@@ -51,7 +51,7 @@ export default function MetricCard({
       <CardActionArea
         onClick={disabled ? undefined : onToggle}
         disabled={disabled}
-        sx={{ p: 2 }}
+        sx={{ p: 4 }}
       >
         {/* Selection indicator */}
         <Box
@@ -72,8 +72,8 @@ export default function MetricCard({
           {isSelected && <CheckIcon fontSize="small" />}
         </Box>
 
-        <Box sx={{ pr: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+        <Box sx={{ pr: 6 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
             <Typography variant="h6">{metric.name}</Typography>
 
             <Chip

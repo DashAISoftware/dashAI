@@ -50,8 +50,8 @@ function Info({ data, nameRelatedInfo, dateRelatedInfo }) {
           container
           direction="row"
           alignItems="center"
-          rowSpacing={3}
-          columnSpacing={15}
+          rowSpacing={6}
+          columnSpacing={30}
         >
           {nameRelatedInfo.map((param) => (
             <Grid key={param.key}>
@@ -64,7 +64,7 @@ function Info({ data, nameRelatedInfo, dateRelatedInfo }) {
         </Grid>
       </Grid>
 
-      <Divider sx={{ mt: 3, mb: 3 }} />
+      <Divider sx={{ mt: 6, mb: 6 }} />
 
       {/* Run Date related info */}
       <Grid>
@@ -72,8 +72,8 @@ function Info({ data, nameRelatedInfo, dateRelatedInfo }) {
           container
           direction="row"
           alignItems="center"
-          rowSpacing={3}
-          columnSpacing={15}
+          rowSpacing={6}
+          columnSpacing={30}
         >
           {dateRelatedInfo.map((param) => (
             <Grid key={param.key}>

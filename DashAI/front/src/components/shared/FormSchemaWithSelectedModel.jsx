@@ -63,9 +63,9 @@ function FormSchemaWithSelectedModel({
 
   return (
     <Stack
-      spacing={2}
+      spacing={4}
       sx={{
-        pt: 2,
+        pt: 4,
         flex: 1,
         minHeight: 0,
         display: "flex",

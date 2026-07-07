@@ -31,21 +31,32 @@ class DecisionTreeClassifierSchema(BaseSchema):
         description=MultilingualString(
             en=(
                 "The function to measure the quality of a split. Supported criteria "
-                "are “gini” for the Gini impurity and “log_loss” and “entropy” both "
+                'are "gini" for the Gini impurity and "log_loss" and "entropy" both '
                 "for the Shannon information gain."
             ),
             es=(
                 "La función para medir la calidad de una división. Los criterios "
-                "soportados son “gini” para la impureza de Gini y “log_loss” y "
-                "“entropy” para la ganancia de información de Shannon."
+                'soportados son "gini" para la impureza de Gini y "log_loss" y '
+                '"entropy" para la ganancia de información de Shannon.'
             ),
             pt=(
                 "A função para medir a qualidade de uma divisão. Os critérios "
-                "suportados são “gini” para a impureza de Gini e “log_loss” e "
-                "“entropy” para o ganho de informação de Shannon."
+                'suportados são "gini" para a impureza de Gini e "log_loss" e '
+                '"entropy" para o ganho de informação de Shannon.'
+            ),
+            de=(
+                "Die Funktion zur Messung der Qualität einer Aufteilung. Unterstützte "
+                "Kriterien sind 'gini' für die Gini-Unreinheit sowie 'log_loss' und "
+                "'entropy' für den Shannon-Informationsgewinn."
+            ),
+            zh=(
+                "衡量分裂质量的函数。支持的准则有：'gini'（基尼不纯度）、"
+                "'log_loss' 和 'entropy'（香农信息增益）。"
             ),
         ),
-        alias=MultilingualString(en="Criterion", es="Criterio", pt="Critério"),
+        alias=MultilingualString(
+            en="Criterion", es="Criterio", pt="Critério", de="Kriterium", zh="准则"
+        ),
     )  # type: ignore
     max_depth: schema_field(
         optimizer_int_field(ge=1),
@@ -71,9 +82,22 @@ class DecisionTreeClassifierSchema(BaseSchema):
                 "até que todas as folhas sejam puras ou até que todas as folhas "
                 "contenham menos de min_samples_split amostras."
             ),
+            de=(
+                "Die maximale Tiefe des Baums. Bei None werden Knoten erweitert, bis "
+                "alle Blätter rein sind oder weniger als min_samples_split Stichproben "
+                "enthalten."
+            ),
+            zh=(
+                "树的最大深度。若为 None，则扩展节点直至所有叶节点纯净，"
+                "或叶节点包含的样本数少于 min_samples_split。"
+            ),
         ),
         alias=MultilingualString(
-            en="Max depth", es="Profundidad máxima", pt="Profundidade máxima"
+            en="Max depth",
+            es="Profundidad máxima",
+            pt="Profundidade máxima",
+            de="Maximale Tiefe",
+            zh="最大深度",
         ),
     )  # type: ignore
     min_samples_split: schema_field(
@@ -88,11 +112,15 @@ class DecisionTreeClassifierSchema(BaseSchema):
             en="The minimum number of samples required to split an internal node.",
             es="El número mínimo de muestras requeridas para dividir un nodo interno.",
             pt="O número mínimo de amostras necessárias para dividir um nó interno.",
+            de="Mindestanzahl von Stichproben zum Aufteilen eines internen Knotens.",
+            zh="分裂内部节点所需的最少样本数。",
         ),
         alias=MultilingualString(
             en="Min samples split",
             es="Mínimas muestras de división",
             pt="Mín. amostras de divisão",
+            de="Minimale Aufteilungsstichproben",
+            zh="最小分裂样本数",
         ),
     )  # type: ignore
     min_samples_leaf: schema_field(
@@ -107,11 +135,15 @@ class DecisionTreeClassifierSchema(BaseSchema):
             en="The minimum number of samples required to be at a leaf node.",
             es="El número mínimo de muestras requeridas para estar en una hoja.",
             pt="O número mínimo de amostras necessárias para estar em uma folha.",
+            de="Mindestanzahl von Stichproben an einem Blattknoten.",
+            zh="叶节点所需的最少样本数。",
         ),
         alias=MultilingualString(
             en="Min samples leaf",
             es="Mínimas muestras para hoja",
             pt="Mín. amostras para folha",
+            de="Minimale Stichproben für Blatt",
+            zh="最小叶节点样本数",
         ),
     )  # type: ignore
     max_features: schema_field(
@@ -134,9 +166,22 @@ class DecisionTreeClassifierSchema(BaseSchema):
                 "O número de características a considerar ao buscar a melhor divisão. "
                 "Se float, max_features é uma porcentagem do total de características."
             ),
+            de=(
+                "Die Anzahl der Merkmale, die bei der Suche nach der besten Aufteilung "
+                "berücksichtigt werden. Als Float ist max_features ein Prozentsatz "
+                "der Gesamtzahl der Merkmale."
+            ),
+            zh=(
+                "寻找最佳分裂时考虑的特征数量。若为浮点数，"
+                "则 max_features 表示特征总数的百分比。"
+            ),
         ),
         alias=MultilingualString(
-            en="Max features", es="Máximas características", pt="Máx. características"
+            en="Max features",
+            es="Máximas características",
+            pt="Máx. características",
+            de="Maximale Merkmale",
+            zh="最大特征数",
         ),
     )  # type: ignore
 
@@ -168,11 +213,15 @@ class DecisionTreeClassifier(
         en="Decision Tree",
         es="Árbol de Decisión",
         pt="Árvore de Decisão",
+        de="Entscheidungsbaum",
+        zh="决策树",
     )
     DESCRIPTION: str = MultilingualString(
         en="Decision tree classifier using CART algorithm.",
         es=("Clasificador de árbol de decisión usando el algoritmo CART."),
         pt="Classificador de árvore de decisão usando o algoritmo CART.",
+        de="Entscheidungsbaum-Klassifikator mit dem CART-Algorithmus.",
+        zh="使用 CART 算法的决策树分类器。",
     )
     COLOR: str = "#4CAF50"
     ICON: str = "AccountTree"

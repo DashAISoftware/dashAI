@@ -10,9 +10,9 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class AlbertTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained ALBERT model for efficient English text classification.
+    """Pretrained ALBERT model for efficient English text classification.
 
-    ALBERT (A Lite BERT) reduces BERT's parameters via cross-layer parameter
+    ALBERT (A Lite BERT) reduces BERT's parameters via crosslayer parameter
     sharing and factorised embedding parametrisation, making it significantly
     smaller and faster while retaining high accuracy. Requires the
     ``sentencepiece`` package for its tokeniser.
@@ -28,10 +28,12 @@ class AlbertTransformer(HuggingFaceTextClassificationTransformer):
         en="ALBERT Transformer",
         es="Transformer ALBERT",
         pt="Transformer ALBERT",
+        de="ALBERT Transformer",
+        zh="ALBERT Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Parameter-efficient BERT variant for English text classification. "
+            "Parameter efficient BERT variant for English text classification. "
             "Downloads weights from Hugging Face on first use (internet required)."
         ),
         es=(
@@ -42,6 +44,15 @@ class AlbertTransformer(HuggingFaceTextClassificationTransformer):
             "Variante do BERT eficiente em parâmetros para classificação de "
             "texto em inglês. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Parametereffiziente BERT-Variante für englische Textklassifikation. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
+        ),
+        zh=(
+            "参数高效的 BERT 变体，用于英文文本分类。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#00838F"

@@ -2,11 +2,9 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   Box,
   Typography,
-  FormControl,
-  Select,
-  MenuItem,
+  Autocomplete,
+  TextField,
   Paper,
-  InputLabel,
   Alert,
   Chip,
 } from "@mui/material";
@@ -15,7 +13,9 @@ import {
   getDatasetFile,
   getDatasetFileFiltered,
   getDatasetTypesByFilePath,
+  getDatasetInfo,
 } from "../../api/datasets";
+import { formatDate } from "../../pages/results/constants/formatDate";
 import { useTranslation } from "react-i18next";
 
 function DatasetSelector({
@@ -24,8 +24,9 @@ function DatasetSelector({
   selectedDataset,
   setSelectedDataset,
 }) {
-  const { t } = useTranslation(["prediction", "common"]);
+  const { t } = useTranslation(["prediction", "common", "datasets"]);
   const [columnTypes, setColumnTypes] = useState({});
+  const [infosById, setInfosById] = useState({});
 
   useEffect(() => {
     if (!selectedDataset?.file_path) return;
@@ -33,6 +34,24 @@ function DatasetSelector({
       .then(setColumnTypes)
       .catch(() => {});
   }, [selectedDataset?.file_path]);
+
+  const fetchMissingInfos = async (items) => {
+    const missing = items.filter((d) => d?.id != null && !infosById[d.id]);
+    if (missing.length === 0) return;
+    try {
+      const results = await Promise.allSettled(
+        missing.map((d) => getDatasetInfo(d.id)),
+      );
+      const map = {};
+      results.forEach((res, idx) => {
+        const id = missing[idx]?.id;
+        if (res.status === "fulfilled" && id != null) map[id] = res.value;
+      });
+      setInfosById((prev) => ({ ...prev, ...map }));
+    } catch (e) {
+      console.warn("Some dataset infos could not be fetched", e);
+    }
+  };
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel, sortModel) => {
@@ -53,34 +72,62 @@ function DatasetSelector({
   );
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <FormControl fullWidth>
-        <InputLabel>{t("prediction:label.selectDataset")}</InputLabel>
-        <Select
-          value={selectedDataset?.id || ""}
-          label={t("prediction:label.selectDataset")}
-          onChange={(e) => {
-            const dataset = datasets.find((d) => d.id === e.target.value);
-            setSelectedDataset(dataset);
-          }}
-        >
-          {datasets.map((dataset) => (
-            <MenuItem key={dataset.id} value={dataset.id}>
-              {dataset.name} ({dataset.total_rows} {t("common:rows")})
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+    <Box sx={{ mb: 6 }}>
+      <Autocomplete
+        options={datasets}
+        getOptionLabel={(option) => option.name}
+        isOptionEqualToValue={(opt, val) => opt.id === val.id}
+        value={selectedDataset}
+        onOpen={() => fetchMissingInfos(datasets)}
+        onChange={(_, newValue) => setSelectedDataset(newValue)}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={t("prediction:label.selectDataset")}
+            variant="outlined"
+            placeholder={t("datasets:label.typeToSearchDatasets")}
+          />
+        )}
+        renderOption={(props, option) => {
+          const { key, ...rootProps } = props;
+          const info = infosById[option.id];
+          return (
+            <Box component="li" key={key} {...rootProps}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  width: "100%",
+                  gap: 0.25,
+                }}
+              >
+                <Typography variant="body1" fontWeight="medium">
+                  {option.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {t("common:created")}: {formatDate(option.created)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {t("datasets:label.rowsColumnsInfo", {
+                    totalRows: info ? info.total_rows : "...",
+                    totalColumns: info ? info.total_columns : "...",
+                  })}
+                </Typography>
+              </Box>
+            </Box>
+          );
+        }}
+      />
       {selectedDataset && (
         <>
-          <Alert severity="info" sx={{ mt: 2 }}>
-            <Typography variant="h5" sx={{ mb: 1 }}>
+          <Alert severity="info" sx={{ mt: 4 }}>
+            <Typography variant="h5" sx={{ mb: 2 }}>
               {t("prediction:label.predictionInfo")}
             </Typography>
 
-            <Box sx={{ mb: 1 }}>
+            <Box sx={{ mb: 2 }}>
               <strong>{t("prediction:label.inputColumns")}:</strong>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.5 }}>
+              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mt: 1 }}>
                 {experiment.input_columns.map((col) => (
                   <Chip
                     key={col}
@@ -99,7 +146,7 @@ function DatasetSelector({
                 label={experiment.output_columns[0]}
                 size="small"
                 color="primary"
-                sx={{ ml: 1, fontSize: "0.75rem" }}
+                sx={{ ml: 2, fontSize: "0.75rem" }}
               />
             </Box>
           </Alert>
@@ -107,9 +154,10 @@ function DatasetSelector({
           <Paper>
             <DatasetTable
               fetchPage={fetchDatasetPage}
-              initialPageSize={10}
+              initialPageSize={5}
               datasetPath={selectedDataset.file_path}
               columnTypes={columnTypes}
+              showExportButton={false}
             />
           </Paper>
         </>

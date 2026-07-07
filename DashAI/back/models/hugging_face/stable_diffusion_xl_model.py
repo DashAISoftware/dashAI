@@ -56,9 +56,27 @@ class StableDiffusionXLSchema(BaseSchema):
                 "'RealVisXL_V4.0' é um popular fine-tune comunitário do SDXL "
                 "otimizado para retratos realistas e fotografia."
             ),
+            de=(
+                "Der zu ladende Stable Diffusion XL-Checkpoint. "
+                "'stable-diffusion-xl-base-1.0' ist das offizielle Basismodell, "
+                "bei 1024x1024 px für hochwertige fotorealistische Generierung "
+                "trainiert. "
+                "'RealVisXL_V4.0' ist ein beliebter Community-Fine-Tune von SDXL, "
+                "optimiert für realistische Porträts und Fotografie."
+            ),
+            zh=(
+                "要加载的 Stable Diffusion XL 检查点。"
+                "'stable-diffusion-xl-base-1.0' 是官方基础模型，"
+                "在 1024x1024px 下训练，用于高质量写实图像生成。"
+                "'RealVisXL_V4.0' 是针对写实人像和摄影优化的热门社区微调版本。"
+            ),
         ),
         alias=MultilingualString(
-            en="Model name", es="Nombre del modelo", pt="Nome do modelo"
+            en="Model name",
+            es="Nombre del modelo",
+            pt="Nome do modelo",
+            de="Modellname",
+            zh="模型名称",
         ),
     )  # type: ignore
 
@@ -84,9 +102,24 @@ class StableDiffusionXLSchema(BaseSchema):
                     "marca d'água'. "
                     "Deixe vazio para omitir o condicionamento negativo."
                 ),
+                de=(
+                    "Text, der beschreibt, was aus dem generierten Bild ausgeschlossen "
+                    "werden soll. Häufige Werte: 'unscharf, geringe Qualität, verzerrt,"
+                    "Wasserzeichen'. Leer lassen, um die negative Konditionierung zu "
+                    "überspringen."
+                ),
+                zh=(
+                    "描述要从生成图像中排除内容的文本。"
+                    "常用值：'模糊、低质量、失真、水印'。"
+                    "留空以跳过负面条件引导。"
+                ),
             ),
             alias=MultilingualString(
-                en="Negative prompt", es="Prompt negativo", pt="Prompt negativo"
+                en="Negative prompt",
+                es="Prompt negativo",
+                pt="Prompt negativo",
+                de="Negativer Prompt",
+                zh="负面提示词",
             ),
         )  # type: ignore
     ]
@@ -112,11 +145,25 @@ class StableDiffusionXLSchema(BaseSchema):
                 "para resultados rápidos, 40-50 para maior qualidade. SDXL alcança "
                 "bons resultados com 25-40 passos."
             ),
+            de=(
+                "Anzahl der auszuführenden Entrauschungsschritte. Mehr Schritte "
+                "refinieren "
+                "das Bild, erhöhen aber die Generierungszeit. Typischer Bereich: 20-30 "
+                "für schnelle Ergebnisse, 40-50 für höhere Qualität. SDXL erzielt "
+                "gute Ergebnisse mit 25-40 Schritten."
+            ),
+            zh=(
+                "去噪步数。步数越多图像越精细，但生成时间越长。"
+                "典型范围：20-30 步快速生成，40-50 步更高质量。"
+                "SDXL 在 25-40 步时效果良好。"
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de passos de inferência",
+            de="Anzahl Inferenzschritte",
+            zh="推理步数",
         ),
     )  # type: ignore
 
@@ -147,9 +194,25 @@ class StableDiffusionXLSchema(BaseSchema):
                 "produzir artefatos. "
                 "SDXL funciona bem com valores entre 5-9."
             ),
+            de=(
+                "Classifier-Free Guidance (CFG)-Skala. Steuert, wie streng das Bild "
+                "dem Prompt folgt. Niedrige Werte (1-4) erlauben kreative Freiheit; "
+                "mittlere Werte (5-9) balancieren Qualität und Treue; hohe Werte (10+) "
+                "erzwingen den Prompt, können aber Artefakte erzeugen. "
+                "SDXL funktioniert gut mit Werten zwischen 5-9."
+            ),
+            zh=(
+                "无分类器引导（CFG）比例。控制图像对文本提示的遵循程度。"
+                "低值（1-4）允许创意自由；中值（5-9）平衡质量与忠实度；"
+                "高值（10+）强制执行提示但可能产生伪影。SDXL 在 5-9 之间效果最佳。"
+            ),
         ),
         alias=MultilingualString(
-            en="Guidance scale", es="Escala de guía", pt="Escala de orientação"
+            en="Guidance scale",
+            es="Escala de guía",
+            pt="Escala de orientação",
+            de="Führungsskala",
+            zh="引导比例",
         ),
     )  # type: ignore
 
@@ -174,8 +237,20 @@ class StableDiffusionXLSchema(BaseSchema):
                 "inferência em CPU é muito lenta para este modelo grande; espere "
                 "10-30 minutos por imagem em CPU."
             ),
+            de=(
+                "Hardware-Gerät für die Inferenz. Wählen Sie GPU für "
+                "Hardwarebeschleunigung, "
+                "für SDXL dringend empfohlen. CPU-Inferenz ist für dieses große Modell "
+                "sehr langsam; rechnen Sie mit 10-30 Minuten pro Bild auf CPU."
+            ),
+            zh=(
+                "推理硬件设备。强烈建议 SDXL 使用 GPU 加速。"
+                "CPU 推理对此大模型非常缓慢，每张图像预计需要 10-30 分钟。"
+            ),
         ),
-        alias=MultilingualString(en="Device", es="Dispositivo", pt="Dispositivo"),
+        alias=MultilingualString(
+            en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
+        ),
     )  # type: ignore
 
     seed: schema_field(
@@ -199,8 +274,20 @@ class StableDiffusionXLSchema(BaseSchema):
                 "Use um valor negativo (ex. -1) para uma semente aleatória em "
                 "cada execução."
             ),
+            de=(
+                "Zufalls-Seed für reproduzierbare Generierung. Ein fester positiver "
+                "Integer erzeugt stets dasselbe Bild bei identischen Einstellungen. "
+                "Verwenden Sie einen negativen Wert (z.B. -1) für einen zufälligen "
+                "Seed bei jedem Durchlauf."
+            ),
+            zh=(
+                "用于可复现生成的随机种子。固定正整数在相同设置下始终生成相同图像。"
+                "使用负值（如 -1）表示每次运行使用随机种子。"
+            ),
         ),
-        alias=MultilingualString(en="Seed", es="Semilla", pt="Semente"),
+        alias=MultilingualString(
+            en="Seed", es="Semilla", pt="Semente", de="Seed", zh="随机种子"
+        ),
     )  # type: ignore
 
     width: schema_field(
@@ -222,8 +309,19 @@ class StableDiffusionXLSchema(BaseSchema):
                 "A resolução nativa do SDXL é 1024x1024 px. Usar resoluções não "
                 "nativas pode reduzir a qualidade."
             ),
+            de=(
+                "Breite des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
+                "Die native Auflösung von SDXL ist 1024x1024 px. Die Verwendung "
+                "nicht-nativer Auflösungen kann die Qualität verringern."
+            ),
+            zh=(
+                "输出图像的宽度（像素），必须是 8 的倍数。"
+                "SDXL 原生分辨率为 1024x1024px，使用非原生分辨率可能降低质量。"
+            ),
         ),
-        alias=MultilingualString(en="Width", es="Ancho", pt="Largura"),
+        alias=MultilingualString(
+            en="Width", es="Ancho", pt="Largura", de="Breite", zh="宽度"
+        ),
     )  # type: ignore
 
     height: schema_field(
@@ -242,8 +340,18 @@ class StableDiffusionXLSchema(BaseSchema):
                 "Altura da imagem de saída em pixels. Deve ser múltiplo de 8. "
                 "A resolução nativa do SDXL é 1024x1024 px."
             ),
+            de=(
+                "Höhe des Ausgabebildes in Pixeln. Muss ein Vielfaches von 8 sein. "
+                "Die native Auflösung von SDXL ist 1024x1024 px."
+            ),
+            zh=(
+                "输出图像的高度（像素），必须是 8 的倍数。"
+                "SDXL 原生分辨率为 1024x1024px。"
+            ),
         ),
-        alias=MultilingualString(en="Height", es="Altura", pt="Altura"),
+        alias=MultilingualString(
+            en="Height", es="Altura", pt="Altura", de="Höhe", zh="高度"
+        ),
     )  # type: ignore
 
     num_images_per_prompt: schema_field(
@@ -265,11 +373,22 @@ class StableDiffusionXLSchema(BaseSchema):
                 "Aumentar este valor é mais eficiente do que executar várias sessões, "
                 "mas requer proporcionalmente mais memória GPU."
             ),
+            de=(
+                "Wie viele Bilder aus einem einzelnen Prompt in einem Stapel generiert "
+                "werden sollen. Diesen Wert zu erhöhen ist effizienter als mehrere "
+                "Sitzungen zu starten, erfordert aber proportional mehr GPU-Speicher."
+            ),
+            zh=(
+                "每个提示词在单批次中生成的图像数量。"
+                "增大此值比多次运行更高效，但需要等比例更多的 GPU 显存。"
+            ),
         ),
         alias=MultilingualString(
             en="Num images per prompt",
             es="Número de imágenes por prompt",
             pt="Número de imagens por prompt",
+            de="Bilder pro Prompt",
+            zh="每提示词图像数",
         ),
     )  # type: ignore
 
@@ -301,6 +420,8 @@ class StableDiffusionXLModel(TextToImageGenerationTaskModel):
         en="Stable Diffusion XL",
         es="Stable Diffusion XL",
         pt="Stable Diffusion XL",
+        de="Stable Diffusion XL",
+        zh="Stable Diffusion XL",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -334,6 +455,21 @@ class StableDiffusionXLModel(TextToImageGenerationTaskModel):
             "RealVisXL V4.0, um fine-tune comunitário otimizado para retratos "
             "fotorrealistas e fotografia. Modelo base em "
             "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0."
+        ),
+        de=(
+            "Stable Diffusion XL (SDXL) ist ein latentes Diffusionsmodell von "
+            "Stability AI zur hochauflösenden Text-zu-Bild-Generierung bei "
+            "1024x1024 px. Es verfügt über eine größere U-Net-Architektur und einen "
+            "zweiten Textcodierer (OpenCLIP ViT-bigG), der Bildqualität, "
+            "Textdarstellung und kompositorische Genauigkeit gegenüber früheren "
+            "SD-Versionen deutlich verbessert. Enthält auch RealVisXL V4.0, einen "
+            "Community-Fine-Tune optimiert für fotorealistische Porträts und "
+            "Fotografie. Basismodell unter "
+            "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0."
+        ),
+        zh=(
+            "Stable Diffusion XL（SDXL）是 Stability AI 的潜扩散模型，"
+            "用于 1024x1024px 高分辨率文本到图像生成，图像质量和排版精度显著提升。"
         ),
     )
 

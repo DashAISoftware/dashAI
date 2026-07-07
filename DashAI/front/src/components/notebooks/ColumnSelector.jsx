@@ -29,6 +29,7 @@ import { useTableLocalization } from "../../utils/useTableLocalization";
  * @param {Object} props.inputCardinality - Cardinality requirements {min, max, exact} (optional)
  * @param {Array} props.allowedDtypes - Array of allowed dtype strings (optional)
  * @param {Array} props.allowedTypes - Array of allowed semantic type names (optional)
+ * @param {Array} props.nonAllowedDtypes - Array of forbidden dtype strings (optional)
  * @param {Function} props.onSelectionChange - Callback when selection changes (selectedColumns) (optional)
  * @param {Function} props.onValidationChange - Callback when validation status changes (isValid) (optional)
 
@@ -39,8 +40,10 @@ function ColumnSelector({
   inputCardinality = {},
   allowedDtypes = [],
   allowedTypes = [],
+  nonAllowedDtypes = [],
   onSelectionChange = () => {},
   onValidationChange = () => {},
+  columnTypes = null,
 }) {
   const [rows, setRows] = useState([]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
@@ -88,25 +91,30 @@ function ColumnSelector({
   );
 
   useEffect(() => {
+    const toColumns = (types) =>
+      Object.entries(types).map(([columnName, typeInfo], idx) => ({
+        id: idx,
+        columnName: columnName,
+        valueType: typeInfo.type || t("common:unknown"),
+        dataType: typeInfo.dtype || t("common:unknown"),
+        order: idx,
+      }));
+
+    if (columnTypes !== null) {
+      const cols = toColumns(columnTypes);
+      setDatasetColumns(cols);
+      setRows(cols);
+      return;
+    }
+
     let isMounted = true;
     const fetchAllData = async () => {
       try {
         const types = await getDatasetTypesByFilePath(file_path);
-
         if (!isMounted) return;
-
-        const datasetColumns = Object.entries(types).map(
-          ([columnName, typeInfo], idx) => ({
-            id: idx,
-            columnName: columnName,
-            valueType: typeInfo.type || t("common:unknown"),
-            dataType: typeInfo.dtype || t("common:unknown"),
-            order: idx,
-          }),
-        );
-
-        setDatasetColumns(datasetColumns);
-        setRows(datasetColumns);
+        const cols = toColumns(types);
+        setDatasetColumns(cols);
+        setRows(cols);
       } catch (error) {
         console.error("Error fetching dataset info/types:", error);
       }
@@ -117,7 +125,7 @@ function ColumnSelector({
     return () => {
       isMounted = false;
     };
-  }, [file_path]);
+  }, [file_path, columnTypes]);
 
   // Validate current selection
   const isValidSelection = useCallback(
@@ -154,10 +162,15 @@ function ColumnSelector({
         if (allowedDtypes.length > 0 && !allowedDtypes.includes(row.dataType)) {
           return false;
         }
+        if (nonAllowedDtypes.length > 0) {
+          const dtypeKey =
+            row.dataType === t("common:unknown") ? "" : row.dataType;
+          if (nonAllowedDtypes.includes(dtypeKey)) return false;
+        }
         return true;
       })
       .map((row) => row.id);
-  }, [rows, allowedDtypes, allowedTypes]);
+  }, [rows, allowedDtypes, allowedTypes, nonAllowedDtypes]);
 
   // Check if row is selectable - using useCallback for stability
   const isRowSelectable = useCallback(
@@ -193,13 +206,15 @@ function ColumnSelector({
   );
 
   const handleSelectAllRows = useCallback(() => {
+    const limit = inputCardinality.exact || inputCardinality.max;
     const validIds = getValidColumnIds();
-    const allValidSelected =
-      validIds.length > 0 &&
-      validIds.every((id) => rowSelectionModel.includes(id));
+    const selectableIds = limit ? validIds.slice(0, limit) : validIds;
+    const allSelectableSelected =
+      selectableIds.length > 0 &&
+      selectableIds.every((id) => rowSelectionModel.includes(id));
 
-    handleSelection(allValidSelected ? {} : toMRT(validIds));
-  }, [getValidColumnIds, rowSelectionModel]);
+    handleSelection(allSelectableSelected ? {} : toMRT(selectableIds));
+  }, [getValidColumnIds, rowSelectionModel, inputCardinality]);
 
   // Effect to update selection data and validation whenever rowSelectionModel changes
   useEffect(() => {
@@ -277,6 +292,7 @@ function ColumnSelector({
     enableFullScreenToggle: false,
     enableHiding: false,
     enablePagination: true,
+    autoResetPageIndex: false,
     muiPaginationProps: { rowsPerPageOptions: [10, 15, 20] },
     initialState: {
       pagination: { pageSize: 10, pageIndex: 0 },
@@ -299,15 +315,20 @@ function ColumnSelector({
           }
         : {},
     }),
-    muiSelectAllCheckboxProps: () => ({
-      checked:
-        getValidColumnIds().length > 0 &&
-        getValidColumnIds().every((id) => rowSelectionModel.includes(id)),
-      indeterminate:
-        rowSelectionModel.length > 0 &&
-        rowSelectionModel.length < getValidColumnIds().length,
-      onChange: handleSelectAllRows,
-    }),
+    muiSelectAllCheckboxProps: () => {
+      const limit = inputCardinality.exact || inputCardinality.max;
+      const validIds = getValidColumnIds();
+      const selectableIds = limit ? validIds.slice(0, limit) : validIds;
+      return {
+        checked:
+          selectableIds.length > 0 &&
+          selectableIds.every((id) => rowSelectionModel.includes(id)),
+        indeterminate:
+          rowSelectionModel.length > 0 &&
+          rowSelectionModel.length < selectableIds.length,
+        onChange: handleSelectAllRows,
+      };
+    },
     localization,
   });
 
@@ -318,8 +339,8 @@ function ColumnSelector({
       {/* Column requirements */}
       <Box
         sx={{
-          mb: 1.5,
-          p: 1.5,
+          mb: 3,
+          p: 3,
           borderRadius: 2,
           backgroundColor: theme.palette.ui.hover,
           border: `1px solid ${theme.palette.ui.divider}`,
@@ -327,7 +348,7 @@ function ColumnSelector({
         }}
       >
         {Object.keys(inputCardinality).length > 0 && (
-          <Typography variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
             {t("datasets:label.requiredColumns", {
               exact: inputCardinality.exact,
               min: inputCardinality.min || 0,
@@ -363,7 +384,7 @@ function ColumnSelector({
             sx={{
               color: "text.secondary",
               fontStyle: "italic",
-              mt: 1,
+              mt: 2,
             }}
           >
             <Trans i18nKey="datasets:label.allowedValueTypes">
@@ -381,7 +402,7 @@ function ColumnSelector({
         {allowedDtypes.length > 0 && (
           <Typography
             variant="caption"
-            sx={{ color: "text.disabled", mt: 0.5, display: "block" }}
+            sx={{ color: "text.disabled", mt: 1, display: "block" }}
           >
             {t("common:allowedTypes")}:{" "}
             <Box
@@ -390,6 +411,20 @@ function ColumnSelector({
             >
               {allowedDtypes.join(", ")}
             </Box>
+          </Typography>
+        )}
+
+        {/* Excluded data types */}
+        {nonAllowedDtypes.length > 0 && (
+          <Typography
+            variant="caption"
+            sx={{ color: "warning.main", mt: 1, display: "block" }}
+          >
+            {t("datasets:label.excludedDataTypes", {
+              dtypes: nonAllowedDtypes
+                .map((d) => (d === "" ? t("common:unknown") : d))
+                .join(", "),
+            })}
           </Typography>
         )}
       </Box>
@@ -434,6 +469,7 @@ ColumnSelector.propTypes = {
   }),
   allowedDtypes: PropTypes.array,
   allowedTypes: PropTypes.array,
+  nonAllowedDtypes: PropTypes.array,
   onSelectionChange: PropTypes.func,
   onValidationChange: PropTypes.func,
 };

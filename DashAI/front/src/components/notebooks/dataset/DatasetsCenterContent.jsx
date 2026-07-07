@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import {
   CloudUpload as UploadDatasetIcon,
   AutoStories as NotebookIcon,
+  Hub as HubIcon,
 } from "@mui/icons-material";
 
 export default function DatasetsCenterContent() {
@@ -23,7 +24,6 @@ export default function DatasetsCenterContent() {
     selectedNotebookId,
     setRightBarContent,
     step,
-    fetchDatasets,
     fetchNotebooks,
     selectedOption,
   } = useDatasetsAndNotebooks();
@@ -56,6 +56,11 @@ export default function DatasetsCenterContent() {
             tourContext.nextStep();
           }, 600);
         }
+        return;
+      }
+
+      if (option === "hub") {
+        navigate("/app/data/hub");
         return;
       }
 
@@ -104,14 +109,13 @@ export default function DatasetsCenterContent() {
           width: "100%",
           height: "100%",
           overflow: "auto",
-          px: 2,
-          pt: 2,
+          px: 4,
+          pt: 4,
         }}
       >
         <DataBreadcrumbs />
         <UploadDatasetSteps
           backHome={() => {
-            fetchDatasets();
             setRightBarContent(null);
             navigate("/app/data");
           }}
@@ -128,14 +132,13 @@ export default function DatasetsCenterContent() {
           width: "100%",
           height: "100%",
           overflow: "auto",
-          px: 2,
-          pt: 2,
+          px: 4,
+          pt: 4,
         }}
       >
         <DataBreadcrumbs />
         <UploadNotebookSteps
           backHome={() => {
-            fetchNotebooks();
             navigate("/app/data");
           }}
           datasets={datasets}

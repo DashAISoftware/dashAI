@@ -12,9 +12,6 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
-from DashAI.back.models.scikit_learn.sklearn_like_model import (
-    CategoricalEncodingStrategy,
-)
 from DashAI.back.models.tabular_classification_model import TabularClassificationModel
 
 
@@ -48,8 +45,13 @@ class SVCSchema(BaseSchema):
                 "O parâmetro 'C' é um parâmetro de regularização. "
                 "A força da regularização é inversamente proporcional a C"
             ),
+            de=(
+                "Der Parameter 'C' ist ein Regularisierungsparameter. "
+                "Die Stärke der Regularisierung ist umgekehrt proportional zu C."
+            ),
+            zh="参数'C'是正则化参数，正则化强度与C成反比。",
         ),
-        alias=MultilingualString(en="C", es="C", pt="C"),
+        alias=MultilingualString(en="C", es="C", pt="C", de="C", zh="C"),
     )  # type: ignore
     coef0: schema_field(
         optimizer_float_field(),
@@ -75,8 +77,16 @@ class SVCSchema(BaseSchema):
                 "função kernel. "
                 "É significativo apenas para kernels poly e sigmoid. "
             ),
+            de=(
+                "Der Parameter 'coef0' ist ein unabhängiger Term in der "
+                "Kernelfunktion. "
+                "Er ist nur für die Kernel poly und sigmoid relevant. "
+            ),
+            zh="参数'coef0'是核函数中的独立项，仅对poly和sigmoid核有意义。",
         ),
-        alias=MultilingualString(en="coef0", es="coef0", pt="coef0"),
+        alias=MultilingualString(
+            en="coef0", es="coef0", pt="coef0", de="coef0", zh="coef0"
+        ),
     )  # type: ignore
     degree: schema_field(
         optimizer_float_field(ge=0.0),
@@ -90,8 +100,12 @@ class SVCSchema(BaseSchema):
             en="The 'degree' parameter is only significant for 'poly' kernel.",
             es="El parámetro 'grado' solo es significativo para el kernel 'poly'.",
             pt="O parâmetro 'grau' só é significativo para o kernel 'poly'.",
+            de="Der Parameter 'degree' ist nur für den 'poly'-Kernel relevant.",
+            zh="参数'degree'仅对'poly'核有意义。",
         ),
-        alias=MultilingualString(en="degree", es="grado", pt="grau"),
+        alias=MultilingualString(
+            en="degree", es="grado", pt="grau", de="Grad", zh="次数"
+        ),
     )  # type: ignore
     gamma: schema_field(
         enum_field(enum=["scale", "auto"]),
@@ -100,8 +114,12 @@ class SVCSchema(BaseSchema):
             en="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels.",
             es="Coeficiente para los kernels 'rbf', 'poly' y 'sigmoid'.",
             pt="Coeficiente para kernels 'rbf', 'poly' e 'sigmoid'.",
+            de="Koeffizient für 'rbf'-, 'poly'- und 'sigmoid'-Kernel.",
+            zh="'rbf'、'poly'和'sigmoid'核的系数。",
         ),
-        alias=MultilingualString(en="gamma", es="gamma", pt="gamma"),
+        alias=MultilingualString(
+            en="gamma", es="gamma", pt="gamma", de="Gamma", zh="gamma"
+        ),
     )  # type: ignore
     kernel: schema_field(
         enum_field(enum=["linear", "poly", "rbf", "sigmoid"]),
@@ -110,8 +128,12 @@ class SVCSchema(BaseSchema):
             en="The 'kernel' parameter is the kernel used in the model.",
             es="El parámetro 'kernel' es el kernel utilizado en el modelo.",
             pt="O parâmetro 'kernel' é o kernel utilizado no modelo.",
+            de="Der Parameter 'kernel' gibt den im Modell verwendeten Kernel an.",
+            zh="参数'kernel'是模型中使用的核函数。",
         ),
-        alias=MultilingualString(en="kernel", es="kernel", pt="kernel"),
+        alias=MultilingualString(
+            en="kernel", es="kernel", pt="kernel", de="Kernel", zh="核函数"
+        ),
     )  # type: ignore
     max_iter: schema_field(
         optimizer_int_field(ge=-1),
@@ -137,9 +159,19 @@ class SVCSchema(BaseSchema):
                 "solucionador. Deve ser um inteiro positivo "
                 "ou -1 para indicar sem limite."
             ),
+            de=(
+                "Der Parameter 'max_iter' bestimmt das Iterationslimit für den "
+                "Löser. Muss eine positive ganze Zahl oder "
+                "-1 für kein Limit sein."
+            ),
+            zh="参数'max_iter'确定求解器的最大迭代次数，正整数或-1表示无限制。",
         ),
         alias=MultilingualString(
-            en="max iterations", es="max iteraciones", pt="máx iterações"
+            en="max iterations",
+            es="max iteraciones",
+            pt="máx iterações",
+            de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
     shrinking: schema_field(
@@ -158,8 +190,15 @@ class SVCSchema(BaseSchema):
                 "O parâmetro 'redução' determina se "
                 "uma heurística de redução é utilizada."
             ),
+            de=(
+                "Der Parameter 'shrinking' bestimmt, ob "
+                "eine Schrumpfungsheuristik verwendet wird."
+            ),
+            zh="参数'shrinking'决定是否使用收缩启发式方法。",
         ),
-        alias=MultilingualString(en="shrinking", es="reducción", pt="redução"),
+        alias=MultilingualString(
+            en="shrinking", es="reducción", pt="redução", de="Schrumpfung", zh="收缩"
+        ),
     )  # type: ignore
     tol: schema_field(
         optimizer_float_field(gt=0.0),
@@ -176,8 +215,12 @@ class SVCSchema(BaseSchema):
                 " la tolerancia para el criterio de detención."
             ),
             pt=("O parâmetro 'tol' determina a tolerância para o critério de parada."),
+            de="Der Parameter 'tol' bestimmt die Toleranz für das Stoppkriterium.",
+            zh="参数'tol'确定停止准则的容差。",
         ),
-        alias=MultilingualString(en="tolerance", es="tolerancia", pt="tolerância"),
+        alias=MultilingualString(
+            en="tolerance", es="tolerancia", pt="tolerância", de="Toleranz", zh="容差"
+        ),
     )  # type: ignore
 
 
@@ -186,8 +229,8 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
 
     SVC constructs a maximum-margin hyperplane in a (possibly kernel-transformed)
     feature space. Training data points that lie on or inside the margin are called
-    support vectors; they fully define the decision boundary. Non-linearly separable
-    problems are addressed by mapping the input space into a higher-dimensional space
+    support vectors; they fully define the decision boundary. Nonlinearly separable
+    problems are addressed by mapping the input space into a higher dimensional space
     via kernel functions (linear, polynomial, RBF, or sigmoid).
 
     Regularisation is controlled by ``C``: smaller values allow more misclassified
@@ -207,15 +250,17 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
         en="Support Vector Machine (SVM)",
         es="Máquina de Vectores de Soporte (SVM)",
         pt="Máquina de Vetores de Suporte (SVM)",
+        zh="支持向量机（SVM）",
+        de="Support-Vektor-Maschine (SVM)",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
             "Support Vector Machine (SVM) is a supervised machine learning algorithm "
             "used for classification and regression tasks. It works by finding the "
             "optimal hyperplane that maximizes the margin between different classes "
-            "in a high-dimensional feature space. SVMs are effective in cases where "
+            "in a high dimensional feature space. SVMs are effective in cases where "
             "the number of features is large relative to the number of samples and "
-            "can model complex, non-linear decision boundaries through the use of "
+            "can model complex, nonlinear decision boundaries through the use of "
             "kernel functions such as linear, polynomial, and radial basis function "
             "(RBF) kernels."
         ),
@@ -240,11 +285,24 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
             "podem modelar fronteiras de decisão complexas e não lineares mediante "
             "o uso de funções kernel como linear, polinomial e de base radial (RBF)."
         ),
+        zh=(
+            "支持向量机（SVM）是一种监督学习算法，通过在高维特征空间中"
+            "寻找最优超平面来最大化类间间隔，支持线性、多项式和径向基函数（RBF）核。"
+        ),
+        de=(
+            "Die Support-Vektor-Maschine (SVM) ist ein überwachter "
+            "Machine Learning Algorithmus für Klassifikations- und "
+            "Regressionsaufgaben. Sie findet die optimale Hyperebene, die die "
+            "Margin zwischen verschiedenen Klassen in einem hochdimensionalen "
+            "Merkmalsraum maximiert. SVMs sind besonders effektiv, wenn die Anzahl "
+            "der Merkmale im Verhältnis zur Anzahl der Stichproben groß ist, und "
+            "können komplexe, nichtlineare Entscheidungsgrenzen durch den Einsatz "
+            "von Kernelfunktionen wie linear, polynomial und radialer Basisfunktion "
+            "(RBF) modellieren."
+        ),
     )
     COLOR: str = "#FF80AB"
     ICON: str = "Timeline"
-
-    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs):
         """Initialise the model by forwarding all kwargs to the parent class.

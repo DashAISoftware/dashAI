@@ -10,7 +10,7 @@ function NodeSidebar({ availableNodes, onDragStart, nodeHelp }) {
     <Box
       sx={{
         width: 250,
-        p: 2,
+        p: 4,
         backgroundColor: theme.palette.background.box,
         overflowY: "auto",
       }}
@@ -28,8 +28,8 @@ function NodeSidebar({ availableNodes, onDragStart, nodeHelp }) {
           onDragStart={(e) => onDragStart(e, node.type)}
           draggable
           sx={{
-            mb: 1,
-            p: 1,
+            mb: 2,
+            p: 2,
             backgroundColor: theme.palette.ui.border,
             color: theme.palette.text.primary,
             borderRadius: 1,
@@ -43,10 +43,10 @@ function NodeSidebar({ availableNodes, onDragStart, nodeHelp }) {
 
       <Box
         sx={{
-          p: 2,
+          p: 4,
           borderTop: `1px solid ${theme.palette.ui.borderLight}`,
           backgroundColor: theme.palette.background.box,
-          mt: 2,
+          mt: 4,
         }}
       >
         {(() => {
@@ -58,10 +58,10 @@ function NodeSidebar({ availableNodes, onDragStart, nodeHelp }) {
                 sx={{
                   color: theme.palette.text.primary,
                   display: "flex",
-                  gap: 1,
+                  gap: 2,
                 }}
               >
-                <HelpOutlineIcon fontSize="inherit" sx={{ mt: 0.8 }} />
+                <HelpOutlineIcon fontSize="inherit" sx={{ mt: 2 }} />
                 {help.name || nodeHelp?.type || "Pipeline Help"}
               </Typography>
               {help.description && (
@@ -70,7 +70,7 @@ function NodeSidebar({ availableNodes, onDragStart, nodeHelp }) {
                     <Typography
                       key={idx}
                       variant="body1"
-                      sx={{ mb: 1, color: theme.palette.text.secondary }}
+                      sx={{ mb: 2, color: theme.palette.text.secondary }}
                     >
                       {paragraph}
                     </Typography>

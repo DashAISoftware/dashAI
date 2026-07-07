@@ -67,13 +67,13 @@ function ConfigureAndUploadDataset({
   }, [error, newDataset.file]);
 
   return (
-    <Paper variant="outlined" sx={{ p: 4 }}>
+    <Paper variant="outlined" sx={{ p: 8 }}>
       <Grid
         container
         direction="row"
         justifyContent="space-around"
         alignItems="stretch"
-        spacing={3}
+        spacing={6}
       >
         {/* Upload file */}
         <Grid size={{ xs: 12, md: 5 }}>

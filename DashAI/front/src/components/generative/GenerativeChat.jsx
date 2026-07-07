@@ -1,6 +1,7 @@
 import { Box, Divider, IconButton, Typography } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { ChatBubble } from "./ChatBubble";
 import {
   getProcessById,
@@ -45,6 +46,8 @@ export default function GenerativeChat() {
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
   const chatContainerRef = useRef(null);
+  const isAtBottomRef = useRef(true);
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const [sessionInfo, setSessionInfo] = useState(null);
   const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
   const [referenceModalOpen, setReferenceModalOpen] = useState(false);
@@ -55,10 +58,15 @@ export default function GenerativeChat() {
   const tourContext = useTourContext();
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
-  const scrollToBottom = () => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+  const scrollToBottom = (force = false) => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+
+    // Force on new message; otherwise only follow if user is already near
+    // the bottom, so polling updates don't yank the view down mid read.
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (force || distanceFromBottom <= 100) {
+      el.scrollTop = el.scrollHeight;
     }
   };
 
@@ -68,16 +76,22 @@ export default function GenerativeChat() {
     return Math.abs(scrollHeight - clientHeight - scrollTop) < 5; // 5px threshold
   };
 
-  const handleScroll = () => {
-    setShouldAutoScroll(isAtBottom());
-  };
-
   const handleOpenReference = (ref, key) => {
     const title = `Document ${ref.document_id}${ref.document_name ? ` (${ref.document_name})` : ''}${ref.document_position ? ` - Chunk ${ref.document_position}` : ''}`;
     setReferenceModalTitle(title);
     // Convert escaped newlines to actual newlines
     setSelectedReferenceText(ref.text.replace(/\\n/g, '\n'));
     setReferenceModalOpen(true);
+  };
+
+  const handleScroll = () => {
+    const el = chatContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    // Remember the user's position before any content change repaints, so the
+    // scroll effect can decide whether to follow without re measuring stale.
+    isAtBottomRef.current = distanceFromBottom <= 100;
+    setShowScrollButton(distanceFromBottom > 100);
   };
 
   const getSessionInfo = () => {
@@ -134,11 +148,15 @@ export default function GenerativeChat() {
     setMessages([]);
   }, [taskName]);
 
+  const prevMessageCountRef = useRef(0);
   useEffect(() => {
-    if (shouldAutoScroll) {
-      scrollToBottom();
-    }
-  }, [messagesWithHistory, shouldAutoScroll]);
+    const isNewMessage =
+      messagesWithHistory.length > prevMessageCountRef.current;
+    prevMessageCountRef.current = messagesWithHistory.length;
+    // Follow on a new message, or when the user was pinned to the bottom
+    // before this update (e.g. the model reply replacing the waiting bubble).
+    scrollToBottom(isNewMessage || isAtBottomRef.current);
+  }, [messagesWithHistory]);
 
   useEffect(() => {
     if (messages.length === 0) return;
@@ -348,40 +366,30 @@ export default function GenerativeChat() {
         sx={{
           width: "100%",
           display: "flex",
-          flexDirection: "column",
+          flexDirection: "row",
           justifyContent: "space-between",
           alignItems: "center",
           borderRadius: 1,
-          opacity: 0.5,
+          my: 2,
+          px: 1,
         }}
       >
-        <Box
-          display="flex"
-          flexDirection="row"
-          alignItems="center"
-          justifyContent="space-between"
-          gap={0.5}
-          width={"100%"}
-          height={"32px"}
-          mb={2}
-        >
-          <Typography>
-            {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
-            {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
-          </Typography>
+        <Typography>
+          {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
+          {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
+        </Typography>
 
-          <Box>
-            <IconButton onClick={() => setSessionInfoVisible(true)}>
-              <InfoIcon
-                sx={{
-                  color: "text.secondary",
-                  "&:hover": {
-                    color: "text.primary",
-                  },
-                }}
-              />
-            </IconButton>
-          </Box>
+        <Box>
+          <IconButton onClick={() => setSessionInfoVisible(true)}>
+            <InfoIcon
+              sx={{
+                color: "text.secondary",
+                "&:hover": {
+                  color: "text.primary",
+                },
+              }}
+            />
+          </IconButton>
         </Box>
       </Box>
 
@@ -389,111 +397,127 @@ export default function GenerativeChat() {
 
       {/* Chat display */}
       <Box
-        display="flex"
-        flexDirection="column"
-        justifyContent="flex-start"
-        alignItems="flex-start"
-        gap={1}
-        width={"100%"}
-        flex={1}
-        minHeight={0}
-        overflow={"auto"}
-        mt={1}
-        p={2}
-        ref={chatContainerRef}
-        onScroll={handleScroll}
         sx={{
-          "&::-webkit-scrollbar": {
-            width: "8px",
-          },
-          "&::-webkit-scrollbar-thumb": {
-            backgroundColor: theme.palette.ui.border,
-            borderRadius: "4px",
-          },
-          "&::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: theme.palette.ui.hover,
-          },
+          position: "relative",
+          display: "flex",
+          flex: 1,
+          minHeight: 0,
+          width: "100%",
         }}
       >
-        {messagesWithHistory?.map((message) => {
-          return (
-            <Box
-              key={`${message.type}_${message.id}`}
-              display="flex"
-              flexDirection="column"
-              justifyContent="flex-start"
-              flexGrow={0}
-              gap={1}
-              width={"100%"}
-              //height={"100%"}
-              mt={1}
-            >
-              {message.type === "history" ? (
-                <Typography variant="body1" sx={{ opacity: 0.8 }}>
-                  <Trans i18nKey="generative:label.parameterChangeEvent">
-                    Parameters updated: <span>{message.changedMessage}</span>
-                  </Trans>
-                </Typography>
-              ) : (
-                <>
-                  <ChatBubble
-                    messages={message.input}
-                    sender={"User"}
-                    timestamp={new Date(message.timestamp).toLocaleTimeString()}
-                    isUser={true}
-                  />
-                  {message.status === 3 ? (
-                    <>
-                      {taskName === "RAGTask" && message.referenceOutput ? (
-                        // For RAG messages, we need custom layout to insert sources before timestamp
-                        <>
+        <Box
+          display="flex"
+          flexDirection="column"
+          justifyContent="flex-start"
+          alignItems="flex-start"
+          gap={1}
+          width={"100%"}
+          flex={1}
+          minHeight={0}
+          overflow={"auto"}
+          mt={1}
+          p={2}
+          ref={chatContainerRef}
+          onScroll={handleScroll}
+        >
+          {messagesWithHistory?.map((message) => {
+            return (
+              <Box
+                key={`${message.type}_${message.id}`}
+                display="flex"
+                flexDirection="column"
+                justifyContent="flex-start"
+                flexGrow={0}
+                gap={1}
+                width={"100%"}
+                //height={"100%"}
+                mt={1}
+              >
+                {message.type === "history" ? (
+                  <Typography variant="body1" sx={{ opacity: 0.8 }}>
+                    <Trans i18nKey="generative:label.parameterChangeEvent">
+                      Parameters updated: <span>{message.changedMessage}</span>
+                    </Trans>
+                  </Typography>
+                ) : (
+                  <>
+                    <ChatBubble
+                      messages={message.input}
+                      sender={"User"}
+                      timestamp={new Date(message.timestamp).toLocaleTimeString()}
+                      isUser={true}
+                    />
+                    {message.status === 3 ? (
+                      <>
+                        {taskName === "RAGTask" && message.referenceOutput ? (
+                          // For RAG messages, we need custom layout to insert sources before timestamp
+                          <>
+                            <ChatBubble
+                              messages={message.output}
+                              sender={"Model"}
+                              timestamp={null} // We'll handle timestamp separately
+                            />
+                            <SourcesDisplay 
+                              references={message.referenceOutput}
+                              onOpenReference={handleOpenReference}
+                              isUser={false}
+                            />
+                            {/* Add timestamp after sources with proper alignment */}
+                            <Box sx={{ 
+                              ml: '40px', // Same alignment as sources and message content
+                              mt: 1,
+                              display: 'flex',
+                              justifyContent: 'flex-start'
+                            }}>
+                              <Box
+                                sx={{
+                                  fontSize: "0.75rem",
+                                  color: "text.secondary",
+                                  opacity: 0.7,
+                                }}
+                              >
+                                {new Date(message.end_time).toLocaleTimeString()}
+                              </Box>
+                            </Box>
+                          </>
+                        ) : (
+                          // For non-RAG messages, use normal ChatBubble with timestamp
                           <ChatBubble
                             messages={message.output}
                             sender={"Model"}
-                            timestamp={null} // We'll handle timestamp separately
+                            timestamp={new Date(
+                              message.end_time,
+                            ).toLocaleTimeString()}
                           />
-                          <SourcesDisplay 
-                            references={message.referenceOutput}
-                            onOpenReference={handleOpenReference}
-                            isUser={false}
-                          />
-                          {/* Add timestamp after sources with proper alignment */}
-                          <Box sx={{ 
-                            ml: '40px', // Same alignment as sources and message content
-                            mt: 1,
-                            display: 'flex',
-                            justifyContent: 'flex-start'
-                          }}>
-                            <Box
-                              sx={{
-                                fontSize: "0.75rem",
-                                color: "text.secondary",
-                                opacity: 0.7,
-                              }}
-                            >
-                              {new Date(message.end_time).toLocaleTimeString()}
-                            </Box>
-                          </Box>
-                        </>
-                      ) : (
-                        // For non-RAG messages, use normal ChatBubble with timestamp
-                        <ChatBubble
-                          messages={message.output}
-                          sender={"Model"}
-                          timestamp={new Date(
-                            message.end_time,
-                          ).toLocaleTimeString()}
-                        />
-                      )}
-                    </>
-                  ) : (
-                    <ChatBubble isWaiting={true} sender="Model" />
-                  )}
-                </>
-              )}
-            </Box>
-          );
-        })}
+                        )}
+                      </>
+                    ) : (
+                      <ChatBubble isWaiting={true} sender="Model" />
+                    )}
+                  </>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
+
+        {showScrollButton && (
+          <IconButton
+            onClick={() => scrollToBottom(true)}
+            sx={{
+              position: "absolute",
+              bottom: 16,
+              right: 16,
+              bgcolor: "background.paper",
+              border: 1,
+              borderColor: "divider",
+              boxShadow: 2,
+              "&:hover": { bgcolor: "background.paper" },
+            }}
+          >
+            <KeyboardArrowDownIcon />
+          </IconButton>
+        )}
       </Box>
 
       {/* Chat input */}

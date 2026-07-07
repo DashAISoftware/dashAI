@@ -46,9 +46,18 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "Em caso de ajuste perfeito, o procedimento de aprendizado é "
                 "interrompido antes."
             ),
+            de=(
+                "Die maximale Anzahl von Schätzern, bei der das Boosting beendet wird. "
+                "Bei perfekter Anpassung wird das Lernverfahren vorzeitig gestoppt."
+            ),
+            zh=("终止提升的最大估计器数量。若出现完美拟合，学习过程将提前停止。"),
         ),
         alias=MultilingualString(
-            en="N estimators", es="N estimadores", pt="N estimadores"
+            en="N estimators",
+            es="N estimadores",
+            pt="N estimadores",
+            de="Anzahl Schätzer",
+            zh="估计器数量",
         ),
     )  # type: ignore
 
@@ -75,9 +84,20 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "Uma taxa de aprendizado maior aumenta a contribuição de cada "
                 "classificador."
             ),
+            de=(
+                "Gewicht für jeden Klassifikator bei jeder Boosting-Iteration. "
+                "Eine höhere Lernrate erhöht den Beitrag jedes Klassifikators."
+            ),
+            zh=(
+                "每次提升迭代中施加给每个分类器的权重。学习率越高，每个分类器的贡献越大。"
+            ),
         ),
         alias=MultilingualString(
-            en="Learning rate", es="Tasa de aprendizaje", pt="Taxa de aprendizado"
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+            de="Lernrate",
+            zh="学习率",
         ),
     )  # type: ignore
 
@@ -97,9 +117,23 @@ class AdaBoostClassifierSchema(BaseSchema):
                 "A semente do gerador de números pseudoaleatórios. Passe um int para "
                 "saída reproduzível, ou None para não definir uma semente específica."
             ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
+            zh=(
+                "伪随机数生成器的种子。传入整数以获得可复现的输出，"
+                "或传入 None 以不设置特定种子。"
+            ),
         ),
         alias=MultilingualString(
-            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 
@@ -131,6 +165,8 @@ class AdaBoostClassifier(
         en="AdaBoost Classifier",
         es="Clasificador AdaBoost",
         pt="Classificador AdaBoost",
+        de="AdaBoost-Klassifikator",
+        zh="AdaBoost 分类器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Adaptive boosting that focuses on misclassified samples.",
@@ -139,6 +175,11 @@ class AdaBoostClassifier(
             "Boosting adaptivo que se concentra em amostras classificadas "
             "incorretamente."
         ),
+        de=(
+            "Adaptives Boosting, das sich auf falsch klassifizierte Stichproben "
+            "konzentriert."
+        ),
+        zh="自适应提升算法，专注于被误分类的样本。",
     )
     COLOR: str = "#FFA726"
     ICON: str = "Bolt"

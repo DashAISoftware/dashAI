@@ -36,10 +36,7 @@ class SklearnLikeClassifier(SklearnLikeModel):
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
         if isinstance(x_pred, DashAIDataset):
-            try:
-                x_prepared = self.prepare_dataset(x_pred, is_fit=False)
-            except ValueError:
-                x_prepared = x_pred
+            x_prepared = self.prepare_dataset(x_pred, is_fit=False)
             x_pred = x_prepared.to_pandas()
         elif isinstance(x_pred, pd.DataFrame):
             pass

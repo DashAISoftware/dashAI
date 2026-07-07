@@ -36,11 +36,18 @@ class PartialDependenceSchema(BaseSchema):
                 "Número de pontos equidistantes para dividir o intervalo da "
                 "característica alvo."
             ),
+            de=(
+                "Anzahl der äquidistanten Punkte zur Aufteilung des Wertebereichs "
+                "des Zielmerkmals."
+            ),
+            zh="将目标特征范围分割为等距点的数量。",
         ),
         alias=MultilingualString(
             en="Grid resolution",
             es="Resolución de la malla",
             pt="Resolução da grade",
+            de="Rasterauflösung",
+            zh="网格分辨率",
         ),
     )  # type: ignore
 
@@ -51,11 +58,15 @@ class PartialDependenceSchema(BaseSchema):
             en=("Lower percentile used to limit the feature values."),
             es=("Percentil inferior para limitar los valores de la característica."),
             pt=("Percentil inferior para limitar os valores da característica."),
+            de=("Unteres Perzentil zur Begrenzung der Merkmalswerte."),
+            zh="用于限制特征值的下百分位数。",
         ),
         alias=MultilingualString(
             en="Lower percentile",
             es="Percentil inferior",
             pt="Percentil inferior",
+            de="Unteres Perzentil",
+            zh="下百分位数",
         ),
     )  # type: ignore
 
@@ -66,11 +77,15 @@ class PartialDependenceSchema(BaseSchema):
             en=("Upper percentile used to limit the feature values."),
             es=("Percentil superior para limitar los valores de la característica."),
             pt=("Percentil superior para limitar os valores da característica."),
+            de=("Oberes Perzentil zur Begrenzung der Merkmalswerte."),
+            zh="用于限制特征值的上百分位数。",
         ),
         alias=MultilingualString(
             en="Upper percentile",
             es="Percentil superior",
             pt="Percentil superior",
+            de="Oberes Perzentil",
+            zh="上百分位数",
         ),
     )  # type: ignore
 
@@ -106,6 +121,8 @@ class PartialDependence(BaseGlobalExplainer):
         en="Partial Dependence",
         es="Dependencia Parcial",
         pt="Dependência Parcial",
+        de="Partielle Abhängigkeit",
+        zh="部分依赖",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -123,6 +140,12 @@ class PartialDependence(BaseGlobalExplainer):
             "característica sobre a probabilidade prevista pelo modelo, "
             "calculando a média sobre a distribuição das demais características."
         ),
+        de=(
+            "Partielle Abhängigkeit zeigt den marginalen Effekt eines Merkmals "
+            "auf die vorhergesagte Wahrscheinlichkeit des Modells, gemittelt "
+            "über die Verteilung der anderen Merkmale."
+        ),
+        zh=("部分依赖通过对其他特征分布取平均，展示特征对模型预测概率的边际效应。"),
     )
     COLOR = "#FFA500"
     SCHEMA = PartialDependenceSchema

@@ -48,9 +48,19 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
                 "como fator multiplicativo para os valores das folhas. Use 1 para "
                 "não aplicar encolhimento."
             ),
+            de=(
+                "Die Lernrate, auch als Schrumpfung bekannt. Wird als multiplikativer "
+                "Faktor für Blattwerte verwendet. Verwenden Sie 1 für keine "
+                "Schrumpfung."
+            ),
+            zh="学习率，也称为收缩率。用作叶节点值的乘法因子。使用1表示不收缩。",
         ),
         alias=MultilingualString(
-            en="Learning rate", es="Tasa de aprendizaje", pt="Taxa de aprendizado"
+            en="Learning rate",
+            es="Tasa de aprendizaje",
+            pt="Taxa de aprendizado",
+            de="Lernrate",
+            zh="学习率",
         ),
     )  # type: ignore
     max_iter: schema_field(
@@ -74,9 +84,18 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
                 "O número máximo de iterações do processo de boosting, ou seja, "
                 "o número máximo de árvores para classificação binária."
             ),
+            de=(
+                "Die maximale Anzahl von Iterationen des Boosting-Prozesses, d.h. die "
+                "maximale Anzahl von Bäumen für binäre Klassifikation."
+            ),
+            zh="提升过程的最大迭代次数，即二元分类的最大树数。",
         ),
         alias=MultilingualString(
-            en="Max iterations", es="Máximas iteraciones", pt="Máximas iterações"
+            en="Max iterations",
+            es="Máximas iteraciones",
+            pt="Máximas iterações",
+            de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
     max_depth: schema_field(
@@ -103,9 +122,18 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
                 "arestas da raiz até a folha mais profunda. Por padrão, a "
                 "profundidade não é restringida."
             ),
+            de=(
+                "Die maximale Tiefe jedes Baums. Die Tiefe ist die Anzahl der Kanten "
+                "von der Wurzel bis zum tiefsten Blatt. Standardmäßig nicht begrenzt."
+            ),
+            zh="每棵树的最大深度。深度是从根节点到最深叶节点的边数。默认不限制深度。",
         ),
         alias=MultilingualString(
-            en="Max depth", es="Profundidad máxima", pt="Profundidade máxima"
+            en="Max depth",
+            es="Profundidad máxima",
+            pt="Profundidade máxima",
+            de="Maximale Tiefe",
+            zh="最大深度",
         ),
     )  # type: ignore
     max_leaf_nodes: schema_field(
@@ -129,9 +157,18 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
                 "O número máximo de folhas para cada árvore. Deve ser estritamente "
                 "maior que 1. Se None, não há limite máximo."
             ),
+            de=(
+                "Die maximale Anzahl von Blättern für jeden Baum. Muss strikt "
+                "größer als 1 sein. Bei None gibt es kein Maximum."
+            ),
+            zh="每棵树的最大叶节点数。必须严格大于1。若为None则无上限。",
         ),
         alias=MultilingualString(
-            en="Max leaf nodes", es="Nodos de hoja máximos", pt="Máximos nós folha"
+            en="Max leaf nodes",
+            es="Nodos de hoja máximos",
+            pt="Máximos nós folha",
+            de="Maximale Blattknoten",
+            zh="最大叶节点数",
         ),
     )  # type: ignore
     min_samples_leaf: schema_field(
@@ -146,11 +183,18 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
             en="The minimum number of samples required to be at a leaf node.",
             es="El número mínimo de muestras requeridas para estar en una hoja.",
             pt="O número mínimo de amostras necessárias para estar em um nó folha.",
+            de=(
+                "Die Mindestanzahl von Stichproben, die an einem Blattknoten "
+                "erforderlich sind."
+            ),
+            zh="叶节点所需的最小样本数。",
         ),
         alias=MultilingualString(
             en="Min samples leaf",
             es="Muestras de hoja mínimas",
             pt="Mínimas amostras para folha",
+            de="Minimale Stichproben für Blatt",
+            zh="最小叶节点样本数",
         ),
     )  # type: ignore
     l2_regularization: schema_field(
@@ -170,9 +214,18 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
             pt=(
                 "O parâmetro de regularização L2. Use 0 para não aplicar regularização."
             ),
+            de=(
+                "Der L2-Regularisierungsparameter. Verwenden Sie 0 für keine "
+                "Regularisierung."
+            ),
+            zh="L2正则化参数。使用0表示不正则化。",
         ),
         alias=MultilingualString(
-            en="L2 regularization", es="Regularización L2", pt="Regularização L2"
+            en="L2 regularization",
+            es="Regularización L2",
+            pt="Regularização L2",
+            de="L2-Regularisierung",
+            zh="L2正则化",
         ),
     )  # type: ignore
 
@@ -207,11 +260,15 @@ class HistGradientBoostingClassifier(
         en="Histogram-based Gradient Boosting",
         es="Gradient Boosting basado en histogramas",
         pt="Classificador por Gradient Boosting Histogramado",
+        de="Histogramm-basiertes Gradient Boosting",
+        zh="基于直方图的梯度提升",
     )
     DESCRIPTION: str = MultilingualString(
         en="Fast gradient boosting using histogram-based algorithms.",
         es=("Gradient boosting rápido usando algoritmos basados en histogramas."),
         pt=("Gradient boosting rápido usando algoritmos baseados em histogramas."),
+        de=("Schnelles Gradient Boosting mit histogrammbasierten Algorithmen."),
+        zh="使用基于直方图算法的快速梯度提升分类器。",
     )
     COLOR: str = "#9575CD"
     ICON: str = "RocketLaunch"

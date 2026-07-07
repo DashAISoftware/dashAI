@@ -20,16 +20,21 @@ function formatValue(value) {
   return String(value);
 }
 
-function Parameters({ data }) {
+function Parameters({ data, schema = null }) {
   const { t } = useTranslation(["common"]);
   const entries = data ? Object.entries(data) : [];
+
+  // Map a parameter key to its display name using the explorer component's
+  // schema (already loaded, so no extra backend fetch); fall back to the key.
+  const properties = schema?.properties ?? {};
+  const getLabel = (key) => properties[key]?.title ?? key;
 
   return (
     <Box>
       <Typography variant="sectionLabel" sx={{ color: "text.secondary" }}>
         {t("common:parameters")}
       </Typography>
-      <Divider sx={{ mt: 1, mb: 1, borderColor: "ui.borderLight" }} />
+      <Divider sx={{ mt: 2, mb: 2, borderColor: "ui.borderLight" }} />
       <Table size="small">
         <TableBody>
           {entries.map(([key, value]) => (
@@ -37,7 +42,7 @@ function Parameters({ data }) {
               <TableCell
                 sx={{
                   borderColor: "ui.borderLight",
-                  py: 0.75,
+                  py: 3,
                 }}
               >
                 <Typography
@@ -47,13 +52,13 @@ function Parameters({ data }) {
                     color: "text.secondary",
                   }}
                 >
-                  {key}
+                  {getLabel(key)}
                 </Typography>
               </TableCell>
               <TableCell
                 sx={{
                   borderColor: "ui.borderLight",
-                  py: 0.75,
+                  py: 3,
                 }}
               >
                 <Typography variant="body2" color="text.primary">
@@ -79,6 +84,7 @@ function Parameters({ data }) {
 
 Parameters.propTypes = {
   data: PropTypes.object.isRequired,
+  schema: PropTypes.object,
 };
 
 export default Parameters;

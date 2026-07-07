@@ -24,3 +24,4 @@ class DefaultSettings(BaseSettings):
     DOCUMENTS_PATH: str = "documents"
     RAG_PATH: str = "rag"
     NOTEBOOK_PATH: str = "notebook"
+    DATAFILE_PATH: str = "datafiles"

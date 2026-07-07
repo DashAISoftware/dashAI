@@ -61,7 +61,7 @@ function FormSchemaFieldWithOptimizers({ objName, paramJsonSchema, field }) {
           onChange={handleSwitchChange}
         />
       }
-      sx={{ mr: 0, gap: 0.5 }}
+      sx={{ mr: 0, gap: 1 }}
     />
   ) : null;
 

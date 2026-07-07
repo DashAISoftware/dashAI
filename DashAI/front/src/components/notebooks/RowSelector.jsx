@@ -112,8 +112,8 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <FormControl component="fieldset" sx={{ mb: 3, width: "100%" }}>
+    <Box sx={{ p: 6 }}>
+      <FormControl component="fieldset" sx={{ mb: 6, width: "100%" }}>
         <FormLabel component="legend">
           {t("datasets:label.selectionMode")}
         </FormLabel>
@@ -122,7 +122,7 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
           direction="row"
           alignItems="center"
           justifyContent="space-between"
-          sx={{ mt: 1 }}
+          sx={{ mt: 2 }}
         >
           <RadioGroup
             row
@@ -147,8 +147,8 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
         </Stack>
       </FormControl>
       {selectionMode === "range" ? (
-        <Stack spacing={2} mb={2}>
-          <Stack direction="row" spacing={2}>
+        <Stack spacing={4} mb={4}>
+          <Stack direction="row" spacing={4}>
             <TextField
               label={t("datasets:label.startIndex")}
               type="number"
@@ -174,7 +174,7 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
           </Stack>
         </Stack>
       ) : (
-        <Stack spacing={2} mb={2}>
+        <Stack spacing={4} mb={4}>
           <TextField
             label={t("datasets:label.indices")}
             placeholder={t("datasets:label.rowIndicesPlaceholder")}
@@ -185,8 +185,8 @@ export function RowSelector({ totalRows, onSelectionChange, initialRows }) {
           />
         </Stack>
       )}
-      <Divider sx={{ my: 1 }} />
-      <Box mt={1}>
+      <Divider sx={{ my: 2 }} />
+      <Box mt={2}>
         <Typography
           variant="caption"
           sx={{ color: theme.palette.text.secondary }}

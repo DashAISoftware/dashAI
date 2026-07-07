@@ -9,7 +9,8 @@ FROM python:3.11-slim
 WORKDIR /app
 COPY . .
 COPY --from=frontend /app/DashAI/front/build DashAI/front/build
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir -r requirements-cpu.txt && \
+    pip install --no-cache-dir --no-deps -e .
 ENV DASHAI_HOST=0.0.0.0
 EXPOSE 8000
 CMD ["python", "-m", "DashAI", "--no-browser"]

@@ -45,6 +45,8 @@ class SimpleImputerSchema(BaseSchema):
             en="The imputation strategy.",
             es="La estrategia de imputación.",
             pt="A estratégia de imputação.",
+            de="Die Imputationsstrategie.",
+            zh="插补策略。",
         ),
     )  # type: ignore
     fill_value: schema_field(
@@ -54,6 +56,8 @@ class SimpleImputerSchema(BaseSchema):
             en="The value to replace missing values with.",
             es="El valor para reemplazar los valores faltantes.",
             pt="O valor para substituir os valores ausentes.",
+            de="Der Wert zum Ersetzen fehlender Werte.",
+            zh="用于替换缺失值的填充值。",
         ),
     )  # type: ignore
     add_indicator: schema_field(
@@ -63,6 +67,11 @@ class SimpleImputerSchema(BaseSchema):
             en="If True, a MissingIndicator transform will stack onto output.",
             es=("Si es True, se apilará un MissingIndicator sobre la salida."),
             pt=("Se True, uma transformação MissingIndicator será empilhada na saída."),
+            de=(
+                "Wenn True, wird eine MissingIndicator-Transformation auf die Ausgabe "
+                "gestapelt."
+            ),
+            zh="如果为 True，则将 MissingIndicator 变换叠加到输出上。",
         ),
     )  # type: ignore
     keep_empty_features: schema_field(
@@ -72,6 +81,8 @@ class SimpleImputerSchema(BaseSchema):
             en="If True, empty features will be kept.",
             es="Si es True, se mantendrán las características vacías.",
             pt="Se True, características vazias serão mantidas.",
+            de="Wenn True, werden leere Merkmale beibehalten.",
+            zh="如果为 True，则保留空特征。",
         ),
     )  # type: ignore
 
@@ -83,11 +94,11 @@ class SimpleImputer(
 
     Each feature is imputed independently using one of four strategies:
 
-    * ``"mean"`` — replace missing values with the column mean (numeric only).
-    * ``"median"`` — replace with the column median (numeric only).
-    * ``"most_frequent"`` — replace with the most common value (works with
+    * ``"mean"``: replace missing values with the column mean (numeric only).
+    * ``"median"``: replace with the column median (numeric only).
+    * ``"most_frequent"``: replace with the most common value (works with
       strings and numeric data).
-    * ``"constant"`` — replace with a fixed ``fill_value`` supplied by the
+    * ``"constant"``: replace with a fixed ``fill_value`` supplied by the
       user.
 
     Columns with all-missing values are handled according to the
@@ -123,11 +134,23 @@ class SimpleImputer(
             "estatística descritiva (p. ex., média, mediana ou moda) "
             "por coluna, ou usando um valor constante."
         ),
+        de=(
+            "Univariater Imputierer zum Vervollständigen fehlender Werte mit einfachen "
+            "Strategien. Fehlende Werte werden durch eine deskriptive Statistik "
+            "(z.B. Mittelwert, Median oder häufigster Wert) entlang jeder Spalte "
+            "oder durch einen konstanten Wert ersetzt."
+        ),
+        zh=(
+            "用于通过简单策略完成缺失值插补的单变量插补器。"
+            "使用每列的描述性统计量（如均值、中位数或众数）或常数值替换缺失值。"
+        ),
     )
     DISPLAY_NAME = MultilingualString(
         en="Simple Imputer",
         es="Imputador Simple",
         pt="Imputador Simples",
+        de="Einfacher Imputierer",
+        zh="简单插补器",
     )
     IMAGE_PREVIEW = "simple_imputer.png"
 

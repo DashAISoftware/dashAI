@@ -1,9 +1,10 @@
+import { memo } from "react";
 import { Box, Typography } from "@mui/material";
 import { ChatAvatar } from "./ChatAvatar";
 import { ChatTimestamp } from "./ChatTimeStamp";
 import { MessageContent } from "./MessageContent";
 
-export function ChatBubble({
+function ChatBubbleComponent({
   messages,
   sender = "",
   timestamp = null,
@@ -17,7 +18,7 @@ export function ChatBubble({
         flexDirection: "row",
         alignItems: "flex-start",
         justifyContent: isUser ? "flex-end" : "flex-start",
-        mb: 2,
+        mb: 4,
         width: "100%",
       }}
     >
@@ -29,8 +30,8 @@ export function ChatBubble({
             variant="body2"
             component="span"
             sx={{
-              ml: 1,
-              mb: 0.5,
+              ml: 2,
+              mb: 1,
               display: "block",
               color: "text.secondary",
             }}
@@ -52,3 +53,5 @@ export function ChatBubble({
     </Box>
   );
 }
+
+export const ChatBubble = memo(ChatBubbleComponent);

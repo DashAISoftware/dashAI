@@ -176,7 +176,7 @@ export default function SelectDatasetStep({
       sx: {
         cursor: "pointer",
         ...(row.original.id === selectedDatasetId && {
-          backgroundColor: theme.palette.accent.amberDim,
+          backgroundColor: `${theme.palette.primary.main}1F`,
           borderLeft: `3px solid ${theme.palette.primary.main}`,
           "&:hover td": {
             backgroundColor: "transparent",
@@ -235,7 +235,7 @@ export default function SelectDatasetStep({
 
       {datasets.length === 0 && !loading && !requestError && (
         <React.Fragment>
-          <Alert severity="warning" sx={{ mb: 2 }}>
+          <Alert severity="warning" sx={{ mb: 4 }}>
             <Trans i18nKey="explainers:label.noDatasetsAvailable">
               <AlertTitle>There are no datasets available.</AlertTitle>
               Go to

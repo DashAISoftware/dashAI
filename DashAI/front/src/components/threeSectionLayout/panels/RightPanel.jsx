@@ -34,7 +34,7 @@ export default function RightPanel({
             ? "right 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease, transform 0.2s ease"
             : "background-color 0.2s ease, transform 0.2s ease",
           "&:hover": {
-            bgcolor: "primary.light",
+            bgcolor: "secondary.main",
             transform: "translateY(-50%) scale(1.1)",
           },
         }}

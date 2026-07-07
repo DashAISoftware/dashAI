@@ -43,11 +43,22 @@ class SD15DepthControlNetSchema(BaseSchema):
                 "mas aumentam o tempo de geração. Intervalo típico: 20-30 para "
                 "resultados rápidos, 40-50 para maior qualidade."
             ),
+            de=(
+                "Anzahl der Entrauschungsschritte. Mehr Schritte verfeinern das Bild, "
+                "erhöhen aber die Generierungszeit. Typischer Bereich: 20-30 für "
+                "schnelle Ergebnisse, 40-50 für höhere Qualität."
+            ),
+            zh=(
+                "去噪步数。步数越多图像越精细，但生成时间也越长。"
+                "典型范围：20-30 步适合快速生成，40-50 步适合更高质量。"
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de passos de inferência",
+            de="Anzahl Inferenzschritte",
+            zh="推理步数",
         ),
     )  # type: ignore
 
@@ -73,11 +84,24 @@ class SD15DepthControlNetSchema(BaseSchema):
                 "saída segue de perto a estrutura da entrada; acima de 1.5 a "
                 "profundidade domina e pode produzir resultados rígidos."
             ),
+            de=(
+                "Gewichtung des ControlNet-Tiefenkonditionierens (Bereich 0.0-2.0). "
+                "Bei 0.0 hat die Tiefenkarte keinen Effekt; bei 1.0 folgt die Ausgabe "
+                "eng der Eingangsstruktur; über 1.5 dominiert die Tiefe und kann zu "
+                "starren Ergebnissen führen."
+            ),
+            zh=(
+                "ControlNet 深度条件权重（范围 0.0-2.0）。"
+                "0.0 时深度图无效果；1.0 时输出紧随输入结构；"
+                "超过 1.5 时深度主导，可能产生僵硬结果。"
+            ),
         ),
         alias=MultilingualString(
             en="ControlNet conditioning scale",
             es="Escala de condicionamiento ControlNet",
             pt="Escala de condicionamento ControlNet",
+            de="ControlNet-Konditionierungsskala",
+            zh="ControlNet 条件缩放系数",
         ),
     )  # type: ignore
 
@@ -98,11 +122,21 @@ class SD15DepthControlNetSchema(BaseSchema):
                 "Escala de Orientação Livre de Classificador (CFG). Controla com que "
                 "rigor a imagem segue o prompt. Valores 7-9 são típicos para SD 1.5."
             ),
+            de=(
+                "Classifier-Free Guidance (CFG)-Skala. Steuert, wie streng das Bild "
+                "dem Text-Prompt folgt. Werte 7-9 sind typisch für SD 1.5."
+            ),
+            zh=(
+                "无分类器引导（CFG）缩放系数。控制图像对文本提示的遵从程度。"
+                "SD 1.5 典型值为 7-9。"
+            ),
         ),
         alias=MultilingualString(
             en="Guidance scale",
             es="Escala de guía",
             pt="Escala de orientação",
+            de="Führungsskala",
+            zh="引导缩放系数",
         ),
     )  # type: ignore
 
@@ -123,11 +157,22 @@ class SD15DepthControlNetSchema(BaseSchema):
                 "recomendada para modelos de difusão. A inferência em CPU é "
                 "possível, mas muito lenta."
             ),
+            de=(
+                "Hardware-Gerät für die Inferenz. GPU wird dringend für "
+                "Diffusionsmodelle empfohlen. CPU-Inferenz ist möglich, "
+                "aber sehr langsam."
+            ),
+            zh=(
+                "推理硬件设备。强烈推荐使用 GPU 运行扩散模型，"
+                "CPU 推理虽可行但速度极慢。"
+            ),
         ),
         alias=MultilingualString(
             en="Device",
             es="Dispositivo",
             pt="Dispositivo",
+            de="Gerät",
+            zh="设备",
         ),
     )  # type: ignore
 
@@ -136,8 +181,9 @@ def get_depth_map_sd15(image, device):
     """Convert an input image to a normalised depth map for SD 1.5 ControlNet.
 
     Uses Intel's DPT-Hybrid-MiDaS model to estimate per-pixel depth, then
-    bilinearly interpolates the result to 512x512 and normalises values to the
-    [0, 1] range before returning a three-channel PIL image.
+    interpolates the result back to the source image resolution (rounded down
+    to a multiple of 8) and normalises values to the [0, 1] range before
+    returning a three-channel PIL image.
 
     Parameters
     ----------
@@ -150,8 +196,9 @@ def get_depth_map_sd15(image, device):
     Returns
     -------
     PIL.Image.Image
-        A 512x512 RGB image where each channel encodes the normalised depth
-        value, ready to be used as a ControlNet conditioning signal.
+        An RGB image at the source resolution (each side rounded down to a
+        multiple of 8) where each channel encodes the normalised depth value,
+        ready to be used as a ControlNet conditioning signal.
     """
     import numpy as np
     import torch
@@ -170,9 +217,16 @@ def get_depth_map_sd15(image, device):
     with torch.no_grad(), torch.autocast(device, dtype=torch.float16):
         depth_map = depth_estimator(pixel_values).predicted_depth
 
+    # Preserve the source resolution. SD 1.5's UNet downsamples by 8 in latent
+    # space, so both dimensions must be divisible by 8; round down to the
+    # nearest multiple to avoid a pipeline shape error.
+    width, height = image.size
+    width = max(8, (width // 8) * 8)
+    height = max(8, (height // 8) * 8)
+
     depth_map = torch.nn.functional.interpolate(
         depth_map.unsqueeze(1),
-        size=(512, 512),
+        size=(height, width),
         mode="bicubic",
         align_corners=False,
     )
@@ -208,6 +262,8 @@ class SD15DepthControlNetModel(BaseControlNetModel):
         en="SD 1.5 Depth ControlNet",
         es="SD 1.5 ControlNet de Profundidad",
         pt="SD 1.5 ControlNet de Profundidade",
+        zh="SD 1.5 深度 ControlNet",
+        de="SD 1.5 Tiefen-ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -239,6 +295,22 @@ class SD15DepthControlNetModel(BaseControlNetModel):
             "512x512 px. Utiliza "
             "lllyasviel/sd-controlnet-depth "
             "(https://huggingface.co/lllyasviel/sd-controlnet-depth) e "
+            "runwayml/stable-diffusion-v1-5 "
+            "(https://huggingface.co/runwayml/stable-diffusion-v1-5)."
+        ),
+        zh=(
+            "结合 ControlNet 深度条件与 Stable Diffusion 1.5，"
+            "使用 Intel DPT-Hybrid-MiDaS 模型提取深度图，"
+            "实现结构感知的 512x512px 图像生成。"
+        ),
+        de=(
+            "Kombiniert die ControlNet-Tiefenkonditionierung mit Stable Diffusion 1.5 "
+            "für strukturbewusste Bildgenerierung. Nimmt ein Eingabebild und einen "
+            "Text-Prompt: Eine Tiefenkarte wird mit dem DPT-Hybrid-MiDaS-Modell von "
+            "Intel extrahiert und als räumliche Bedingung zur Steuerung der "
+            "Bildsynthese bei 512x512 px verwendet. Verwendet "
+            "lllyasviel/sd-controlnet-depth "
+            "(https://huggingface.co/lllyasviel/sd-controlnet-depth) und "
             "runwayml/stable-diffusion-v1-5 "
             "(https://huggingface.co/runwayml/stable-diffusion-v1-5)."
         ),

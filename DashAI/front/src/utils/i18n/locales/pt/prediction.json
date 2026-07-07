@@ -57,6 +57,8 @@
     "reviewDetails": "Revise a configuração da sua previsão antes de enviar",
     "runFirstPrediction": "Execute sua primeira previsão para vê-la aqui",
     "selectCategory": "Selecione uma categoria",
+    "changeImage": "Alterar imagem",
+    "uploadImage": "Enviar imagem",
     "selectDataset": "Selecione um conjunto de dados para a previsão",
     "selectDatasetFromPlatform": "Selecione um conjunto de dados da plataforma",
     "selectMode": "Selecionar Modo",

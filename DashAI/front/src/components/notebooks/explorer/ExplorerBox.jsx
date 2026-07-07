@@ -9,7 +9,7 @@ import {
   CircularProgress,
   Button,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import { Analytics, Info, Delete } from "@mui/icons-material";
 import { TabResults } from "./tabs";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
@@ -23,6 +23,7 @@ export default function ExplorerBox({
   explorer,
   handleExplorerDeleteClick,
   onStatusChange,
+  isHighlighted = false,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
   const theme = useTheme();
@@ -88,6 +89,18 @@ export default function ExplorerBox({
         bgcolor: theme.palette.background.box,
         borderRadius: 2,
         height: "100%",
+        position: "relative",
+        zIndex: isHighlighted ? 1 : 0,
+        "@keyframes newItemHighlight": {
+          "0%": { boxShadow: "none" },
+          "20%": {
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+          },
+          "100%": { boxShadow: "none" },
+        },
+        animation: isHighlighted
+          ? "newItemHighlight 4s ease-in-out forwards"
+          : "none",
       }}
       className="explorer-box"
     >
@@ -104,10 +117,10 @@ export default function ExplorerBox({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            mb: 2,
+            mb: 4,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Analytics
               sx={{ color: theme.palette.primary.main, fontSize: 20 }}
             />
@@ -115,10 +128,16 @@ export default function ExplorerBox({
               {explorerComponent.display_name}
             </Typography>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               label={getExplorerStatus(statusLabel, t)}
-              color={statusLabel === 3 ? "primary" : "default"} // Finished
+              color={
+                statusLabel === 3
+                  ? "success"
+                  : statusLabel === 4
+                    ? "error"
+                    : "default"
+              }
               size="small"
             />
             <>
@@ -134,10 +153,7 @@ export default function ExplorerBox({
                   color="primary"
                   icon={<Info />}
                   sx={{
-                    bgcolor: "primary.main",
-                    "&:hover": {
-                      bgcolor: "primary.dark",
-                    },
+                    "&:hover": { bgcolor: "secondary.main" },
                   }}
                 />
               )}
@@ -188,7 +204,7 @@ export default function ExplorerBox({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              p: 2,
+              p: 4,
             }}
           >
             <Typography
@@ -209,7 +225,7 @@ export default function ExplorerBox({
               justifyContent: "center",
             }}
           >
-            <CircularProgress size={24} sx={{ mr: 1 }} />
+            <CircularProgress size={24} sx={{ mr: 2 }} />
             <Typography>{t("common:processing")}</Typography>
           </Box>
         )}

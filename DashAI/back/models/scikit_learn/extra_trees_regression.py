@@ -33,9 +33,15 @@ class ExtraTreesRegressionSchema(BaseSchema):
             en="The number of trees in the forest.",
             es="El número de árboles en el bosque.",
             pt="O número de árvores na floresta.",
+            de="Die Anzahl der Bäume im Wald.",
+            zh="森林中的树木数量。",
         ),
         alias=MultilingualString(
-            en="N estimators", es="N estimadores", pt="N estimadores"
+            en="N estimators",
+            es="N estimadores",
+            pt="N estimadores",
+            de="Anzahl Schätzer",
+            zh="估计器数量",
         ),
     )  # type: ignore
 
@@ -57,9 +63,22 @@ class ExtraTreesRegressionSchema(BaseSchema):
                 "até que todas as folhas sejam puras ou restem menos de "
                 "min_samples_split amostras."
             ),
+            de=(
+                "Die maximale Tiefe des Baums. Bei None werden Knoten erweitert, bis "
+                "alle Blätter rein sind oder weniger als min_samples_split Stichproben "
+                "verbleiben."
+            ),
+            zh=(
+                "树的最大深度。若为None，则扩展节点直到所有叶子纯净或"
+                "剩余样本数少于min_samples_split。"
+            ),
         ),
         alias=MultilingualString(
-            en="Max depth", es="Profundidad máxima", pt="Profundidade máxima"
+            en="Max depth",
+            es="Profundidad máxima",
+            pt="Profundidade máxima",
+            de="Maximale Tiefe",
+            zh="最大深度",
         ),
     )  # type: ignore
 
@@ -75,11 +94,15 @@ class ExtraTreesRegressionSchema(BaseSchema):
             en="Minimum number of samples required to split an internal node.",
             es="Número mínimo de muestras requeridas para dividir un nodo interno.",
             pt="Número mínimo de amostras necessárias para dividir um nó interno.",
+            de="Mindestanzahl von Stichproben zum Aufteilen eines internen Knotens.",
+            zh="拆分内部节点所需的最小样本数。",
         ),
         alias=MultilingualString(
             en="Min samples split",
             es="Mínimas muestras de división",
             pt="Mínimas amostras de divisão",
+            de="Minimale Aufteilungsstichproben",
+            zh="最小拆分样本数",
         ),
     )  # type: ignore
 
@@ -95,11 +118,15 @@ class ExtraTreesRegressionSchema(BaseSchema):
             en="Minimum number of samples required to be at a leaf node.",
             es="Número mínimo de muestras requeridas para estar en una hoja.",
             pt="Número mínimo de amostras necessárias para estar em um nó folha.",
+            de="Mindestanzahl von Stichproben an einem Blattknoten.",
+            zh="叶节点所需的最小样本数。",
         ),
         alias=MultilingualString(
             en="Min samples leaf",
             es="Mínimas muestras para hoja",
             pt="Mínimas amostras para folha",
+            de="Minimale Stichproben für Blatt",
+            zh="最小叶节点样本数",
         ),
     )  # type: ignore
 
@@ -119,8 +146,19 @@ class ExtraTreesRegressionSchema(BaseSchema):
                 "Se amostras bootstrap são usadas ao construir as árvores. "
                 "Se False, o conjunto de dados completo é usado para cada árvore."
             ),
+            de=(
+                "Ob Bootstrap-Stichproben beim Aufbau von Bäumen verwendet werden. "
+                "Bei False wird der gesamte Datensatz für jeden Baum verwendet."
+            ),
+            zh=("构建树时是否使用自助采样。若为False，则每棵树使用完整数据集。"),
         ),
-        alias=MultilingualString(en="Bootstrap", es="Bootstrap", pt="Bootstrap"),
+        alias=MultilingualString(
+            en="Bootstrap",
+            es="Bootstrap",
+            pt="Bootstrap",
+            de="Bootstrap",
+            zh="自助采样",
+        ),
     )  # type: ignore
 
     random_state: schema_field(
@@ -139,9 +177,23 @@ class ExtraTreesRegressionSchema(BaseSchema):
                 "A semente do gerador de números pseudoaleatórios. Passe um int para "
                 "saída reproduzível, ou None para não definir uma semente específica."
             ),
+            de=(
+                "Der Seed des Pseudozufallszahlengenerators. Übergeben Sie eine ganze "
+                "Zahl für "
+                "reproduzierbare Ausgaben oder None, um keinen bestimmten Seed "
+                "festzulegen."
+            ),
+            zh=(
+                "伪随机数生成器的种子。传入整数以获得可复现的输出，"
+                "或传入None不设置特定种子。"
+            ),
         ),
         alias=MultilingualString(
-            en="Random state", es="Estado aleatorio", pt="Estado aleatório"
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
         ),
     )  # type: ignore
 
@@ -170,6 +222,8 @@ class ExtraTreesRegression(RegressionModel, SklearnLikeRegressor, _ExtraTreesReg
         en="Extra-Trees Regression",
         es="Regresión Extra-Trees",
         pt="Regressor de Árvores Extras",
+        de="Extra-Trees-Regression",
+        zh="极端随机树回归",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -184,6 +238,11 @@ class ExtraTreesRegression(RegressionModel, SklearnLikeRegressor, _ExtraTreesReg
             "Conjunto de árvores de decisão completamente aleatorizadas "
             "para regressão rápida e de baixa variância."
         ),
+        de=(
+            "Ensemble vollständig zufälliger Entscheidungsbäume für schnelle "
+            "Regression mit geringer Varianz."
+        ),
+        zh="完全随机决策树集成，用于快速低方差回归。",
     )
     COLOR: str = "#26A69A"
     ICON: str = "Park"

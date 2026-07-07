@@ -30,7 +30,7 @@ function FormSchemaHeader({ title, onClose, onFormSubmit }) {
       <IconButton onClick={handleClose} aria-label={t("common:back")}>
         <ArrowBackOutlined />
       </IconButton>
-      <Typography variant="h5" sx={{ ml: 2 }}>
+      <Typography variant="h5" sx={{ ml: 8 }}>
         {title}
       </Typography>
     </Box>

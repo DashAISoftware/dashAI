@@ -32,6 +32,8 @@ class KNNImputerSchema(BaseSchema):
             en="The number of nearest neighbors to use for imputation.",
             es="Número de vecinos más cercanos a usar para la imputación.",
             pt="O número de vizinhos mais próximos a usar para imputação.",
+            de="Die Anzahl der nächsten Nachbarn für die Imputation.",
+            zh="用于插补的最近邻数量。",
         ),
     )  # type: ignore
     weights: schema_field(
@@ -41,6 +43,8 @@ class KNNImputerSchema(BaseSchema):
             en="The weight function to use for imputation.",
             es="La función de peso a usar para la imputación.",
             pt="A função de peso a usar para imputação.",
+            de="Die Gewichtungsfunktion für die Imputation.",
+            zh="用于插补的权重函数。",
         ),
     )  # type: ignore
     metric: schema_field(
@@ -50,6 +54,8 @@ class KNNImputerSchema(BaseSchema):
             en="The metric to use for imputation.",
             es="La métrica a usar para la imputación.",
             pt="A métrica a usar para imputação.",
+            de="Die Metrik für die Imputation.",
+            zh="用于插补的距离度量。",
         ),
     )  # type: ignore
     add_indicator: schema_field(
@@ -59,6 +65,11 @@ class KNNImputerSchema(BaseSchema):
             en="If True, a MissingIndicator transform will stack onto output.",
             es="Si es True, se apilará un MissingIndicator sobre la salida.",
             pt="Se True, um MissingIndicator será adicionado à saída.",
+            de=(
+                "Wenn True, wird eine MissingIndicator-Transformation auf die Ausgabe "
+                "gestapelt."
+            ),
+            zh="如果为 True，则将 MissingIndicator 变换叠加到输出上。",
         ),
     )  # type: ignore
     keep_empty_features: schema_field(
@@ -68,6 +79,8 @@ class KNNImputerSchema(BaseSchema):
             en="If True, empty features will be kept.",
             es="Si es True, se mantendrán las características vacías.",
             pt="Se True, características vazias serão mantidas.",
+            de="Wenn True, werden leere Merkmale beibehalten.",
+            zh="如果为 True，则保留空特征。",
         ),
     )  # type: ignore
 
@@ -106,9 +119,18 @@ class KNNImputer(BasicPreprocessingConverter, SklearnWrapper, KNNImputerOperatio
             "Imputação para completar valores ausentes utilizando "
             "k-Vizinhos Mais Próximos."
         ),
+        de=(
+            "Imputation zum Vervollständigen fehlender Werte mithilfe von k-nächsten "
+            "Nachbarn."
+        ),
+        zh="使用 k 近邻算法完成缺失值插补。",
     )
     DISPLAY_NAME = MultilingualString(
-        en="KNN Imputer", es="Imputador KNN", pt="Imputador KNN"
+        en="KNN Imputer",
+        es="Imputador KNN",
+        pt="Imputador KNN",
+        de="KNN-Imputierer",
+        zh="KNN 插补器",
     )
     IMAGE_PREVIEW = "knn_imputer.png"
 

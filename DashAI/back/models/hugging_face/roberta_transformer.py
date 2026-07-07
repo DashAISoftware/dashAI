@@ -10,10 +10,10 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class RobertaTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained RoBERTa model for English text classification.
+    """Pretrained RoBERTa model for English text classification.
 
     RoBERTa (Robustly Optimised BERT Pre-training Approach) improves upon BERT
-    by training longer with larger mini-batches, removing the next-sentence
+    by training longer with larger mini-batches, removing the next sentence
     prediction objective, and using dynamic masking. It achieves consistently
     higher performance on NLP benchmarks than BERT.
 
@@ -28,6 +28,8 @@ class RobertaTransformer(HuggingFaceTextClassificationTransformer):
         en="RoBERTa Transformer",
         es="Transformer RoBERTa",
         pt="Transformer RoBERTa",
+        de="RoBERTa Transformer",
+        zh="RoBERTa Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -41,6 +43,15 @@ class RobertaTransformer(HuggingFaceTextClassificationTransformer):
         pt=(
             "BERT otimizado robustamente para classificação de texto em inglês. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Robust optimiertes BERT für englische Textklassifikation. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
+        ),
+        zh=(
+            "经过鲁棒优化的 BERT，用于英文文本分类。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#E65100"

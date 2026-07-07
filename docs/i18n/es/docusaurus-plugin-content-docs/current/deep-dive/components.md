@@ -5,7 +5,7 @@ sidebar_label: Componentes
 
 ## ¿Qué es un Componente?
 
-Un **componente** es el bloque de construcción fundamental de DashAI. Toda pieza de funcionalidad conectable — modelos, tareas, métricas, exploradores, explicadores, converters, cargadores de datos, optimizadores y trabajos — es un componente.
+Un **componente** es el bloque de construcción fundamental de dashAI. Toda pieza de funcionalidad conectable es un componente: modelos, tareas, métricas, exploradores, explicadores, converters, cargadores de datos, optimizadores y trabajos.
 
 ## Tipos de Componentes
 
@@ -29,10 +29,10 @@ Cada clase de componente declara un atributo de clase `TYPE` que determina su ca
 
 Cada componente puede exponer metadatos utilizados por el frontend para visualización y filtrado:
 
-- `DESCRIPTION` — una descripción multilingüe de lo que hace el componente.
-- `DISPLAY_NAME` — un nombre legible por humanos.
-- `COLOR` — un color hexadecimal para la representación en la UI.
-- `COMPATIBLE_COMPONENTS` — una lista de nombres de componentes con los que este componente es compatible (p. ej., una métrica que solo aplica a tareas de clasificación).
+- `DESCRIPTION`: una descripción multilingüe de lo que hace el componente.
+- `DISPLAY_NAME`: un nombre legible por humanos.
+- `COLOR`: un color hexadecimal para la representación en la UI.
+- `COMPATIBLE_COMPONENTS`: una lista de nombres de componentes con los que este componente es compatible (p. ej., una métrica que solo aplica a tareas de clasificación).
 
 ---
 
@@ -86,7 +86,7 @@ Un **Objeto Configurable** es cualquier componente cuyo comportamiento puede per
 
 ### Cómo Funciona
 
-1. **Definición del esquema** — Un componente define un atributo de clase `SCHEMA` como un modelo Pydantic. Cada campo del modelo representa un parámetro configurable:
+1. **Definición del esquema**: Un componente define un atributo de clase `SCHEMA` como un modelo Pydantic. Cada campo del modelo representa un parámetro configurable:
 
    ```python
    class LogisticRegressionSchema(BaseSchema):
@@ -113,9 +113,9 @@ Un **Objeto Configurable** es cualquier componente cuyo comportamiento puede per
 
    Cada campo usa `schema_field()` con un validador de tipo (p. ej., `optimizer_float_field`, `enum_field`), un valor por defecto de marcador, una descripción bilingüe y un alias para la etiqueta de la UI. El frontend usa el JSON Schema generado para renderizar controles de formulario; el optimizador usa los metadatos de tipo para definir los límites de búsqueda.
 
-2. **Generación del esquema** — `get_schema()` convierte el modelo Pydantic en un diccionario JSON Schema. El frontend usa este esquema para renderizar formularios de configuración dinámicamente.
+2. **Generación del esquema**: `get_schema()` convierte el modelo Pydantic en un diccionario JSON Schema. El frontend usa este esquema para renderizar formularios de configuración dinámicamente.
 
-3. **Validación y transformación** — Cuando el usuario envía una configuración, el backend llama a `validate_and_transform(params)` que:
+3. **Validación y transformación**: Cuando el usuario envía una configuración, el backend llama a `validate_and_transform(params)` que:
    - Valida los datos de parámetros en bruto contra el esquema Pydantic.
    - Instancia recursivamente cualquier referencia a componentes anidados (un parámetro de tipo `ComponentType` se resuelve en una instancia real del componente).
 

@@ -24,6 +24,12 @@ function ArrayInput({
     setInputValue(newSafeValue.join(","));
   }, [value]);
 
+  useEffect(() => {
+    if (Array.isArray(value)) {
+      setInputValue(value.join(","));
+    }
+  }, [value]);
+
   const convertValue = (val) => {
     switch (itemType) {
       case "integer":

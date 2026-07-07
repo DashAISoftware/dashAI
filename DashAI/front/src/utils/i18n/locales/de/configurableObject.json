@@ -1,0 +1,10 @@
+{
+  "advancedConfiguration": "Erweiterte Konfiguration",
+  "enterValue": "Wert eingeben",
+  "error": {
+    "splitsParams": "Die Summe der Aufteilungsgrößen muss 1 ergeben"
+  },
+  "lowerBound": "Untere Grenze des Suchraums",
+  "optimize": "Hyperparameter {{name}} optimieren",
+  "upperBound": "Obere Grenze des Suchraums"
+}

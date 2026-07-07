@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Divider, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import StorageIcon from "@mui/icons-material/Storage";
 import Biotech from "@mui/icons-material/Biotech";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import Footer from "../threeSectionLayout/Footer";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
-import CollapsibleList from "../threeSectionLayout/CollapsibleList";
+import DatasetFolderList from "../threeSectionLayout/DatasetFolderList";
 import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
 import SearchBar from "../threeSectionLayout/SearchBar";
 import NewItemButton from "../threeSectionLayout/NewItemButton";
@@ -32,6 +32,11 @@ export default function ModelsLeftBar({ onToggle }) {
     deleteDataset,
     editDataset,
     editSession,
+    folders,
+    createFolder,
+    renameFolder,
+    deleteFolderById,
+    moveDatasetToFolder,
   } = useModels();
   const navigate = useNavigate();
 
@@ -132,11 +137,35 @@ export default function ModelsLeftBar({ onToggle }) {
       { name: session.name },
     );
 
+  const TASK_TRANSLATIONS = {
+    tabularClassification: () => t("datasets:task.tabularClassification"),
+    imageClassification: () => t("datasets:task.imageClassification"),
+    textClassification: () => t("datasets:task.textClassification"),
+    translation: () => t("datasets:task.translation"),
+    regression: () => t("datasets:task.regression"),
+    eda: () => t("datasets:task.eda"),
+  };
+
+  const TASK_KEY_MAP = {
+    "Tabular Classification": "tabularClassification",
+    "Image Classification": "imageClassification",
+    "Text Classification": "textClassification",
+    Translation: "translation",
+    Regression: "regression",
+    EDA: "eda",
+  };
+
   const getDatasetDescription = (dataset) => {
-    return t("datasets:label.datasetDescription", {
+    const base = t("datasets:label.datasetDescription", {
       rows: dataset.total_rows || 0,
       columns: dataset.total_columns || 0,
     });
+    if (!dataset.task) return base;
+    const key = TASK_KEY_MAP[dataset.task];
+    const taskLabel = TASK_TRANSLATIONS[key]
+      ? TASK_TRANSLATIONS[key]()
+      : dataset.task;
+    return `${taskLabel} | ${base}`;
   };
 
   const getSessionDescription = (session) => {
@@ -225,11 +254,12 @@ export default function ModelsLeftBar({ onToggle }) {
   return (
     <SideBar>
       {/* Create new item button */}
-      <Box p={2} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
+      <Box p={4} sx={{ height: "64px", display: "flex", alignItems: "center" }}>
         {selectedDatasetId || selectedSessionId ? (
           <NewItemButton
             onClick={handleNewSessionButton}
-            title={t("models:button.newSession")}
+            title={t("models:button.modelsHub")}
+            EndIcon={ViewModuleIcon}
           />
         ) : (
           <Typography variant="body1" color="textSecondary">
@@ -240,7 +270,7 @@ export default function ModelsLeftBar({ onToggle }) {
 
       {/* Search bar global */}
       {totalItems > SEARCH_THRESHOLD && (
-        <Box px={2} pb={2} flex={"0 0 auto"}>
+        <Box px={4} pb={4} flex={"0 0 auto"}>
           <SearchBar
             placeholder={t("models:label.searchDatasetsSessions")}
             value={searchQuery}
@@ -255,18 +285,21 @@ export default function ModelsLeftBar({ onToggle }) {
 
       {/* Scrollable content */}
       <Box display="flex" flexDirection="column" flex={1} minHeight={0}>
-        <CollapsibleList
-          items={filteredDatasets}
+        <DatasetFolderList
+          datasets={filteredDatasets}
+          folders={folders}
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
           onItemEdit={editDataset}
-          defaultOpen={true}
           title={t("datasets:label.availableDatasets")}
-          Icon={StorageIcon}
           getItemDescription={getDatasetDescription}
           getDeleteConfirmationContent={getDatasetDeleteConfirmationContent}
           getDeleteConfirmationWarning={getDatasetDeleteConfirmationWarning}
+          onCreateFolder={createFolder}
+          onRenameFolder={renameFolder}
+          onDeleteFolder={deleteFolderById}
+          onMoveDataset={moveDatasetToFolder}
         />
 
         <Divider

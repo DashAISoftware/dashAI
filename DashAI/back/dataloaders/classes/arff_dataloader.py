@@ -24,12 +24,25 @@ class ARFFDataLoader(BaseDataLoader):
 
     Reads Weka ARFF files using scipy, decodes nominal attributes from bytes
     to UTF-8 strings, and converts the result into DashAI datasets. Handles
-    multi-file uploads via ZIP archives containing train/test/val split folders.
+    multifile uploads via ZIP archives containing train/test/val split folders.
     """
 
     SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({".arff", ".zip"})
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     SCHEMA = ARFFDataloaderSchema
+    SUPPORTS_NATIVE_TYPES: bool = True
+    NATIVE_TYPE_MAPPING: Dict[str, Dict[str, Any]] = {
+        "numeric": {"type": "Float", "dtype": "float64"},
+        "real": {"type": "Float", "dtype": "float64"},
+        "integer": {"type": "Integer", "dtype": "int64"},
+        "nominal": {
+            "type": "Categorical",
+            "dtype": "string",
+            "encoder": "one_hot",
+        },
+        "string": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
+        "date": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
+    }
 
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -49,12 +62,43 @@ class ARFFDataLoader(BaseDataLoader):
             "Os arquivos ARFF são autodescritivos e não requerem "
             "parâmetros adicionais."
         ),
+        de=(
+            "Datenlader für tabellarische Daten in ARFF-Dateien "
+            "(Weka Attribute-Relation File Format). "
+            "ARFF-Dateien sind selbstbeschreibend und erfordern keine zusätzlichen "
+            "Parameter."
+        ),
+        zh=(
+            "ARFF文件（Weka属性关系文件格式）表格数据加载器。"
+            "ARFF文件是自描述的，不需要额外参数。"
+        ),
     )
     DISPLAY_NAME: str = MultilingualString(
         en="ARFF Data Loader",
         es="Cargador de Datos ARFF",
         pt="Carregador de Dados ARFF",
+        de="ARFF Datenlader",
+        zh="ARFF数据加载器",
     )
+
+    def _load_arff_raw(self, filepath: str):
+        """Read raw scipy ARFF ``(data, meta)`` tuple.
+
+        Centralises the scipy call so the metadata object (discarded by
+        ``_read_arff_file``) is available to ``extract_native_types``.
+
+        Raises
+        ------
+        datasets.builder.DatasetGenerationError
+            If the file cannot be parsed as valid ARFF.
+        """
+        from datasets.builder import DatasetGenerationError
+        from scipy.io import arff
+
+        try:
+            return arff.loadarff(filepath)
+        except Exception as e:
+            raise DatasetGenerationError from e
 
     def _read_arff_file(self, filepath: str):
         """Read an ARFF file and return a pandas DataFrame.
@@ -75,19 +119,70 @@ class ARFFDataLoader(BaseDataLoader):
             If the file cannot be parsed as valid ARFF.
         """
         import pandas as pd
-        from datasets.builder import DatasetGenerationError
-        from scipy.io import arff
 
-        try:
-            data, _ = arff.loadarff(filepath)
-        except Exception as e:
-            raise DatasetGenerationError from e
-
+        data, _ = self._load_arff_raw(filepath)
         arff_df = pd.DataFrame(data)
         for col in arff_df.columns:
             if arff_df[col].dtype == object:
                 arff_df[col] = arff_df[col].str.decode("utf-8")
         return arff_df
+
+    @staticmethod
+    def _decode_if_bytes(value: Any) -> Any:
+        """Return ``value`` UTF-8 decoded if it is bytes, otherwise unchanged."""
+        return value.decode("utf-8") if isinstance(value, bytes) else value
+
+    def extract_native_types(
+        self,
+        filepath_or_buffer: str,
+        params: Dict[str, Any],
+    ) -> Dict[str, Dict[str, Any]]:
+        """Build the DashAI column-type map from the ARFF header itself.
+
+        Reads the scipy metadata object and converts each declared attribute
+        kind (``numeric``, ``integer``, ``real``, ``nominal``, ``string``,
+        ``date``) into the same dict shape used by
+        ``DashAIPtype.infer_types``. For ``nominal`` attributes the
+        category list comes straight from the ARFF header (e.g.
+        ``@attribute color {red, green, blue}``), no statistical guess.
+
+        Parameters
+        ----------
+        filepath_or_buffer : str
+            Path to a single ARFF file already on disk.
+        params : Dict[str, Any]
+            Unused (ARFF needs no parameters).
+
+        Returns
+        -------
+        Dict[str, Dict[str, Any]]
+            Column name -> DashAI type dict.
+        """
+        _, meta = self._load_arff_raw(filepath_or_buffer)
+
+        native_types: Dict[str, Dict[str, Any]] = {}
+        for col_name in meta.names():
+            kind, values = meta[col_name]
+            kind_key = kind.lower() if isinstance(kind, str) else "string"
+
+            if kind_key in self.NATIVE_TYPE_MAPPING:
+                info = self.NATIVE_TYPE_MAPPING[kind_key].copy()
+            else:
+                info = {"type": "Text", "dtype": "string"}
+
+            if kind_key == "nominal" and values is not None:
+                info["categories"] = [self._decode_if_bytes(v) for v in values]
+
+            info["inference_reason"] = {
+                "source": "arff_metadata",
+                "native_type": kind_key,
+                "final_type": info.get("type"),
+                "is_categorical": kind_key == "nominal",
+            }
+
+            native_types[col_name] = info
+
+        return native_types
 
     def load_data(
         self,

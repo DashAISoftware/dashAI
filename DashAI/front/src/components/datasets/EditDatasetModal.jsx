@@ -67,11 +67,11 @@ function EditDatasetModal({ datasetId, name, updateDatasets }) {
             direction="row"
             justifyContent="space-around"
             alignItems="stretch"
-            spacing={2}
+            spacing={4}
           >
             {/* New name field */}
             <Grid size={{ xs: 12 }}>
-              <Typography variant="subtitle1" component="h3" sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" component="h3" sx={{ mb: 6 }}>
                 Enter a new name for your dataset
               </Typography>
 
@@ -82,7 +82,7 @@ function EditDatasetModal({ datasetId, name, updateDatasets }) {
                 autoComplete="off"
                 fullWidth
                 onChange={(event) => setDatasetName(event.target.value)}
-                sx={{ mb: 2 }}
+                sx={{ mb: 4 }}
               />
             </Grid>
           </Grid>

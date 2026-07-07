@@ -9,8 +9,12 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import (
+    NON_NUMERIC_DTYPES,
+    BaseExplorerSchema,
+)
 from DashAI.back.exploration.statistical_explorer import StatisticalExplorer
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
@@ -35,7 +39,7 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
     The ``method`` field selects between three estimators: ``"pearson"``
     measures linear association and assumes approximately normal distributions;
     ``"spearman"`` measures monotonic association using rank-transformed data
-    and is more robust to non-linear relationships and outliers; ``"kendall"``
+    and is more robust to nonlinear relationships and outliers; ``"kendall"``
     uses concordance/discordance counts and is preferred for small samples or
     heavily tied data.  Use ``"numeric_only"`` to exclude non-numeric columns
     from the calculation automatically.
@@ -48,11 +52,15 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
             en=("Correlation method to use: 'pearson', 'kendall', or 'spearman'."),
             es=("Método de correlación a usar: 'pearson', 'kendall' o 'spearman'."),
             pt=("Método de correlação a usar: 'pearson', 'kendall' ou 'spearman'."),
+            de=("Korrelationsmethode: 'pearson', 'kendall' oder 'spearman'."),
+            zh="使用的相关性方法：'pearson'、'kendall'或'spearman'。",
         ),
         alias=MultilingualString(
             en="Correlation method",
             es="Método de correlación",
             pt="Método de correlação",
+            de="Korrelationsmethode",
+            zh="相关性方法",
         ),
     )  # type: ignore
     min_periods: schema_field(
@@ -73,11 +81,18 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
                 "para obter um resultado válido. Usado apenas com 'pearson' ou "
                 "'spearman'."
             ),
+            de=(
+                "Mindestanzahl der Beobachtungen pro Spaltenpaar für ein gültiges "
+                "Ergebnis. Nur mit 'pearson' oder 'spearman' verwendet."
+            ),
+            zh="每列对获得有效结果所需的最小观测数。仅用于'pearson'或'spearman'。",
         ),
         alias=MultilingualString(
             en="Minimum periods",
             es="Períodos mínimos",
             pt="Períodos mínimos",
+            de="Mindestperioden",
+            zh="最小周期数",
         ),
     )  # type: ignore
     numeric_only: schema_field(
@@ -96,11 +111,18 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
                 "Se True, inclui apenas colunas numéricas ao calcular a "
                 "correlação; caso contrário, inclui todas."
             ),
+            de=(
+                "Wenn True, werden nur numerische Spalten bei der Berechnung "
+                "der Korrelation berücksichtigt; sonst alle Spalten."
+            ),
+            zh="如果为True，计算相关性时仅包含数值列；否则包含所有列。",
         ),
         alias=MultilingualString(
             en="Numeric only",
             es="Solo numéricas",
             pt="Somente numéricas",
+            de="Nur numerisch",
+            zh="仅数值列",
         ),
     )  # type: ignore
     plot: schema_field(
@@ -110,11 +132,15 @@ class CorrelationMatrixExplorerSchema(BaseExplorerSchema):
             en=("If True, the result will be plotted."),
             es=("Si es True, el resultado será graficado."),
             pt=("Se True, o resultado será graficado."),
+            de=("Wenn True, wird das Ergebnis dargestellt."),
+            zh="如果为True，结果将以图表显示。",
         ),
         alias=MultilingualString(
             en="Plot result",
             es="Graficar resultado",
             pt="Graficar resultado",
+            de="Ergebnis darstellen",
+            zh="绘制结果",
         ),
     )  # type: ignore
 
@@ -143,6 +169,8 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         en="Correlation Matrix",
         es="Matriz de Correlación",
         pt="Matriz de Correlação",
+        de="Korrelationsmatrix",
+        zh="相关性矩阵",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -159,13 +187,20 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
             "padrão é um mapa de calor, mas também pode ser retornada em "
             "formato tabular."
         ),
+        de=(
+            "Gibt die Korrelationsmatrix des Datensatzes zurück. Die "
+            "Standardausgabe ist eine Heatmap, aber es kann auch ein "
+            "tabellarisches Ergebnis zurückgegeben werden."
+        ),
+        zh="返回数据集的相关性矩阵。默认输出为热图，也可返回表格形式。",
     )
     IMAGE_PREVIEW = "correlation_matrix.png"
 
     SCHEMA = CorrelationMatrixExplorerSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [Float, Integer],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
+        "non_allowed_dtypes": NON_NUMERIC_DTYPES,
         "input_cardinality": {"min": 2},
     }
 
@@ -177,7 +212,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         **kwargs
             Keyword arguments matching
             ``CorrelationMatrixExplorerSchema`` fields:
-            method (str): Correlation method — ``"pearson"``,
+            method (str): Correlation method, one of ``"pearson"``,
             ``"kendall"``, or ``"spearman"``.
             min_periods (int): Minimum observations required per column
             pair. Applied only for ``"pearson"`` and ``"spearman"``.
@@ -198,8 +233,8 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         """Compute a correlation matrix and optionally render it as a Plotly heatmap.
 
         Converts the dataset to a pandas DataFrame, computes pairwise column
-        correlations using the configured method, and — when ``self.plot`` is
-        ``True`` — wraps the result in a Plotly ``imshow`` heatmap figure.
+        correlations using the configured method, and, when ``self.plot`` is
+        ``True``, wraps the result in a Plotly ``imshow`` heatmap figure.
 
         Parameters
         ----------
@@ -231,8 +266,8 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
 
         if self.plot:
             result = px.imshow(
-                result,
-                text_auto=True,
+                result.round(4),
+                text_auto=".4~f",
                 aspect="auto",
                 title=f"Correlation Matrix of {len(explorer_info.columns)} columns",
             )
@@ -264,7 +299,7 @@ class CorrelationMatrixExplorer(StatisticalExplorer):
         save_path : Path
             Directory where the file will be saved.
         result : Any
-            The result returned by ``launch_exploration`` — either
+            The result returned by ``launch_exploration``, either
             a ``plotly.graph_objs.Figure`` or a ``pandas.DataFrame``.
 
         Returns

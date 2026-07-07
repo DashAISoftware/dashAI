@@ -6,12 +6,10 @@ import HelpIcon from "@mui/icons-material/Help";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
 import ColumnSelector from "../ColumnSelector";
 import { RowSelector } from "../RowSelector";
-import {
-  getDatasetInfoByFilePath,
-  getDatasetTypesByFilePath,
-} from "../../../api/datasets";
+import { getDatasetInfoByFilePath } from "../../../api/datasets";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
+import { useExplorersAndConverters } from "../context/ExplorersAndConvertersContext";
 
 export default function ScopeStepConverter({
   supervised,
@@ -28,11 +26,12 @@ export default function ScopeStepConverter({
 }) {
   const theme = useTheme();
   const [datasetInfo, setDatasetInfo] = useState(0);
-  const [datasetColumns, setDatasetColumns] = useState([]);
   const tourContext = useTourContext();
   const allowedTypes = tool?.metadata?.allowed_types || [];
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
+  const inputCardinality = tool?.metadata?.input_cardinality || {};
   const { t } = useTranslation(["common", "datasets"]);
+  const { columnTypes } = useExplorersAndConverters();
 
   const handleSubmit = () => {
     nextStep();
@@ -49,28 +48,11 @@ export default function ScopeStepConverter({
 
     const fetchAllData = async () => {
       try {
-        const [data, types] = await Promise.all([
-          getDatasetInfoByFilePath(notebook.file_path),
-          getDatasetTypesByFilePath(notebook.file_path),
-        ]);
-
+        const data = await getDatasetInfoByFilePath(notebook.file_path);
         if (!isMounted) return;
-
         setDatasetInfo(data);
-
-        const datasetColumns = Object.entries(types).map(
-          ([columnName, typeInfo], idx) => ({
-            id: idx,
-            columnName: columnName,
-            valueType: typeInfo.type || t("common:unknown"),
-            dataType: typeInfo.dtype || t("common:unknown"),
-            order: idx,
-          }),
-        );
-
-        setDatasetColumns(datasetColumns);
       } catch (error) {
-        console.error("Error fetching dataset info/types:", error);
+        console.error("Error fetching dataset info:", error);
       }
     };
 
@@ -88,6 +70,7 @@ export default function ScopeStepConverter({
         flexDirection: "column",
         flex: 1,
         height: "100%",
+        gap: 2,
         minHeight: 0,
       }}
       data-tour="column-selector-converter-container"
@@ -100,12 +83,12 @@ export default function ScopeStepConverter({
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
-          gap: 1,
+          gap: 2,
         }}
       >
         <Typography
           variant="body2"
-          sx={{ color: theme.palette.text.primary, mb: 0.5 }}
+          sx={{ color: theme.palette.text.primary, mb: 1 }}
         >
           {t("datasets:label.selectScopeDescriptionColumns")}
         </Typography>
@@ -115,6 +98,8 @@ export default function ScopeStepConverter({
           tool={tool}
           allowedTypes={allowedTypes}
           allowedDtypes={allowedDtypes}
+          inputCardinality={inputCardinality}
+          columnTypes={columnTypes}
           onSelectionChange={(columnsInfo) => {
             const processedColumns = columnsInfo.map((col) => ({
               idx: col.id + 1,
@@ -147,7 +132,7 @@ export default function ScopeStepConverter({
           flexShrink: 0,
           display: "flex",
           justifyContent: "flex-end",
-          gap: 1,
+          gap: 2,
           pt: 1,
         }}
       >

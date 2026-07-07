@@ -38,6 +38,7 @@ function ComponentSelector({
   searchPlaceholder,
   emptyText,
   getIcon,
+  flat = false,
   tourDataFor = null,
   tourDataMatchFn = null,
 }) {
@@ -103,8 +104,106 @@ function ComponentSelector({
 
   const handleSelect = (component) => onSelect?.(component);
 
+  const renderCard = (component) => {
+    const isSelected = selected?.name === component.name;
+    const icon = getIcon?.(component);
+    const isCsvComponent =
+      tourDataFor &&
+      (tourDataMatchFn
+        ? tourDataMatchFn(component)
+        : component.name.toLowerCase().includes("csv"));
+    return (
+      <Paper
+        key={component.name}
+        elevation={0}
+        onClick={() => handleSelect(component)}
+        data-tour={isCsvComponent ? tourDataFor : undefined}
+        sx={{
+          p: 3,
+          display: "flex",
+          gap: 3,
+          alignItems: "flex-start",
+          cursor: "pointer",
+          border: 1,
+          borderColor: isSelected ? "primary.main" : "divider",
+          bgcolor: isSelected ? "action.selected" : "background.paper",
+          transition: "border-color 0.15s, background 0.15s",
+          "&:hover": { borderColor: "secondary.main" },
+        }}
+      >
+        {icon && (
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 1,
+              bgcolor: isSelected ? "primary.main" : "action.hover",
+              color: isSelected ? "primary.contrastText" : "text.primary",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            {icon}
+          </Box>
+        )}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
+            {getLabel(component)}
+          </Typography>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              mt: 1,
+            }}
+          >
+            {getDescription(component, t("noDescriptionAvailable"))}
+          </Typography>
+        </Box>
+        {isSelected && (
+          <CheckIcon
+            fontSize="small"
+            color="primary"
+            sx={{ flexShrink: 0, mt: 1 }}
+          />
+        )}
+      </Paper>
+    );
+  };
+
+  const emptyState = (
+    <Box sx={{ textAlign: "center", py: 12, color: "text.secondary" }}>
+      <SearchIcon sx={{ fontSize: 48, opacity: 0.4, mb: 2 }} />
+      <Typography variant="body2">{emptyText ?? t("noItemsFound")}</Typography>
+      <Typography variant="caption" sx={{ opacity: 0.7 }}>
+        {t("tryAdjustingSearch")}
+      </Typography>
+    </Box>
+  );
+
+  const cardGrid = (
+    <Box
+      sx={{
+        display: "grid",
+        gap: 2,
+        gridTemplateColumns: {
+          xs: "1fr",
+          md: "repeat(2, 1fr)",
+          xl: "repeat(3, 1fr)",
+        },
+      }}
+    >
+      {filtered.map(renderCard)}
+    </Box>
+  );
+
   return (
-    <Stack direction="column" sx={{ height: "100%", minHeight: 0 }} spacing={2}>
+    <Stack direction="column" sx={{ height: "100%", minHeight: 0 }} spacing={4}>
       {components.length > SEARCH_THRESHOLD && (
         <TextField
           size="small"
@@ -131,189 +230,94 @@ function ComponentSelector({
         />
       )}
 
-      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-        {categories.map((cat) => {
-          const isActive = activeCategory === cat;
-          const count = cat === ALL_CATEGORY ? components.length : counts[cat];
-          return (
-            <Chip
-              key={cat}
-              label={`${cat} (${count})`}
-              clickable
-              color={isActive ? "primary" : "default"}
-              variant={isActive ? "filled" : "outlined"}
-              onClick={() => setActiveCategory(cat)}
-              size="small"
-            />
-          );
-        })}
-      </Stack>
-
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 1 }}>
-        <Stack spacing={1.5}>
-          {Object.entries(grouped).map(([cat, items]) => {
-            const isOpen = expanded.has(cat);
+      {!flat && (
+        <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+          {categories.map((cat) => {
+            const isActive = activeCategory === cat;
+            const count =
+              cat === ALL_CATEGORY ? components.length : counts[cat];
             return (
-              <Box key={cat}>
-                <Box
-                  onClick={() => toggleCategory(cat)}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    py: 1,
-                    cursor: "pointer",
-                    color: "text.secondary",
-                    "&:hover": { color: "text.primary" },
-                  }}
-                >
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography
-                      variant="overline"
-                      sx={{ letterSpacing: 1, fontWeight: 600 }}
-                    >
-                      {cat}
-                    </Typography>
-                    <Chip label={items.length} size="small" />
-                  </Stack>
-                  <ExpandMoreIcon
-                    fontSize="small"
-                    sx={{
-                      transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
-                      transition: "transform 0.2s",
-                    }}
-                  />
-                </Box>
-                <Collapse in={isOpen} unmountOnExit>
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gap: 1,
-                      gridTemplateColumns: {
-                        xs: "1fr",
-                        md: "repeat(2, 1fr)",
-                        xl: "repeat(3, 1fr)",
-                      },
-                      pt: 1,
-                    }}
-                  >
-                    {items.map((component) => {
-                      const isSelected = selected?.name === component.name;
-                      const icon = getIcon?.(component);
-                      const isCsvComponent =
-                        tourDataFor &&
-                        (tourDataMatchFn
-                          ? tourDataMatchFn(component)
-                          : component.name.toLowerCase().includes("csv"));
-                      return (
-                        <Paper
-                          key={component.name}
-                          elevation={0}
-                          onClick={() => handleSelect(component)}
-                          data-tour={isCsvComponent ? tourDataFor : undefined}
-                          sx={{
-                            p: 1.5,
-                            display: "flex",
-                            gap: 1.5,
-                            alignItems: "flex-start",
-                            cursor: "pointer",
-                            border: 1,
-                            borderColor: isSelected
-                              ? "primary.main"
-                              : "divider",
-                            bgcolor: isSelected
-                              ? "action.selected"
-                              : "background.paper",
-                            transition: "border-color 0.15s, background 0.15s",
-                            "&:hover": {
-                              borderColor: "primary.light",
-                            },
-                          }}
-                        >
-                          {icon && (
-                            <Box
-                              sx={{
-                                p: 1,
-                                borderRadius: 1,
-                                bgcolor: isSelected
-                                  ? "primary.main"
-                                  : "action.hover",
-                                color: isSelected
-                                  ? "primary.contrastText"
-                                  : "text.primary",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                flexShrink: 0,
-                              }}
-                            >
-                              {icon}
-                            </Box>
-                          )}
-                          <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography
-                              variant="subtitle2"
-                              noWrap
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {getLabel(component)}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{
-                                display: "-webkit-box",
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                                mt: 0.5,
-                              }}
-                            >
-                              {getDescription(
-                                component,
-                                t("noDescriptionAvailable"),
-                              )}
-                            </Typography>
-                          </Box>
-                          {isSelected && (
-                            <CheckIcon
-                              fontSize="small"
-                              color="primary"
-                              sx={{ flexShrink: 0, mt: 0.5 }}
-                            />
-                          )}
-                        </Paper>
-                      );
-                    })}
-                  </Box>
-                </Collapse>
-              </Box>
+              <Chip
+                key={cat}
+                label={`${cat} (${count})`}
+                clickable
+                color={isActive ? "primary" : "default"}
+                variant={isActive ? "filled" : "outlined"}
+                onClick={() => setActiveCategory(cat)}
+                size="small"
+              />
             );
           })}
-
-          {filtered.length === 0 && (
-            <Box
-              sx={{
-                textAlign: "center",
-                py: 6,
-                color: "text.secondary",
-              }}
-            >
-              <SearchIcon sx={{ fontSize: 48, opacity: 0.4, mb: 1 }} />
-              <Typography variant="body2">
-                {emptyText ?? t("noItemsFound")}
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                {t("tryAdjustingSearch")}
-              </Typography>
-            </Box>
-          )}
         </Stack>
+      )}
+
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", pr: 2 }}>
+        {flat ? (
+          <Stack spacing={3}>
+            {filtered.length === 0 ? emptyState : cardGrid}
+          </Stack>
+        ) : (
+          <Stack spacing={3}>
+            {Object.entries(grouped).map(([cat, items]) => {
+              const isOpen = expanded.has(cat);
+              return (
+                <Box key={cat}>
+                  <Box
+                    onClick={() => toggleCategory(cat)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      py: 2,
+                      cursor: "pointer",
+                      color: "text.secondary",
+                      "&:hover": { color: "text.primary" },
+                    }}
+                  >
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Typography
+                        variant="overline"
+                        sx={{ letterSpacing: 1, fontWeight: 600 }}
+                      >
+                        {cat}
+                      </Typography>
+                      <Chip label={items.length} size="small" />
+                    </Stack>
+                    <ExpandMoreIcon
+                      fontSize="small"
+                      sx={{
+                        transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 0.2s",
+                      }}
+                    />
+                  </Box>
+                  <Collapse in={isOpen} unmountOnExit>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gap: 2,
+                        gridTemplateColumns: {
+                          xs: "1fr",
+                          md: "repeat(2, 1fr)",
+                          xl: "repeat(3, 1fr)",
+                        },
+                        pt: 2,
+                      }}
+                    >
+                      {items.map(renderCard)}
+                    </Box>
+                  </Collapse>
+                </Box>
+              );
+            })}
+            {filtered.length === 0 && emptyState}
+          </Stack>
+        )}
       </Box>
 
       <Box
         sx={{
-          pt: 1.5,
+          pt: 4,
           borderTop: 1,
           borderColor: "divider",
           display: "flex",
@@ -353,6 +357,7 @@ ComponentSelector.propTypes = {
   searchPlaceholder: PropTypes.string,
   emptyText: PropTypes.string,
   getIcon: PropTypes.func,
+  flat: PropTypes.bool,
   tourDataMatchFn: PropTypes.func,
 };
 

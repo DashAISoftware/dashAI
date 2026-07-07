@@ -59,6 +59,16 @@ class ROCAUC(ClassificationMetric):
             "em vários limiares de decisão. Representa o grau de "
             "separabilidade entre classes."
         ),
+        de=(
+            "Die Fläche unter der ROC-Kurve (RoC AUC) "
+            "ist ein Leistungsmaß für Klassifikationsprobleme bei verschiedenen "
+            "Schwellenwert-Einstellungen. Sie repräsentiert den Grad der "
+            "Trennbarkeit zwischen Klassen."
+        ),
+        zh=(
+            "ROC 曲线下面积（ROC AUC）是在不同阈值设置下衡量分类问题性能的指标，"
+            "代表类别间的可分离程度。"
+        ),
     )
 
     @staticmethod
@@ -100,12 +110,15 @@ class ROCAUC(ClassificationMetric):
 
         if multiclass is None:
             multiclass = n_classes > 2
-        if multiclass:
-            return roc_auc_score(
-                true_labels,
-                probs_pred_labels,
-                multi_class="ovr",
-                labels=list(range(n_classes)),
-            )
-        else:
-            return roc_auc_score(true_labels, probs_pred_labels[:, 1])
+        try:
+            if multiclass:
+                return roc_auc_score(
+                    true_labels,
+                    probs_pred_labels,
+                    multi_class="ovr",
+                    labels=list(range(n_classes)),
+                )
+            else:
+                return roc_auc_score(true_labels, probs_pred_labels[:, 1])
+        except ValueError:
+            return float("nan")

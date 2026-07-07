@@ -25,6 +25,11 @@ class CharacterReplacerSchema(BaseSchema):
             en=("The character or substring to be replaced. Cannot be empty."),
             es=("El carácter o subcadena a reemplazar. No puede estar vacío."),
             pt=("O caractere ou substring a ser substituído. Não pode estar vazio."),
+            de=(
+                "Das zu ersetzende Zeichen oder die Teilzeichenkette. Darf nicht leer "
+                "sein."
+            ),
+            zh="要替换的字符或子字符串。不能为空。",
         ),
     )  # type: ignore
     replacement_char: schema_field(
@@ -43,6 +48,11 @@ class CharacterReplacerSchema(BaseSchema):
                 "O caractere ou substring com o qual substituir. Se nulo, "
                 "'char_to_replace' será removido."
             ),
+            de=(
+                "Das Ersatzzeichen oder die Ersatzteilzeichenkette. Wenn null, "
+                "wird 'char_to_replace' entfernt."
+            ),
+            zh="用于替换的字符或子字符串。如果为空，则删除'char_to_replace'。",
         ),
     )  # type: ignore
 
@@ -70,11 +80,18 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
             "Substitui ou remove caracteres/substrings especificados nas "
             "colunas de texto selecionadas."
         ),
+        de=(
+            "Ersetzt oder entfernt angegebene Zeichen/Teilzeichenketten in "
+            "ausgewählten Text-Spalten."
+        ),
+        zh="替换或删除所选字符串列中指定的字符/子字符串。",
     )
     DISPLAY_NAME = MultilingualString(
         en="Character Replacer",
         es="Reemplazador de Caracteres",
         pt="Substituidor de Caracteres",
+        de="Zeichenersetzung",
+        zh="字符替换器",
     )
     IMAGE_PREVIEW = "character_replacer.png"
 

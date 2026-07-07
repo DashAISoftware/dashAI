@@ -58,6 +58,7 @@ def build_config_dict(
     config["NOTEBOOK_PATH"] = local_path / config["NOTEBOOK_PATH"]
     config["RUNS_PATH"] = local_path / config["RUNS_PATH"]
     config["IMAGES_PATH"] = local_path / config["IMAGES_PATH"]
+    config["DATAFILE_PATH"] = local_path / config["DATAFILE_PATH"]
     config["FRONT_BUILD_PATH"] = pathlib.Path(config["FRONT_BUILD_PATH"]).absolute()
     config["BACK_PATH"] = pathlib.Path(config["BACK_PATH"]).absolute()
     config["LOGGING_LEVEL"] = getattr(logging, logging_level)

@@ -19,15 +19,25 @@ class OptunaSchema(BaseSchema):
             ),
             es=("La cantidad de pruebas por estudio. Debe ser un entero positivo."),
             pt=("A quantidade de tentativas por estudo. Deve ser um inteiro positivo."),
+            de=(
+                "Die Anzahl der Versuche pro Studie. Muss eine positive ganze Zahl "
+                "sein."
+            ),
+            zh="每次研究的试验次数，必须为正整数。",
         ),
-        alias=MultilingualString(en="N trials", es="N pruebas", pt="N tentativas"),
+        alias=MultilingualString(
+            en="N trials",
+            es="N pruebas",
+            pt="N tentativas",
+            de="N Versuche",
+            zh="试验次数",
+        ),
     )  # type: ignore
     sampler: schema_field(
         enum_field(
             enum=[
                 "TPESampler",
                 "CmaEsSampler",
-                "GridSampler",
                 "GPSampler",
                 "NSGAIISampler",
                 "QMCSampler",
@@ -51,8 +61,22 @@ class OptunaSchema(BaseSchema):
                 "hiperparâmetros. Diferentes amostradores usam diferentes "
                 "estratégias para explorar o espaço de hiperparâmetros."
             ),
+            de=(
+                "Der Abtastalgorithmus für die Hyperparameter-Optimierung. "
+                "Verschiedene Abtaster verwenden unterschiedliche Strategien "
+                "zur Erkundung des Hyperparameter-Raums."
+            ),
+            zh=(
+                "用于超参数优化的采样算法。不同的采样器使用不同的策略来探索超参数空间。"
+            ),
         ),
-        alias=MultilingualString(en="Sampler", es="Muestreador", pt="Amostrador"),
+        alias=MultilingualString(
+            en="Sampler",
+            es="Muestreador",
+            pt="Amostrador",
+            de="Abtaster",
+            zh="采样器",
+        ),
     )  # type: ignore
     pruner: schema_field(
         enum_field(enum=["MedianPruner", "None"]),
@@ -72,8 +96,23 @@ class OptunaSchema(BaseSchema):
                 "promissoras. 'MedianPruner' para tentativas abaixo da mediana. "
                 "'None' desativa a poda."
             ),
+            de=(
+                "Der Pruner für den vorzeitigen Abbruch aussichtsloser Versuche. "
+                "'MedianPruner' stoppt Versuche unterhalb des Mittelwerts. "
+                "'None' deaktiviert das Pruning."
+            ),
+            zh=(
+                "用于提前停止无希望试验的剪枝器。"
+                "'MedianPruner' 停止低于中位数的试验。'None' 禁用剪枝。"
+            ),
         ),
-        alias=MultilingualString(en="Pruner", es="Podador", pt="Podador"),
+        alias=MultilingualString(
+            en="Pruner",
+            es="Podador",
+            pt="Podador",
+            de="Pruner",
+            zh="剪枝器",
+        ),
     )  # type: ignore
 
 
@@ -82,11 +121,15 @@ class OptunaOptimizer(BaseOptimizer):
         en="Optuna Optimizer",
         es="Optimizador Optuna",
         pt="Otimizador Optuna",
+        de="Optuna-Optimierer",
+        zh="Optuna 优化器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Hyperparameter optimization using Optuna library.",
         es="Optimización de hiperparámetros usando la librería Optuna.",
         pt="Otimização de hiperparâmetros usando a biblioteca Optuna.",
+        de="Hyperparameter-Optimierung mit der Optuna-Bibliothek.",
+        zh="使用 Optuna 库进行超参数优化。",
     )
     COLOR: str = "#E91E63"
     SCHEMA = OptunaSchema

@@ -132,7 +132,7 @@ export const CustomTooltip = ({
 
       <Box
         sx={{
-          fontSize: "14px",
+          fontSize: "16px",
           lineHeight: "1.6",
           color: theme.palette.text.primary,
           pr: 2,
@@ -176,7 +176,6 @@ export const CustomTooltip = ({
               sx={{
                 color: theme.palette.text.secondary,
                 textTransform: "none",
-                fontSize: "12px",
               }}
             >
               {t("common:skipTour")}

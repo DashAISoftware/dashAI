@@ -9,6 +9,7 @@ from DashAI.back.config_object import ConfigObject
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.plugins.utils import (
     _get_all_plugins,
+    _is_verified_author,
     execute_pip_command,
     get_plugin_by_name_from_pypi,
     get_plugins_from_pypi,
@@ -73,6 +74,7 @@ def test_get_plugin_by_name_from_pypi():
     print("plugin_data", plugin_data)
     assert plugin_data == {
         "author": "DashAI Team",
+        "verified": True,
         "installed_version": "0.1.0",
         "lastest_version": "0.1.0",
         "tags": [
@@ -108,6 +110,7 @@ def test_get_plugin_by_name_from_pypi_with_other_tags():
 
     assert plugin_data == {
         "author": "DashAI Team",
+        "verified": True,
         "installed_version": "0.1.0",
         "lastest_version": "0.1.0",
         "tags": [
@@ -165,6 +168,7 @@ def test_get_plugins_from_pypi():
     assert plugins == [
         {
             "author": "DashAI Team",
+            "verified": True,
             "installed_version": "0.1.0",
             "lastest_version": "0.1.0",
             "tags": [
@@ -179,6 +183,21 @@ def test_get_plugins_from_pypi():
             "summary": "Tabular Classification Package",
         }
     ]
+
+
+@pytest.mark.parametrize(
+    ("author", "author_email", "expected"),
+    [
+        ("DashAI team", "dashaisoftware@gmail.com", True),
+        ("Someone else", "DashAI team <dashaisoftware@gmail.com>", True),
+        ("dashai team", "", True),
+        ("Third party", "other@example.com", False),
+        (None, None, False),
+        ("DashAI", "info@dashai.org", False),
+    ],
+)
+def test_is_verified_author(author, author_email, expected):
+    assert _is_verified_author(author, author_email) is expected
 
 
 def test_execute_pip_install_command():

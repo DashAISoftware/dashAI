@@ -42,11 +42,24 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
                 "20-30 para resultados rápidos, 40-50 para maior qualidade. "
                 "Valores acima de 100 raramente melhoram o resultado."
             ),
+            de=(
+                "Anzahl der Entrauschungsschritte. Mehr Schritte verfeinern das Bild, "
+                "erhöhen aber die Generierungszeit. Typischer Bereich: 20-30 für "
+                "schnelle Ergebnisse, 40-50 für höhere Qualität. Werte über 100 "
+                "verbessern das Ergebnis kaum."
+            ),
+            zh=(
+                "去噪步骤数。步骤越多图像越精细，但生成时间越长。"
+                "典型范围：20-30步获得快速结果，40-50步获得更高质量。"
+                "超过100步几乎不再改善输出效果。"
+            ),
         ),
         alias=MultilingualString(
             en="Num inference steps",
             es="Número de pasos de inferencia",
             pt="Número de passos de inferência",
+            de="Anzahl Inferenzschritte",
+            zh="推理步骤数",
         ),
     )  # type: ignore
 
@@ -76,11 +89,24 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
                 "perto a estrutura da imagem de entrada; acima de 1.5 a restrição de "
                 "profundidade domina e pode produzir resultados excessivamente rígidos."
             ),
+            de=(
+                "Gewichtung des ControlNet-Tiefenkonditionierens (Bereich 0.0-2.0). "
+                "Bei 0.0 hat die Tiefenkarte keinen Effekt; bei 1.0 (Standard) folgt "
+                "die Ausgabe eng der Eingangsbildstruktur; über 1.5 dominiert die "
+                "Tiefenbeschränkung und kann zu übermäßig starren Ergebnissen führen."
+            ),
+            zh=(
+                "ControlNet深度条件权重（范围0.0-2.0）。"
+                "0.0时深度图无效果；1.0（默认）时输出紧密跟随输入图像结构；"
+                "超过1.5时深度约束主导，可能产生过于刚硬的结果。"
+            ),
         ),
         alias=MultilingualString(
             en="ControlNet conditioning scale",
             es="Escala de condicionamiento ControlNet",
             pt="Escala de condicionamento ControlNet",
+            de="ControlNet-Konditionierungsskala",
+            zh="ControlNet条件强度",
         ),
     )  # type: ignore
 
@@ -106,11 +132,23 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
                 "difusão. Selecione 'CPU' em sistemas sem GPU compatível, mas espere "
                 "tempos de geração significativamente mais longos."
             ),
+            de=(
+                "Hardware-Gerät für die Inferenz. Wählen Sie eine GPU-Option für "
+                "Hardware-Beschleunigung, die für Diffusionsmodelle dringend empfohlen "
+                "wird. Wählen Sie 'CPU' auf Systemen ohne kompatible GPU, aber rechnen "
+                "Sie mit deutlich längeren Generierungszeiten."
+            ),
+            zh=(
+                "推理硬件设备。强烈建议为扩散模型选择GPU选项以进行硬件加速。"
+                "在没有兼容GPU的系统上选择'CPU'，但预期生成时间将显著更长。"
+            ),
         ),
         alias=MultilingualString(
             en="Device",
             es="Dispositivo",
             pt="Dispositivo",
+            de="Gerät",
+            zh="设备",
         ),
     )  # type: ignore
 
@@ -177,6 +215,8 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
         en="Stable Diffusion XL V1 ControlNet",
         es="Stable Diffusion XL V1 ControlNet",
         pt="Stable Diffusion XL V1 ControlNet",
+        zh="Stable Diffusion XL V1 ControlNet",
+        de="Stable Diffusion XL V1 ControlNet",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -214,6 +254,23 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
             "(https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0-small), "
             "madebyollin/sdxl-vae-fp16-fix "
             "(https://huggingface.co/madebyollin/sdxl-vae-fp16-fix) e "
+            "stabilityai/stable-diffusion-xl-base-1.0 "
+            "(https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0)."
+        ),
+        zh=(
+            "结合 ControlNet 深度条件与 Stable Diffusion XL 1.0，"
+            "使用 Intel DPT-Hybrid-MiDaS 提取深度图，实现结构感知的高分辨率图像生成。"
+        ),
+        de=(
+            "Kombiniert die ControlNet-Tiefenkonditionierung mit der Stable "
+            "Diffusion XL 1.0-Pipeline für strukturbewusste Bildgenerierung. "
+            "Nimmt ein Eingabebild und einen Text-Prompt: Eine Tiefenkarte wird "
+            "mit dem DPT-Hybrid-MiDaS-Modell von Intel extrahiert und als "
+            "räumliche Bedingung zur Steuerung der Bildsynthese verwendet. "
+            "Verwendet diffusers/controlnet-depth-sdxl-1.0-small "
+            "(https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0-small), "
+            "madebyollin/sdxl-vae-fp16-fix "
+            "(https://huggingface.co/madebyollin/sdxl-vae-fp16-fix) und "
             "stabilityai/stable-diffusion-xl-base-1.0 "
             "(https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0)."
         ),

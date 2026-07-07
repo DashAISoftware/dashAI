@@ -10,11 +10,11 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class XlmRobertaTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained XLM-RoBERTa model for multilingual text classification.
+    """Pretrained XLM-RoBERTa model for multilingual text classification.
 
     XLM-RoBERTa is a multilingual version of RoBERTa trained on 2.5 TB of
     filtered CommonCrawl data covering 100 languages. It achieves strong
-    performance on cross-lingual classification without language-specific
+    performance on crosslingual classification without language specific
     fine-tuning. Requires the ``sentencepiece`` package for its tokeniser.
 
     References
@@ -28,10 +28,12 @@ class XlmRobertaTransformer(HuggingFaceTextClassificationTransformer):
         en="XLM-RoBERTa Transformer",
         es="Transformer XLM-RoBERTa",
         pt="Transformer XLM-RoBERTa",
+        de="XLM-RoBERTa Transformer",
+        zh="XLM-RoBERTa Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Multilingual RoBERTa for cross-lingual text classification "
+            "Multilingual RoBERTa for crosslingual text classification "
             "(100 languages). "
             "Downloads weights from Hugging Face on first use (internet required)."
         ),
@@ -44,6 +46,16 @@ class XlmRobertaTransformer(HuggingFaceTextClassificationTransformer):
             "RoBERTa multilingual para classificação de texto entre idiomas "
             "(100 idiomas). "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Mehrsprachiges RoBERTa für sprachübergreifende Textklassifikation "
+            "(100 Sprachen). "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
+        ),
+        zh=(
+            "支持跨语言文本分类的多语言 RoBERTa（100 种语言）。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#6A1B9A"

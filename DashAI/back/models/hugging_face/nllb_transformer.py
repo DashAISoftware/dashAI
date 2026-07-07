@@ -13,7 +13,10 @@ from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformerSchema,
 )
 from DashAI.back.models.translation_model import TranslationModel
-from DashAI.back.models.utils import GPU_OR_CPU_PLACEHOLDER
+from DashAI.back.models.utils import (
+    GPU_OR_CPU_PLACEHOLDER,
+    resolve_temp_checkpoint_dir,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -33,23 +36,42 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
             en=(
                 "Source language code for NLLB tokenizer (e.g. spa_Latn for Spanish, "
                 "eng_Latn for English). It uses BCP-47 language tags in the format"
-                "[Examples](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Examples](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
             ),
             es=(
                 "Código de idioma de origen para el tokenizer NLLB (ej. spa_Latn para "
                 "español, eng_Latn para inglés). Utiliza etiquetas de idioma BCP-47 "
                 "en el formato "
-                "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
             ),
             pt=(
                 "Código do idioma de origem para o tokenizer NLLB (ex. spa_Latn para "
                 "espanhol, eng_Latn para inglês). Utiliza tags de idioma BCP-47 "
                 "no formato "
-                "[Exemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Exemplos](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
+            ),
+            de=(
+                "Quellsprachcode für den NLLB-Tokenisierer (z.B. spa_Latn für Spanisch,"
+                "eng_Latn für Englisch). Verwendet BCP-47-Sprach-Tags im Format "
+                "[Beispiele](https://dl-translate.readthedocs.io/en/latest/available_lan"
+                "guages/#nllb-200)"
+            ),
+            zh=(
+                "NLLB 分词器的源语言代码（例如 spa_Latn 表示西班牙语，"
+                "eng_Latn 表示英语）。使用 BCP-47 语言标签格式 "
+                "[示例](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
             ),
         ),
         alias=MultilingualString(
-            en="Source language", es="Idioma de origen", pt="Idioma de origem"
+            en="Source language",
+            es="Idioma de origen",
+            pt="Idioma de origem",
+            de="Quellsprache",
+            zh="源语言",
         ),
     )  # type: ignore
     target_language: schema_field(
@@ -59,35 +81,54 @@ class NllbTransformerSchema(OpusMtEnESTransformerSchema):
             en=(
                 "Target language code for NLLB generation (e.g. eng_Latn for English, "
                 "fra_Latn for French). It uses BCP-47 language tags in the format "
-                "[Examples](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Examples](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
             ),
             es=(
                 "Código de idioma destino para la generación NLLB (ej. eng_Latn para "
                 "inglés, fra_Latn para francés). Utiliza etiquetas de idioma BCP-47 "
                 "en el formato "
-                "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Ejemplos](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
             ),
             pt=(
                 "Código do idioma de destino para a geração NLLB (ex. eng_Latn para "
                 "inglês, fra_Latn para francês). Utiliza tags de idioma BCP-47 "
                 "no formato "
-                "[Exemplos](https://dl-translate.readthedocs.io/en/latest/available_languages/#nllb-200)"
+                "[Exemplos](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
+            ),
+            de=(
+                "Zielsprachcode für die NLLB-Erzeugung (z.B. eng_Latn für Englisch, "
+                "fra_Latn für Französisch). Verwendet BCP-47-Sprach-Tags im Format "
+                "[Beispiele](https://dl-translate.readthedocs.io/en/latest/available_lan"
+                "guages/#nllb-200)"
+            ),
+            zh=(
+                "NLLB 生成的目标语言代码（例如 eng_Latn 表示英语，"
+                "fra_Latn 表示法语）。使用 BCP-47 语言标签格式 "
+                "[示例](https://dl-translate.readthedocs.io/en/latest/available_lang"
+                "uages/#nllb-200)"
             ),
         ),
         alias=MultilingualString(
-            en="Target language", es="Idioma destino", pt="Idioma de destino"
+            en="Target language",
+            es="Idioma destino",
+            pt="Idioma de destino",
+            de="Zielsprache",
+            zh="目标语言",
         ),
     )  # type: ignore
 
 
 class NllbTransformer(TranslationModel):
-    """Pre-trained transformer for configurable multilingual translation.
+    """Pretrained transformer for configurable multilingual translation.
 
     This model fine-tunes the ``facebook/nllb-200-distilled-600M`` checkpoint from
     Meta AI's No Language Left Behind (NLLB) project. The base model supports
     translation across 200 languages using a single unified model, identified by
     NLLB language codes of the form ``<iso639>_<script>`` (e.g. ``spa_Latn``,
-    ``eng_Latn``). The 600M-parameter distilled variant provides a balance between
+    ``eng_Latn``). The 600M parameter distilled variant provides a balance between
     translation quality and computational cost.
 
     Target language generation is guided by ``forced_bos_token_id``, which forces
@@ -107,11 +148,15 @@ class NllbTransformer(TranslationModel):
         en="NLLB Transformer",
         es="Transformer NLLB",
         pt="Transformer NLLB",
+        de="NLLB Transformer",
+        zh="NLLB Transformer",
     )
     DESCRIPTION: str = MultilingualString(
-        en=("NLLB multilingual model for configurable source-target translation."),
+        en=("NLLB multilingual model for configurable source to target translation."),
         es=("Modelo multilenguaje NLLB para traduccion configurable origen-destino."),
         pt=("Modelo multilingual NLLB para tradução configurável origem-destino."),
+        de=("Mehrsprachiges NLLB-Modell für konfigurierbare Quell-Ziel-Übersetzung."),
+        zh="NLLB 多语言模型，支持可配置的源语言到目标语言翻译。",
     )
     COLOR: str = "#5E35B1"
     ICON: str = "Translate"
@@ -167,7 +212,7 @@ class NllbTransformer(TranslationModel):
         Parameters
         ----------
         model : transformers.PreTrainedModel or None, optional
-            An already-loaded HuggingFace seq2seq model to reuse. If ``None``,
+            An already loaded HuggingFace seq2seq model to reuse. If ``None``,
             the ``facebook/nllb-200-distilled-600M`` checkpoint is downloaded
             and initialised. Default ``None``.
         **kwargs : dict
@@ -237,16 +282,16 @@ class NllbTransformer(TranslationModel):
 
         Sets ``tokenizer.src_lang`` to ``source_language`` before tokenizing
         so the NLLB tokenizer inserts the correct language prefix token. Each
-        sample is tokenized with truncation and max-length padding to 512
+        sample is tokenized with truncation and max length padding to 512
         tokens. When ``y`` is provided, target tokens are stored under the
         ``labels`` key.
 
         Parameters
         ----------
         x : DashAIDataset
-            Source-language dataset. Only the first column is used.
+            Source language dataset. Only the first column is used.
         y : DashAIDataset, optional
-            Target-language dataset. When provided, tokenized targets are added
+            Target language dataset. When provided, tokenized targets are added
             as ``labels``. When ``None``, only ``input_ids`` and
             ``attention_mask`` are returned (inference mode).
 
@@ -308,14 +353,14 @@ class NllbTransformer(TranslationModel):
         Parameters
         ----------
         x_train : DashAIDataset
-            Input source-language text features for training.
+            Input source language text features for training.
         y_train : DashAIDataset
-            Target-language translation labels for training.
+            Target language translation labels for training.
         x_validation : DashAIDataset, optional
-            Input source-language text features for validation. Default
+            Input source language text features for validation. Default
             ``None``.
         y_validation : DashAIDataset, optional
-            Target-language translation labels for validation. Default ``None``.
+            Target language translation labels for validation. Default ``None``.
 
         Returns
         -------
@@ -331,7 +376,9 @@ class NllbTransformer(TranslationModel):
 
         has_validation_data = x_validation is not None and y_validation is not None
 
-        output_root = Path("DashAI/back/user_models/temp_checkpoints_nllb")
+        output_root = resolve_temp_checkpoint_dir(
+            "DashAI/back/user_models/temp_checkpoints_nllb"
+        )
         output_root.mkdir(parents=True, exist_ok=True)
         run_output_dir = tempfile.mkdtemp(prefix="nllb_", dir=str(output_root))
 
@@ -387,7 +434,7 @@ class NllbTransformer(TranslationModel):
         Parameters
         ----------
         x_pred : DashAIDataset
-            Source-language dataset. Only the first column is used.
+            Source language dataset. Only the first column is used.
 
         Returns
         -------
@@ -405,6 +452,20 @@ class NllbTransformer(TranslationModel):
                 f"This {self.__class__.__name__} instance is not fitted yet. Call 'fit'"
                 " with appropriate arguments before using this estimator."
             )
+
+        import torch
+
+        if self.device.lower() == "gpu" and torch.cuda.is_available():
+            self.model.to("cuda")
+        else:
+            self.model.to("cpu")
+        self.model.eval()
+
+        if self.device.lower() == "gpu":
+            self.model.to("cuda")
+        else:
+            self.model.to("cpu")
+        self.model.eval()
 
         dataset = self.tokenize_data(x_pred)
         dataset.set_format(type="torch", columns=["input_ids", "attention_mask"])
@@ -432,7 +493,7 @@ class NllbTransformer(TranslationModel):
     ) -> "DashAIDataset":
         """Return the dataset unchanged.
 
-        No pre-processing transformations are required for this model. The
+        No preprocessing transformations are required for this model. The
         method exists for compatibility with the DashAI model interface.
 
         Parameters

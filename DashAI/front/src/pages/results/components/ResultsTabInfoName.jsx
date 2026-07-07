@@ -11,8 +11,8 @@ function ResultsTabInfoName({ runData }) {
         container
         direction="row"
         alignItems="center"
-        rowSpacing={3}
-        columnSpacing={15}
+        rowSpacing={6}
+        columnSpacing={30}
       >
         {runNameInfo.map((param) => (
           <Grid key={param.key}>

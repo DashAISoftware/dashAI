@@ -19,7 +19,6 @@ import ToolGrid from "./tool/ToolGrid";
 import FormExplorerSection from "./explorerCreation/FormExplorerSection";
 import FormConverterSection from "./converterCreation/FormConverterSection";
 import { getComponents } from "../../api/component";
-import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import { useTourContext } from "../tour/TourProvider";
 import { useExplorersAndConverters } from "./context/ExplorersAndConvertersContext";
@@ -33,10 +32,10 @@ function SectionHeader({ icon: Icon, label, count, mt, theme, t }) {
       sx={{
         display: "flex",
         alignItems: "center",
-        gap: 1,
-        mb: 1.5,
+        gap: 2,
+        mb: 3,
         mt: mt ?? 0,
-        pb: 0.5,
+        pb: 1,
         borderBottom: "1px solid",
         borderColor: theme.palette.divider,
       }}
@@ -67,7 +66,7 @@ function RightBarDatasetView() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          p: 2,
+          p: 4,
         }}
       >
         <Typography
@@ -96,12 +95,23 @@ export default function RightBar({ notebook, onToggle }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [converters, setConverters] = useState([]);
   const [explorers, setExplorers] = useState([]);
-  const [datasetColumns, setDatasetColumns] = useState([]);
   const tourContext = useTourContext();
   const [viewMode, setViewMode] = useState("list");
   const { enqueueSnackbar } = useSnackbar();
-  const { explorersAndConverters } = useExplorersAndConverters();
+  const { explorersAndConverters, columnTypes } = useExplorersAndConverters();
   const { t } = useTranslation(["datasets", "common"]);
+
+  const datasetColumns = useMemo(
+    () =>
+      Object.entries(columnTypes).map(([columnName, typeInfo], idx) => ({
+        id: idx,
+        columnName,
+        valueType: typeInfo.type || t("common:unknown"),
+        dataType: typeInfo.dtype || t("common:unknown"),
+        order: idx,
+      })),
+    [columnTypes, t],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -123,48 +133,12 @@ export default function RightBar({ notebook, onToggle }) {
     return () => {
       cancelled = true;
     };
-  }, [explorersAndConverters, t]);
+  }, [t]);
 
   // Clear search when the selected notebook changes
   useEffect(() => {
     setSearchQuery("");
   }, [notebook?.id]);
-
-  // Fetch dataset columns from notebook file
-  useEffect(() => {
-    let isMounted = true;
-    const fetchAllData = async () => {
-      try {
-        const types = await getDatasetTypesByFilePath(notebook.file_path);
-
-        if (!isMounted) return;
-
-        const datasetColumns = Object.entries(types).map(
-          ([columnName, typeInfo], idx) => ({
-            id: idx,
-            columnName: columnName,
-            valueType: typeInfo.type || t("common:unknown"),
-            dataType: typeInfo.dtype || t("common:unknown"),
-            order: idx,
-          }),
-        );
-
-        setDatasetColumns(datasetColumns);
-      } catch (error) {
-        console.error("Error fetching dataset info/types:", error);
-      }
-    };
-
-    if (notebook?.file_path) {
-      fetchAllData();
-    } else {
-      setDatasetColumns([]);
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [notebook?.file_path, explorersAndConverters]);
 
   // Validate explorers based on dataset columns
   const validateExplorer = (explorer) => {
@@ -173,6 +147,7 @@ export default function RightBar({ notebook, onToggle }) {
     const allowedTypes = explorer?.metadata?.allowed_types || [];
     const allowedDtypes = explorer?.metadata?.allowed_dtypes || [];
     const inputCardinality = explorer?.metadata?.input_cardinality || {};
+    const nonAllowedDtypes = explorer?.metadata?.non_allowed_dtypes || [];
 
     let validColumns = datasetColumns;
     let disabled = false;
@@ -191,6 +166,15 @@ export default function RightBar({ notebook, onToggle }) {
       validColumns = validColumns.filter((col) =>
         allowedDtypes.includes(col.dataType),
       );
+    }
+
+    // Apply global dtype blacklist declared by the backend
+    if (nonAllowedDtypes.length > 0) {
+      validColumns = validColumns.filter((col) => {
+        const dtypeKey =
+          col.dataType === t("common:unknown") ? "" : col.dataType;
+        return !nonAllowedDtypes.includes(dtypeKey);
+      });
     }
 
     // Check cardinality requirements
@@ -240,6 +224,7 @@ export default function RightBar({ notebook, onToggle }) {
 
     const allowedTypes = converter?.metadata?.allowed_types || [];
     const allowedDtypes = converter?.metadata?.allowed_dtypes || [];
+    const inputCardinality = converter?.metadata?.input_cardinality || {};
 
     let validColumns = datasetColumns;
     let disabled = false;
@@ -258,6 +243,27 @@ export default function RightBar({ notebook, onToggle }) {
       validColumns = validColumns.filter((col) =>
         allowedDtypes.includes(col.dataType),
       );
+    }
+
+    // Check cardinality requirements
+    if (inputCardinality.exact != null) {
+      if (validColumns.length < inputCardinality.exact) {
+        disabled = true;
+        tooltip += `\n\n${t("datasets:error.requiresExactColumns", {
+          required: inputCardinality.exact,
+          available: validColumns.length,
+          count: inputCardinality.exact,
+        })}`;
+      }
+    } else if (inputCardinality.min != null) {
+      if (validColumns.length < inputCardinality.min) {
+        disabled = true;
+        tooltip += `\n\n${t("datasets:error.requiresMinColumns", {
+          required: inputCardinality.min,
+          available: validColumns.length,
+          count: inputCardinality.min,
+        })}`;
+      }
     }
 
     // Check if there are no valid columns at all (some restriction was applied)
@@ -362,7 +368,7 @@ export default function RightBar({ notebook, onToggle }) {
       >
         <Box
           sx={{
-            p: 2,
+            p: 4,
             borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             height: 64,
@@ -388,7 +394,7 @@ export default function RightBar({ notebook, onToggle }) {
               <Tab
                 data-tour="explorers-tab"
                 label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <AnalyticsIcon sx={{ fontSize: 18 }} />
                     {t("datasets:label.explore")}
                   </Box>
@@ -397,7 +403,7 @@ export default function RightBar({ notebook, onToggle }) {
               <Tab
                 data-tour="converters-tab"
                 label={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <TransformIcon sx={{ fontSize: 18 }} />
                     {t("datasets:label.convert")}
                   </Box>
@@ -417,7 +423,7 @@ export default function RightBar({ notebook, onToggle }) {
               {/* Search bar */}
               <Box
                 sx={{
-                  p: 2,
+                  p: 4,
                   borderBottom: `1px solid ${theme.palette.ui.border}`,
                   flexShrink: 0,
                 }}
@@ -435,8 +441,8 @@ export default function RightBar({ notebook, onToggle }) {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  px: 2,
-                  py: 1,
+                  px: 4,
+                  py: 2,
                   borderBottom: `1px solid ${theme.palette.ui.border}`,
                   flexShrink: 0,
                 }}
@@ -491,10 +497,10 @@ export default function RightBar({ notebook, onToggle }) {
                           flex: 1,
                           overflowY: "auto",
                           overflowX: "hidden",
-                          p: 2,
+                          p: 4,
                           minWidth: 0,
                         }
-                      : { flex: 1, overflow: "auto", p: 2 };
+                      : { flex: 1, overflow: "auto", p: 4 };
 
                   const hasExplorers = filteredExplorers.length > 0;
                   const hasConverters = filteredConverters.length > 0;
@@ -525,7 +531,7 @@ export default function RightBar({ notebook, onToggle }) {
                                 icon={TransformIcon}
                                 label={t("datasets:label.convert")}
                                 count={filteredConverters.length}
-                                mt={hasExplorers ? 3 : 0}
+                                mt={hasExplorers ? 6 : 0}
                                 theme={theme}
                                 t={t}
                               />
@@ -542,7 +548,7 @@ export default function RightBar({ notebook, onToggle }) {
                               sx={{
                                 color: "text.secondary",
                                 textAlign: "center",
-                                py: 2,
+                                py: 4,
                               }}
                             >
                               {t("datasets:label.noToolsMatched")}

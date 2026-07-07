@@ -1,12 +1,16 @@
+import asyncio
 import hashlib
+import io
+import json
 import logging
+import os
 import time
 import zipfile
 from collections import OrderedDict
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Dict
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
-import pyarrow as pa
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
@@ -21,16 +25,116 @@ from DashAI.back.api.api_v1.schemas.datasets_params import (
     DatasetRenameColumnParams,
     DatasetUpdateParams,
 )
-from DashAI.back.dependencies.database.models import Dataset, ModelSession
+from DashAI.back.dependencies.database.models import Dataset, Folder, ModelSession
 
 if TYPE_CHECKING:
+    import pyarrow as pa
     from sqlalchemy.orm.session import sessionmaker
 
     from DashAI.back.dependencies.registry import ComponentRegistry
 
 
+def _build_image_preview_sample(
+    extract_dir: str, image_extensions: set, max_rows: int = 5
+) -> tuple:
+    """Walk an extracted imagefolder directory and return sample rows,
+    total count, and whether class subdirectories exist.
+
+    Returns
+    -------
+    tuple of (list[dict], int, bool)
+        (sample_rows, total_images, has_labels)
+    """
+    import os
+
+    samples = []
+    total = 0
+    labels_seen = set()
+    for root, dirs, files in os.walk(extract_dir):
+        dirs[:] = [
+            d for d in dirs if not d.startswith("__MACOSX") and not d.startswith(".")
+        ]
+        for f in sorted(files):
+            if f.startswith("."):
+                continue
+            ext = os.path.splitext(f)[1].lower()
+            if ext not in image_extensions:
+                continue
+            total += 1
+            label = os.path.basename(root)
+            labels_seen.add(label)
+            if len(samples) >= max_rows:
+                continue
+            filepath = os.path.join(root, f)
+            try:
+                with open(filepath, "rb") as fh:
+                    img_bytes = fh.read()
+                if len(img_bytes) == 0:
+                    continue
+                thumb = _image_bytes_to_thumbnail_data_uri(img_bytes)
+                if thumb == "[Image]":
+                    continue
+                samples.append({"image": thumb, "_label": label})
+            except Exception:
+                continue
+
+    has_labels = len(labels_seen) > 1
+
+    if has_labels:
+        for s in samples:
+            s["label"] = s.pop("_label")
+    else:
+        for s in samples:
+            s.pop("_label", None)
+
+    return samples, total, has_labels
+
+
+def _image_bytes_to_thumbnail_data_uri(img_bytes: bytes, max_size: int = 64) -> str:
+    """Convert raw image bytes to a small base64 data URI thumbnail."""
+    import base64
+    import io
+
+    from PIL import Image
+
+    try:
+        img = Image.open(io.BytesIO(img_bytes))
+        if img.mode in ("CMYK", "YCbCr", "LAB", "HSV"):
+            img = img.convert("RGB")
+        elif img.mode in ("LA", "PA"):
+            img = img.convert("RGBA")
+        img.thumbnail((max_size, max_size))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        b64 = base64.b64encode(buf.getvalue()).decode()
+        return f"data:image/png;base64,{b64}"
+    except Exception as e:
+        logger.warning(
+            "Failed to generate thumbnail (len=%d, head=%r): %s",
+            len(img_bytes),
+            img_bytes[:16],
+            e,
+        )
+        return "[Image]"
+
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+_SEED_MANIFEST_PATH = (
+    Path(__file__).parent.parent.parent.parent / "seeds" / "manifest.json"
+)
+
+
+def _load_seed_tasks() -> dict:
+    try:
+        with _SEED_MANIFEST_PATH.open() as f:
+            return {name: meta.get("task") for name, meta in json.load(f).items()}
+    except Exception:
+        return {}
+
+
+_SEED_TASKS: dict = _load_seed_tasks()
 
 
 # ---------------------------------------------------------------------------
@@ -44,7 +148,7 @@ class _FilteredTableCache:
     """LRU cache for filtered/sorted PyArrow tables with TTL eviction."""
 
     def __init__(self, max_size: int = _CACHE_MAX_SIZE, ttl: int = _CACHE_TTL_SECONDS):
-        self._store: OrderedDict[str, tuple[float, pa.Table, int]] = OrderedDict()
+        self._store: OrderedDict[str, tuple[float, "pa.Table", int]] = OrderedDict()
         self._max_size = max_size
         self._ttl = ttl
 
@@ -62,6 +166,13 @@ class _FilteredTableCache:
         if time.time() - ts > self._ttl:
             del self._store[key]
             return None
+        arrow_file_path = f"{path}/dataset/data.arrow"
+        try:
+            if os.path.getmtime(arrow_file_path) > ts:
+                del self._store[key]
+                return None
+        except OSError:
+            pass
         self._store.move_to_end(key)
         return table, total
 
@@ -70,7 +181,7 @@ class _FilteredTableCache:
         path: str,
         filter_model: str | None,
         sort_model: str | None,
-        table: pa.Table,
+        table: "pa.Table",
         total: int,
     ):
         key = self._make_key(path, filter_model, sort_model)
@@ -91,7 +202,7 @@ def _load_and_filter_table(
     path: str,
     filter_model: str | None,
     sort_model: str | None,
-) -> tuple[pa.Table, int, bool]:
+) -> tuple["pa.Table", int, bool]:
     """Load arrow file, apply filters and sorting.
 
     Returns (table, total, was_filtered).
@@ -106,7 +217,7 @@ def _load_and_filter_table(
     from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
 
     arrow_file_path = f"{path}/dataset/data.arrow"
-    with pa.memory_map(arrow_file_path, "r") as source:
+    with pa.OSFile(arrow_file_path, "rb") as source:
         reader = ipc.RecordBatchFileReader(source)
         batches = [reader.get_batch(i) for i in range(reader.num_record_batches)]
         table = pa.Table.from_batches(batches)
@@ -268,6 +379,8 @@ async def filter_dataset_file(
     pagination over the same filter+sort combination avoids re-reading
     and re-filtering the Arrow file.
     """
+    import pyarrow as pa
+
     cached = _filtered_table_cache.get(path, filter_model, sort_model)
     if cached is not None:
         table, total = cached
@@ -277,10 +390,35 @@ async def filter_dataset_file(
 
     start = page * page_size
     paged_table = table.slice(start, page_size)
-    rows = [
-        {col: paged_table[col][i].as_py() for col in paged_table.schema.names}
-        for i in range(paged_table.num_rows)
-    ]
+
+    image_cols = {
+        col
+        for col in paged_table.schema.names
+        if pa.types.is_struct(paged_table.schema.field(col).type)
+        or pa.types.is_large_binary(paged_table.schema.field(col).type)
+        or pa.types.is_binary(paged_table.schema.field(col).type)
+    }
+
+    rows = []
+    for i in range(paged_table.num_rows):
+        row = {}
+        for col in paged_table.schema.names:
+            val = paged_table[col][i].as_py()
+            if col in image_cols:
+                if isinstance(val, dict):
+                    img_bytes = val.get("bytes", b"")
+                elif isinstance(val, bytes):
+                    img_bytes = val
+                else:
+                    img_bytes = b""
+                row[col] = (
+                    _image_bytes_to_thumbnail_data_uri(img_bytes)
+                    if img_bytes
+                    else "[Image]"
+                )
+            else:
+                row[col] = val
+        rows.append(row)
 
     return JSONResponse(content={"rows": rows, "total": total})
 
@@ -374,7 +512,12 @@ async def get_datasets(
                 detail="Internal database error",
             ) from e
 
-    return datasets
+    result = []
+    for ds in datasets:
+        data = jsonable_encoder(ds)
+        data["task"] = _SEED_TASKS.get(ds.name)
+        result.append(data)
+    return result
 
 
 @router.get("/{dataset_id}")
@@ -926,7 +1069,7 @@ async def update_dataset(
     params: DatasetUpdateParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
-    """Updates the name of a dataset with the provided ID.
+    """Updates the name and/or folder of a dataset with the provided ID.
 
     Parameters
     ----------
@@ -952,27 +1095,36 @@ async def update_dataset(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
             )
 
-        if not params.name or not params.name.strip():
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Name cannot be empty",
-            )
+        if params.name is not None:
+            if not params.name.strip():
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Name cannot be empty",
+                )
+            new_name = params.name.strip()
+            if new_name != dataset.name:
+                exists = db.execute(
+                    select(Dataset.id).where(
+                        Dataset.name == new_name, Dataset.id != dataset_id
+                    )
+                ).scalar()
+                if exists:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Dataset name already exists",
+                    )
+                dataset.name = new_name
 
-        new_name = params.name.strip()
+        if "folder_id" in params.model_fields_set:
+            if params.folder_id is not None:
+                folder = db.get(Folder, params.folder_id)
+                if folder is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Folder not found",
+                    )
+            dataset.folder_id = params.folder_id
 
-        if new_name == dataset.name:
-            return dataset
-
-        exists = db.execute(
-            select(Dataset.id).where(Dataset.name == new_name, Dataset.id != dataset_id)
-        ).scalar()
-        if exists:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Dataset name already exists",
-            )
-
-        dataset.name = new_name
         try:
             db.commit()
             db.refresh(dataset)
@@ -1129,18 +1281,22 @@ async def rename_dataset_column(
                 # Update nan entries
                 splits_data["nan"][new_name] = splits_data["nan"].pop(old_name)
 
-                # Update general info
-                splits_data["general_info"]["dtypes"][new_name] = splits_data[
-                    "general_info"
-                ]["dtypes"].pop(old_name)
+                # Update general info (absent when compute_metadata=False)
+                if "general_info" in splits_data:
+                    splits_data["general_info"]["dtypes"][new_name] = splits_data[
+                        "general_info"
+                    ]["dtypes"].pop(old_name)
 
                 # Update quality info nan per ratio
-                splits_data["quality_info"]["nan_ratio_per_column"][new_name] = (
-                    splits_data["quality_info"]["nan_ratio_per_column"].pop(old_name)
-                )
+                if "quality_info" in splits_data:
+                    splits_data["quality_info"]["nan_ratio_per_column"][new_name] = (
+                        splits_data["quality_info"]["nan_ratio_per_column"].pop(
+                            old_name
+                        )
+                    )
 
                 # Update numeric_stats if column is numerical
-                if old_name in splits_data["numeric_stats"]:
+                if old_name in splits_data.get("numeric_stats", {}):
                     splits_data["numeric_stats"][new_name] = splits_data[
                         "numeric_stats"
                     ].pop(old_name)
@@ -1360,7 +1516,7 @@ async def get_dataset_file(
     end = start + page_size
     rows_collected = 0
 
-    with pa.memory_map(arrow_file_path, "r") as source:
+    with pa.OSFile(arrow_file_path, "rb") as source:
         reader = ipc.RecordBatchFileReader(source)
 
         current_index = 0
@@ -1380,11 +1536,32 @@ async def get_dataset_file(
             slice_end = min(batch.num_rows, end - batch_start)
             sliced_batch = batch.slice(slice_start, slice_end - slice_start)
 
+            image_cols = {
+                col
+                for col in sliced_batch.schema.names
+                if pa.types.is_struct(sliced_batch.schema.field(col).type)
+                or pa.types.is_large_binary(sliced_batch.schema.field(col).type)
+                or pa.types.is_binary(sliced_batch.schema.field(col).type)
+            }
+
             for j in range(sliced_batch.num_rows):
-                row = {
-                    col: sliced_batch[col][j].as_py()
-                    for col in sliced_batch.schema.names
-                }
+                row = {}
+                for col in sliced_batch.schema.names:
+                    val = sliced_batch[col][j].as_py()
+                    if col in image_cols:
+                        if isinstance(val, dict):
+                            img_bytes = val.get("bytes", b"")
+                        elif isinstance(val, bytes):
+                            img_bytes = val
+                        else:
+                            img_bytes = b""
+                        row[col] = (
+                            _image_bytes_to_thumbnail_data_uri(img_bytes)
+                            if img_bytes
+                            else "[Image]"
+                        )
+                    else:
+                        row[col] = val
                 rows.append(row)
                 rows_collected += 1
                 if rows_collected >= page_size:
@@ -1398,72 +1575,183 @@ async def get_dataset_file(
     return JSONResponse(content={"rows": rows, "total": total_rows})
 
 
+def _build_image_zip(table: "pa.Table") -> io.BytesIO:
+    """Build a ZIP buffer from an image dataset table.
+
+    Uses ZIP_STORED (no compression) because image formats (JPEG, PNG) are
+    already compressed, so DEFLATE gains nothing but wastes significant CPU time.
+    """
+    import pyarrow as pa
+
+    label_col = next(
+        (
+            col
+            for col in table.column_names
+            if not pa.types.is_struct(table.schema.field(col).type)
+            and (
+                pa.types.is_string(table.schema.field(col).type)
+                or pa.types.is_large_string(table.schema.field(col).type)
+                or pa.types.is_dictionary(table.schema.field(col).type)
+            )
+        ),
+        None,
+    )
+
+    image_cols = [
+        col
+        for col in table.column_names
+        if pa.types.is_struct(table.schema.field(col).type)
+    ]
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_STORED) as zf:
+        seen_paths: set = set()
+        for col in image_cols:
+            arr_col = table.column(col)
+            label_arr = table.column(label_col) if label_col else None
+            for i in range(table.num_rows):
+                val = arr_col[i].as_py()
+                if not (isinstance(val, dict) and val.get("bytes")):
+                    continue
+                img_bytes = val["bytes"]
+                raw_path = val.get("path") or ""
+                raw_ext = os.path.splitext(raw_path)[1].lstrip(".").lower()
+                ext = raw_ext if raw_ext else "png"
+                orig_fname = os.path.basename(raw_path) or f"{col}_{i}.{ext}"
+
+                if label_arr is not None:
+                    label_val = str(label_arr[i].as_py())
+                    entry = f"{label_val}/{orig_fname}"
+                else:
+                    entry = f"images/{orig_fname}"
+
+                if entry in seen_paths:
+                    stem, dot_ext = os.path.splitext(orig_fname)
+                    entry_base = (
+                        f"{label_val}/{stem}"
+                        if label_arr is not None
+                        else f"images/{stem}"
+                    )
+                    entry = f"{entry_base}_{i}{dot_ext}"
+                seen_paths.add(entry)
+                zf.writestr(entry, img_bytes)
+
+    zip_buffer.seek(0)
+    return zip_buffer
+
+
+def _iter_buffer(buf: io.BytesIO, chunk_size: int = 65536):
+    """Yield a BytesIO in fixed-size chunks for StreamingResponse."""
+    while True:
+        chunk = buf.read(chunk_size)
+        if not chunk:
+            break
+        yield chunk
+
+
+async def _build_export_response(
+    table: "pa.Table", dataset_name: str
+) -> StreamingResponse:
+    """Build a StreamingResponse for dataset export.
+
+    For image datasets (struct columns), produces a ZIP in ImageFolder format:
+    ``<label>/<original_filename>``. For tabular datasets, produces a plain CSV.
+
+    The CPU-bound work (ZIP/CSV construction) runs in a thread-pool executor so
+    it does not block FastAPI's async event loop.
+
+    Parameters
+    ----------
+    table : pa.Table
+        The (possibly filtered) Arrow table to export.
+    dataset_name : str
+        Used as the base filename in the Content-Disposition header.
+
+    Returns
+    -------
+    StreamingResponse
+        ZIP (image datasets) or CSV (tabular datasets).
+    """
+    import pyarrow as pa
+    import pyarrow.csv as csv
+
+    image_cols = [
+        col
+        for col in table.column_names
+        if pa.types.is_struct(table.schema.field(col).type)
+    ]
+
+    loop = asyncio.get_event_loop()
+
+    if image_cols:
+        zip_buffer = await loop.run_in_executor(None, _build_image_zip, table)
+        return StreamingResponse(
+            _iter_buffer(zip_buffer),
+            media_type="application/zip",
+            headers={"Content-Disposition": f"attachment; filename={dataset_name}.zip"},
+        )
+    else:
+        drop_cols = [
+            col
+            for col in table.column_names
+            if pa.types.is_binary(table.schema.field(col).type)
+            or pa.types.is_large_binary(table.schema.field(col).type)
+        ]
+        if drop_cols:
+            table = table.drop(drop_cols)
+
+        def _build_csv():
+            output = io.BytesIO()
+            csv.write_csv(table, output)
+            output.seek(0)
+            return output
+
+        csv_buffer = await loop.run_in_executor(None, _build_csv)
+        return StreamingResponse(
+            _iter_buffer(csv_buffer),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={dataset_name}.csv"},
+        )
+
+
 @router.get("/export/csv")
 async def export_dataset_as_csv(
     path: str,
+    filter_model: Optional[str] = None,
+    sort_model: Optional[str] = None,
 ):
-    """Export the complete dataset as CSV file.
+    """Export a dataset as CSV or ZIP, with optional filtering and sorting.
 
     Parameters
     ----------
     path : str
         The folder path of the dataset to export.
+    filter_model : str, optional
+        JSON-encoded MUI filter model (same format as ``/filter/``).
+    sort_model : str, optional
+        JSON-encoded MUI sort model (same format as ``/filter/``).
 
     Returns
     -------
     StreamingResponse
-        A streaming response with the complete dataset in CSV format.
+        CSV for tabular datasets; ZIP in ImageFolder format for image datasets.
     """
     import os
 
-    import pyarrow as pa
-    import pyarrow.csv as csv
-    import pyarrow.ipc as ipc
-
     try:
         arrow_file_path = f"{path}/dataset/data.arrow"
-
         if not os.path.exists(arrow_file_path):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Dataset file not found",
             )
-
-        # Read the complete Arrow file
-        with pa.memory_map(arrow_file_path, "r") as source:
-            import io
-
-            reader = ipc.RecordBatchFileReader(source)
-
-            # Read all batches and combine them into a single table
-            batches = []
-            for i in range(reader.num_record_batches):
-                batch = reader.get_batch(i)
-                batches.append(batch)
-
-            if not batches:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="No data found in dataset",
-                )
-
-            table = pa.Table.from_batches(batches)
-
-            # Convert to CSV
-            output = io.BytesIO()
-            csv.write_csv(table, output)
-            output.seek(0)
-
-            # Get dataset name from path for filename
-            dataset_name = os.path.basename(path.rstrip("/"))
-            filename = f"{dataset_name}.csv"
-
-            return StreamingResponse(
-                io.BytesIO(output.getvalue()),
-                media_type="text/csv",
-                headers={"Content-Disposition": f"attachment; filename={filename}"},
-            )
-
+        table, _total, _was_filtered = _load_and_filter_table(
+            path, filter_model, sort_model
+        )
+        dataset_name = os.path.basename(path.rstrip("/"))
+        return await _build_export_response(table, dataset_name)
+    except HTTPException:
+        raise
     except FileNotFoundError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -1483,7 +1771,7 @@ async def export_dataset_csv_by_id(
     dataset_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
-    """Export the entire dataset as a CSV file by dataset ID.
+    """Export the entire dataset as a CSV or ZIP file by dataset ID.
 
     Parameters
     ----------
@@ -1491,18 +1779,13 @@ async def export_dataset_csv_by_id(
         ID of the dataset to export.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
-        The generated session can be used to access and query the database.
 
     Returns
     -------
     StreamingResponse
-        A streaming response that provides the CSV file content.
+        CSV for tabular datasets; ZIP in ImageFolder format for image datasets.
     """
     import os
-
-    import pyarrow as pa
-    import pyarrow.csv as csv
-    import pyarrow.ipc as ipc
 
     from DashAI.back.core.enums.status import DatasetStatus
 
@@ -1531,40 +1814,11 @@ async def export_dataset_csv_by_id(
                     detail="Dataset file not found",
                 )
 
-            # Read the complete Arrow file
-            with pa.memory_map(arrow_file_path, "r") as source:
-                import io
+            table, _total, _was_filtered = _load_and_filter_table(file_path, None, None)
+            return await _build_export_response(table, dataset.name)
 
-                reader = ipc.RecordBatchFileReader(source)
-
-                # Read all batches and combine them into a single table
-                batches = []
-                for i in range(reader.num_record_batches):
-                    batch = reader.get_batch(i)
-                    batches.append(batch)
-
-                if not batches:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="No data found in dataset",
-                    )
-
-                table = pa.Table.from_batches(batches)
-
-                # Convert to CSV
-                output = io.BytesIO()
-                csv.write_csv(table, output)
-                output.seek(0)
-
-                # Use dataset name for filename
-                filename = f"{dataset.name}.csv"
-
-                return StreamingResponse(
-                    io.BytesIO(output.getvalue()),
-                    media_type="text/csv",
-                    headers={"Content-Disposition": f"attachment; filename={filename}"},
-                )
-
+        except HTTPException:
+            raise
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -1628,10 +1882,12 @@ async def preview_with_types(
         ) as tmp_file:
             content = await file.read()
             tmp_file.write(content)
+            previewed_bytes = len(content)
             tmp_file_path = tmp_file.name
 
         try:
             inference_rows = parsed_params.get("inference_rows", 1000)
+            use_native_types = parsed_params.get("use_native_types", False)
             dataloader_name = parsed_params.get("dataloader_name")
 
             if not dataloader_name:
@@ -1649,6 +1905,11 @@ async def preview_with_types(
             dataloader_cls = component_registry[dataloader_name]["class"]
             dataloader = dataloader_cls()
 
+            native_types = None
+            should_use_native = (
+                use_native_types and dataloader_cls.SUPPORTS_NATIVE_TYPES
+            )
+
             if file.filename.endswith(".zip"):
                 allowed_exts = dataloader_cls.SUPPORTED_EXTENSIONS
                 extract_dir = tempfile.mkdtemp()
@@ -1656,14 +1917,69 @@ async def preview_with_types(
                     with zipfile.ZipFile(tmp_file_path, "r") as zf:
                         zf.extractall(extract_dir)
 
+                    image_extensions = {
+                        ".png",
+                        ".jpg",
+                        ".jpeg",
+                        ".bmp",
+                        ".gif",
+                        ".tiff",
+                        ".webp",
+                    }
                     matched_file = None
-                    for root, _, files in os.walk(extract_dir):
+                    has_images = False
+                    for root, dirs, files in os.walk(extract_dir):
+                        dirs[:] = [
+                            d
+                            for d in dirs
+                            if not d.startswith("__MACOSX") and not d.startswith(".")
+                        ]
                         for f in files:
-                            if os.path.splitext(f)[1].lower() in allowed_exts:
+                            if f.startswith("."):
+                                continue
+                            ext = os.path.splitext(f)[1].lower()
+                            if ext in allowed_exts:
                                 matched_file = os.path.join(root, f)
                                 break
+                            if ext in image_extensions:
+                                has_images = True
                         if matched_file:
                             break
+
+                    if matched_file is None and has_images:
+                        sample_rows, total_images, has_labels = (
+                            _build_image_preview_sample(
+                                extract_dir, image_extensions, max_rows=5
+                            )
+                        )
+                        shutil.rmtree(extract_dir, ignore_errors=True)
+                        os.unlink(tmp_file_path)
+
+                        schema = {
+                            "image": {"type": "Image", "dtype": "struct"},
+                        }
+                        inferred_types = {
+                            "image": {"type": "Image", "dtype": "struct"},
+                        }
+                        if has_labels:
+                            schema["label"] = {
+                                "type": "Categorical",
+                                "dtype": "string",
+                            }
+                            inferred_types["label"] = {
+                                "type": "Categorical",
+                                "dtype": "string",
+                                "encoder": "one_hot",
+                            }
+
+                        return {
+                            "sample": sample_rows,
+                            "schema": schema,
+                            "inferred_types": inferred_types,
+                            "preview_row_count": total_images,
+                            "types_inferred": False,
+                            "previewed_bytes": previewed_bytes,
+                        }
 
                     if matched_file is None:
                         raise HTTPException(
@@ -1680,6 +1996,11 @@ async def preview_with_types(
                         n_rows=inference_rows,
                     )
 
+                    if should_use_native:
+                        native_types = dataloader.extract_native_types(
+                            matched_file, parsed_params
+                        )
+
                 finally:
                     with contextlib.suppress(Exception):
                         shutil.rmtree(extract_dir, ignore_errors=True)
@@ -1691,17 +2012,25 @@ async def preview_with_types(
                     n_rows=inference_rows,
                 )
 
+                if should_use_native:
+                    native_types = dataloader.extract_native_types(
+                        tmp_file_path, parsed_params
+                    )
+
             sample_df = loaded_dataset.head(100)
 
             table = pa.Table.from_pandas(loaded_dataset)
             arrow_schema = arrow_to_dashai_schema(table)
 
-            methods = parsed_params.get("methods", ["DashAIPtype"])
-            inferred_types = {}
+            if native_types is not None:
+                inferred_types = native_types
+            else:
+                methods = parsed_params.get("methods", ["DashAIPtype"])
+                inferred_types = {}
 
-            for method in methods:
-                method_types = infer_types(loaded_dataset, method=method)
-                inferred_types.update(method_types)
+                for method in methods:
+                    method_types = infer_types(loaded_dataset, method=method)
+                    inferred_types.update(method_types)
 
             sample_df = sample_df.replace({np.nan: None, np.inf: None, -np.inf: None})
             sample = sample_df.to_dict(orient="records")
@@ -1711,6 +2040,8 @@ async def preview_with_types(
                 "schema": arrow_schema,
                 "inferred_types": inferred_types,
                 "preview_row_count": len(loaded_dataset),
+                "types_inferred": True,
+                "previewed_bytes": previewed_bytes,
             }
 
         finally:

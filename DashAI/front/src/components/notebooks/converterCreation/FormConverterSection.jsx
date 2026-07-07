@@ -7,6 +7,7 @@ import ParameterStepConverter from "./ParameterStepConverter";
 import ScopeStepConverter from "./ScopeStepConverter";
 import { startJobPolling } from "../../../utils/jobPoller";
 import { enqueueConverterJob } from "../../../api/job";
+import { getDatasetTypesByFilePath } from "../../../api/datasets";
 import { useTranslation } from "react-i18next";
 
 export default function FormConverterSection({
@@ -20,8 +21,12 @@ export default function FormConverterSection({
   const [targetColumn, setTargetColumn] = useState(null);
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
-  const { explorersAndConverters, setExplorersAndConverters } =
-    useExplorersAndConverters();
+  const {
+    explorersAndConverters,
+    setExplorersAndConverters,
+    setColumnTypes,
+    setLastAddedItemId,
+  } = useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["common", "datasets"]);
 
@@ -44,6 +49,7 @@ export default function FormConverterSection({
       .then((response) => {
         const data = { ...response, type: "converter" };
         setExplorersAndConverters((prev) => [...prev, data]);
+        setLastAddedItemId({ id: data.id, type: "converter" });
         enqueueSnackbar(
           t("datasets:message.converterCreated", { name: tool.name }),
           {
@@ -74,6 +80,12 @@ export default function FormConverterSection({
                         : item,
                     ),
                   );
+
+                  if (notebook?.file_path) {
+                    getDatasetTypesByFilePath(notebook.file_path)
+                      .then((types) => setColumnTypes(types ?? {}))
+                      .catch(console.error);
+                  }
                 },
 
                 (result) => {
@@ -148,6 +160,8 @@ export default function FormConverterSection({
       {step === 1 && (
         <ParameterStepConverter
           converter={tool.name}
+          tool={tool}
+          selectedColumns={columns}
           initialParams={{}}
           handleSaveConverter={handleSaveConverter}
           setStep={setStep}

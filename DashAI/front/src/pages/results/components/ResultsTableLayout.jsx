@@ -71,7 +71,7 @@ function ResultsTableLayout({
   return (
     <Paper
       sx={{
-        p: 4,
+        p: 8,
       }}
     >
       {!loading ? (
@@ -80,7 +80,7 @@ function ResultsTableLayout({
             sx={{
               display: "flex",
               justifyContent: "space-between",
-              pb: 4,
+              pb: 8,
               pt: 0,
             }}
           >

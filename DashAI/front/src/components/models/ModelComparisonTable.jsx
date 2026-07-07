@@ -18,6 +18,7 @@ import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
 import { useTableLocalization } from "../../utils/useTableLocalization";
 import api from "../../api/api";
+import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 
 /**
  * Compact comparison table showing all runs in a session.
@@ -41,8 +42,9 @@ function ModelComparisonTable({
   const [scores, setScores] = useState({});
   const [loadingScores, setLoadingScores] = useState(false);
   const [runs, setRuns] = useState(initialRuns);
+  const [runToDelete, setRunToDelete] = useState(null);
 
-  const { t } = useTranslation(["models", "common"]);
+  const { t, i18n } = useTranslation(["models", "common"]);
   const theme = useTheme();
   const localization = useTableLocalization();
 
@@ -68,7 +70,7 @@ function ModelComparisonTable({
       }
     };
     fetchModels();
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -80,7 +82,7 @@ function ModelComparisonTable({
       }
     };
     fetchMetrics();
-  }, []);
+  }, [i18n.language]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Fetch scoring profiles for this session's task
@@ -112,12 +114,20 @@ function ModelComparisonTable({
     fetchProfiles();
   }, [session?.task_name]);
 
+  // Stable string that changes only when a run's status changes.
+  // Used as a dep so the score fetch re-triggers after training completes
+  // without firing on every unrelated re-render of the parent.
+  const runStatusSignature = useMemo(
+    () => initialRuns.map((r) => `${r.id}:${r.status}`).join(","),
+    [initialRuns],
+  );
+
   // ────────────────────────────────────────────────────────────────────────
-  // Fetch scores when profile or runs change
+  // Fetch scores when profile, split, session or any run status changes
   // ────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!runs.length || !selectedProfile || !session?.id) return;
+    if (!initialRuns.length || !selectedProfile || !session?.id) return;
 
     const fetchScores = async () => {
       setLoadingScores(true);
@@ -150,7 +160,7 @@ function ModelComparisonTable({
     };
 
     fetchScores();
-  }, [selectedProfile, metricSplit, session?.id]);
+  }, [selectedProfile, metricSplit, session?.id, runStatusSignature]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Build columns
@@ -233,7 +243,7 @@ function ModelComparisonTable({
             >
               {metricName}
               {directionArrow && (
-                <Box component="span" sx={{ ml: 0.5, opacity: 0.7 }}>
+                <Box component="span" sx={{ ml: 1, opacity: 0.7 }}>
                   {directionArrow}
                 </Box>
               )}
@@ -256,7 +266,7 @@ function ModelComparisonTable({
             bestVal !== undefined && Math.abs(value - bestVal) < 1e-9;
 
           return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {isBest && (
                 <Tooltip title={t("models:label.bestModel")} placement="top">
                   <Box
@@ -295,8 +305,8 @@ function ModelComparisonTable({
         </Tooltip>
       ),
       Cell: ({ row }) => {
-        const { statusCode, id } = row.original;
-        const isRunning = statusCode === 1 || statusCode === 2;
+        const { status, id } = row.original;
+        const isRunning = status === 1 || status === 2;
         if (isRunning) return "-";
 
         const scoreData = scores[id];
@@ -316,7 +326,7 @@ function ModelComparisonTable({
             <Typography
               variant="body2"
               component="div"
-              sx={{ fontWeight: "bold", mb: 0.5 }}
+              sx={{ fontWeight: "bold", mb: 1 }}
             >
               {t("models:label.score")}: {score.toFixed(1)}/100
             </Typography>
@@ -335,7 +345,7 @@ function ModelComparisonTable({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 0.5,
+                gap: 1,
                 cursor: "help",
                 fontWeight: "bold",
               }}
@@ -412,7 +422,7 @@ function ModelComparisonTable({
             row.original.status === 1 || row.original.status === 2;
 
           return (
-            <Box sx={{ display: "flex", gap: 0.5 }}>
+            <Box sx={{ display: "flex", gap: 1 }}>
               <Tooltip title={t("common:train")}>
                 <span>
                   <IconButton
@@ -448,7 +458,9 @@ function ModelComparisonTable({
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onDelete(runs.find((r) => r.id === row.original.id));
+                      setRunToDelete(
+                        runs.find((r) => r.id === row.original.id),
+                      );
                     }}
                     disabled={isRunning}
                     color="error"
@@ -501,8 +513,8 @@ function ModelComparisonTable({
     enablePagination: false,
     enableTopToolbar: false,
     enableBottomToolbar: false,
-    muiTableBodyCellProps: { sx: { py: 0.25, whiteSpace: "pre" } },
-    muiTableHeadCellProps: { sx: { py: 0.5 } },
+    muiTableBodyCellProps: { sx: { py: 1, whiteSpace: "pre" } },
+    muiTableHeadCellProps: { sx: { py: 1 } },
     state: { columnOrder },
     muiTableBodyRowProps: ({ row }) => ({
       onClick: () => {
@@ -533,8 +545,8 @@ function ModelComparisonTable({
       {/* Profile selector */}
       <Box
         sx={{
-          px: 1.5,
-          py: 0.5,
+          px: 3,
+          py: 1,
           display: "flex",
           alignItems: "center",
           gap: 1,
@@ -586,6 +598,16 @@ function ModelComparisonTable({
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <MaterialReactTable table={table} />
       </Box>
+
+      <DeleteConfirmationModal
+        open={Boolean(runToDelete)}
+        onClose={() => setRunToDelete(null)}
+        onConfirm={() => {
+          onDelete(runToDelete);
+          setRunToDelete(null);
+        }}
+        content={t("models:message.confirmDeleteRun")}
+      />
     </Box>
   );
 }

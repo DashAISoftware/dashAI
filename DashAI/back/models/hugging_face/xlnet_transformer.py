@@ -10,7 +10,7 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class XlnetTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained XLNet model for English text classification.
+    """Pretrained XLNet model for English text classification.
 
     XLNet is an autoregressive language model that maximises the expected
     log-likelihood over all permutations of the factorisation order. Unlike BERT,
@@ -28,6 +28,8 @@ class XlnetTransformer(HuggingFaceTextClassificationTransformer):
         en="XLNet Transformer",
         es="Transformer XLNet",
         pt="Transformer XLNet",
+        de="XLNet Transformer",
+        zh="XLNet Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -41,6 +43,15 @@ class XlnetTransformer(HuggingFaceTextClassificationTransformer):
         pt=(
             "Modelo XLNet autorregressivo para classificação de texto em inglês. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Autoregressives XLNet-Modell für englische Textklassifikation. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
+        ),
+        zh=(
+            "自回归 XLNet 模型，用于英文文本分类。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#37474F"

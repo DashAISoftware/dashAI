@@ -7,12 +7,12 @@ export default function DimensionsForm({ data, handleTraceChange }) {
   const theme = useTheme();
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 6 }}>
       {data[0].dimensions.map((dim, idx) => (
         <Box
           key={idx}
           sx={{
-            p: 2,
+            p: 4,
             border: `1px solid ${
               theme.palette.ui.borderLight || theme.palette.divider
             }`,
@@ -20,7 +20,7 @@ export default function DimensionsForm({ data, handleTraceChange }) {
             bgcolor: theme.palette.background.default,
           }}
         >
-          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 4 }}>
             {t("datasets:label.dimensionIdx", {
               idx: idx + 1,
               label: dim.label || `Dimension ${idx + 1}`,

@@ -8,9 +8,9 @@ import {
   SchoolOutlined as TutorialsIcon,
   GitHub as GitHubIcon,
   LanguageOutlined as WebsiteIcon,
-  ForumOutlined as ForumIcon,
   ChatBubbleOutlineOutlined as DiscordIcon,
-  AlternateEmailOutlined as TwitterIcon,
+  CampaignOutlined as MailingListIcon,
+  MailOutlineOutlined as MailIcon,
   OpenInNew as OpenInNewIcon,
 } from "@mui/icons-material";
 import Box from "@mui/material/Box";
@@ -41,25 +41,40 @@ const SIDEBAR_LINKS = {
     { key: "website", href: "https://www.dash-ai.com", Icon: WebsiteIcon },
   ],
   community: [
-    { key: "forum", href: "#", Icon: ForumIcon },
-    { key: "discord", href: "#", Icon: DiscordIcon },
-    { key: "twitter", href: "#", Icon: TwitterIcon },
+    {
+      key: "discord",
+      href: "https://discord.gg/n9y2hEjFng",
+      Icon: DiscordIcon,
+    },
+    {
+      key: "mailingList",
+      href: "https://groups.google.com/g/dashai-updates",
+      Icon: MailingListIcon,
+    },
+    {
+      key: "directMail",
+      href: "mailto:dashai.nocode@gmail.com",
+      Icon: MailIcon,
+    },
   ],
 };
 
 function SidebarSection({ label, links, t, theme }) {
   return (
     <Box
-      sx={{ pb: 2, borderBottom: `1px solid ${theme.palette.ui.borderLight}` }}
+      sx={{ pb: 4, borderBottom: `1px solid ${theme.palette.ui.borderLight}` }}
     >
       <Typography
+        variant="caption"
         sx={{
           color: theme.palette.text.disabled,
-          px: "20px",
-          py: "10px",
-          pb: "6px",
+          px: 4,
+          py: 2,
+          pb: 1,
           display: "block",
-          ...theme.typography.sectionLabel,
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          fontFamily: '"Geist Mono", monospace',
         }}
       >
         {label}
@@ -69,14 +84,14 @@ function SidebarSection({ label, links, t, theme }) {
           key={key}
           component="a"
           href={href}
-          target={href !== "#" ? "_blank" : undefined}
+          target={href.startsWith("http") ? "_blank" : undefined}
           rel="noopener noreferrer"
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: "10px",
-            px: "20px",
-            py: "8px",
+            gap: 2,
+            px: 4,
+            py: 2,
             borderLeft: "2px solid transparent",
             textDecoration: "none",
             color: theme.palette.text.secondary,
@@ -85,7 +100,7 @@ function SidebarSection({ label, links, t, theme }) {
             "&:hover": {
               background: theme.palette.ui.hover,
               color: theme.palette.text.primary,
-              borderLeftColor: theme.palette.accent.amberBorder,
+              borderLeftColor: `${theme.palette.primary.main}38`,
             },
             "&:hover .ext-icon": { opacity: 1 },
           }}
@@ -203,7 +218,7 @@ function Home() {
         <Box
           component="aside"
           sx={{
-            width: 220,
+            width: 230,
             flexShrink: 0,
             borderRight: `1px solid ${theme.palette.divider}`,
             background: theme.palette.background.box,
@@ -224,24 +239,23 @@ function Home() {
             t={t}
             theme={theme}
           />
-          {/* Version string pinned to bottom */}
+          {/* Copyright pinned to bottom */}
           <Box
             sx={{
               mt: "auto",
-              px: "20px",
-              py: "16px",
+              px: 4,
+              py: 4,
               borderTop: `1px solid ${theme.palette.divider}`,
             }}
           >
             <Typography
+              variant="sectionLabel"
               sx={{
-                fontSize: "9px",
                 color: theme.palette.text.disabled,
-                letterSpacing: "0.04em",
                 lineHeight: 1.9,
               }}
             >
-              v0.2.1-beta · MIT License
+              {`© ${new Date().getFullYear()} dashAI - MIT License`}
             </Typography>
           </Box>
         </Box>
@@ -258,14 +272,11 @@ function Home() {
           {/* Page header */}
           <Box
             sx={{
-              px: "28px",
-              py: "20px",
-              pb: "18px",
+              px: 6,
+              py: 4,
+              pb: 4,
               borderBottom: `1px solid ${theme.palette.divider}`,
-              background:
-                theme.palette.mode === "dark"
-                  ? "rgba(12,12,10,0.7)"
-                  : theme.palette.background.box,
+              background: theme.palette.background.default,
             }}
           >
             <Typography variant="h3" sx={{ color: theme.palette.text.primary }}>
@@ -277,7 +288,7 @@ function Home() {
                 color: theme.palette.text.disabled,
                 fontWeight: 300,
                 lineHeight: 1.65,
-                mt: "3px",
+                mt: 1,
               }}
             >
               {t("home:label.welcomeSubtitle")}
@@ -287,13 +298,14 @@ function Home() {
           {/* 2x2 module card grid */}
           <Box
             sx={{
-              p: "14px",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gridTemplateRows: "1fr 1fr",
-              gap: "14px",
-              height: "70%",
-              width: "80%",
+              p: 4,
+              display: { xs: "flex", lg: "grid" },
+              flexDirection: { xs: "column", lg: "row" },
+              gridTemplateColumns: { lg: "1fr 1fr" },
+              gridTemplateRows: { lg: "1fr 1fr" },
+              gap: { xs: 2, lg: 4 },
+              height: { xs: "auto", lg: "70%" },
+              width: { xs: "100%", lg: "80%" },
               minHeight: 0,
             }}
           >
@@ -301,7 +313,11 @@ function Home() {
               <Box
                 key={mod.to}
                 data-tour={mod.tourAttr || undefined}
-                sx={{ minHeight: 0, height: "100%" }}
+                sx={{
+                  minHeight: 0,
+                  height: { xs: "auto", lg: "100%" },
+                  flexShrink: { xs: 0, lg: 1 },
+                }}
               >
                 <HomeButton
                   title={mod.title}

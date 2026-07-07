@@ -111,7 +111,7 @@ function ResultsTabHyperparameters({ runData }) {
   ) : !historicalPlot ? (
     <Box>{t("models:label.noHyperparameterPlotsAvailable")}</Box>
   ) : (
-    <Grid container spacing={2} direction="column">
+    <Grid container spacing={4} direction="column">
       <Grid container direction="column">
         <Plot
           data={historicalPlot?.data}

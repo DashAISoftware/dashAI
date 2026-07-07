@@ -33,6 +33,8 @@ class SkewedChi2SamplerSchema(BaseSchema):
             en="The skewedness parameter of the chi-squared kernel.",
             es="El parámetro de sesgo del kernel chi-cuadrado.",
             pt="O parâmetro de enviesamento do kernel qui-quadrado.",
+            de="Der Schiefheitsparameter des Chi-Quadrat-Kernels.",
+            zh="卡方核的偏斜参数。",
         ),
     )  # type: ignore
     n_components: schema_field(
@@ -52,6 +54,11 @@ class SkewedChi2SamplerSchema(BaseSchema):
                 "Número de amostras de Monte Carlo por característica original. "
                 "Equivale à dimensionalidade do espaço de características calculado."
             ),
+            de=(
+                "Anzahl der Monte-Carlo-Stichproben pro ursprünglichem Merkmal. "
+                "Entspricht der Dimensionalität des berechneten Merkmalsraums."
+            ),
+            zh="每个原始特征的蒙特卡罗样本数，等于计算出的特征空间的维度。",
         ),
     )  # type: ignore
     random_state: schema_field(
@@ -73,6 +80,15 @@ class SkewedChi2SamplerSchema(BaseSchema):
                 "deslocamentos aleatórios ao ajustar os dados. Passe um inteiro "
                 "para obter resultados reproduzíveis."
             ),
+            de=(
+                "Pseudozufallszahlengenerator zur Steuerung der Erzeugung zufälliger "
+                "Gewichte und Versätze beim Anpassen der Trainingsdaten. "
+                "Ganzzahl übergeben für reproduzierbare Ausgabe."
+            ),
+            zh=(
+                "用于控制拟合训练数据时随机权重和随机偏移生成的伪随机数生成器。"
+                "传入整数以获得可重现的输出。"
+            ),
         ),
     )  # type: ignore
 
@@ -83,7 +99,7 @@ class SkewedChi2Sampler(
     """Approximate the skewed chi-squared kernel feature map
     via random Fourier features.
 
-    The skewed chi-squared kernel is well-suited for histogram-based features
+    The skewed chi-squared kernel is well suited for histogram-based features
     (e.g. visual bag-of-words, colour histograms) and is defined as:
 
         K(x, y) = prod_j  2 * sqrt(x_j + c) * sqrt(y_j + c) /
@@ -124,13 +140,20 @@ class SkewedChi2Sampler(
             "Aproxima o mapa de características de um kernel qui-quadrado por "
             "aproximação de Monte Carlo de sua transformada de Fourier."
         ),
+        de=(
+            "Approximiert die Merkmalszuordnung eines Chi-Quadrat-Kernels durch "
+            "Monte-Carlo-Approximation seiner Fourier-Transformation."
+        ),
+        zh="通过蒙特卡罗近似其傅里叶变换来近似卡方核的特征映射。",
     )
     DISPLAY_NAME = MultilingualString(
         en="Skewed Chi² Sampler",
-        es="Muestreador Chi²",
+        es="Muestreador Chi² Sesgado",
         pt="Amostrador Qui-2 Enviesado",
+        de="Schiefer Chi²-Stichprobennehmer",
+        zh="偏斜卡方采样器",
     )
-    IMAGE_PREVIEW = "skewed_chi_2_sampler.png"
+    IMAGE_PREVIEW = "skewed_chi2_sampler.png"
 
     metadata = {"allowed_types": [Float, Integer], "allowed_dtypes": []}
 

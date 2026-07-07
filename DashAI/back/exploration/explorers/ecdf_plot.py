@@ -11,8 +11,12 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import (
+    NON_NUMERIC_DTYPES,
+    BaseExplorerSchema,
+)
 from DashAI.back.exploration.distribution_explorer import DistributionExplorer
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
 
 if TYPE_CHECKING:
@@ -34,7 +38,7 @@ class ECDFPlotSchema(BaseExplorerSchema):
     ``color_column`` splits the ECDF into separate colour-coded traces for each
     distinct value of the chosen column, making it easy to compare distributions
     across groups on the same axes.  ``facet_col`` and ``facet_row`` create a
-    grid of sub-plots, one per category, for column-wise and row-wise faceting
+    grid of subplots, one per category, for column wise and row wise faceting
     respectively.
 
     ``ecdf_norm`` sets how the y-axis is scaled: ``"probability"`` maps the
@@ -50,9 +54,15 @@ class ECDFPlotSchema(BaseExplorerSchema):
             en=("Column used to color the ECDF plot."),
             es=("Columna usada para colorear el gráfico ECDF."),
             pt=("Coluna usada para colorir o gráfico ECDF."),
+            de=("Spalte zur Einfärbung des ECDF-Diagramms."),
+            zh="用于为ECDF图着色的列。",
         ),
         alias=MultilingualString(
-            en="Color column", es="Columna de color", pt="Coluna de cor"
+            en="Color column",
+            es="Columna de color",
+            pt="Coluna de cor",
+            de="Farbspalte",
+            zh="颜色列",
         ),
     )  # type: ignore
     facet_col: schema_field(
@@ -62,9 +72,15 @@ class ECDFPlotSchema(BaseExplorerSchema):
             en=("Column used to facet the ECDF plot by columns."),
             es=("Columna usada para facetar el gráfico ECDF por columnas."),
             pt=("Coluna usada para facetar o gráfico ECDF por colunas."),
+            de=("Spalte zur spaltenseitigen Facettierung des ECDF-Diagramms."),
+            zh="用于按列对ECDF图进行分面的列。",
         ),
         alias=MultilingualString(
-            en="Facet column", es="Facetear por columnas", pt="Facetar por colunas"
+            en="Facet column",
+            es="Facetear por columnas",
+            pt="Facetar por colunas",
+            de="Facettenspalte",
+            zh="分面列",
         ),
     )  # type: ignore
     facet_row: schema_field(
@@ -74,9 +90,15 @@ class ECDFPlotSchema(BaseExplorerSchema):
             en=("Column used to facet the ECDF plot by rows."),
             es=("Columna usada para facetar el gráfico ECDF por filas."),
             pt=("Coluna usada para facetar o gráfico ECDF por linhas."),
+            de=("Spalte zur zeilenseitigen Facettierung des ECDF-Diagramms."),
+            zh="用于按行对ECDF图进行分面的列。",
         ),
         alias=MultilingualString(
-            en="Facet row", es="Facetear por filas", pt="Facetar por linhas"
+            en="Facet row",
+            es="Facetear por filas",
+            pt="Facetar por linhas",
+            de="Facettenzeile",
+            zh="分面行",
         ),
     )  # type: ignore
     ecdf_norm: schema_field(
@@ -86,9 +108,15 @@ class ECDFPlotSchema(BaseExplorerSchema):
             en=("Type of normalization used for the ECDF plot."),
             es=("Tipo de normalización usada en el gráfico ECDF."),
             pt=("Tipo de normalização usada no gráfico ECDF."),
+            de=("Normalisierungstyp für das ECDF-Diagramm."),
+            zh="ECDF图使用的归一化类型。",
         ),
         alias=MultilingualString(
-            en="ECDF normalization", es="Normalización ECDF", pt="Normalização ECDF"
+            en="ECDF normalization",
+            es="Normalización ECDF",
+            pt="Normalização ECDF",
+            de="ECDF-Normalisierung",
+            zh="ECDF归一化",
         ),
     )  # type: ignore
 
@@ -117,10 +145,12 @@ class ECDFPlotExplorer(DistributionExplorer):
         en="Empirical Cumulative Distribution Plot",
         es="Gráfico ECDF (Distribución Acumulada Empírica)",
         pt="Gráfico ECDF",
+        de="Empirisches Kumulatives Verteilungsdiagramm",
+        zh="经验累积分布函数图",
     )
     DESCRIPTION = MultilingualString(
         en=(
-            "Non-parametric plot showing the proportion or count of "
+            "Nonparametric plot showing the proportion or count of "
             "observations below each unique value."
         ),
         es=(
@@ -131,13 +161,19 @@ class ECDFPlotExplorer(DistributionExplorer):
             "Gráfico não paramétrico que mostra a proporção ou a contagem de "
             "observações abaixo de cada valor único."
         ),
+        de=(
+            "Nicht-parametrisches Diagramm, das den Anteil oder die Anzahl der "
+            "Beobachtungen unterhalb jedes eindeutigen Wertes zeigt."
+        ),
+        zh="非参数图，显示每个唯一值以下的观测比例或计数。",
     )
     IMAGE_PREVIEW = "ecdf_plot.png"
 
     SCHEMA = ECDFPlotSchema
     metadata: Dict[str, Any] = {
-        "allowed_types": [Float, Integer],
+        "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
+        "non_allowed_dtypes": NON_NUMERIC_DTYPES,
         "input_cardinality": {"min": 1},
     }
 
@@ -151,9 +187,9 @@ class ECDFPlotExplorer(DistributionExplorer):
             color_column (str or int, optional): Column name or zero-based index
             used to split the ECDF into color-coded traces. Defaults to None.
             facet_col (str or int, optional): Column name or zero-based index used
-            to create column-wise subplot facets. Defaults to None.
+            to create column wise subplot facets. Defaults to None.
             facet_row (str or int, optional): Column name or zero-based index used
-            to create row-wise subplot facets. Defaults to None.
+            to create row wise subplot facets. Defaults to None.
             ecdf_norm (str, optional): Y-axis normalization. One of ``"none"``
             (cumulative count), ``"percent"``, or ``"probability"``.
             Defaults to ``"probability"``.

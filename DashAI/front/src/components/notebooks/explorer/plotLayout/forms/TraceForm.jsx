@@ -19,8 +19,28 @@ export default function TraceForm({
 }) {
   const { t } = useTranslation(["datasets", "common"]);
 
+  // px.imshow() (correlation matrix, density heatmap) sets coloraxis: "coloraxis"
+  // on the trace, so the colorbar lives in layout.coloraxis.colorbar — not trace.colorbar.
+  // Other heatmap types that don't reference a shared coloraxis keep their colorbar
+  // directly on the trace.
+  const colorbarInLayout = Boolean(trace.coloraxis);
+  const colorbarSrc = colorbarInLayout
+    ? layout.coloraxis?.colorbar
+    : trace.colorbar;
+
+  const setColorbarField = (field, value) => {
+    if (colorbarInLayout) {
+      handleChange("coloraxis", {
+        ...layout.coloraxis,
+        colorbar: { ...layout.coloraxis?.colorbar, [field]: value },
+      });
+    } else {
+      handleTraceChange(index, `colorbar.${field}`, value);
+    }
+  };
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
       {/* Common trace settings */}
       <TextField
         label={t("common:name")}
@@ -65,25 +85,45 @@ export default function TraceForm({
 
           <DebouncedColorPicker
             label={t("datasets:label.colorbarBorderColor")}
-            value={trace.colorbar?.bordercolor || "#FFFFFF"}
-            onChange={(color) =>
-              handleTraceChange(index, "colorbar.bordercolor", color)
-            }
+            value={colorbarSrc?.bordercolor || "#FFFFFF"}
+            onChange={(color) => setColorbarField("bordercolor", color)}
           />
           <TextField
             label={t("datasets:label.colorbarBorderWidth")}
             variant="outlined"
             size="small"
             type="number"
-            value={trace.colorbar?.borderwidth || 0}
+            value={colorbarSrc?.borderwidth || 0}
             onChange={(e) =>
-              handleTraceChange(
-                index,
-                "colorbar.borderwidth",
-                parseInt(e.target.value),
-              )
+              setColorbarField("borderwidth", parseInt(e.target.value, 10) || 0)
             }
             fullWidth
+          />
+
+          <DebouncedColorPicker
+            label={t("datasets:label.colorbarTickFontColor")}
+            value={colorbarSrc?.tickfont?.color || "#444444"}
+            onChange={(color) =>
+              setColorbarField("tickfont", {
+                ...colorbarSrc?.tickfont,
+                color,
+              })
+            }
+          />
+          <TextField
+            label={t("datasets:label.colorbarTickFontSize")}
+            variant="outlined"
+            size="small"
+            type="number"
+            value={colorbarSrc?.tickfont?.size ?? 12}
+            onChange={(e) =>
+              setColorbarField("tickfont", {
+                ...colorbarSrc?.tickfont,
+                size: parseInt(e.target.value, 10) || 12,
+              })
+            }
+            fullWidth
+            slotProps={{ htmlInput: { min: 8, max: 72 } }}
           />
         </>
       )}

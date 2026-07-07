@@ -39,11 +39,22 @@ class KernelShapSchema(BaseSchema):
                 "características às saídas do modelo. Opções: 'identity' "
                 "(identidade) ou 'logit' (log-odds)."
             ),
+            zh=(
+                "将特征重要性值连接到模型输出的链接函数。"
+                "选项：'identity'（恒等函数）或'logit'（对数几率）。"
+            ),
+            de=(
+                "Verknüpfungsfunktion, um Merkmalswichtigkeitswerte mit den "
+                "Modellausgaben zu verbinden. Optionen: 'identity' "
+                "(Identitätsfunktion) oder 'logit' (Log-Odds)."
+            ),
         ),
         alias=MultilingualString(
             en="Link function",
             es="Función de enlace",
             pt="Função de ligação",
+            zh="链接函数",
+            de="Verknüpfungsfunktion",
         ),
     )  # type: ignore
 
@@ -68,11 +79,22 @@ class KernelShapSchema(BaseSchema):
                 "de treinamento completo. Conjuntos menores reduzem o tempo de "
                 "execução."
             ),
+            zh=(
+                "用于拟合解释器的参数。如果需要对背景数据进行采样则为'true'；"
+                "否则使用整个训练集。较小的数据集可加速算法运行时间。"
+            ),
+            de=(
+                "Parameter zum Anpassen des Erklärers. 'true', wenn Hintergrunddaten "
+                "gesamplet werden müssen; sonst wird der gesamte Trainingssatz "
+                "verwendet. Kleinere Datensätze beschleunigen die Laufzeit."
+            ),
         ),
         alias=MultilingualString(
             en="Sample background data",
             es="Muestrear datos de fondo",
             pt="Amostrar dados de fundo",
+            zh="采样背景数据",
+            de="Hintergrunddaten samplen",
         ),
     )  # type: ignore
 
@@ -94,11 +116,18 @@ class KernelShapSchema(BaseSchema):
                 "à fração de amostras de fundo a extrair do conjunto de "
                 "treinamento."
             ),
+            zh="如果选择了'采样背景数据'，则对应从训练集中抽取的背景样本比例。",
+            de=(
+                "Wenn 'Hintergrunddaten samplen' ausgewählt ist, entspricht dies dem "
+                "Anteil der Hintergrundproben aus dem Trainingssatz."
+            ),
         ),
         alias=MultilingualString(
             en="Background fraction",
             es="Fracción de fondo",
             pt="Fração de fundo",
+            zh="背景比例",
+            de="Hintergrundfraktion",
         ),
     )  # type: ignore
 
@@ -124,24 +153,35 @@ class KernelShapSchema(BaseSchema):
                 "houver características categóricas, 'shuffle' é usado por "
                 "padrão."
             ),
+            zh=(
+                "如果为'true'，选择用'shuffle'随机采样实例或用'kmeans'汇总数据集。"
+                "如果存在类别特征，默认使用'shuffle'。"
+            ),
+            de=(
+                "Wenn 'true', werden zufällige Instanzen mit 'shuffle' gesamplet "
+                "oder der Datensatz mit 'kmeans' zusammengefasst. Bei kategorialen "
+                "Merkmalen wird standardmäßig 'shuffle' verwendet."
+            ),
         ),
         alias=MultilingualString(
             en="Sampling method",
             es="Método de muestreo",
             pt="Método de amostragem",
+            zh="采样方法",
+            de="Samplingmethode",
         ),
     )  # type: ignore
 
 
 class KernelShap(BaseLocalExplainer):
-    """Model-agnostic local explainer that estimates SHAP values
+    """Model agnostic local explainer that estimates SHAP values
     via a weighted linear model.
 
     Kernel SHAP (SHapley Additive exPlanations) unifies LIME and classic Shapley
     values from cooperative game theory. For each instance to explain, it fits a
     weighted linear model over a sampled coalition of feature subsets, where the
     sample weights are derived from the Shapley kernel. The resulting coefficients
-    are the SHAP values — each one represents the marginal contribution of a feature
+    are the SHAP values. Each one represents the marginal contribution of a feature
     to the model's prediction relative to a background (reference) distribution.
 
     Because it treats the model as a black box (querying only ``predict_proba``),
@@ -157,7 +197,11 @@ class KernelShap(BaseLocalExplainer):
 
     COMPATIBLE_COMPONENTS = ["TabularClassificationTask"]
     DISPLAY_NAME = MultilingualString(
-        en="Kernel SHAP", es="Kernel SHAP", pt="Kernel SHAP"
+        en="Kernel SHAP",
+        es="Kernel SHAP",
+        pt="Kernel SHAP",
+        zh="Kernel SHAP",
+        de="Kernel SHAP",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -172,6 +216,11 @@ class KernelShap(BaseLocalExplainer):
         pt=(
             "Kernel SHAP aproxima os valores de Shapley para explicar a saída do "
             "modelo atribuindo a contribuição de cada característica à previsão."
+        ),
+        zh=("Kernel SHAP通过将每个特征的贡献归因于预测来逼近SHAP值，以解释模型输出。"),
+        de=(
+            "Kernel SHAP approximiert SHAP-Werte, um die Modellausgabe zu erklären, "
+            "indem die Beiträge jedes Merkmals zur Vorhersage zugeordnet werden."
         ),
     )
     COLOR = "#008000"

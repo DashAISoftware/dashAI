@@ -374,10 +374,14 @@ async def get_component_image(
         .get("metadata", {})
         .get("image_preview", None)
     )
+    cache_headers = {"Cache-Control": "public, max-age=3600"}
+
     if not image_path:
         with open(local_path_image / "placeholder.svg", "rb") as image_file:
             return StreamingResponse(
-                io.BytesIO(image_file.read()), media_type="image/svg+xml"
+                io.BytesIO(image_file.read()),
+                media_type="image/svg+xml",
+                headers=cache_headers,
             )
 
     # If it is a URL, we obtain the image from the URL
@@ -385,22 +389,30 @@ async def get_component_image(
         response = requests.get(image_path, timeout=5)
         if response.status_code == 200:
             return StreamingResponse(
-                io.BytesIO(response.content), media_type="image/png"
+                io.BytesIO(response.content),
+                media_type="image/png",
+                headers=cache_headers,
             )
         else:
             with open(local_path_image / "placeholder.svg", "rb") as image_file:
                 return StreamingResponse(
-                    io.BytesIO(image_file.read()), media_type="image/svg+xml"
+                    io.BytesIO(image_file.read()),
+                    media_type="image/svg+xml",
+                    headers=cache_headers,
                 )
 
     # Otherwise, we assume it is a local path
     try:
         with open(local_path_image / image_path, "rb") as image_file:
             return StreamingResponse(
-                io.BytesIO(image_file.read()), media_type="image/png"
+                io.BytesIO(image_file.read()),
+                media_type="image/png",
+                headers=cache_headers,
             )
     except FileNotFoundError:
         with open(local_path_image / "placeholder.svg", "rb") as image_file:
             return StreamingResponse(
-                io.BytesIO(image_file.read()), media_type="image/svg+xml"
+                io.BytesIO(image_file.read()),
+                media_type="image/svg+xml",
+                headers=cache_headers,
             )

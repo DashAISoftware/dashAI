@@ -35,6 +35,8 @@ import pluginsEN from "./locales/en/plugins.json";
 import pluginsES from "./locales/es/plugins.json";
 import generativeTourEN from "./locales/en/generativeTour.json";
 import generativeTourES from "./locales/es/generativeTour.json";
+import hubEN from "./locales/en/hub.json";
+import hubES from "./locales/es/hub.json";
 import configurableObjectPT from "./locales/pt/configurableObject.json";
 import commonPT from "./locales/pt/common.json";
 import customPT from "./locales/pt/custom.json";
@@ -52,6 +54,41 @@ import modelsSessionTourPT from "./locales/pt/modelsSessionTour.json";
 import homePT from "./locales/pt/home.json";
 import pluginsPT from "./locales/pt/plugins.json";
 import generativeTourPT from "./locales/pt/generativeTour.json";
+import configurableObjectDE from "./locales/de/configurableObject.json";
+import commonDE from "./locales/de/common.json";
+import customDE from "./locales/de/custom.json";
+import experimentsDE from "./locales/de/experiments.json";
+import explainersDE from "./locales/de/explainers.json";
+import generativeDE from "./locales/de/generative.json";
+import modelsDE from "./locales/de/models.json";
+import datasetsDE from "./locales/de/datasets.json";
+import predictionDE from "./locales/de/prediction.json";
+import homeTourDE from "./locales/de/homeTour.json";
+import datasetsTourDE from "./locales/de/datasetsTour.json";
+import notebookTourDE from "./locales/de/notebookTour.json";
+import modelsTourDE from "./locales/de/modelsTour.json";
+import modelsSessionTourDE from "./locales/de/modelsSessionTour.json";
+import homeDE from "./locales/de/home.json";
+import pluginsDE from "./locales/de/plugins.json";
+import generativeTourDE from "./locales/de/generativeTour.json";
+import configurableObjectZH from "./locales/zh/configurableObject.json";
+import commonZH from "./locales/zh/common.json";
+import customZH from "./locales/zh/custom.json";
+import experimentsZH from "./locales/zh/experiments.json";
+import explainersZH from "./locales/zh/explainers.json";
+import generativeZH from "./locales/zh/generative.json";
+import modelsZH from "./locales/zh/models.json";
+import datasetsZH from "./locales/zh/datasets.json";
+import predictionZH from "./locales/zh/prediction.json";
+import homeTourZH from "./locales/zh/homeTour.json";
+import datasetsTourZH from "./locales/zh/datasetsTour.json";
+import notebookTourZH from "./locales/zh/notebookTour.json";
+import modelsTourZH from "./locales/zh/modelsTour.json";
+import modelsSessionTourZH from "./locales/zh/modelsSessionTour.json";
+import homeZH from "./locales/zh/home.json";
+import pluginsZH from "./locales/zh/plugins.json";
+import generativeTourZH from "./locales/zh/generativeTour.json";
+import hubZH from "./locales/zh/hub.json";
 
 // the translations
 // (tip move them in a JSON file and import them,
@@ -75,6 +112,7 @@ const resources = {
     modelsTour: modelsTourEN,
     modelsSessionTour: modelsSessionTourEN,
     generativeTour: generativeTourEN,
+    hub: hubEN,
   },
   es: {
     configurableObject: configurableObjectES,
@@ -94,6 +132,7 @@ const resources = {
     modelsTour: modelsTourES,
     modelsSessionTour: modelsSessionTourES,
     generativeTour: generativeTourES,
+    hub: hubES,
   },
   pt: {
     configurableObject: configurableObjectPT,
@@ -114,6 +153,45 @@ const resources = {
     modelsSessionTour: modelsSessionTourPT,
     generativeTour: generativeTourPT,
   },
+  de: {
+    configurableObject: configurableObjectDE,
+    common: commonDE,
+    custom: customDE,
+    experiments: experimentsDE,
+    explainers: explainersDE,
+    generative: generativeDE,
+    models: modelsDE,
+    datasets: datasetsDE,
+    prediction: predictionDE,
+    plugins: pluginsDE,
+    home: homeDE,
+    homeTour: homeTourDE,
+    datasetsTour: datasetsTourDE,
+    notebookTour: notebookTourDE,
+    modelsTour: modelsTourDE,
+    modelsSessionTour: modelsSessionTourDE,
+    generativeTour: generativeTourDE,
+  },
+  zh: {
+    configurableObject: configurableObjectZH,
+    common: commonZH,
+    custom: customZH,
+    experiments: experimentsZH,
+    explainers: explainersZH,
+    generative: generativeZH,
+    models: modelsZH,
+    datasets: datasetsZH,
+    prediction: predictionZH,
+    plugins: pluginsZH,
+    home: homeZH,
+    homeTour: homeTourZH,
+    datasetsTour: datasetsTourZH,
+    notebookTour: notebookTourZH,
+    modelsTour: modelsTourZH,
+    modelsSessionTour: modelsSessionTourZH,
+    generativeTour: generativeTourZH,
+    hub: hubZH,
+  },
 };
 
 i18n
@@ -121,7 +199,7 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    supportedLngs: ["en", "es", "pt"],
+    supportedLngs: ["en", "es", "pt", "de", "zh"],
     nonExplicitSupportedLngs: true,
     fallbackLng: "en",
 
@@ -143,6 +221,7 @@ i18n
       "modelsSessionTour",
       "plugins",
       "generativeTour",
+      "hub",
     ],
     defaultNS: "common",
 

@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from sqlalchemy import (
     JSON,
+    BigInteger,
     Boolean,
     Column,
     DateTime,
@@ -24,6 +25,7 @@ from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.enums.plugin_tags import PluginTag
 from DashAI.back.core.enums.status import (
     ConverterStatus,
+    DatafileStatus,
     DatasetStatus,
     ExplainerStatus,
     ExplorerStatus,
@@ -47,6 +49,21 @@ metadata = MetaData(naming_convention=naming_convention)
 Base = declarative_base(metadata=metadata)
 
 
+class Folder(Base):
+    __tablename__ = "folder"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    datasets: Mapped[List["Dataset"]] = relationship(back_populates="folder")
+
+
 class Dataset(Base):
     __tablename__ = "dataset"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -59,6 +76,11 @@ class Dataset(Base):
         onupdate=datetime.now,
     )
     file_path: Mapped[str] = mapped_column(String, nullable=False)
+    total_rows: Mapped[int] = mapped_column(Integer, nullable=True)
+    total_columns: Mapped[int] = mapped_column(Integer, nullable=True)
+    folder_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("folder.id", ondelete="SET NULL"), nullable=True
+    )
 
     notebooks: Mapped[List["Notebook"]] = relationship(
         cascade="all, delete-orphan", back_populates="dataset"
@@ -69,6 +91,7 @@ class Dataset(Base):
     predictions: Mapped[List["Prediction"]] = relationship(
         "Prediction", cascade="all, delete-orphan", back_populates="dataset"
     )
+    folder: Mapped[Optional["Folder"]] = relationship(back_populates="datasets")
 
     status: Mapped[Enum] = mapped_column(
         Enum(DatasetStatus), nullable=False, default=DatasetStatus.NOT_STARTED
@@ -281,6 +304,9 @@ class Plugin(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     author: Mapped[str] = mapped_column(String, nullable=False)
+    verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
     installed_version: Mapped[str] = mapped_column(String, nullable=False)
     latest_version: Mapped[str] = mapped_column(String, nullable=False)
     tags: Mapped[List["Tag"]] = relationship(
@@ -1234,4 +1260,38 @@ class RAGDocumentPipelineSessionLink(Base):
         UniqueConstraint("document_id", "session_id", name="uix_document_session"),
         UniqueConstraint("session_id", "pipeline_id", name="uix_session_pipeline"),
         UniqueConstraint("document_id", "pipeline_id", name="uix_document_pipeline"),
+    )
+
+
+class Datafile(Base):
+    __tablename__ = "datafile"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_name: Mapped[str] = mapped_column(String, nullable=False)
+    dataset_id: Mapped[str] = mapped_column(String, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    local_path: Mapped[str] = mapped_column(String, nullable=True)
+    status: Mapped[Enum] = mapped_column(
+        Enum(DatafileStatus),
+        nullable=False,
+        default=DatafileStatus.DOWNLOADING,
+    )
+    error_message: Mapped[str] = mapped_column(String, nullable=True)
+    size_bytes: Mapped[Optional[int]] = mapped_column(BigInteger, nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    tags: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array
+    source_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "source_name",
+            "dataset_id",
+            name="uq_datafile_source_dataset",
+        ),
     )

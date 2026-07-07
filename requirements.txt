@@ -30,6 +30,7 @@ controlnet_aux
 sacrebleu
 sentencepiece
 optuna
+cmaes
 hyperopt
 nvidia-ml-py
 openpyxl
@@ -57,3 +58,5 @@ InstructorEmbedding
 filetype
 torchmetrics
 pywebview
+openml
+oslo.concurrency

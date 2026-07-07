@@ -130,7 +130,9 @@ export const enqueuePredictionJob = async (
     const cleanObj: any = {};
     Object.entries(obj).forEach(([key, value]) => {
       if (value instanceof File) {
-        formData.append(`file_${i}_${key}`, value); // attach file
+        const fieldName = `file_${i}_${key}`;
+        formData.append(fieldName, value);
+        cleanObj[key] = fieldName;
       } else {
         cleanObj[key] = value;
       }
@@ -250,6 +252,29 @@ export const enqueuePipelineJob = async (
     headers: {
       "Content-Type": "multipart/form-data",
     },
+  });
+  return response.data;
+};
+
+export const enqueueDatafileJob = async (
+  datafileId: number,
+  sourceName: string,
+  datasetSourceId: string,
+): Promise<{ id: string }> => {
+  const formData = new FormData();
+  formData.append("job_type", "DatafileJob");
+  formData.append(
+    "kwargs",
+    JSON.stringify({
+      kwargs: {
+        datafile_id: datafileId,
+        source_name: sourceName,
+        dataset_source_id: datasetSourceId,
+      },
+    }),
+  );
+  const response = await api.post<{ id: string }>("/v1/job/", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return response.data;
 };

@@ -10,9 +10,9 @@ from DashAI.back.models.hugging_face.distilbert_transformer import (
 
 
 class BertTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained BERT model for English text classification.
+    """Pretrained BERT model for English text classification.
 
-    BERT (Bidirectional Encoder Representations from Transformers) pre-trains deep
+    BERT (Bidirectional Encoder Representations from Transformers) pretrains deep
     bidirectional representations by jointly conditioning on both left and right
     context in all layers. Fine-tuned BERT achieves strong results on a wide range
     of text classification tasks.
@@ -28,6 +28,8 @@ class BertTransformer(HuggingFaceTextClassificationTransformer):
         en="BERT Transformer",
         es="Transformer BERT",
         pt="Transformer BERT",
+        de="BERT Transformer",
+        zh="BERT Transformer",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -41,6 +43,15 @@ class BertTransformer(HuggingFaceTextClassificationTransformer):
         pt=(
             "Modelo BERT bidirecional para classificação de texto em inglês. "
             "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+        ),
+        de=(
+            "Bidirektionales BERT-Modell für englische Textklassifikation. "
+            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "(Internet erforderlich)."
+        ),
+        zh=(
+            "双向 BERT 模型，用于英文文本分类。"
+            "首次使用时从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#1565C0"

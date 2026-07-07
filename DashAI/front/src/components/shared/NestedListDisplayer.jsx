@@ -48,7 +48,7 @@ function NestedListDisplayer({
         </ListItemButton>
 
         <Collapse in={open} timeout="auto" unmountOnExit>
-          <List sx={{ pl: 4 }} dense>
+          <List sx={{ pl: 8 }} dense>
             {Object.keys(value).map((key) => (
               <NestedListDisplayer
                 key={`${name}-${key}`}
@@ -75,7 +75,7 @@ function NestedListDisplayer({
         </ListItemButton>
 
         <Collapse in={open} timeout="auto" unmountOnExit>
-          <List sx={{ pl: 4 }} dense>
+          <List sx={{ pl: 8 }} dense>
             {value.map((item, index) => (
               <NestedListDisplayer
                 key={`${name}-${index}`}
@@ -93,9 +93,9 @@ function NestedListDisplayer({
   return (
     <ListItem>
       <ListItemText
-        primary={<Typography variant="p">{name + ":"}</Typography>}
+        primary={<Typography variant="body2">{name + ":"}</Typography>}
         secondary={
-          <Typography variant="p" sx={{ ml: 1, color: "gray" }}>
+          <Typography variant="body2" sx={{ ml: 2, color: "gray" }}>
             {typeof value === "boolean"
               ? String(value)
               : value === null

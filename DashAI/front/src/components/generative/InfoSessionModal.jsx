@@ -45,7 +45,7 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
         {/* Modal Header */}
         <Box
           sx={{
-            p: 2,
+            p: 4,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -70,15 +70,15 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
         </Box>
 
         {/* Modal Content */}
-        <Box sx={{ p: 3 }}>
-          <Box sx={{ mb: 3 }}>
+        <Box sx={{ p: 6 }}>
+          <Box sx={{ mb: 6 }}>
             <Chip
               label={sessionData.task_name}
               color="primary"
               size="small"
-              sx={{ mb: 1 }}
+              sx={{ mb: 2 }}
             />
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {t("common:model")}:{" "}
               <span style={{ color: theme.palette.text.primary }}>
                 {sessionData.model_name}
@@ -86,12 +86,12 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
             </Typography>
           </Box>
 
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 2 }}>
             {t("common:parameters")}:{" "}
           </Typography>
           <TableContainer
             component={Paper}
-            sx={{ mb: 3, bgcolor: "rgba(0,0,0,0.2)" }}
+            sx={{ mb: 6, bgcolor: "rgba(0,0,0,0.2)" }}
           >
             <Table size="small">
               <TableBody>
@@ -125,7 +125,7 @@ export default function InfoSessionModal({ sessionData, open, onClose }) {
             </Table>
           </TableContainer>
 
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 2 }}>
             {t("common:metadata")}:
           </Typography>
           <TableContainer component={Paper} sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
