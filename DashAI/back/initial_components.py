@@ -119,6 +119,7 @@ from DashAI.back.metrics.classification.cohen_kappa import CohenKappa
 from DashAI.back.metrics.classification.f1 import F1
 from DashAI.back.metrics.classification.hamming_distance import HammingDistance
 from DashAI.back.metrics.classification.log_loss import LogLoss
+from DashAI.back.metrics.classification.matthews_corrcoef import MatthewsCorrCoef
 from DashAI.back.metrics.classification.precision import Precision
 from DashAI.back.metrics.classification.recall import Recall
 from DashAI.back.metrics.classification.roc_auc import ROCAUC
@@ -420,6 +421,7 @@ def get_initial_components():
         LogLoss,
         HammingDistance,
         CohenKappa,
+        MatthewsCorrCoef,
         # Optimizers
         OptunaOptimizer,
         HyperOptOptimizer,
