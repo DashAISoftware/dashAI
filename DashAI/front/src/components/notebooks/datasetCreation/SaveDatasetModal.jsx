@@ -240,15 +240,15 @@ export function SaveDatasetModal({
             </IconButton>
           </Box>
 
-          {/* Scrollable Content */}
+          {/* Static fields — always visible, never scroll */}
           <Box
             sx={{
-              p: 3,
+              px: 3,
+              pt: 3,
               display: "flex",
               flexDirection: "column",
               gap: 3,
-              overflowY: "auto",
-              flex: 1,
+              flexShrink: 0,
             }}
             data-tour="save-dataset-modal-notebook"
           >
@@ -279,22 +279,32 @@ export function SaveDatasetModal({
               </Box>
             </FormSchemaFieldCard>
 
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                {t("datasets:label.appliedTransformations")}
+            <Typography variant="subtitle2">
+              {t("datasets:label.appliedTransformations")}
+            </Typography>
+          </Box>
+
+          {/* Scrollable converter list */}
+          <Box
+            sx={{
+              px: 3,
+              pb: 2,
+              overflowY: "auto",
+              flex: 1,
+              minHeight: 0,
+            }}
+          >
+            {localConverters.length === 0 ? (
+              <Typography variant="body2" color="text.secondary">
+                {t("datasets:label.noTransformationsApplied")}
               </Typography>
-              {localConverters.length === 0 ? (
-                <Typography variant="body2" color="text.secondary">
-                  {t("datasets:label.noTransformationsApplied")}
-                </Typography>
-              ) : (
-                <ConverterHistoryList
-                  converters={localConverters}
-                  onConverterDelete={handleConverterDeleteClick}
-                  showDeleteButtons={true}
-                />
-              )}
-            </Box>
+            ) : (
+              <ConverterHistoryList
+                converters={localConverters}
+                onConverterDelete={handleConverterDeleteClick}
+                showDeleteButtons={true}
+              />
+            )}
           </Box>
 
           {/* Footer - always visible */}
