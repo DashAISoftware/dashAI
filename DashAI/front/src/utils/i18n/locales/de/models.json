@@ -74,6 +74,7 @@
     "editRunParameters": "Parameter bearbeiten und Modell neu ausführen",
     "epoch": "Epoche",
     "explainability": "Erklärbarkeit",
+    "last": "Ergebnis",
     "experimentResults": "Experimentergebnisse {{name}}",
     "explainersCount_one": "• <1>{{count}}</1> Erklärungsmodell",
     "explainersCount_other": "• <1>{{count}}</1> Erklärungsmodelle",
@@ -173,6 +174,8 @@
     "profile_text_detectPositives": "Positive erkennen",
     "profile_text_avoidFalseAlarms": "Falschalarme vermeiden",
     "profile_text_probabilityQuality": "Wahrscheinlichkeitsqualität",
+    "profile_cluster_separation": "Cluster-Trennung",
+    "profile_cluster_compactness": "Cluster-Kompaktheit",
     "editRun": "Durchlauf bearbeiten",
     "chartType": "Diagrammtyp"
   },

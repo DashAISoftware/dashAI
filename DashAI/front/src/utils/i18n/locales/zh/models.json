@@ -74,6 +74,7 @@
     "editRunParameters": "编辑参数并重新运行模型",
     "epoch": "轮次",
     "explainability": "可解释性",
+    "last": "终值",
     "experimentResults": "实验 {{name}} 结果",
     "explainersCount_one": "• <1>{{count}}</1> 个解释器",
     "explainersCount_other": "• <1>{{count}}</1> 个解释器",
@@ -173,6 +174,8 @@
     "profile_text_detectPositives": "检测正例",
     "profile_text_avoidFalseAlarms": "避免误报",
     "profile_text_probabilityQuality": "概率质量",
+    "profile_cluster_separation": "聚类分离度",
+    "profile_cluster_compactness": "聚类紧密度",
     "editRun": "编辑运行",
     "chartType": "图表类型"
   },

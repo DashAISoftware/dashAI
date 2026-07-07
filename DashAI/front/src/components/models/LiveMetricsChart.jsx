@@ -27,47 +27,67 @@ export function LiveMetricsChart({ run }) {
   const { t } = useTranslation("models");
   const [level, setLevel] = useState(null);
   const [split, setSplit] = useState("TRAIN");
+  const [usesFullMetrics, setUsesFullMetrics] = useState(false);
   const [data, setData] = useState({});
   const [selectedMetrics, setSelectedMetrics] = useState([]);
   const [availableMetrics, setAvailableMetrics] = useState({
     TRAIN: [],
     VALIDATION: [],
     TEST: [],
+    FULL: [],
   });
 
   const selectedMetricsPerSplit = useRef({
     TRAIN: null,
     VALIDATION: null,
     TEST: null,
+    FULL: null,
   });
   const socketRef = useRef(null);
 
   useEffect(() => {
-    if (run.status === 3 && run.test_metrics) {
+    if (run.status === 3 && (run.test_metrics || run.full_metrics)) {
       setData((prev) => {
         const next = structuredClone(prev);
 
-        const formattedTestMetrics = {};
-        for (const metricName in run.test_metrics) {
-          const value = run.test_metrics[metricName];
-          if (Array.isArray(value)) {
-            formattedTestMetrics[metricName] = value;
-          } else {
-            formattedTestMetrics[metricName] = [
-              { step: 1, value: value, timestamp: new Date().toISOString() },
-            ];
+        const formatMetrics = (metrics) => {
+          const formattedMetrics = {};
+          for (const metricName in metrics) {
+            const value = metrics[metricName];
+            formattedMetrics[metricName] = Array.isArray(value)
+              ? value
+              : [
+                  {
+                    step: 1,
+                    value: value,
+                    timestamp: new Date().toISOString(),
+                  },
+                ];
           }
+          return formattedMetrics;
+        };
+
+        if (run.test_metrics) {
+          const formattedTestMetrics = formatMetrics(run.test_metrics);
+          next.TEST = {
+            TRIAL: formattedTestMetrics,
+            STEP: formattedTestMetrics,
+            EPOCH: formattedTestMetrics,
+          };
         }
 
-        next.TEST = {
-          TRIAL: formattedTestMetrics,
-          STEP: formattedTestMetrics,
-          EPOCH: formattedTestMetrics,
-        };
+        if (run.full_metrics) {
+          const formattedFullMetrics = formatMetrics(run.full_metrics);
+          next.FULL = {
+            LAST: formattedFullMetrics,
+          };
+          setSplit("FULL");
+          setLevel("LAST");
+        }
         return next;
       });
     }
-  }, [run.status, run.test_metrics]);
+  }, [run.status, run.test_metrics, run.full_metrics]);
 
   useEffect(() => {
     if (socketRef.current) {
@@ -83,6 +103,7 @@ export function LiveMetricsChart({ run }) {
         TRAIN: null,
         VALIDATION: null,
         TEST: null,
+        FULL: null,
       };
     }
 
@@ -188,17 +209,44 @@ export function LiveMetricsChart({ run }) {
     getModelSessionById(run.model_session_id.toString()).then((session) => {
       if (!mounted) return;
 
-      setAvailableMetrics({
+      let splitType;
+      if (session.splits && typeof session.splits === "object") {
+        splitType = session.splits.splitType;
+      } else {
+        try {
+          splitType = JSON.parse(session.splits || "{}").splitType;
+        } catch {
+          splitType = undefined;
+        }
+      }
+      const sessionUsesFullMetrics = splitType === "none";
+      setUsesFullMetrics(sessionUsesFullMetrics);
+      if (sessionUsesFullMetrics) {
+        setSplit("FULL");
+      }
+
+      setAvailableMetrics((prev) => ({
+        ...prev,
         TRAIN: session.train_metrics ?? [],
         VALIDATION: session.validation_metrics ?? [],
         TEST: session.test_metrics ?? [],
-      });
+      }));
     });
 
     return () => {
       mounted = false;
     };
   }, [run.model_session_id]);
+
+  // Unlike TRAIN/VALIDATION/TEST, FULL has no session-level config to fetch —
+  // its metric names come straight from the computed run.full_metrics, so
+  // this updates independently without re-fetching the session.
+  useEffect(() => {
+    setAvailableMetrics((prev) => ({
+      ...prev,
+      FULL: run.full_metrics ? Object.keys(run.full_metrics) : [],
+    }));
+  }, [run.full_metrics]);
 
   const filteredMetrics = useMemo(() => {
     const metrics = data[split]?.[level] ?? {};
@@ -244,6 +292,8 @@ export function LiveMetricsChart({ run }) {
     data[split]?.STEP && Object.keys(data[split].STEP).length > 0;
   const hasEpochData =
     data[split]?.EPOCH && Object.keys(data[split].EPOCH).length > 0;
+  const hasLastData =
+    data[split]?.LAST && Object.keys(data[split].LAST).length > 0;
 
   const levelLabel = useMemo(() => {
     if (!level) return "";
@@ -251,6 +301,11 @@ export function LiveMetricsChart({ run }) {
   }, [level, t]);
 
   useEffect(() => {
+    if (usesFullMetrics) {
+      setLevel(hasLastData ? "LAST" : null);
+      return;
+    }
+
     const currentLevelHasData =
       (level === "TRIAL" && hasTrialData) ||
       (level === "STEP" && hasStepData) ||
@@ -264,7 +319,15 @@ export function LiveMetricsChart({ run }) {
     else if (hasStepData) setLevel("STEP");
     else if (hasTrialData) setLevel("TRIAL");
     else setLevel(null);
-  }, [split, hasEpochData, hasStepData, hasTrialData, level]);
+  }, [
+    split,
+    usesFullMetrics,
+    hasEpochData,
+    hasStepData,
+    hasTrialData,
+    hasLastData,
+    level,
+  ]);
 
   const filteredMetricKeys = useMemo(
     () => Object.keys(filteredMetrics).sort().join(","),
@@ -326,11 +389,13 @@ export function LiveMetricsChart({ run }) {
         </FormControl>
       </Box>
 
-      <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 4 }}>
-        <Tab label={t("models:label.train")} value="TRAIN" />
-        <Tab label={t("models:label.validation")} value="VALIDATION" />
-        <Tab label={t("models:label.test")} value="TEST" />
-      </Tabs>
+      {!usesFullMetrics && (
+        <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 4 }}>
+          <Tab label={t("models:label.train")} value="TRAIN" />
+          <Tab label={t("models:label.validation")} value="VALIDATION" />
+          <Tab label={t("models:label.test")} value="TEST" />
+        </Tabs>
+      )}
 
       {chartData.length === 0 || selectedMetrics.length === 0 ? (
         <Box
@@ -374,31 +439,33 @@ export function LiveMetricsChart({ run }) {
         </ResponsiveContainer>
       )}
 
-      <Box display="flex" justifyContent="flex-end" mt={2}>
-        <ButtonGroup size="small" variant="outlined">
-          <Button
-            variant={level === "TRIAL" ? "contained" : "outlined"}
-            onClick={() => handleLevelChange("TRIAL")}
-            disabled={!hasTrialData}
-          >
-            {t("models:label.trial")}
-          </Button>
-          <Button
-            variant={level === "STEP" ? "contained" : "outlined"}
-            onClick={() => handleLevelChange("STEP")}
-            disabled={!hasStepData}
-          >
-            {t("models:label.step")}
-          </Button>
-          <Button
-            variant={level === "EPOCH" ? "contained" : "outlined"}
-            onClick={() => handleLevelChange("EPOCH")}
-            disabled={!hasEpochData}
-          >
-            {t("models:label.epoch")}
-          </Button>
-        </ButtonGroup>
-      </Box>
+      {!usesFullMetrics && (
+        <Box display="flex" justifyContent="flex-end" mt={2}>
+          <ButtonGroup size="small" variant="outlined">
+            <Button
+              variant={level === "TRIAL" ? "contained" : "outlined"}
+              onClick={() => handleLevelChange("TRIAL")}
+              disabled={!hasTrialData}
+            >
+              {t("models:label.trial")}
+            </Button>
+            <Button
+              variant={level === "STEP" ? "contained" : "outlined"}
+              onClick={() => handleLevelChange("STEP")}
+              disabled={!hasStepData}
+            >
+              {t("models:label.step")}
+            </Button>
+            <Button
+              variant={level === "EPOCH" ? "contained" : "outlined"}
+              onClick={() => handleLevelChange("EPOCH")}
+              disabled={!hasEpochData}
+            >
+              {t("models:label.epoch")}
+            </Button>
+          </ButtonGroup>
+        </Box>
+      )}
     </Box>
   );
 }

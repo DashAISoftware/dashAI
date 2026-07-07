@@ -48,6 +48,20 @@ import { useTranslation } from "react-i18next";
 import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 
+function getSessionSplitType(session) {
+  if (!session?.splits) return null;
+  if (typeof session.splits !== "string") {
+    return session.splits.splitType || null;
+  }
+
+  try {
+    const splits = JSON.parse(session.splits || "{}");
+    return splits.splitType || null;
+  } catch {
+    return null;
+  }
+}
+
 export default function RunResults({
   run,
   model,
@@ -59,6 +73,11 @@ export default function RunResults({
   autoExpand = false,
 }) {
   const isControlled = controlledVisible !== undefined;
+  const splitType = getSessionSplitType(session);
+  const usesFullDataset = splitType === "none";
+  // Predictions is the one operation with no graceful fallback — it calls
+  // model.predict(), which clustering models don't implement at all.
+  const supportsPredictions = !usesFullDataset;
 
   const [globalExplainers, setGlobalExplainers] = useState([]);
   const [localExplainers, setLocalExplainers] = useState([]);
@@ -81,6 +100,7 @@ export default function RunResults({
       const savedTab = JSON.parse(saved);
       // Tabs 1+ (Explainability, Predictions, Hyperparameters) require a finished run
       if (savedTab > 0 && run.status !== 3) return 0;
+      if (savedTab === 2 && !supportsPredictions) return 0;
       return savedTab;
     }
     return 0;
@@ -183,6 +203,7 @@ export default function RunResults({
   useEffect(() => {
     const handleOpenDialog = (event) => {
       if (event.detail.runId === run.id) {
+        if (!supportsPredictions) return;
         setResultsVisible(true);
         setActiveTab(2);
         setShowDatasetPanel(true);
@@ -191,7 +212,7 @@ export default function RunResults({
     window.addEventListener("openPredictionDialog", handleOpenDialog);
     return () =>
       window.removeEventListener("openPredictionDialog", handleOpenDialog);
-  }, [run.id]);
+  }, [run.id, supportsPredictions]);
 
   useEffect(() => {
     if (isRunning && autoExpand) {
@@ -209,8 +230,12 @@ export default function RunResults({
   }, [resultsVisible, run.id, isControlled]);
 
   useEffect(() => {
+    if (activeTab === 2 && !supportsPredictions) {
+      setActiveTab(0);
+      return;
+    }
     localStorage.setItem(`run-${run.id}-active-tab`, JSON.stringify(activeTab));
-  }, [activeTab, run.id]);
+  }, [activeTab, run.id, supportsPredictions]);
 
   const handleExplainerCreated = () => {
     fetchOperations();
@@ -357,21 +382,23 @@ export default function RunResults({
               }
               disabled={!isFinished}
             />
-            <Tab
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <span>{t("models:label.predictions")}</span>
-                  {isFinished && (
-                    <Chip
-                      label={predictions.length}
-                      size="small"
-                      color="primary"
-                    />
-                  )}
-                </Box>
-              }
-              disabled={!isFinished}
-            />
+            {supportsPredictions && (
+              <Tab
+                label={
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                    <span>{t("models:label.predictions")}</span>
+                    {isFinished && (
+                      <Chip
+                        label={predictions.length}
+                        size="small"
+                        color="primary"
+                      />
+                    )}
+                  </Box>
+                }
+                disabled={!isFinished}
+              />
+            )}
             <Tab
               label={t("models:label.hyperparameters")}
               disabled={!isFinished || optimizables === 0}
@@ -587,7 +614,7 @@ export default function RunResults({
           </Box>
         )}
 
-        {activeTab === 2 && isFinished && (
+        {activeTab === 2 && isFinished && supportsPredictions && (
           <Box sx={{ py: 4, width: "100%" }}>
             <Grid container spacing={4} sx={{ mb: 4 }}>
               <Grid item xs={6}>
@@ -922,6 +949,7 @@ RunResults.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     task_name: PropTypes.string,
+    splits: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }),
   onRefresh: PropTypes.func,
   explainerRefreshTrigger: PropTypes.number,

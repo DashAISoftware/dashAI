@@ -223,6 +223,7 @@ export function useSessions({ t }) {
         run.test_metrics ||
         run.train_metrics ||
         run.validation_metrics ||
+        run.full_metrics ||
         run.status === 3; // Finished
 
       if (hasBeenTrained) {

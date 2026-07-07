@@ -178,6 +178,19 @@ export default function SessionVisualization() {
     [runs],
   );
 
+  const sessionSplits = React.useMemo(() => {
+    if (!session?.splits) return {};
+    if (typeof session.splits === "object") return session.splits;
+
+    try {
+      return JSON.parse(session.splits);
+    } catch {
+      return {};
+    }
+  }, [session?.splits]);
+
+  const usesFullMetrics = sessionSplits.splitType === "none";
+
   // Check which metrics are available
   const hasTrainMetrics = runs.some(
     (run) => run.train_metrics && Object.keys(run.train_metrics).length > 0,
@@ -189,6 +202,14 @@ export default function SessionVisualization() {
   const hasTestMetrics = runs.some(
     (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
   );
+
+  useEffect(() => {
+    if (usesFullMetrics) {
+      setMetricSplit("full");
+    } else if (metricSplit === "full") {
+      setMetricSplit("test");
+    }
+  }, [usesFullMetrics, metricSplit, session?.id]);
 
   const handleTrainWithTour = (run) => {
     if (onTrain) onTrain(run);
@@ -389,35 +410,38 @@ export default function SessionVisualization() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Metric Split Selector — controls both table and graph views */}
-                {(hasTrainMetrics ||
-                  hasValidationMetrics ||
-                  hasTestMetrics) && (
-                  <ToggleButtonGroup
-                    value={metricSplit}
-                    exclusive
-                    onChange={(e, newValue) => {
-                      if (newValue !== null) setMetricSplit(newValue);
-                    }}
-                    size="small"
-                  >
-                    {hasTrainMetrics && (
-                      <ToggleButton value="train">
-                        {t("common:train")}
-                      </ToggleButton>
-                    )}
-                    {hasValidationMetrics && (
-                      <ToggleButton value="validation">
-                        {t("common:validation")}
-                      </ToggleButton>
-                    )}
-                    {hasTestMetrics && (
-                      <ToggleButton value="test">
-                        {t("common:test")}
-                      </ToggleButton>
-                    )}
-                  </ToggleButtonGroup>
-                )}
+                {/* Metric Split Selector — controls both table and graph views.
+                    Not shown when the session only ever has one metric set
+                    (clustering's full-dataset runs) — there is nothing to switch between. */}
+                {!usesFullMetrics &&
+                  (hasTrainMetrics ||
+                    hasValidationMetrics ||
+                    hasTestMetrics) && (
+                    <ToggleButtonGroup
+                      value={metricSplit}
+                      exclusive
+                      onChange={(e, newValue) => {
+                        if (newValue !== null) setMetricSplit(newValue);
+                      }}
+                      size="small"
+                    >
+                      {hasTrainMetrics && (
+                        <ToggleButton value="train">
+                          {t("common:train")}
+                        </ToggleButton>
+                      )}
+                      {hasValidationMetrics && (
+                        <ToggleButton value="validation">
+                          {t("common:validation")}
+                        </ToggleButton>
+                      )}
+                      {hasTestMetrics && (
+                        <ToggleButton value="test">
+                          {t("common:test")}
+                        </ToggleButton>
+                      )}
+                    </ToggleButtonGroup>
+                  )}
 
                 {/* Toggle between Table and Graphs */}
                 <ButtonGroup size="small" variant="outlined">

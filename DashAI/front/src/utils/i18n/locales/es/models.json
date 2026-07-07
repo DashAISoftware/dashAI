@@ -74,6 +74,7 @@
     "editRunParameters": "Editar parámetros y volver a ejecutar el modelo",
     "epoch": "Época",
     "explainability": "Explicabilidad",
+    "last": "Final",
     "experimentResults": "Resultados del experimento {{name}}",
     "explainersCount_one": "• <1>{{count}}</1> explicador",
     "explainersCount_many": "• <1>{{count}}</1> explicadores",
@@ -175,6 +176,8 @@
     "profile_text_detectPositives": "Detectar Positivos",
     "profile_text_avoidFalseAlarms": "Evitar Falsas Alarmas",
     "profile_text_probabilityQuality": "Calidad de Probabilidades",
+    "profile_cluster_separation": "Separación de Clusters",
+    "profile_cluster_compactness": "Compacidad de Clusters",
     "editRun": "Editar ejecución",
     "chartType": "Tipo de gráfico"
   },
