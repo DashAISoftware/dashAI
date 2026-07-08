@@ -2,8 +2,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
-  ToggleButton,
-  ToggleButtonGroup,
   Button,
   CircularProgress,
   useTheme,
@@ -15,6 +13,7 @@ import { resolveDefaults } from "../../../../utils/schema";
 import RetrieverAdvancedModal from "../advanced/RetrieverAdvancedModal";
 import AdvancedConfigCard from "../components/AdvancedConfigCard";
 import PresetCard from "../components/PresetCard";
+import RAGSectionColumn from "../components/RAGSectionColumn";
 
 const TOP_K_OPTIONS = [3, 5, 10, 15, 20];
 
@@ -34,6 +33,15 @@ function deepEqual(a, b) {
   if (keysA.length !== keysB.length) return false;
   return keysA.every((k) => deepEqual(a[k], b[k]));
 }
+
+/**
+ * Omits `top_k` key from an object for purpose of comparing
+ * retriever configurations while ignoring the top-K value.
+ */
+const omitTopK = (obj) =>
+  Object.fromEntries(
+    Object.entries(obj || {}).filter(([k]) => k !== "top_k"),
+  );
 
 function getEffectiveTopK(model) {
   if (!model?.params) return null;
@@ -140,29 +148,24 @@ export default function RetrieverSection({
   const isAdvanced = useMemo(() => {
     if (!retrieverModel?.component || !retrieverModel?.params) return false;
 
-    const filterTopK = (obj) =>
-      Object.fromEntries(
-        Object.entries(obj || {}).filter(([k]) => k !== "top_k"),
-      );
-
     const modelNoTopK = {
       component: retrieverModel.component,
-      params: filterTopK(retrieverModel.params),
+      params: omitTopK(retrieverModel.params),
     };
 
     const kwNoTopK = {
       component: keywordModel.component,
-      params: filterTopK(keywordModel.params),
+      params: omitTopK(keywordModel.params),
     };
 
     const seNoTopK = {
       component: semanticModel.component,
-      params: filterTopK(semanticModel.params),
+      params: omitTopK(semanticModel.params),
     };
 
     const hyNoTopK = {
       component: hybridModel.component,
-      params: filterTopK(hybridModel.params),
+      params: omitTopK(hybridModel.params),
     };
 
     return !deepEqual(modelNoTopK, kwNoTopK)
@@ -173,31 +176,26 @@ export default function RetrieverSection({
   const detectSelectedGroup = useCallback((model) => {
     if (!model?.component) return null;
 
-    const filterTopK = (obj) =>
-      Object.fromEntries(
-        Object.entries(obj || {}).filter(([k]) => k !== "top_k"),
-      );
-
     const modelNoTopK = {
       component: model.component,
-      params: filterTopK(model.params),
+      params: omitTopK(model.params),
     };
 
     if (deepEqual(modelNoTopK, {
       component: keywordModel.component,
-      params: filterTopK(keywordModel.params),
+      params: omitTopK(keywordModel.params),
     })) {
       return "keyword";
     }
     if (deepEqual(modelNoTopK, {
       component: semanticModel.component,
-      params: filterTopK(semanticModel.params),
+      params: omitTopK(semanticModel.params),
     })) {
       return "semantic";
     }
     if (deepEqual(modelNoTopK, {
       component: hybridModel.component,
-      params: filterTopK(hybridModel.params),
+      params: omitTopK(hybridModel.params),
     })) {
       return "hybrid";
     }
@@ -293,131 +291,113 @@ export default function RetrieverSection({
   }
 
   return (
-    <>
-      <Box display="flex" flexDirection="column" gap={2} width="100%">
-        <Typography variant="body2" color="textSecondary">
-          {t("generative:simplifiedRag.retriever.description")}
-        </Typography>
+    <RAGSectionColumn>
+      <Typography variant="body2" color="textSecondary">
+        {t("generative:simplifiedRag.retriever.description")}
+      </Typography>
 
-        <Box>
-          <Typography variant="body2" sx={{ fontWeight: 500, mb: 2 }}>
-            {t("generative:simplifiedRag.retriever.paradigmLabel")}
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
-            <PresetCard
-              key="keyword"
-              selected={!isAdvanced && selectedGroup === "keyword"}
-              onClick={() => selectPreset("keyword")}
-              label={t("generative:simplifiedRag.retriever.keywordLabel", { defaultValue: "Keyword" })}
-              description="BM25"
-              sx={{ flex: 1, minWidth: 180, py: 2, px: 1 }}
+      <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
+        <PresetCard
+          key="keyword"
+          selected={!isAdvanced && selectedGroup === "keyword"}
+          onClick={() => selectPreset("keyword")}
+          label={t("generative:simplifiedRag.retriever.keywordLabel", { defaultValue: "Keyword" })}
+          description="BM25"
+          sx={{ minWidth: 180}}
+        />
+        <PresetCard
+          key="semantic"
+          selected={!isAdvanced && selectedGroup === "semantic"}
+          onClick={() => selectPreset("semantic")}
+          label={t("generative:simplifiedRag.retriever.semanticLabel", { defaultValue: "Semantic" })}
+          description="Harrier OSS v1 0.6B"
+          sx={{ minWidth: 180}}
+        />
+        <PresetCard
+          key="hybrid"
+          selected={!isAdvanced && selectedGroup === "hybrid"}
+          onClick={() => selectPreset("hybrid")}
+          label={t("generative:simplifiedRag.retriever.hybridLabel", { defaultValue: "Hybrid" })}
+          description="BM25 + Harrier 0.6B"
+          sx={{ minWidth: 180}}
+        />
+        {isAdvanced && retrieverModel?.component && (
+          <Box sx={{ flex: 1, minWidth: 180, display: "flex", flexDirection: "column", gap: 1 }}>
+            <AdvancedConfigCard
+              modelName={retrieverModel.component}
+              onClick={() => setShowAdvanced(true)}
             />
-            <PresetCard
-              key="semantic"
-              selected={!isAdvanced && selectedGroup === "semantic"}
-              onClick={() => selectPreset("semantic")}
-              label={t("generative:simplifiedRag.retriever.semanticLabel", { defaultValue: "Semantic" })}
-              description="Harrier OSS v1 0.6B"
-              sx={{ flex: 1, minWidth: 180, py: 2, px: 1 }}
-            />
-            <PresetCard
-              key="hybrid"
-              selected={!isAdvanced && selectedGroup === "hybrid"}
-              onClick={() => selectPreset("hybrid")}
-              label={t("generative:simplifiedRag.retriever.hybridLabel", { defaultValue: "Hybrid" })}
-              description="BM25 + Harrier 0.6B"
-              sx={{ flex: 1, minWidth: 180, py: 2, px: 1 }}
-            />
-            {isAdvanced && retrieverModel?.component && (
-              <Box sx={{ flex: 1, minWidth: 180, display: "flex", flexDirection: "column", gap: 1 }}>
-                <AdvancedConfigCard
-                  modelName={retrieverModel.component}
-                  onClick={() => setShowAdvanced(true)}
-                />
-                {effectiveTopK != null && (
-                  <Box
-                    sx={{
-                      border: "1px solid",
-                      borderColor: theme.palette.accent.amberBorder,
-                      borderRadius: 1,
-                      backgroundColor: theme.palette.accent.amberDim,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      py: 1.5,
-                      px: 1,
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ color: theme.palette.primary.main, fontWeight: 500 }}
-                    >
-                      Advanced Top K: {effectiveTopK}
-                    </Typography>
-                  </Box>
-                )}
+            {effectiveTopK != null && (
+              <Box
+                sx={{
+                  border: "1px solid",
+                  borderColor: theme.palette.ui.border,
+                  borderRadius: 1,
+                  backgroundColor: theme.palette.action.selected,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  py: 1.5,
+                  px: 1,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ color: theme.palette.text.primary, fontWeight: 500 }}
+                >
+                  {t("generative:simplifiedRag.retriever.advancedTopK", {
+                    topK: effectiveTopK,
+                    defaultValue: "Advanced Top K: {{topK}}",
+                  })}
+                </Typography>
               </Box>
             )}
           </Box>
-        </Box>
-
-        {selectedGroup && (
-          <Box>
-            {!isAdvanced && (
-              <>
-                <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                  {t("generative:simplifiedRag.retriever.topKLabel")}
-                </Typography>
-                <ToggleButtonGroup
-                  value={String(topK)}
-                  exclusive
-                  onChange={(_event, newValue) => {
-                    if (newValue !== null) {
-                      handleTopKChange(newValue);
-                    }
-                  }}
-                  fullWidth
-                  sx={{ display: "flex", gap: 1 }}
-                >
-                  {TOP_K_OPTIONS.map((k) => (
-                    <ToggleButton
-                      key={k}
-                      value={String(k)}
-                      sx={{
-                        flex: 1,
-                        py: 1.5,
-                        border: "1px solid",
-                        borderColor: "divider",
-                        "&.Mui-selected": {
-                          color: theme.palette.primary.main,
-                          border: `1px solid ${theme.palette.accent.amberBorder}`,
-                          background: theme.palette.accent.amberDim,
-                          borderRadius: "2px",
-                          "&:hover": {
-                            backgroundColor: theme.palette.primary.main,
-                            color: theme.palette.primary.contrastText,
-                          },
-                        },
-                      }}
-                    >
-                      <Typography variant="body2">{k}</Typography>
-                    </ToggleButton>
-                  ))}
-                </ToggleButtonGroup>
-              </>
-            )}
-          </Box>
         )}
-
-        <Button
-          variant="outlined"
-          color="primary"
-          onClick={() => setShowAdvanced(true)}
-          fullWidth
-        >
-          ↗ {t("generative:simplifiedRag.retriever.advancedButton")}
-        </Button>
       </Box>
+
+      {selectedGroup && (
+        <Box>
+          {!isAdvanced && (
+            <>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                {t("generative:simplifiedRag.retriever.topKLabel")}
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap", width: "100%" }}>
+                {TOP_K_OPTIONS.map((k) => (
+                  <PresetCard
+                    key={k}
+                    selected={topK === k}
+                    onClick={() => handleTopKChange(String(k))}
+                    label={String(k)}
+                    description={""}
+                    sx={{ flex: "1 1 0", minWidth: 0, justifyContent: "center", alignItems: "center" }}
+                  />
+                ))}
+              </Box>
+            </>
+          )}
+        </Box>
+      )}
+
+      <Button
+        variant="contained"
+        color="primary"
+        size="small"
+        onClick={() => setShowAdvanced(true)
+        }
+        sx=
+        {{
+          alignSelf: "flex-start", 
+          width: "fit-content",
+          border: "1px solid",
+          borderColor: theme.palette.primary.main,
+          backgroundColor: theme.palette.action.selected,
+          color: theme.palette.text.primary,
+        }}
+      >
+        {t("generative:simplifiedRag.retriever.advancedButton")}
+      </Button>
 
       <RetrieverAdvancedModal
         open={showAdvanced}
@@ -427,7 +407,7 @@ export default function RetrieverSection({
         retrieverModel={retrieverModel}
         setRetrieverModel={setRetrieverModel}
       />
-    </>
+    </RAGSectionColumn>
   );
 }
 

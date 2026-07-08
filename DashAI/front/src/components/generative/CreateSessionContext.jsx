@@ -51,7 +51,6 @@ export function CreateSessionProvider({ children }) {
 
     Promise.all(
       tasks
-        .filter((task) => task.name !== "RAGTask")
         .map((task) =>
         getRelatedComponents(task.name).then((components) =>
           components.map((c) => ({

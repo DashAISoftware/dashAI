@@ -68,23 +68,23 @@
   },
   "simplifiedRag": {
     "setup": {
-      "title": "Crear Sesión RAG",
+      "title": "Crear sesión RAG",
       "subtitle": "Proporciona información básica, selecciona documentos y configura los componentes para tu sesión RAG.",
-      "sessionDetails": "Detalles de la Sesión",
-      "sessionName": "Nombre de la Sesión *",
+      "sessionDetails": "Detalles de la sesión",
+      "sessionName": "Nombre de la sesión *",
       "sessionNamePlaceholder": "ej. Documentación de Producto RAG",
       "sessionNameDuplicate": "Este nombre de sesión ya existe",
       "sessionNameDuplicateAlert": "Ya existe una sesión con este nombre. Por favor, usa un nombre diferente.",
       "description": "Descripción (Opcional)",
       "descriptionPlaceholder": "Describe el propósito de esta sesión RAG...",
-      "selectDocuments": "Seleccionar Documentos",
+      "selectDocuments": "Seleccionar documentos",
       "selectDocumentsDescription": "Sube nuevos documentos o selecciona de los existentes para ser usados en RAG.",
       "chunkingStrategy": "Estrategia de Chunking",
-      "retrieverModel": "Modelo de Recuperación",
+      "retrieverModel": "Modelo de recuperación",
       "promptTemplate": "Plantilla de Prompt",
-      "languageModel": "Modelo de Lenguaje (LLM)",
+      "languageModel": "Modelo de lenguaje (LLM)",
       "cancel": "Cancelar",
-      "saveSession": "Guardar Sesión",
+      "saveSession": "Guardar sesión",
       "openDocumentsLibrary": "Abrir biblioteca de documentos"
     },
     "validation": {
@@ -121,14 +121,16 @@
           "description": "Configuración avanzada aplicada"
         }
       },
-      "advancedButton": "Abrir Configuración Avanzada"
+      "advancedButton": "Abrir configuración avanzada"
     },
     "retriever": {
       "description": "Selecciona tu paradigma de recuperación. El recuperador buscará en tus documentos y devolverá los fragmentos más relevantes.",
-      "paradigmLabel": "Paradigma de Recuperación",
-      "advancedApplied": "Configuración Avanzada Aplicada",
-      "topKLabel": "Número de Resultados (Top K)",
-      "advancedButton": "Abrir Configuración Avanzada",
+      "paradigmLabel": "Paradigma de recuperación",
+      "advancedApplied": "Configuración avanzada aplicada",
+      "topKLabel": "Número de fragmentos (Top K)",
+      "topKCardDescription": "Fragmentos",
+      "advancedTopK": "Top K avanzado: {{topK}}",
+      "advancedButton": "Abrir configuración avanzada",
       "modifyFromAdvanced": "El Top K debe modificarse desde la vista de configuración avanzada",
       "explanations": {
         "SparseRetriever": "Ideal para búsquedas por palabras clave e IDs específicos. Útil para encontrar coincidencias exactas en los documentos.",
@@ -139,16 +141,16 @@
     "composite": {
       "addChild": "Añadir nodo recuperador",
       "removeNode": "Eliminar nodo",
-      "configureNode": "Configurar Nodo",
+      "configureNode": "Configurar nodo",
       "selectModel": "Seleccionar modelo recuperador",
       "parameters": "Parámetros",
-      "simpleGroup": "Recuperadores Simples",
-      "keywordGroup": "Recuperadores por Palabras Clave",
-      "denseGroup": "Recuperadores Densos",
+      "simpleGroup": "Recuperadores simples",
+      "keywordGroup": "Recuperadores por palabras clave",
+      "denseGroup": "Recuperadores densos",
       "embeddingGroup": "Recuperadores por Embeddings",
       "hybridGroup": "Híbrido",
       "hybridDescription": "BM25 + embeddings multilingües HuggingFace",
-      "compositeGroup": "Recuperadores Compuestos",
+      "compositeGroup": "Recuperadores compuestos",
       "nestedCompositeNote": "Este es un recuperador compuesto. Sus hijos pueden configurarse en el árbol inferior.",
       "allChunks": "Todos los fragments",
       "selectedChunks": "Fragments seleccionados",
@@ -157,21 +159,21 @@
     },
     "generator": {
       "description": "Selecciona el modelo de lenguaje que generará las respuestas basadas en el contexto recuperado y tus prompts.",
-      "modelLabel": "Modelo de Generación",
-      "advancedApplied": "Configuración Avanzada Aplicada",
+      "modelLabel": "Modelo de generación",
+      "advancedApplied": "Configuración avanzada aplicada",
       "selectModel": "Seleccionar modelo de lenguaje",
       "selectModelPlaceholder": "ej. GPT-4, Claude, Llama",
       "modelInfo": "Modelo:",
-      "advancedButton": "Abrir Configuración Avanzada"
+      "advancedButton": "Abrir configuración avanzada"
     },
     "prompt": {
       "description": "Selecciona una plantilla de prompt que define cómo se combinan el contexto recuperado y los mensajes del chat para generar respuestas.",
-      "availablePrompts": "Plantillas Disponibles",
+      "availablePrompts": "Plantillas disponibles",
       "openPrompts": "Abrir biblioteca de prompts",
       "promptLabel": "Prompt",
       "selectTemplate": "Seleccionar plantilla de prompt",
       "selectTemplatePlaceholder": "ej. Prompt por Defecto, Instrucción Personalizada",
-      "selectedTemplate": "Plantilla de Prompt Seleccionada:",
+      "selectedTemplate": "Plantilla de Prompt seleccionada:",
       "newPromptButton": "Nuevo Prompt",
       "defaultGenerationPrompt": "Prompt de Generación por Defecto",
       "defaultQnAGenerationPrompt": "Prompt de Generación Q&A por Defecto",
@@ -187,10 +189,10 @@
       "descriptionPlaceholder": "No hay descripción disponible",
       "createdLabel": "Creado",
       "openChatButton": "Abrir chat de sesión RAG",
-      "detailedConfig": "Configuración Detallada",
-      "chunkingModel": "Modelo de Chunking",
-      "retrieverModel": "Modelo de Recuperación",
-      "generationModel": "Modelo de Generación",
+      "detailedConfig": "Configuración detallada",
+      "chunkingModel": "Modelo de chunking",
+      "retrieverModel": "Modelo de recuperación",
+      "generationModel": "Modelo de generación",
       "promptSelected": "Prompt seleccionado",
       "promptName": "Nombre:",
       "promptTemplate": "Plantilla:",
@@ -200,13 +202,13 @@
       "apiKeyCopied": "Clave API copiada al portapapeles",
       "failedToCopyApiKey": "Error al copiar la clave API",
       "noParameters": "Sin parámetros",
-      "viewDetails": "Ver Detalles",
+      "viewDetails": "Ver detalles",
       "parameterDetails": "Detalles del Parámetro",
       "completeConfig": "Configuración completa del parámetro:",
       "close": "Cerrar"
     },
     "newPrompt": {
-      "title": "Crear una nueva Plantilla",
+      "title": "Crear una nueva plantilla",
       "description": "La plantilla de prompt define cómo se integran los fragmentos (piezas de documentos) y los mensajes del chat para generar respuestas. Personaliza el prompt para adaptar el comportamiento de tus sesiones RAG.",
       "placeholdersInfo": "Usa {chunks} para representar dónde se insertarán los fragmentos del documento recuperado, e {input} para el mensaje del usuario.",
       "nameLabel": "Nombre del Prompt",
@@ -221,10 +223,10 @@
       "languageLabel": "Idioma (opcional)"
     },
     "advanced": {
-      "chunkingTitle": "Configuración Avanzada de Chunking",
-      "retrieverTitle": "Configuración Avanzada de Recuperación",
-      "generatorTitle": "Configuración Avanzada de Generación",
-      "promptTitle": "Configuración Avanzada de Prompt",
+      "chunkingTitle": "Configuración avanzada de chunking",
+      "retrieverTitle": "Configuración avanzada de recuperación",
+      "generatorTitle": "Configuración avanzada de generación",
+      "promptTitle": "Configuración avanzada de prompt",
       "close": "Cerrar",
       "done": "Listo",
       "noDescription": "No hay descripción disponible",
@@ -247,7 +249,7 @@
           "title": "Documentos",
           "point1": "Tus documentos son la base de conocimiento: el asistente sólo puede usar lo que logre recuperar de ellos.",
           "point2": "Sube archivos claros y bien estructurados (PDF, TXT, etc.) para mejores resultados.",
-          "point3": "Los PDFs escaneados (imágenes) pueden tener una extracción de texto limitada y empeorar las respuestas."
+          "point3": "Actualmente sólo documentos de texto son soportados. Imágenes, audio y video aún no son soportados."
         },
         "chunking": {
           "title": "Chunking",
@@ -288,7 +290,7 @@
     "contextSpace": "Con tu configuración actual tienes espacio para tus fuentes (chunks) y {{availableChars}} carácteres para tu mensaje.",
     "insufficientContextTitle": "Ventana de contexto insuficiente",
     "insufficientContextDescription": "El modelo seleccionado no tiene suficiente contexto para manejar la configuración actual de Tamaño de Fragmento y Top K. Por favor, reduce el Tamaño de Fragmento, el número de resultados (Top K), o selecciona un modelo con una ventana de contexto más grande.",
-    "apiKeyMissingTitle": "API Key Requerida",
+    "apiKeyMissingTitle": "API key requerida",
     "apiKeyMissingDescription": "Este modelo requiere una API key para funcionar. Abre la Configuración Avanzada para añadir tu API key."
   },
   "documentReferences": {
@@ -323,5 +325,13 @@
     "successUpload_one": "{{count}} documento subido exitosamente",
     "successUpload_other": "{{count}} documentos subidos exitosamente",
     "failedUpload": "Error al subir documento(s)"
+  },
+  "ragPromptsPage": {
+    "title": "Prompts RAG",
+    "description": "Gestiona los prompts para tus sesiones RAG: ve todos los prompts disponibles y crea nuevos para mejorar tus interacciones de IA."
+  },
+  "ragDocumentsPage": {
+    "title": "Documentos RAG",
+    "description": "Gestiona los documentos para tus sesiones RAG: ve los documentos existentes y sube nuevos para mejorar tu base de conocimiento de IA."
   }
 }

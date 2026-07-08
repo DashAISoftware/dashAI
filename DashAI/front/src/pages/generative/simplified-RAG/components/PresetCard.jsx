@@ -16,34 +16,33 @@ export default function PresetCard({
       variant="outlined"
       onClick={onClick}
       sx={{
-        py: 1.5,
+        flex: 1,
         cursor: "pointer",
+        minHeight: 56,
+        px: 3,
+        py: 4,
         display: "flex",
         flexDirection: "column",
         gap: 0.5,
-        justifyContent: "center",
-        textTransform: "none",
+        justifyContent: "flex-start",
         border: "1px solid",
-        borderColor: selected ? theme.palette.accent.amberBorder : "divider",
-        borderRadius: selected ? "2px" : 1,
-        backgroundColor: selected ? theme.palette.accent.amberDim : "transparent",
-        color: selected ? theme.palette.primary.main : "inherit",
-        "&:hover": selected
-          ? {
-              backgroundColor: theme.palette.primary.main,
-              color: theme.palette.primary.contrastText,
-              "& .MuiTypography-root": {
-                color: theme.palette.primary.contrastText,
-              },
-            }
-          : {},
+        borderColor: selected ? theme.palette.primary.main : theme.palette.ui.border,
+        borderRadius: 2,
+        backgroundColor: selected ? theme.palette.action.selected : theme.palette.background.paper,
+        transition: theme.transitions.create(["background-color", "border-color", "box-shadow"], {
+          duration: theme.transitions.duration.short,
+        }),
+        "&:hover": {
+          backgroundColor: selected ? theme.palette.action.selected : theme.palette.action.hover,
+          borderColor: theme.palette.primary.main,
+        },
         ...extraSx,
       }}
     >
-      <Typography variant="subtitle2" sx={{ textAlign: "center" }}>
+      <Typography variant="subtitle2">
         {label}
       </Typography>
-      <Typography variant="caption" sx={{ textAlign: "center" }}>
+      <Typography variant="caption">
         {description}
       </Typography>
     </Paper>

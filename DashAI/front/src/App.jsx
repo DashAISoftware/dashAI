@@ -1,6 +1,6 @@
 import React from "react";
 
-import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { TourRegistryProvider } from "./contexts/TourRegistryContext";
 import ModuleThemeWrapper from "./components/ModuleThemeWrapper";
 
@@ -69,11 +69,7 @@ function App() {
           <Route path="/app/generative" element={<Generative />} />
           <Route
             path="/app/generative/rag"
-            element={
-              <GenerativeProvider>
-                <SimplifiedRAGPage />
-              </GenerativeProvider>
-            }
+            element={<Navigate to="/app/generative/sessions/new" replace />}
           />
           <Route
             path="/app/generative/rag/documents"

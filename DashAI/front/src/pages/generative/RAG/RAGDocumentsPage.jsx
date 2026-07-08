@@ -1,8 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Box, Typography } from "@mui/material";
+import ModuleContainer from "../../../components/layout/ModuleContainer";
+import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
+import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
+import RightPanel from "../../../components/threeSectionLayout/panels/RightPanel";
 import SessionBar from "../../../components/generative/SessionBar";
-import MainGenerativeBox from "../../../components/generative/MainGenerativeBox";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import DocumentTable from "../../../components/generative/RAG/DocumentTable";
 import {
@@ -10,10 +14,14 @@ import {
   deleteDocument,
 } from "../../../api/rag";
 import { getSessions, removeSession } from "../../../api/session";
-import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
+import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
+import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
+import { FormSchemaProvider } from "../../../contexts/schema";
 
 function RAGDocumentsPage() {
   const navigate = useNavigate();
+  const threePanelLayout = useThreePanelLayout();
+  const { t } = useTranslation(["generative"]);
   const [allDocuments, setAllDocuments] = useState([]);
   const [documentsLoading, setDocumentsLoading] = useState(true);
   const [sessions, setSessions] = useState([]);
@@ -61,18 +69,16 @@ function RAGDocumentsPage() {
   }, []);
 
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
-    // Navigate directly to generative with session
-    navigate("/app/generative", { 
-      state: { 
+    navigate("/app/generative", {
+      state: {
         selectedSessionId: sessionId,
         selectedTaskName: taskName,
         selectedDisplayName: taskDisplayName
-      } 
+      }
     });
   };
 
   const handleNewSessionButton = () => {
-    // Navigate to generative with no session selected
     navigate("/app/generative");
   };
 
@@ -82,28 +88,29 @@ function RAGDocumentsPage() {
   };
 
   return (
-    <Box height="calc(100vh - 74px)" width="100%" display="flex">
-      <Box width="20%">
-        <SessionBar
-          sessions={sessions}
-          handleSessionClick={handleSessionClick}
-          handleNewSessionButton={handleNewSessionButton}
-          handleSessionDelete={handleSessionDelete}
-          stepIndex={0}
-          showSearch={false}
-        />
-      </Box>
+    <FormSchemaProvider>
+      <ThreePanelLayoutContext.Provider value={threePanelLayout}>
+        <ModuleContainer>
+          <LeftPanel data-tour="sessions-left-panel">
+            <SessionBar
+              sessions={sessions}
+              handleSessionClick={handleSessionClick}
+              handleNewSessionButton={handleNewSessionButton}
+              handleSessionDelete={handleSessionDelete}
+              stepIndex={0}
+              onToggle={threePanelLayout.handleToggleLeft}
+              showSearch={false}
+            />
+          </LeftPanel>
 
-      <Box width="60%">
-        <CenterBox>
+          <CenterPanel data-tour="documents-center-panel">
             <RAGBreadcrumbs />
             <Typography variant="h5" component="h1">
-              RAG Documents
+              {t("generative:ragDocumentsPage.title")}
             </Typography>
             <Typography variant="subtitle1" component="p" sx={{ mb: 2 }}>
-              Manage documents for your RAG sessions: view existing documents and upload new ones to enhance your AI knowledge base.
+              {t("generative:ragDocumentsPage.description")}
             </Typography>
-
             <DocumentTable
               documents={[...allDocuments]
                 .sort(
@@ -126,24 +133,26 @@ function RAGDocumentsPage() {
               isLoading={documentsLoading}
               showTableTitle={false}
             />
-        </CenterBox>
-      </Box>
+          </CenterPanel>
 
-      <Box width="20%" sx={{ flexShrink: 0, flexGrow: 0 }}>
-        <Box
-          width="100%"
-          height="100%"
-          sx={{ 
-            backgroundColor: "background.box", 
-            borderRadius: 2,
-            minWidth: 0,
-            maxWidth: "100%",
-            overflow: "hidden"
-          }}
-        >
-        </Box>
-      </Box>
-    </Box>
+          <RightPanel toggleButtonTop="50%" data-tour="documents-right-panel">
+            <Box
+              width="100%"
+              height="100%"
+              sx={{
+                backgroundColor: "background.box",
+                borderRadius: 2,
+                minWidth: 0,
+                maxWidth: "100%",
+                overflow: "auto",
+                p: 2,
+              }}
+            >
+            </Box>
+          </RightPanel>
+        </ModuleContainer>
+      </ThreePanelLayoutContext.Provider>
+    </FormSchemaProvider>
   );
 }
 

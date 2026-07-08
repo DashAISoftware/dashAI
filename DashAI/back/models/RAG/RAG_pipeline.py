@@ -264,6 +264,20 @@ class RAGPipeline(BaseGenerativeModel):
     retriever: RetrieverModel
     llm_model: TextToTextGenerationTaskModel
 
+    DISPLAY_NAME: str = MultilingualString(
+        en="RAG Pipeline",
+        es="Flujo de RAG",
+        pt="Pipeline RAG",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en="Pipeline for Retrieval-Augmented Generation (RAG) tasks, orchestrating document loading, chunking, retrieval, prompt formatting, and LLM generation.",
+        es="Pipeline para tareas de Generación Aumentada por Recuperación (RAG), orquestando la carga de documentos, chunking, recuperación, formateo de prompts y generación con LLM.",
+        pt="Pipeline para tarefas de Geração Aumentada por Recuperação (RAG), orquestrando carregamento de documentos, chunking, recuperação, formatação de prompts e geração com LLM.",
+    )
+    COLOR: str = "#e12885"
+    ICON: str = "Grading"
+    MODEL_NAME: str = "RAGPipeline"
+
     def __init__(
         self,
         config: RAGPipelineConfig,

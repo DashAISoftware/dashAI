@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo} from "react";
 import {
   Box,
   Typography,
   Button,
   CircularProgress,
+  useTheme
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
@@ -12,12 +13,14 @@ import { resolveDefaults, getModelFromSubform, getParamsFromSubform } from "../.
 import ChunkingAdvancedModal from "../advanced/ChunkingAdvancedModal";
 import AdvancedConfigCard from "../components/AdvancedConfigCard";
 import PresetCard from "../components/PresetCard";
+import RAGSectionColumn from "../components/RAGSectionColumn";
 
 export default function ChunkingSection({
   chunkingModel,
   setChunkingModel,
 }) {
   const { t } = useTranslation(["generative"]);
+  const theme = useTheme();
 
   const CHUNKING_PRESETS = useMemo(() => [
     {
@@ -147,8 +150,7 @@ export default function ChunkingSection({
   const isCustom = selectedPreset === "custom";
 
   return (
-    <>
-      <Box display="flex" flexDirection="column" gap={2} width="100%">
+      <RAGSectionColumn>
         <Typography variant="body2" color="textSecondary">
           {t("generative:simplifiedRag.chunking.description")}
         </Typography>
@@ -157,44 +159,52 @@ export default function ChunkingSection({
         <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
           {CHUNKING_PRESETS.map((preset) => (
             <PresetCard
-              key={preset.value}
-              selected={selectedPreset === preset.value}
-              onClick={() => handlePresetClick(preset.value)}
-              label={preset.label}
-              description={getPresetDescription(preset)}
-              sx={{ flex: 1, minWidth: 150, py: 2, px: 1 }}
+            key={preset.value}
+            selected={selectedPreset === preset.value}
+            onClick={() => handlePresetClick(preset.value)}
+            label={preset.label}
+            description={getPresetDescription(preset)}
+            sx={{minWidth: 150  }}
             />
           ))}
           {isCustom && selectedChunker && (
             <AdvancedConfigCard
-              modelName={selectedChunker.name}
-              onClick={() => setShowAdvanced(true)}
+            modelName={selectedChunker.name}
+            onClick={() => setShowAdvanced(true)}
             />
           )}
         </Box>
 
         {/* Advanced Configuration Button */}
         <Button
-          variant="outlined"
+          variant="contained"
           color="primary"
+          size="small"
           onClick={() => setShowAdvanced(true)}
-          fullWidth
           disabled={!selectedChunker}
-        >
-          ↗ {t("generative:simplifiedRag.chunking.advancedButton")}
+          sx=
+          {{
+            alignSelf: "flex-start", 
+            width: "fit-content",
+            border: "1px solid",
+            borderColor: theme.palette.primary.main,
+            backgroundColor: theme.palette.action.selected,
+            color: theme.palette.text.primary,
+          }}
+          >
+           {t("generative:simplifiedRag.chunking.advancedButton")}
         </Button>
-      </Box>
 
-      {/* Advanced Configuration Modal */}
-      {selectedChunker && (
-        <ChunkingAdvancedModal
+        {/* Advanced Configuration Modal */}
+        {selectedChunker && (
+          <ChunkingAdvancedModal
           open={showAdvanced}
           onClose={() => setShowAdvanced(false)}
           chunkingModel={chunkingModel}
           setChunkingModel={setChunkingModel}
-        />
-      )}
-    </>
+          />
+        )}
+    </RAGSectionColumn>
   );
 }
 

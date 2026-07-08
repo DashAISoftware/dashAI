@@ -69,7 +69,27 @@
       "defaultGenerationPrompt": "Prompt de Geração Padrão",
       "defaultQnAGenerationPrompt": "Prompt de Geração Q&A Padrão",
       "createNewPrompt": "Criar novo prompt",
-      "language": "Idioma"
+      "language": "Idioma",
+      "description": "Escolha um modelo de prompt. Os prompts definem como os fragmentos recuperados dos documentos são integrados à mensagem do usuário para gerar uma resposta.",
+      "selectTemplate": "Modelo de Prompt",
+      "selectTemplatePlaceholder": "Selecione um modelo de prompt...",
+      "selectedTemplate": "Template selecionado",
+      "newPromptButton": "Novo prompt"
+    },
+    "newPrompt": {
+      "title": "Criar um novo prompt",
+      "description": "O template do prompt define como os fragmentos (partes dos documentos) e as mensagens do chat são integrados para gerar respostas. Personalize o prompt para ajustar o comportamento das suas sessões RAG.",
+      "placeholdersInfo": "Use {chunks} para representar onde os fragmentos dos documentos recuperados serão inseridos, e {input} para a mensagem do usuário.",
+      "nameLabel": "Nome do Prompt",
+      "nameRequired": "O nome do prompt é obrigatório",
+      "promptLabel": "Prompt",
+      "promptPlaceholder": "Aqui você pode modificar o prompt, por exemplo:\nCada mensagem do usuário é adicionada como {input}\nAs fontes são adicionadas como {chunks}",
+      "cancel": "Cancelar",
+      "save": "Salvar",
+      "unsavedChanges": "Você tem alterações não salvas. Tem certeza de que deseja cancelar?",
+      "success": "Prompt criado com sucesso!",
+      "error": "Falha ao criar o prompt",
+      "languageLabel": "Idioma (opcional)"
     },
     "composite": {
       "addChild": "Adicionar nó recuperador",
@@ -77,13 +97,13 @@
       "configureNode": "Configurar Nó",
       "selectModel": "Selecionar modelo recuperador",
       "parameters": "Parâmetros",
-      "simpleGroup": "Recuperadores Simples",
-      "keywordGroup": "Recuperadores por Palavras-chave",
-      "denseGroup": "Recuperadores Densos",
+      "simpleGroup": "Recuperadores simples",
+      "keywordGroup": "Recuperadores por palavras-chave",
+      "denseGroup": "Recuperadores densos",
       "embeddingGroup": "Recuperadores por Embeddings",
       "hybridGroup": "Híbrido",
       "hybridDescription": "BM25 + embeddings multilíngues HuggingFace",
-      "compositeGroup": "Recuperadores Compostos",
+      "compositeGroup": "Recuperadores compostos",
       "nestedCompositeNote": "Este é um recuperador composto. Seus filhos podem ser configurados na árvore abaixo.",
       "allChunks": "Todos os fragments",
       "selectedChunks": "Fragments selecionados",
@@ -95,7 +115,15 @@
     "contextSpace": "Com sua configuração atual, você tem espaço para suas fontes (chunks) e {{availableChars}} caracteres para sua mensagem.",
     "insufficientContextTitle": "Janela de Contexto Insuficiente",
     "insufficientContextDescription": "O modelo selecionado não tem contexto suficiente para lidar com as configurações atuais de Tamanho do Fragmento e Top K. Reduza o Tamanho do Fragmento, o número de resultados (Top K) ou selecione um modelo com uma janela de contexto maior.",
-    "apiKeyMissingTitle": "API Key Necessária",
+    "apiKeyMissingTitle": "API key necessária",
     "apiKeyMissingDescription": "Este modelo requer uma API key para funcionar. Abra a Configuração Avançada para adicionar sua API key."
+  },
+  "ragPromptsPage": {
+    "title": "Prompts RAG",
+    "description": "Gerencie os prompts para suas sessões RAG: veja todos os prompts disponíveis e crie novos para melhorar suas interações de IA."
+  },
+  "ragDocumentsPage": {
+    "title": "Documentos RAG",
+    "description": "Gerencie os documentos para suas sessões RAG: veja os documentos existentes e faça upload de novos para melhorar sua base de conhecimento de IA."
   }
 }

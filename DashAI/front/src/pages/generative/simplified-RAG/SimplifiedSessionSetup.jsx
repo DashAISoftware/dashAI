@@ -5,14 +5,8 @@ import {
   TextField,
   Typography,
   CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Alert,
-  IconButton,
-  Tooltip,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { ViewList as ViewListIcon } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import DocumentSelector from "../../../components/generative/RAG/DocumentSelector";
@@ -20,11 +14,14 @@ import ChunkingSection from "./sections/ChunkingSection";
 import RetrieverSection from "./sections/RetrieverSection";
 import GeneratorSection from "./sections/GeneratorSection";
 import PromptSection from "./sections/PromptSection";
+import RAGCard from "./components/RAGCard";
+import SectionCard from "./components/SectionCard";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import { createRAGSession } from "../../../api/rag";
 import { getSessions } from "../../../api/session";
 import { generateSequentialName } from "../../../utils/nameGenerator";
+import RAGSectionColumn from "./components/RAGSectionColumn";
 
 const defaultSessionData = {
   name: "",
@@ -314,214 +311,158 @@ export default function SimplifiedSessionSetup({
         height="100%"
         display="flex"
         flexDirection="column"
-        sx={{ px: 2, pt: 2, pb: 0 }}
       >
-        <Box
-          display="flex"
-          flexDirection="column"
-          height="100%"
-          width="100%"
-        >
-        {/* Header */}
-        <Box flexShrink={0}>
-          <Typography variant="h5" component="h1" sx={{ mb: 1 }}>
-            {t("generative:simplifiedRag.setup.title")}
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            {t("generative:simplifiedRag.setup.subtitle")}
-          </Typography>
-        </Box>
-
         {/* Scrollable Content */}
-        <Box flex={1} overflow="auto" sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 3 }}>
+        <Box flex={1} overflow="auto" sx={{display: "flex", flexDirection: "column", gap: 3}}>
 
-        {/* Session Details */}
-        <Accordion
-          expanded={expandedSections.sessionDetails}
-          onChange={handleSectionChange("sessionDetails")}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-              {t("generative:simplifiedRag.setup.sessionDetails")}
+          <RAGSectionColumn>
+            <Typography variant="h5" component="h3">
+              {t("generative:simplifiedRag.setup.title")}
             </Typography>
-          </AccordionSummary>
-          <AccordionDetails
-            sx={{ display: "flex", flexDirection: "column", gap: 2, px: 4 }}
-          >
-            <TextField
-              fullWidth
-              label={t("generative:simplifiedRag.setup.sessionName")}
-              variant="outlined"
-              value={sessionData.name}
-              onChange={handleSessionNameChange}
-              placeholder={t("generative:simplifiedRag.setup.sessionNamePlaceholder")}
-              error={Boolean(nameError) || isDuplicateName}
-              helperText={nameError || (isDuplicateName ? t("generative:simplifiedRag.setup.sessionNameDuplicate") : "")}
-              inputProps={{ maxLength: 256 }}
-              size="medium"
-              disabled={saving}
-            />
-
-            {isDuplicateName && (
-              <Alert
-                severity="warning"
-                sx={{
-                  p: 2,
-                  backgroundColor: "action.hover",
-                  border: "1px solid",
-                  borderColor: "warning.main",
-                  borderRadius: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                }}
-              >
-                <Typography variant="body2">
-                  {t("generative:simplifiedRag.setup.sessionNameDuplicateAlert")}
-                </Typography>
-              </Alert>
-            )}
-
-            <TextField
-              fullWidth
-              label={t("generative:simplifiedRag.setup.description")}
-              variant="outlined"
-              value={sessionData.description}
-              onChange={handleSessionDescriptionChange}
-              placeholder={t("generative:simplifiedRag.setup.descriptionPlaceholder")}
-              multiline
-              rows={3}
-              inputProps={{ maxLength: 512 }}
-              size="medium"
-              disabled={saving}
-            />
-          </AccordionDetails>
-        </Accordion>
-
-        {/* Document Selection */}
-        <Accordion
-          expanded={expandedSections.documents}
-          onChange={handleSectionChange("documents")}
-        >
-          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mr: 2 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {t("generative:simplifiedRag.setup.selectDocuments")}
-              </Typography>
-              <Tooltip title={t("generative:simplifiedRag.setup.openDocumentsLibrary")}>
-                <IconButton
-                  size="small"
-                  onClick={(e) => { e.stopPropagation(); goToDocumentsDetail(); }}
-                  aria-label="open-documents-library"
-                >
-                  <ViewListIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          </AccordionSummary>
-          <AccordionDetails
-            sx={{ display: "flex", flexDirection: "column", gap: 2, px: 4 }}
-          >
             <Typography variant="body2" color="textSecondary">
-              {t("generative:simplifiedRag.setup.selectDocumentsDescription")}
+              {t("generative:simplifiedRag.setup.subtitle")}
             </Typography>
+          </RAGSectionColumn>
 
-            <Box width="100%">
+
+          {/* Session Details */}
+          <RAGCard
+            title={t("generative:simplifiedRag.setup.sessionDetails")}
+            expanded={expandedSections.sessionDetails}
+            onChange={handleSectionChange("sessionDetails")}
+          >
+            <SectionCard>
+              <RAGSectionColumn>
+                <TextField
+                  fullWidth
+                  label={t("generative:simplifiedRag.setup.sessionName")}
+                  variant="outlined"
+                  value={sessionData.name}
+                  onChange={handleSessionNameChange}
+                  placeholder={t("generative:simplifiedRag.setup.sessionNamePlaceholder")}
+                  error={Boolean(nameError) || isDuplicateName}
+                  helperText={nameError || (isDuplicateName ? t("generative:simplifiedRag.setup.sessionNameDuplicate") : "")}
+                  size="medium"
+                  disabled={saving}
+                  />
+
+                {isDuplicateName && (
+                  <Alert
+                  severity="warning"
+                  sx={{
+                    p: 2,
+                    backgroundColor: "action.hover",
+                    border: "1px solid",
+                    borderColor: "warning.main",
+                    borderRadius: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                  >
+                    <Typography variant="body2">
+                      {t("generative:simplifiedRag.setup.sessionNameDuplicateAlert")}
+                    </Typography>
+                  </Alert>
+                )}
+
+                <TextField
+                  fullWidth
+                  label={t("generative:simplifiedRag.setup.description")}
+                  variant="outlined"
+                  value={sessionData.description}
+                  onChange={handleSessionDescriptionChange}
+                  placeholder={t("generative:simplifiedRag.setup.descriptionPlaceholder")}
+                  multiline
+                  rows={3}
+                  size="medium"
+                  disabled={saving}
+                  />
+              </RAGSectionColumn>
+            </SectionCard>
+          </RAGCard>
+
+          {/* Document Selection */}
+          <RAGCard
+            title={t("generative:simplifiedRag.setup.selectDocuments")}
+            expanded={expandedSections.documents}
+            onChange={handleSectionChange("documents")}
+            actions={[
+              {
+                icon: <ViewListIcon fontSize="small" />,
+                tooltip: t("generative:simplifiedRag.setup.openDocumentsLibrary"),
+                onClick: goToDocumentsDetail,
+                ariaLabel: "open-documents-library",
+              },
+            ]}
+          >
+            <SectionCard>
               <DocumentSelector
                 selectedIds={sessionData.documents}
                 onSelect={handleDocumentSelectionChange}
               />
-            </Box>
-          </AccordionDetails>
-        </Accordion>
+            </SectionCard>
+          </RAGCard>
 
-        {/* Configuration Sections */}
-        <Box display="flex" flexDirection="column" gap={2}>
           {/* Chunking Section */}
-          <Accordion
+          <RAGCard
+            title={t("generative:simplifiedRag.setup.chunkingStrategy")}
             expanded={expandedSections.chunking}
             onChange={handleSectionChange("chunking")}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {t("generative:simplifiedRag.setup.chunkingStrategy")}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails
-              sx={{ display: "flex", flexDirection: "column", gap: 2, px: 4 }}
-            >
+            <SectionCard>  
               <ChunkingSection
                 chunkingModel={sessionData.parameters.chunking_model}
                 setChunkingModel={updateChunkingModel}
-              />
-            </AccordionDetails>
-          </Accordion>
+                />
+            </SectionCard>
+          </RAGCard>
 
           {/* Retriever Section */}
-          <Accordion
+          <RAGCard
+            title={t("generative:simplifiedRag.setup.retrieverModel")}
             expanded={expandedSections.retriever}
             onChange={handleSectionChange("retriever")}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {t("generative:simplifiedRag.setup.retrieverModel")}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails
-              sx={{ display: "flex", flexDirection: "column", gap: 2, px: 4 }}
-            >
+            <SectionCard>
               <RetrieverSection
                 retrieverModel={sessionData.parameters.retriever_model}
                 setRetrieverModel={updateRetrieverModel}
               />
-            </AccordionDetails>
-          </Accordion>
+
+            </SectionCard>
+          </RAGCard>
 
           {/* Prompt Section */}
-          <Accordion
+          <RAGCard
+            title={t("generative:simplifiedRag.setup.promptTemplate")}
             expanded={expandedSections.prompt}
             onChange={handleSectionChange("prompt")}
+            actions={[
+              {
+                icon: <ViewListIcon fontSize="small" />,
+                tooltip: t("generative:simplifiedRag.prompt.openPrompts"),
+                onClick: goToPromptsDetail,
+                ariaLabel: "open-prompt-library",
+              },
+            ]}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", mr: 2 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                  {t("generative:simplifiedRag.setup.promptTemplate")}
-                </Typography>
-                <Tooltip title={t("generative:simplifiedRag.prompt.openPrompts")}>
-                  <IconButton
-                    size="small"
-                    onClick={(e) => { e.stopPropagation(); goToPromptsDetail(); }}
-                    aria-label="open-prompt-library"
-                  >
-                    <ViewListIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails
-              sx={{ display: "flex", flexDirection: "column", gap: 2, px: 4 }}
-            >
+            <SectionCard>
               <PromptSection
                 promptModel={sessionData.parameters.prompt}
                 setPromptModel={updatePrompt}
                 onTokenCountChange={setPromptTokenCount}
-              />
-            </AccordionDetails>
-          </Accordion>
+                />
+            </SectionCard>
+          </RAGCard>
 
           {/* Generator Section */}
-          <Accordion
+          <RAGCard
+            title={t("generative:simplifiedRag.setup.languageModel")}
             expanded={expandedSections.generator}
             onChange={handleSectionChange("generator")}
           >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {t("generative:simplifiedRag.setup.languageModel")}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails
-              sx={{ display: "flex", flexDirection: "column", gap: 2, px: 4 }}
-            >
+            <SectionCard>
               <GeneratorSection
                 generatorModel={sessionData.parameters.generator_model}
                 setGeneratorModel={updateGeneratorModel}
@@ -530,10 +471,9 @@ export default function SimplifiedSessionSetup({
                 promptTokenCount={promptTokenCount}
                 setIsValid={setIsGeneratorValidState}
               />
-            </AccordionDetails>
-          </Accordion>
+            </SectionCard>
+          </RAGCard>
 
-        </Box>
         </Box>
 
         {/* Action Buttons — fixed at bottom */}
@@ -567,7 +507,6 @@ export default function SimplifiedSessionSetup({
             {saving ? <CircularProgress size={20} /> : t("generative:simplifiedRag.setup.saveSession")}
           </Button>
         </Box>
-      </Box>
       </Box>
     );
 }

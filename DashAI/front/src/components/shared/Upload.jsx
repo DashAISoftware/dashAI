@@ -145,7 +145,6 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
         borderRadius: 2,
         display: "flex",
         flexDirection: "column",
-        width: "100%",
         minHeight: "400px",
       }}
     >

@@ -1,78 +1,107 @@
 import React from "react";
-import Typography from "@mui/material/Typography";
+import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import Tooltip from "@mui/material/Tooltip";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
+/**
+ * Displays a list of required placeholders with icons and a "+" button
+ * to insert each placeholder into the prompt template textarea.
+ */
 export default function PlaceholdersList({
   required = [],
-  /* optional = [], */
   descriptions = {},
   template = "",
+  onInsertPlaceholder,
 }) {
   return (
-    <div style={{ marginTop: 16, marginBottom: 16 }}>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 64 }}>
-        <div>
-          <Typography variant="subtitle1" gutterBottom>
-            Required Placeholders
-          </Typography>
-          <ul style={{ marginTop: 0 }}>
-            {required.map((ph) => {
-              const isPresent = template.includes(ph);
-              return (
-                <li
-                  key={ph}
-                  style={{ display: "flex", alignItems: "center", gap: 8 }}
-                >
-                  {isPresent ? (
-                    <CheckCircleIcon fontSize="small" color="success" />
-                  ) : (
-                    <WarningAmberIcon fontSize="small" color="warning" />
-                  )}
-                  <strong>{ph}</strong>
-                  <Tooltip title={descriptions[ph] || ""} placement="right">
-                    <HelpOutlineIcon
-                      fontSize="small"
-                      color="action"
-                      style={{ cursor: "pointer" }}
-                    />
-                  </Tooltip>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-        {/* <div>
-          <Typography variant="subtitle1" gutterBottom>
-            Optional Placeholders
-          </Typography>
-          <ul style={{ marginTop: 0 }}>
-            {optional.map((ph) => {
-              const isPresent = template.includes(ph);
-              return (
-                <li
-                  key={ph}
-                  style={{ display: "flex", alignItems: "center", gap: 8 }}
-                >
-                  {isPresent && (
-                    <CheckCircleIcon fontSize="small" color="success" />
-                  )}
-                  <strong>{ph}</strong>
-                  <Tooltip title={descriptions[ph] || ""} placement="right">
-                    <HelpOutlineIcon
-                      fontSize="small"
-                      color="action"
-                      style={{ cursor: "pointer" }}
-                    />
-                  </Tooltip>
-                </li>
-              );
-            })}
-          </ul>
-        </div> */}
-      </div>
-    </div>
+    <Box sx={{ mt: 2, mb: 2 }}>
+      <Typography variant="subtitle1" gutterBottom>
+        Required Placeholders
+      </Typography>
+      <Box
+        component="ul"
+        sx={{
+          listStyle: "none",
+          m: 0,
+          p: 0,
+          display: "flex",
+          flexDirection: "column",
+          gap: 0.5,
+        }}
+      >
+        {required.map((ph) => {
+          const isPresent = template.includes(ph);
+          return (
+            <Box
+              component="li"
+              key={ph}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.5,
+              }}
+            >
+              {/* Status icon */}
+              {isPresent ? (
+                <CheckCircleIcon
+                  fontSize="small"
+                  color="success"
+                  sx={{ flexShrink: 0 }}
+                />
+              ) : (
+                <WarningAmberIcon
+                  fontSize="small"
+                  color="warning"
+                  sx={{ flexShrink: 0 }}
+                />
+              )}
+
+              {/* Insert button */}
+              {onInsertPlaceholder && (
+                <Tooltip title={`Insert ${ph}`} placement="top">
+                  <IconButton
+                    size="small"
+                    onClick={() => onInsertPlaceholder(ph)}
+                    sx={{
+                      p: 0.25,
+                      color: "primary.main",
+                      "&:hover": { backgroundColor: "primary.light" },
+                    }}
+                  >
+                    <AddCircleOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              {/* Placeholder text */}
+              <Typography
+                component="code"
+                variant="body2"
+                sx={{
+                  fontFamily: "monospace",
+                  fontWeight: 600,
+                  fontSize: "0.8rem",
+                }}
+              >
+                {ph}
+              </Typography>
+
+              {/* Info tooltip */}
+              {descriptions[ph] && (
+                <Tooltip title={descriptions[ph]} placement="right">
+                  <HelpOutlineIcon
+                    fontSize="small"
+                    color="action"
+                    sx={{ cursor: "pointer", flexShrink: 0 }}
+                  />
+                </Tooltip>
+              )}
+            </Box>
+          );
+        })}
+      </Box>
+    </Box>
   );
 }

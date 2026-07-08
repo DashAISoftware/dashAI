@@ -9,8 +9,18 @@ export const getDescription = (desc, i18n) => {
   return "";
 };
 
-export const renderTemplateWithHighlights = (template) => {
+/**
+ * Render a template string with placeholders ({chunks}, {input}, etc.) highlighted.
+ *
+ * @param {string} template - The template string to render
+ * @param {object}  [highlightColors] - Optional resolved color overrides (hex/rgba)
+ * @param {string} [highlightColors.bg] - Background color for placeholders
+ * @param {string} [highlightColors.text] - Text color for placeholders
+ */
+export const renderTemplateWithHighlights = (template, highlightColors = {}) => {
   if (!template) return null;
+
+  const { bg, text } = highlightColors;
 
   const placeholderRegex = /\{([^}]+)\}/g;
   const parts = [];
@@ -44,8 +54,8 @@ export const renderTemplateWithHighlights = (template) => {
         component="span"
         key={idx}
         sx={{
-          backgroundColor: "warning.light",
-          color: "warning.dark",
+          backgroundColor: bg || "warning.light",
+          color: text || "warning.dark",
           padding: "2px 4px",
           borderRadius: "3px",
           fontWeight: 600,

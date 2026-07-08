@@ -12,6 +12,7 @@ import Tooltip from "@mui/material/Tooltip";
 import InfoIcon from "@mui/icons-material/Info";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import GeneratorBody from "../../../pages/generative/simplified-RAG/components/GeneratorBody";
+import RAGSectionColumn from "../../../pages/generative/simplified-RAG/components/RAGSectionColumn";
 
 export default function GeneratorParamsCard({
   generatorModel,
@@ -82,17 +83,19 @@ export default function GeneratorParamsCard({
           )}
         </Box>
 
-        <GeneratorBody
-          generatorModel={generatorModel}
-          setGeneratorModel={setGeneratorModel}
-          chunkSize={chunkSize}
-          topK={topK}
-          promptTokenCount={promptTokenCount}
-          setIsValid={setIsValid}
-          isAdvanced={isAdvanced}
-          setInitialModelParams={setInitialModelParams}
-          showDetails={isExpanded}
-        />
+        <RAGSectionColumn>
+          <GeneratorBody
+            generatorModel={generatorModel}
+            setGeneratorModel={setGeneratorModel}
+            chunkSize={chunkSize}
+            topK={topK}
+            promptTokenCount={promptTokenCount}
+            setIsValid={setIsValid}
+            isAdvanced={isAdvanced}
+            setInitialModelParams={setInitialModelParams}
+            showDetails={isExpanded}
+          />
+        </RAGSectionColumn>
       </CardContent>
     </Card>
   );

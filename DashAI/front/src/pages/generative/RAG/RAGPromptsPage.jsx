@@ -1,17 +1,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Box, Typography } from "@mui/material";
+import ModuleContainer from "../../../components/layout/ModuleContainer";
+import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
+import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
+import RightPanel from "../../../components/threeSectionLayout/panels/RightPanel";
 import SessionBar from "../../../components/generative/SessionBar";
-import MainGenerativeBox from "../../../components/generative/MainGenerativeBox";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import RAGDocumentsPanel from "../../../components/generative/RAG/RAGDocumentsPanel";
 import PromptSelectionTable from "../../../components/generative/RAG/PromptSelectionTable";
 import { getSessions, removeSession } from "../../../api/session";
-import CenterBox from "../../../components/threeSectionLayout/panelContainers/CenterBox";
-
+import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
+import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
+import { FormSchemaProvider } from "../../../contexts/schema";
 
 function RAGPromptsPage() {
   const navigate = useNavigate();
+  const threePanelLayout = useThreePanelLayout();
+  const { t } = useTranslation(["generative"]);
   const [rowSelectionModel, setRowSelectionModel] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [documentRefreshTrigger, setDocumentRefreshTrigger] = useState(0);
@@ -30,18 +37,16 @@ function RAGPromptsPage() {
   }, [loadSessions]);
 
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
-    // Navigate directly to generative with session
-    navigate("/app/generative", { 
-      state: { 
+    navigate("/app/generative", {
+      state: {
         selectedSessionId: sessionId,
         selectedTaskName: taskName,
-        selectedDisplayName: taskDisplayName
-      } 
+        selectedDisplayName: taskDisplayName,
+      },
     });
   };
 
   const handleNewSessionButton = () => {
-    // Navigate to generative with no session selected
     navigate("/app/generative");
   };
 
@@ -59,57 +64,60 @@ function RAGPromptsPage() {
   };
 
   return (
-    <Box height="calc(100vh - 74px)" width="100%" display="flex">
-      <Box width="20%">
-        <SessionBar
-          sessions={sessions}
-          handleSessionClick={handleSessionClick}
-          handleNewSessionButton={handleNewSessionButton}
-          handleSessionDelete={handleSessionDelete}
-          stepIndex={0}
-          showSearch={false}
-        />
-      </Box>
+    <FormSchemaProvider>
+      <ThreePanelLayoutContext.Provider value={threePanelLayout}>
+        <ModuleContainer>
+          <LeftPanel data-tour="sessions-left-panel">
+            <SessionBar
+              sessions={sessions}
+              handleSessionClick={handleSessionClick}
+              handleNewSessionButton={handleNewSessionButton}
+              handleSessionDelete={handleSessionDelete}
+              stepIndex={0}
+              onToggle={threePanelLayout.handleToggleLeft}
+              showSearch={false}
+            />
+          </LeftPanel>
 
-      <Box width="60%">
-        <CenterBox>
+          <CenterPanel data-tour="prompts-center-panel">
             <RAGBreadcrumbs />
             <Typography variant="h5" component="h1">
-              RAG Prompts
+              {t("generative:ragPromptsPage.title")}
             </Typography>
             <Typography variant="subtitle1" component="p" sx={{ mb: 2 }}>
-              Manage prompts for your RAG sessions: view all available prompts and create new ones to improve your AI interactions.
+              {t("generative:ragPromptsPage.description")}
             </Typography>
-
             <PromptSelectionTable
               showTableTitle={false}
               loading={false}
               rowSelectionModel={rowSelectionModel}
               onRowSelectionModelChange={handleRowSelectionModelChange}
             />
-        </CenterBox>
-      </Box>
+          </CenterPanel>
 
-      <Box width="20%" sx={{ flexShrink: 0, flexGrow: 0 }}>
-        <Box
-          width="100%"
-          height="100%"
-          sx={{ 
-            backgroundColor: "background.box", 
-            borderRadius: 2,
-            minWidth: 0,
-            maxWidth: "100%",
-            overflow: "hidden"
-          }}
-        >
-          <RAGDocumentsPanel
-            selectedSessionId={null}
-            isRagChatActive={false}
-            onDocumentChange={handleDocumentChange}
-          />
-        </Box>
-      </Box>
-    </Box>
+          <RightPanel toggleButtonTop="50%" data-tour="documents-right-panel">
+            <Box
+              width="100%"
+              height="100%"
+              sx={{
+                backgroundColor: "background.box",
+                borderRadius: 2,
+                minWidth: 0,
+                maxWidth: "100%",
+                overflow: "auto",
+                p: 2,
+              }}
+            >
+              <RAGDocumentsPanel
+                selectedSessionId={null}
+                isRagChatActive={false}
+                onDocumentChange={handleDocumentChange}
+              />
+            </Box>
+          </RightPanel>
+        </ModuleContainer>
+      </ThreePanelLayoutContext.Provider>
+    </FormSchemaProvider>
   );
 }
 

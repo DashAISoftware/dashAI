@@ -1,10 +1,11 @@
-import { Box, Divider, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import ComponentDetailsPanel from "../custom/ComponentDetailsPanel";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
 import { useTheme } from "@mui/material/styles";
 import { useCreateSession } from "./CreateSessionContext";
+import SimplifiedRAGInfoBar from "./RAG/SimplifiedRAGInfoBar";
 
 export default function CreateSessionRight() {
   const { t } = useTranslation(["generative", "common"]);
@@ -22,6 +23,14 @@ export default function CreateSessionRight() {
           component={selectedModel}
           categoryKey="task_display_name"
         />
+      </Box>
+    );
+  }
+
+  if (selectedModel?.task_name === "RAGTask") {
+    return (
+      <Box sx={{ height: "100%", overflow: "auto", p: 2 }}>
+        <SimplifiedRAGInfoBar />
       </Box>
     );
   }
