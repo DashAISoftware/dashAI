@@ -3,7 +3,6 @@ import logging
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from kink import di, inject
-from sqlalchemy import exc
 
 from DashAI.back.dependencies.database.models import NodeRun, Pipeline, PipelineRun
 from DashAI.back.job.base_job import BaseJob, JobError
@@ -118,45 +117,38 @@ class PipelineJob(BaseJob):
                     )
                     node_context["_node_id"] = node_id
 
-                    node_run_id = None
-                    try:
-                        with session_factory() as run_db:
-                            node_run = NodeRun(
-                                pipeline_run_id=pipeline_run.id,
-                                node_id=node_id,
-                                node_type=node_type or "Unknown",
-                                config=node_config,
-                            )
-                            node_run.set_status_as_delivered()
-                            run_db.add(node_run)
-                            NodeJob._commit_with_retry(run_db, readd=[node_run])
-                            node_run_id = node_run.id
-                    except exc.OperationalError as e:
-                        if "database is locked" in str(e).lower():
-                            log.warning("NodeRun insert skipped due to database lock.")
-                            node_run_id = None
-                        else:
-                            raise
+                    async with update_lock:
+                        node_run = self._persist_node_run(
+                            db, pipeline_run.id, node_id, node_type, node_config
+                        )
 
                     node_job = NodeJob(
-                        node_run_id=node_run_id,
+                        node_run_id=None,
                         node_id=node_id,
                         node_type=node_type,
                         node_config=node_config,
                         context=node_context,
                     )
 
-                    if node_type in exclusive_types:
-                        async with exclusive_lock:
+                    try:
+                        if node_type in exclusive_types:
+                            async with exclusive_lock:
+                                output = await asyncio.to_thread(node_job.run)
+                        else:
                             output = await asyncio.to_thread(node_job.run)
-                    else:
-                        output = await asyncio.to_thread(node_job.run)
+                    except Exception:
+                        async with update_lock:
+                            self._set_node_run_status(
+                                db, node_run, "error", "Node execution failed."
+                            )
+                        raise
 
                     async with update_lock:
                         self._update_context(
                             node_context, pipeline, node_type, node_id, output
                         )
                         node_contexts[node_id] = node_context
+                        self._set_node_run_status(db, node_run, "finished")
 
                 async def _schedule(node_id: str) -> None:
                     task = asyncio.create_task(_run_node(node_id))
@@ -208,6 +200,51 @@ class PipelineJob(BaseJob):
                 db.add(pipeline_run)
                 NodeJob._commit_with_retry(db, readd=[pipeline_run])
                 raise
+
+    def _persist_node_run(
+        self, db, pipeline_run_id, node_id, node_type, node_config
+    ):
+        """Create a NodeRun (STARTED) on the orchestrator's session.
+
+        Returns the NodeRun, or None if it could not be persisted (the node
+        still runs, just without a status to color).
+        """
+        try:
+            node_run = NodeRun(
+                pipeline_run_id=pipeline_run_id,
+                node_id=node_id,
+                node_type=node_type or "Unknown",
+                config=node_config,
+            )
+            node_run.set_status_as_started()
+            db.add(node_run)
+            NodeJob._commit_with_retry(db, readd=[node_run])
+            return node_run
+        except Exception as e:  # noqa: BLE001
+            log.warning("Could not persist NodeRun for %s: %s", node_id, e)
+            return None
+
+    def _set_node_run_status(self, db, node_run, status, error_message=None):
+        """Update a NodeRun's status on the orchestrator's session."""
+        if node_run is None:
+            return
+        try:
+            if status == "finished":
+                node_run.set_status_as_finished()
+            elif status == "error":
+                node_run.set_status_as_error(
+                    error_message or "Node execution failed."
+                )
+            else:
+                node_run.set_status_as_started()
+            NodeJob._commit_with_retry(db, readd=[node_run])
+        except Exception as e:  # noqa: BLE001
+            log.warning(
+                "Could not update NodeRun status (%s) for %s: %s",
+                status,
+                getattr(node_run, "node_id", "?"),
+                e,
+            )
 
     def _build_predecessor_map(
         self,
