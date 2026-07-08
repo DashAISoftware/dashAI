@@ -213,6 +213,7 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
 from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
+from DashAI.back.models.pymc.bart_regression import BARTRegression
 from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
@@ -329,6 +330,7 @@ def get_initial_components():
         BertinTransformer,
         BetoTransformer,
         BayesianRidgeRegression,
+        BARTRegression,
         DebertaV3Transformer,
         DecisionTreeClassifier,
         DecisionTreeRegression,

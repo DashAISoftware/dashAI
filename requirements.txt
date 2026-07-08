@@ -21,6 +21,7 @@ Pillow
 beartype
 plotly
 shap
+pymc-bart
 typer
 rich
 torch
