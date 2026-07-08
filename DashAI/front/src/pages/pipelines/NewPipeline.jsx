@@ -102,6 +102,7 @@ function NewPipeline() {
     nodeIdCounter,
     nameError,
     nameErrorMessage,
+    isRunning,
 
     // Setters
     setNodes,
@@ -474,6 +475,7 @@ function NewPipeline() {
                           handlePipelineNameChange={handlePipelineNameChange}
                           canvasMode={canvasMode}
                           setCanvasMode={setCanvasMode}
+                          isRunning={isRunning}
                         />
 
                         <PipelineDesigner

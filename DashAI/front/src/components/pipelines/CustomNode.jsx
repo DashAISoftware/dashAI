@@ -9,7 +9,7 @@ import CallSplitIcon from "@mui/icons-material/CallSplit";
 import ModelTrainingIcon from "@mui/icons-material/ModelTraining";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import CloseIcon from "@mui/icons-material/Close";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import { useState } from "react";
 
 const iconMap = {
@@ -33,13 +33,31 @@ const CustomNode = ({ data, isConnectable }) => {
   const isDisabled =
     data.errors?.some((err) => err.includes("already exists")) ?? false;
 
-  const borderColor = isLightCanvas
-    ? data.notConfigured && !isDisabled
-      ? "2px solid #f9a825"
-      : "1px solid #f9a825"
-    : data.notConfigured && !isDisabled
-      ? `2px solid ${theme.palette.warning.main}`
-      : `1px solid ${theme.palette.ui.borderLight}`;
+  const runStatusColors = {
+    DELIVERED: theme.palette.status.started,
+    STARTED: theme.palette.status.started,
+    FINISHED: theme.palette.status.finished,
+    ERROR: theme.palette.status.error,
+  };
+  const runColor = runStatusColors[data.status];
+  const isRunning =
+    data.status === "STARTED" || data.status === "DELIVERED";
+  const statusBg =
+    data.status === "FINISHED"
+      ? alpha(theme.palette.status.finished, isLightCanvas ? 0.14 : 0.2)
+      : data.status === "ERROR"
+        ? alpha(theme.palette.status.error, isLightCanvas ? 0.12 : 0.2)
+        : null;
+
+  const borderColor = runColor
+    ? `2px solid ${runColor}`
+    : isLightCanvas
+      ? data.notConfigured && !isDisabled
+        ? "2px solid #f9a825"
+        : "1px solid #f9a825"
+      : data.notConfigured && !isDisabled
+        ? `2px solid ${theme.palette.warning.main}`
+        : `1px solid ${theme.palette.ui.borderLight}`;
 
   const iconColor = isLightCanvas
     ? isDisabled
@@ -111,10 +129,25 @@ const CustomNode = ({ data, isConnectable }) => {
         justifyContent: "center",
         display: "flex",
         borderRadius: 2,
-        backgroundColor: bgColor,
+        backgroundColor: statusBg || bgColor,
         border: borderColor,
         textAlign: "center",
         position: "relative",
+        transition: "background-color 0.3s, border-color 0.3s",
+        "@keyframes dashaiNodePulse": {
+          "0%": {
+            boxShadow: `0 0 0 0 ${alpha(runColor || "#000000", 0.45)}`,
+          },
+          "70%": {
+            boxShadow: `0 0 0 7px ${alpha(runColor || "#000000", 0)}`,
+          },
+          "100%": {
+            boxShadow: `0 0 0 0 ${alpha(runColor || "#000000", 0)}`,
+          },
+        },
+        animation: isRunning
+          ? "dashaiNodePulse 1.4s ease-out infinite"
+          : undefined,
       }}
     >
       {data.onDelete && hovered && (

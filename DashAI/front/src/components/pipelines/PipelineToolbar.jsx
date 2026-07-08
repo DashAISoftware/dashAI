@@ -1,5 +1,12 @@
 import React from "react";
-import { Box, TextField, Button, IconButton, Tooltip } from "@mui/material";
+import {
+  Box,
+  TextField,
+  Button,
+  IconButton,
+  Tooltip,
+  CircularProgress,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -13,6 +20,7 @@ function PipelineToolbar({
   handlePipelineNameChange,
   canvasMode,
   setCanvasMode,
+  isRunning = false,
 }) {
   const theme = useTheme();
 
@@ -72,8 +80,18 @@ function PipelineToolbar({
             )}
           </IconButton>
         </Tooltip>
-        <Button variant="contained" color="primary" onClick={onRun}>
-          Run
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={onRun}
+          disabled={isRunning}
+          startIcon={
+            isRunning ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : undefined
+          }
+        >
+          {isRunning ? "Running..." : "Run"}
         </Button>
       </Box>
     </Box>

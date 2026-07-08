@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { addEdge, useEdgesState, useNodesState } from "reactflow";
 import { useSnackbar } from "notistack";
 import {
@@ -8,7 +8,12 @@ import {
   getNodeTypesMap,
   buildNodeHelp,
 } from "../components/pipelines";
-import { getPipelineById, getPipelines, validateEdge } from "../api/pipeline";
+import {
+  getPipelineById,
+  getPipelines,
+  validateEdge,
+  getLatestPipelineRun,
+} from "../api/pipeline";
 import { generateSequentialName } from "../utils/nameGenerator";
 import RunPipeline from "../components/pipelines/Run";
 
@@ -61,7 +66,109 @@ export function usePipelineState(pipelineId, location, navigate) {
   const [userHasModifiedName, setUserHasModifiedName] = useState(false);
   const [existingPipelines, setExistingPipelines] = useState([]);
   const [nodeIdCounter, setNodeIdCounter] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const pollRef = useRef(null);
+  const finishTimerRef = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
+
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    if (finishTimerRef.current) {
+      clearTimeout(finishTimerRef.current);
+      finishTimerRef.current = null;
+    }
+  }, []);
+
+  const applyNodeStatuses = useCallback(
+    (nodeRuns) => {
+      const statusById = {};
+      (nodeRuns || []).forEach((nr) => {
+        if (nr?.node_id) statusById[nr.node_id] = nr.status;
+      });
+      setNodes((nds) =>
+        nds.map((n) => ({
+          ...n,
+          data: { ...n.data, status: statusById[n.id] ?? "NOT_STARTED" },
+        })),
+      );
+    },
+    [setNodes],
+  );
+
+  const resetNodeStatuses = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) => ({ ...n, data: { ...n.data, status: "NOT_STARTED" } })),
+    );
+  }, [setNodes]);
+
+  const markAllNodesFinished = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) => ({ ...n, data: { ...n.data, status: "FINISHED" } })),
+    );
+  }, [setNodes]);
+
+  const startRunPolling = useCallback(
+    (pid, sinceRunId) => {
+      stopPolling();
+      setIsRunning(true);
+      const poll = async () => {
+        try {
+          const run = await getLatestPipelineRun(pid);
+          if (!run || run.id == null) return;
+          if (sinceRunId != null && run.id <= sinceRunId) return;
+          applyNodeStatuses(run.node_runs);
+          if (run.status === "FINISHED") {
+            stopPolling();
+            setIsRunning(false);
+            markAllNodesFinished();
+            enqueueSnackbar("Pipeline execution finished", {
+              variant: "success",
+            });
+            finishTimerRef.current = setTimeout(() => {
+              setActiveTab("results");
+            }, 1000);
+          } else if (run.status === "ERROR") {
+            stopPolling();
+            setIsRunning(false);
+            enqueueSnackbar(run.error_message || "Pipeline execution failed", {
+              variant: "error",
+            });
+          }
+        } catch (e) {
+          // transient error
+        }
+      };
+      poll();
+      pollRef.current = setInterval(poll, 800);
+    },
+    [
+      applyNodeStatuses,
+      markAllNodesFinished,
+      enqueueSnackbar,
+      stopPolling,
+      setActiveTab,
+    ],
+  );
+
+  useEffect(() => stopPolling, [stopPolling]);
+
+  useEffect(() => {
+    const since = location.state?.runningSinceRunId;
+    if (since === undefined || since === null) return;
+    if (!pipelineId || nodes.length === 0) return;
+    startRunPolling(Number(pipelineId), since);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [
+    pipelineId,
+    location.state,
+    location.pathname,
+    nodes.length,
+    startRunPolling,
+    navigate,
+  ]);
 
   const { defaultName } = useMemo(() => {
     if (pipelineId) return { defaultName: null };
@@ -292,6 +399,20 @@ export function usePipelineState(pipelineId, location, navigate) {
       enqueueSnackbar("Error in pipeline", { variant: "error" });
       return;
     }
+
+    stopPolling();
+    resetNodeStatuses();
+
+    let sinceRunId = 0;
+    if (pipelineId) {
+      try {
+        const prevRun = await getLatestPipelineRun(Number(pipelineId));
+        sinceRunId = prevRun?.id ?? 0;
+      } catch (e) {
+        sinceRunId = 0;
+      }
+    }
+
     const newId = await RunPipeline(
       sortedNodes,
       nodeData,
@@ -302,8 +423,14 @@ export function usePipelineState(pipelineId, location, navigate) {
     );
     if (newId) {
       setResultId(newId);
-      setActiveTab("results");
-      navigate(`/app/pipelines/${newId}`);
+      setActiveTab("flow");
+      if (String(newId) !== String(pipelineId)) {
+        navigate(`/app/pipelines/${newId}`, {
+          state: { runningSinceRunId: sinceRunId },
+        });
+      } else {
+        startRunPolling(Number(newId), sinceRunId);
+      }
     }
   };
 
@@ -457,6 +584,7 @@ export function usePipelineState(pipelineId, location, navigate) {
     nodeIdCounter,
     nameError,
     nameErrorMessage,
+    isRunning,
 
     // Setters
     setNodes,
