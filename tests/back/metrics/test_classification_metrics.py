@@ -6,6 +6,7 @@ from datasets import Dataset
 
 from DashAI.back.metrics.classification.accuracy import Accuracy
 from DashAI.back.metrics.classification.f1 import F1
+from DashAI.back.metrics.classification.matthews_corrcoef import MatthewsCorrCoef
 from DashAI.back.metrics.classification.precision import Precision
 from DashAI.back.metrics.classification.recall import Recall
 
@@ -51,6 +52,32 @@ def test_f1_score(metric_input: Dict[str, List[int]]):
     assert score <= 1.0
 
 
+def test_matthews_corrcoef(metric_input: Dict[str, List[int]]):
+    score = MatthewsCorrCoef.score(
+        metric_input["true_labels"], metric_input["pred_labels"]
+    )
+
+    assert isinstance(score, float)
+    assert score >= -1.0
+    assert score <= 1.0
+
+
+def test_matthews_corrcoef_matches_sklearn_reference(
+    metric_input: Dict[str, List[int]],
+):
+    from sklearn.metrics import matthews_corrcoef
+
+    true = np.array(metric_input["true_labels"]["foo"])
+    pred = np.argmax(metric_input["pred_labels"], axis=1)
+    expected = matthews_corrcoef(true, pred)
+
+    score = MatthewsCorrCoef.score(
+        metric_input["true_labels"], metric_input["pred_labels"]
+    )
+
+    assert score == pytest.approx(expected)
+
+
 def test_metrics_different_input_sizes(metric_input: Dict[str, List[int]]):
     error_pattern = (
         r"The length of the true labels and the predicted labels must be equal, "
@@ -80,3 +107,11 @@ def test_metrics_different_input_sizes(metric_input: Dict[str, List[int]]):
         match=error_pattern,
     ):
         F1.score(metric_input["true_labels"], metric_input["wrong_size_labels"])
+
+    with pytest.raises(
+        ValueError,
+        match=error_pattern,
+    ):
+        MatthewsCorrCoef.score(
+            metric_input["true_labels"], metric_input["wrong_size_labels"]
+        )

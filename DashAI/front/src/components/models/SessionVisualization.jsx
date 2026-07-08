@@ -162,6 +162,7 @@ export default function SessionVisualization() {
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
+    setTimeout(() => setSelectedRunId(null), 2000);
   }, []);
 
   const handleViewDetails = React.useCallback((run) => {

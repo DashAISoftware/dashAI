@@ -39,6 +39,10 @@ dependencies = [
     "beartype",
     "plotly",
     "shap",
+    "pymc-bart",
+    # pymc still imports the pre-1.0 arviz API (InferenceData, concat) but its
+    # metadata sets no upper bound, so the resolver must be capped here
+    "arviz<1.0.0",
     "typer",
     "rich",
     "torch",

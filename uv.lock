@@ -58,9 +58,9 @@ dependencies = [
     { name = "pyyaml" },
     { name = "safetensors" },
     { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-6-dashai-cuda'" },
-    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "torch", version = "2.12.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')" },
-    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/8d/75/94cd5d389649578aca399e5aa822637eec18319a1dadc400ffe2f9a7493f/accelerate-1.14.0.tar.gz", hash = "sha256:41b9c4377a54e0b460a959b0defa1b736e4ca0a2373252d9a539964c2afe3c8d", size = 412167, upload-time = "2026-06-11T13:45:52.326Z" }
 wheels = [
@@ -340,6 +340,180 @@ wheels = [
 ]
 
 [[package]]
+name = "arviz"
+version = "0.23.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "h5netcdf" },
+    { name = "h5py" },
+    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "matplotlib", version = "3.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "packaging" },
+    { name = "pandas" },
+    { name = "platformdirs" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "setuptools" },
+    { name = "typing-extensions" },
+    { name = "xarray", version = "2025.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray", version = "2026.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray-einstats", version = "0.8.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray-einstats", version = "0.9.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray-einstats", version = "0.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f3/c9/9c853633715f972eecc20995763c6e3005a3afcdcf47e39d20cd1c2889cd/arviz-0.23.4.tar.gz", hash = "sha256:611be826995066036c9443ea98d11486c279ef3da3b6cdc5c0816fab434115b9", size = 1592968, upload-time = "2026-02-04T17:57:53.664Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/1f/227f9cb7edcd3e14ab05928f3db00e9d595c0f269c87bf35f565ce44941b/arviz-0.23.4-py3-none-any.whl", hash = "sha256:c46c7faf8a06abadc9b5b64000584062ecbc20c2298e2bd6dfba04bb01a684ca", size = 1673773, upload-time = "2026-02-04T17:57:51.778Z" },
+]
+
+[[package]]
+name = "arviz-base"
+version = "0.8.2"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "typing-extensions", marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray", version = "2026.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d5/b7/6567bb2fff93232635f0ba1c6f8dceee9b1271e94165a4d9dd6c40ff5636/arviz_base-0.8.2.tar.gz", hash = "sha256:4d77142c6396c648fef3624b2d3f76fc9f326b88e513b34eff15ac06489cf840", size = 1403232, upload-time = "2026-01-16T14:00:48.184Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8f/31/0491ae7431f50708a0d60d54adf363b8e874d09af9d867e813fb4751c590/arviz_base-0.8.2-py3-none-any.whl", hash = "sha256:84f8c72d1454e21198f9188537d10fedba8db23ee4abc54200c38c808b76e05c", size = 1420673, upload-time = "2026-01-16T14:00:46.408Z" },
+]
+
+[[package]]
+name = "arviz-base"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+]
+dependencies = [
+    { name = "lazy-loader", marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine != 'x86_64') or (python_full_version < '3.12' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray", version = "2026.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e6/d7/4db6e89b0cc5a26ce0e84accd5dd6ff43572eb32e9b46c577bd5d219ed6a/arviz_base-1.2.0.tar.gz", hash = "sha256:be06f9c15c53a951a971bef697e6b0a68497aae4d1670be065dd8f0482e9efca", size = 1410416, upload-time = "2026-06-12T15:54:46.517Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/37/d7/82e5f456d50b6accf06d137594282bf6984526fa1b329a061f7b91b123aa/arviz_base-1.2.0-py3-none-any.whl", hash = "sha256:a3f7023b665823068ff4b973bb6205eacc65f3c0a446cc099d7e5326b50f1ffc", size = 1427453, upload-time = "2026-06-12T15:54:44.805Z" },
+]
+
+[[package]]
+name = "arviz-stats"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1c/c3/34c8e1baa44b100c137fe8df0421f179241846c2e4311775ba29d2af38bd/arviz_stats-0.8.0.tar.gz", hash = "sha256:633576cbb488aeb50608466fe2c0c79926d599ec1937d24636ba88c0cdfa224f", size = 137513, upload-time = "2026-01-15T16:08:57.39Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/08/8a8ad310c116a5574468c0fa2f37a418769719d9ff5127dc817c54ce20b2/arviz_stats-0.8.0-py3-none-any.whl", hash = "sha256:c80553f11c590219c6eabdee6d67fb100c31f8751790772bdc269a9970429913", size = 164648, upload-time = "2026-01-15T16:08:55.653Z" },
+]
+
+[package.optional-dependencies]
+xarray = [
+    { name = "arviz-base", version = "0.8.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray", version = "2026.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray-einstats", version = "0.9.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+
+[[package]]
+name = "arviz-stats"
+version = "1.2.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+]
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine != 'x86_64') or (python_full_version < '3.12' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4c/97/fd555a4b16ac349f297c786dab1a3270b3540677b0222a84e517441eb338/arviz_stats-1.2.0.tar.gz", hash = "sha256:fc49e6e75f4fce953987a9bf17dc39950e1f12e7cd73f865257e5d1b6a5ee114", size = 157554, upload-time = "2026-06-12T16:20:11.552Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/96/8f/73f43d90534d49a4af4c8e35d5b60e2838435b0318f44262dc6fe2dd39d8/arviz_stats-1.2.0-py3-none-any.whl", hash = "sha256:f9084addeb1abdbab6e9816f0a063118bc4ff7c48ce9141a4dad20b0e41410ae", size = 183844, upload-time = "2026-06-12T16:20:10.191Z" },
+]
+
+[package.optional-dependencies]
+xarray = [
+    { name = "arviz-base", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray", version = "2026.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray-einstats", version = "0.10.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+
+[[package]]
 name = "ast-serialize"
 version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -432,6 +606,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/7a/71/cca6167c06d00c81375fd668719df245864076d284f7cb46a694cbeb5454/bottle-0.13.4.tar.gz", hash = "sha256:787e78327e12b227938de02248333d788cfe45987edca735f8f88e03472c3f47", size = 98717, upload-time = "2025-06-15T10:08:59.439Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/83/f6/b55ec74cfe68c6584163faa311503c20b0da4c09883a41e8e00d6726c954/bottle-0.13.4-py2.py3-none-any.whl", hash = "sha256:045684fbd2764eac9cdeb824861d1551d113e8b683d8d26e296898d3dd99a12e", size = 103807, upload-time = "2025-06-15T10:08:57.691Z" },
+]
+
+[[package]]
+name = "cachetools"
+version = "7.1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f4/8b/0d3945a13955303b81272f759a0331e54c5c793da455e6f5706b89d2639c/cachetools-7.1.4.tar.gz", hash = "sha256:437f55a4e0c1b01a4f3077cc470e6991d47430970e36fbcb77e2be0df4fc1cd6", size = 40085, upload-time = "2026-05-21T22:40:43.376Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8c/7b/1fc1c09cc0756cf25861a3be10565915953876da48bb228fb9a672b20a42/cachetools-7.1.4-py3-none-any.whl", hash = "sha256:323dc4127934744db5b54eb4924482d7edafbf9554e820d1531c2e08c0e4ef54", size = 16761, upload-time = "2026-05-21T22:40:41.845Z" },
 ]
 
 [[package]]
@@ -665,7 +848,7 @@ name = "clr-loader"
 version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi" },
+    { name = "cffi", marker = "(python_full_version < '3.12' and extra != 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu') or sys_platform != 'darwin' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/e4/46/7eea92b6aa2d68af78e049cbecec5f757f1aad44ecdecdc16bbad7eead51/clr_loader-0.3.1.tar.gz", hash = "sha256:2e073e9aaf49d1ae2f56ecba27987ad5fb68be4bcd9dd34a5bed8f0e4e128366", size = 86805, upload-time = "2026-04-18T17:49:44.287Z" }
 wheels = [
@@ -705,6 +888,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a2/61/f083b5ac52e505dfc1c624eafbf8c7589a0d7f32daa398d2e7590efa5fda/colorlog-6.10.1.tar.gz", hash = "sha256:eb4ae5cb65fe7fec7773c2306061a8e63e02efc2c72eba9d27b0fa23c94f1321", size = 17162, upload-time = "2025-10-16T16:14:11.978Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/6d/c1/e419ef3723a074172b68aaa89c9f3de486ed4c2399e2dbd8113a4fdcaf9e/colorlog-6.10.1-py3-none-any.whl", hash = "sha256:2d7e8348291948af66122cff006c9f8da6255d224e7cf8e37d8de2df3bad8c9c", size = 11743, upload-time = "2025-10-16T16:14:10.512Z" },
+]
+
+[[package]]
+name = "cons"
+version = "0.4.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "logical-unification" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ae/20/0eca1dcdbac64a570e60df66119847f94cdd513178d9c222c15101ca1022/cons-0.4.7.tar.gz", hash = "sha256:0a96cd2abd6a9f494816c1272cf5583a960041750c2d7a48eeeccd47ce369dfd", size = 8690, upload-time = "2025-07-11T18:01:31.534Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a5/9f/bffa3362895e5437d9d12e3bbd242f86d91af1d7cd26f6e14ebb6376581b/cons-0.4.7-py3-none-any.whl", hash = "sha256:e38ee12cf703559ea744c94f725bee0e2329f32daf0249b49db1b0437cc6cb94", size = 8603, upload-time = "2025-07-11T18:01:28.706Z" },
 ]
 
 [[package]]
@@ -918,13 +1113,13 @@ dependencies = [
     { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "timm" },
     { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-6-dashai-cuda'" },
-    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "torch", version = "2.12.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')" },
-    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
     { name = "torchvision", version = "0.26.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-6-dashai-cuda'" },
-    { name = "torchvision", version = "0.27.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torchvision", version = "0.27.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "torchvision", version = "0.27.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')" },
-    { name = "torchvision", version = "0.27.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torchvision", version = "0.27.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/14/ad/2eb8cd9a8e17e35b9e5d39ad29afdde8fe810bda85e6e59117050519955d/controlnet_aux-0.0.10.tar.gz", hash = "sha256:31dc265a54448bdcee033a130b47423c80587fa35ccac752113af1b4d48f5183", size = 215016, upload-time = "2025-05-08T10:38:30.845Z" }
 wheels = [
@@ -1232,6 +1427,7 @@ source = { editable = "." }
 dependencies = [
     { name = "accelerate" },
     { name = "alembic" },
+    { name = "arviz" },
     { name = "beartype" },
     { name = "cmaes" },
     { name = "controlnet-aux" },
@@ -1266,6 +1462,8 @@ dependencies = [
     { name = "protobuf" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "pymc-bart", version = "0.9.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pymc-bart", version = "0.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "pywebview" },
     { name = "rich" },
     { name = "sacrebleu" },
@@ -1278,14 +1476,14 @@ dependencies = [
     { name = "starlette" },
     { name = "streaming-form-data" },
     { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-6-dashai-cuda'" },
-    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "torch", version = "2.12.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')" },
-    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
     { name = "torchmetrics" },
     { name = "torchvision", version = "0.26.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-6-dashai-cuda'" },
-    { name = "torchvision", version = "0.27.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torchvision", version = "0.27.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "torchvision", version = "0.27.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')" },
-    { name = "torchvision", version = "0.27.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torchvision", version = "0.27.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
     { name = "transformers" },
     { name = "typer" },
     { name = "wordcloud" },
@@ -1295,10 +1493,10 @@ dependencies = [
 [package.optional-dependencies]
 cpu = [
     { name = "llama-cpp-python", version = "0.3.32", source = { registry = "https://abetlen.github.io/llama-cpp-python/whl/cpu" } },
-    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
-    { name = "torchvision", version = "0.27.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "torchvision", version = "0.27.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torchvision", version = "0.27.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torchvision", version = "0.27.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
 ]
 cuda = [
     { name = "llama-cpp-python", version = "0.3.32", source = { registry = "https://pypi.org/simple" } },
@@ -1324,6 +1522,7 @@ dev = [
 requires-dist = [
     { name = "accelerate" },
     { name = "alembic" },
+    { name = "arviz", specifier = "<1.0.0" },
     { name = "beartype" },
     { name = "cmaes" },
     { name = "controlnet-aux" },
@@ -1357,6 +1556,7 @@ requires-dist = [
     { name = "protobuf" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "pymc-bart" },
     { name = "pywebview" },
     { name = "rich" },
     { name = "sacrebleu" },
@@ -1586,6 +1786,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d3/38/af70d7ab1ae9d4da450eeec1fa3918940a5fafb9055e934af8d6eb0c2313/et_xmlfile-2.0.0.tar.gz", hash = "sha256:dab3f4764309081ce75662649be815c4c9081e88f0837825f90fd28317d4da54", size = 17234, upload-time = "2024-10-25T17:25:40.039Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c1/8b/5fe2cc11fee489817272089c4203e679c63b570a5aaeb18d852ae3cbba6a/et_xmlfile-2.0.0-py3-none-any.whl", hash = "sha256:7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa", size = 18059, upload-time = "2024-10-25T17:25:39.051Z" },
+]
+
+[[package]]
+name = "etuples"
+version = "0.3.10"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cons" },
+    { name = "multipledispatch" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/42/c0/ba049efa7d216221713cffc303641bd73bbb309ff0e4e2a623f32af2a4ea/etuples-0.3.10.tar.gz", hash = "sha256:26fde81d7e822837146231bfce4d6ba67eab5d7ed55bc58ba7437c2568051167", size = 21493, upload-time = "2025-07-14T18:49:35.654Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/39/19/bf11636df040a9f9c3fd6959aedea5b5cfddd751272732278fb04ee0a78c/etuples-0.3.10-py3-none-any.whl", hash = "sha256:4408c7940ef06af52dbbea0954a8a1817ed5750ce905ff48091ac3cd3aeb720b", size = 12201, upload-time = "2025-07-14T18:49:34.557Z" },
 ]
 
 [[package]]
@@ -2141,6 +2354,81 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/01/ee/02a2c011bdab74c6fb3c75474d40b3052059d95df7e73351460c8588d963/h11-0.16.0.tar.gz", hash = "sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1", size = 101250, upload-time = "2025-04-24T03:35:25.427Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/04/4b/29cac41a4d98d144bf5f6d33995617b185d14b22401f75ca86f384e87ff1/h11-0.16.0-py3-none-any.whl", hash = "sha256:63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86", size = 37515, upload-time = "2025-04-24T03:35:24.344Z" },
+]
+
+[[package]]
+name = "h5netcdf"
+version = "1.8.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ef/03/92d6cc02c0055158167255980461155d6e17f1c4143c03f8bcc18d3e3f3a/h5netcdf-1.8.1.tar.gz", hash = "sha256:9b396a4cc346050fc1a4df8523bc1853681ec3544e0449027ae397cb953c7a16", size = 78679, upload-time = "2026-01-23T07:35:31.233Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b1/8b/88f16936a8e8070a83d36239555227ecd91728f9ef222c5382cda07e0fd6/h5netcdf-1.8.1-py3-none-any.whl", hash = "sha256:a76ed7cfc9b8a8908ea7057c4e57e27307acff1049b7f5ed52db6c2247636879", size = 62915, upload-time = "2026-01-23T07:35:30.195Z" },
+]
+
+[[package]]
+name = "h5py"
+version = "3.16.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/db/33/acd0ce6863b6c0d7735007df01815403f5589a21ff8c2e1ee2587a38f548/h5py-3.16.0.tar.gz", hash = "sha256:a0dbaad796840ccaa67a4c144a0d0c8080073c34c76d5a6941d6818678ef2738", size = 446526, upload-time = "2026-03-06T13:49:08.07Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/6b/231413e58a787a89b316bb0d1777da3c62257e4797e09afd8d17ad3549dc/h5py-3.16.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e06f864bedb2c8e7c1358e6c73af48519e317457c444d6f3d332bb4e8fa6d7d9", size = 3724137, upload-time = "2026-03-06T13:47:35.242Z" },
+    { url = "https://files.pythonhosted.org/packages/74/f9/557ce3aad0fe8471fb5279bab0fc56ea473858a022c4ce8a0b8f303d64e9/h5py-3.16.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:ec86d4fffd87a0f4cb3d5796ceb5a50123a2a6d99b43e616e5504e66a953eca3", size = 3090112, upload-time = "2026-03-06T13:47:37.634Z" },
+    { url = "https://files.pythonhosted.org/packages/7a/f5/e15b3d0dc8a18e56409a839e6468d6fb589bc5207c917399c2e0706eeb44/h5py-3.16.0-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:86385ea895508220b8a7e45efa428aeafaa586bd737c7af9ee04661d8d84a10d", size = 4844847, upload-time = "2026-03-06T13:47:39.811Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/92/a8851d936547efe30cc0ce5245feac01f3ec6171f7899bc3f775c72030b3/h5py-3.16.0-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:8975273c2c5921c25700193b408e28d6bdd0111c37468b2d4e25dcec4cd1d84d", size = 5065352, upload-time = "2026-03-06T13:47:41.489Z" },
+    { url = "https://files.pythonhosted.org/packages/2b/ae/f2adc5d0ca9626db3277a3d87516e124cbc5d0eea0bd79bc085702d04f2c/h5py-3.16.0-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:1677ad48b703f44efc9ea0c3ab284527f81bc4f318386aaaebc5fede6bbae56f", size = 4839173, upload-time = "2026-03-06T13:47:43.586Z" },
+    { url = "https://files.pythonhosted.org/packages/64/0b/e0c8c69da1d8838da023a50cd3080eae5d475691f7636b35eff20bb6ef20/h5py-3.16.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:7c4dd4cf5f0a4e36083f73172f6cfc25a5710789269547f132a20975bfe2434c", size = 5076216, upload-time = "2026-03-06T13:47:45.315Z" },
+    { url = "https://files.pythonhosted.org/packages/66/35/d88fd6718832133c885004c61ceeeb24dbd6397ef877dbed6b3a64d6a286/h5py-3.16.0-cp310-cp310-win_amd64.whl", hash = "sha256:bdef06507725b455fccba9c16529121a5e1fbf56aa375f7d9713d9e8ff42454d", size = 3183639, upload-time = "2026-03-06T13:47:47.041Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/95/a825894f3e45cbac7554c4e97314ce886b233a20033787eda755ca8fecc7/h5py-3.16.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:719439d14b83f74eeb080e9650a6c7aa6d0d9ea0ca7f804347b05fac6fbf18af", size = 3721663, upload-time = "2026-03-06T13:47:49.599Z" },
+    { url = "https://files.pythonhosted.org/packages/bf/3b/38ff88b347c3e346cda1d3fc1b65a7aa75d40632228d8b8a5d7b58508c24/h5py-3.16.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:c3f0a0e136f2e95dd0b67146abb6668af4f1a69c81ef8651a2d316e8e01de447", size = 3087630, upload-time = "2026-03-06T13:47:51.249Z" },
+    { url = "https://files.pythonhosted.org/packages/98/a8/2594cef906aee761601eff842c7dc598bea2b394a3e1c00966832b8eeb7c/h5py-3.16.0-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:a6fbc5367d4046801f9b7db9191b31895f22f1c6df1f9987d667854cac493538", size = 4823472, upload-time = "2026-03-06T13:47:53.085Z" },
+    { url = "https://files.pythonhosted.org/packages/52/a0/c1f604538ff6db22a0690be2dc44ab59178e115f63c917794e529356ab23/h5py-3.16.0-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:fb1720028d99040792bb2fb31facb8da44a6f29df7697e0b84f0d79aff2e9bd3", size = 5027150, upload-time = "2026-03-06T13:47:55.043Z" },
+    { url = "https://files.pythonhosted.org/packages/2e/fd/301739083c2fc4fd89950f9bcfce75d6e14b40b0ca3d40e48a8993d1722c/h5py-3.16.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:314b6054fe0b1051c2b0cb2df5cbdab15622fb05e80f202e3b6a5eee0d6fe365", size = 4814544, upload-time = "2026-03-06T13:47:56.893Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/42/2193ed41ccee78baba8fcc0cff2c925b8b9ee3793305b23e1f22c20bf4c7/h5py-3.16.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:ffbab2fedd6581f6aa31cf1639ca2cb86e02779de525667892ebf4cc9fd26434", size = 5034013, upload-time = "2026-03-06T13:47:59.01Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/20/e6c0ff62ca2ad1a396a34f4380bafccaaf8791ff8fccf3d995a1fc12d417/h5py-3.16.0-cp311-cp311-win_amd64.whl", hash = "sha256:17d1f1630f92ad74494a9a7392ab25982ce2b469fc62da6074c0ce48366a2999", size = 3191673, upload-time = "2026-03-06T13:48:00.626Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/48/239cbe352ac4f2b8243a8e620fa1a2034635f633731493a7ff1ed71e8658/h5py-3.16.0-cp311-cp311-win_arm64.whl", hash = "sha256:85b9c49dd58dc44cf70af944784e2c2038b6f799665d0dcbbc812a26e0faa859", size = 2673834, upload-time = "2026-03-06T13:48:02.579Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/c0/5d4119dba94093bbafede500d3defd2f5eab7897732998c04b54021e530b/h5py-3.16.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:c5313566f4643121a78503a473f0fb1e6dcc541d5115c44f05e037609c565c4d", size = 3685604, upload-time = "2026-03-06T13:48:04.198Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/42/c84efcc1d4caebafb1ecd8be4643f39c85c47a80fe254d92b8b43b1eadaf/h5py-3.16.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:42b012933a83e1a558c673176676a10ce2fd3759976a0fedee1e672d1e04fc9d", size = 3061940, upload-time = "2026-03-06T13:48:05.783Z" },
+    { url = "https://files.pythonhosted.org/packages/89/84/06281c82d4d1686fde1ac6b0f307c50918f1c0151062445ab3b6fa5a921d/h5py-3.16.0-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:ff24039e2573297787c3063df64b60aab0591980ac898329a08b0320e0cf2527", size = 5198852, upload-time = "2026-03-06T13:48:07.482Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/e9/1a19e42cd43cc1365e127db6aae85e1c671da1d9a5d746f4d34a50edb577/h5py-3.16.0-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:dfc21898ff025f1e8e67e194965a95a8d4754f452f83454538f98f8a3fcb207e", size = 5405250, upload-time = "2026-03-06T13:48:09.628Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/8e/9790c1655eabeb85b92b1ecab7d7e62a2069e53baefd58c98f0909c7a948/h5py-3.16.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:698dd69291272642ffda44a0ecd6cd3bda5faf9621452d255f57ce91487b9794", size = 5190108, upload-time = "2026-03-06T13:48:11.26Z" },
+    { url = "https://files.pythonhosted.org/packages/51/d7/ab693274f1bd7e8c5f9fdd6c7003a88d59bedeaf8752716a55f532924fbb/h5py-3.16.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:2b2c02b0a160faed5fb33f1ba8a264a37ee240b22e049ecc827345d0d9043074", size = 5419216, upload-time = "2026-03-06T13:48:13.322Z" },
+    { url = "https://files.pythonhosted.org/packages/03/c1/0976b235cf29ead553e22f2fb6385a8252b533715e00d0ae52ed7b900582/h5py-3.16.0-cp312-cp312-win_amd64.whl", hash = "sha256:96b422019a1c8975c2d5dadcf61d4ba6f01c31f92bbde6e4649607885fe502d6", size = 3182868, upload-time = "2026-03-06T13:48:15.759Z" },
+    { url = "https://files.pythonhosted.org/packages/14/d9/866b7e570b39070f92d47b0ff1800f0f8239b6f9e45f02363d7112336c1f/h5py-3.16.0-cp312-cp312-win_arm64.whl", hash = "sha256:39c2838fb1e8d97bcf1755e60ad1f3dd76a7b2a475928dc321672752678b96db", size = 2653286, upload-time = "2026-03-06T13:48:17.279Z" },
+    { url = "https://files.pythonhosted.org/packages/0f/9e/6142ebfda0cb6e9349c091eae73c2e01a770b7659255248d637bec54a88b/h5py-3.16.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:370a845f432c2c9619db8eed334d1e610c6015796122b0e57aa46312c22617d9", size = 3671808, upload-time = "2026-03-06T13:48:19.737Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/65/5e088a45d0f43cd814bc5bec521c051d42005a472e804b1a36c48dada09b/h5py-3.16.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:42108e93326c50c2810025aade9eac9d6827524cdccc7d4b75a546e5ab308edb", size = 3045837, upload-time = "2026-03-06T13:48:21.854Z" },
+    { url = "https://files.pythonhosted.org/packages/da/1e/6172269e18cc5a484e2913ced33339aad588e02ba407fafd00d369e22ef3/h5py-3.16.0-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:099f2525c9dcf28de366970a5fb34879aab20491589fa89ce2863a84218bb524", size = 5193860, upload-time = "2026-03-06T13:48:24.071Z" },
+    { url = "https://files.pythonhosted.org/packages/bd/98/ef2b6fe2903e377cbe870c3b2800d62552f1e3dbe81ce49e1923c53d1c5c/h5py-3.16.0-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:9300ad32dea9dfc5171f94d5f6948e159ed93e4701280b0f508773b3f582f402", size = 5400417, upload-time = "2026-03-06T13:48:25.728Z" },
+    { url = "https://files.pythonhosted.org/packages/bc/81/5b62d760039eed64348c98129d17061fdfc7839fc9c04eaaad6dee1004e4/h5py-3.16.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:171038f23bccddfc23f344cadabdfc9917ff554db6a0d417180d2747fe4c75a7", size = 5185214, upload-time = "2026-03-06T13:48:27.436Z" },
+    { url = "https://files.pythonhosted.org/packages/28/c4/532123bcd9080e250696779c927f2cb906c8bf3447df98f5ceb8dcded539/h5py-3.16.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:7e420b539fb6023a259a1b14d4c9f6df8cf50d7268f48e161169987a57b737ff", size = 5414598, upload-time = "2026-03-06T13:48:29.49Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/d9/a27997f84341fc0dfcdd1fe4179b6ba6c32a7aa880fdb8c514d4dad6fba3/h5py-3.16.0-cp313-cp313-win_amd64.whl", hash = "sha256:18f2bbcd545e6991412253b98727374c356d67caa920e68dc79eab36bf5fedad", size = 3175509, upload-time = "2026-03-06T13:48:31.131Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/23/bb8647521d4fd770c30a76cfc6cb6a2f5495868904054e92f2394c5a78ff/h5py-3.16.0-cp313-cp313-win_arm64.whl", hash = "sha256:656f00e4d903199a1d58df06b711cf3ca632b874b4207b7dbec86185b5c8c7d4", size = 2647362, upload-time = "2026-03-06T13:48:33.411Z" },
+    { url = "https://files.pythonhosted.org/packages/48/3c/7fcd9b4c9eed82e91fb15568992561019ae7a829d1f696b2c844355d95dd/h5py-3.16.0-cp314-cp314-macosx_10_15_x86_64.whl", hash = "sha256:9c9d307c0ef862d1cd5714f72ecfafe0a5d7529c44845afa8de9f46e5ba8bd65", size = 3678608, upload-time = "2026-03-06T13:48:35.183Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/b7/9366ed44ced9b7ef357ab48c94205280276db9d7f064aa3012a97227e966/h5py-3.16.0-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:8c1eff849cdd53cbc73c214c30ebdb6f1bb8b64790b4b4fc36acdb5e43570210", size = 3054773, upload-time = "2026-03-06T13:48:37.139Z" },
+    { url = "https://files.pythonhosted.org/packages/58/a5/4964bc0e91e86340c2bbda83420225b2f770dcf1eb8a39464871ad769436/h5py-3.16.0-cp314-cp314-manylinux_2_28_aarch64.whl", hash = "sha256:e2c04d129f180019e216ee5f9c40b78a418634091c8782e1f723a6ca3658b965", size = 5198886, upload-time = "2026-03-06T13:48:38.879Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/16/d905e7f53e661ce2c24686c38048d8e2b750ffc4350009d41c4e6c6c9826/h5py-3.16.0-cp314-cp314-manylinux_2_28_x86_64.whl", hash = "sha256:e4360f15875a532bc7b98196c7592ed4fc92672a57c0a621355961cafb17a6dd", size = 5404883, upload-time = "2026-03-06T13:48:41.324Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/f2/58f34cb74af46d39f4cd18ea20909a8514960c5a3e5b92fd06a28161e0a8/h5py-3.16.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:3fae9197390c325e62e0a1aa977f2f62d994aa87aab182abbea85479b791197c", size = 5192039, upload-time = "2026-03-06T13:48:43.117Z" },
+    { url = "https://files.pythonhosted.org/packages/ce/ca/934a39c24ce2e2db017268c08da0537c20fa0be7e1549be3e977313fc8f5/h5py-3.16.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:43259303989ac8adacc9986695b31e35dba6fd1e297ff9c6a04b7da5542139cc", size = 5421526, upload-time = "2026-03-06T13:48:44.838Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/14/615a450205e1b56d16c6783f5ccd116cde05550faad70ae077c955654a75/h5py-3.16.0-cp314-cp314-win_amd64.whl", hash = "sha256:fa48993a0b799737ba7fd21e2350fa0a60701e58180fae9f2de834bc39a147ab", size = 3183263, upload-time = "2026-03-06T13:48:47.117Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/48/a6faef5ed632cae0c65ac6b214a6614a0b510c3183532c521bdb0055e117/h5py-3.16.0-cp314-cp314-win_arm64.whl", hash = "sha256:1897a771a7f40d05c262fc8f37376ec37873218544b70216872876c627640f63", size = 2663450, upload-time = "2026-03-06T13:48:48.707Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/32/0c8bb8aedb62c772cf7c1d427c7d1951477e8c2835f872bc0a13d1f85f86/h5py-3.16.0-cp314-cp314t-macosx_10_15_x86_64.whl", hash = "sha256:15922e485844f77c0b9d275396d435db3baa58292a9c2176a386e072e0cf2491", size = 3760693, upload-time = "2026-03-06T13:48:50.453Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/1f/fcc5977d32d6387c5c9a694afee716a5e20658ac08b3ff24fdec79fb05f2/h5py-3.16.0-cp314-cp314t-macosx_11_0_arm64.whl", hash = "sha256:df02dd29bd247f98674634dfe41f89fd7c16ba3d7de8695ec958f58404a4e618", size = 3181305, upload-time = "2026-03-06T13:48:52.221Z" },
+    { url = "https://files.pythonhosted.org/packages/f5/a1/af87f64b9f986889884243643621ebbd4ac72472ba8ec8cec891ac8e2ca1/h5py-3.16.0-cp314-cp314t-manylinux_2_28_aarch64.whl", hash = "sha256:0f456f556e4e2cebeebd9d66adf8dc321770a42593494a0b6f0af54a7567b242", size = 5074061, upload-time = "2026-03-06T13:48:54.089Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/d0/146f5eaff3dc246a9c7f6e5e4f42bd45cc613bce16693bcd4d1f7c958bf5/h5py-3.16.0-cp314-cp314t-manylinux_2_28_x86_64.whl", hash = "sha256:3e6cb3387c756de6a9492d601553dffea3fe11b5f22b443aac708c69f3f55e16", size = 5279216, upload-time = "2026-03-06T13:48:56.75Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/9d/12a13424f1e604fc7df9497b73c0356fb78c2fb206abd7465ce47226e8fd/h5py-3.16.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:8389e13a1fd745ad2856873e8187fd10268b2d9677877bb667b41aebd771d8b7", size = 5070068, upload-time = "2026-03-06T13:48:59.169Z" },
+    { url = "https://files.pythonhosted.org/packages/41/8c/bbe98f813722b4873818a8db3e15aa3e625b59278566905ac439725e8070/h5py-3.16.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:346df559a0f7dcb31cf8e44805319e2ab24b8957c45e7708ce503b2ec79ba725", size = 5300253, upload-time = "2026-03-06T13:49:02.033Z" },
+    { url = "https://files.pythonhosted.org/packages/32/9e/87e6705b4d6890e7cecdf876e2a7d3e40654a2ae37482d79a6f1b87f7b92/h5py-3.16.0-cp314-cp314t-win_amd64.whl", hash = "sha256:4c6ab014ab704b4feaa719ae783b86522ed0bf1f82184704ed3c9e4e3228796e", size = 3381671, upload-time = "2026-03-06T13:49:04.351Z" },
+    { url = "https://files.pythonhosted.org/packages/96/91/9fad90cfc5f9b2489c7c26ad897157bce82f0e9534a986a221b99760b23b/h5py-3.16.0-cp314-cp314t-win_arm64.whl", hash = "sha256:faca8fb4e4319c09d83337adc80b2ca7d5c5a343c2d6f1b6388f32cfecca13c1", size = 2740706, upload-time = "2026-03-06T13:49:06.347Z" },
 ]
 
 [[package]]
@@ -2886,6 +3174,19 @@ wheels = [
 ]
 
 [[package]]
+name = "logical-unification"
+version = "0.4.7"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "multipledispatch" },
+    { name = "toolz" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b0/5d/37673e494a4eed550785ad1268df0202e69aa081bcbf7c0aafd0a853b0fc/logical_unification-0.4.7.tar.gz", hash = "sha256:3d73b263a870827b3f52d89c94f3336afd7fcaecf1e0c67fa18e73025399775c", size = 13513, upload-time = "2025-10-20T21:42:24.904Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b1/d0/337b3c49cbe742ab5c118d14730fbc7b14b57d1a130d4f39efaa9ec04226/logical_unification-0.4.7-py3-none-any.whl", hash = "sha256:077f49e32693bc66a418f08c1de540f55b5a20f237ffb80ea85d99bfc6139c3b", size = 13469, upload-time = "2025-10-20T21:42:24.024Z" },
+]
+
+[[package]]
 name = "lxml"
 version = "6.1.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3300,6 +3601,23 @@ wheels = [
 ]
 
 [[package]]
+name = "minikanren"
+version = "1.0.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cons" },
+    { name = "etuples" },
+    { name = "logical-unification" },
+    { name = "multipledispatch" },
+    { name = "toolz" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ab/3d/bbab3c19771efbfafc52de98db8ad7cf3c2c444bbbd7241c2b06e9f305bc/minikanren-1.0.5.tar.gz", hash = "sha256:c030e3e9a3fa5f372f84b66966776a8dc63b16b98768b78be0401982b892e00d", size = 21699, upload-time = "2025-06-24T21:38:51.439Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bb/02/5e9ae831946db26f172e03e896fe83b07c5ca643df2b32c1b81557f0e77f/minikanren-1.0.5-py3-none-any.whl", hash = "sha256:22c24f4fdf009a56e30655787af45c90f0704bcc24e8d3e651378675b4bccb21", size = 24072, upload-time = "2025-06-24T21:38:50.113Z" },
+]
+
+[[package]]
 name = "minio"
 version = "7.2.20"
 source = { registry = "https://pypi.org/simple" }
@@ -3460,6 +3778,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0c/f7/addf1087b860ac60e6f382240f64fb99f8bfb532bb06f7c542b83c29ca61/multidict-6.7.1-cp314-cp314t-win_amd64.whl", hash = "sha256:497bde6223c212ba11d462853cfa4f0ae6ef97465033e7dc9940cdb3ab5b48e5", size = 53542, upload-time = "2026-01-26T02:46:08.809Z" },
     { url = "https://files.pythonhosted.org/packages/4c/81/4629d0aa32302ef7b2ec65c75a728cc5ff4fa410c50096174c1632e70b3e/multidict-6.7.1-cp314-cp314t-win_arm64.whl", hash = "sha256:2bbd113e0d4af5db41d5ebfe9ccaff89de2120578164f86a5d17d5a576d1e5b2", size = 44719, upload-time = "2026-01-26T02:46:11.146Z" },
     { url = "https://files.pythonhosted.org/packages/81/08/7036c080d7117f28a4af526d794aab6a84463126db031b007717c1a6676e/multidict-6.7.1-py3-none-any.whl", hash = "sha256:55d97cc6dae627efa6a6e548885712d4864b81110ac76fa4e534c03819fa4a56", size = 12319, upload-time = "2026-01-26T02:46:44.004Z" },
+]
+
+[[package]]
+name = "multipledispatch"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/3e/a62c3b824c7dec33c4a1578bcc842e6c30300051033a4e5975ed86cc2536/multipledispatch-1.0.0.tar.gz", hash = "sha256:5c839915465c68206c3e9c473357908216c28383b425361e5d144594bf85a7e0", size = 12385, upload-time = "2023-06-27T16:45:11.074Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/51/c0/00c9809d8b9346eb238a6bbd5f83e846a4ce4503da94a4c08cb7284c325b/multipledispatch-1.0.0-py3-none-any.whl", hash = "sha256:0c53cd8b077546da4e48869f49b13164bebafd0c2a5afceb6bb6a316e7fb46e4", size = 12818, upload-time = "2023-06-27T16:45:09.418Z" },
 ]
 
 [[package]]
@@ -5208,6 +5535,165 @@ wheels = [
 ]
 
 [[package]]
+name = "pymc"
+version = "5.23.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "arviz", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "cachetools", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "cloudpickle", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pandas", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pytensor", version = "2.31.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "rich", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "threadpoolctl", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/63/25/ec325ae8723d90c09924c1a18c0922fcf8099d82fd2bab9e937bb8ca8270/pymc-5.23.0.tar.gz", hash = "sha256:23fc95234d4364b5a78cc6311531447099e96d01c8d1c628bff42565d4450bbf", size = 477350, upload-time = "2025-05-28T06:02:15.402Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/37/8e/cdacf953ba5f06d717f80a5e9bcf033a5bfe3ef1b67d406b0446253920f5/pymc-5.23.0-py3-none-any.whl", hash = "sha256:4c157d76cbdac88fff629652a8aac527f66ca568db706a4008ba35fe4c88d79c", size = 519595, upload-time = "2025-05-28T06:02:13.288Z" },
+]
+
+[[package]]
+name = "pymc"
+version = "5.26.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "arviz", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "cachetools", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "cloudpickle", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pandas", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pytensor", version = "2.35.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "rich", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "threadpoolctl", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "typing-extensions", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/86/26/2fe6fb4f7f41275ead0a08f9a7e79eba17ab31b8e3474361d63dc3176689/pymc-5.26.1.tar.gz", hash = "sha256:b49aeea21e4f50792aa7b0c537bd92abb5542950f93dc254ca86116d8a654a93", size = 488624, upload-time = "2025-10-17T12:04:24.023Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/58/e6/1fa293b58b495799d511b49ab5a57c13590af8e226681096293073779600/pymc-5.26.1-py3-none-any.whl", hash = "sha256:6bf5a13eb50627c49d62a1e267fde859fe8bb744e3f718c294c908863dfef6a9", size = 536660, upload-time = "2025-10-17T12:04:22.117Z" },
+]
+
+[[package]]
+name = "pymc-bart"
+version = "0.9.2"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "arviz", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numba", version = "0.66.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pymc", version = "5.23.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f0/f1/0031d51c6ad12c2d178d4394866077967552286fe1ae48569ef51bdc706e/pymc_bart-0.9.2.tar.gz", hash = "sha256:7509b68c2a74cec5c11691b25e34e02cc8909f2a9069c5e36680ae86260e3693", size = 41306, upload-time = "2025-06-12T12:40:36.769Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0c/68/9317f580d73718fe03823a8221d71f093266e4fb284423e8d0c8ceb52653/pymc_bart-0.9.2-py3-none-any.whl", hash = "sha256:dacda5dc22a229c973aca13bc007318d016382373d191842e0ebc4d6cc6dc2f2", size = 31667, upload-time = "2025-06-12T12:40:35.414Z" },
+]
+
+[[package]]
+name = "pymc-bart"
+version = "0.11.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "arviz-stats", version = "0.8.0", source = { registry = "https://pypi.org/simple" }, extra = ["xarray"], marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "arviz-stats", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, extra = ["xarray"], marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "matplotlib", version = "3.11.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numba", version = "0.47.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numba", version = "0.66.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pymc", version = "5.26.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ac/d1/0de1909cc35f7b5df98fa5bd93585f1489a1bb59161d10e023acfa7c6c59/pymc_bart-0.11.0.tar.gz", hash = "sha256:fc107a29f12c7a4345fca33ae3fda5208da4788e0f5e776a37a71cb871097d95", size = 43418, upload-time = "2025-10-21T10:27:59.548Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/04/1a/c2c8f28f9522d4e08c402949b350e11249be492663f7e95ac209d1979dd8/pymc_bart-0.11.0-py3-none-any.whl", hash = "sha256:c07ec5cf854a39c6f7328998d01d96da9ba956fb27020f691f90a1dc65c1855f", size = 32758, upload-time = "2025-10-21T10:27:58.738Z" },
+]
+
+[[package]]
 name = "pyobjc-core"
 version = "12.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -5229,7 +5715,7 @@ name = "pyobjc-framework-cocoa"
 version = "12.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyobjc-core" },
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin' or extra != 'extra-6-dashai-cpu' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/51/34/fbe38a204643aa4e1b91391cdce07a34da565a69171ebcad08de7438a556/pyobjc_framework_cocoa-12.2.1.tar.gz", hash = "sha256:b94b37fe5730e5ae1fb0052912cd174e6ec329b0bfba4a012ae5db1014b5864b", size = 3125751, upload-time = "2026-06-19T16:20:05.159Z" }
 wheels = [
@@ -5249,8 +5735,8 @@ name = "pyobjc-framework-quartz"
 version = "12.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyobjc-core" },
-    { name = "pyobjc-framework-cocoa" },
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin' or extra != 'extra-6-dashai-cpu' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin' or extra != 'extra-6-dashai-cpu' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3b/f6/2a8b84dbf1fe7c04dd96ea73d991678d4e09a909f51971ecc51629bb2ab4/pyobjc_framework_quartz-12.2.1.tar.gz", hash = "sha256:b3b8b6f71e66147f8ff9e6213864cc8527e3a0b1ee90835b93ce221f4802d9b0", size = 3215521, upload-time = "2026-06-19T16:21:30.199Z" }
 wheels = [
@@ -5270,8 +5756,8 @@ name = "pyobjc-framework-security"
 version = "12.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyobjc-core" },
-    { name = "pyobjc-framework-cocoa" },
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin' or extra != 'extra-6-dashai-cpu' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin' or extra != 'extra-6-dashai-cpu' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/44/b8/4267b802d8dba6de468e7d0765b05cc4e146fa376ed9f55e0b6461016bef/pyobjc_framework_security-12.2.1.tar.gz", hash = "sha256:d7831b1537f4346892e7f2f0e2b09d79bee98919b0767f4061278d0e03028f2d", size = 181065, upload-time = "2026-06-19T16:21:40.151Z" }
 wheels = [
@@ -5291,8 +5777,8 @@ name = "pyobjc-framework-uniformtypeidentifiers"
 version = "12.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyobjc-core" },
-    { name = "pyobjc-framework-cocoa" },
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin' or extra != 'extra-6-dashai-cpu' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin' or extra != 'extra-6-dashai-cpu' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/74/a1/108fa1e5a3dd8aff626f98fb97de370323b290404b04ffa2ef9420665ed3/pyobjc_framework_uniformtypeidentifiers-12.2.1.tar.gz", hash = "sha256:1fb89d13aa3c2df8e6d6536f6df3493fe5a6caefd2a5adebf17c5af3b29ed4a2", size = 20679, upload-time = "2026-06-19T16:21:55.739Z" }
 wheels = [
@@ -5304,8 +5790,8 @@ name = "pyobjc-framework-webkit"
 version = "12.2.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pyobjc-core" },
-    { name = "pyobjc-framework-cocoa" },
+    { name = "pyobjc-core", marker = "sys_platform == 'darwin' or extra != 'extra-6-dashai-cpu' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin' or extra != 'extra-6-dashai-cpu' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/11/d2/b230c594f70ecb970b4cef67bae2648d1bfa5b381e9b7e3710bf24ec8887/pyobjc_framework_webkit-12.2.1.tar.gz", hash = "sha256:a56acae55b50d549b20dff2921ad1099add8fbc377d0de09ddc2ba50957f7def", size = 332374, upload-time = "2026-06-19T16:22:01.988Z" }
 wheels = [
@@ -5327,6 +5813,118 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f3/91/9c6ee907786a473bf81c5f53cf703ba0957b23ab84c264080fb5a450416f/pyparsing-3.3.2.tar.gz", hash = "sha256:c777f4d763f140633dcb6d8a3eda953bf7a214dc4eff598413c070bcdc117cbc", size = 6851574, upload-time = "2026-01-21T03:57:59.36Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/10/bd/c038d7cc38edc1aa5bf91ab8068b63d4308c66c4c8bb3cbba7dfbc049f9c/pyparsing-3.3.2-py3-none-any.whl", hash = "sha256:850ba148bd908d7e2411587e247a1e4f0327839c40e2e5e6d05a007ecc69911d", size = 122781, upload-time = "2026-01-21T03:57:55.912Z" },
+]
+
+[[package]]
+name = "pytensor"
+version = "2.31.7"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "cons", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "etuples", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "filelock", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "logical-unification", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "minikanren", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "setuptools", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f9/1b/77783110a06ce0afacab063c64f644ea0a450daffa76dcf1bbb09ae2d819/pytensor-2.31.7.tar.gz", hash = "sha256:0af99e240c95bc0223886eefb4343b0e9dc6fba349b70b107b3a6fbb9cb66409", size = 4431862, upload-time = "2025-07-09T00:34:30.557Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3d/75/ea4fb7bc3252f313c7a4d0d124aa9c8f020cb668300f3c4d742807383772/pytensor-2.31.7-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:142814427e0e82d8f3db83529faa6073d33ce9e571cb22096547af19016ad025", size = 1438513, upload-time = "2025-07-09T00:33:49.86Z" },
+    { url = "https://files.pythonhosted.org/packages/ca/48/2de01b59238517308348ba97624e85781e6061a622bef71616df54e52256/pytensor-2.31.7-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:70e262a5c4be0055f25dbbb8512c1eb2899cb80e6a630b95ea387356a825f823", size = 1892231, upload-time = "2025-07-09T00:33:52.094Z" },
+    { url = "https://files.pythonhosted.org/packages/c2/68/8123d9794351e1b22f8d1ff8e4dce770e722b22d5bd58c9b0bd397540383/pytensor-2.31.7-cp310-cp310-musllinux_1_2_i686.whl", hash = "sha256:2343df3dc9eb46903a4c68591dcc36a05b2c9309a0748a47e3933a3864765d4d", size = 1908596, upload-time = "2025-07-09T00:33:54.262Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/2a/33b5eb1c537f79e13a2f3aaf429bc6abed86148208181c76af64ddf4c396/pytensor-2.31.7-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:58927b06df3168e9df005dadc2869613f4fba12ed6b49096e8a3fc29583aaa9d", size = 1918935, upload-time = "2025-07-09T00:33:56.32Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/a2/3937ad756662120492ea926e22ba62c7c0606694139479e458d806ed9125/pytensor-2.31.7-cp310-cp310-win_amd64.whl", hash = "sha256:2ae4fca59c4858353b4025b48a09b07d80bced723369355b2284e357e5f15299", size = 1437758, upload-time = "2025-07-09T00:33:59.303Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/e8/bcc2b73e4e5d46663a10295358397c11dfb251ccc108e2129173532b80ce/pytensor-2.31.7-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:5983ced37b9c91fe7fb6c8cc44b432e68bfb266ffc0cab145406fba578039acb", size = 1624436, upload-time = "2025-07-09T00:34:01.449Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/3d/b2e1e1e5d99d5273fa317cbbd27f3d70d688c287e4e2ccd3d81a93040aaa/pytensor-2.31.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:81f37c7b0ec42e2f5a0509b1753a0becac029dd902dad59360e24d5270d30d9c", size = 2109404, upload-time = "2025-07-09T00:34:03.182Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/00/76c159227f82d7ad62b9d4e5a13c55404d615eb969c5e4388c40b72acdef/pytensor-2.31.7-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:44bf1e2ee2e49cfbc95cc9fbeac4534dc18fc325735ad13ae8ef585cce7b7bf8", size = 2123068, upload-time = "2025-07-09T00:34:05.37Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/ed/acf9bbb19f57cf8308700fdb41990163196ce10bd2dec15cbdc429609933/pytensor-2.31.7-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:9ff160177c7209f5803715e297d9052eff968f4ae50e3ad787ee496bf0fd53af", size = 2138152, upload-time = "2025-07-09T00:34:07.1Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/03/8eaf7204149b92cf3987c1ec1d9f976fef9ccf0a732e51eee9844aee1476/pytensor-2.31.7-cp311-cp311-win_amd64.whl", hash = "sha256:38acc41d2724fad9f87795106754b5e79f9374ec35450a0b3382c5fbe01bc850", size = 1622332, upload-time = "2025-07-09T00:34:09.053Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/7a/92e2bd5b6752780703685a818e2d4d96360a3906bf58985a383cf84bd03d/pytensor-2.31.7-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:c863122dc61638aa87c7277da984fe266eba6cf53e04a0cf5acbeac1fbe4e325", size = 1624386, upload-time = "2025-07-09T00:34:10.678Z" },
+    { url = "https://files.pythonhosted.org/packages/43/a5/9205f8420f59466a36b18ca41f09767ff0aed48ddb2ecb2c6d170bd201e8/pytensor-2.31.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1489a55acb192528974f343f8cc67fc53cac0fbeb0bc02d4281f0a207fa506b5", size = 2100754, upload-time = "2025-07-09T00:34:12.314Z" },
+    { url = "https://files.pythonhosted.org/packages/9b/51/676da3fcf776fd50af0b7e9d5e662c584a23456afeb8598fa87135b61af9/pytensor-2.31.7-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:e79aaea8e1a94d115bcd895c82f8a6bf0dd651518a980108ca718ff182afb24b", size = 2115814, upload-time = "2025-07-09T00:34:14.325Z" },
+    { url = "https://files.pythonhosted.org/packages/52/62/7f2ff99f244afbe318f45cb69c6e548e7135caf4a5b89b5b32a6646af59b/pytensor-2.31.7-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:5aab6ff129ed85910b42965eef4a58b53d072c123200763677b6787a165d1aab", size = 2139405, upload-time = "2025-07-09T00:34:15.985Z" },
+    { url = "https://files.pythonhosted.org/packages/3b/56/bebc6fadc66ef513c7b87a5d1de46e522ff4d57bd1acfb39f5f400b2b06e/pytensor-2.31.7-cp312-cp312-win_amd64.whl", hash = "sha256:ab478a722dedc89e31634f189343a416293e27555be6ea6f4620598f05ecd583", size = 1623709, upload-time = "2025-07-09T00:34:17.947Z" },
+    { url = "https://files.pythonhosted.org/packages/e9/ed/9c5dedd5c2616fabf1f94b40adf0defde1f4c7dc8afc9319bf60da5611af/pytensor-2.31.7-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:2c3b463f392bb46d99ce9f060faaae13420277f446de5f4d6c18ac095bf83439", size = 1623518, upload-time = "2025-07-09T00:34:19.584Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/e4/47e7e2818c8b1acbd64f9a0ab3de001e484fb3545c82b37c350d71eb9e7b/pytensor-2.31.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e5abd20541c9d9a4340fde4da63cab5a6b4ec3228f0070b539bb6188f2255512", size = 2094291, upload-time = "2025-07-09T00:34:21.772Z" },
+    { url = "https://files.pythonhosted.org/packages/a9/fd/6d75179820edb49ed42467e3f78ba1c9bf305f1bdc65524f97de4578114b/pytensor-2.31.7-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:99468fb50b3765b43bb82a3f411dcd37b3f5ce922870d8374ddf9cbc01033d68", size = 2116022, upload-time = "2025-07-09T00:34:24.007Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/1e/6ff8891aaee7295b8c5d62149832cf38e8af141e703f69263bdb47564e6a/pytensor-2.31.7-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:e7df2d29568602544eb1733d09075a6f229470fc6b96fc03ba8036997eef58a7", size = 2134927, upload-time = "2025-07-09T00:34:25.865Z" },
+    { url = "https://files.pythonhosted.org/packages/61/f3/e341e9d5d20f31a15beaa61dd16b3254db93542830f3814acf5e895b27c0/pytensor-2.31.7-cp313-cp313-win_amd64.whl", hash = "sha256:f1b533058ad2503aa40df7db3aec99cfb1eff5c158ec7cb58892db940ff585ac", size = 1623504, upload-time = "2025-07-09T00:34:27.511Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/3d/33859b753186d3bcae89fd2ddfd5b180569030db3ace02a26c0d3b56c449/pytensor-2.31.7-py2.py3-none-any.whl", hash = "sha256:d7f89c7eaedd8ce4323289602b41be28e8aaee14c73a52c701079f25c4247aa8", size = 1338497, upload-time = "2025-07-09T00:34:28.942Z" },
+]
+
+[[package]]
+name = "pytensor"
+version = "2.35.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "cons", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "etuples", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "filelock", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "logical-unification", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "minikanren", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "setuptools", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cb/af/e36e72cf8607a5ebbbc61c0221f0a5cdc6877ea08ceb9233b2485eb3403d/pytensor-2.35.1.tar.gz", hash = "sha256:01364a31c6e86bcf99770d1e625d70bcdb90f8c72b1d3377f7c96b4009a3e195", size = 4835996, upload-time = "2025-10-20T15:19:00.193Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/49/32/12b975cf28eade3ddff97b226030901ffdf3be82adb3507db90e72fa2e3b/pytensor-2.35.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:109b550d73a3f278a9141e6fe38fa5e419eae4ddb0bcb0f57b1c9d9d37c72b65", size = 1469274, upload-time = "2025-10-20T15:18:37.536Z" },
+    { url = "https://files.pythonhosted.org/packages/ad/6e/96526d42bd2ec706bf0521202fb3596f4ff583798f54c644487f9b863247/pytensor-2.35.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5bb6781b9e974612e4f87ce9bce7bb8f9cd57b1e097c73afe58c250e8f528673", size = 1971089, upload-time = "2025-10-20T15:18:39.732Z" },
+    { url = "https://files.pythonhosted.org/packages/76/9e/6bf2cb03838a66510412ccadc6a70f4703893571d11b1a745839753aa1e4/pytensor-2.35.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:119a3f0de6f4bc37a25c9e527ff91594c71bf76b934c11c42eccf34e307f2bca", size = 1974290, upload-time = "2025-10-20T15:18:41.671Z" },
+    { url = "https://files.pythonhosted.org/packages/8a/56/06fb19fad670e92f4d110432be4b05010d8421979c8d2d1030b0c84dd7d0/pytensor-2.35.1-cp311-cp311-win_amd64.whl", hash = "sha256:044f3f030e0f6945f55524c7b46b975748456d299fb34d73b75ffde27d7aac8f", size = 1456975, upload-time = "2025-10-20T15:18:43.529Z" },
+    { url = "https://files.pythonhosted.org/packages/32/87/b19ba91e70a6bf3892110f2fe69abf6f37f836ede1b3bbc808782e129766/pytensor-2.35.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:a1729506e53ad07529f1a1475619031329e6c319f2948e0c43bc874e5db149f2", size = 1653531, upload-time = "2025-10-20T15:18:45.286Z" },
+    { url = "https://files.pythonhosted.org/packages/ad/85/8db8f0944c22e32b767f1bdfbfa2d10b26e245f586345e2bb31f34089238/pytensor-2.35.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0f6ec510476596d2992ce7e915e97c4a85e4a1cf5047ff45d151cd0c9953074f", size = 2159891, upload-time = "2025-10-20T15:18:46.861Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/27/20ad78df2e693c3eb278b34c9dadffa231c65425197ba6a561c3420c0e99/pytensor-2.35.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:e4ac64964fad2a80ba6c9ced73e4551f0551a6ea4f126ab8ff34c59eb6ee3066", size = 2160134, upload-time = "2025-10-20T15:18:48.684Z" },
+    { url = "https://files.pythonhosted.org/packages/2f/74/6587450f260eab46e6319f2d65d42746c3a0a7bd1a919d9cedb72820d6b1/pytensor-2.35.1-cp312-cp312-win_amd64.whl", hash = "sha256:34022b672554699871bd01636d915d6b4fdacc991a5abae8371a8ec90a354c8a", size = 1644007, upload-time = "2025-10-20T15:18:50.491Z" },
+    { url = "https://files.pythonhosted.org/packages/85/86/26b1ccad83c3e27cd71ab8b90f98ae774155685aed8b4713e16296ae795f/pytensor-2.35.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:f63b513e422e1c2d7862a8c14fd1bbc2da43194ff143ea52fb0e82fa06b0f13a", size = 1652790, upload-time = "2025-10-20T15:18:51.99Z" },
+    { url = "https://files.pythonhosted.org/packages/2f/ce/1c3fc9df42a2e7038bc69c757d5120aea265045175865d5d000ad0a302ed/pytensor-2.35.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b7f8c07d204a5aa0d06633caf6b324c68136f62836db265b92d488ca9ef60ded", size = 2155415, upload-time = "2025-10-20T15:18:53.732Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/25/799d2ef4baa21e2a997a22bcb60b5841e43175758aef991ec1f456a85b51/pytensor-2.35.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:efed96e69a1541e681f6b33448ad32616a71331f669f75b08f5686a3529cb181", size = 2155304, upload-time = "2025-10-20T15:18:55.608Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/da/e8c2637ff60d2bf7177e483013aaee970667d1ba2dab75b92886eff3bccb/pytensor-2.35.1-cp313-cp313-win_amd64.whl", hash = "sha256:0e73773a1fe8d6e2a3b1a1af71c4b2dfaf4f1eb7813f4bcb03b2133bb09ea16f", size = 1643829, upload-time = "2025-10-20T15:18:57.042Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/cd/9bf8773d5e2a62f4218bf45505b9856000df7124d3bf3df6f3f137951f01/pytensor-2.35.1-py2.py3-none-any.whl", hash = "sha256:253fa0ee739d7afa3e009563cf3ccd9c48d9b058e88dee9ee3b8d6fe1ea03ccd", size = 1358179, upload-time = "2025-10-20T15:18:58.661Z" },
 ]
 
 [[package]]
@@ -5423,7 +6021,7 @@ name = "pythonnet"
 version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "clr-loader" },
+    { name = "clr-loader", marker = "(python_full_version < '3.12' and extra != 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu') or sys_platform != 'darwin' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/05/57/da1992e44663b71365c6e842c8d7fa453d4ec45fb99a68cfee5b7e944d3c/pythonnet-3.1.0.tar.gz", hash = "sha256:7b34c382905d10a371509ffafd64cae0416305c28817738a9cd138336f4e9991", size = 250599, upload-time = "2026-05-23T20:30:21.578Z" }
 wheels = [
@@ -5556,7 +6154,7 @@ name = "qtpy"
 version = "2.4.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "packaging" },
+    { name = "packaging", marker = "(python_full_version < '3.12' and extra != 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu') or sys_platform != 'darwin' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/70/01/392eba83c8e47b946b929d7c46e0f04b35e9671f8bb6fc36b6f7945b4de8/qtpy-2.4.3.tar.gz", hash = "sha256:db744f7832e6d3da90568ba6ccbca3ee2b3b4a890c3d6fbbc63142f6e4cdf5bb", size = 66982, upload-time = "2025-02-11T15:09:25.759Z" }
 wheels = [
@@ -7109,13 +7707,13 @@ dependencies = [
     { name = "pyyaml" },
     { name = "safetensors" },
     { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-6-dashai-cuda'" },
-    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "torch", version = "2.12.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')" },
-    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
     { name = "torchvision", version = "0.26.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-6-dashai-cuda'" },
-    { name = "torchvision", version = "0.27.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torchvision", version = "0.27.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "torchvision", version = "0.27.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')" },
-    { name = "torchvision", version = "0.27.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torchvision", version = "0.27.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/08/54/ece85b0eef3700c90db8271a43669b05a0ebbe2edb1962329c34374a297e/timm-1.0.27.tar.gz", hash = "sha256:315dfe63186ca9fb7ff941268941231fd5be259f2b4bb4afa28560ae1015cb9a", size = 2439861, upload-time = "2026-05-08T19:38:36.844Z" }
 wheels = [
@@ -7207,6 +7805,15 @@ wheels = [
 ]
 
 [[package]]
+name = "toolz"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/11/d6/114b492226588d6ff54579d95847662fc69196bdeec318eb45393b24c192/toolz-1.1.0.tar.gz", hash = "sha256:27a5c770d068c110d9ed9323f24f1543e83b2f300a687b7891c1a6d56b697b5b", size = 52613, upload-time = "2025-10-17T04:03:21.661Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fb/12/5911ae3eeec47800503a238d971e51722ccea5feb8569b735184d5fcdbc0/toolz-1.1.0-py3-none-any.whl", hash = "sha256:15ccc861ac51c53696de0a5d6d4607f99c210739caf987b5d2054f3efed429d8", size = 58093, upload-time = "2025-10-17T04:03:20.435Z" },
+]
+
+[[package]]
 name = "torch"
 version = "2.11.0+cu128"
 source = { registry = "https://download.pytorch.org/whl/cu128" }
@@ -7268,7 +7875,6 @@ name = "torch"
 version = "2.12.1"
 source = { registry = "https://download.pytorch.org/whl/cpu" }
 resolution-markers = [
-    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
     "python_full_version == '3.14.*' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
     "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
     "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
@@ -7276,14 +7882,14 @@ resolution-markers = [
     "python_full_version < '3.11' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "filelock", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "fsspec", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "jinja2", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "filelock", marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "fsspec", marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "jinja2", marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.11' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "setuptools", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "sympy", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "typing-extensions", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "setuptools", marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "sympy", marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "typing-extensions", marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.12.1-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:ec56e82be6a8b0c036771a77f7d32ad3c299770571af9815b3dafe61434389d5", upload-time = "2026-06-17T15:43:50Z" },
@@ -7368,18 +7974,19 @@ resolution-markers = [
     "python_full_version == '3.14.*' and sys_platform != 'darwin'",
     "python_full_version == '3.13.*' and sys_platform != 'darwin'",
     "python_full_version == '3.12.*' and sys_platform != 'darwin'",
+    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
     "python_full_version == '3.11.*' and sys_platform != 'darwin'",
     "python_full_version < '3.11' and sys_platform != 'darwin'",
 ]
 dependencies = [
-    { name = "filelock", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
-    { name = "fsspec", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
-    { name = "jinja2", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "filelock", marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "fsspec", marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "jinja2", marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.11' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "setuptools", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
-    { name = "sympy", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
-    { name = "typing-extensions", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "setuptools", marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "sympy", marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "typing-extensions", marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.12.1%2Bcpu-cp310-cp310-linux_s390x.whl", hash = "sha256:a73cb40dddadd56bd40722ad896f17838ec754fc17509c16d9639aa77b116e00", upload-time = "2026-06-18T01:56:33Z" },
@@ -7420,9 +8027,9 @@ dependencies = [
     { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "packaging" },
     { name = "torch", version = "2.11.0+cu128", source = { registry = "https://download.pytorch.org/whl/cu128" }, marker = "extra == 'extra-6-dashai-cuda'" },
-    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "torch", version = "2.12.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')" },
-    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/81/34/39b8b749333db56c0585d7a11fa62a283c087bb1dfc897d69fb8cedbefb1/torchmetrics-1.9.0.tar.gz", hash = "sha256:a488609948600df52d3db4fcdab02e62aab2a85ef34da67037dc3e65b8512faa", size = 581765, upload-time = "2026-03-09T17:41:22.443Z" }
 wheels = [
@@ -7481,7 +8088,6 @@ name = "torchvision"
 version = "0.27.1"
 source = { registry = "https://download.pytorch.org/whl/cpu" }
 resolution-markers = [
-    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
     "python_full_version == '3.14.*' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
     "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
     "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
@@ -7490,9 +8096,9 @@ resolution-markers = [
 ]
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.11' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "pillow", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pillow", marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "torch", version = "2.12.1", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version < '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torchvision-0.27.1-cp310-cp310-macosx_14_0_arm64.whl", hash = "sha256:68ba63b48af92f06db995adb23d8411993dba1dee705a4e92411b83a00930b7f", upload-time = "2026-06-17T15:44:32Z" },
@@ -7566,15 +8172,16 @@ resolution-markers = [
     "python_full_version == '3.14.*' and sys_platform != 'darwin'",
     "python_full_version == '3.13.*' and sys_platform != 'darwin'",
     "python_full_version == '3.12.*' and sys_platform != 'darwin'",
+    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin'",
     "python_full_version == '3.11.*' and sys_platform != 'darwin'",
     "python_full_version < '3.11' and sys_platform != 'darwin'",
 ]
 dependencies = [
     { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.11' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.11' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu') or (platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "pillow", marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
-    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "pillow", marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
+    { name = "torch", version = "2.12.1+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version >= '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu') or (python_full_version < '3.15' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version < '3.12' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu')" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torchvision-0.27.1%2Bcpu-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:3323edb900ca46d29dba267ee809e55fe5fe09cd3d9f54124a7c5ed33a6a2dbe", upload-time = "2026-06-17T15:44:31Z" },
@@ -8159,6 +8766,160 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/a0/4f/ac12fda57a55068a094ec42851fb0a40e8489d8941863d517452de62e507/wrapt-2.2.2-cp314-cp314t-win_amd64.whl", hash = "sha256:d09db0f7e8357060d3c38fc22a018aba683a796bf184360fd1a58f6fc180dc77", size = 82462, upload-time = "2026-06-20T23:49:21.631Z" },
     { url = "https://files.pythonhosted.org/packages/48/a7/df732dac86d9b2027c56bd163dbc883e037b16c3469614752e148d219c61/wrapt-2.2.2-cp314-cp314t-win_arm64.whl", hash = "sha256:f32fe639c39561ccc187bcae17e9271be0eb45f1c2952510d2f29b33ab577347", size = 81182, upload-time = "2026-06-20T23:49:23.199Z" },
     { url = "https://files.pythonhosted.org/packages/6e/d2/6317eb6d4554855bbf12d61857774af34747bf88a42c19bf306de67e2fa3/wrapt-2.2.2-py3-none-any.whl", hash = "sha256:5bad217350f19ce99ca5b5e71d406765ea86fe541628426772b657375ee1c048", size = 61460, upload-time = "2026-06-20T23:49:42.966Z" },
+]
+
+[[package]]
+name = "xarray"
+version = "2025.6.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "packaging", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pandas", marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/19/ec/e50d833518f10b0c24feb184b209bb6856f25b919ba8c1f89678b930b1cd/xarray-2025.6.1.tar.gz", hash = "sha256:a84f3f07544634a130d7dc615ae44175419f4c77957a7255161ed99c69c7c8b0", size = 3003185, upload-time = "2025-06-12T03:04:09.099Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/82/8a/6b50c1dd2260d407c1a499d47cf829f59f07007e0dcebafdabb24d1d26a5/xarray-2025.6.1-py3-none-any.whl", hash = "sha256:8b988b47f67a383bdc3b04c5db475cd165e580134c1f1943d52aee4a9c97651b", size = 1314739, upload-time = "2025-06-12T03:04:06.708Z" },
+]
+
+[[package]]
+name = "xarray"
+version = "2026.4.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "packaging", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "pandas", marker = "python_full_version >= '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4b/a6/6fe936a798a3a38a79c7422d1a31afd2e9a14690fcb0ccff96bc01f04bf2/xarray-2026.4.0.tar.gz", hash = "sha256:c4ac9a01a945d90d5b1628e2af045099a9d4943536d4f2ee3ae963c3b222d15b", size = 3132311, upload-time = "2026-04-13T19:45:36.688Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/dc/83/6d810a8a9ebc9c307989b418840c20e46907c74d707beb67ab566773e6fc/xarray-2026.4.0-py3-none-any.whl", hash = "sha256:d43751d9fb4a90f9249c30431684f00c41bc874f1edccd862631a40cbc0edf08", size = 1414326, upload-time = "2026-04-13T19:45:34.659Z" },
+]
+
+[[package]]
+name = "xarray-einstats"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray", version = "2025.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ed/5d/654cca0448ad5c1d0333530511bc20eefaab304a4362dcbdc7ea3da12a3d/xarray_einstats-0.8.0.tar.gz", hash = "sha256:7f1573f9bd4d60d6e7ed9fd27c4db39da51ec49bf8ba654d4602a139a6309d7f", size = 30225, upload-time = "2024-09-19T00:07:39.399Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f8/07/27f0d68989bb1c44a781747e222dda67cf65002834ed35ad91abd1a71802/xarray_einstats-0.8.0-py3-none-any.whl", hash = "sha256:fd00552c3fb5c859b1ebc7c88a97342d3bb93d14bba904c5a9b94a4f724b76b4", size = 32553, upload-time = "2024-09-19T00:07:37.904Z" },
+]
+
+[[package]]
+name = "xarray-einstats"
+version = "0.9.1"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray", version = "2026.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/f1/10/ef474494a7f2102ec4c02352c723fa282c6237b600565eb82ee354291211/xarray_einstats-0.9.1.tar.gz", hash = "sha256:39b373deed43592c41d3fbf8863af62e19e01c1ae553ae5ff059a8df78d995c6", size = 33327, upload-time = "2025-06-18T15:53:28.499Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/17/8b/ed2f0f49385c3d7739cd4699954add26e8f09a372a0c3f04f2bde32fcea2/xarray_einstats-0.9.1-py3-none-any.whl", hash = "sha256:777339524e85d066f2ef9ed1e3a3fb63aead4c1065fd1406f30dfa4de58ce063", size = 39043, upload-time = "2025-06-18T15:53:24.088Z" },
+]
+
+[[package]]
+name = "xarray-einstats"
+version = "0.10.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+]
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine != 'x86_64') or (python_full_version < '3.12' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xarray", version = "2026.4.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/48/9b/305ee6a2dac75fc9c28105db061408df6ecbf0f7a1de37636e8e4ea47ca7/xarray_einstats-0.10.0.tar.gz", hash = "sha256:d432a363fc8f09baad164f9826dc711551c684b9abd8098c1b961d18663a627d", size = 33449, upload-time = "2026-02-19T18:13:55.245Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/d4/225027a913621a879b429a043674aa35220e6ce67785acad4f7bd0c4ff33/xarray_einstats-0.10.0-py3-none-any.whl", hash = "sha256:fa3169b46cee29092db820d8bbc203148bada4fc970ee75e62cbf3dd7c5a8945", size = 39099, upload-time = "2026-02-19T18:13:53.174Z" },
 ]
 
 [[package]]
