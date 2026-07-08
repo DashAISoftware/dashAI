@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, List, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     from DashAI.back.pipeline.validator.nodes_definitions import NodeDefinition
@@ -35,8 +35,8 @@ class NodeContract(BaseModel):
     requiresConfiguration: bool  # noqa: N815
     source: bool
     target: bool
-    predecessors: List[str]
-    successors: List[str]
+    predecessors: List[str] = Field(default_factory=list)
+    successors: List[str] = Field(default_factory=list)
     input: Optional[str] = None
     output: Optional[str] = None
     sourceHandles: int = 1  # noqa: N815
@@ -56,8 +56,6 @@ NODE_CONTRACTS: List[NodeContract] = [
         requiresConfiguration=True,
         source=True,
         target=False,
-        predecessors=[],
-        successors=["DataExploration", "Train", "SplitData", "RetrieveModel"],
         output="Dataset object",
         sourceHandles=2,
         maxOutputs=2,
@@ -82,8 +80,6 @@ NODE_CONTRACTS: List[NodeContract] = [
         requiresConfiguration=True,
         source=False,
         target=True,
-        predecessors=["DataSelector"],
-        successors=[],
         input="Dataset object",
         inputs=[
             PortSpec(
@@ -111,8 +107,6 @@ NODE_CONTRACTS: List[NodeContract] = [
         requiresConfiguration=True,
         source=True,
         target=True,
-        predecessors=["DataSelector"],
-        successors=["TaskAndModel"],
         input="Dataset object",
         output="Split dataset subsets",
         sourceHandles=2,
@@ -144,8 +138,6 @@ NODE_CONTRACTS: List[NodeContract] = [
         requiresConfiguration=True,
         source=True,
         target=True,
-        predecessors=["SplitData"],
-        successors=["MetricsEval", "Prediction"],
         input="Split dataset subsets",
         output="Trained model object",
         sourceHandles=2,
@@ -174,8 +166,6 @@ NODE_CONTRACTS: List[NodeContract] = [
         requiresConfiguration=True,
         source=True,
         target=True,
-        predecessors=["TaskAndModel"],
-        successors=["Prediction"],
         input="Trained model and split data",
         output="Model artifact (metrics stored in pipeline results)",
         maxInputs=2,
@@ -206,8 +196,6 @@ NODE_CONTRACTS: List[NodeContract] = [
         requiresConfiguration=True,
         source=True,
         target=True,
-        predecessors=["DataSelector"],
-        successors=["Prediction"],
         input="Dataset object",
         output="Trained model object and evaluation results",
         inputs=[
@@ -233,8 +221,6 @@ NODE_CONTRACTS: List[NodeContract] = [
         requiresConfiguration=False,
         source=False,
         target=True,
-        predecessors=["Train", "RetrieveModel", "TaskAndModel", "MetricsEval"],
-        successors=[],
         input="Trained model and dataset object",
         inputs=[
             PortSpec(
@@ -259,8 +245,6 @@ NODE_CONTRACTS: List[NodeContract] = [
         requiresConfiguration=True,
         source=True,
         target=True,
-        predecessors=["DataSelector"],
-        successors=["Prediction"],
         input="Dataset object",
         output="Trained model object",
         inputs=[
@@ -283,6 +267,33 @@ NODE_CONTRACTS: List[NodeContract] = [
 NODE_CONTRACTS_MAP: Dict[str, NodeContract] = {
     contract.type: contract for contract in NODE_CONTRACTS
 }
+
+
+def _derive_compatibility_from_ports() -> None:
+    """Populate predecessors/successors from the typed ports.
+
+    Compatibility is driven purely by the port data kinds: node B is a valid
+    successor of node A when any output kind of A is accepted by some input of
+    B. This way, adding a new node only requires declaring its input/output
+    kinds -- there is no need to edit every other node's contract.
+    """
+    outputs_by_type = {c.type: {p.kind for p in c.outputs} for c in NODE_CONTRACTS}
+    accepts_by_type = {
+        c.type: {kind for port in c.inputs for kind in (port.accepts or [port.kind])}
+        for c in NODE_CONTRACTS
+    }
+    for src in NODE_CONTRACTS:
+        for tgt in NODE_CONTRACTS:
+            if src.type == tgt.type:
+                continue
+            if outputs_by_type[src.type] & accepts_by_type[tgt.type]:
+                if tgt.type not in src.successors:
+                    src.successors.append(tgt.type)
+                if src.type not in tgt.predecessors:
+                    tgt.predecessors.append(src.type)
+
+
+_derive_compatibility_from_ports()
 
 
 def get_contracts_payload() -> List[Dict[str, object]]:
