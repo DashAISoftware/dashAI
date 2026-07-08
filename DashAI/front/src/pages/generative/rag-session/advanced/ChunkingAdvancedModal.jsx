@@ -10,17 +10,18 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
-import GeneratorConfigurationStep from "./GeneratorConfigurationStep";
+import ChunkingConfigurationStep from "./ChunkingConfigurationStep";
+import { getModelFromSubform } from "../../../../utils/schema";
 
-export default function GeneratorAdvancedModal({
+export default function ChunkingAdvancedModal({
   open,
   onClose,
-  selectedGenerator,
-  generatorModel,
-  setGeneratorModel,
+  chunkingModel,
+  setChunkingModel,
 }) {
   const { t } = useTranslation(["generative"]);
   const [stepValid, setStepValid] = useState(false);
+  const modelName = getModelFromSubform(chunkingModel);
 
   const handleClose = () => {
     onClose();
@@ -48,7 +49,7 @@ export default function GeneratorAdvancedModal({
           alignItems: "center",
         }}
       >
-        {t("generative:simplifiedRag.advanced.generatorTitle")}
+        {t("generative:rag.advanced.chunkingTitle")}
         <IconButton
           onClick={handleClose}
           size="small"
@@ -59,10 +60,10 @@ export default function GeneratorAdvancedModal({
       </DialogTitle>
 
       <DialogContent dividers sx={{ bgcolor: "background.paper", minHeight: 400 }}>
-        <FormSchemaProvider key={`generator-advanced-${generatorModel?.component}`}>
-          <GeneratorConfigurationStep
-            generatorModel={generatorModel}
-            setGeneratorModel={setGeneratorModel}
+        <FormSchemaProvider key={`chunking-advanced-${modelName}`}>
+          <ChunkingConfigurationStep
+            chunkingModel={chunkingModel}
+            setChunkingModel={setChunkingModel}
             setNextEnabled={setStepValid}
           />
         </FormSchemaProvider>
@@ -70,7 +71,7 @@ export default function GeneratorAdvancedModal({
 
       <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
         <Button onClick={handleClose} variant="outlined">
-          {t("generative:simplifiedRag.advanced.close")}
+          {t("generative:rag.advanced.close")}
         </Button>
         <Button
           onClick={handleSave}
@@ -78,7 +79,7 @@ export default function GeneratorAdvancedModal({
           color="primary"
           disabled={!stepValid}
         >
-          {t("generative:simplifiedRag.advanced.done")}
+          {t("generative:rag.advanced.done")}
         </Button>
       </DialogActions>
     </Dialog>

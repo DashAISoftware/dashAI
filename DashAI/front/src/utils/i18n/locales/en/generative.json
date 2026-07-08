@@ -66,7 +66,7 @@
     "sessionDeleted": "Session deleted successfully",
     "sessionUpdated": "Session updated successfully"
   },
-  "simplifiedRag": {
+  "rag": {
     "setup": {
       "title": "Create RAG session",
       "subtitle": "Provide basic information, select documents, and configure the components for your RAG session.",

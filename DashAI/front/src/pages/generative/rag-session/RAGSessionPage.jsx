@@ -14,12 +14,12 @@ import { useGenerative } from "../../../components/generative/GenerativeContext"
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { FormSchemaProvider } from "../../../contexts/schema";
-import SimplifiedSessionSetup from "./SimplifiedSessionSetup";
+import RAGSessionSetup from "./RAGSessionSetup";
 import RAGDocumentsPanel from "../../../components/generative/RAG/RAGDocumentsPanel";
-import SimplifiedRAGInfoBar from "../../../components/generative/RAG/SimplifiedRAGInfoBar";
+import RAGInfoBar from "../../../components/generative/RAG/RAGInfoBar";
 import RAGParamsPanel from "../../../components/generative/RAG/RAGParamsPanel";
 
-function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
+function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
   const navigate = useNavigate();
   const { id: urlSessionId } = useParams();
   const threePanelLayout = useThreePanelLayout();
@@ -165,7 +165,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
       />
     )
   ) : (
-    <SimplifiedSessionSetup
+    <RAGSessionSetup
       key={setupKey}
       onClose={handleCloseSetup}
       onSessionCreated={handleSessionCreated}
@@ -234,7 +234,7 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
               {isRagSessionSelected ? (
                 <RAGParamsPanel selectedSessionId={globalSelectedSessionId} />
               ) : (
-                <SimplifiedRAGInfoBar />
+                <RAGInfoBar />
               )}
             </Box>
           </RightPanel>
@@ -244,4 +244,4 @@ function SimplifiedRAGPage({ onSessionSelect, sessions, setSessions }) {
   );
 }
 
-export default SimplifiedRAGPage;
+export default RAGSessionPage;

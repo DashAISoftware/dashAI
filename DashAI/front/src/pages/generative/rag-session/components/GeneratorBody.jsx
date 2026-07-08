@@ -14,18 +14,21 @@ import { useTranslation } from "react-i18next";
 import { getGeneratorComponents } from "../../../../api/rag";
 import { resolveDefaults } from "../../../../utils/schema";
 import GeneratorAdvancedModal from "../advanced/GeneratorAdvancedModal";
-import AdvancedConfigCard from "../components/AdvancedConfigCard";
-import RAGSectionColumn from "../components/RAGSectionColumn";
-import { getDescription } from "../components/sectionUtils";
+import AdvancedConfigCard from "./AdvancedConfigCard";
+import { getDescription } from "./sectionUtils";
 
-export default function GeneratorSection({
+export default function GeneratorBody({
   generatorModel,
   setGeneratorModel,
   chunkSize = 0,
   topK = 0,
   promptTokenCount = 0,
   setIsValid,
+  isAdvanced,
+  setInitialModelParams,
+  showDetails = true,
 }) {
+  const theme = useTheme();
   const { t, i18n } = useTranslation(["generative"]);
   const [generators, setGenerators] = useState([]);
   const [selectedGenerator, setSelectedGenerator] = useState(null);
@@ -33,7 +36,6 @@ export default function GeneratorSection({
   const [loading, setLoading] = useState(true);
   const DEFAULT_CONTEXT_WINDOW = 10000;
   const DEFAULT_MAX_TOKENS = 1000;
-  const theme = useTheme();
 
   const contextStats = useMemo(() => {
     if (!generatorModel?.params || !selectedGenerator || !generatorModel.component) {
@@ -87,6 +89,7 @@ export default function GeneratorSection({
     if (!generators.length) return;
 
     if (!generatorModel?.component) {
+      if (setInitialModelParams) setInitialModelParams(null);
       return;
     }
 
@@ -104,11 +107,13 @@ export default function GeneratorSection({
     }
 
     setSelectedGenerator(foundGenerator);
+    if (setInitialModelParams) setInitialModelParams({ ...generatorModel.params });
   }, [generators, generatorModel?.component, generatorModel?.params]);
 
   const handleGeneratorChange = async (event, newValue) => {
     if (!newValue) {
       setSelectedGenerator(null);
+      if (setInitialModelParams) setInitialModelParams(null);
       setGeneratorModel({ component: "", params: {} });
       return;
     }
@@ -119,6 +124,7 @@ export default function GeneratorSection({
       max_tokens: DEFAULT_MAX_TOKENS,
       context_window: DEFAULT_CONTEXT_WINDOW,
     };
+    if (setInitialModelParams) setInitialModelParams({ ...overriddenParams });
 
     setSelectedGenerator(newValue);
     setGeneratorModel({
@@ -132,11 +138,8 @@ export default function GeneratorSection({
   }
 
   return (
-    <RAGSectionColumn>
-      <Typography variant="body2" color="textSecondary">
-        {t("generative:simplifiedRag.generator.description")}
-      </Typography>
-
+    <>
+      {/* Model Selection */}
       <Box>
         <Autocomplete
           options={generators}
@@ -147,14 +150,22 @@ export default function GeneratorSection({
           renderInput={(params) => (
             <TextField
               {...params}
-              label={t("generative:simplifiedRag.generator.selectModel")}
-              placeholder={t("generative:simplifiedRag.generator.selectModelPlaceholder")}
+              label={t("generative:rag.generator.selectModel")}
+              placeholder={t("generative:rag.generator.selectModelPlaceholder")}
             />
           )}
         />
       </Box>
 
-      {selectedGenerator && (
+      {isAdvanced && selectedGenerator && (
+        <AdvancedConfigCard
+          modelName={selectedGenerator.name}
+          onClick={() => setShowAdvanced(true)}
+        />
+      )}
+
+      {/* Selected Model Info & Context Message */}
+      {showDetails && selectedGenerator && generatorModel?.params && (
         <Box
           sx={{
             p: 2,
@@ -169,7 +180,7 @@ export default function GeneratorSection({
         >
           <Typography variant="body2">
             <Box component="span" sx={{ typography: "subtitle2" }}>
-              {t("generative:simplifiedRag.generator.modelInfo")}
+              {t("generative:rag.generator.modelInfo")}
             </Box> {selectedGenerator.name}
           </Typography>
 
@@ -198,16 +209,16 @@ export default function GeneratorSection({
           )}
         </Box>
       )}
-      {/*Show the Open advanced configuration button only when a LLM is selected*/}
-      {selectedGenerator && (
+
+      {showDetails && (
         <Button
-          variant="contained"
+          variant="outlined"
           color="primary"
           size="small"
           onClick={() => setShowAdvanced(true)}
           disabled={!selectedGenerator}
           sx={{
-            alignSelf: "flex-start",
+            alignSelf: "flex-start", 
             width: "fit-content",
             border: "1px solid",
             borderColor: theme.palette.primary.main,
@@ -215,7 +226,7 @@ export default function GeneratorSection({
             color: theme.palette.text.primary,
           }}
         >
-          ↗ {t("generative:simplifiedRag.generator.advancedButton")}
+          ↗ {t("generative:rag.generator.advancedButton")}
         </Button>
       )}
 
@@ -228,15 +239,18 @@ export default function GeneratorSection({
           setGeneratorModel={setGeneratorModel}
         />
       )}
-    </RAGSectionColumn>
+    </>
   );
 }
 
-GeneratorSection.propTypes = {
+GeneratorBody.propTypes = {
   generatorModel: PropTypes.object,
   setGeneratorModel: PropTypes.func.isRequired,
   chunkSize: PropTypes.number,
   topK: PropTypes.number,
   promptTokenCount: PropTypes.number,
   setIsValid: PropTypes.func.isRequired,
+  isAdvanced: PropTypes.bool,
+  setInitialModelParams: PropTypes.func,
+  showDetails: PropTypes.bool,
 };

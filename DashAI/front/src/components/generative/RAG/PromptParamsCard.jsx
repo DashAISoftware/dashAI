@@ -22,9 +22,9 @@ import Tooltip from "@mui/material/Tooltip";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getRAGPrompts, getDefaultPrompts } from "../../../api/rag";
-import NewPromptModal from "../../../pages/generative/simplified-RAG/advanced/NewPromptModal";
-import RAGSectionColumn from "../../../pages/generative/simplified-RAG/components/RAGSectionColumn";
-import { getDescription, renderTemplateWithHighlights } from "../../../pages/generative/simplified-RAG/components/sectionUtils";
+import NewPromptModal from "../../../pages/generative/rag-session/advanced/NewPromptModal";
+import RAGSectionColumn from "../../../pages/generative/rag-session/components/RAGSectionColumn";
+import { getDescription, renderTemplateWithHighlights } from "../../../pages/generative/rag-session/components/sectionUtils";
 
 const LANGUAGE_OPTIONS = [
   { code: "en", name: "English" },
@@ -40,10 +40,10 @@ const DEFAULT_IDS = {
 
 function getDefaultDisplayName(component, t) {
   if (component.name === "DefaultRAGGenerationPrompt") {
-    return t("generative:simplifiedRag.prompt.defaultGenerationPrompt");
+    return t("generative:rag.prompt.defaultGenerationPrompt");
   }
   if (component.name === "DefaultQnARAGenerationPrompt") {
-    return t("generative:simplifiedRag.prompt.defaultQnAGenerationPrompt");
+    return t("generative:rag.prompt.defaultQnAGenerationPrompt");
   }
   return component.name;
 }
@@ -137,7 +137,7 @@ export default function PromptParamsCard({
       ...customs,
       {
         id: CREATE_NEW_ID,
-        name: t("generative:simplifiedRag.prompt.createNewPrompt"),
+        name: t("generative:rag.prompt.createNewPrompt"),
         _isCreateNew: true,
         _isDefault: false,
         class_name: "",
@@ -288,7 +288,7 @@ export default function PromptParamsCard({
             <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Prompt</Typography>
             <Box>
               {isExpanded && (
-                <Tooltip title={t("generative:simplifiedRag.prompt.descriptionToggle") || "Description"}>
+                <Tooltip title={t("generative:rag.prompt.descriptionToggle") || "Description"}>
                   <IconButton
                     size="small"
                     onClick={() => setShowDescription((s) => !s)}
@@ -299,12 +299,12 @@ export default function PromptParamsCard({
                   </IconButton>
                 </Tooltip>
               )}
-              <Tooltip title={t("generative:simplifiedRag.prompt.openPrompts")}>
+              <Tooltip title={t("generative:rag.prompt.openPrompts")}>
                 <IconButton size="small" onClick={goToPromptsDetail} aria-label="open-prompt-library">
                   <ViewListIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-              <Tooltip title={isExpanded ? (t("generative:simplifiedRag.prompt.collapse") || "Collapse") : (t("generative:simplifiedRag.prompt.expand") || "Expand")}>
+              <Tooltip title={isExpanded ? (t("generative:rag.prompt.collapse") || "Collapse") : (t("generative:rag.prompt.expand") || "Expand")}>
                 <IconButton
                   size="small"
                   onClick={() => setIsExpanded((s) => !s)}
@@ -320,7 +320,7 @@ export default function PromptParamsCard({
           </Box>
           {isExpanded && showDescription && (
             <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-              {t("generative:simplifiedRag.prompt.description")}
+              {t("generative:rag.prompt.description")}
             </Typography>
           )}
         </Box>
@@ -339,9 +339,9 @@ export default function PromptParamsCard({
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label={t("generative:simplifiedRag.prompt.selectTemplate")}
+                  label={t("generative:rag.prompt.selectTemplate")}
                   placeholder={t(
-                    "generative:simplifiedRag.prompt.selectTemplatePlaceholder",
+                    "generative:rag.prompt.selectTemplatePlaceholder",
                   )}
                 />
               )}
@@ -357,7 +357,7 @@ export default function PromptParamsCard({
             <TextField
               select
               fullWidth
-              label={t("generative:simplifiedRag.prompt.language")}
+              label={t("generative:rag.prompt.language")}
               value={selectedLanguage}
               onChange={handleLanguageChange}
               size="small"
@@ -373,7 +373,7 @@ export default function PromptParamsCard({
           {isExpanded && selectedPrompt && (
             <Box>
               <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                {t("generative:simplifiedRag.prompt.selectedTemplate")}
+                {t("generative:rag.prompt.selectedTemplate")}
               </Typography>
 
               <Box
@@ -414,7 +414,7 @@ export default function PromptParamsCard({
               startIcon={<AddIcon />}
               onClick={() => setNewPromptModalOpen(true)}
             >
-              {t("generative:simplifiedRag.prompt.newPromptButton")}
+              {t("generative:rag.prompt.newPromptButton")}
             </Button>
           )}
         </RAGSectionColumn>

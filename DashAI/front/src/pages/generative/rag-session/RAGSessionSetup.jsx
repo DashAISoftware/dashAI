@@ -47,7 +47,7 @@ const defaultSessionData = {
   },
 };
 
-export default function SimplifiedSessionSetup({
+export default function RAGSessionSetup({
   initialData,
   onClose,
   onSessionCreated,
@@ -148,7 +148,7 @@ export default function SimplifiedSessionSetup({
 
     // Validate empty name
     if (value.trim() === "") {
-      setNameError(t("generative:simplifiedRag.validation.nameRequired"));
+      setNameError(t("generative:rag.validation.nameRequired"));
     } else {
       setNameError("");
     }
@@ -218,37 +218,37 @@ export default function SimplifiedSessionSetup({
 
   const validateConfiguration = () => {
     if (!sessionData.name.trim()) {
-      enqueueSnackbar(t("generative:simplifiedRag.validation.nameRequired"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.nameRequired"), { variant: "warning" });
       return false;
     }
     if (isDuplicateName) {
-      enqueueSnackbar(t("generative:simplifiedRag.validation.nameUnique"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.nameUnique"), { variant: "warning" });
       return false;
     }
     if (sessionData.documents.length === 0) {
-      enqueueSnackbar(t("generative:simplifiedRag.validation.documentsRequired"), {
+      enqueueSnackbar(t("generative:rag.validation.documentsRequired"), {
         variant: "warning",
       });
       return false;
     }
     if (!sessionData.parameters.chunking_model?.component) {
-      enqueueSnackbar(t("generative:simplifiedRag.validation.chunkingRequired"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.chunkingRequired"), { variant: "warning" });
       return false;
     }
     if (!sessionData.parameters.retriever_model?.component) {
-      enqueueSnackbar(t("generative:simplifiedRag.validation.retrieverRequired"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.retrieverRequired"), { variant: "warning" });
       return false;
     }
     if (!sessionData.parameters.generator_model?.component) {
-      enqueueSnackbar(t("generative:simplifiedRag.validation.generatorRequired"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.generatorRequired"), { variant: "warning" });
       return false;
     }
     if (!isGeneratorValidState) {
-      enqueueSnackbar(t("generative:simplifiedRag.validation.generatorInvalid"), { variant: "error" });
+      enqueueSnackbar(t("generative:rag.validation.generatorInvalid"), { variant: "error" });
       return false;
     }
     if (!sessionData.parameters.prompt?.component) {
-      enqueueSnackbar(t("generative:simplifiedRag.validation.promptRequired"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.promptRequired"), { variant: "warning" });
       return false;
     }
     return true;
@@ -287,7 +287,7 @@ export default function SimplifiedSessionSetup({
       };
 
       const createdSession = await createRAGSession(finalSessionData);
-      enqueueSnackbar(t("generative:simplifiedRag.messages.success"), { variant: "success" });
+      enqueueSnackbar(t("generative:rag.messages.success"), { variant: "success" });
 
       if (onSessionCreated) {
         onSessionCreated(createdSession);
@@ -317,17 +317,17 @@ export default function SimplifiedSessionSetup({
 
           <RAGSectionColumn>
             <Typography variant="h5" component="h3">
-              {t("generative:simplifiedRag.setup.title")}
+              {t("generative:rag.setup.title")}
             </Typography>
             <Typography variant="body2" color="textSecondary">
-              {t("generative:simplifiedRag.setup.subtitle")}
+              {t("generative:rag.setup.subtitle")}
             </Typography>
           </RAGSectionColumn>
 
 
           {/* Session Details */}
           <RAGCard
-            title={t("generative:simplifiedRag.setup.sessionDetails")}
+            title={t("generative:rag.setup.sessionDetails")}
             expanded={expandedSections.sessionDetails}
             onChange={handleSectionChange("sessionDetails")}
           >
@@ -335,13 +335,13 @@ export default function SimplifiedSessionSetup({
               <RAGSectionColumn>
                 <TextField
                   fullWidth
-                  label={t("generative:simplifiedRag.setup.sessionName")}
+                  label={t("generative:rag.setup.sessionName")}
                   variant="outlined"
                   value={sessionData.name}
                   onChange={handleSessionNameChange}
-                  placeholder={t("generative:simplifiedRag.setup.sessionNamePlaceholder")}
+                  placeholder={t("generative:rag.setup.sessionNamePlaceholder")}
                   error={Boolean(nameError) || isDuplicateName}
-                  helperText={nameError || (isDuplicateName ? t("generative:simplifiedRag.setup.sessionNameDuplicate") : "")}
+                  helperText={nameError || (isDuplicateName ? t("generative:rag.setup.sessionNameDuplicate") : "")}
                   size="medium"
                   disabled={saving}
                   />
@@ -361,18 +361,18 @@ export default function SimplifiedSessionSetup({
                   }}
                   >
                     <Typography variant="body2">
-                      {t("generative:simplifiedRag.setup.sessionNameDuplicateAlert")}
+                      {t("generative:rag.setup.sessionNameDuplicateAlert")}
                     </Typography>
                   </Alert>
                 )}
 
                 <TextField
                   fullWidth
-                  label={t("generative:simplifiedRag.setup.description")}
+                  label={t("generative:rag.setup.description")}
                   variant="outlined"
                   value={sessionData.description}
                   onChange={handleSessionDescriptionChange}
-                  placeholder={t("generative:simplifiedRag.setup.descriptionPlaceholder")}
+                  placeholder={t("generative:rag.setup.descriptionPlaceholder")}
                   multiline
                   rows={3}
                   size="medium"
@@ -384,13 +384,13 @@ export default function SimplifiedSessionSetup({
 
           {/* Document Selection */}
           <RAGCard
-            title={t("generative:simplifiedRag.setup.selectDocuments")}
+            title={t("generative:rag.setup.selectDocuments")}
             expanded={expandedSections.documents}
             onChange={handleSectionChange("documents")}
             actions={[
               {
                 icon: <ViewListIcon fontSize="small" />,
-                tooltip: t("generative:simplifiedRag.setup.openDocumentsLibrary"),
+                tooltip: t("generative:rag.setup.openDocumentsLibrary"),
                 onClick: goToDocumentsDetail,
                 ariaLabel: "open-documents-library",
               },
@@ -406,7 +406,7 @@ export default function SimplifiedSessionSetup({
 
           {/* Chunking Section */}
           <RAGCard
-            title={t("generative:simplifiedRag.setup.chunkingStrategy")}
+            title={t("generative:rag.setup.chunkingStrategy")}
             expanded={expandedSections.chunking}
             onChange={handleSectionChange("chunking")}
           >
@@ -420,7 +420,7 @@ export default function SimplifiedSessionSetup({
 
           {/* Retriever Section */}
           <RAGCard
-            title={t("generative:simplifiedRag.setup.retrieverModel")}
+            title={t("generative:rag.setup.retrieverModel")}
             expanded={expandedSections.retriever}
             onChange={handleSectionChange("retriever")}
           >
@@ -435,13 +435,13 @@ export default function SimplifiedSessionSetup({
 
           {/* Prompt Section */}
           <RAGCard
-            title={t("generative:simplifiedRag.setup.promptTemplate")}
+            title={t("generative:rag.setup.promptTemplate")}
             expanded={expandedSections.prompt}
             onChange={handleSectionChange("prompt")}
             actions={[
               {
                 icon: <ViewListIcon fontSize="small" />,
-                tooltip: t("generative:simplifiedRag.prompt.openPrompts"),
+                tooltip: t("generative:rag.prompt.openPrompts"),
                 onClick: goToPromptsDetail,
                 ariaLabel: "open-prompt-library",
               },
@@ -458,7 +458,7 @@ export default function SimplifiedSessionSetup({
 
           {/* Generator Section */}
           <RAGCard
-            title={t("generative:simplifiedRag.setup.languageModel")}
+            title={t("generative:rag.setup.languageModel")}
             expanded={expandedSections.generator}
             onChange={handleSectionChange("generator")}
           >
@@ -495,7 +495,7 @@ export default function SimplifiedSessionSetup({
             onClick={onClose}
             disabled={saving}
           >
-            {t("generative:simplifiedRag.setup.cancel")}
+            {t("generative:rag.setup.cancel")}
           </Button>
           <Button
             variant="contained"
@@ -504,7 +504,7 @@ export default function SimplifiedSessionSetup({
             disabled={saving || !isConfigurationComplete}
             sx={{ minWidth: 120 }}
           >
-            {saving ? <CircularProgress size={20} /> : t("generative:simplifiedRag.setup.saveSession")}
+            {saving ? <CircularProgress size={20} /> : t("generative:rag.setup.saveSession")}
           </Button>
         </Box>
       </Box>

@@ -25,22 +25,22 @@ export default function ChunkingSection({
   const CHUNKING_PRESETS = useMemo(() => [
     {
       value: "small",
-      label: t("generative:simplifiedRag.chunking.presets.small.label"),
+      label: t("generative:rag.chunking.presets.small.label"),
       config: { chunk_size: 256, chunk_overlap: 25 },
     },
     {
       value: "paragraph",
-      label: t("generative:simplifiedRag.chunking.presets.paragraph.label"),
+      label: t("generative:rag.chunking.presets.paragraph.label"),
       config: { chunk_size: 500, chunk_overlap: 50 },
     },
     {
       value: "page",
-      label: t("generative:simplifiedRag.chunking.presets.page.label"),
+      label: t("generative:rag.chunking.presets.page.label"),
       config: { chunk_size: 2000, chunk_overlap: 200 },
     },
     {
       value: "large",
-      label: t("generative:simplifiedRag.chunking.presets.large.label"),
+      label: t("generative:rag.chunking.presets.large.label"),
       config: { chunk_size: 4000, chunk_overlap: 400 },
     },
   ], [t]);
@@ -48,7 +48,7 @@ export default function ChunkingSection({
   const getPresetDescription = (preset) => {
     const chars = preset.config.chunk_size;
     const tokens = Math.ceil(chars / 4);
-    return t("generative:simplifiedRag.chunking.presets.chunkSizeFormat", { chars, tokens });
+    return t("generative:rag.chunking.presets.chunkSizeFormat", { chars, tokens });
   };
 
   const [chunkers, setChunkers] = useState([]);
@@ -152,7 +152,7 @@ export default function ChunkingSection({
   return (
       <RAGSectionColumn>
         <Typography variant="body2" color="textSecondary">
-          {t("generative:simplifiedRag.chunking.description")}
+          {t("generative:rag.chunking.description")}
         </Typography>
 
         {/* Preset Options */}
@@ -192,7 +192,7 @@ export default function ChunkingSection({
             color: theme.palette.text.primary,
           }}
           >
-           ↗ {t("generative:simplifiedRag.chunking.advancedButton")}
+           ↗ {t("generative:rag.chunking.advancedButton")}
         </Button>
 
         {/* Advanced Configuration Modal */}

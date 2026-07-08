@@ -110,7 +110,7 @@ export default function NewPromptModal({
   const handleConfirmClose = useCallback(() => {
     if (hasUnsavedChanges) {
       const confirmed = window.confirm(
-        t("generative:simplifiedRag.newPrompt.unsavedChanges"),
+        t("generative:rag.newPrompt.unsavedChanges"),
       );
       if (!confirmed) return;
     }
@@ -129,7 +129,7 @@ export default function NewPromptModal({
         },
       });
       if (result && result.id) {
-        enqueueSnackbar(t("generative:simplifiedRag.newPrompt.success"), {
+        enqueueSnackbar(t("generative:rag.newPrompt.success"), {
           variant: "success",
         });
         setHasUnsavedChanges(false);
@@ -137,7 +137,7 @@ export default function NewPromptModal({
       }
     } catch (error) {
       console.error("Error creating prompt:", error);
-      enqueueSnackbar(t("generative:simplifiedRag.newPrompt.error"), {
+      enqueueSnackbar(t("generative:rag.newPrompt.error"), {
         variant: "error",
       });
     }
@@ -167,7 +167,7 @@ export default function NewPromptModal({
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid item>
             <Typography variant="h6" component="h2">
-              {t("generative:simplifiedRag.newPrompt.title")}
+              {t("generative:rag.newPrompt.title")}
             </Typography>
           </Grid>
           <Grid item>
@@ -184,16 +184,16 @@ export default function NewPromptModal({
       <DialogContent dividers>
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            {t("generative:simplifiedRag.newPrompt.description")}
+            {t("generative:rag.newPrompt.description")}
           </Typography>
           <Typography variant="body2" color="textSecondary">
-            {t("generative:simplifiedRag.newPrompt.placeholdersInfo")}
+            {t("generative:rag.newPrompt.placeholdersInfo")}
           </Typography>
         </Box>
 
         <TextField
           fullWidth
-          label={t("generative:simplifiedRag.newPrompt.nameLabel")}
+          label={t("generative:rag.newPrompt.nameLabel")}
           value={promptName}
           onChange={handlePromptNameChange}
           sx={{ mt: 2, mb: 2 }}
@@ -201,7 +201,7 @@ export default function NewPromptModal({
           error={!promptName.trim()}
           helperText={
             !promptName.trim()
-              ? t("generative:simplifiedRag.newPrompt.nameRequired")
+              ? t("generative:rag.newPrompt.nameRequired")
               : ""
           }
           InputLabelProps={{ required: false }}
@@ -211,7 +211,7 @@ export default function NewPromptModal({
           select
           fullWidth
           label={
-            t("generative:simplifiedRag.newPrompt.languageLabel") ||
+            t("generative:rag.newPrompt.languageLabel") ||
             "Language (optional)"
           }
           value={promptLanguage}
@@ -239,9 +239,9 @@ export default function NewPromptModal({
 
         <HighlightedTextarea
           ref={textareaRef}
-          label={t("generative:simplifiedRag.newPrompt.promptLabel")}
+          label={t("generative:rag.newPrompt.promptLabel")}
           placeholder={t(
-            "generative:simplifiedRag.newPrompt.promptPlaceholder",
+            "generative:rag.newPrompt.promptPlaceholder",
           )}
           value={promptTemplate}
           onChange={handlePromptTemplateChange}
@@ -251,14 +251,14 @@ export default function NewPromptModal({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleConfirmClose}>
-          {t("generative:simplifiedRag.newPrompt.cancel")}
+          {t("generative:rag.newPrompt.cancel")}
         </Button>
         <Button
           variant="contained"
           disabled={!canSave}
           onClick={handleSave}
         >
-          {t("generative:simplifiedRag.newPrompt.save")}
+          {t("generative:rag.newPrompt.save")}
         </Button>
       </DialogActions>
     </Dialog>

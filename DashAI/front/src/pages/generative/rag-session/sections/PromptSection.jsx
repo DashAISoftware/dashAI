@@ -30,10 +30,10 @@ const DEFAULT_IDS = {
 
 function getDefaultDisplayName(component, t) {
   if (component.name === "DefaultRAGGenerationPrompt") {
-    return t("generative:simplifiedRag.prompt.defaultGenerationPrompt");
+    return t("generative:rag.prompt.defaultGenerationPrompt");
   }
   if (component.name === "DefaultQnARAGenerationPrompt") {
-    return t("generative:simplifiedRag.prompt.defaultQnAGenerationPrompt");
+    return t("generative:rag.prompt.defaultQnAGenerationPrompt");
   }
   return component.name;
 }
@@ -121,7 +121,7 @@ export default function PromptSection({
       ...customs,
       {
         id: CREATE_NEW_ID,
-        name: t("generative:simplifiedRag.prompt.createNewPrompt"),
+        name: t("generative:rag.prompt.createNewPrompt"),
         _isCreateNew: true,
         _isDefault: false,
         class_name: "",
@@ -267,7 +267,7 @@ export default function PromptSection({
   return (
     <RAGSectionColumn>
       <Typography variant="body2" color="textSecondary">
-        {t("generative:simplifiedRag.prompt.description")}
+        {t("generative:rag.prompt.description")}
       </Typography>
 
             <Button
@@ -285,7 +285,7 @@ export default function PromptSection({
           color: theme.palette.text.primary,
         }}
       >
-        {t("generative:simplifiedRag.prompt.newPromptButton")}
+        {t("generative:rag.prompt.newPromptButton")}
       </Button>
 
       <Box>
@@ -301,9 +301,9 @@ export default function PromptSection({
           renderInput={(params) => (
             <TextField
               {...params}
-              label={t("generative:simplifiedRag.prompt.selectTemplate")}
+              label={t("generative:rag.prompt.selectTemplate")}
               placeholder={t(
-                "generative:simplifiedRag.prompt.selectTemplatePlaceholder",
+                "generative:rag.prompt.selectTemplatePlaceholder",
               )}
             />
           )}
@@ -319,7 +319,7 @@ export default function PromptSection({
         <TextField
           select
           fullWidth
-          label={t("generative:simplifiedRag.prompt.language")}
+          label={t("generative:rag.prompt.language")}
           value={selectedLanguage}
           onChange={handleLanguageChange}
           size="small"
@@ -335,7 +335,7 @@ export default function PromptSection({
       {selectedPrompt && (
         <RAGSectionColumn>
           <Typography variant="subtitle2" >
-            {t("generative:simplifiedRag.prompt.selectedTemplate")}
+            {t("generative:rag.prompt.selectedTemplate")}
           </Typography>
 
           <Box

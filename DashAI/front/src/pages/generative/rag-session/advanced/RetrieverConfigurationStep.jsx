@@ -264,10 +264,10 @@ const RetrieverConfigurationStep = forwardRef(
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: 2 }}>
         <Typography variant="subtitle2" sx={{ mb: 0 }}>
-          {t("generative:simplifiedRag.composite.selectModel")}
+          {t("generative:rag.composite.selectModel")}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          {t("generative:simplifiedRag.composite.retrieverDescription")}
+          {t("generative:rag.composite.retrieverDescription")}
         </Typography>
         <Autocomplete
           options={allOptions}
@@ -275,22 +275,22 @@ const RetrieverConfigurationStep = forwardRef(
           groupBy={(opt) => {
             if (opt._type === "embedding")
               return (
-                t("generative:simplifiedRag.composite.denseGroup") ||
+                t("generative:rag.composite.denseGroup") ||
                 "Dense Retrievers"
               );
             const flags = opt.flags || [];
             if (flags.includes("composite"))
               return (
-                t("generative:simplifiedRag.composite.compositeGroup") ||
+                t("generative:rag.composite.compositeGroup") ||
                 "Composite"
               );
             if (flags.includes("keyword"))
               return (
-                t("generative:simplifiedRag.composite.keywordGroup") ||
+                t("generative:rag.composite.keywordGroup") ||
                 "Keyword"
               );
             return (
-              t("generative:simplifiedRag.composite.simpleGroup") || "Other"
+              t("generative:rag.composite.simpleGroup") || "Other"
             );
           }}
           value={selectedRetriever}
@@ -317,7 +317,7 @@ const RetrieverConfigurationStep = forwardRef(
         {selectedRetriever && openConfig && isComposite && (
           <>
             <Typography variant="body2" color="text.secondary" sx={{ mt: -1 }}>
-              {t("generative:simplifiedRag.composite.compositeInstructions")}
+              {t("generative:rag.composite.compositeInstructions")}
             </Typography>
             <CompositeRetrieverBuilder
               key={`composite-${selectedRetriever.name}`}

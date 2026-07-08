@@ -96,7 +96,7 @@ export default function RetrieverNodeConfig({
           alignItems: "center",
         }}
       >
-        {t("generative:simplifiedRag.composite.configureNode")}
+        {t("generative:rag.composite.configureNode")}
         <IconButton onClick={onClose} size="small" sx={{ color: "text.secondary" }}>
           <CloseIcon />
         </IconButton>
@@ -111,17 +111,17 @@ export default function RetrieverNodeConfig({
             getOptionLabel={(opt) => getDisplay(opt)}
             isOptionEqualToValue={(a, b) => a.name === b.name}
             groupBy={(opt) => {
-              if (COMPOSITE_TYPES.includes(opt.name)) return t("generative:simplifiedRag.composite.compositeGroup");
-              return t("generative:simplifiedRag.composite.simpleGroup");
+              if (COMPOSITE_TYPES.includes(opt.name)) return t("generative:rag.composite.compositeGroup");
+              return t("generative:rag.composite.simpleGroup");
             }}
             renderInput={(p) => (
-              <TextField {...p} label={t("generative:simplifiedRag.composite.selectModel")} />
+              <TextField {...p} label={t("generative:rag.composite.selectModel")} />
             )}
           />
 
           {isComposite && (
             <Typography variant="caption" color="text.secondary">
-              {t("generative:simplifiedRag.composite.nestedCompositeNote")}
+              {t("generative:rag.composite.nestedCompositeNote")}
             </Typography>
           )}
 
@@ -129,7 +129,7 @@ export default function RetrieverNodeConfig({
             <>
               <Divider />
               <Typography variant="subtitle2">
-                {t("generative:simplifiedRag.composite.parameters")}
+                {t("generative:rag.composite.parameters")}
               </Typography>
               <FormSchemaContainer key={`node-config-${nodeId}-${selectedModel.name}`}>
                 <FormSchema

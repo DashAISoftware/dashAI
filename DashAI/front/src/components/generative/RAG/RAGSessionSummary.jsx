@@ -133,11 +133,11 @@ export default function RAGSessionSummary({
       };
 
       setIsEditing(false);
-      enqueueSnackbar(t("generative:simplifiedRag.summary.sessionUpdated"), {
+      enqueueSnackbar(t("generative:rag.summary.sessionUpdated"), {
         variant: "success",
       });
     } catch (error) {
-      enqueueSnackbar(t("generative:simplifiedRag.summary.failedToUpdateSession"), {
+      enqueueSnackbar(t("generative:rag.summary.failedToUpdateSession"), {
         variant: "error",
       });
       console.error("Failed to update session metadata:", error);
@@ -181,9 +181,9 @@ export default function RAGSessionSummary({
   // Helper function to copy to clipboard
   const handleCopyToClipboard = (value) => {
     navigator.clipboard.writeText(String(value)).then(() => {
-      enqueueSnackbar(t("generative:simplifiedRag.summary.apiKeyCopied"), { variant: "success" });
+      enqueueSnackbar(t("generative:rag.summary.apiKeyCopied"), { variant: "success" });
     }).catch(() => {
-      enqueueSnackbar(t("generative:simplifiedRag.summary.failedToCopyApiKey"), { variant: "error" });
+      enqueueSnackbar(t("generative:rag.summary.failedToCopyApiKey"), { variant: "error" });
     });
   };
 
@@ -201,7 +201,7 @@ export default function RAGSessionSummary({
     if (!params || Object.keys(params).length === 0) {
       return (
         <Typography variant="caption" color="text.primary" sx={{ ml: 1 }}>
-          {t("generative:simplifiedRag.summary.noParameters")}
+          {t("generative:rag.summary.noParameters")}
         </Typography>
       );
     }
@@ -233,7 +233,7 @@ export default function RAGSessionSummary({
                       backgroundColor: 'action.hover'
                     }
                   }}
-                  title={t("generative:simplifiedRag.summary.apiKeyCopied")}
+                  title={t("generative:rag.summary.apiKeyCopied")}
                 >
                   <ContentCopyIcon sx={{ fontSize: '0.75rem' }} />
                 </IconButton>
@@ -257,7 +257,7 @@ export default function RAGSessionSummary({
                 }
               }}
             >
-              {t("generative:simplifiedRag.summary.viewDetails")}
+              {t("generative:rag.summary.viewDetails")}
             </Button>
           )}
         </Box>
@@ -346,7 +346,7 @@ export default function RAGSessionSummary({
         height="100%"
       >
         <Typography variant="h6" color="text.secondary">
-          {t("generative:simplifiedRag.summary.loading")}
+          {t("generative:rag.summary.loading")}
         </Typography>
       </Box>
     );
@@ -361,7 +361,7 @@ export default function RAGSessionSummary({
         height="100%"
       >
         <Typography variant="h6" color="text.secondary">
-          {t("generative:simplifiedRag.summary.sessionNotFound")}
+          {t("generative:rag.summary.sessionNotFound")}
         </Typography>
       </Box>
     );
@@ -396,7 +396,7 @@ export default function RAGSessionSummary({
             <Box display="flex" flexDirection="column" gap={2}>
               <TextField
                 fullWidth
-                label={t("generative:simplifiedRag.summary.sessionName")}
+                label={t("generative:rag.summary.sessionName")}
                 value={editingName}
                 onChange={(e) => {
                   setEditingName(e.target.value);
@@ -410,7 +410,7 @@ export default function RAGSessionSummary({
               />
               <TextField
                 fullWidth
-                label={t("generative:simplifiedRag.summary.sessionDescription")}
+                label={t("generative:rag.summary.sessionDescription")}
                 value={editingDescription}
                 onChange={(e) => setEditingDescription(e.target.value)}
                 variant="outlined"
@@ -429,24 +429,24 @@ export default function RAGSessionSummary({
                   size="small"
                   onClick={handleToggleEditMode}
                   sx={{ color: 'text.secondary' }}
-                  aria-label={t("generative:simplifiedRag.summary.edit")}
+                  aria-label={t("generative:rag.summary.edit")}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
               </Box>
               <Typography variant="body1" color="text.secondary" mb={2}>
-                {sessionData.description || t("generative:simplifiedRag.summary.descriptionPlaceholder")}
+                {sessionData.description || t("generative:rag.summary.descriptionPlaceholder")}
               </Typography>
               <Box display="flex" gap={1}>
                 <Chip 
-                  label={t("generative:simplifiedRag.summary.title")} 
+                  label={t("generative:rag.summary.title")} 
                   color="text.secondary" 
                   variant="outlined"
                   size="small"
                   sx={{ color: 'text.secondary' }}
                 />
                 <Chip 
-                  label={`${t("generative:simplifiedRag.summary.createdLabel")} ${new Date(sessionData.created).toLocaleDateString()}`}
+                  label={`${t("generative:rag.summary.createdLabel")} ${new Date(sessionData.created).toLocaleDateString()}`}
                   variant="outlined"
                   size="small"
                   color="text.secondary"
@@ -466,7 +466,7 @@ export default function RAGSessionSummary({
                 color="primary"
                 onClick={handleSaveMetadata}
                 disabled={isSaving || !hasMetadataChanges}
-                aria-label={t("generative:simplifiedRag.summary.save")}
+                aria-label={t("generative:rag.summary.save")}
                 sx={{ minWidth: 40, width: 40, height: 40, padding: 0 }}
               >
                 <SaveIcon fontSize="small" />
@@ -475,7 +475,7 @@ export default function RAGSessionSummary({
                 size="small"
                 onClick={handleToggleEditMode}
                 disabled={isSaving}
-                aria-label={t("generative:simplifiedRag.summary.cancel")}
+                aria-label={t("generative:rag.summary.cancel")}
                 sx={{ color: 'text.secondary' }}
               >
                 <CloseIcon fontSize="small" />
@@ -502,7 +502,7 @@ export default function RAGSessionSummary({
                 transition: 'all 0.2s ease-in-out'
               }}
             >
-              {t("generative:simplifiedRag.summary.openChatButton")}
+              {t("generative:rag.summary.openChatButton")}
             </Button>
           )}
             {/* edit button moved next to session name */}
@@ -518,7 +518,7 @@ export default function RAGSessionSummary({
               <Box display="flex" alignItems="center" mb={3}>
                 <SettingsIcon sx={{ mr: 1, color: 'primary.main' }} />
                 <Typography variant="h6">
-                  {t("generative:simplifiedRag.summary.detailedConfig")}
+                  {t("generative:rag.summary.detailedConfig")}
                 </Typography>
               </Box>
               
@@ -526,11 +526,11 @@ export default function RAGSessionSummary({
               {parameters.chunking_model && (
                 <CollapsibleParameterCard
                   icon={<ContentCutIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
-                  title={t("generative:simplifiedRag.summary.chunkingModel")}
+                  title={t("generative:rag.summary.chunkingModel")}
                   component={parameters.chunking_model.component}
                   params={parameters.chunking_model.params}
                   sectionKey="chunking"
-                  componentName={t("generative:simplifiedRag.summary.chunkingModel")}
+                  componentName={t("generative:rag.summary.chunkingModel")}
                 />
               )}
 
@@ -538,11 +538,11 @@ export default function RAGSessionSummary({
               {parameters.retriever_model && (
                 <CollapsibleParameterCard
                   icon={<LeaderboardIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
-                  title={t("generative:simplifiedRag.summary.retrieverModel")}
+                  title={t("generative:rag.summary.retrieverModel")}
                   component={parameters.retriever_model.component}
                   params={parameters.retriever_model.params}
                   sectionKey="retriever"
-                  componentName={t("generative:simplifiedRag.summary.retrieverModel")}
+                  componentName={t("generative:rag.summary.retrieverModel")}
                 />
               )}
 
@@ -550,11 +550,11 @@ export default function RAGSessionSummary({
               {parameters.generation_model && (
                 <CollapsibleParameterCard
                   icon={<BoltIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
-                  title={t("generative:simplifiedRag.summary.generationModel")}
+                  title={t("generative:rag.summary.generationModel")}
                   component={parameters.generation_model.component}
                   params={parameters.generation_model.params}
                   sectionKey="generation"
-                  componentName={t("generative:simplifiedRag.summary.generationModel")}
+                  componentName={t("generative:rag.summary.generationModel")}
                 />
               )}
             </CardContent>
@@ -572,7 +572,7 @@ export default function RAGSessionSummary({
         <DialogTitle>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Typography variant="h6">
-              {modalContent?.title || t("generative:simplifiedRag.summary.parameterDetails")}
+              {modalContent?.title || t("generative:rag.summary.parameterDetails")}
             </Typography>
             <IconButton onClick={() => setModalOpen(false)} size="small">
               <CloseIcon />
@@ -582,7 +582,7 @@ export default function RAGSessionSummary({
         <DialogContent>
           <Box>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              {t("generative:simplifiedRag.summary.completeConfig")}
+              {t("generative:rag.summary.completeConfig")}
             </Typography>
             <Box
               component="pre"
@@ -598,7 +598,7 @@ export default function RAGSessionSummary({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setModalOpen(false)}>{t("generative:simplifiedRag.summary.close")}</Button>
+          <Button onClick={() => setModalOpen(false)}>{t("generative:rag.summary.close")}</Button>
         </DialogActions>
       </Dialog>
     </Box>

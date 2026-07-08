@@ -4,7 +4,7 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import { getGenerativeSession } from "../../api/generativeTask";
 import Generative from "./Generative";
 import { GenerativeProvider } from "../../components/generative/GenerativeContext";
-import SimplifiedRAGPage from "./simplified-RAG/SimplifiedRAGPage";
+import RAGSessionPage from "./rag-session/RAGSessionPage";
 
 export default function SessionRouter() {
   const { id } = useParams();
@@ -68,7 +68,7 @@ export default function SessionRouter() {
   if (effectiveView === "RAGTask") {
     return (
       <GenerativeProvider key={id}>
-        <SimplifiedRAGPage />
+        <RAGSessionPage />
       </GenerativeProvider>
     );
   }

@@ -14,7 +14,7 @@ import { useCreateSession } from "./CreateSessionContext";
 import { useGenerative } from "./GenerativeContext";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
 import { useTourContext } from "../tour/TourProvider";
-import SimplifiedSessionSetup from "../../pages/generative/simplified-RAG/SimplifiedSessionSetup";
+import RAGSessionSetup from "../../pages/generative/rag-session/RAGSessionSetup";
 
 export default function CreateSessionCenter() {
   const { t } = useTranslation(["generative", "common"]);
@@ -153,7 +153,7 @@ export default function CreateSessionCenter() {
             />
           )
         ) : selectedModel?.task_name === "RAGTask" ? (
-          <SimplifiedSessionSetup
+          <RAGSessionSetup
             onClose={handleRagClose}
             onSessionCreated={handleRagSessionCreated}
             existingSessions={sessions}

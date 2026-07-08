@@ -12,57 +12,57 @@ function Section({ title, children }) {
   );
 }
 
-export default function SimplifiedRAGInfoBar() {
+export default function RAGInfoBar() {
   const { t } = useTranslation(["generative"]);
 
   return (
     <Box display="flex" flexDirection="column" gap={2}>
       <Box>
         <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
-          {t("generative:simplifiedRag.rightPanel.title")}
+          {t("generative:rag.rightPanel.title")}
         </Typography>
         <Typography variant="body2" color="textSecondary">
-          {t("generative:simplifiedRag.rightPanel.subtitle")}
+          {t("generative:rag.rightPanel.subtitle")}
         </Typography>
       </Box>
 
-      <Section title={t("generative:simplifiedRag.rightPanel.howItWorksTitle")}>
+      <Section title={t("generative:rag.rightPanel.howItWorksTitle")}>
         <Box component="ul" sx={{ pl: 2, my: 0 }}>
           <Typography component="li" variant="body2" color="textSecondary">
-            {t("generative:simplifiedRag.rightPanel.howItWorks.step1")}
+            {t("generative:rag.rightPanel.howItWorks.step1")}
           </Typography>
           <Typography component="li" variant="body2" color="textSecondary">
-            {t("generative:simplifiedRag.rightPanel.howItWorks.step2")}
+            {t("generative:rag.rightPanel.howItWorks.step2")}
           </Typography>
           <Typography component="li" variant="body2" color="textSecondary">
-            {t("generative:simplifiedRag.rightPanel.howItWorks.step3")}
+            {t("generative:rag.rightPanel.howItWorks.step3")}
           </Typography>
           <Typography component="li" variant="body2" color="textSecondary">
-            {t("generative:simplifiedRag.rightPanel.howItWorks.step4")}
+            {t("generative:rag.rightPanel.howItWorks.step4")}
           </Typography>
         </Box>
       </Section>
 
-      <Section title={t("generative:simplifiedRag.rightPanel.settingsTitle")}>
+      <Section title={t("generative:rag.rightPanel.settingsTitle")}>
         <Box display="flex" flexDirection="column" gap={2}>
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              {t("generative:simplifiedRag.rightPanel.settings.documents.title")}
+              {t("generative:rag.rightPanel.settings.documents.title")}
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.documents.point1",
+                  "generative:rag.rightPanel.settings.documents.point1",
                 )}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.documents.point2",
+                  "generative:rag.rightPanel.settings.documents.point2",
                 )}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.documents.point3",
+                  "generative:rag.rightPanel.settings.documents.point3",
                 )}
               </Typography>
             </Box>
@@ -70,27 +70,27 @@ export default function SimplifiedRAGInfoBar() {
 
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              {t("generative:simplifiedRag.rightPanel.settings.chunking.title")}
+              {t("generative:rag.rightPanel.settings.chunking.title")}
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.chunking.point1",
+                  "generative:rag.rightPanel.settings.chunking.point1",
                 )}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.chunking.point2",
+                  "generative:rag.rightPanel.settings.chunking.point2",
                 )}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.chunking.point3",
+                  "generative:rag.rightPanel.settings.chunking.point3",
                 )}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.chunking.point4",
+                  "generative:rag.rightPanel.settings.chunking.point4",
                 )}
               </Typography>
             </Box>
@@ -99,33 +99,33 @@ export default function SimplifiedRAGInfoBar() {
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
               {t(
-                "generative:simplifiedRag.rightPanel.settings.retriever.title",
+                "generative:rag.rightPanel.settings.retriever.title",
               )}
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.retriever.point1",
+                  "generative:rag.rightPanel.settings.retriever.point1",
                 )}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.retriever.point2",
+                  "generative:rag.rightPanel.settings.retriever.point2",
                 )}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.retriever.point3",
+                  "generative:rag.rightPanel.settings.retriever.point3",
                 )}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.retriever.point4",
+                  "generative:rag.rightPanel.settings.retriever.point4",
                 )}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.retriever.point5",
+                  "generative:rag.rightPanel.settings.retriever.point5",
                 )}
               </Typography>
             </Box>
@@ -133,34 +133,34 @@ export default function SimplifiedRAGInfoBar() {
 
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              {t("generative:simplifiedRag.rightPanel.settings.llm.title")}
+              {t("generative:rag.rightPanel.settings.llm.title")}
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t("generative:simplifiedRag.rightPanel.settings.llm.point1")}
+                {t("generative:rag.rightPanel.settings.llm.point1")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t("generative:simplifiedRag.rightPanel.settings.llm.point2")}
+                {t("generative:rag.rightPanel.settings.llm.point2")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t("generative:simplifiedRag.rightPanel.settings.llm.point3")}
+                {t("generative:rag.rightPanel.settings.llm.point3")}
               </Typography>
             </Box>
           </Box>
 
           <Box>
             <Typography variant="body2" sx={{ fontWeight: 700 }}>
-              {t("generative:simplifiedRag.rightPanel.settings.prompt.title")}
+              {t("generative:rag.rightPanel.settings.prompt.title")}
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.prompt.point1",
+                  "generative:rag.rightPanel.settings.prompt.point1",
                 )}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
                 {t(
-                  "generative:simplifiedRag.rightPanel.settings.prompt.point2",
+                  "generative:rag.rightPanel.settings.prompt.point2",
                 )}
               </Typography>
             </Box>
@@ -168,16 +168,16 @@ export default function SimplifiedRAGInfoBar() {
         </Box>
       </Section>
 
-      <Section title={t("generative:simplifiedRag.rightPanel.tipsTitle")}>
+      <Section title={t("generative:rag.rightPanel.tipsTitle")}>
         <Box component="ul" sx={{ pl: 2, my: 0 }}>
           <Typography component="li" variant="body2" color="textSecondary">
-            {t("generative:simplifiedRag.rightPanel.tips.tip1")}
+            {t("generative:rag.rightPanel.tips.tip1")}
           </Typography>
           <Typography component="li" variant="body2" color="textSecondary">
-            {t("generative:simplifiedRag.rightPanel.tips.tip2")}
+            {t("generative:rag.rightPanel.tips.tip2")}
           </Typography>
           <Typography component="li" variant="body2" color="textSecondary">
-            {t("generative:simplifiedRag.rightPanel.tips.tip3")}
+            {t("generative:rag.rightPanel.tips.tip3")}
           </Typography>
         </Box>
       </Section>

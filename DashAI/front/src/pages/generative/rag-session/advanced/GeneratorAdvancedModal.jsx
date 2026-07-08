@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -10,28 +10,23 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
-import RetrieverConfigurationStep from "./RetrieverConfigurationStep";
+import GeneratorConfigurationStep from "./GeneratorConfigurationStep";
 
-export default function RetrieverAdvancedModal({
+export default function GeneratorAdvancedModal({
   open,
   onClose,
-  selectedParadigm,
-  allParadigms,
-  retrieverModel,
-  setRetrieverModel,
+  selectedGenerator,
+  generatorModel,
+  setGeneratorModel,
 }) {
   const { t } = useTranslation(["generative"]);
   const [stepValid, setStepValid] = useState(false);
-  const retrieverStepRef = useRef(null);
 
   const handleClose = () => {
     onClose();
   };
 
   const handleSave = () => {
-    if (retrieverStepRef.current) {
-      retrieverStepRef.current.saveFormValues();
-    }
     onClose();
   };
 
@@ -53,7 +48,7 @@ export default function RetrieverAdvancedModal({
           alignItems: "center",
         }}
       >
-        {t("generative:simplifiedRag.advanced.retrieverTitle")}
+        {t("generative:rag.advanced.generatorTitle")}
         <IconButton
           onClick={handleClose}
           size="small"
@@ -64,12 +59,10 @@ export default function RetrieverAdvancedModal({
       </DialogTitle>
 
       <DialogContent dividers sx={{ bgcolor: "background.paper", minHeight: 400 }}>
-        <FormSchemaProvider key={`retriever-advanced-${retrieverModel?.component}`}>
-          <RetrieverConfigurationStep
-            ref={retrieverStepRef}
-            allParadigms={allParadigms}
-            retrieverModel={retrieverModel}
-            setRetrieverModel={setRetrieverModel}
+        <FormSchemaProvider key={`generator-advanced-${generatorModel?.component}`}>
+          <GeneratorConfigurationStep
+            generatorModel={generatorModel}
+            setGeneratorModel={setGeneratorModel}
             setNextEnabled={setStepValid}
           />
         </FormSchemaProvider>
@@ -77,7 +70,7 @@ export default function RetrieverAdvancedModal({
 
       <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
         <Button onClick={handleClose} variant="outlined">
-          {t("generative:simplifiedRag.advanced.close")}
+          {t("generative:rag.advanced.close")}
         </Button>
         <Button
           onClick={handleSave}
@@ -85,7 +78,7 @@ export default function RetrieverAdvancedModal({
           color="primary"
           disabled={!stepValid}
         >
-          {t("generative:simplifiedRag.advanced.done")}
+          {t("generative:rag.advanced.done")}
         </Button>
       </DialogActions>
     </Dialog>

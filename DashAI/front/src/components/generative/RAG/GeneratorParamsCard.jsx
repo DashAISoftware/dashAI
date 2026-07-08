@@ -11,8 +11,8 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import InfoIcon from "@mui/icons-material/Info";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import GeneratorBody from "../../../pages/generative/simplified-RAG/components/GeneratorBody";
-import RAGSectionColumn from "../../../pages/generative/simplified-RAG/components/RAGSectionColumn";
+import GeneratorBody from "../../../pages/generative/rag-session/components/GeneratorBody";
+import RAGSectionColumn from "../../../pages/generative/rag-session/components/RAGSectionColumn";
 
 export default function GeneratorParamsCard({
   generatorModel,
@@ -41,17 +41,17 @@ export default function GeneratorParamsCard({
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {t("generative:simplifiedRag.generator.modelLabel")}
+                {t("generative:rag.generator.modelLabel")}
               </Typography>
               {isExpanded && isAdvanced && (
                 <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
-                  {t("generative:simplifiedRag.generator.advancedApplied")}
+                  {t("generative:rag.generator.advancedApplied")}
                 </Typography>
               )}
             </Box>
             <Box>
               {isExpanded && (
-                <Tooltip title={t("generative:simplifiedRag.generator.description")}>
+                <Tooltip title={t("generative:rag.generator.description")}>
                   <IconButton
                     size="small"
                     onClick={() => setShowDescription((s) => !s)}
@@ -62,7 +62,7 @@ export default function GeneratorParamsCard({
                   </IconButton>
                 </Tooltip>
               )}
-              <Tooltip title={isExpanded ? (t("generative:simplifiedRag.prompt.collapse") || "Collapse") : (t("generative:simplifiedRag.prompt.expand") || "Expand")}>
+              <Tooltip title={isExpanded ? (t("generative:rag.prompt.collapse") || "Collapse") : (t("generative:rag.prompt.expand") || "Expand")}>
                 <IconButton
                   size="small"
                   onClick={() => setIsExpanded((s) => !s)}
@@ -78,7 +78,7 @@ export default function GeneratorParamsCard({
           </Box>
           {isExpanded && showDescription && (
             <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-              {t("generative:simplifiedRag.generator.description")}
+              {t("generative:rag.generator.description")}
             </Typography>
           )}
         </Box>

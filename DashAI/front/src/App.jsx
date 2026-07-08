@@ -20,7 +20,7 @@ import HubImportPage from "./pages/hub/HubImportPage";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
 import RAGDocumentsPage from "./pages/generative/RAG/RAGDocumentsPage";
 import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
-import SimplifiedRAGPage from "./pages/generative/simplified-RAG/SimplifiedRAGPage";
+import RAGSessionPage from "./pages/generative/rag-session/RAGSessionPage";
 import SessionRouter from "./pages/generative/SessionRouter";
 import { DatasetsAndNotebooksProvider } from "./components/custom/contexts/DatasetsAndNotebooksContext";
 

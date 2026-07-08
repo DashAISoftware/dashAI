@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -10,24 +10,28 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
-import ChunkingConfigurationStep from "./ChunkingConfigurationStep";
-import { getModelFromSubform } from "../../../../utils/schema";
+import RetrieverConfigurationStep from "./RetrieverConfigurationStep";
 
-export default function ChunkingAdvancedModal({
+export default function RetrieverAdvancedModal({
   open,
   onClose,
-  chunkingModel,
-  setChunkingModel,
+  selectedParadigm,
+  allParadigms,
+  retrieverModel,
+  setRetrieverModel,
 }) {
   const { t } = useTranslation(["generative"]);
   const [stepValid, setStepValid] = useState(false);
-  const modelName = getModelFromSubform(chunkingModel);
+  const retrieverStepRef = useRef(null);
 
   const handleClose = () => {
     onClose();
   };
 
   const handleSave = () => {
+    if (retrieverStepRef.current) {
+      retrieverStepRef.current.saveFormValues();
+    }
     onClose();
   };
 
@@ -49,7 +53,7 @@ export default function ChunkingAdvancedModal({
           alignItems: "center",
         }}
       >
-        {t("generative:simplifiedRag.advanced.chunkingTitle")}
+        {t("generative:rag.advanced.retrieverTitle")}
         <IconButton
           onClick={handleClose}
           size="small"
@@ -60,10 +64,12 @@ export default function ChunkingAdvancedModal({
       </DialogTitle>
 
       <DialogContent dividers sx={{ bgcolor: "background.paper", minHeight: 400 }}>
-        <FormSchemaProvider key={`chunking-advanced-${modelName}`}>
-          <ChunkingConfigurationStep
-            chunkingModel={chunkingModel}
-            setChunkingModel={setChunkingModel}
+        <FormSchemaProvider key={`retriever-advanced-${retrieverModel?.component}`}>
+          <RetrieverConfigurationStep
+            ref={retrieverStepRef}
+            allParadigms={allParadigms}
+            retrieverModel={retrieverModel}
+            setRetrieverModel={setRetrieverModel}
             setNextEnabled={setStepValid}
           />
         </FormSchemaProvider>
@@ -71,7 +77,7 @@ export default function ChunkingAdvancedModal({
 
       <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
         <Button onClick={handleClose} variant="outlined">
-          {t("generative:simplifiedRag.advanced.close")}
+          {t("generative:rag.advanced.close")}
         </Button>
         <Button
           onClick={handleSave}
@@ -79,7 +85,7 @@ export default function ChunkingAdvancedModal({
           color="primary"
           disabled={!stepValid}
         >
-          {t("generative:simplifiedRag.advanced.done")}
+          {t("generative:rag.advanced.done")}
         </Button>
       </DialogActions>
     </Dialog>

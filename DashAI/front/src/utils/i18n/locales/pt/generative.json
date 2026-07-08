@@ -57,24 +57,133 @@
     "attachMedia": "Anexar mídia",
     "attachMediaToContinue": "Anexe uma mídia para continuar",
     "noInputAvailable": "Não há entrada disponível para esta tarefa",
-    "selectModelCrumb": "Selecionar Modelo"
+    "selectModelCrumb": "Selecionar Modelo",
+    "ragTask": "RAG - Geração Aumentada por Recuperação",
+    "ragTaskDescription": "Faça upload de documentos e converse com eles usando geração aumentada por recuperação."
   },
   "message": {
     "sessionCreatedSuccess": "Sessão criada com sucesso.",
     "sessionDeleted": "Sessão excluída com sucesso",
     "sessionUpdated": "Sessão atualizada com sucesso"
   },
-  "simplifiedRag": {
+  "rag": {
+    "setup": {
+      "title": "Criar sessão RAG",
+      "subtitle": "Forneça informações básicas, selecione documentos e configure os componentes para sua sessão RAG.",
+      "sessionDetails": "Detalhes da sessão",
+      "sessionName": "Nome da sessão *",
+      "sessionNamePlaceholder": "ex. Documentação de Produto RAG",
+      "sessionNameDuplicate": "Este nome de sessão já existe",
+      "sessionNameDuplicateAlert": "Já existe uma sessão com este nome. Por favor, use um nome diferente.",
+      "description": "Descrição (Opcional)",
+      "descriptionPlaceholder": "Descreva o propósito desta sessão RAG...",
+      "selectDocuments": "Selecionar documentos",
+      "selectDocumentsDescription": "Faça upload de novos documentos ou selecione entre os existentes para usar no RAG.",
+      "chunkingStrategy": "Estratégia de chunking",
+      "retrieverModel": "Modelo de recuperação",
+      "promptTemplate": "Modelo de Prompt",
+      "languageModel": "Modelo de linguagem (LLM)",
+      "cancel": "Cancelar",
+      "saveSession": "Salvar sessão",
+      "openDocumentsLibrary": "Abrir biblioteca de documentos"
+    },
+    "validation": {
+      "nameRequired": "O nome da sessão é obrigatório",
+      "nameUnique": "O nome da sessão deve ser único",
+      "documentsRequired": "Pelo menos um documento deve ser selecionado",
+      "chunkingRequired": "O modelo de chunking deve ser configurado",
+      "retrieverRequired": "O modelo de recuperação deve ser configurado",
+      "generatorRequired": "O modelo de geração deve ser configurado",
+      "generatorInvalid": "A configuração do gerador é inválida (verifique a janela de contexto)",
+      "promptRequired": "Um modelo de prompt deve ser selecionado"
+    },
+    "messages": {
+      "success": "Sessão RAG criada com sucesso"
+    },
+    "chunking": {
+      "description": "Selecione como seus documentos serão divididos em fragmentos para recuperação.",
+      "presets": {
+        "small": {
+          "label": "Fragmentos pequenos"
+        },
+        "paragraph": {
+          "label": "Tamanho de parágrafo"
+        },
+        "page": {
+          "label": "Fragmento de página"
+        },
+        "large": {
+          "label": "Seções grandes"
+        },
+        "chunkSizeFormat": "{{chars}} caracteres ≈ {{tokens}} tokens",
+        "custom": {
+          "label": "Modelo de chunking personalizado",
+          "description": "Configuração avançada aplicada"
+        }
+      },
+      "advancedButton": "Abrir configuração avançada"
+    },
+    "retriever": {
+      "description": "Selecione seu paradigma de recuperação. O recuperador buscará em seus documentos e retornará os fragmentos mais relevantes.",
+      "keywordLabel": "Palavra-chave",
+      "semanticLabel": "Semântico",
+      "hybridLabel": "Híbrido",
+      "advancedApplied": "Configuração avançada aplicada",
+      "topKLabel": "Número de fragmentos (Top K)",
+      "topKCardDescription": "Fragmentos",
+      "advancedTopK": "Top K avançado: {{topK}}",
+      "advancedButton": "Abrir configuração avançada",
+      "modifyFromAdvanced": "O Top K deve ser modificado na visualização de configuração avançada",
+      "explanations": {
+        "SparseRetriever": "Ideal para busca por palavras-chave e IDs específicos. Útil para encontrar correspondências exatas em documentos.",
+        "DenseRetriever": "Busca contextual que entende o significado. Ótimo para encontrar conteúdo semanticamente similar, mas pode perder palavras-chave ou IDs específicos.",
+        "HybridRetriever": "Combina busca por palavras-chave e contextual para desempenho equilibrado em diferentes tipos de consulta."
+      }
+    },
+    "composite": {
+      "addChild": "Adicionar nó recuperador",
+      "removeNode": "Remover nó",
+      "configureNode": "Configurar Nó",
+      "selectModel": "Selecionar modelo recuperador",
+      "parameters": "Parâmetros",
+      "simpleGroup": "Recuperadores simples",
+      "keywordGroup": "Recuperadores por palavras-chave",
+      "denseGroup": "Recuperadores densos",
+      "embeddingGroup": "Recuperadores por Embeddings",
+      "hybridGroup": "Híbrido",
+      "hybridDescription": "BM25 + embeddings multilíngues HuggingFace",
+      "compositeGroup": "Recuperadores compostos",
+      "nestedCompositeNote": "Este é um recuperador composto. Seus filhos podem ser configurados na árvore abaixo.",
+      "allChunks": "Todos os fragmentos",
+      "selectedChunks": "Fragmentos selecionados",
+      "retrieverDescription": "Escolha um recuperador para configurar seus parâmetros. Os recuperadores por palavras-chave (BM25, TF-IDF) encontram documentos por frequência de termos. Os recuperadores por embeddings capturam o significado semântico com vetores densos. Os recuperadores compostos encadeiam vários recuperadores, de forma sequencial ou em paralelo.",
+      "compositeInstructions": "Clique no botão + para adicionar um recuperador filho a este composto. Clique em um cartão para editar seus parâmetros ou escolher outro modelo."
+    },
+    "generator": {
+      "description": "Selecione o modelo de linguagem que gerará respostas com base no contexto recuperado e seus prompts.",
+      "modelLabel": "Modelo de geração",
+      "advancedApplied": "Configuração avançada aplicada",
+      "selectModel": "Selecionar modelo de linguagem",
+      "selectModelPlaceholder": "ex. GPT-4, Claude, Llama",
+      "modelInfo": "Modelo:",
+      "advancedButton": "Abrir configuração avançada"
+    },
     "prompt": {
+      "description": "Selecione um modelo de prompt que define como o contexto recuperado e as mensagens do chat são combinados para gerar respostas.",
+      "availablePrompts": "Prompts disponíveis",
+      "openPrompts": "Abrir biblioteca de prompts",
+      "promptLabel": "Prompt",
+      "selectTemplate": "Selecionar modelo de prompt",
+      "selectTemplatePlaceholder": "ex. Prompt Padrão, Instrução Personalizada",
+      "selectedTemplate": "Modelo de prompt selecionado:",
+      "newPromptButton": "Novo prompt",
       "defaultGenerationPrompt": "Prompt de Geração Padrão",
       "defaultQnAGenerationPrompt": "Prompt de Geração Q&A Padrão",
       "createNewPrompt": "Criar novo prompt",
       "language": "Idioma",
-      "description": "Escolha um modelo de prompt. Os prompts definem como os fragmentos recuperados dos documentos são integrados à mensagem do usuário para gerar uma resposta.",
-      "selectTemplate": "Modelo de Prompt",
-      "selectTemplatePlaceholder": "Selecione um modelo de prompt...",
-      "selectedTemplate": "Template selecionado",
-      "newPromptButton": "Novo prompt"
+      "collapse": "Recolher",
+      "expand": "Expandir",
+      "descriptionToggle": "Descrição"
     },
     "newPrompt": {
       "title": "Criar um novo prompt",
@@ -91,32 +200,143 @@
       "error": "Falha ao criar o prompt",
       "languageLabel": "Idioma (opcional)"
     },
-    "composite": {
-      "addChild": "Adicionar nó recuperador",
-      "removeNode": "Remover nó",
-      "configureNode": "Configurar Nó",
-      "selectModel": "Selecionar modelo recuperador",
-      "parameters": "Parâmetros",
-      "simpleGroup": "Recuperadores simples",
-      "keywordGroup": "Recuperadores por palavras-chave",
-      "denseGroup": "Recuperadores densos",
-      "embeddingGroup": "Recuperadores por Embeddings",
-      "hybridGroup": "Híbrido",
-      "hybridDescription": "BM25 + embeddings multilíngues HuggingFace",
-      "compositeGroup": "Recuperadores compostos",
-      "nestedCompositeNote": "Este é um recuperador composto. Seus filhos podem ser configurados na árvore abaixo.",
-      "allChunks": "Todos os fragments",
-      "selectedChunks": "Fragments selecionados",
-      "retrieverDescription": "Escolha um recuperador para configurar seus parâmetros. Os recuperadores por palavras-chave (BM25, TF-IDF) encontram documentos por frequência de termos. Os recuperadores por embeddings capturam o significado semântico com vetores densos. Os recuperadores compostos encadeiam vários recuperadores, de forma sequencial ou em paralelo.",
-      "compositeInstructions": "Clique no botão + para adicionar um recuperador filho a este composto. Clique em um cartão para editar seus parâmetros ou escolher outro modelo."
+    "advanced": {
+      "chunkingTitle": "Configuração avançada de chunking",
+      "retrieverTitle": "Configuração avançada de recuperação",
+      "generatorTitle": "Configuração avançada de geração",
+      "promptTitle": "Configuração avançada de prompt",
+      "close": "Fechar",
+      "done": "Concluído",
+      "noDescription": "Nenhuma descrição disponível",
+      "promptTemplate": "Modelo de Prompt",
+      "promptInfo": "A configuração avançada para prompts é geralmente gerenciada através da interface de modelos de prompt. Você pode criar prompts personalizados ou modificar os existentes lá."
+    },
+    "rightPanel": {
+      "title": "Conceitos básicos de RAG",
+      "subtitle": "A Geração Aumentada por Recuperação (RAG) ajuda o modelo a responder usando seus documentos.",
+      "howItWorksTitle": "Como funciona",
+      "howItWorks": {
+        "step1": "Selecione os documentos que deseja que o assistente use.",
+        "step2": "Os documentos são divididos em fragmentos (chunking) para tornar a recuperação eficiente.",
+        "step3": "Um recuperador (retriever) encontra os fragmentos mais relevantes para sua pergunta.",
+        "step4": "O LLM gera uma resposta usando esses fragmentos e o modelo de prompt selecionado."
+      },
+      "settingsTitle": "O que cada configuração faz",
+      "settings": {
+        "documents": {
+          "title": "Documentos",
+          "point1": "Seus documentos são a base de conhecimento: o assistente só pode usar o que conseguir recuperar deles.",
+          "point2": "Faça upload de arquivos claros e bem estruturados (PDF, TXT, etc.) para melhores resultados.",
+          "point3": "Atualmente, apenas documentos de texto são suportados. Imagens, áudio e vídeo ainda não são suportados."
+        },
+        "chunking": {
+          "title": "Chunking",
+          "point1": "O chunking divide os documentos em pedaços menores que podem ser pesquisados.",
+          "point2": "Fragmentos muito pequenos: a recuperação pode perder contexto e as respostas podem parecer fragmentadas.",
+          "point3": "Fragmentos muito grandes: a recuperação pode trazer ruído extra e as respostas podem ser mais lentas (mais tokens).",
+          "point4": "A sobreposição (overlap) ajuda a manter o contexto entre os fragmentos, mas aumenta a repetição."
+        },
+        "retriever": {
+          "title": "Recuperador (Sparse vs Denso)",
+          "point1": "O recuperador decide quais fragmentos são enviados ao LLM.",
+          "point2": "Sparse (por palavras-chave): ótimo para termos exatos como IDs, nomes de produtos ou código; geralmente rápido.",
+          "point3": "Limitação do sparse: tem dificuldade com sinônimos e perguntas muito parafraseadas.",
+          "point4": "Denso (semântico): melhor para linguagem natural e paráfrases; busca por significado.",
+          "point5": "Limitação do denso: pode retornar fragmentos 'semelhantes' mas não exatos, e pode ser mais lento."
+        },
+        "llm": {
+          "title": "Modelo de Linguagem (LLM)",
+          "point1": "O LLM escreve a resposta final usando os fragmentos recuperados.",
+          "point2": "Modelos maiores geralmente respondem melhor, mas podem ser mais lentos e custar mais.",
+          "point3": "Se precisar de velocidade, comece com um modelo menor e iterar."
+        },
+        "prompt": {
+          "title": "Modelo de prompt",
+          "point1": "Os prompts controlam o tom, formato e no que o modelo deve focar.",
+          "point2": "Se as respostas forem muito longas/curtas ou sem estrutura, tente outro modelo ou refine o prompt."
+        }
+      },
+      "tipsTitle": "Dicas práticas",
+      "tips": {
+        "tip1": "Se as respostas perderem contexto, tente fragmentos maiores ou mais sobreposição.",
+        "tip2": "Se as respostas parecerem muito genéricas, tente fragmentos menores ou ajuste o modelo recuperador.",
+        "tip3": "Escolha um modelo de prompt que corresponda ao seu domínio e tom."
+      }
+    },
+    "documents": {
+      "uploadButton": "Upload de documentos",
+      "emptyUploadText": "Faça upload do(s) seu(s) documento(s)"
+    },
+    "summary": {
+      "title": "Sessão RAG",
+      "descriptionPlaceholder": "Nenhuma descrição disponível",
+      "createdLabel": "Criado",
+      "openChatButton": "Abrir chat da sessão RAG",
+      "detailedConfig": "Configuração detalhada",
+      "chunkingModel": "Modelo de chunking",
+      "retrieverModel": "Modelo de recuperação",
+      "generationModel": "Modelo de geração",
+      "promptSelected": "Prompt selecionado",
+      "promptName": "Nome:",
+      "promptTemplate": "Modelo:",
+      "noPrompt": "Nenhum prompt configurado",
+      "sessionNotFound": "Sessão não encontrada",
+      "loading": "Carregando dados da sessão...",
+      "apiKeyCopied": "Chave da API copiada para a área de transferência",
+      "failedToCopyApiKey": "Falha ao copiar a chave da API",
+      "noParameters": "Sem parâmetros",
+      "viewDetails": "Ver detalhes",
+      "parameterDetails": "Detalhes do parâmetro",
+      "completeConfig": "Configuração completa do parâmetro:",
+      "close": "Fechar",
+      "sessionName": "Nome da sessão",
+      "sessionDescription": "Descrição da sessão",
+      "edit": "Editar",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "sessionUpdated": "Sessão atualizada com sucesso",
+      "failedToUpdateSession": "Falha ao atualizar a sessão"
     }
   },
   "validation": {
     "contextSpace": "Com sua configuração atual, você tem espaço para suas fontes (chunks) e {{availableChars}} caracteres para sua mensagem.",
     "insufficientContextTitle": "Janela de Contexto Insuficiente",
     "insufficientContextDescription": "O modelo selecionado não tem contexto suficiente para lidar com as configurações atuais de Tamanho do Fragmento e Top K. Reduza o Tamanho do Fragmento, o número de resultados (Top K) ou selecione um modelo com uma janela de contexto maior.",
-    "apiKeyMissingTitle": "API key necessária",
-    "apiKeyMissingDescription": "Este modelo requer uma API key para funcionar. Abra a Configuração Avançada para adicionar sua API key."
+    "apiKeyMissingTitle": "Chave de API necessária",
+    "apiKeyMissingDescription": "Este modelo requer uma chave de API para funcionar. Abra a Configuração Avançada para adicionar sua chave de API."
+  },
+  "documentReferences": {
+    "modalTitle": "Referências do documento",
+    "fallbackTitle": "Documento {{id}}",
+    "chunksCount_one": "Este documento forneceu {{count}} fragmento para esta resposta:",
+    "chunksCount_other": "Este documento forneceu {{count}} fragmentos para esta resposta:",
+    "chunkLabel": "Fragmento {{position}}",
+    "close": "Fechar"
+  },
+  "sourcesDisplay": {
+    "viewSources": "Ver fontes da mensagem",
+    "provided": "forneceu",
+    "chunk_one": "fragmento",
+    "chunk_other": "fragmentos",
+    "viewChunks": "Ver fragmentos"
+  },
+  "documentsBar": {
+    "title": "Documentos",
+    "documentCount_one": "{{count}} documento",
+    "documentCount_other": "{{count}} documentos",
+    "inCurrentSession": " na sessão atual",
+    "available": " disponíveis",
+    "addDocuments": "Adicionar documentos",
+    "searchPlaceholder": "Pesquisar documentos",
+    "detailedView": "Ver visualização detalhada",
+    "noDocumentsFound": "Nenhum documento encontrado",
+    "noDocumentsInSession": "Nenhum documento nesta sessão",
+    "noDocumentsAvailable": "Nenhum documento disponível",
+    "uploadDocuments": "Faça upload do(s) seu(s) documento(s)",
+    "failedFetch": "Falha ao carregar documentos",
+    "successUpload_one": "{{count}} documento enviado com sucesso",
+    "successUpload_other": "{{count}} documentos enviados com sucesso",
+    "failedUpload": "Falha ao enviar documento(s)"
   },
   "ragPromptsPage": {
     "title": "Prompts RAG",

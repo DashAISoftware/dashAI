@@ -8,7 +8,7 @@ export default function AdvancedConfigCard({ modelName, onClick }) {
   return (
     <PresetCard
       selected
-      label={t("generative:simplifiedRag.retriever.advancedApplied")}
+      label={t("generative:rag.retriever.advancedApplied")}
       description={modelName}
       onClick={onClick}
     />

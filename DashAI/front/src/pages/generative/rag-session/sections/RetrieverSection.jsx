@@ -293,7 +293,7 @@ export default function RetrieverSection({
   return (
     <RAGSectionColumn>
       <Typography variant="body2" color="textSecondary">
-        {t("generative:simplifiedRag.retriever.description")}
+        {t("generative:rag.retriever.description")}
       </Typography>
 
       <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
@@ -301,7 +301,7 @@ export default function RetrieverSection({
           key="keyword"
           selected={!isAdvanced && selectedGroup === "keyword"}
           onClick={() => selectPreset("keyword")}
-          label={t("generative:simplifiedRag.retriever.keywordLabel", { defaultValue: "Keyword" })}
+          label={t("generative:rag.retriever.keywordLabel", { defaultValue: "Keyword" })}
           description="BM25"
           sx={{ minWidth: 180}}
         />
@@ -309,7 +309,7 @@ export default function RetrieverSection({
           key="semantic"
           selected={!isAdvanced && selectedGroup === "semantic"}
           onClick={() => selectPreset("semantic")}
-          label={t("generative:simplifiedRag.retriever.semanticLabel", { defaultValue: "Semantic" })}
+          label={t("generative:rag.retriever.semanticLabel", { defaultValue: "Semantic" })}
           description="Harrier OSS v1 0.6B"
           sx={{ minWidth: 180}}
         />
@@ -317,7 +317,7 @@ export default function RetrieverSection({
           key="hybrid"
           selected={!isAdvanced && selectedGroup === "hybrid"}
           onClick={() => selectPreset("hybrid")}
-          label={t("generative:simplifiedRag.retriever.hybridLabel", { defaultValue: "Hybrid" })}
+          label={t("generative:rag.retriever.hybridLabel", { defaultValue: "Hybrid" })}
           description="BM25 + Harrier 0.6B"
           sx={{ minWidth: 180}}
         />
@@ -345,7 +345,7 @@ export default function RetrieverSection({
                   variant="body2"
                   sx={{ color: theme.palette.text.primary, fontWeight: 500 }}
                 >
-                  {t("generative:simplifiedRag.retriever.advancedTopK", {
+                  {t("generative:rag.retriever.advancedTopK", {
                     topK: effectiveTopK,
                     defaultValue: "Advanced Top K: {{topK}}",
                   })}
@@ -361,7 +361,7 @@ export default function RetrieverSection({
           {!isAdvanced && (
             <>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                {t("generative:simplifiedRag.retriever.topKLabel")}
+                {t("generative:rag.retriever.topKLabel")}
               </Typography>
               <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap", width: "100%" }}>
                 {TOP_K_OPTIONS.map((k) => (
@@ -396,7 +396,7 @@ export default function RetrieverSection({
           color: theme.palette.text.primary,
         }}
       >
-        ↗ {t("generative:simplifiedRag.retriever.advancedButton")}
+        ↗ {t("generative:rag.retriever.advancedButton")}
       </Button>
 
       <RetrieverAdvancedModal

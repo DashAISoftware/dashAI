@@ -182,7 +182,7 @@ export default function CompositeRetrieverBuilder({
             lineHeight: 1.2,
           }}
         >
-          {t("generative:simplifiedRag.composite.allChunks")}
+          {t("generative:rag.composite.allChunks")}
         </Typography>
 
         <Box
@@ -233,7 +233,7 @@ export default function CompositeRetrieverBuilder({
             lineHeight: 1.2,
           }}
         >
-          {t("generative:simplifiedRag.composite.selectedChunks")}
+          {t("generative:rag.composite.selectedChunks")}
         </Typography>
       </Box>
 
@@ -308,7 +308,7 @@ function TreeNodeView({
     if (val.en) return val.en;
     return String(val);
   };
-  const name = getString(info?.display_name) || getString(info?.name) || node.component || t("generative:simplifiedRag.composite.configureNode");
+  const name = getString(info?.display_name) || getString(info?.name) || node.component || t("generative:rag.composite.configureNode");
   const isComposite = COMPOSITE_TYPES.includes(node.component);
   const Indent = depth * 3;
 
@@ -355,7 +355,7 @@ function TreeNodeView({
         </Box>
 
         {isComposite && (
-          <Tooltip title={t("generative:simplifiedRag.composite.addChild")}>
+          <Tooltip title={t("generative:rag.composite.addChild")}>
             <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddChild(node.nodeId); }} sx={{ color: "primary.main" }}>
               <AddCircleOutlineIcon fontSize="small" />
             </IconButton>
@@ -363,7 +363,7 @@ function TreeNodeView({
         )}
 
         {!isRoot && (
-          <Tooltip title={t("generative:simplifiedRag.composite.removeNode")}>
+          <Tooltip title={t("generative:rag.composite.removeNode")}>
             <IconButton size="small" onClick={(e) => { e.stopPropagation(); onRemoveChild(parentId, node.nodeId); }} sx={{ color: "error.main" }}>
               <RemoveCircleOutlineIcon fontSize="small" />
             </IconButton>

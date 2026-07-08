@@ -5,7 +5,7 @@ import ComponentDetailsPanel from "../custom/ComponentDetailsPanel";
 import FormSchemaRenderFields from "../shared/FormSchemaRenderFields";
 import { useTheme } from "@mui/material/styles";
 import { useCreateSession } from "./CreateSessionContext";
-import SimplifiedRAGInfoBar from "./RAG/SimplifiedRAGInfoBar";
+import RAGInfoBar from "./RAG/RAGInfoBar";
 
 export default function CreateSessionRight() {
   const { t } = useTranslation(["generative", "common"]);
@@ -30,7 +30,7 @@ export default function CreateSessionRight() {
   if (selectedModel?.task_name === "RAGTask") {
     return (
       <Box sx={{ height: "100%", overflow: "auto", p: 2 }}>
-        <SimplifiedRAGInfoBar />
+        <RAGInfoBar />
       </Box>
     );
   }

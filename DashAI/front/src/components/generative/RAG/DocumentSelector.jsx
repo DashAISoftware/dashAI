@@ -17,7 +17,7 @@ import { loadDocuments, addDocument, deleteDocument } from "../../../api/rag";
 import { formatDate } from "../../../utils";
 import { normalizeUrl } from "../../../utils/urlUtils";
 import DocumentPreviewModal from "./DocumentPreviewModal";
-import RAGSectionColumn from "../../../pages/generative/simplified-RAG/components/RAGSectionColumn";
+import RAGSectionColumn from "../../../pages/generative/rag-session/components/RAGSectionColumn";
 
 export default function DocumentSelector({
   selectedIds: initialSelectedIds = [],
@@ -360,7 +360,7 @@ export default function DocumentSelector({
   return (
     <RAGSectionColumn sx={sx}>
       <Typography variant="body2" color="textSecondary">
-        {t("generative:simplifiedRag.setup.selectDocumentsDescription")}
+        {t("generative:rag.setup.selectDocumentsDescription")}
       </Typography>
       
       <MaterialReactTable table={table} />
@@ -373,7 +373,7 @@ export default function DocumentSelector({
         onClick={() => setUploadOpen(true)}
         sx={{ alignSelf: "flex-start", width: "fit-content" }}
       >
-        {t("generative:simplifiedRag.documents.uploadButton")}
+        {t("generative:rag.documents.uploadButton")}
       </Button>
 
       <Dialog
@@ -393,7 +393,7 @@ export default function DocumentSelector({
         <Upload
           onFileUpload={handleFileUpload}
           multiple={true}
-          emptyUploadText={t("generative:simplifiedRag.documents.emptyUploadText")}
+          emptyUploadText={t("generative:rag.documents.emptyUploadText")}
         />
 
       </Dialog>
