@@ -40,8 +40,7 @@ const CustomNode = ({ data, isConnectable }) => {
     ERROR: theme.palette.status.error,
   };
   const runColor = runStatusColors[data.status];
-  const isRunning =
-    data.status === "STARTED" || data.status === "DELIVERED";
+  const isRunning = data.status === "STARTED" || data.status === "DELIVERED";
   const statusBg =
     data.status === "FINISHED"
       ? alpha(theme.palette.status.finished, isLightCanvas ? 0.14 : 0.2)

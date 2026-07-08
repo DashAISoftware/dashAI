@@ -201,9 +201,7 @@ class PipelineJob(BaseJob):
                 NodeJob._commit_with_retry(db, readd=[pipeline_run])
                 raise
 
-    def _persist_node_run(
-        self, db, pipeline_run_id, node_id, node_type, node_config
-    ):
+    def _persist_node_run(self, db, pipeline_run_id, node_id, node_type, node_config):
         """Create a NodeRun (STARTED) on the orchestrator's session.
 
         Returns the NodeRun, or None if it could not be persisted (the node
@@ -232,9 +230,7 @@ class PipelineJob(BaseJob):
             if status == "finished":
                 node_run.set_status_as_finished()
             elif status == "error":
-                node_run.set_status_as_error(
-                    error_message or "Node execution failed."
-                )
+                node_run.set_status_as_error(error_message or "Node execution failed.")
             else:
                 node_run.set_status_as_started()
             NodeJob._commit_with_retry(db, readd=[node_run])
