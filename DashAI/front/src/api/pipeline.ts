@@ -87,6 +87,25 @@ export const getExplorationResults = async (id: number) => {
   return response.data;
 };
 
+export const getLatestPipelineRun = async (
+  pipelineId: number,
+): Promise<{
+  id: number | null;
+  status: string | null;
+  error_message?: string | null;
+  node_runs: Array<{
+    node_id: string;
+    node_type: string;
+    status: string | null;
+    error_message?: string | null;
+  }>;
+}> => {
+  const response = await api.get(
+    `${pipelineEndpoint}/${pipelineId}/runs/latest`,
+  );
+  return response.data;
+};
+
 export const filterModels = async (
   dataset_id: string,
   pipeline_id: number | null = null,

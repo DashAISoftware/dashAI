@@ -13,7 +13,12 @@ from DashAI.back.api.api_v1.schemas.pipelines_params import (
     ValidateNodeParams,
     ValidatePipelineParams,
 )
-from DashAI.back.dependencies.database.models import Dataset, Pipeline
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    NodeRun,
+    Pipeline,
+    PipelineRun,
+)
 from DashAI.back.pipeline.contracts import get_contracts_payload, validate_edge
 from DashAI.back.pipeline.validator.nodes_definitions import NODES
 from DashAI.back.pipeline.validator.pipeline_validator import PipelineValidator
@@ -239,6 +244,59 @@ async def get_pipeline(
                 detail="Internal database error",
             ) from e
     return pipeline
+
+
+@router.get("/{pipeline_id}/runs/latest")
+@inject
+async def get_latest_pipeline_run(
+    pipeline_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the latest execution run of a pipeline with per-node statuses.
+
+    Used by the frontend to color the pipeline nodes live as they execute.
+
+    Returns
+    -------
+    dict
+        The latest run id, its status name and a list of node runs, each with
+        its node_id, node_type and status name (NOT_STARTED, DELIVERED,
+        STARTED, FINISHED, ERROR).
+    """
+    with session_factory() as db:
+        try:
+            run = (
+                db.query(PipelineRun)
+                .filter(PipelineRun.pipeline_id == pipeline_id)
+                .order_by(PipelineRun.id.desc())
+                .first()
+            )
+            if run is None:
+                return {"id": None, "status": None, "node_runs": []}
+
+            node_runs = (
+                db.query(NodeRun).filter(NodeRun.pipeline_run_id == run.id).all()
+            )
+            return {
+                "id": run.id,
+                "status": run.status.name if run.status is not None else None,
+                "error_message": run.error_message,
+                "node_runs": [
+                    {
+                        "node_id": nr.node_id,
+                        "node_type": nr.node_type,
+                        "status": nr.status.name if nr.status is not None else None,
+                        "error_message": nr.error_message,
+                    }
+                    for nr in node_runs
+                ],
+            }
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
 
 
 @router.get("/{pipeline_id}/dataexploration/results/")
