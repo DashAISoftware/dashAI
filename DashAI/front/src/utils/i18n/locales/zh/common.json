@@ -171,6 +171,7 @@
     "noJobs": "队列中无任务",
     "noActiveJobs": "无活动任务",
     "noCompletedJobs": "无已完成任务",
+    "cancelJob": "取消任务",
     "deleteJob": "删除任务",
     "confirmDeleteJob": "确定要删除此任务吗？",
     "confirmClearAll": "确定要删除所有已注册的任务吗？",

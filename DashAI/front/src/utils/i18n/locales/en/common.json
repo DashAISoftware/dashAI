@@ -171,6 +171,7 @@
     "noJobs": "No jobs in queue",
     "noActiveJobs": "No active jobs",
     "noCompletedJobs": "No completed jobs",
+    "cancelJob": "Cancel job",
     "deleteJob": "Delete job",
     "confirmDeleteJob": "Are you sure you want to delete this job?",
     "confirmClearAll": "Are you sure you want to delete ALL registered jobs?",

@@ -371,8 +371,14 @@ class ModelJob(BaseJob):
                     ) from e
 
                 try:
-                    run_path = os.path.join(config["RUNS_PATH"], str(run.id))
-                    model.save(run_path)
+                    import os as _os
+                    from pathlib import Path as _Path
+
+                    from DashAI.back.core.atomic import atomic_save_path
+
+                    run_path = _os.path.join(config["RUNS_PATH"], str(run.id))
+                    with atomic_save_path(_Path(run_path)) as tmp_run_path:
+                        model.save(str(tmp_run_path))
                 except Exception as e:
                     log.exception(e)
                     raise JobError(

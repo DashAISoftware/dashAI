@@ -171,6 +171,7 @@
     "noJobs": "Não há trabalhos na fila",
     "noActiveJobs": "Não há trabalhos ativos",
     "noCompletedJobs": "Não há trabalhos concluídos",
+    "cancelJob": "Cancelar trabalho",
     "deleteJob": "Excluir trabalho",
     "confirmDeleteJob": "Tem certeza de que deseja excluir este trabalho?",
     "confirmClearAll": "Tem certeza de que deseja excluir TODOS os trabalhos registrados?",

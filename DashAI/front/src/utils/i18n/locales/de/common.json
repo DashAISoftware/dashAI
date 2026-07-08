@@ -171,6 +171,7 @@
     "noJobs": "Keine Aufgaben in der Warteschlange",
     "noActiveJobs": "Keine aktiven Aufgaben",
     "noCompletedJobs": "Keine abgeschlossenen Aufgaben",
+    "cancelJob": "Aufgabe abbrechen",
     "deleteJob": "Aufgabe löschen",
     "confirmDeleteJob": "Sind Sie sicher, dass Sie diese Aufgabe löschen möchten?",
     "confirmClearAll": "Sind Sie sicher, dass Sie ALLE registrierten Aufgaben löschen möchten?",
