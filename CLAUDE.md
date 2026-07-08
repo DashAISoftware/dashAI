@@ -15,7 +15,8 @@ DashAI is a desktop/web graphical toolbox for training, evaluating, and deployin
 uv sync                  # add --extra cpu on machines without NVIDIA GPU
 uv run pre-commit install
 
-# Run dev server
+# Run dev server (if you synced with --extra cpu/cuda, pass the same
+# --extra to uv run; a plain uv run re-syncs to the default torch build)
 uv run python -m DashAI --no-browser --logging-level DEBUG
 
 # Lint / format

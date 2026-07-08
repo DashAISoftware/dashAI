@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "DashAI"
 version = "0.9.6"
-description = "DashAI: a graphical toolbox for training, evaluating and deploying state-of-the-art AI models."
+description = "dashAI: a graphical toolbox for training, evaluating and deploying state-of-the-art AI models."
 readme = "README.rst"
 license = "MIT"
 authors = [{ name = "DashAI Team", email = "fbravo@dcc.uchile.cl" }]

@@ -137,7 +137,7 @@ This step is optional on CPU (step 2 already installed a working PyTorch).
 Run the section below that matches your hardware to pick a specific build.
 
 Every ``pip install`` command below can also be run as ``uv pip install`` with
-the same flags — same result, just faster.
+the same flags: same result, just faster.
 
 CPU only (Linux / macOS / Windows)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -354,6 +354,24 @@ PyTorch wheels instead:
 
     $ uv sync --extra cpu
 
+On NVIDIA machines, the ``cuda`` extra pins the CUDA 12.8 PyTorch wheels. To
+also get LLM (GGUF) support with CUDA offload, set ``CMAKE_ARGS`` so that
+``llama-cpp-python`` compiles against CUDA (this requires CMake, a C compiler
+and the CUDA toolkit; see "Build tools for GPU llama-cpp" above):
+
+.. code:: bash
+
+    $ uv cache clean llama-cpp-python
+    $ CMAKE_ARGS="-DGGML_CUDA=on" uv sync --extra cuda --reinstall-package llama-cpp-python
+
+The first command and the ``--reinstall-package`` flag matter: uv skips
+packages that are already installed and caches built wheels, and neither
+check looks at ``CMAKE_ARGS``, so without them a previous CPU build gets
+silently reused. Without ``CMAKE_ARGS``, ``llama-cpp-python`` still installs
+but runs on CPU (there is no prebuilt CUDA wheel on PyPI). If nvcc rejects
+your default gcc as too new, point it at an older one you have installed,
+for example ``CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-13"``.
+
 If you prefer plain ``pip``, the same setup works inside any environment
 (``venv`` or ``conda``) since all metadata lives in ``pyproject.toml``. Note
 that this skips the lockfile, so versions may differ slightly from the ones
@@ -378,6 +396,11 @@ Or, through the installed entry point:
 .. code:: bash
 
     $ uv run dashai
+
+**Important:** if you synced with an extra, pass the same extra to ``uv run``
+(for example ``uv run --extra cpu python -m DashAI``). A plain ``uv run``
+re-syncs the environment to the default set and swaps your PyTorch build back
+to the PyPI one.
 
 (If you installed with pip inside your own environment, drop the ``uv run``
 prefix: ``python -m DashAI`` or ``dashai``.)

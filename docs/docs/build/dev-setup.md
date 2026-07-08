@@ -37,8 +37,26 @@ which are much lighter:
 uv sync --extra cpu
 ```
 
+On NVIDIA machines, the `cuda` extra pins the CUDA 12.8 PyTorch wheels. To
+also get LLM (GGUF) support with CUDA offload, set `CMAKE_ARGS` so that
+`llama-cpp-python` compiles against CUDA (requires CMake, a C compiler and
+the CUDA toolkit):
+
+```bash
+uv cache clean llama-cpp-python
+CMAKE_ARGS="-DGGML_CUDA=on" uv sync --extra cuda --reinstall-package llama-cpp-python
+```
+
+The first command and the `--reinstall-package` flag matter: uv skips
+packages that are already installed and caches built wheels, and neither
+check looks at `CMAKE_ARGS`, so without them a previous CPU build gets
+silently reused. Without `CMAKE_ARGS`, `llama-cpp-python` still installs but
+runs on CPU (there is no prebuilt CUDA wheel on PyPI). If nvcc rejects your
+default gcc as too new, point it at an older one you have installed, for
+example `CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-13"`.
+
 Alternatively, plain `pip` works inside any environment (venv or conda),
-since all metadata lives in `pyproject.toml` — note this skips the lockfile,
+since all metadata lives in `pyproject.toml`. Note this skips the lockfile,
 so versions may differ slightly from the ones the team and CI use:
 
 ```bash
@@ -64,6 +82,11 @@ uv run python -m DashAI
 # or
 uv run dashai --no-browser --logging-level INFO
 ```
+
+**Important:** if you synced with an extra, pass the same extra to `uv run`
+(for example `uv run --extra cpu python -m DashAI`). A plain `uv run` re-syncs
+the environment to the default set and swaps your PyTorch build back to the
+PyPI one.
 
 **Frontend** (development server with hot reload):
 
