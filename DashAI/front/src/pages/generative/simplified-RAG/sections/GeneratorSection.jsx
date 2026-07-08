@@ -7,6 +7,7 @@ import {
   Button,
   Alert,
   AlertTitle,
+  useTheme
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
@@ -32,6 +33,7 @@ export default function GeneratorSection({
   const [loading, setLoading] = useState(true);
   const DEFAULT_CONTEXT_WINDOW = 10000;
   const DEFAULT_MAX_TOKENS = 1000;
+  const theme = useTheme();
 
   const contextStats = useMemo(() => {
     if (!generatorModel?.params || !selectedGenerator || !generatorModel.component) {
@@ -196,16 +198,26 @@ export default function GeneratorSection({
           )}
         </Box>
       )}
-
-      <Button
-        variant="outlined"
-        color="primary"
-        onClick={() => setShowAdvanced(true)}
-        fullWidth
-        disabled={!selectedGenerator}
-      >
-        ↗ {t("generative:simplifiedRag.generator.advancedButton")}
-      </Button>
+      {/*Show the Open advanced configuration button only when a LLM is selected*/}
+      {selectedGenerator && (
+        <Button
+          variant="contained"
+          color="primary"
+          size="small"
+          onClick={() => setShowAdvanced(true)}
+          disabled={!selectedGenerator}
+          sx={{
+            alignSelf: "flex-start",
+            width: "fit-content",
+            border: "1px solid",
+            borderColor: theme.palette.primary.main,
+            backgroundColor: theme.palette.action.selected,
+            color: theme.palette.text.primary,
+          }}
+        >
+          ↗ {t("generative:simplifiedRag.generator.advancedButton")}
+        </Button>
+      )}
 
       {selectedGenerator && (
         <GeneratorAdvancedModal

@@ -192,7 +192,7 @@ export default function ChunkingSection({
             color: theme.palette.text.primary,
           }}
           >
-           {t("generative:simplifiedRag.chunking.advancedButton")}
+           ↗ {t("generative:simplifiedRag.chunking.advancedButton")}
         </Button>
 
         {/* Advanced Configuration Modal */}

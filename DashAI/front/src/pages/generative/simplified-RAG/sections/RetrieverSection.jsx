@@ -396,7 +396,7 @@ export default function RetrieverSection({
           color: theme.palette.text.primary,
         }}
       >
-        {t("generative:simplifiedRag.retriever.advancedButton")}
+        ↗ {t("generative:simplifiedRag.retriever.advancedButton")}
       </Button>
 
       <RetrieverAdvancedModal
