@@ -4,6 +4,15 @@ from DashAI.back.models.RAG.documents.base_document import BaseDocument
 from DashAI.back.models.RAG.utils import hash_function
 
 
+def _clean_textract_output(text: str) -> str:
+    """Clean textract output by removing control characters and normalizing whitespace."""
+    import re
+
+    text = re.sub(r"[\x00-\x1f\x7f]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+
 class PDFDocument(BaseDocument):
     """
     Class representing a PDF document.
@@ -55,31 +64,13 @@ class PDFDocument(BaseDocument):
 
             return text.strip()
         elif self.PARSER == "textract":
-            import re
-
             import textract
 
             try:
                 text = textract.process(self.file_path, output_encoding="utf-8").decode(
                     "utf-8"
                 )
-
-                def limpiar_texto(texto):
-                    # Mantiene letras españolas, números, espacios, puntuación y saltos de línea normales
-                    # Elimina caracteres de control como \x0c, \r, etc.
-
-                    # Opción 1: Eliminar solo caracteres de control específicos
-                    texto = re.sub(
-                        r"[\x00-\x1f\x7f]", " ", texto
-                    )  # Reemplaza por espacio
-                    texto = re.sub(r"\s+", " ", texto)  # Normaliza espacios múltiples
-
-                    # Opción 2: Eliminar pero mantener saltos de línea (recomendado)
-                    # texto = re.sub(r'[\x00-\x09\x0b\x0c\x0e-\x1f\x7f]', '', texto)
-
-                    return texto.strip()
-
-                text = limpiar_texto(text)
+                text = _clean_textract_output(text)
                 return text.strip()
             except Exception as e:
                 raise ValueError(

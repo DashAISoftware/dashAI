@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict
 
 from DashAI.back.models.RAG.retrievers.dense._hf_language_utils import (
     build_family_language_summary,

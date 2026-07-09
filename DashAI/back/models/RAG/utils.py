@@ -1,12 +1,17 @@
 import hashlib
 
 
-def hash_function(content) -> str:
-    """
-    Generate a SHA-256 hash for the given content bytes.
+def hash_function(content: str | bytes) -> str:
+    """Generate a SHA-256 hash for the given content bytes.
 
     Args:
-        content (bytes): The content to hash.
+        content: The content to hash (str or bytes).
+
+    Returns:
+        A hex-encoded SHA-256 hash string.
+
+    Raises:
+        UnicodeEncodeError: If a str content cannot be encoded as UTF-8.
     """
     if isinstance(content, str):
         content = content.encode("utf-8")

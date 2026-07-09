@@ -12,8 +12,8 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 import pytest
 
 sys.exit(pytest.main([
-    "tests/back/api/test_rag_pipeline_benchmark.py",
+    "tests/back/RAG/test_rag_pipeline_api_configs.py",
     "-v",
     "--tb=short",
-    "--device=CPU",
+    "-k", "not benchmark",
 ]))

@@ -3,6 +3,7 @@ from typing import Any, List, Optional, Tuple
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
+from DashAI.back.models.RAG.RAG_pipeline import RAGGenerationOutput
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
 
@@ -100,16 +101,28 @@ class RAGTask(BaseGenerativeTask):
 
     def process_output(
         self,
-        output: List[Any],
+        output: RAGGenerationOutput,
         **kwargs: Any,
     ) -> List[Tuple[str, str]]:
         """Process the output of a generative model.
 
-        file_name (Str): Indicates the name of the file.
-        path (Str): Indicates the path where the output will be stored.
+        Parameters
+        ----------
+        output : RAGGenerationOutput
+            The typed output from RAGPipeline.generate().
         """
-        message, chunks = output
-        return [(str(message), "str"), (json.dumps(chunks, ensure_ascii=False, default=str), "Dict")]
+        message = output.message
+        chunks = output.chunks
+        return [
+            (str(message), "str"),
+            (
+                json.dumps(
+                    {k: v.to_dict() for k, v in chunks.items()},
+                    ensure_ascii=False,
+                ),
+                "Dict",
+            ),
+        ]
 
     def process_output_from_database(
         self,

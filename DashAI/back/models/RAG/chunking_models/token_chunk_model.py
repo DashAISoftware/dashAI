@@ -1,7 +1,6 @@
-from typing import List
+from typing import TYPE_CHECKING, List, Optional
 
 from pydantic import field_validator
-from transformers import AutoTokenizer
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -54,6 +53,10 @@ class TokenChunkModelSchema(BaseSchema):
         return v
 
 
+if TYPE_CHECKING:
+    from transformers import AutoTokenizer
+
+
 class TokenChunkModel(BaseChunkingModel):
     SCHEMA = TokenChunkModelSchema
 
@@ -62,8 +65,16 @@ class TokenChunkModel(BaseChunkingModel):
         self.chunk_size = self.parameters["chunk_size"]
         self.chunk_overlap = self.parameters["chunk_overlap"]
         self.tokenizer_name = self.parameters["tokenizer_name"]
-        self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
+        self._tokenizer: Optional["AutoTokenizer"] = None
         super().__init__(**kwargs)
+
+    @property
+    def tokenizer(self):
+        if self._tokenizer is None:
+            from transformers import AutoTokenizer
+
+            self._tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_name)
+        return self._tokenizer
 
     def chunk_text(self, text: str) -> List[str]:
         tokens = self.tokenizer.tokenize(text)

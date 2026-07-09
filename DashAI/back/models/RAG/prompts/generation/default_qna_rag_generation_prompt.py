@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -122,7 +122,7 @@ class DefaultQnARAGGenerationPrompt(RAGGenerationPrompt):
         self.language = kwargs.pop("language")
         self.template = kwargs.pop("template") or TEMPLATES.get(self.language, "")
 
-    def format(self, input: str, chunks: List[str], **kwargs: Any) -> str:
+    def format(self, input: str, chunks: str, **kwargs: Any) -> str:
         buffer = self.template
         buffer = buffer.replace("{input}", input)
         buffer = buffer.replace("{chunks}", chunks)

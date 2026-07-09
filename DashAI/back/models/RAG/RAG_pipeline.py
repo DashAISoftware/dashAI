@@ -91,6 +91,33 @@ class ModelRef:
 
 
 @dataclass(frozen=True)
+class ChunkReference:
+    """A single chunk with its document metadata."""
+
+    document_id: int
+    document_name: str
+    document_position: int
+    text: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON-serializable dict representation."""
+        return {
+            "document_id": self.document_id,
+            "document_name": self.document_name,
+            "document_position": self.document_position,
+            "text": self.text,
+        }
+
+
+@dataclass(frozen=True)
+class RAGGenerationOutput:
+    """Typed output from RAGPipeline.generate()."""
+
+    message: Any
+    chunks: Dict[str, "ChunkReference"]
+
+
+@dataclass(frozen=True)
 class RAGPipelineConfig:
     """Structured, validated representation of pipeline initialisation kwargs.
 
@@ -357,21 +384,21 @@ class RAGPipeline(BaseGenerativeModel):
     def _build_chunk_references(
         self,
         chunks: List[Chunk],
-    ) -> Tuple[str, Dict[str, Dict[str, Any]]]:
+    ) -> Tuple[str, Dict[str, ChunkReference]]:
         chunks_texts: List[str] = []
-        chunk_dict: Dict[str, Dict[str, Any]] = {}
+        chunk_dict: Dict[str, ChunkReference] = {}
         for retrieved_chunk in chunks:
             document_id: int = retrieved_chunk.document_id
             document: BaseDocument = self.documents[document_id]
             chunk_position: int = retrieved_chunk.document_position
             chunk_text: str = retrieved_chunk.text
             chunk_ref: str = f"{document_id}_{chunk_position}"
-            chunk_dict[chunk_ref] = {
-                "document_id": document_id,
-                "document_name": document.file_name,
-                "document_position": chunk_position,
-                "text": chunk_text,
-            }
+            chunk_dict[chunk_ref] = ChunkReference(
+                document_id=document_id,
+                document_name=document.file_name,
+                document_position=chunk_position,
+                text=chunk_text,
+            )
             chunks_texts.append(
                 f"Document {document.file_name}, "
                 f"chunk nº {chunk_position}, text:\n {chunk_text}"
@@ -381,7 +408,9 @@ class RAGPipeline(BaseGenerativeModel):
     def generate(
         self,
         input_data: Tuple[Dict[str, str], ...],
-    ) -> List[Any]:
+    ) -> RAGGenerationOutput:
+        if not input_data:
+            raise RAGPipelineRuntimeError("input_data must not be empty.")
         try:
             input_dict: Dict[str, str] = input_data[-1]
             input_message: str = input_dict["content"]
@@ -391,7 +420,7 @@ class RAGPipeline(BaseGenerativeModel):
             raise RAGPipelineRuntimeError(f"Failed during retrieval: {str(e)}") from e
         try:
             chunks_text: str
-            chunk_dict: Dict[int, Dict[str, Any]]
+            chunk_dict: Dict[str, ChunkReference]
             chunks_text, chunk_dict = self._build_chunk_references(chunks)
             prompt: str = self.prompt_model.format(
                 input=input_message,
@@ -407,7 +436,7 @@ class RAGPipeline(BaseGenerativeModel):
             ]
             # NOTE: Output is not streamed — the user waits for the full response.
             output: List[Any] = self.llm_model.generate(model_input)
-            return [output[0], chunk_dict]
+            return RAGGenerationOutput(message=output[0], chunks=chunk_dict)
         except Exception as e:
             raise RAGPipelineRuntimeError(
                 f"Failed during LLM generation: {str(e)}"

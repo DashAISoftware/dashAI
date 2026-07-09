@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any, Tuple
 
 from DashAI.back.models.RAG.prompts.prompt import Prompt
 
@@ -14,8 +14,8 @@ class RAGGenerationPrompt(Prompt):
     @staticmethod
     def format(
         input: str,
-        chunks: List[str],
-        history: List[Tuple[str, str]] | None = None,
+        chunks: str,
+        history: Tuple[Tuple[str, str], ...] | None = None,
         **kwargs: Any,
     ) -> str:
         raise NotImplementedError("Subclasses must implement this method.")

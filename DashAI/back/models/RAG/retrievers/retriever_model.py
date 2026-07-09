@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Final, List
+from typing import Any, Dict, Final, List, Tuple
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_model import BaseModel
@@ -102,7 +102,6 @@ class RetrieverModel(BaseModel, ABC):
         Subclasses restore saved state (``load()``) or compute initial
         state (``_fit()``, ``_init_embedding()``).  Default is a no-op.
         """
-        pass
 
     # ── Retrieval interface ─────────────────────────────────────────
 
@@ -111,7 +110,7 @@ class RetrieverModel(BaseModel, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def score_chunks(self, chunk_ids: List[int], query: str) -> List[float]:
+    def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         raise NotImplementedError
 
     @property

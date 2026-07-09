@@ -50,9 +50,8 @@ class BaseChunkingModel(ConfigObject, metaclass=ABCMeta):
         Returns:
             Dict[int, Chunk]: A dictionary mapping chunk indices to Chunk objects.
         """
-        assert isinstance(document, BaseDocument), (
-            "Input must be an instance of BaseDocument."
-        )
+        if not isinstance(document, BaseDocument):
+            raise TypeError("Input must be an instance of BaseDocument.")
         text = document.get_text()
         chunks_text = self.chunk_text(text)
         chunks = {}

@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from DashAI.back.models.RAG.prompts.generation.rag_generation_prompt import (
     RAGGenerationPrompt,
@@ -25,7 +25,7 @@ class CustomRAGGenerationPrompt(RAGGenerationPrompt):
     def __init__(self, **kwargs: Any):
         self.template = kwargs.pop("template")
 
-    def format(self, input: str, chunks: List[str], **kwargs: Any) -> str:
+    def format(self, input: str, chunks: str, **kwargs: Any) -> str:
         """
         Format the prompt using the provided template.
 

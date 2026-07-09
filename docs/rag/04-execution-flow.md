@@ -2,40 +2,152 @@
 
 ## Step-by-Step
 
-### 1. Form Submission
-User fills the `RAGSessionSetup` form (documents, chunking, retriever, prompt, generator) and clicks Save.
+### 1. Session Configuration
+
+The user fills the `RAGSessionSetup` form:
+- Selects documents from the repository.
+- Configures the chunking model (type, chunk size, overlap).
+- Chooses a retriever (preset or custom composite).
+- Selects a prompt template (language, optional custom template).
+- Picks an LLM (model name, parameters like temperature, context window).
 
 ### 2. Session Creation
-Frontend calls `POST /api/v1/generative-session/`. The endpoint validates parameters against `RAGPipeline.SCHEMA` and persists the session record.
+
+Frontend calls `POST /api/v1/generative-session/` with the full parameter
+payload. The endpoint validates parameters against `RAGPipeline.SCHEMA` and
+persists a `GenerativeSession` record in the database. The session stores:
+- `task_name` — Set to `"RAGTask"` for RAG sessions.
+- `model_name` — Set to `"RAGPipeline"`.
+- `parameters` — The full configuration dict (documents, chunking, retriever,
+  prompt, generation model).
 
 ### 3. Process Creation
-Frontend calls `POST /api/v1/generative-process/` with the user's input question. This creates a `GenerativeProcess` record linked to the session.
+
+When the user sends a message, the frontend calls
+`POST /api/v1/generative-process/` with the input text. This creates a
+`GenerativeProcess` record linked to the session, with `status="PENDING"`.
 
 ### 4. Job Dispatch
-Frontend calls `POST /api/v1/job/` with `job_type="GenerativeJob"`. The job is enqueued in Huey (the async task queue).
+
+The frontend calls `POST /api/v1/job/` with `job_type="GenerativeJob"` and the
+`generative_process_id`. The job is enqueued in the Huey async task queue.
 
 ### 5. Job Execution
-`GenerativeJob.run()` detects the session uses `RAGTask` and delegates to `RAGJob.run()`.
 
-### 6. Pipeline Construction
-`RAGJob.run()`:
-1. Constructs `RAGPipelineConfig` from the session parameters.
-2. Instantiates `RAGModelsFactory` to resolve/create model records (chunking, retriever, prompt, LLM).
-3. Creates `PipelineRepository` for persistence.
-4. Creates `DocumentLoader` for document access.
-5. Assembles `RAGPipeline` with all dependencies.
+`GenerativeJob.run()` performs an initial DB lookup:
+```
+Query session → check task_name → if issubclass(RAGTask):
+    delegate to RAGJob.run()
+    return
+```
 
-### 7. Generation
-`RAGPipeline.generate()`:
-1. **Load documents** — `DocumentLoader.load()` fetches document texts from the repository.
-2. **Get or create chunk set** — `get_or_create_chunk_set()` computes a SHA-256 hash of the document IDs + chunking params. If a chunk set with that hash exists, reuse it; otherwise chunk and persist.
-3. **Chunk** — The chunking model splits documents into chunks.
-4. **Retrieve** — The retriever scores chunks against the query and returns the top-k.
-5. **Build prompt** — The prompt template is rendered with retrieved chunks and the user query.
-6. **Generate** — The LLM generates a response from the prompt.
+If the task is **not** a RAG task, `GenerativeJob` proceeds with the standard
+generation flow.
 
-### 8. Output Serialization
-`RAGTask.process_output()` serializes retrieved chunks as JSON and saves the generation result to the database via the process record.
+### 6. Pipeline Construction (in RAGJob)
 
-### 9. Frontend Polling
-The frontend polls `GET /api/v1/jobs/{job_id}` for job status. When the job completes, it reads the process output and renders the chat response.
+```
+RAGJob.run():
+  │
+  ├── 1. Query GenerativeProcess + GenerativeSession from DB
+  │
+  ├── 2. Build RAGPipelineConfig.from_kwargs()
+  │       Uses session parameters + injected DB + registry + env path
+  │
+  ├── 3. Create RAGModelsFactory(db, registry, rag_path)
+  │
+  ├── 4. Create PipelineRepository(db)
+  │
+  ├── 5. Create DocumentLoader(db)
+  │
+  └── 6. Assemble RAGPipeline(config, models, repo, doc_loader)
+```
+
+### 7. Pipeline Initialisation
+
+During `RAGPipeline.__init__()`:
+
+```
+  │
+  ├── a. PipelineRepository.ensure_db_record(session_id)
+  │       Creates or finds the rag_pipeline table row.
+  │
+  ├── b. DocumentLoader.load(document_ids)
+  │       Fetches documents from DB, hydrates BaseDocument objects.
+  │
+  ├── c. get_or_create_chunk_set(db, doc_ids, chunking_config)
+  │       SHA-256 signature → reuse or create new chunk set.
+  │
+  ├── d. ModelsFactory.create_prompt(component, params)
+  │       Lookup-or-create prompt record in rag_prompt table.
+  │
+  ├── e. ModelsFactory.create_chunking_model(docs, chunk_set, component, params)
+  │       Creates chunker → chunks docs → persists chunks → returns model.
+  │
+  ├── f. ModelsFactory.create_retriever(pipeline_id, chunks, chunk_set, component, params)
+  │       Creates retriever → computes/trains → persists → returns model.
+  │
+  ├── g. ModelsFactory.create_llm(component, params)
+  │       Lookup-or-create LLM record in rag_generation_model table.
+  │
+  └── h. PipelineRepository.update_db_record(...)
+        Patches the pipeline record with real component FK IDs.
+```
+
+### 8. History Preparation
+
+The job queries all previous `GenerativeProcess` records for the session with
+`status="FINISHED"` and builds a list of `(input, output)` tuples. The
+`RAGTask.prepare_for_task()` method folds this history into a message list:
+
+```
+[
+  {"role": "user", "content": "Previous input"},
+  {"role": "assistant", "content": "Previous output"},
+  {"role": "user", "content": "Current input"}
+]
+```
+
+### 9. Generation
+
+`RAGPipeline.generate(input_data)`:
+
+```
+  │
+  ├── a. Extract input message + history from input_data
+  │
+  ├── b. retriever.retrieve(query)
+  │       Returns top-k Chunk objects relevant to the query.
+  │
+  ├── c. _build_chunk_references(chunks)
+  │       Formats chunks into text block + ChunkReference dict.
+  │
+  ├── d. prompt_model.format(input=query, chunks=chunk_text)
+  │       Renders the prompt template with query + chunk context.
+  │
+  ├── e. llm_model.generate(history + prompt)
+  │       LLM generates a response text.
+  │
+  └── f. Return RAGGenerationOutput(message, chunks)
+```
+
+### 10. Output Processing
+
+`RAGTask.process_output(output)`:
+
+1. Unpacks `output.message` (LLM response text) and `output.chunks` (dict of
+   `ChunkReference` objects with document metadata).
+2. Returns a list of `(data, type)` tuples:
+   - `(response_text, "str")`
+   - `(json_chunk_references, "Dict")`
+
+### 11. Persistence
+
+`RAGJob` creates `ProcessData` records for each output tuple, links them to the
+`GenerativeProcess`, and sets the process status to `"FINISHED"`.
+
+### 12. Frontend Polling
+
+The frontend polls `GET /api/v1/jobs/{job_id}` for job status. When the job
+completes, it reads the process output and renders the chat response with
+cited chunk references.
