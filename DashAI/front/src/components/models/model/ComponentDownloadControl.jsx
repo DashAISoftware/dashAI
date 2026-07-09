@@ -205,7 +205,11 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
           startIcon={<DeleteIcon />}
           onClick={() => setConfirmOpen(true)}
         >
-          {t("common:componentDownload.delete")}
+          {meta.download_size_bytes != null
+            ? t("common:componentDownload.deleteWithSize", {
+                size: formatSize(meta.download_size_bytes),
+              })
+            : t("common:componentDownload.delete")}
         </Button>
         <DeleteConfirmationModal
           open={confirmOpen}

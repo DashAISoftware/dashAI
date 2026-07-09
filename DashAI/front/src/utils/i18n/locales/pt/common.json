@@ -163,6 +163,7 @@
   "componentDownload": {
     "download": "Baixar ({{size}})",
     "delete": "Remover download",
+    "deleteWithSize": "Remover download ({{size}})",
     "downloading": "Baixando...",
     "done": "Componente baixado",
     "deleted": "Download removido",

@@ -57,7 +57,7 @@ describe("ComponentDownloadControl", () => {
       />,
     );
     const button = await screen.findByRole("button", {
-      name: "Delete download",
+      name: /delete download/i,
     });
     fireEvent.click(button);
     // Deletion only happens after confirming in the modal.

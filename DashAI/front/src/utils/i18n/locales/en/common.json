@@ -163,6 +163,7 @@
   "componentDownload": {
     "download": "Download ({{size}})",
     "delete": "Delete download",
+    "deleteWithSize": "Delete download ({{size}})",
     "downloading": "Downloading...",
     "done": "Component downloaded",
     "deleted": "Download deleted",

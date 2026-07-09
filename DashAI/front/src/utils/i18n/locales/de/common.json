@@ -163,6 +163,7 @@
   "componentDownload": {
     "download": "Herunterladen ({{size}})",
     "delete": "Download loeschen",
+    "deleteWithSize": "Download loeschen ({{size}})",
     "downloading": "Wird heruntergeladen...",
     "done": "Komponente heruntergeladen",
     "deleted": "Download geloescht",
