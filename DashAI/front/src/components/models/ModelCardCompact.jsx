@@ -4,17 +4,168 @@ import {
   Paper,
   Box,
   Typography,
-  Chip,
   IconButton,
-  Button,
   Tooltip,
+  CircularProgress,
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { PlayArrow, Delete } from "@mui/icons-material";
+import { PlayArrow, Delete, WarningAmber } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
-import { getRunStatus, getRunStatusColor } from "../../utils/runStatus";
+import { getRunStatusColor } from "../../utils/runStatus";
 import { ModelIcon } from "./model/ModelIcon";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
+
+const RING_SIZE = 24;
+
+function ScoreRing({ run, score, statusMain }) {
+  const theme = useTheme();
+  const { t } = useTranslation(["models", "common"]);
+  const isRunning = run.status === 1 || run.status === 2;
+  const isError = run.status === 4;
+  const isFinished = run.status === 3;
+
+  if (isRunning) {
+    return (
+      <CircularProgress
+        size={RING_SIZE}
+        thickness={3.5}
+        sx={{ color: statusMain }}
+      />
+    );
+  }
+
+  if (isError) {
+    return (
+      <Box
+        sx={{
+          position: "relative",
+          width: RING_SIZE,
+          height: RING_SIZE,
+          flexShrink: 0,
+        }}
+      >
+        <CircularProgress
+          variant="determinate"
+          value={100}
+          size={RING_SIZE}
+          thickness={3.5}
+          sx={{ color: alpha(statusMain, 0.3) }}
+        />
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <WarningAmber sx={{ color: statusMain, fontSize: 14 }} />
+        </Box>
+      </Box>
+    );
+  }
+
+  if (isFinished && score) {
+    const rounded = Math.round(score.score);
+    const tooltipContent = (
+      <Typography variant="body2" component="div" sx={{ lineHeight: 1.6 }}>
+        <Typography
+          variant="body2"
+          component="div"
+          sx={{ fontWeight: "bold", mb: 1 }}
+        >
+          {t("models:label.score")}: {score.score.toFixed(1)}/100
+        </Typography>
+        {score.breakdown?.map(
+          ({ metric_name, value, normalized_weight }, i) => (
+            <Typography variant="body2" component="div" key={metric_name}>
+              {i === 0 ? "=" : "+"} {metric_name} ({value.toFixed(4)}) ×{" "}
+              {(normalized_weight * 100).toFixed(0)}%
+            </Typography>
+          ),
+        )}
+      </Typography>
+    );
+
+    return (
+      <Tooltip title={tooltipContent} placement="top" arrow>
+        <Box
+          sx={{
+            position: "relative",
+            width: RING_SIZE,
+            height: RING_SIZE,
+            flexShrink: 0,
+            cursor: "help",
+          }}
+        >
+          <CircularProgress
+            variant="determinate"
+            value={100}
+            size={RING_SIZE}
+            thickness={3.5}
+            sx={{ color: alpha(statusMain, 0.2), position: "absolute" }}
+          />
+          <CircularProgress
+            variant="determinate"
+            value={rounded}
+            size={RING_SIZE}
+            thickness={3.5}
+            sx={{ color: statusMain }}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Typography sx={{ fontWeight: 700, fontSize: 9, lineHeight: 1 }}>
+              {rounded}
+            </Typography>
+          </Box>
+        </Box>
+      </Tooltip>
+    );
+  }
+
+  // Not started (or finished with no score yet available)
+  return (
+    <Box
+      sx={{
+        position: "relative",
+        width: RING_SIZE,
+        height: RING_SIZE,
+        flexShrink: 0,
+      }}
+    >
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          borderRadius: "50%",
+          border: `2px dashed ${theme.palette.text.disabled}`,
+          opacity: 0.4,
+        }}
+      />
+      <Box
+        sx={{
+          position: "absolute",
+          inset: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Typography color="text.disabled" sx={{ fontSize: 10, lineHeight: 1 }}>
+          –
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
 
 /**
  * Compact launcher card for a single run — shows just enough to identify
@@ -23,6 +174,7 @@ import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationMod
 function ModelCardCompact({
   run,
   models = [],
+  score,
   onTrain,
   onDelete,
   onOpen,
@@ -34,51 +186,29 @@ function ModelCardCompact({
 
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
-  const statusText = getRunStatus(run.status, t);
   const canTrain = run.status === 0 || run.status === 3 || run.status === 4;
   const isRunning = run.status === 1 || run.status === 2;
 
-  const primaryMetric = (() => {
-    if (!run.trained_models || run.trained_models.length === 0) return null;
-    const values = {};
-    run.trained_models.forEach((tm) => {
-      if (!tm.metrics) return;
-      Object.entries(tm.metrics).forEach(([key, value]) => {
-        if (!values[key]) values[key] = [];
-        values[key].push(value);
-      });
-    });
-    const keys = Object.keys(values);
-    if (keys.length === 0) return null;
-    const key =
-      run.goal_metric && values[run.goal_metric] ? run.goal_metric : keys[0];
-    const avg = values[key].reduce((sum, v) => sum + v, 0) / values[key].length;
-    return { key, avg };
-  })();
+  const statusColorKey = getRunStatusColor(run.status);
+  const statusMain =
+    statusColorKey === "default"
+      ? theme.palette.text.disabled
+      : theme.palette[statusColorKey].main;
 
   return (
     <Paper
-      elevation={isHighlighted ? 4 : 1}
+      elevation={isHighlighted ? 4 : 0}
       onClick={onOpen}
       sx={{
-        p: 3,
+        p: 2.5,
         display: "flex",
         flexDirection: "column",
         gap: 2,
         cursor: "pointer",
         border: 1,
-        borderColor: "divider",
-        borderLeft: "4px solid",
-        borderLeftColor:
-          run.status === 3
-            ? "success.main"
-            : run.status === 4
-              ? "error.main"
-              : isRunning
-                ? "info.main"
-                : "divider",
+        borderColor: alpha(statusMain, 0.35),
         transition: "border-color 0.15s, box-shadow 0.15s",
-        "&:hover": { borderColor: "secondary.main" },
+        "&:hover": { borderColor: alpha(statusMain, 0.7) },
         ...(isHighlighted && {
           boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.4)}`,
         }),
@@ -87,7 +217,7 @@ function ModelCardCompact({
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
         <Box
           sx={{
-            p: 2,
+            p: 1.5,
             borderRadius: 1,
             bgcolor: "action.hover",
             display: "flex",
@@ -101,34 +231,32 @@ function ModelCardCompact({
             color={model?.color || model?.metadata?.color}
           />
         </Box>
+
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
             {modelDisplayName}
           </Typography>
-          <Typography variant="caption" color="text.secondary" noWrap>
-            {run.name}
-          </Typography>
-        </Box>
-      </Box>
-
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <Chip
-          label={statusText}
-          color={getRunStatusColor(run.status)}
-          size="small"
-        />
-        {primaryMetric && (
-          <Typography variant="caption" color="text.secondary">
-            {primaryMetric.key.toUpperCase()}:{" "}
-            <Typography component="span" variant="caption" fontWeight="medium">
-              {primaryMetric.avg.toFixed(4)}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                bgcolor: statusMain,
+                flexShrink: 0,
+              }}
+            />
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {run.name}
             </Typography>
-          </Typography>
-        )}
+          </Box>
+        </Box>
+
+        <ScoreRing run={run} score={score} statusMain={statusMain} />
       </Box>
 
       <Box
-        sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}
+        sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}
         onClick={(e) => e.stopPropagation()}
       >
         {canTrain && (
@@ -137,14 +265,9 @@ function ModelCardCompact({
               run.status === 3 ? t("common:retrain") : t("common:trainVerb")
             }
           >
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<PlayArrow fontSize="small" />}
-              onClick={() => onTrain(run)}
-            >
-              {run.status === 3 ? t("common:retrain") : t("common:trainVerb")}
-            </Button>
+            <IconButton size="small" onClick={() => onTrain(run)}>
+              <PlayArrow fontSize="small" />
+            </IconButton>
           </Tooltip>
         )}
         <Tooltip title={t("models:button.deleteRun")}>
@@ -174,6 +297,17 @@ function ModelCardCompact({
   );
 }
 
+ScoreRing.propTypes = {
+  run: PropTypes.shape({
+    status: PropTypes.number,
+  }).isRequired,
+  score: PropTypes.shape({
+    score: PropTypes.number,
+    breakdown: PropTypes.array,
+  }),
+  statusMain: PropTypes.string.isRequired,
+};
+
 ModelCardCompact.propTypes = {
   run: PropTypes.shape({
     id: PropTypes.number,
@@ -184,6 +318,10 @@ ModelCardCompact.propTypes = {
     trained_models: PropTypes.array,
   }).isRequired,
   models: PropTypes.array,
+  score: PropTypes.shape({
+    score: PropTypes.number,
+    breakdown: PropTypes.array,
+  }),
   onTrain: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onOpen: PropTypes.func.isRequired,

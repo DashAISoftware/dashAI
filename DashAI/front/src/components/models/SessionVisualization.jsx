@@ -22,6 +22,7 @@ import { useTranslation } from "react-i18next";
 
 import { useModels } from "./ModelsContext";
 import { useTourContext } from "../tour/TourProvider";
+import { useRunScores } from "../../hooks/models/useRunScores";
 
 export default function SessionVisualization() {
   const [models, setModels] = useState([]);
@@ -50,6 +51,9 @@ export default function SessionVisualization() {
     clearLastAddedRunId,
     selectModel,
   } = useModels();
+
+  const { profiles, selectedProfile, setSelectedProfile, scores } =
+    useRunScores({ session, runs, metricSplit });
 
   const theme = useTheme();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -358,11 +362,8 @@ export default function SessionVisualization() {
                   sx={{
                     display: "grid",
                     gap: 3,
-                    gridTemplateColumns: {
-                      xs: "1fr",
-                      md: "repeat(2, 1fr)",
-                      xl: "repeat(3, 1fr)",
-                    },
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(240px, 1fr))",
                   }}
                 >
                   {sortedRuns.map((run, index) => (
@@ -387,6 +388,7 @@ export default function SessionVisualization() {
                       <ModelCardCompact
                         run={run}
                         models={models}
+                        score={scores[run.id]}
                         onTrain={handleTrainWithTour}
                         onDelete={onDeleteRun}
                         onOpen={() =>
@@ -524,6 +526,9 @@ export default function SessionVisualization() {
                   onDelete={onDeleteRun}
                   onRowClick={handleRowClick}
                   metricSplit={metricSplit}
+                  profiles={profiles}
+                  selectedProfile={selectedProfile}
+                  onProfileChange={setSelectedProfile}
                 />
               ) : (
                 <ResultsGraphs

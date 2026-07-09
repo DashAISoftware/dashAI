@@ -34,11 +34,12 @@ function ModelComparisonTable({
   onDelete,
   onRowClick,
   metricSplit = "test",
+  profiles = [],
+  selectedProfile = null,
+  onProfileChange,
 }) {
   const [models, setModels] = useState([]);
   const [metrics, setMetrics] = useState([]);
-  const [profiles, setProfiles] = useState([]);
-  const [selectedProfile, setSelectedProfile] = useState(null);
   const [scores, setScores] = useState({});
   const [loadingScores, setLoadingScores] = useState(false);
   const [runs, setRuns] = useState(initialRuns);
@@ -84,35 +85,9 @@ function ModelComparisonTable({
     fetchMetrics();
   }, [i18n.language]);
 
-  // ────────────────────────────────────────────────────────────────────────
-  // Fetch scoring profiles for this session's task
-  // ────────────────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        const params = {};
-        if (session?.task_name) {
-          params.task_name = session.task_name;
-        }
-        const response = await api.get("/v1/scoring/profiles", { params });
-        const profilesList = response.data;
-        setProfiles(profilesList);
-
-        // Keep current profile only if still valid; otherwise select first
-        setSelectedProfile((prevProfile) => {
-          if (profilesList.length === 0) {
-            return null;
-          }
-          const profileExists = profilesList.some((p) => p.id === prevProfile);
-          return profileExists ? prevProfile : profilesList[0].id;
-        });
-      } catch (error) {
-        console.error("Error fetching scoring profiles:", error);
-      }
-    };
-    fetchProfiles();
-  }, [session?.task_name]);
+  // Scoring profiles and the selected profile are owned by the parent
+  // (shared with the compact model cards via useRunScores) and passed in
+  // as props, so both views always score against the same profile.
 
   // Stable string that changes only when a run's status changes.
   // Used as a dep so the score fetch re-triggers after training completes
@@ -565,7 +540,7 @@ function ModelComparisonTable({
         </Typography>
         <Select
           value={selectedProfile || ""}
-          onChange={(e) => setSelectedProfile(e.target.value)}
+          onChange={(e) => onProfileChange?.(e.target.value)}
           size="small"
           disabled={profiles.length === 0 || loadingScores}
           sx={{
@@ -624,6 +599,9 @@ ModelComparisonTable.propTypes = {
   onDelete: PropTypes.func.isRequired,
   onRowClick: PropTypes.func,
   metricSplit: PropTypes.oneOf(["train", "validation", "test"]),
+  profiles: PropTypes.array,
+  selectedProfile: PropTypes.string,
+  onProfileChange: PropTypes.func,
 };
 
 export default ModelComparisonTable;
