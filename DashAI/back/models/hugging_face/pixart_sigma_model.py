@@ -21,13 +21,53 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 class PixArtSigmaSchema(BaseSchema):
     """Configuration schema for PixArt-Sigma text-to-image generation.
 
-    Configures the checkpoint variant (``model_name``), prompt conditioning
+    Configures the checkpoint (``checkpoint``), prompt conditioning
     (``negative_prompt``), denoising schedule (``num_inference_steps``),
     classifier free guidance strength (``guidance_scale``), output dimensions
     (``width``, ``height``), reproducibility (``seed``), hardware target
     (``device``), and batch size (``num_images_per_prompt``) for
     ``PixArtSigmaModel``.
     """
+
+    checkpoint: schema_field(
+        enum_field(enum=["1024", "512"]),
+        placeholder="1024",
+        description=MultilingualString(
+            en=(
+                "Which PixArt-Sigma checkpoint to use: '1024' for best quality "
+                "at 1024x1024 px, or '512' for a faster, lighter model at "
+                "512x512 px. Both checkpoints are downloaded together."
+            ),
+            es=(
+                "Qué checkpoint de PixArt-Sigma usar: '1024' para mejor calidad "
+                "a 1024x1024 px, o '512' para un modelo más rápido y ligero a "
+                "512x512 px. Ambos checkpoints se descargan juntos."
+            ),
+            pt=(
+                "Qual checkpoint do PixArt-Sigma usar: '1024' para melhor "
+                "qualidade a 1024x1024 px, ou '512' para um modelo mais rápido "
+                "e leve a 512x512 px. Ambos os checkpoints são baixados juntos."
+            ),
+            de=(
+                "Welcher PixArt-Sigma-Checkpoint verwendet wird: '1024' für "
+                "beste Qualität bei 1024x1024 px oder '512' für ein schnelleres, "
+                "leichteres Modell bei 512x512 px. Beide Checkpoints werden "
+                "zusammen heruntergeladen."
+            ),
+            zh=(
+                "使用哪个 PixArt-Sigma 检查点：'1024' 表示 1024x1024 "
+                "像素的最佳质量，'512' 表示 512x512 像素更快更轻量的模型。"
+                "两个检查点会一起下载。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Checkpoint",
+            es="Checkpoint",
+            pt="Checkpoint",
+            de="Checkpoint",
+            zh="检查点",
+        ),
+    )  # type: ignore
 
     negative_prompt: Optional[
         schema_field(
@@ -321,9 +361,7 @@ class PixArtSigmaSchema(BaseSchema):
     )  # type: ignore
 
 
-class PixArtSigmaGenerationModel(
-    HFPretrainedDownloadMixin, TextToImageGenerationTaskModel
-):
+class PixArtSigma(HFPretrainedDownloadMixin, TextToImageGenerationTaskModel):
     """Diffusion Transformer model for high efficiency text-to-image generation.
 
     Wraps the PixArt-Sigma pipeline, which replaces the U-Net backbone used
@@ -345,7 +383,12 @@ class PixArtSigmaGenerationModel(
     """
 
     SCHEMA = PixArtSigmaSchema
-    MODEL_NAME: str = ""
+    # The 1024 checkpoint is a full pipeline (T5, VAE, scheduler, tokenizer).
+    # The 512 checkpoint ships only a transformer, injected into this pipeline
+    # when the 512 variant is selected, so both repos are downloaded together.
+    MODEL_NAME: str = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+    TRANSFORMER_512_REPO: str = "PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
+    DOWNLOAD_SIZE_BYTES: int = 24280249290
     COLOR: str = "#6a1b9a"
     DISPLAY_NAME: str = MultilingualString(
         en="PixArt-Sigma",
@@ -456,6 +499,7 @@ class PixArtSigmaGenerationModel(
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
 
+        self.checkpoint = kwargs.get("checkpoint")
         self.model = self._build_pipeline(use_gpu).to(self.device)
 
         self.negative_prompt = kwargs.get("negative_prompt")
@@ -466,12 +510,26 @@ class PixArtSigmaGenerationModel(
         self.height = kwargs.get("height")
         self.num_images_per_prompt = kwargs.get("num_images_per_prompt")
 
-    def _build_pipeline(self, use_gpu: bool):
-        """Load the PixArt-Sigma pipeline from the downloaded checkpoint.
+    @classmethod
+    def hf_repos(cls):
+        """Download both the 1024 (full pipeline) and 512 (transformer) repos.
 
-        The default loads a self-contained checkpoint (one that ships a full
-        ``model_index.json`` pipeline, e.g. the 1024px variant). Subclasses
-        whose checkpoint contains only the transformer override this.
+        Returns
+        -------
+        list of tuple of (str, str)
+            The 1024 checkpoint (T5, VAE, scheduler, tokenizer, transformer)
+            and the 512 checkpoint (transformer only), so either variant can be
+            used after a single download.
+        """
+        return [(cls.MODEL_NAME, "model"), (cls.TRANSFORMER_512_REPO, "model")]
+
+    def _build_pipeline(self, use_gpu: bool):
+        """Load the PixArt-Sigma pipeline for the selected checkpoint.
+
+        The pipeline scaffold (T5, VAE, scheduler, tokenizer) always comes from
+        the 1024 repo. For the ``"1024"`` checkpoint its own transformer is
+        used; for ``"512"`` the transformer from the 512 repo is injected (the
+        512 repo has no ``model_index.json`` and cannot be loaded on its own).
 
         Parameters
         ----------
@@ -486,11 +544,22 @@ class PixArtSigmaGenerationModel(
         import torch
         from diffusers import PixArtSigmaPipeline
 
-        self.model_name = self._pretrained_source(None)
-        return PixArtSigmaPipeline.from_pretrained(
-            self.model_name,
-            torch_dtype=torch.float16 if use_gpu else torch.float32,
-        )
+        dtype = torch.float16 if use_gpu else torch.float32
+        pipeline_dir = str(self._repo_dir(self.MODEL_NAME))
+        self.model_name = pipeline_dir
+
+        if self.checkpoint == "512":
+            from diffusers import Transformer2DModel
+
+            transformer_dir = str(self._repo_dir(self.TRANSFORMER_512_REPO))
+            transformer = Transformer2DModel.from_pretrained(
+                transformer_dir, subfolder="transformer", torch_dtype=dtype
+            )
+            return PixArtSigmaPipeline.from_pretrained(
+                pipeline_dir, transformer=transformer, torch_dtype=dtype
+            )
+
+        return PixArtSigmaPipeline.from_pretrained(pipeline_dir, torch_dtype=dtype)
 
     def generate(self, input: str) -> List[Any]:
         """Generate images from a text prompt.
@@ -522,162 +591,3 @@ class PixArtSigmaGenerationModel(
             num_images_per_prompt=self.num_images_per_prompt,
         )
         return output.images
-
-
-class PixArtSigma1024(PixArtSigmaGenerationModel):
-    """PixArt-Sigma XL 1024px checkpoint.
-
-    Downloads its checkpoint into the component's own download folder.
-    """
-
-    MODEL_NAME: str = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
-    DOWNLOAD_SIZE_BYTES: int = 21832490389
-    DISPLAY_NAME = MultilingualString(
-        en="PixArt-Sigma 1024",
-        es="PixArt-Sigma 1024",
-        pt="PixArt-Sigma 1024",
-        de="PixArt-Sigma 1024",
-        zh="PixArt-Sigma 1024",
-    )
-    DESCRIPTION = MultilingualString(
-        en=(
-            "PixArt-Sigma XL by PixArt-alpha, a diffusion transformer (DiT) "
-            "text-to-image model that reaches quality comparable to larger diffusion "
-            "models with far fewer parameters. This checkpoint generates at "
-            "1024x1024 px. Weights are downloaded into the component's own folder. "
-            "Model page: https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-M"
-            "S"
-        ),
-        es=(
-            "PixArt-Sigma XL de PixArt-alpha, un modelo de texto a imagen basado en "
-            "transformer de difusión (DiT) que alcanza una calidad comparable a "
-            "modelos de difusión más grandes con muchos menos parámetros. Este "
-            "checkpoint genera a 1024x1024 px. Los pesos se descargan en la carpeta "
-            "propia del componente. Página del modelo: "
-            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
-        ),
-        pt=(
-            "PixArt-Sigma XL de PixArt-alpha, um modelo de texto para imagem baseado "
-            "em transformer de difusão (DiT) que atinge qualidade comparável a "
-            "modelos de difusão maiores com muito menos parâmetros. Este "
-            "checkpoint gera a 1024x1024 px. Os pesos são baixados na pasta "
-            "própria do componente. Página do modelo: "
-            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
-        ),
-        de=(
-            "PixArt-Sigma XL von PixArt-alpha, ein Text-zu-Bild-Modell auf Basis "
-            "eines Diffusion-Transformers (DiT), das mit weit weniger Parametern "
-            "eine Qualität vergleichbar mit größeren Diffusionsmodellen erreicht. "
-            "Dieser Checkpoint erzeugt Bilder mit 1024x1024 px. Die Gewichte werden "
-            "in den eigenen Ordner der Komponente heruntergeladen. Modellseite: "
-            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
-        ),
-        zh=(
-            "PixArt-alpha 推出的 PixArt-Sigma XL，是一种基于扩散 "
-            "Transformer（DiT）的文本到图像模型，以远更少的参数量达到可媲美更大扩散模"
-            "型的质量。该检查点以 1024x1024 "
-            "像素生成。权重会下载到该组件自己的文件夹中。 模型页面： "
-            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
-        ),
-    )
-
-
-class PixArtSigma512(PixArtSigmaGenerationModel):
-    """PixArt-Sigma XL 512px checkpoint (faster).
-
-    Downloads its checkpoint into the component's own download folder.
-    """
-
-    MODEL_NAME: str = "PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
-    # The 512 checkpoint ships only the transformer; the T5 text encoder, VAE,
-    # scheduler and tokenizer are loaded from the 1024 checkpoint, so both repos
-    # are downloaded. Size is the sum of the two.
-    PIPELINE_REPO: str = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
-    DOWNLOAD_SIZE_BYTES: int = 24280249290
-    DISPLAY_NAME = MultilingualString(
-        en="PixArt-Sigma 512",
-        es="PixArt-Sigma 512",
-        pt="PixArt-Sigma 512",
-        de="PixArt-Sigma 512",
-        zh="PixArt-Sigma 512",
-    )
-    DESCRIPTION = MultilingualString(
-        en=(
-            "PixArt-Sigma XL by PixArt-alpha at 512x512 px, a diffusion transformer "
-            "(DiT) text-to-image model. The lower resolution makes it faster and "
-            "lighter than the 1024 px variant. Weights are downloaded into the "
-            "component's own folder. Model page: https://huggingface.co/PixArt-alpha/"
-            "PixArt-Sigma-XL-2-512-MS"
-        ),
-        es=(
-            "PixArt-Sigma XL de PixArt-alpha a 512x512 px, un modelo de texto a "
-            "imagen basado en transformer de difusión (DiT). La menor resolución "
-            "lo hace más rápido y ligero que la variante de 1024 px. Los pesos se "
-            "descargan en la carpeta propia del componente. Página del modelo: "
-            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
-        ),
-        pt=(
-            "PixArt-Sigma XL de PixArt-alpha a 512x512 px, um modelo de texto para "
-            "imagem baseado em transformer de difusão (DiT). A menor resolução o "
-            "torna mais rápido e leve que a variante de 1024 px. Os pesos são "
-            "baixados na pasta própria do componente. Página do modelo: "
-            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
-        ),
-        de=(
-            "PixArt-Sigma XL von PixArt-alpha bei 512x512 px, ein "
-            "Text-zu-Bild-Modell auf Basis eines Diffusion-Transformers (DiT). Die "
-            "geringere Auflösung macht es schneller und leichter als die "
-            "1024-px-Variante. Die Gewichte werden in den eigenen Ordner der "
-            "Komponente heruntergeladen. Modellseite: "
-            "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
-        ),
-        zh=(
-            "PixArt-alpha 推出的 PixArt-Sigma XL，分辨率为 512x512 "
-            "像素，是一种基于扩散 Transformer（DiT）的文本到图像模型。较低的分辨率使"
-            "其比 1024 像素变体更快、更轻量。权重会下载到该组件自己的文件夹中。 "
-            "模型页面： https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
-        ),
-    )
-
-    @classmethod
-    def hf_repos(cls):
-        """Download the 512 transformer repo and the 1024 pipeline repo.
-
-        Returns
-        -------
-        list of tuple of (str, str)
-            The 512 checkpoint (transformer only) and the 1024 checkpoint
-            (full pipeline: T5, VAE, scheduler, tokenizer).
-        """
-        return [(cls.MODEL_NAME, "model"), (cls.PIPELINE_REPO, "model")]
-
-    def _build_pipeline(self, use_gpu: bool):
-        """Load the 512 transformer into the 1024 pipeline scaffold.
-
-        The 512 repo has no ``model_index.json`` (it ships only the
-        transformer), so the pipeline is loaded from the 1024 repo with the
-        512 transformer injected.
-
-        Parameters
-        ----------
-        use_gpu : bool
-            Whether a GPU is available (selects float16 vs float32).
-
-        Returns
-        -------
-        diffusers.PixArtSigmaPipeline
-            The loaded pipeline (not yet moved to a device).
-        """
-        import torch
-        from diffusers import PixArtSigmaPipeline, Transformer2DModel
-
-        dtype = torch.float16 if use_gpu else torch.float32
-        transformer_dir = str(self._repo_dir(self.MODEL_NAME))
-        pipeline_dir = str(self._repo_dir(self.PIPELINE_REPO))
-        self.model_name = pipeline_dir
-        transformer = Transformer2DModel.from_pretrained(
-            transformer_dir, subfolder="transformer", torch_dtype=dtype
-        )
-        return PixArtSigmaPipeline.from_pretrained(
-            pipeline_dir, transformer=transformer, torch_dtype=dtype
-        )

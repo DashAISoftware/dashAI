@@ -187,10 +187,7 @@ from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
 from DashAI.back.models.hugging_face.opus_mt_roa_en_transformer import (
     OpusMtRoaEnTransformer,
 )
-from DashAI.back.models.hugging_face.pixart_sigma_model import (
-    PixArtSigma512,
-    PixArtSigma1024,
-)
+from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigma
 from DashAI.back.models.hugging_face.qwen_model import (
     Qwen25_05BInstruct,
     Qwen25_15BInstruct,
@@ -402,8 +399,7 @@ def get_initial_components():
         OpusMtEnRoaTransformer,
         OpusMtEsENTransformer,
         OpusMtFrEnTransformer,
-        PixArtSigma1024,
-        PixArtSigma512,
+        PixArtSigma,
         Qwen25_05BInstruct,
         Qwen25_15BInstruct,
         OpusMtRoaEnTransformer,
