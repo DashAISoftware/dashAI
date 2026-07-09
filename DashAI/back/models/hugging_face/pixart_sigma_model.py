@@ -458,7 +458,7 @@ class PixArtSigmaGenerationModel(
         self.device = (
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
-        self._pretrained_source(None)
+        self.model_name = self._pretrained_source(None)
 
         self.model = PixArtSigmaPipeline.from_pretrained(
             self.model_name,
