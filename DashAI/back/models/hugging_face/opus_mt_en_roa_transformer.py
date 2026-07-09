@@ -81,6 +81,7 @@ class OpusMtEnRoaTransformer(OpusMtTransformerMixin):
     MODEL_NAME: str = "Helsinki-NLP/opus-mt-en-roa"
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_opus-mt-en-roa"
     SCHEMA = OpusMtEnRoaTransformerSchema
+    DOWNLOAD_SIZE_BYTES = 1171638932
     DISPLAY_NAME: str = MultilingualString(
         en="Opus MT En-Roa Transformer",
         es="Transformer Opus MT En-Roa",
@@ -92,32 +93,32 @@ class OpusMtEnRoaTransformer(OpusMtTransformerMixin):
         en=(
             "Pretrained transformer for English to Romance translation "
             "(Portuguese, Spanish, French, Italian, Romanian, Catalan, "
-            "Galician), selected via the target language parameter. Downloads "
-            "weights from Hugging Face on first use (internet required)."
+            "Galician), selected via the target language parameter. Download "
+            "its weights from Hugging Face before use (internet required)."
         ),
         es=(
             "Transformer preentrenado para traducción del inglés a lenguas "
             "romances (portugués, español, francés, italiano, rumano, catalán, "
             "gallego), seleccionadas con el parámetro de idioma de destino. "
-            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+            "Descarga sus pesos de Hugging Face antes de usarlo (requiere internet)."
         ),
         pt=(
             "Transformer pré-treinado para tradução do inglês para línguas "
             "românicas (português, espanhol, francês, italiano, romeno, catalão, "
-            "galego), selecionadas pelo parâmetro de idioma de destino. Baixa os "
-            "pesos do Hugging Face no primeiro uso (requer internet)."
+            "galego), selecionadas pelo parâmetro de idioma de destino. Baixe "
+            "seus pesos do Hugging Face antes de usar (requer internet)."
         ),
         de=(
             "Vortrainierter Transformer für die Übersetzung von Englisch in "
             "romanische Sprachen (Portugiesisch, Spanisch, Französisch, "
             "Italienisch, Rumänisch, Katalanisch, Galicisch), ausgewählt über "
-            "den Zielsprachenparameter. Lädt Gewichte von Hugging Face bei der "
-            "ersten Verwendung herunter (Internet erforderlich)."
+            "den Zielsprachenparameter. Lädt die Gewichte vor der Nutzung von "
+            "Hugging Face herunter (Internet erforderlich)."
         ),
         zh=(
             "用于英语到罗曼语翻译的预训练 Transformer（葡萄牙语、西班牙语、法语、"
             "意大利语、罗马尼亚语、加泰罗尼亚语、加利西亚语），通过目标语言参数选择。"
-            "首次使用时从 Hugging Face 下载权重（需要网络）。"
+            "使用前需从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#5E35B1"

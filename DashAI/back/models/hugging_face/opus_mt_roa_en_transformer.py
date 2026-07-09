@@ -31,6 +31,7 @@ class OpusMtRoaEnTransformer(OpusMtTransformerMixin):
     MODEL_NAME: str = "Helsinki-NLP/opus-mt-roa-en"
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_opus-mt-roa-en"
     SCHEMA = OpusMtRoaEnTransformerSchema
+    DOWNLOAD_SIZE_BYTES = 1206056595
     DISPLAY_NAME: str = MultilingualString(
         en="Opus MT Roa-En Transformer",
         es="Transformer Opus MT Roa-En",
@@ -41,28 +42,28 @@ class OpusMtRoaEnTransformer(OpusMtTransformerMixin):
     DESCRIPTION: str = MultilingualString(
         en=(
             "Pretrained transformer for Romance to English translation "
-            "(includes Portuguese to English). Downloads weights from Hugging "
-            "Face on first use (internet required)."
+            "(includes Portuguese to English). Download its weights from "
+            "Hugging Face before use (internet required)."
         ),
         es=(
             "Transformer preentrenado para traducción de lenguas romances al "
-            "inglés (incluye portugués a inglés). Descarga pesos de Hugging "
-            "Face en el primer uso (requiere internet)."
+            "inglés (incluye portugués a inglés). Descarga sus pesos de "
+            "Hugging Face antes de usarlo (requiere internet)."
         ),
         pt=(
             "Transformer pré-treinado para tradução de línguas românicas para o "
-            "inglês (inclui português para inglês). Baixa os pesos do Hugging "
-            "Face no primeiro uso (requer internet)."
+            "inglês (inclui português para inglês). Baixe seus pesos do "
+            "Hugging Face antes de usar (requer internet)."
         ),
         de=(
             "Vortrainierter Transformer für die Übersetzung romanischer Sprachen "
             "ins Englische (einschließlich Portugiesisch nach Englisch). Lädt "
-            "Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "die Gewichte vor der Nutzung von Hugging Face herunter "
             "(Internet erforderlich)."
         ),
         zh=(
             "用于罗曼语到英语翻译的预训练 Transformer（包括葡萄牙语到英语）。"
-            "首次使用时从 Hugging Face 下载权重（需要网络）。"
+            "使用前需从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#00796B"
