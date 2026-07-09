@@ -53,7 +53,6 @@ export default function ModelsBreadcrumbs() {
       const run = runs.find((r) => r.id === Number(params.runId));
       const runName = run?.name ?? `#${params.runId}`;
       return [
-        rootCrumb,
         {
           label: sessionName,
           path: `/app/models/sessions/${params.id}`,
