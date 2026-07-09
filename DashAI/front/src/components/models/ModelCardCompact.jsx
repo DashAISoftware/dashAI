@@ -285,17 +285,21 @@ function ModelCardCompact({
         </Tooltip>
       </Box>
 
-      <DeleteConfirmationModal
-        open={deleteConfirmOpen}
-        onClose={() => setDeleteConfirmOpen(false)}
-        onConfirm={() => {
-          setDeleteConfirmOpen(false);
-          localStorage.removeItem(`run-${run.id}-results-visible`);
-          localStorage.removeItem(`run-${run.id}-active-tab`);
-          onDelete(run);
-        }}
-        content={t("models:message.confirmDeleteRun")}
-      />
+      {/* Wrapped so clicks inside the modal (a portal) don't bubble through
+          the React tree into the card's onClick={onOpen} above */}
+      <Box onClick={(e) => e.stopPropagation()}>
+        <DeleteConfirmationModal
+          open={deleteConfirmOpen}
+          onClose={() => setDeleteConfirmOpen(false)}
+          onConfirm={() => {
+            setDeleteConfirmOpen(false);
+            localStorage.removeItem(`run-${run.id}-results-visible`);
+            localStorage.removeItem(`run-${run.id}-active-tab`);
+            onDelete(run);
+          }}
+          content={t("models:message.confirmDeleteRun")}
+        />
+      </Box>
     </Paper>
   );
 }

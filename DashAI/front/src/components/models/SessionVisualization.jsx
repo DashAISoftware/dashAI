@@ -195,6 +195,16 @@ export default function SessionVisualization() {
     }
   };
 
+  // If the run being deleted is the one currently open in the detail view,
+  // navigate back to the session overview instead of leaving the user on a
+  // "run not found" screen for a run that no longer exists.
+  const handleDeleteRun = async (run) => {
+    await onDeleteRun(run);
+    if (params.runId && String(run.id) === params.runId) {
+      navigate(`/app/models/sessions/${session.id}`);
+    }
+  };
+
   if (!session) {
     return (
       <>
@@ -319,7 +329,7 @@ export default function SessionVisualization() {
                 models={models}
                 session={session}
                 onTrain={handleTrainWithTour}
-                onDelete={onDeleteRun}
+                onDelete={handleDeleteRun}
                 explainerRefreshTrigger={explainerRefreshTrigger}
                 onOperationsRefresh={() =>
                   setExplainerRefreshTrigger((prev) => prev + 1)
@@ -410,7 +420,7 @@ export default function SessionVisualization() {
                         models={models}
                         score={scores[run.id]}
                         onTrain={handleTrainWithTour}
-                        onDelete={onDeleteRun}
+                        onDelete={handleDeleteRun}
                         onOpen={() =>
                           navigate(
                             `/app/models/sessions/${session.id}/model/${run.id}`,
