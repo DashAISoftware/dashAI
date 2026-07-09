@@ -168,7 +168,8 @@
     "deleted": "Descarga eliminada",
     "failed": "La descarga del componente ha fallado",
     "mustDownload": "Este modelo debe descargarse antes de usarlo",
-    "mustDownloadNested": "Estos componentes deben descargarse primero: {{names}}"
+    "mustDownloadNested": "Estos componentes deben descargarse primero: {{names}}",
+    "confirmDelete": "¿Eliminar los archivos descargados de {{name}}? Podrás descargarlo de nuevo más tarde."
   },
   "jobQueue": {
     "title": "Cola de trabajos",

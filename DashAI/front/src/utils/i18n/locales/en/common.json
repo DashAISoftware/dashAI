@@ -168,7 +168,8 @@
     "deleted": "Download deleted",
     "failed": "Component download failed",
     "mustDownload": "This model must be downloaded before use",
-    "mustDownloadNested": "These components must be downloaded first: {{names}}"
+    "mustDownloadNested": "These components must be downloaded first: {{names}}",
+    "confirmDelete": "Delete the downloaded files for {{name}}? You can download it again later."
   },
   "jobQueue": {
     "title": "Job Queue",

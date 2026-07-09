@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Box, CircularProgress, IconButton, Tooltip } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -9,6 +9,7 @@ import {
   useComponentDownloadState,
   deleteComponent,
 } from "./ComponentDownloadControl";
+import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
 
 /**
  * Compact, tooltip-free download status shown at the end of a model row in the
@@ -22,6 +23,7 @@ export default function ModelDownloadStatusIcon({ model, onChanged }) {
   const { t } = useTranslation(["common"]);
   const { enqueueSnackbar } = useSnackbar();
   const { downloaded, downloading } = useComponentDownloadState(model);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (!model.metadata?.requires_download) return null;
 
@@ -31,13 +33,25 @@ export default function ModelDownloadStatusIcon({ model, onChanged }) {
 
   if (downloaded) {
     return (
-      <Tooltip title={t("common:componentDownload.delete")}>
-        <IconButton
-          size="small"
-          color="error"
-          aria-label={t("common:componentDownload.delete")}
-          onClick={(e) => {
-            e.stopPropagation();
+      <>
+        <Tooltip title={t("common:componentDownload.delete")}>
+          <IconButton
+            size="small"
+            color="error"
+            aria-label={t("common:componentDownload.delete")}
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmOpen(true);
+            }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <DeleteConfirmationModal
+          open={confirmOpen}
+          onClose={() => setConfirmOpen(false)}
+          onConfirm={() => {
+            setConfirmOpen(false);
             deleteComponent({
               component: model,
               enqueueSnackbar,
@@ -45,10 +59,11 @@ export default function ModelDownloadStatusIcon({ model, onChanged }) {
               onStatusChange: onChanged,
             });
           }}
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
+          content={t("common:componentDownload.confirmDelete", {
+            name: model.display_name || model.name,
+          })}
+        />
+      </>
     );
   }
 

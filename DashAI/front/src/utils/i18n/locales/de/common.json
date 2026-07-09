@@ -168,7 +168,8 @@
     "deleted": "Download geloescht",
     "failed": "Download der Komponente fehlgeschlagen",
     "mustDownload": "Dieses Modell muss vor der Nutzung heruntergeladen werden",
-    "mustDownloadNested": "Diese Komponenten müssen zuerst heruntergeladen werden: {{names}}"
+    "mustDownloadNested": "Diese Komponenten müssen zuerst heruntergeladen werden: {{names}}",
+    "confirmDelete": "Die heruntergeladenen Dateien für {{name}} löschen? Du kannst es später erneut herunterladen."
   },
   "jobQueue": {
     "title": "Aufgabenwarteschlange",

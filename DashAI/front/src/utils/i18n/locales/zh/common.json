@@ -168,7 +168,8 @@
     "deleted": "下载已删除",
     "failed": "组件下载失败",
     "mustDownload": "使用前必须先下载此模型",
-    "mustDownloadNested": "必须先下载这些组件：{{names}}"
+    "mustDownloadNested": "必须先下载这些组件：{{names}}",
+    "confirmDelete": "删除 {{name}} 的已下载文件？之后可以重新下载。"
   },
   "jobQueue": {
     "title": "任务队列",

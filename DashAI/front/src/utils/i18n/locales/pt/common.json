@@ -168,7 +168,8 @@
     "deleted": "Download removido",
     "failed": "Falha ao baixar o componente",
     "mustDownload": "Este modelo precisa ser baixado antes de usar",
-    "mustDownloadNested": "Estes componentes precisam ser baixados primeiro: {{names}}"
+    "mustDownloadNested": "Estes componentes precisam ser baixados primeiro: {{names}}",
+    "confirmDelete": "Excluir os arquivos baixados de {{name}}? Você poderá baixá-lo novamente mais tarde."
   },
   "jobQueue": {
     "title": "Fila de trabalhos",

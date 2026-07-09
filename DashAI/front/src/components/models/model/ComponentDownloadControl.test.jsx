@@ -56,8 +56,14 @@ describe("ComponentDownloadControl", () => {
         onStatusChange={() => {}}
       />,
     );
-    const button = await screen.findByRole("button", { name: /delete/i });
+    const button = await screen.findByRole("button", {
+      name: "Delete download",
+    });
     fireEvent.click(button);
+    // Deletion only happens after confirming in the modal.
+    expect(deleteComponentDownload).not.toHaveBeenCalled();
+    const confirm = await screen.findByRole("button", { name: "Delete" });
+    fireEvent.click(confirm);
     await waitFor(() =>
       expect(deleteComponentDownload).toHaveBeenCalledWith(
         "OpusMtEnRoaTransformerDownloaded",

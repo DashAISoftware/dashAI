@@ -10,6 +10,7 @@ import {
   getComponentDownloadStatus,
 } from "../../../api/component";
 import { startJobPolling, stopJobPolling } from "../../../utils/jobPoller";
+import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
 
 const formatSize = (bytes) => {
   if (bytes == null) return "";
@@ -174,6 +175,7 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
   const { enqueueSnackbar } = useSnackbar();
   const meta = component.metadata || {};
   const { downloaded, downloading } = useComponentDownloadState(component);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (!meta.requires_download) return null;
 
@@ -196,14 +198,27 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
 
   if (downloaded) {
     return (
-      <Button
-        size="small"
-        color="error"
-        startIcon={<DeleteIcon />}
-        onClick={handleDelete}
-      >
-        {t("common:componentDownload.delete")}
-      </Button>
+      <>
+        <Button
+          size="small"
+          color="error"
+          startIcon={<DeleteIcon />}
+          onClick={() => setConfirmOpen(true)}
+        >
+          {t("common:componentDownload.delete")}
+        </Button>
+        <DeleteConfirmationModal
+          open={confirmOpen}
+          onClose={() => setConfirmOpen(false)}
+          onConfirm={() => {
+            setConfirmOpen(false);
+            handleDelete();
+          }}
+          content={t("common:componentDownload.confirmDelete", {
+            name: component.display_name || component.name,
+          })}
+        />
+      </>
     );
   }
 

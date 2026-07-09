@@ -32,15 +32,19 @@ describe("ModelDownloadStatusIcon", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("deletes a downloaded model from a plain delete icon", async () => {
+  it("deletes a downloaded model after confirming in the modal", async () => {
     renderWithProviders(
       <ModelDownloadStatusIcon
         model={{ ...model, downloaded: true }}
         onChanged={() => {}}
       />,
     );
-    const del = await screen.findByRole("button", { name: /delete/i });
+    const del = await screen.findByRole("button", { name: "Delete download" });
     fireEvent.click(del);
+    // Deletion only happens after confirming in the modal.
+    expect(deleteComponentDownload).not.toHaveBeenCalled();
+    const confirm = await screen.findByRole("button", { name: "Delete" });
+    fireEvent.click(confirm);
     await waitFor(() =>
       expect(deleteComponentDownload).toHaveBeenCalledWith(
         "DownloadableTestModel",
