@@ -358,13 +358,42 @@ export default function SessionVisualization() {
             {/* Session header — breadcrumb, title, quick stats */}
             <Box sx={{ px: 4, pt: 4 }}>
               <ModelsBreadcrumbs />
-              <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-                {session.name}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {t("models:label.modelCount", { count: sortedRuns.length })}
-                {datasetName && ` | ${t("common:dataset")} ${datasetName}`}
-              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-end",
+                  flexWrap: "wrap",
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+                    {session.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("models:label.modelCount", {
+                      count: sortedRuns.length,
+                    })}
+                    {datasetName && ` | ${t("common:dataset")} ${datasetName}`}
+                  </Typography>
+                </Box>
+
+                {runs.length > 0 && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<PlayArrow />}
+                    disabled={!runs.some((r) => r.status === 0)}
+                    onClick={() => {
+                      const notStartedRuns = runs.filter((r) => r.status === 0);
+                      notStartedRuns.forEach((run) => onTrain(run));
+                    }}
+                  >
+                    {t("models:button.runAll")}
+                  </Button>
+                )}
+              </Box>
             </Box>
 
             {/* Compact model cards — quick access to each model */}
@@ -514,23 +543,6 @@ export default function SessionVisualization() {
                       {t("common:graphs")}
                     </Button>
                   </ButtonGroup>
-
-                  {/* Run All Button */}
-                  {runs.length > 0 && runs.some((r) => r.status === 0) && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<PlayArrow />}
-                      onClick={() => {
-                        const notStartedRuns = runs.filter(
-                          (r) => r.status === 0,
-                        );
-                        notStartedRuns.forEach((run) => onTrain(run));
-                      }}
-                    >
-                      {t("models:button.runAll")}
-                    </Button>
-                  )}
                 </Box>
               </Box>
 
