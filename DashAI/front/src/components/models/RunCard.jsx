@@ -304,7 +304,10 @@ function RunCard({
         "@keyframes newRunHighlight": {
           "0%": { boxShadow: "none" },
           "20%": {
-            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+            boxShadow: `0 0 0 3px ${alpha(
+              theme.palette.primary.main,
+              0.65,
+            )}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
           },
           "100%": { boxShadow: "none" },
         },
@@ -334,13 +337,13 @@ function RunCard({
                 flexWrap: "wrap",
               }}
             >
-              {modelDisplayName}
+              {run.name}
               <Typography
                 variant="body2"
                 color="text.secondary"
                 component="span"
               >
-                ({run.name})
+                ({modelDisplayName})
               </Typography>
             </Typography>
           </Box>

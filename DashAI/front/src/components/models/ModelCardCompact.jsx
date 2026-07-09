@@ -236,7 +236,7 @@ function ModelCardCompact({
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
-          {modelDisplayName}
+          {run.name}
         </Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Box
@@ -249,7 +249,7 @@ function ModelCardCompact({
             }}
           />
           <Typography variant="caption" color="text.secondary" noWrap>
-            {run.name}
+            {modelDisplayName}
           </Typography>
         </Box>
       </Box>
