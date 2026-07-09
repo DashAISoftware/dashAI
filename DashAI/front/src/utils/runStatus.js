@@ -14,3 +14,19 @@ export function getRunStatus(statusNumber, t) {
       throw new Error(`Error ${statusNumber} is not a valid status`);
   }
 }
+
+export function getRunStatusColor(statusNumber) {
+  switch (statusNumber) {
+    case 0:
+      return "default";
+    case 1:
+    case 2:
+      return "info";
+    case 3:
+      return "success";
+    case 4:
+      return "error";
+    default:
+      return "default";
+  }
+}

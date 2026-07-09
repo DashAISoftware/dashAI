@@ -128,6 +128,7 @@
     "showResults": "显示结果",
     "saveWillDeleteOperationsDetails": "保存 \"<1>{{runName}}</1>\" 将重置该运行。再次训练时以下内容将被删除：",
     "runDetails": "运行详情",
+    "runNotFound": "未找到该运行",
     "runExperimentToSeeMetrics": "前往<1>实验标签页</1>运行您的实验。",
     "runFailedNoHyperparameterPlots": "运行失败。无超参数图表可用。",
     "runInProgressCannotEdit": "运行正在进行中，无法编辑。",

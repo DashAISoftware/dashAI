@@ -128,6 +128,7 @@
     "showResults": "Ergebnisse anzeigen",
     "saveWillDeleteOperationsDetails": "Das Speichern von \"<1>{{runName}}</1>\" setzt den Durchlauf zurück. Folgendes wird beim erneuten Training gelöscht:",
     "runDetails": "Durchlaufdetails",
+    "runNotFound": "Durchlauf nicht gefunden",
     "runExperimentToSeeMetrics": "Gehen Sie zum<1>Experiments-Tab</1>, um Ihr Experiment auszuführen.",
     "runFailedNoHyperparameterPlots": "Durchlauf fehlgeschlagen. Keine Hyperparameter-Plots verfügbar.",
     "runInProgressCannotEdit": "Der Durchlauf wird gerade ausgeführt und kann nicht bearbeitet werden.",

@@ -38,7 +38,7 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
-import { getRunStatus } from "../../utils/runStatus";
+import { getRunStatus, getRunStatusColor } from "../../utils/runStatus";
 import RunResults from "./RunResults";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
@@ -67,6 +67,7 @@ function RunCard({
   existingRuns = [],
   onRefresh,
   isHighlighted = false,
+  forceExpanded = false,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
@@ -76,13 +77,15 @@ function RunCard({
     const saved = localStorage.getItem(`run-${run.id}-results-visible`);
     return saved ? JSON.parse(saved) : false;
   });
+  const isResultsVisible = forceExpanded || resultsVisible;
 
   useEffect(() => {
+    if (forceExpanded) return;
     localStorage.setItem(
       `run-${run.id}-results-visible`,
       JSON.stringify(resultsVisible),
     );
-  }, [resultsVisible, run.id]);
+  }, [resultsVisible, run.id, forceExpanded]);
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(run.name || "");
   const [editedParameters, setEditedParameters] = useState(
@@ -252,22 +255,6 @@ function RunCard({
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 0:
-        return "default";
-      case 1:
-      case 2:
-        return "info";
-      case 3:
-        return "success";
-      case 4:
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
   useEffect(() => {
     if (run.status !== 1 && run.status !== 2) {
       setAutoExpand(false);
@@ -415,7 +402,7 @@ function RunCard({
 
             <Chip
               label={statusText}
-              color={getStatusColor(run.status)}
+              color={getRunStatusColor(run.status)}
               size="small"
             />
 
@@ -429,25 +416,27 @@ function RunCard({
                 <Delete fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip
-              title={
-                resultsVisible
-                  ? t("models:label.hideResults")
-                  : t("models:label.showResults")
-              }
-            >
-              <IconButton
-                size="small"
-                onClick={() => setResultsVisible(!resultsVisible)}
-                color="default"
+            {!forceExpanded && (
+              <Tooltip
+                title={
+                  resultsVisible
+                    ? t("models:label.hideResults")
+                    : t("models:label.showResults")
+                }
               >
-                {resultsVisible ? (
-                  <ExpandLess fontSize="small" />
-                ) : (
-                  <ExpandMore fontSize="small" />
-                )}
-              </IconButton>
-            </Tooltip>
+                <IconButton
+                  size="small"
+                  onClick={() => setResultsVisible(!resultsVisible)}
+                  color="default"
+                >
+                  {resultsVisible ? (
+                    <ExpandLess fontSize="small" />
+                  ) : (
+                    <ExpandMore fontSize="small" />
+                  )}
+                </IconButton>
+              </Tooltip>
+            )}
           </Box>
         </Box>
 
@@ -494,7 +483,7 @@ function RunCard({
             session={session}
             onRefresh={onOperationsRefresh}
             explainerRefreshTrigger={explainerRefreshTrigger}
-            resultsVisible={resultsVisible}
+            resultsVisible={isResultsVisible}
             setResultsVisible={setResultsVisible}
             autoExpand={autoExpand}
           />
@@ -684,6 +673,7 @@ RunCard.propTypes = {
   isLastRun: PropTypes.bool,
   existingRuns: PropTypes.array,
   onRefresh: PropTypes.func,
+  forceExpanded: PropTypes.bool,
 };
 
 export default RunCard;

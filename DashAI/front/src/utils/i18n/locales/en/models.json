@@ -128,6 +128,7 @@
     "showResults": "Show Results",
     "saveWillDeleteOperationsDetails": "Saving \"<1>{{runName}}</1>\" will reset the run. The following will be deleted when you train again:",
     "runDetails": "Run Details",
+    "runNotFound": "Run not found",
     "runExperimentToSeeMetrics": "Go to<1>experiments tab</1>to run your experiment.",
     "runFailedNoHyperparameterPlots": "Run Failed. No hyperparameter plots available.",
     "runInProgressCannotEdit": "Run is currently in progress and cannot be edited.",

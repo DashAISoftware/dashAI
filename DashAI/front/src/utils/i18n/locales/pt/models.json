@@ -130,6 +130,7 @@
     "showResults": "Mostrar Resultados",
     "saveWillDeleteOperationsDetails": "Salvar \"<1>{{runName}}</1>\" redefinirá a execução. O seguinte será excluído ao retreinar:",
     "runDetails": "Detalhes da Execução",
+    "runNotFound": "Execução não encontrada",
     "runExperimentToSeeMetrics": "Vá para a <1>aba de experimentos</1> para executar seu experimento.",
     "runFailedNoHyperparameterPlots": "Execução Falhou. Não há gráficos de hiperparâmetros disponíveis.",
     "runInProgressCannotEdit": "A execução está em andamento e não pode ser editada.",

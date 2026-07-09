@@ -130,6 +130,7 @@
     "showResults": "Mostrar Resultados",
     "saveWillDeleteOperationsDetails": "Guardar \"<1>{{runName}}</1>\" restablecerá la ejecución. Lo siguiente se eliminará cuando vuelva a entrenar:",
     "runDetails": "Detalles de la Ejecución",
+    "runNotFound": "Ejecución no encontrada",
     "runExperimentToSeeMetrics": "Ve a la <1>pestaña de experimentos</1> para ejecutar tu experimento.",
     "runFailedNoHyperparameterPlots": "Ejecución Fallida. No hay gráficos de hiperparámetros disponibles.",
     "runInProgressCannotEdit": "La ejecución está actualmente en progreso y no puede ser editada.",
