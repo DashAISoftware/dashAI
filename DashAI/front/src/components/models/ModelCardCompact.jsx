@@ -202,7 +202,7 @@ function ModelCardCompact({
       sx={{
         p: 2.5,
         display: "flex",
-        flexDirection: "column",
+        alignItems: "center",
         gap: 2,
         cursor: "pointer",
         border: 1,
@@ -217,80 +217,70 @@ function ModelCardCompact({
         }),
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-        <Box
-          sx={{
-            p: 1.5,
-            borderRadius: 1,
-            bgcolor: "action.hover",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <ModelIcon
-            iconName={model?.metadata?.icon}
-            color={model?.color || model?.metadata?.color}
-          />
-        </Box>
+      <Box
+        sx={{
+          p: 1.5,
+          borderRadius: 1,
+          bgcolor: "action.hover",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <ModelIcon
+          iconName={model?.metadata?.icon}
+          color={model?.color || model?.metadata?.color}
+        />
+      </Box>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
-            {modelDisplayName}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
+          {modelDisplayName}
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            sx={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              bgcolor: statusMain,
+              flexShrink: 0,
+            }}
+          />
+          <Typography variant="caption" color="text.secondary" noWrap>
+            {run.name}
           </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box
-              sx={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                bgcolor: statusMain,
-                flexShrink: 0,
-              }}
-            />
-            <Typography variant="caption" color="text.secondary" noWrap>
-              {run.name}
-            </Typography>
-          </Box>
         </Box>
       </Box>
 
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <ScoreRing run={run} score={score} statusMain={statusMain} />
+      <ScoreRing run={run} score={score} statusMain={statusMain} />
 
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {canTrain && (
-            <Tooltip
-              title={
-                run.status === 3 ? t("common:retrain") : t("common:trainVerb")
-              }
-            >
-              <IconButton size="small" onClick={() => onTrain(run)}>
-                <PlayArrow fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title={t("models:button.deleteRun")}>
-            <IconButton
-              size="small"
-              color="error"
-              disabled={isRunning}
-              onClick={() => setDeleteConfirmOpen(true)}
-            >
-              <Delete fontSize="small" />
+      <Box
+        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {canTrain && (
+          <Tooltip
+            title={
+              run.status === 3 ? t("common:retrain") : t("common:trainVerb")
+            }
+          >
+            <IconButton size="small" onClick={() => onTrain(run)}>
+              <PlayArrow fontSize="small" />
             </IconButton>
           </Tooltip>
-        </Box>
+        )}
+        <Tooltip title={t("models:button.deleteRun")}>
+          <IconButton
+            size="small"
+            color="error"
+            disabled={isRunning}
+            onClick={() => setDeleteConfirmOpen(true)}
+          >
+            <Delete fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       {/* Wrapped so clicks inside the modal (a portal) don't bubble through

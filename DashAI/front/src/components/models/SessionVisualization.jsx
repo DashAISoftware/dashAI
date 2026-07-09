@@ -393,7 +393,7 @@ export default function SessionVisualization() {
                     display: "grid",
                     gap: 3,
                     gridTemplateColumns:
-                      "repeat(auto-fill, minmax(240px, 1fr))",
+                      "repeat(auto-fill, minmax(340px, 1fr))",
                   }}
                 >
                   {sortedRuns.map((run, index) => (
