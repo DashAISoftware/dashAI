@@ -196,7 +196,7 @@ class SD15HEDControlNetModel(HFDownloadableMixin, BaseControlNetModel):
         ("lllyasviel/sd-controlnet-hed", "model"),
         ("lllyasviel/Annotators", "model"),
     ]
-    DOWNLOAD_SIZE_BYTES = 7400000000
+    DOWNLOAD_SIZE_BYTES = 60738022767
     COLOR: str = "#006064"
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 HED ControlNet",

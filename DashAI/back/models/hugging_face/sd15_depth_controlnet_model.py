@@ -263,7 +263,7 @@ class SD15DepthControlNetModel(HFDownloadableMixin, BaseControlNetModel):
         ("lllyasviel/sd-controlnet-depth", "model"),
         ("Intel/dpt-hybrid-midas", "model"),
     ]
-    DOWNLOAD_SIZE_BYTES = 5900000000
+    DOWNLOAD_SIZE_BYTES = 50640633273
     COLOR: str = "#4e342e"
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 Depth ControlNet",

@@ -23,7 +23,7 @@ class Qwen25_05BInstruct(GGUFTextGenerationModel):  # noqa: N801
 
     REPO_ID = "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
     GGUF_PATTERN = "*8_0.gguf"
-    DOWNLOAD_SIZE_BYTES = 700_000_000
+    DOWNLOAD_SIZE_BYTES = 675710816
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#2e7d32"
     DISPLAY_NAME = MultilingualString(
@@ -88,7 +88,7 @@ class Qwen25_15BInstruct(GGUFTextGenerationModel):  # noqa: N801
 
     REPO_ID = "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
     GGUF_PATTERN = "*8_0.gguf"
-    DOWNLOAD_SIZE_BYTES = 1_900_000_000
+    DOWNLOAD_SIZE_BYTES = 1894532128
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#2e7d32"
     DISPLAY_NAME = MultilingualString(

@@ -445,7 +445,7 @@ class TongyiZImage(TongyiZImageGenerationModel):
     """
 
     MODEL_NAME: str = "Tongyi-MAI/Z-Image"
-    DOWNLOAD_SIZE_BYTES: int = 8000000000
+    DOWNLOAD_SIZE_BYTES: int = 20547479575
     DISPLAY_NAME = MultilingualString(
         en="Tongyi Z-Image",
         es="Tongyi Z-Image",
@@ -498,7 +498,7 @@ class TongyiZImageTurbo(TongyiZImageGenerationModel):
     """
 
     MODEL_NAME: str = "Tongyi-MAI/Z-Image-Turbo"
-    DOWNLOAD_SIZE_BYTES: int = 8000000000
+    DOWNLOAD_SIZE_BYTES: int = 32899667397
     DISPLAY_NAME = MultilingualString(
         en="Tongyi Z-Image Turbo",
         es="Tongyi Z-Image Turbo",

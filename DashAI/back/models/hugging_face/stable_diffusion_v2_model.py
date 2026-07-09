@@ -546,7 +546,7 @@ class StableDiffusion2(StableDiffusion2GenerationModel):
 
     MODEL_NAME: str = "sd2-community/stable-diffusion-2"
     # Full fp32 diffusers pipeline (text encoder + U-Net + VAE) is ~5 GB.
-    DOWNLOAD_SIZE_BYTES: int = 5_200_000_000
+    DOWNLOAD_SIZE_BYTES: int = 25911933905
     DISPLAY_NAME = MultilingualString(
         en="Stable Diffusion 2",
         es="Stable Diffusion 2",
@@ -606,7 +606,7 @@ class StableDiffusion2_512(StableDiffusion2GenerationModel):  # noqa: N801
 
     MODEL_NAME: str = "sd2-community/stable-diffusion-2-base"
     # Full fp32 diffusers pipeline (text encoder + U-Net + VAE) is ~5 GB.
-    DOWNLOAD_SIZE_BYTES: int = 5_200_000_000
+    DOWNLOAD_SIZE_BYTES: int = 25911843836
     DISPLAY_NAME = MultilingualString(
         en="Stable Diffusion 2 (512px)",
         es="Stable Diffusion 2 (512px)",
@@ -661,7 +661,7 @@ class StableDiffusion21(StableDiffusion2GenerationModel):
 
     MODEL_NAME: str = "sd2-community/stable-diffusion-2-1"
     # Full fp32 diffusers pipeline (text encoder + U-Net + VAE) is ~5 GB.
-    DOWNLOAD_SIZE_BYTES: int = 5_200_000_000
+    DOWNLOAD_SIZE_BYTES: int = 36341303572
     DISPLAY_NAME = MultilingualString(
         en="Stable Diffusion 2.1",
         es="Stable Diffusion 2.1",
@@ -717,7 +717,7 @@ class StableDiffusion21_512(StableDiffusion2GenerationModel):  # noqa: N801
 
     MODEL_NAME: str = "sd2-community/stable-diffusion-2-1-base"
     # Full fp32 diffusers pipeline (text encoder + U-Net + VAE) is ~5 GB.
-    DOWNLOAD_SIZE_BYTES: int = 5_200_000_000
+    DOWNLOAD_SIZE_BYTES: int = 36341275775
     DISPLAY_NAME = MultilingualString(
         en="Stable Diffusion 2.1 (512px)",
         es="Stable Diffusion 2.1 (512px)",

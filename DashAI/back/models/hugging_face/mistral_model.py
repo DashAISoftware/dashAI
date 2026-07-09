@@ -21,7 +21,7 @@ class Mistral7BInstructV03(GGUFTextGenerationModel):
 
     REPO_ID = "bartowski/Mistral-7B-Instruct-v0.3-GGUF"
     GGUF_PATTERN = "*Q4_K_M.gguf"
-    DOWNLOAD_SIZE_BYTES = 4_400_000_000
+    DOWNLOAD_SIZE_BYTES = 4372812000
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#ff6f00"
     DISPLAY_NAME = MultilingualString(
@@ -79,7 +79,7 @@ class MistralNemoInstruct2407(GGUFTextGenerationModel):
 
     REPO_ID = "bartowski/Mistral-Nemo-Instruct-2407-GGUF"
     GGUF_PATTERN = "*Q4_K_M.gguf"
-    DOWNLOAD_SIZE_BYTES = 7_100_000_000
+    DOWNLOAD_SIZE_BYTES = 7477208192
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#ff6f00"
     DISPLAY_NAME = MultilingualString(

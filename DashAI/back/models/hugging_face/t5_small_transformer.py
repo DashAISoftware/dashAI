@@ -131,7 +131,7 @@ class T5SmallTransformer(HFPretrainedDownloadMixin, TranslationModel):
     COLOR: str = "#00695C"
     ICON: str = "Language"
     MODEL_NAME: str = "t5-small"
-    DOWNLOAD_SIZE_BYTES: int = 240_000_000
+    DOWNLOAD_SIZE_BYTES: int = 2246973515
 
     def __init__(self, model=None, pretrained_dir=None, **kwargs):
         kwargs = self.validate_and_transform(kwargs)

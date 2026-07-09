@@ -21,7 +21,7 @@ class Llama31_8BInstruct(GGUFTextGenerationModel):  # noqa: N801
 
     REPO_ID = "bartowski/Meta-Llama-3.1-8B-Instruct-GGUF"
     GGUF_PATTERN = "*Q4_K_M.gguf"
-    DOWNLOAD_SIZE_BYTES = 4_900_000_000
+    DOWNLOAD_SIZE_BYTES = 4920739232
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#1a237e"
     DISPLAY_NAME = MultilingualString(
@@ -84,7 +84,7 @@ class Llama32_1BInstruct(GGUFTextGenerationModel):  # noqa: N801
 
     REPO_ID = "bartowski/Llama-3.2-1B-Instruct-GGUF"
     GGUF_PATTERN = "*Q4_K_M.gguf"
-    DOWNLOAD_SIZE_BYTES = 800_000_000
+    DOWNLOAD_SIZE_BYTES = 807694464
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#1a237e"
     DISPLAY_NAME = MultilingualString(
@@ -142,7 +142,7 @@ class Llama32_3BInstruct(GGUFTextGenerationModel):  # noqa: N801
 
     REPO_ID = "bartowski/Llama-3.2-3B-Instruct-GGUF"
     GGUF_PATTERN = "*Q4_K_M.gguf"
-    DOWNLOAD_SIZE_BYTES = 2_000_000_000
+    DOWNLOAD_SIZE_BYTES = 2019377696
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#1a237e"
     DISPLAY_NAME = MultilingualString(

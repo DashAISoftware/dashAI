@@ -58,5 +58,5 @@ class BertinTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "RecordVoiceOver"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "bertin-project/bertin-roberta-base-spanish"
-    DOWNLOAD_SIZE_BYTES: int = 500_000_000
+    DOWNLOAD_SIZE_BYTES: int = 1510386247
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_bertin"

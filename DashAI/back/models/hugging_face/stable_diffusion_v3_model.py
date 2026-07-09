@@ -567,7 +567,7 @@ class StableDiffusion3Medium(StableDiffusion3GenerationModel):
     """
 
     MODEL_NAME: str = "stabilityai/stable-diffusion-3-medium-diffusers"
-    DOWNLOAD_SIZE_BYTES: int = 5500000000
+    DOWNLOAD_SIZE_BYTES: int = 31012147557
     DISPLAY_NAME = MultilingualString(
         en="Stable Diffusion 3 Medium",
         es="Stable Diffusion 3 Medium",
@@ -634,7 +634,7 @@ class StableDiffusion35Medium(StableDiffusion3GenerationModel):
     """
 
     MODEL_NAME: str = "stabilityai/stable-diffusion-3.5-medium"
-    DOWNLOAD_SIZE_BYTES: int = 10000000000
+    DOWNLOAD_SIZE_BYTES: int = 48861581303
     DISPLAY_NAME = MultilingualString(
         en="Stable Diffusion 3.5 Medium",
         es="Stable Diffusion 3.5 Medium",
@@ -699,7 +699,7 @@ class StableDiffusion35Large(StableDiffusion3GenerationModel):
     """
 
     MODEL_NAME: str = "stabilityai/stable-diffusion-3.5-large"
-    DOWNLOAD_SIZE_BYTES: int = 16000000000
+    DOWNLOAD_SIZE_BYTES: int = 71585723216
     DISPLAY_NAME = MultilingualString(
         en="Stable Diffusion 3.5 Large",
         es="Stable Diffusion 3.5 Large",
@@ -765,7 +765,7 @@ class StableDiffusion35LargeTurbo(StableDiffusion3GenerationModel):
     """
 
     MODEL_NAME: str = "stabilityai/stable-diffusion-3.5-large-turbo"
-    DOWNLOAD_SIZE_BYTES: int = 16000000000
+    DOWNLOAD_SIZE_BYTES: int = 71582971259
     DISPLAY_NAME = MultilingualString(
         en="Stable Diffusion 3.5 Large Turbo",
         es="Stable Diffusion 3.5 Large Turbo",

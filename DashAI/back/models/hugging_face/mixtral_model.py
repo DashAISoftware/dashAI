@@ -30,7 +30,7 @@ class Mixtral8x7BInstructQ4KM(GGUFTextGenerationModel):
 
     REPO_ID = _MIXTRAL_REPO
     GGUF_PATTERN = "*Q4_K_M.gguf"
-    DOWNLOAD_SIZE_BYTES = 26_000_000_000
+    DOWNLOAD_SIZE_BYTES = 28448468384
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#4a148c"
     DISPLAY_NAME = MultilingualString(
@@ -91,7 +91,7 @@ class Mixtral8x7BInstructQ2K(GGUFTextGenerationModel):
 
     REPO_ID = _MIXTRAL_REPO
     GGUF_PATTERN = "*Q2_K.gguf"
-    DOWNLOAD_SIZE_BYTES = 16_000_000_000
+    DOWNLOAD_SIZE_BYTES = 17311231392
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#4a148c"
     DISPLAY_NAME = MultilingualString(

@@ -21,7 +21,7 @@ class SmolLM2_360MInstruct(GGUFTextGenerationModel):  # noqa: N801
 
     REPO_ID = "HuggingFaceTB/SmolLM2-360M-Instruct-GGUF"
     GGUF_PATTERN = "*q8_0.gguf"
-    DOWNLOAD_SIZE_BYTES = 400_000_000
+    DOWNLOAD_SIZE_BYTES = 386404992
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#00695c"
     DISPLAY_NAME = MultilingualString(
@@ -79,7 +79,7 @@ class SmolLM2_17BInstruct(GGUFTextGenerationModel):  # noqa: N801
 
     REPO_ID = "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF"
     GGUF_PATTERN = "*q4_k_m.gguf"
-    DOWNLOAD_SIZE_BYTES = 1_100_000_000
+    DOWNLOAD_SIZE_BYTES = 1055609536
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#00695c"
     DISPLAY_NAME = MultilingualString(

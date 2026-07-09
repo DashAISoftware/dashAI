@@ -328,7 +328,7 @@ class SDXLTurboModel(HFPretrainedDownloadMixin, TextToImageGenerationTaskModel):
     SCHEMA = SDXLTurboSchema
     MODEL_NAME: str = "stabilityai/sdxl-turbo"
     # SDXL-Turbo diffusers pipeline is ~7 GB.
-    DOWNLOAD_SIZE_BYTES: int = 7_000_000_000
+    DOWNLOAD_SIZE_BYTES: int = 55516176914
     COLOR: str = "#b71c1c"
     DISPLAY_NAME: str = MultilingualString(
         en="SDXL Turbo",

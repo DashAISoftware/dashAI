@@ -32,6 +32,7 @@ class OpusMtEsENTransformer(OpusMtTransformerMixin):
     MODEL_NAME: str = "Helsinki-NLP/opus-mt-es-en"
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_opus-mt-es-en"
     SCHEMA = OpusMtEsENTransformerSchema
+    DOWNLOAD_SIZE_BYTES = 627891360
     DISPLAY_NAME: str = MultilingualString(
         en="Opus MT Es-En Transformer",
         es="Transformer Opus MT Es-En",

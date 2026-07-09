@@ -58,5 +58,5 @@ class BertTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "Psychology"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "bert-base-uncased"
-    DOWNLOAD_SIZE_BYTES: int = 440_000_000
+    DOWNLOAD_SIZE_BYTES: int = 3454102158
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_bert"

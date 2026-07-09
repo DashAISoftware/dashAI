@@ -205,7 +205,7 @@ class NllbTransformer(HFPretrainedDownloadMixin, TranslationModel):
         raise ValueError(f"Unsupported {field_name} '{language_code}'.")
 
     MODEL_NAME: str = "facebook/nllb-200-distilled-600M"
-    DOWNLOAD_SIZE_BYTES: int = 2_400_000_000
+    DOWNLOAD_SIZE_BYTES: int = 2482655255
 
     def __init__(self, model=None, pretrained_dir=None, **kwargs):
         """Initialize the NLLB tokenizer and model.

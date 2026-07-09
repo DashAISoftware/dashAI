@@ -512,7 +512,7 @@ class PixArtSigma1024(PixArtSigmaGenerationModel):
     """
 
     MODEL_NAME: str = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
-    DOWNLOAD_SIZE_BYTES: int = 2500000000
+    DOWNLOAD_SIZE_BYTES: int = 21832490389
     DISPLAY_NAME = MultilingualString(
         en="PixArt-Sigma 1024",
         es="PixArt-Sigma 1024",
@@ -570,7 +570,7 @@ class PixArtSigma512(PixArtSigmaGenerationModel):
     """
 
     MODEL_NAME: str = "PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
-    DOWNLOAD_SIZE_BYTES: int = 2500000000
+    DOWNLOAD_SIZE_BYTES: int = 2447758901
     DISPLAY_NAME = MultilingualString(
         en="PixArt-Sigma 512",
         es="PixArt-Sigma 512",

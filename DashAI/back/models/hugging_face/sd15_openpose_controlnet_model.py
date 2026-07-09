@@ -191,7 +191,7 @@ class SD15OpenPoseControlNetModel(HFDownloadableMixin, BaseControlNetModel):
         ("lllyasviel/sd-controlnet-openpose", "model"),
         ("lllyasviel/Annotators", "model"),
     ]
-    DOWNLOAD_SIZE_BYTES = 7400000000
+    DOWNLOAD_SIZE_BYTES = 60737694276
     COLOR: str = "#880e4f"
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 OpenPose ControlNet",

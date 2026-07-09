@@ -494,7 +494,7 @@ class StableDiffusionXL(StableDiffusionXLGenerationModel):
 
     MODEL_NAME: str = "stabilityai/stable-diffusion-xl-base-1.0"
     # SDXL diffusers pipeline (base + refiner-less) is ~7 GB.
-    DOWNLOAD_SIZE_BYTES: int = 7_000_000_000
+    DOWNLOAD_SIZE_BYTES: int = 76912765291
     DISPLAY_NAME = MultilingualString(
         en="Stable Diffusion XL",
         es="Stable Diffusion XL",
@@ -554,7 +554,7 @@ class RealVisXLV4(StableDiffusionXLGenerationModel):
 
     MODEL_NAME: str = "SG161222/RealVisXL_V4.0"
     # SDXL diffusers pipeline (base + refiner-less) is ~7 GB.
-    DOWNLOAD_SIZE_BYTES: int = 7_000_000_000
+    DOWNLOAD_SIZE_BYTES: int = 27754923233
     DISPLAY_NAME = MultilingualString(
         en="RealVisXL V4.0",
         es="RealVisXL V4.0",

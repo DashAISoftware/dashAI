@@ -58,5 +58,5 @@ class ElectraTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "ElectricBolt"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "google/electra-small-discriminator"
-    DOWNLOAD_SIZE_BYTES: int = 54_000_000
+    DOWNLOAD_SIZE_BYTES: int = 163615837
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_electra"
