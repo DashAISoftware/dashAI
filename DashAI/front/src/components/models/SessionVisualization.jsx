@@ -121,7 +121,7 @@ export default function SessionVisualization() {
     }
   }, [sessionTourContext]);
 
-  // Scroll to and highlight a newly added run card
+  // Scroll to a newly added run card and mark it to be highlighted
   useEffect(() => {
     if (!lastAddedRunId) return;
     const scrollTimer = setTimeout(() => {
@@ -132,12 +132,17 @@ export default function SessionVisualization() {
       setHighlightedRunId(lastAddedRunId);
       clearLastAddedRunId();
     }, 100);
-    const clearTimer = setTimeout(() => setHighlightedRunId(null), 4100);
-    return () => {
-      clearTimeout(scrollTimer);
-      clearTimeout(clearTimer);
-    };
+    return () => clearTimeout(scrollTimer);
   }, [lastAddedRunId]);
+
+  // Clear the highlight a few seconds after it was set. Kept in its own
+  // effect (keyed on highlightedRunId, not lastAddedRunId) so it isn't
+  // cancelled by clearLastAddedRunId() re-triggering the effect above.
+  useEffect(() => {
+    if (!highlightedRunId) return;
+    const clearTimer = setTimeout(() => setHighlightedRunId(null), 1000);
+    return () => clearTimeout(clearTimer);
+  }, [highlightedRunId]);
 
   const handleRowClick = React.useCallback((runId) => {
     setSelectedRunId(runId);

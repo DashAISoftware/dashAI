@@ -197,7 +197,7 @@ function ModelCardCompact({
 
   return (
     <Paper
-      elevation={isHighlighted ? 4 : 0}
+      elevation={0}
       onClick={onOpen}
       sx={{
         p: 2.5,
@@ -207,10 +207,13 @@ function ModelCardCompact({
         cursor: "pointer",
         border: 1,
         borderColor: alpha(statusMain, 0.35),
-        transition: "border-color 0.15s, box-shadow 0.15s",
+        transition: "border-color 0.15s, box-shadow 1.2s ease-out",
         "&:hover": { borderColor: alpha(statusMain, 0.7) },
         ...(isHighlighted && {
-          boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.4)}`,
+          boxShadow: `0 0 0 3px ${alpha(
+            theme.palette.primary.main,
+            0.4,
+          )}, 0 0 20px 6px ${alpha(theme.palette.primary.main, 0.18)}`,
         }),
       }}
     >
