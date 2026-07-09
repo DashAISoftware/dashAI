@@ -450,20 +450,13 @@ class PixArtSigmaGenerationModel(
             num_images_per_prompt : int
                 Number of images to generate per prompt call.
         """
-        import torch
-        from diffusers import PixArtSigmaPipeline
-
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
         self.device = (
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
-        self.model_name = self._pretrained_source(None)
 
-        self.model = PixArtSigmaPipeline.from_pretrained(
-            self.model_name,
-            torch_dtype=torch.float16 if use_gpu else torch.float32,
-        ).to(self.device)
+        self.model = self._build_pipeline(use_gpu).to(self.device)
 
         self.negative_prompt = kwargs.get("negative_prompt")
         self.num_inference_steps = kwargs.get("num_inference_steps")
@@ -472,6 +465,32 @@ class PixArtSigmaGenerationModel(
         self.width = kwargs.get("width")
         self.height = kwargs.get("height")
         self.num_images_per_prompt = kwargs.get("num_images_per_prompt")
+
+    def _build_pipeline(self, use_gpu: bool):
+        """Load the PixArt-Sigma pipeline from the downloaded checkpoint.
+
+        The default loads a self-contained checkpoint (one that ships a full
+        ``model_index.json`` pipeline, e.g. the 1024px variant). Subclasses
+        whose checkpoint contains only the transformer override this.
+
+        Parameters
+        ----------
+        use_gpu : bool
+            Whether a GPU is available (selects float16 vs float32).
+
+        Returns
+        -------
+        diffusers.PixArtSigmaPipeline
+            The loaded pipeline (not yet moved to a device).
+        """
+        import torch
+        from diffusers import PixArtSigmaPipeline
+
+        self.model_name = self._pretrained_source(None)
+        return PixArtSigmaPipeline.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16 if use_gpu else torch.float32,
+        )
 
     def generate(self, input: str) -> List[Any]:
         """Generate images from a text prompt.
@@ -570,7 +589,11 @@ class PixArtSigma512(PixArtSigmaGenerationModel):
     """
 
     MODEL_NAME: str = "PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
-    DOWNLOAD_SIZE_BYTES: int = 2447758901
+    # The 512 checkpoint ships only the transformer; the T5 text encoder, VAE,
+    # scheduler and tokenizer are loaded from the 1024 checkpoint, so both repos
+    # are downloaded. Size is the sum of the two.
+    PIPELINE_REPO: str = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+    DOWNLOAD_SIZE_BYTES: int = 24280249290
     DISPLAY_NAME = MultilingualString(
         en="PixArt-Sigma 512",
         es="PixArt-Sigma 512",
@@ -615,3 +638,46 @@ class PixArtSigma512(PixArtSigmaGenerationModel):
             "模型页面： https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
         ),
     )
+
+    @classmethod
+    def hf_repos(cls):
+        """Download the 512 transformer repo and the 1024 pipeline repo.
+
+        Returns
+        -------
+        list of tuple of (str, str)
+            The 512 checkpoint (transformer only) and the 1024 checkpoint
+            (full pipeline: T5, VAE, scheduler, tokenizer).
+        """
+        return [(cls.MODEL_NAME, "model"), (cls.PIPELINE_REPO, "model")]
+
+    def _build_pipeline(self, use_gpu: bool):
+        """Load the 512 transformer into the 1024 pipeline scaffold.
+
+        The 512 repo has no ``model_index.json`` (it ships only the
+        transformer), so the pipeline is loaded from the 1024 repo with the
+        512 transformer injected.
+
+        Parameters
+        ----------
+        use_gpu : bool
+            Whether a GPU is available (selects float16 vs float32).
+
+        Returns
+        -------
+        diffusers.PixArtSigmaPipeline
+            The loaded pipeline (not yet moved to a device).
+        """
+        import torch
+        from diffusers import PixArtSigmaPipeline, Transformer2DModel
+
+        dtype = torch.float16 if use_gpu else torch.float32
+        transformer_dir = str(self._repo_dir(self.MODEL_NAME))
+        pipeline_dir = str(self._repo_dir(self.PIPELINE_REPO))
+        self.model_name = pipeline_dir
+        transformer = Transformer2DModel.from_pretrained(
+            transformer_dir, subfolder="transformer", torch_dtype=dtype
+        )
+        return PixArtSigmaPipeline.from_pretrained(
+            pipeline_dir, transformer=transformer, torch_dtype=dtype
+        )
