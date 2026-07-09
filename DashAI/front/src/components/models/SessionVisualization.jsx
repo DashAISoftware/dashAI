@@ -14,6 +14,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { useParams } from "react-router-dom";
 import {
   PlayArrow,
   TableChart,
@@ -25,6 +26,7 @@ import RunCard from "./RunCard";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
+import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import { useTranslation } from "react-i18next";
 
 import { useModels } from "./ModelsContext";
@@ -43,6 +45,7 @@ export default function SessionVisualization() {
   const isResizing = React.useRef(false);
   const { t } = useTranslation(["models", "common"]);
   const sessionTourContext = useTourContext();
+  const params = useParams();
 
   const {
     selectedSession: session,
@@ -337,6 +340,14 @@ export default function SessionVisualization() {
             </Typography>
           </Box>
         )}
+        {/* TEMP scaffold for phase 1 (routing/breadcrumbs) — replaced by the
+            full-screen model detail view in phase 3 */}
+        {params.runId && (
+          <Box sx={{ px: 4, pt: 4 }}>
+            <ModelsBreadcrumbs />
+          </Box>
+        )}
+
         {/* Sticky Comparison Table */}
         <Accordion
           data-tour="model-comparison-panel"
