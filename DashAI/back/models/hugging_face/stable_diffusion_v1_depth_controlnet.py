@@ -217,7 +217,7 @@ class StableDiffusionXLV1ControlNet(HFDownloadableMixin, BaseControlNetModel):
         ("madebyollin/sdxl-vae-fp16-fix", "model"),
         ("Intel/dpt-hybrid-midas", "model"),
     ]
-    DOWNLOAD_SIZE_BYTES = 80696728644
+    DOWNLOAD_SIZE_BYTES = 39033373420
     COLOR: str = "#e65100"
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion XL V1 ControlNet",

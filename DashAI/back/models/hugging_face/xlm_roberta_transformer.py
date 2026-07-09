@@ -62,5 +62,5 @@ class XlmRobertaTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "Language"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "xlm-roberta-base"
-    DOWNLOAD_SIZE_BYTES: int = 6352430498
+    DOWNLOAD_SIZE_BYTES: int = 2245330190
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_xlm_roberta"

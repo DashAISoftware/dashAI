@@ -58,5 +58,5 @@ class RobertaTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "SmartToy"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "roberta-base"
-    DOWNLOAD_SIZE_BYTES: int = 2815192007
+    DOWNLOAD_SIZE_BYTES: int = 1003342916
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_roberta"

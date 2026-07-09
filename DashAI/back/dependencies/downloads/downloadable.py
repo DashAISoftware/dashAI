@@ -75,9 +75,30 @@ class HFDownloadableMixin(DownloadableMixin):
     * ``(repo_id, repo_type)`` -- full snapshot download (original behavior).
     * ``(repo_id, repo_type, allow_patterns)`` -- partial download; only files
       matching the glob patterns in ``allow_patterns`` are fetched.
+
+    ``HF_IGNORE_PATTERNS`` is applied to every repo download to skip the
+    non-PyTorch weight formats HuggingFace repos ship alongside the PyTorch /
+    safetensors weights (TensorFlow, Flax, Rust, ONNX, OpenVINO, CoreML). These
+    are never used by ``from_pretrained`` here, so dropping them shrinks the
+    download without affecting fine-tuning or inference. It keeps both ``.bin``
+    and ``.safetensors`` so any model still has a loadable weight.
     """
 
     HF_REPOS: List[Union[Tuple[str, str], Tuple[str, str, List[str]]]] = []
+    #: Alternate-framework artifacts to skip on every download (``*`` matches
+    #: path separators in ``huggingface_hub`` glob semantics, so these match at
+    #: any depth, e.g. ``unet/diffusion_flax_model.msgpack``).
+    HF_IGNORE_PATTERNS: Optional[List[str]] = [
+        "*.h5",
+        "*.msgpack",
+        "*.ot",
+        "*.onnx",
+        "*.onnx_data",
+        "*.tflite",
+        "*.mlmodel",
+        "*openvino*",
+        "*coreml*",
+    ]
 
     @classmethod
     def hf_repos(cls) -> List[Union[Tuple[str, str], Tuple[str, str, List[str]]]]:
@@ -206,6 +227,8 @@ class HFDownloadableMixin(DownloadableMixin):
             kwargs = {}
             if allow_patterns is not None:
                 kwargs["allow_patterns"] = allow_patterns
+            if cls.HF_IGNORE_PATTERNS:
+                kwargs["ignore_patterns"] = list(cls.HF_IGNORE_PATTERNS)
             snapshot_download(
                 repo_id=rid, repo_type=rtype, local_dir=str(target), **kwargs
             )

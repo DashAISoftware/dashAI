@@ -158,7 +158,7 @@ class M2M100Transformer(HFPretrainedDownloadMixin, TranslationModel):
     COLOR: str = "#6A1B9A"
     ICON: str = "Language"
     MODEL_NAME: str = "facebook/m2m100_418M"
-    DOWNLOAD_SIZE_BYTES: int = 3877717593
+    DOWNLOAD_SIZE_BYTES: int = 1941936305
 
     def __init__(self, model=None, pretrained_dir=None, **kwargs):
         kwargs = self.validate_and_transform(kwargs)

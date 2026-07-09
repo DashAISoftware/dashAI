@@ -494,7 +494,7 @@ class StableDiffusionXL(StableDiffusionXLGenerationModel):
 
     MODEL_NAME: str = "stabilityai/stable-diffusion-xl-base-1.0"
     # SDXL diffusers pipeline (base + refiner-less) is ~7 GB.
-    DOWNLOAD_SIZE_BYTES: int = 76912765291
+    DOWNLOAD_SIZE_BYTES: int = 35249410067
     DISPLAY_NAME = MultilingualString(
         en="Stable Diffusion XL",
         es="Stable Diffusion XL",

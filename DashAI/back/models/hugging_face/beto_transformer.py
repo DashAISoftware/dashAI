@@ -58,5 +58,5 @@ class BetoTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "RecordVoiceOver"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "dccuchile/bert-base-spanish-wwm-cased"
-    DOWNLOAD_SIZE_BYTES: int = 1416527075
+    DOWNLOAD_SIZE_BYTES: int = 440350800
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_beto"

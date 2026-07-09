@@ -296,7 +296,7 @@ class SDXLCannyControlNetModel(HFDownloadableMixin, BaseControlNetModel):
         ("diffusers/controlnet-canny-sdxl-1.0", "model"),
         ("madebyollin/sdxl-vae-fp16-fix", "model"),
     ]
-    DOWNLOAD_SIZE_BYTES = 93308273070
+    DOWNLOAD_SIZE_BYTES = 51644917846
     COLOR: str = "#1a237e"
     DISPLAY_NAME: str = MultilingualString(
         en="SDXL Canny ControlNet",
