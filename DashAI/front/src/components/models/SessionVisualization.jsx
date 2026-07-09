@@ -2,24 +2,15 @@ import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Divider,
   Button,
   ButtonGroup,
   ToggleButtonGroup,
   ToggleButton,
-  Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  PlayArrow,
-  TableChart,
-  BarChart,
-  ExpandMore,
-} from "@mui/icons-material";
+import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
 import RunCard from "./RunCard";
 import ModelCardCompact from "./ModelCardCompact";
@@ -36,13 +27,9 @@ export default function SessionVisualization() {
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [highlightedRunId, setHighlightedRunId] = useState(null);
-  const [tableHeight, setTableHeight] = useState(280);
   const [showTable, setShowTable] = useState(true);
-  const [previousTableHeight, setPreviousTableHeight] = useState(280);
   const [metricSplit, setMetricSplit] = useState("test");
-  const [tableCollapsed, setTableCollapsed] = useState(false);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
-  const isResizing = React.useRef(false);
   const { t } = useTranslation(["models", "common"]);
   const sessionTourContext = useTourContext();
   const params = useParams();
@@ -86,21 +73,9 @@ export default function SessionVisualization() {
     };
   }, []);
 
-  // Auto-expand when switching to graphs
-  const handleToggleView = React.useCallback(
-    (isTable) => {
-      if (!isTable && showTable) {
-        // Switching from Table to Graphs
-        setPreviousTableHeight(tableHeight);
-        setTableHeight(Math.max(tableHeight, 600));
-      } else if (isTable && !showTable) {
-        // Switching from Graphs to Table
-        setTableHeight(previousTableHeight);
-      }
-      setShowTable(isTable);
-    },
-    [showTable, tableHeight, previousTableHeight],
-  );
+  const handleToggleView = React.useCallback((isTable) => {
+    setShowTable(isTable);
+  }, []);
 
   const fetchModels = React.useCallback(async () => {
     try {
@@ -208,38 +183,6 @@ export default function SessionVisualization() {
     }
   };
 
-  const handleMouseMove = React.useCallback((e) => {
-    if (isResizing.current) {
-      const details = document.querySelector("[data-accordion-details]");
-      if (details) {
-        const detailsRect = details.getBoundingClientRect();
-        const newHeight = e.clientY - detailsRect.top;
-        const minHeight = 150;
-        const maxHeight = window.innerHeight * 0.7;
-        const clampedHeight = Math.max(
-          minHeight,
-          Math.min(maxHeight, newHeight),
-        );
-        setTableHeight(clampedHeight);
-      }
-    }
-  }, []);
-
-  const handleMouseUp = React.useCallback(() => {
-    isResizing.current = false;
-    document.body.style.cursor = "default";
-    document.body.style.userSelect = "auto";
-  }, []);
-
-  React.useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [handleMouseMove, handleMouseUp]);
-
   if (!session) {
     return (
       <>
@@ -304,7 +247,7 @@ export default function SessionVisualization() {
           display: "flex",
           flexDirection: "column",
           height: "100%",
-          overflow: "hidden",
+          overflow: "auto",
           position: "relative",
           outline: isDragOver
             ? `2px dashed ${theme.palette.primary.main}`
@@ -353,37 +296,120 @@ export default function SessionVisualization() {
           </Box>
         )}
 
-        {/* Sticky Comparison Table — hidden while viewing a single model's
-            detail; comparing across models doesn't apply there */}
-        {!params.runId && (
-          <Accordion
-            data-tour="model-comparison-panel"
-            expanded={!tableCollapsed}
-            onChange={() => setTableCollapsed((v) => !v)}
-            disableGutters
-            elevation={1}
-            sx={{
-              flexShrink: 0,
-              borderBottom: "1px solid",
-              borderColor: "divider",
-              borderRadius: "4px",
-              "&:before": { display: "none" },
-            }}
-          >
-            <AccordionSummary
-              expandIcon={
-                <Tooltip
-                  title={
-                    tableCollapsed ? t("common:expand") : t("common:collapse")
-                  }
-                >
-                  <ExpandMore />
-                </Tooltip>
-              }
+        {/* Model detail (interim placeholder — full-screen layout lands in
+            the last phase; for now this just keeps edit/train/results
+            reachable while a specific run is selected via the URL) */}
+        {params.runId ? (
+          <Box sx={{ flex: 1, p: 4 }}>
+            {activeRun ? (
+              <RunCard
+                run={activeRun}
+                models={models}
+                session={session}
+                onTrain={handleTrainWithTour}
+                onDelete={onDeleteRun}
+                explainerRefreshTrigger={explainerRefreshTrigger}
+                onOperationsRefresh={() =>
+                  setExplainerRefreshTrigger((prev) => prev + 1)
+                }
+                existingRuns={runs}
+                onRefresh={fetchRuns}
+                forceExpanded
+              />
+            ) : (
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  height: "100%",
+                }}
+              >
+                <Typography variant="body1" color="text.secondary">
+                  {t("models:label.runNotFound")}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        ) : (
+          <>
+            {/* Compact model cards — quick access to each model */}
+            <Box
+              data-tour="run-cards-section"
               sx={{
-                alignItems: "flex-start",
-                "& .MuiAccordionSummary-content": { my: "8px", mr: 1 },
-                "& .MuiAccordionSummary-expandIconWrapper": { mt: "10px" },
+                p: 4,
+              }}
+            >
+              {runs.length === 0 ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "50vh",
+                  }}
+                >
+                  <Typography variant="body1" color="text.secondary">
+                    {t("models:label.noRunsYet")}
+                  </Typography>
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    display: "grid",
+                    gap: 3,
+                    gridTemplateColumns: {
+                      xs: "1fr",
+                      md: "repeat(2, 1fr)",
+                      xl: "repeat(3, 1fr)",
+                    },
+                  }}
+                >
+                  {sortedRuns.map((run, index) => (
+                    <Box
+                      key={run.id}
+                      id={`run-card-${run.id}`}
+                      data-tour={
+                        index === sortedRuns.length - 1
+                          ? "first-run-card"
+                          : undefined
+                      }
+                      sx={{
+                        scrollMarginTop: "20px",
+                        scrollMarginBottom: "20px",
+                        transition: "transform 0.3s ease",
+                        ...(selectedRunId === run.id && {
+                          transform: "scale(1.02)",
+                          boxShadow: 3,
+                        }),
+                      }}
+                    >
+                      <ModelCardCompact
+                        run={run}
+                        models={models}
+                        onTrain={handleTrainWithTour}
+                        onDelete={onDeleteRun}
+                        onOpen={() =>
+                          navigate(
+                            `/app/models/sessions/${session.id}/model/${run.id}`,
+                          )
+                        }
+                        isHighlighted={highlightedRunId === run.id}
+                      />
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            {/* Comparison analysis area — table/graphs across all models */}
+            <Box
+              data-tour="model-comparison-panel"
+              sx={{
+                flexShrink: 0,
+                p: 4,
               }}
             >
               <Box
@@ -394,6 +420,7 @@ export default function SessionVisualization() {
                   width: "100%",
                   flexWrap: "wrap",
                   gap: 1,
+                  mb: 2,
                 }}
               >
                 <Typography variant="h6" color="text.primary">
@@ -406,7 +433,6 @@ export default function SessionVisualization() {
                     alignItems: "center",
                     flexWrap: "wrap",
                   }}
-                  onClick={(e) => e.stopPropagation()}
                 >
                   {/* Metric Split Selector — controls both table and graph views */}
                   {(hasTrainMetrics ||
@@ -475,185 +501,39 @@ export default function SessionVisualization() {
                   )}
                 </Box>
               </Box>
-            </AccordionSummary>
 
-            <AccordionDetails
-              data-accordion-details
-              sx={{
-                p: 2,
-                pt: 0,
-                height: `${tableHeight}px`,
-                overflow: "hidden",
-                position: "relative",
-              }}
-            >
               {runs.length === 0 ? (
                 <Box
                   sx={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    height: "100%",
+                    minHeight: "40vh",
                   }}
                 >
                   <Typography variant="body2" color="text.secondary">
                     {t("models:label.noRunsYet")}
                   </Typography>
                 </Box>
+              ) : showTable ? (
+                <ModelComparisonTable
+                  runs={runs}
+                  session={session}
+                  onTrain={onTrain}
+                  onViewDetails={handleViewDetails}
+                  onDelete={onDeleteRun}
+                  onRowClick={handleRowClick}
+                  metricSplit={metricSplit}
+                />
               ) : (
-                <Box sx={{ height: "100%", overflow: "auto" }}>
-                  {showTable ? (
-                    <ModelComparisonTable
-                      runs={runs}
-                      session={session}
-                      onTrain={onTrain}
-                      onViewDetails={handleViewDetails}
-                      onDelete={onDeleteRun}
-                      onRowClick={handleRowClick}
-                      metricSplit={metricSplit}
-                    />
-                  ) : (
-                    <ResultsGraphs
-                      runs={runs}
-                      selectedSplit={metricSplit}
-                      onSplitChange={setMetricSplit}
-                    />
-                  )}
-                </Box>
+                <ResultsGraphs
+                  runs={runs}
+                  selectedSplit={metricSplit}
+                  onSplitChange={setMetricSplit}
+                />
               )}
-
-              {/* Resize Handle */}
-              <Box
-                onMouseDown={() => {
-                  isResizing.current = true;
-                  document.body.style.cursor = "row-resize";
-                  document.body.style.userSelect = "none";
-                }}
-                sx={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: "5px",
-                  cursor: "row-resize",
-                  bgcolor: "transparent",
-                  transition: "background-color 0.2s ease",
-                  "&:hover": { bgcolor: "primary.main" },
-                  zIndex: 10,
-                }}
-              />
-            </AccordionDetails>
-          </Accordion>
-        )}
-
-        {!params.runId && <Divider sx={{ my: 2, mt: 2 }} />}
-
-        {/* Model detail (interim placeholder — full-screen layout lands in
-            phase 3; for now this just keeps edit/train/results reachable
-            while a specific run is selected via the URL) */}
-        {params.runId ? (
-          <Box sx={{ flex: 1, overflow: "auto", p: 4 }}>
-            {activeRun ? (
-              <RunCard
-                run={activeRun}
-                models={models}
-                session={session}
-                onTrain={handleTrainWithTour}
-                onDelete={onDeleteRun}
-                explainerRefreshTrigger={explainerRefreshTrigger}
-                onOperationsRefresh={() =>
-                  setExplainerRefreshTrigger((prev) => prev + 1)
-                }
-                existingRuns={runs}
-                onRefresh={fetchRuns}
-                forceExpanded
-              />
-            ) : (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-                }}
-              >
-                <Typography variant="body1" color="text.secondary">
-                  {t("models:label.runNotFound")}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        ) : (
-          /* Compact model cards */
-          <Box
-            data-tour="run-cards-section"
-            sx={{
-              flex: 1,
-              overflow: "auto",
-              p: 4,
-            }}
-          >
-            {runs.length === 0 ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
-                }}
-              >
-                <Typography variant="body1" color="text.secondary">
-                  {t("models:label.noRunsYet")}
-                </Typography>
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  display: "grid",
-                  gap: 3,
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    md: "repeat(2, 1fr)",
-                    xl: "repeat(3, 1fr)",
-                  },
-                }}
-              >
-                {sortedRuns.map((run, index) => (
-                  <Box
-                    key={run.id}
-                    id={`run-card-${run.id}`}
-                    data-tour={
-                      index === sortedRuns.length - 1
-                        ? "first-run-card"
-                        : undefined
-                    }
-                    sx={{
-                      scrollMarginTop: "20px",
-                      scrollMarginBottom: "20px",
-                      transition: "transform 0.3s ease",
-                      ...(selectedRunId === run.id && {
-                        transform: "scale(1.02)",
-                        boxShadow: 3,
-                      }),
-                    }}
-                  >
-                    <ModelCardCompact
-                      run={run}
-                      models={models}
-                      onTrain={handleTrainWithTour}
-                      onDelete={onDeleteRun}
-                      onOpen={() =>
-                        navigate(
-                          `/app/models/sessions/${session.id}/model/${run.id}`,
-                        )
-                      }
-                      isHighlighted={highlightedRunId === run.id}
-                    />
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </Box>
+            </Box>
+          </>
         )}
       </Box>
 
