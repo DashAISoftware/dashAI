@@ -15,7 +15,7 @@ import { getRunStatusColor } from "../../utils/runStatus";
 import { ModelIcon } from "./model/ModelIcon";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 
-const RING_SIZE = 24;
+const RING_SIZE = 36;
 
 function ScoreRing({ run, score, statusMain }) {
   const theme = useTheme();
@@ -60,7 +60,7 @@ function ScoreRing({ run, score, statusMain }) {
             justifyContent: "center",
           }}
         >
-          <WarningAmber sx={{ color: statusMain, fontSize: 14 }} />
+          <WarningAmber sx={{ color: statusMain, fontSize: 18 }} />
         </Box>
       </Box>
     );
@@ -122,7 +122,7 @@ function ScoreRing({ run, score, statusMain }) {
               justifyContent: "center",
             }}
           >
-            <Typography sx={{ fontWeight: 700, fontSize: 9, lineHeight: 1 }}>
+            <Typography sx={{ fontWeight: 700, fontSize: 12, lineHeight: 1 }}>
               {rounded}
             </Typography>
           </Box>
@@ -146,7 +146,7 @@ function ScoreRing({ run, score, statusMain }) {
           position: "absolute",
           inset: 0,
           borderRadius: "50%",
-          border: `2px dashed ${theme.palette.text.disabled}`,
+          border: `2.5px dashed ${theme.palette.text.disabled}`,
           opacity: 0.4,
         }}
       />
@@ -159,7 +159,7 @@ function ScoreRing({ run, score, statusMain }) {
           justifyContent: "center",
         }}
       >
-        <Typography color="text.disabled" sx={{ fontSize: 10, lineHeight: 1 }}>
+        <Typography color="text.disabled" sx={{ fontSize: 12, lineHeight: 1 }}>
           –
         </Typography>
       </Box>
@@ -217,7 +217,7 @@ function ModelCardCompact({
         }),
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
         <Box
           sx={{
             p: 1.5,
