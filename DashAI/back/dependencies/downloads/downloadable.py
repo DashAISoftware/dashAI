@@ -7,6 +7,7 @@ HuggingFace case by downloading each repo into the component's own folder.
 """
 
 import logging
+import os
 import pathlib
 import shutil
 from typing import Callable, List, Optional, Tuple, Union
@@ -216,6 +217,18 @@ class HFDownloadableMixin(DownloadableMixin):
             ``report(None, "Downloading <repo_id>")``.  ``None`` means no
             progress reporting.
         """
+        # Force the classic HTTP/LFS transfer path. The Xet backend can return
+        # a 404 on its read-token endpoint for some repos (e.g. bert-base-
+        # uncased), which aborts the whole download; the classic path is
+        # slower but reliable.
+        os.environ["HF_HUB_DISABLE_XET"] = "1"
+        try:
+            from huggingface_hub import constants as hf_constants
+
+            hf_constants.HF_HUB_DISABLE_XET = True
+        except Exception:
+            pass
+
         for entry in cls.hf_repos():
             rid, rtype, allow_patterns = cls._unpack_entry(entry)
             target = cls._repo_dir(rid)
