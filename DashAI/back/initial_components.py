@@ -120,6 +120,7 @@ from DashAI.back.metrics.classification.cohen_kappa import CohenKappa
 from DashAI.back.metrics.classification.f1 import F1
 from DashAI.back.metrics.classification.hamming_distance import HammingDistance
 from DashAI.back.metrics.classification.log_loss import LogLoss
+from DashAI.back.metrics.classification.matthews_corrcoef import MatthewsCorrCoef
 from DashAI.back.metrics.classification.precision import Precision
 from DashAI.back.metrics.classification.recall import Recall
 from DashAI.back.metrics.classification.roc_auc import ROCAUC
@@ -174,14 +175,17 @@ from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
 from DashAI.back.models.hugging_face.opus_mt_en_fr_transformer import (
     OpusMtEnFrTransformer,
 )
-from DashAI.back.models.hugging_face.opus_mt_en_pt_transformer import (
-    OpusMtEnPtTransformer,
+from DashAI.back.models.hugging_face.opus_mt_en_roa_transformer import (
+    OpusMtEnRoaTransformer,
 )
 from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
     OpusMtEsENTransformer,
 )
 from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
     OpusMtFrEnTransformer,
+)
+from DashAI.back.models.hugging_face.opus_mt_roa_en_transformer import (
+    OpusMtRoaEnTransformer,
 )
 from DashAI.back.models.hugging_face.pixart_sigma_model import (
     PixArtSigma512,
@@ -239,6 +243,7 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
 from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
+from DashAI.back.models.pymc.bart_regression import BARTRegression
 from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
@@ -355,6 +360,7 @@ def get_initial_components():
         BertinTransformer,
         BetoTransformer,
         BayesianRidgeRegression,
+        BARTRegression,
         DebertaV3Transformer,
         DecisionTreeClassifier,
         DecisionTreeRegression,
@@ -393,13 +399,14 @@ def get_initial_components():
         OpusMtEnDeTransformer,
         OpusMtEnESTransformer,
         OpusMtEnFrTransformer,
-        OpusMtEnPtTransformer,
+        OpusMtEnRoaTransformer,
         OpusMtEsENTransformer,
         OpusMtFrEnTransformer,
         PixArtSigma1024,
         PixArtSigma512,
         Qwen25_05BInstruct,
         Qwen25_15BInstruct,
+        OpusMtRoaEnTransformer,
         RandomForestClassifier,
         RobertaTransformer,
         RandomForestRegression,
@@ -465,6 +472,7 @@ def get_initial_components():
         LogLoss,
         HammingDistance,
         CohenKappa,
+        MatthewsCorrCoef,
         # Optimizers
         OptunaOptimizer,
         HyperOptOptimizer,
