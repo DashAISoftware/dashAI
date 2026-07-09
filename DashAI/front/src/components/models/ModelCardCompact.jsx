@@ -254,35 +254,43 @@ function ModelCardCompact({
             </Typography>
           </Box>
         </Box>
-
-        <ScoreRing run={run} score={score} statusMain={statusMain} />
       </Box>
 
       <Box
-        sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}
-        onClick={(e) => e.stopPropagation()}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
       >
-        {canTrain && (
-          <Tooltip
-            title={
-              run.status === 3 ? t("common:retrain") : t("common:trainVerb")
-            }
-          >
-            <IconButton size="small" onClick={() => onTrain(run)}>
-              <PlayArrow fontSize="small" />
+        <ScoreRing run={run} score={score} statusMain={statusMain} />
+
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {canTrain && (
+            <Tooltip
+              title={
+                run.status === 3 ? t("common:retrain") : t("common:trainVerb")
+              }
+            >
+              <IconButton size="small" onClick={() => onTrain(run)}>
+                <PlayArrow fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title={t("models:button.deleteRun")}>
+            <IconButton
+              size="small"
+              color="error"
+              disabled={isRunning}
+              onClick={() => setDeleteConfirmOpen(true)}
+            >
+              <Delete fontSize="small" />
             </IconButton>
           </Tooltip>
-        )}
-        <Tooltip title={t("models:button.deleteRun")}>
-          <IconButton
-            size="small"
-            color="error"
-            disabled={isRunning}
-            onClick={() => setDeleteConfirmOpen(true)}
-          >
-            <Delete fontSize="small" />
-          </IconButton>
-        </Tooltip>
+        </Box>
       </Box>
 
       {/* Wrapped so clicks inside the modal (a portal) don't bubble through
