@@ -1,19 +1,27 @@
-"""Standalone runner for the pipeline benchmark.
+"""Thin wrapper that delegates to RAG_benchmark/run_pipeline_benchmark.py.
 
-Now that DashAI's full import chain works (all deps installed, fasttext
-made optional), this runner simply delegates to pytest.
+The actual implementation has moved to ``RAG_benchmark/run_pipeline_benchmark.py``.
+Please use that going forward, or run:
+    python -m RAG_benchmark.benchmarks.cli [OPTIONS] COMMAND [ARGS]
 """
 
+from __future__ import annotations
+
 import sys
-import io
+from pathlib import Path
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+_runner = Path(__file__).parent / "RAG_benchmark" / "run_pipeline_benchmark.py"
+if not _runner.exists():
+    print(
+        "Error: RAG_benchmark/run_pipeline_benchmark.py not found.\n"
+        "Please run: python -m RAG_benchmark.benchmarks.cli --help",
+        file=sys.stderr,
+    )
+    sys.exit(1)
 
-import pytest
+# Forward to the moved script
+sys.path.insert(0, str(_runner.parent.parent))
+from RAG_benchmark.run_pipeline_benchmark import main
 
-sys.exit(pytest.main([
-    "tests/back/RAG/test_rag_pipeline_api_configs.py",
-    "-v",
-    "--tb=short",
-    "-k", "not benchmark",
-]))
+if __name__ == "__main__":
+    main()

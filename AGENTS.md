@@ -76,10 +76,10 @@ The frontend polls `/api/v1/jobs/{job_id}` for long-running task status.
 | `DashAI/back/plugins/` | Plugin system (PyPI packages with `dashai.plugins` entry point) |
 | `DashAI/front/src/components/configurableObject/` | Auto-generates forms from backend component schemas |
 | `DashAI/front/src/pages/generative/SessionRouter.jsx` | Routes `/app/generative/sessions/:id` to RAG or non-RAG view based on session `task_name` |
-| `DashAI/front/src/pages/generative/rag-session/` | RAG session setup wizard (RAGSessionSetup) + collapsible section components per pipeline stage |
-| `DashAI/front/src/pages/generative/rag-session/sections/` | Per-stage components: ChunkingSection, RetrieverSection, GeneratorSection, PromptSection |
-| `DashAI/front/src/pages/generative/rag-session/advanced/` | Advanced configuration modals: CompositeRetrieverBuilder, ChunkingConfigurationStep, RetrieverConfigurationStep, etc. |
-| `DashAI/front/src/pages/generative/rag-session/components/` | Reusable bodies: GeneratorBody, PromptBody, PresetCard, AdvancedConfigCard |
+| `DashAI/front/src/pages/generative/RAGSession/` | RAG session setup wizard (RAGSessionSetup) + collapsible section components per pipeline stage |
+| `DashAI/front/src/pages/generative/RAGSession/sections/` | Per-stage components: ChunkingSection, RetrieverSection, GeneratorSection, PromptSection |
+| `DashAI/front/src/pages/generative/RAGSession/advanced/` | Advanced configuration modals: CompositeRetrieverBuilder, ChunkingConfigurationStep, RetrieverConfigurationStep, etc. |
+| `DashAI/front/src/pages/generative/RAGSession/components/` | Reusable bodies: GeneratorBody, PromptBody, PresetCard, AdvancedConfigCard |
 
 ## Key patterns
 
@@ -96,7 +96,7 @@ The frontend polls `/api/v1/jobs/{job_id}` for long-running task status.
 DashAI includes a **Retrieval-Augmented Generation (RAG)** module — a 4-stage pipeline (Document Loading → Chunking → Retrieval → Generation) for chatting with your documents.
 
 - **Backend:** `DashAI/back/models/RAG/` — pipeline orchestrator (RAGPipeline), abstract factory (RAGModelsFactory), sub-factories for prompts/chunking/retrievers/LLMs, retriever repository (all SQL), document loader, chunk-set caching.
-- **Frontend:** `DashAI/front/src/pages/generative/rag-session/` — session setup wizard (RAGSessionSetup, RAGSessionPage) with stage sections (ChunkingSection, RetrieverSection, GeneratorSection, PromptSection) and advanced config modals.
+- **Frontend:** `DashAI/front/src/pages/generative/RAGSession/` — session setup wizard (RAGSessionSetup, RAGSessionPage) with stage sections (ChunkingSection, RetrieverSection, GeneratorSection, PromptSection) and advanced config modals.
 - **Jobs:** `RAGJob` extends `GenerativeJob` to run the RAG pipeline as a background task.
 - **Full docs (backend + frontend):** See [`docs/rag/`](./docs/rag/) for architecture, data models, retrievers, pipeline orchestration, frontend architecture, testing guide, and known constraints.
 

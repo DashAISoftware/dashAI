@@ -17,7 +17,7 @@ import { loadDocuments, addDocument, deleteDocument } from "../../../api/rag";
 import { formatDate } from "../../../utils";
 import { normalizeUrl } from "../../../utils/urlUtils";
 import DocumentPreviewModal from "./DocumentPreviewModal";
-import RAGSectionColumn from "../../../pages/generative/rag-session/components/RAGSectionColumn";
+import RAGSectionColumn from "../../../pages/generative/RAGSession/components/RAGSectionColumn";
 
 export default function DocumentSelector({
   selectedIds: initialSelectedIds = [],

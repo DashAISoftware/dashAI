@@ -11,8 +11,8 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import InfoIcon from "@mui/icons-material/Info";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import GeneratorBody from "../../../pages/generative/rag-session/components/GeneratorBody";
-import RAGSectionColumn from "../../../pages/generative/rag-session/components/RAGSectionColumn";
+import GeneratorBody from "../../../pages/generative/RAGSession/components/GeneratorBody";
+import RAGSectionColumn from "../../../pages/generative/RAGSession/components/RAGSectionColumn";
 
 export default function GeneratorParamsCard({
   generatorModel,

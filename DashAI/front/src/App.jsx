@@ -20,7 +20,7 @@ import HubImportPage from "./pages/hub/HubImportPage";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
 import RAGDocumentsPage from "./pages/generative/RAG/RAGDocumentsPage";
 import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
-import RAGSessionPage from "./pages/generative/rag-session/RAGSessionPage";
+import RAGSessionPage from "./pages/generative/RAGSession/RAGSessionPage";
 import SessionRouter from "./pages/generative/SessionRouter";
 import { DatasetsAndNotebooksProvider } from "./components/custom/contexts/DatasetsAndNotebooksContext";
 
@@ -68,11 +68,11 @@ function App() {
           />
           <Route path="/app/generative" element={<Generative />} />
           <Route
-            path="/app/generative/rag"
+            path="/app/generative/RAG"
             element={<Navigate to="/app/generative/sessions/new" replace />}
           />
           <Route
-            path="/app/generative/rag/documents"
+            path="/app/generative/RAG/documents"
             element={
               <GenerativeProvider>
                 <RAGDocumentsPage />
@@ -80,7 +80,7 @@ function App() {
             }
           />
           <Route
-            path="/app/generative/rag/prompts"
+            path="/app/generative/RAG/prompts"
             element={
               <GenerativeProvider>
                 <RAGPromptsPage />

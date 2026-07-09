@@ -1,77 +1,153 @@
-from typing import Any, List, Tuple
+from typing import Any
 
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    enum_field,
+    schema_field,
+    string_field,
+)
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.prompts.augmentation.augmentation_prompt import (
     AugmentationPrompt,
 )
 
-template = """
-You are a intelligent and insightful assistant. Your task is to generate keywords or phrases to search for
-relevant information based on the input provided. The keywords or phrases should be relevant to the input
-and should help in retrieving useful information to improve the precision of the response.
-The user input is:
-{input}
-The chat history is: 
-{history}
-The number of keywords or phrases to generate is {n_search_terms}.
-Please generate {n_search_terms} keywords or phrases that can be used to search for relevant information.
-The keywords or phrases should be concise and to the point. You must fill the following template:
-{
-'keywords': ['keyword_1', 'keyword_2', ..., 'keyword_n']}
+TEMPLATES = {
+    "en": (
+        "You are an intelligent and insightful assistant. Your task is to generate "
+        "keywords or phrases to search for relevant information based on the input "
+        "provided.\n"
+        "The keywords or phrases should be relevant to the input and should help in "
+        "retrieving useful information to improve the precision of the response.\n"
+        "\n"
+        "User input:\n"
+        "{input}\n"
+        "\n"
+        "Generate {n_search_terms} keywords or phrases that can be used to search for "
+        "relevant information. The keywords or phrases should be concise and to the "
+        "point.\n"
+        "\n"
+        "You must respond with a JSON object following this exact format:\n"
+        "{'keywords': ['keyword_1', 'keyword_2', ..., 'keyword_n']}"
+    ),
+    "es": (
+        "Eres un asistente inteligente y perspicaz. Tu tarea es generar palabras clave "
+        "o frases para buscar información relevante basada en la entrada "
+        "proporcionada.\n"
+        "Las palabras clave o frases deben ser relevantes para la entrada y ayudar a "
+        "recuperar información útil para mejorar la precisión de la respuesta.\n"
+        "\n"
+        "Entrada del usuario:\n"
+        "{input}\n"
+        "\n"
+        "Genera {n_search_terms} palabras clave o frases que puedan usarse para buscar "
+        "información relevante. Las palabras clave o frases deben ser concisas y "
+        "directas.\n"
+        "\n"
+        "Debes responder con un objeto JSON siguiendo este formato exacto:\n"
+        "{'keywords': ['palabra_clave_1', 'palabra_clave_2', ..., 'palabra_clave_n']}"
+    ),
+    "pt": (
+        "Você é um assistente inteligente e perspicaz. Sua tarefa é gerar "
+        "palavras-chave ou frases para buscar informações relevantes com base na "
+        "entrada fornecida.\n"
+        "As palavras-chave ou frases devem ser relevantes para a entrada e ajudar a "
+        "recuperar informações úteis para melhorar a precisão da resposta.\n"
+        "\n"
+        "Entrada do usuário:\n"
+        "{input}\n"
+        "\n"
+        "Gere {n_search_terms} palavras-chave ou frases que possam ser usadas para "
+        "buscar informações relevantes. As palavras-chave ou frases devem ser concisas "
+        "e diretas.\n"
+        "\n"
+        "Você deve responder com um objeto JSON seguindo este formato exato:\n"
+        "{'keywords': ['palavra_chave_1', 'palavra_chave_2', ..., 'palavra_chave_n']}"
+    ),
 }
-"""
+
+
+class DefaultAugmentationPromptSchema(BaseSchema):
+    language: schema_field(
+        enum_field(enum=["en", "es", "pt"]),
+        placeholder="en",
+        description=MultilingualString(
+            en="Language for the generated response.",
+            es="Idioma de la respuesta generada.",
+            pt="Idioma da resposta gerada.",
+        ),
+    )
+    template: schema_field(
+        string_field(),
+        placeholder="",
+        description="The prompt template with placeholders.",
+    )
 
 
 class DefaultAugmentationPrompt(AugmentationPrompt):
     """
     AugmentationPrompt class for generating augmented retrieval prompts,
-    it uses the language model to generate keywords or phrases that can be used to augment the input.
+    it uses the language model to generate keywords or phrases that can be used
+    to augment the input.
     """
+
+    SCHEMA = DefaultAugmentationPromptSchema
+    DESCRIPTION: str = MultilingualString(
+        en="Default prompt template for generating augmented retrieval queries.",
+        es="Plantilla de prompt predeterminada para generar consultas de "
+        "recuperación aumentadas.",
+        pt="Modelo de prompt padrão para gerar consultas de recuperação aumentadas.",
+    )
+    DISPLAY_NAME: str = MultilingualString(
+        en="Default Augmentation Prompt",
+        es="Prompt de Aumento Predeterminado",
+        pt="Prompt de Aumento Padrão",
+    )
+
+    required_placeholders = ["{input}", "{n_search_terms}"]
+    optional_placeholders: list[str] = []
 
     metadata = {
         "name": "Default Augmentation Prompt",
-        "description": "Default prompt template for generating augmented retrieval prompts.",
+        "description": "Default prompt template for generating augmented retrieval "
+        "prompts.",
         "type": "augmentation",
-        "required_placeholders": AugmentationPrompt.required_placeholders,
-        "optional_placeholders": AugmentationPrompt.optional_placeholders,
+        "required_placeholders": required_placeholders,
+        "optional_placeholders": optional_placeholders,
         "placeholder_descriptions": {
             "{input}": "The user input message.",
-            "{history}": "The chat history (optional) to be included in the context.",
             "{n_search_terms}": "The number of search terms to generate.",
         },
-        "template": template,
+        "templates": TEMPLATES,
     }
 
-    template = template
-    required_placeholders = ["{input}", "{n_search_terms}"]
-    optional_placeholders = []
+    def __init__(self, **kwargs: Any) -> None:
+        """Initialize the augmentation prompt with a language and resolved template.
 
-    @staticmethod
+        Args:
+            language: Language code to select the appropriate template
+                (one of "en", "es", "pt").
+            template: Override template string. If not provided, the
+                default template for the selected language is used.
+        """
+        self.language = kwargs.pop("language")
+        self.template = kwargs.pop("template") or TEMPLATES.get(self.language, "")
+
     def format(
+        self,
         input: str,
         n_search_terms: int,
-        history: List[Tuple[str, str]] = None,
         **kwargs: Any,
     ) -> str:
-        """
-        Instantiate and format the prompt for augmentation.
+        """Render the augmentation prompt by replacing all placeholders.
+
         Args:
-            input (str): The input to be formatted.
-            history (List[Tuple[str, str]]): The history of the conversation.
-            n_seach_terms (int): The number of search terms to generate.
-            **kwargs: Additional keyword arguments for formatting.
+            input: The user's input message.
+            n_search_terms: Number of search terms the LLM should generate.
+
         Returns:
-            str: The formatted prompt.
+            Fully formatted prompt string ready for LLM input.
         """
-        buffer = template
+        buffer = self.template
         buffer = buffer.replace("{input}", input)
-        if history:
-            buffer = buffer.replace(
-                "{history}",
-                "\n".join(
-                    [f"Q: {h_input}\nA: {h_output}" for h_input, h_output in history]
-                ),
-            )
-        else:
-            buffer = buffer.replace("{history}", "No previous conversation.")
         buffer = buffer.replace("{n_search_terms}", str(n_search_terms))
         return buffer

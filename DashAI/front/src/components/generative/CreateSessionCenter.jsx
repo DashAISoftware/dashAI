@@ -14,7 +14,7 @@ import { useCreateSession } from "./CreateSessionContext";
 import { useGenerative } from "./GenerativeContext";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
 import { useTourContext } from "../tour/TourProvider";
-import RAGSessionSetup from "../../pages/generative/rag-session/RAGSessionSetup";
+import RAGSessionSetup from "../../pages/generative/RAGSession/RAGSessionSetup";
 
 export default function CreateSessionCenter() {
   const { t } = useTranslation(["generative", "common"]);

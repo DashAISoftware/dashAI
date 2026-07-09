@@ -20,7 +20,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
   const navigate = useNavigate();
 
   const goToDocumentsDetail = () => {
-    navigate("/app/generative/rag/documents");
+    navigate("/app/generative/RAG/documents");
   };
 
   // Fetch documents for the selected RAG session or all documents
@@ -128,7 +128,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
   };
 
   const handleDetailedView = () => {
-    navigate("/app/generative/rag/documents");
+    navigate("/app/generative/RAG/documents");
   };
 
   return (

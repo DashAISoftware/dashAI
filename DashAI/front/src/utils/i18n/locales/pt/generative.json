@@ -178,7 +178,7 @@
       "selectedTemplate": "Modelo de prompt selecionado:",
       "newPromptButton": "Novo prompt",
       "defaultGenerationPrompt": "Prompt de Geração Padrão",
-      "defaultQnAGenerationPrompt": "Prompt de Geração Q&A Padrão",
+      "defaultQAGenerationPrompt": "Prompt de Geração Q&A Padrão",
       "createNewPrompt": "Criar novo prompt",
       "language": "Idioma",
       "collapse": "Recolher",

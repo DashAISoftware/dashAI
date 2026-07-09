@@ -17,8 +17,11 @@ from DashAI.back.dependencies.database.models import (
     RAGPrompt,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.models.RAG.prompts.generation.default_qna_rag_generation_prompt import (
-    DefaultQnARAGGenerationPrompt,
+from DashAI.back.models.RAG.prompts.augmentation.default_augmentation_prompt import (
+    DefaultAugmentationPrompt,
+)
+from DashAI.back.models.RAG.prompts.generation.default_QA_rag_generation_prompt import (
+    DefaultQARAGGenerationPrompt,
 )
 from DashAI.back.models.RAG.prompts.generation.default_rag_generation_prompt import (
     DefaultRAGGenerationPrompt,
@@ -94,7 +97,7 @@ async def create_rag_prompt(
             )
 
         if "templates" in prompt.parameters:
-            for lang, tmpl in prompt.parameters["templates"].items():
+            for _lang, tmpl in prompt.parameters["templates"].items():
                 _validate_prompt_template(prompt.class_name, tmpl, component_registry)
         elif "template" in prompt.parameters:
             _validate_prompt_template(
@@ -150,9 +153,11 @@ async def update_rag_prompt(
 
             if prompt.parameters is not None:
                 if "templates" in prompt.parameters:
-                    for lang, tmpl in prompt.parameters["templates"].items():
+                    for _lang, tmpl in prompt.parameters["templates"].items():
                         _validate_prompt_template(
-                            existing_prompt.class_name, tmpl, component_registry,
+                            existing_prompt.class_name,
+                            tmpl,
+                            component_registry,
                         )
                 elif "template" in prompt.parameters:
                     _validate_prompt_template(
@@ -163,7 +168,9 @@ async def update_rag_prompt(
                 else:
                     raise HTTPException(
                         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail="Prompt parameters must include 'template' or 'templates'.",
+                        detail=(
+                            "Prompt parameters must include 'template' or 'templates'."
+                        ),
                     )
                 existing_prompt.parameters = prompt.parameters
                 changed = True
@@ -216,9 +223,11 @@ async def update_rag_prompt_for_session(
 
             if prompt.parameters is not None:
                 if "templates" in prompt.parameters:
-                    for lang, tmpl in prompt.parameters["templates"].items():
+                    for _lang, tmpl in prompt.parameters["templates"].items():
                         _validate_prompt_template(
-                            existing_prompt.class_name, tmpl, component_registry,
+                            existing_prompt.class_name,
+                            tmpl,
+                            component_registry,
                         )
                 elif "template" in prompt.parameters:
                     _validate_prompt_template(
@@ -229,7 +238,9 @@ async def update_rag_prompt_for_session(
                 else:
                     raise HTTPException(
                         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail="Prompt parameters must include 'template' or 'templates'.",
+                        detail=(
+                            "Prompt parameters must include 'template' or 'templates'."
+                        ),
                     )
                 new_parameters = prompt.parameters
             else:
@@ -325,21 +336,24 @@ async def get_all_prompts(
                     },
                 )
                 default_qa_prompt = RAGPrompt(
-                    class_name=DefaultQnARAGGenerationPrompt.__name__,
-                    name="Default QnA RAG Generation Prompt",
+                    class_name=DefaultQARAGGenerationPrompt.__name__,
+                    name="Default QA RAG Generation Prompt",
                     parameters={
-                        "templates": DefaultQnARAGGenerationPrompt.metadata["templates"],
+                        "templates": DefaultQARAGGenerationPrompt.metadata["templates"],
                         "language": "en",
                     },
                 )
-                """ default_augmentation_prompt = RAGPrompt(
+                default_augmentation_prompt = RAGPrompt(
                     class_name=DefaultAugmentationPrompt.__name__,
                     name="Default Augmentation Prompt",
-                    parameters={"template": DefaultAugmentationPrompt.template},
-                ) """
+                    parameters={
+                        "templates": DefaultAugmentationPrompt.metadata["templates"],
+                        "language": "en",
+                    },
+                )
                 db.add(default_generation_prompt)
                 db.add(default_qa_prompt)
-                #db.add(default_augmentation_prompt)
+                db.add(default_augmentation_prompt)
                 db.commit()
                 prompts = db.query(RAGPrompt).all()
 

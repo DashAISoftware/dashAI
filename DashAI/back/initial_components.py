@@ -211,6 +211,8 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
 )
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
+from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
+from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
 from DashAI.back.models.RAG import RAGPipeline
 from DashAI.back.models.RAG.chunking_models import (
     CharacterChunkModel,
@@ -232,7 +234,8 @@ from DashAI.back.models.RAG.embeddings.dense import (
 from DashAI.back.models.RAG.prompts import (
     CustomAugmentationPrompt,
     CustomRAGGenerationPrompt,
-    DefaultQnARAGGenerationPrompt,
+    DefaultAugmentationPrompt,
+    DefaultQARAGGenerationPrompt,
     DefaultRAGGenerationPrompt,
 )
 from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
@@ -261,8 +264,6 @@ from DashAI.back.models.remote_models.deepseek_text_to_text_generation_model imp
 from DashAI.back.models.remote_models.openai_text_to_text_generation_model import (
     OpenAITextToTextGenerationModel,
 )
-from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
-from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
 from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
@@ -334,10 +335,10 @@ from DashAI.back.pipeline.train_node import Train
 # Plugins
 from DashAI.back.plugins.utils import get_available_plugins
 from DashAI.back.tasks.controlnet_task import ControlNetTask
+from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 
 # Tasks
 from DashAI.back.tasks.RAG_task import RAGTask
-from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 from DashAI.back.tasks.regression_task import RegressionTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
@@ -577,8 +578,8 @@ def get_initial_components():
         # Prompts
         DefaultRAGGenerationPrompt,
         CustomRAGGenerationPrompt,
-        DefaultQnARAGGenerationPrompt,
-        # DefaultAugmentationPrompt,
+        DefaultQARAGGenerationPrompt,
+        DefaultAugmentationPrompt,
         CustomAugmentationPrompt,
         # Retrievers
         BM25Retriever,

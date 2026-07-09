@@ -22,9 +22,9 @@ import Tooltip from "@mui/material/Tooltip";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getRAGPrompts, getDefaultPrompts } from "../../../api/rag";
-import NewPromptModal from "../../../pages/generative/rag-session/advanced/NewPromptModal";
-import RAGSectionColumn from "../../../pages/generative/rag-session/components/RAGSectionColumn";
-import { getDescription, renderTemplateWithHighlights } from "../../../pages/generative/rag-session/components/sectionUtils";
+import NewPromptModal from "../../../pages/generative/RAGSession/advanced/NewPromptModal";
+import RAGSectionColumn from "../../../pages/generative/RAGSession/components/RAGSectionColumn";
+import { getDescription, renderTemplateWithHighlights } from "../../../pages/generative/RAGSession/components/sectionUtils";
 
 const LANGUAGE_OPTIONS = [
   { code: "en", name: "English" },
@@ -35,15 +35,15 @@ const LANGUAGE_OPTIONS = [
 const CREATE_NEW_ID = "__create-new__";
 const DEFAULT_IDS = {
   DefaultRAGGenerationPrompt: "default-generation",
-  DefaultQnARAGenerationPrompt: "default-qna",
+  DefaultQARAGenerationPrompt: "default-QA",
 };
 
 function getDefaultDisplayName(component, t) {
   if (component.name === "DefaultRAGGenerationPrompt") {
     return t("generative:rag.prompt.defaultGenerationPrompt");
   }
-  if (component.name === "DefaultQnARAGenerationPrompt") {
-    return t("generative:rag.prompt.defaultQnAGenerationPrompt");
+  if (component.name === "DefaultQARAGenerationPrompt") {
+    return t("generative:rag.prompt.defaultQAGenerationPrompt");
   }
   return component.name;
 }
@@ -60,7 +60,7 @@ export default function PromptParamsCard({
   onTokenCountChange,
 }) {
   const navigate = useNavigate();
-  const goToPromptsDetail = () => navigate("/app/generative/rag/prompts");
+  const goToPromptsDetail = () => navigate("/app/generative/RAG/prompts");
   const { t, i18n } = useTranslation(["generative"]);
   const theme = useTheme();
   const placeholderColors = useMemo(

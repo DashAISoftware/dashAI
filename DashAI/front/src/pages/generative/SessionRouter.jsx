@@ -4,7 +4,7 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import { getGenerativeSession } from "../../api/generativeTask";
 import Generative from "./Generative";
 import { GenerativeProvider } from "../../components/generative/GenerativeContext";
-import RAGSessionPage from "./rag-session/RAGSessionPage";
+import RAGSessionPage from "./RAGSession/RAGSessionPage";
 
 export default function SessionRouter() {
   const { id } = useParams();

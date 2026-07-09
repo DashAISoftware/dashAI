@@ -176,7 +176,7 @@
       "selectedTemplate": "Selected prompt template:",
       "newPromptButton": "New prompt",
       "defaultGenerationPrompt": "Default Generation Prompt",
-      "defaultQnAGenerationPrompt": "Default Q&A Generation Prompt",
+      "defaultQAGenerationPrompt": "Default Q&A Generation Prompt",
       "createNewPrompt": "Create new prompt",
       "language": "Language"
     },

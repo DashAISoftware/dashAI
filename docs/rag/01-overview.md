@@ -65,7 +65,7 @@ User query
 | Embeddings| `DashAI/back/models/RAG/embeddings/`          |
 | Jobs      | `DashAI/back/job/rag_job.py`                 |
 | Task      | `DashAI/back/tasks/RAG_task.py`              |
-| Frontend  | `DashAI/front/src/pages/generative/rag-session/` |
+| Frontend  | `DashAI/front/src/pages/generative/RAGSession/` |
 
 ## Quick Architecture
 
@@ -90,7 +90,7 @@ Browser / PyWebView
   `BaseChunkingModel`)
 - **Retrievers** — Sparse (TF-IDF, BM25), Dense (via `DenseEmbedding`
   subclasses), Composite (Sequential, Parallel, MMR Reranker)
-- **Prompts** — Generation prompts (Default, Custom, QnA) in en/es/pt +
+- **Prompts** — Generation prompts (Default, Custom, QA) in en/es/pt +
   augmentation prompts (Default, Custom) for future query expansion
 - **LLMs** — Any `TextToTextGenerationTaskModel` registered in the component
   registry (OpenAI-compatible APIs, HuggingFace models)

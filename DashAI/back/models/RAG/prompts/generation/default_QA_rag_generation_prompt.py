@@ -70,7 +70,7 @@ TEMPLATES = {
 }
 
 
-class DefaultQnARAGGenerationPromptSchema(BaseSchema):
+class DefaultQARAGGenerationPromptSchema(BaseSchema):
     language: schema_field(
         enum_field(enum=["en", "es", "pt"]),
         placeholder="en",
@@ -87,26 +87,26 @@ class DefaultQnARAGGenerationPromptSchema(BaseSchema):
     )
 
 
-class DefaultQnARAGGenerationPrompt(RAGGenerationPrompt):
+class DefaultQARAGGenerationPrompt(RAGGenerationPrompt):
     """
     Default generation prompt for Question Answering tasks.
     This prompt is designed to guide the language model in generating answers based on provided context chunks.
     """
 
-    SCHEMA = DefaultQnARAGGenerationPromptSchema
+    SCHEMA = DefaultQARAGGenerationPromptSchema
     DESCRIPTION: str = MultilingualString(
         en="Default prompt template used in the language generation step of RAG for Question Answering tasks.",
         es="Plantilla de prompt predeterminada utilizada en el paso de generación de lenguaje de RAG para tareas de preguntas y respuestas.",
         pt="Modelo de prompt padrão usado na etapa de geração de linguagem do RAG para tarefas de perguntas e respostas.",
     )
     DISPLAY_NAME: str = MultilingualString(
-        en="Default QnA RAG Generation Prompt",
+        en="Default QA RAG Generation Prompt",
         es="Prompt de Generación RAG de Preguntas y Respuestas Predeterminado",
         pt="Prompt de Geração RAG de Perguntas e Respostas Padrão",
     )
 
     metadata = {
-        "name": "Default QnA RAG Generation Prompt",
+        "name": "Default QA RAG Generation Prompt",
         "description": "Default prompt template used in the language generation step of RAG for Question Answering tasks.",
         "type": "generation",
         "required_placeholders": RAGGenerationPrompt.required_placeholders,

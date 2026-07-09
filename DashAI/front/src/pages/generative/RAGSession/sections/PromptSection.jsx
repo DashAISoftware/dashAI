@@ -25,15 +25,15 @@ const LANGUAGE_OPTIONS = [
 const CREATE_NEW_ID = "__create-new__";
 const DEFAULT_IDS = {
   DefaultRAGGenerationPrompt: "default-generation",
-  DefaultQnARAGenerationPrompt: "default-qna",
+  DefaultQARAGenerationPrompt: "default-QA",
 };
 
 function getDefaultDisplayName(component, t) {
   if (component.name === "DefaultRAGGenerationPrompt") {
     return t("generative:rag.prompt.defaultGenerationPrompt");
   }
-  if (component.name === "DefaultQnARAGenerationPrompt") {
-    return t("generative:rag.prompt.defaultQnAGenerationPrompt");
+  if (component.name === "DefaultQARAGenerationPrompt") {
+    return t("generative:rag.prompt.defaultQAGenerationPrompt");
   }
   return component.name;
 }

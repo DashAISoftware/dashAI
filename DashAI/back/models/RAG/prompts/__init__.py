@@ -8,5 +8,5 @@ from DashAI.back.models.RAG.prompts.generation import (
     RAGGenerationPrompt,
     CustomRAGGenerationPrompt,
     DefaultRAGGenerationPrompt,
-    DefaultQnARAGGenerationPrompt
+    DefaultQARAGGenerationPrompt
 )

@@ -9,7 +9,7 @@
 
 ## Main RAG Page Flow
 
-All files under `pages/generative/rag-session/`:
+All files under `pages/generative/RAGSession/`:
 
 1. **`RAGSessionSetup.jsx`** — Session creation form with accordion sections:
    - Document selection, chunking config, retriever config (3-preset card

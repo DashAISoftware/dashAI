@@ -6,7 +6,8 @@ from DashAI.back.models.RAG.prompts.prompt import Prompt
 class AugmentationPrompt(Prompt):
     """
     AugmentationPrompt class for generating augmented retrieval prompts,
-    it uses the language model to generate keywords or phrases that can be used to augment the input.
+    it uses the language model to generate keywords or phrases that can be used
+    to augment the input.
     """
 
     required_placeholders = ["{input}", "{n_search_terms}"]
@@ -20,8 +21,7 @@ class AugmentationPrompt(Prompt):
         Instantiate and format the prompt for augmentation.
         Args:
             input (str): The input to be formatted.
-            history (List[Tuple[str, str]]): The history of the conversation.
-            n_seach_terms (int): The number of search terms to generate.
+            n_search_terms (int): The number of search terms to generate.
             **kwargs: Additional keyword arguments for formatting.
         Returns:
             str: The formatted prompt.

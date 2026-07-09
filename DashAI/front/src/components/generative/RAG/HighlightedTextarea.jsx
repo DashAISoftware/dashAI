@@ -1,6 +1,6 @@
 import { forwardRef, useRef, useCallback, useImperativeHandle } from "react";
 import { Box, Typography, useTheme } from "@mui/material";
-import { renderTemplateWithHighlights } from "../../../pages/generative/rag-session/components/sectionUtils";
+import { renderTemplateWithHighlights } from "../../../pages/generative/RAGSession/components/sectionUtils";
 
 /**
  * A multiline text field that highlights placeholders ({chunks}, {input}, etc.)

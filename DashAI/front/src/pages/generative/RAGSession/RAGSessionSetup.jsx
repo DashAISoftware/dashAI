@@ -56,8 +56,8 @@ export default function RAGSessionSetup({
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative"]);
   const navigate = useNavigate();
-  const goToPromptsDetail = () => navigate("/app/generative/rag/prompts");
-  const goToDocumentsDetail = () => navigate("/app/generative/rag/documents");
+  const goToPromptsDetail = () => navigate("/app/generative/RAG/prompts");
+  const goToDocumentsDetail = () => navigate("/app/generative/RAG/documents");
 
   const [suggestedName, setSuggestedName] = useState(() => {
     const sessionsList = Array.isArray(existingSessions) ? existingSessions : [];

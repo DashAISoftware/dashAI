@@ -176,7 +176,7 @@
       "selectedTemplate": "Plantilla de Prompt seleccionada:",
       "newPromptButton": "Nuevo Prompt",
       "defaultGenerationPrompt": "Prompt de Generación por Defecto",
-      "defaultQnAGenerationPrompt": "Prompt de Generación Q&A por Defecto",
+      "defaultQAGenerationPrompt": "Prompt de Generación Q&A por Defecto",
       "createNewPrompt": "Crear nuevo prompt",
       "language": "Idioma"
     },
