@@ -62,6 +62,8 @@
     "addModelToSession": "Add Model to Session",
     "confirmDeleteSession": "Are you sure you want to delete the session \"{{name}}\"? This action cannot be undone.",
     "availableModels": "Available Models",
+    "modelCount_one": "{{count}} model",
+    "modelCount_other": "{{count}} models",
     "bar": "Bar",
     "heatmap": "Heatmap",
     "chooseTaskForSessionWithDataset": "Choose the machine learning task for your session with dataset \"{{datasetName}}\".",

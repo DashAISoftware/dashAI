@@ -39,6 +39,7 @@ export default function SessionVisualization() {
   const {
     selectedSession: session,
     runs,
+    datasets,
     onTrainRun: onTrain,
     onDeleteRun,
     fetchRuns,
@@ -170,6 +171,8 @@ export default function SessionVisualization() {
   const activeRun = params.runId
     ? runs.find((r) => String(r.id) === params.runId)
     : null;
+
+  const datasetName = datasets.find((d) => d.id === session?.dataset_id)?.name;
 
   // Check which metrics are available
   const hasTrainMetrics = runs.some(
@@ -342,6 +345,18 @@ export default function SessionVisualization() {
           </Box>
         ) : (
           <>
+            {/* Session header — breadcrumb, title, quick stats */}
+            <Box sx={{ px: 4, pt: 4 }}>
+              <ModelsBreadcrumbs />
+              <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+                {session.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                {t("models:label.modelCount", { count: sortedRuns.length })}
+                {datasetName && ` | ${t("common:dataset")} ${datasetName}`}
+              </Typography>
+            </Box>
+
             {/* Compact model cards — quick access to each model */}
             <Box
               data-tour="run-cards-section"

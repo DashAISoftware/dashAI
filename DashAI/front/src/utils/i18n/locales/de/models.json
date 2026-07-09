@@ -62,6 +62,8 @@
     "addModelToSession": "Modell zur Sitzung hinzufügen",
     "confirmDeleteSession": "Sind Sie sicher, dass Sie die Sitzung \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "availableModels": "Verfügbare Modelle",
+    "modelCount_one": "{{count}} Modell",
+    "modelCount_other": "{{count}} Modelle",
     "bar": "Balken",
     "heatmap": "Heatmap",
     "chooseTaskForSessionWithDataset": "Wählen Sie die ML-Aufgabe für Ihre Sitzung mit dem Datensatz \"{{datasetName}}\".",

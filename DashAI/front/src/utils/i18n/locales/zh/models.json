@@ -62,6 +62,8 @@
     "addModelToSession": "将模型添加到会话",
     "confirmDeleteSession": "确定要删除会话 \"{{name}}\" 吗？此操作无法撤销。",
     "availableModels": "可用模型",
+    "modelCount_one": "{{count}} 个模型",
+    "modelCount_other": "{{count}} 个模型",
     "bar": "条形图",
     "heatmap": "热图",
     "chooseTaskForSessionWithDataset": "为使用数据集 \"{{datasetName}}\" 的会话选择机器学习任务。",

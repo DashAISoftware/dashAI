@@ -62,6 +62,8 @@
     "addModelToSession": "Adicionar Modelo à Sessão",
     "confirmDeleteSession": "Tem certeza de que deseja excluir a sessão \"{{name}}\"? Esta ação não pode ser desfeita.",
     "availableModels": "Modelos Disponíveis",
+    "modelCount_one": "{{count}} modelo",
+    "modelCount_other": "{{count}} modelos",
     "bar": "Barra",
     "heatmap": "Mapa de calor",
     "chooseTaskForSessionWithDataset": "Escolha a tarefa de aprendizado de máquina para sua sessão com o conjunto de dados \"{{datasetName}}\".",
