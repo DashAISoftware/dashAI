@@ -7,7 +7,6 @@ import {
   IconButton,
   List,
   ListItem,
-  Badge,
   Divider,
   Button,
 } from '@mui/material';
@@ -26,7 +25,7 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
   const [documentModalOpen, setDocumentModalOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [selectedChunks, setSelectedChunks] = useState([]);
-  const referenceEntries = Object.entries(references);
+  const referenceEntries = references ? Object.entries(references) : [];
   const sourceCount = referenceEntries.length;
 
   const handleToggleExpanded = () => {
@@ -57,14 +56,12 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
 
   // Get document title - fallback to "Document X" if no title available
   const getDocumentTitle = (docId, chunks) => {
-    // Check if any chunk has a document_title or document_name
     const firstChunk = chunks[0];
     if (firstChunk.document_title) return firstChunk.document_title;
     if (firstChunk.document_name) return firstChunk.document_name;
     if (firstChunk.title) return firstChunk.title;
     if (firstChunk.name) return firstChunk.name;
     
-    // Fallback to generic title
     return t('sourcesDisplay.fallbackTitle', { id: docId, defaultValue: `Document ${docId}` });
   };
 
@@ -72,9 +69,9 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
     <Box 
       sx={{ 
         mt: 1,
-        ml: isUser ? 0 : '40px', // Match avatar (32px) + margin (8px) 
-        mr: isUser ? '40px' : 0, // Right margin for user messages
-        maxWidth: isUser ? 'calc(80% - 40px)' : 'calc(80% - 40px)', // Match ChatBubble maxWidth minus avatar space
+        ml: isUser ? 0 : '40px',
+        mr: isUser ? '40px' : 0,
+        maxWidth: isUser ? 'calc(80% - 40px)' : 'calc(80% - 40px)',
         border: 1, 
         borderColor: 'divider', 
         borderRadius: 1, 
@@ -94,22 +91,29 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
         }}
         onClick={handleToggleExpanded}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <SourceIcon fontSize="small" color="primary" />
-          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <SourceIcon fontSize="small" color="primary" sx={{ flexShrink: 0 }} />
+          <Typography variant="body2" sx={{ fontWeight: 'medium', flexShrink: 0 }}>
             {t('sourcesDisplay.viewSources')}
           </Typography>
-          <Badge 
-            badgeContent={sourceCount} 
-            color="primary" 
+          <Box
             sx={{
-              '& .MuiBadge-badge': {
-                fontSize: '0.75rem',
-                height: 20,
-                minWidth: 20
-              }
+              backgroundColor: 'primary.main',
+              color: 'primary.contrastText',
+              borderRadius: '10px',
+              minWidth: 20,
+              height: 20,
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              px: 0.5,
+              flexShrink: 0
             }}
-          />
+          >
+            {sourceCount}
+          </Box>
         </Box>
         
         <IconButton size="small">
@@ -120,9 +124,8 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
       {/* Sources List */}
       <Collapse in={expanded} timeout="auto">
         <List dense disablePadding>
-          {Object.entries(groupedReferences).map(([docId, chunks]) => (
+          {Object.entries(groupedReferences).map(([docId, chunks], index, array) => (
             <React.Fragment key={docId}>
-              {/* Document Item */}
               <ListItem disablePadding>
                 <Box sx={{ 
                     width: '100%', 
@@ -142,28 +145,34 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
                   }}>
                     <DescriptionIcon fontSize="small" color="primary" sx={{ flexShrink: 0 }} />
 
-                    <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                      
-                      {/* Línea 1: nombre */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: 1, gap: 0.5 }}>
                       <Typography 
+                        component="span"
                         variant="body2"
                         sx={{
                           fontWeight: 'bold',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
+                          whiteSpace: 'nowrap',
+                          flexShrink: 1,
+                          minWidth: 0
                         }}
                       >
                         {getDocumentTitle(docId, chunks)}
                       </Typography>
-
-                      {/* Línea 2: metadata */}
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography 
+                        component="span"
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          flexShrink: 0,
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
                         {t('sourcesDisplay.provided')}{' '}
                         <strong>{chunks.length}</strong>{' '}
                         {t('sourcesDisplay.chunk', { count: chunks.length })}
                       </Typography>
-
                     </Box>
                   </Box>
                   
@@ -186,16 +195,12 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
                 </Box>
               </ListItem>
 
-              {/* Divider between documents (but not after the last one) */}
-              {Object.keys(groupedReferences).indexOf(docId) < Object.keys(groupedReferences).length - 1 && (
-                <Divider />
-              )}
+              {index < array.length - 1 && <Divider />}
             </React.Fragment>
           ))}
         </List>
       </Collapse>
 
-      {/* Document References Modal */}
       <DocumentReferencesModal
         open={documentModalOpen}
         onClose={handleCloseDocumentModal}
