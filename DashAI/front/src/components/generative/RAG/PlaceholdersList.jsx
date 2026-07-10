@@ -4,6 +4,7 @@ import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import { useTranslation } from "react-i18next";
 
 /**
  * Displays a list of required placeholders with icons and a "+" button
@@ -15,10 +16,11 @@ export default function PlaceholdersList({
   template = "",
   onInsertPlaceholder,
 }) {
+  const { t } = useTranslation(["generative"]);
   return (
     <Box sx={{ mt: 2, mb: 2 }}>
       <Typography variant="subtitle1" gutterBottom>
-        Required Placeholders
+        {t("generative:rag.placeholders.title")}
       </Typography>
       <Box
         component="ul"
@@ -60,7 +62,7 @@ export default function PlaceholdersList({
 
               {/* Insert button */}
               {onInsertPlaceholder && (
-                <Tooltip title={`Insert ${ph}`} placement="top">
+                <Tooltip title={t("generative:rag.placeholders.insert", { placeholder: ph })} placement="top">
                   <IconButton
                     size="small"
                     onClick={() => onInsertPlaceholder(ph)}

@@ -1,6 +1,7 @@
 import { Dialog, DialogTitle, DialogContent, Box } from "@mui/material";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 import { normalizeUrl } from "../../../utils/urlUtils";
 
 export default function DocumentPreviewModal({
@@ -9,17 +10,18 @@ export default function DocumentPreviewModal({
   document,
   txtContent,
 }) {
+  const { t } = useTranslation(["generative"]);
   const fileType = document?.file_type || document?.type;
   const preview = normalizeUrl(document?.preview);
 
   const dialogContent = (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Preview Document</DialogTitle>
+      <DialogTitle>{t("generative:rag.documentPreview.title")}</DialogTitle>
       <DialogContent>
         {document && fileType === "pdf" && preview && (
           <iframe
             src={preview}
-            title="PDF Preview"
+            title={t("generative:rag.documentPreview.pdfPreview")}
             width="100%"
             height="600px"
             style={{ border: 0 }}
@@ -29,7 +31,7 @@ export default function DocumentPreviewModal({
           <pre style={{ maxHeight: 600, overflow: "auto" }}>{txtContent}</pre>
         )}
         {document && !["pdf", "txt"].includes(fileType) && (
-          <Box>No preview available for this file type.</Box>
+          <Box>{t("generative:rag.documentPreview.noPreview")}</Box>
         )}
       </DialogContent>
     </Dialog>

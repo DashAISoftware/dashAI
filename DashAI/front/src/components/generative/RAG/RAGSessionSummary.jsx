@@ -95,8 +95,8 @@ export default function RAGSessionSummary({
 
     const newName = (editingName || "").trim();
     if (!newName) {
-      setNameError("El nombre de la sesión no puede estar vacío.");
-      enqueueSnackbar("El nombre de la sesión no puede estar vacío.", { variant: "error" });
+      setNameError(t("generative:rag.validation.nameRequired"));
+      enqueueSnackbar(t("generative:rag.validation.nameRequired"), { variant: "error" });
       return;
     }
 
@@ -107,8 +107,8 @@ export default function RAGSessionSummary({
       const allSessions = await getSessions();
       const duplicate = allSessions.find((s) => s.name === newName && s.id !== sessionData.id);
       if (duplicate) {
-        setNameError("Ya existe otra sesión con ese nombre.");
-        enqueueSnackbar("Ya existe otra sesión con ese nombre.", { variant: "error" });
+        setNameError(t("generative:rag.validation.nameUnique"));
+        enqueueSnackbar(t("generative:rag.validation.nameUnique"), { variant: "error" });
         setIsSaving(false);
         return;
       }
@@ -190,7 +190,7 @@ export default function RAGSessionSummary({
   // Helper function to open modal with complex parameter
   const handleParameterClick = (paramName, paramValue, componentName) => {
     setModalContent({
-      title: `${componentName} - ${paramName}`,
+      title: t("generative:rag.summary.parameterDetailTitle", { component: componentName, param: paramName }),
       content: paramValue
     });
     setModalOpen(true);

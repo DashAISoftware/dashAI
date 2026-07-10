@@ -57,11 +57,377 @@
     "attachMedia": "附加媒体",
     "attachMediaToContinue": "附加媒体以继续",
     "noInputAvailable": "此任务无可用输入",
-    "selectModelCrumb": "选择模型"
+    "selectModelCrumb": "选择模型",
+    "ragTask": "RAG - 检索增强生成",
+    "ragTaskDescription": "上传文档并使用检索增强生成与它们对话。"
   },
   "message": {
     "sessionCreatedSuccess": "会话创建成功。",
     "sessionDeleted": "会话删除成功",
     "sessionUpdated": "会话更新成功"
+  },
+  "rag": {
+    "setup": {
+      "title": "创建 RAG 会话",
+      "subtitle": "提供基本信息，选择文档，并为您的 RAG 会话配置组件。",
+      "sessionDetails": "会话详情",
+      "sessionName": "会话名称 *",
+      "sessionNamePlaceholder": "例如：产品文档 RAG",
+      "sessionNameDuplicate": "此会话名称已存在",
+      "sessionNameDuplicateAlert": "已存在同名会话。请使用其他名称。",
+      "description": "描述（可选）",
+      "descriptionPlaceholder": "描述此 RAG 会话的用途...",
+      "selectDocuments": "选择文档",
+      "selectDocumentsDescription": "上传新文档或从现有文档中选择以用于 RAG。",
+      "chunkingStrategy": "分块策略",
+      "retrieverModel": "检索模型",
+      "promptTemplate": "提示词模板",
+      "languageModel": "语言模型 (LLM)",
+      "cancel": "取消",
+      "saveSession": "保存会话",
+      "openDocumentsLibrary": "打开文档库"
+    },
+    "validation": {
+      "nameRequired": "会话名称为必填项",
+      "nameUnique": "会话名称必须唯一",
+      "documentsRequired": "必须至少选择一个文档",
+      "chunkingRequired": "必须配置分块模型",
+      "retrieverRequired": "必须配置检索模型",
+      "generatorRequired": "必须配置生成器模型",
+      "generatorInvalid": "生成器配置无效（请检查上下文窗口）",
+      "promptRequired": "必须选择提示词模板"
+    },
+    "messages": {
+      "success": "RAG 会话创建成功"
+    },
+    "chunking": {
+      "description": "选择您的文档如何拆分为用于检索的块。",
+      "presets": {
+        "small": {
+          "label": "小块"
+        },
+        "paragraph": {
+          "label": "段落长度"
+        },
+        "page": {
+          "label": "页面块"
+        },
+        "large": {
+          "label": "大节"
+        },
+        "chunkSizeFormat": "{{chars}} 字符 ≈ {{tokens}} 标记",
+        "custom": {
+          "label": "自定义分块模型",
+          "description": "已应用高级配置"
+        }
+      },
+      "advancedButton": "打开高级配置"
+    },
+    "retriever": {
+      "description": "选择您的检索范式。检索器将搜索您的文档并返回最相关的块。",
+      "paradigmLabel": "检索范式",
+      "keywordLabel": "关键词",
+      "semanticLabel": "语义",
+      "hybridLabel": "混合",
+      "hybridDescription": "BM25 + Harrier 0.6B",
+      "advancedApplied": "已应用高级配置",
+      "topKLabel": "块数量 (Top K)",
+      "topKCardDescription": "块",
+      "advancedTopK": "高级 Top K: {{topK}}",
+      "advancedButton": "打开高级配置",
+      "modifyFromAdvanced": "必须从高级配置视图中修改 Top K",
+      "explanations": {
+        "SparseRetriever": "最适合特定关键词和 ID 搜索。用于查找文档中的精确匹配。",
+        "DenseRetriever": "理解语义的上下文搜索。适合查找语义相似的内容，但可能遗漏特定关键词或 ID。",
+        "HybridRetriever": "结合关键词搜索和上下文搜索，在不同查询类型间提供平衡的性能。"
+      }
+    },
+    "composite": {
+      "addChild": "添加检索节点",
+      "removeNode": "删除节点",
+      "configureNode": "配置节点",
+      "selectModel": "选择检索模型",
+      "parameters": "参数",
+      "simpleGroup": "简单检索器",
+      "keywordGroup": "关键词检索器",
+      "denseGroup": "稠密检索器",
+      "embeddingGroup": "嵌入检索器",
+      "hybridGroup": "混合",
+      "hybridDescription": "BM25 + HuggingFace 多语言嵌入",
+      "compositeGroup": "组合检索器",
+      "nestedCompositeNote": "这是一个组合检索器。其子节点可以在下方的树中配置。",
+      "allChunks": "所有块",
+      "selectedChunks": "已选块",
+      "retrieverDescription": "选择一个检索器来配置其参数。关键词检索器（BM25、TF-IDF）通过词频查找文档。嵌入检索器通过稠密向量捕获语义含义。组合检索器按顺序或并行地链接多个检索器。",
+      "compositeInstructions": "点击 + 按钮向此组合添加子检索器。点击检索器卡片以编辑其参数或选择其他模型。"
+    },
+    "generator": {
+      "description": "选择将根据检索到的上下文和您的提示词生成回复的语言模型。",
+      "modelLabel": "生成器模型",
+      "advancedApplied": "已应用高级配置",
+      "selectModel": "选择语言模型",
+      "selectModelPlaceholder": "例如：GPT-4、Claude、Llama",
+      "modelInfo": "模型：",
+      "advancedButton": "打开高级配置"
+    },
+    "prompt": {
+      "description": "选择一种提示词模板，定义如何组合检索到的上下文和聊天消息以生成回复。",
+      "availablePrompts": "可用的提示词",
+      "openPrompts": "打开提示词库",
+      "promptLabel": "提示词",
+      "selectTemplate": "选择提示词模板",
+      "selectTemplatePlaceholder": "例如：默认提示词、自定义指令",
+      "selectedTemplate": "已选择的提示词模板：",
+      "newPromptButton": "新建提示词",
+      "defaultGenerationPrompt": "默认生成提示词",
+      "defaultQAGenerationPrompt": "默认问答生成提示词",
+      "createNewPrompt": "创建新提示词",
+      "language": "语言",
+      "collapse": "收起",
+      "expand": "展开",
+      "descriptionToggle": "描述",
+      "languages": {
+        "en": "English",
+        "es": "Español",
+        "pt": "Português"
+      }
+    },
+    "promptView": {
+      "type": "类型",
+      "language": "语言",
+      "languageNotAvailable": "语言不可用",
+      "languageNone": "无语言",
+      "noContent": "无模板内容",
+      "close": "关闭",
+      "templateContent": "模板内容",
+      "untitledPrompt": "提示词",
+      "table": {
+        "id": "ID",
+        "name": "名称",
+        "type": "类型",
+        "language": "语言",
+        "created": "创建时间",
+        "edited": "编辑时间",
+        "actions": "操作",
+        "viewPrompt": "查看提示词",
+        "currentPrompts": "当前提示词",
+        "choosePrompt": "选择或自定义您的提示词以定义模型的行为。",
+        "newPrompt": "新建提示词"
+      }
+    },
+    "documents": {
+      "uploadButton": "上传文档",
+      "emptyUploadText": "上传您的文档",
+      "table": {
+        "id": "ID",
+        "name": "名称",
+        "type": "类型",
+        "created": "创建时间",
+        "lastModified": "最后修改",
+        "actions": "操作",
+        "preview": "预览",
+        "delete": "删除",
+        "addDocument": "添加文档",
+        "currentDocuments": "当前文档",
+        "noDocumentsAvailable": "没有可用的文档。",
+        "emptyUploadText": "上传您的文档",
+        "unknownType": "未知"
+      }
+    },
+    "summary": {
+      "title": "RAG 会话",
+      "descriptionPlaceholder": "暂无描述",
+      "createdLabel": "创建时间",
+      "openChatButton": "打开 RAG 会话聊天",
+      "detailedConfig": "详细配置",
+      "chunkingModel": "分块模型",
+      "retrieverModel": "检索模型",
+      "generationModel": "生成模型",
+      "promptSelected": "已选提示词",
+      "promptName": "名称：",
+      "promptTemplate": "模板：",
+      "noPrompt": "未配置提示词",
+      "sessionNotFound": "未找到会话",
+      "loading": "正在加载会话数据...",
+      "apiKeyCopied": "API 密钥已复制到剪贴板",
+      "failedToCopyApiKey": "复制 API 密钥失败",
+      "noParameters": "无参数",
+      "viewDetails": "查看详情",
+      "parameterDetails": "参数详情",
+      "completeConfig": "完整参数配置：",
+      "close": "关闭",
+      "sessionName": "会话名称",
+      "sessionDescription": "会话描述",
+      "parameterDetailTitle": "{{component}} - {{param}}",
+      "edit": "编辑",
+      "save": "保存",
+      "cancel": "取消",
+      "sessionUpdated": "会话更新成功",
+      "failedToUpdateSession": "更新会话失败"
+    },
+    "newPrompt": {
+      "title": "创建新提示词",
+      "description": "提示词模板定义了如何集成文档块和聊天消息以生成回复。自定义提示词以调整您的 RAG 会话行为。",
+      "placeholdersInfo": "使用 {chunks} 表示检索到的文档块将被插入的位置，使用 {input} 表示用户消息。",
+      "nameLabel": "提示词名称",
+      "nameRequired": "提示词名称为必填项",
+      "promptLabel": "提示词",
+      "promptPlaceholder": "您可以在此修改提示词，例如：\n每条用户消息添加为 {input}\n来源添加为 {chunks}",
+      "cancel": "取消",
+      "save": "保存",
+      "unsavedChanges": "您有未保存的更改。确定要取消吗？",
+      "success": "提示词创建成功！",
+      "error": "创建提示词失败",
+      "languageLabel": "语言（可选）"
+    },
+    "advanced": {
+      "chunkingTitle": "高级分块配置",
+      "retrieverTitle": "高级检索配置",
+      "generatorTitle": "高级生成器配置",
+      "promptTitle": "高级提示词配置",
+      "close": "关闭",
+      "done": "完成",
+      "noDescription": "暂无描述",
+      "promptTemplate": "提示词模板",
+      "promptInfo": "提示词的高级配置通常通过提示词模板界面管理。您可以在那里创建自定义提示词或修改现有模板。"
+    },
+    "rightPanel": {
+      "title": "RAG 基础",
+      "subtitle": "检索增强生成 (RAG) 帮助模型使用您的文档回答问题。",
+      "howItWorksTitle": "工作原理",
+      "howItWorks": {
+        "step1": "选择您希望助手使用的文档。",
+        "step2": "文档被拆分为较小的块（分块）以使检索高效。",
+        "step3": "检索器找到与您问题最相关的块。",
+        "step4": "LLM 使用这些块和选择的提示词模板生成答案。"
+      },
+      "settingsTitle": "各设置的作用",
+      "settings": {
+        "documents": {
+          "title": "文档",
+          "point1": "您的文档是知识库：助手只能使用其能够从中检索到的内容。",
+          "point2": "上传清晰、结构良好的文件（PDF、TXT 等）以获得最佳效果。",
+          "point3": "目前仅支持基于文本的文档。图像、音频和视频尚不支持。"
+        },
+        "chunking": {
+          "title": "分块",
+          "point1": "分块将文档拆分为可搜索的较小片段。",
+          "point2": "块太小：检索可能会丢失上下文，回答可能显得支离破碎。",
+          "point3": "块太大：检索可能带来额外噪音，回答可能更慢（更多标记）。",
+          "point4": "重叠有助于保持块之间的上下文，但会增加重复。"
+        },
+        "retriever": {
+          "title": "检索器（稀疏 vs 稠密）",
+          "point1": "检索器决定将哪些块发送给 LLM。",
+          "point2": "稀疏（关键词）：适合精确术语如 ID、产品名称或代码；通常快速。",
+          "point3": "稀疏限制：难以处理同义词和高度改述的问题。",
+          "point4": "稠密（语义）：更适合自然语言和改述；通过含义搜索。",
+          "point5": "稠密限制：可能返回「相似」但不精确的匹配，且可能较慢。"
+        },
+        "llm": {
+          "title": "语言模型 (LLM)",
+          "point1": "LLM 使用检索到的块编写最终答案。",
+          "point2": "较大的模型通常回答更好，但可能更慢且更昂贵。",
+          "point3": "如果您需要速度，从较小的模型开始并迭代。"
+        },
+        "prompt": {
+          "title": "提示词模板",
+          "point1": "提示词控制语气、格式以及模型应关注的内容。",
+          "point2": "如果回答太长/太短或缺乏结构，请尝试其他模板或优化提示词。"
+        }
+      },
+      "tipsTitle": "实用技巧",
+      "tips": {
+        "tip1": "如果回答缺少上下文，请尝试更大的块或更多重叠。",
+        "tip2": "如果回答感觉太泛泛，请尝试更小的块或调整检索模型。",
+        "tip3": "选择与您领域和语气匹配的提示词模板。"
+      }
+    },
+    "common": {
+      "loading": "加载中..."
+    },
+    "chunkingConfig": {
+      "configureTitle": "配置分块模型",
+      "modelLabel": "分块模型"
+    },
+    "generatorConfig": {
+      "configureTitle": "配置生成器模型 (LLM)",
+      "modelLabel": "生成器模型"
+    },
+    "retrieverConfig": {
+      "modelLabel": "检索模型"
+    },
+    "breadcrumbs": {
+      "generative": "生成式",
+      "rag": "RAG",
+      "documents": "文档",
+      "prompts": "提示词",
+      "goBack": "返回",
+      "sessionSuffix": "会话"
+    },
+    "placeholders": {
+      "title": "必填占位符",
+      "insert": "插入 {{placeholder}}"
+    },
+    "documentPreview": {
+      "title": "文档预览",
+      "noPreview": "此文件类型没有可用的预览。",
+      "pdfPreview": "PDF 预览"
+    },
+    "paramsPanel": {
+      "title": "RAG 参数",
+      "save": "保存",
+      "failedToLoad": "加载 RAG 会话失败",
+      "updated": "RAG 参数已更新",
+      "failedToUpdate": "更新 RAG 参数失败"
+    }
+  },
+  "validation": {
+    "contextSpace": "使用当前配置，您有空间容纳源（块）和 {{availableChars}} 个字符用于您的消息。",
+    "insufficientContextTitle": "上下文窗口不足",
+    "insufficientContextDescription": "所选模型没有足够的上下文来处理当前的块大小和 Top K 设置。请减小块大小、减少结果数量 (Top K)，或选择具有更大上下文窗口的模型。",
+    "apiKeyMissingTitle": "需要 API 密钥",
+    "apiKeyMissingDescription": "此模型需要 API 密钥才能运行。打开高级配置以添加您的 API 密钥。"
+  },
+  "documentReferences": {
+    "modalTitle": "文档引用",
+    "fallbackTitle": "文档 {{id}}",
+    "chunksCount_one": "此文档为此回复提供了 {{count}} 个块：",
+    "chunksCount_other": "此文档为此回复提供了 {{count}} 个块：",
+    "chunkLabel": "第 {{position}} 块",
+    "close": "关闭"
+  },
+  "sourcesDisplay": {
+    "viewSources": "查看消息来源",
+    "provided": "提供了",
+    "chunk_one": "个块",
+    "chunk_other": "个块",
+    "viewChunks": "查看块"
+  },
+  "documentsBar": {
+    "title": "文档",
+    "documentCount_one": "{{count}} 个文档",
+    "documentCount_other": "{{count}} 个文档",
+    "inCurrentSession": " 在当前会话中",
+    "available": " 可用",
+    "addDocuments": "添加文档",
+    "searchPlaceholder": "搜索文档",
+    "detailedView": "查看详细视图",
+    "noDocumentsFound": "未找到文档",
+    "noDocumentsInSession": "此会话中没有文档",
+    "noDocumentsAvailable": "没有可用的文档",
+    "uploadDocuments": "上传您的文档",
+    "failedFetch": "获取文档失败",
+    "successUpload_one": "成功上传 {{count}} 个文档",
+    "successUpload_other": "成功上传 {{count}} 个文档",
+    "failedUpload": "上传文档失败"
+  },
+  "ragPromptsPage": {
+    "title": "RAG 提示词",
+    "description": "管理 RAG 会话的提示词：查看所有可用的提示词并创建新的，以提升您的 AI 交互体验。"
+  },
+  "ragDocumentsPage": {
+    "title": "RAG 文档",
+    "description": "管理 RAG 会话的文档：查看现有文档并上传新的，以增强您的 AI 知识库。"
   }
 }

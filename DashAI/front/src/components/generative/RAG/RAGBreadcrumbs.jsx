@@ -6,6 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Box from "@mui/material/Box";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useGenerative } from "../GenerativeContext";
 
 /**
@@ -13,6 +14,7 @@ import { useGenerative } from "../GenerativeContext";
  * @param {string} sessionName - Optional session name to show in breadcrumbs
  */
 function RAGBreadcrumbs({ sessionName }) {
+  const { t } = useTranslation(["generative"]);
   const navigate = useNavigate();
   const location = useLocation();
   const {
@@ -35,12 +37,12 @@ function RAGBreadcrumbs({ sessionName }) {
     if (!path.startsWith("/app/generative/RAG")) return [];
 
     const base = [
-      { label: "Generative", path: "/app/generative" },
-      { label: "RAG", path: "/app/generative/RAG" },
+      { label: t("generative:rag.breadcrumbs.generative"), path: "/app/generative" },
+      { label: t("generative:rag.breadcrumbs.rag"), path: "/app/generative/RAG" },
     ];
 
-    if (path === "/app/generative/RAG/documents") return [...base, { label: "Documents", path: null, current: true }];
-    if (path === "/app/generative/RAG/prompts") return [...base, { label: "Prompts", path: null, current: true }];
+    if (path === "/app/generative/RAG/documents") return [...base, { label: t("generative:rag.breadcrumbs.documents"), path: null, current: true }];
+    if (path === "/app/generative/RAG/prompts") return [...base, { label: t("generative:rag.breadcrumbs.prompts"), path: null, current: true }];
 
     if (sessionName) return [...base, { label: sessionName, path: null, current: true, isSession: true }];
 
@@ -97,7 +99,7 @@ function RAGBreadcrumbs({ sessionName }) {
               backgroundColor: 'action.hover'
             }
           }}
-          aria-label="Go back"
+          aria-label={t("generative:rag.breadcrumbs.goBack")}
         >
           <ArrowBackIcon fontSize="small" />
         </IconButton>
@@ -116,7 +118,7 @@ function RAGBreadcrumbs({ sessionName }) {
               <Typography key={index} color="text.primary">
                 {breadcrumb.isSession ? (
                   <>
-                    <em>{breadcrumb.label}</em> session
+                    <em>{breadcrumb.label}</em> {t("generative:rag.breadcrumbs.sessionSuffix")}
                   </>
                 ) : (
                   breadcrumb.label

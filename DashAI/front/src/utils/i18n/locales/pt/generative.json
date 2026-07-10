@@ -128,6 +128,7 @@
       "keywordLabel": "Palavra-chave",
       "semanticLabel": "Semântico",
       "hybridLabel": "Híbrido",
+      "hybridDescription": "BM25 + Harrier 0.6B",
       "advancedApplied": "Configuração avançada aplicada",
       "topKLabel": "Número de fragmentos (Top K)",
       "topKCardDescription": "Fragmentos",
@@ -183,7 +184,35 @@
       "language": "Idioma",
       "collapse": "Recolher",
       "expand": "Expandir",
-      "descriptionToggle": "Descrição"
+      "descriptionToggle": "Descrição",
+      "languages": {
+        "en": "English",
+        "es": "Español",
+        "pt": "Português"
+      }
+    },
+    "promptView": {
+      "type": "Tipo",
+      "language": "Idioma",
+      "languageNotAvailable": "Idioma não disponível",
+      "languageNone": "Sem idioma",
+      "noContent": "Sem conteúdo de template",
+      "close": "Fechar",
+      "templateContent": "Conteúdo do template",
+      "untitledPrompt": "Prompt",
+      "table": {
+        "id": "ID",
+        "name": "Nome",
+        "type": "Tipo",
+        "language": "Idioma",
+        "created": "Criado",
+        "edited": "Editado",
+        "actions": "Ações",
+        "viewPrompt": "Ver prompt",
+        "currentPrompts": "Prompts atuais",
+        "choosePrompt": "Escolha ou personalize seu prompt para definir o comportamento do modelo.",
+        "newPrompt": "Novo prompt"
+      }
     },
     "newPrompt": {
       "title": "Criar um novo prompt",
@@ -263,9 +292,62 @@
         "tip3": "Escolha um modelo de prompt que corresponda ao seu domínio e tom."
       }
     },
+    "common": {
+      "loading": "Carregando..."
+    },
+    "chunkingConfig": {
+      "configureTitle": "Configurar modelo de chunking",
+      "modelLabel": "Modelo de chunking"
+    },
+    "generatorConfig": {
+      "configureTitle": "Configurar modelo gerador (LLM)",
+      "modelLabel": "Modelo gerador"
+    },
+    "retrieverConfig": {
+      "modelLabel": "Modelo de recuperação"
+    },
+    "breadcrumbs": {
+      "generative": "Generativo",
+      "rag": "RAG",
+      "documents": "Documentos",
+      "prompts": "Prompts",
+      "goBack": "Voltar",
+      "sessionSuffix": "sessão"
+    },
+    "placeholders": {
+      "title": "Marcadores obrigatórios",
+      "insert": "Inserir {{placeholder}}"
+    },
+    "documentPreview": {
+      "title": "Visualização do documento",
+      "noPreview": "Não há visualização disponível para este tipo de arquivo.",
+      "pdfPreview": "Visualização de PDF"
+    },
+    "paramsPanel": {
+      "title": "Parâmetros RAG",
+      "save": "Salvar",
+      "failedToLoad": "Erro ao carregar a sessão RAG",
+      "updated": "Parâmetros RAG atualizados",
+      "failedToUpdate": "Erro ao atualizar os parâmetros RAG"
+    },
     "documents": {
       "uploadButton": "Upload de documentos",
-      "emptyUploadText": "Faça upload do(s) seu(s) documento(s)"
+      "emptyUploadText": "Faça upload do(s) seu(s) documento(s)",
+      "table": {
+        "id": "ID",
+        "name": "Nome",
+        "type": "Tipo",
+        "created": "Criado",
+        "lastModified": "Última modificação",
+        "actions": "Ações",
+        "preview": "Visualizar",
+        "delete": "Excluir",
+        "addDocument": "Adicionar documento",
+        "currentDocuments": "Documentos atuais",
+        "noDocumentsAvailable": "Nenhum documento disponível.",
+        "emptyUploadText": "Envie seu(s) documento(s)",
+        "unknownType": "Desconhecido"
+      }
     },
     "summary": {
       "title": "Sessão RAG",
@@ -291,6 +373,7 @@
       "close": "Fechar",
       "sessionName": "Nome da sessão",
       "sessionDescription": "Descrição da sessão",
+      "parameterDetailTitle": "{{component}} - {{param}}",
       "edit": "Editar",
       "save": "Salvar",
       "cancel": "Cancelar",

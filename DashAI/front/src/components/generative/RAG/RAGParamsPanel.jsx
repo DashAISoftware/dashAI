@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 import SideBar from "../../threeSectionLayout/panelContainers/SideBar";
 import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 import {
   getRAGSession,
   updateGenerativeSessionParams,
@@ -10,6 +11,7 @@ import PromptParamsCard from "./PromptParamsCard";
 import GeneratorParamsCard from "./GeneratorParamsCard";
 
 export default function RAGParamsPanel({ selectedSessionId }) {
+  const { t } = useTranslation(["generative"]);
   const { enqueueSnackbar } = useSnackbar();
   const [promptModel, setPromptModel] = useState({ component: "", params: {} });
   const [generatorModel, setGeneratorModel] = useState({ component: null, params: {} });
@@ -40,7 +42,7 @@ export default function RAGParamsPanel({ selectedSessionId }) {
       })
       .catch((err) => {
         console.error("Failed to load RAG session:", err);
-        enqueueSnackbar("Failed to load RAG session", { variant: "error" });
+        enqueueSnackbar(t("generative:rag.paramsPanel.failedToLoad"), { variant: "error" });
       })
       .finally(() => setLoading(false));
   }, [selectedSessionId, enqueueSnackbar]);
@@ -69,20 +71,20 @@ export default function RAGParamsPanel({ selectedSessionId }) {
 
     try {
       await updateGenerativeSessionParams(selectedSessionId, payload.parameters);
-      enqueueSnackbar("RAG parameters updated", { variant: "success" });
+      enqueueSnackbar(t("generative:rag.paramsPanel.updated"), { variant: "success" });
       // Update the snapshot after successful save and trigger recalculation
       originalParamsRef.current = payload.parameters;
       setSavedVersion((v) => v + 1);
     } catch (err) {
       console.error("Failed to update RAG session:", err);
-      enqueueSnackbar("Failed to update RAG parameters", { variant: "error" });
+      enqueueSnackbar(t("generative:rag.paramsPanel.failedToUpdate"), { variant: "error" });
     }
   };
 
   return (
     <SideBar>
       <Box sx={{ p: 2, height: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
-        <Typography variant="h6">RAG Parameters</Typography>
+        <Typography variant="h6">{t("generative:rag.paramsPanel.title")}</Typography>
 
         <Box sx={{ overflow: "auto", flex: 1 }}>
           <Box sx={{ mb: 2 }}>
@@ -107,7 +109,7 @@ export default function RAGParamsPanel({ selectedSessionId }) {
             onClick={handleSave} 
             disabled={loading || !isValid || !selectedSessionId || !hasParamChanges}
           >
-            Save
+            {t("generative:rag.paramsPanel.save")}
           </Button>
         </Box>
       </Box>

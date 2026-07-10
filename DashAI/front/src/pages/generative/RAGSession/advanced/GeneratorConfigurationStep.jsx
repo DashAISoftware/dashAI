@@ -6,6 +6,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import { getGeneratorComponents } from "../../../../api/rag";
@@ -16,6 +17,7 @@ export default function GeneratorConfigurationStep({
   setGeneratorModel,
   setNextEnabled,
 }) {
+  const { t } = useTranslation(["generative"]);
   const [generators, setGenerators] = useState([]);
   const [selectedGenerator, setSelectedGenerator] = useState(null);
 
@@ -86,7 +88,7 @@ export default function GeneratorConfigurationStep({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Typography variant="subtitle2" sx={{ mb: 0 }}>
-        Configure Generator Model (LLM)
+        {t("generative:rag.generatorConfig.configureTitle")}
       </Typography>
 
       <Autocomplete
@@ -97,7 +99,7 @@ export default function GeneratorConfigurationStep({
         onChange={handleSelection}
         isOptionEqualToValue={(option, value) => option.name === value?.name}
         renderInput={(params) => (
-          <TextField {...params} label="Generator Model" />
+          <TextField {...params} label={t("generative:rag.generatorConfig.modelLabel")} />
         )}
       />
 

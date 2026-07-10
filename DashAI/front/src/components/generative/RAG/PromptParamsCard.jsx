@@ -30,11 +30,7 @@ import NewPromptModal from "../../../pages/generative/RAGSession/advanced/NewPro
 import RAGSectionColumn from "../../../pages/generative/RAGSession/components/RAGSectionColumn";
 import { getDescription, renderTemplateWithHighlights } from "../../../pages/generative/RAGSession/components/sectionUtils";
 
-const LANGUAGE_OPTIONS = [
-  { code: "en", name: "English" },
-  { code: "es", name: "Español" },
-  { code: "pt", name: "Português" },
-];
+import { LANGUAGE_CODES } from "../../../constants/languages";
 
 const CREATE_NEW_ID = "__create-new__";
 const DEFAULT_IDS = {
@@ -308,10 +304,10 @@ export default function PromptParamsCard({
       <CardContent sx={{ p: 2 }}>
         <Box sx={{ mb: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>Prompt</Typography>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{t("generative:rag.prompt.promptLabel")}</Typography>
             <Box>
               {isExpanded && (
-                <Tooltip title={t("generative:rag.prompt.descriptionToggle") || "Description"}>
+                <Tooltip title={t("generative:rag.prompt.descriptionToggle")}>
                   <IconButton
                     size="small"
                     onClick={() => setShowDescription((s) => !s)}
@@ -327,7 +323,7 @@ export default function PromptParamsCard({
                   <ViewListIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-              <Tooltip title={isExpanded ? (t("generative:rag.prompt.collapse") || "Collapse") : (t("generative:rag.prompt.expand") || "Expand")}>
+              <Tooltip title={isExpanded ? t("generative:rag.prompt.collapse") : t("generative:rag.prompt.expand")}>
                 <IconButton
                   size="small"
                   onClick={() => setIsExpanded((s) => !s)}
@@ -385,9 +381,9 @@ export default function PromptParamsCard({
               onChange={handleLanguageChange}
               size="small"
             >
-              {LANGUAGE_OPTIONS.map((opt) => (
-                <MenuItem key={opt.code} value={opt.code}>
-                  {opt.name}
+              {LANGUAGE_CODES.map((code) => (
+                <MenuItem key={code} value={code}>
+                  {t(`generative:rag.prompt.languages.${code}`)}
                 </MenuItem>
               ))}
             </TextField>

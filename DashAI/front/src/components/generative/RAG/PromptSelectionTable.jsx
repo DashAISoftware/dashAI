@@ -14,7 +14,6 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { DataGrid } from "@mui/x-data-grid";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../../utils";
-import { LANGUAGE_NAME_MAP } from "../../../constants/languages";
 import PromptViewModal from "./PromptViewModal";
 import NewPromptModal from "../../../pages/generative/RAGSession/advanced/NewPromptModal";
 import { getRAGPrompts } from "../../../api/rag";
@@ -122,7 +121,7 @@ export default function PromptSelectionTable({
         editable: false,
         valueGetter: (value, row) => {
           if (row.language) {
-            return LANGUAGE_NAME_MAP[row.language] || row.language;
+            return t(`generative:rag.prompt.languages.${row.language}`) || row.language;
           }
           return "-";
         },

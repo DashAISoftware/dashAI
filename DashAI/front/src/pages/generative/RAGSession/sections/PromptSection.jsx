@@ -20,11 +20,7 @@ import NewPromptModal from "../advanced/NewPromptModal";
 import RAGSectionColumn from "../components/RAGSectionColumn";
 import { getDescription, renderTemplateWithHighlights } from "../components/sectionUtils";
 
-const LANGUAGE_OPTIONS = [
-  { code: "en", name: "English" },
-  { code: "es", name: "Español" },
-  { code: "pt", name: "Português" },
-];
+import { LANGUAGE_CODES } from "../../../../constants/languages";
 
 const CREATE_NEW_ID = "__create-new__";
 const DEFAULT_IDS = {
@@ -347,9 +343,9 @@ export default function PromptSection({
           onChange={handleLanguageChange}
           size="small"
         >
-          {LANGUAGE_OPTIONS.map((opt) => (
-            <MenuItem key={opt.code} value={opt.code}>
-              {opt.name}
+          {LANGUAGE_CODES.map((code) => (
+            <MenuItem key={code} value={code}>
+              {t(`generative:rag.prompt.languages.${code}`)}
             </MenuItem>
           ))}
         </TextField>

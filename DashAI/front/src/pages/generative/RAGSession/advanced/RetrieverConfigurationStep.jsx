@@ -274,30 +274,19 @@ const RetrieverConfigurationStep = forwardRef(
           getOptionLabel={(opt) => getDisplayName(opt)}
           groupBy={(opt) => {
             if (opt._type === "embedding")
-              return (
-                t("generative:rag.composite.denseGroup") ||
-                "Dense Retrievers"
-              );
+              return t("generative:rag.composite.denseGroup");
             const flags = opt.flags || [];
             if (flags.includes("composite"))
-              return (
-                t("generative:rag.composite.compositeGroup") ||
-                "Composite"
-              );
+              return t("generative:rag.composite.compositeGroup");
             if (flags.includes("keyword"))
-              return (
-                t("generative:rag.composite.keywordGroup") ||
-                "Keyword"
-              );
-            return (
-              t("generative:rag.composite.simpleGroup") || "Other"
-            );
+              return t("generative:rag.composite.keywordGroup");
+            return t("generative:rag.composite.simpleGroup");
           }}
           value={selectedRetriever}
           onChange={handleRetrieverChange}
           isOptionEqualToValue={(a, b) => a.name === b.name}
           renderInput={(params) => (
-            <TextField {...params} label="Retriever model" />
+            <TextField {...params} label={t("generative:rag.retrieverConfig.modelLabel")} />
           )}
         />
 

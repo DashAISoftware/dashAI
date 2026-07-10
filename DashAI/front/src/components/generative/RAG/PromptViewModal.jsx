@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { renderTemplateWithHighlights } from "../../../pages/generative/RAGSession/components/sectionUtils";
-import { LANGUAGE_OPTIONS, LANGUAGE_NAME_MAP } from "../../../constants/languages";
+import { LANGUAGE_CODES } from "../../../constants/languages";
 
 /**
  * Dialog that displays prompt content with optional language selection.
@@ -78,9 +78,9 @@ export default function PromptViewModal({ open, handleClose, prompt }) {
     const codes = Object.keys(prompt.parameters.templates);
     return codes.map((code) => ({
       code,
-      name: LANGUAGE_OPTIONS.find((opt) => opt.code === code)?.name || code,
+      name: t(`generative:rag.prompt.languages.${code}`) || code,
     }));
-  }, [hasMultiTemplates, prompt]);
+  }, [hasMultiTemplates, prompt, t]);
 
   const currentTemplate = useMemo(() => {
     if (hasMultiTemplates) {
@@ -123,7 +123,7 @@ export default function PromptViewModal({ open, handleClose, prompt }) {
             label={t("generative:rag.promptView.language")}
             value={
               prompt?.parameters?.language
-                ? LANGUAGE_NAME_MAP[prompt.parameters.language] ||
+                ? t(`generative:rag.prompt.languages.${prompt.parameters.language}`) ||
                   prompt.parameters.language
                 : t("generative:rag.promptView.languageNotAvailable")
             }

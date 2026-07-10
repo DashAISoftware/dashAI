@@ -19,7 +19,7 @@ import { generateSequentialName } from "../../../../utils/nameGenerator";
 import PlaceholdersList from "../../../../components/generative/RAG/PlaceholdersList";
 import HighlightedTextarea from "../../../../components/generative/RAG/HighlightedTextarea";
 import { getCustomPrompts, createRAGPrompt } from "../../../../api/rag";
-import { LANGUAGE_OPTIONS } from "../../../../constants/languages";
+import { LANGUAGE_CODES } from "../../../../constants/languages";
 
 export default function NewPromptModal({
   open,
@@ -221,9 +221,9 @@ export default function NewPromptModal({
           sx={{ mb: 2 }}
         >
           <MenuItem value="">{t("generative:rag.promptView.languageNone")}</MenuItem>
-          {LANGUAGE_OPTIONS.map((opt) => (
-            <MenuItem key={opt.code} value={opt.code}>
-              {opt.name}
+          {LANGUAGE_CODES.map((code) => (
+            <MenuItem key={code} value={code}>
+              {t(`generative:rag.prompt.languages.${code}`)}
             </MenuItem>
           ))}
         </TextField>

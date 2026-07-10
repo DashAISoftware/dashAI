@@ -6,6 +6,7 @@ import {
   InsertDriveFile,
   Article,
 } from "@mui/icons-material";
+import { useTranslation } from "react-i18next";
 
 const getDocumentIcon = (fileType) => {
   const iconMap = {
@@ -31,6 +32,7 @@ export default function DocumentListItem({
   disabled = false,
   onClick,
 }) {
+  const { t } = useTranslation(["generative"]);
   const [isHovered, setIsHovered] = useState(false);
 
   const DocumentIcon = getDocumentIcon(document.type);
@@ -125,7 +127,7 @@ export default function DocumentListItem({
             fontWeight: 600,
           }}
         >
-          {document.type || "Unknown"}
+          {document.type || t("generative:rag.documents.table.unknownType")}
         </Typography>
       </Box>
     </Box>

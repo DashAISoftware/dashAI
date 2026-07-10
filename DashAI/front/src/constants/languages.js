@@ -1,12 +1,5 @@
 /**
- * Shared language constants used across RAG prompt components.
+ * Language codes available for RAG prompt templates.
+ * Display names are loaded from i18n locale files (generative:rag.prompt.languages.*).
  */
-export const LANGUAGE_OPTIONS = [
-  { code: "en", name: "English" },
-  { code: "es", name: "Español" },
-  { code: "pt", name: "Português" },
-];
-
-export const LANGUAGE_NAME_MAP = Object.fromEntries(
-  LANGUAGE_OPTIONS.map((opt) => [opt.code, opt.name]),
-);
+export const LANGUAGE_CODES = ["en", "es", "pt"];

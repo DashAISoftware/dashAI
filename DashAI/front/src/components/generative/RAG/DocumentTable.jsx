@@ -19,6 +19,7 @@ import { formatDate } from "../../../utils";
 import DeleteItemModal from "../../custom/DeleteItemModal";
 import DocumentPreviewModal from "./DocumentPreviewModal";
 import { normalizeUrl } from "../../../utils/urlUtils";
+import { useTranslation } from "react-i18next";
 
 export default function DocumentTable({
   documents,
@@ -28,6 +29,7 @@ export default function DocumentTable({
   tableTitle = null,
   showTableTitle = false,
 }) {
+  const { t } = useTranslation(["generative", "common"]);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [txtContent, setTxtContent] = useState("");
@@ -77,38 +79,38 @@ export default function DocumentTable({
   };
 
   const columns = [
-    { field: "id", headerName: "ID", flex: 0.1, editable: false },
+    { field: "id", headerName: t("generative:rag.documents.table.id"), flex: 0.1, editable: false },
     {
       field: "file_name",
-      headerName: "Name",
+      headerName: t("generative:rag.documents.table.name"),
       flex: 0.6,
       editable: false,
     },
     {
       field: "created",
-      headerName: "Added On",
+      headerName: t("generative:rag.documents.table.created"),
       flex: 0.4,
       editable: false,
       valueGetter: (value) => formatDate(value),
     },
     {
       field: "last_modified",
-      headerName: "Last Modified",
+      headerName: t("generative:rag.documents.table.lastModified"),
       flex: 0.4,
       editable: false,
       valueGetter: (value, row) => {
         return row?.optional_metadata?.last_modified
           ? formatDate(row.optional_metadata.last_modified)
-          : "N/A";
+          : t("common:na");
       },
     },
     {
       field: "actions",
       type: "actions",
-      headerName: "Actions",
+      headerName: t("generative:rag.documents.table.actions"),
       flex: 0.3,
       getActions: (params) => [
-        <Tooltip title="Preview" key="preview">
+        <Tooltip title={t("generative:rag.documents.table.preview")} key="preview">
           <IconButton
             size="small"
             onClick={() => handleOpenPreview(params.row)}
@@ -135,7 +137,7 @@ export default function DocumentTable({
           sx={{ mb: 4 }}
         >
           <Typography variant="h5" component="h2">
-            {tableTitle || "Current documents"}
+            {tableTitle || t("generative:rag.documents.table.currentDocuments")}
           </Typography>
           <Button
             variant="contained"
@@ -143,7 +145,7 @@ export default function DocumentTable({
             startIcon={<AddIcon />}
             onClick={() => setUploadOpen(true)}
           >
-            Add new document
+            {t("generative:rag.documents.table.addDocument")}
           </Button>
         </Grid>
       ) : (
@@ -159,7 +161,7 @@ export default function DocumentTable({
             startIcon={<AddIcon />}
             onClick={() => setUploadOpen(true)}
           >
-            Add new document
+            {t("generative:rag.documents.table.addDocument")}
           </Button>
         </Grid>
       )}
@@ -171,7 +173,7 @@ export default function DocumentTable({
           mt={16}
           mx={"auto "}
         >
-          No documents available.
+          {t("generative:rag.documents.table.noDocumentsAvailable")}
         </Typography>
       ) : (
         <DataGrid
@@ -209,7 +211,7 @@ export default function DocumentTable({
         <Upload
           onFileUpload={handleFileUpload}
           multiple={true}
-          emptyUploadText="Upload your document(s)"
+          emptyUploadText={t("generative:rag.documents.table.emptyUploadText")}
         />
       </Dialog>
     </Paper>

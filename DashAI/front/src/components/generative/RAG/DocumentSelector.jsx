@@ -202,31 +202,31 @@ export default function DocumentSelector({
     () => [
       {
         accessorKey: "file_name",
-        header: "Name",
+        header: t("generative:rag.documents.table.name"),
         size: 250,
         Cell: ({ row }) => row.original.file_name,
       },
       {
         accessorKey: "file_type",
-        header: "Type",
+        header: t("generative:rag.documents.table.type"),
         size: 80,
         Cell: ({ row }) => row.original.file_type?.toUpperCase() || "-",
       },
       {
         accessorKey: "created",
-        header: "Created",
+        header: t("generative:rag.documents.table.created"),
         size: 150,
         Cell: ({ row }) => formatDate(row.original.created) || "-",
       },
       {
         id: "actions",
-        header: "Actions",
+        header: t("generative:rag.documents.table.actions"),
         size: 100,
         enableSorting: false,
         enableColumnFilter: false,
         Cell: ({ row }) => (
           <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
-            <Tooltip title="Preview">
+            <Tooltip title={t("generative:rag.documents.table.preview")}>
               <IconButton
                 size="small"
                 onClick={() => handleOpenPreview(row.original)}
@@ -234,7 +234,7 @@ export default function DocumentSelector({
                 <Visibility fontSize="small" />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Delete">
+            <Tooltip title={t("generative:rag.documents.table.delete")}>
               <IconButton
                 size="small"
                 onClick={() => handleRemoveDocument(row.original.id)}
@@ -247,7 +247,7 @@ export default function DocumentSelector({
         ),
       },
     ],
-    [handleRemoveDocument],
+    [handleRemoveDocument, t],
   );
 
   const rowSelection = useMemo(

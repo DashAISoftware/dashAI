@@ -301,7 +301,7 @@ export default function RetrieverSection({
           key="keyword"
           selected={!isAdvanced && selectedGroup === "keyword"}
           onClick={() => selectPreset("keyword")}
-          label={t("generative:rag.retriever.keywordLabel", { defaultValue: "Keyword" })}
+          label={t("generative:rag.retriever.keywordLabel")}
           description="BM25"
           sx={{ minWidth: 180}}
         />
@@ -309,7 +309,7 @@ export default function RetrieverSection({
           key="semantic"
           selected={!isAdvanced && selectedGroup === "semantic"}
           onClick={() => selectPreset("semantic")}
-          label={t("generative:rag.retriever.semanticLabel", { defaultValue: "Semantic" })}
+          label={t("generative:rag.retriever.semanticLabel")}
           description="Harrier OSS v1 0.6B"
           sx={{ minWidth: 180}}
         />
@@ -317,8 +317,8 @@ export default function RetrieverSection({
           key="hybrid"
           selected={!isAdvanced && selectedGroup === "hybrid"}
           onClick={() => selectPreset("hybrid")}
-          label={t("generative:rag.retriever.hybridLabel", { defaultValue: "Hybrid" })}
-          description="BM25 + Harrier 0.6B"
+          label={t("generative:rag.retriever.hybridLabel")}
+          description={t("generative:rag.retriever.hybridDescription")}
           sx={{ minWidth: 180}}
         />
         {isAdvanced && retrieverModel?.component && (
@@ -347,7 +347,6 @@ export default function RetrieverSection({
                 >
                   {t("generative:rag.retriever.advancedTopK", {
                     topK: effectiveTopK,
-                    defaultValue: "Advanced Top K: {{topK}}",
                   })}
                 </Typography>
               </Box>

@@ -1,6 +1,6 @@
 {
   "button": {
-    "backToTaskSelection": "Volver a Selección de Tarea",
+    "backToTaskSelection": "Volver a selección de tarea",
     "createSession": "Crear una sesión",
     "generativeHub": "Centro Generativo"
   },
@@ -21,36 +21,36 @@
   },
   "label": {
     "confirmDeleteSession": "¿Seguro que quieres eliminar la sesión \"{{name}}\"? Esta acción no se puede deshacer.",
-    "deleteSessionConfirmation": "¿Está seguro de que desea eliminar esta sesión? Esta acción no se puede deshacer.",
+    "deleteSessionConfirmation": "¿Seguro que quieres eliminar esta sesión? Esta acción no se puede deshacer.",
     "noDescriptionAvailable": "No hay descripción disponible",
     "showLess": "Mostrar menos",
     "readMore": "Leer más",
     "generativeModule": "Módulo Generativo",
-    "createNewSession": "Crear una Nueva Sesión",
+    "createNewSession": "Crear una nueva sesión",
     "createNewSessionDescription": "Elige un modelo, configura sus parámetros y empieza a conversar.",
     "configureSession": "Configurar sesión",
     "modelHasNoParameters": "Este modelo no tiene parámetros configurables.",
     "nameAndDescribeYourSession": "Nombra tu sesión. Ajusta los parámetros a la derecha. Puedes cambiarlos en cualquier momento durante la sesión.",
-    "nameYourSession": "Nombre su sesión",
-    "newSession": "Nueva Sesión",
+    "nameYourSession": "Nombra tu sesión",
+    "newSession": "Nueva sesión",
     "pickAModelGroupedByTask": "Elige un modelo. Los modelos están agrupados por tarea.",
     "searchModels": "Buscar modelos...",
     "startBySelectingATask": "Comienza seleccionando una tarea generativa.",
     "noSessionsFound": "No se encontraron sesiones",
     "parameterChangeEvent": "Parámetros actualizados: <1></1>",
     "parameterChangeHistory": "Historial de cambios de parámetros para la sesión actual",
-    "searchSessions": "Buscar Sesiones",
+    "searchSessions": "Buscar sesiones",
     "selectGenerativeTask": "Seleccione una tarea generativa para comenzar una nueva sesión",
     "selectModel": "Seleccione un modelo",
     "selectModelAndConfigureParameters": "Seleccione un modelo y configure sus parámetros.",
     "selectSessionToViewParameters": "Seleccione una sesión para ver y editar sus parámetros.",
-    "sessionDescription": "Descripción de la Sesión",
-    "sessionInformation": "Información de la Sesión",
-    "sessionName": "Nombre de la Sesión",
+    "sessionDescription": "Descripción de la sesión",
+    "sessionInformation": "Información de la sesión",
+    "sessionName": "Nombre de la sesión",
     "sessions": "Sesiones",
     "tourDisabledMessage": "Regresa al inicio para comenzar el tour",
     "typeYourMessage": "Escribe un mensaje",
-    "untitledSession": "Sesión Sin Título",
+    "untitledSession": "Sesión sin título",
     "attachImage": "Adjuntar imagen",
     "attachAudio": "Adjuntar audio",
     "attachVideo": "Adjuntar video",
@@ -58,7 +58,7 @@
     "attachMediaToContinue": "Adjunta medios para continuar",
     "noInputAvailable": "No hay entrada disponible para esta tarea",
     "selectModelCrumb": "Select Model",
-    "ragTask": "RAG - Generación Aumentada por Recuperación",
+    "ragTask": "RAG - Generación aumentada por recuperación",
     "ragTaskDescription": "Sube documentos y conversa con ellos usando generación aumentada por recuperación."
   },
   "message": {
@@ -72,16 +72,16 @@
       "subtitle": "Proporciona información básica, selecciona documentos y configura los componentes para tu sesión RAG.",
       "sessionDetails": "Detalles de la sesión",
       "sessionName": "Nombre de la sesión *",
-      "sessionNamePlaceholder": "ej. Documentación de Producto RAG",
+      "sessionNamePlaceholder": "p. ej., Documentación de producto RAG",
       "sessionNameDuplicate": "Este nombre de sesión ya existe",
       "sessionNameDuplicateAlert": "Ya existe una sesión con este nombre. Por favor, usa un nombre diferente.",
       "description": "Descripción (Opcional)",
       "descriptionPlaceholder": "Describe el propósito de esta sesión RAG...",
       "selectDocuments": "Seleccionar documentos",
-      "selectDocumentsDescription": "Sube nuevos documentos o selecciona de los existentes para ser usados en RAG.",
-      "chunkingStrategy": "Estrategia de Chunking",
+      "selectDocumentsDescription": "Sube nuevos documentos o selecciona de los existentes para utilizarlos en RAG.",
+      "chunkingStrategy": "Estrategia de chunking",
       "retrieverModel": "Modelo de recuperación",
-      "promptTemplate": "Plantilla de Prompt",
+      "promptTemplate": "Plantilla de prompt",
       "languageModel": "Modelo de lenguaje (LLM)",
       "cancel": "Cancelar",
       "saveSession": "Guardar sesión",
@@ -126,6 +126,10 @@
     "retriever": {
       "description": "Selecciona tu paradigma de recuperación. El recuperador buscará en tus documentos y devolverá los fragmentos más relevantes.",
       "paradigmLabel": "Paradigma de recuperación",
+      "keywordLabel": "Palabras clave",
+      "semanticLabel": "Semántico",
+      "hybridLabel": "Híbrido",
+      "hybridDescription": "BM25 + Harrier 0.6B",
       "advancedApplied": "Configuración avanzada aplicada",
       "topKLabel": "Número de fragmentos (Top K)",
       "topKCardDescription": "Fragmentos",
@@ -152,8 +156,8 @@
       "hybridDescription": "BM25 + embeddings multilingües HuggingFace",
       "compositeGroup": "Recuperadores compuestos",
       "nestedCompositeNote": "Este es un recuperador compuesto. Sus hijos pueden configurarse en el árbol inferior.",
-      "allChunks": "Todos los fragments",
-      "selectedChunks": "Fragments seleccionados",
+      "allChunks": "Todos los fragmentos",
+      "selectedChunks": "Fragmentos seleccionados",
       "retrieverDescription": "Elige un recuperador para configurar sus parámetros. Los recuperadores por palabras clave (BM25, TF-IDF) encuentran documentos por frecuencia de términos. Los recuperadores por embeddings capturan el significado semántico con vectores densos. Los recuperadores compuestos encadenan varios recuperadores, de forma secuencial o en paralelo.",
       "compositeInstructions": "Haz clic en el botón + para añadir un recuperador hijo a este compuesto. Haz clic sobre una tarjeta para editar sus parámetros o elegir otro modelo."
     },
@@ -172,13 +176,21 @@
       "openPrompts": "Abrir biblioteca de prompts",
       "promptLabel": "Prompt",
       "selectTemplate": "Seleccionar plantilla de prompt",
-      "selectTemplatePlaceholder": "ej. Prompt por Defecto, Instrucción Personalizada",
-      "selectedTemplate": "Plantilla de Prompt seleccionada:",
-      "newPromptButton": "Nuevo Prompt",
-      "defaultGenerationPrompt": "Prompt de Generación Predeterminado",
-      "defaultQAGenerationPrompt": "Prompt Predeterminado para Preguntas y Respuestas",
+      "selectTemplatePlaceholder": "p. ej., Prompt por defecto, Instrucción personalizada",
+      "selectedTemplate": "Plantilla de prompt seleccionada:",
+      "newPromptButton": "Nuevo prompt",
+      "defaultGenerationPrompt": "Prompt de generación predeterminado",
+      "defaultQAGenerationPrompt": "Prompt predeterminado para preguntas y respuestas",
       "createNewPrompt": "Crear nuevo prompt",
-      "language": "Idioma"
+      "language": "Idioma",
+      "collapse": "Contraer",
+      "expand": "Expandir",
+      "descriptionToggle": "Descripción",
+      "languages": {
+        "en": "English",
+        "es": "Español",
+        "pt": "Português"
+      }
     },
     "promptView": {
       "type": "Tipo",
@@ -200,12 +212,27 @@
         "viewPrompt": "Ver prompt",
         "currentPrompts": "Prompts actuales",
         "choosePrompt": "Elige o personaliza tu prompt para definir el comportamiento del modelo.",
-        "newPrompt": "Nuevo Prompt"
+        "newPrompt": "Nuevo prompt"
       }
     },
     "documents": {
       "uploadButton": "Subir documentos",
-      "emptyUploadText": "Sube tu(s) documento(s)"
+      "emptyUploadText": "Sube tu(s) documento(s)",
+      "table": {
+        "id": "ID",
+        "name": "Nombre",
+        "type": "Tipo",
+        "created": "Creado",
+        "lastModified": "Última modificación",
+        "actions": "Acciones",
+        "preview": "Vista previa",
+        "delete": "Eliminar",
+        "addDocument": "Añadir documento",
+        "currentDocuments": "Documentos actuales",
+        "noDocumentsAvailable": "No hay documentos disponibles.",
+        "emptyUploadText": "Sube tu(s) documento(s)",
+        "unknownType": "Desconocido"
+      }
     },
     "summary": {
       "title": "Sesión RAG",
@@ -226,15 +253,23 @@
       "failedToCopyApiKey": "Error al copiar la clave API",
       "noParameters": "Sin parámetros",
       "viewDetails": "Ver detalles",
-      "parameterDetails": "Detalles del Parámetro",
+      "parameterDetails": "Detalles del parámetro",
       "completeConfig": "Configuración completa del parámetro:",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "sessionName": "Nombre de la sesión",
+      "sessionDescription": "Descripción de la sesión",
+      "parameterDetailTitle": "{{component}} - {{param}}",
+      "edit": "Editar",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "sessionUpdated": "Sesión actualizada correctamente",
+      "failedToUpdateSession": "Error al actualizar la sesión"
     },
     "newPrompt": {
       "title": "Crear una nueva plantilla",
       "description": "La plantilla de prompt define cómo se integran los fragmentos (piezas de documentos) y los mensajes del chat para generar respuestas. Personaliza el prompt para adaptar el comportamiento de tus sesiones RAG.",
       "placeholdersInfo": "Usa {chunks} para representar dónde se insertarán los fragmentos del documento recuperado, e {input} para el mensaje del usuario.",
-      "nameLabel": "Nombre del Prompt",
+      "nameLabel": "Nombre del prompt",
       "nameRequired": "El nombre del prompt es obligatorio",
       "promptLabel": "Prompt",
       "promptPlaceholder": "Aquí puedes modificar el prompt, por ejemplo:\nCada mensaje del usuario se añade como {input}\nLas fuentes se añaden como {chunks}",
@@ -253,7 +288,7 @@
       "close": "Cerrar",
       "done": "Listo",
       "noDescription": "No hay descripción disponible",
-      "promptTemplate": "Plantilla de Prompt",
+      "promptTemplate": "Plantilla de prompt",
       "promptInfo": "La configuración avanzada para los prompts se gestiona normalmente a través de la interfaz de plantillas de prompt. Allí puedes crear prompts personalizados o modificar los existentes."
     },
     "rightPanel": {
@@ -307,14 +342,52 @@
         "tip2": "Si las respuestas son muy genéricas, prueba fragmentos más pequeños o ajusta el modelo recuperador.",
         "tip3": "Elige una plantilla de prompt que encaje con tu dominio y tono."
       }
+    },
+    "common": {
+      "loading": "Cargando..."
+    },
+    "chunkingConfig": {
+      "configureTitle": "Configurar modelo de chunking",
+      "modelLabel": "Modelo de chunking"
+    },
+    "generatorConfig": {
+      "configureTitle": "Configurar modelo generador (LLM)",
+      "modelLabel": "Modelo generador"
+    },
+    "retrieverConfig": {
+      "modelLabel": "Modelo de recuperación"
+    },
+    "breadcrumbs": {
+      "generative": "Generativo",
+      "rag": "RAG",
+      "documents": "Documentos",
+      "prompts": "Prompts",
+      "goBack": "Volver",
+      "sessionSuffix": "sesión"
+    },
+    "placeholders": {
+      "title": "Marcadores obligatorios",
+      "insert": "Insertar {{placeholder}}"
+    },
+    "documentPreview": {
+      "title": "Vista previa del documento",
+      "noPreview": "No hay vista previa disponible para este tipo de archivo.",
+      "pdfPreview": "Vista previa de PDF"
+    },
+    "paramsPanel": {
+      "title": "Parámetros RAG",
+      "save": "Guardar",
+      "failedToLoad": "Error al cargar la sesión RAG",
+      "updated": "Parámetros RAG actualizados",
+      "failedToUpdate": "Error al actualizar los parámetros RAG"
     }
   },
   "validation": {
-    "contextSpace": "Con tu configuración actual tienes espacio para tus fuentes (chunks) y {{availableChars}} carácteres para tu mensaje.",
+    "contextSpace": "Con tu configuración actual tienes espacio para tus fuentes (chunks) y {{availableChars}} caracteres para tu mensaje.",
     "insufficientContextTitle": "Ventana de contexto insuficiente",
-    "insufficientContextDescription": "El modelo seleccionado no tiene suficiente contexto para manejar la configuración actual de Tamaño de Fragmento y Top K. Por favor, reduce el Tamaño de Fragmento, el número de resultados (Top K), o selecciona un modelo con una ventana de contexto más grande.",
+    "insufficientContextDescription": "El modelo seleccionado no tiene suficiente contexto para manejar la configuración actual de tamaño de fragmento y Top K. Por favor, reduce el tamaño de fragmento, el número de resultados (Top K), o selecciona un modelo con una ventana de contexto más grande.",
     "apiKeyMissingTitle": "API key requerida",
-    "apiKeyMissingDescription": "Este modelo requiere una API key para funcionar. Abre la Configuración Avanzada para añadir tu API key."
+    "apiKeyMissingDescription": "Este modelo requiere una API key para funcionar. Abre la configuración avanzada para añadir tu API key."
   },
   "documentReferences": {
     "modalTitle": "Referencias del documento",

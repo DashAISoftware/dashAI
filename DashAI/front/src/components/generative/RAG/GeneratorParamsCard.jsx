@@ -62,7 +62,7 @@ export default function GeneratorParamsCard({
                   </IconButton>
                 </Tooltip>
               )}
-              <Tooltip title={isExpanded ? (t("generative:rag.prompt.collapse") || "Collapse") : (t("generative:rag.prompt.expand") || "Expand")}>
+              <Tooltip title={isExpanded ? t("generative:rag.prompt.collapse") : t("generative:rag.prompt.expand")}>
                 <IconButton
                   size="small"
                   onClick={() => setIsExpanded((s) => !s)}

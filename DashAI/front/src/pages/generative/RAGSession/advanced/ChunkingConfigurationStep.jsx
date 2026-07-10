@@ -6,6 +6,7 @@ import {
   Typography,
 } from "@mui/material";
 import PropTypes from "prop-types";
+import { useTranslation } from "react-i18next";
 import { getChunkingComponents } from "../../../../api/rag";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
@@ -16,6 +17,7 @@ export default function ChunkingConfigurationStep({
   setChunkingModel,
   setNextEnabled,
 }) {
+  const { t } = useTranslation(["generative"]);
   const [chunkingOptions, setChunkingOptions] = useState([]);
   const [selectedChunking, setSelectedChunking] = useState(null);
   const [error, setError] = useState(null);
@@ -131,7 +133,7 @@ export default function ChunkingConfigurationStep({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Typography variant="subtitle2" sx={{ mb: 0 }}>
-        Configure Chunking Model
+        {t("generative:rag.chunkingConfig.configureTitle")}
       </Typography>
 
       <Autocomplete
@@ -142,7 +144,7 @@ export default function ChunkingConfigurationStep({
         onChange={handleChunkingSelectionChange}
         isOptionEqualToValue={(option, value) => option.name === value?.name}
         renderInput={(params) => (
-          <TextField {...params} label="Chunking Model" />
+          <TextField {...params} label={t("generative:rag.chunkingConfig.modelLabel")} />
         )}
       />
 

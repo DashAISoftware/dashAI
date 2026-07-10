@@ -126,6 +126,10 @@
     "retriever": {
       "description": "Select your retrieval paradigm. The retriever will search through your documents and return the most relevant chunks.",
       "paradigmLabel": "Retrieval paradigm",
+      "keywordLabel": "Keyword",
+      "semanticLabel": "Semantic",
+      "hybridLabel": "Hybrid",
+      "hybridDescription": "BM25 + Harrier 0.6B",
       "advancedApplied": "Advanced configuration applied",
       "topKLabel": "Number of chunks (Top K)",
       "topKCardDescription": "Chunks",
@@ -178,7 +182,15 @@
       "defaultGenerationPrompt": "Default Generation Prompt",
       "defaultQAGenerationPrompt": "Default Q&A Generation Prompt",
       "createNewPrompt": "Create new prompt",
-      "language": "Language"
+      "language": "Language",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "descriptionToggle": "Description",
+      "languages": {
+        "en": "English",
+        "es": "Español",
+        "pt": "Português"
+      }
     },
     "promptView": {
       "type": "Type",
@@ -205,7 +217,22 @@
     },
     "documents": {
       "uploadButton": "Upload documents",
-      "emptyUploadText": "Upload your document(s)"
+      "emptyUploadText": "Upload your document(s)",
+      "table": {
+        "id": "ID",
+        "name": "Name",
+        "type": "Type",
+        "created": "Created",
+        "lastModified": "Last Modified",
+        "actions": "Actions",
+        "preview": "Preview",
+        "delete": "Delete",
+        "addDocument": "Add new document",
+        "currentDocuments": "Current documents",
+        "noDocumentsAvailable": "No documents available.",
+        "emptyUploadText": "Upload your document(s)",
+        "unknownType": "Unknown"
+      }
     },
     "summary": {
       "title": "RAG session",
@@ -228,7 +255,15 @@
       "viewDetails": "View details",
       "parameterDetails": "Parameter details",
       "completeConfig": "Complete parameter configuration:",
-      "close": "Close"
+      "close": "Close",
+      "sessionName": "Session Name",
+      "sessionDescription": "Session Description",
+      "parameterDetailTitle": "{{component}} - {{param}}",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "sessionUpdated": "Session updated successfully",
+      "failedToUpdateSession": "Failed to update session"
     },
     "newPrompt": {
       "title": "Create a new prompt",
@@ -307,6 +342,44 @@
         "tip2": "If answers feel too generic, try smaller chunks or adjust the retriever model.",
         "tip3": "Choose a prompt template that matches your domain and tone."
       }
+    },
+    "common": {
+      "loading": "Loading..."
+    },
+    "chunkingConfig": {
+      "configureTitle": "Configure Chunking Model",
+      "modelLabel": "Chunking Model"
+    },
+    "generatorConfig": {
+      "configureTitle": "Configure Generator Model (LLM)",
+      "modelLabel": "Generator Model"
+    },
+    "retrieverConfig": {
+      "modelLabel": "Retriever model"
+    },
+    "breadcrumbs": {
+      "generative": "Generative",
+      "rag": "RAG",
+      "documents": "Documents",
+      "prompts": "Prompts",
+      "goBack": "Go back",
+      "sessionSuffix": "session"
+    },
+    "placeholders": {
+      "title": "Required Placeholders",
+      "insert": "Insert {{placeholder}}"
+    },
+    "documentPreview": {
+      "title": "Preview Document",
+      "noPreview": "No preview available for this file type.",
+      "pdfPreview": "PDF Preview"
+    },
+    "paramsPanel": {
+      "title": "RAG Parameters",
+      "save": "Save",
+      "failedToLoad": "Failed to load RAG session",
+      "updated": "RAG parameters updated",
+      "failedToUpdate": "Failed to update RAG parameters"
     }
   },
   "validation": {

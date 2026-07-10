@@ -154,7 +154,7 @@ export default function CompositeRetrieverBuilder({
     return (
       <Box sx={{ py: 4, textAlign: "center" }}>
         <Typography variant="body2" color="text.secondary">
-          Loading...
+          {t("generative:rag.common.loading")}
         </Typography>
       </Box>
     );
