@@ -12,6 +12,7 @@ from DashAI.back.api.api_v1.schemas.explorers_params import (
     ExplorerCreate,
     ExplorerResultsOptions,
 )
+from DashAI.back.core.artifacts import normalize_artifacts
 from DashAI.back.core.enums.status import ExplorerStatus
 from DashAI.back.dependencies.database.models import Dataset, Explorer, Notebook
 
@@ -328,7 +329,8 @@ async def get_explorer_results(
             detail="Error while getting explorer results",
         ) from e
 
-    return results
+    # Upgrade legacy {"data", "type", "config"} results from plugin explorers
+    return normalize_artifacts(results)
 
 
 @router.put("/{explorer_id}/results/")
