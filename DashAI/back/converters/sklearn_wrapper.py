@@ -85,54 +85,56 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
             If no scikit-learn class with a `fit` method is found
             in the MRO.
         """
-        if hasattr(x, "to_pandas"):
-            x_pandas = x.to_pandas()
-            self._fit_input_cache = (x, x_pandas)
-        else:
-            x_pandas = x
-            self._fit_input_cache = None
-        y_pandas = y.to_pandas() if y is not None and hasattr(y, "to_pandas") else y
+        try:
+            if hasattr(x, "to_pandas"):
+                x_pandas = x.to_pandas()
+                self._fit_input_cache = (x, x_pandas)
+            else:
+                x_pandas = x
+                self._fit_input_cache = None
+            y_pandas = y.to_pandas() if y is not None and hasattr(y, "to_pandas") else y
 
-        # Detect whether the underlying sklearn estimator needs a target.
-        # sklearn >= 1.6 moved tags from ``_get_tags`` to ``__sklearn_tags__``,
-        # so we consult both for backward/forward compatibility.
-        requires_y = False
-        if hasattr(self, "__sklearn_tags__"):
-            try:
-                tags = self.__sklearn_tags__()
-                target_tags = getattr(tags, "target_tags", None)
-                if target_tags is not None:
-                    requires_y = bool(getattr(target_tags, "required", False))
-            except Exception:
-                requires_y = False
-        if not requires_y and hasattr(self, "_get_tags"):
-            with contextlib.suppress(Exception):
-                requires_y = bool(self._get_tags().get("requires_y", False))
+            requires_y = False
+            if hasattr(self, "__sklearn_tags__"):
+                try:
+                    tags = self.__sklearn_tags__()
+                    target_tags = getattr(tags, "target_tags", None)
+                    if target_tags is not None:
+                        requires_y = bool(getattr(target_tags, "required", False))
+                except Exception:
+                    requires_y = False
+            if not requires_y and hasattr(self, "_get_tags"):
+                with contextlib.suppress(Exception):
+                    requires_y = bool(self._get_tags().get("requires_y", False))
 
-        if requires_y and y is None:
-            raise ValueError("This transformer requires y for fitting")
+            if requires_y and y is None:
+                raise ValueError("This transformer requires y for fitting")
 
-        sklearn_cls = next(
-            (
-                cls
-                for cls in type(self).__mro__
-                if "sklearn" in cls.__module__
-                and "DashAI" not in cls.__module__
-                and "fit" in cls.__dict__
-            ),
-            None,
-        )
-
-        if sklearn_cls is None:
-            raise RuntimeError(
-                "No sklearn class with a 'fit' method found in the MRO. "
-                "Ensure that your transformer inherits from a valid sklearn class."
+            sklearn_cls = next(
+                (
+                    cls
+                    for cls in type(self).__mro__
+                    if "sklearn" in cls.__module__
+                    and "DashAI" not in cls.__module__
+                    and "fit" in cls.__dict__
+                ),
+                None,
             )
-        fit_method = sklearn_cls.__dict__["fit"]
-        if requires_y or y_pandas is not None:
-            fit_method(self, x_pandas, y_pandas)
-        else:
-            fit_method(self, x_pandas)
+
+            if sklearn_cls is None:
+                raise RuntimeError(
+                    "No sklearn class with a 'fit' method found in the MRO. "
+                    "Ensure that your transformer inherits from a valid sklearn "
+                    "class."
+                )
+            fit_method = sklearn_cls.__dict__["fit"]
+            if requires_y or y_pandas is not None:
+                fit_method(self, x_pandas, y_pandas)
+            else:
+                fit_method(self, x_pandas)
+        except Exception:
+            self._fit_input_cache = None
+            raise
 
         return self
 

@@ -217,13 +217,18 @@ class SimpleImputer(
         Returns
         -------
         DashAIDataType
-            The original column type for ``"most_frequent"``/``"constant"``
-            (no arithmetic is performed on the values). For
-            ``"mean"``/``"median"``, ``Integer`` if the source column was an
-            Integer and the computed statistic is a whole number, otherwise
-            a Float type backed by ``pyarrow.float64()``.
+            ``Integer`` for the binary ``MissingIndicator`` columns appended
+            when ``add_indicator=True``. Otherwise, the original column type
+            for ``"most_frequent"``/``"constant"`` (no arithmetic is performed
+            on the values), or for ``"mean"``/``"median"``, ``Integer`` if the
+            source column was an Integer and the computed statistic is a
+            whole number — otherwise a Float type backed by
+            ``pyarrow.float64()``.
         """
         import pyarrow as pa
+
+        if column_name and str(column_name).startswith("missingindicator_"):
+            return Integer(arrow_type=pa.int64())
 
         input_types = getattr(self, "_input_types", None)
         input_type = input_types.get(column_name) if input_types else None
