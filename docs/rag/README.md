@@ -19,3 +19,6 @@ Retrieval, and Generation.
 - **[05-known-limitations.md](./05-known-limitations.md)** — Current
   constraints, performance notes, concurrency caveats, and maintenance
   guidance.
+- **[06-future-work.md](./06-future-work.md)** — Planned improvements:
+  retrieval paradigms, query transformation, PDF parsing, tree-based
+  retrieval, message-level document filtering, and multi-modal support.
