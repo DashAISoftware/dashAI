@@ -61,6 +61,11 @@ export default function ModelListItem({
         }
         onMouseEnter={(e) => handleMouseEnter(e, model)}
         onMouseLeave={handleMouseLeave}
+        // Close the hover popover on any click in the row (capture phase, so it
+        // runs even for the action's icon which stops propagation). Otherwise a
+        // click that opens a modal (e.g. delete confirmation) leaves the popover
+        // stuck open since no mouseleave fires.
+        onClickCapture={handleMouseLeave}
         onClick={handleCardClick}
         {...props}
         sx={{
