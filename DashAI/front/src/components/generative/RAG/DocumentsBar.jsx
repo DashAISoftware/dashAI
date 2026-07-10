@@ -23,20 +23,16 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
     navigate("/app/generative/RAG/documents");
   };
 
-  // Fetch documents for the selected RAG session or all documents
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
         let data;
         if (selectedSessionId) {
-          // Fetch session-specific documents
           data = await getSessionDocuments(selectedSessionId);
         } else {
-          // Fetch all documents when no session is selected (e.g., on RAG home page)
           data = await loadDocuments();
         }
 
-        // Transform API response to component format
         const transformedDocuments = data.map((doc) => ({
           id: doc.id,
           name: doc.file_name,
@@ -62,7 +58,6 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
     fetchDocuments();
   }, [selectedSessionId, enqueueSnackbar, t]);
 
-  // Filter documents based on search query
   useEffect(() => {
     if (!searchQuery.trim()) {
       setFilteredDocuments(documents);
@@ -113,7 +108,6 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         { variant: "success" }
       );
       
-      // Notify parent component if callback provided
       if (onDocumentChange) {
         onDocumentChange();
       }
@@ -143,7 +137,6 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         maxWidth: "100%", // Ensure consistent width
       }}
     >
-      {/* Header */}
       <Box sx={{ p: 2, flexShrink: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="h6">{t("documentsBar.title")}</Typography>
@@ -172,7 +165,6 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
           </Button>
         </Box>
       )}
-      {/* Search bar - only show when documents are available */}
       {showSearch && documents.length >= 1 && (
         <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -184,7 +176,6 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
                 placeholder={t("documentsBar.searchPlaceholder")}
               />
             </Box>
-            {/* Detailed view icon - only show when no session is selected */}
             {!selectedSessionId && (
               <Tooltip title={t("documentsBar.detailedView")} placement="top">
                 <IconButton
@@ -203,7 +194,6 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         </Box>
       )}
 
-      {/* Document list */}
       <Box
         sx={{
           flex: "0 1 45vh", // Take up to 40% of viewport height, but can shrink
@@ -242,7 +232,6 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         )}
       </Box>
 
-      {/* Upload Dialog */}
       <Dialog
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}

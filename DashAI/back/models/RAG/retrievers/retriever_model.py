@@ -37,8 +37,6 @@ class RetrieverModel(BaseModel, ABC):
         self._db_id: int | None = None
         self.params = kwargs
 
-    # ── Canonical ID (RAGRetriever.id for all retrievers) ──────────
-
     def get_id(self) -> int | None:
         return self._db_id
 
@@ -48,8 +46,6 @@ class RetrieverModel(BaseModel, ABC):
                 f"ID is already set to {self._db_id}, cannot reassign to {id}."
             )
         self._db_id = id
-
-    # ── Validation ──────────────────────────────────────────────────
 
     def _validate_chunks_dict(self) -> None:
         if not isinstance(self.chunks, dict):
@@ -75,8 +71,6 @@ class RetrieverModel(BaseModel, ABC):
                         f"Chunk {chunk_id} document_id {chunk.document_id} != doc ID {doc_id}."
                     )
 
-    # ── Infrastructure injection ───────────────────────────────────
-
     def inject_infra(
         self,
         env_rag_path: str | os.PathLike,
@@ -94,16 +88,12 @@ class RetrieverModel(BaseModel, ABC):
         self._persistence = persistence
         self._validate_chunks_dict()
 
-    # ── Post-infra initialisation ────────────────────────────────────
-
     def init_model(self) -> None:
         """Called by the factory **after** ``inject_infra()``.
 
         Subclasses restore saved state (``load()``) or compute initial
         state (``_fit()``, ``_init_embedding()``).  Default is a no-op.
         """
-
-    # ── Retrieval interface ─────────────────────────────────────────
 
     @abstractmethod
     def retrieve(self, query, **kwargs) -> List[Chunk]:
@@ -127,8 +117,6 @@ class RetrieverModel(BaseModel, ABC):
 
     def get_children(self) -> List["RetrieverModel"]:
         raise NotImplementedError
-
-    # ── BaseModel contract ──────────────────────────────────────────
 
     def save(self, filename: str = "") -> None:
         pass

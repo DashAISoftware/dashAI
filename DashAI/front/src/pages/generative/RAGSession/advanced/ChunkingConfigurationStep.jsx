@@ -67,7 +67,6 @@ export default function ChunkingConfigurationStep({
     };
   }, []);
 
-  // If parent gives a preselected chunking model, sync it
   useEffect(() => {
     if (!chunkingOptions.length) return;
     const modelName = getModelFromSubform(chunkingModel);
@@ -108,7 +107,6 @@ export default function ChunkingConfigurationStep({
   };
 
   const handleFormSubmit = (values) => {
-    // Generic validation for any chunking model with chunk_size and chunk_overlap
     if (
       values.chunk_size !== undefined &&
       values.chunk_overlap !== undefined &&

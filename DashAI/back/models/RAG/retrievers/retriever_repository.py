@@ -39,8 +39,6 @@ class RetrieverRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    # ── Bridge record ────────────────────────────────────────────────
-
     def create_bridge(self, class_name: str, pipeline_id: int) -> RetrieverDBModel:
         """Insert a new canonical identity record in rag_retriever.
 
@@ -55,8 +53,6 @@ class RetrieverRepository:
         self.db.commit()
         self.db.refresh(bridge_record)
         return bridge_record
-
-    # ── Sparse ───────────────────────────────────────────────────────
 
     def find_sparse(
         self,
@@ -115,8 +111,6 @@ class RetrieverRepository:
         self.db.refresh(record)
         return record
 
-    # ── Dense ────────────────────────────────────────────────────────
-
     def find_dense(
         self,
         class_name: str,
@@ -156,8 +150,6 @@ class RetrieverRepository:
         self.db.commit()
         self.db.refresh(record)
         return record
-
-    # ── Composite ────────────────────────────────────────────────────
 
     def find_composite(
         self, pipeline_id: int, class_name: str
@@ -214,8 +206,6 @@ class RetrieverRepository:
             )
         self.db.commit()
         return bridge_record
-
-    # ── Embedding models ─────────────────────────────────────────────
 
     def find_or_create_embedding_model(
         self,
@@ -314,8 +304,6 @@ class RetrieverRepository:
             )
             .first()
         )
-
-    # ── Bridge utilities ─────────────────────────────────────────────
 
     def find_sparse_by_bridge_id(self, bridge_id: int) -> Optional[SparseRetrieverDBModel]:
         """Look up a sparse retriever sub-table record by its bridge_id."""

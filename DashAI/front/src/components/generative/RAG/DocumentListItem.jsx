@@ -77,7 +77,6 @@ export default function DocumentListItem({
           : {},
       }}
     >
-      {/* Icon */}
       <Box
         sx={{
           display: "flex",
@@ -95,7 +94,6 @@ export default function DocumentListItem({
         <DocumentIcon sx={{ fontSize: 20 }} />
       </Box>
 
-      {/* Content */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box
           sx={{

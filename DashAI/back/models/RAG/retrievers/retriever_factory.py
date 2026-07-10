@@ -61,8 +61,6 @@ class RetrieverFactory:
         self._chunk_set_id = chunk_set_id
         self._repo = RetrieverRepository(db)
 
-    # ── Public entry point ───────────────────────────────────────────
-
     def create(
         self,
         component_name: str,
@@ -75,8 +73,6 @@ class RetrieverFactory:
             return self._create_composite(model_class, params)
 
         return self._create_unit(model_class, params)
-
-    # ── Composite ────────────────────────────────────────────────────
 
     def _create_composite(self, model_class, params):
         existing = self._load_composite_from_db(model_class, params)
@@ -160,8 +156,6 @@ class RetrieverFactory:
             self._pipeline_id,
             child_ids,
         ).id
-
-    # ── Unit ─────────────────────────────────────────────────────────
 
     def _create_unit(self, model_class, params):
         sorted_params = dict(sorted(params.items()))
@@ -276,8 +270,6 @@ class RetrieverFactory:
         if bridge is not None:
             model.set_id(bridge.id)
         return model
-
-    # ── Save ─────────────────────────────────────────────────────────
 
     def _save_unit(self, model, sorted_params):
         if isinstance(model, DenseRetriever):

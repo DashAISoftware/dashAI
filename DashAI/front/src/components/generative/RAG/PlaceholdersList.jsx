@@ -45,7 +45,6 @@ export default function PlaceholdersList({
                 gap: 0.5,
               }}
             >
-              {/* Status icon */}
               {isPresent ? (
                 <CheckCircleIcon
                   fontSize="small"
@@ -60,7 +59,6 @@ export default function PlaceholdersList({
                 />
               )}
 
-              {/* Insert button */}
               {onInsertPlaceholder && (
                 <Tooltip title={t("generative:rag.placeholders.insert", { placeholder: ph })} placement="top">
                   <IconButton
@@ -77,7 +75,6 @@ export default function PlaceholdersList({
                 </Tooltip>
               )}
 
-              {/* Placeholder text */}
               <Typography
                 component="code"
                 variant="body2"
@@ -90,7 +87,6 @@ export default function PlaceholdersList({
                 {ph}
               </Typography>
 
-              {/* Info tooltip */}
               {descriptions[ph] && (
                 <Tooltip title={descriptions[ph]} placement="right">
                   <HelpOutlineIcon

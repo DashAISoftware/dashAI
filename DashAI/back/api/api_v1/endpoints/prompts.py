@@ -86,7 +86,6 @@ async def create_rag_prompt(
 ):
     """Create a new RAGPrompt entry in the database."""
     with session_factory() as db:
-        # Validate presence of parameters and template explicitly for readability
         if not prompt.parameters:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -247,7 +246,6 @@ async def update_rag_prompt_for_session(
             new_parameters = dict(new_parameters or {})
             new_parameters["cloned_for_session"] = session_id
 
-            # Choose a base name in an explicit, easy-to-read way
             if prompt.name:
                 candidate_name = prompt.name
             elif existing_prompt.name:

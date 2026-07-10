@@ -69,7 +69,6 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
           width: "100%",
         }}
       >
-        {/* Highlighted backdrop — sits behind the textarea */}
         <Box
           ref={backdropRef}
           aria-hidden="true"
@@ -92,7 +91,6 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
             : placeholder || ""}
         </Box>
 
-        {/* Editable textarea — transparent text, visible caret */}
         <Box
           component="textarea"
           ref={inputRef}

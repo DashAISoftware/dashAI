@@ -57,7 +57,6 @@ class PDFDocument(BaseDocument):
                     f"The PDF file {self.file_path} is empty or not valid."
                 )
 
-            # Extract text from all pages
             text = ""
             for page in reader.pages:
                 text += page.extract_text() or ""

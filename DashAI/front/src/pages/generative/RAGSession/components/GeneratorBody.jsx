@@ -139,7 +139,6 @@ export default function GeneratorBody({
 
   return (
     <>
-      {/* Model Selection */}
       <Box>
         <Autocomplete
           options={generators}
@@ -164,7 +163,6 @@ export default function GeneratorBody({
         />
       )}
 
-      {/* Selected Model Info & Context Message */}
       {showDetails && selectedGenerator && generatorModel?.params && (
         <Box
           sx={{

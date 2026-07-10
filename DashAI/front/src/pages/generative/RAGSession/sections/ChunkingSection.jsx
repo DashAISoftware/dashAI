@@ -155,7 +155,6 @@ export default function ChunkingSection({
           {t("generative:rag.chunking.description")}
         </Typography>
 
-        {/* Preset Options */}
         <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
           {CHUNKING_PRESETS.map((preset) => (
             <PresetCard
@@ -175,7 +174,6 @@ export default function ChunkingSection({
           )}
         </Box>
 
-        {/* Advanced Configuration Button */}
         <Button
           variant="contained"
           color="primary"
@@ -195,7 +193,6 @@ export default function ChunkingSection({
            ↗ {t("generative:rag.chunking.advancedButton")}
         </Button>
 
-        {/* Advanced Configuration Modal */}
         {selectedChunker && (
           <ChunkingAdvancedModal
           open={showAdvanced}

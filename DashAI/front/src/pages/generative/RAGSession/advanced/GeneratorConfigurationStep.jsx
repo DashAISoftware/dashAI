@@ -59,14 +59,12 @@ export default function GeneratorConfigurationStep({
     };
   }, []);
 
-  // if parent gives a preselected generator, sync it
   useEffect(() => {
     if (!generators.length) return;
     if (generatorModel?.component) {
       const found = generators.find((g) => g.name === generatorModel.component);
       if (found) setSelectedGenerator(found);
     }
-    // enable next when there is a selection
     setNextEnabled(!!generatorModel?.component);
   }, [generators, generatorModel?.component]);
 

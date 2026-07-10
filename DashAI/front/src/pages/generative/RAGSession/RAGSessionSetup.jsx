@@ -106,7 +106,6 @@ export default function RAGSessionSetup({
 
   const [isGeneratorValidState, setIsGeneratorValidState] = useState(false);
 
-  // Directly derive values from state to ensure reactivity
   let chunkSize = sessionData.parameters.chunking_model?.params?.chunk_size || 0;
   // If chunking model is character based, use 1 token = 4 characters as a rough estimate
   if (sessionData.parameters.chunking_model?.component?.toLowerCase().includes("character")) {
@@ -116,14 +115,12 @@ export default function RAGSessionSetup({
 
   const [promptTokenCount, setPromptTokenCount] = useState(0);
 
-  // Update name if suggestedName changes and user hasn't touched the field
   useEffect(() => {
     if (initialData?.name) return;
     if (isNameTouched) return;
     setSessionData((prev) => ({ ...prev, name: suggestedName }));
   }, [initialData?.name, isNameTouched, suggestedName]);
 
-  // Handle name duplicate check when existingSessions or name changes
   useEffect(() => {
     const trimmedValue = sessionData.name.trim().toLowerCase();
     if (!trimmedValue) {
@@ -146,7 +143,6 @@ export default function RAGSessionSetup({
       name: value,
     }));
 
-    // Validate empty name
     if (value.trim() === "") {
       setNameError(t("generative:rag.validation.nameRequired"));
     } else {
@@ -312,7 +308,6 @@ export default function RAGSessionSetup({
         display="flex"
         flexDirection="column"
       >
-        {/* Scrollable Content */}
         <Box flex={1} overflow="auto" sx={{display: "flex", flexDirection: "column", gap: 3}}>
 
           <RAGSectionColumn>
@@ -325,7 +320,6 @@ export default function RAGSessionSetup({
           </RAGSectionColumn>
 
 
-          {/* Session Details */}
           <RAGCard
             title={t("generative:rag.setup.sessionDetails")}
             expanded={expandedSections.sessionDetails}
@@ -382,7 +376,6 @@ export default function RAGSessionSetup({
             </SectionCard>
           </RAGCard>
 
-          {/* Document Selection */}
           <RAGCard
             title={t("generative:rag.setup.selectDocuments")}
             expanded={expandedSections.documents}
@@ -404,7 +397,6 @@ export default function RAGSessionSetup({
             </SectionCard>
           </RAGCard>
 
-          {/* Chunking Section */}
           <RAGCard
             title={t("generative:rag.setup.chunkingStrategy")}
             expanded={expandedSections.chunking}
@@ -418,7 +410,6 @@ export default function RAGSessionSetup({
             </SectionCard>
           </RAGCard>
 
-          {/* Retriever Section */}
           <RAGCard
             title={t("generative:rag.setup.retrieverModel")}
             expanded={expandedSections.retriever}
@@ -433,7 +424,6 @@ export default function RAGSessionSetup({
             </SectionCard>
           </RAGCard>
 
-          {/* Prompt Section */}
           <RAGCard
             title={t("generative:rag.setup.promptTemplate")}
             expanded={expandedSections.prompt}
@@ -456,7 +446,6 @@ export default function RAGSessionSetup({
             </SectionCard>
           </RAGCard>
 
-          {/* Generator Section */}
           <RAGCard
             title={t("generative:rag.setup.languageModel")}
             expanded={expandedSections.generator}
@@ -476,7 +465,6 @@ export default function RAGSessionSetup({
 
         </Box>
 
-        {/* Action Buttons — fixed at bottom */}
         <Box
           flexShrink={0}
           display="flex"

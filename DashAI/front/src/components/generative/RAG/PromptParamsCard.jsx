@@ -254,7 +254,6 @@ export default function PromptParamsCard({
   const handlePromptCreated = useCallback(
     async (newPromptId) => {
       const updatedPrompts = await getRAGPrompts();
-      // Apply same filter as loadPrompts: exclude system defaults and augmentation
       setCustomPrompts(
         (updatedPrompts || []).filter(
           (p) =>

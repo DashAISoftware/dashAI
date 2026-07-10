@@ -47,7 +47,6 @@ export default function RAGParamsPanel({ selectedSessionId }) {
       .finally(() => setLoading(false));
   }, [selectedSessionId, enqueueSnackbar]);
 
-  // Detect if parameters have changed
   const hasParamChanges = React.useMemo(() => {
     if (!originalParamsRef.current) return false;
     const original = originalParamsRef.current;

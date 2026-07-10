@@ -54,7 +54,6 @@ export default function RAGSessionSummary({
   const { enqueueSnackbar } = useSnackbar();
   const originalMetadataRef = useRef({ name: "", description: "" });
 
-  // Toggle function for collapsible sections
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -74,7 +73,6 @@ export default function RAGSessionSummary({
   // Toggle edit mode
   const handleToggleEditMode = () => {
     if (!isEditing && sessionData) {
-      // Entering edit mode - load current values
       const currentName = sessionData.name || "";
       const currentDescription = sessionData.description || "";
       originalMetadataRef.current = {
@@ -88,7 +86,6 @@ export default function RAGSessionSummary({
     setIsEditing(!isEditing);
   };
 
-  // Save session metadata
   const handleSaveMetadata = async () => {
     if (!sessionData) return;
     if (!hasMetadataChanges || isSaving) return;
@@ -121,7 +118,6 @@ export default function RAGSessionSummary({
         },
       });
 
-      // Update local state
       setSessionData({
         ...sessionData,
         name: newName,
@@ -158,7 +154,6 @@ export default function RAGSessionSummary({
     );
   };
 
-  // Helper function to format simple parameter values
   const formatSimpleValue = (value) => {
     if (value === null || value === undefined) return 'null';
     if (typeof value === 'boolean') return value.toString();
@@ -166,19 +161,16 @@ export default function RAGSessionSummary({
     return String(value);
   };
 
-  // Helper function to check if parameter is an API key
   const isApiKey = (key) => {
     return key.toLowerCase().includes('api');
   };
 
-  // Helper function to mask API key values
   const maskApiKey = (value) => {
     const stringValue = String(value);
     if (stringValue.length <= 10) return stringValue;
     return stringValue.substring(0, 15) + '...';
   };
 
-  // Helper function to copy to clipboard
   const handleCopyToClipboard = (value) => {
     navigator.clipboard.writeText(String(value)).then(() => {
       enqueueSnackbar(t("generative:rag.summary.apiKeyCopied"), { variant: "success" });
@@ -187,7 +179,6 @@ export default function RAGSessionSummary({
     });
   };
 
-  // Helper function to open modal with complex parameter
   const handleParameterClick = (paramName, paramValue, componentName) => {
     setModalContent({
       title: t("generative:rag.summary.parameterDetailTitle", { component: componentName, param: paramName }),
@@ -196,7 +187,6 @@ export default function RAGSessionSummary({
     setModalOpen(true);
   };
 
-  // Helper function to render parameter list with modal support
   const renderParametersList = (params, componentName) => {
     if (!params || Object.keys(params).length === 0) {
       return (
@@ -265,7 +255,6 @@ export default function RAGSessionSummary({
     });
   };
 
-  // Component for collapsible parameter card
   const CollapsibleParameterCard = ({ icon, title, component, params, sectionKey, componentName }) => (
     <Box 
       sx={{ 
@@ -307,7 +296,6 @@ export default function RAGSessionSummary({
         </IconButton>
       </Box>
 
-      {/* Parameters List */}
       <Collapse in={expandedSections[sectionKey]} timeout="auto">
         <Box sx={{ p: 2, pt: 1, backgroundColor: 'background.box' }}>
           {renderParametersList(params, componentName)}
@@ -381,7 +369,6 @@ export default function RAGSessionSummary({
       {/* RAG Breadcrumbs */}
       <RAGBreadcrumbs sessionName={sessionData?.name} />
 
-      {/* Header */}
       <Box 
         display="flex" 
         width="100%"
@@ -505,13 +492,10 @@ export default function RAGSessionSummary({
               {t("generative:rag.summary.openChatButton")}
             </Button>
           )}
-            {/* edit button moved next to session name */}
         </Box>
       </Box>
 
-      {/* Main Content Grid */}
       <Grid container spacing={3} sx={{ width: '100%' }}>
-        {/* Detailed Configuration - Collapsible Cards */}
         <Grid item sx={{ backgroundColor: 'background.box', width: '100%' }}>
           <Card sx={{ backgroundColor: 'background.box' }}>
             <CardContent>
@@ -522,7 +506,6 @@ export default function RAGSessionSummary({
                 </Typography>
               </Box>
               
-              {/* Chunking Model */}
               {parameters.chunking_model && (
                 <CollapsibleParameterCard
                   icon={<ContentCutIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
@@ -534,7 +517,6 @@ export default function RAGSessionSummary({
                 />
               )}
 
-              {/* Retriever Model */}
               {parameters.retriever_model && (
                 <CollapsibleParameterCard
                   icon={<LeaderboardIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
@@ -546,7 +528,6 @@ export default function RAGSessionSummary({
                 />
               )}
 
-              {/* Generation Model */}
               {parameters.generation_model && (
                 <CollapsibleParameterCard
                   icon={<BoltIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
@@ -562,7 +543,6 @@ export default function RAGSessionSummary({
         </Grid>
       </Grid>
 
-      {/* Parameter Details Modal */}
       <Dialog
         open={modalOpen}
         onClose={() => setModalOpen(false)}

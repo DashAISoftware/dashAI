@@ -198,7 +198,6 @@ export default function GeneratorSection({
           )}
         </Box>
       )}
-      {/*Show the Open advanced configuration button only when a LLM is selected*/}
       {selectedGenerator && (
         <Button
           variant="contained"
