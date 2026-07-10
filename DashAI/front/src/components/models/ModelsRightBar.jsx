@@ -4,6 +4,7 @@ import { Box, Typography, TextField, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { Search as SearchIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
+import { useParams } from "react-router-dom";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
@@ -15,6 +16,8 @@ import ColumnInsights from "../notebooks/dataset/ColumnInsights";
 
 export default function ModelsRightBar({ onToggle }) {
   const theme = useTheme();
+  const params = useParams();
+  const isInModelDetail = Boolean(params.runId);
   const [models, setModels] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -183,6 +186,23 @@ export default function ModelsRightBar({ onToggle }) {
               </Typography>
             </Box>
           )
+        ) : isInModelDetail ? (
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              p: 2,
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{ color: "text.secondary", textAlign: "center" }}
+            >
+              {t("models:label.exitModelDetailToAddModels")}
+            </Typography>
+          </Box>
         ) : (
           <>
             {/* Search Box */}

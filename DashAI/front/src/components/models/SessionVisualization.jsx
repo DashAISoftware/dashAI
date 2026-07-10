@@ -12,7 +12,7 @@ import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
 import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
-import RunCard from "./RunCard";
+import ModelDetailView from "./ModelDetailView";
 import ModelCardCompact from "./ModelCardCompact";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
@@ -310,49 +310,40 @@ export default function SessionVisualization() {
             </Typography>
           </Box>
         )}
-        {/* TEMP scaffold for phase 1 (routing/breadcrumbs) — replaced by the
-            full-screen model detail view in phase 3 */}
-        {params.runId && (
-          <Box sx={{ px: 4, pt: 4 }}>
-            <ModelsBreadcrumbs />
-          </Box>
-        )}
-
-        {/* Model detail (interim placeholder — full-screen layout lands in
-            the last phase; for now this just keeps edit/train/results
-            reachable while a specific run is selected via the URL) */}
+        {/* Model detail — full-screen view for a single run */}
         {params.runId ? (
-          <Box sx={{ flex: 1, p: 4 }}>
-            {activeRun ? (
-              <RunCard
-                run={activeRun}
-                models={models}
-                session={session}
-                onTrain={handleTrainWithTour}
-                onDelete={handleDeleteRun}
-                explainerRefreshTrigger={explainerRefreshTrigger}
-                onOperationsRefresh={() =>
-                  setExplainerRefreshTrigger((prev) => prev + 1)
-                }
-                existingRuns={runs}
-                onRefresh={fetchRuns}
-                forceExpanded
-              />
-            ) : (
+          activeRun ? (
+            <ModelDetailView
+              run={activeRun}
+              models={models}
+              session={session}
+              datasetName={datasetName}
+              onTrain={handleTrainWithTour}
+              onDelete={handleDeleteRun}
+              explainerRefreshTrigger={explainerRefreshTrigger}
+              onOperationsRefresh={() =>
+                setExplainerRefreshTrigger((prev) => prev + 1)
+              }
+              existingRuns={runs}
+              onRefresh={fetchRuns}
+            />
+          ) : (
+            <Box sx={{ px: 4, pt: 4 }}>
+              <ModelsBreadcrumbs />
               <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  height: "100%",
+                  py: 8,
                 }}
               >
                 <Typography variant="body1" color="text.secondary">
                   {t("models:label.runNotFound")}
                 </Typography>
               </Box>
-            )}
-          </Box>
+            </Box>
+          )
         ) : (
           <>
             {/* Session header — breadcrumb, title, quick stats */}

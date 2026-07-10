@@ -68,6 +68,11 @@ function RunCard({
   onRefresh,
   isHighlighted = false,
   forceExpanded = false,
+  hideChrome = false,
+  isEditing: controlledIsEditing = undefined,
+  setIsEditing: setControlledIsEditing = undefined,
+  deleteConfirmOpen: controlledDeleteConfirmOpen = undefined,
+  setDeleteConfirmOpen: setControlledDeleteConfirmOpen = undefined,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
@@ -86,7 +91,25 @@ function RunCard({
       JSON.stringify(resultsVisible),
     );
   }, [resultsVisible, run.id, forceExpanded]);
-  const [isEditing, setIsEditing] = useState(false);
+
+  const isEditingControlled = controlledIsEditing !== undefined;
+  const [internalIsEditing, setInternalIsEditing] = useState(false);
+  const isEditing = isEditingControlled
+    ? controlledIsEditing
+    : internalIsEditing;
+  const setIsEditing = isEditingControlled
+    ? setControlledIsEditing
+    : setInternalIsEditing;
+
+  const isDeleteConfirmControlled = controlledDeleteConfirmOpen !== undefined;
+  const [internalDeleteConfirmOpen, setInternalDeleteConfirmOpen] =
+    useState(false);
+  const deleteConfirmOpen = isDeleteConfirmControlled
+    ? controlledDeleteConfirmOpen
+    : internalDeleteConfirmOpen;
+  const setDeleteConfirmOpen = isDeleteConfirmControlled
+    ? setControlledDeleteConfirmOpen
+    : setInternalDeleteConfirmOpen;
   const [editedName, setEditedName] = useState(run.name || "");
   const [editedParameters, setEditedParameters] = useState(
     run.parameters || {},
@@ -103,7 +126,6 @@ function RunCard({
   const [operationsCount, setOperationsCount] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [autoExpand, setAutoExpand] = useState(false);
 
   const {
@@ -286,200 +308,212 @@ function RunCard({
 
   return (
     <Card
-      elevation={2}
-      sx={{
-        mb: 4,
-        bgcolor: "background.box",
-        borderLeft: "4px solid",
-        borderLeftColor:
-          run.status === 3 // Finished
-            ? "success.main"
-            : run.status === 4 // Error
-              ? "error.main"
-              : isRunning
-                ? "info.main"
-                : "divider",
-        position: "relative",
-        zIndex: isHighlighted ? 1 : 0,
-        "@keyframes newRunHighlight": {
-          "0%": { boxShadow: "none" },
-          "20%": {
-            boxShadow: `0 0 0 3px ${alpha(
-              theme.palette.primary.main,
-              0.65,
-            )}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
-          },
-          "100%": { boxShadow: "none" },
-        },
-        animation: isHighlighted
-          ? "newRunHighlight 4s ease-in-out forwards"
-          : "none",
-      }}
+      elevation={hideChrome ? 0 : 2}
+      sx={
+        hideChrome
+          ? { bgcolor: "transparent", boxShadow: "none" }
+          : {
+              mb: 4,
+              bgcolor: "background.box",
+              borderLeft: "4px solid",
+              borderLeftColor:
+                run.status === 3 // Finished
+                  ? "success.main"
+                  : run.status === 4 // Error
+                    ? "error.main"
+                    : isRunning
+                      ? "info.main"
+                      : "divider",
+              position: "relative",
+              zIndex: isHighlighted ? 1 : 0,
+              "@keyframes newRunHighlight": {
+                "0%": { boxShadow: "none" },
+                "20%": {
+                  boxShadow: `0 0 0 3px ${alpha(
+                    theme.palette.primary.main,
+                    0.65,
+                  )}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+                },
+                "100%": { boxShadow: "none" },
+              },
+              animation: isHighlighted
+                ? "newRunHighlight 4s ease-in-out forwards"
+                : "none",
+            }
+      }
     >
-      <CardContent>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 4,
-            gap: 2,
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
-            <Typography
-              variant="h6"
-              component="div"
+      <CardContent
+        sx={hideChrome ? { p: 0, "&:last-child": { pb: 0 } } : undefined}
+      >
+        {!hideChrome && (
+          <>
+            <Box
               sx={{
                 display: "flex",
+                justifyContent: "space-between",
                 alignItems: "center",
+                mb: 4,
                 gap: 2,
-                flexWrap: "wrap",
               }}
             >
-              {run.name}
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}
+              >
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {run.name}
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    component="span"
+                  >
+                    ({modelDisplayName})
+                  </Typography>
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                {!isRunning && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    color="primary"
+                    startIcon={<Edit />}
+                    onClick={handleStartEdit}
+                  >
+                    {t("common:edit")}
+                  </Button>
+                )}
+                {canTrain && (
+                  <Tooltip
+                    title={
+                      run.status === 3 &&
+                      operationsCount &&
+                      (operationsCount.explainers > 0 ||
+                        operationsCount.predictions > 0)
+                        ? t("models:message.retrainWillResetOperations", {
+                            explainersCount: operationsCount.explainers,
+                            predictionsCount: operationsCount.predictions,
+                          })
+                        : ""
+                    }
+                  >
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      startIcon={<PlayArrow />}
+                      onClick={() => {
+                        setAutoExpand(true);
+                        onTrain(run, operationsCount);
+                      }}
+                      data-tour={isLastRun ? "train-button" : undefined}
+                    >
+                      {run.status === 3
+                        ? t("common:retrain")
+                        : t("common:trainVerb")}
+                    </Button>
+                  </Tooltip>
+                )}
+                {isRunning && (
+                  <Button
+                    variant="contained"
+                    color="warning"
+                    size="small"
+                    disabled
+                    startIcon={<Stop />}
+                  >
+                    {t("common:running")}
+                  </Button>
+                )}
+
+                <Chip
+                  label={statusText}
+                  color={getRunStatusColor(run.status)}
+                  size="small"
+                />
+
+                <Tooltip title={t("models:button.deleteRun")}>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => setDeleteConfirmOpen(true)}
+                    disabled={isRunning}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+                {!forceExpanded && (
+                  <Tooltip
+                    title={
+                      resultsVisible
+                        ? t("models:label.hideResults")
+                        : t("models:label.showResults")
+                    }
+                  >
+                    <IconButton
+                      size="small"
+                      onClick={() => setResultsVisible(!resultsVisible)}
+                      color="default"
+                    >
+                      {resultsVisible ? (
+                        <ExpandLess fontSize="small" />
+                      ) : (
+                        <ExpandMore fontSize="small" />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
+            </Box>
+
+            {metrics && Object.keys(metrics).length > 0 && (
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  {t("common:metrics")}
+                </Typography>
+                <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  {Object.entries(metrics).map(([metric, values]) => {
+                    const avgValue =
+                      values.reduce((sum, val) => sum + val, 0) / values.length;
+                    return (
+                      <Box key={metric}>
+                        <Typography
+                          variant="caption"
+                          sx={{ color: theme.palette.text.secondary }}
+                        >
+                          {metric.toUpperCase()}
+                        </Typography>
+                        <Typography variant="body2" fontWeight="medium">
+                          {avgValue.toFixed(4)}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+            )}
+
+            {run.description && (
               <Typography
                 variant="body2"
-                color="text.secondary"
-                component="span"
+                sx={{ color: theme.palette.text.secondary, mb: 4 }}
               >
-                ({modelDisplayName})
+                {run.description}
               </Typography>
-            </Typography>
-          </Box>
-
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            {!isRunning && (
-              <Button
-                variant="outlined"
-                size="small"
-                color="primary"
-                startIcon={<Edit />}
-                onClick={handleStartEdit}
-              >
-                {t("common:edit")}
-              </Button>
             )}
-            {canTrain && (
-              <Tooltip
-                title={
-                  run.status === 3 &&
-                  operationsCount &&
-                  (operationsCount.explainers > 0 ||
-                    operationsCount.predictions > 0)
-                    ? t("models:message.retrainWillResetOperations", {
-                        explainersCount: operationsCount.explainers,
-                        predictionsCount: operationsCount.predictions,
-                      })
-                    : ""
-                }
-              >
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  startIcon={<PlayArrow />}
-                  onClick={() => {
-                    setAutoExpand(true);
-                    onTrain(run, operationsCount);
-                  }}
-                  data-tour={isLastRun ? "train-button" : undefined}
-                >
-                  {run.status === 3
-                    ? t("common:retrain")
-                    : t("common:trainVerb")}
-                </Button>
-              </Tooltip>
-            )}
-            {isRunning && (
-              <Button
-                variant="contained"
-                color="warning"
-                size="small"
-                disabled
-                startIcon={<Stop />}
-              >
-                {t("common:running")}
-              </Button>
-            )}
-
-            <Chip
-              label={statusText}
-              color={getRunStatusColor(run.status)}
-              size="small"
-            />
-
-            <Tooltip title={t("models:button.deleteRun")}>
-              <IconButton
-                size="small"
-                color="error"
-                onClick={() => setDeleteConfirmOpen(true)}
-                disabled={isRunning}
-              >
-                <Delete fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            {!forceExpanded && (
-              <Tooltip
-                title={
-                  resultsVisible
-                    ? t("models:label.hideResults")
-                    : t("models:label.showResults")
-                }
-              >
-                <IconButton
-                  size="small"
-                  onClick={() => setResultsVisible(!resultsVisible)}
-                  color="default"
-                >
-                  {resultsVisible ? (
-                    <ExpandLess fontSize="small" />
-                  ) : (
-                    <ExpandMore fontSize="small" />
-                  )}
-                </IconButton>
-              </Tooltip>
-            )}
-          </Box>
-        </Box>
-
-        {metrics && Object.keys(metrics).length > 0 && (
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="subtitle2" gutterBottom>
-              {t("common:metrics")}
-            </Typography>
-            <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-              {Object.entries(metrics).map(([metric, values]) => {
-                const avgValue =
-                  values.reduce((sum, val) => sum + val, 0) / values.length;
-                return (
-                  <Box key={metric}>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: theme.palette.text.secondary }}
-                    >
-                      {metric.toUpperCase()}
-                    </Typography>
-                    <Typography variant="body2" fontWeight="medium">
-                      {avgValue.toFixed(4)}
-                    </Typography>
-                  </Box>
-                );
-              })}
-            </Box>
-          </Box>
+          </>
         )}
 
-        {run.description && (
-          <Typography
-            variant="body2"
-            sx={{ color: theme.palette.text.secondary, mb: 4 }}
-          >
-            {run.description}
-          </Typography>
-        )}
-
-        <Box sx={{ mt: 4 }}>
+        <Box sx={{ mt: hideChrome ? 0 : 4 }}>
           <RunResults
             run={run}
             model={model}
@@ -677,6 +711,11 @@ RunCard.propTypes = {
   existingRuns: PropTypes.array,
   onRefresh: PropTypes.func,
   forceExpanded: PropTypes.bool,
+  hideChrome: PropTypes.bool,
+  isEditing: PropTypes.bool,
+  setIsEditing: PropTypes.func,
+  deleteConfirmOpen: PropTypes.bool,
+  setDeleteConfirmOpen: PropTypes.func,
 };
 
 export default RunCard;

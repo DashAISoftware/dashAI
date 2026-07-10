@@ -15,13 +15,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
 } from "@mui/material";
 import { renderParamValue } from "./ModelParamBlock";
 import {
@@ -73,14 +66,12 @@ export default function RunResults({
     ? setControlledVisible
     : setInternalVisible;
 
-  const [paramsExpanded, setParamsExpanded] = useState(false);
-
   const [activeTab, setActiveTab] = useState(() => {
     const saved = localStorage.getItem(`run-${run.id}-active-tab`);
     if (saved !== null) {
       const savedTab = JSON.parse(saved);
-      // Tabs 1+ (Explainability, Predictions, Hyperparameters) require a finished run
-      if (savedTab > 0 && run.status !== 3) return 0;
+      // Tabs 2+ (Explainability, Predictions, Hyperparameters) require a finished run
+      if (savedTab > 1 && run.status !== 3) return 0;
       return savedTab;
     }
     return 0;
@@ -184,7 +175,7 @@ export default function RunResults({
     const handleOpenDialog = (event) => {
       if (event.detail.runId === run.id) {
         setResultsVisible(true);
-        setActiveTab(2);
+        setActiveTab(3);
         setShowDatasetPanel(true);
       }
     };
@@ -196,7 +187,7 @@ export default function RunResults({
   useEffect(() => {
     if (isRunning && autoExpand) {
       setResultsVisible(true);
-      setActiveTab(0); // Live Metrics tab
+      setActiveTab(1); // Live Metrics tab
     }
   }, [isRunning, autoExpand]);
 
@@ -255,92 +246,21 @@ export default function RunResults({
 
   return (
     <Box id={`run-results-${run.id}`}>
-      {hasParams && (
-        <Box sx={{ mb: 4 }}>
-          <Button
-            size="small"
-            onClick={() => setParamsExpanded(!paramsExpanded)}
-            endIcon={paramsExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-            sx={{ textTransform: "none" }}
-          >
-            {t("common:modelParameters")}
-          </Button>
-          <Collapse in={paramsExpanded} timeout="auto" unmountOnExit>
-            <Box sx={{ mt: 2 }}>
-              {run.parameters && Object.keys(run.parameters).length > 0 && (
-                <Box sx={{ mb: 4 }}>
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>{t("common:parameter")}</TableCell>
-                          <TableCell>{t("common:value")}</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {Object.entries(run.parameters).map(([key, value]) => (
-                          <TableRow key={key}>
-                            <TableCell>{getParamLabel(key)}</TableCell>
-                            <TableCell>{renderParamValue(value)}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              )}
-              {run.optimizer_name && run.goal_metric && (
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>
-                    {t("common:optimizer")}: {run.optimizer_name}
-                  </Typography>
-                  {run.optimizer_parameters &&
-                    Object.keys(run.optimizer_parameters).length > 0 && (
-                      <TableContainer component={Paper} variant="outlined">
-                        <Table size="small">
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>{t("common:parameter")}</TableCell>
-                              <TableCell>{t("common:value")}</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {Object.entries(run.optimizer_parameters).map(
-                              ([key, value]) => (
-                                <TableRow key={key}>
-                                  <TableCell>{key}</TableCell>
-                                  <TableCell>
-                                    {renderParamValue(value)}
-                                  </TableCell>
-                                </TableRow>
-                              ),
-                            )}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    )}
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mt: 2 }}
-                  >
-                    {t("models:label.goalMetric")}:{" "}
-                    <strong>{run.goal_metric}</strong>
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Collapse>
-        </Box>
-      )}
-
       <Collapse in={resultsVisible} timeout="auto" unmountOnExit>
         <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
           <Tabs
             value={activeTab}
             onChange={(e, newValue) => setActiveTab(newValue)}
             aria-label="Results tabs"
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              "& .MuiTabs-scrollButtons.Mui-disabled": {
+                display: "none",
+              },
+            }}
           >
+            <Tab label={t("models:label.configuration")} />
             <Tab label={t("models:label.liveMetrics")} />
             <Tab
               label={
@@ -381,11 +301,136 @@ export default function RunResults({
 
         {activeTab === 0 && (
           <Box sx={{ py: 4 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 3 }}>
+              {t("common:modelParameters")}
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 3,
+                maxWidth: 500,
+              }}
+            >
+              {run.parameters &&
+                Object.entries(run.parameters).map(([key, value]) => (
+                  <Box key={key}>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}
+                    >
+                      {getParamLabel(key)}
+                    </Typography>
+                    <Box
+                      sx={{
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 1,
+                        px: 3,
+                        py: 2,
+                        mt: 1,
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {renderParamValue(value)}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+
+              {run.optimizer_name && run.goal_metric && (
+                <>
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}
+                    >
+                      {t("common:optimizer")}
+                    </Typography>
+                    <Box
+                      sx={{
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 1,
+                        px: 3,
+                        py: 2,
+                        mt: 1,
+                      }}
+                    >
+                      <Typography variant="body2">
+                        {run.optimizer_name}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}
+                    >
+                      {t("models:label.goalMetric")}
+                    </Typography>
+                    <Box
+                      sx={{
+                        border: 1,
+                        borderColor: "divider",
+                        borderRadius: 1,
+                        px: 3,
+                        py: 2,
+                        mt: 1,
+                      }}
+                    >
+                      <Typography variant="body2">{run.goal_metric}</Typography>
+                    </Box>
+                  </Box>
+
+                  {run.optimizer_parameters &&
+                    Object.entries(run.optimizer_parameters).map(
+                      ([key, value]) => (
+                        <Box key={key}>
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              textTransform: "uppercase",
+                              letterSpacing: 0.5,
+                            }}
+                          >
+                            {key}
+                          </Typography>
+                          <Box
+                            sx={{
+                              border: 1,
+                              borderColor: "divider",
+                              borderRadius: 1,
+                              px: 3,
+                              py: 2,
+                              mt: 1,
+                            }}
+                          >
+                            <Typography variant="body2">
+                              {renderParamValue(value)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      ),
+                    )}
+                </>
+              )}
+            </Box>
+          </Box>
+        )}
+
+        {activeTab === 1 && (
+          <Box sx={{ py: 4 }}>
             <LiveMetricsChart run={run} />
           </Box>
         )}
 
-        {activeTab === 1 && isFinished && (
+        {activeTab === 2 && isFinished && (
           <Box sx={{ py: 4, width: "100%" }}>
             <Grid container spacing={4} sx={{ mb: 4 }}>
               <Grid item xs={6}>
@@ -587,7 +632,7 @@ export default function RunResults({
           </Box>
         )}
 
-        {activeTab === 2 && isFinished && (
+        {activeTab === 3 && isFinished && (
           <Box sx={{ py: 4, width: "100%" }}>
             <Grid container spacing={4} sx={{ mb: 4 }}>
               <Grid item xs={6}>
@@ -892,7 +937,7 @@ export default function RunResults({
           </Box>
         )}
 
-        {activeTab === 3 && isFinished && optimizables > 0 && (
+        {activeTab === 4 && isFinished && optimizables > 0 && (
           <Box sx={{ py: 4 }}>
             <HyperparameterPlots run={run} />
           </Box>
