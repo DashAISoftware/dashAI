@@ -85,7 +85,12 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
             If no scikit-learn class with a `fit` method is found
             in the MRO.
         """
-        x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
+        if hasattr(x, "to_pandas"):
+            x_pandas = x.to_pandas()
+            self._fit_input_cache = (x, x_pandas)
+        else:
+            x_pandas = x
+            self._fit_input_cache = None
         y_pandas = y.to_pandas() if y is not None and hasattr(y, "to_pandas") else y
 
         # Detect whether the underlying sklearn estimator needs a target.
@@ -165,7 +170,16 @@ class SklearnWrapper(BaseConverter, metaclass=ABCMeta):
 
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
-        x_pandas = x.to_pandas() if hasattr(x, "to_pandas") else x
+        cached = getattr(self, "_fit_input_cache", None)
+        if cached is not None and cached[0] is x:
+            x_pandas = cached[1]
+        elif hasattr(x, "to_pandas"):
+            x_pandas = x.to_pandas()
+        else:
+            x_pandas = x
+        # Drop the reference now that it's been consumed (or wasn't a hit),
+        # so the cached DataFrame doesn't outlive this transform call.
+        self._fit_input_cache = None
 
         sklearn_cls = next(
             (

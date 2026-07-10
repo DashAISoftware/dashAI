@@ -345,10 +345,11 @@ class ConverterJob(BaseJob):
                         )
                         if scope_rows_indexes:
                             y_dataset_fit = y_dataset_fit.select(scope_rows_indexes)
-
-                        y_full_transform = loaded_dataset.select_columns(
-                            [target_column_name]
-                        )
+                            y_full_transform = loaded_dataset.select_columns(
+                                [target_column_name]
+                            )
+                        else:
+                            y_full_transform = y_dataset_fit
 
                     X_dataset_fit = loaded_dataset.select_columns(scope_column_names)
 
@@ -370,7 +371,14 @@ class ConverterJob(BaseJob):
                             f"Error fitting converter {converter_name}: {e}"
                         ) from e
 
-                    X_full_transform = loaded_dataset.select_columns(scope_column_names)
+                    if scope_rows_indexes:
+                        X_full_transform = loaded_dataset.select_columns(
+                            scope_column_names
+                        )
+                    else:
+                        # Same reuse as above: no row-level fit scope means
+                        # X_dataset_fit already covers the full transform scope.
+                        X_full_transform = X_dataset_fit
 
                     try:
                         transformed_dataset = converter_instance.transform(
