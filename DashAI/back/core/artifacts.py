@@ -33,14 +33,6 @@ from pydantic import (
     model_validator,
 )
 
-_IMAGE_MAGIC_MIMES = (
-    (b"\x89PNG\r\n\x1a\n", "image/png"),
-    (b"\xff\xd8\xff", "image/jpeg"),
-    (b"GIF87a", "image/gif"),
-    (b"GIF89a", "image/gif"),
-    (b"BM", "image/bmp"),
-)
-
 
 def _detect_mime(data: bytes) -> str:
     """Guess the MIME type of raw image bytes from their magic numbers.
@@ -55,12 +47,10 @@ def _detect_mime(data: bytes) -> str:
     str
         The detected MIME type, or ``"image/png"`` when unknown.
     """
-    for magic, mime in _IMAGE_MAGIC_MIMES:
-        if data.startswith(magic):
-            return mime
-    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
-        return "image/webp"
-    return "image/png"
+    import filetype
+
+    kind = filetype.guess(data)
+    return kind.mime if kind is not None else "image/png"
 
 
 class Artifact(BaseModel):
