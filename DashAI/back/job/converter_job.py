@@ -57,14 +57,23 @@ def _rebuild_dataset_with_transformed_columns(
     original_columns = base.column_names
     transformed_cols = transformed.column_names
 
-    removed_cols = [col for col in scope_column_names if col not in transformed_cols]
-    replacement_cols = [col for col in scope_column_names if col in transformed_cols]
-    new_cols = [col for col in transformed_cols if col not in scope_column_names]
+    transformed_cols_set = set(transformed_cols)
+    scope_column_names_set = set(scope_column_names)
+
+    removed_cols = [
+        col for col in scope_column_names if col not in transformed_cols_set
+    ]
+    replacement_cols = [
+        col for col in scope_column_names if col in transformed_cols_set
+    ]
+    new_cols = [col for col in transformed_cols if col not in scope_column_names_set]
+
+    removed_cols_set = set(removed_cols)
 
     new_columns_order = []
     seen_cols = set()
     for col in original_columns:
-        if col in removed_cols:
+        if col in removed_cols_set:
             continue
         if col not in seen_cols:
             new_columns_order.append(col)
@@ -83,10 +92,10 @@ def _rebuild_dataset_with_transformed_columns(
 
     updated_arrays = {}
     for col in replacement_cols:
-        if col in transformed.arrow_table.column_names:
+        if col in transformed_cols_set:
             updated_arrays[col] = transformed.arrow_table[col]
     for col, unique_col in col_name_mapping.items():
-        if col in transformed.arrow_table.column_names:
+        if col in transformed_cols_set:
             updated_arrays[unique_col] = transformed.arrow_table[col]
 
     updated_types = base.types.copy()

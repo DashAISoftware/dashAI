@@ -203,7 +203,7 @@ class SimpleImputer(
         """
         if hasattr(x, "types") and x.types is not None:
             self._input_types = dict(x.types)
-        self._input_columns = list(x.column_names)
+        self._input_columns = {name: idx for idx, name in enumerate(x.column_names)}
         return super().fit(x, y)
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
@@ -246,7 +246,7 @@ class SimpleImputer(
                 and statistics is not None
                 and column_name in columns
             ):
-                value = statistics[columns.index(column_name)]
+                value = statistics[columns[column_name]]
                 if float(value).is_integer():
                     return Integer(arrow_type=pa.int64())
 
