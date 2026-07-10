@@ -17,7 +17,7 @@ export const getDescription = (desc, i18n) => {
  * @param {string} [highlightColors.bg] - Background color for placeholders
  * @param {string} [highlightColors.text] - Text color for placeholders
  */
-export const renderTemplateWithHighlights = (template, highlightColors = {}) => {
+export const renderTemplateWithHighlights = (template, highlightColors = {}, fontFamily = "monospace") => {
   if (!template) return null;
 
   const { bg, text } = highlightColors;
@@ -58,8 +58,7 @@ export const renderTemplateWithHighlights = (template, highlightColors = {}) => 
           color: text || "warning.dark",
           padding: "2px 4px",
           borderRadius: "3px",
-          fontWeight: 600,
-          fontFamily: "monospace",
+          fontFamily,
         }}
       >
         {part.value}

@@ -40,11 +40,11 @@ export default function GeneratorParamsCard({
         <Box sx={{ mb: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+              <Typography variant="subtitle2">
                 {t("generative:rag.generator.modelLabel")}
               </Typography>
               {isExpanded && isAdvanced && (
-                <Typography variant="caption" sx={{ color: "warning.main", fontWeight: "bold" }}>
+                <Typography variant="caption" sx={{ color: "warning.main" }}>
                   {t("generative:rag.generator.advancedApplied")}
                 </Typography>
               )}

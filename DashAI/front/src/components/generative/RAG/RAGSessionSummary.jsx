@@ -239,7 +239,6 @@ export default function RAGSessionSummary({
                 ml: 0.5, 
                 p: 0.25,
                 minHeight: 'auto',
-                fontSize: '0.75rem',
                 textTransform: 'none',
                 color: 'primary.main',
                 '&:hover': {
@@ -281,7 +280,7 @@ export default function RAGSessionSummary({
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="body2">{icon}</Typography>
-          <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+          <Typography variant="subtitle1">
             {title}: <Typography component="span" color="text.primary">{component}</Typography>
           </Typography>
         </Box>
@@ -477,8 +476,6 @@ export default function RAGSessionSummary({
               sx={{
                 py: 1.5,
                 px: 4,
-                fontSize: '1rem',
-                fontWeight: 600,
                 borderRadius: 2,
                 boxShadow: 3,
                 textTransform: 'none',
@@ -567,7 +564,6 @@ export default function RAGSessionSummary({
             <Box
               component="pre"
               sx={{
-                fontSize: '0.875rem',
                 bgcolor: 'background.paper',
                 color: 'text.secondary',
                 p: 2,

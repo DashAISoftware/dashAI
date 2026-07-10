@@ -303,7 +303,7 @@ export default function PromptParamsCard({
       <CardContent sx={{ p: 2 }}>
         <Box sx={{ mb: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>{t("generative:rag.prompt.promptLabel")}</Typography>
+            <Typography variant="subtitle2">{t("generative:rag.prompt.promptLabel")}</Typography>
             <Box>
               {isExpanded && (
                 <Tooltip title={t("generative:rag.prompt.descriptionToggle")}>
@@ -363,11 +363,7 @@ export default function PromptParamsCard({
                   )}
                 />
               )}
-              sx={{
-                "& .MuiAutocomplete-option": {
-                  fontSize: "0.875rem",
-                },
-              }}
+              sx={{}}
             />
           </Box>
 
@@ -401,14 +397,13 @@ export default function PromptParamsCard({
                   border: "1px solid",
                   borderColor: "divider",
                   borderRadius: 1,
-                  fontFamily: "monospace",
-                  fontSize: "0.875rem",
+              fontFamily: theme.typography.code.fontFamily,
                   lineHeight: 1.6,
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                 }}
               >
-                {renderTemplateWithHighlights(currentTemplate, placeholderColors)}
+                {renderTemplateWithHighlights(currentTemplate, placeholderColors, theme.typography.code.fontFamily)}
               </Box>
 
               {getDescription(selectedPrompt.description, i18n) && (

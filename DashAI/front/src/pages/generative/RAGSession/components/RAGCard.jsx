@@ -32,9 +32,9 @@ export default function RAGCard({
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
         sx={{
-          minHeight: "48px !important",
+          minHeight: 48,
           "&.Mui-expanded": {
-            minHeight: "48px !important",
+            minHeight: 48,
           },
         }}
       >

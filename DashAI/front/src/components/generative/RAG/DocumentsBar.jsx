@@ -146,7 +146,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
             </IconButton>
           </Tooltip>
         </Box>
-        <Typography variant="caption" sx={{ color: "rgb(113, 113, 122)", mt: 1 }}>
+        <Typography variant="caption" sx={{ color: "text.secondary", mt: 1 }}>
           {t("documentsBar.documentCount", { count: filteredDocuments.length })}
           {selectedSessionId ? t("documentsBar.inCurrentSession") : t("documentsBar.available")}
         </Typography>
@@ -166,7 +166,7 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         </Box>
       )}
       {showSearch && documents.length >= 1 && (
-        <Box sx={{ p: 2, borderBottom: "1px solid #333", flexShrink: 0 }}>
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", flexShrink: 0 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Box sx={{ flex: 1 }}>
               <SearchBar

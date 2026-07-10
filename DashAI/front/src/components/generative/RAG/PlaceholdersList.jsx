@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, IconButton, Tooltip, Typography } from "@mui/material";
+import { Box, IconButton, Tooltip, Typography, useTheme } from "@mui/material";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -16,6 +16,7 @@ export default function PlaceholdersList({
   template = "",
   onInsertPlaceholder,
 }) {
+  const theme = useTheme();
   const { t } = useTranslation(["generative"]);
   return (
     <Box sx={{ mt: 2, mb: 2 }}>
@@ -79,9 +80,7 @@ export default function PlaceholdersList({
                 component="code"
                 variant="body2"
                 sx={{
-                  fontFamily: "monospace",
-                  fontWeight: 600,
-                  fontSize: "0.8rem",
+                  fontFamily: theme.typography.code.fontFamily,
                 }}
               >
                 {ph}

@@ -326,11 +326,7 @@ export default function PromptSection({
               )}
             />
           )}
-          sx={{
-            "& .MuiAutocomplete-option": {
-              fontSize: "0.875rem",
-            },
-          }}
+          sx={{}}
         />
       </Box>
 
@@ -364,14 +360,13 @@ export default function PromptSection({
               border: "1px solid",
               borderColor: "divider",
               borderRadius: 1,
-              fontFamily: "monospace",
-              fontSize: "0.875rem",
+              fontFamily: theme.typography.code.fontFamily,
               lineHeight: 1.6,
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
             }}
           >
-            {renderTemplateWithHighlights(currentTemplate, placeholderColors)}
+            {renderTemplateWithHighlights(currentTemplate, placeholderColors, theme.typography.code.fontFamily)}
           </Box>
 
           {getDescription(selectedPrompt.description, i18n) && (

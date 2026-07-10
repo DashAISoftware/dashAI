@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import {
   Description,
   PictureAsPdf,
@@ -18,15 +18,6 @@ const getDocumentIcon = (fileType) => {
   return IconComponent;
 };
 
-const getDocumentColor = (fileType) => {
-  const colorMap = {
-    pdf: "primary.main",
-    txt: "primary.main",
-  };
-
-  return colorMap[fileType?.toLowerCase()] || "#6B7280";
-};
-
 export default function DocumentListItem({
   document,
   disabled = false,
@@ -34,9 +25,14 @@ export default function DocumentListItem({
 }) {
   const { t } = useTranslation(["generative"]);
   const [isHovered, setIsHovered] = useState(false);
+  const theme = useTheme();
 
   const DocumentIcon = getDocumentIcon(document.type);
-  const documentColor = getDocumentColor(document.type);
+  const colorMap = { pdf: "primary.main", txt: "primary.main" };
+  const documentColor =
+    colorMap[document.type?.toLowerCase()] || theme.palette.text.disabled;
+
+  const disabledOverlay = `repeating-linear-gradient(45deg, transparent, transparent 10px, ${theme.palette.action.disabled} 10px, ${theme.palette.action.disabled} 20px)`;
 
   return (
     <Box
@@ -51,8 +47,9 @@ export default function DocumentListItem({
         width: "100%",
         minWidth: 0,
         maxWidth: "100%",
-        bgcolor: disabled ? "rgb(32, 32, 32)" : "rgb(44, 44, 44)",
-        border: "1px solid rgb(39, 39, 42)",
+        bgcolor: disabled ? "action.disabledBackground" : "background.paper",
+        border: 1,
+        borderColor: "divider",
         borderRadius: 1,
         cursor: disabled ? "not-allowed" : "pointer",
         transition: "all 0.2s",
@@ -60,8 +57,8 @@ export default function DocumentListItem({
         filter: disabled ? "grayscale(0.6)" : "none",
         position: "relative",
         "&:hover": {
-          bgcolor: disabled ? "rgb(32, 32, 32)" : "rgb(60, 60, 60)",
-          borderColor: disabled ? "rgb(39, 39, 42)" : documentColor,
+          bgcolor: disabled ? "action.disabledBackground" : "action.hover",
+          borderColor: disabled ? "divider" : documentColor,
           transform: disabled ? "none" : "translateX(4px)",
         },
         "&::after": disabled
@@ -71,8 +68,7 @@ export default function DocumentListItem({
               inset: 0,
               borderRadius: 1,
               pointerEvents: "none",
-              background:
-                "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0, 0, 0, 0.1) 10px, rgba(0, 0, 0, 0.1) 20px)",
+              background: disabledOverlay,
             }
           : {},
       }}
@@ -85,8 +81,8 @@ export default function DocumentListItem({
           width: 36,
           height: 36,
           borderRadius: 1,
-          bgcolor: disabled ? "rgb(50, 50, 50)" : "rgb(63, 63, 70)",
-          color: disabled ? "rgb(150, 150, 150)" : "rgb(255, 255, 255)",
+          bgcolor: "action.selected",
+          color: disabled ? "text.disabled" : "text.primary",
           flexShrink: 0,
           transition: "all 0.2s",
         }}
@@ -106,8 +102,7 @@ export default function DocumentListItem({
           <Typography
             variant="body2"
             sx={{
-              color: disabled ? "rgb(150, 150, 150)" : "rgb(250, 250, 250)",
-              fontWeight: 500,
+              color: disabled ? "text.disabled" : "text.primary",
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
@@ -119,10 +114,8 @@ export default function DocumentListItem({
         <Typography
           variant="caption"
           sx={{
-            color: disabled ? "rgb(90, 90, 90)" : "rgb(113, 113, 122)",
+            color: disabled ? "text.disabled" : "text.secondary",
             textTransform: "uppercase",
-            fontSize: "0.7rem",
-            fontWeight: 600,
           }}
         >
           {document.type || t("generative:rag.documents.table.unknownType")}

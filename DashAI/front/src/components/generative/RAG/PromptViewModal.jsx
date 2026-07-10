@@ -145,7 +145,6 @@ export default function PromptViewModal({ open, handleClose, prompt }) {
             borderColor: theme.palette.ui.border,
             borderRadius: 1,
             fontFamily: theme.typography.code.fontFamily,
-            fontSize: "0.875rem",
             lineHeight: 1.6,
             whiteSpace: "pre-wrap",
             wordBreak: "break-word",
@@ -153,7 +152,7 @@ export default function PromptViewModal({ open, handleClose, prompt }) {
             overflowY: "auto",
           }}
         >
-          {renderTemplateWithHighlights(currentTemplate, placeholderColors) ?? (
+          {renderTemplateWithHighlights(currentTemplate, placeholderColors, theme.typography.code.fontFamily) ?? (
             <Typography
               variant="body2"
               color="text.secondary"

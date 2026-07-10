@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 function Section({ title, children }) {
   return (
     <Box>
-      <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
+      <Typography variant="subtitle2" sx={{ mb: 1 }}>
         {title}
       </Typography>
       {children}
@@ -18,7 +18,7 @@ export default function RAGInfoBar() {
   return (
     <Box display="flex" flexDirection="column" gap={2}>
       <Box>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+        <Typography variant="subtitle1">
           {t("generative:rag.rightPanel.title")}
         </Typography>
         <Typography variant="body2" color="textSecondary">
@@ -46,7 +46,7 @@ export default function RAGInfoBar() {
       <Section title={t("generative:rag.rightPanel.settingsTitle")}>
         <Box display="flex" flexDirection="column" gap={2}>
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            <Typography variant="body2">
               {t("generative:rag.rightPanel.settings.documents.title")}
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
@@ -69,7 +69,7 @@ export default function RAGInfoBar() {
           </Box>
 
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            <Typography variant="body2">
               {t("generative:rag.rightPanel.settings.chunking.title")}
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
@@ -97,7 +97,7 @@ export default function RAGInfoBar() {
           </Box>
 
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            <Typography variant="body2">
               {t(
                 "generative:rag.rightPanel.settings.retriever.title",
               )}
@@ -132,7 +132,7 @@ export default function RAGInfoBar() {
           </Box>
 
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            <Typography variant="body2">
               {t("generative:rag.rightPanel.settings.llm.title")}
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
@@ -149,7 +149,7 @@ export default function RAGInfoBar() {
           </Box>
 
           <Box>
-            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+            <Typography variant="body2">
               {t("generative:rag.rightPanel.settings.prompt.title")}
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>

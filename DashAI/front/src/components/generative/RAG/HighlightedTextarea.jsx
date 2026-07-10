@@ -39,13 +39,13 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
 
   /** Shared styles applied to both backdrop and textarea for perfect alignment */
   const sharedInputSx = {
-    fontFamily: '"Geist Mono", monospace',
-    fontSize: "0.875rem",
+    fontFamily: theme.typography.code.fontFamily,
+    fontSize: theme.typography.body2.fontSize,
     lineHeight: 1.6,
     p: "16.5px 14px",
     border: 1,
     borderColor: "divider",
-    borderRadius: "4px",
+    borderRadius: 1,
     // Stack both elements in the same grid cell so they overlap exactly
     gridArea: "1 / 1",
   };
@@ -55,7 +55,7 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
       {label && (
         <Typography
           variant="body2"
-          sx={{ mb: 0.5, color: "text.secondary", fontWeight: 500 }}
+          sx={{ mb: 0.5, color: "text.secondary" }}
         >
           {label}
         </Typography>
@@ -87,7 +87,7 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
             ? renderTemplateWithHighlights(value, {
                 bg: bgColor,
                 text: textColor,
-              })
+              }, theme.typography.code.fontFamily)
             : placeholder || ""}
         </Box>
 

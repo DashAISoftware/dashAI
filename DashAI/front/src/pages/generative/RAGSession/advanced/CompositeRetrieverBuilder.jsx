@@ -177,7 +177,6 @@ export default function CompositeRetrieverBuilder({
           variant="caption"
           sx={{
             color: "text.secondary",
-            fontWeight: 600,
             textAlign: "center",
             lineHeight: 1.2,
           }}
@@ -228,7 +227,6 @@ export default function CompositeRetrieverBuilder({
           variant="caption"
           sx={{
             color: "text.secondary",
-            fontWeight: 600,
             textAlign: "center",
             lineHeight: 1.2,
           }}
@@ -349,7 +347,7 @@ function TreeNodeView({
           ) : (
             <PsychologyIcon sx={{ fontSize: 18, color: "primary.main" }} />
           )}
-          <Typography variant="body2" sx={{ fontWeight: 600, fontSize: "0.8rem" }}>
+          <Typography variant="body2">
             {name}
           </Typography>
         </Box>

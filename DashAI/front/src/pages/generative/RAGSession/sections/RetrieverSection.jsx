@@ -343,7 +343,7 @@ export default function RetrieverSection({
               >
                 <Typography
                   variant="body2"
-                  sx={{ color: theme.palette.text.primary, fontWeight: 500 }}
+                  sx={{ color: theme.palette.text.primary }}
                 >
                   {t("generative:rag.retriever.advancedTopK", {
                     topK: effectiveTopK,

@@ -305,7 +305,6 @@ export default function DocumentSelector({
     },
     muiTableHeadCellProps: {
       sx: {
-        fontWeight: 600,
         backgroundColor: theme.palette.action.hover,
       },
     },

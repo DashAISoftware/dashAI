@@ -173,7 +173,7 @@ export default function GeneratorSection({
             </Box> {selectedGenerator.name}
           </Typography>
 
-          <Typography variant="body2" sx={{ color: contextStats.isValid ? "success.main" : "error.main", fontWeight: 500 }}>
+          <Typography variant="body2" sx={{ color: contextStats.isValid ? "success.main" : "error.main" }}>
             {t("generative:validation.contextSpace", { availableChars: contextStats.availableTokens?.toLocaleString() })}
           </Typography>
 
