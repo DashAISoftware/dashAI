@@ -103,7 +103,7 @@ class PipelineJob(BaseJob):
                 task_map: Dict[asyncio.Task, str] = {}
                 update_lock = asyncio.Lock()
                 exclusive_lock = asyncio.Lock()
-                exclusive_types = {"TaskAndModel", "Train"}
+                exclusive_types = {"TaskAndModel"}
 
                 async def _run_node(node_id: str) -> None:
                     step = step_map.get(node_id, {})
@@ -348,22 +348,6 @@ class PipelineJob(BaseJob):
                 "explorations": current_node_exploration,
             }
             pipeline.exploration = aggregated_exploration
-        elif node_type == "Train":
-            current_train = output.get("train") or {}
-            context["train"] = current_train
-            context["model_node_id"] = node_id
-
-            aggregated_train = (
-                dict(pipeline.train) if isinstance(pipeline.train, dict) else {}
-            )
-            train_key = node_id or f"Train-{len(aggregated_train)}"
-            aggregated_train[train_key] = {
-                "node_id": node_id,
-                "model_node_id": node_id,
-                "dataset_name": context.get("dataset_name"),
-                **current_train,
-            }
-            pipeline.train = aggregated_train
         elif node_type == "SplitData":
             context["split_data"] = output.get("split_data")
             pipeline.split_data = context["split_data"]

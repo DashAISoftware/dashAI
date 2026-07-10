@@ -278,7 +278,6 @@ from DashAI.back.pipeline.prediction_node import Prediction
 from DashAI.back.pipeline.retrieve_model_node import RetrieveModel
 from DashAI.back.pipeline.split_data_node import SplitData
 from DashAI.back.pipeline.task_and_model_node import TaskAndModel
-from DashAI.back.pipeline.train_node import Train
 
 # Plugins
 from DashAI.back.plugins.utils import get_available_plugins
@@ -492,7 +491,6 @@ def get_initial_components():
         Nystroem,
         DataSelector,
         DataExploration,
-        Train,
         RetrieveModel,
         Prediction,
         SplitData,

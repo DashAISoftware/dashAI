@@ -6,14 +6,12 @@ from .validator import (
     RetrieveModelValidator,
     SplitDataValidator,
     TaskAndModelValidator,
-    TrainValidator,
 )
 
 __all__ = [
     "PipelineValidator",
     "DataSelectorValidator",
     "DataExplorationValidator",
-    "TrainValidator",
     "RetrieveModelValidator",
     "SplitDataValidator",
     "TaskAndModelValidator",

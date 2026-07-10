@@ -186,34 +186,6 @@ NODE_CONTRACTS: List[NodeContract] = [
         ],
     ),
     NodeContract(
-        type="Train",
-        name="Train Model",
-        icon="SettingsIcon",
-        description=(
-            "Trains a model using a selected dataset, with configurable columns, "
-            "splits, task, model, and metrics."
-        ),
-        requiresConfiguration=True,
-        source=True,
-        target=True,
-        input="Dataset object",
-        output="Trained model object and evaluation results",
-        inputs=[
-            PortSpec(
-                name="dataset",
-                kind="DatasetRef",
-                description="Dataset used for training.",
-            )
-        ],
-        outputs=[
-            PortSpec(
-                name="model",
-                kind="ModelArtifact",
-                description="Trained model artifact.",
-            )
-        ],
-    ),
-    NodeContract(
         type="Prediction",
         name="Prediction",
         icon="EmojiObjectsIcon",
