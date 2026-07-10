@@ -18,6 +18,7 @@ import PipelineResultsGraphs from "./ResultsGraphs";
 import PipelineResultsPrediction from "./ResultsPrediction";
 import ResultsTabParameters from "../../../pages/results/components/ResultsTabParameters";
 import ResultsExploration from "./ResultsExploration";
+import DatasetSummaryTable from "../../datasets/DatasetSummaryTable";
 
 const POLL_INTERVAL_MS = 3000;
 
@@ -206,7 +207,30 @@ function PipelineResults({ pipelineId, onClose }) {
   const hasPrediction =
     branchResults.filter((branch) => !!branch.prediction).length > 0;
 
-  if (!hasExploration && !hasTrain && !hasPrediction) {
+  const steps = Array.isArray(results.steps) ? results.steps : [];
+  const dataSelectorSteps = steps.filter((s) => s.type === "DataSelector");
+  const splitDataSteps = steps.filter((s) => s.type === "SplitData");
+  const retrieveModelSteps = steps.filter((s) => s.type === "RetrieveModel");
+  const totalRows = dataSelectorSteps[0]?.config?.total_rows ?? null;
+
+  const hasDataSelector = dataSelectorSteps.length > 0;
+  const hasSplitData = splitDataSteps.length > 0;
+  const hasRetrieveModel = retrieveModelSteps.length > 0;
+
+  const splitSize = (ratio) =>
+    totalRows != null && ratio != null ? Math.round(ratio * totalRows) : null;
+
+  const formatColumns = (cols) =>
+    Array.isArray(cols) && cols.length > 0 ? cols.join(", ") : "-";
+
+  if (
+    !hasExploration &&
+    !hasTrain &&
+    !hasPrediction &&
+    !hasDataSelector &&
+    !hasSplitData &&
+    !hasRetrieveModel
+  ) {
     return (
       <Box sx={{ p: 4 }}>
         {onClose && (
@@ -230,6 +254,128 @@ function PipelineResults({ pipelineId, onClose }) {
 
   return (
     <Box sx={{ p: 2 }}>
+      {polling && (
+        <Box display="flex" alignItems="center" gap={2} mb={2}>
+          <CircularProgress size={20} />
+          <Typography variant="body2">
+            Pipeline is running. Remaining results will appear automatically…
+          </Typography>
+        </Box>
+      )}
+
+      {hasDataSelector && (
+        <Accordion defaultExpanded>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Typography variant="h6">Data Selector</Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
+            <Box mx={10} my={2} display="flex" flexDirection="column" gap={3}>
+              {dataSelectorSteps.map((step) => {
+                const cfg = step.config || {};
+                return (
+                  <Paper sx={{ width: "100%", p: 3 }} key={step.id}>
+                    <Typography variant="subtitle1">
+                      Dataset: {cfg.name || "-"}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "gray", mb: 2 }}>
+                      {cfg.total_rows ?? "?"} rows × {cfg.total_columns ?? "?"}{" "}
+                      columns
+                      {cfg.task ? ` | ${cfg.task}` : ""}
+                    </Typography>
+                    {cfg.id != null && (
+                      <DatasetSummaryTable
+                        datasetId={Number(cfg.id)}
+                        isEditable={false}
+                      />
+                    )}
+                  </Paper>
+                );
+              })}
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      {hasSplitData && (
+        <Accordion defaultExpanded>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Typography variant="h6">Split Data</Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
+            <Box mx={10} my={2} display="flex" flexDirection="column" gap={3}>
+              {splitDataSteps.map((step) => {
+                const cfg = step.config || {};
+                const splits = cfg.splits || {};
+                return (
+                  <Paper sx={{ width: "100%", p: 3 }} key={step.id}>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      <strong>Input columns:</strong>{" "}
+                      {formatColumns(cfg.input_columns)}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                      <strong>Output columns:</strong>{" "}
+                      {formatColumns(cfg.output_columns)}
+                    </Typography>
+                    {["train", "validation", "test"].map((key) => {
+                      const ratio = splits[key];
+                      const size = splitSize(ratio);
+                      return (
+                        <Typography
+                          key={key}
+                          variant="body2"
+                          sx={{ color: "gray" }}
+                        >
+                          {key.charAt(0).toUpperCase() + key.slice(1)}:{" "}
+                          {ratio != null ? `${Math.round(ratio * 100)}%` : "-"}
+                          {size != null ? ` (~${size} rows)` : ""}
+                        </Typography>
+                      );
+                    })}
+                  </Paper>
+                );
+              })}
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      {hasRetrieveModel && (
+        <Accordion defaultExpanded>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Typography variant="h6">Retrieve Model</Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
+            <Box mx={10} my={2} display="flex" flexDirection="column" gap={3}>
+              {retrieveModelSteps.map((step) => {
+                const cfg = step.config || {};
+                return (
+                  <Paper sx={{ width: "100%", p: 3 }} key={step.id}>
+                    <Typography variant="subtitle1">
+                      {cfg.model || "-"}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: "gray", mb: 1 }}>
+                      {cfg.task ? `Task: ${cfg.task}` : ""}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mb: 0.5 }}>
+                      <strong>Input columns:</strong>{" "}
+                      {formatColumns(cfg.input_columns)}
+                    </Typography>
+                    {cfg.model_path && (
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "gray", wordBreak: "break-all" }}
+                      >
+                        {cfg.model_path}
+                      </Typography>
+                    )}
+                  </Paper>
+                );
+              })}
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+      )}
+
       {hasExploration && (
         <Accordion defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMore />}>
