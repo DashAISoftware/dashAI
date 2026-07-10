@@ -63,6 +63,7 @@ def test_download_fetches_into_component_dir(components_root):
         repo_id="owner/model-a",
         repo_type="model",
         local_dir=str(components_root / "_Dummy" / "model-a"),
+        ignore_patterns=list(_Dummy.HF_IGNORE_PATTERNS),
     )
     assert calls[0] == (None, "Downloading owner/model-a")
 
@@ -90,6 +91,7 @@ def test_download_3tuple_passes_allow_patterns(components_root):
         repo_type="model",
         local_dir=str(components_root / "_DummyPartial" / "model-a"),
         allow_patterns=["*8_0.gguf"],
+        ignore_patterns=list(_DummyPartial.HF_IGNORE_PATTERNS),
     )
 
 
