@@ -54,6 +54,7 @@
     "selectDatasetToExplain": "Selecione um conjunto de dados com instâncias para explicar",
     "selectExplainer": "Definir nome e explicador",
     "selectExplainerAndName": "Selecione um explicador e insira um nome",
+    "selectInstance": "Selecione uma instância",
     "explainerInProgress": "Explicador em andamento...",
     "splitSelectionSummary": "Percentual: {{percentage}}% | Linhas selecionadas: {{rowsSelected}} / {{totalRows}}",
     "searchExplainers": "Pesquisar explicadores..."

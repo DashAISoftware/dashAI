@@ -1,4 +1,4 @@
-import { React, useEffect, useMemo, useState } from "react";
+import { React, useEffect, useState } from "react";
 import {
   FormControl,
   InputLabel,
@@ -7,55 +7,51 @@ import {
   CircularProgress,
   Box,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import Plot from "react-plotly.js";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
 import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
-import { applyThemeToLayout } from "../../utils/plotlyTheme";
+import ArtifactRenderer from "../shared/ArtifactRenderer";
+
+/**
+ * Coerce the plot endpoint response into a list of typed artifacts.
+ * Legacy responses are lists of plotly JSON strings; they are wrapped as
+ * plotly artifacts. Typed dicts pass through untouched.
+ */
+function parseExplanationArtifacts(items) {
+  return items.map((item) =>
+    typeof item === "string"
+      ? { type: "plotly", payload: item, title: null }
+      : item,
+  );
+}
 
 export default function ExplainersPlot({ explainer, scope }) {
   const { enqueueSnackbar } = useSnackbar();
-  const theme = useTheme();
-  const [explainersPlots, setExplainersPlots] = useState([]);
-  const [currentPlot, setCurrentPlot] = useState(0);
+  const [artifacts, setArtifacts] = useState([]);
+  const [currentArtifact, setCurrentArtifact] = useState(0);
   const [loading, setLoading] = useState(true);
-  const isLocal = scope === "local";
   const { t } = useTranslation(["explainers"]);
-
-  const themedLayout = useMemo(() => {
-    if (!explainersPlots[currentPlot]) return {};
-    return applyThemeToLayout(explainersPlots[currentPlot].layout, theme);
-  }, [explainersPlots, currentPlot, theme]);
-  function parseExplanationPlot(explanation) {
-    const formattedPlot = JSON.parse(JSON.stringify(explanation));
-    return formattedPlot.map(JSON.parse);
-  }
 
   const getExplainerPlot = async () => {
     setLoading(true);
     try {
-      const explainersPlots = await getExplainerPlotRequest(
-        explainer.id,
-        scope,
-      );
-      if (!explainersPlots || explainersPlots.length === 0) {
-        setExplainersPlots([]);
-        setCurrentPlot(0);
+      const response = await getExplainerPlotRequest(explainer.id, scope);
+      if (!response || response.length === 0) {
+        setArtifacts([]);
+        setCurrentArtifact(0);
         enqueueSnackbar(t("explainers:error.noData"), {
           variant: "warning",
         });
       } else {
-        const parsedExplainersPlot = parseExplanationPlot(explainersPlots);
-        setExplainersPlots(parsedExplainersPlot);
-        // Reset currentPlot when data updates to avoid stale index
-        setCurrentPlot(0);
+        setArtifacts(parseExplanationArtifacts(response));
+        // Reset currentArtifact when data updates to avoid stale index
+        setCurrentArtifact(0);
       }
     } catch (error) {
-      setExplainersPlots([]);
-      setCurrentPlot(0);
+      setArtifacts([]);
+      setCurrentArtifact(0);
       enqueueSnackbar(t("explainers:error.fetchExplainers"), {
         variant: "error",
       });
@@ -92,37 +88,30 @@ export default function ExplainersPlot({ explainer, scope }) {
         p: 1,
       }}
     >
-      {!loading && isLocal && explainersPlots.length > 0 && (
+      {!loading && artifacts.length > 1 && (
         <FormControl variant="outlined" sx={{ minWidth: "200px", mb: 2 }}>
-          <InputLabel id="select-type-label">Select an instance</InputLabel>
+          <InputLabel id="select-type-label">
+            {t("explainers:label.selectInstance")}
+          </InputLabel>
           <Select
             id="select-type"
-            value={currentPlot}
-            onChange={(event) => setCurrentPlot(event.target.value)}
+            value={currentArtifact}
+            onChange={(event) => setCurrentArtifact(event.target.value)}
             label="class"
             autoWidth
           >
-            {explainersPlots.map((_, i) => (
+            {artifacts.map((artifact, i) => (
               <MenuItem key={i} value={i}>
-                {t("explainers:label.instanceNumber", { number: i + 1 })}
+                {artifact.title ??
+                  t("explainers:label.instanceNumber", { number: i + 1 })}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
       )}
       {!loading && explainer.status === 3 ? (
-        explainersPlots.length > 0 && explainersPlots[currentPlot] ? (
-          <Plot
-            data={explainersPlots[currentPlot].data}
-            layout={{
-              ...themedLayout,
-              height: 380,
-              autosize: true,
-            }}
-            config={{ displayModeBar: false }}
-            useResizeHandler
-            style={{ width: "100%" }}
-          />
+        artifacts.length > 0 && artifacts[currentArtifact] ? (
+          <ArtifactRenderer artifact={artifacts[currentArtifact]} />
         ) : (
           <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>
         )
