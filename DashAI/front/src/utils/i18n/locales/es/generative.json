@@ -175,10 +175,33 @@
       "selectTemplatePlaceholder": "ej. Prompt por Defecto, Instrucción Personalizada",
       "selectedTemplate": "Plantilla de Prompt seleccionada:",
       "newPromptButton": "Nuevo Prompt",
-      "defaultGenerationPrompt": "Prompt de Generación por Defecto",
-      "defaultQAGenerationPrompt": "Prompt de Generación Q&A por Defecto",
+      "defaultGenerationPrompt": "Prompt de Generación Predeterminado",
+      "defaultQAGenerationPrompt": "Prompt Predeterminado para Preguntas y Respuestas",
       "createNewPrompt": "Crear nuevo prompt",
       "language": "Idioma"
+    },
+    "promptView": {
+      "type": "Tipo",
+      "language": "Idioma",
+      "languageNotAvailable": "Idioma no disponible",
+      "languageNone": "Sin idioma",
+      "noContent": "Sin contenido de plantilla",
+      "close": "Cerrar",
+      "templateContent": "Contenido de la plantilla",
+      "untitledPrompt": "Prompt",
+      "table": {
+        "id": "ID",
+        "name": "Nombre",
+        "type": "Tipo",
+        "language": "Idioma",
+        "created": "Creado",
+        "edited": "Editado",
+        "actions": "Acciones",
+        "viewPrompt": "Ver prompt",
+        "currentPrompts": "Prompts actuales",
+        "choosePrompt": "Elige o personaliza tu prompt para definir el comportamiento del modelo.",
+        "newPrompt": "Nuevo Prompt"
+      }
     },
     "documents": {
       "uploadButton": "Subir documentos",

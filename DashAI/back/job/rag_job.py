@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 from kink import inject
 from sqlalchemy import exc
 
+from DashAI.back.core.enums.status import RunStatus
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
@@ -22,8 +23,12 @@ from DashAI.back.tasks.RAG_task import RAGTask
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
-logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+
+# Known RAG pipeline parameter keys accepted from generative_session.parameters.
+_RAG_PARAM_KEYS: frozenset = frozenset(
+    {"documents", "prompt", "chunking_model", "retriever_model", "generation_model"}
+)
 
 
 class RAGJob(BaseJob):
@@ -102,6 +107,15 @@ class RAGJob(BaseJob):
 
     @inject
     def run(self) -> None:
+        """Execute the full RAG pipeline lifecycle as a background job.
+
+        Loads the generative process and session, filters parameters via
+        whitelist, instantiates the RAG pipeline, runs inference, and
+        persists the output.
+
+        Raises:
+            JobError: If any stage of execution fails.
+        """
         import gc
 
         import torch
@@ -129,6 +143,7 @@ class RAGJob(BaseJob):
                             f"Generative process {generative_process_id} "
                             "not found in DB."
                         )
+                    log.debug("Loaded generative process %d", generative_process_id)
                 except Exception as e:
                     log.exception(e)
                     if generative_process:
@@ -144,6 +159,9 @@ class RAGJob(BaseJob):
                         raise JobError(
                             f"Session {generative_process.session_id} not found in DB."
                         )
+                    log.debug(
+                        "Loaded generative session %d", generative_session.id
+                    )
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()
@@ -151,13 +169,28 @@ class RAGJob(BaseJob):
                     raise JobError("Error retrieving generative session.") from e
 
                 try:
+                    # Whitelist-only: accept only known RAG pipeline keys.
+                    # generative_session.parameters is a JSON column that may
+                    # contain legacy or metadata keys (e.g. prompt_id).
+                    raw_params = dict(generative_session.parameters)
+                    extra_keys: set[str] = set(raw_params) - _RAG_PARAM_KEYS
+                    if extra_keys:
+                        log.debug(
+                            "Filtered extra session parameter keys: %s",
+                            sorted(extra_keys),
+                        )
+                    clean_params = {}
+                    for key in raw_params:
+                        if key in _RAG_PARAM_KEYS:
+                            clean_params[key] = raw_params[key]
                     pipeline_config = RAGPipelineConfig.from_kwargs(
                         db=db,
                         component_registry=component_registry,
                         session_id=generative_session.id,
                         env_rag_path=config["RAG_PATH"],
-                        **generative_session.parameters,
+                        **clean_params,
                     )
+                    log.debug("Created RAG pipeline config for session %d", generative_session.id)
                     models = RAGModelsFactory(
                         db,
                         component_registry,
@@ -171,6 +204,7 @@ class RAGJob(BaseJob):
                         repo,
                         doc_loader,
                     )
+                    log.debug("Created RAG pipeline model for session %d", generative_session.id)
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()
@@ -194,7 +228,7 @@ class RAGJob(BaseJob):
                         (proc.input[0].data, proc.output[0].data)
                         for proc in db.query(GenerativeProcess)
                         .filter(GenerativeProcess.session_id == generative_session.id)
-                        .filter(GenerativeProcess.status == "FINISHED")
+                        .filter(GenerativeProcess.status == RunStatus.FINISHED)
                         .all()
                     ]
                     input_data = task.prepare_for_task(
@@ -208,6 +242,7 @@ class RAGJob(BaseJob):
                     raise JobError("Error preparing task with history.") from e
 
                 try:
+                    log.debug("Starting generation for process %d", generative_process_id)
                     generative_process.set_status_as_started()
                     db.commit()
                 except exc.SQLAlchemyError as e:
@@ -220,6 +255,7 @@ class RAGJob(BaseJob):
 
                 try:
                     output: Any = model.generate(input_data)
+                    log.debug("Generation completed for process %d", generative_process_id)
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()
@@ -260,6 +296,7 @@ class RAGJob(BaseJob):
                     db.refresh(generative_process)
                     generative_process.set_status_as_finished()
                     db.commit()
+                    log.debug("Output processing completed for process %d", generative_process_id)
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()

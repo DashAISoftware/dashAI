@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import PropTypes from "prop-types";
 import {
   Box,
   Paper,
@@ -11,10 +12,48 @@ import {
 import { AddCircleOutline as AddIcon } from "@mui/icons-material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { DataGrid } from "@mui/x-data-grid";
+import { useTranslation } from "react-i18next";
 import { formatDate } from "../../../utils";
-import TemplateModal from "../../custom/TemplateModal";
+import { LANGUAGE_NAME_MAP } from "../../../constants/languages";
+import PromptViewModal from "./PromptViewModal";
 import NewPromptModal from "../../../pages/generative/RAGSession/advanced/NewPromptModal";
 import { getRAGPrompts } from "../../../api/rag";
+
+/**
+ * Expand default prompts (with `templates` dict) into one row per language.
+ * Custom prompts (single `template`) remain as a single row.
+ *
+ * Each expanded row includes a `_parentPrompt` reference to the original
+ * prompt object, used by the view modal to show all language versions.
+ *
+ * @param {Array} prompts - Raw prompt objects from the API.
+ * @returns {Array} Flattened rows ready for the DataGrid.
+ */
+function expandPromptRows(prompts) {
+  const rows = [];
+  for (const prompt of prompts) {
+    const templates = prompt.parameters?.templates;
+    if (templates && Object.keys(templates).length > 0) {
+      for (const lang of Object.keys(templates)) {
+        rows.push({
+          ...prompt,
+          id: `${prompt.id}-${lang}`,
+          _originalId: prompt.id,
+          language: lang,
+          _parentPrompt: prompt,
+        });
+      }
+    } else {
+      rows.push({
+        ...prompt,
+        language: prompt.parameters?.language || null,
+        _originalId: prompt.id,
+        _parentPrompt: prompt,
+      });
+    }
+  }
+  return rows;
+}
 
 export default function PromptSelectionTable({
   prompts = [],
@@ -25,69 +64,72 @@ export default function PromptSelectionTable({
   setSessionData,
 }) {
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState("");
+  const [selectedPrompt, setSelectedPrompt] = useState(null);
   const [newPromptModalOpen, setNewPromptModalOpen] = useState(false);
   const [promptRows, setPromptRows] = useState([]);
+  const [rawPrompts, setRawPrompts] = useState([]);
+  const { t } = useTranslation(["generative"]);
+
   React.useEffect(() => {
     async function fetchPrompts() {
       const initialPrompts = await getRAGPrompts();
       initialPrompts.sort((a, b) => new Date(b.created) - new Date(a.created));
-      setPromptRows(initialPrompts);
+      setRawPrompts(initialPrompts);
+      setPromptRows(expandPromptRows(initialPrompts));
     }
     fetchPrompts();
   }, []);
 
-  const handleViewTemplate = (template) => {
-    setSelectedTemplate(template);
+  const handleViewPrompt = (row) => {
+    // Always open the full parent prompt so the modal shows all languages
+    setSelectedPrompt(row._parentPrompt || row);
     setModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setModalOpen(false);
-    setSelectedTemplate("");
+    setSelectedPrompt(null);
   };
 
   const columns = React.useMemo(
     () => [
       {
         field: "id",
-        headerName: "ID",
+        headerName: t("generative:rag.promptView.table.id"),
         minWidth: 50,
         flex: 0.3,
         editable: false,
       },
       {
         field: "name",
-        headerName: "Name",
+        headerName: t("generative:rag.promptView.table.name"),
         minWidth: 140,
         flex: 1,
         editable: false,
       },
       {
         field: "class_name",
-        headerName: "Type",
+        headerName: t("generative:rag.promptView.table.type"),
         minWidth: 140,
         flex: 1,
         editable: false,
       },
       {
         field: "language",
-        headerName: "Language",
+        headerName: t("generative:rag.promptView.table.language"),
         minWidth: 100,
         flex: 0.7,
         editable: false,
         valueGetter: (value, row) => {
-          const lang = row.parameters?.language;
-          const langMap = { en: "English", es: "Español", pt: "Português" };
-          if (lang) {
-            return langMap[lang] || lang;
+          if (row.language) {
+            return LANGUAGE_NAME_MAP[row.language] || row.language;
           }
-          return row.class_name?.startsWith("Default") ? "English" : "-";
+          return "-";
         },
       },
       {
         field: "created",
-        headerName: "Created",
+        headerName: t("generative:rag.promptView.table.created"),
         minWidth: 140,
         flex: 1,
         editable: false,
@@ -95,7 +137,7 @@ export default function PromptSelectionTable({
       },
       {
         field: "last_modified",
-        headerName: "Edited",
+        headerName: t("generative:rag.promptView.table.edited"),
         minWidth: 140,
         flex: 1,
         editable: false,
@@ -104,16 +146,14 @@ export default function PromptSelectionTable({
       {
         field: "actions",
         type: "actions",
-        headerName: "Actions",
+        headerName: t("generative:rag.promptView.table.actions"),
         minWidth: 80,
         flex: 0.4,
         getActions: (params) => [
-          <Tooltip title="View prompt" key="preview">
+          <Tooltip title={t("generative:rag.promptView.table.viewPrompt")} key="preview">
             <IconButton
               size="small"
-              onClick={() =>
-                handleViewTemplate(params.row.parameters?.template || "")
-              }
+              onClick={() => handleViewPrompt(params.row)}
             >
               <VisibilityIcon fontSize="small" />
             </IconButton>
@@ -121,13 +161,14 @@ export default function PromptSelectionTable({
         ],
       },
     ],
-    [],
+    [t],
   );
 
   const handlePromptCreated = async (newPromptId) => {
     const updatedPrompts = await getRAGPrompts();
     updatedPrompts.sort((a, b) => new Date(b.created) - new Date(a.created));
-    setPromptRows(updatedPrompts);
+    setRawPrompts(updatedPrompts);
+    setPromptRows(expandPromptRows(updatedPrompts));
     if (onRowSelectionModelChange && newPromptId) {
       onRowSelectionModelChange([newPromptId]);
     }
@@ -153,7 +194,7 @@ export default function PromptSelectionTable({
           sx={{ mb: 4 }}
         >
           <Typography variant="h5" component="h2">
-            Current prompts
+            {t("generative:rag.promptView.table.currentPrompts")}
           </Typography>
           <Button
             variant="contained"
@@ -161,7 +202,7 @@ export default function PromptSelectionTable({
             onClick={() => setNewPromptModalOpen(true)}
             startIcon={<AddIcon />}
           >
-            New Prompt
+            {t("generative:rag.promptView.table.newPrompt")}
           </Button>
         </Grid>
       )}
@@ -173,7 +214,7 @@ export default function PromptSelectionTable({
           sx={{ mb: 4 }}
         >
           <Typography variant="subtitle1" component="p" sx={{ mb: 2 }}>
-            Choose or customize your prompt to define the model's behavior.
+            {t("generative:rag.promptView.table.choosePrompt")}
           </Typography>
           <Button
             variant="contained"
@@ -181,7 +222,7 @@ export default function PromptSelectionTable({
             onClick={() => setNewPromptModalOpen(true)}
             startIcon={<AddIcon />}
           >
-            New Prompt
+            {t("generative:rag.promptView.table.newPrompt")}
           </Button>
         </Grid>
       )}
@@ -201,18 +242,28 @@ export default function PromptSelectionTable({
           autoHeight
           loading={loading}
         />
-        <TemplateModal
+        <PromptViewModal
+          key={selectedPrompt?.id ?? "no-prompt"}
           open={modalOpen}
           handleClose={handleCloseModal}
-          template={selectedTemplate}
+          prompt={selectedPrompt}
         />
         <NewPromptModal
           open={newPromptModalOpen}
           handleClose={() => setNewPromptModalOpen(false)}
           onPromptCreated={handlePromptCreated}
-          existingPrompts={promptRows}
+          existingPrompts={rawPrompts}
         />
       </Box>
     </Paper>
   );
 }
+
+PromptSelectionTable.propTypes = {
+  prompts: PropTypes.array,
+  loading: PropTypes.bool,
+  rowSelectionModel: PropTypes.array,
+  onRowSelectionModelChange: PropTypes.func,
+  showTableTitle: PropTypes.bool,
+  setSessionData: PropTypes.func,
+};

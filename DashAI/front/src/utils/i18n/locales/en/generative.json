@@ -180,6 +180,29 @@
       "createNewPrompt": "Create new prompt",
       "language": "Language"
     },
+    "promptView": {
+      "type": "Type",
+      "language": "Language",
+      "languageNotAvailable": "Language not available",
+      "languageNone": "No language",
+      "noContent": "No template content",
+      "close": "Close",
+      "templateContent": "Template content",
+      "untitledPrompt": "Prompt",
+      "table": {
+        "id": "ID",
+        "name": "Name",
+        "type": "Type",
+        "language": "Language",
+        "created": "Created",
+        "edited": "Edited",
+        "actions": "Actions",
+        "viewPrompt": "View prompt",
+        "currentPrompts": "Current prompts",
+        "choosePrompt": "Choose or customize your prompt to define the model's behavior.",
+        "newPrompt": "New Prompt"
+      }
+    },
     "documents": {
       "uploadButton": "Upload documents",
       "emptyUploadText": "Upload your document(s)"

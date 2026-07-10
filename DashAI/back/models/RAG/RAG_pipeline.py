@@ -8,8 +8,11 @@ retrieval → prompt formatting → LLM generation.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+
+log = logging.getLogger(__name__)
 
 from sqlalchemy.orm import Session
 
@@ -204,7 +207,16 @@ class RAGPipelineConfig:
         )
         extra: set[str] = set(kwargs) - all_known
         if extra:
-            raise RAGPipelineConfigError(f"Unknown parameters: {sorted(extra)}")
+            log.warning(
+                "Unknown parameters passed to RAGPipelineConfig.from_kwargs(): %s. "
+                "These keys are not recognized and will cause the pipeline to fail. "
+                "Check if session parameters contain extra metadata keys.",
+                sorted(extra),
+            )
+            raise RAGPipelineConfigError(
+                f"Unknown parameters: {sorted(extra)}. "
+                "These keys are not recognized pipeline configuration parameters."
+            )
 
         return cls(
             session_id=kwargs["session_id"],
@@ -376,6 +388,23 @@ class RAGPipeline(BaseGenerativeModel):
         self,
         query: str,
     ) -> List[Chunk]:
+        """Retrieve the top-K chunks for a single query.
+
+        Parameters
+        ----------
+        query : str
+            The search query string.
+
+        Returns
+        -------
+        List[Chunk]
+            Ranked list of retrieved chunks.
+
+        Raises
+        ------
+        RAGPipelineRuntimeError
+            If the retriever fails.
+        """
         try:
             return self.retriever.retrieve(query)
         except Exception as e:
@@ -385,6 +414,18 @@ class RAGPipeline(BaseGenerativeModel):
         self,
         chunks: List[Chunk],
     ) -> Tuple[str, Dict[str, ChunkReference]]:
+        """Build a text block and reference map from retrieved chunks.
+
+        Parameters
+        ----------
+        chunks : List[Chunk]
+            Chunks returned by the retriever.
+
+        Returns
+        -------
+        Tuple[str, Dict[str, ChunkReference]]
+            Joined chunk texts and a mapping from chunk key to ChunkReference.
+        """
         chunks_texts: List[str] = []
         chunk_dict: Dict[str, ChunkReference] = {}
         for retrieved_chunk in chunks:
@@ -409,6 +450,24 @@ class RAGPipeline(BaseGenerativeModel):
         self,
         input_data: Tuple[Dict[str, str], ...],
     ) -> RAGGenerationOutput:
+        """Run the full RAG pipeline: retrieve → format → generate.
+
+        Parameters
+        ----------
+        input_data : Tuple[Dict[str, str], ...]
+            Chat-format input with history as earlier entries and the
+            current user message as the last entry.
+
+        Returns
+        -------
+        RAGGenerationOutput
+            The generated message and the chunks used for retrieval.
+
+        Raises
+        ------
+        RAGPipelineRuntimeError
+            If any stage fails (retrieval, formatting, or generation).
+        """
         if not input_data:
             raise RAGPipelineRuntimeError("input_data must not be empty.")
         try:

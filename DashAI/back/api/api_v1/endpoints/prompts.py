@@ -17,9 +17,6 @@ from DashAI.back.dependencies.database.models import (
     RAGPrompt,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.models.RAG.prompts.augmentation.default_augmentation_prompt import (
-    DefaultAugmentationPrompt,
-)
 from DashAI.back.models.RAG.prompts.generation.default_QA_rag_generation_prompt import (
     DefaultQARAGGenerationPrompt,
 )
@@ -343,17 +340,8 @@ async def get_all_prompts(
                         "language": "en",
                     },
                 )
-                default_augmentation_prompt = RAGPrompt(
-                    class_name=DefaultAugmentationPrompt.__name__,
-                    name="Default Augmentation Prompt",
-                    parameters={
-                        "templates": DefaultAugmentationPrompt.metadata["templates"],
-                        "language": "en",
-                    },
-                )
                 db.add(default_generation_prompt)
                 db.add(default_qa_prompt)
-                db.add(default_augmentation_prompt)
                 db.commit()
                 prompts = db.query(RAGPrompt).all()
 

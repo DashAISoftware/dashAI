@@ -244,6 +244,17 @@ export const addDocument = async ({
   return response.data;
 };
 
+/** Class name prefix that identifies non-generation prompt types. */
+const AUGMENTATION_PROMPT_CLASS_PREFIX = "Augmentation";
+
+/**
+ * Check whether a prompt's class_name corresponds to a generation prompt
+ * (i.e. NOT an augmentation prompt).
+ */
+export function isGenerationPromptClass(className: string): boolean {
+  return !className.includes(AUGMENTATION_PROMPT_CLASS_PREFIX);
+}
+
 export const getDefaultPrompts = async (): Promise<IComponent[]> => {
   return getChildComponents("RAGGenerationPrompt", false);
 };

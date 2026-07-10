@@ -21,7 +21,11 @@ import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { getRAGPrompts, getDefaultPrompts } from "../../../api/rag";
+import {
+  getRAGPrompts,
+  getDefaultPrompts,
+  isGenerationPromptClass,
+} from "../../../api/rag";
 import NewPromptModal from "../../../pages/generative/RAGSession/advanced/NewPromptModal";
 import RAGSectionColumn from "../../../pages/generative/RAGSession/components/RAGSectionColumn";
 import { getDescription, renderTemplateWithHighlights } from "../../../pages/generative/RAGSession/components/sectionUtils";
@@ -35,17 +39,20 @@ const LANGUAGE_OPTIONS = [
 const CREATE_NEW_ID = "__create-new__";
 const DEFAULT_IDS = {
   DefaultRAGGenerationPrompt: "default-generation",
-  DefaultQARAGenerationPrompt: "default-QA",
+  DefaultQARAGGenerationPrompt: "default-QA",
 };
 
-function getDefaultDisplayName(component, t) {
-  if (component.name === "DefaultRAGGenerationPrompt") {
-    return t("generative:rag.prompt.defaultGenerationPrompt");
-  }
-  if (component.name === "DefaultQARAGenerationPrompt") {
+function getDefaultDisplayName(option, t) {
+  // Use class_name (set explicitly by our code) rather than name
+  // (raw API field) to avoid potential encoding / serialization mismatches.
+  const cname = option.class_name || option.name || "";
+  if (cname.includes("DefaultQARAGGenerationPrompt")) {
     return t("generative:rag.prompt.defaultQAGenerationPrompt");
   }
-  return component.name;
+  if (cname.includes("DefaultRAGGenerationPrompt")) {
+    return t("generative:rag.prompt.defaultGenerationPrompt");
+  }
+  return option.name || cname;
 }
 
 function getOptionLabel(option, t) {
@@ -89,8 +96,17 @@ export default function PromptParamsCard({
 
   const loadPrompts = useCallback(async () => {
     try {
-      const customData = await getRAGPrompts();
-      setCustomPrompts(customData || []);
+      const dbPrompts = await getRAGPrompts();
+      // Keep only user-created generation prompts:
+      // 1. Exclude system defaults (class_name starts with "Default")
+      // 2. Exclude augmentation prompts (wrong type for this selector)
+      setCustomPrompts(
+        (dbPrompts || []).filter(
+          (p) =>
+            !p.class_name.startsWith("Default") &&
+            isGenerationPromptClass(p.class_name),
+        ),
+      );
     } catch (error) {
       console.error("Error loading custom RAG prompts:", error);
       setCustomPrompts([]);
@@ -242,7 +258,14 @@ export default function PromptParamsCard({
   const handlePromptCreated = useCallback(
     async (newPromptId) => {
       const updatedPrompts = await getRAGPrompts();
-      setCustomPrompts(updatedPrompts || []);
+      // Apply same filter as loadPrompts: exclude system defaults and augmentation
+      setCustomPrompts(
+        (updatedPrompts || []).filter(
+          (p) =>
+            !p.class_name.startsWith("Default") &&
+            isGenerationPromptClass(p.class_name),
+        ),
+      );
 
       const newPrompt = (updatedPrompts || []).find(
         (p) => p.id === newPromptId,

@@ -10,6 +10,7 @@ import {
   Grid,
   IconButton,
   TextField,
+  MenuItem,
   Box,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
@@ -18,6 +19,7 @@ import { generateSequentialName } from "../../../../utils/nameGenerator";
 import PlaceholdersList from "../../../../components/generative/RAG/PlaceholdersList";
 import HighlightedTextarea from "../../../../components/generative/RAG/HighlightedTextarea";
 import { getCustomPrompts, createRAGPrompt } from "../../../../api/rag";
+import { LANGUAGE_OPTIONS } from "../../../../constants/languages";
 
 export default function NewPromptModal({
   open,
@@ -210,22 +212,20 @@ export default function NewPromptModal({
         <TextField
           select
           fullWidth
-          label={
-            t("generative:rag.newPrompt.languageLabel") ||
-            "Language (optional)"
-          }
+          label={t("generative:rag.newPrompt.languageLabel")}
           value={promptLanguage}
           onChange={(e) => {
             setPromptLanguage(e.target.value);
             setHasUnsavedChanges(true);
           }}
           sx={{ mb: 2 }}
-          SelectProps={{ native: true }}
         >
-          <option value="">— No language —</option>
-          <option value="en">English</option>
-          <option value="es">Español</option>
-          <option value="pt">Português</option>
+          <MenuItem value="">{t("generative:rag.promptView.languageNone")}</MenuItem>
+          {LANGUAGE_OPTIONS.map((opt) => (
+            <MenuItem key={opt.code} value={opt.code}>
+              {opt.name}
+            </MenuItem>
+          ))}
         </TextField>
 
         {selectedType && selectedType.metadata && (
