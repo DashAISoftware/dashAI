@@ -83,8 +83,11 @@ export default function ModelListItem({
             bgcolor: disabled
               ? theme.palette.ui.disabled
               : theme.palette.action.hover,
-            borderColor: disabled ? theme.palette.ui.border : color,
-            transform: disabled || !isClickable ? "none" : "translateX(4px)",
+            // A not downloaded row is disabled but still clickable to start the
+            // download, so give it the same hover feedback (border highlight +
+            // slide) instead of feeling stiff.
+            borderColor: color,
+            transform: !isClickable ? "none" : "translateX(4px)",
           },
           "&::after": disabled
             ? {
