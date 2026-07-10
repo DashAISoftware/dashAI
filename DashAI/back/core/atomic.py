@@ -102,12 +102,19 @@ def atomic_save_path(final_path: Union[str, Path]):
     tmp_path = final_path.parent / f".tmp_{secrets.token_hex(6)}"
     try:
         yield tmp_path
-        # Atomically replace final_path
-        if final_path.is_dir():
-            shutil.rmtree(final_path)
-        elif final_path.exists():
-            final_path.unlink()
+        # Rename-before-delete: move the existing artifact aside first so it is
+        # never destroyed before the new one is in place (same as atomic_directory).
+        old_path = None
+        if final_path.exists() or final_path.is_symlink():
+            old_path = final_path.parent / f".old_{secrets.token_hex(6)}"
+            final_path.rename(old_path)
         tmp_path.rename(final_path)
+        if old_path is not None:
+            with SuppressErrors():
+                if old_path.is_dir():
+                    shutil.rmtree(old_path, ignore_errors=True)
+                else:
+                    old_path.unlink()
     except BaseException:
         with SuppressErrors():
             if tmp_path.is_dir():

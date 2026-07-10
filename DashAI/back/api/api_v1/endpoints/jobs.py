@@ -316,7 +316,7 @@ async def cancel_all_jobs(
             job_status = job_info.get("status", "")
             if job_status in ("finished", "error", "cancelled", "killed", "deleted"):
                 continue
-            if job_queue.cancel(job_id):
+            if await asyncio.to_thread(job_queue.cancel, job_id):
                 cancelled += 1
         return {"cancelled": cancelled}
     except Exception as e:

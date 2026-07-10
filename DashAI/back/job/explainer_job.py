@@ -286,7 +286,7 @@ class ExplainerJob(BaseJob):
 
                 from DashAI.back.core.atomic import atomic_open
 
-                explanation_filename = f"local_explanation_{explainer_id}.json"
+                explanation_filename = f"local_explanation_{explainer_id}.pickle"
                 explanation_path = os.path.join(
                     config["EXPLANATIONS_PATH"], explanation_filename
                 )
