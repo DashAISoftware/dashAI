@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset
 
@@ -8,14 +8,13 @@ from .base_splitter import BaseSplitter
 class HoldoutSplitter(BaseSplitter):
     def __init__(self, splits_data):
         super().__init__(splits_data)
-        # actualmente están como "train", "test" y "val"
         self.train_size = splits_data.get("train", None)
         self.test_size = splits_data.get("test", None)
         self.val_size = splits_data.get("validation", None)
         self.splitted_indexes = splits_data.get("splitted_indexes", {})
         self.stratify = splits_data.get("stratify", False)
 
-    def split(self, x, y) -> Tuple[object, object, List[List]]:
+    def split(self, x, y) -> Tuple[object, object, Dict[str, Any]]:
         # Si algún tamaño es None, se asume que se asignaron indices manualmente
         if all(idx is None for idx in [self.train_size, self.test_size, self.val_size]):
             train_indices = self.splitted_indexes.get("train_indexes", [])

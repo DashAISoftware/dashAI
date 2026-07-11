@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset_cv
 
@@ -30,7 +30,7 @@ class FoldSplitter(BaseSplitter):
             "The split indexes method must be implemented by subclasses."
         )
 
-    def split(self, x, y) -> Tuple[List[object], List[object], Dict]:
+    def split(self, x, y) -> Tuple[List[object], List[object], Dict[str, Any]]:
         if len(x) < self.n_splits:
             raise ValueError(
                 f"""Number of splits (n_splits={self.n_splits}) cannot be
