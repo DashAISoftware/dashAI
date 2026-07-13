@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { getExplorerResults } from "../../../api/explorer";
-import {
-  artifactToVisualizerData,
-  visualizersKeys,
-} from "../../../utils/artifactVisualizerData";
+import { artifactToVisualizerData } from "../../../utils/artifactVisualizerData";
 
 /**
  * Hook to manage explorer results data
@@ -53,5 +50,3 @@ export function useExplorerResults(explorer) {
     fetchExplorerResults,
   };
 }
-
-export { visualizersKeys };
