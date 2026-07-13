@@ -1,15 +1,13 @@
 """Shared helpers for image-classification explainers.
 
 These helpers define the (minimal) white box capability contract image
-explainers rely on; models expose no explainability specific methods,
-only their existing public state:
+explainers rely on:
 
 - ``model.model`` is the underlying ``torch.nn.Module``.
-- ``model.image_size`` (int) is the model's input resolution.
+- ``model.get_inference_transform()`` returns the exact transform the
+  model applies to input images (enforced by the image explainable model
+  mixins in ``DashAI.back.models.image_explainable_model``).
 - ``model.idx_to_label`` maps class indices to label names.
-
-The inference transform is reconstructed on the explainer side by
-:func:`get_transform` from that public state.
 """
 
 from typing import Any, List
@@ -47,13 +45,12 @@ def get_torch_module(model: Any):
 
 
 def get_transform(model: Any):
-    """Build the model's inference transform from its public state.
+    """Return the model's inference transform.
 
-    Preprocessing knowledge lives on the explainer side so models carry no
-    explainability responsibilities. The transform replicates what each
-    model family applies internally when predicting: torchvision-backbone
-    classifiers add the ImageNet normalization; every other image model
-    gets a plain resize plus tensor conversion based on ``image_size``.
+    Models compatible with image explainers implement
+    ``get_inference_transform`` (enforced by the
+    ``OcclusionSaliencyCompatibleModel`` / ``GradCamCompatibleModel``
+    mixins), exposing the exact preprocessing they apply to input images.
 
     Parameters
     ----------
@@ -64,29 +61,20 @@ def get_transform(model: Any):
     -------
     Callable
         A transform mapping a PIL image to a normalized tensor.
+
+    Raises
+    ------
+    ValueError
+        If the model does not implement ``get_inference_transform``.
     """
-    from torchvision import transforms
-
-    image_size = int(getattr(model, "image_size", 224))
-    steps = [
-        transforms.Lambda(lambda img: img.convert("RGB")),
-        transforms.Resize((image_size, image_size)),
-        transforms.ToTensor(),
-    ]
-
-    from DashAI.back.models.base_torchvision_image_classifier import (
-        TorchvisionImageClassifier,
-    )
-
-    if isinstance(model, TorchvisionImageClassifier):
-        steps.append(
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225],
-            )
+    transform_factory = getattr(model, "get_inference_transform", None)
+    if transform_factory is None:
+        raise ValueError(
+            "This explainer requires a model implementing "
+            "'get_inference_transform' (see the image explainable model "
+            f"mixins); got {type(model).__name__}."
         )
-
-    return transforms.Compose(steps)
+    return transform_factory()
 
 
 def get_target_names(model: Any, y_dataset) -> List[str]:

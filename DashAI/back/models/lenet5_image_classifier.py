@@ -11,6 +11,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.image_explainable_model import GradCamCompatibleModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
@@ -318,7 +319,7 @@ def _build_lenet5_model(input_channels, input_size, num_classes, dropout_rate):
     return _LeNet5(input_channels, input_size, num_classes, dropout_rate)
 
 
-class LeNet5ImageClassifier(BaseModel):
+class LeNet5ImageClassifier(BaseModel, GradCamCompatibleModel):
     """LeNet-5 image classifier (LeCun et al., 1998).
 
     The original convolutional neural network architecture, featuring two
@@ -327,7 +328,8 @@ class LeNet5ImageClassifier(BaseModel):
     """
 
     SCHEMA = LeNet5ImageClassifierSchema
-    COMPATIBLE_COMPONENTS = ["ImageClassificationTask", "GradCam", "OcclusionSaliency"]
+    COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+
     DISPLAY_NAME: str = MultilingualString(
         en="LeNet-5",
         es="LeNet-5",
@@ -409,6 +411,25 @@ class LeNet5ImageClassifier(BaseModel):
         self.num_classes = None
         self.idx_to_label = {}
         self.label_to_idx = {}
+
+    def get_inference_transform(self):
+        """Return the transform applied to input images at inference time.
+
+        Returns
+        -------
+        Callable
+            Resize and tensor conversion matching the training pipeline
+            (no normalization).
+        """
+        from torchvision import transforms
+
+        return transforms.Compose(
+            [
+                transforms.Lambda(lambda img: img.convert("RGB")),
+                transforms.Resize((self.image_size, self.image_size)),
+                transforms.ToTensor(),
+            ]
+        )
 
     def prepare_output(self, dataset, is_fit=False):
         """Encode string labels to integer indices matching the model's class order."""

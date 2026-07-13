@@ -14,6 +14,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.image_explainable_model import GradCamCompatibleModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
@@ -337,7 +338,7 @@ def _make_image_dataset(x_dataset, y_dataset=None, image_size=224):
     return _ImageDataset(x_dataset, y_dataset, image_size)
 
 
-class TorchvisionImageClassifier(BaseModel, abc.ABC):
+class TorchvisionImageClassifier(BaseModel, GradCamCompatibleModel, abc.ABC):
     """Abstract base for torchvision image classifiers.
 
     Subclasses must implement:
@@ -347,7 +348,7 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
     """
 
     SCHEMA = TorchvisionImageClassifierSchema
-    COMPATIBLE_COMPONENTS = ["ImageClassificationTask", "GradCam", "OcclusionSaliency"]
+    COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
 
     @abc.abstractmethod
     def _build_backbone(self, num_classes: int, pretrained: bool):
@@ -411,6 +412,29 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
             p.requires_grad = False
         for p in self._classifier_head().parameters():
             p.requires_grad = True
+
+    def get_inference_transform(self):
+        """Return the transform applied to input images at inference time.
+
+        Returns
+        -------
+        Callable
+            Resize, tensor conversion and the ImageNet normalization used
+            by the training pipeline.
+        """
+        from torchvision import transforms
+
+        return transforms.Compose(
+            [
+                transforms.Lambda(lambda img: img.convert("RGB")),
+                transforms.Resize((self.image_size, self.image_size)),
+                transforms.ToTensor(),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406],
+                    std=[0.229, 0.224, 0.225],
+                ),
+            ]
+        )
 
     def prepare_output(self, dataset, is_fit=False):
         """Encode string labels to integer indices matching the model's class order."""

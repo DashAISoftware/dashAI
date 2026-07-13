@@ -6,6 +6,7 @@ from DashAI.back.explainability.explainers.grad_cam import GradCam
 from DashAI.back.explainability.explainers.occlusion_saliency import (
     OcclusionSaliency,
 )
+from DashAI.back.models.image_explainable_model import GradCamCompatibleModel
 
 IMAGE_SIZE = 32
 
@@ -34,7 +35,7 @@ class _FakeImageDataset:
         return self._rows[index]
 
 
-class _ConvImageModel:
+class _ConvImageModel(GradCamCompatibleModel):
     """Tiny convolutional image classifier exposing the capability contract."""
 
     def __init__(self):
@@ -51,6 +52,17 @@ class _ConvImageModel:
             nn.AdaptiveAvgPool2d(4),
             nn.Flatten(),
             nn.Linear(4 * 4 * 4, 2),
+        )
+
+    def get_inference_transform(self):
+        from torchvision import transforms
+
+        return transforms.Compose(
+            [
+                transforms.Lambda(lambda img: img.convert("RGB")),
+                transforms.Resize((self.image_size, self.image_size)),
+                transforms.ToTensor(),
+            ]
         )
 
 
