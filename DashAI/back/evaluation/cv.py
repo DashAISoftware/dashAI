@@ -56,7 +56,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                     pickle.dump(plot, file)
                     plot_paths.append(plot_path)
 
-        # Suponiendo que el último fold es el conjunto completo
+        # El último fold es el conjunto completo
         for i in range(len(x) - 1):
             x_fold = x[i]
             y_fold = y[i]
@@ -85,11 +85,13 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
     def evaluate(self, model, input_dataset, output_dataset, metric, **kwargs):
         # fold_index es None cuando NO se está haciendo nested CV
         fold_index = kwargs.get("fold_index")
-        folds_results = []
+        folds_results = []  # Valores de la métrica objetivo para cada fold
+        # Acumuladores de metricas a lo largo de los folds
         train_results = {}
         test_results = {}
 
-        # Suponiendo que el último fold es el conjunto completo
+        # Validacion cruzada que representa el loop interno en caso de nested CV,
+        # o el loop externo en caso de CV simple
         for i in range(len(input_dataset) - 1):
             x_fold = input_dataset[i]
             y_fold = output_dataset[i]
@@ -101,15 +103,11 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             model.train(x_fold["train"], y_fold["train"])
 
             train_scores = model.compute_metrics(split=SplitEnum.TRAIN)
-            score = train_scores[metric.__name__]
-            folds_results.append(score)
+            test_scores = model.compute_metrics(split=SplitEnum.TEST)
+            folds_results.append(test_scores[metric.__name__])
 
-            # agregar métricas para posterior guardado en la base de datos
-            # solo si no estamos haciendo nested CV, para evitar guardar métricas
-            # innecesariasde cada fold interno
+            # Acumular metricas solo si no estamos haciendo nested CV
             if fold_index is None:
-                test_scores = model.compute_metrics(split=SplitEnum.TEST)
-
                 for results, scores in [
                     (train_results, train_scores),
                     (test_results, test_scores),
@@ -120,8 +118,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                         results[metric_name].append(value)
 
         if fold_index is None:
-            # Promediar resultados por métrica y split
-            # solo cuando no esta en inner loop de nested cv
+            # Promediar resultados de los folds solo si no estamos haciendo nested CV
             averaged_train_results = {
                 metric: np.mean(values) for metric, values in train_results.items()
             }
