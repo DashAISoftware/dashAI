@@ -6,6 +6,7 @@ import {
   Select,
   CircularProgress,
   Box,
+  Typography,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
@@ -27,10 +28,34 @@ function parseExplanationArtifacts(items) {
   );
 }
 
+/**
+ * Group consecutive artifacts sharing the same non null title. Explainers
+ * emit several artifacts per explained instance (e.g. a plot followed by a
+ * text summary) under one title; each group becomes a single entry in the
+ * instance selector and its artifacts render stacked together. Untitled
+ * artifacts stay in their own group.
+ */
+function groupArtifacts(artifacts) {
+  const groups = [];
+  artifacts.forEach((artifact) => {
+    const lastGroup = groups[groups.length - 1];
+    if (
+      artifact.title != null &&
+      lastGroup &&
+      lastGroup.title === artifact.title
+    ) {
+      lastGroup.artifacts.push(artifact);
+    } else {
+      groups.push({ title: artifact.title ?? null, artifacts: [artifact] });
+    }
+  });
+  return groups;
+}
+
 export default function ExplainersPlot({ explainer, scope }) {
   const { enqueueSnackbar } = useSnackbar();
-  const [artifacts, setArtifacts] = useState([]);
-  const [currentArtifact, setCurrentArtifact] = useState(0);
+  const [groups, setGroups] = useState([]);
+  const [currentGroup, setCurrentGroup] = useState(0);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation(["explainers"]);
 
@@ -39,19 +64,19 @@ export default function ExplainersPlot({ explainer, scope }) {
     try {
       const response = await getExplainerPlotRequest(explainer.id, scope);
       if (!response || response.length === 0) {
-        setArtifacts([]);
-        setCurrentArtifact(0);
+        setGroups([]);
+        setCurrentGroup(0);
         enqueueSnackbar(t("explainers:error.noData"), {
           variant: "warning",
         });
       } else {
-        setArtifacts(parseExplanationArtifacts(response));
-        // Reset currentArtifact when data updates to avoid stale index
-        setCurrentArtifact(0);
+        setGroups(groupArtifacts(parseExplanationArtifacts(response)));
+        // Reset currentGroup when data updates to avoid stale index
+        setCurrentGroup(0);
       }
     } catch (error) {
-      setArtifacts([]);
-      setCurrentArtifact(0);
+      setGroups([]);
+      setCurrentGroup(0);
       enqueueSnackbar(t("explainers:error.fetchExplainers"), {
         variant: "error",
       });
@@ -88,21 +113,21 @@ export default function ExplainersPlot({ explainer, scope }) {
         p: 1,
       }}
     >
-      {!loading && artifacts.length > 1 && (
+      {!loading && groups.length > 1 && (
         <FormControl variant="outlined" sx={{ minWidth: "200px", mb: 2 }}>
           <InputLabel id="select-type-label">
             {t("explainers:label.selectInstance")}
           </InputLabel>
           <Select
             id="select-type"
-            value={currentArtifact}
-            onChange={(event) => setCurrentArtifact(event.target.value)}
+            value={currentGroup}
+            onChange={(event) => setCurrentGroup(event.target.value)}
             label="class"
             autoWidth
           >
-            {artifacts.map((artifact, i) => (
+            {groups.map((group, i) => (
               <MenuItem key={i} value={i}>
-                {artifact.title ??
+                {group.title ??
                   t("explainers:label.instanceNumber", { number: i + 1 })}
               </MenuItem>
             ))}
@@ -110,8 +135,20 @@ export default function ExplainersPlot({ explainer, scope }) {
         </FormControl>
       )}
       {!loading && explainer.status === 3 ? (
-        artifacts.length > 0 && artifacts[currentArtifact] ? (
-          <ArtifactRenderer artifact={artifacts[currentArtifact]} />
+        groups.length > 0 && groups[currentGroup] ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {groups[currentGroup].title && (
+              <Typography variant="subtitle2">
+                {groups[currentGroup].title}
+              </Typography>
+            )}
+            {groups[currentGroup].artifacts.map((artifact, i) => (
+              <ArtifactRenderer
+                key={i}
+                artifact={{ ...artifact, title: null }}
+              />
+            ))}
+          </Box>
         ) : (
           <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>
         )
