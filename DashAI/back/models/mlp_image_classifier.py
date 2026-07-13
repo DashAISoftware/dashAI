@@ -358,7 +358,7 @@ class MLPImageClassifier(BaseModel):
     """
 
     SCHEMA = MLPImageClassifierSchema
-    COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+    COMPATIBLE_COMPONENTS = ["ImageClassificationTask", "OcclusionSaliency"]
     DISPLAY_NAME: str = MultilingualString(
         en="MLP Image Classifier",
         es="Clasificador de Imágenes MLP",

@@ -347,7 +347,7 @@ class TorchvisionImageClassifier(BaseModel, abc.ABC):
     """
 
     SCHEMA = TorchvisionImageClassifierSchema
-    COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+    COMPATIBLE_COMPONENTS = ["ImageClassificationTask", "GradCam", "OcclusionSaliency"]
 
     @abc.abstractmethod
     def _build_backbone(self, num_classes: int, pretrained: bool):

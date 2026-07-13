@@ -411,7 +411,7 @@ class CNNImageClassifier(BaseModel):
     """
 
     SCHEMA = CNNImageClassifierSchema
-    COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+    COMPATIBLE_COMPONENTS = ["ImageClassificationTask", "GradCam", "OcclusionSaliency"]
     DISPLAY_NAME: str = MultilingualString(
         en="CNN Image Classifier",
         es="Clasificador de Imágenes CNN",

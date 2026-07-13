@@ -327,7 +327,7 @@ class LeNet5ImageClassifier(BaseModel):
     """
 
     SCHEMA = LeNet5ImageClassifierSchema
-    COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+    COMPATIBLE_COMPONENTS = ["ImageClassificationTask", "GradCam", "OcclusionSaliency"]
     DISPLAY_NAME: str = MultilingualString(
         en="LeNet-5",
         es="LeNet-5",

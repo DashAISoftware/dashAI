@@ -53,17 +53,6 @@ class _ConvImageModel:
             nn.Linear(4 * 4 * 4, 2),
         )
 
-    def get_inference_transform(self):
-        from torchvision import transforms
-
-        return transforms.Compose(
-            [
-                transforms.Lambda(lambda img: img.convert("RGB")),
-                transforms.Resize((self.image_size, self.image_size)),
-                transforms.ToTensor(),
-            ]
-        )
-
 
 class _MlpImageModel(_ConvImageModel):
     """Image model with no convolutional layers (like MLPImageClassifier)."""
