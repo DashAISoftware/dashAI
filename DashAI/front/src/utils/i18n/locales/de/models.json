@@ -113,6 +113,7 @@
     "noPredictionsYet": "Noch keine Vorhersagen",
     "noRunsYet": "Noch keine Durchläufe. Fügen Sie Modelle aus dem rechten Panel hinzu.",
     "noSessionSelected": "Keine Sitzung ausgewählt",
+    "operations": "Vorgänge",
     "operationsWillBeDeletedWarning": "Diese Operationen werden dauerhaft gelöscht und können nicht wiederhergestellt werden. Sind Sie sicher?",
     "optimizerConfiguration": "Einstellungen des Hyperparameter-Optimierers konfigurieren",
     "optimizerParameters": "Optimiererparameter",

@@ -113,6 +113,7 @@
     "noPredictionsYet": "暂无预测记录",
     "noRunsYet": "暂无运行记录。请从右侧面板添加模型。",
     "noSessionSelected": "未选择会话",
+    "operations": "操作",
     "operationsWillBeDeletedWarning": "这些操作将被永久删除且无法恢复。确定要继续吗？",
     "optimizerConfiguration": "配置超参数优化器设置",
     "optimizerParameters": "优化器参数",

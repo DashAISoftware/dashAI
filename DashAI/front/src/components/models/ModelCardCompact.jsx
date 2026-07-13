@@ -9,7 +9,12 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
-import { PlayArrow, Delete, WarningAmber } from "@mui/icons-material";
+import {
+  PlayArrow,
+  Delete,
+  WarningAmber,
+  ChevronRight,
+} from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { getRunStatusColor } from "../../utils/runStatus";
 import { ModelIcon } from "./model/ModelIcon";
@@ -200,16 +205,22 @@ function ModelCardCompact({
       elevation={0}
       onClick={onOpen}
       sx={{
-        p: 2.5,
         display: "flex",
-        alignItems: "center",
-        gap: 2,
+        flexDirection: "column",
         cursor: "pointer",
         border: 1,
         borderColor: alpha(statusMain, 0.35),
-        transition: "border-color 0.15s, box-shadow 1.2s ease-out",
-        "&:hover": { borderColor: alpha(statusMain, 0.7) },
+        transition:
+          "border-color 0.15s, box-shadow 0.2s ease-out, transform 0.15s ease-out",
+        "&:hover": {
+          borderColor: alpha(statusMain, 0.7),
+          transform: "translateY(-3px)",
+          boxShadow: `0 6px 16px ${alpha(theme.palette.common.black, 0.35)}`,
+          "& .card-chevron-icon": { color: theme.palette.primary.main },
+        },
         ...(isHighlighted && {
+          transition:
+            "border-color 0.15s, box-shadow 1.2s ease-out, transform 0.15s ease-out",
           boxShadow: `0 0 0 3px ${alpha(
             theme.palette.primary.main,
             0.4,
@@ -219,83 +230,128 @@ function ModelCardCompact({
     >
       <Box
         sx={{
-          p: 1.5,
-          borderRadius: 1,
-          bgcolor: "action.hover",
+          pt: 1.5,
+          pb: 2.5,
+          px: 2.5,
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
+          gap: 2,
         }}
       >
-        <ModelIcon
-          iconName={model?.metadata?.icon}
-          color={model?.color || model?.metadata?.color}
-        />
-      </Box>
-
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
-          {run.name}
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box
-            sx={{
-              width: 6,
-              height: 6,
-              borderRadius: "50%",
-              bgcolor: statusMain,
-              flexShrink: 0,
-            }}
+        <Box
+          sx={{
+            p: 1.5,
+            borderRadius: 1,
+            bgcolor: "action.hover",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <ModelIcon
+            iconName={model?.metadata?.icon}
+            color={model?.color || model?.metadata?.color}
           />
-          <Typography variant="caption" color="text.secondary" noWrap>
-            {modelDisplayName}
+        </Box>
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
+            {run.name}
           </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              sx={{
+                width: 6,
+                height: 6,
+                borderRadius: "50%",
+                bgcolor: statusMain,
+                flexShrink: 0,
+              }}
+            />
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {modelDisplayName}
+            </Typography>
+          </Box>
+        </Box>
+
+        <ScoreRing run={run} score={score} statusMain={statusMain} />
+
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {canTrain && (
+            <Tooltip
+              title={
+                run.status === 3 ? t("common:retrain") : t("common:trainVerb")
+              }
+            >
+              <IconButton size="small" onClick={() => onTrain(run)}>
+                <PlayArrow fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title={t("models:button.deleteRun")}>
+            <IconButton
+              size="small"
+              color="error"
+              disabled={isRunning}
+              onClick={() => setDeleteConfirmOpen(true)}
+            >
+              <Delete fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+
+        {/* Wrapped so clicks inside the modal (a portal) don't bubble through
+            the React tree into the card's onClick={onOpen} above */}
+        <Box onClick={(e) => e.stopPropagation()}>
+          <DeleteConfirmationModal
+            open={deleteConfirmOpen}
+            onClose={() => setDeleteConfirmOpen(false)}
+            onConfirm={() => {
+              setDeleteConfirmOpen(false);
+              localStorage.removeItem(`run-${run.id}-results-visible`);
+              localStorage.removeItem(`run-${run.id}-active-tab`);
+              onDelete(run);
+            }}
+            content={t("models:message.confirmDeleteRun")}
+          />
         </Box>
       </Box>
 
-      <ScoreRing run={run} score={score} statusMain={statusMain} />
-
+      {/* Footer hint — signals the whole card is clickable to open the
+          full model detail view (configuration, metrics, predictions, etc.) */}
       <Box
-        sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
-        onClick={(e) => e.stopPropagation()}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2.5,
+          pt: 0.75,
+          pb: 1.5,
+        }}
       >
-        {canTrain && (
-          <Tooltip
-            title={
-              run.status === 3 ? t("common:retrain") : t("common:trainVerb")
-            }
-          >
-            <IconButton size="small" onClick={() => onTrain(run)}>
-              <PlayArrow fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-        <Tooltip title={t("models:button.deleteRun")}>
-          <IconButton
-            size="small"
-            color="error"
-            disabled={isRunning}
-            onClick={() => setDeleteConfirmOpen(true)}
-          >
-            <Delete fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Box>
-
-      {/* Wrapped so clicks inside the modal (a portal) don't bubble through
-          the React tree into the card's onClick={onOpen} above */}
-      <Box onClick={(e) => e.stopPropagation()}>
-        <DeleteConfirmationModal
-          open={deleteConfirmOpen}
-          onClose={() => setDeleteConfirmOpen(false)}
-          onConfirm={() => {
-            setDeleteConfirmOpen(false);
-            localStorage.removeItem(`run-${run.id}-results-visible`);
-            localStorage.removeItem(`run-${run.id}-active-tab`);
-            onDelete(run);
+        <Typography
+          variant="caption"
+          color="text.disabled"
+          sx={{
+            fontSize: "0.6rem",
+            fontWeight: 500,
+            letterSpacing: 0.4,
+            textTransform: "uppercase",
           }}
-          content={t("models:message.confirmDeleteRun")}
+        >
+          {t("models:label.configuration")} | {t("models:label.operations")}
+        </Typography>
+        <ChevronRight
+          className="card-chevron-icon"
+          sx={{
+            fontSize: 16,
+            color: "text.disabled",
+            transition: "color 0.15s",
+          }}
         />
       </Box>
     </Paper>

@@ -114,6 +114,7 @@
     "noPredictionsYet": "Aún no hay predicciones",
     "noRunsYet": "Aún no hay ejecuciones. Agregue modelos desde el panel derecho.",
     "noSessionSelected": "No se Seleccionó Ninguna Sesión",
+    "operations": "Operaciones",
     "operationsWillBeDeletedWarning": "Estas operaciones se eliminarán permanentemente y no se pueden recuperar. ¿Está seguro de que desea continuar?",
     "optimizerConfiguration": "Configure los ajustes del optimizador de hiperparámetros",
     "optimizerParameters": "Parámetros del Optimizador",
