@@ -34,7 +34,7 @@ function ResultsGraphsPlot({ chartData }) {
 
   const panels = chartData.bar ?? [];
   const legend = chartData.legend ?? [];
-  const xaxis = chartData.xaxis;
+  const yaxis = chartData.yaxis;
   const heatmapData = chartData.heatmap ?? [];
 
   if (panels.length === 0 && heatmapData.length === 0) {
@@ -46,7 +46,7 @@ function ResultsGraphsPlot({ chartData }) {
   const panelLayout = {
     autosize: true,
     height: 240,
-    margin: { l: 44, r: 12, t: 8, b: 64 },
+    margin: { l: 110, r: 12, t: 8, b: 32 },
     showlegend: false,
     paper_bgcolor: bgColor,
     plot_bgcolor: bgColor,
@@ -58,16 +58,15 @@ function ResultsGraphsPlot({ chartData }) {
     },
     xaxis: {
       gridcolor: gridColor,
+      zerolinecolor: gridColor,
       tickfont: { color: textColor, size: 10 },
-      tickangle: -30,
-      automargin: true,
-      tickvals: xaxis?.tickvals,
-      ticktext: xaxis?.ticktext,
     },
     yaxis: {
       gridcolor: gridColor,
-      zerolinecolor: gridColor,
       tickfont: { color: textColor, size: 10 },
+      automargin: true,
+      tickvals: yaxis?.tickvals,
+      ticktext: yaxis?.ticktext,
     },
   };
 
@@ -110,7 +109,7 @@ function ResultsGraphsPlot({ chartData }) {
         sx={{
           display: "grid",
           gap: 3,
-          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))",
         }}
       >
         {panels.map((panel) => (

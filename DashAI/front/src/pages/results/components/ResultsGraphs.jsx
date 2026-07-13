@@ -100,7 +100,7 @@ function ResultsGraphs({
       // Bar view: one small chart per metric (small multiples) instead of
       // one combined chart, so metrics with different scales/ranges never
       // share an axis. Every run keeps the same color across all panels.
-      const { panels, legend, xaxis } = smallMultiplesMaking(
+      const { panels, legend, yaxis } = smallMultiplesMaking(
         finishedRuns,
         selectedMetrics,
         metricsKey,
@@ -118,7 +118,7 @@ function ResultsGraphs({
       );
 
       const { generalLayout } = layoutMaking("heatmap", {}, theme);
-      setChartData({ generalLayout, bar: panels, legend, xaxis, heatmap });
+      setChartData({ generalLayout, bar: panels, legend, yaxis, heatmap });
     } catch (error) {
       enqueueSnackbar(t("models:error.errorProcesingExperimentResults"), {
         variant: "error",

@@ -73,11 +73,11 @@ function smallMultiplesMaking(
   const runLabels = fullRunLabels.map(truncate);
   const runColors = finishedRuns.map((_, idx) => colors[idx % colors.length]);
 
-  // Use numeric slots (not the run name) as the x category. Two different
+  // Use numeric slots (not the run name) as the category axis. Two different
   // runs of the same model (e.g. "BaggingClassifier_1"/"_2") often share the
-  // same truncated prefix — if the label itself were the x value, Plotly
-  // would treat them as the same category and merge their bars into one.
-  const xValues = finishedRuns.map((_, idx) => idx);
+  // same truncated prefix — if the label itself were the category value,
+  // Plotly would treat them as the same category and merge their bars.
+  const yValues = finishedRuns.map((_, idx) => idx);
 
   const panels = metrics.map((metric) => {
     const isInverse = metricsMetadata[metric]?.maximize === false;
@@ -95,11 +95,12 @@ function smallMultiplesMaking(
       data: [
         {
           type: "bar",
-          x: xValues,
-          y: values,
+          orientation: "h",
+          y: yValues,
+          x: values,
           customdata: fullRunLabels,
           marker: { color: runColors, opacity: 0.85 },
-          hovertemplate: "%{customdata}<br>%{y:.4f}<extra></extra>",
+          hovertemplate: "%{customdata}<br>%{x:.4f}<extra></extra>",
         },
       ],
     };
@@ -110,9 +111,9 @@ function smallMultiplesMaking(
     color: runColors[idx],
   }));
 
-  const xaxis = { tickvals: xValues, ticktext: runLabels };
+  const yaxis = { tickvals: yValues, ticktext: runLabels };
 
-  return { panels, legend, xaxis };
+  return { panels, legend, yaxis };
 }
 
 /**
