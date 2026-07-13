@@ -14,11 +14,13 @@ import {
   Delete,
   WarningAmber,
   ChevronRight,
+  Edit,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { getRunStatusColor } from "../../utils/runStatus";
 import { ModelIcon } from "./model/ModelIcon";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
+import RunEditDialog from "./RunEditDialog";
 
 const RING_SIZE = 36;
 
@@ -180,14 +182,18 @@ function ModelCardCompact({
   run,
   models = [],
   score,
+  session,
+  existingRuns = [],
   onTrain,
   onDelete,
+  onRefresh,
   onOpen,
   isHighlighted = false,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
 
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
@@ -213,7 +219,7 @@ function ModelCardCompact({
         transition:
           "border-color 0.15s, box-shadow 0.2s ease-out, transform 0.15s ease-out",
         "&:hover": {
-          borderColor: alpha(statusMain, 0.7),
+          borderColor: theme.palette.primary.main,
           transform: "translateY(-3px)",
           boxShadow: `0 6px 16px ${alpha(theme.palette.common.black, 0.35)}`,
           "& .card-chevron-icon": { color: theme.palette.primary.main },
@@ -292,6 +298,11 @@ function ModelCardCompact({
               </IconButton>
             </Tooltip>
           )}
+          <Tooltip title={t("common:edit")}>
+            <IconButton size="small" onClick={() => setConfigOpen(true)}>
+              <Edit fontSize="small" />
+            </IconButton>
+          </Tooltip>
           <Tooltip title={t("models:button.deleteRun")}>
             <IconButton
               size="small"
@@ -317,6 +328,15 @@ function ModelCardCompact({
               onDelete(run);
             }}
             content={t("models:message.confirmDeleteRun")}
+          />
+
+          <RunEditDialog
+            run={run}
+            session={session}
+            existingRuns={existingRuns}
+            onRefresh={onRefresh}
+            open={configOpen}
+            onClose={() => setConfigOpen(false)}
           />
         </Box>
       </Box>
@@ -383,8 +403,15 @@ ModelCardCompact.propTypes = {
     score: PropTypes.number,
     breakdown: PropTypes.array,
   }),
+  session: PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    task_name: PropTypes.string,
+  }),
+  existingRuns: PropTypes.array,
   onTrain: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
+  onRefresh: PropTypes.func,
   onOpen: PropTypes.func.isRequired,
   isHighlighted: PropTypes.bool,
 };

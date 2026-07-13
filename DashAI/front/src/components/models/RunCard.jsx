@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import PropTypes from "prop-types";
 import {
   Card,
@@ -9,21 +9,7 @@ import {
   IconButton,
   Button,
   Collapse,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Divider,
   Tooltip,
-  TextField,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import {
@@ -31,26 +17,15 @@ import {
   Stop,
   Edit,
   Delete,
-  Save,
-  Cancel,
   ExpandMore,
   ExpandLess,
-  Close as CloseIcon,
 } from "@mui/icons-material";
-import { useSnackbar } from "notistack";
 import { getRunStatus, getRunStatusColor } from "../../utils/runStatus";
 import RunResults from "./RunResults";
-import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
-import FormSchemaContainer from "../shared/FormSchemaContainer";
-import OptimizationTableSelectOptimizer from "./modelSession/OptimizationTableSelectOptimizer";
-import ModelsTableSelectMetric from "./modelSession/ModelsTableSelectMetric";
-import useSchema from "../../hooks/useSchema";
-import { updateRunParameters, getRunOperationsCount } from "../../api/run";
-import RetrainConfirmDialog from "./RetrainConfirmDialog";
-import { renderParamValue } from "./ModelParamBlock";
+import RunEditDialog from "./RunEditDialog";
+import { getRunOperationsCount } from "../../api/run";
 import { useTranslation } from "react-i18next";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
-import { checkIfHaveOptimazers } from "../../utils/schema";
 
 /**
  * Card component displaying a model run with actions and details
@@ -76,7 +51,6 @@ function RunCard({
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
-  const { enqueueSnackbar } = useSnackbar();
   const [resultsVisible, setResultsVisible] = useState(() => {
     if (run.status === 0) return false;
     const saved = localStorage.getItem(`run-${run.id}-results-visible`);
@@ -110,40 +84,8 @@ function RunCard({
   const setDeleteConfirmOpen = isDeleteConfirmControlled
     ? setControlledDeleteConfirmOpen
     : setInternalDeleteConfirmOpen;
-  const [editedName, setEditedName] = useState(run.name || "");
-  const [editedParameters, setEditedParameters] = useState(
-    run.parameters || {},
-  );
-  const [editedOptimizer, setEditedOptimizer] = useState(
-    run.optimizer_name || "",
-  );
-  const [editedOptimizerParams, setEditedOptimizerParams] = useState(
-    run.optimizer_parameters || {},
-  );
-  const [editedGoalMetric, setEditedGoalMetric] = useState(
-    run.goal_metric || "",
-  );
   const [operationsCount, setOperationsCount] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveConfirmOpen, setSaveConfirmOpen] = useState(false);
   const [autoExpand, setAutoExpand] = useState(false);
-
-  const {
-    defaultValues: defaultOptimizerParams,
-    loading: optimizerSchemaLoading,
-  } = useSchema({
-    modelName: isEditing ? editedOptimizer : null,
-  });
-
-  useEffect(() => {
-    if (!isEditing) {
-      setEditedName(run.name || "");
-      setEditedParameters(run.parameters || {});
-      setEditedOptimizer(run.optimizer_name || "");
-      setEditedOptimizerParams(run.optimizer_parameters || {});
-      setEditedGoalMetric(run.goal_metric || "");
-    }
-  }, [run, isEditing]);
 
   const fetchOperationsCount = useCallback(async () => {
     if (!run?.id) return;
@@ -158,120 +100,6 @@ function RunCard({
   useEffect(() => {
     fetchOperationsCount();
   }, [fetchOperationsCount, explainerRefreshTrigger]);
-
-  const hasOptimizableParams = useMemo(() => {
-    return checkIfHaveOptimazers(editedParameters);
-  }, [editedParameters]);
-
-  const handleStartEdit = () => {
-    setIsEditing(true);
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditing(false);
-    setEditedName(run.name || "");
-    setEditedParameters(run.parameters || {});
-    setEditedOptimizer(run.optimizer_name || "");
-    setEditedOptimizerParams(run.optimizer_parameters || {});
-    setEditedGoalMetric(run.goal_metric || "");
-  };
-
-  const doSave = async () => {
-    setSaveConfirmOpen(false);
-    setIsSaving(true);
-    try {
-      await updateRunParameters(
-        run.id.toString(),
-        editedName.trim(),
-        editedParameters,
-        editedOptimizer || "",
-        { ...defaultOptimizerParams, ...editedOptimizerParams },
-        editedGoalMetric || "",
-      );
-
-      enqueueSnackbar(
-        t("models:message.runUpdatedSuccess", { runName: editedName }),
-        { variant: "success" },
-      );
-
-      setIsEditing(false);
-
-      if (onRefresh) {
-        await onRefresh();
-      }
-      await fetchOperationsCount();
-    } catch (error) {
-      console.error("Error updating run:", error);
-      enqueueSnackbar(
-        t("models:error.failedToUpdateRun", {
-          error: error.message || t("common:unknownError"),
-        }),
-        { variant: "error" },
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editedName.trim()) {
-      enqueueSnackbar(t("models:error.runNameEmpty"), { variant: "warning" });
-      return;
-    }
-
-    const nameExists = existingRuns.some(
-      (r) =>
-        r.id !== run.id &&
-        r.name &&
-        r.name.toLowerCase() === editedName.trim().toLowerCase(),
-    );
-    if (nameExists) {
-      enqueueSnackbar(
-        t("models:error.runNameExists", { name: editedName.trim() }),
-        { variant: "error" },
-      );
-      return;
-    }
-
-    if (hasOptimizableParams) {
-      if (!editedOptimizer) {
-        enqueueSnackbar(t("models:error.selectOptimizerRequired"), {
-          variant: "warning",
-        });
-        return;
-      }
-      if (!editedGoalMetric) {
-        enqueueSnackbar(t("models:error.selectGoalMetricRequired"), {
-          variant: "warning",
-        });
-        return;
-      }
-    }
-
-    // If operations exist, warn before saving (they will be deleted on next train)
-    if (
-      operationsCount &&
-      (operationsCount.explainers > 0 || operationsCount.predictions > 0)
-    ) {
-      setSaveConfirmOpen(true);
-      return;
-    }
-
-    await doSave();
-  };
-
-  const handleParametersChange = useCallback((values) => {
-    setEditedParameters(values);
-  }, []);
-
-  const handleOptimizerParamsChange = useCallback((values) => {
-    setEditedOptimizerParams(values);
-  }, []);
-
-  const handleOptimizerSelected = (optimizerName) => {
-    setEditedOptimizer(optimizerName);
-    setEditedOptimizerParams({});
-  };
 
   const statusText = getRunStatus(run.status, t);
   const model = models.find((m) => m.name === run.model_name);
@@ -387,7 +215,7 @@ function RunCard({
                     size="small"
                     color="primary"
                     startIcon={<Edit />}
-                    onClick={handleStartEdit}
+                    onClick={() => setIsEditing(true)}
                   >
                     {t("common:edit")}
                   </Button>
@@ -525,14 +353,6 @@ function RunCard({
             autoExpand={autoExpand}
           />
         </Box>
-        <RetrainConfirmDialog
-          mode="save"
-          open={saveConfirmOpen}
-          onClose={() => setSaveConfirmOpen(false)}
-          onConfirm={doSave}
-          run={run}
-          operationsCount={operationsCount}
-        />
         <DeleteConfirmationModal
           open={deleteConfirmOpen}
           onClose={() => setDeleteConfirmOpen(false)}
@@ -546,138 +366,14 @@ function RunCard({
         />
       </CardContent>
 
-      <Dialog
+      <RunEditDialog
+        run={run}
+        session={session}
+        existingRuns={existingRuns}
+        onRefresh={onRefresh}
         open={isEditing}
-        onClose={handleCancelEdit}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { minHeight: "500px" } }}
-      >
-        <DialogTitle sx={{ bgcolor: "background.paper" }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography variant="h6" component="span">
-              {t("models:label.editRun")}
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={handleCancelEdit}
-              sx={{ color: "text.secondary" }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-        </DialogTitle>
-
-        <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            <Alert severity="info">
-              {t("models:message.editingParametersWarning")}
-            </Alert>
-
-            <TextField
-              label={t("models:label.runName")}
-              value={editedName}
-              onChange={(e) => setEditedName(e.target.value)}
-              fullWidth
-              required
-              size="small"
-            />
-
-            {run.model_name && (
-              <Box>
-                <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                  {t("common:modelParameters")}
-                </Typography>
-                <FormSchemaContainer>
-                  <FormSchemaWithSelectedModel
-                    modelToConfigure={run.model_name}
-                    initialValues={editedParameters}
-                    onFormSubmit={handleParametersChange}
-                    onValuesChange={handleParametersChange}
-                    onCancel={() => {}}
-                    hideButtons
-                  />
-                </FormSchemaContainer>
-              </Box>
-            )}
-
-            {hasOptimizableParams && (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Divider />
-                <Typography variant="subtitle2">
-                  {t("models:label.hyperparameterOptimizerConfiguration")}
-                </Typography>
-                <Alert severity="warning" icon={false}>
-                  {t("models:message.parametersMarkedForOptimization")}
-                </Alert>
-
-                <Box>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    {t("models:label.goalMetric")} *
-                  </Typography>
-                  <ModelsTableSelectMetric
-                    taskName={session?.task_name}
-                    metricName={editedGoalMetric}
-                    handleSelectedMetric={setEditedGoalMetric}
-                    required
-                  />
-                </Box>
-
-                <OptimizationTableSelectOptimizer
-                  taskName={session?.task_name}
-                  optimizerName={editedOptimizer}
-                  handleSelectedOptimizer={handleOptimizerSelected}
-                />
-
-                {editedOptimizer && (
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                      {t("common:optimizerParameters")}
-                    </Typography>
-                    <FormSchemaContainer>
-                      <FormSchemaWithSelectedModel
-                        modelToConfigure={editedOptimizer}
-                        initialValues={editedOptimizerParams}
-                        onFormSubmit={(values) =>
-                          setEditedOptimizerParams(values)
-                        }
-                        onValuesChange={handleOptimizerParamsChange}
-                        onCancel={() => {}}
-                        hideButtons
-                      />
-                    </FormSchemaContainer>
-                  </Box>
-                )}
-              </Box>
-            )}
-          </Box>
-        </DialogContent>
-
-        <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
-          <Button
-            variant="outlined"
-            startIcon={<Cancel />}
-            onClick={handleCancelEdit}
-            disabled={isSaving}
-          >
-            {t("common:cancel")}
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<Save />}
-            onClick={handleSaveEdit}
-            disabled={isSaving}
-          >
-            {isSaving ? t("common:saving") : t("common:save")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onClose={() => setIsEditing(false)}
+      />
     </Card>
   );
 }

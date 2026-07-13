@@ -103,6 +103,7 @@
     "nameYourSession": "Nomeie sua Sessão",
     "selectDatasetAndPrepare": "Nomeie sua sessão, selecione um conjunto de dados e configure suas colunas e partições.",
     "noCompatibleModelsFound": "Nenhum modelo compatível encontrado",
+    "noConfigurationAvailable": "Nenhuma configuração disponível para esta execução",
     "dropModelHere": "Solte aqui para adicionar",
     "noDatasetPredictionsYet": "Ainda não há previsões de conjunto de dados",
     "noGlobalExplainersYet": "Ainda não há explicadores globais",

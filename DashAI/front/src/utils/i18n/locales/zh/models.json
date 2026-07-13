@@ -102,6 +102,7 @@
     "nameYourSession": "为会话命名",
     "selectDatasetAndPrepare": "为会话命名，选择数据集并配置列和划分。",
     "noCompatibleModelsFound": "未找到兼容模型",
+    "noConfigurationAvailable": "此运行没有可用的配置",
     "dropModelHere": "拖放此处以添加",
     "noDatasetPredictionsYet": "暂无数据集预测",
     "noGlobalExplainersYet": "暂无全局解释器",

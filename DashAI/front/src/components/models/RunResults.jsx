@@ -16,7 +16,7 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import { renderParamValue } from "./ModelParamBlock";
+import ModelConfigurationContent from "./ModelConfigurationContent";
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
@@ -98,11 +98,6 @@ export default function RunResults({
     canSave: false,
     isSaving: false,
   });
-
-  // Map a parameter key to its display name using the matching model's schema
-  // (the model comes from the right side bar list, so no extra backend fetch).
-  const paramProperties = model?.schema?.properties ?? {};
-  const getParamLabel = (key) => paramProperties[key]?.title ?? key;
 
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
   const isFinished = run.status === 3;
@@ -304,123 +299,7 @@ export default function RunResults({
             <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 3 }}>
               {t("common:modelParameters")}
             </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 3,
-                maxWidth: 500,
-              }}
-            >
-              {run.parameters &&
-                Object.entries(run.parameters).map(([key, value]) => (
-                  <Box key={key}>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}
-                    >
-                      {getParamLabel(key)}
-                    </Typography>
-                    <Box
-                      sx={{
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 1,
-                        px: 3,
-                        py: 2,
-                        mt: 1,
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {renderParamValue(value)}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-
-              {run.optimizer_name && run.goal_metric && (
-                <>
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}
-                    >
-                      {t("common:optimizer")}
-                    </Typography>
-                    <Box
-                      sx={{
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 1,
-                        px: 3,
-                        py: 2,
-                        mt: 1,
-                      }}
-                    >
-                      <Typography variant="body2">
-                        {run.optimizer_name}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Box>
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}
-                    >
-                      {t("models:label.goalMetric")}
-                    </Typography>
-                    <Box
-                      sx={{
-                        border: 1,
-                        borderColor: "divider",
-                        borderRadius: 1,
-                        px: 3,
-                        py: 2,
-                        mt: 1,
-                      }}
-                    >
-                      <Typography variant="body2">{run.goal_metric}</Typography>
-                    </Box>
-                  </Box>
-
-                  {run.optimizer_parameters &&
-                    Object.entries(run.optimizer_parameters).map(
-                      ([key, value]) => (
-                        <Box key={key}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{
-                              textTransform: "uppercase",
-                              letterSpacing: 0.5,
-                            }}
-                          >
-                            {key}
-                          </Typography>
-                          <Box
-                            sx={{
-                              border: 1,
-                              borderColor: "divider",
-                              borderRadius: 1,
-                              px: 3,
-                              py: 2,
-                              mt: 1,
-                            }}
-                          >
-                            <Typography variant="body2">
-                              {renderParamValue(value)}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      ),
-                    )}
-                </>
-              )}
-            </Box>
+            <ModelConfigurationContent run={run} model={model} />
           </Box>
         )}
 

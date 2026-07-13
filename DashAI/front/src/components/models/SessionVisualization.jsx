@@ -417,8 +417,11 @@ export default function SessionVisualization() {
                         run={run}
                         models={models}
                         score={scores[run.id]}
+                        session={session}
+                        existingRuns={runs}
                         onTrain={handleTrainWithTour}
                         onDelete={handleDeleteRun}
+                        onRefresh={fetchRuns}
                         onOpen={() =>
                           navigate(
                             `/app/models/sessions/${session.id}/model/${run.id}`,

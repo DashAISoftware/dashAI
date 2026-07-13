@@ -102,6 +102,7 @@
     "nameYourSession": "Sitzung benennen",
     "selectDatasetAndPrepare": "Benennen Sie Ihre Sitzung, wählen Sie einen Datensatz aus und konfigurieren Sie Spalten und Aufteilungen.",
     "noCompatibleModelsFound": "Keine kompatiblen Modelle gefunden",
+    "noConfigurationAvailable": "Keine Konfiguration für diesen Durchlauf verfügbar",
     "dropModelHere": "Hier ablegen zum Hinzufügen",
     "noDatasetPredictionsYet": "Noch keine Datensatz-Vorhersagen",
     "noGlobalExplainersYet": "Noch keine globalen Erklärungsmodelle",
