@@ -426,6 +426,7 @@ export default function RunResults({
               explainerConfig={{
                 runId: run.id,
                 taskName: session?.task_name,
+                modelName: run.model_name,
               }}
               onCreated={handleExplainerCreated}
               onCancel={() => setGlobalCreatorOpen(false)}
@@ -436,6 +437,7 @@ export default function RunResults({
               explainerConfig={{
                 runId: run.id,
                 taskName: session?.task_name,
+                modelName: run.model_name,
               }}
               onCreated={handleExplainerCreated}
               onCancel={() => setLocalCreatorOpen(false)}
