@@ -22,7 +22,7 @@ import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationMod
 
 /**
  * Compact comparison table showing all runs in a session.
- * Designed for sticky header display with fixed height.
+ * Renders at its natural content height — the page scrolls, not the table.
  *
  * Scores are computed server-side and fetched from the backend.
  */
@@ -473,17 +473,15 @@ function ModelComparisonTable({
     muiTablePaperProps: {
       elevation: 0,
       sx: {
-        height: "100%",
         display: "flex",
         flexDirection: "column",
         border: "1px solid",
         borderColor: "divider",
       },
     },
-    muiTableContainerProps: { sx: { flex: 1, overflow: "auto" } },
     localization,
     initialState: { density: "compact" },
-    enableStickyHeader: true,
+    enableStickyHeader: false,
     enableRowSelection: false,
     enablePagination: false,
     enableTopToolbar: false,
@@ -511,7 +509,6 @@ function ModelComparisonTable({
   return (
     <Box
       sx={{
-        height: "100%",
         width: "100%",
         display: "flex",
         flexDirection: "column",

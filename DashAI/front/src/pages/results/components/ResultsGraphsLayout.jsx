@@ -2,13 +2,10 @@ import React from "react";
 import PropTypes from "prop-types";
 import { Box } from "@mui/material";
 
-import ResultsGraphsSelection from "./ResultsGraphsSelection";
 import ResultsGraphsParameters from "./ResultsGraphsParameters";
 import ResultsGraphsPlot from "./ResultsGraphsPlot";
 
 function ResultsGraphsLayout({
-  selectedChart,
-  handleChangeChart,
   currentMetrics,
   selectedMetrics,
   handleToggleMetric,
@@ -24,35 +21,24 @@ function ResultsGraphsLayout({
       width="100%"
       height="100%"
     >
-      {/* Chart type selector */}
-      <ResultsGraphsSelection
-        selectedChart={selectedChart}
-        handleChangeChart={handleChangeChart}
+      {/* Metric filter toolbar */}
+      <ResultsGraphsParameters
+        currentMetrics={currentMetrics}
+        selectedMetrics={selectedMetrics}
+        handleToggleMetric={handleToggleMetric}
+        handleSelectAll={handleSelectAll}
+        handleClearAll={handleClearAll}
       />
 
+      {/* Plotly chart area — bar panels + heatmap in one grid */}
       <Box display="flex" flex={1} width="100%">
-        {/* Metric filter sidebar */}
-        <ResultsGraphsParameters
-          currentMetrics={currentMetrics}
-          selectedMetrics={selectedMetrics}
-          handleToggleMetric={handleToggleMetric}
-          handleSelectAll={handleSelectAll}
-          handleClearAll={handleClearAll}
-        />
-
-        {/* Plotly chart area */}
-        <ResultsGraphsPlot
-          selectedChart={selectedChart}
-          chartData={chartData}
-        />
+        <ResultsGraphsPlot chartData={chartData} />
       </Box>
     </Box>
   );
 }
 
 ResultsGraphsLayout.propTypes = {
-  selectedChart: PropTypes.string.isRequired,
-  handleChangeChart: PropTypes.func.isRequired,
   currentMetrics: PropTypes.array.isRequired,
   selectedMetrics: PropTypes.array.isRequired,
   handleToggleMetric: PropTypes.func.isRequired,

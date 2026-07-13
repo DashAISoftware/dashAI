@@ -23,69 +23,63 @@ function ResultsGraphsParameters({
   return (
     <Box
       display="flex"
-      flexDirection="column"
+      alignItems="center"
+      flexWrap="wrap"
       sx={{
-        width: 200,
-        minWidth: 160,
-        flexShrink: 0,
+        width: "100%",
+        px: 4,
+        py: 3,
+        gap: 4,
         bgcolor: theme.palette.ui.panelLight,
-        borderRight: `1px solid ${theme.palette.ui.border}`,
+        borderBottom: `1px solid ${theme.palette.ui.border}`,
       }}
     >
-      {/* ── Metric checkboxes ── */}
-      <Box sx={{ p: 6, flex: 1, overflowY: "auto" }}>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={2}
+      <Box display="flex" alignItems="center" gap={1} flexShrink={0}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ fontWeight: 600, letterSpacing: 0.5 }}
         >
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ fontWeight: 600, letterSpacing: 0.5 }}
-          >
-            {t("common:metrics", "Metrics")}
-          </Typography>
+          {t("common:metrics", "Metrics")}
+        </Typography>
 
-          <Box>
-            <Button
-              size="small"
-              onClick={handleSelectAll}
-              disabled={currentMetrics.length === 0}
-              sx={{
-                minWidth: 0,
-                px: 3,
-                py: 0,
-                fontSize: "0.65rem",
-                lineHeight: 1.5,
-              }}
-            >
-              {t("common:all", "All")}
-            </Button>
-            <Button
-              size="small"
-              onClick={handleClearAll}
-              disabled={selectedMetrics.length === 0}
-              sx={{
-                minWidth: 0,
-                px: 3,
-                py: 0,
-                fontSize: "0.65rem",
-                lineHeight: 1.5,
-              }}
-            >
-              {t("common:none", "None")}
-            </Button>
-          </Box>
-        </Box>
+        <Button
+          size="small"
+          onClick={handleSelectAll}
+          disabled={currentMetrics.length === 0}
+          sx={{
+            minWidth: 0,
+            px: 3,
+            py: 0,
+            fontSize: "0.65rem",
+            lineHeight: 1.5,
+          }}
+        >
+          {t("common:all", "All")}
+        </Button>
+        <Button
+          size="small"
+          onClick={handleClearAll}
+          disabled={selectedMetrics.length === 0}
+          sx={{
+            minWidth: 0,
+            px: 3,
+            py: 0,
+            fontSize: "0.65rem",
+            lineHeight: 1.5,
+          }}
+        >
+          {t("common:none", "None")}
+        </Button>
+      </Box>
 
-        {currentMetrics.length === 0 ? (
-          <Typography variant="caption" color="text.disabled">
-            {t("models:label.noMetricsAvailableForThisView")}
-          </Typography>
-        ) : (
-          currentMetrics.map((metric) => (
+      {currentMetrics.length === 0 ? (
+        <Typography variant="caption" color="text.disabled">
+          {t("models:label.noMetricsAvailableForThisView")}
+        </Typography>
+      ) : (
+        <Box display="flex" flexWrap="wrap" alignItems="center">
+          {currentMetrics.map((metric) => (
             <FormControlLabel
               key={metric}
               control={
@@ -96,11 +90,11 @@ function ResultsGraphsParameters({
                 />
               }
               label={<Typography variant="body2">{metric}</Typography>}
-              sx={{ display: "flex", m: 0, py: 1 }}
+              sx={{ display: "flex", m: 0, mr: 3 }}
             />
-          ))
-        )}
-      </Box>
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }

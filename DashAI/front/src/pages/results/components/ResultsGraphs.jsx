@@ -6,7 +6,7 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
 import { getComponents } from "../../../api/component";
-import graphsMaking, { heatmapMaking } from "../constants/graphsMaking";
+import { heatmapMaking, smallMultiplesMaking } from "../constants/graphsMaking";
 import layoutMaking from "../constants/layoutMaking";
 import ResultsGraphsLayout from "./ResultsGraphsLayout";
 
@@ -19,7 +19,6 @@ function ResultsGraphs({
   const theme = useTheme();
   const { t } = useTranslation(["models"]);
 
-  const [selectedChart, setSelectedChart] = useState("bar");
   // Internal split state — used only when no controlled prop is provided
   const [internalSplit, setInternalSplit] = useState("test");
   const [selectedMetrics, setSelectedMetrics] = useState([]);
@@ -97,21 +96,11 @@ function ResultsGraphs({
 
     try {
       const metricsKey = `${selectedSplit}_metrics`;
-      const graphsToView = {};
 
-      finishedRuns.forEach((run, idx) => {
-        const metricsObj = run[metricsKey] ?? {};
-        const values = selectedMetrics.map((m) => {
-          const v = metricsObj[m];
-          if (v === undefined || v === null) return null;
-          if (Array.isArray(v)) return v[v.length - 1]?.value ?? null;
-          return typeof v === "number" ? v : null;
-        });
-        graphsMaking(graphsToView, run, selectedMetrics, values, idx, theme);
-      });
-
-      // Heatmap is a single all-runs trace — built after the loop.
-      graphsToView.heatmap = heatmapMaking(
+      // Bar view: one small chart per metric (small multiples) instead of
+      // one combined chart, so metrics with different scales/ranges never
+      // share an axis. Every run keeps the same color across all panels.
+      const { panels, legend, xaxis } = smallMultiplesMaking(
         finishedRuns,
         selectedMetrics,
         metricsKey,
@@ -119,12 +108,17 @@ function ResultsGraphs({
         metricsMetadata,
       );
 
-      const { generalLayout } = layoutMaking(
-        selectedChart,
-        graphsToView,
+      // Heatmap is a single all-runs trace, unchanged.
+      const heatmap = heatmapMaking(
+        finishedRuns,
+        selectedMetrics,
+        metricsKey,
         theme,
+        metricsMetadata,
       );
-      setChartData({ generalLayout, ...graphsToView });
+
+      const { generalLayout } = layoutMaking("heatmap", {}, theme);
+      setChartData({ generalLayout, bar: panels, legend, xaxis, heatmap });
     } catch (error) {
       enqueueSnackbar(t("models:error.errorProcesingExperimentResults"), {
         variant: "error",
@@ -135,14 +129,12 @@ function ResultsGraphs({
     finishedRuns,
     selectedSplit,
     selectedMetrics,
-    selectedChart,
     theme,
     metricsMetadata,
     enqueueSnackbar,
     t,
   ]);
 
-  const handleChangeChart = (chartType) => setSelectedChart(chartType);
   const handleToggleMetric = (metric) => {
     const canonicalOrder = availableMetrics[selectedSplit] ?? [];
     setSelectedMetrics((prev) => {
@@ -170,8 +162,6 @@ function ResultsGraphs({
 
   return (
     <ResultsGraphsLayout
-      selectedChart={selectedChart}
-      handleChangeChart={handleChangeChart}
       currentMetrics={currentMetrics}
       selectedMetrics={selectedMetrics}
       handleToggleMetric={handleToggleMetric}

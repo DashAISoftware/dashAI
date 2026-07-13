@@ -1,64 +1,187 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import { useTranslation } from "react-i18next";
 
-function ResultsGraphsPlot({ selectedChart, chartData }) {
+function EmptyState({ message }) {
+  return (
+    <Box
+      flex={1}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      sx={{
+        minHeight: 400,
+        border: "1px dashed",
+        borderColor: "divider",
+        borderRadius: 1,
+        m: 4,
+      }}
+    >
+      <Typography color="text.secondary">{message}</Typography>
+    </Box>
+  );
+}
+
+function ResultsGraphsPlot({ chartData }) {
   const { t } = useTranslation(["models"]);
+  const theme = useTheme();
+  const bgColor = theme.palette.background.paper;
+  const textColor = theme.palette.text.primary;
+  const gridColor = theme.palette.divider;
 
-  const traceData =
-    selectedChart === "heatmap"
-      ? (chartData.heatmap ?? [])
-      : (chartData.bar ?? []);
+  const panels = chartData.bar ?? [];
+  const legend = chartData.legend ?? [];
+  const xaxis = chartData.xaxis;
+  const heatmapData = chartData.heatmap ?? [];
 
-  const hasData = traceData.length > 0;
-
-  if (!hasData) {
+  if (panels.length === 0 && heatmapData.length === 0) {
     return (
-      <Box
-        flex={1}
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        sx={{
-          minHeight: 400,
-          border: "1px dashed",
-          borderColor: "divider",
-          borderRadius: 1,
-          m: 4,
-        }}
-      >
-        <Typography color="text.secondary">
-          {t("models:label.noMetricsAvailableForThisView")}
-        </Typography>
-      </Box>
+      <EmptyState message={t("models:label.noMetricsAvailableForThisView")} />
     );
   }
 
+  const panelLayout = {
+    autosize: true,
+    height: 240,
+    margin: { l: 44, r: 12, t: 8, b: 64 },
+    showlegend: false,
+    paper_bgcolor: bgColor,
+    plot_bgcolor: bgColor,
+    bargap: 0.25,
+    font: {
+      color: textColor,
+      family: theme.typography.fontFamily,
+      size: 11,
+    },
+    xaxis: {
+      gridcolor: gridColor,
+      tickfont: { color: textColor, size: 10 },
+      tickangle: -30,
+      automargin: true,
+      tickvals: xaxis?.tickvals,
+      ticktext: xaxis?.ticktext,
+    },
+    yaxis: {
+      gridcolor: gridColor,
+      zerolinecolor: gridColor,
+      tickfont: { color: textColor, size: 10 },
+    },
+  };
+
   return (
-    <Box flex={1} sx={{ minHeight: 400, overflow: "hidden" }}>
-      <Plot
-        data={traceData}
-        layout={{
-          ...(chartData.generalLayout ?? {}),
-          autosize: true,
-          width: undefined,
+    <Box sx={{ p: 4, width: "100%" }}>
+      {/* Shared legend — one entry per run, same color in every panel */}
+      {legend.length > 1 && (
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 3,
+            mb: 4,
+            px: 1,
+          }}
+        >
+          {legend.map(({ label, color }) => (
+            <Box
+              key={label}
+              sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+            >
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  bgcolor: color,
+                  flexShrink: 0,
+                }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                {label}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      )}
+
+      <Box
+        sx={{
+          display: "grid",
+          gap: 3,
+          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
         }}
-        useResizeHandler
-        style={{ width: "100%", height: "100%" }}
-        config={{
-          responsive: true,
-          displayModeBar: false,
-          staticPlot: selectedChart === "heatmap",
-        }}
-      />
+      >
+        {panels.map((panel) => (
+          <Box
+            key={panel.metric}
+            sx={{
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+              p: 2,
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 600, mb: 1, px: 1 }}
+            >
+              {panel.title}
+            </Typography>
+            <Plot
+              data={panel.data}
+              layout={panelLayout}
+              useResizeHandler
+              style={{ width: "100%", height: "240px" }}
+              config={{ responsive: true, displayModeBar: false }}
+            />
+          </Box>
+        ))}
+
+        {/* Heatmap — spans the full grid width since it needs room for
+            every run × metric cell, but still reflows as one grid item */}
+        {heatmapData.length > 0 && (
+          <Box
+            sx={{
+              gridColumn: "1 / -1",
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+              p: 2,
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 600, mb: 1, px: 1 }}
+            >
+              {t("models:label.heatmap")}
+            </Typography>
+            <Box sx={{ height: 460 }}>
+              <Plot
+                data={heatmapData}
+                layout={{
+                  ...(chartData.generalLayout ?? {}),
+                  autosize: true,
+                  width: undefined,
+                }}
+                useResizeHandler
+                style={{ width: "100%", height: "100%" }}
+                config={{
+                  responsive: true,
+                  displayModeBar: false,
+                  staticPlot: true,
+                }}
+              />
+            </Box>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 }
 
 ResultsGraphsPlot.propTypes = {
-  selectedChart: PropTypes.string.isRequired,
   chartData: PropTypes.object.isRequired,
 };
 

@@ -42,6 +42,80 @@ function graphsMaking(graphsToView, run, metrics, values, runIndex, theme) {
 }
 
 /**
+ * Build one small bar chart PER METRIC (small multiples), instead of a single
+ * chart with all metrics grouped on one x-axis. Each metric gets its own
+ * scale, so metrics with very different ranges (e.g. Accuracy vs LogLoss)
+ * are never forced onto a shared axis. Every run keeps the same color across
+ * every panel (identity, not rank) so it stays recognizable throughout.
+ *
+ * @param {object[]} finishedRuns          Array of completed run objects
+ * @param {string[]} metrics               Metric names — one panel each
+ * @param {string}   metricsKey            e.g. "test_metrics"
+ * @param {object}   theme                 MUI theme object
+ * @param {object}   [metricsMetadata={}]  { MetricName: { maximize: bool } }
+ * @returns {{ panels: object[], legend: {label: string, color: string}[] }}
+ */
+function smallMultiplesMaking(
+  finishedRuns,
+  metrics,
+  metricsKey,
+  theme,
+  metricsMetadata = {},
+) {
+  const MAX_LABEL = 16;
+  const truncate = (s) =>
+    s.length > MAX_LABEL ? `${s.slice(0, MAX_LABEL)}…` : s;
+
+  const colors = getTraceColors(theme);
+  const fullRunLabels = finishedRuns.map(
+    (run, idx) => run.run_name || run.name || `Run ${idx + 1}`,
+  );
+  const runLabels = fullRunLabels.map(truncate);
+  const runColors = finishedRuns.map((_, idx) => colors[idx % colors.length]);
+
+  // Use numeric slots (not the run name) as the x category. Two different
+  // runs of the same model (e.g. "BaggingClassifier_1"/"_2") often share the
+  // same truncated prefix — if the label itself were the x value, Plotly
+  // would treat them as the same category and merge their bars into one.
+  const xValues = finishedRuns.map((_, idx) => idx);
+
+  const panels = metrics.map((metric) => {
+    const isInverse = metricsMetadata[metric]?.maximize === false;
+    const values = finishedRuns.map((run) => {
+      const metricsObj = run[metricsKey] ?? {};
+      const v = metricsObj[metric];
+      if (v === undefined || v === null) return null;
+      if (Array.isArray(v)) return v[v.length - 1]?.value ?? null;
+      return typeof v === "number" ? v : null;
+    });
+
+    return {
+      metric,
+      title: isInverse ? `${metric} ↓` : metric,
+      data: [
+        {
+          type: "bar",
+          x: xValues,
+          y: values,
+          customdata: fullRunLabels,
+          marker: { color: runColors, opacity: 0.85 },
+          hovertemplate: "%{customdata}<br>%{y:.4f}<extra></extra>",
+        },
+      ],
+    };
+  });
+
+  const legend = fullRunLabels.map((label, idx) => ({
+    label,
+    color: runColors[idx],
+  }));
+
+  const xaxis = { tickvals: xValues, ticktext: runLabels };
+
+  return { panels, legend, xaxis };
+}
+
+/**
  * Build a single Plotly heatmap trace from all runs at once.
  *
  * Each metric column is independently min-max normalized relative to the
@@ -151,5 +225,5 @@ function heatmapMaking(
   ];
 }
 
-export { heatmapMaking };
+export { heatmapMaking, smallMultiplesMaking };
 export default graphsMaking;

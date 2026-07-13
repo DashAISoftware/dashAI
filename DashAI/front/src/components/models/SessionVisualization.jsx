@@ -4,13 +4,12 @@ import {
   Typography,
   Divider,
   Button,
-  ButtonGroup,
   ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
-import { PlayArrow, TableChart, BarChart } from "@mui/icons-material";
+import { PlayArrow } from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
 import ModelDetailView from "./ModelDetailView";
 import ModelCardCompact from "./ModelCardCompact";
@@ -28,7 +27,6 @@ export default function SessionVisualization() {
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [highlightedRunId, setHighlightedRunId] = useState(null);
-  const [showTable, setShowTable] = useState(true);
   const [metricSplit, setMetricSplit] = useState("test");
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const { t } = useTranslation(["models", "common"]);
@@ -78,10 +76,6 @@ export default function SessionVisualization() {
     };
   }, []);
 
-  const handleToggleView = React.useCallback((isTable) => {
-    setShowTable(isTable);
-  }, []);
-
   const fetchModels = React.useCallback(async () => {
     try {
       const response = await getComponents({ selectTypes: ["Model"] });
@@ -94,22 +88,6 @@ export default function SessionVisualization() {
   useEffect(() => {
     fetchModels();
   }, [fetchModels]);
-
-  useEffect(() => {
-    const handleGraphsButtonClick = (e) => {
-      const graphsButton = e.target.closest('[data-tour="graphs-button"]');
-      if (graphsButton && sessionTourContext?.stepIndex === 7) {
-        setTimeout(() => {
-          sessionTourContext.nextStep();
-        }, 500);
-      }
-    };
-
-    document.addEventListener("click", handleGraphsButtonClick, true);
-    return () => {
-      document.removeEventListener("click", handleGraphsButtonClick, true);
-    };
-  }, [sessionTourContext]);
 
   // Check if tour should start from previous tutorial
   useEffect(() => {
@@ -515,25 +493,6 @@ export default function SessionVisualization() {
                       )}
                     </ToggleButtonGroup>
                   )}
-
-                  {/* Toggle between Table and Graphs */}
-                  <ButtonGroup size="small" variant="outlined">
-                    <Button
-                      variant={showTable ? "contained" : "outlined"}
-                      onClick={() => handleToggleView(true)}
-                      startIcon={<TableChart />}
-                    >
-                      {t("common:table")}
-                    </Button>
-                    <Button
-                      data-tour="graphs-button"
-                      variant={!showTable ? "contained" : "outlined"}
-                      onClick={() => handleToggleView(false)}
-                      startIcon={<BarChart />}
-                    >
-                      {t("common:graphs")}
-                    </Button>
-                  </ButtonGroup>
                 </Box>
               </Box>
 
@@ -550,25 +509,34 @@ export default function SessionVisualization() {
                     {t("models:label.noRunsYet")}
                   </Typography>
                 </Box>
-              ) : showTable ? (
-                <ModelComparisonTable
-                  runs={runs}
-                  session={session}
-                  onTrain={onTrain}
-                  onViewDetails={handleViewDetails}
-                  onDelete={onDeleteRun}
-                  onRowClick={handleRowClick}
-                  metricSplit={metricSplit}
-                  profiles={profiles}
-                  selectedProfile={selectedProfile}
-                  onProfileChange={setSelectedProfile}
-                />
               ) : (
-                <ResultsGraphs
-                  runs={runs}
-                  selectedSplit={metricSplit}
-                  onSplitChange={setMetricSplit}
-                />
+                <>
+                  <ModelComparisonTable
+                    runs={runs}
+                    session={session}
+                    onTrain={onTrain}
+                    onViewDetails={handleViewDetails}
+                    onDelete={onDeleteRun}
+                    onRowClick={handleRowClick}
+                    metricSplit={metricSplit}
+                    profiles={profiles}
+                    selectedProfile={selectedProfile}
+                    onProfileChange={setSelectedProfile}
+                  />
+
+                  <Typography
+                    variant="h6"
+                    color="text.primary"
+                    sx={{ mt: 6, mb: 2 }}
+                  >
+                    {t("common:graphs")}
+                  </Typography>
+                  <ResultsGraphs
+                    runs={runs}
+                    selectedSplit={metricSplit}
+                    onSplitChange={setMetricSplit}
+                  />
+                </>
               )}
             </Box>
           </>
