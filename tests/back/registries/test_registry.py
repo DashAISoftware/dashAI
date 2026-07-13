@@ -70,6 +70,19 @@ class ComponentWithTwoBaseClasses(BaseConfigComponent1, BaseConfigComponent2): .
 class NoComponent: ...
 
 
+class RelatedMixin:
+    COMPATIBLE_COMPONENTS = ["Component1"]
+
+
+class RelatedParentComponent(BaseStaticComponent):
+    COMPATIBLE_COMPONENTS = ["Component2"]
+
+
+class CombinedRelatedComponent(RelatedMixin, RelatedParentComponent):
+    # Redeclares an inherited entry on purpose: the union must deduplicate.
+    COMPATIBLE_COMPONENTS = ["Component1"]
+
+
 COMPONENT1_DICT = {
     "name": "Component1",
     "type": "ConfigComponent1",
@@ -482,3 +495,35 @@ def test_relationships_module():
         COMPONENT1_DICT,
         COMPONENT2_DICT,
     ]
+
+
+def test_compatible_components_merge_across_bases():
+    test_registry = ComponentRegistry(
+        initial_components=[
+            Component1,
+            Component2,
+        ]
+    )
+
+    test_registry.register_component(CombinedRelatedComponent)
+
+    # The mixin contributes "Component1", the static base "Component2";
+    # the subclass redeclaration of "Component1" does not duplicate it.
+    assert test_registry._relationship_manager["CombinedRelatedComponent"] == [
+        "Component1",
+        "Component2",
+    ]
+    assert test_registry.get_related_components("CombinedRelatedComponent") == [
+        COMPONENT1_DICT,
+        COMPONENT2_DICT,
+    ]
+    assert [
+        component["name"]
+        for component in test_registry.get_related_components("Component2")
+    ] == ["CombinedRelatedComponent"]
+
+    # Unregistering removes both inherited edges symmetrically.
+    test_registry.unregister_component(CombinedRelatedComponent)
+    assert test_registry._relationship_manager["CombinedRelatedComponent"] == []
+    assert test_registry.get_related_components("Component1") == []
+    assert test_registry.get_related_components("Component2") == []
