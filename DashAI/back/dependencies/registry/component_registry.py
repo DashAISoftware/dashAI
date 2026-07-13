@@ -454,7 +454,8 @@ class ComponentRegistry:
         """Obtain any related component of the given component name.
 
         If the component has no related components, then the method returns an empty
-        list.
+        list. Related names that are not registered components (e.g. an explainer
+        declared by a model but provided by an uninstalled plugin) are skipped.
 
         Parameters
         ----------
@@ -479,4 +480,5 @@ class ComponentRegistry:
         return [
             self.__getitem__(related_component_id)
             for related_component_id in self._relationship_manager[component_id]
+            if self.__contains__(related_component_id)
         ]
