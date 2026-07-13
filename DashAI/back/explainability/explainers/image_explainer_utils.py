@@ -1,7 +1,7 @@
 """Shared helpers for image-classification explainers.
 
-These helpers define the (minimal) white-box capability contract image
-explainers rely on; models expose no explainability-specific methods,
+These helpers define the (minimal) white box capability contract image
+explainers rely on; models expose no explainability specific methods,
 only their existing public state:
 
 - ``model.model`` is the underlying ``torch.nn.Module``.
@@ -147,9 +147,9 @@ def heatmap_overlay_artifact(
 
     Parameters
     ----------
-    image_uint8 : array-like
+    image_uint8 : array like
         RGB image of shape (H, W, 3), uint8 values.
-    heatmap : array-like
+    heatmap : array like
         Saliency map of shape (H, W) with values in [0, 1].
     title : str
         Artifact title (shown in the instance selector).
@@ -167,7 +167,7 @@ def heatmap_overlay_artifact(
     image = np.asarray(image_uint8, dtype=np.float32) / 255.0
     cam = np.clip(np.asarray(heatmap, dtype=np.float32), 0.0, 1.0)
 
-    # Jet-like colormap, avoids a matplotlib/cv2 dependency at plot time.
+    # Jet like colormap, avoids a matplotlib/cv2 dependency at plot time.
     red = np.clip(1.5 - np.abs(4 * cam - 3), 0, 1)
     green = np.clip(1.5 - np.abs(4 * cam - 2), 0, 1)
     blue = np.clip(1.5 - np.abs(4 * cam - 1), 0, 1)
