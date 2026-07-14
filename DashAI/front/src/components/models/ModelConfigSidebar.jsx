@@ -25,7 +25,7 @@ export default function ModelConfigSidebar({
 
   const formProps = useRunEditForm({ run, session, existingRuns, onRefresh });
   const {
-    isDirty,
+    canSave,
     operationsCount,
     isSaving,
     saveConfirmOpen,
@@ -67,7 +67,7 @@ export default function ModelConfigSidebar({
           <Button
             variant="contained"
             onClick={handleSaveEdit}
-            disabled={isSaving || !isDirty}
+            disabled={isSaving || !canSave}
           >
             {isSaving ? t("common:saving") : t("common:save")}
           </Button>

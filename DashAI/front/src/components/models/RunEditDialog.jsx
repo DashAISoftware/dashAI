@@ -42,7 +42,7 @@ export default function RunEditDialog({
   });
 
   const {
-    isDirty,
+    canSave,
     operationsCount,
     isSaving,
     saveConfirmOpen,
@@ -99,7 +99,7 @@ export default function RunEditDialog({
             variant="contained"
             startIcon={<Save />}
             onClick={handleSaveEdit}
-            disabled={isSaving || !isDirty}
+            disabled={isSaving || !canSave}
           >
             {isSaving ? t("common:saving") : t("common:save")}
           </Button>

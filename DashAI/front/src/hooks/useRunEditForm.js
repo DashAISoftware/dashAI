@@ -95,6 +95,13 @@ export default function useRunEditForm({
     run,
   ]);
 
+  // While a parameter is marked for optimization, an optimizer and a goal
+  // metric are both required — keep Save disabled until they're set instead
+  // of letting the user click it and only then learn what's missing.
+  const canSave =
+    isDirty &&
+    (!hasOptimizableParams || (!!editedOptimizer && !!editedGoalMetric));
+
   const doSave = async () => {
     setSaveConfirmOpen(false);
     setIsSaving(true);
@@ -207,6 +214,7 @@ export default function useRunEditForm({
     setEditedGoalMetric,
     hasOptimizableParams,
     isDirty,
+    canSave,
     operationsCount,
     isSaving,
     saveConfirmOpen,
