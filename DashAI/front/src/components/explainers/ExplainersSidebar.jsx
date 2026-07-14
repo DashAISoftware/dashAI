@@ -32,27 +32,42 @@ export default function ExplainersSidebar({ run, session, onCreated }) {
   const [creator, setCreator] = useState(null);
 
   const taskName = session?.task_name;
+  const modelName = run?.model_name;
 
   const fetchExplainers = useCallback(async () => {
     if (!taskName) return;
     try {
       setLoading(true);
+
+      const fetchScope = async (explainerType) => {
+        const [taskRelated, modelRelated] = await Promise.all([
+          getComponents({
+            selectTypes: [explainerType],
+            relatedComponent: taskName,
+          }),
+          modelName
+            ? getComponents({
+                selectTypes: [explainerType],
+                relatedComponent: modelName,
+              })
+            : Promise.resolve([]),
+        ]);
+        const seen = new Set();
+        return [...taskRelated, ...modelRelated]
+          .filter((obj) => {
+            if (seen.has(obj.name)) return false;
+            seen.add(obj.name);
+            return true;
+          })
+          .filter((obj) => !obj.name.startsWith("Fit"));
+      };
+
       const [globalResponse, localResponse] = await Promise.all([
-        getComponents({
-          selectTypes: ["GlobalExplainer"],
-          relatedComponent: taskName,
-        }),
-        getComponents({
-          selectTypes: ["LocalExplainer"],
-          relatedComponent: taskName,
-        }),
+        fetchScope("GlobalExplainer"),
+        fetchScope("LocalExplainer"),
       ]);
-      setGlobalExplainers(
-        globalResponse.filter((obj) => !obj.name.startsWith("Fit")),
-      );
-      setLocalExplainers(
-        localResponse.filter((obj) => !obj.name.startsWith("Fit")),
-      );
+      setGlobalExplainers(globalResponse);
+      setLocalExplainers(localResponse);
     } catch (error) {
       console.error("Error fetching explainers:", error);
       enqueueSnackbar(t("explainers:error.fetchExplainers"), {
@@ -61,7 +76,7 @@ export default function ExplainersSidebar({ run, session, onCreated }) {
     } finally {
       setLoading(false);
     }
-  }, [taskName, enqueueSnackbar, t]);
+  }, [taskName, modelName, enqueueSnackbar, t]);
 
   useEffect(() => {
     fetchExplainers();
@@ -180,7 +195,7 @@ export default function ExplainersSidebar({ run, session, onCreated }) {
         <InlineExplainerCreator
           open
           scope={creator.scope}
-          explainerConfig={{ runId: run.id, taskName }}
+          explainerConfig={{ runId: run.id, taskName, modelName }}
           preselectedExplainer={creator.name}
           onCreated={onCreated}
           onCancel={() => setCreator(null)}
