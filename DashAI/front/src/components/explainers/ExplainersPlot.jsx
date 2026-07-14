@@ -13,46 +13,47 @@ import { useSnackbar } from "notistack";
 
 import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
-import ArtifactRenderer from "../shared/ArtifactRenderer";
+import ArtifactViewer from "../shared/ArtifactViewer";
 
-/**
- * Coerce the plot endpoint response into a list of typed artifacts.
- * Legacy responses are lists of plotly JSON strings; they are wrapped as
- * plotly artifacts. Typed dicts pass through untouched.
- */
+/** Wrap legacy plotly JSON strings as plotly artifacts; pass typed dicts through. */
 function parseExplanationArtifacts(items) {
   return items.map((item) =>
     typeof item === "string"
-      ? { type: "plotly", payload: item, title: null }
+      ? { type: "plotly", payload: item, title: null, role: "explanation" }
       : item,
   );
 }
 
 /**
- * Group consecutive artifacts sharing the same non null title. Explainers
- * emit several artifacts per explained instance (e.g. a plot followed by a
- * text summary) under one title; each group becomes a single entry in the
- * instance selector and its artifacts render stacked together. Untitled
- * artifacts stay in their own group.
+ * Group consecutive artifacts sharing the same non-null title into one
+ * instance group, tracking each artifact's flat index in the endpoint
+ * response so edits can target it.
  */
 function groupArtifacts(artifacts) {
   const groups = [];
-  artifacts.forEach((artifact) => {
+  artifacts.forEach((artifact, index) => {
+    const withIndex = { ...artifact, index };
     const lastGroup = groups[groups.length - 1];
     if (
       artifact.title != null &&
       lastGroup &&
       lastGroup.title === artifact.title
     ) {
-      lastGroup.artifacts.push(artifact);
+      lastGroup.artifacts.push(withIndex);
     } else {
-      groups.push({ title: artifact.title ?? null, artifacts: [artifact] });
+      groups.push({ title: artifact.title ?? null, artifacts: [withIndex] });
     }
   });
   return groups;
 }
 
-export default function ExplainersPlot({ explainer, scope }) {
+export default function ExplainersPlot({
+  explainer,
+  scope,
+  onSaveOverride = null,
+  onResetOverride = null,
+  overriddenIndexes = [],
+}) {
   const { enqueueSnackbar } = useSnackbar();
   const [groups, setGroups] = useState([]);
   const [currentGroup, setCurrentGroup] = useState(0);
@@ -66,12 +67,9 @@ export default function ExplainersPlot({ explainer, scope }) {
       if (!response || response.length === 0) {
         setGroups([]);
         setCurrentGroup(0);
-        enqueueSnackbar(t("explainers:error.noData"), {
-          variant: "warning",
-        });
+        enqueueSnackbar(t("explainers:error.noData"), { variant: "warning" });
       } else {
         setGroups(groupArtifacts(parseExplanationArtifacts(response)));
-        // Reset currentGroup when data updates to avoid stale index
         setCurrentGroup(0);
       }
     } catch (error) {
@@ -80,106 +78,109 @@ export default function ExplainersPlot({ explainer, scope }) {
       enqueueSnackbar(t("explainers:error.fetchExplainers"), {
         variant: "error",
       });
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (explainer.status === 3) {
-      getExplainerPlot();
-    }
+    if (explainer.status === 3) getExplainerPlot();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [explainer.id, explainer.status]);
+
+  if (loading || explainer.status !== 3) {
+    if (explainer.status === 4) {
+      return <Box sx={{ p: 4 }}>{t("explainers:error.explainerFailed")}</Box>;
+    }
+    return (
+      <Box sx={{ display: "flex", justifyContent: "flex-start", p: 2 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (groups.length === 0 || !groups[currentGroup]) {
+    return <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>;
+  }
+
+  const group = groups[currentGroup];
+  const inputArtifacts = group.artifacts.filter((a) => a.role === "input");
+  const explanationArtifacts = group.artifacts.filter(
+    (a) => a.role !== "input",
+  );
 
   return (
     <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        maxWidth: 700,
-        border: 1,
-        borderColor: "divider",
-        bgcolor: "background.default",
-        borderRadius: 1,
-        overflow: "hidden",
-        p: 1,
-      }}
+      sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 2 }}
     >
-      {!loading && groups.length > 1 && (
-        <FormControl variant="outlined" sx={{ minWidth: "200px", mb: 2 }}>
-          <InputLabel id="select-type-label">
+      {groups.length > 1 && (
+        <FormControl variant="outlined" sx={{ minWidth: 200 }}>
+          <InputLabel id="select-instance-label">
             {t("explainers:label.selectInstance")}
           </InputLabel>
           <Select
-            id="select-type"
+            labelId="select-instance-label"
             value={currentGroup}
             onChange={(event) => setCurrentGroup(event.target.value)}
-            label="class"
+            label={t("explainers:label.selectInstance")}
             autoWidth
           >
-            {groups.map((group, i) => (
+            {groups.map((g, i) => (
               <MenuItem key={i} value={i}>
-                {group.title ??
+                {g.title ??
                   t("explainers:label.instanceNumber", { number: i + 1 })}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
       )}
-      {!loading && explainer.status === 3 ? (
-        groups.length > 0 && groups[currentGroup] ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {groups[currentGroup].title && (
-              <Typography variant="subtitle2">
-                {groups[currentGroup].title}
-              </Typography>
-            )}
-            {groups[currentGroup].artifacts.map((artifact, i) => (
-              <ArtifactRenderer
-                key={i}
-                artifact={{ ...artifact, title: null }}
-              />
-            ))}
-          </Box>
-        ) : (
-          <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>
-        )
-      ) : explainer.status === 4 ? (
-        <Box sx={{ p: 4 }}>{t("explainers:error.explainerFailed")}</Box>
-      ) : (
-        <Box sx={{ display: "flex", justifyContent: "flex-start", p: 2 }}>
-          <CircularProgress />
+
+      {inputArtifacts.length > 0 && (
+        <Box
+          sx={{
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 1,
+            p: 2,
+            bgcolor: "background.default",
+          }}
+        >
+          <Typography variant="overline" color="text.secondary">
+            {t("explainers:label.modelInput")}
+          </Typography>
+          {inputArtifacts.map((artifact) => (
+            <ArtifactViewer key={artifact.index} artifact={artifact} />
+          ))}
         </Box>
       )}
+
+      {explanationArtifacts.map((artifact) => (
+        <ArtifactViewer
+          key={artifact.index}
+          artifact={artifact}
+          canReset={overriddenIndexes.includes(artifact.index)}
+          onSaveEdit={
+            onSaveOverride
+              ? (figure) => onSaveOverride(artifact.index, figure)
+              : null
+          }
+          onResetEdit={
+            onResetOverride ? () => onResetOverride(artifact.index) : null
+          }
+        />
+      ))}
     </Box>
   );
 }
 
 ExplainersPlot.propTypes = {
   explainer: PropTypes.shape({
-    explainer_name: PropTypes.string,
     id: PropTypes.number,
-    parameters: PropTypes.objectOf(
-      PropTypes.oneOfType([
-        PropTypes.number,
-        PropTypes.string,
-        PropTypes.arrayOf(PropTypes.string),
-      ]),
-    ),
     status: PropTypes.number,
-    runId: PropTypes.number,
-    explanationPath: PropTypes.string,
-    plot_path: PropTypes.string,
-    name: PropTypes.string,
-    created: PropTypes.string,
   }).isRequired,
   scope: PropTypes.string.isRequired,
+  onSaveOverride: PropTypes.func,
+  onResetOverride: PropTypes.func,
+  overriddenIndexes: PropTypes.arrayOf(PropTypes.number),
 };
