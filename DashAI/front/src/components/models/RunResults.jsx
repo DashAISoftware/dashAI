@@ -39,6 +39,8 @@ import { getModelSessionById } from "../../api/modelSession";
 import { getDatasetSample } from "../../api/datasets";
 import { checkHowManyOptimazers } from "../../utils/schema";
 import { useTranslation } from "react-i18next";
+import { useParams } from "react-router-dom";
+import { useModels } from "./ModelsContext";
 import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 
@@ -208,6 +210,18 @@ export default function RunResults({
   useEffect(() => {
     localStorage.setItem(`run-${run.id}-active-tab`, JSON.stringify(activeTab));
   }, [activeTab, run.id]);
+
+  // Expose the active tab while this run is shown full-screen, so the right
+  // sidebar can swap its content (e.g. list explainers on the explainers tab).
+  const params = useParams();
+  const modelsContext = useModels();
+  const setRunDetailTab = modelsContext?.setRunDetailTab;
+  const isDetailView = String(params.runId ?? "") === String(run.id);
+  useEffect(() => {
+    if (!isDetailView || !setRunDetailTab) return;
+    setRunDetailTab(activeTab);
+    return () => setRunDetailTab(null);
+  }, [isDetailView, activeTab, setRunDetailTab]);
 
   const handleExplainerCreated = () => {
     fetchOperations();

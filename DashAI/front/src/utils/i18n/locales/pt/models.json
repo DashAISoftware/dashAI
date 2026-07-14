@@ -61,6 +61,7 @@
   "label": {
     "addModelToSession": "Adicionar Modelo à Sessão",
     "confirmDeleteSession": "Tem certeza de que deseja excluir a sessão \"{{name}}\"? Esta ação não pode ser desfeita.",
+    "availableExplainers": "Explicadores Disponíveis",
     "availableModels": "Modelos Disponíveis",
     "modelCount_one": "{{count}} modelo",
     "modelCount_other": "{{count}} modelos",
@@ -103,6 +104,7 @@
     "modelsModule": "Módulo de Modelos",
     "nameYourSession": "Nomeie sua Sessão",
     "selectDatasetAndPrepare": "Nomeie sua sessão, selecione um conjunto de dados e configure suas colunas e partições.",
+    "noCompatibleExplainersFound": "Nenhum explicador compatível encontrado",
     "noCompatibleModelsFound": "Nenhum modelo compatível encontrado",
     "noConfigurationAvailable": "Nenhuma configuração disponível para esta execução",
     "dropModelHere": "Solte aqui para adicionar",
@@ -112,6 +114,7 @@
     "noManualPredictionsYet": "Ainda não há previsões manuais",
     "noMetricsAvailable": "Não há métricas disponíveis",
     "noMetricsAvailableForThisView": "Não há métricas disponíveis para esta visualização",
+    "noExplainersMatchSearch": "Nenhum explicador corresponde à sua busca",
     "noModelsMatchSearch": "Nenhum modelo corresponde à sua busca",
     "noPredictionsYet": "Ainda não há previsões",
     "noRunsYet": "Ainda não há execuções. Adicione modelos pelo painel direito.",

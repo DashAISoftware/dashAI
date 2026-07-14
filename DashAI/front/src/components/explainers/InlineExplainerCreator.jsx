@@ -48,6 +48,7 @@ export default function InlineExplainerCreator({
   open,
   scope,
   explainerConfig,
+  preselectedExplainer = null,
   onCreated,
   onCancel,
 }) {
@@ -310,6 +311,7 @@ export default function InlineExplainerCreator({
             scope={isLocal ? "Local" : "Global"}
             taskName={taskName}
             existingExplainers={existingExplainers}
+            preselectedExplainerName={preselectedExplainer}
           />
         )}
         {isLocal && activeStep === 1 && (
@@ -369,6 +371,7 @@ InlineExplainerCreator.propTypes = {
     runId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     taskName: PropTypes.string,
   }).isRequired,
+  preselectedExplainer: PropTypes.string,
   onCreated: PropTypes.func,
   onCancel: PropTypes.func.isRequired,
 };

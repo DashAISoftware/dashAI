@@ -28,7 +28,6 @@ export default function SessionVisualization() {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [highlightedRunId, setHighlightedRunId] = useState(null);
   const [metricSplit, setMetricSplit] = useState("test");
-  const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const { t } = useTranslation(["models", "common"]);
   const sessionTourContext = useTourContext();
   const params = useParams();
@@ -49,6 +48,8 @@ export default function SessionVisualization() {
     lastAddedRunId,
     clearLastAddedRunId,
     selectModel,
+    explainerRefreshTrigger,
+    triggerExplainerRefresh,
   } = useModels();
 
   const { profiles, selectedProfile, setSelectedProfile, scores } =
@@ -299,9 +300,7 @@ export default function SessionVisualization() {
               onTrain={handleTrainWithTour}
               onDelete={handleDeleteRun}
               explainerRefreshTrigger={explainerRefreshTrigger}
-              onOperationsRefresh={() =>
-                setExplainerRefreshTrigger((prev) => prev + 1)
-              }
+              onOperationsRefresh={triggerExplainerRefresh}
               existingRuns={runs}
               onRefresh={fetchRuns}
             />

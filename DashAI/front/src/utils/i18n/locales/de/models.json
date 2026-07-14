@@ -61,6 +61,7 @@
   "label": {
     "addModelToSession": "Modell zur Sitzung hinzufügen",
     "confirmDeleteSession": "Sind Sie sicher, dass Sie die Sitzung \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "availableExplainers": "Verfügbare Erklärungsmodelle",
     "availableModels": "Verfügbare Modelle",
     "modelCount_one": "{{count}} Modell",
     "modelCount_other": "{{count}} Modelle",
@@ -102,6 +103,7 @@
     "modelsModule": "Modell-Modul",
     "nameYourSession": "Sitzung benennen",
     "selectDatasetAndPrepare": "Benennen Sie Ihre Sitzung, wählen Sie einen Datensatz aus und konfigurieren Sie Spalten und Aufteilungen.",
+    "noCompatibleExplainersFound": "Keine kompatiblen Erklärungsmodelle gefunden",
     "noCompatibleModelsFound": "Keine kompatiblen Modelle gefunden",
     "noConfigurationAvailable": "Keine Konfiguration für diesen Durchlauf verfügbar",
     "dropModelHere": "Hier ablegen zum Hinzufügen",
@@ -111,6 +113,7 @@
     "noManualPredictionsYet": "Noch keine manuellen Vorhersagen",
     "noMetricsAvailable": "Keine Metriken verfügbar",
     "noMetricsAvailableForThisView": "Keine Metriken für diese Ansicht verfügbar",
+    "noExplainersMatchSearch": "Keine Erklärungsmodelle entsprechen Ihrer Suche",
     "noModelsMatchSearch": "Keine Modelle entsprechen Ihrer Suche",
     "noPredictionsYet": "Noch keine Vorhersagen",
     "noRunsYet": "Noch keine Durchläufe. Fügen Sie Modelle aus dem rechten Panel hinzu.",

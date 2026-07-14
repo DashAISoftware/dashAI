@@ -61,6 +61,7 @@
   "label": {
     "addModelToSession": "Add Model to Session",
     "confirmDeleteSession": "Are you sure you want to delete the session \"{{name}}\"? This action cannot be undone.",
+    "availableExplainers": "Available Explainers",
     "availableModels": "Available Models",
     "modelCount_one": "{{count}} model",
     "modelCount_other": "{{count}} models",
@@ -102,6 +103,7 @@
     "modelsModule": "Models Module",
     "nameYourSession": "Name Your Session",
     "selectDatasetAndPrepare": "Name your session, select a dataset and configure its columns and splits.",
+    "noCompatibleExplainersFound": "No compatible explainers found",
     "noCompatibleModelsFound": "No compatible models found",
     "noConfigurationAvailable": "No configuration available for this run",
     "dropModelHere": "Drop here to add",
@@ -111,6 +113,7 @@
     "noManualPredictionsYet": "No manual predictions yet",
     "noMetricsAvailable": "No metrics available",
     "noMetricsAvailableForThisView": "No metrics available for this view",
+    "noExplainersMatchSearch": "No explainers match your search",
     "noModelsMatchSearch": "No models match your search",
     "noPredictionsYet": "No predictions yet",
     "noRunsYet": "No runs yet. Add models from the right panel.",

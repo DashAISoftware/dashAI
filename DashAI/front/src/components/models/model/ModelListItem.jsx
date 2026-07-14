@@ -8,6 +8,7 @@ import { setCustomDragImage } from "../../../utils/dragImage";
 export default function ModelListItem({
   model,
   disabled = false,
+  draggable = true,
   onClick,
   ...props
 }) {
@@ -59,9 +60,9 @@ export default function ModelListItem({
       >
         <Box
           key={model.id}
-          draggable={!disabled}
+          draggable={!disabled && draggable}
           onDragStart={
-            !disabled
+            !disabled && draggable
               ? (e) => {
                   e.dataTransfer.setData(
                     "application/x-dashai-model",
@@ -86,7 +87,7 @@ export default function ModelListItem({
               : theme.palette.ui.box,
             border: `1px solid ${theme.palette.ui.border}`,
             borderRadius: 1,
-            cursor: disabled ? "not-allowed" : "grab",
+            cursor: disabled ? "not-allowed" : draggable ? "grab" : "pointer",
             transition: "all 0.2s",
             opacity: disabled ? 0.5 : 1,
             filter: disabled ? "grayscale(0.6)" : "none",

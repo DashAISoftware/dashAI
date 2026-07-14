@@ -14,6 +14,9 @@ import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
 import ColumnInsights from "../notebooks/dataset/ColumnInsights";
 import ModelConfigSidebar from "./ModelConfigSidebar";
+import ExplainersSidebar from "../explainers/ExplainersSidebar";
+
+const EXPLAINERS_TAB = 1;
 
 export default function ModelsRightBar({ onToggle }) {
   const theme = useTheme();
@@ -38,6 +41,8 @@ export default function ModelsRightBar({ onToggle }) {
     setDatasetTab,
     sessionRightContent,
     fetchRuns,
+    runDetailTab,
+    triggerExplainerRefresh,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -113,6 +118,17 @@ export default function ModelsRightBar({ onToggle }) {
     : null;
 
   if (isInModelDetail && activeRun) {
+    // On the explainers tab of a finished run, offer the compatible
+    // explainers to add, mirroring how the session view offers models.
+    if (runDetailTab === EXPLAINERS_TAB && activeRun.status === 3) {
+      return (
+        <ExplainersSidebar
+          run={activeRun}
+          session={session}
+          onCreated={triggerExplainerRefresh}
+        />
+      );
+    }
     return (
       <ModelConfigSidebar
         run={activeRun}

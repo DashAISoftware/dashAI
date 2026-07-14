@@ -61,6 +61,7 @@
   "label": {
     "addModelToSession": "将模型添加到会话",
     "confirmDeleteSession": "确定要删除会话 \"{{name}}\" 吗？此操作无法撤销。",
+    "availableExplainers": "可用解释器",
     "availableModels": "可用模型",
     "modelCount_one": "{{count}} 个模型",
     "modelCount_other": "{{count}} 个模型",
@@ -102,6 +103,7 @@
     "modelsModule": "模型模块",
     "nameYourSession": "为会话命名",
     "selectDatasetAndPrepare": "为会话命名，选择数据集并配置列和划分。",
+    "noCompatibleExplainersFound": "未找到兼容的解释器",
     "noCompatibleModelsFound": "未找到兼容模型",
     "noConfigurationAvailable": "此运行没有可用的配置",
     "dropModelHere": "拖放此处以添加",
@@ -111,6 +113,7 @@
     "noManualPredictionsYet": "暂无手动预测",
     "noMetricsAvailable": "暂无可用指标",
     "noMetricsAvailableForThisView": "此视图暂无可用指标",
+    "noExplainersMatchSearch": "没有解释器匹配您的搜索",
     "noModelsMatchSearch": "没有模型匹配您的搜索",
     "noPredictionsYet": "暂无预测记录",
     "noRunsYet": "暂无运行记录。请从右侧面板添加模型。",

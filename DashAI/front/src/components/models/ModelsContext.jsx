@@ -89,6 +89,12 @@ export function ModelsProvider({ children }) {
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [datasetTab, setDatasetTab] = useState(0);
   const [sessionRightContent, setSessionRightContent] = useState(null);
+  const [runDetailTab, setRunDetailTab] = useState(null);
+  const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
+
+  const triggerExplainerRefresh = useCallback(() => {
+    setExplainerRefreshTrigger((prev) => prev + 1);
+  }, []);
 
   const selectModel = useCallback((model) => {
     setSelectedModel(model);
@@ -176,6 +182,10 @@ export function ModelsProvider({ children }) {
     setDatasetTab,
     sessionRightContent,
     setSessionRightContent,
+    runDetailTab,
+    setRunDetailTab,
+    explainerRefreshTrigger,
+    triggerExplainerRefresh,
   };
 
   return (
