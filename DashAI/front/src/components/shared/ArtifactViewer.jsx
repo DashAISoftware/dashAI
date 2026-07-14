@@ -1,4 +1,3 @@
-// DashAI/front/src/components/shared/ArtifactViewer.jsx
 import React, { useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
@@ -15,7 +14,7 @@ import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import SaveIcon from "@mui/icons-material/Save";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import CloseIcon from "@mui/icons-material/Close";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import { useTranslation } from "react-i18next";
 
@@ -24,9 +23,12 @@ import { applyThemeToLayout } from "../../utils/plotlyTheme";
 import { downloadArtifact } from "../../utils/downloadArtifact";
 
 /**
- * Renders a single typed artifact with a toolbar: type-aware download, plot
- * editing (plotly only), and fullscreen. When onSaveEdit is provided, edited
- * plotly figures can be persisted; otherwise edits are client-side only.
+ * Renders one typed artifact as a self-contained bordered block. The actions
+ * that apply to that artifact (download, plot editing, fullscreen) live in a
+ * compact cluster docked to the block's top-right corner, revealed on hover
+ * or keyboard focus so the resting card stays uncluttered. Plot editing is
+ * offered only for plotly artifacts; edits persist when onSaveEdit is given,
+ * otherwise they are client-side only.
  */
 export default function ArtifactViewer({
   artifact,
@@ -39,6 +41,7 @@ export default function ArtifactViewer({
   const [downloadAnchor, setDownloadAnchor] = useState(null);
   const [editing, setEditing] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
+  const [editFigure, setEditFigure] = useState(null);
   const plotWrapRef = useRef(null);
   const isPlotly = artifact.type === "plotly";
 
@@ -54,9 +57,8 @@ export default function ArtifactViewer({
     }
   }, [artifact, isPlotly]);
 
-  const [editFigure, setEditFigure] = useState(null);
-
   const startEdit = () => {
+    if (!figure?.data) return;
     setEditFigure({
       data: JSON.parse(JSON.stringify(figure.data)),
       layout: applyThemeToLayout(figure.layout, theme),
@@ -65,8 +67,12 @@ export default function ArtifactViewer({
   };
 
   const saveEdit = async () => {
-    if (onSaveEdit && editFigure) await onSaveEdit(editFigure);
-    setEditing(false);
+    try {
+      if (onSaveEdit && editFigure) await onSaveEdit(editFigure);
+      setEditing(false);
+    } catch (error) {
+      console.error("Failed to save plot edits", error);
+    }
   };
 
   const findPlotEl = () =>
@@ -74,20 +80,55 @@ export default function ArtifactViewer({
       ? plotWrapRef.current.querySelector(".js-plotly-plot")
       : null;
 
+  const actionButtonSx = {
+    color: "text.secondary",
+    "&:hover": { color: "text.primary" },
+  };
+
   return (
-    <Box sx={{ width: "100%", position: "relative" }} ref={plotWrapRef}>
-      {/* Toolbar */}
+    <Box
+      ref={plotWrapRef}
+      sx={{
+        position: "relative",
+        width: "100%",
+        border: `1px solid ${theme.palette.ui.border}`,
+        borderRadius: 1,
+        bgcolor: theme.palette.ui.box,
+        p: 3,
+        "& .artifact-actions": {
+          opacity: 0,
+          transition: "opacity 0.15s ease",
+        },
+        "&:hover .artifact-actions, &:focus-within .artifact-actions": {
+          opacity: 1,
+        },
+        "@media (hover: none)": {
+          "& .artifact-actions": { opacity: 1 },
+        },
+      }}
+    >
+      {/* Action cluster, docked to the block corner and attached to this
+          artifact's content. */}
       <Box
+        className="artifact-actions"
         sx={{
+          position: "absolute",
+          top: 6,
+          right: 6,
+          zIndex: 2,
           display: "flex",
-          justifyContent: "flex-end",
-          gap: 1,
-          mb: 1,
+          gap: 0.5,
+          p: 0.5,
+          borderRadius: 1,
+          bgcolor: alpha(theme.palette.background.paper, 0.85),
+          backdropFilter: "blur(4px)",
+          border: `1px solid ${theme.palette.ui.border}`,
         }}
       >
         <Tooltip title={t("explainers:button.download")}>
           <IconButton
             size="small"
+            sx={actionButtonSx}
             onClick={(e) =>
               isPlotly
                 ? setDownloadAnchor(e.currentTarget)
@@ -99,20 +140,24 @@ export default function ArtifactViewer({
         </Tooltip>
         {isPlotly && figure && (
           <Tooltip title={t("explainers:button.editPlot")}>
-            <IconButton size="small" onClick={startEdit}>
+            <IconButton size="small" sx={actionButtonSx} onClick={startEdit}>
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
         {canReset && onResetEdit && (
           <Tooltip title={t("explainers:button.resetPlot")}>
-            <IconButton size="small" onClick={onResetEdit}>
+            <IconButton size="small" sx={actionButtonSx} onClick={onResetEdit}>
               <RestartAltIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
         <Tooltip title={t("explainers:button.fullscreen")}>
-          <IconButton size="small" onClick={() => setFullscreen(true)}>
+          <IconButton
+            size="small"
+            sx={actionButtonSx}
+            onClick={() => setFullscreen(true)}
+          >
             <FullscreenIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -141,7 +186,9 @@ export default function ArtifactViewer({
         </MenuItem>
       </Menu>
 
-      <ArtifactRenderer artifact={artifact} />
+      {/* The instance label is shown once by the parent; suppress the
+          per-artifact title so it is not repeated on every block. */}
+      <ArtifactRenderer artifact={{ ...artifact, title: null }} />
 
       {/* Edit dialog: editable plotly figure */}
       <Dialog
@@ -184,7 +231,7 @@ export default function ArtifactViewer({
           </IconButton>
         </Box>
         <Box sx={{ p: 2 }}>
-          <ArtifactRenderer artifact={artifact} />
+          <ArtifactRenderer artifact={{ ...artifact, title: null }} />
         </Box>
       </Dialog>
     </Box>

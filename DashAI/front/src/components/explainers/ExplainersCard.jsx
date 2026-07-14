@@ -7,6 +7,7 @@ import {
   Box,
   CircularProgress,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
@@ -30,6 +31,7 @@ export default function ExplainersCard({
   onDelete,
   compact = false,
 }) {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [componentData, setComponentData] = useState(null);
   const { t } = useTranslation(["explainers"]);
@@ -72,8 +74,16 @@ export default function ExplainersCard({
   if (compact) {
     return (
       <>
-        <Paper elevation={2} sx={{ p: 4 }}>
-          <Grid container direction="column" gap={2}>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 4,
+            bgcolor: "background.paper",
+            borderColor: theme.palette.ui.border,
+            borderRadius: 1,
+          }}
+        >
+          <Grid container direction="column" gap={3}>
             <Grid
               item
               container

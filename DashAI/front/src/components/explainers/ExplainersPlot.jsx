@@ -109,13 +109,14 @@ export default function ExplainersPlot({
   const explanationArtifacts = group.artifacts.filter(
     (a) => a.role !== "input",
   );
+  const hasSelector = groups.length > 1;
 
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 2 }}
+      sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 3 }}
     >
-      {groups.length > 1 && (
-        <FormControl variant="outlined" sx={{ minWidth: 200 }}>
+      {hasSelector ? (
+        <FormControl variant="outlined" size="small" sx={{ minWidth: 220 }}>
           <InputLabel id="select-instance-label">
             {t("explainers:label.selectInstance")}
           </InputLabel>
@@ -124,7 +125,6 @@ export default function ExplainersPlot({
             value={currentGroup}
             onChange={(event) => setCurrentGroup(event.target.value)}
             label={t("explainers:label.selectInstance")}
-            autoWidth
           >
             {groups.map((g, i) => (
               <MenuItem key={i} value={i}>
@@ -134,19 +134,21 @@ export default function ExplainersPlot({
             ))}
           </Select>
         </FormControl>
+      ) : (
+        group.title && (
+          <Typography variant="subtitle2" color="text.secondary">
+            {group.title}
+          </Typography>
+        )
       )}
 
       {inputArtifacts.length > 0 && (
-        <Box
-          sx={{
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 1,
-            p: 2,
-            bgcolor: "background.default",
-          }}
-        >
-          <Typography variant="overline" color="text.secondary">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Typography
+            variant="overline"
+            color="text.secondary"
+            sx={{ lineHeight: 1.4 }}
+          >
             {t("explainers:label.modelInput")}
           </Typography>
           {inputArtifacts.map((artifact) => (
