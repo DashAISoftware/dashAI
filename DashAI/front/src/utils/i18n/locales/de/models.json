@@ -67,7 +67,7 @@
     "modelCount_other": "{{count}} Modelle",
     "bar": "Balken",
     "heatmap": "Heatmap",
-    "characteristics": "Merkmale",
+    "characteristics": "Ergebnisse",
     "chooseTaskForSessionWithDataset": "Wählen Sie die ML-Aufgabe für Ihre Sitzung mit dem Datensatz \"{{datasetName}}\".",
     "configuration": "Konfiguration",
     "configureModel": "Modell konfigurieren",

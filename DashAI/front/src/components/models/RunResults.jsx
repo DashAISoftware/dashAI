@@ -18,6 +18,7 @@ import {
   DialogActions,
   Tooltip,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
@@ -99,6 +100,7 @@ export default function RunResults({
   const isFinished = run.status === 3;
   const isRunning = run.status === 1 || run.status === 2;
   const { t } = useTranslation(["models", "common"]);
+  const theme = useTheme();
 
   // Explains *why* a tab is disabled, so it reads as a real (if currently
   // unavailable) tab rather than being confused with the static group labels.
@@ -110,6 +112,42 @@ export default function RunResults({
     : optimizables === 0
       ? t("models:message.noOptimizableParamsForHpo")
       : "";
+
+  // Same "pill bar" tab styling used in DatasetVisualization, so both
+  // sections of the app read as one consistent tab component.
+  const pillTabsSx = {
+    minHeight: 40,
+    bgcolor: theme.palette.ui.box,
+    borderRadius: 1,
+    "& .MuiTabs-indicator": { height: "2px" },
+    "& .MuiTab-root": {
+      minHeight: 40,
+      fontSize: "0.85rem",
+      borderRadius: "4px",
+      transition: "all 0.2s",
+      border: "1px solid transparent",
+      textTransform: "none",
+      "&:hover": { bgcolor: theme.palette.action.hover },
+      "&.Mui-disabled": {
+        color: theme.palette.text.disabled,
+        bgcolor: theme.palette.ui.disabled,
+        borderColor: theme.palette.ui.border,
+        opacity: 0.6,
+        cursor: "not-allowed",
+        filter: "grayscale(0.6)",
+        position: "relative",
+        "&::after": {
+          content: '""',
+          position: "absolute",
+          inset: 0,
+          borderRadius: "4px",
+          pointerEvents: "none",
+          background:
+            "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)",
+        },
+      },
+    },
+  };
 
   const runId = run.id;
   const fetchOperations = useCallback(async () => {
@@ -254,11 +292,8 @@ export default function RunResults({
       <Collapse in={resultsVisible} timeout="auto" unmountOnExit>
         <Box
           sx={{
-            borderBottom: 1,
-            borderColor: "divider",
-            mb: 4,
             display: "flex",
-            alignItems: "stretch",
+            alignItems: "flex-end",
           }}
         >
           <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -279,13 +314,9 @@ export default function RunResults({
               value={[0, 3].includes(activeTab) ? activeTab : false}
               onChange={(e, newValue) => setActiveTab(newValue)}
               aria-label="Result characteristics tabs"
-              sx={{ minHeight: 40 }}
+              sx={pillTabsSx}
             >
-              <Tab
-                value={0}
-                label={t("models:label.liveMetrics")}
-                sx={{ minHeight: 40 }}
-              />
+              <Tab value={0} label={t("models:label.liveMetrics")} />
               <Tab
                 value={3}
                 label={
@@ -296,12 +327,33 @@ export default function RunResults({
                   </Tooltip>
                 }
                 disabled={!isFinished || optimizables === 0}
-                sx={{ minHeight: 40 }}
               />
             </Tabs>
           </Box>
 
-          <Divider orientation="vertical" flexItem sx={{ mx: 4 }} />
+          {/* Empty spacer just for the horizontal gap between groups — kept
+              out of the flex height/alignment calculation so the actual
+              rule (positioned absolutely inside it) can be sized freely
+              without pushing the tabs around. */}
+          <Box
+            sx={{
+              position: "relative",
+              alignSelf: "stretch",
+              width: 0,
+              mx: 4,
+            }}
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                top: 32,
+                bottom: -16,
+                left: 0,
+                width: "1px",
+                bgcolor: "divider",
+              }}
+            />
+          </Box>
 
           <Box sx={{ display: "flex", flexDirection: "column" }}>
             <Typography
@@ -321,7 +373,7 @@ export default function RunResults({
               value={[1, 2].includes(activeTab) ? activeTab : false}
               onChange={(e, newValue) => setActiveTab(newValue)}
               aria-label="Result operations tabs"
-              sx={{ minHeight: 40 }}
+              sx={pillTabsSx}
             >
               <Tab
                 value={1}
@@ -349,7 +401,6 @@ export default function RunResults({
                   </Tooltip>
                 }
                 disabled={!isFinished}
-                sx={{ minHeight: 40 }}
               />
               <Tab
                 value={2}
@@ -375,11 +426,12 @@ export default function RunResults({
                   </Tooltip>
                 }
                 disabled={!isFinished}
-                sx={{ minHeight: 40 }}
               />
             </Tabs>
           </Box>
         </Box>
+
+        <Divider sx={{ my: 4 }} />
 
         {activeTab === 0 && (
           <Box sx={{ py: 4 }}>

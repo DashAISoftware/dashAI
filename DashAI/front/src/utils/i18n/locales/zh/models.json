@@ -67,7 +67,7 @@
     "modelCount_other": "{{count}} 个模型",
     "bar": "条形图",
     "heatmap": "热图",
-    "characteristics": "特征",
+    "characteristics": "结果",
     "chooseTaskForSessionWithDataset": "为使用数据集 \"{{datasetName}}\" 的会话选择机器学习任务。",
     "configuration": "配置",
     "configureModel": "配置模型",
