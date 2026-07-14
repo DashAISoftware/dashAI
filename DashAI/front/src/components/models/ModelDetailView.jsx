@@ -8,7 +8,13 @@ import {
   Chip,
   Tooltip,
 } from "@mui/material";
-import { PlayArrow, Delete } from "@mui/icons-material";
+import {
+  PlayArrow,
+  Delete,
+  Dataset as DatasetIcon,
+  CalendarToday,
+  AccessTime,
+} from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import RunCard from "./RunCard";
@@ -69,11 +75,22 @@ export default function ModelDetailView({
   const createdLabel = formatCreatedDate(run.created, i18n.language);
   const durationLabel = formatDuration(run.start_time, run.end_time);
 
-  const statsParts = [
-    `${t("common:status")} ${statusText}`,
-    datasetName && `${t("common:dataset")} ${datasetName}`,
-    createdLabel && `${t("common:created")} ${createdLabel}`,
-    durationLabel && `${t("common:duration")} ${durationLabel}`,
+  const statChips = [
+    datasetName && {
+      icon: <DatasetIcon fontSize="small" />,
+      label: t("common:dataset"),
+      value: datasetName,
+    },
+    createdLabel && {
+      icon: <CalendarToday fontSize="small" />,
+      label: t("common:created"),
+      value: createdLabel,
+    },
+    durationLabel && {
+      icon: <AccessTime fontSize="small" />,
+      label: t("common:duration"),
+      value: durationLabel,
+    },
   ].filter(Boolean);
 
   return (
@@ -135,14 +152,43 @@ export default function ModelDetailView({
         </Box>
       </Box>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-        {statsParts.map((part, i) => (
-          <React.Fragment key={i}>
-            {i > 0 && " | "}
-            {part}
-          </React.Fragment>
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 6 }}>
+        {statChips.map(({ icon, label, value }) => (
+          <Chip
+            key={label}
+            icon={icon}
+            variant="outlined"
+            size="small"
+            sx={{
+              height: 26,
+              "& .MuiChip-icon": {
+                color: "text.secondary",
+                ml: 1.5,
+                fontSize: "1rem",
+              },
+              "& .MuiChip-label": { px: 2 },
+            }}
+            label={
+              <Box component="span" sx={{ display: "flex", gap: 1 }}>
+                <Typography
+                  component="span"
+                  variant="caption"
+                  color="text.secondary"
+                >
+                  {label}
+                </Typography>
+                <Typography
+                  component="span"
+                  variant="caption"
+                  sx={{ fontWeight: 600 }}
+                >
+                  {value}
+                </Typography>
+              </Box>
+            }
+          />
         ))}
-      </Typography>
+      </Box>
 
       <RunCard
         run={run}

@@ -66,6 +66,7 @@
     "modelCount_other": "{{count}} Modelle",
     "bar": "Balken",
     "heatmap": "Heatmap",
+    "characteristics": "Merkmale",
     "chooseTaskForSessionWithDataset": "Wählen Sie die ML-Aufgabe für Ihre Sitzung mit dem Datensatz \"{{datasetName}}\".",
     "configuration": "Konfiguration",
     "configureModel": "Modell konfigurieren",
@@ -186,6 +187,8 @@
   },
   "message": {
     "allRunsCompleted": "{{experiment}} hat alle Durchläufe abgeschlossen.",
+    "tabAvailableAfterFinish": "Verfügbar, sobald der Durchlauf das Training abgeschlossen hat.",
+    "noOptimizableParamsForHpo": "Keine Parameter sind für die Optimierung markiert — bearbeiten Sie die Konfiguration des Durchlaufs, um dies zu aktivieren.",
     "confirmDeleteRun": "Sind Sie sicher, dass Sie diesen Durchlauf löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "editingParametersWarning": "Das Bearbeiten von Parametern setzt den Status dieses Durchlaufs auf 'Nicht gestartet' zurück. Alle vorhandenen Metriken und Ergebnisse gehen verloren.",
     "aboutToUpdateParameters": "Sie sind dabei, die Parameter für Durchlauf <strong>{{runName}}</strong> zu aktualisieren. Diese Aktion hat folgende Konsequenzen:",

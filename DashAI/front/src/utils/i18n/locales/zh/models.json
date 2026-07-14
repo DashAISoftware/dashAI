@@ -66,6 +66,7 @@
     "modelCount_other": "{{count}} 个模型",
     "bar": "条形图",
     "heatmap": "热图",
+    "characteristics": "特征",
     "chooseTaskForSessionWithDataset": "为使用数据集 \"{{datasetName}}\" 的会话选择机器学习任务。",
     "configuration": "配置",
     "configureModel": "配置模型",
@@ -186,6 +187,8 @@
   },
   "message": {
     "allRunsCompleted": "{{experiment}} 已完成所有运行。",
+    "tabAvailableAfterFinish": "运行训练完成后即可使用。",
+    "noOptimizableParamsForHpo": "没有参数被标记为优化——请编辑运行的配置以启用此功能。",
     "confirmDeleteRun": "确定要删除此运行吗？此操作无法撤销。",
     "editingParametersWarning": "编辑参数将把此运行的状态重置为「未开始」。所有现有指标和结果将丢失。",
     "aboutToUpdateParameters": "您即将更新运行 <strong>{{runName}}</strong> 的参数。此操作将产生以下后果：",

@@ -9,12 +9,14 @@ import {
   Collapse,
   Tabs,
   Tab,
+  Divider,
   Grid,
   IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  Tooltip,
 } from "@mui/material";
 import {
   ExpandMore as ExpandMoreIcon,
@@ -101,6 +103,17 @@ export default function RunResults({
   const isFinished = run.status === 3;
   const isRunning = run.status === 1 || run.status === 2;
   const { t } = useTranslation(["models", "common"]);
+
+  // Explains *why* a tab is disabled, so it reads as a real (if currently
+  // unavailable) tab rather than being confused with the static group labels.
+  const notFinishedTooltip = !isFinished
+    ? t("models:message.tabAvailableAfterFinish")
+    : "";
+  const hyperparametersTooltip = !isFinished
+    ? notFinishedTooltip
+    : optimizables === 0
+      ? t("models:message.noOptimizableParamsForHpo")
+      : "";
 
   const runId = run.id;
   const fetchOperations = useCallback(async () => {
@@ -236,55 +249,133 @@ export default function RunResults({
   return (
     <Box id={`run-results-${run.id}`}>
       <Collapse in={resultsVisible} timeout="auto" unmountOnExit>
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
-          <Tabs
-            value={activeTab}
-            onChange={(e, newValue) => setActiveTab(newValue)}
-            aria-label="Results tabs"
-            variant="scrollable"
-            scrollButtons="auto"
-            sx={{
-              "& .MuiTabs-scrollButtons.Mui-disabled": {
-                display: "none",
-              },
-            }}
-          >
-            <Tab label={t("models:label.liveMetrics")} />
-            <Tab
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <span>{t("models:label.explainability")}</span>
-                  {isFinished && (
-                    <Chip
-                      label={globalExplainers.length + localExplainers.length}
-                      size="small"
-                      color="primary"
-                    />
-                  )}
-                </Box>
-              }
-              disabled={!isFinished}
-            />
-            <Tab
-              label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <span>{t("models:label.predictions")}</span>
-                  {isFinished && (
-                    <Chip
-                      label={predictions.length}
-                      size="small"
-                      color="primary"
-                    />
-                  )}
-                </Box>
-              }
-              disabled={!isFinished}
-            />
-            <Tab
-              label={t("models:label.hyperparameters")}
-              disabled={!isFinished || optimizables === 0}
-            />
-          </Tabs>
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+            mb: 4,
+            display: "flex",
+            alignItems: "stretch",
+          }}
+        >
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+                fontWeight: 600,
+                pl: 2,
+                pt: 1,
+              }}
+            >
+              {t("models:label.characteristics")}
+            </Typography>
+            <Tabs
+              value={[0, 3].includes(activeTab) ? activeTab : false}
+              onChange={(e, newValue) => setActiveTab(newValue)}
+              aria-label="Result characteristics tabs"
+              sx={{ minHeight: 40 }}
+            >
+              <Tab
+                value={0}
+                label={t("models:label.liveMetrics")}
+                sx={{ minHeight: 40 }}
+              />
+              <Tab
+                value={3}
+                label={
+                  <Tooltip title={hyperparametersTooltip}>
+                    <span style={{ pointerEvents: "auto" }}>
+                      {t("models:label.hyperparameters")}
+                    </span>
+                  </Tooltip>
+                }
+                disabled={!isFinished || optimizables === 0}
+                sx={{ minHeight: 40 }}
+              />
+            </Tabs>
+          </Box>
+
+          <Divider orientation="vertical" flexItem sx={{ mx: 4 }} />
+
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+                fontWeight: 600,
+                pl: 2,
+                pt: 1,
+              }}
+            >
+              {t("models:label.operations")}
+            </Typography>
+            <Tabs
+              value={[1, 2].includes(activeTab) ? activeTab : false}
+              onChange={(e, newValue) => setActiveTab(newValue)}
+              aria-label="Result operations tabs"
+              sx={{ minHeight: 40 }}
+            >
+              <Tab
+                value={1}
+                label={
+                  <Tooltip title={notFinishedTooltip}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        pointerEvents: "auto",
+                      }}
+                    >
+                      <span>{t("models:label.explainability")}</span>
+                      {isFinished && (
+                        <Chip
+                          label={
+                            globalExplainers.length + localExplainers.length
+                          }
+                          size="small"
+                          color="primary"
+                        />
+                      )}
+                    </Box>
+                  </Tooltip>
+                }
+                disabled={!isFinished}
+                sx={{ minHeight: 40 }}
+              />
+              <Tab
+                value={2}
+                label={
+                  <Tooltip title={notFinishedTooltip}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        pointerEvents: "auto",
+                      }}
+                    >
+                      <span>{t("models:label.predictions")}</span>
+                      {isFinished && (
+                        <Chip
+                          label={predictions.length}
+                          size="small"
+                          color="primary"
+                        />
+                      )}
+                    </Box>
+                  </Tooltip>
+                }
+                disabled={!isFinished}
+                sx={{ minHeight: 40 }}
+              />
+            </Tabs>
+          </Box>
         </Box>
 
         {activeTab === 0 && (

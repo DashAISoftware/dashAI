@@ -66,6 +66,7 @@
     "modelCount_other": "{{count}} models",
     "bar": "Bar",
     "heatmap": "Heatmap",
+    "characteristics": "Characteristics",
     "chooseTaskForSessionWithDataset": "Choose the machine learning task for your session with dataset \"{{datasetName}}\".",
     "configureModel": "Configure Model",
     "configuration": "Configuration",
@@ -186,6 +187,8 @@
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
+    "tabAvailableAfterFinish": "Available once the run finishes training.",
+    "noOptimizableParamsForHpo": "No parameters are marked for optimization — edit the run's configuration to enable this.",
     "confirmDeleteRun": "Are you sure you want to delete this run? This action cannot be undone.",
     "editingParametersWarning": "Editing parameters will reset this run's status to 'Not Started'. All existing metrics and results will be lost.",
     "aboutToUpdateParameters": "You are about to update the parameters for run <strong>{{runName}}</strong>. This action will have the following consequences:",

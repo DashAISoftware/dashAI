@@ -66,6 +66,7 @@
     "modelCount_other": "{{count}} modelos",
     "bar": "Barra",
     "heatmap": "Mapa de calor",
+    "characteristics": "Características",
     "chooseTaskForSessionWithDataset": "Escolha a tarefa de aprendizado de máquina para sua sessão com o conjunto de dados \"{{datasetName}}\".",
     "configuration": "Configuração",
     "configureModel": "Configurar Modelo",
@@ -188,6 +189,8 @@
   },
   "message": {
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",
+    "tabAvailableAfterFinish": "Estará disponível quando a execução terminar o treinamento.",
+    "noOptimizableParamsForHpo": "Nenhum parâmetro está marcado para otimização — edite a configuração da execução para habilitar isso.",
     "confirmDeleteRun": "Tem certeza de que deseja excluir esta execução? Esta ação não pode ser desfeita.",
     "editingParametersWarning": "Ao editar os parâmetros, o estado desta execução será redefinido para 'Não Iniciado'. Todas as métricas e resultados existentes serão perdidos.",
     "aboutToUpdateParameters": "Você está prestes a atualizar os parâmetros para a execução <strong>{{runName}}</strong>. Esta ação terá as seguintes consequências:",
