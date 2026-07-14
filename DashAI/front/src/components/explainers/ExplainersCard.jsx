@@ -4,16 +4,12 @@ import {
   Typography,
   IconButton,
   Paper,
-  Button,
-  Collapse,
   Box,
   CircularProgress,
 } from "@mui/material";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import PropTypes from "prop-types";
 import ExplainersPlot from "./ExplainersPlot";
 import { useNavigate } from "react-router-dom";
@@ -35,15 +31,6 @@ export default function ExplainersCard({
   compact = false,
 }) {
   const [open, setOpen] = useState(false);
-  const expandedStorageKey = `explainer-${scope}-${explainer.id}-expanded`;
-  const [expanded, setExpanded] = useState(() => {
-    const saved = localStorage.getItem(expandedStorageKey);
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-
-  useEffect(() => {
-    localStorage.setItem(expandedStorageKey, JSON.stringify(expanded));
-  }, [expanded, expandedStorageKey]);
   const [componentData, setComponentData] = useState(null);
   const { t } = useTranslation(["explainers"]);
   const isRunning = RUNNING_STATUSES.includes(explainer.status);
@@ -140,22 +127,13 @@ export default function ExplainersCard({
               </Box>
             ) : (
               <Grid sx={{ width: "100%" }}>
-                <Button
-                  size="small"
-                  onClick={() => setExpanded(!expanded)}
-                  endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                  sx={{ textTransform: "none" }}
+                <Box
+                  sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}
                 >
-                  {expanded
-                    ? t("explainers:button.hidePlot")
-                    : t("explainers:button.showPlot")}
-                </Button>
-
-                <Collapse in={expanded} timeout="auto" unmountOnExit>
-                  <Box sx={{ mt: 4 }}>
-                    <ExplainersPlot explainer={explainer} scope={scope} />
-                  </Box>
-                </Collapse>
+                  {/* Reserved slot for the future "generate story" action button.
+                      Kept hidden until that feature lands. */}
+                </Box>
+                <ExplainersPlot explainer={explainer} scope={scope} />
               </Grid>
             )}
           </Grid>
