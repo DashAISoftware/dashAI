@@ -56,7 +56,7 @@ export default function InlineExplainerCreator({
   const { t } = useTranslation(["explainers", "common"]);
   const formSubmitRef = useRef(null);
 
-  const { runId, taskName } = explainerConfig;
+  const { runId, taskName, modelName } = explainerConfig;
   const isLocal = scope === "local";
   // With a preselected explainer the selection step is skipped entirely; the
   // stepper starts at dataset selection (local) or parameter configuration.
@@ -314,6 +314,7 @@ export default function InlineExplainerCreator({
             setNextEnabled={setNextEnabled}
             scope={isLocal ? "Local" : "Global"}
             taskName={taskName}
+            modelName={modelName}
             existingExplainers={existingExplainers}
           />
         )}
@@ -377,6 +378,7 @@ InlineExplainerCreator.propTypes = {
   explainerConfig: PropTypes.shape({
     runId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     taskName: PropTypes.string,
+    modelName: PropTypes.string,
   }).isRequired,
   preselectedExplainer: PropTypes.string,
   onCreated: PropTypes.func,

@@ -54,6 +54,7 @@
     "selectDatasetToExplain": "Select a dataset with instances to explain",
     "selectExplainer": "Set name and explainer",
     "selectExplainerAndName": "Select a explainer and enter a name",
+    "selectInstance": "Select an instance",
     "explainerInProgress": "Explainer in progress...",
     "splitSelectionSummary": "Percentage: {{percentage}}% | Rows selected: {{rowsSelected}} / {{totalRows}}",
     "searchExplainers": "Search explainers..."

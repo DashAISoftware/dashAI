@@ -1,5 +1,6 @@
 import api from "./api";
-import type { IExplorer, IExplorerResults } from "../types/explorer";
+import type { IArtifact } from "../types/artifact";
+import type { IExplorer } from "../types/explorer";
 
 const explorerEndpoint = "/v1/explorer";
 
@@ -103,7 +104,7 @@ export const deleteExplorer = async (explorerId: string): Promise<object> => {
 export const getExplorerResults = async (
   explorerId: number,
   options: object = {},
-): Promise<IExplorerResults> => {
+): Promise<IArtifact[]> => {
   const data = { options };
   const response = await api.post(
     `${explorerEndpoint}/${explorerId}/results/`,

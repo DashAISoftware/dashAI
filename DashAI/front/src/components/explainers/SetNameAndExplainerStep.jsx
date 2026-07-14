@@ -13,6 +13,7 @@ function SetNameAndExplainerStep({
   setNextEnabled,
   scope,
   taskName,
+  modelName,
   existingExplainers = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
@@ -31,9 +32,26 @@ function SetNameAndExplainerStep({
   const getExplainers = async () => {
     setLoading(true);
     try {
-      const result = await getComponentsRequest({
-        selectTypes: [`${scope}Explainer`],
-        relatedComponent: taskName,
+      // Explainers related to the task are model agnostic (usable by any
+      // model of the task); explainers related to the run's model are
+      // model specific ones the model declares in COMPATIBLE_COMPONENTS.
+      const [taskRelated, modelRelated] = await Promise.all([
+        getComponentsRequest({
+          selectTypes: [`${scope}Explainer`],
+          relatedComponent: taskName,
+        }),
+        modelName
+          ? getComponentsRequest({
+              selectTypes: [`${scope}Explainer`],
+              relatedComponent: modelName,
+            })
+          : Promise.resolve([]),
+      ]);
+      const seen = new Set();
+      const result = [...taskRelated, ...modelRelated].filter((obj) => {
+        if (seen.has(obj.name)) return false;
+        seen.add(obj.name);
+        return true;
       });
       setExplainers(result.filter((obj) => !obj.name.startsWith("Fit")));
     } catch (error) {
@@ -165,6 +183,7 @@ SetNameAndExplainerStep.propTypes = {
   setNextEnabled: PropTypes.func.isRequired,
   scope: PropTypes.string.isRequired,
   taskName: PropTypes.string,
+  modelName: PropTypes.string,
   existingExplainers: PropTypes.array,
 };
 
