@@ -26,7 +26,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --locked
+        run: uv sync --locked --extra cpu
 
       - name: Set DB env vars
         run: |
@@ -36,7 +36,7 @@ jobs:
 
       - name: Show Alembic info
         run: |
-          uv run alembic --version
+          uv run --no-sync alembic --version
           echo "DB will be at: $DATABASE_URL"
 
       - name: Prepare temp dir
@@ -47,15 +47,15 @@ jobs:
       # upgrade to head
       - name: Upgrade to head
         run: |
-          uv run alembic -x url="$DATABASE_URL" upgrade head
+          uv run --no-sync alembic -x url="$DATABASE_URL" upgrade head
 
       # Checks downgrade and upgrade again (reversibility)
       - name: Downgrade to base and upgrade again (reversibility check)
         run: |
-          uv run alembic -x url="$DATABASE_URL" downgrade base
-          uv run alembic -x url="$DATABASE_URL" upgrade head
+          uv run --no-sync alembic -x url="$DATABASE_URL" downgrade base
+          uv run --no-sync alembic -x url="$DATABASE_URL" upgrade head
 
       - name: Check for pending autogenerate (python-based)
         env:
           PYTHONPATH: "${PYTHONPATH}:."
-        run: uv run python -m scripts.ci_alembic_check
+        run: uv run --no-sync python -m scripts.ci_alembic_check

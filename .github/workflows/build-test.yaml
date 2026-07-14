@@ -47,7 +47,7 @@ jobs:
           enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --locked
+        run: uv sync --locked --extra cpu
 
       - name: Prepare frontend build
         run: mkdir -p DashAI/front/build
@@ -57,4 +57,4 @@ jobs:
           name: react-build
           path: DashAI/front/build
       - name: Test with pytest
-        run: uv run pytest -v
+        run: uv run --no-sync pytest -v
