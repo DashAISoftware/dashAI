@@ -41,7 +41,13 @@ export default function ArtifactViewer({
   const [downloadAnchor, setDownloadAnchor] = useState(null);
   const [editing, setEditing] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
-  const [editFigure, setEditFigure] = useState(null);
+  // editInitial is the figure the editable Plot mounts with (set once per edit
+  // session). editFigureRef holds the latest edited figure, captured in
+  // onUpdate WITHOUT setState so Plotly's own edit events do not trigger a
+  // React re-render that would re-run Plotly.react and loop the page into a
+  // freeze.
+  const [editInitial, setEditInitial] = useState(null);
+  const editFigureRef = useRef(null);
   const plotWrapRef = useRef(null);
   const isPlotly = artifact.type === "plotly";
 
@@ -59,17 +65,27 @@ export default function ArtifactViewer({
 
   const startEdit = () => {
     if (!figure?.data) return;
-    setEditFigure({
+    const initial = {
       data: JSON.parse(JSON.stringify(figure.data)),
       layout: applyThemeToLayout(figure.layout, theme),
-    });
+    };
+    setEditInitial(initial);
+    editFigureRef.current = initial;
     setEditing(true);
+  };
+
+  const closeEdit = () => {
+    setEditing(false);
+    setEditInitial(null);
+    editFigureRef.current = null;
   };
 
   const saveEdit = async () => {
     try {
-      if (onSaveEdit && editFigure) await onSaveEdit(editFigure);
-      setEditing(false);
+      if (onSaveEdit && editFigureRef.current) {
+        await onSaveEdit(editFigureRef.current);
+      }
+      closeEdit();
     } catch (error) {
       console.error("Failed to save plot edits", error);
     }
@@ -190,13 +206,11 @@ export default function ArtifactViewer({
           per-artifact title so it is not repeated on every block. */}
       <ArtifactRenderer artifact={{ ...artifact, title: null }} />
 
-      {/* Edit dialog: editable plotly figure */}
-      <Dialog
-        open={editing}
-        onClose={() => setEditing(false)}
-        fullWidth
-        maxWidth="lg"
-      >
+      {/* Edit dialog: editable plotly figure. The Plot mounts once with
+          editInitial and reports edits through onUpdate into a ref; we never
+          feed those edits back as props, so Plotly does not re-render in a
+          loop. */}
+      <Dialog open={editing} onClose={closeEdit} fullWidth maxWidth="lg">
         <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1, gap: 1 }}>
           {onSaveEdit && (
             <Tooltip title={t("common:save")}>
@@ -205,18 +219,18 @@ export default function ArtifactViewer({
               </IconButton>
             </Tooltip>
           )}
-          <IconButton onClick={() => setEditing(false)}>
+          <IconButton onClick={closeEdit}>
             <CloseIcon />
           </IconButton>
         </Box>
-        {editFigure && (
+        {editInitial && (
           <Plot
-            data={editFigure.data}
-            layout={{ ...editFigure.layout, autosize: true, height: 500 }}
+            data={editInitial.data}
+            layout={{ ...editInitial.layout, autosize: true, height: 500 }}
             config={{ editable: true, displaylogo: false, responsive: true }}
-            onUpdate={(fig) =>
-              setEditFigure({ data: fig.data, layout: fig.layout })
-            }
+            onUpdate={(fig) => {
+              editFigureRef.current = { data: fig.data, layout: fig.layout };
+            }}
             useResizeHandler
             style={{ width: "100%" }}
           />
