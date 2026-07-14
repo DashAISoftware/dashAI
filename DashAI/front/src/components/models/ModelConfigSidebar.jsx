@@ -51,14 +51,15 @@ export default function ModelConfigSidebar({
         </Typography>
       </Box>
 
-      <Box sx={{ flex: 1, overflowY: "auto", p: 4 }}>
+      <Box sx={{ flex: 1, overflowY: "auto", px: 4, pt: 4 }}>
         <RunEditForm run={run} {...formProps} />
 
         <Box
           sx={{
             display: "flex",
             justifyContent: "flex-end",
-            py: 2,
+            pt: 2,
+            pb: 4,
             position: "sticky",
             bottom: 0,
             bgcolor: "background.box",
