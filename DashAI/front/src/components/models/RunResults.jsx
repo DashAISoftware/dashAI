@@ -21,14 +21,12 @@ import {
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
-  Add as AddIcon,
   TrendingUp as TrendingUpIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
 import ExplainersCard from "../explainers/ExplainersCard";
 import PredictionCard from "./PredictionCard";
 import { LoadingButton } from "@mui/lab";
-import InlineExplainerCreator from "../explainers/InlineExplainerCreator";
 import DatasetPredictionPanel from "./DatasetPredictionPanel";
 import ManualPredictionPanel from "./ManualPredictionPanel";
 import LiveMetricsChart from "./LiveMetricsChart";
@@ -41,8 +39,6 @@ import { checkHowManyOptimazers } from "../../utils/schema";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { useModels } from "./ModelsContext";
-import TimestampWrapper from "../shared/TimestampWrapper";
-import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 
 export default function RunResults({
   run,
@@ -82,8 +78,6 @@ export default function RunResults({
   const [trainingDatasetSample, setTrainingDatasetSample] = useState(null);
   const [outputColumn, setOutputColumn] = useState(null);
 
-  const [globalCreatorOpen, setGlobalCreatorOpen] = useState(false);
-  const [localCreatorOpen, setLocalCreatorOpen] = useState(false);
   const [globalExpanded, setGlobalExpanded] = useState(true);
   const [localExpanded, setLocalExpanded] = useState(true);
   const [datasetExpanded, setDatasetExpanded] = useState(true);
@@ -222,11 +216,6 @@ export default function RunResults({
     setRunDetailTab(activeTab);
     return () => setRunDetailTab(null);
   }, [isDetailView, activeTab, setRunDetailTab]);
-
-  const handleExplainerCreated = () => {
-    fetchOperations();
-    if (onRefresh) onRefresh();
-  };
 
   const handlePredictionCreated = (prediction) => {
     if (prediction) {
@@ -400,60 +389,6 @@ export default function RunResults({
 
         {activeTab === 1 && isFinished && (
           <Box sx={{ py: 4, width: "100%" }}>
-            <Grid container spacing={4} sx={{ mb: 4 }}>
-              <Grid item xs={6}>
-                <TimestampWrapper
-                  eventName={TIMESTAMP_KEYS.explainer.configureGlobal}
-                >
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<AddIcon />}
-                    onClick={() => setGlobalCreatorOpen(true)}
-                    fullWidth
-                  >
-                    {t("models:button.createGlobalExplainer")}
-                  </Button>
-                </TimestampWrapper>
-              </Grid>
-              <Grid item xs={6}>
-                <TimestampWrapper
-                  eventName={TIMESTAMP_KEYS.explainer.configureLocal}
-                >
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<AddIcon />}
-                    onClick={() => setLocalCreatorOpen(true)}
-                    fullWidth
-                  >
-                    {t("models:button.createLocalExplainer")}
-                  </Button>
-                </TimestampWrapper>
-              </Grid>
-            </Grid>
-
-            <InlineExplainerCreator
-              open={globalCreatorOpen}
-              scope="global"
-              explainerConfig={{
-                runId: run.id,
-                taskName: session?.task_name,
-              }}
-              onCreated={handleExplainerCreated}
-              onCancel={() => setGlobalCreatorOpen(false)}
-            />
-            <InlineExplainerCreator
-              open={localCreatorOpen}
-              scope="local"
-              explainerConfig={{
-                runId: run.id,
-                taskName: session?.task_name,
-              }}
-              onCreated={handleExplainerCreated}
-              onCancel={() => setLocalCreatorOpen(false)}
-            />
-
             <Stack spacing={4}>
               <Box
                 sx={{

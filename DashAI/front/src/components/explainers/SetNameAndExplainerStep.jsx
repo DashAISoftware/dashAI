@@ -14,7 +14,6 @@ function SetNameAndExplainerStep({
   scope,
   taskName,
   existingExplainers = [],
-  preselectedExplainerName = null,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
@@ -36,16 +35,7 @@ function SetNameAndExplainerStep({
         selectTypes: [`${scope}Explainer`],
         relatedComponent: taskName,
       });
-      const filtered = result.filter((obj) => !obj.name.startsWith("Fit"));
-      setExplainers(filtered);
-      if (preselectedExplainerName) {
-        const preselected = filtered.find(
-          (obj) => obj.name === preselectedExplainerName,
-        );
-        if (preselected) {
-          setSelectedExplainer(preselected);
-        }
-      }
+      setExplainers(result.filter((obj) => !obj.name.startsWith("Fit")));
     } catch (error) {
       enqueueSnackbar(t("explainers:error.fetchExplainers"), {
         variant: "error",
@@ -176,7 +166,6 @@ SetNameAndExplainerStep.propTypes = {
   scope: PropTypes.string.isRequired,
   taskName: PropTypes.string,
   existingExplainers: PropTypes.array,
-  preselectedExplainerName: PropTypes.string,
 };
 
 export default SetNameAndExplainerStep;
