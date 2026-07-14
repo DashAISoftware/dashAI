@@ -3,7 +3,13 @@
     "addExplainer": "Add Explainer",
     "backToExplainers": "Back to explainers",
     "hidePlot": "Hide Plot",
-    "showPlot": "Show Plot"
+    "showPlot": "Show Plot",
+    "download": "Download",
+    "downloadPng": "Download as PNG",
+    "downloadSvg": "Download as SVG",
+    "editPlot": "Edit plot",
+    "resetPlot": "Reset edits",
+    "fullscreen": "Fullscreen"
   },
   "error": {
     "explainerFailed": "Explainer failed to generate.",
@@ -57,7 +63,8 @@
     "selectInstance": "Select an instance",
     "explainerInProgress": "Explainer in progress...",
     "splitSelectionSummary": "Percentage: {{percentage}}% | Rows selected: {{rowsSelected}} / {{totalRows}}",
-    "searchExplainers": "Search explainers..."
+    "searchExplainers": "Search explainers...",
+    "modelInput": "Model input"
   },
   "message": {
     "explainerJobCompleted": "Explainer {{name}} completed successfully",

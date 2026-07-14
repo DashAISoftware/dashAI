@@ -3,7 +3,13 @@
     "addExplainer": "添加解释器",
     "backToExplainers": "返回解释器列表",
     "hidePlot": "隐藏图表",
-    "showPlot": "显示图表"
+    "showPlot": "显示图表",
+    "download": "下载",
+    "downloadPng": "下载为 PNG",
+    "downloadSvg": "下载为 SVG",
+    "editPlot": "编辑图表",
+    "resetPlot": "重置编辑",
+    "fullscreen": "全屏"
   },
   "error": {
     "explainerFailed": "解释器生成失败。",
@@ -57,7 +63,8 @@
     "selectInstance": "选择一个实例",
     "explainerInProgress": "解释器运行中...",
     "splitSelectionSummary": "百分比：{{percentage}}% | 已选行数：{{rowsSelected}} / {{totalRows}}",
-    "searchExplainers": "搜索解释器..."
+    "searchExplainers": "搜索解释器...",
+    "modelInput": "模型输入"
   },
   "message": {
     "explainerJobCompleted": "解释器 {{name}} 成功完成",

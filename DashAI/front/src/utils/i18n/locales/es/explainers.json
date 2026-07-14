@@ -3,7 +3,13 @@
     "addExplainer": "Agregar Explicador",
     "backToExplainers": "Volver a explicadores",
     "hidePlot": "Ocultar Gráfico",
-    "showPlot": "Mostrar Gráfico"
+    "showPlot": "Mostrar Gráfico",
+    "download": "Descargar",
+    "downloadPng": "Descargar como PNG",
+    "downloadSvg": "Descargar como SVG",
+    "editPlot": "Editar gráfico",
+    "resetPlot": "Restablecer ediciones",
+    "fullscreen": "Pantalla completa"
   },
   "error": {
     "explainerFailed": "Error al generar el explicador.",
@@ -57,7 +63,8 @@
     "selectInstance": "Selecciona una instancia",
     "explainerInProgress": "Explicador en progreso...",
     "splitSelectionSummary": "Porcentaje: {{percentage}}% | Filas seleccionadas: {{rowsSelected}} / {{totalRows}}",
-    "searchExplainers": "Buscar explicadores..."
+    "searchExplainers": "Buscar explicadores...",
+    "modelInput": "Entrada del modelo"
   },
   "message": {
     "explainerJobCompleted": "Explicador {{name}} completado exitosamente",
