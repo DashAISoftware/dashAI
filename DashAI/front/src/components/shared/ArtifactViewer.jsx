@@ -101,6 +101,13 @@ export default function ArtifactViewer({
     "&:hover": { color: "text.primary" },
   };
 
+  // Fill most of the viewport in the fullscreen view, leaving room for the
+  // header bar and padding.
+  const fullscreenHeight =
+    typeof window !== "undefined"
+      ? Math.max(360, Math.round(window.innerHeight * 0.8))
+      : 720;
+
   return (
     <Box
       ref={plotWrapRef}
@@ -238,14 +245,46 @@ export default function ArtifactViewer({
       </Dialog>
 
       {/* Fullscreen view */}
-      <Dialog open={fullscreen} fullScreen onClose={() => setFullscreen(false)}>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1 }}>
-          <IconButton onClick={() => setFullscreen(false)}>
+      <Dialog
+        open={fullscreen}
+        fullScreen
+        onClose={() => setFullscreen(false)}
+        PaperProps={{ sx: { bgcolor: "background.default" } }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 4,
+            py: 2,
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
+            flexShrink: 0,
+          }}
+        >
+          <Typography variant="subtitle1" color="text.primary">
+            {artifact.title || ""}
+          </Typography>
+          <IconButton onClick={() => setFullscreen(false)} sx={actionButtonSx}>
             <CloseIcon />
           </IconButton>
         </Box>
-        <Box sx={{ p: 2 }}>
-          <ArtifactRenderer artifact={{ ...artifact, title: null }} />
+        <Box
+          sx={{
+            flex: 1,
+            overflow: "auto",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            p: 4,
+          }}
+        >
+          <Box sx={{ width: "100%", maxWidth: 1100 }}>
+            <ArtifactRenderer
+              artifact={{ ...artifact, title: null }}
+              height={fullscreenHeight}
+            />
+          </Box>
         </Box>
       </Dialog>
     </Box>

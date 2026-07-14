@@ -23,8 +23,10 @@ import { applyThemeToLayout } from "../../utils/plotlyTheme";
  * (payload: plotly JSON string), "table" (payload: {columns, rows,
  * highlight}), "image" (payload: {data, mime}) and "text" (payload: string).
  * Unknown types fall back to preformatted text so nothing is silently lost.
+ * The optional height sets the plot height and caps image/table height; it
+ * lets callers render larger (for example a fullscreen view).
  */
-export default function ArtifactRenderer({ artifact }) {
+export default function ArtifactRenderer({ artifact, height = 380 }) {
   const theme = useTheme();
   const { t } = useTranslation(["common"]);
 
@@ -58,7 +60,7 @@ export default function ArtifactRenderer({ artifact }) {
         return (
           <Plot
             data={parsedFigure.data}
-            layout={{ ...themedLayout, height: 380, autosize: true }}
+            layout={{ ...themedLayout, height, autosize: true }}
             config={{ displayModeBar: false }}
             useResizeHandler
             style={{ width: "100%" }}
@@ -67,7 +69,7 @@ export default function ArtifactRenderer({ artifact }) {
       case "table": {
         const { columns = [], rows = [] } = artifact.payload ?? {};
         return (
-          <TableContainer component={Paper} sx={{ maxHeight: 380 }}>
+          <TableContainer component={Paper} sx={{ maxHeight: height }}>
             <Table size="small" stickyHeader>
               <TableHead>
                 <TableRow>
@@ -111,7 +113,7 @@ export default function ArtifactRenderer({ artifact }) {
             component="img"
             src={`data:${mime};base64,${data}`}
             alt={artifact.title || t("common:image")}
-            sx={{ maxWidth: "100%", maxHeight: 380, objectFit: "contain" }}
+            sx={{ maxWidth: "100%", maxHeight: height, objectFit: "contain" }}
           />
         );
       }
@@ -145,4 +147,5 @@ ArtifactRenderer.propTypes = {
     payload: PropTypes.any,
     title: PropTypes.string,
   }).isRequired,
+  height: PropTypes.number,
 };
