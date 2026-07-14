@@ -66,7 +66,7 @@
     "modelCount_other": "{{count}} models",
     "bar": "Bar",
     "heatmap": "Heatmap",
-    "characteristics": "Characteristics",
+    "characteristics": "Results",
     "chooseTaskForSessionWithDataset": "Choose the machine learning task for your session with dataset \"{{datasetName}}\".",
     "configureModel": "Configure Model",
     "configuration": "Configuration",
