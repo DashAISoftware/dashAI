@@ -8,7 +8,7 @@ import {
   Chip,
   Tooltip,
 } from "@mui/material";
-import { Edit, PlayArrow, Delete } from "@mui/icons-material";
+import { PlayArrow, Delete } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import RunCard from "./RunCard";
@@ -58,7 +58,6 @@ export default function ModelDetailView({
   onRefresh,
 }) {
   const { t, i18n } = useTranslation(["models", "common"]);
-  const [isEditing, setIsEditing] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const model = models.find((m) => m.name === run.model_name);
@@ -113,16 +112,6 @@ export default function ModelDetailView({
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {!isRunning && (
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<Edit />}
-              onClick={() => setIsEditing(true)}
-            >
-              {t("common:edit")}
-            </Button>
-          )}
           {canTrain && (
             <Button
               variant="contained"
@@ -167,8 +156,6 @@ export default function ModelDetailView({
         onRefresh={onRefresh}
         forceExpanded
         hideChrome
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
         deleteConfirmOpen={deleteConfirmOpen}
         setDeleteConfirmOpen={setDeleteConfirmOpen}
       />

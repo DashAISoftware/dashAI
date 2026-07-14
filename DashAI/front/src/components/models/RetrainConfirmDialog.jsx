@@ -95,11 +95,19 @@ export default function RetrainConfirmDialog({
           </>
         ) : (
           <DialogContentText>
-            <Trans i18nKey="models:label.retrainConfirmDetails">
-              Are you sure you want to re-train run "
-              <strong>{{ runName: run?.name }}</strong>
-              "?
-            </Trans>
+            {mode === "save" ? (
+              <Trans i18nKey="models:label.saveConfirmDetails">
+                Saving "<strong>{{ runName: run?.name }}</strong>" will reset
+                its status to 'Not Started' and clear its current metrics and
+                results. Are you sure you want to continue?
+              </Trans>
+            ) : (
+              <Trans i18nKey="models:label.retrainConfirmDetails">
+                Are you sure you want to re-train run "
+                <strong>{{ runName: run?.name }}</strong>
+                "?
+              </Trans>
+            )}
           </DialogContentText>
         )}
       </DialogContent>

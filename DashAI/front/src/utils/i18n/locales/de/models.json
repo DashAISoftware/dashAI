@@ -130,6 +130,7 @@
     "retrainWillDeleteOperations": "Dieser Durchlauf hat bestehende Operationen, die gelöscht werden",
     "retrainWillDeleteOperationsDetails": "Das Neu-Trainieren von \"<1>{{runName}}</1>\" löscht:",
     "saveParameterChanges": "Parameteränderungen speichern?",
+    "saveConfirmDetails": "Das Speichern von \"<1>{{runName}}</1>\" setzt seinen Status auf 'Nicht gestartet' zurück und löscht seine aktuellen Metriken und Ergebnisse. Möchten Sie wirklich fortfahren?",
     "showResults": "Ergebnisse anzeigen",
     "saveWillDeleteOperationsDetails": "Das Speichern von \"<1>{{runName}}</1>\" setzt den Durchlauf zurück. Folgendes wird beim erneuten Training gelöscht:",
     "runDetails": "Durchlaufdetails",

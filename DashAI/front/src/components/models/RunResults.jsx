@@ -16,7 +16,6 @@ import {
   DialogContent,
   DialogActions,
 } from "@mui/material";
-import ModelConfigurationContent from "./ModelConfigurationContent";
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
@@ -43,7 +42,6 @@ import { TIMESTAMP_KEYS } from "../../constants/timestamp";
 
 export default function RunResults({
   run,
-  model,
   session,
   onRefresh,
   explainerRefreshTrigger,
@@ -70,8 +68,8 @@ export default function RunResults({
     const saved = localStorage.getItem(`run-${run.id}-active-tab`);
     if (saved !== null) {
       const savedTab = JSON.parse(saved);
-      // Tabs 2+ (Explainability, Predictions, Hyperparameters) require a finished run
-      if (savedTab > 1 && run.status !== 3) return 0;
+      // Tabs 1+ (Explainability, Predictions, Hyperparameters) require a finished run
+      if (savedTab > 0 && run.status !== 3) return 0;
       return savedTab;
     }
     return 0;
@@ -170,7 +168,7 @@ export default function RunResults({
     const handleOpenDialog = (event) => {
       if (event.detail.runId === run.id) {
         setResultsVisible(true);
-        setActiveTab(3);
+        setActiveTab(2);
         setShowDatasetPanel(true);
       }
     };
@@ -182,7 +180,7 @@ export default function RunResults({
   useEffect(() => {
     if (isRunning && autoExpand) {
       setResultsVisible(true);
-      setActiveTab(1); // Live Metrics tab
+      setActiveTab(0); // Live Metrics tab
     }
   }, [isRunning, autoExpand]);
 
@@ -235,10 +233,6 @@ export default function RunResults({
   const totalOperations =
     globalExplainers.length + localExplainers.length + predictions.length;
 
-  const hasParams =
-    (run.parameters && Object.keys(run.parameters).length > 0) ||
-    (run.optimizer_name && run.goal_metric);
-
   return (
     <Box id={`run-results-${run.id}`}>
       <Collapse in={resultsVisible} timeout="auto" unmountOnExit>
@@ -255,7 +249,6 @@ export default function RunResults({
               },
             }}
           >
-            <Tab label={t("models:label.configuration")} />
             <Tab label={t("models:label.liveMetrics")} />
             <Tab
               label={
@@ -296,20 +289,11 @@ export default function RunResults({
 
         {activeTab === 0 && (
           <Box sx={{ py: 4 }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 3 }}>
-              {t("common:modelParameters")}
-            </Typography>
-            <ModelConfigurationContent run={run} model={model} />
-          </Box>
-        )}
-
-        {activeTab === 1 && (
-          <Box sx={{ py: 4 }}>
             <LiveMetricsChart run={run} />
           </Box>
         )}
 
-        {activeTab === 2 && isFinished && (
+        {activeTab === 1 && isFinished && (
           <Box sx={{ py: 4, width: "100%" }}>
             <Grid container spacing={4} sx={{ mb: 4 }}>
               <Grid item xs={6}>
@@ -511,7 +495,7 @@ export default function RunResults({
           </Box>
         )}
 
-        {activeTab === 3 && isFinished && (
+        {activeTab === 2 && isFinished && (
           <Box sx={{ py: 4, width: "100%" }}>
             <Grid container spacing={4} sx={{ mb: 4 }}>
               <Grid item xs={6}>
@@ -816,7 +800,7 @@ export default function RunResults({
           </Box>
         )}
 
-        {activeTab === 4 && isFinished && optimizables > 0 && (
+        {activeTab === 3 && isFinished && optimizables > 0 && (
           <Box sx={{ py: 4 }}>
             <HyperparameterPlots run={run} />
           </Box>
@@ -837,11 +821,6 @@ RunResults.propTypes = {
     model_session_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     test_metrics: PropTypes.object,
   }).isRequired,
-  model: PropTypes.shape({
-    name: PropTypes.string,
-    display_name: PropTypes.string,
-    schema: PropTypes.object,
-  }),
   session: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

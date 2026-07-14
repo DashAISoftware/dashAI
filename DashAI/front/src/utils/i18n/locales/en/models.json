@@ -130,6 +130,7 @@
     "retrainWillDeleteOperations": "This run has existing operations that will be deleted",
     "retrainWillDeleteOperationsDetails": "Re-training run \"<1>{{runName}}</1>\" will delete:",
     "saveParameterChanges": "Save Parameter Changes?",
+    "saveConfirmDetails": "Saving \"<1>{{runName}}</1>\" will reset its status to 'Not Started' and clear its current metrics and results. Are you sure you want to continue?",
     "showResults": "Show Results",
     "saveWillDeleteOperationsDetails": "Saving \"<1>{{runName}}</1>\" will reset the run. The following will be deleted when you train again:",
     "runDetails": "Run Details",

@@ -130,6 +130,7 @@
     "retrainWillDeleteOperations": "此运行有将被删除的现有操作",
     "retrainWillDeleteOperationsDetails": "重新训练运行 \"<1>{{runName}}</1>\" 将删除：",
     "saveParameterChanges": "保存参数更改？",
+    "saveConfirmDetails": "保存“<1>{{runName}}</1>”将把其状态重置为“未开始”，并清除其当前的指标和结果。确定要继续吗？",
     "showResults": "显示结果",
     "saveWillDeleteOperationsDetails": "保存 \"<1>{{runName}}</1>\" 将重置该运行。再次训练时以下内容将被删除：",
     "runDetails": "运行详情",

@@ -132,6 +132,7 @@
     "retrainWillDeleteOperations": "Esta ejecución tiene operaciones existentes que serán eliminadas",
     "retrainWillDeleteOperationsDetails": "Re-entrenar la ejecución \"<1>{{runName}}</1>\" eliminará:",
     "saveParameterChanges": "¿Guardar Cambios de Parámetros?",
+    "saveConfirmDetails": "Guardar \"<1>{{runName}}</1>\" reiniciará su estado a 'No Iniciado' y borrará sus métricas y resultados actuales. ¿Está seguro de que desea continuar?",
     "showResults": "Mostrar Resultados",
     "saveWillDeleteOperationsDetails": "Guardar \"<1>{{runName}}</1>\" restablecerá la ejecución. Lo siguiente se eliminará cuando vuelva a entrenar:",
     "runDetails": "Detalles de la Ejecución",

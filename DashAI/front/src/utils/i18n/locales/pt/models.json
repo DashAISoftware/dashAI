@@ -132,6 +132,7 @@
     "retrainWillDeleteOperations": "Esta execução possui operações existentes que serão excluídas",
     "retrainWillDeleteOperationsDetails": "Retreinar a execução \"<1>{{runName}}</1>\" excluirá:",
     "saveParameterChanges": "Salvar Alterações de Parâmetros?",
+    "saveConfirmDetails": "Salvar \"<1>{{runName}}</1>\" redefinirá seu status para 'Não Iniciado' e apagará suas métricas e resultados atuais. Tem certeza de que deseja continuar?",
     "showResults": "Mostrar Resultados",
     "saveWillDeleteOperationsDetails": "Salvar \"<1>{{runName}}</1>\" redefinirá a execução. O seguinte será excluído ao retreinar:",
     "runDetails": "Detalhes da Execução",

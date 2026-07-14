@@ -13,6 +13,7 @@ import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
 import ColumnInsights from "../notebooks/dataset/ColumnInsights";
+import ModelConfigSidebar from "./ModelConfigSidebar";
 
 export default function ModelsRightBar({ onToggle }) {
   const theme = useTheme();
@@ -36,6 +37,7 @@ export default function ModelsRightBar({ onToggle }) {
     datasetInfo,
     setDatasetTab,
     sessionRightContent,
+    fetchRuns,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -105,6 +107,21 @@ export default function ModelsRightBar({ onToggle }) {
       setTimeout(waitForElement, 300);
     }
   };
+
+  const activeRun = isInModelDetail
+    ? existingRuns.find((r) => String(r.id) === params.runId)
+    : null;
+
+  if (isInModelDetail && activeRun) {
+    return (
+      <ModelConfigSidebar
+        run={activeRun}
+        session={session}
+        existingRuns={existingRuns}
+        onRefresh={fetchRuns}
+      />
+    );
+  }
 
   if (sessionRightContent) {
     return (
