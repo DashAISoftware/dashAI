@@ -25,7 +25,7 @@ function EmptyState({ message }) {
   );
 }
 
-function ResultsGraphsPlot({ chartData }) {
+function ResultsGraphsPlot({ chartData, onToggleRun }) {
   const { t } = useTranslation(["models"]);
   const theme = useTheme();
   const bgColor = theme.palette.background.paper;
@@ -83,10 +83,19 @@ function ResultsGraphsPlot({ chartData }) {
             px: 1,
           }}
         >
-          {legend.map(({ label, color }) => (
+          {legend.map(({ id, label, color, hidden }) => (
             <Box
-              key={label}
-              sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+              key={id}
+              onClick={() => onToggleRun(id)}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                cursor: "pointer",
+                opacity: hidden ? 0.4 : 1,
+                userSelect: "none",
+                "&:hover": { opacity: hidden ? 0.65 : 0.8 },
+              }}
             >
               <Box
                 sx={{
@@ -95,6 +104,7 @@ function ResultsGraphsPlot({ chartData }) {
                   borderRadius: "50%",
                   bgcolor: color,
                   flexShrink: 0,
+                  filter: hidden ? "grayscale(1)" : "none",
                 }}
               />
               <Typography variant="caption" color="text.secondary">
@@ -182,6 +192,7 @@ function ResultsGraphsPlot({ chartData }) {
 
 ResultsGraphsPlot.propTypes = {
   chartData: PropTypes.object.isRequired,
+  onToggleRun: PropTypes.func.isRequired,
 };
 
 export default ResultsGraphsPlot;

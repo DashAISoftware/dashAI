@@ -12,6 +12,7 @@ function ResultsGraphsLayout({
   handleSelectAll,
   handleClearAll,
   chartData,
+  onToggleRun,
 }) {
   return (
     <Box
@@ -32,7 +33,7 @@ function ResultsGraphsLayout({
 
       {/* Plotly chart area — bar panels + heatmap in one grid */}
       <Box display="flex" flex={1} width="100%">
-        <ResultsGraphsPlot chartData={chartData} />
+        <ResultsGraphsPlot chartData={chartData} onToggleRun={onToggleRun} />
       </Box>
     </Box>
   );
@@ -45,6 +46,7 @@ ResultsGraphsLayout.propTypes = {
   handleSelectAll: PropTypes.func.isRequired,
   handleClearAll: PropTypes.func.isRequired,
   chartData: PropTypes.object.isRequired,
+  onToggleRun: PropTypes.func.isRequired,
 };
 
 export default ResultsGraphsLayout;
