@@ -24,17 +24,6 @@ export const getExplainerPlot = async (
   return response.data;
 };
 
-export const getExplainerInputs = async (
-  explainerId: number,
-): Promise<{
-  kind: string;
-  columns?: string[];
-  instances: Array<Record<string, unknown>>;
-}> => {
-  const response = await api.get(`/v1/explainer/local/${explainerId}/inputs`);
-  return response.data;
-};
-
 export const createGlobalExplainer = async (
   name: string,
   runId: number,

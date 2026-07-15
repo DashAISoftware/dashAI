@@ -493,9 +493,8 @@ export default function RunResults({
                   ) : (
                     <Box
                       sx={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(680px, 1fr))",
+                        display: "flex",
+                        flexDirection: "column",
                         gap: 2,
                       }}
                     >
@@ -564,9 +563,8 @@ export default function RunResults({
                   ) : (
                     <Box
                       sx={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(680px, 1fr))",
+                        display: "flex",
+                        flexDirection: "column",
                         gap: 2,
                       }}
                     >

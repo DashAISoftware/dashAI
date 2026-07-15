@@ -1,23 +1,12 @@
 import { React, useEffect, useState } from "react";
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  CircularProgress,
-  Box,
-  Typography,
-} from "@mui/material";
+import { CircularProgress, Box, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
-import {
-  getExplainerPlot as getExplainerPlotRequest,
-  getExplainerInputs as getExplainerInputsRequest,
-} from "../../api/explainer";
+import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
 import ArtifactViewer from "../shared/ArtifactViewer";
-import ModelInputView from "./ModelInputView";
+import ExplainerInstanceTable from "./ExplainerInstanceTable";
 
 /** Wrap legacy plotly JSON strings as plotly artifacts; pass typed dicts through. */
 function parseExplanationArtifacts(items) {
@@ -62,9 +51,9 @@ export default function ExplainersPlot({
   const [groups, setGroups] = useState([]);
   const [currentGroup, setCurrentGroup] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [inputs, setInputs] = useState(null);
   const { t } = useTranslation(["explainers"]);
   const isLocal = scope === "local";
+  const datasetPath = isLocal ? explainer.input_dataset_path : null;
 
   const getExplainerPlot = async () => {
     setLoading(true);
@@ -90,21 +79,8 @@ export default function ExplainersPlot({
     }
   };
 
-  const getInputs = async () => {
-    try {
-      const response = await getExplainerInputsRequest(explainer.id);
-      setInputs(response);
-    } catch (error) {
-      setInputs(null);
-      console.error(error);
-    }
-  };
-
   useEffect(() => {
-    if (explainer.status === 3) {
-      getExplainerPlot();
-      if (isLocal) getInputs();
-    }
+    if (explainer.status === 3) getExplainerPlot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [explainer.id, explainer.status]);
 
@@ -124,69 +100,22 @@ export default function ExplainersPlot({
   }
 
   const group = groups[currentGroup];
-  const explanationArtifacts = group.artifacts;
   const hasSelector = groups.length > 1;
-  // The original dataset row given to the model for the selected instance,
-  // fetched from the explainer's dataset (local explainers only).
-  const currentInput =
-    isLocal && inputs?.instances ? inputs.instances[currentGroup] : null;
+  const instanceLabel = (g, index) =>
+    g.title ?? t("explainers:label.instanceNumber", { number: index + 1 });
 
-  return (
+  // The explanation artifacts for the selected instance.
+  const detail = (
     <Box
-      sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 3 }}
+      sx={{
+        flex: 1,
+        minWidth: 0,
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+      }}
     >
-      {hasSelector ? (
-        <FormControl variant="outlined" size="small" sx={{ minWidth: 220 }}>
-          <InputLabel id="select-instance-label">
-            {t("explainers:label.selectInstance")}
-          </InputLabel>
-          <Select
-            labelId="select-instance-label"
-            value={currentGroup}
-            onChange={(event) => setCurrentGroup(event.target.value)}
-            label={t("explainers:label.selectInstance")}
-          >
-            {groups.map((g, i) => (
-              <MenuItem key={i} value={i}>
-                {g.title ??
-                  t("explainers:label.instanceNumber", { number: i + 1 })}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      ) : (
-        group.title && (
-          <Typography variant="subtitle2" color="text.secondary">
-            {group.title}
-          </Typography>
-        )
-      )}
-
-      {currentInput && (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 1,
-            p: 3,
-            bgcolor: "background.paper",
-          }}
-        >
-          <Typography
-            variant="overline"
-            color="text.secondary"
-            sx={{ lineHeight: 1.4 }}
-          >
-            {t("explainers:label.modelInput")}
-          </Typography>
-          <ModelInputView input={currentInput} columns={inputs?.columns} />
-        </Box>
-      )}
-
-      {explanationArtifacts.map((artifact) => (
+      {group.artifacts.map((artifact) => (
         <ArtifactViewer
           key={artifact.index}
           artifact={artifact}
@@ -203,12 +132,55 @@ export default function ExplainersPlot({
       ))}
     </Box>
   );
+
+  // Single instance: no selector needed, show the explanation full width.
+  if (!hasSelector) {
+    return (
+      <Box
+        sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 3 }}
+      >
+        {group.title && (
+          <Typography variant="subtitle2" color="text.secondary">
+            {group.title}
+          </Typography>
+        )}
+        {detail}
+      </Box>
+    );
+  }
+
+  // Many instances: the explained dataset rows on the left (paginated, the
+  // model input for each instance), the selected instance's explanation on
+  // the right.
+  return (
+    <Box
+      sx={{ display: "flex", gap: 3, width: "100%", alignItems: "flex-start" }}
+    >
+      <Box sx={{ flex: "0 0 42%", minWidth: 300, maxWidth: 560 }}>
+        <Typography
+          variant="overline"
+          color="text.secondary"
+          sx={{ display: "block", mb: 1, lineHeight: 1.4 }}
+        >
+          {t("explainers:label.modelInput")}
+        </Typography>
+        <ExplainerInstanceTable
+          datasetPath={datasetPath}
+          titles={groups.map((g, i) => instanceLabel(g, i))}
+          selectedIndex={currentGroup}
+          onSelect={setCurrentGroup}
+        />
+      </Box>
+      {detail}
+    </Box>
+  );
 }
 
 ExplainersPlot.propTypes = {
   explainer: PropTypes.shape({
     id: PropTypes.number,
     status: PropTypes.number,
+    input_dataset_path: PropTypes.string,
   }).isRequired,
   scope: PropTypes.string.isRequired,
   onSaveOverride: PropTypes.func,
