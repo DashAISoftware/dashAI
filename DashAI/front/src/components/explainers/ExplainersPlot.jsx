@@ -11,9 +11,13 @@ import {
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
-import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
+import {
+  getExplainerPlot as getExplainerPlotRequest,
+  getExplainerInputs as getExplainerInputsRequest,
+} from "../../api/explainer";
 import { useTranslation } from "react-i18next";
 import ArtifactViewer from "../shared/ArtifactViewer";
+import ModelInputView from "./ModelInputView";
 
 /** Wrap legacy plotly JSON strings as plotly artifacts; pass typed dicts through. */
 function parseExplanationArtifacts(items) {
@@ -58,7 +62,9 @@ export default function ExplainersPlot({
   const [groups, setGroups] = useState([]);
   const [currentGroup, setCurrentGroup] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [inputs, setInputs] = useState(null);
   const { t } = useTranslation(["explainers"]);
+  const isLocal = scope === "local";
 
   const getExplainerPlot = async () => {
     setLoading(true);
@@ -84,8 +90,21 @@ export default function ExplainersPlot({
     }
   };
 
+  const getInputs = async () => {
+    try {
+      const response = await getExplainerInputsRequest(explainer.id);
+      setInputs(response);
+    } catch (error) {
+      setInputs(null);
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
-    if (explainer.status === 3) getExplainerPlot();
+    if (explainer.status === 3) {
+      getExplainerPlot();
+      if (isLocal) getInputs();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [explainer.id, explainer.status]);
 
@@ -105,11 +124,12 @@ export default function ExplainersPlot({
   }
 
   const group = groups[currentGroup];
-  const inputArtifacts = group.artifacts.filter((a) => a.role === "input");
-  const explanationArtifacts = group.artifacts.filter(
-    (a) => a.role !== "input",
-  );
+  const explanationArtifacts = group.artifacts;
   const hasSelector = groups.length > 1;
+  // The original dataset row given to the model for the selected instance,
+  // fetched from the explainer's dataset (local explainers only).
+  const currentInput =
+    isLocal && inputs?.instances ? inputs.instances[currentGroup] : null;
 
   return (
     <Box
@@ -142,8 +162,19 @@ export default function ExplainersPlot({
         )
       )}
 
-      {inputArtifacts.length > 0 && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      {currentInput && (
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 1,
+            p: 3,
+            bgcolor: "background.paper",
+          }}
+        >
           <Typography
             variant="overline"
             color="text.secondary"
@@ -151,9 +182,7 @@ export default function ExplainersPlot({
           >
             {t("explainers:label.modelInput")}
           </Typography>
-          {inputArtifacts.map((artifact) => (
-            <ArtifactViewer key={artifact.index} artifact={artifact} />
-          ))}
+          <ModelInputView input={currentInput} columns={inputs?.columns} />
         </Box>
       )}
 
