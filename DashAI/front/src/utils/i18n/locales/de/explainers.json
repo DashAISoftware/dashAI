@@ -63,8 +63,7 @@
     "selectInstance": "Instanz auswählen",
     "explainerInProgress": "Erklärungsmodell wird verarbeitet...",
     "splitSelectionSummary": "Prozentsatz: {{percentage}}% | Ausgewählte Zeilen: {{rowsSelected}} / {{totalRows}}",
-    "searchExplainers": "Erklärungsmodelle suchen...",
-    "modelInput": "Modelleingabe"
+    "searchExplainers": "Erklärungsmodelle suchen..."
   },
   "message": {
     "explainerJobCompleted": "Erklärungsmodell {{name}} erfolgreich abgeschlossen",

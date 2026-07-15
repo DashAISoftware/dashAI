@@ -144,13 +144,6 @@ export default function ExplainersPlot({
       sx={{ display: "flex", gap: 3, width: "100%", alignItems: "flex-start" }}
     >
       <Box sx={{ flex: "0 0 46%", minWidth: 320 }}>
-        <Typography
-          variant="overline"
-          color="text.secondary"
-          sx={{ display: "block", mb: 1, lineHeight: 1.4 }}
-        >
-          {t("explainers:label.modelInput")}
-        </Typography>
         <ExplainerInstanceTable
           datasetPath={datasetPath}
           titles={groups.map(

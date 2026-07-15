@@ -63,8 +63,7 @@
     "selectInstance": "Selecione uma instância",
     "explainerInProgress": "Explicador em andamento...",
     "splitSelectionSummary": "Percentual: {{percentage}}% | Linhas selecionadas: {{rowsSelected}} / {{totalRows}}",
-    "searchExplainers": "Pesquisar explicadores...",
-    "modelInput": "Entrada do modelo"
+    "searchExplainers": "Pesquisar explicadores..."
   },
   "message": {
     "explainerJobCompleted": "Explicador {{name}} concluído com sucesso",

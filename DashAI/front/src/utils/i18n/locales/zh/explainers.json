@@ -63,8 +63,7 @@
     "selectInstance": "选择一个实例",
     "explainerInProgress": "解释器运行中...",
     "splitSelectionSummary": "百分比：{{percentage}}% | 已选行数：{{rowsSelected}} / {{totalRows}}",
-    "searchExplainers": "搜索解释器...",
-    "modelInput": "模型输入"
+    "searchExplainers": "搜索解释器..."
   },
   "message": {
     "explainerJobCompleted": "解释器 {{name}} 成功完成",
