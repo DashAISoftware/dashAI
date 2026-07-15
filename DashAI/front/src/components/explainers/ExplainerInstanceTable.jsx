@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Box, TablePagination } from "@mui/material";
+import { Box, Divider, TablePagination } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
 import { getDatasetFile } from "../../api/datasets";
@@ -84,6 +84,7 @@ export default function ExplainerInstanceTable({
           </tbody>
         </table>
       </div>
+      <Divider />
       <TablePagination
         component="div"
         sx={{
