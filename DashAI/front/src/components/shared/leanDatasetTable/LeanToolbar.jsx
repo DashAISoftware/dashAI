@@ -34,6 +34,16 @@ const LeanToolbar = memo(function LeanToolbar({
   onExport,
 }) {
   const { t } = useTranslation(["datasets"]);
+
+  if (
+    !enableFilters &&
+    !enableSearch &&
+    !enableColumnVisibility &&
+    !showExportButton
+  ) {
+    return null;
+  }
+
   return (
     <Box className="lean-toolbar">
       {/* Left: export */}
