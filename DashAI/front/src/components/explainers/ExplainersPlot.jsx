@@ -145,7 +145,7 @@ export default function ExplainersPlot({
         sx={{
           // Local explainers select a dataset instance (wider table); global
           // explainers select from a short list of curves (narrower).
-          flex: isLocal ? "0 0 46%" : "0 0 33%",
+          flex: isLocal ? "0 0 46%" : "0 0 25%",
           minWidth: isLocal ? 320 : 220,
           display: "flex",
           flexDirection: "column",
