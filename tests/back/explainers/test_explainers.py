@@ -173,11 +173,15 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         key in explanation
         for key in ["features", "importances_mean", "importances_std"]
     )
-    assert len(plot) == 1
-    assert isinstance(plot[0], PlotlyArtifact)
-    artifact_dict = plot[0].to_dict()
-    assert artifact_dict["type"] == "plotly"
-    json.loads(artifact_dict["payload"])
+    # One plotly artifact per feature count (all features down to one), so the
+    # frontend lists the counts in its selector instead of an in-figure dropdown.
+    assert len(plot) == len(INPUT_COLUMNS)
+    for artifact in plot:
+        assert isinstance(artifact, PlotlyArtifact)
+        artifact_dict = artifact.to_dict()
+        assert artifact_dict["type"] == "plotly"
+        assert artifact_dict["title"].startswith("Top ")
+        json.loads(artifact_dict["payload"])
 
     for values in explanation.values():
         assert len(values) == len(INPUT_COLUMNS)
@@ -196,7 +200,7 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         key in explanation
         for key in ["features", "importances_mean", "importances_std"]
     )
-    assert len(plot) == 1
+    assert len(plot) == len(INPUT_COLUMNS)
 
     for values in explanation.values():
         assert len(values) == len(INPUT_COLUMNS)

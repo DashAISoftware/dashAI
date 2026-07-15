@@ -517,74 +517,40 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 "importances_std": np.round(pfi["importances_std"], 3).tolist(),
             }
 
-    def _create_plot(self, data, n_features: int):
-        """Build a Plotly horizontal bar chart of feature importances.
+    def _create_plot(self, data) -> List[Artifact]:
+        """Build one horizontal bar chart per feature count.
+
+        Each artifact shows the top ``count`` most important features, from all
+        features down to one, so the frontend lists the counts in its selector
+        instead of a dropdown embedded in a single figure.
 
         Parameters
         ----------
         data : pandas.DataFrame
             DataFrame with columns ``"features"``, ``"importances_mean"``, and
             ``"importances_std"``, sorted ascending by importance.
-        n_features : int
-            Number of top features (last rows of ``data``) to display in the
-            default view. A dropdown menu lets users cycle through all counts.
 
         Returns
         -------
         List[Artifact]
-            A single-element list with the plotly artifact of the
-            explanation plot.
+            One plotly artifact per feature count, most features first.
         """
         # Lazy imports
         import plotly.express as px
 
-        fig = px.bar(
-            data.iloc[-n_features:],
-            x=data.iloc[-n_features:]["importances_mean"],
-            y=data.iloc[-n_features:]["features"],
-            error_x=data.iloc[-n_features:]["importances_std"],
-        )
+        artifacts = []
+        for count in range(len(data), 0, -1):
+            subset = data.iloc[-count:]
+            fig = px.bar(
+                subset,
+                x=subset["importances_mean"],
+                y=subset["features"],
+                error_x=subset["importances_std"],
+            )
+            fig.update_layout(xaxis_title="Importance", yaxis_title=None)
+            artifacts.append(PlotlyArtifact(payload=fig, title=f"Top {count} features"))
 
-        fig.update_layout(
-            xaxis_title="Importance",
-            yaxis_title=None,
-            annotations=[
-                {
-                    "text": "",
-                    "showarrow": False,
-                    "x": 0,
-                    "y": 1.15,
-                    "xanchor": "left",
-                    "xref": "paper",
-                    "yref": "paper",
-                    "yanchor": "top",
-                }
-            ],
-            updatemenus=[
-                {
-                    "x": 0,
-                    "xanchor": "left",
-                    "y": 1.2,
-                    "yanchor": "top",
-                    "buttons": [
-                        {
-                            "label": f"N° features: {len(data.iloc[-c:,])}",
-                            "method": "restyle",
-                            "args": [
-                                {
-                                    "x": [data.iloc[-c:]["importances_mean"]],
-                                    "y": [data.iloc[-c:]["features"]],
-                                    "error_x": [data.iloc[-c:]["importances_std"]],
-                                },
-                            ],
-                        }
-                        for c in range(len(data))
-                    ],
-                }
-            ],
-        )
-
-        return [PlotlyArtifact(payload=fig, title="Permutation Feature Importance")]
+        return artifacts
 
     def plot(self, explanation: dict) -> List[Artifact]:
         """Create a Plotly bar chart from a feature importance explanation dict.
@@ -598,17 +564,13 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         Returns
         -------
         List[Artifact]
-            A single-element list with the plotly artifact of the
-            explanation plot (built by :meth:`_create_plot`).
+            One plotly artifact per feature count (built by
+            :meth:`_create_plot`).
         """
-        n_features = 10
         # Lazy import
         import pandas as pd
 
         data = pd.DataFrame.from_dict(explanation)
         data = data.sort_values(by=["importances_mean"], ascending=True)
 
-        if n_features > len(data):
-            n_features = len(data)
-
-        return self._create_plot(data, n_features)
+        return self._create_plot(data)
