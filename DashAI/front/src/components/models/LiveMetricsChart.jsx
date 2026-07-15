@@ -1,7 +1,11 @@
 import {
   Box,
+  Divider,
+  MenuItem,
+  Select,
   ToggleButtonGroup,
   ToggleButton,
+  Tooltip,
   Typography,
   Button,
   ButtonGroup,
@@ -12,6 +16,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getModelSessionById } from "../../api/modelSession";
 import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
+import api from "../../api/api";
 
 // Same color source as the session results charts (ResultsGraphsPlot /
 // graphsMaking) so a metric's line color stays visually consistent with the
@@ -31,7 +36,21 @@ const getTraceColors = (theme) => [
   ]),
 ];
 
-export function LiveMetricsChart({ run }) {
+function toFinalValue(value) {
+  const resolved = Array.isArray(value)
+    ? (value[value.length - 1]?.value ?? null)
+    : value;
+  const num = Number(resolved);
+  return Number.isNaN(num) ? null : num;
+}
+
+export function LiveMetricsChart({
+  run,
+  session,
+  profiles,
+  selectedProfile,
+  onProfileChange,
+}) {
   const { t } = useTranslation("models");
   const theme = useTheme();
   const [level, setLevel] = useState(null);
@@ -217,6 +236,48 @@ export function LiveMetricsChart({ run }) {
     );
   }, [data, split, level, availableMetrics]);
 
+  // Compact final-value summary for whichever split is selected — same
+  // numbers/score shown in the session's comparison table, scoped to the
+  // split currently picked here instead of a fixed one.
+  const summaryMetrics = useMemo(() => {
+    const rawMetrics = run[`${split.toLowerCase()}_metrics`] ?? {};
+    return Object.entries(rawMetrics)
+      .map(([name, value]) => [name, toFinalValue(value)])
+      .filter(([, value]) => value !== null);
+  }, [run, split]);
+
+  const [runScore, setRunScore] = useState(null);
+
+  useEffect(() => {
+    if (!selectedProfile || !session?.id) {
+      setRunScore(null);
+      return;
+    }
+
+    let cancelled = false;
+    api
+      .get("/v1/run/", {
+        params: {
+          model_session_id: session.id,
+          include_scores: true,
+          profile_id: selectedProfile,
+          metric_split: split.toLowerCase(),
+        },
+      })
+      .then((response) => {
+        if (cancelled) return;
+        const match = response.data.find((r) => r.id === run.id);
+        setRunScore(match?.score ?? null);
+      })
+      .catch((error) => {
+        console.error("Error fetching run score:", error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProfile, session?.id, split, run.id]);
+
   // One small panel per metric — each keeps its own x/y scale instead of
   // sharing a single overlaid axis, same "small multiples" approach used for
   // the session results charts.
@@ -332,6 +393,128 @@ export function LiveMetricsChart({ run }) {
           <ToggleButton value="TEST">{t("models:label.test")}</ToggleButton>
         </ToggleButtonGroup>
       </Box>
+
+      {summaryMetrics.length > 0 && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 4,
+            mb: 4,
+            px: 3,
+            py: 2,
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 1,
+          }}
+        >
+          {profiles && profiles.length > 0 && (
+            <>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ whiteSpace: "nowrap" }}
+                >
+                  {t("models:label.scoreProfile")}:
+                </Typography>
+                <Select
+                  value={selectedProfile || ""}
+                  onChange={(e) => onProfileChange?.(e.target.value)}
+                  size="small"
+                  sx={{
+                    fontSize: "0.75rem",
+                    height: 24,
+                    "& .MuiSelect-select": { py: 0, px: 1 },
+                  }}
+                >
+                  {profiles.map((p) => (
+                    <MenuItem
+                      key={p.id}
+                      value={p.id}
+                      sx={{ fontSize: "0.8rem" }}
+                    >
+                      {t(`models:label.profile_${p.id}`)}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </Box>
+              <Divider orientation="vertical" flexItem />
+            </>
+          )}
+
+          {runScore && (
+            <>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  {t("models:label.score")}
+                </Typography>
+                <Tooltip
+                  title={
+                    <Typography
+                      variant="body2"
+                      component="div"
+                      sx={{ lineHeight: 1.6 }}
+                    >
+                      {runScore.breakdown.map(
+                        ({ metric_name, value, normalized_weight }, i) => (
+                          <Typography
+                            variant="body2"
+                            component="div"
+                            key={metric_name}
+                          >
+                            {i === 0 ? "=" : "+"} {metric_name} (
+                            {value.toFixed(4)}) ×{" "}
+                            {(normalized_weight * 100).toFixed(0)}%
+                          </Typography>
+                        ),
+                      )}
+                    </Typography>
+                  }
+                  placement="top"
+                  arrow
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.5,
+                      cursor: "help",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <Box
+                      component="span"
+                      sx={{ color: "warning.main", fontSize: "0.875rem" }}
+                    >
+                      ★
+                    </Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      {runScore.score.toFixed(1)}
+                    </Typography>
+                  </Box>
+                </Tooltip>
+              </Box>
+              <Divider orientation="vertical" flexItem />
+            </>
+          )}
+
+          {summaryMetrics.map(([name, value]) => (
+            <Box
+              key={name}
+              sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+            >
+              <Typography variant="caption" color="text.secondary">
+                {name}
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                {value.toFixed(4)}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      )}
 
       <ResultsGraphsParameters
         currentMetrics={Object.keys(filteredMetrics)}

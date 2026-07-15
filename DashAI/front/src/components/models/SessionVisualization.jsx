@@ -303,6 +303,9 @@ export default function SessionVisualization() {
               }
               existingRuns={runs}
               onRefresh={fetchRuns}
+              profiles={profiles}
+              selectedProfile={selectedProfile}
+              onProfileChange={setSelectedProfile}
             />
           ) : (
             <Box sx={{ px: 4, pt: 4 }}>
