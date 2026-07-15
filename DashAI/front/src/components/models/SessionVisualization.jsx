@@ -132,14 +132,13 @@ export default function SessionVisualization() {
     setTimeout(() => setSelectedRunId(null), 2000);
   }, []);
 
-  const handleViewDetails = React.useCallback((run) => {
-    if (!run?.id) return;
-    setSelectedRunId(run.id);
-    const element = document.getElementById(`run-card-${run.id}`);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, []);
+  const handleViewDetails = React.useCallback(
+    (run) => {
+      if (!run?.id) return;
+      navigate(`/app/models/sessions/${session.id}/model/${run.id}`);
+    },
+    [navigate, session?.id],
+  );
 
   const sortedRuns = React.useMemo(
     () => [...runs].sort((a, b) => new Date(a.created) - new Date(b.created)),
