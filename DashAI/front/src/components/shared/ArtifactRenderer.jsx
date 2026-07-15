@@ -1,21 +1,12 @@
 import React, { useMemo } from "react";
-import {
-  Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
-import { useTheme, alpha } from "@mui/material/styles";
+import { Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 
 import { applyThemeToLayout } from "../../utils/plotlyTheme";
+import TableArtifact from "./TableArtifact";
 
 /**
  * Renders a single typed artifact ({type, payload, title}) returned by the
@@ -69,41 +60,12 @@ export default function ArtifactRenderer({ artifact, height = 380 }) {
       case "table": {
         const { columns = [], rows = [] } = artifact.payload ?? {};
         return (
-          <TableContainer component={Paper} sx={{ maxHeight: height }}>
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow>
-                  {columns.map((column) => (
-                    <TableCell key={column}>{column}</TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map((row, rowIndex) => (
-                  <TableRow key={rowIndex}>
-                    {row.map((value, columnIndex) => (
-                      <TableCell
-                        key={columnIndex}
-                        sx={
-                          highlightedCells.has(`${rowIndex}-${columnIndex}`)
-                            ? {
-                                bgcolor: alpha(
-                                  theme.palette.warning.main,
-                                  0.25,
-                                ),
-                                fontWeight: "bold",
-                              }
-                            : undefined
-                        }
-                      >
-                        {value === null ? "-" : String(value)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <TableArtifact
+            columns={columns}
+            rows={rows}
+            highlightedCells={highlightedCells}
+            height={height}
+          />
         );
       }
       case "image": {
