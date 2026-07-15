@@ -291,3 +291,11 @@
 .lean-sort--desc .lean-sort-arrow--down {
   opacity: 1;
 }
+
+.lean-row--clickable {
+  cursor: pointer;
+}
+
+.lean-row--clickable:hover {
+  background: var(--lean-row-hover, rgba(255, 255, 255, 0.06));
+}

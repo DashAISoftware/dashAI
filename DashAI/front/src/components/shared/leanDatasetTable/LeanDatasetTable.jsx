@@ -35,6 +35,8 @@ function LeanDatasetTable({
   enableRowsPerPage = true,
   enableColumnVisibility = true,
   showExportButton = true,
+  onRowClick = null,
+  selectedRowIndex = null,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -290,6 +292,7 @@ function LeanDatasetTable({
         "--lean-header-bg": theme.palette.ui.panelDark,
         "--lean-header-fg": theme.palette.text.primary,
         "--lean-body-bg": theme.palette.ui.panelDark,
+        "--lean-row-hover": theme.palette.action.hover,
       }}
     >
       <LeanToolbar
@@ -380,13 +383,34 @@ function LeanDatasetTable({
             )}
           </thead>
           <tbody>
-            {rows.map((row, i) => (
-              <tr key={i} className="lean-row">
-                {visibleColumnKeys.map((key) => (
-                  <LeanCell key={key} value={row[key]} query={highlightQuery} />
-                ))}
-              </tr>
-            ))}
+            {rows.map((row, i) => {
+              const globalIndex = page * pageSize + i;
+              const isSelected = selectedRowIndex === globalIndex;
+              return (
+                <tr
+                  key={i}
+                  className={
+                    onRowClick ? "lean-row lean-row--clickable" : "lean-row"
+                  }
+                  onClick={
+                    onRowClick ? () => onRowClick(row, globalIndex) : undefined
+                  }
+                  style={{
+                    backgroundColor: isSelected
+                      ? theme.palette.action.selected
+                      : undefined,
+                  }}
+                >
+                  {visibleColumnKeys.map((key) => (
+                    <LeanCell
+                      key={key}
+                      value={row[key]}
+                      query={highlightQuery}
+                    />
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         {!loading && rows.length === 0 && (
@@ -444,6 +468,8 @@ LeanDatasetTable.propTypes = {
   enableRowsPerPage: PropTypes.bool,
   enableColumnVisibility: PropTypes.bool,
   showExportButton: PropTypes.bool,
+  onRowClick: PropTypes.func,
+  selectedRowIndex: PropTypes.number,
 };
 
 export default LeanDatasetTable;

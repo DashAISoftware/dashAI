@@ -1,153 +1,99 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import PropTypes from "prop-types";
 import {
-  Box,
   Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TablePagination,
   TableRow,
 } from "@mui/material";
 
 import { getDatasetFile } from "../../api/datasets";
+import LeanDatasetTable from "../shared/leanDatasetTable/LeanDatasetTable";
 
-const ROWS_PER_PAGE = 8;
-
-const isImageValue = (value) =>
-  typeof value === "string" && value.startsWith("data:image");
+const ROWS_PER_PAGE = 10;
 
 /**
- * Paginated table of the rows a local explainer explained, used to pick an
- * instance. Rows come from the stored input DashAIDataset via the existing
- * dataset file endpoint (images arrive as data URIs). When no dataset path is
- * available it falls back to a list of instance titles. Clicking a row calls
- * onSelect with the row's global index (its instance index).
+ * Instance picker for a local explainer's explained rows. When the explainer
+ * stored its input rows as a dataset (datasetPath), it renders the shared
+ * dataset table (feature values, image thumbnails, pagination). Otherwise, for
+ * explainers computed before input rows were persisted, it falls back to a
+ * simple paginated list of instance labels. Selecting a row calls onSelect
+ * with the instance index.
  */
 export default function ExplainerInstanceTable({
   datasetPath = null,
-  titles = [],
+  titles,
   selectedIndex,
   onSelect,
 }) {
-  const [rows, setRows] = useState([]);
-  const [columns, setColumns] = useState([]);
-  const [total, setTotal] = useState(titles.length);
   const [page, setPage] = useState(0);
 
-  useEffect(() => {
-    if (!datasetPath) {
-      setTotal(titles.length);
-      return undefined;
-    }
-    let cancelled = false;
-    getDatasetFile(datasetPath, page, ROWS_PER_PAGE)
-      .then((response) => {
-        if (cancelled) return;
-        const fetchedRows = response?.rows ?? [];
-        setRows(fetchedRows);
-        setTotal(response?.total ?? fetchedRows.length);
-        setColumns(fetchedRows.length ? Object.keys(fetchedRows[0]) : []);
-      })
-      .catch((error) => {
-        if (!cancelled) console.error(error);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [datasetPath, page, titles.length]);
+  if (datasetPath) {
+    return (
+      <LeanDatasetTable
+        fetchPage={(fetchPageIndex, pageSize) =>
+          getDatasetFile(datasetPath, fetchPageIndex, pageSize)
+        }
+        datasetPath={datasetPath}
+        initialPageSize={10}
+        enableFilters={false}
+        enableSearch={false}
+        enableColumnVisibility={false}
+        enableRowsPerPage={false}
+        showExportButton={false}
+        selectedRowIndex={selectedIndex}
+        onRowClick={(row, globalIndex) => onSelect(globalIndex)}
+      />
+    );
+  }
 
   const pageStart = page * ROWS_PER_PAGE;
-  const fallbackTitles = titles.slice(pageStart, pageStart + ROWS_PER_PAGE);
+  const pageTitles = titles.slice(pageStart, pageStart + ROWS_PER_PAGE);
 
   return (
-    <Box>
+    <div>
       <TableContainer
         component={Paper}
         variant="outlined"
         sx={{ maxHeight: 520 }}
       >
         <Table size="small" stickyHeader>
-          {datasetPath && columns.length > 0 && (
-            <TableHead>
-              <TableRow>
-                {columns.map((column) => (
-                  <TableCell key={column} sx={{ fontWeight: 600 }}>
-                    {column}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
-          )}
           <TableBody>
-            {datasetPath
-              ? rows.map((row, i) => {
-                  const globalIndex = pageStart + i;
-                  return (
-                    <TableRow
-                      key={globalIndex}
-                      hover
-                      selected={globalIndex === selectedIndex}
-                      onClick={() => onSelect(globalIndex)}
-                      sx={{ cursor: "pointer" }}
-                    >
-                      {columns.map((column) => (
-                        <TableCell key={column}>
-                          {isImageValue(row[column]) ? (
-                            <Box
-                              component="img"
-                              src={row[column]}
-                              alt=""
-                              sx={{
-                                height: 44,
-                                width: 44,
-                                objectFit: "cover",
-                                borderRadius: 0.5,
-                                display: "block",
-                              }}
-                            />
-                          ) : (
-                            String(row[column] ?? "-")
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  );
-                })
-              : fallbackTitles.map((title, i) => {
-                  const globalIndex = pageStart + i;
-                  return (
-                    <TableRow
-                      key={globalIndex}
-                      hover
-                      selected={globalIndex === selectedIndex}
-                      onClick={() => onSelect(globalIndex)}
-                      sx={{ cursor: "pointer" }}
-                    >
-                      <TableCell>{title}</TableCell>
-                    </TableRow>
-                  );
-                })}
+            {pageTitles.map((title, i) => {
+              const globalIndex = pageStart + i;
+              return (
+                <TableRow
+                  key={globalIndex}
+                  hover
+                  selected={globalIndex === selectedIndex}
+                  onClick={() => onSelect(globalIndex)}
+                  sx={{ cursor: "pointer" }}
+                >
+                  <TableCell>{title}</TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
       <TablePagination
         component="div"
-        count={total}
+        count={titles.length}
         page={page}
         onPageChange={(event, newPage) => setPage(newPage)}
         rowsPerPage={ROWS_PER_PAGE}
         rowsPerPageOptions={[ROWS_PER_PAGE]}
       />
-    </Box>
+    </div>
   );
 }
 
 ExplainerInstanceTable.propTypes = {
   datasetPath: PropTypes.string,
-  titles: PropTypes.arrayOf(PropTypes.string),
+  titles: PropTypes.arrayOf(PropTypes.string).isRequired,
   selectedIndex: PropTypes.number,
   onSelect: PropTypes.func.isRequired,
 };

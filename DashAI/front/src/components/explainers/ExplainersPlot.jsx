@@ -81,7 +81,6 @@ export default function ExplainersPlot({
 
   useEffect(() => {
     if (explainer.status === 3) getExplainerPlot();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [explainer.id, explainer.status]);
 
   if (loading || explainer.status !== 3) {
@@ -101,8 +100,6 @@ export default function ExplainersPlot({
 
   const group = groups[currentGroup];
   const hasSelector = groups.length > 1;
-  const instanceLabel = (g, index) =>
-    g.title ?? t("explainers:label.instanceNumber", { number: index + 1 });
 
   // The explanation artifacts for the selected instance.
   const detail = (
@@ -139,14 +136,14 @@ export default function ExplainersPlot({
     return detail;
   }
 
-  // Many instances: the explained dataset rows on the left (paginated, the
-  // model input for each instance), the selected instance's explanation on
-  // the right.
+  // Many instances: the instance picker on the left (the explained dataset
+  // rows when stored, else a list of instance labels), the selected
+  // instance's explanation on the right.
   return (
     <Box
       sx={{ display: "flex", gap: 3, width: "100%", alignItems: "flex-start" }}
     >
-      <Box sx={{ flex: "0 0 42%", minWidth: 300, maxWidth: 560 }}>
+      <Box sx={{ flex: "0 0 46%", minWidth: 320 }}>
         <Typography
           variant="overline"
           color="text.secondary"
@@ -156,7 +153,11 @@ export default function ExplainersPlot({
         </Typography>
         <ExplainerInstanceTable
           datasetPath={datasetPath}
-          titles={groups.map((g, i) => instanceLabel(g, i))}
+          titles={groups.map(
+            (g, i) =>
+              g.title ??
+              t("explainers:label.instanceNumber", { number: i + 1 }),
+          )}
           selectedIndex={currentGroup}
           onSelect={setCurrentGroup}
         />
