@@ -62,10 +62,13 @@ class Artifact(BaseModel):
         Discriminator naming the artifact kind; fixed per subclass.
     title : Optional[str]
         Human readable title shown above the rendered artifact.
+    role : Literal["input", "explanation"]
+        Role indicating artifact type, defaulting to explanation.
     """
 
     type: str
     title: Optional[str] = None
+    role: Literal["input", "explanation"] = "explanation"
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize the artifact to its wire format.
@@ -344,7 +347,7 @@ def normalize_artifacts(items: Any) -> List[Dict[str, Any]]:
         elif isinstance(item, str):
             artifacts.append(PlotlyArtifact(payload=item).to_dict())
         elif isinstance(item, dict) and "type" in item and "payload" in item:
-            artifacts.append({"title": None, **item})
+            artifacts.append({"title": None, "role": "explanation", **item})
         elif isinstance(item, dict) and "type" in item and "data" in item:
             artifacts.append(_legacy_explorer_artifact(item))
         else:

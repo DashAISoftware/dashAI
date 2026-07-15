@@ -24,6 +24,7 @@ def test_plotly_artifact_to_dict():
         "type": "plotly",
         "payload": '{"data": []}',
         "title": "A plot",
+        "role": "explanation",
     }
 
 
@@ -53,6 +54,7 @@ def test_table_artifact_to_dict():
             "highlight": [{"row": 1, "column": 0}],
         },
         "title": "A table",
+        "role": "explanation",
     }
 
 
@@ -76,6 +78,7 @@ def test_text_artifact_to_dict():
         "type": "text",
         "payload": "line 1\nline 2",
         "title": None,
+        "role": "explanation",
     }
 
 
@@ -138,7 +141,14 @@ def test_normalize_none_is_empty():
 
 def test_normalize_legacy_plotly_strings():
     artifacts = normalize_artifacts(['{"data": []}'])
-    assert artifacts == [{"type": "plotly", "payload": '{"data": []}', "title": None}]
+    assert artifacts == [
+        {
+            "type": "plotly",
+            "payload": '{"data": []}',
+            "title": None,
+            "role": "explanation",
+        }
+    ]
 
 
 def test_normalize_wraps_single_values():
@@ -148,20 +158,29 @@ def test_normalize_wraps_single_values():
 
 def test_normalize_artifact_instances():
     artifacts = normalize_artifacts([TextArtifact(payload="x", title="t")])
-    assert artifacts == [{"type": "text", "payload": "x", "title": "t"}]
+    assert artifacts == [
+        {"type": "text", "payload": "x", "title": "t", "role": "explanation"}
+    ]
 
 
 def test_normalize_passes_artifact_dicts_through():
     item = {"type": "text", "payload": "x"}
     assert normalize_artifacts([item]) == [
-        {"type": "text", "payload": "x", "title": None}
+        {"type": "text", "payload": "x", "title": None, "role": "explanation"}
     ]
 
 
 def test_normalize_legacy_explorer_plotly():
     legacy = {"type": "plotly_json", "data": '{"data": []}', "config": {}}
     artifacts = normalize_artifacts([legacy])
-    assert artifacts == [{"type": "plotly", "payload": '{"data": []}', "title": None}]
+    assert artifacts == [
+        {
+            "type": "plotly",
+            "payload": '{"data": []}',
+            "title": None,
+            "role": "explanation",
+        }
+    ]
 
 
 def test_normalize_legacy_explorer_tabular():
@@ -186,4 +205,35 @@ def test_normalize_legacy_explorer_image():
 
 def test_normalize_unrenderable_falls_back_to_text():
     [artifact] = normalize_artifacts([42])
-    assert artifact == {"type": "text", "payload": "42", "title": None}
+    assert artifact == {
+        "type": "text",
+        "payload": "42",
+        "title": None,
+        "role": "explanation",
+    }
+
+
+def test_artifact_role_defaults_to_explanation():
+    from DashAI.back.core.artifacts import TextArtifact
+
+    artifact = TextArtifact(payload="hi")
+    assert artifact.to_dict()["role"] == "explanation"
+
+
+def test_artifact_role_roundtrips_input():
+    from DashAI.back.core.artifacts import TableArtifact, TablePayload
+
+    artifact = TableArtifact(
+        payload=TablePayload(columns=["a"], rows=[[1]]),
+        role="input",
+    )
+    assert artifact.to_dict()["role"] == "input"
+
+
+def test_normalize_artifacts_preserves_role():
+    from DashAI.back.core.artifacts import normalize_artifacts
+
+    result = normalize_artifacts(
+        [{"type": "text", "payload": "x", "title": "Instance 1", "role": "input"}]
+    )
+    assert result[0]["role"] == "input"
