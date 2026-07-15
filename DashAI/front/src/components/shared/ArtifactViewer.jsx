@@ -185,7 +185,7 @@ export default function ArtifactViewer({
           position: "absolute",
           top: 6,
           right: 6,
-          zIndex: 2,
+          zIndex: 3,
           display: "flex",
           gap: 0.5,
           p: 0.5,
