@@ -65,7 +65,7 @@ export default function LeanHeaderCell({
           </button>
         </div>
         <div className="lean-th-type">
-          <span>{type || "-"}</span>
+          <span>{type || null}</span>
           {type === "Categorical" && datasetId && (
             <LeanEncoderChip
               columnName={columnKey}
