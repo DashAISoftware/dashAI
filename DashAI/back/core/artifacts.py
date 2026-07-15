@@ -353,3 +353,74 @@ def normalize_artifacts(items: Any) -> List[Dict[str, Any]]:
         else:
             artifacts.append(TextArtifact(payload=str(item)).to_dict())
     return artifacts
+
+
+def build_tabular_input_artifact(
+    feature_names: List[str],
+    instance_values: List[Any],
+    title: Optional[str] = None,
+) -> "TableArtifact":
+    """Build an input artifact holding one instance's feature values.
+
+    Parameters
+    ----------
+    feature_names : List[str]
+        Column headers, one per feature.
+    instance_values : List[Any]
+        The feature values fed to the model for this instance.
+    title : Optional[str]
+        Group title shared with the instance's explanation artifacts.
+
+    Returns
+    -------
+    TableArtifact
+        A single-row table artifact with role "input".
+    """
+    return TableArtifact(
+        payload=TablePayload(
+            columns=[str(name) for name in feature_names],
+            rows=[list(instance_values)],
+        ),
+        title=title,
+        role="input",
+    )
+
+
+def build_text_input_artifact(text: str, title: Optional[str] = None) -> "TextArtifact":
+    """Build an input artifact holding the text fed to the model.
+
+    Parameters
+    ----------
+    text : str
+        The input text for this instance.
+    title : Optional[str]
+        Group title shared with the instance's explanation artifacts.
+
+    Returns
+    -------
+    TextArtifact
+        A text artifact with role "input".
+    """
+    return TextArtifact(payload=text, title=title, role="input")
+
+
+def build_image_input_artifact(
+    image: Any, title: Optional[str] = None
+) -> "ImageArtifact":
+    """Build an input artifact from the image fed to the model.
+
+    Parameters
+    ----------
+    image : DashAIImage
+        The input image instance for this explained sample.
+    title : Optional[str]
+        Group title shared with the instance's explanation artifacts.
+
+    Returns
+    -------
+    ImageArtifact
+        An image artifact with role "input".
+    """
+    artifact = ImageArtifact.from_dashai_image(image, title=title)
+    artifact.role = "input"
+    return artifact

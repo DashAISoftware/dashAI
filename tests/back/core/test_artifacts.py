@@ -237,3 +237,36 @@ def test_normalize_artifacts_preserves_role():
         [{"type": "text", "payload": "x", "title": "Instance 1", "role": "input"}]
     )
     assert result[0]["role"] == "input"
+
+
+def test_build_tabular_input_artifact():
+    from DashAI.back.core.artifacts import build_tabular_input_artifact
+
+    artifact = build_tabular_input_artifact(["age", "city"], [42, "NY"], "Instance 1")
+    payload = artifact.to_dict()
+    assert payload["role"] == "input"
+    assert payload["title"] == "Instance 1"
+    assert payload["payload"]["columns"] == ["age", "city"]
+    assert payload["payload"]["rows"] == [[42, "NY"]]
+
+
+def test_build_text_input_artifact():
+    from DashAI.back.core.artifacts import build_text_input_artifact
+
+    artifact = build_text_input_artifact("hello world", "Instance 2")
+    payload = artifact.to_dict()
+    assert payload["role"] == "input"
+    assert payload["type"] == "text"
+    assert payload["payload"] == "hello world"
+
+
+def test_build_image_input_artifact():
+    from DashAI.back.core.artifacts import build_image_input_artifact
+    from DashAI.back.types.dashai_image import DashAIImage
+
+    image = DashAIImage(bytes=PNG_BYTES, path="img.png")
+    artifact = build_image_input_artifact(image, "Instance 3")
+    payload = artifact.to_dict()
+    assert payload["role"] == "input"
+    assert payload["type"] == "image"
+    assert payload["title"] == "Instance 3"
