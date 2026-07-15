@@ -191,6 +191,7 @@ class ExplainerJob(BaseJob):
         from DashAI.back.dataloaders.classes.dashai_dataset import (
             load_dataset,
             prepare_for_model_session,
+            save_dataset,
             select_columns,
             split_dataset,
         )
@@ -265,16 +266,16 @@ class ExplainerJob(BaseJob):
                     self.input_columns,
                     self.output_columns,
                 )
-                # Capture the original selected rows (the model input for each
-                # explained instance) before the model's own preprocessing runs.
-                from DashAI.back.explainability.input_rows import (
-                    serialize_local_input_rows,
-                )
-
+                # Persist the original selected rows (the model input for each
+                # explained instance) as a DashAIDataset before the model's own
+                # preprocessing runs, so the frontend can read them back with
+                # the existing dataset endpoints.
                 input_source = X["train"] if isinstance(X, DatasetDict) else X
-                input_rows = serialize_local_input_rows(
-                    input_source, self.input_columns
+                input_dataset_path = os.path.join(
+                    config["EXPLANATIONS_PATH"],
+                    f"local_explanation_input_{explainer_id}",
                 )
+                save_dataset(input_source, os.path.join(input_dataset_path, "dataset"))
                 X = trained_model.prepare_dataset(X, is_fit=False)
 
             except Exception as e:
@@ -304,11 +305,6 @@ class ExplainerJob(BaseJob):
                 with open(plots_path, "wb") as file:
                     pickle.dump(plots, file)
 
-                inputs_filename = f"local_explanation_inputs_{explainer_id}.pickle"
-                inputs_path = os.path.join(config["EXPLANATIONS_PATH"], inputs_filename)
-                with open(inputs_path, "wb") as file:
-                    pickle.dump(input_rows, file)
-
             except Exception as e:
                 log.exception(e)
                 raise JobError(
@@ -317,6 +313,7 @@ class ExplainerJob(BaseJob):
             try:
                 self.explainer_db.explanation_path = explanation_path
                 self.explainer_db.plots_path = plots_path
+                self.explainer_db.input_dataset_path = input_dataset_path
                 self.explainer_db.plot_overrides = None
                 db.commit()
             except Exception as e:

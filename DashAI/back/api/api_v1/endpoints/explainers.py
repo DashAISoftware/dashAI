@@ -539,68 +539,6 @@ async def get_local_explanation_plot(
     return _apply_overrides(normalize_artifacts(plots), plot_overrides)
 
 
-@router.get("/local/{explainer_id}/inputs")
-@inject
-async def get_local_explanation_inputs(
-    explainer_id: int,
-    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
-):
-    """Return the original dataset rows explained by a local explainer.
-
-    These are the model inputs for each explained instance, as they were
-    before the model's own preprocessing: feature values for tabular tasks,
-    the input text for text tasks, and the original image for image tasks.
-
-    Parameters
-    ----------
-    explainer_id: int
-        Id of the local explainer whose input rows to retrieve.
-    session_factory : Callable[..., ContextManager[Session]]
-        A factory that creates a context manager that handles a SQLAlchemy
-        session.
-
-    Returns
-    -------
-    dict
-        The serialized input rows (see
-        ``DashAI.back.explainability.input_rows``). ``{"kind": "none",
-        "instances": []}`` when no input rows were saved (for example an
-        explainer computed before this feature existed).
-
-    Raises
-    ------
-    HTTPException
-        If the explainer does not exist or is not finished.
-    """
-    import os
-    import pickle
-
-    config = di["config"]
-
-    with session_factory() as db:
-        local_explainer = db.get(LocalExplainer, explainer_id)
-        if local_explainer is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Explainer not found",
-            )
-        if local_explainer.status != ExplainerStatus.FINISHED:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Explanation not found",
-            )
-
-    inputs_path = os.path.join(
-        config["EXPLANATIONS_PATH"],
-        f"local_explanation_inputs_{explainer_id}.pickle",
-    )
-    if not os.path.exists(inputs_path):
-        return {"kind": "none", "instances": []}
-
-    with open(inputs_path, "rb") as file:
-        return pickle.load(file)
-
-
 @router.put("/{scope}/plot/{explainer_id}/override")
 @inject
 async def save_plot_override(
