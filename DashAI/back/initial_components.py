@@ -58,8 +58,10 @@ from DashAI.back.converters.scikit_learn.variance_threshold import VarianceThres
 from DashAI.back.converters.simple_converters.character_replacer import (
     CharacterReplacer,
 )
+from DashAI.back.converters.simple_converters.column_arithmetic import ColumnArithmetic
 from DashAI.back.converters.simple_converters.column_remover import ColumnRemover
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
+from DashAI.back.converters.simple_converters.numeric_expansion import NumericExpansion
 
 # DataLoaders
 from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
@@ -115,6 +117,7 @@ from DashAI.back.job.predict_job import PredictJob
 
 # Metrics
 from DashAI.back.metrics.classification.accuracy import Accuracy
+from DashAI.back.metrics.classification.balanced_accuracy import BalancedAccuracy
 from DashAI.back.metrics.classification.cohen_kappa import CohenKappa
 from DashAI.back.metrics.classification.f1 import F1
 from DashAI.back.metrics.classification.hamming_distance import HammingDistance
@@ -416,6 +419,7 @@ def get_initial_components():
         # Metrics
         F1,
         Accuracy,
+        BalancedAccuracy,
         Precision,
         Recall,
         Bleu,
@@ -468,6 +472,8 @@ def get_initial_components():
         ColumnRemover,
         NanRemover,
         CharacterReplacer,
+        ColumnArithmetic,
+        NumericExpansion,
         FastICA,
         IncrementalPCA,
         PCA,
