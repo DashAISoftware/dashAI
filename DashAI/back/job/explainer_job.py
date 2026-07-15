@@ -271,7 +271,10 @@ class ExplainerJob(BaseJob):
                     serialize_local_input_rows,
                 )
 
-                input_rows = serialize_local_input_rows(X["train"], self.input_columns)
+                input_source = X["train"] if isinstance(X, DatasetDict) else X
+                input_rows = serialize_local_input_rows(
+                    input_source, self.input_columns
+                )
                 X = trained_model.prepare_dataset(X, is_fit=False)
 
             except Exception as e:
