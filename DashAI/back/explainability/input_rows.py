@@ -25,51 +25,50 @@ import io
 from typing import Any, Dict, List
 
 
-def _is_image_feature(feature: Any) -> bool:
-    """Return whether a datasets feature holds images.
+def _encode_pil_image(image: Any) -> str:
+    """Encode a PIL image as a base64 PNG string.
 
     Parameters
     ----------
-    feature : Any
-        A value from a datasets ``Dataset.features`` mapping.
-
-    Returns
-    -------
-    bool
-        True when the feature is an image feature (including DashAIImage).
-    """
-    return "image" in type(feature).__name__.lower()
-
-
-def _image_cell_to_base64(cell: Any) -> str:
-    """Encode one image cell to base64, tolerating the shapes it can take.
-
-    A datasets image cell can arrive as a dict with a ``bytes`` key, as a
-    DashAIImage exposing ``bytes``, or as a decoded PIL image.
-
-    Parameters
-    ----------
-    cell : Any
-        The value stored in an image column for one row.
+    image : PIL.Image.Image
+        The image to encode.
 
     Returns
     -------
     str
-        Base64-encoded image bytes, or an empty string when no bytes are
-        available.
+        Base64-encoded PNG bytes.
     """
-    raw = None
-    if isinstance(cell, dict):
-        raw = cell.get("bytes")
-    elif getattr(cell, "bytes", None) is not None:
-        raw = cell.bytes
-    if raw is None and hasattr(cell, "save"):
-        buffer = io.BytesIO()
-        cell.save(buffer, format="PNG")
-        raw = buffer.getvalue()
-    if raw is None:
-        return ""
-    return base64.b64encode(bytes(raw)).decode("ascii")
+    buffer = io.BytesIO()
+    image.convert("RGB").save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
+def _detect_image_columns(dataset: Any, input_columns: List[str]) -> List[str]:
+    """Return the input columns that hold images.
+
+    Image cells in a DashAIDataset expose ``to_pil``; probing the first row is
+    more reliable than inspecting feature type names.
+
+    Parameters
+    ----------
+    dataset : datasets.Dataset
+        The selected rows.
+    input_columns : List[str]
+        The model input columns to consider.
+
+    Returns
+    -------
+    List[str]
+        The input columns whose cells are images.
+    """
+    if len(dataset) == 0:
+        return []
+    first_row = dataset[0]
+    return [
+        column
+        for column in input_columns
+        if hasattr(first_row.get(column), "to_pil")
+    ]
 
 
 def serialize_local_input_rows(
@@ -92,26 +91,26 @@ def serialize_local_input_rows(
         Image tasks use the first image input column; all other tasks are
         rendered as a table of feature values (text columns included).
     """
-    features = getattr(dataset, "features", {}) or {}
-    image_columns = [
-        column for column in input_columns if _is_image_feature(features.get(column))
-    ]
+    image_columns = _detect_image_columns(dataset, input_columns)
 
     if image_columns:
         column = image_columns[0]
-        instances = [
-            {
-                "kind": "image",
-                "data": _image_cell_to_base64(row[column]),
-                "mime": "image/png",
-            }
-            for row in dataset
-        ]
+        instances = []
+        for index in range(len(dataset)):
+            cell = dataset[index][column]
+            try:
+                data = _encode_pil_image(cell.to_pil())
+            except Exception:
+                data = ""
+            instances.append(
+                {"kind": "image", "data": data, "mime": "image/png"}
+            )
         return {"kind": "image", "columns": [column], "instances": instances}
 
     frame = dataset.to_pandas()[list(input_columns)]
     instances = [
-        {"kind": "tabular", "values": list(row)} for row in frame.values.tolist()
+        {"kind": "tabular", "values": list(row)}
+        for row in frame.values.tolist()
     ]
     return {
         "kind": "tabular",
