@@ -18,7 +18,7 @@ function parseExplanationArtifacts(items) {
 }
 
 /**
- * Group consecutive artifacts sharing the same non-null title into one
+ * Group consecutive artifacts sharing the same non null title into one
  * instance group, tracking each artifact's flat index in the endpoint
  * response so edits can target it.
  */
@@ -112,10 +112,12 @@ export default function ExplainersPlot({
         gap: 3,
       }}
     >
-      {group.artifacts.map((artifact) => (
+      {group.artifacts.map((artifact, i) => (
         <ArtifactViewer
           key={artifact.index}
           artifact={artifact}
+          siblingArtifacts={group.artifacts}
+          siblingIndex={i}
           canReset={overriddenIndexes.includes(artifact.index)}
           onSaveEdit={
             onSaveOverride
