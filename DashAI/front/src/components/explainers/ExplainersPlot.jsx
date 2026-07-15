@@ -133,20 +133,10 @@ export default function ExplainersPlot({
     </Box>
   );
 
-  // Single instance: no selector needed, show the explanation full width.
+  // Single instance (typically a global explainer): no selector and no title,
+  // since the card header already names the explainer. Show it full width.
   if (!hasSelector) {
-    return (
-      <Box
-        sx={{ display: "flex", flexDirection: "column", width: "100%", gap: 3 }}
-      >
-        {group.title && (
-          <Typography variant="subtitle2" color="text.secondary">
-            {group.title}
-          </Typography>
-        )}
-        {detail}
-      </Box>
-    );
+    return detail;
   }
 
   // Many instances: the explained dataset rows on the left (paginated, the
