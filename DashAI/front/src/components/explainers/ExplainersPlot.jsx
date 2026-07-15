@@ -143,8 +143,10 @@ export default function ExplainersPlot({
     <Box sx={{ display: "flex", gap: 3, width: "100%", alignItems: "stretch" }}>
       <Box
         sx={{
-          flex: "0 0 46%",
-          minWidth: 320,
+          // Local explainers select a dataset instance (wider table); global
+          // explainers select from a short list of curves (narrower).
+          flex: isLocal ? "0 0 46%" : "0 0 33%",
+          minWidth: isLocal ? 320 : 220,
           display: "flex",
           flexDirection: "column",
           minHeight: 0,
