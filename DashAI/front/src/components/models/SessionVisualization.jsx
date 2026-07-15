@@ -289,7 +289,7 @@ export default function SessionVisualization() {
             </Typography>
           </Box>
         )}
-        {/* Model detail — full-screen view for a single run */}
+        {/* Model detail: full-screen view for a single run */}
         {params.runId ? (
           activeRun ? (
             <ModelDetailView
@@ -323,7 +323,7 @@ export default function SessionVisualization() {
           )
         ) : (
           <>
-            {/* Session header — breadcrumb, title, quick stats */}
+            {/* Session header: breadcrumb, title, quick stats */}
             <Box sx={{ px: 4, pt: 4 }}>
               <ModelsBreadcrumbs />
               <Box
@@ -364,7 +364,7 @@ export default function SessionVisualization() {
               </Box>
             </Box>
 
-            {/* Compact model cards — quick access to each model */}
+            {/* Compact model cards: quick access to each model */}
             <Box
               data-tour="run-cards-section"
               sx={{
@@ -436,7 +436,7 @@ export default function SessionVisualization() {
 
             <Divider sx={{ my: 2 }} />
 
-            {/* Comparison analysis area — table/graphs across all models */}
+            {/* Comparison analysis area: table/graphs across all models */}
             <Box
               data-tour="model-comparison-panel"
               sx={{
@@ -466,7 +466,7 @@ export default function SessionVisualization() {
                     flexWrap: "wrap",
                   }}
                 >
-                  {/* Metric Split Selector — controls both table and graph views */}
+                  {/* Metric Split Selector: controls both table and graph views */}
                   {(hasTrainMetrics ||
                     hasValidationMetrics ||
                     hasTestMetrics) && (

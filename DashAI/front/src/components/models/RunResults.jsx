@@ -331,7 +331,7 @@ export default function RunResults({
             </Tabs>
           </Box>
 
-          {/* Empty spacer just for the horizontal gap between groups — kept
+          {/* Empty spacer just for the horizontal gap between groups. Kept
               out of the flex height/alignment calculation so the actual
               rule (positioned absolutely inside it) can be sized freely
               without pushing the tabs around. */}
