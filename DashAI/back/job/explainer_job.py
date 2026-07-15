@@ -162,6 +162,7 @@ class ExplainerJob(BaseJob):
             try:
                 self.explainer_db.explanation_path = explanation_path
                 self.explainer_db.plot_path = plot_path
+                self.explainer_db.plot_overrides = None
                 db.commit()
             except Exception as e:
                 log.exception(e)
@@ -301,6 +302,7 @@ class ExplainerJob(BaseJob):
             try:
                 self.explainer_db.explanation_path = explanation_path
                 self.explainer_db.plots_path = plots_path
+                self.explainer_db.plot_overrides = None
                 db.commit()
             except Exception as e:
                 log.exception(e)

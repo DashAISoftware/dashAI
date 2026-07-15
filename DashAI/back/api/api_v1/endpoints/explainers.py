@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
+from pydantic import BaseModel
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.explainers_params import (
@@ -27,6 +28,52 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _apply_overrides(artifacts: list, overrides: dict | None) -> list:
+    """Replace plotly artifact payloads with stored edited figures.
+
+    Parameters
+    ----------
+    artifacts : list
+        Normalized artifact dicts from ``normalize_artifacts``.
+    overrides : dict or None
+        Mapping of ``str(index)`` to an edited plotly figure (JSON string).
+
+    Returns
+    -------
+    list
+        The artifacts with overridden plotly payloads applied.
+    """
+    if not overrides:
+        return artifacts
+    import json
+
+    for key, figure in overrides.items():
+        try:
+            idx = int(key)
+        except (TypeError, ValueError):
+            continue
+        if 0 <= idx < len(artifacts) and artifacts[idx].get("type") == "plotly":
+            artifacts[idx]["payload"] = (
+                figure if isinstance(figure, str) else json.dumps(figure)
+            )
+    return artifacts
+
+
+class PlotOverrideBody(BaseModel):
+    """Request body for saving one plot override.
+
+    Parameters
+    ----------
+    index : int
+        Artifact index whose payload is being overridden.
+    figure : object
+        The edited plotly figure, either a JSON string or a dict.
+    """
+
+    index: int
+    figure: object
 
 
 @router.get("/global")
@@ -190,6 +237,7 @@ async def get_global_explanation_plot(
                 )
 
             plot_path = global_explainer[0].plot_path
+            plot_overrides = global_explainer[0].plot_overrides
 
             with open(plot_path, "rb") as file:
                 plot = pickle.load(file)
@@ -201,7 +249,7 @@ async def get_global_explanation_plot(
                 detail="Internal database error",
             ) from e
 
-    return normalize_artifacts(plot)
+    return _apply_overrides(normalize_artifacts(plot), plot_overrides)
 
 
 @router.post("/global", status_code=status.HTTP_201_CREATED)
@@ -476,6 +524,7 @@ async def get_local_explanation_plot(
                 )
 
             plots_path = local_explainer[0].plots_path
+            plot_overrides = local_explainer[0].plot_overrides
 
             with open(plots_path, "rb") as file:
                 plots = pickle.load(file)
@@ -487,7 +536,110 @@ async def get_local_explanation_plot(
                 detail="Internal database error",
             ) from e
 
-    return normalize_artifacts(plots)
+    return _apply_overrides(normalize_artifacts(plots), plot_overrides)
+
+
+@router.put("/{scope}/plot/{explainer_id}/override")
+@inject
+async def save_plot_override(
+    scope: str,
+    explainer_id: int,
+    body: PlotOverrideBody,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Persist an edited plotly figure for one artifact of an explanation.
+
+    Parameters
+    ----------
+    scope : str
+        Either "global" or "local".
+    explainer_id : int
+        Id of the explainer whose plot is being edited.
+    body : PlotOverrideBody
+        The artifact index and the edited plotly figure.
+    session_factory : Callable[..., ContextManager[Session]]
+        Factory yielding a SQLAlchemy session.
+
+    Returns
+    -------
+    dict
+        ``{"status": "ok"}`` on success.
+
+    Raises
+    ------
+    HTTPException
+        If the scope is invalid or the explainer does not exist.
+    """
+    import json
+
+    if scope not in ("global", "local"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid scope"
+        )
+    model = GlobalExplainer if scope == "global" else LocalExplainer
+    with session_factory() as db:
+        explainer = db.get(model, explainer_id)
+        if explainer is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Explainer not found"
+            )
+        overrides = dict(explainer.plot_overrides or {})
+        figure = body.figure
+        overrides[str(body.index)] = (
+            figure if isinstance(figure, str) else json.dumps(figure)
+        )
+        explainer.plot_overrides = overrides
+        db.commit()
+    return {"status": "ok"}
+
+
+@router.delete("/{scope}/plot/{explainer_id}/override/{index}")
+@inject
+async def delete_plot_override(
+    scope: str,
+    explainer_id: int,
+    index: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Remove a stored plot override, reverting to the computed figure.
+
+    Parameters
+    ----------
+    scope : str
+        Either "global" or "local".
+    explainer_id : int
+        Id of the explainer.
+    index : int
+        Artifact index whose override is removed.
+    session_factory : Callable[..., ContextManager[Session]]
+        Factory yielding a SQLAlchemy session.
+
+    Returns
+    -------
+    dict
+        ``{"status": "ok"}``.
+
+    Raises
+    ------
+    HTTPException
+        If the scope is invalid or the explainer does not exist.
+    """
+    if scope not in ("global", "local"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid scope"
+        )
+    model = GlobalExplainer if scope == "global" else LocalExplainer
+    with session_factory() as db:
+        explainer = db.get(model, explainer_id)
+        if explainer is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Explainer not found"
+            )
+        overrides = dict(explainer.plot_overrides or {})
+        overrides.pop(str(index), None)
+        explainer.plot_overrides = overrides or None
+        db.commit()
+    return {"status": "ok"}
 
 
 @router.post("/local", status_code=status.HTTP_201_CREATED)
