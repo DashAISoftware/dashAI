@@ -1,30 +1,39 @@
 import {
   Box,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Tabs,
-  Tab,
+  ToggleButtonGroup,
+  ToggleButton,
   Typography,
   Button,
   ButtonGroup,
 } from "@mui/material";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
+import { useTheme } from "@mui/material/styles";
+import Plot from "react-plotly.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getModelSessionById } from "../../api/modelSession";
+import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
+
+// Same color source as the session results charts (ResultsGraphsPlot /
+// graphsMaking) so a metric's line color stays visually consistent with the
+// rest of the app.
+const getTraceColors = (theme) => [
+  theme.palette.primary.main,
+  theme.palette.secondary.main,
+  ...(theme.palette.chart?.palette || [
+    "#66bb6a",
+    "#42a5f5",
+    "#ff9800",
+    "#ab47bc",
+    "#ef5350",
+    "#26a69a",
+    "#8d6e63",
+    "#78909c",
+  ]),
+];
 
 export function LiveMetricsChart({ run }) {
   const { t } = useTranslation("models");
+  const theme = useTheme();
   const [level, setLevel] = useState(null);
   const [split, setSplit] = useState("TRAIN");
   const [data, setData] = useState({});
@@ -208,35 +217,23 @@ export function LiveMetricsChart({ run }) {
     );
   }, [data, split, level, availableMetrics]);
 
-  const chartData = useMemo(() => {
-    if (Object.keys(filteredMetrics).length === 0) return [];
-
-    const allSteps = new Set();
-    for (const metricName in filteredMetrics) {
-      const metricData = filteredMetrics[metricName];
-      if (Array.isArray(metricData)) {
-        metricData.forEach((point) => {
-          allSteps.add(point.step);
-        });
-      }
-    }
-
-    const sortedSteps = Array.from(allSteps).sort((a, b) => a - b);
-
-    return sortedSteps.map((step) => {
-      const point = { x: step };
-      for (const metricName in filteredMetrics) {
-        const metricData = filteredMetrics[metricName];
-        if (Array.isArray(metricData)) {
-          const dataPoint = metricData.find((p) => p.step === step);
-          point[metricName] = dataPoint?.value ?? null;
-        } else {
-          point[metricName] = null;
-        }
-      }
-      return point;
+  // One small panel per metric — each keeps its own x/y scale instead of
+  // sharing a single overlaid axis, same "small multiples" approach used for
+  // the session results charts.
+  const panels = useMemo(() => {
+    const colors = getTraceColors(theme);
+    return selectedMetrics.map((metricName, idx) => {
+      const points = (filteredMetrics[metricName] ?? [])
+        .slice()
+        .sort((a, b) => a.step - b.step);
+      return {
+        metric: metricName,
+        x: points.map((p) => p.step),
+        y: points.map((p) => p.value),
+        color: colors[idx % colors.length],
+      };
     });
-  }, [filteredMetrics]);
+  }, [selectedMetrics, filteredMetrics, theme]);
 
   const hasTrialData =
     data[split]?.TRIAL && Object.keys(data[split].TRIAL).length > 0;
@@ -291,10 +288,26 @@ export function LiveMetricsChart({ run }) {
     }
   }, [split, level, filteredMetricKeys]);
 
-  const handleMetricChange = (e) => {
-    const newSelection = e.target.value;
+  const handleToggleMetric = (metric) => {
+    const canonicalOrder = Object.keys(filteredMetrics);
+    const newSelection = selectedMetrics.includes(metric)
+      ? selectedMetrics.filter((m) => m !== metric)
+      : canonicalOrder.filter(
+          (m) => m === metric || selectedMetrics.includes(m),
+        );
     setSelectedMetrics(newSelection);
     selectedMetricsPerSplit.current[split] = newSelection;
+  };
+
+  const handleSelectAll = () => {
+    const newSelection = Object.keys(filteredMetrics);
+    setSelectedMetrics(newSelection);
+    selectedMetricsPerSplit.current[split] = newSelection;
+  };
+
+  const handleClearAll = () => {
+    setSelectedMetrics([]);
+    selectedMetricsPerSplit.current[split] = [];
   };
 
   const handleLevelChange = (newLevel) => {
@@ -303,36 +316,34 @@ export function LiveMetricsChart({ run }) {
 
   return (
     <Box p={2}>
-      <Box display="flex" gap={2} mb={2}>
-        <FormControl
+      <Box display="flex" justifyContent="flex-end" mb={4}>
+        <ToggleButtonGroup
+          value={split}
+          exclusive
+          onChange={(e, newValue) => {
+            if (newValue !== null) setSplit(newValue);
+          }}
           size="small"
-          sx={{ minWidth: 250 }}
-          disabled={Object.keys(filteredMetrics).length === 0}
         >
-          <InputLabel>{t("models:label.metrics")}</InputLabel>
-          <Select
-            multiple
-            value={selectedMetrics}
-            label="Metrics"
-            onChange={handleMetricChange}
-            renderValue={(selected) => selected.join(", ")}
-          >
-            {Object.keys(filteredMetrics).map((metric) => (
-              <MenuItem key={metric} value={metric}>
-                {metric}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+          <ToggleButton value="TRAIN">{t("models:label.train")}</ToggleButton>
+          <ToggleButton value="VALIDATION">
+            {t("models:label.validation")}
+          </ToggleButton>
+          <ToggleButton value="TEST">{t("models:label.test")}</ToggleButton>
+        </ToggleButtonGroup>
       </Box>
 
-      <Tabs value={split} onChange={(_, v) => setSplit(v)} sx={{ mb: 4 }}>
-        <Tab label={t("models:label.train")} value="TRAIN" />
-        <Tab label={t("models:label.validation")} value="VALIDATION" />
-        <Tab label={t("models:label.test")} value="TEST" />
-      </Tabs>
+      <ResultsGraphsParameters
+        currentMetrics={Object.keys(filteredMetrics)}
+        selectedMetrics={selectedMetrics}
+        handleToggleMetric={handleToggleMetric}
+        handleSelectAll={handleSelectAll}
+        handleClearAll={handleClearAll}
+      />
 
-      {chartData.length === 0 || selectedMetrics.length === 0 ? (
+      <Box sx={{ mb: 4 }} />
+
+      {panels.length === 0 ? (
         <Box
           height={350}
           display="flex"
@@ -345,33 +356,72 @@ export function LiveMetricsChart({ run }) {
           </Typography>
         </Box>
       ) : (
-        <ResponsiveContainer width="100%" height={350}>
-          <LineChart data={chartData}>
-            <XAxis
-              dataKey="x"
-              label={{
-                value: levelLabel,
-                position: "insideBottom",
-                offset: -5,
-              }}
-            />
-            <YAxis />
-            <Tooltip />
-            <Legend />
-
-            {selectedMetrics.map((metric, idx) => (
-              <Line
-                key={metric}
-                type="monotone"
-                dataKey={metric}
-                dot={false}
-                stroke={`hsl(${(idx * 137.5) % 360}, 70%, 50%)`}
-                strokeWidth={2}
-                isAnimationActive={false}
+        <Box
+          sx={{
+            display: "grid",
+            gap: 3,
+            gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))",
+          }}
+        >
+          {panels.map((panel) => (
+            <Box
+              key={panel.metric}
+              sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 2 }}
+            >
+              <Typography
+                variant="subtitle2"
+                sx={{ fontWeight: 600, mb: 1, px: 1 }}
+              >
+                {panel.metric}
+              </Typography>
+              <Plot
+                data={[
+                  {
+                    type: "scatter",
+                    mode: panel.x.length > 1 ? "lines" : "markers",
+                    x: panel.x,
+                    y: panel.y,
+                    line: {
+                      color: panel.color,
+                      width: 2,
+                      shape: "spline",
+                      smoothing: 0.7,
+                    },
+                    marker: { color: panel.color },
+                    hovertemplate: "%{x}: %{y:.4f}<extra></extra>",
+                  },
+                ]}
+                layout={{
+                  autosize: true,
+                  height: 240,
+                  margin: { l: 50, r: 12, t: 8, b: 40 },
+                  showlegend: false,
+                  paper_bgcolor: theme.palette.background.paper,
+                  plot_bgcolor: theme.palette.background.paper,
+                  font: {
+                    color: theme.palette.text.primary,
+                    family: theme.typography.fontFamily,
+                    size: 11,
+                  },
+                  xaxis: {
+                    title: levelLabel,
+                    gridcolor: theme.palette.divider,
+                    zerolinecolor: theme.palette.divider,
+                    tickfont: { color: theme.palette.text.primary, size: 10 },
+                  },
+                  yaxis: {
+                    gridcolor: theme.palette.divider,
+                    tickfont: { color: theme.palette.text.primary, size: 10 },
+                    automargin: true,
+                  },
+                }}
+                useResizeHandler
+                style={{ width: "100%", height: "240px" }}
+                config={{ responsive: true, displayModeBar: false }}
               />
-            ))}
-          </LineChart>
-        </ResponsiveContainer>
+            </Box>
+          ))}
+        </Box>
       )}
 
       <Box display="flex" justifyContent="flex-end" mt={2}>
