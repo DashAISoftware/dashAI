@@ -265,6 +265,13 @@ class ExplainerJob(BaseJob):
                     self.input_columns,
                     self.output_columns,
                 )
+                # Capture the original selected rows (the model input for each
+                # explained instance) before the model's own preprocessing runs.
+                from DashAI.back.explainability.input_rows import (
+                    serialize_local_input_rows,
+                )
+
+                input_rows = serialize_local_input_rows(X["train"], self.input_columns)
                 X = trained_model.prepare_dataset(X, is_fit=False)
 
             except Exception as e:
@@ -293,6 +300,11 @@ class ExplainerJob(BaseJob):
                 plots_path = os.path.join(config["EXPLANATIONS_PATH"], plots_filename)
                 with open(plots_path, "wb") as file:
                     pickle.dump(plots, file)
+
+                inputs_filename = f"local_explanation_inputs_{explainer_id}.pickle"
+                inputs_path = os.path.join(config["EXPLANATIONS_PATH"], inputs_filename)
+                with open(inputs_path, "wb") as file:
+                    pickle.dump(input_rows, file)
 
             except Exception as e:
                 log.exception(e)
