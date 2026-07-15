@@ -14,7 +14,11 @@ import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import PropTypes from "prop-types";
 import ExplainersPlot from "./ExplainersPlot";
 import { useNavigate } from "react-router-dom";
-import { deleteExplainer } from "../../api/explainer";
+import {
+  deleteExplainer,
+  saveExplainerPlotOverride,
+  resetExplainerPlotOverride,
+} from "../../api/explainer";
 import { useTranslation } from "react-i18next";
 import { getComponentById } from "../../api/component";
 
@@ -34,6 +38,7 @@ export default function ExplainersCard({
   const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [componentData, setComponentData] = useState(null);
+  const [overriddenIndexes, setOverriddenIndexes] = useState([]);
   const { t } = useTranslation(["explainers"]);
   const isRunning = RUNNING_STATUSES.includes(explainer.status);
 
@@ -59,6 +64,18 @@ export default function ExplainersCard({
     } else {
       window.location.reload();
     }
+  };
+
+  const handleSaveOverride = async (index, figure) => {
+    await saveExplainerPlotOverride(scope, explainer.id, index, figure);
+    setOverriddenIndexes((prev) =>
+      prev.includes(index) ? prev : [...prev, index],
+    );
+  };
+
+  const handleResetOverride = async (index) => {
+    await resetExplainerPlotOverride(scope, explainer.id, index);
+    setOverriddenIndexes((prev) => prev.filter((i) => i !== index));
   };
 
   useEffect(() => {
@@ -143,7 +160,13 @@ export default function ExplainersCard({
                   {/* Reserved slot for the future "generate story" action button.
                       Kept hidden until that feature lands. */}
                 </Box>
-                <ExplainersPlot explainer={explainer} scope={scope} />
+                <ExplainersPlot
+                  explainer={explainer}
+                  scope={scope}
+                  onSaveOverride={handleSaveOverride}
+                  onResetOverride={handleResetOverride}
+                  overriddenIndexes={overriddenIndexes}
+                />
               </Grid>
             )}
           </Grid>

@@ -85,3 +85,27 @@ export const deleteExplainer = async (
   const response = await api.delete(`/v1/explainer/${scope}/${id}`);
   return response.data;
 };
+
+export const saveExplainerPlotOverride = async (
+  scope: string,
+  explainerId: number,
+  index: number,
+  figure: unknown,
+): Promise<object> => {
+  const response = await api.put(
+    `/v1/explainer/${scope}/plot/${explainerId}/override`,
+    { index, figure },
+  );
+  return response.data;
+};
+
+export const resetExplainerPlotOverride = async (
+  scope: string,
+  explainerId: number,
+  index: number,
+): Promise<object> => {
+  const response = await api.delete(
+    `/v1/explainer/${scope}/plot/${explainerId}/override/${index}`,
+  );
+  return response.data;
+};
