@@ -140,10 +140,16 @@ export default function ExplainersPlot({
   // rows when stored, else a list of instance labels), the selected
   // instance's explanation on the right.
   return (
-    <Box
-      sx={{ display: "flex", gap: 3, width: "100%", alignItems: "flex-start" }}
-    >
-      <Box sx={{ flex: "0 0 46%", minWidth: 320 }}>
+    <Box sx={{ display: "flex", gap: 3, width: "100%", alignItems: "stretch" }}>
+      <Box
+        sx={{
+          flex: "0 0 46%",
+          minWidth: 320,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+        }}
+      >
         <ExplainerInstanceTable
           datasetPath={datasetPath}
           titles={groups.map(

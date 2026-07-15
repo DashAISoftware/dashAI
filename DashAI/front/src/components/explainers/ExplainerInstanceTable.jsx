@@ -1,17 +1,11 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TablePagination,
-  TableRow,
-} from "@mui/material";
+import { Box, TablePagination } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 import { getDatasetFile } from "../../api/datasets";
 import LeanDatasetTable from "../shared/leanDatasetTable/LeanDatasetTable";
+import "../shared/leanDatasetTable/leanDatasetTable.css";
 
 const ROWS_PER_PAGE = 10;
 
@@ -20,8 +14,8 @@ const ROWS_PER_PAGE = 10;
  * stored its input rows as a dataset (datasetPath), it renders the shared
  * dataset table (feature values, image thumbnails, pagination). Otherwise, for
  * explainers computed before input rows were persisted, it falls back to a
- * simple paginated list of instance labels. Selecting a row calls onSelect
- * with the instance index.
+ * list of instance labels styled like the dataset table. Selecting a row calls
+ * onSelect with the instance index.
  */
 export default function ExplainerInstanceTable({
   datasetPath = null,
@@ -29,6 +23,7 @@ export default function ExplainerInstanceTable({
   selectedIndex,
   onSelect,
 }) {
+  const theme = useTheme();
   const [page, setPage] = useState(0);
 
   if (datasetPath) {
@@ -54,40 +49,61 @@ export default function ExplainerInstanceTable({
   const pageTitles = titles.slice(pageStart, pageStart + ROWS_PER_PAGE);
 
   return (
-    <div>
-      <TableContainer
-        component={Paper}
-        variant="outlined"
-        sx={{ maxHeight: 520 }}
-      >
-        <Table size="small" stickyHeader>
-          <TableBody>
+    <Box
+      className="lean-root"
+      sx={{
+        "--lean-header-bg": theme.palette.ui.panelDark,
+        "--lean-header-fg": theme.palette.text.primary,
+        "--lean-body-bg": theme.palette.ui.panelDark,
+        "--lean-row-hover": theme.palette.action.hover,
+      }}
+    >
+      <div className="lean-scroll">
+        <table className="lean-table">
+          <tbody>
             {pageTitles.map((title, i) => {
               const globalIndex = pageStart + i;
+              const isSelected = globalIndex === selectedIndex;
               return (
-                <TableRow
+                <tr
                   key={globalIndex}
-                  hover
-                  selected={globalIndex === selectedIndex}
+                  className="lean-row lean-row--clickable"
                   onClick={() => onSelect(globalIndex)}
-                  sx={{ cursor: "pointer" }}
+                  style={{
+                    backgroundColor: isSelected
+                      ? theme.palette.action.selected
+                      : undefined,
+                  }}
                 >
-                  <TableCell>{title}</TableCell>
-                </TableRow>
+                  <td className="lean-cell" title={title}>
+                    {title}
+                  </td>
+                </tr>
               );
             })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+          </tbody>
+        </table>
+      </div>
       <TablePagination
         component="div"
+        sx={{
+          backgroundColor: "var(--lean-body-bg)",
+          border: "1px solid rgba(128, 128, 128, 0.3)",
+          borderTop: "none",
+          borderBottomLeftRadius: 4,
+          borderBottomRightRadius: 4,
+        }}
         count={titles.length}
         page={page}
-        onPageChange={(event, newPage) => setPage(newPage)}
         rowsPerPage={ROWS_PER_PAGE}
+        showFirstButton
+        showLastButton
+        onPageChange={(_event, newPage) => setPage(newPage)}
         rowsPerPageOptions={[ROWS_PER_PAGE]}
+        labelRowsPerPage=""
+        slotProps={{ select: { sx: { display: "none" } } }}
       />
-    </div>
+    </Box>
   );
 }
 

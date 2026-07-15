@@ -4,6 +4,9 @@
   flex-direction: column;
   min-height: 0;
   width: 100%;
+  /* Fill a height constrained parent (a no op when the parent height is
+     indefinite) so the scroll area grows and pagination pins to the bottom. */
+  height: 100%;
 }
 
 .lean-loading {
@@ -15,6 +18,9 @@
 
 .lean-scroll {
   overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: var(--lean-body-bg, transparent);
   border: 1px solid rgba(128, 128, 128, 0.3);
   border-bottom: none;
   border-radius: 4px 4px 0 0;
