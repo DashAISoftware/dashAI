@@ -360,10 +360,7 @@ export default function RunResults({
               disabled={!isFinished || optimizables === 0}
             />
             {isCv && (
-              <Tab
-                label={t("models:label.foldMetrics")}
-                disabled={!isFinished}
-              />
+              <Tab label={t("models:label.CvDetails")} disabled={!isFinished} />
             )}
           </Tabs>
         </Box>

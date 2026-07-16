@@ -104,7 +104,7 @@
     "hyperparameterOptimizationPlots": "Gráficos de Otimização de Hiperparâmetros",
     "hyperparameterOptimizerConfiguration": "Configuração do Otimizador de Hiperparâmetros",
     "hyperparameters": "Hiperparâmetros",
-    "foldMetrics": "Métricas por Fold",
+    "CvDetails": "Detalhes da Validação Cruzada",
     "runName": "Nome da Execução",
     "confirmParameterUpdate": "Confirmar Atualização de Parâmetros",
     "liveMetrics": "Métricas ao Vivo",

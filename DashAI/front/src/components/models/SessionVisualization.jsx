@@ -447,7 +447,7 @@ export default function SessionVisualization() {
                     onClick={() => handleToggleView("tests")}
                     startIcon={<Science />}
                   >
-                    {t("models:button.statisticalTests", "Test")}
+                    {t("common:tests")}
                   </Button>
                 </ButtonGroup>
 

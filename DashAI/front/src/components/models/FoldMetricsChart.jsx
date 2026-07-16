@@ -501,7 +501,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
             />
             <Tab
               value="nested"
-              label="Nested CV"
+              label={t("models:label.nestedCrossValidation")}
               sx={{ textTransform: "none", minHeight: 36, py: 0 }}
             />
           </Tabs>

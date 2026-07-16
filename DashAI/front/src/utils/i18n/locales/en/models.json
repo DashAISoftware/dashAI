@@ -104,7 +104,7 @@
     "hyperparameterOptimizationPlots": "Hyperparameter Optimization Plots",
     "hyperparameterOptimizerConfiguration": "Hyperparameter Optimizer Configuration",
     "hyperparameters": "Hyperparameters",
-    "foldMetrics": "Fold Metrics",
+    "CvDetails": "Cross Validation details",
     "runName": "Run Name",
     "confirmParameterUpdate": "Confirm Parameter Update",
     "liveMetrics": "Live Metrics",
