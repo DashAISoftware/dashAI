@@ -446,4 +446,4 @@ class DiceCounterfactual(BaseLocalExplainer):
             text = TextArtifact(payload=summary)
             groups.append(ArtifactGroup(title=title, artifacts=[table, text]))
 
-        return GroupedArtifacts(groups=groups)
+        return [GroupedArtifacts(groups=groups)]

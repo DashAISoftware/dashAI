@@ -361,4 +361,4 @@ class TokenAblation(BaseLocalExplainer):
             text = TextArtifact(payload=summary)
             groups.append(ArtifactGroup(title=title, artifacts=[plot, text]))
 
-        return GroupedArtifacts(groups=groups)
+        return [GroupedArtifacts(groups=groups)]
