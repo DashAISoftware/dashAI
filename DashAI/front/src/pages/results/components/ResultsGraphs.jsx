@@ -197,6 +197,7 @@ function ResultsGraphs({
       handleClearAll={handleClearAll}
       chartData={chartData}
       onToggleRun={handleToggleRun}
+      sessionId={finishedRuns[0]?.model_session_id}
     />
   );
 }

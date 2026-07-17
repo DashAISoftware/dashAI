@@ -106,7 +106,7 @@ function SortableCard({ id, title, gridColumn, children }) {
   );
 }
 
-function ResultsGraphsPlot({ chartData, onToggleRun }) {
+function ResultsGraphsPlot({ chartData, onToggleRun, sessionId }) {
   const { t } = useTranslation(["models"]);
   const theme = useTheme();
   const bgColor = theme.palette.background.paper;
@@ -118,9 +118,18 @@ function ResultsGraphsPlot({ chartData, onToggleRun }) {
   const yaxis = chartData.yaxis;
   const heatmapData = chartData.heatmap ?? [];
 
+  // Scoped per session — otherwise dragging a card in one session's Graphs
+  // would silently reorder every other session's Graphs too, since it's the
+  // same metric/heatmap ids everywhere. The parent remounts this component
+  // (via `key={sessionId}`) whenever the session changes, so this only needs
+  // to be read once per mount.
+  const storageKey = sessionId
+    ? `${PANEL_ORDER_STORAGE_KEY}-${sessionId}`
+    : PANEL_ORDER_STORAGE_KEY;
+
   const [order, setOrder] = useState(() => {
     try {
-      const saved = localStorage.getItem(PANEL_ORDER_STORAGE_KEY);
+      const saved = localStorage.getItem(storageKey);
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -153,9 +162,9 @@ function ResultsGraphsPlot({ chartData, onToggleRun }) {
 
   useEffect(() => {
     if (order.length > 0) {
-      localStorage.setItem(PANEL_ORDER_STORAGE_KEY, JSON.stringify(order));
+      localStorage.setItem(storageKey, JSON.stringify(order));
     }
-  }, [order]);
+  }, [order, storageKey]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -354,6 +363,7 @@ SortableCard.defaultProps = {
 ResultsGraphsPlot.propTypes = {
   chartData: PropTypes.object.isRequired,
   onToggleRun: PropTypes.func.isRequired,
+  sessionId: PropTypes.number,
 };
 
 export default ResultsGraphsPlot;

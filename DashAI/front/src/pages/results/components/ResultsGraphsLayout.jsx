@@ -13,6 +13,7 @@ function ResultsGraphsLayout({
   handleClearAll,
   chartData,
   onToggleRun,
+  sessionId,
 }) {
   return (
     <Box
@@ -35,7 +36,14 @@ function ResultsGraphsLayout({
 
       {/* Plotly chart area — bar panels + heatmap in one grid */}
       <Box display="flex" flex={1} width="100%">
-        <ResultsGraphsPlot chartData={chartData} onToggleRun={onToggleRun} />
+        {/* Remounts (resetting the drag-order state cleanly) whenever the
+            session changes instead of reusing the instance across sessions */}
+        <ResultsGraphsPlot
+          key={sessionId}
+          chartData={chartData}
+          onToggleRun={onToggleRun}
+          sessionId={sessionId}
+        />
       </Box>
     </Box>
   );
@@ -49,6 +57,7 @@ ResultsGraphsLayout.propTypes = {
   handleClearAll: PropTypes.func.isRequired,
   chartData: PropTypes.object.isRequired,
   onToggleRun: PropTypes.func.isRequired,
+  sessionId: PropTypes.number,
 };
 
 export default ResultsGraphsLayout;
