@@ -466,7 +466,11 @@ def normalize_artifacts(
             }
         return normalize_leaf(item)
 
-    if create_grouped and isinstance(items, list):
+    if (
+        create_grouped
+        and isinstance(items, list)
+        and not isinstance(items[0], (GroupedArtifacts, dict))
+    ):
         grouped_groups = []
         for i, item in enumerate(items):
             normalized_item = normalize_item(item)
