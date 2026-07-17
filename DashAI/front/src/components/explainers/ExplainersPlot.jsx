@@ -45,18 +45,23 @@ function ArtifactBatch({
   leading = null,
   leadingFlex,
   leadingMinWidth = 0,
+  siblingOffset = 0,
 }) {
   // Key by position within the batch, not by artifact.index: switching the
   // selected group then reuses the same viewer/Plot instance at each slot and
   // updates it in place (Plotly diffs) instead of unmounting the tall old plot
   // and mounting a new one, which briefly collapses page height and makes the
   // window scroll up.
+  //
+  // siblingIndex maps this leaf into `siblings` (which may span every group,
+  // not just this batch) via siblingOffset, so the fullscreen viewer can page
+  // across groups even when each group has a single artifact.
   const renderLeaf = (artifact, i) => (
     <ArtifactViewer
       key={i}
       artifact={artifact}
       siblingArtifacts={siblings}
-      siblingIndex={i}
+      siblingIndex={siblingOffset + i}
       {...leafProps(artifact, ctx)}
     />
   );
@@ -98,6 +103,7 @@ ArtifactBatch.propTypes = {
   leading: PropTypes.node,
   leadingFlex: PropTypes.string,
   leadingMinWidth: PropTypes.number,
+  siblingOffset: PropTypes.number,
 };
 
 /**
@@ -123,6 +129,14 @@ function GroupedArtifactsView({ grouped, ctx, datasetPath = null }) {
   );
   const wide = Boolean(datasetPath);
 
+  // Fullscreen navigation spans every group's artifacts (flattened), so the
+  // viewer can page across groups even when each group has a single artifact.
+  // The selected group's artifacts occupy the slice starting at `offset`.
+  const allArtifacts = groups.flatMap((g) => g.artifacts);
+  const offset = groups
+    .slice(0, selected)
+    .reduce((n, g) => n + g.artifacts.length, 0);
+
   // Rendered directly (no height cap): ExplainerInstanceTable's root is
   // height:100%, so it fills the stretched batch cell and matches the height
   // of the first artifact beside it, scrolling internally when long.
@@ -138,7 +152,8 @@ function GroupedArtifactsView({ grouped, ctx, datasetPath = null }) {
   return (
     <ArtifactBatch
       artifacts={group.artifacts}
-      siblings={group.artifacts}
+      siblings={allArtifacts}
+      siblingOffset={offset}
       ctx={ctx}
       leading={selector}
       leadingFlex={wide ? "0 0 46%" : "0 0 25%"}
