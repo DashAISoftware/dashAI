@@ -123,8 +123,8 @@ class TestPromptCRUD:
         assert "DefaultRAGGenerationPrompt" in class_names, (
             "DefaultRAGGenerationPrompt not found in prompt list"
         )
-        assert "DefaultQnARAGGenerationPrompt" in class_names, (
-            "DefaultQnARAGGenerationPrompt not found in prompt list"
+        assert "DefaultQARAGGenerationPrompt" in class_names, (
+            "DefaultQARAGGenerationPrompt not found in prompt list"
         )
 
     def test_create_custom_prompt(self, client: TestClient):
@@ -296,18 +296,18 @@ class TestPromptSessionIntegration:
         assert prompt["params"]["language"] == "es", "Language should be es"
 
     def test_session_with_qna_prompt(self, client: TestClient, test_doc_id: int):
-        """Session creation with DefaultQnARAGGenerationPrompt
+        """Session creation with DefaultQARAGGenerationPrompt
         (language=en) stores prompt correctly."""
         params = _base_session_params(test_doc_id)
         params["name"] = "Session QnA Prompt"
         params["parameters"]["prompt"] = {
-            "component": "DefaultQnARAGGenerationPrompt",
+            "component": "DefaultQARAGGenerationPrompt",
             "params": {"language": "en"},
         }
         stored = _post_and_get(client, params)
         prompt = stored["parameters"]["prompt"]
-        assert prompt["component"] == "DefaultQnARAGGenerationPrompt", (
-            "Prompt component should be DefaultQnARAGGenerationPrompt"
+        assert prompt["component"] == "DefaultQARAGGenerationPrompt", (
+            "Prompt component should be DefaultQARAGGenerationPrompt"
         )
         assert prompt["params"]["language"] == "en"
 
