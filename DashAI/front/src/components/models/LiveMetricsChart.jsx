@@ -377,7 +377,12 @@ export function LiveMetricsChart({
 
   return (
     <Box p={2}>
-      <Box display="flex" justifyContent="flex-end" mb={4}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb={4}
+      >
         <ToggleButtonGroup
           value={split}
           exclusive
@@ -392,6 +397,14 @@ export function LiveMetricsChart({
           </ToggleButton>
           <ToggleButton value="TEST">{t("models:label.test")}</ToggleButton>
         </ToggleButtonGroup>
+
+        <ResultsGraphsParameters
+          currentMetrics={Object.keys(filteredMetrics)}
+          selectedMetrics={selectedMetrics}
+          handleToggleMetric={handleToggleMetric}
+          handleSelectAll={handleSelectAll}
+          handleClearAll={handleClearAll}
+        />
       </Box>
 
       {summaryMetrics.length > 0 && (
@@ -515,16 +528,6 @@ export function LiveMetricsChart({
           ))}
         </Box>
       )}
-
-      <ResultsGraphsParameters
-        currentMetrics={Object.keys(filteredMetrics)}
-        selectedMetrics={selectedMetrics}
-        handleToggleMetric={handleToggleMetric}
-        handleSelectAll={handleSelectAll}
-        handleClearAll={handleClearAll}
-      />
-
-      <Box sx={{ mb: 4 }} />
 
       {panels.length === 0 ? (
         <Box

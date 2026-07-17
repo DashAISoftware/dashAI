@@ -23,13 +23,15 @@ function ResultsGraphsLayout({
       height="100%"
     >
       {/* Metric filter toolbar */}
-      <ResultsGraphsParameters
-        currentMetrics={currentMetrics}
-        selectedMetrics={selectedMetrics}
-        handleToggleMetric={handleToggleMetric}
-        handleSelectAll={handleSelectAll}
-        handleClearAll={handleClearAll}
-      />
+      <Box sx={{ display: "flex", justifyContent: "flex-end", px: 4, py: 3 }}>
+        <ResultsGraphsParameters
+          currentMetrics={currentMetrics}
+          selectedMetrics={selectedMetrics}
+          handleToggleMetric={handleToggleMetric}
+          handleSelectAll={handleSelectAll}
+          handleClearAll={handleClearAll}
+        />
+      </Box>
 
       {/* Plotly chart area — bar panels + heatmap in one grid */}
       <Box display="flex" flex={1} width="100%">

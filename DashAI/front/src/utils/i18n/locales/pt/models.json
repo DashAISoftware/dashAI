@@ -99,6 +99,7 @@
     "metricsEmptyForDisplaySet": "As métricas de resultado para {{set}} estão vazias.",
     "metrics": "Métricas",
     "metricToOptimize": "Métrica a Otimizar",
+    "searchMetric": "Buscar métrica...",
     "modelComparison": "Comparação de Modelos",
     "modelsModule": "Módulo de Modelos",
     "nameYourSession": "Nomeie sua Sessão",

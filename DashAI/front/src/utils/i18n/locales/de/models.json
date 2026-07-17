@@ -98,6 +98,7 @@
     "metricsEmptyForDisplaySet": "Die Ergebnismetriken für {{set}} sind leer.",
     "metrics": "Metriken",
     "metricToOptimize": "Zu optimierende Metrik",
+    "searchMetric": "Metrik suchen...",
     "modelComparison": "Modellvergleich",
     "modelsModule": "Modell-Modul",
     "nameYourSession": "Sitzung benennen",

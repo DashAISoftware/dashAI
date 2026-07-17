@@ -22,6 +22,11 @@ import { CSS } from "@dnd-kit/utilities";
 
 const PANEL_ORDER_STORAGE_KEY = "dashai-results-panel-order";
 const HEATMAP_ID = "__heatmap__";
+// Matches the run cards grid's minmax floor (SessionVisualization.jsx) so
+// both sections switch between 1 and 2 columns at the same container width
+// instead of disagreeing in a narrow "dead zone".
+const PANEL_MIN_WIDTH = 340;
+const GRID_GAP = 24; // gap: 3 → 3 * 8px
 
 function EmptyState({ message }) {
   return (
@@ -167,6 +172,29 @@ function ResultsGraphsPlot({ chartData, onToggleRun }) {
     });
   };
 
+  // The heatmap spans 2 grid columns, which forces the auto-fill grid to
+  // reserve 2 tracks even when the container is too narrow for two real
+  // 420px columns — CSS then resolves that shortage by splitting the
+  // columns unevenly instead of collapsing to one column per row. Only ask
+  // for the 2-column span once the container actually has room for it.
+  //
+  // Uses a state-backed (not plain useRef) callback ref: the grid only
+  // mounts once chartData finishes loading (before that, EmptyState renders
+  // instead), so a plain ref + `useEffect(..., [])` would fire before the
+  // node exists and never re-attach once it does.
+  const [gridNode, setGridNode] = useState(null);
+  const [canSpanTwoColumns, setCanSpanTwoColumns] = useState(true);
+
+  useEffect(() => {
+    if (!gridNode) return undefined;
+    const TWO_COLUMN_MIN_WIDTH = PANEL_MIN_WIDTH * 2 + GRID_GAP;
+    const observer = new ResizeObserver(([entry]) => {
+      setCanSpanTwoColumns(entry.contentRect.width >= TWO_COLUMN_MIN_WIDTH);
+    });
+    observer.observe(gridNode);
+    return () => observer.disconnect();
+  }, [gridNode]);
+
   if (panels.length === 0 && heatmapData.length === 0) {
     return (
       <EmptyState message={t("models:label.noMetricsAvailableForThisView")} />
@@ -254,10 +282,11 @@ function ResultsGraphsPlot({ chartData, onToggleRun }) {
       >
         <SortableContext items={orderedIds} strategy={rectSortingStrategy}>
           <Box
+            ref={setGridNode}
             sx={{
               display: "grid",
               gap: 3,
-              gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))",
+              gridTemplateColumns: `repeat(auto-fill, minmax(${PANEL_MIN_WIDTH}px, 1fr))`,
             }}
           >
             {orderedIds.map((id) => {
@@ -267,7 +296,7 @@ function ResultsGraphsPlot({ chartData, onToggleRun }) {
                     key={id}
                     id={id}
                     title={t("models:label.heatmap")}
-                    gridColumn="span 2"
+                    gridColumn={canSpanTwoColumns ? "span 2" : undefined}
                   >
                     <Box sx={{ height: 480 }}>
                       <Plot
