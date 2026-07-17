@@ -75,6 +75,10 @@ def _apply_overrides(artifacts: list, overrides: dict | None) -> list:
         leaf = leaves_by_index.get(idx)
         if leaf is not None and leaf.get("type") == "plotly":
             leaf["payload"] = figure if isinstance(figure, str) else json.dumps(figure)
+            # Flag so the frontend renders the user's edited figure verbatim
+            # instead of re-applying the app theme (which would clobber the
+            # edited colors/background).
+            leaf["overridden"] = True
     return artifacts
 
 

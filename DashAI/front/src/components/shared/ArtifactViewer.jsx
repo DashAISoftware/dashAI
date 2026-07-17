@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -8,20 +8,21 @@ import {
   Typography,
   Tooltip,
   Dialog,
+  Divider,
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import EditIcon from "@mui/icons-material/Edit";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import SaveIcon from "@mui/icons-material/Save";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { useTheme, alpha } from "@mui/material/styles";
-import Plot from "react-plotly.js";
 import { useTranslation } from "react-i18next";
 
 import ArtifactRenderer from "./ArtifactRenderer";
+import PlotLayoutForm from "../notebooks/explorer/plotLayout/PlotLayoutForm";
+import PlotlyJsonVisualizer from "../notebooks/explorer/visualizations/PlotlyJsonVisualizer";
 import { applyThemeToLayout } from "../../utils/plotlyTheme";
 import { downloadArtifact } from "../../utils/downloadArtifact";
 
@@ -48,9 +49,22 @@ export default function ArtifactViewer({
   const [fullscreen, setFullscreen] = useState(false);
   const [fullscreenIndex, setFullscreenIndex] = useState(siblingIndex);
   const hasSiblings = siblingArtifacts && siblingArtifacts.length > 1;
+
+  // The parent list does not refetch after a save, so hold the edited payload
+  // locally and render from it, making a save show immediately. Cleared when
+  // the underlying artifact prop actually changes (e.g. a real refetch/reset).
+  const [localPayload, setLocalPayload] = useState(null);
+  useEffect(() => {
+    setLocalPayload(null);
+  }, [artifact.payload]);
+  const shownArtifact =
+    localPayload != null
+      ? { ...artifact, payload: localPayload, overridden: true }
+      : artifact;
+
   const fullscreenArtifact = hasSiblings
     ? siblingArtifacts[fullscreenIndex]
-    : artifact;
+    : shownArtifact;
 
   const openFullscreen = () => {
     setFullscreenIndex(siblingIndex);
@@ -64,50 +78,53 @@ export default function ArtifactViewer({
         siblingArtifacts.length,
     );
   };
-  // editInitial is the figure the editable Plot mounts with (set once per edit
-  // session). editFigureRef holds the latest edited figure, captured in
-  // onUpdate WITHOUT setState so Plotly's own edit events do not trigger a
-  // React re render that would re run Plotly.react and loop the page into a
-  // freeze.
-  const [editInitial, setEditInitial] = useState(null);
-  const editFigureRef = useRef(null);
+  // Working copies the form editor mutates. The preview Plot renders from these
+  // directly, so edits made in the form show live; the form is the single
+  // source of truth, so there is no Plotly edit-event feedback loop.
+  const [editData, setEditData] = useState(null);
+  const [editLayout, setEditLayout] = useState(null);
   const plotWrapRef = useRef(null);
   const isPlotly = artifact.type === "plotly";
 
   const figure = useMemo(() => {
     if (!isPlotly) return null;
     try {
-      return typeof artifact.payload === "string"
-        ? JSON.parse(artifact.payload)
-        : artifact.payload;
+      return typeof shownArtifact.payload === "string"
+        ? JSON.parse(shownArtifact.payload)
+        : shownArtifact.payload;
     } catch (error) {
       console.error("Invalid plotly payload", error);
       return null;
     }
-  }, [artifact, isPlotly]);
+  }, [shownArtifact, isPlotly]);
 
   const startEdit = () => {
     if (!figure?.data) return;
-    const initial = {
-      data: JSON.parse(JSON.stringify(figure.data)),
-      layout: applyThemeToLayout(figure.layout, theme),
-    };
-    setEditInitial(initial);
-    editFigureRef.current = initial;
+    setEditData(structuredClone(figure.data));
+    // An already-overridden figure keeps its saved colors; a fresh one is
+    // themed so the editor starts from the current on-screen appearance.
+    setEditLayout(
+      shownArtifact.overridden
+        ? structuredClone(figure.layout ?? {})
+        : applyThemeToLayout(figure.layout, theme),
+    );
     setEditing(true);
   };
 
   const closeEdit = () => {
     setEditing(false);
-    setEditInitial(null);
-    editFigureRef.current = null;
+    setEditData(null);
+    setEditLayout(null);
   };
 
   const saveEdit = async () => {
     try {
-      if (onSaveEdit && editFigureRef.current) {
-        await onSaveEdit(editFigureRef.current);
+      const edited = { data: editData, layout: editLayout };
+      if (onSaveEdit && editData) {
+        await onSaveEdit(edited);
       }
+      // Reflect the save immediately, since the parent list is not refetched.
+      setLocalPayload(JSON.stringify(edited));
       closeEdit();
     } catch (error) {
       console.error("Failed to save plot edits", error);
@@ -218,7 +235,14 @@ export default function ArtifactViewer({
         )}
         {canReset && onResetEdit && (
           <Tooltip title={t("explainers:button.resetPlot")}>
-            <IconButton size="small" sx={actionButtonSx} onClick={onResetEdit}>
+            <IconButton
+              size="small"
+              sx={actionButtonSx}
+              onClick={() => {
+                setLocalPayload(null);
+                onResetEdit();
+              }}
+            >
               <RestartAltIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -255,37 +279,97 @@ export default function ArtifactViewer({
 
       {/* The instance label is shown once by the parent; suppress the
           per artifact title so it is not repeated on every block. */}
-      <ArtifactRenderer artifact={{ ...artifact, title: null }} />
+      <ArtifactRenderer artifact={{ ...shownArtifact, title: null }} />
 
-      {/* Edit dialog: editable plotly figure. The Plot mounts once with
-          editInitial and reports edits through onUpdate into a ref; we never
-          feed those edits back as props, so Plotly does not re render in a
-          loop. */}
-      <Dialog open={editing} onClose={closeEdit} fullWidth maxWidth="lg">
-        <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1, gap: 1 }}>
-          {onSaveEdit && (
-            <Tooltip title={t("common:save")}>
-              <IconButton onClick={saveEdit}>
-                <SaveIcon />
-              </IconButton>
-            </Tooltip>
-          )}
-          <IconButton onClick={closeEdit}>
+      {/* Edit dialog: a live plot preview beside the shared form layout
+          editor (reused from the explorer view). The form mutates editData /
+          editLayout and the preview renders from them, so edits show live. */}
+      <Dialog
+        open={editing}
+        onClose={closeEdit}
+        maxWidth={false}
+        slotProps={{
+          paper: {
+            sx: {
+              width: "90vw",
+              maxWidth: "none",
+              height: "85vh",
+              bgcolor: "background.default",
+              backgroundImage: "none",
+            },
+          },
+        }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 2,
+            px: 4,
+            py: 2,
+            flexShrink: 0,
+            bgcolor: "background.default",
+          }}
+        >
+          <Typography variant="h6" component="div" color="text.primary">
+            {t("explainers:button.editPlot")}
+          </Typography>
+          <IconButton onClick={closeEdit} aria-label={t("common:close")}>
             <CloseIcon />
           </IconButton>
         </Box>
-        {editInitial && (
-          <Plot
-            data={editInitial.data}
-            layout={{ ...editInitial.layout, autosize: true, height: 500 }}
-            config={{ editable: true, displaylogo: false, responsive: true }}
-            onUpdate={(fig) => {
-              editFigureRef.current = { data: fig.data, layout: fig.layout };
+        <Divider sx={{ flexShrink: 0 }} />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            flex: 1,
+            minHeight: 0,
+            overflow: "hidden",
+          }}
+        >
+          {/* Live preview: reuses the explorer's plot viewer so it shows the
+              same overlay icon buttons (zoom, reset, fullscreen, download). */}
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              minHeight: 0,
+              overflow: "auto",
+              p: 3,
+              bgcolor: "background.default",
             }}
-            useResizeHandler
-            style={{ width: "100%" }}
-          />
-        )}
+          >
+            {editData && (
+              <PlotlyJsonVisualizer
+                data={{ data: editData, layout: editLayout }}
+                fillHeight
+              />
+            )}
+          </Box>
+          {/* Form layout/trace editor */}
+          <Box
+            sx={{
+              width: { xs: "100%", md: "15%" },
+              flexShrink: 0,
+              borderLeft: { md: `1px solid ${theme.palette.ui.border}` },
+              minHeight: 0,
+              overflow: "hidden",
+            }}
+          >
+            {editData && (
+              <PlotLayoutForm
+                data={editData}
+                setData={setEditData}
+                layout={editLayout}
+                setLayout={setEditLayout}
+                onSave={saveEdit}
+                sx={{ bgcolor: "background.default" }}
+              />
+            )}
+          </Box>
+        </Box>
       </Dialog>
 
       {/* Fullscreen view: dark blurred lightbox overlay, rounded/shadowed

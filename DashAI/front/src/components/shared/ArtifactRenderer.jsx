@@ -35,8 +35,15 @@ export default function ArtifactRenderer({ artifact, height = 380 }) {
 
   const themedLayout = useMemo(() => {
     if (!parsedFigure) return {};
+    // User-edited (overridden) figures are rendered verbatim so their saved
+    // colors/background survive; only strip fixed sizing. Non-overridden
+    // figures follow the app light/dark theme.
+    if (artifact.overridden) {
+      const { width: _w, height: _h, ...rest } = parsedFigure.layout ?? {};
+      return rest;
+    }
     return applyThemeToLayout(parsedFigure.layout, theme);
-  }, [parsedFigure, theme]);
+  }, [parsedFigure, theme, artifact.overridden]);
 
   const highlightedCells = useMemo(() => {
     if (artifact.type !== "table") return new Set();
@@ -108,6 +115,7 @@ ArtifactRenderer.propTypes = {
     type: PropTypes.string.isRequired,
     payload: PropTypes.any,
     title: PropTypes.string,
+    overridden: PropTypes.bool,
   }).isRequired,
   height: PropTypes.number,
 };
