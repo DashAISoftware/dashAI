@@ -31,8 +31,9 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Add as AddIcon,
-  TrendingUp as TrendingUpIcon,
   Close as CloseIcon,
+  Dataset as DatasetIcon,
+  EditNote as EditNoteIcon,
 } from "@mui/icons-material";
 import ExplainersCard from "../explainers/ExplainersCard";
 import PredictionCard from "./PredictionCard";
@@ -746,7 +747,7 @@ export default function RunResults({
                   <Button
                     variant="outlined"
                     size="small"
-                    startIcon={<TrendingUpIcon />}
+                    startIcon={<DatasetIcon />}
                     onClick={() => {
                       setDatasetRunState({
                         canRun: false,
@@ -762,7 +763,7 @@ export default function RunResults({
                   <Button
                     variant="outlined"
                     size="small"
-                    startIcon={<TrendingUpIcon />}
+                    startIcon={<EditNoteIcon />}
                     onClick={() => {
                       setManualSaveState({ canSave: false, isSaving: false });
                       setShowManualPanel(true);
@@ -914,6 +915,7 @@ export default function RunResults({
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <DatasetIcon fontSize="small" color="action" />
                       <Typography variant="subtitle2" fontWeight="medium">
                         {t("models:label.datasetPredictions")}
                       </Typography>
@@ -993,6 +995,7 @@ export default function RunResults({
                     }}
                   >
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <EditNoteIcon fontSize="small" color="action" />
                       <Typography variant="subtitle2" fontWeight="medium">
                         {t("models:label.manualPredictions")}
                       </Typography>
