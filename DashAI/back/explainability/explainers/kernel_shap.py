@@ -1,6 +1,10 @@
 from typing import List, Optional
 
-from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotlyArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
@@ -520,7 +524,7 @@ class KernelShap(BaseLocalExplainer):
 
         return PlotlyArtifact(payload=fig, title=title)
 
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Method to create the explanation plots using plotly.
 
         Parameters
@@ -530,9 +534,9 @@ class KernelShap(BaseLocalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A list with one plotly artifact per explained instance; the
-            artifact titles ("Instance 1", ...) identify each instance.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group ("Instance 1", ...) per
+            explained instance, each holding that instance's plotly plot.
         """
 
         exp = explanation.copy()
@@ -550,7 +554,7 @@ class KernelShap(BaseLocalExplainer):
 
         feats = np.asarray(feature_names, dtype=str).reshape(-1)
 
-        plots = []
+        groups = []
         for instance_number, i in enumerate(exp, start=1):
             instance_values = exp[i]["instance_values"]
             model_prediction = exp[i]["model_prediction"]
@@ -656,8 +660,9 @@ class KernelShap(BaseLocalExplainer):
                 base_value,
                 y_pred_pbb,
                 y_pred_name,
-                title=f"Instance {instance_number}",
             )
-            plots.append(plot)
+            groups.append(
+                ArtifactGroup(title=f"Instance {instance_number}", artifacts=[plot])
+            )
 
-        return plots
+        return [GroupedArtifacts(groups=groups)]

@@ -1,5 +1,5 @@
 import { React, useEffect, useState } from "react";
-import { CircularProgress, Box, Typography } from "@mui/material";
+import { CircularProgress, Box } from "@mui/material";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
@@ -17,27 +17,159 @@ function parseExplanationArtifacts(items) {
   );
 }
 
+/** Build the onSaveEdit/onResetEdit/canReset props shared by every leaf. */
+function leafProps(
+  artifact,
+  { onSaveOverride, onResetOverride, overriddenIndexes },
+) {
+  return {
+    canReset: overriddenIndexes.includes(artifact.index),
+    onSaveEdit: onSaveOverride
+      ? (figure) => onSaveOverride(artifact.index, figure)
+      : null,
+    onResetEdit: onResetOverride ? () => onResetOverride(artifact.index) : null,
+  };
+}
+
 /**
- * Group consecutive artifacts sharing the same non null title into one
- * instance group, tracking each artifact's flat index in the endpoint
- * response so edits can target it.
+ * Lay out a batch of leaf artifacts: the first artifact fills the row beside
+ * whatever `leading` element is passed (a selector, or nothing); any further
+ * artifacts stack below at full width, most recent first. `siblings` is the
+ * full artifact list of the batch so the fullscreen viewer can navigate
+ * between them.
  */
-function groupArtifacts(artifacts) {
-  const groups = [];
-  artifacts.forEach((artifact, index) => {
-    const withIndex = { ...artifact, index };
-    const lastGroup = groups[groups.length - 1];
-    if (
-      artifact.title != null &&
-      lastGroup &&
-      lastGroup.title === artifact.title
-    ) {
-      lastGroup.artifacts.push(withIndex);
-    } else {
-      groups.push({ title: artifact.title ?? null, artifacts: [withIndex] });
-    }
-  });
-  return groups;
+function ArtifactBatch({
+  artifacts,
+  siblings,
+  ctx,
+  leading = null,
+  leadingFlex,
+  leadingMinWidth = 0,
+}) {
+  // Key by position within the batch, not by artifact.index: switching the
+  // selected group then reuses the same viewer/Plot instance at each slot and
+  // updates it in place (Plotly diffs) instead of unmounting the tall old plot
+  // and mounting a new one, which briefly collapses page height and makes the
+  // window scroll up.
+  const renderLeaf = (artifact, i) => (
+    <ArtifactViewer
+      key={i}
+      artifact={artifact}
+      siblingArtifacts={siblings}
+      siblingIndex={i}
+      {...leafProps(artifact, ctx)}
+    />
+  );
+
+  const [firstArtifact, ...rest] = artifacts;
+  const stacked = rest.map((artifact, i) => ({ artifact, i: i + 1 })).reverse();
+
+  return (
+    <Box
+      sx={{ display: "flex", flexDirection: "column", gap: 3, width: "100%" }}
+    >
+      <Box sx={{ display: "flex", gap: 3, alignItems: "stretch" }}>
+        {leading && (
+          <Box
+            sx={{
+              flex: leadingFlex,
+              minWidth: leadingMinWidth,
+              // Flex + stretch so the leading element (a table whose root is
+              // height:100%) fills this cell and matches the first artifact's
+              // height instead of collapsing to its own content.
+              display: "flex",
+              minHeight: 0,
+            }}
+          >
+            {leading}
+          </Box>
+        )}
+        <Box sx={{ flex: 1, minWidth: 0 }}>{renderLeaf(firstArtifact, 0)}</Box>
+      </Box>
+      {stacked.map(({ artifact, i }) => renderLeaf(artifact, i))}
+    </Box>
+  );
+}
+
+ArtifactBatch.propTypes = {
+  artifacts: PropTypes.array.isRequired,
+  siblings: PropTypes.array.isRequired,
+  ctx: PropTypes.object.isRequired,
+  leading: PropTypes.node,
+  leadingFlex: PropTypes.string,
+  leadingMinWidth: PropTypes.number,
+};
+
+/**
+ * Render a GroupedArtifacts item: a selector listing every group, beside the
+ * selected group's first artifact (with the rest stacked below). Holds its own
+ * selection state, so multiple selectors on one card are independent.
+ *
+ * The selector widget depends on `datasetPath`: local explainers pass the
+ * explained rows dataset path so the picker shows the actual instance feature
+ * values (the row index selects the group); global explainers omit it and get
+ * a plain title list.
+ */
+function GroupedArtifactsView({ grouped, ctx, datasetPath = null }) {
+  const { t } = useTranslation(["explainers"]);
+  const [selected, setSelected] = useState(0);
+  const groups = grouped.groups ?? [];
+  if (groups.length === 0) return null;
+
+  const group = groups[selected] ?? groups[0];
+  const titles = groups.map(
+    (g, i) =>
+      g.title ?? t("explainers:label.instanceNumber", { number: i + 1 }),
+  );
+  const wide = Boolean(datasetPath);
+
+  // Rendered directly (no height cap): ExplainerInstanceTable's root is
+  // height:100%, so it fills the stretched batch cell and matches the height
+  // of the first artifact beside it, scrolling internally when long.
+  const selector = (
+    <ExplainerInstanceTable
+      datasetPath={datasetPath}
+      titles={titles}
+      selectedIndex={selected}
+      onSelect={setSelected}
+    />
+  );
+
+  return (
+    <ArtifactBatch
+      artifacts={group.artifacts}
+      siblings={group.artifacts}
+      ctx={ctx}
+      leading={selector}
+      leadingFlex={wide ? "0 0 46%" : "0 0 25%"}
+      leadingMinWidth={wide ? 320 : 220}
+    />
+  );
+}
+
+GroupedArtifactsView.propTypes = {
+  grouped: PropTypes.object.isRequired,
+  ctx: PropTypes.object.isRequired,
+  datasetPath: PropTypes.string,
+};
+
+/**
+ * Render one top level response item: a "grouped" selector
+ * (`GroupedArtifactsView`) or a plain leaf artifact (shown alone at full
+ * width). `datasetPath` is forwarded to grouped items so local explainers get
+ * the dataset row picker.
+ */
+function renderItem(item, ctx, datasetPath = null) {
+  if (item.type === "grouped") {
+    return (
+      <GroupedArtifactsView
+        grouped={item}
+        ctx={ctx}
+        datasetPath={datasetPath}
+      />
+    );
+  }
+  return <ArtifactViewer artifact={item} {...leafProps(item, ctx)} />;
 }
 
 export default function ExplainersPlot({
@@ -48,8 +180,7 @@ export default function ExplainersPlot({
   overriddenIndexes = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
-  const [groups, setGroups] = useState([]);
-  const [currentGroup, setCurrentGroup] = useState(0);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation(["explainers"]);
   const isLocal = scope === "local";
@@ -60,16 +191,13 @@ export default function ExplainersPlot({
     try {
       const response = await getExplainerPlotRequest(explainer.id, scope);
       if (!response || response.length === 0) {
-        setGroups([]);
-        setCurrentGroup(0);
+        setItems([]);
         enqueueSnackbar(t("explainers:error.noData"), { variant: "warning" });
       } else {
-        setGroups(groupArtifacts(parseExplanationArtifacts(response)));
-        setCurrentGroup(0);
+        setItems(parseExplanationArtifacts(response));
       }
     } catch (error) {
-      setGroups([]);
-      setCurrentGroup(0);
+      setItems([]);
       enqueueSnackbar(t("explainers:error.fetchExplainers"), {
         variant: "error",
       });
@@ -94,78 +222,23 @@ export default function ExplainersPlot({
     );
   }
 
-  if (groups.length === 0 || !groups[currentGroup]) {
+  if (items.length === 0) {
     return <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>;
   }
 
-  const group = groups[currentGroup];
-  const hasSelector = groups.length > 1;
+  const ctx = { onSaveOverride, onResetOverride, overriddenIndexes };
 
-  // The explanation artifacts for the selected instance.
-  const detail = (
-    <Box
-      sx={{
-        flex: 1,
-        minWidth: 0,
-        display: "flex",
-        flexDirection: "column",
-        gap: 3,
-      }}
-    >
-      {group.artifacts.map((artifact, i) => (
-        <ArtifactViewer
-          key={artifact.index}
-          artifact={artifact}
-          siblingArtifacts={group.artifacts}
-          siblingIndex={i}
-          canReset={overriddenIndexes.includes(artifact.index)}
-          onSaveEdit={
-            onSaveOverride
-              ? (figure) => onSaveOverride(artifact.index, figure)
-              : null
-          }
-          onResetEdit={
-            onResetOverride ? () => onResetOverride(artifact.index) : null
-          }
-        />
-      ))}
-    </Box>
-  );
-
-  // Single instance (typically a global explainer): no selector and no title,
-  // since the card header already names the explainer. Show it full width.
-  if (!hasSelector) {
-    return detail;
-  }
-
-  // Many instances: the instance picker on the left (the explained dataset
-  // rows when stored, else a list of instance labels), the selected
-  // instance's explanation on the right.
+  // Every top level item renders continuously: a plain artifact at full width,
+  // a "grouped" item as its own self contained selector. Local explainers pass
+  // the explained rows dataset path so their grouped selector shows the
+  // instance feature values instead of plain labels.
   return (
-    <Box sx={{ display: "flex", gap: 3, width: "100%", alignItems: "stretch" }}>
-      <Box
-        sx={{
-          // Local explainers select a dataset instance (wider table); global
-          // explainers select from a short list of curves (narrower).
-          flex: isLocal ? "0 0 46%" : "0 0 25%",
-          minWidth: isLocal ? 320 : 220,
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0,
-        }}
-      >
-        <ExplainerInstanceTable
-          datasetPath={datasetPath}
-          titles={groups.map(
-            (g, i) =>
-              g.title ??
-              t("explainers:label.instanceNumber", { number: i + 1 }),
-          )}
-          selectedIndex={currentGroup}
-          onSelect={setCurrentGroup}
-        />
-      </Box>
-      {detail}
+    <Box
+      sx={{ display: "flex", flexDirection: "column", gap: 3, width: "100%" }}
+    >
+      {items.map((item, i) => (
+        <Box key={i}>{renderItem(item, ctx, datasetPath)}</Box>
+      ))}
     </Box>
   );
 }

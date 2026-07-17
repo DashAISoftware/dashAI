@@ -33,10 +33,16 @@ router = APIRouter()
 def _apply_overrides(artifacts: list, overrides: dict | None) -> list:
     """Replace plotly artifact payloads with stored edited figures.
 
+    Leaves nested inside a ``"grouped"`` selector (see
+    :class:`DashAI.back.core.artifacts.GroupedArtifacts`), i.e. under each
+    group's ``artifacts``, are matched by their stamped ``"index"`` just
+    like top level ones, so a group's plotly artifact can be edited/reset the
+    same way as a top level one.
+
     Parameters
     ----------
     artifacts : list
-        Normalized artifact dicts from ``normalize_artifacts``.
+        Normalized artifact/grouped dicts from ``normalize_artifacts``.
     overrides : dict or None
         Mapping of ``str(index)`` to an edited plotly figure (JSON string).
 
@@ -49,15 +55,26 @@ def _apply_overrides(artifacts: list, overrides: dict | None) -> list:
         return artifacts
     import json
 
+    leaves_by_index = {}
+
+    def collect_leaves(items):
+        for item in items:
+            if item.get("type") == "grouped":
+                for group in item.get("groups", []):
+                    collect_leaves(group.get("artifacts", []))
+            else:
+                leaves_by_index[item.get("index")] = item
+
+    collect_leaves(artifacts)
+
     for key, figure in overrides.items():
         try:
             idx = int(key)
         except (TypeError, ValueError):
             continue
-        if 0 <= idx < len(artifacts) and artifacts[idx].get("type") == "plotly":
-            artifacts[idx]["payload"] = (
-                figure if isinstance(figure, str) else json.dumps(figure)
-            )
+        leaf = leaves_by_index.get(idx)
+        if leaf is not None and leaf.get("type") == "plotly":
+            leaf["payload"] = figure if isinstance(figure, str) else json.dumps(figure)
     return artifacts
 
 

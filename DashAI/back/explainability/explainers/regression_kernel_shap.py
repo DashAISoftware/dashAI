@@ -1,6 +1,11 @@
 from typing import List
 
-from DashAI.back.core.artifacts import Artifact, PlotlyArtifact, TextArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotlyArtifact,
+    TextArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
@@ -243,7 +248,7 @@ class RegressionKernelShap(BaseLocalExplainer):
 
         return explanation
 
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Render each instance as a SHAP bar plot plus a text summary.
 
         Parameters
@@ -253,9 +258,9 @@ class RegressionKernelShap(BaseLocalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A list of typed artifacts: one plotly and one text artifact per
-            explained instance.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group per explained instance,
+            each holding that instance's plotly plot and text summary.
         """
         import numpy as np
         import pandas as pd
@@ -268,7 +273,7 @@ class RegressionKernelShap(BaseLocalExplainer):
         output_column = metadata["output_column"]
         max_features = 8
 
-        artifacts = []
+        groups = []
         for i in exp:
             instance = exp[i]
             prediction = instance["model_prediction"]
@@ -314,7 +319,7 @@ class RegressionKernelShap(BaseLocalExplainer):
             )
 
             title = f"Instance {int(i) + 1}"
-            artifacts.append(PlotlyArtifact(payload=fig, title=title))
+            plot = PlotlyArtifact(payload=fig)
 
             top = data.iloc[::-1].head(3)
             top_features = ", ".join(
@@ -332,6 +337,7 @@ class RegressionKernelShap(BaseLocalExplainer):
                 f"{delta:+} from the baseline {base_value}. "
                 f"Main contributions: {top_features}."
             )
-            artifacts.append(TextArtifact(payload=summary, title=title))
+            text = TextArtifact(payload=summary)
+            groups.append(ArtifactGroup(title=title, artifacts=[plot, text]))
 
-        return artifacts
+        return [GroupedArtifacts(groups=groups)]

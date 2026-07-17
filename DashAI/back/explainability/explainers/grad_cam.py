@@ -1,6 +1,10 @@
 from typing import List
 
-from DashAI.back.core.artifacts import Artifact, TextArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    TextArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -239,7 +243,7 @@ class GradCam(BaseLocalExplainer):
 
         return explanation
 
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Render each image as a heatmap overlay plus a text summary.
 
         Parameters
@@ -249,9 +253,9 @@ class GradCam(BaseLocalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A list of typed artifacts: one plotly overlay and one text
-            artifact per explained image.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group per explained image, each
+            holding that image's heatmap overlay and text summary.
         """
         import numpy as np
 
@@ -259,7 +263,7 @@ class GradCam(BaseLocalExplainer):
         metadata = exp.pop("metadata")
         target_names = metadata["target_names"]
 
-        artifacts = []
+        groups = []
         for i in exp:
             instance = exp[i]
             predicted_class = instance["predicted_class"]
@@ -273,20 +277,16 @@ class GradCam(BaseLocalExplainer):
                 f"{self.method}: regions supporting {predicted_name} "
                 f"(p={predicted_prob})"
             )
-            artifacts.append(
-                heatmap_overlay_artifact(
-                    instance["image"], instance["heatmap"], title, subtitle
-                )
+            overlay = heatmap_overlay_artifact(
+                instance["image"], instance["heatmap"], title, subtitle
             )
-            artifacts.append(
-                TextArtifact(
-                    payload=(
-                        f"The model predicted {predicted_name} "
-                        f"(p={predicted_prob}). Highlighted regions are the "
-                        "areas whose activations most supported this class."
-                    ),
-                    title=title,
-                )
+            text = TextArtifact(
+                payload=(
+                    f"The model predicted {predicted_name} "
+                    f"(p={predicted_prob}). Highlighted regions are the "
+                    "areas whose activations most supported this class."
+                ),
             )
+            groups.append(ArtifactGroup(title=title, artifacts=[overlay, text]))
 
-        return artifacts
+        return [GroupedArtifacts(groups=groups)]

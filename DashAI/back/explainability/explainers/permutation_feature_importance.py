@@ -1,6 +1,10 @@
 from typing import Dict, List, Union
 
-from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotlyArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -517,12 +521,13 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 "importances_std": np.round(pfi["importances_std"], 3).tolist(),
             }
 
-    def _create_plot(self, data) -> List[Artifact]:
-        """Build one horizontal bar chart per feature count.
+    def _create_plot(self, data) -> List[GroupedArtifacts]:
+        """Build one selector over feature counts.
 
-        Each artifact shows the top ``count`` most important features, from all
-        features down to one, so the frontend lists the counts in its selector
-        instead of a dropdown embedded in a single figure.
+        Each count (from all features down to one) is a selectable group
+        holding the horizontal bar chart of the top ``count`` most important
+        features, so the frontend lists the counts in a selector instead of a
+        dropdown embedded in a single figure.
 
         Parameters
         ----------
@@ -532,13 +537,14 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            One plotly artifact per feature count, most features first.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group (a bar chart) per feature
+            count, most features first.
         """
         # Lazy imports
         import plotly.express as px
 
-        artifacts = []
+        groups = []
         for count in range(len(data), 0, -1):
             subset = data.iloc[-count:]
             fig = px.bar(
@@ -548,11 +554,16 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 error_x=subset["importances_std"],
             )
             fig.update_layout(xaxis_title="Importance", yaxis_title=None)
-            artifacts.append(PlotlyArtifact(payload=fig, title=f"Top {count} features"))
+            groups.append(
+                ArtifactGroup(
+                    title=f"Top {count} features",
+                    artifacts=[PlotlyArtifact(payload=fig)],
+                )
+            )
 
-        return artifacts
+        return [GroupedArtifacts(groups=groups)]
 
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Create a Plotly bar chart from a feature importance explanation dict.
 
         Parameters
@@ -563,8 +574,8 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            One plotly artifact per feature count (built by
+        List[GroupedArtifacts]
+            A single selector over the feature counts (built by
             :meth:`_create_plot`).
         """
         # Lazy import

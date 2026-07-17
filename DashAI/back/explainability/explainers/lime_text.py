@@ -1,6 +1,11 @@
 from typing import List
 
-from DashAI.back.core.artifacts import Artifact, PlotlyArtifact, TextArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotlyArtifact,
+    TextArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     int_field,
@@ -239,8 +244,8 @@ class LimeText(BaseLocalExplainer):
 
         return explanation
 
-    def plot(self, explanation: dict) -> List[Artifact]:
-        """Render each instance as a word-weight bar plot plus a summary.
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
+        """Render each instance as a word weight bar plot plus a summary.
 
         Parameters
         ----------
@@ -249,9 +254,9 @@ class LimeText(BaseLocalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A list of typed artifacts: one plotly and one text artifact per
-            explained instance.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group per explained instance,
+            each holding that instance's word weight plot and text summary.
         """
         import numpy as np
         import plotly.graph_objs as go
@@ -260,7 +265,7 @@ class LimeText(BaseLocalExplainer):
         metadata = exp.pop("metadata")
         target_names = metadata["target_names"]
 
-        artifacts = []
+        groups = []
         for i in exp:
             instance = exp[i]
             predicted_class = instance["predicted_class"]
@@ -301,19 +306,17 @@ class LimeText(BaseLocalExplainer):
             )
 
             title = f"Instance {int(i) + 1}"
-            artifacts.append(PlotlyArtifact(payload=fig, title=title))
+            plot = PlotlyArtifact(payload=fig)
 
             top = list(reversed(word_weights))[:3]
             top_words = ", ".join(f"'{word}' ({weight:+})" for word, weight in top)
-            artifacts.append(
-                TextArtifact(
-                    payload=(
-                        f"The model predicted {predicted_name} "
-                        f"(p={predicted_prob}). Most influential words: "
-                        f"{top_words}."
-                    ),
-                    title=title,
-                )
+            text = TextArtifact(
+                payload=(
+                    f"The model predicted {predicted_name} "
+                    f"(p={predicted_prob}). Most influential words: "
+                    f"{top_words}."
+                ),
             )
+            groups.append(ArtifactGroup(title=title, artifacts=[plot, text]))
 
-        return artifacts
+        return [GroupedArtifacts(groups=groups)]

@@ -1,7 +1,8 @@
 from typing import List
 
 from DashAI.back.core.artifacts import (
-    Artifact,
+    ArtifactGroup,
+    GroupedArtifacts,
     TableArtifact,
     TablePayload,
     TextArtifact,
@@ -328,7 +329,7 @@ class NearestCounterfactual(BaseLocalExplainer):
 
         return explanation
 
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Render each instance as a comparison table plus a text summary.
 
         Parameters
@@ -338,9 +339,9 @@ class NearestCounterfactual(BaseLocalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A list of typed artifacts: one table and one text artifact per
-            explained instance.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group per explained instance,
+            each holding that instance's comparison table and text summary.
         """
         import numpy as np
 
@@ -349,7 +350,7 @@ class NearestCounterfactual(BaseLocalExplainer):
         feature_names = metadata["feature_names"]
         target_names = metadata["target_names"]
 
-        artifacts = []
+        groups = []
         for i in exp:
             instance = exp[i]
             instance_values = instance["instance_values"]
@@ -382,13 +383,8 @@ class NearestCounterfactual(BaseLocalExplainer):
                 highlight.append({"row": len(feature_names), "column": 2 + cf_idx})
 
             title = f"Instance {int(i) + 1}"
-            artifacts.append(
-                TableArtifact(
-                    payload=TablePayload(
-                        columns=columns, rows=rows, highlight=highlight
-                    ),
-                    title=title,
-                )
+            table = TableArtifact(
+                payload=TablePayload(columns=columns, rows=rows, highlight=highlight),
             )
 
             if counterfactuals:
@@ -409,6 +405,7 @@ class NearestCounterfactual(BaseLocalExplainer):
                     f"The model predicted {predicted_name} (p={predicted_prob}). "
                     "No counterfactual examples were found in the training data."
                 )
-            artifacts.append(TextArtifact(payload=summary, title=title))
+            text = TextArtifact(payload=summary)
+            groups.append(ArtifactGroup(title=title, artifacts=[table, text]))
 
-        return artifacts
+        return [GroupedArtifacts(groups=groups)]

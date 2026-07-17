@@ -1,7 +1,8 @@
 from typing import List
 
 from DashAI.back.core.artifacts import (
-    Artifact,
+    ArtifactGroup,
+    GroupedArtifacts,
     TableArtifact,
     TablePayload,
     TextArtifact,
@@ -369,7 +370,7 @@ class DiceCounterfactual(BaseLocalExplainer):
 
         return explanation
 
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Render each instance as a comparison table plus a text summary.
 
         Parameters
@@ -379,9 +380,9 @@ class DiceCounterfactual(BaseLocalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A list of typed artifacts: one table and one text artifact per
-            explained instance.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group per explained instance,
+            each holding that instance's comparison table and text summary.
         """
         import numpy as np
 
@@ -390,7 +391,7 @@ class DiceCounterfactual(BaseLocalExplainer):
         feature_names = metadata["feature_names"]
         target_names = metadata["target_names"]
 
-        artifacts = []
+        groups = []
         for i in exp:
             instance = exp[i]
             predicted_class = instance["predicted_class"]
@@ -422,13 +423,8 @@ class DiceCounterfactual(BaseLocalExplainer):
                 highlight.append({"row": len(feature_names), "column": 2 + cf_idx})
 
             title = f"Instance {int(i) + 1}"
-            artifacts.append(
-                TableArtifact(
-                    payload=TablePayload(
-                        columns=columns, rows=rows, highlight=highlight
-                    ),
-                    title=title,
-                )
+            table = TableArtifact(
+                payload=TablePayload(columns=columns, rows=rows, highlight=highlight),
             )
 
             if counterfactuals:
@@ -447,6 +443,7 @@ class DiceCounterfactual(BaseLocalExplainer):
                     f"(p={predicted_prob}). DiCE could not generate "
                     "counterfactuals for this instance."
                 )
-            artifacts.append(TextArtifact(payload=summary, title=title))
+            text = TextArtifact(payload=summary)
+            groups.append(ArtifactGroup(title=title, artifacts=[table, text]))
 
-        return artifacts
+        return [GroupedArtifacts(groups=groups)]
