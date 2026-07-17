@@ -148,11 +148,12 @@ export default function ArtifactViewer({
     height: 44,
   };
 
-  // Fill most of the viewport in the fullscreen view, leaving room for the
-  // header bar and padding.
+  // Fill 75% of the viewport in the fullscreen view, minus the card's vertical
+  // padding (p: 4 => 32px top + 32px bottom) so the content fits within the
+  // 75vh card without producing a scrollbar.
   const fullscreenHeight =
     typeof window !== "undefined"
-      ? Math.max(360, Math.round(window.innerHeight * 0.8))
+      ? Math.max(360, Math.round(window.innerHeight * 0.75) - 64)
       : 720;
 
   return (
@@ -340,9 +341,8 @@ export default function ArtifactViewer({
 
           <Box
             sx={{
-              width: "90vw",
-              maxWidth: 1100,
-              maxHeight: "90vh",
+              width: "75vw",
+              maxHeight: "75vh",
               overflow: "auto",
               bgcolor: "background.paper",
               borderRadius: "10px",
