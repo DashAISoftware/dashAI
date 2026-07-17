@@ -213,6 +213,48 @@ def test_normalize_unrenderable_falls_back_to_text():
     }
 
 
+def test_normalize_wraps_local_explainer_items_in_grouped_artifacts():
+    artifacts = normalize_artifacts(
+        [
+            TextArtifact(payload="x", title="Instance 1"),
+            TextArtifact(payload="y", title="Instance 2"),
+        ],
+        create_grouped=True,
+    )
+    assert artifacts == [
+        {
+            "type": "grouped",
+            "title": None,
+            "groups": [
+                {
+                    "title": "Instance 1",
+                    "artifacts": [
+                        {
+                            "type": "text",
+                            "payload": "x",
+                            "title": "Instance 1",
+                            "role": "explanation",
+                            "index": 0,
+                        }
+                    ],
+                },
+                {
+                    "title": "Instance 2",
+                    "artifacts": [
+                        {
+                            "type": "text",
+                            "payload": "y",
+                            "title": "Instance 2",
+                            "role": "explanation",
+                            "index": 1,
+                        }
+                    ],
+                },
+            ],
+        }
+    ]
+
+
 def test_artifact_role_defaults_to_explanation():
     from DashAI.back.core.artifacts import TextArtifact
 
