@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -17,6 +23,8 @@ import {
   DialogContent,
   DialogActions,
   Tooltip,
+  ToggleButtonGroup,
+  ToggleButton,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -60,6 +68,23 @@ export default function RunResults({
   const [globalExplainers, setGlobalExplainers] = useState([]);
   const [localExplainers, setLocalExplainers] = useState([]);
   const [predictions, setPredictions] = useState([]);
+
+  // "Prediction #N" shown on each card must count only this run's own
+  // predictions, numbered separately within each section (Dataset vs
+  // Manual) in creation order — not `prediction.id`, which is a
+  // database-wide primary key shared across every run/session in the app.
+  const predictionDisplayNumbers = useMemo(() => {
+    const numbers = new Map();
+    [
+      predictions.filter((p) => p.dataset_id),
+      predictions.filter((p) => !p.dataset_id),
+    ].forEach((group) => {
+      [...group]
+        .sort((a, b) => a.id - b.id)
+        .forEach((p, index) => numbers.set(p.id, index + 1));
+    });
+    return numbers;
+  }, [predictions]);
   const [internalVisible, setInternalVisible] = useState(() => {
     if (run.status === 0) return false;
     const saved = localStorage.getItem(`run-${run.id}-results-visible`);
@@ -90,6 +115,8 @@ export default function RunResults({
   const [localExpanded, setLocalExpanded] = useState(true);
   const [datasetExpanded, setDatasetExpanded] = useState(true);
   const [manualExpanded, setManualExpanded] = useState(true);
+  // "all" | "dataset" | "manual" — which prediction section(s) are shown
+  const [predictionFilter, setPredictionFilter] = useState("all");
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
   const datasetRunRef = useRef(null);
   const [datasetRunState, setDatasetRunState] = useState({
@@ -649,36 +676,103 @@ export default function RunResults({
 
         {activeTab === 2 && isFinished && (
           <Box sx={{ py: 4, width: "100%" }}>
-            <Grid container spacing={4} sx={{ mb: 4 }}>
-              <Grid item xs={6}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<TrendingUpIcon />}
-                  onClick={() => {
-                    setDatasetRunState({ canRun: false, isSubmitting: false });
-                    setShowDatasetPanel(true);
-                  }}
-                  fullWidth
-                >
-                  {t("models:button.newDatasetPrediction")}
-                </Button>
-              </Grid>
-              <Grid item xs={6}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<TrendingUpIcon />}
-                  onClick={() => {
-                    setManualSaveState({ canSave: false, isSaving: false });
-                    setShowManualPanel(true);
-                  }}
-                  fullWidth
-                >
-                  {t("models:button.newManualPrediction")}
-                </Button>
-              </Grid>
-            </Grid>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 2,
+                mb: 4,
+              }}
+            >
+              <ToggleButtonGroup
+                value={predictionFilter}
+                exclusive
+                onChange={(e, newValue) => {
+                  if (newValue !== null) setPredictionFilter(newValue);
+                }}
+                size="small"
+              >
+                <ToggleButton value="all" sx={{ gap: 1 }}>
+                  {t("common:all")}
+                  <Box
+                    component="span"
+                    sx={{
+                      bgcolor: "action.selected",
+                      borderRadius: 1,
+                      px: 1,
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {predictions.length}
+                  </Box>
+                </ToggleButton>
+                <ToggleButton value="dataset" sx={{ gap: 1 }}>
+                  {t("common:dataset")}
+                  <Box
+                    component="span"
+                    sx={{
+                      bgcolor: "action.selected",
+                      borderRadius: 1,
+                      px: 1,
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {predictions.filter((p) => p.dataset_id).length}
+                  </Box>
+                </ToggleButton>
+                <ToggleButton value="manual" sx={{ gap: 1 }}>
+                  {t("models:label.manual")}
+                  <Box
+                    component="span"
+                    sx={{
+                      bgcolor: "action.selected",
+                      borderRadius: 1,
+                      px: 1,
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {predictions.filter((p) => !p.dataset_id).length}
+                  </Box>
+                </ToggleButton>
+              </ToggleButtonGroup>
+
+              <Box sx={{ display: "flex", gap: 2 }}>
+                {predictionFilter !== "manual" && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<TrendingUpIcon />}
+                    onClick={() => {
+                      setDatasetRunState({
+                        canRun: false,
+                        isSubmitting: false,
+                      });
+                      setShowDatasetPanel(true);
+                    }}
+                  >
+                    {t("models:button.newDatasetPrediction")}
+                  </Button>
+                )}
+                {predictionFilter !== "dataset" && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<TrendingUpIcon />}
+                    onClick={() => {
+                      setManualSaveState({ canSave: false, isSaving: false });
+                      setShowManualPanel(true);
+                    }}
+                  >
+                    {t("models:button.newManualPrediction")}
+                  </Button>
+                )}
+              </Box>
+            </Box>
 
             <Dialog
               open={showDatasetPanel}
@@ -801,153 +895,163 @@ export default function RunResults({
             </Dialog>
 
             <Stack spacing={2}>
-              <Box
-                sx={{
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  p: 2,
-                  width: "100%",
-                }}
-              >
+              {predictionFilter !== "manual" && (
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: datasetExpanded ? 2 : 0,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    p: 2,
+                    width: "100%",
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Typography variant="subtitle2" fontWeight="medium">
-                      {t("models:label.datasetPredictions")}
-                    </Typography>
-                    <Chip
-                      label={predictions.filter((p) => p.dataset_id).length}
-                      size="small"
-                      color="primary"
-                    />
-                  </Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => setDatasetExpanded((prev) => !prev)}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: datasetExpanded ? 2 : 0,
+                    }}
                   >
-                    {datasetExpanded ? (
-                      <ExpandLessIcon fontSize="small" />
-                    ) : (
-                      <ExpandMoreIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </Box>
-                <Collapse in={datasetExpanded}>
-                  {predictions.filter((p) => p.dataset_id).length === 0 ? (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      align="center"
-                      sx={{ py: 3 }}
-                    >
-                      {t("models:label.noDatasetPredictionsYet")}
-                    </Typography>
-                  ) : (
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(680px, 1fr))",
-                        gap: 2,
-                      }}
-                    >
-                      {predictions
-                        .filter((p) => p.dataset_id)
-                        .map((prediction) => (
-                          <PredictionCard
-                            key={prediction.id}
-                            prediction={prediction}
-                            onDelete={handlePredictionDeleted}
-                            onUpdate={fetchOperations}
-                            targetColumn={outputColumn}
-                            datasetSample={trainingDatasetSample}
-                          />
-                        ))}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="subtitle2" fontWeight="medium">
+                        {t("models:label.datasetPredictions")}
+                      </Typography>
+                      <Chip
+                        label={predictions.filter((p) => p.dataset_id).length}
+                        size="small"
+                        color="primary"
+                      />
                     </Box>
-                  )}
-                </Collapse>
-              </Box>
+                    <IconButton
+                      size="small"
+                      onClick={() => setDatasetExpanded((prev) => !prev)}
+                    >
+                      {datasetExpanded ? (
+                        <ExpandLessIcon fontSize="small" />
+                      ) : (
+                        <ExpandMoreIcon fontSize="small" />
+                      )}
+                    </IconButton>
+                  </Box>
+                  <Collapse in={datasetExpanded}>
+                    {predictions.filter((p) => p.dataset_id).length === 0 ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        align="center"
+                        sx={{ py: 3 }}
+                      >
+                        {t("models:label.noDatasetPredictionsYet")}
+                      </Typography>
+                    ) : (
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fill, minmax(680px, 1fr))",
+                          gap: 2,
+                        }}
+                      >
+                        {predictions
+                          .filter((p) => p.dataset_id)
+                          .map((prediction) => (
+                            <PredictionCard
+                              key={prediction.id}
+                              prediction={prediction}
+                              onDelete={handlePredictionDeleted}
+                              onUpdate={fetchOperations}
+                              targetColumn={outputColumn}
+                              datasetSample={trainingDatasetSample}
+                              displayNumber={predictionDisplayNumbers.get(
+                                prediction.id,
+                              )}
+                            />
+                          ))}
+                      </Box>
+                    )}
+                  </Collapse>
+                </Box>
+              )}
 
-              <Box
-                sx={{
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  p: 2,
-                  width: "100%",
-                }}
-              >
+              {predictionFilter !== "dataset" && (
                 <Box
                   sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: manualExpanded ? 2 : 0,
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    p: 2,
+                    width: "100%",
                   }}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Typography variant="subtitle2" fontWeight="medium">
-                      {t("models:label.manualPredictions")}
-                    </Typography>
-                    <Chip
-                      label={predictions.filter((p) => !p.dataset_id).length}
-                      size="small"
-                      color="primary"
-                    />
-                  </Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => setManualExpanded((prev) => !prev)}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: manualExpanded ? 2 : 0,
+                    }}
                   >
-                    {manualExpanded ? (
-                      <ExpandLessIcon fontSize="small" />
-                    ) : (
-                      <ExpandMoreIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </Box>
-                <Collapse in={manualExpanded}>
-                  {predictions.filter((p) => !p.dataset_id).length === 0 ? (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      align="center"
-                      sx={{ py: 3 }}
-                    >
-                      {t("models:label.noManualPredictionsYet")}
-                    </Typography>
-                  ) : (
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(680px, 1fr))",
-                        gap: 2,
-                      }}
-                    >
-                      {predictions
-                        .filter((p) => !p.dataset_id)
-                        .map((prediction) => (
-                          <PredictionCard
-                            key={prediction.id}
-                            prediction={prediction}
-                            onDelete={handlePredictionDeleted}
-                            onUpdate={fetchOperations}
-                            targetColumn={outputColumn}
-                            datasetSample={trainingDatasetSample}
-                          />
-                        ))}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography variant="subtitle2" fontWeight="medium">
+                        {t("models:label.manualPredictions")}
+                      </Typography>
+                      <Chip
+                        label={predictions.filter((p) => !p.dataset_id).length}
+                        size="small"
+                        color="primary"
+                      />
                     </Box>
-                  )}
-                </Collapse>
-              </Box>
+                    <IconButton
+                      size="small"
+                      onClick={() => setManualExpanded((prev) => !prev)}
+                    >
+                      {manualExpanded ? (
+                        <ExpandLessIcon fontSize="small" />
+                      ) : (
+                        <ExpandMoreIcon fontSize="small" />
+                      )}
+                    </IconButton>
+                  </Box>
+                  <Collapse in={manualExpanded}>
+                    {predictions.filter((p) => !p.dataset_id).length === 0 ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        align="center"
+                        sx={{ py: 3 }}
+                      >
+                        {t("models:label.noManualPredictionsYet")}
+                      </Typography>
+                    ) : (
+                      <Box
+                        sx={{
+                          display: "grid",
+                          gridTemplateColumns:
+                            "repeat(auto-fill, minmax(680px, 1fr))",
+                          gap: 2,
+                        }}
+                      >
+                        {predictions
+                          .filter((p) => !p.dataset_id)
+                          .map((prediction) => (
+                            <PredictionCard
+                              key={prediction.id}
+                              prediction={prediction}
+                              onDelete={handlePredictionDeleted}
+                              onUpdate={fetchOperations}
+                              targetColumn={outputColumn}
+                              datasetSample={trainingDatasetSample}
+                              displayNumber={predictionDisplayNumbers.get(
+                                prediction.id,
+                              )}
+                            />
+                          ))}
+                      </Box>
+                    )}
+                  </Collapse>
+                </Box>
+              )}
             </Stack>
           </Box>
         )}

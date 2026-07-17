@@ -95,6 +95,7 @@
     "localExplainer": "局部解释器",
     "localExplainers": "局部解释器",
     "manualPredictions": "手动预测",
+    "manual": "手动",
     "metricsEmptyForDisplaySet": "{{set}} 的结果指标为空。",
     "metrics": "指标",
     "metricToOptimize": "待优化指标",

@@ -96,6 +96,7 @@
     "localExplainer": "Explicador Local",
     "localExplainers": "Explicadores Locais",
     "manualPredictions": "Previsões Manuais",
+    "manual": "Manuais",
     "metricsEmptyForDisplaySet": "As métricas de resultado para {{set}} estão vazias.",
     "metrics": "Métricas",
     "metricToOptimize": "Métrica a Otimizar",

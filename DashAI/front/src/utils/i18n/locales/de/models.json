@@ -95,6 +95,7 @@
     "localExplainer": "Lokales Erklärungsmodell",
     "localExplainers": "Lokale Erklärungsmodelle",
     "manualPredictions": "Manuelle Vorhersagen",
+    "manual": "Manuell",
     "metricsEmptyForDisplaySet": "Die Ergebnismetriken für {{set}} sind leer.",
     "metrics": "Metriken",
     "metricToOptimize": "Zu optimierende Metrik",

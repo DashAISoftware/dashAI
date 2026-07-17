@@ -95,6 +95,7 @@
     "localExplainer": "Local Explainer",
     "localExplainers": "Local Explainers",
     "manualPredictions": "Manual Predictions",
+    "manual": "Manual",
     "metricsEmptyForDisplaySet": "The result metrics for {{set}} are empty.",
     "metrics": "Metrics",
     "metricToOptimize": "Metric to Optimize",
