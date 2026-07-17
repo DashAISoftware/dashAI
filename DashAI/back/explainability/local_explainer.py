@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Final, List, Tuple, Union
+from typing import TYPE_CHECKING, Final, Tuple
 
 from DashAI.back.config_object import ConfigObject
-from DashAI.back.core.artifacts import Artifact, GroupedArtifacts
+from DashAI.back.core.artifacts import GroupedArtifacts
 from DashAI.back.models.base_model import BaseModel
 
 if TYPE_CHECKING:
@@ -88,7 +88,7 @@ class BaseLocalExplainer(ConfigObject, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def plot(self, explanation: dict) -> List[Union[Artifact, GroupedArtifacts]]:
+    def plot(self, explanation: dict) -> GroupedArtifacts:
         """Generate renderable artifacts from a previously computed explanation.
 
         Concrete implementations must convert the explanation dictionary
@@ -104,10 +104,8 @@ class BaseLocalExplainer(ConfigObject, ABC):
 
         Returns
         -------
-        List[Union[Artifact, GroupedArtifacts]]
-            Leaf artifacts (:class:`PlotlyArtifact`, :class:`TableArtifact`,
-            :class:`TextArtifact`, :class:`ImageArtifact`) and/or
-            :class:`GroupedArtifacts` describing the explanation.
+        GroupedArtifacts
+            A single grouped artifact whose groups are one explained instance each.
 
         Raises
         ------

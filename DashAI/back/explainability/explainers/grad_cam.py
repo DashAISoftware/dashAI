@@ -289,4 +289,4 @@ class GradCam(BaseLocalExplainer):
             )
             groups.append(ArtifactGroup(title=title, artifacts=[overlay, text]))
 
-        return [GroupedArtifacts(groups=groups)]
+        return GroupedArtifacts(groups=groups)

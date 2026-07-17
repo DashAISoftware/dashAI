@@ -665,4 +665,4 @@ class KernelShap(BaseLocalExplainer):
                 ArtifactGroup(title=f"Instance {instance_number}", artifacts=[plot])
             )
 
-        return [GroupedArtifacts(groups=groups)]
+        return GroupedArtifacts(groups=groups)

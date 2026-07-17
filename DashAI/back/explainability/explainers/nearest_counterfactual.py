@@ -388,9 +388,7 @@ class NearestCounterfactual(BaseLocalExplainer):
             )
 
             if counterfactuals:
-                lines = [
-                    (f"The model predicted {predicted_name} (p={predicted_prob}).")
-                ]
+                lines = [f"The model predicted {predicted_name} (p={predicted_prob})."]
                 for cf_idx, counterfactual in enumerate(counterfactuals):
                     cf_name = target_names[counterfactual["predicted_class"]]
                     changed = ", ".join(counterfactual["changed_features"]) or "nothing"
@@ -408,4 +406,4 @@ class NearestCounterfactual(BaseLocalExplainer):
             text = TextArtifact(payload=summary)
             groups.append(ArtifactGroup(title=title, artifacts=[table, text]))
 
-        return [GroupedArtifacts(groups=groups)]
+        return GroupedArtifacts(groups=groups)
