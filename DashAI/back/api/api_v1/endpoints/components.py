@@ -235,8 +235,6 @@ async def get_components(
         for component_dict in selected_components.values()
     ]
 
-    return out
-
 
 @router.get("/{id}/")
 @inject
@@ -317,11 +315,13 @@ async def update_component() -> None:
         status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Method not implemented"
     )
 
+
 @router.get("/{component_name}/children/")
 async def get_child_components(
-    component_name:str,
-    recursive:bool=False,
-    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"])):
+    component_name: str,
+    recursive: bool = False,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
     """Get child components of a specific component.
 
     Args:
@@ -331,11 +331,14 @@ async def get_child_components(
     Returns:
         List[Dict[str, Any]]: A list of child component dictionaries.
     """
-    children_list = component_registry.get_child_components(component_name, recursive=recursive)
+    children_list = component_registry.get_child_components(
+        component_name, recursive=recursive
+    )
     # Remove "class" key from each child component
     cleaned_children = [_delete_class(child) for child in children_list]
 
     return cleaned_children
+
 
 @router.get("/image/{component_name}/", status_code=status.HTTP_200_OK)
 async def get_component_image(

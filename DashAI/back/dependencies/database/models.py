@@ -828,14 +828,20 @@ class Chunk(Base):
     )
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
-    chunk_metadata: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
+    chunk_metadata: Mapped[Optional[dict]] = mapped_column(
+        "metadata", JSON, nullable=True
+    )
 
     document: Mapped["Document"] = relationship("Document", back_populates="chunks")
-    chunk_set: Mapped["RAGChunkSet"] = relationship("RAGChunkSet", back_populates="chunks")
+    chunk_set: Mapped["RAGChunkSet"] = relationship(
+        "RAGChunkSet", back_populates="chunks"
+    )
 
     __table_args__ = (
         UniqueConstraint(
-            "chunk_set_id", "document_id", "chunk_index",
+            "chunk_set_id",
+            "document_id",
+            "chunk_index",
             name="uix_chunk_set_doc_index",
         ),
     )
@@ -853,16 +859,23 @@ class RAGChunkSet(Base):
     parameters: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
     chunks: Mapped[List["Chunk"]] = relationship(
-        "Chunk", back_populates="chunk_set", cascade="all, delete-orphan",
+        "Chunk",
+        back_populates="chunk_set",
+        cascade="all, delete-orphan",
     )
     documents: Mapped[List["RAGChunkSetDocument"]] = relationship(
-        "RAGChunkSetDocument", back_populates="chunk_set", cascade="all, delete-orphan",
+        "RAGChunkSetDocument",
+        back_populates="chunk_set",
+        cascade="all, delete-orphan",
     )
     embedding_matrices: Mapped[List["RAGEmbeddingMatrix"]] = relationship(
-        "RAGEmbeddingMatrix", back_populates="chunk_set",
+        "RAGEmbeddingMatrix",
+        back_populates="chunk_set",
     )
     retriever_links: Mapped[List["RAGRetrieverChunkSet"]] = relationship(
-        "RAGRetrieverChunkSet", back_populates="chunk_set", cascade="all, delete-orphan",
+        "RAGRetrieverChunkSet",
+        back_populates="chunk_set",
+        cascade="all, delete-orphan",
     )
 
 
@@ -878,13 +891,15 @@ class RAGChunkSetDocument(Base):
     )
 
     chunk_set: Mapped["RAGChunkSet"] = relationship(
-        "RAGChunkSet", back_populates="documents",
+        "RAGChunkSet",
+        back_populates="documents",
     )
     document: Mapped["Document"] = relationship("Document")
 
     __table_args__ = (
         UniqueConstraint(
-            "chunk_set_id", "document_id",
+            "chunk_set_id",
+            "document_id",
             name="uix_chunk_set_document",
         ),
     )
@@ -902,12 +917,14 @@ class RAGRetrieverChunkSet(Base):
     )
 
     chunk_set: Mapped["RAGChunkSet"] = relationship(
-        "RAGChunkSet", back_populates="retriever_links",
+        "RAGChunkSet",
+        back_populates="retriever_links",
     )
 
     __table_args__ = (
         UniqueConstraint(
-            "retriever_id", "chunk_set_id",
+            "retriever_id",
+            "chunk_set_id",
             name="uix_retriever_chunk_set",
         ),
     )
@@ -936,7 +953,8 @@ class RAGPrompt(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "class_name", "parameters",
+            "class_name",
+            "parameters",
             name="uix_rag_prompt_class_params",
         ),
     )
@@ -958,7 +976,8 @@ class RAGGenerationModel(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "class_name", "parameters",
+            "class_name",
+            "parameters",
             name="uix_rag_gen_model_class_params",
         ),
     )
@@ -992,7 +1011,9 @@ class RAGPipeline(Base):
         "RAGChunkingModel", back_populates="pipelines"
     )
     retriever: Mapped["RAGRetriever"] = relationship(
-        "RAGRetriever", back_populates="pipeline", uselist=False,
+        "RAGRetriever",
+        back_populates="pipeline",
+        uselist=False,
     )
     prompt: Mapped["RAGPrompt"] = relationship("RAGPrompt", back_populates="pipelines")
     generation_model: Mapped["RAGGenerationModel"] = relationship(
@@ -1018,7 +1039,8 @@ class RAGChunkingModel(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "class_name", "parameters",
+            "class_name",
+            "parameters",
             name="uix_rag_chunking_model_class_params",
         ),
     )
@@ -1040,14 +1062,20 @@ class RAGRetriever(Base):
 
     pipeline: Mapped["RAGPipeline"] = relationship(back_populates="retriever")
     children: Mapped[List["RAGRetrieverChild"]] = relationship(
-        "RAGRetrieverChild", foreign_keys="RAGRetrieverChild.parent_id",
-        back_populates="parent", cascade="all, delete-orphan",
+        "RAGRetrieverChild",
+        foreign_keys="RAGRetrieverChild.parent_id",
+        back_populates="parent",
+        cascade="all, delete-orphan",
     )
     sparse_detail: Mapped[Optional["RAGSparseRetriever"]] = relationship(
-        "RAGSparseRetriever", back_populates="bridge", uselist=False,
+        "RAGSparseRetriever",
+        back_populates="bridge",
+        uselist=False,
     )
     dense_detail: Mapped[Optional["RAGDenseRetriever"]] = relationship(
-        "RAGDenseRetriever", back_populates="bridge", uselist=False,
+        "RAGDenseRetriever",
+        back_populates="bridge",
+        uselist=False,
     )
 
 
@@ -1059,20 +1087,25 @@ class RAGRetrieverChild(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     parent_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_retriever.id", ondelete="CASCADE"), nullable=False,
+        ForeignKey("rag_retriever.id", ondelete="CASCADE"),
+        nullable=False,
     )
     child_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_retriever.id", ondelete="CASCADE"), nullable=False,
+        ForeignKey("rag_retriever.id", ondelete="CASCADE"),
+        nullable=False,
     )
     child_order: Mapped[int] = mapped_column(Integer, nullable=False)
 
     parent: Mapped["RAGRetriever"] = relationship(
-        "RAGRetriever", foreign_keys=[parent_id], back_populates="children",
+        "RAGRetriever",
+        foreign_keys=[parent_id],
+        back_populates="children",
     )
 
     __table_args__ = (
         UniqueConstraint(
-            "parent_id", "child_order",
+            "parent_id",
+            "child_order",
             name="uix_retriever_child_order",
         ),
     )
@@ -1085,23 +1118,28 @@ class RAGSparseRetriever(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     bridge_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_retriever.id", ondelete="CASCADE"), nullable=False,
+        ForeignKey("rag_retriever.id", ondelete="CASCADE"),
+        nullable=False,
     )
     chunk_set_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False,
+        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"),
+        nullable=False,
     )
     class_name: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
     storage_folder: Mapped[str] = mapped_column(String, nullable=False)
 
     bridge: Mapped["RAGRetriever"] = relationship(
-        "RAGRetriever", back_populates="sparse_detail",
+        "RAGRetriever",
+        back_populates="sparse_detail",
     )
     chunk_set: Mapped["RAGChunkSet"] = relationship("RAGChunkSet")
 
     __table_args__ = (
         UniqueConstraint(
-            "class_name", "parameters", "chunk_set_id",
+            "class_name",
+            "parameters",
+            "chunk_set_id",
             name="uix_rag_sparse_retriever",
         ),
     )
@@ -1114,10 +1152,12 @@ class RAGDenseRetriever(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     bridge_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_retriever.id", ondelete="CASCADE"), nullable=False,
+        ForeignKey("rag_retriever.id", ondelete="CASCADE"),
+        nullable=False,
     )
     chunk_set_id: Mapped[int] = mapped_column(
-        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False,
+        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"),
+        nullable=False,
     )
     class_name: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
@@ -1125,7 +1165,8 @@ class RAGDenseRetriever(Base):
         ForeignKey("rag_embedding_model.id", ondelete="CASCADE"), nullable=False
     )
     bridge: Mapped["RAGRetriever"] = relationship(
-        "RAGRetriever", back_populates="dense_detail",
+        "RAGRetriever",
+        back_populates="dense_detail",
     )
     chunk_set: Mapped["RAGChunkSet"] = relationship("RAGChunkSet")
     embedding_model: Mapped["RAGEmbeddingModel"] = relationship(
@@ -1134,7 +1175,10 @@ class RAGDenseRetriever(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "class_name", "parameters", "chunk_set_id", "embedding_model_id",
+            "class_name",
+            "parameters",
+            "chunk_set_id",
+            "embedding_model_id",
             name="uix_rag_dense_retriever",
         ),
     )
@@ -1159,7 +1203,8 @@ class RAGEmbeddingModel(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "class_name", "parameters",
+            "class_name",
+            "parameters",
             name="uix_rag_embedding_model_class_params",
         ),
     )
@@ -1182,19 +1227,20 @@ class RAGEmbeddingMatrix(Base):
         ForeignKey("rag_embedding_model.id", ondelete="CASCADE"), nullable=False
     )
     storage_folder: Mapped[str] = mapped_column(String, nullable=False)
-    matrix_shape: Mapped[List[int]] = mapped_column(
-        JSON, nullable=False
-    )
+    matrix_shape: Mapped[List[int]] = mapped_column(JSON, nullable=False)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
-        DateTime, default=datetime.now, onupdate=datetime.now,
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
     )
 
     document: Mapped["Document"] = relationship(
         "Document", back_populates="embedding_matrices"
     )
     chunk_set: Mapped["RAGChunkSet"] = relationship(
-        "RAGChunkSet", back_populates="embedding_matrices",
+        "RAGChunkSet",
+        back_populates="embedding_matrices",
     )
     embedding_model: Mapped["RAGEmbeddingModel"] = relationship(
         "RAGEmbeddingModel", back_populates="embedding_matrices"
@@ -1202,7 +1248,9 @@ class RAGEmbeddingMatrix(Base):
 
     __table_args__ = (
         UniqueConstraint(
-            "document_id", "chunk_set_id", "embedding_model_id",
+            "document_id",
+            "chunk_set_id",
+            "embedding_model_id",
             name="uix_document_chunk_set_embedding",
         ),
     )

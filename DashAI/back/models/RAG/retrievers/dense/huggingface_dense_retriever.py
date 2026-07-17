@@ -17,7 +17,8 @@ class HuggingFaceDenseRetriever(DenseRetriever):
     )
     DESCRIPTION: str = MultilingualString(
         en="Dense retriever using HuggingFace embeddings for similarity search.",
-        es="Recuperador denso que usa embeddings HuggingFace para búsqueda por similitud.",
+        es="Recuperador denso que usa embeddings HuggingFace para"
+        " búsqueda por similitud.",
     )
 
     def __init__(self, **kwargs):

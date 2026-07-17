@@ -45,9 +45,7 @@ def replace_defs_in_schema(schema: dict):
 
 
 class BaseSchema(BaseModel):
-    pass
-
-    """ @classmethod
+    """@classmethod
     def model_validate(cls, raw_data: dict):
         schema_fields = cls.model_fields
         for field_name, field in schema_fields.items():
@@ -57,4 +55,4 @@ class BaseSchema(BaseModel):
                 if raw_data[field_name] == "":
                     raw_data[field_name] = None
 
-        return super().model_validate(raw_data) """
+        return super().model_validate(raw_data)"""

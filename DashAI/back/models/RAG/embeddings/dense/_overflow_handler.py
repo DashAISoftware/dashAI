@@ -41,7 +41,15 @@ class OverfloatHandler(HuggingFaceEmbedding):
             stride=0,
         )
         num_texts = len(texts)
-        if self.overflow_strategy == AGGREGATE and "overflow_to_sample_mapping" in encoded:
+        if self.overflow_strategy not in [TRUNCATE, AGGREGATE]:
+            raise ValueError(
+                f"Invalid overflow strategy: {self.overflow_strategy}. "
+                f"Supported strategies are: {TRUNCATE}, {AGGREGATE}."
+            )
+        if (
+            self.overflow_strategy == AGGREGATE
+            and "overflow_to_sample_mapping" in encoded
+        ):
             mapping = encoded.pop("overflow_to_sample_mapping")
             encoded = {k: v.to(self.device) for k, v in encoded.items()}
             with torch.no_grad():
@@ -53,7 +61,9 @@ class OverfloatHandler(HuggingFaceEmbedding):
                 if len(segment_indices) == 1:
                     result.append(segment_embeddings[segment_indices[0]])
                 else:
-                    result.append(torch.mean(segment_embeddings[segment_indices], dim=0))
+                    result.append(
+                        torch.mean(segment_embeddings[segment_indices], dim=0)
+                    )
             return torch.stack(result).numpy()
         encoded = {k: v.to(self.device) for k, v in encoded.items()}
         with torch.no_grad():

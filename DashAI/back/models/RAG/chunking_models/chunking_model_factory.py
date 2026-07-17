@@ -146,7 +146,7 @@ class ChunkingModelFactory:
 
     def _update_chunk_ids(self, model: BaseChunkingModel) -> None:
         for document_id, document_chunks in model.get_chunks().items():
-            for idx, chunk in document_chunks.items():
+            for idx, _chunk in document_chunks.items():
                 db_chunk = (
                     self._db.query(ChunkDBModel)
                     .filter_by(

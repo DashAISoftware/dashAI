@@ -90,14 +90,19 @@ class DefaultQARAGGenerationPromptSchema(BaseSchema):
 class DefaultQARAGGenerationPrompt(RAGGenerationPrompt):
     """
     Default generation prompt for Question Answering tasks.
-    This prompt is designed to guide the language model in generating answers based on provided context chunks.
+    This prompt is designed to guide the language model in generating
+    answers based on provided context chunks.
     """
 
     SCHEMA = DefaultQARAGGenerationPromptSchema
     DESCRIPTION: str = MultilingualString(
-        en="Default prompt template used in the language generation step of RAG for Question Answering tasks.",
-        es="Plantilla de prompt predeterminada utilizada en el paso de generación de lenguaje de RAG para tareas de preguntas y respuestas.",
-        pt="Modelo de prompt padrão usado na etapa de geração de linguagem do RAG para tarefas de perguntas e respostas.",
+        en="Default prompt template used in the language generation step"
+        " of RAG for Question Answering tasks.",
+        es="Plantilla de prompt predeterminada utilizada en el paso de"
+        " generación de lenguaje de RAG para tareas de preguntas y"
+        " respuestas.",
+        pt="Modelo de prompt padrão usado na etapa de geração de linguagem"
+        " do RAG para tarefas de perguntas e respostas.",
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Default QA RAG Generation Prompt",
@@ -107,7 +112,8 @@ class DefaultQARAGGenerationPrompt(RAGGenerationPrompt):
 
     metadata = {
         "name": "Default QA RAG Generation Prompt",
-        "description": "Default prompt template used in the language generation step of RAG for Question Answering tasks.",
+        "description": "Default prompt template used in the language"
+        " generation step of RAG for Question Answering tasks.",
         "type": "generation",
         "required_placeholders": RAGGenerationPrompt.required_placeholders,
         "optional_placeholders": RAGGenerationPrompt.optional_placeholders,

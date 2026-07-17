@@ -112,18 +112,21 @@ class DeepSeekTextToTextGenerationModel(TextToTextGenerationTaskModel):
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "API for DeepSeek's language models, allowing you to select and configure the "
-            "text-to-text models supported by the DeepSeek API (https://deepseek.com/). "
-            "Note that it requires a private API key with an associated cost, that the "
-            "language model runs on DeepSeek's servers, and that your data will be used "
-            "according to that company's policies."
+            "API for DeepSeek's language models, allowing you to select and"
+            " configure the text-to-text models supported by the DeepSeek"
+            " API (https://deepseek.com/). Note that it requires a private"
+            " API key with an associated cost, that the language model runs"
+            " on DeepSeek's servers, and that your data will be used"
+            " according to that company's policies."
         ),
         es=(
-            "API para los modelos de lenguaje de DeepSeek, permite seleccionar y configurar los "
-            "modelos de texto a texto soportados por la API de DeepSeek (https://deepseek.com/). "
-            "Considere que requiere una API key (clave de API) privada con un costo asociado, "
-            "que el modelo de lenguaje se ejecuta en los servidores de DeepSeek y que sus datos "
-            "serán utilizados según las políticas de esa empresa."
+            "API para los modelos de lenguaje de DeepSeek, permite"
+            " seleccionar y configurar los modelos de texto a texto"
+            " soportados por la API de DeepSeek (https://deepseek.com/)."
+            " Considere que requiere una API key (clave de API) privada"
+            " con un costo asociado, que el modelo de lenguaje se ejecuta"
+            " en los servidores de DeepSeek y que sus datos serán"
+            " utilizados según las políticas de esa empresa."
         ),
     )
 

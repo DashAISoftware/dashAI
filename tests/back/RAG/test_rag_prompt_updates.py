@@ -1,5 +1,3 @@
-
-
 from DashAI.back.dependencies.database.models import GenerativeSession, RAGPrompt
 
 
@@ -80,7 +78,9 @@ def test_clone_prompt_for_session(client):
     session_factory = client.app.container["session_factory"]
     session_id = _create_rag_session(session_factory, prompt["id"], "rag-session-clone")
 
-    response = client.post(f"/api/v1/prompt/{prompt['id']}/sessions/{session_id}", json={})
+    response = client.post(
+        f"/api/v1/prompt/{prompt['id']}/sessions/{session_id}", json={}
+    )
 
     assert response.status_code == 201
     data = response.json()
@@ -99,7 +99,9 @@ def test_session_parameter_prompt_reassignment(client):
     prompts = _get_prompt_list(client)
     base_prompt = prompts[1]
     session_factory = client.app.container["session_factory"]
-    session_id = _create_rag_session(session_factory, base_prompt["id"], "rag-session-cleanup")
+    session_id = _create_rag_session(
+        session_factory, base_prompt["id"], "rag-session-cleanup"
+    )
 
     clone_response = client.post(
         f"/api/v1/prompt/{base_prompt['id']}/sessions/{session_id}",
@@ -123,4 +125,6 @@ def test_session_parameter_prompt_reassignment(client):
     # only handles retrievers and chunking models, not prompts).
     with session_factory() as db:
         orphan = db.get(RAGPrompt, cloned_prompt_id)
-        assert orphan is not None, "Cloned prompt should still exist (no prompt cleanup)."
+        assert orphan is not None, (
+            "Cloned prompt should still exist (no prompt cleanup)."
+        )

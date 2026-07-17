@@ -5,7 +5,8 @@ from DashAI.back.models.RAG.utils import hash_function
 
 
 def _clean_textract_output(text: str) -> str:
-    """Clean textract output by removing control characters and normalizing whitespace."""
+    """Clean textract output by removing control characters
+    and normalizing whitespace."""
     import re
 
     text = re.sub(r"[\x00-\x1f\x7f]", " ", text)
@@ -34,7 +35,8 @@ class PDFDocument(BaseDocument):
             file_name (str): The name of the file.
             file_path (str): The path to the file.
             created (Optional[str]): The creation date of the document.
-            optional_metadata (Optional[Dict[str, Any]]): Additional metadata for the document.
+            optional_metadata (Optional[Dict[str, Any]]): Additional
+                metadata for the document.
         """
         self.PARSER = kwargs.get("parser", "textract")
         file_hash = hash_function(file_path)
@@ -74,7 +76,7 @@ class PDFDocument(BaseDocument):
             except Exception as e:
                 raise ValueError(
                     f"Error extracting text from PDF file {self.file_path}: {str(e)}"
-                )
+                ) from e
         else:
             raise ValueError(f"Unsupported parser: {self.PARSER}")
 

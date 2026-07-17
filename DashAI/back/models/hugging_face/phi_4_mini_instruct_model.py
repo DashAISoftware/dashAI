@@ -29,21 +29,27 @@ class Phi4MiniInstructSchema(BaseSchema):
         ),
         placeholder="unsloth/Phi-4-mini-instruct-GGUF",
         description=MultilingualString(
-            en=("Phi-4-mini-instruct is a lightweight open model built upon synthetic "
-               "data and filtered publicly available websites - with a focus on high-quality, "
-               "reasoning dense data. The model belongs to the Phi-4 model family and "
-               "supports 128K token context length. The model underwent an enhancement "
-               "process, incorporating both supervised fine-tuning and direct preference "
-               "optimization to support precise instruction adherence and robust safety "
-               "measures."
+            en=(
+                "Phi-4-mini-instruct is a lightweight open model built upon"
+                " synthetic data and filtered publicly available websites -"
+                " with a focus on high-quality, reasoning dense data. The"
+                " model belongs to the Phi-4 model family and supports"
+                " 128K token context length. The model underwent an"
+                " enhancement process, incorporating both supervised"
+                " fine-tuning and direct preference optimization to support"
+                " precise instruction adherence and robust safety measures."
             ),
-            es=("Phi-4-mini-instruct es un modelo abierto ligero construido sobre datos "
-               "sintéticos y sitios web disponibles públicamente filtrados, con un enfoque"
-               "en datos de alta calidad y densos en razonamiento. El modelo pertenece a la "
-               "familia de modelos Phi-4 y soporta un contexto de longitud de 128K tokens. "
-               "El modelo se sometió a un proceso de mejora, incorporando tanto ajuste fino "
-               "(fine-tuning) supervisado como optimización directa de preferencias para "
-               "soportar una adherencia precisa a las instrucciones y medidas de seguridad."
+            es=(
+                "Phi-4-mini-instruct es un modelo abierto ligero construido"
+                " sobre datos sintéticos y sitios web disponibles"
+                " públicamente filtrados, con un enfoque en datos de alta"
+                " calidad y densos en razonamiento. El modelo pertenece a la"
+                " familia de modelos Phi-4 y soporta un contexto de longitud"
+                " de 128K tokens. El modelo se sometió a un proceso de"
+                " mejora, incorporando tanto ajuste fino (fine-tuning)"
+                " supervisado como optimización directa de preferencias para"
+                " soportar una adherencia precisa a las instrucciones y"
+                " medidas de seguridad."
             ),
         ),
         alias=MultilingualString(en="Model Name", es="Nombre del Modelo"),
@@ -52,7 +58,7 @@ class Phi4MiniInstructSchema(BaseSchema):
     quantization: schema_field(
         enum_field(
             enum=[
-                #"unsloth/Phi-4-mini-instruct-GGUF",
+                # "unsloth/Phi-4-mini-instruct-GGUF",
                 "Phi-4-mini-instruct-Q2_K.gguf",
                 "Phi-4-mini-instruct-Q2_K_L.gguf",
                 "Phi-4-mini-instruct-Q3_K_M.gguf",
@@ -73,11 +79,13 @@ class Phi4MiniInstructSchema(BaseSchema):
                 "potentially sacrificing some accuracy."
             ),
             es=(
-                "La cuantización específica del modelo Phi 4 Mini Instruct a utilizar. "
-                "Las opciones incluyen varios tamaños de cuantización y el formato BF16. "
-                "La elección de la cuantización puede afectar el rendimiento y el uso de "
-                "recursos del modelo, generalmente con cuantizaciones más pequeñas "
-                "requieren menos memoria pero potencialmente sacrifican algo de precisión."
+                "La cuantización específica del modelo Phi 4 Mini Instruct a"
+                " utilizar. Las opciones incluyen varios tamaños de"
+                " cuantización y el formato BF16. La elección de la"
+                " cuantización puede afectar el rendimiento y el uso de"
+                " recursos del modelo, generalmente con cuantizaciones más"
+                " pequeñas requieren menos memoria pero potencialmente"
+                " sacrifican algo de precisión."
             ),
         ),
         alias=MultilingualString(en="Quantization", es="Cuantización"),
@@ -188,22 +196,25 @@ class Phi4MiniInstructModel(TextToTextGenerationTaskModel):
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Phi-4-mini-instruct is a lightweight open model built upon synthetic "
-            "data and filtered publicly available websites - with a focus on high-quality, "
-            "reasoning dense data. The model belongs to the Phi-4 model family and "
-            "supports 128K token context length. The model underwent an enhancement "
-            "process, incorporating both supervised fine-tuning and direct preference "
-            "optimization to support precise instruction adherence and robust safety "
-            "measures."
+            "Phi-4-mini-instruct is a lightweight open model built upon"
+            " synthetic data and filtered publicly available websites -"
+            " with a focus on high-quality, reasoning dense data. The"
+            " model belongs to the Phi-4 model family and supports"
+            " 128K token context length. The model underwent an"
+            " enhancement process, incorporating both supervised"
+            " fine-tuning and direct preference optimization to support"
+            " precise instruction adherence and robust safety measures."
         ),
         es=(
-            "Phi-4-mini-instruct es un modelo abierto ligero construido sobre datos "
-            "sintéticos y sitios web disponibles públicamente filtrados, con un enfoque"
-            "en datos de alta calidad y densos en razonamiento. El modelo pertenece a la "
-            "familia de modelos Phi-4 y soporta un contexto de longitud de 128K tokens. "
-            "El modelo se sometió a un proceso de mejora, incorporando tanto ajuste fino "
-            "(fine-tuning) supervisado como optimización directa de preferencias para "
-            "soportar una adherencia precisa a las instrucciones y medidas de seguridad."
+            "Phi-4-mini-instruct es un modelo abierto ligero construido"
+            " sobre datos sintéticos y sitios web disponibles públicamente"
+            " filtrados, con un enfoque en datos de alta calidad y densos"
+            " en razonamiento. El modelo pertenece a la familia de modelos"
+            " Phi-4 y soporta un contexto de longitud de 128K tokens. El"
+            " modelo se sometió a un proceso de mejora, incorporando tanto"
+            " ajuste fino (fine-tuning) supervisado como optimización"
+            " directa de preferencias para soportar una adherencia precisa"
+            " a las instrucciones y medidas de seguridad."
         ),
     )
 

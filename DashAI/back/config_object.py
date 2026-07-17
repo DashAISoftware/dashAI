@@ -49,6 +49,7 @@ class ConfigObject:
         """
         try:
             from pydantic import ValidationError
+
             schema_instance = self.SCHEMA.model_validate(raw_data)
         except ValidationError as e:
             # print full error message

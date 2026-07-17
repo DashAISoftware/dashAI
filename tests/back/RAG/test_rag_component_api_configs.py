@@ -165,7 +165,8 @@ def _post_and_get(client: TestClient, params: dict):
 
 
 class TestEncodingModels:
-    """6 configurations: sparse and dense encoding models with hyperparameter variations."""
+    """6 configurations: sparse and dense encoding models
+    with hyperparameter variations."""
 
     def test_encoding_bm25_default(self, client: TestClient, test_doc_id: int):
         """BM25Retriever with all default hyperparams."""
@@ -180,8 +181,11 @@ class TestEncodingModels:
         assert ret["params"]["similarity_function"] == "cosine"
         assert ret["params"]["top_k"] == 5
 
-    def test_encoding_bm25_custom_hyperparams(self, client: TestClient, test_doc_id: int):
-        """BM25Retriever with custom hyperparams k1=2.0, b=0.5, delta=0.5, euclidean, top_k=7."""
+    def test_encoding_bm25_custom_hyperparams(
+        self, client: TestClient, test_doc_id: int
+    ):
+        """BM25Retriever with custom hyperparams
+        k1=2.0, b=0.5, delta=0.5, euclidean, top_k=7."""
         params = _base_params(test_doc_id)
         params["name"] = "Enc BM25 Custom"
         params["parameters"]["retriever_model"] = {
@@ -319,7 +323,9 @@ class TestRankingFunctions:
         """BM25Retriever with manhattan similarity."""
         params = _base_params(test_doc_id)
         params["name"] = "Rank Manhattan"
-        params["parameters"]["retriever_model"]["params"]["similarity_function"] = "manhattan"
+        params["parameters"]["retriever_model"]["params"]["similarity_function"] = (
+            "manhattan"
+        )
         params["parameters"]["retriever_model"]["params"]["top_k"] = 10
         stored = _post_and_get(client, params)
         ret = stored["parameters"]["retriever_model"]
@@ -328,7 +334,8 @@ class TestRankingFunctions:
         assert ret["params"]["top_k"] == 10
 
     def test_ranking_mmr_reranker(self, client: TestClient, test_doc_id: int):
-        """MMRRerankerRetriever (lambda=0.7, factor=4) wrapping DenseEmbeddingRetriever."""
+        """MMRRerankerRetriever (lambda=0.7, factor=4)
+        wrapping DenseEmbeddingRetriever."""
         params = _base_params(test_doc_id)
         params["name"] = "Rank MMR"
         params["parameters"]["retriever_model"] = {
@@ -337,9 +344,7 @@ class TestRankingFunctions:
                 "mmr_lambda": 0.7,
                 "retrieval_factor": 4,
                 "top_k": 10,
-                "children": [
-                    _dense_st_retriever(similarity_metric="cosine", top_k=40)
-                ],
+                "children": [_dense_st_retriever(similarity_metric="cosine", top_k=40)],
             },
         }
         stored = _post_and_get(client, params)
@@ -351,7 +356,10 @@ class TestRankingFunctions:
         children = ret["params"]["children"]
         assert len(children) == 1
         assert children[0]["component"] == "DenseEmbeddingRetriever"
-        assert children[0]["params"]["embedding_model"]["component"] == "SentenceTransformerEmbedding"
+        assert (
+            children[0]["params"]["embedding_model"]["component"]
+            == "SentenceTransformerEmbedding"
+        )
         assert children[0]["params"]["top_k"] == 40
 
 
@@ -423,9 +431,7 @@ class TestTopK:
                 "mmr_lambda": 0.5,
                 "retrieval_factor": 3,
                 "top_k": 12,
-                "children": [
-                    _dense_st_retriever(similarity_metric="cosine", top_k=36)
-                ],
+                "children": [_dense_st_retriever(similarity_metric="cosine", top_k=36)],
             },
         }
         stored = _post_and_get(client, params)
@@ -440,7 +446,8 @@ class TestTopK:
 
 
 class TestChunkingStrategies:
-    """6 chunking strategy configurations with different algorithms and parameters (chunk_size, chunk_overlap)."""
+    """6 chunking strategy configurations with different algorithms
+    and parameters (chunk_size, chunk_overlap)."""
 
     def test_chunking_char_small(self, client: TestClient, test_doc_id: int):
         """CharacterChunkModel with chunk_size=256, chunk_overlap=25."""
@@ -537,7 +544,10 @@ class TestChunkingStrategies:
         stored = _post_and_get(client, params)
         chunk = stored["parameters"]["chunking_model"]
         assert chunk["component"] == "TokenChunkModel"
-        assert chunk["params"]["tokenizer_name"] == "dccuchile/bert-base-spanish-wwm-uncased"
+        assert (
+            chunk["params"]["tokenizer_name"]
+            == "dccuchile/bert-base-spanish-wwm-uncased"
+        )
         assert chunk["params"]["chunk_size"] == 512
         assert chunk["params"]["chunk_overlap"] == 50
 
@@ -606,7 +616,8 @@ class TestPrompts:
 
 
 class TestGeneratorModels:
-    """8 generator model configurations with different models and hyperparameters (≤8B)."""
+    """8 generator model configurations with different models
+    and hyperparameters (≤8B)."""
 
     def test_generator_llama_1b_default(self, client: TestClient, test_doc_id: int):
         """LlamaModel 3.2-1B with default hyperparams."""
@@ -775,7 +786,8 @@ class TestGeneratorModels:
     def test_generator_openai_gpt4o_mini_custom(
         self, client: TestClient, test_doc_id: int
     ):
-        """OpenAITextToTextGenerationModel with gpt-4o-mini, temp=0.3, max_tokens=512."""
+        """OpenAITextToTextGenerationModel with
+        gpt-4o-mini, temp=0.3, max_tokens=512."""
         params = _base_params(test_doc_id)
         params["name"] = "Gen OpenAI GPT4o Mini"
         params["parameters"]["generation_model"] = {

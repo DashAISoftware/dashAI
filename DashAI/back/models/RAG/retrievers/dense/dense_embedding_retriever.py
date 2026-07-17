@@ -52,7 +52,8 @@ class DenseEmbeddingRetriever(DenseRetriever):
     )
     DESCRIPTION: str = MultilingualString(
         en="Dense retriever using any registered DenseEmbedding for similarity search.",
-        es="Recuperador denso que usa cualquier DenseEmbedding registrado para búsqueda por similitud.",
+        es="Recuperador denso que usa cualquier DenseEmbedding registrado"
+        " para búsqueda por similitud.",
     )
 
     def __init__(self, **kwargs):

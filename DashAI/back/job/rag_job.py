@@ -159,9 +159,7 @@ class RAGJob(BaseJob):
                         raise JobError(
                             f"Session {generative_process.session_id} not found in DB."
                         )
-                    log.debug(
-                        "Loaded generative session %d", generative_session.id
-                    )
+                    log.debug("Loaded generative session %d", generative_session.id)
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()
@@ -190,7 +188,10 @@ class RAGJob(BaseJob):
                         env_rag_path=config["RAG_PATH"],
                         **clean_params,
                     )
-                    log.debug("Created RAG pipeline config for session %d", generative_session.id)
+                    log.debug(
+                        "Created RAG pipeline config for session %d",
+                        generative_session.id,
+                    )
                     models = RAGModelsFactory(
                         db,
                         component_registry,
@@ -204,7 +205,10 @@ class RAGJob(BaseJob):
                         repo,
                         doc_loader,
                     )
-                    log.debug("Created RAG pipeline model for session %d", generative_session.id)
+                    log.debug(
+                        "Created RAG pipeline model for session %d",
+                        generative_session.id,
+                    )
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()
@@ -242,7 +246,9 @@ class RAGJob(BaseJob):
                     raise JobError("Error preparing task with history.") from e
 
                 try:
-                    log.debug("Starting generation for process %d", generative_process_id)
+                    log.debug(
+                        "Starting generation for process %d", generative_process_id
+                    )
                     generative_process.set_status_as_started()
                     db.commit()
                 except exc.SQLAlchemyError as e:
@@ -255,7 +261,9 @@ class RAGJob(BaseJob):
 
                 try:
                     output: Any = model.generate(input_data)
-                    log.debug("Generation completed for process %d", generative_process_id)
+                    log.debug(
+                        "Generation completed for process %d", generative_process_id
+                    )
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()
@@ -296,7 +304,10 @@ class RAGJob(BaseJob):
                     db.refresh(generative_process)
                     generative_process.set_status_as_finished()
                     db.commit()
-                    log.debug("Output processing completed for process %d", generative_process_id)
+                    log.debug(
+                        "Output processing completed for process %d",
+                        generative_process_id,
+                    )
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()

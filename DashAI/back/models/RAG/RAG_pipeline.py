@@ -12,8 +12,6 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
-log = logging.getLogger(__name__)
-
 from sqlalchemy.orm import Session
 
 from DashAI.back.core.schema_fields import (
@@ -48,6 +46,8 @@ from DashAI.back.models.RAG.retrievers.retriever_factory import (
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
+
+log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
@@ -309,9 +309,22 @@ class RAGPipeline(BaseGenerativeModel):
         pt="Pipeline RAG",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Pipeline for Retrieval-Augmented Generation (RAG) tasks, orchestrating document loading, chunking, retrieval, prompt formatting, and LLM generation.",
-        es="Pipeline para tareas de Generación Aumentada por Recuperación (RAG), orquestando la carga de documentos, chunking, recuperación, formateo de prompts y generación con LLM.",
-        pt="Pipeline para tarefas de Geração Aumentada por Recuperação (RAG), orquestrando carregamento de documentos, chunking, recuperação, formatação de prompts e geração com LLM.",
+        en=(
+            "Pipeline for Retrieval-Augmented Generation (RAG) tasks,"
+            " orchestrating document loading, chunking, retrieval,"
+            " prompt formatting, and LLM generation."
+        ),
+        es=(
+            "Pipeline para tareas de Generación Aumentada por"
+            " Recuperación (RAG), orquestando la carga de documentos,"
+            " chunking, recuperación, formateo de prompts y generación"
+            " con LLM."
+        ),
+        pt=(
+            "Pipeline para tarefas de Geração Aumentada por Recuperação"
+            " (RAG), orquestrando carregamento de documentos, chunking,"
+            " recuperação, formatação de prompts e geração com LLM."
+        ),
     )
     COLOR: str = "#e12885"
     ICON: str = "Grading"

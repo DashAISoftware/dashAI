@@ -25,7 +25,8 @@ class TxtDocument(BaseDocument):
             file_path (str): The path to the file.
             file_hash (str): A hash of the file content.
             created (Optional[str]): The creation date of the document.
-            optional_metadata (Optional[Dict[str, Any]]): Additional metadata for the document.
+            optional_metadata (Optional[Dict[str, Any]]): Additional
+                metadata for the document.
         """
         file_hash = hash_function(file_path)
         super().__init__(

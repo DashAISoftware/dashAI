@@ -53,11 +53,11 @@ class DocumentLoader:
                 raise ValueError(f"Document with ID {doc_id} not found in database.")
             try:
                 doc_class = _DOCUMENT_CLASSES[db_doc.file_type]
-            except KeyError:
+            except KeyError as err:
                 raise ValueError(
                     f"Unsupported file type '{db_doc.file_type}'. "
                     f"Supported types: txt, pdf, md, rst, tex, csv."
-                )
+                ) from err
             documents[doc_id] = doc_class(
                 id=db_doc.id,
                 file_name=db_doc.file_name,

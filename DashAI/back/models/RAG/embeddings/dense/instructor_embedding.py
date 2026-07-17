@@ -33,7 +33,8 @@ class InstructorEmbeddingSchema(BaseSchema):
         placeholder="hkunlp/instructor-base",
         description=MultilingualString(
             en="INSTRUCTOR model for instruction-tuned embedding generation.",
-            es="Modelo INSTRUCTOR para generación de embeddings ajustados por instrucción.",
+            es="Modelo INSTRUCTOR para generación de embeddings ajustados"
+            " por instrucción.",
         ),
     )  # type: ignore
 

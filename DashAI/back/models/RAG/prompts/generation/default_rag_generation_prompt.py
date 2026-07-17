@@ -89,7 +89,8 @@ class DefaultRAGGenerationPrompt(RAGGenerationPrompt):
     SCHEMA = DefaultRAGGenerationPromptSchema
     DESCRIPTION: str = MultilingualString(
         en="Default prompt template used in the language generation step of RAG.",
-        es="Plantilla de prompt predeterminada utilizada en el paso de generación de lenguaje de RAG.",
+        es="Plantilla de prompt predeterminada utilizada en el paso de"
+        " generación de lenguaje de RAG.",
         pt="Modelo de prompt padrão usado na etapa de geração de linguagem do RAG.",
     )
     DISPLAY_NAME: str = MultilingualString(
@@ -100,7 +101,8 @@ class DefaultRAGGenerationPrompt(RAGGenerationPrompt):
 
     metadata = {
         "name": "Default RAG Generation Prompt",
-        "description": "Default prompt template used in the language generation step of RAG.",
+        "description": "Default prompt template used in the language"
+        " generation step of RAG.",
         "type": "generation",
         "required_placeholders": RAGGenerationPrompt.required_placeholders,
         "optional_placeholders": RAGGenerationPrompt.optional_placeholders,

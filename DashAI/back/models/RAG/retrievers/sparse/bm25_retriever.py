@@ -81,14 +81,17 @@ class BM25VectorizerSchema(BaseSchema):
         ),
     )  # type: ignore
 
+
 class BM25VectorizerModel(BaseModel):
     DISPLAY_NAME: str = MultilingualString(
         en="BM25 Vectorizer",
         es="Vectorizador BM25",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Vectorizer for BM25Retriever using CountVectorizer with BM25-specific parameters.",
-        es="Vectorizador para BM25Retriever usando CountVectorizer con parámetros específicos de BM25.",
+        en="Vectorizer for BM25Retriever using CountVectorizer with"
+        " BM25-specific parameters.",
+        es="Vectorizador para BM25Retriever usando CountVectorizer con"
+        " parámetros específicos de BM25.",
     )
 
     SCHEMA = BM25VectorizerSchema
@@ -115,6 +118,7 @@ class BM25VectorizerModel(BaseModel):
 
     def train(self):
         pass
+
 
 class BM25RetrieverSchema(BaseSchema):
     BM25Vectorizer: schema_field(
@@ -180,7 +184,8 @@ class BM25Retriever(SparseRetriever):
     )
     DESCRIPTION: str = MultilingualString(
         en="Sparse retriever using BM25 (Okapi) ranking for document retrieval.",
-        es="Recuperador disperso que usa ranking BM25 (Okapi) para recuperar documentos.",
+        es="Recuperador disperso que usa ranking BM25 (Okapi) para"
+        " recuperar documentos.",
     )
 
     SCHEMA = BM25RetrieverSchema
@@ -284,7 +289,8 @@ class BM25Retriever(SparseRetriever):
         k = top_k if top_k is not None else self._top_k
         query_vec = self._vectorizer.transform([query])
         distances = pairwise_distances(
-            query_vec, self._bm25_matrix,
+            query_vec,
+            self._bm25_matrix,
             metric=self.similarity_function_name,
         ).flatten()
         top_indices = np.argsort(distances)[:k]
@@ -304,10 +310,11 @@ class BM25Retriever(SparseRetriever):
             return []
         chunk_vectors = self._bm25_matrix[rows]
         distances = pairwise_distances(
-            query_vec, chunk_vectors,
+            query_vec,
+            chunk_vectors,
             metric=self.similarity_function_name,
         ).flatten()
-        scored = list(zip(valid_ids, distances.tolist()))
+        scored = list(zip(valid_ids, distances.tolist(), strict=True))
         scored.sort(key=lambda x: x[1])
         return scored
 

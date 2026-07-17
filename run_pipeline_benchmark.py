@@ -21,7 +21,7 @@ if not _runner.exists():
 
 # Forward to the moved script
 sys.path.insert(0, str(_runner.parent.parent))
-from RAG_benchmark.run_pipeline_benchmark import main
+from RAG_benchmark.run_pipeline_benchmark import main  # noqa: E402
 
 if __name__ == "__main__":
     main()

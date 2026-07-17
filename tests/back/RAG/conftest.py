@@ -13,7 +13,6 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.app import create_app
 from DashAI.back.dependencies.job_queues.huey_job_queue import HueyJobQueue
-from DashAI.back.job.dataset_job import DatasetJob
 
 
 def remove_dir_with_retry(directory, max_attempts=5, sleep_seconds=1):

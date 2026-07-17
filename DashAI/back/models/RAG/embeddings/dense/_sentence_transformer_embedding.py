@@ -1,5 +1,5 @@
 import torch
-import torch.nn.functional as F
+import torch.nn.functional as functional
 
 from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
     OverfloatHandler,
@@ -34,23 +34,28 @@ class _SentenceTransformerEmbedding(OverfloatHandler):
         if self.pooling == "last_token":
             return self._last_token_pool(model_output, attention_mask)
         token_embeddings = model_output[0]
-        input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        input_mask_expanded = (
+            attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
+        )
         pooled = torch.sum(token_embeddings * input_mask_expanded, 1) / torch.clamp(
             input_mask_expanded.sum(1), min=1e-9
         )
         if self.normalize:
-            pooled = F.normalize(pooled, p=2, dim=1)
+            pooled = functional.normalize(pooled, p=2, dim=1)
         return pooled
 
     def _last_token_pool(self, model_output, attention_mask):
         last_hidden_states = model_output[0]
-        left_padding = (attention_mask[:, -1].sum() == attention_mask.shape[0])
+        left_padding = attention_mask[:, -1].sum() == attention_mask.shape[0]
         if left_padding:
             pooled = last_hidden_states[:, -1]
         else:
             sequence_lengths = attention_mask.sum(dim=1) - 1
             batch_size = last_hidden_states.shape[0]
-            pooled = last_hidden_states[torch.arange(batch_size, device=last_hidden_states.device), sequence_lengths]
+            pooled = last_hidden_states[
+                torch.arange(batch_size, device=last_hidden_states.device),
+                sequence_lengths,
+            ]
         if self.normalize:
-            pooled = F.normalize(pooled, p=2, dim=1)
+            pooled = functional.normalize(pooled, p=2, dim=1)
         return pooled

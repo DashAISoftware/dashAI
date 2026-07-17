@@ -9,7 +9,8 @@ from DashAI.back.models.base_model import BaseModel
 class DenseEmbedding(BaseModel):
     """
     Base class for all encoding (embedding) models.
-    This class should be inherited by any specific encoding (embedding) model implementation.
+    This class should be inherited by any specific encoding (embedding)
+    model implementation.
     """
 
     embedding_dim: int
@@ -36,7 +37,8 @@ class DenseEmbedding(BaseModel):
         This method should be implemented by subclasses.
 
         :param texts: A list of input texts to encode (embed).
-        :return: A list of lists representing the encodings (embeddings) of the input texts.
+        :return: A list of lists representing the encodings (embeddings)
+            of the input texts.
         """
         raise NotImplementedError("Subclasses must implement this method.")
 

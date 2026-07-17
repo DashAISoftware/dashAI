@@ -128,7 +128,8 @@ class TestPromptCRUD:
         )
 
     def test_create_custom_prompt(self, client: TestClient):
-        """POST /api/v1/prompt/ creates a new CustomRAGGenerationPrompt and it appears in the list."""
+        """POST /api/v1/prompt/ creates a new CustomRAGGenerationPrompt
+        and it appears in the list."""
         template = "Answer using: {chunks}\n\nQuestion: {input}"
         payload = {
             "class_name": "CustomRAGGenerationPrompt",
@@ -136,7 +137,9 @@ class TestPromptCRUD:
             "parameters": {"template": template},
         }
         response = client.post("/api/v1/prompt/", json=payload)
-        assert response.status_code == 201, f"Expected 201, got {response.status_code}: {response.text}"
+        assert response.status_code == 201, (
+            f"Expected 201, got {response.status_code}: {response.text}"
+        )
         data = response.json()
         assert data["id"] is not None, "Created prompt should have an id"
 
@@ -149,7 +152,8 @@ class TestPromptCRUD:
         assert custom[0]["parameters"]["template"] == template
 
     def test_create_duplicate_prompt_fails(self, client: TestClient):
-        """Creating the same prompt twice (same class_name + parameters) is rejected via IntegrityError."""
+        """Creating the same prompt twice
+        (same class_name + parameters) is rejected via IntegrityError."""
         template = "Q: {input}\nContext: {chunks}"
         payload = {
             "class_name": "CustomRAGGenerationPrompt",
@@ -252,7 +256,8 @@ class TestPromptCRUD:
         }
         response = client.post("/api/v1/prompt/", json=payload)
         assert response.status_code == 400, (
-            f"Expected 400 for invalid class_name, got {response.status_code}: {response.text}"
+            f"Expected 400 for invalid class_name, got"
+            f" {response.status_code}: {response.text}"
         )
 
 
@@ -265,7 +270,8 @@ class TestPromptSessionIntegration:
     """Prompt usage within generative RAG sessions."""
 
     def test_session_with_default_prompt_en(self, client: TestClient, test_doc_id: int):
-        """Session creation with DefaultRAGGenerationPrompt (language=en) stores prompt correctly."""
+        """Session creation with DefaultRAGGenerationPrompt
+        (language=en) stores prompt correctly."""
         params = _base_session_params(test_doc_id)
         params["name"] = "Session EN Prompt"
         stored = _post_and_get(client, params)
@@ -276,7 +282,8 @@ class TestPromptSessionIntegration:
         assert prompt["params"]["language"] == "en", "Language should be en"
 
     def test_session_with_default_prompt_es(self, client: TestClient, test_doc_id: int):
-        """Session creation with DefaultRAGGenerationPrompt (language=es) stores prompt correctly."""
+        """Session creation with DefaultRAGGenerationPrompt
+        (language=es) stores prompt correctly."""
         params = _base_session_params(test_doc_id)
         params["name"] = "Session ES Prompt"
         params["parameters"]["prompt"] = {
@@ -289,7 +296,8 @@ class TestPromptSessionIntegration:
         assert prompt["params"]["language"] == "es", "Language should be es"
 
     def test_session_with_qna_prompt(self, client: TestClient, test_doc_id: int):
-        """Session creation with DefaultQnARAGGenerationPrompt (language=en) stores prompt correctly."""
+        """Session creation with DefaultQnARAGGenerationPrompt
+        (language=en) stores prompt correctly."""
         params = _base_session_params(test_doc_id)
         params["name"] = "Session QnA Prompt"
         params["parameters"]["prompt"] = {
@@ -303,8 +311,11 @@ class TestPromptSessionIntegration:
         )
         assert prompt["params"]["language"] == "en"
 
-    def test_session_with_custom_prompt_template(self, client: TestClient, test_doc_id: int):
-        """Session creation with CustomRAGGenerationPrompt stores the custom template correctly."""
+    def test_session_with_custom_prompt_template(
+        self, client: TestClient, test_doc_id: int
+    ):
+        """Session creation with CustomRAGGenerationPrompt
+        stores the custom template correctly."""
         template_text = "Answer the question based on: {chunks}\n\nQuestion: {input}"
         params = _base_session_params(test_doc_id)
         params["name"] = "Session Custom Prompt"
@@ -320,7 +331,8 @@ class TestPromptSessionIntegration:
         )
 
     def test_clone_prompt_to_session(self, client: TestClient, test_doc_id: int):
-        """POST /api/v1/prompt/{id}/sessions/{session_id} clones a prompt and attaches it to the session."""
+        """POST /api/v1/prompt/{id}/sessions/{session_id}
+        clones a prompt and attaches it to the session."""
         # Create a session first
         params = _base_session_params(test_doc_id)
         params["name"] = "Session For Clone"
@@ -334,7 +346,9 @@ class TestPromptSessionIntegration:
             "parameters": {"template": "Clone: {chunks}\nQ: {input}"},
         }
         create_resp = client.post("/api/v1/prompt/", json=create_payload)
-        assert create_resp.status_code == 201, f"Prompt creation failed: {create_resp.text}"
+        assert create_resp.status_code == 201, (
+            f"Prompt creation failed: {create_resp.text}"
+        )
         prompt_id = create_resp.json()["id"]
 
         # Clone the prompt to the session
@@ -358,12 +372,16 @@ class TestPromptSessionIntegration:
             "Session parameters should reference the cloned prompt ID"
         )
 
-    def test_session_rejects_invalid_prompt_class(self, client: TestClient, test_doc_id: int):
-        """Session creation accepts unknown component names — validation happens at pipeline runtime.
+    def test_session_rejects_invalid_prompt_class(
+        self, client: TestClient, test_doc_id: int
+    ):
+        """Session creation accepts unknown component names —
+        validation happens at pipeline runtime.
 
-        The schema `component_field(parent="Prompt")` validates the {component, params}
-        structure but does not verify component existence in the registry at session
-        creation time. The unknown component is stored as-is.
+        The schema `component_field(parent="Prompt")` validates the
+        {component, params} structure but does not verify component
+        existence in the registry at session creation time. The unknown
+        component is stored as-is.
         """
         params = _base_session_params(test_doc_id)
         params["name"] = "Session Invalid Prompt"

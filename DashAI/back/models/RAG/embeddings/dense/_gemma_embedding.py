@@ -37,7 +37,9 @@ class _GemmaEmbedding(HuggingFaceEmbedding):
         self.params["task_type"] = task_type
 
     def _pool(self, model_output, attention_mask):
-        raise NotImplementedError("Gemma uses SentenceTransformer API, _pool is unused.")
+        raise NotImplementedError(
+            "Gemma uses SentenceTransformer API, _pool is unused."
+        )
 
     def load(self):
         from sentence_transformers import SentenceTransformer
@@ -46,7 +48,9 @@ class _GemmaEmbedding(HuggingFaceEmbedding):
 
     def batch_encode(self, texts: List[str]) -> np.ndarray:
         prompted = [DOCUMENT_PROMPT + t for t in texts]
-        return self.model.encode(prompted, normalize_embeddings=True, show_progress_bar=False)
+        return self.model.encode(
+            prompted, normalize_embeddings=True, show_progress_bar=False
+        )
 
     def encode(self, text: str) -> np.ndarray:
         query_prompt = TASK_PROMPTS[self.task_type]

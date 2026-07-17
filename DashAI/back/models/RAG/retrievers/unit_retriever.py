@@ -41,12 +41,14 @@ class UnitRetriever(RetrieverModel, ABC):
 
     def add(self, child: RetrieverModel) -> None:
         raise TypeError(
-            f"{self.__class__.__name__} is a unit retriever and cannot contain children."
+            f"{self.__class__.__name__} is a unit retriever and"
+            " cannot contain children."
         )
 
     def remove(self, child: RetrieverModel) -> None:
         raise TypeError(
-            f"{self.__class__.__name__} is a unit retriever and cannot contain children."
+            f"{self.__class__.__name__} is a unit retriever and"
+            " cannot contain children."
         )
 
     def get_children(self) -> List[RetrieverModel]:

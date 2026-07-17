@@ -35,7 +35,7 @@ class QwenSchema(BaseSchema):
                 # "Qwen/Qwen3-4B-GGUF", This one is not working on llama-cpp 0.3.4
                 "Qwen/Qwen2.5-3B-Instruct-GGUF",
                 "Qwen/Qwen2.5-7B-Instruct-GGUF",
-                "Qwen/Qwen2.5-14B-Instruct-GGUF"
+                "Qwen/Qwen2.5-14B-Instruct-GGUF",
             ]
         ),
         placeholder="Qwen/Qwen2.5-1.5B-Instruct-GGUF",
@@ -445,7 +445,9 @@ class QwenModel(TextToTextGenerationTaskModel):
                 verbose=True,
                 n_ctx=self.n_ctx,
                 n_gpu_layers=-1 if use_gpu else 0,
-                main_gpu=LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) if use_gpu else 0,
+                main_gpu=LLAMA_DEVICE_TO_IDX.get(kwargs.get("device"))
+                if use_gpu
+                else 0,
             )
         except ValueError:
             # Fall back to Q2_K single-file quantization when Q8_0 is
@@ -457,7 +459,9 @@ class QwenModel(TextToTextGenerationTaskModel):
                 verbose=True,
                 n_ctx=self.n_ctx,
                 n_gpu_layers=-1 if use_gpu else 0,
-                main_gpu=LLAMA_DEVICE_TO_IDX.get(kwargs.get("device")) if use_gpu else 0,
+                main_gpu=LLAMA_DEVICE_TO_IDX.get(kwargs.get("device"))
+                if use_gpu
+                else 0,
             )
 
     def generate(self, prompt: list[dict[str, str]]) -> List[str]:

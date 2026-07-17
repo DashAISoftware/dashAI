@@ -43,7 +43,8 @@ class GemmaEmbeddingSchema(BaseSchema):
         placeholder="search_result",
         description=MultilingualString(
             en="Task type that optimizes the query embedding for a specific use case.",
-            es="Tipo de tarea que optimiza el embedding de consulta para un caso de uso específico.",
+            es="Tipo de tarea que optimiza el embedding de consulta para"
+            " un caso de uso específico.",
         ),
     )  # type: ignore
 

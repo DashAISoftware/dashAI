@@ -19,10 +19,13 @@ class _InstructorEmbedding(HuggingFaceEmbedding):
         self.params["instruction"] = instruction
 
     def _pool(self, model_output, attention_mask):
-        raise NotImplementedError("INSTRUCTOR uses custom encoding API, _pool is unused.")
+        raise NotImplementedError(
+            "INSTRUCTOR uses custom encoding API, _pool is unused."
+        )
 
     def load(self):
         from InstructorEmbedding import INSTRUCTOR
+
         self.model = INSTRUCTOR(self.model_name)
         self.model._text_length = self.model._input_length
 

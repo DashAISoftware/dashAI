@@ -30,12 +30,16 @@ class ParallelRetrieverSchema(BaseSchema):
         placeholder=MergeStrategy.ROUND_ROBIN.value,
         description=MultilingualString(
             en=(
-                f"'{MergeStrategy.ROUND_ROBIN.value}': alternates results from each retriever. "
-                f"'{MergeStrategy.INTERLEAVE.value}': merges preserving internal order."
+                f"'{MergeStrategy.ROUND_ROBIN.value}': alternates results"
+                f" from each retriever. "
+                f"'{MergeStrategy.INTERLEAVE.value}': merges preserving"
+                f" internal order."
             ),
             es=(
-                f"'{MergeStrategy.ROUND_ROBIN.value}': alterna resultados de cada recuperador. "
-                f"'{MergeStrategy.INTERLEAVE.value}': fusiona preservando el orden interno."
+                f"'{MergeStrategy.ROUND_ROBIN.value}': alterna resultados"
+                f" de cada recuperador. "
+                f"'{MergeStrategy.INTERLEAVE.value}': fusiona preservando"
+                f" el orden interno."
             ),
         ),
     )  # type: ignore

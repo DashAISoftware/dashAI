@@ -60,15 +60,18 @@ class RetrieverModel(BaseModel, ABC):
             for chunk_id, chunk in doc_chunks.items():
                 if not isinstance(chunk_id, int):
                     raise ValueError(
-                        f"Chunk ID {chunk_id} in document ID {doc_id} must be an integer."
+                        f"Chunk ID {chunk_id} in document ID {doc_id}"
+                        f" must be an integer."
                     )
                 if not isinstance(chunk, Chunk):
                     raise ValueError(
-                        f"Chunk {chunk_id} in document ID {doc_id} must be an instance of Chunk."
+                        f"Chunk {chunk_id} in document ID {doc_id}"
+                        f" must be an instance of Chunk."
                     )
                 if chunk.document_id != doc_id:
                     raise ValueError(
-                        f"Chunk {chunk_id} document_id {chunk.document_id} != doc ID {doc_id}."
+                        f"Chunk {chunk_id} document_id {chunk.document_id}"
+                        f" != doc ID {doc_id}."
                     )
 
     def inject_infra(

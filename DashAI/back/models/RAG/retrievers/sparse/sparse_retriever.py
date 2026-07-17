@@ -10,5 +10,6 @@ class SparseRetriever(UnitRetriever):
     )
     DESCRIPTION: str = MultilingualString(
         en="Sparse retriever using term-frequency based representations.",
-        es="Recuperador disperso que usa representaciones basadas en frecuencia de términos.",
+        es="Recuperador disperso que usa representaciones basadas en"
+        " frecuencia de términos.",
     )

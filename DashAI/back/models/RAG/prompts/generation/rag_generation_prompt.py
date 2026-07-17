@@ -5,7 +5,8 @@ from DashAI.back.models.RAG.prompts.prompt import Prompt
 
 class RAGGenerationPrompt(Prompt):
     """
-    RAGGenerationPrompt class for formatting prompts used in the language generation step of RAG.
+    RAGGenerationPrompt class for formatting prompts used in the language
+    generation step of RAG.
     """
 
     required_placeholders = ["{input}", "{chunks}"]

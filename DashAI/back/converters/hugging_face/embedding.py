@@ -1,12 +1,10 @@
-from typing import List
+"""HuggingFace embedding converter with lazy-loaded dependencies."""
+
+from typing import TYPE_CHECKING, List
 
 import numpy as np
 import torch
 from transformers import AutoModel, AutoTokenizer
-
-"""HuggingFace embedding converter with lazy-loaded dependencies."""
-
-from typing import TYPE_CHECKING
 
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -189,7 +187,7 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
         self.model = AutoModel.from_pretrained(self.model_name).to(self.device)
         self.model.eval()
 
-    def _encode_texts(self, texts:List[str])-> List[np.ndarray]:
+    def _encode_texts(self, texts: List[str]) -> List[np.ndarray]:
         """Encode a list of texts into embeddings."""
         # Tokenize
         encoded = self.tokenizer(

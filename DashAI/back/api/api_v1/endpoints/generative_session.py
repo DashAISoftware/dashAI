@@ -4,10 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Final, Union
 
-COMPOSITE_RETRIEVER_NAMES: Final = frozenset(
-    {"SequentialRetriever", "ParallelRetriever"}
-)
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
 from sqlalchemy import exc, select
@@ -32,6 +28,10 @@ from DashAI.back.dependencies.database.models import (
     RAGSparseRetriever,
 )
 from DashAI.back.tasks.RAG_task import RAGTask
+
+COMPOSITE_RETRIEVER_NAMES: Final = frozenset(
+    {"SequentialRetriever", "ParallelRetriever"}
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -92,10 +92,6 @@ def _cleanup_orphaned_rag_resources(
         if new_parameters is None:
             return True
         return old_parameters.get(key) != new_parameters.get(key)
-
-    other_sessions = (
-        db.query(GenerativeSession).filter(GenerativeSession.id != session_id).all()
-    )
 
     documents_ids = old_parameters.get("documents") or []
     documents_ids = sorted(documents_ids)
@@ -360,6 +356,7 @@ async def upload_generative_session(
 
             # Normalise frontend properties wrapper and validate
             from DashAI.back.core.schema_fields.utils import normalize_payload
+
             params.parameters = normalize_payload(params.parameters)
             try:
                 model_class.SCHEMA.model_validate(params.parameters)

@@ -23,10 +23,12 @@ class SequentialRetrieverSchema(BaseSchema):
         list_field(component_field(parent="RetrieverModel"), min_items=2),
         placeholder=[],
         description=MultilingualString(
-            en="Ordered list of child retrievers. The first child retrieves broadly; "
-            "each subsequent child re-ranks and tightens the results.",
-            es="Lista ordenada de recuperadores hijos. El primero recupera ampliamente; "
-            "cada hijo subsiguiente reordena y ajusta los resultados.",
+            en="Ordered list of child retrievers. The first child retrieves"
+            " broadly; each subsequent child re-ranks and tightens the"
+            " results.",
+            es="Lista ordenada de recuperadores hijos. El primero recupera"
+            " ampliamente; cada hijo subsiguiente reordena y ajusta los"
+            " resultados.",
         ),
     )  # type: ignore
 

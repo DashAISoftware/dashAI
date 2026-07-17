@@ -48,7 +48,8 @@ class DenseRetriever(UnitRetriever):
     )
     DESCRIPTION: str = MultilingualString(
         en="Embedding retriever using vector embeddings for similarity search.",
-        es="Recuperador por embeddings que usa representaciones vectoriales para búsqueda por similitud.",
+        es="Recuperador por embeddings que usa representaciones"
+        " vectoriales para búsqueda por similitud.",
     )
 
     SCHEMA = DenseRetrieverSchema
@@ -156,7 +157,7 @@ class DenseRetriever(UnitRetriever):
             self.similarity_matrix[rows],
             metric=self.similarity_metric,
         )[0]
-        scored = list(zip(valid_ids, distances.tolist()))
+        scored = list(zip(valid_ids, distances.tolist(), strict=True))
         scored.sort(key=lambda x: x[1])
         return scored
 

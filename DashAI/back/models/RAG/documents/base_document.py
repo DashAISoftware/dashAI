@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 
@@ -26,7 +26,8 @@ class BaseDocument(ABC):
             file_path (str): The path to the file.
             file_hash (str): A hash of the file content.
             created (Optional[str]): The creation date of the document.
-            optional_metadata (Optional[Dict[str, Any]]): Additional metadata for the document.
+            optional_metadata (Optional[Dict[str, Any]]): Additional
+                metadata for the document.
         """
         self.id = id
         self.file_name = file_name
@@ -35,6 +36,7 @@ class BaseDocument(ABC):
         self.created = created if created else None
         self.optional_metadata = optional_metadata if optional_metadata else None
 
+    @abstractmethod
     def get_text(self) -> str:
         """
         Get the text content of the document.
@@ -42,7 +44,6 @@ class BaseDocument(ABC):
         Returns:
             str: The text content of the document.
         """
-        raise NotImplementedError("This method should be implemented by subclasses.")
 
     def get_text_length(self) -> int:
         """
@@ -53,6 +54,7 @@ class BaseDocument(ABC):
         """
         return len(self.get_text())
 
+    @abstractmethod
     def get_metadata(self) -> Dict[str, Any]:
         """
         Get the metadata of the document.
@@ -60,7 +62,6 @@ class BaseDocument(ABC):
         Returns:
             Dict[str, Any]: The metadata of the document.
         """
-        raise NotImplementedError("This method should be implemented by subclasses.")
 
     def get_id(self) -> int:
         """
@@ -108,4 +109,8 @@ class BaseDocument(ABC):
         return self.file_path.split(".")[-1].lower() if self.file_path else None
 
     def __repr__(self):
-        return f"BaseDocument(id={self.id}, filename='{self.get_file_name()}', content='{self.get_text()[:50]}...', metadata={self.get_metadata()})"
+        return (
+            f"BaseDocument(id={self.id}, filename='{self.get_file_name()}', "
+            f"content='{self.get_text()[:50]}...', "
+            f"metadata={self.get_metadata()})"
+        )

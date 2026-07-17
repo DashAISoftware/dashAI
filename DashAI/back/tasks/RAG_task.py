@@ -24,10 +24,12 @@ class RAGTask(BaseGenerativeTask):
     )
     DESCRIPTION: str = MultilingualString(
         en="""
-        This task generates a text response with an LLM model based on documents provided.
+        This task generates a text response with an LLM model based on
+        documents provided.
         """,
         es="""
-        Esta tarea genera una respuesta de texto con un modelo LLM basado en los documentos proporcionados.
+        Esta tarea genera una respuesta de texto con un modelo LLM basado
+        en los documentos proporcionados.
         """,
     )
 

@@ -110,14 +110,23 @@ class LlamaSchema(BaseSchema):
     quantization: schema_field(
         enum_field(
             enum=[
-                "Q2_K", "Q2_K_L",
-                "Q3_K_S", "Q3_K_M", "Q3_K_L", "Q3_K_XL",
-                "Q4_K_S", "Q4_K_0", "Q4_K_M",
-                "Q5_K_S", "Q5_K_M",
-                "Q6_K", "Q6_K_L",
+                "Q2_K",
+                "Q2_K_L",
+                "Q3_K_S",
+                "Q3_K_M",
+                "Q3_K_L",
+                "Q3_K_XL",
+                "Q4_K_S",
+                "Q4_K_0",
+                "Q4_K_M",
+                "Q5_K_S",
+                "Q5_K_M",
+                "Q6_K",
+                "Q6_K_L",
                 "Q8_0",
-                "F32"
-            ],),
+                "F32",
+            ],
+        ),
         placeholder="Q4_K_M",
         description=MultilingualString(
             en=(
@@ -496,7 +505,6 @@ class LlamaModel(TextToTextGenerationTaskModel):
         self.frequency_penalty = kwargs.pop("frequency_penalty", 0.1)
         self.n_ctx = kwargs.pop("context_window", 512)
 
-        #self.filename = LLAMA_FILENAME_MAP.get(self.model_name, "*Q4_K_M.gguf")
         self.quantization = kwargs.get("quantization", "Q4_K_M")
         self.filename = f"*{self.quantization}.gguf"
 

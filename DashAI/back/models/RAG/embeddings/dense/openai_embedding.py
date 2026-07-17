@@ -13,7 +13,13 @@ from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 class OpenAIEmbeddingSchema(BaseSchema):
     model_name: schema_field(
-        enum_field(["text-embedding-ada-002", "text-embedding-3-small", "text-embedding-3-large"]),
+        enum_field(
+            [
+                "text-embedding-ada-002",
+                "text-embedding-3-small",
+                "text-embedding-3-large",
+            ]
+        ),
         placeholder="text-embedding-3-small",
         description=MultilingualString(
             en="OpenAI embedding model to use.",

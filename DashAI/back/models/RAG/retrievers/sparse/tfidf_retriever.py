@@ -216,7 +216,8 @@ class TFIDFRetriever(SparseRetriever):
     )
     DESCRIPTION: str = MultilingualString(
         en="Sparse retriever using TF-IDF vectorization for document retrieval.",
-        es="Recuperador disperso que usa vectorización TF-IDF para recuperar documentos.",
+        es="Recuperador disperso que usa vectorización TF-IDF para"
+        " recuperar documentos.",
     )
 
     SCHEMA = TFIDFRetrieverSchema
@@ -284,8 +285,6 @@ class TFIDFRetriever(SparseRetriever):
     def retrieval_top_k(self) -> int:
         return self._top_k
 
-
-
     def retrieve(self, query: str, top_k: int | None = None) -> List[Chunk]:
         self._check_infra()
         k = top_k if top_k is not None else self._top_k
@@ -315,7 +314,7 @@ class TFIDFRetriever(SparseRetriever):
             self._tf_idf_matrix[rows],
             metric=self.similarity_function_name,
         ).flatten()
-        scored = list(zip(valid_ids, distances.tolist()))
+        scored = list(zip(valid_ids, distances.tolist(), strict=True))
         scored.sort(key=lambda x: x[1])
         return scored
 

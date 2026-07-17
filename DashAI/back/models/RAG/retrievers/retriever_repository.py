@@ -305,20 +305,20 @@ class RetrieverRepository:
             .first()
         )
 
-    def find_sparse_by_bridge_id(self, bridge_id: int) -> Optional[SparseRetrieverDBModel]:
+    def find_sparse_by_bridge_id(
+        self, bridge_id: int
+    ) -> Optional[SparseRetrieverDBModel]:
         """Look up a sparse retriever sub-table record by its bridge_id."""
         return (
-            self.db.query(SparseRetrieverDBModel)
-            .filter_by(bridge_id=bridge_id)
-            .first()
+            self.db.query(SparseRetrieverDBModel).filter_by(bridge_id=bridge_id).first()
         )
 
-    def find_dense_by_bridge_id(self, bridge_id: int) -> Optional[DenseRetrieverDBModel]:
+    def find_dense_by_bridge_id(
+        self, bridge_id: int
+    ) -> Optional[DenseRetrieverDBModel]:
         """Look up a dense retriever sub-table record by its bridge_id."""
         return (
-            self.db.query(DenseRetrieverDBModel)
-            .filter_by(bridge_id=bridge_id)
-            .first()
+            self.db.query(DenseRetrieverDBModel).filter_by(bridge_id=bridge_id).first()
         )
 
     def find_bridge_for_sub_table(

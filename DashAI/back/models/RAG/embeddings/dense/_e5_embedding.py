@@ -1,7 +1,7 @@
 from typing import List
 
 import numpy as np
-import torch.nn.functional as F
+import torch.nn.functional as functional
 
 from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
     OverfloatHandler,
@@ -31,7 +31,7 @@ class _E5Embedding(OverfloatHandler):
         mask = attention_mask[..., None].bool()
         last_hidden = last_hidden.masked_fill(~mask, 0.0)
         pooled = last_hidden.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
-        return F.normalize(pooled, p=2, dim=1)
+        return functional.normalize(pooled, p=2, dim=1)
 
     def batch_encode(self, texts: List[str]) -> np.ndarray:
         prefixed = [f"{PASSAGE_PREFIX}{t}" for t in texts]
