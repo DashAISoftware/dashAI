@@ -65,6 +65,8 @@ export default function SessionVisualization() {
   const theme = useTheme();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const isCrossValidation =
+    session?.evaluation_strategy === "CrossValidationEvaluationStrategy";
 
   useEffect(() => {
     const onStart = (e) => {
@@ -141,6 +143,12 @@ export default function SessionVisualization() {
       }, 1000);
     }
   }, [sessionTourContext]);
+
+  useEffect(() => {
+    if (!isCrossValidation && view === "tests") {
+      setView("table");
+    }
+  }, [isCrossValidation, view]);
 
   // Scroll to and highlight a newly added run card
   useEffect(() => {
@@ -442,13 +450,15 @@ export default function SessionVisualization() {
                   >
                     {t("common:graphs")}
                   </Button>
-                  <Button
-                    variant={view === "tests" ? "contained" : "outlined"}
-                    onClick={() => handleToggleView("tests")}
-                    startIcon={<Science />}
-                  >
-                    {t("common:tests")}
-                  </Button>
+                  {isCrossValidation && (
+                    <Button
+                      variant={view === "tests" ? "contained" : "outlined"}
+                      onClick={() => handleToggleView("tests")}
+                      startIcon={<Science />}
+                    >
+                      {t("common:tests")}
+                    </Button>
+                  )}
                 </ButtonGroup>
 
                 {/* Run All Button */}
@@ -479,7 +489,7 @@ export default function SessionVisualization() {
               position: "relative",
             }}
           >
-            {view === "tests" ? (
+            {view === "tests" && isCrossValidation ? (
               <Box sx={{ height: "100%", overflow: "auto" }}>
                 <StatisticalTestTable session={session} />
               </Box>
