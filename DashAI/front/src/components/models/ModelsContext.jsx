@@ -91,9 +91,21 @@ export function ModelsProvider({ children }) {
   const [sessionRightContent, setSessionRightContent] = useState(null);
   const [runDetailTab, setRunDetailTab] = useState(null);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
+  const [explainerToCreate, setExplainerToCreate] = useState(null);
 
   const triggerExplainerRefresh = useCallback(() => {
     setExplainerRefreshTrigger((prev) => prev + 1);
+  }, []);
+
+  // Open the explainer creation dialog for a given {scope, name}. Shared so both
+  // the sidebar (click) and the central view (drag and drop) can trigger it,
+  // mirroring how selectModel opens the add model dialog.
+  const openExplainerCreator = useCallback((explainer) => {
+    setExplainerToCreate(explainer);
+  }, []);
+
+  const closeExplainerCreator = useCallback(() => {
+    setExplainerToCreate(null);
   }, []);
 
   const selectModel = useCallback((model) => {
@@ -186,6 +198,9 @@ export function ModelsProvider({ children }) {
     setRunDetailTab,
     explainerRefreshTrigger,
     triggerExplainerRefresh,
+    explainerToCreate,
+    openExplainerCreator,
+    closeExplainerCreator,
   };
 
   return (

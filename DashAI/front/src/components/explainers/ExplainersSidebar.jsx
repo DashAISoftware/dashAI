@@ -9,6 +9,7 @@ import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
 import ModelListItem from "../models/model/ModelListItem";
 import InlineExplainerCreator from "./InlineExplainerCreator";
+import { useModels } from "../models/ModelsContext";
 
 const matchesQuery = (component, query) =>
   (component.display_name || component.name).toLowerCase().includes(query) ||
@@ -29,7 +30,8 @@ export default function ExplainersSidebar({ run, session, onCreated }) {
   const [localExplainers, setLocalExplainers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [creator, setCreator] = useState(null);
+  const { explainerToCreate, openExplainerCreator, closeExplainerCreator } =
+    useModels();
 
   const taskName = session?.task_name;
   const modelName = run?.model_name;
@@ -120,8 +122,12 @@ export default function ExplainersSidebar({ run, session, onCreated }) {
             <ModelListItem
               key={`${scope}-${explainer.name}`}
               model={explainer}
-              draggable={false}
-              onClick={() => setCreator({ scope, name: explainer.name })}
+              draggable
+              dragType="application/x-dashai-explainer"
+              dragPayload={{ scope, name: explainer.name }}
+              onClick={() =>
+                openExplainerCreator({ scope, name: explainer.name })
+              }
             />
           ))}
         </Box>
@@ -191,14 +197,14 @@ export default function ExplainersSidebar({ run, session, onCreated }) {
         )}
       </Box>
 
-      {creator && (
+      {explainerToCreate && (
         <InlineExplainerCreator
           open
-          scope={creator.scope}
+          scope={explainerToCreate.scope}
           explainerConfig={{ runId: run.id, taskName, modelName }}
-          preselectedExplainer={creator.name}
+          preselectedExplainer={explainerToCreate.name}
           onCreated={onCreated}
-          onCancel={() => setCreator(null)}
+          onCancel={closeExplainerCreator}
         />
       )}
     </SideBar>

@@ -9,6 +9,8 @@ export default function ModelListItem({
   model,
   disabled = false,
   draggable = true,
+  dragType = "application/x-dashai-model",
+  dragPayload,
   onClick,
   ...props
 }) {
@@ -65,8 +67,8 @@ export default function ModelListItem({
             !disabled && draggable
               ? (e) => {
                   e.dataTransfer.setData(
-                    "application/x-dashai-model",
-                    JSON.stringify(model),
+                    dragType,
+                    JSON.stringify(dragPayload ?? model),
                   );
                   e.dataTransfer.effectAllowed = "copy";
                   setCustomDragImage(e);

@@ -108,7 +108,10 @@ export default function ExplainersCard({
               justifyContent="space-between"
               alignItems="center"
             >
-              <Grid sx={{ width: 300, minWidth: 0, overflow: "hidden" }}>
+              <Grid
+                item
+                sx={{ flex: 1, minWidth: 0, overflow: "hidden", mr: 2 }}
+              >
                 <Typography
                   variant="body1"
                   fontWeight="medium"

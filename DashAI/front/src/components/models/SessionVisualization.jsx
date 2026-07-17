@@ -48,6 +48,7 @@ export default function SessionVisualization() {
     lastAddedRunId,
     clearLastAddedRunId,
     selectModel,
+    openExplainerCreator,
     explainerRefreshTrigger,
     triggerExplainerRefresh,
   } = useModels();
@@ -61,7 +62,11 @@ export default function SessionVisualization() {
 
   useEffect(() => {
     const onStart = (e) => {
-      if (e.dataTransfer.types.includes("application/x-dashai-model")) {
+      const types = e.dataTransfer.types;
+      if (
+        types.includes("application/x-dashai-model") ||
+        types.includes("application/x-dashai-explainer")
+      ) {
         setIsDragging(true);
       }
     };
@@ -214,14 +219,20 @@ export default function SessionVisualization() {
         data-session-viz
         onDragOver={(e) => {
           if (e.dataTransfer.types.includes("Files")) e.preventDefault();
-          if (!e.dataTransfer.types.includes("application/x-dashai-model"))
+          if (
+            !e.dataTransfer.types.includes("application/x-dashai-model") &&
+            !e.dataTransfer.types.includes("application/x-dashai-explainer")
+          )
             return;
           e.preventDefault();
           e.dataTransfer.dropEffect = "copy";
         }}
         onDragEnter={(e) => {
           if (e.dataTransfer.types.includes("Files")) e.preventDefault();
-          if (!e.dataTransfer.types.includes("application/x-dashai-model"))
+          if (
+            !e.dataTransfer.types.includes("application/x-dashai-model") &&
+            !e.dataTransfer.types.includes("application/x-dashai-explainer")
+          )
             return;
           e.preventDefault();
           setIsDragOver(true);
@@ -233,13 +244,24 @@ export default function SessionVisualization() {
           }
         }}
         onDrop={(e) => {
+          const types = e.dataTransfer.types;
+          const isModel = types.includes("application/x-dashai-model");
+          const isExplainer = types.includes("application/x-dashai-explainer");
+          if (!isModel && !isExplainer) return;
           e.preventDefault();
           setIsDragOver(false);
           try {
-            const model = JSON.parse(
-              e.dataTransfer.getData("application/x-dashai-model"),
-            );
-            if (model?.name) selectModel(model);
+            if (isExplainer) {
+              const explainer = JSON.parse(
+                e.dataTransfer.getData("application/x-dashai-explainer"),
+              );
+              if (explainer?.name) openExplainerCreator(explainer);
+            } else {
+              const model = JSON.parse(
+                e.dataTransfer.getData("application/x-dashai-model"),
+              );
+              if (model?.name) selectModel(model);
+            }
           } catch {
             // ignore invalid drops
           }
