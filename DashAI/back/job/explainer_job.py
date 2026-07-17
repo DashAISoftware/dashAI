@@ -286,7 +286,9 @@ class ExplainerJob(BaseJob):
                 ) from e
             try:
                 explanation = explainer.explain_instance(X)
-                plots = normalize_artifacts(explainer.plot(explanation))
+                plots = normalize_artifacts(
+                    explainer.plot(explanation), create_grouped=True
+                )
             except Exception as e:
                 log.exception(e)
                 raise JobError(

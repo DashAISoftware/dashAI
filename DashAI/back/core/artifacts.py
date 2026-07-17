@@ -384,7 +384,9 @@ def _legacy_explorer_artifact(item: Dict[str, Any]) -> Dict[str, Any]:
     return TextArtifact(payload=str(data)).to_dict()
 
 
-def normalize_artifacts(items: Any) -> List[Dict[str, Any]]:
+def normalize_artifacts(
+    items: Any, *, create_grouped: bool = False
+) -> List[Dict[str, Any]]:
     """Coerce any component output into a list of artifact/group wire dicts.
 
     Handles current values (``Artifact`` or :class:`GroupedArtifacts`
@@ -403,6 +405,11 @@ def normalize_artifacts(items: Any) -> List[Dict[str, Any]]:
     items : Any
         The value returned by an explainer ``plot`` method, an explorer
         ``get_results`` method, or loaded from a persisted result file.
+    create_grouped : bool, optional
+        When ``True``, wrap a list of leaf artifacts into a single grouped
+        artifact container with one selectable group per input item. This is
+        useful for local explainers whose output is a list of per-instance
+        artifacts.
 
     Returns
     -------
@@ -458,6 +465,32 @@ def normalize_artifacts(items: Any) -> List[Dict[str, Any]]:
                 "groups": [normalize_group(g) for g in item.get("groups", [])],
             }
         return normalize_leaf(item)
+
+    if create_grouped and isinstance(items, list):
+        grouped_groups = []
+        for i, item in enumerate(items):
+            normalized_item = normalize_item(item)
+            if normalized_item.get("type") == "grouped":
+                grouped_groups.append(
+                    {
+                        "title": normalized_item.get("title", f"instance {i}"),
+                        "artifacts": normalized_item.get("groups", []),
+                    }
+                )
+            else:
+                grouped_groups.append(
+                    {
+                        "title": normalized_item.get("title", f"instance {i}"),
+                        "artifacts": [normalized_item],
+                    }
+                )
+        return [
+            {
+                "type": "grouped",
+                "title": None,
+                "groups": grouped_groups,
+            }
+        ]
 
     return [normalize_item(item) for item in items]
 

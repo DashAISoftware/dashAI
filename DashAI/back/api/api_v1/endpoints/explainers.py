@@ -553,7 +553,9 @@ async def get_local_explanation_plot(
                 detail="Internal database error",
             ) from e
 
-    return _apply_overrides(normalize_artifacts(plots), plot_overrides)
+    return _apply_overrides(
+        normalize_artifacts(plots, create_grouped=True), plot_overrides
+    )
 
 
 @router.put("/{scope}/plot/{explainer_id}/override")
