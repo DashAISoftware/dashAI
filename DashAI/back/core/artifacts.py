@@ -466,35 +466,21 @@ def normalize_artifacts(
             }
         return normalize_leaf(item)
 
-    if (
-        create_grouped
-        and isinstance(items, list)
-        and not isinstance(items[0], (GroupedArtifacts, dict))
-    ):
-        grouped_groups = []
-        for i, item in enumerate(items):
-            normalized_item = normalize_item(item)
-            if normalized_item.get("type") == "grouped":
-                grouped_groups.append(
-                    {
-                        "title": normalized_item.get("title", f"instance {i}"),
-                        "artifacts": normalized_item.get("groups", []),
-                    }
-                )
-            else:
-                grouped_groups.append(
-                    {
-                        "title": normalized_item.get("title", f"instance {i}"),
-                        "artifacts": [normalized_item],
-                    }
-                )
-        return [
-            {
-                "type": "grouped",
-                "title": None,
-                "groups": grouped_groups,
-            }
+    def is_grouped(value: Any) -> bool:
+        return isinstance(value, GroupedArtifacts) or (
+            isinstance(value, dict) and value.get("type") == "grouped"
+        )
+
+    # Migrate a flat list of per instance leaf artifacts (e.g. an old local
+    # explainer's output) into a single grouped artifact with one selectable
+    # group per instance. A payload that is already grouped is passed through
+    # unchanged.
+    if create_grouped and items and not is_grouped(items[0]):
+        groups = [
+            {"title": leaf.get("title"), "artifacts": [leaf]}
+            for leaf in (normalize_leaf(item) for item in items)
         ]
+        return [{"type": "grouped", "title": None, "groups": groups}]
 
     return [normalize_item(item) for item in items]
 
