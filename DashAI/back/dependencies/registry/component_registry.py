@@ -217,7 +217,6 @@ class ComponentRegistry:
             "metadata": _metadata,
             "description": getattr(new_component, "DESCRIPTION", None),
             "display_name": getattr(new_component, "DISPLAY_NAME", None),
-            "flags": getattr(new_component, "FLAGS", []),
             "color": getattr(new_component, "COLOR", None),
         }
 

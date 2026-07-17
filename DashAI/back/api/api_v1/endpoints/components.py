@@ -82,6 +82,21 @@ def _delete_class(component_dict: Dict[str, Any]) -> Dict[str, Any]:
     return {key: value for key, value in component_dict.items() if key != "class"}
 
 
+def _enrich_with_flags(
+    component_dict: Dict[str, Any], include_flags: bool
+) -> Dict[str, Any]:
+    """Append FLAGS from the component class when include_flags is True."""
+    if not include_flags:
+        return component_dict
+    cls = component_dict.get("class")
+    if cls is None:
+        return component_dict
+    flags = getattr(cls, "FLAGS", [])
+    if not flags:
+        return component_dict
+    return {**component_dict, "flags": flags}
+
+
 @router.get("/")
 @inject
 async def get_components(
@@ -91,6 +106,7 @@ async def get_components(
     related_component: Union[str, None] = None,
     component_parent: Union[str, None] = None,
     has_related_of_type: Union[str, None] = None,
+    include_flags: bool = Query(default=False),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> List[Dict[str, Any]]:
     """Retrieve components from the register according to the provided parameters.
@@ -230,10 +246,13 @@ async def get_components(
             components_with_related_type,
         )
 
-    return [
-        _filter_by_language(_delete_class(component_dict), accept_language)
-        for component_dict in selected_components.values()
-    ]
+    result = []
+    for component_dict in selected_components.values():
+        enriched = _enrich_with_flags(component_dict, include_flags)
+        cleaned = _delete_class(enriched)
+        localized = _filter_by_language(cleaned, accept_language)
+        result.append(localized)
+    return result
 
 
 @router.get("/{id}/")
@@ -241,6 +260,7 @@ async def get_components(
 def get_component_by_id(
     id: str,
     accept_language: str | None = Header(default=None),
+    include_flags: bool = Query(default=False),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> Dict[str, Any]:
     """Return a specific component using its id (the id is the component class name).
@@ -271,7 +291,10 @@ def get_component_by_id(
             status_code=404,
             detail=f"Component {id} not found in the registry.",
         )
-    return _filter_by_language(_delete_class(component_registry[id]), accept_language)
+    raw = component_registry[id]
+    enriched = _enrich_with_flags(raw, include_flags)
+    cleaned = _delete_class(enriched)
+    return _filter_by_language(cleaned, accept_language)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)

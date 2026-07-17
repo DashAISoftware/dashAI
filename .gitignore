@@ -211,3 +211,8 @@ docs/node_modules/
 **/dataset_info.json
 
 /RAG_benchmark
+tests/back/dataloaders/iris/**
+tests/back/dataloaders/json/**
+tests/back/models/json/**
+tests/back/tasks/json/**
+None/json/**
