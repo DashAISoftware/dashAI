@@ -1,6 +1,12 @@
 import React from "react";
 
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+} from "react-router-dom";
 import { TourRegistryProvider } from "./contexts/TourRegistryContext";
 import ModuleThemeWrapper from "./components/ModuleThemeWrapper";
 
@@ -92,7 +98,10 @@ function App() {
             path="/app/generative/sessions/new/:modelName"
             element={<Generative />}
           />
-          <Route path="/app/generative/sessions/:id" element={<SessionRouter />} />
+          <Route
+            path="/app/generative/sessions/:id"
+            element={<SessionRouter />}
+          />
           <Route path="/app/pipelines" element={<PipelinesPage />} />
           <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
           <Route

@@ -202,11 +202,7 @@ export default function NewPromptModal({
             </Typography>
           </Grid>
           <Grid item>
-            <IconButton
-              edge="end"
-              color="inherit"
-              onClick={handleConfirmClose}
-            >
+            <IconButton edge="end" color="inherit" onClick={handleConfirmClose}>
               <CloseIcon />
             </IconButton>
           </Grid>
@@ -231,9 +227,7 @@ export default function NewPromptModal({
           required
           error={!promptName.trim()}
           helperText={
-            !promptName.trim()
-              ? t("generative:rag.newPrompt.nameRequired")
-              : ""
+            !promptName.trim() ? t("generative:rag.newPrompt.nameRequired") : ""
           }
           InputLabelProps={{ required: false }}
         />
@@ -249,7 +243,9 @@ export default function NewPromptModal({
           }}
           sx={{ mb: 2 }}
         >
-          <MenuItem value="">{t("generative:rag.promptView.languageNone")}</MenuItem>
+          <MenuItem value="">
+            {t("generative:rag.promptView.languageNone")}
+          </MenuItem>
           {LANGUAGE_CODES.map((code) => (
             <MenuItem key={code} value={code}>
               {t(`generative:rag.prompt.languages.${code}`)}
@@ -269,9 +265,7 @@ export default function NewPromptModal({
         <HighlightedTextarea
           ref={textareaRef}
           label={t("generative:rag.newPrompt.promptLabel")}
-          placeholder={t(
-            "generative:rag.newPrompt.promptPlaceholder",
-          )}
+          placeholder={t("generative:rag.newPrompt.promptPlaceholder")}
           value={promptTemplate}
           onChange={handlePromptTemplateChange}
           minRows={6}
@@ -282,11 +276,7 @@ export default function NewPromptModal({
         <Button onClick={handleConfirmClose}>
           {t("generative:rag.newPrompt.cancel")}
         </Button>
-        <Button
-          variant="contained"
-          disabled={!canSave}
-          onClick={handleSave}
-        >
+        <Button variant="contained" disabled={!canSave} onClick={handleSave}>
           {t("generative:rag.newPrompt.save")}
         </Button>
       </DialogActions>

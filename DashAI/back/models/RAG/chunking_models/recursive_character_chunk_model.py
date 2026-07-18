@@ -77,7 +77,8 @@ class RecursiveCharacterChunkModelSchema(BaseSchema):
 
 
 class RecursiveCharacterChunkModel(BaseChunkingModel):
-    """Chunking model that recursively splits text using a prioritized list of separators.
+    """Chunking model that recursively splits text using a prioritized list
+    of separators.
 
     Falls back to character-level splitting when no separator fits within the
     chunk size.
@@ -149,7 +150,8 @@ class RecursiveCharacterChunkModel(BaseChunkingModel):
         return self._recursive_split(splits, separator_idx + 1)
 
     def _recursive_split(self, splits: List[str], next_sep_idx: int) -> List[str]:
-        """Iterate over already-split segments and further split any that exceed chunk_size.
+        """Iterate over already-split segments and further split any that exceed
+        chunk_size.
 
         Args:
             splits: Segments from a previous split operation.

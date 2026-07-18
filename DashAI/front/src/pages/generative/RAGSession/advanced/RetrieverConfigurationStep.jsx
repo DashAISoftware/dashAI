@@ -10,18 +10,23 @@ import {
 import PropTypes from "prop-types";
 import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { getRetrievalParadigm, getRetrieverComponents } from "../../../../api/rag";
+import {
+  getRetrievalParadigm,
+  getRetrieverComponents,
+} from "../../../../api/rag";
 import FormSchema from "../../../../components/shared/FormSchema";
 import CompositeRetrieverBuilder from "./CompositeRetrieverBuilder";
-import {
-  FormSchemaProvider,
-} from "../../../../contexts/schema";
+import { FormSchemaProvider } from "../../../../contexts/schema";
 import { resolveDefaults } from "../../../../utils/schema";
 
 /** Parent class name for all dense embedding components in the backend ComponentRegistry. */
 const DENSE_EMBEDDING_PARENT = "DenseEmbedding";
 
-const COMPOSITE_NAMES = ["SequentialRetriever", "ParallelRetriever", "MMRRerankerRetriever"];
+const COMPOSITE_NAMES = [
+  "SequentialRetriever",
+  "ParallelRetriever",
+  "MMRRerankerRetriever",
+];
 
 /**
  * Resolves a component's display name from its display_name field (string or multilingual).
@@ -69,7 +74,9 @@ function AutoSaveFormSchema({
       const d = await resolveDefaults(selectedRetriever.name);
       if (!cancelled) setFetchedDefaults(d);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedRetriever]);
 
   const initialValues = useMemo(() => {
@@ -190,16 +197,14 @@ const RetrieverConfigurationStep = forwardRef(
         if (retrieverModel?.component) {
           let found = null;
           if (retrieverModel.component === "DenseEmbeddingRetriever") {
-            const embName =
-              retrieverModel.params?.embedding_model?.component;
+            const embName = retrieverModel.params?.embedding_model?.component;
             if (embName) {
               found = merged.find((c) => c.name === embName);
             }
             if (!found) {
               found =
-                retrievers.find(
-                  (c) => c.name === "DenseEmbeddingRetriever",
-                ) || null;
+                retrievers.find((c) => c.name === "DenseEmbeddingRetriever") ||
+                null;
             }
           } else {
             found = merged.find((c) => c.name === retrieverModel.component);
@@ -226,51 +231,58 @@ const RetrieverConfigurationStep = forwardRef(
      * @param {object} _event - The autocomplete event.
      * @param {object|null} newValue - The selected component option.
      */
-    const handleRetrieverChange = useCallback(async (_event, newValue) => {
-      savedParamsRef.current = null;
+    const handleRetrieverChange = useCallback(
+      async (_event, newValue) => {
+        savedParamsRef.current = null;
 
-      if (!newValue) {
-        setSelectedRetriever(null);
-        setRetrieverModel({ component: "", params: {} });
-        setOpenConfig(false);
-        setNextEnabled(false);
-        return;
-      }
+        if (!newValue) {
+          setSelectedRetriever(null);
+          setRetrieverModel({ component: "", params: {} });
+          setOpenConfig(false);
+          setNextEnabled(false);
+          return;
+        }
 
-      if (newValue._type === "embedding") {
-        const embeddingDefaults = await resolveDefaults(newValue.name);
-        const denseRetrieverDefaults = await resolveDefaults(
-          "DenseEmbeddingRetriever",
-        );
-        const model = {
-          component: "DenseEmbeddingRetriever",
-          params: {
-            ...denseRetrieverDefaults,
-            embedding_model: {
-              component: newValue.name,
-              params: embeddingDefaults,
+        if (newValue._type === "embedding") {
+          const embeddingDefaults = await resolveDefaults(newValue.name);
+          const denseRetrieverDefaults = await resolveDefaults(
+            "DenseEmbeddingRetriever",
+          );
+          const model = {
+            component: "DenseEmbeddingRetriever",
+            params: {
+              ...denseRetrieverDefaults,
+              embedding_model: {
+                component: newValue.name,
+                params: embeddingDefaults,
+              },
             },
-          },
-        };
-        const found = retrieversRef.current.find(
-          (c) => c.name === "DenseEmbeddingRetriever",
-        );
-        setSelectedRetriever(
-          found
-            ? { ...found, _type: "retriever" }
-            : { ...newValue, _type: "retriever", name: "DenseEmbeddingRetriever" },
-        );
-        setRetrieverModel(model);
-        setOpenConfig(Boolean(found?.schema?.properties));
-        setNextEnabled(true);
-      } else {
-        const defaults = await resolveDefaults(newValue.name);
-        setSelectedRetriever(newValue);
-        setRetrieverModel({ component: newValue.name, params: defaults });
-        setOpenConfig(Boolean(newValue?.schema?.properties));
-        setNextEnabled(true);
-      }
-    }, [setRetrieverModel, setNextEnabled]);
+          };
+          const found = retrieversRef.current.find(
+            (c) => c.name === "DenseEmbeddingRetriever",
+          );
+          setSelectedRetriever(
+            found
+              ? { ...found, _type: "retriever" }
+              : {
+                  ...newValue,
+                  _type: "retriever",
+                  name: "DenseEmbeddingRetriever",
+                },
+          );
+          setRetrieverModel(model);
+          setOpenConfig(Boolean(found?.schema?.properties));
+          setNextEnabled(true);
+        } else {
+          const defaults = await resolveDefaults(newValue.name);
+          setSelectedRetriever(newValue);
+          setRetrieverModel({ component: newValue.name, params: defaults });
+          setOpenConfig(Boolean(newValue?.schema?.properties));
+          setNextEnabled(true);
+        }
+      },
+      [setRetrieverModel, setNextEnabled],
+    );
 
     /**
      * Stores updated parameter values from the auto-saving form into the retriever model.
@@ -333,7 +345,10 @@ const RetrieverConfigurationStep = forwardRef(
           onChange={handleRetrieverChange}
           isOptionEqualToValue={(a, b) => a.name === b.name}
           renderInput={(params) => (
-            <TextField {...params} label={t("generative:rag.retrieverConfig.modelLabel")} />
+            <TextField
+              {...params}
+              label={t("generative:rag.retrieverConfig.modelLabel")}
+            />
           )}
         />
 

@@ -30,7 +30,9 @@ export default function RAGCard({
   children,
 }) {
   return (
-    <Accordion expanded={expanded} onChange={onChange}
+    <Accordion
+      expanded={expanded}
+      onChange={onChange}
       sx={{
         "&::before": {
           display: "none",
@@ -39,8 +41,9 @@ export default function RAGCard({
           marginTop: 0,
           marginBottom: 0,
         },
-        px: 4
-      }}>
+        px: 4,
+      }}
+    >
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
         sx={{
@@ -58,9 +61,7 @@ export default function RAGCard({
             width: "100%",
           }}
         >
-          <Typography variant="subtitle1">
-            {title}
-          </Typography>
+          <Typography variant="subtitle1">{title}</Typography>
           {actions.length > 0 && (
             <Box sx={{ display: "flex" }}>
               {actions.map((action, index) => (

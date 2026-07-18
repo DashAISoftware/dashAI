@@ -36,7 +36,6 @@ class Prompt(BaseModel):
             filename: Path to the file to load from. If empty, uses the
                 default.
         """
-        pass
 
     def save(self, filename: str = "") -> None:
         """Save the prompt to a file.
@@ -44,7 +43,6 @@ class Prompt(BaseModel):
         Args:
             filename: Path to save to. If empty, uses the default.
         """
-        pass
 
     def train(self, **kwargs: Any) -> None:
         """No-op training method for compatibility with the model interface.
@@ -52,7 +50,6 @@ class Prompt(BaseModel):
         Args:
             **kwargs: Ignored.
         """
-        pass
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:

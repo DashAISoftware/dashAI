@@ -38,25 +38,30 @@ export default function PresetCard({
         gap: 0.5,
         justifyContent: "flex-start",
         border: "1px solid",
-        borderColor: selected ? theme.palette.primary.main : theme.palette.ui.border,
+        borderColor: selected
+          ? theme.palette.primary.main
+          : theme.palette.ui.border,
         borderRadius: 2,
-        backgroundColor: selected ? theme.palette.action.selected : theme.palette.background.paper,
-        transition: theme.transitions.create(["background-color", "border-color", "box-shadow"], {
-          duration: theme.transitions.duration.short,
-        }),
+        backgroundColor: selected
+          ? theme.palette.action.selected
+          : theme.palette.background.paper,
+        transition: theme.transitions.create(
+          ["background-color", "border-color", "box-shadow"],
+          {
+            duration: theme.transitions.duration.short,
+          },
+        ),
         "&:hover": {
-          backgroundColor: selected ? theme.palette.action.selected : theme.palette.action.hover,
+          backgroundColor: selected
+            ? theme.palette.action.selected
+            : theme.palette.action.hover,
           borderColor: theme.palette.primary.main,
         },
         ...extraSx,
       }}
     >
-      <Typography variant="subtitle2">
-        {label}
-      </Typography>
-      <Typography variant="caption">
-        {description}
-      </Typography>
+      <Typography variant="subtitle2">{label}</Typography>
+      <Typography variant="caption">{description}</Typography>
     </Paper>
   );
 }

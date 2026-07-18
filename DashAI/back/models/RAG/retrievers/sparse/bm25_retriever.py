@@ -322,8 +322,8 @@ class BM25Retriever(SparseRetriever):
         doc_lengths = np.array(tf.sum(axis=1)).flatten()
         avgdl = np.mean(doc_lengths)
 
-        df = np.array((tf > 0).sum(axis=0)).flatten()
-        idf = np.log((n_docs - df + 0.5) / (df + 0.5) + 1.0)
+        doc_freq = np.array((tf > 0).sum(axis=0)).flatten()
+        idf = np.log((n_docs - doc_freq + 0.5) / (doc_freq + 0.5) + 1.0)
         idf += self.delta
         idf[idf < 0] = 0
 

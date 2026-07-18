@@ -134,7 +134,10 @@ export default function PromptSelectionTable({
         editable: false,
         valueGetter: (value, row) => {
           if (row.language) {
-            return t(`generative:rag.prompt.languages.${row.language}`) || row.language;
+            return (
+              t(`generative:rag.prompt.languages.${row.language}`) ||
+              row.language
+            );
           }
           return "-";
         },
@@ -162,7 +165,10 @@ export default function PromptSelectionTable({
         minWidth: 80,
         flex: 0.4,
         getActions: (params) => [
-          <Tooltip title={t("generative:rag.promptView.table.viewPrompt")} key="preview">
+          <Tooltip
+            title={t("generative:rag.promptView.table.viewPrompt")}
+            key="preview"
+          >
             <IconButton
               size="small"
               onClick={() => handleViewPrompt(params.row)}

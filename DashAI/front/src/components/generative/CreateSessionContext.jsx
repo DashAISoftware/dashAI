@@ -50,8 +50,7 @@ export function CreateSessionProvider({ children }) {
     setLoadingModels(true);
 
     Promise.all(
-      tasks
-        .map((task) =>
+      tasks.map((task) =>
         getRelatedComponents(task.name).then((components) =>
           components.map((c) => ({
             ...c,

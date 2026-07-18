@@ -169,12 +169,12 @@ function ClassInput({
         PaperProps={{
           sx: {
             zIndex: 1400, // Ensure it appears above parent Dialog (which has z-index 1300)
-          }
+          },
         }}
         BackdropProps={{
           sx: {
             zIndex: 1399, // Backdrop should be below the Dialog but above parent
-          }
+          },
         }}
       >
         <DialogTitle>{`${selectedOption} parameters`}</DialogTitle>

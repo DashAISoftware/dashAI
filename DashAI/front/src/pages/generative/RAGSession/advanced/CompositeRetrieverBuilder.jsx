@@ -1,10 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
+import { Box, Typography, IconButton, Tooltip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
@@ -12,10 +7,17 @@ import PsychologyIcon from "@mui/icons-material/Psychology";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { getRetrieverComponents, getRetrievalParadigm } from "../../../../api/rag";
+import {
+  getRetrieverComponents,
+  getRetrievalParadigm,
+} from "../../../../api/rag";
 import RetrieverNodeConfig from "./RetrieverNodeConfig";
 
-const COMPOSITE_TYPES = ["SequentialRetriever", "ParallelRetriever", "MMRRerankerRetriever"];
+const COMPOSITE_TYPES = [
+  "SequentialRetriever",
+  "ParallelRetriever",
+  "MMRRerankerRetriever",
+];
 let _nodeIdCounter = 0;
 function nextId() {
   return `n_${++_nodeIdCounter}`;
@@ -52,7 +54,9 @@ export default function CompositeRetrieverBuilder({
       const leafMap = {};
       for (const leaf of leaves) {
         const children = await getRetrieverComponents(leaf.name);
-        leafMap[leaf.name] = (children || []).filter((c) => c.configurable_object !== false);
+        leafMap[leaf.name] = (children || []).filter(
+          (c) => c.configurable_object !== false,
+        );
       }
       setAllComponents(paradigms);
       setLeafRegistry(leafMap);
@@ -69,7 +73,12 @@ export default function CompositeRetrieverBuilder({
     const buildFromParams = (child) => {
       const id = nextId();
       const comp = findComponent(child.component);
-      const node = { nodeId: id, component: child.component, params: child.params || {}, children: [] };
+      const node = {
+        nodeId: id,
+        component: child.component,
+        params: child.params || {},
+        children: [],
+      };
       if (COMPOSITE_TYPES.includes(child.component) && child.children?.length) {
         node.children = child.children.map(buildFromParams).filter(Boolean);
       }
@@ -168,7 +177,10 @@ export default function CompositeRetrieverBuilder({
     setTree((prev) => {
       const updated = updateAt(prev, parentId, (n) => ({
         ...n,
-        children: [...n.children, { nodeId: id, component: "", params: {}, children: [] }],
+        children: [
+          ...n.children,
+          { nodeId: id, component: "", params: {}, children: [] },
+        ],
       }));
       return updated;
     });
@@ -202,7 +214,14 @@ export default function CompositeRetrieverBuilder({
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "row", gap: 2, alignItems: "flex-start" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "row",
+        gap: 2,
+        alignItems: "flex-start",
+      }}
+    >
       <Box
         sx={{
           display: "flex",
@@ -312,7 +331,6 @@ CompositeRetrieverBuilder.propTypes = {
   onChange: PropTypes.func.isRequired,
 };
 
-
 /**
  * Recursively searches a tree for a node by its nodeId.
  * @param {object} tree - The tree root to search.
@@ -369,13 +387,25 @@ function TreeNodeView({
     if (val.en) return val.en;
     return String(val);
   };
-  const name = getString(info?.display_name) || getString(info?.name) || node.component || t("generative:rag.composite.configureNode");
+  const name =
+    getString(info?.display_name) ||
+    getString(info?.name) ||
+    node.component ||
+    t("generative:rag.composite.configureNode");
   const isComposite = COMPOSITE_TYPES.includes(node.component);
   const Indent = depth * 3;
 
   return (
     <Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: Indent, position: "relative" }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          ml: Indent,
+          position: "relative",
+        }}
+      >
         {depth > 0 && (
           <Box
             sx={{
@@ -410,14 +440,19 @@ function TreeNodeView({
           ) : (
             <PsychologyIcon sx={{ fontSize: 18, color: "primary.main" }} />
           )}
-          <Typography variant="body2">
-            {name}
-          </Typography>
+          <Typography variant="body2">{name}</Typography>
         </Box>
 
         {isComposite && (
           <Tooltip title={t("generative:rag.composite.addChild")}>
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onAddChild(node.nodeId); }} sx={{ color: "primary.main" }}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddChild(node.nodeId);
+              }}
+              sx={{ color: "primary.main" }}
+            >
               <AddCircleOutlineIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -425,7 +460,14 @@ function TreeNodeView({
 
         {!isRoot && (
           <Tooltip title={t("generative:rag.composite.removeNode")}>
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); onRemoveChild(parentId, node.nodeId); }} sx={{ color: "error.main" }}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemoveChild(parentId, node.nodeId);
+              }}
+              sx={{ color: "error.main" }}
+            >
               <RemoveCircleOutlineIcon fontSize="small" />
             </IconButton>
           </Tooltip>

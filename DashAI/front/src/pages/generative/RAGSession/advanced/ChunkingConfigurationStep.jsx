@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  Box,
-  Autocomplete,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { getChunkingComponents } from "../../../../api/rag";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
-import { resolveDefaults, getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
+import {
+  resolveDefaults,
+  getModelFromSubform,
+  getParamsFromSubform,
+} from "../../../../utils/schema";
 
 /**
  * Step component for selecting a chunking strategy and configuring its parameters.
@@ -41,26 +40,26 @@ export default function ChunkingConfigurationStep({
       const d = await resolveDefaults(selectedChunking.name);
       if (!cancelled) setFetchedDefaults(d);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedChunking]);
 
-  const formInitialValues = useMemo(
-    () => {
-      if (selectedChunking) {
-        const existingModelName = getModelFromSubform(chunkingModel);
-        const existingParams = getParamsFromSubform(chunkingModel) ?? chunkingModel?.params;
-        if (
-          existingModelName === selectedChunking.name &&
-          existingParams &&
-          Object.keys(existingParams).length > 0
-        ) {
-          return existingParams;
-        }
+  const formInitialValues = useMemo(() => {
+    if (selectedChunking) {
+      const existingModelName = getModelFromSubform(chunkingModel);
+      const existingParams =
+        getParamsFromSubform(chunkingModel) ?? chunkingModel?.params;
+      if (
+        existingModelName === selectedChunking.name &&
+        existingParams &&
+        Object.keys(existingParams).length > 0
+      ) {
+        return existingParams;
       }
-      return fetchedDefaults || {};
-    },
-    [selectedChunking, chunkingModel, fetchedDefaults],
-  );
+    }
+    return fetchedDefaults || {};
+  }, [selectedChunking, chunkingModel, fetchedDefaults]);
 
   useEffect(() => {
     let isMounted = true;
@@ -83,12 +82,10 @@ export default function ChunkingConfigurationStep({
     console.log("[ChunkingConfigStep] Syncing selectedChunking:", {
       modelName,
       chunkingModel,
-      chunkingOptions: chunkingOptions.map(c => c.name),
+      chunkingOptions: chunkingOptions.map((c) => c.name),
     });
     if (modelName) {
-      const found = chunkingOptions.find(
-        (c) => c.name === modelName,
-      );
+      const found = chunkingOptions.find((c) => c.name === modelName);
       if (found) {
         console.log("[ChunkingConfigStep] Found chunking model:", found.name);
         setSelectedChunking(found);
@@ -163,7 +160,10 @@ export default function ChunkingConfigurationStep({
         onChange={handleChunkingSelectionChange}
         isOptionEqualToValue={(option, value) => option.name === value?.name}
         renderInput={(params) => (
-          <TextField {...params} label={t("generative:rag.chunkingConfig.modelLabel")} />
+          <TextField
+            {...params}
+            label={t("generative:rag.chunkingConfig.modelLabel")}
+          />
         )}
       />
 

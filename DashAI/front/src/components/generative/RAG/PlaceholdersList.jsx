@@ -61,7 +61,12 @@ export default function PlaceholdersList({
               )}
 
               {onInsertPlaceholder && (
-                <Tooltip title={t("generative:rag.placeholders.insert", { placeholder: ph })} placement="top">
+                <Tooltip
+                  title={t("generative:rag.placeholders.insert", {
+                    placeholder: ph,
+                  })}
+                  placement="top"
+                >
                   <IconButton
                     size="small"
                     onClick={() => onInsertPlaceholder(ph)}

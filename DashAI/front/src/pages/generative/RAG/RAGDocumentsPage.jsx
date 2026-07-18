@@ -9,10 +9,7 @@ import RightPanel from "../../../components/threeSectionLayout/panels/RightPanel
 import SessionBar from "../../../components/generative/SessionBar";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import DocumentTable from "../../../components/generative/RAG/DocumentTable";
-import {
-  loadDocuments,
-  deleteDocument,
-} from "../../../api/rag";
+import { loadDocuments, deleteDocument } from "../../../api/rag";
 import { getSessions, removeSession } from "../../../api/session";
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
@@ -99,8 +96,8 @@ function RAGDocumentsPage() {
       state: {
         selectedSessionId: sessionId,
         selectedTaskName: taskName,
-        selectedDisplayName: taskDisplayName
-      }
+        selectedDisplayName: taskDisplayName,
+      },
     });
   };
 
@@ -177,8 +174,7 @@ function RAGDocumentsPage() {
                 overflow: "auto",
                 p: 2,
               }}
-            >
-            </Box>
+            ></Box>
           </RightPanel>
         </ModuleContainer>
       </ThreePanelLayoutContext.Provider>

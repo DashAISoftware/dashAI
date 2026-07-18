@@ -28,7 +28,10 @@ import {
 } from "../../../api/rag";
 import NewPromptModal from "../../../pages/generative/RAGSession/advanced/NewPromptModal";
 import RAGSectionColumn from "../../../pages/generative/RAGSession/components/RAGSectionColumn";
-import { getDescription, renderTemplateWithHighlights } from "../../../pages/generative/RAGSession/components/sectionUtils";
+import {
+  getDescription,
+  renderTemplateWithHighlights,
+} from "../../../pages/generative/RAGSession/components/sectionUtils";
 
 import { LANGUAGE_CODES } from "../../../constants/languages";
 
@@ -202,7 +205,11 @@ export default function PromptParamsCard({
       return;
     }
 
-    if (!isInitializedRef.current && promptModel?.component === (selectedPrompt.class_name || selectedPrompt.name)) {
+    if (
+      !isInitializedRef.current &&
+      promptModel?.component ===
+        (selectedPrompt.class_name || selectedPrompt.name)
+    ) {
       isInitializedRef.current = true;
       return;
     }
@@ -338,8 +345,16 @@ export default function PromptParamsCard({
     <Card sx={{ backgroundColor: "background.paper" }}>
       <CardContent sx={{ p: 2 }}>
         <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Typography variant="subtitle2">{t("generative:rag.prompt.promptLabel")}</Typography>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography variant="subtitle2">
+              {t("generative:rag.prompt.promptLabel")}
+            </Typography>
             <Box>
               {isExpanded && (
                 <Tooltip title={t("generative:rag.prompt.descriptionToggle")}>
@@ -354,11 +369,21 @@ export default function PromptParamsCard({
                 </Tooltip>
               )}
               <Tooltip title={t("generative:rag.prompt.openPrompts")}>
-                <IconButton size="small" onClick={goToPromptsDetail} aria-label="open-prompt-library">
+                <IconButton
+                  size="small"
+                  onClick={goToPromptsDetail}
+                  aria-label="open-prompt-library"
+                >
                   <ViewListIcon fontSize="small" />
                 </IconButton>
               </Tooltip>
-              <Tooltip title={isExpanded ? t("generative:rag.prompt.collapse") : t("generative:rag.prompt.expand")}>
+              <Tooltip
+                title={
+                  isExpanded
+                    ? t("generative:rag.prompt.collapse")
+                    : t("generative:rag.prompt.expand")
+                }
+              >
                 <IconButton
                   size="small"
                   onClick={() => setIsExpanded((s) => !s)}
@@ -366,7 +391,10 @@ export default function PromptParamsCard({
                 >
                   <ExpandMoreIcon
                     fontSize="small"
-                    sx={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+                    sx={{
+                      transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.2s",
+                    }}
                   />
                 </IconButton>
               </Tooltip>
@@ -403,22 +431,23 @@ export default function PromptParamsCard({
             />
           </Box>
 
-          {isExpanded && (isDefault || selectedPrompt?.parameters?.templates) && (
-            <TextField
-              select
-              fullWidth
-              label={t("generative:rag.prompt.language")}
-              value={selectedLanguage}
-              onChange={handleLanguageChange}
-              size="small"
-            >
-              {LANGUAGE_CODES.map((code) => (
-                <MenuItem key={code} value={code}>
-                  {t(`generative:rag.prompt.languages.${code}`)}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
+          {isExpanded &&
+            (isDefault || selectedPrompt?.parameters?.templates) && (
+              <TextField
+                select
+                fullWidth
+                label={t("generative:rag.prompt.language")}
+                value={selectedLanguage}
+                onChange={handleLanguageChange}
+                size="small"
+              >
+                {LANGUAGE_CODES.map((code) => (
+                  <MenuItem key={code} value={code}>
+                    {t(`generative:rag.prompt.languages.${code}`)}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
 
           {isExpanded && selectedPrompt && (
             <Box>
@@ -433,13 +462,17 @@ export default function PromptParamsCard({
                   border: "1px solid",
                   borderColor: "divider",
                   borderRadius: 1,
-              fontFamily: theme.typography.code.fontFamily,
+                  fontFamily: theme.typography.code.fontFamily,
                   lineHeight: 1.6,
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                 }}
               >
-                {renderTemplateWithHighlights(currentTemplate, placeholderColors, theme.typography.code.fontFamily)}
+                {renderTemplateWithHighlights(
+                  currentTemplate,
+                  placeholderColors,
+                  theme.typography.code.fontFamily,
+                )}
               </Box>
 
               {getDescription(selectedPrompt.description, i18n) && (

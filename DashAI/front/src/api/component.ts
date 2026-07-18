@@ -1,7 +1,6 @@
 import api from "./api";
 import type { IComponent } from "../types/component";
 
-
 interface componentQuery {
   model?: string;
   selectTypes?: string[];
@@ -51,10 +50,16 @@ export const getComponents = async ({
   return response.data;
 };
 
-export const getChildComponents = async (componentName: string, recursive: boolean): Promise<IComponent[]> => {
-  const response = await api.get<IComponent[]>(`/v1/component/${componentName}/children`, {
-    params: { recursive },
-  });
+export const getChildComponents = async (
+  componentName: string,
+  recursive: boolean,
+): Promise<IComponent[]> => {
+  const response = await api.get<IComponent[]>(
+    `/v1/component/${componentName}/children`,
+    {
+      params: { recursive },
+    },
+  );
   return response.data;
 };
 export const getComponentById = async (id: string): Promise<IComponent> => {

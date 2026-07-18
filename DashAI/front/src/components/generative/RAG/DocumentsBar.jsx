@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Button, Dialog, IconButton, Tooltip } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Dialog,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
 import AddIcon from "@mui/icons-material/AddCircleOutline";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import { useNavigate } from "react-router-dom";
@@ -8,7 +15,11 @@ import SearchBar from "../../threeSectionLayout/SearchBar";
 import DocumentList from "./DocumentList";
 import Upload from "../../shared/Upload";
 import { useSnackbar } from "notistack";
-import { getSessionDocuments, addDocument, loadDocuments } from "../../../api/rag";
+import {
+  getSessionDocuments,
+  addDocument,
+  loadDocuments,
+} from "../../../api/rag";
 
 /**
  * Documents sidebar showing a searchable list of documents for the current RAG session.
@@ -21,7 +32,12 @@ import { getSessionDocuments, addDocument, loadDocuments } from "../../../api/ra
  * @param {boolean}  [props.showSearch=true] - Whether to show the search bar.
  * @returns {JSX.Element}
  */
-export default function DocumentsBar({ selectedSessionId, taskName, onDocumentChange, showSearch = true }) {
+export default function DocumentsBar({
+  selectedSessionId,
+  taskName,
+  onDocumentChange,
+  showSearch = true,
+}) {
   const { t } = useTranslation("generative");
   const [searchQuery, setSearchQuery] = useState("");
   const [documents, setDocuments] = useState([]);
@@ -88,9 +104,9 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
    */
   const handleFileUpload = async (files, url) => {
     if (!files) return;
-    
+
     const fileList = Array.isArray(files) ? files : [files];
-    
+
     try {
       for (const file of fileList) {
         const docToAdd = {
@@ -100,9 +116,9 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
             source: url || "local_upload",
           },
         };
-        
+
         const savedDoc = await addDocument(docToAdd);
-        
+
         // Add to local state immediately for UI feedback
         const transformedDoc = {
           id: savedDoc.id,
@@ -115,15 +131,15 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
           created: savedDoc.created,
           optional_metadata: savedDoc.optional_metadata,
         };
-        
-        setDocuments(prevDocs => [transformedDoc, ...prevDocs]);
+
+        setDocuments((prevDocs) => [transformedDoc, ...prevDocs]);
       }
-      
+
       enqueueSnackbar(
         t("documentsBar.successUpload", { count: fileList.length }),
-        { variant: "success" }
+        { variant: "success" },
       );
-      
+
       if (onDocumentChange) {
         onDocumentChange();
       }
@@ -154,7 +170,13 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
       }}
     >
       <Box sx={{ p: 2, flexShrink: 0 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
           <Typography variant="h6">{t("documentsBar.title")}</Typography>
           <Tooltip title={t("documentsBar.detailedView")}>
             <IconButton size="small" onClick={goToDocumentsDetail}>
@@ -164,7 +186,9 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         </Box>
         <Typography variant="caption" sx={{ color: "text.secondary", mt: 1 }}>
           {t("documentsBar.documentCount", { count: filteredDocuments.length })}
-          {selectedSessionId ? t("documentsBar.inCurrentSession") : t("documentsBar.available")}
+          {selectedSessionId
+            ? t("documentsBar.inCurrentSession")
+            : t("documentsBar.available")}
         </Typography>
       </Box>
       {/* Add documents button - only show when no session is selected */}
@@ -182,7 +206,9 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
         </Box>
       )}
       {showSearch && documents.length >= 1 && (
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider", flexShrink: 0 }}>
+        <Box
+          sx={{ p: 2, borderBottom: 1, borderColor: "divider", flexShrink: 0 }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Box sx={{ flex: 1 }}>
               <SearchBar
@@ -197,9 +223,9 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
                 <IconButton
                   size="medium"
                   onClick={handleDetailedView}
-                  sx={{ 
+                  sx={{
                     color: "text.secondary",
-                    "&:hover": { color: "primary.main" }
+                    "&:hover": { color: "primary.main" },
                   }}
                 >
                   <ViewListIcon fontSize="small" />
@@ -241,8 +267,8 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
               {searchQuery
                 ? t("documentsBar.noDocumentsFound")
                 : selectedSessionId
-                ? t("documentsBar.noDocumentsInSession")
-                : t("documentsBar.noDocumentsAvailable")}
+                  ? t("documentsBar.noDocumentsInSession")
+                  : t("documentsBar.noDocumentsAvailable")}
             </Typography>
           </Box>
         )}
@@ -262,7 +288,14 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
           },
         }}
       >
-        <Box sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+        <Box
+          sx={{
+            flex: 1,
+            overflow: "auto",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <Upload
             onFileUpload={handleFileUpload}
             multiple={true}

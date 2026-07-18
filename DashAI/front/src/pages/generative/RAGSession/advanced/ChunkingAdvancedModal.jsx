@@ -72,7 +72,10 @@ export default function ChunkingAdvancedModal({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ bgcolor: "background.paper", minHeight: 400 }}>
+      <DialogContent
+        dividers
+        sx={{ bgcolor: "background.paper", minHeight: 400 }}
+      >
         <FormSchemaProvider key={`chunking-advanced-${modelName}`}>
           <ChunkingConfigurationStep
             chunkingModel={chunkingModel}
@@ -98,4 +101,3 @@ export default function ChunkingAdvancedModal({
     </Dialog>
   );
 }
-

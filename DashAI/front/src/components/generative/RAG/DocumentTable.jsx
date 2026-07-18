@@ -100,7 +100,12 @@ export default function DocumentTable({
   };
 
   const columns = [
-    { field: "id", headerName: t("generative:rag.documents.table.id"), flex: 0.1, editable: false },
+    {
+      field: "id",
+      headerName: t("generative:rag.documents.table.id"),
+      flex: 0.1,
+      editable: false,
+    },
     {
       field: "file_name",
       headerName: t("generative:rag.documents.table.name"),
@@ -131,7 +136,10 @@ export default function DocumentTable({
       headerName: t("generative:rag.documents.table.actions"),
       flex: 0.3,
       getActions: (params) => [
-        <Tooltip title={t("generative:rag.documents.table.preview")} key="preview">
+        <Tooltip
+          title={t("generative:rag.documents.table.preview")}
+          key="preview"
+        >
           <IconButton
             size="small"
             onClick={() => handleOpenPreview(params.row)}

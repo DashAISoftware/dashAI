@@ -56,14 +56,15 @@ export const getRAGSession = async (sessionId: number): Promise<ISession> => {
 export const createRAGSession = async (
   sessionData: Omit<ISession, "id" | "created" | "last_modified">,
 ): Promise<ISession> => {
-  const transformedSession: Omit<ISession, "id" | "created" | "last_modified"> = {
-    name: sessionData.name,
-    description: sessionData.description,
-    task_name: "RAGTask",
-    model_name: "RAGPipeline",
-    display_name: "",
-    parameters: sessionData.parameters,
-  };
+  const transformedSession: Omit<ISession, "id" | "created" | "last_modified"> =
+    {
+      name: sessionData.name,
+      description: sessionData.description,
+      task_name: "RAGTask",
+      model_name: "RAGPipeline",
+      display_name: "",
+      parameters: sessionData.parameters,
+    };
 
   const response = await api.post<ISession>(
     "/v1/generative-session/",

@@ -19,8 +19,8 @@ from kink import di
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas import DocumentResponse
-from DashAI.back.models.RAG.exceptions import RAGDocumentFileTypeError
 from DashAI.back.models.RAG.documents import DocumentFileType
+from DashAI.back.models.RAG.exceptions import RAGDocumentFileTypeError
 from DashAI.back.services.RAG.document_service import DocumentService
 
 router = APIRouter()

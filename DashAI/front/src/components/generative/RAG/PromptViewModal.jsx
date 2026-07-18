@@ -91,7 +91,9 @@ export default function PromptViewModal({ open, handleClose, prompt }) {
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>{prompt?.name || t("generative:rag.promptView.untitledPrompt")}</DialogTitle>
+      <DialogTitle>
+        {prompt?.name || t("generative:rag.promptView.untitledPrompt")}
+      </DialogTitle>
       <DialogContent>
         <TextField
           label={t("generative:rag.promptView.type")}
@@ -123,8 +125,9 @@ export default function PromptViewModal({ open, handleClose, prompt }) {
             label={t("generative:rag.promptView.language")}
             value={
               prompt?.parameters?.language
-                ? t(`generative:rag.prompt.languages.${prompt.parameters.language}`) ||
-                  prompt.parameters.language
+                ? t(
+                    `generative:rag.prompt.languages.${prompt.parameters.language}`,
+                  ) || prompt.parameters.language
                 : t("generative:rag.promptView.languageNotAvailable")
             }
             disabled
@@ -152,7 +155,11 @@ export default function PromptViewModal({ open, handleClose, prompt }) {
             overflowY: "auto",
           }}
         >
-          {renderTemplateWithHighlights(currentTemplate, placeholderColors, theme.typography.code.fontFamily) ?? (
+          {renderTemplateWithHighlights(
+            currentTemplate,
+            placeholderColors,
+            theme.typography.code.fontFamily,
+          ) ?? (
             <Typography
               variant="body2"
               color="text.secondary"

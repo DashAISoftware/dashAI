@@ -7,7 +7,6 @@ from sqlalchemy import (
     JSON,
     BigInteger,
     Boolean,
-    Column,
     DateTime,
     Enum,
     Float,

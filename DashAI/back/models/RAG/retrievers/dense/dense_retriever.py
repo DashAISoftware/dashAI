@@ -13,8 +13,9 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.embeddings import DenseEmbedding
-from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
+from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
+
 # NOTE: The entire chunk index (similarity_matrix) is loaded into memory,
 # which is fine for typical use with tens to low hundreds of documents but
 # may be a bottleneck for very large collections.

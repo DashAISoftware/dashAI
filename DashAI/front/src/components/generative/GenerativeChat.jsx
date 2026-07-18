@@ -77,10 +77,10 @@ export default function GenerativeChat() {
   };
 
   const handleOpenReference = (ref, key) => {
-    const title = `Document ${ref.document_id}${ref.document_name ? ` (${ref.document_name})` : ''}${ref.document_position ? ` - Chunk ${ref.document_position}` : ''}`;
+    const title = `Document ${ref.document_id}${ref.document_name ? ` (${ref.document_name})` : ""}${ref.document_position ? ` - Chunk ${ref.document_position}` : ""}`;
     setReferenceModalTitle(title);
     // Convert escaped newlines to actual newlines
-    setSelectedReferenceText(ref.text.replace(/\\n/g, '\n'));
+    setSelectedReferenceText(ref.text.replace(/\\n/g, "\n"));
     setReferenceModalOpen(true);
   };
 
@@ -102,7 +102,7 @@ export default function GenerativeChat() {
 
   const getMessages = () => {
     getProcessesBySessionId(sessionId).then((response) => {
-      console.log('Fetched messages:', response); // Add here
+      console.log("Fetched messages:", response); // Add here
       setIsLoadingMessage(false);
       setMessages(response);
     });
@@ -211,50 +211,62 @@ export default function GenerativeChat() {
   }, [messages]);
 
   useEffect(() => {
-    console.log('Combining messages and history for display'); // Add here
-    console.log('Messages:', messages);
-    console.log('TASK NAME:', taskName);
-    console.log('session name:', sessionInfo?.name);
-    console.log('session description:', sessionInfo?.description);
+    console.log("Combining messages and history for display"); // Add here
+    console.log("Messages:", messages);
+    console.log("TASK NAME:", taskName);
+    console.log("session name:", sessionInfo?.name);
+    console.log("session description:", sessionInfo?.description);
     let messagesObject = messages.map((process) => {
       // Check if there's reference data in the output (only for RAGTask)
       let referenceOutput = null;
       let mainOutput = process.output;
-      
-      if (taskName === "RAGTask" && process.output && process.output.length > 1) {
+
+      if (
+        taskName === "RAGTask" &&
+        process.output &&
+        process.output.length > 1
+      ) {
         // Look for Dict type output that contains reference information
-        const referenceItem = process.output.find(item => item.data_type === "Dict");
+        const referenceItem = process.output.find(
+          (item) => item.data_type === "Dict",
+        );
         if (referenceItem) {
-          console.log('Raw reference data:', referenceItem.data);
+          console.log("Raw reference data:", referenceItem.data);
           try {
             // The data might be a Python dict string, try to parse it as JSON
             let dataStr = referenceItem.data;
-            
+
             // If it starts with { but isn't valid JSON, it might be a Python dict
             // Try to convert Python dict format to JSON format
-            if (dataStr.startsWith('{') && !dataStr.startsWith('{"')) {
+            if (dataStr.startsWith("{") && !dataStr.startsWith('{"')) {
               // Replace Python dict format with JSON format
               dataStr = dataStr
-                .replace(/'/g, '"')  // Replace single quotes with double quotes
-                .replace(/True/g, 'true')  // Replace Python True with JSON true
-                .replace(/False/g, 'false')  // Replace Python False with JSON false
-                .replace(/None/g, 'null');  // Replace Python None with JSON null
+                .replace(/'/g, '"') // Replace single quotes with double quotes
+                .replace(/True/g, "true") // Replace Python True with JSON true
+                .replace(/False/g, "false") // Replace Python False with JSON false
+                .replace(/None/g, "null"); // Replace Python None with JSON null
             }
-            
-            console.log('Processed data string:', dataStr);
+
+            console.log("Processed data string:", dataStr);
             const parsedData = JSON.parse(dataStr);
             referenceOutput = parsedData;
             // Keep only non-Dict outputs as main output
-            mainOutput = process.output.filter(item => item.data_type !== "Dict");
+            mainOutput = process.output.filter(
+              (item) => item.data_type !== "Dict",
+            );
           } catch (e) {
-            console.log('Could not parse reference data:', e);
-            console.log('Original data:', referenceItem.data);
+            console.log("Could not parse reference data:", e);
+            console.log("Original data:", referenceItem.data);
             // If parsing fails, try to extract info using regex as fallback for multiple references
             try {
               // Updated regex to capture all fields: document_id, document_name, document_position, text
-              const matches = [...referenceItem.data.matchAll(/(\d+):\s*\{\s*['"]?document_id['"]?\s*:\s*(\d+).*?['"]?document_name['"]?\s*:\s*['"]([^'"]*)['"]\s*.*?['"]?document_position['"]?\s*:\s*(\d+).*?['"]?text['"]?\s*:\s*['"]([^'"]*)['"]/gs)];
-              console.log('Regex matches for references:', matches);
-              
+              const matches = [
+                ...referenceItem.data.matchAll(
+                  /(\d+):\s*\{\s*['"]?document_id['"]?\s*:\s*(\d+).*?['"]?document_name['"]?\s*:\s*['"]([^'"]*)['"]\s*.*?['"]?document_position['"]?\s*:\s*(\d+).*?['"]?text['"]?\s*:\s*['"]([^'"]*)['"]/gs,
+                ),
+              ];
+              console.log("Regex matches for references:", matches);
+
               if (matches.length > 0) {
                 referenceOutput = {};
                 matches.forEach((match) => {
@@ -263,14 +275,16 @@ export default function GenerativeChat() {
                     document_id: parseInt(match[2]),
                     document_name: match[3],
                     document_position: parseInt(match[4]),
-                    text: match[5]
+                    text: match[5],
                   };
                 });
-                mainOutput = process.output.filter(item => item.data_type !== "Dict");
-                console.log('Fallback parsing successful:', referenceOutput);
+                mainOutput = process.output.filter(
+                  (item) => item.data_type !== "Dict",
+                );
+                console.log("Fallback parsing successful:", referenceOutput);
               }
             } catch (fallbackError) {
-              console.log('Fallback parsing also failed:', fallbackError);
+              console.log("Fallback parsing also failed:", fallbackError);
             }
           }
         }
@@ -302,8 +316,9 @@ export default function GenerativeChat() {
               whiteSpace: "pre-wrap",
             }}
           >
-              {change.parameter}: {formatHistoryValue(change.oldValue)}{" "}
-              <ArrowRightAltIcon fontSize="small" /> {formatHistoryValue(change.newValue)}{" "}
+            {change.parameter}: {formatHistoryValue(change.oldValue)}{" "}
+            <ArrowRightAltIcon fontSize="small" />{" "}
+            {formatHistoryValue(change.newValue)}{" "}
           </span>
         )),
       };
@@ -444,7 +459,9 @@ export default function GenerativeChat() {
                     <ChatBubble
                       messages={message.input}
                       sender={"User"}
-                      timestamp={new Date(message.timestamp).toLocaleTimeString()}
+                      timestamp={new Date(
+                        message.timestamp,
+                      ).toLocaleTimeString()}
                       isUser={true}
                     />
                     {message.status === 3 ? (
@@ -457,18 +474,20 @@ export default function GenerativeChat() {
                               sender={"Model"}
                               timestamp={null} // We'll handle timestamp separately
                             />
-                            <SourcesDisplay 
+                            <SourcesDisplay
                               references={message.referenceOutput}
                               onOpenReference={handleOpenReference}
                               isUser={false}
                             />
                             {/* Add timestamp after sources with proper alignment */}
-                            <Box sx={{ 
-                              ml: '40px', // Same alignment as sources and message content
-                              mt: 1,
-                              display: 'flex',
-                              justifyContent: 'flex-start'
-                            }}>
+                            <Box
+                              sx={{
+                                ml: "40px", // Same alignment as sources and message content
+                                mt: 1,
+                                display: "flex",
+                                justifyContent: "flex-start",
+                              }}
+                            >
                               <Box
                                 sx={{
                                   fontSize: "0.75rem",
@@ -476,7 +495,9 @@ export default function GenerativeChat() {
                                   opacity: 0.7,
                                 }}
                               >
-                                {new Date(message.end_time).toLocaleTimeString()}
+                                {new Date(
+                                  message.end_time,
+                                ).toLocaleTimeString()}
                               </Box>
                             </Box>
                           </>

@@ -1,7 +1,14 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { useSnackbar } from "notistack";
-import { Button, Grid, Paper, Typography, LinearProgress, Box } from "@mui/material";
+import {
+  Button,
+  Grid,
+  Paper,
+  Typography,
+  LinearProgress,
+  Box,
+} from "@mui/material";
 import {
   get_documents_json,
   delete_document as deleteDocumentRequest,
@@ -111,7 +118,16 @@ function DocumentTable({
   );
 
   return (
-    <Paper sx={{ py: 4, px: 6, height: "100%", minHeight: 400, display: "flex", flexDirection: "column" }}>
+    <Paper
+      sx={{
+        py: 4,
+        px: 6,
+        height: "100%",
+        minHeight: 400,
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
       <Grid
         container
         direction="row"
@@ -147,8 +163,15 @@ function DocumentTable({
         </Grid>
       </Grid>
 
-      <Box sx={{ flex: 1, minHeight: 300, display: "flex", flexDirection: "column" }}>
-        {(!loading && documents.length === 0) ? (
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 300,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {!loading && documents.length === 0 ? (
           <Box
             sx={{
               flex: 1,
@@ -159,7 +182,12 @@ function DocumentTable({
               width: "100%",
             }}
           >
-            <Typography variant="h6" color="text.secondary" align="center" sx={{ width: "100%" }}>
+            <Typography
+              variant="h6"
+              color="text.secondary"
+              align="center"
+              sx={{ width: "100%" }}
+            >
               No documents available
             </Typography>
           </Box>

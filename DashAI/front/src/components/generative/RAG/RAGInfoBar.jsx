@@ -63,19 +63,13 @@ export default function RAGInfoBar() {
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.documents.point1",
-                )}
+                {t("generative:rag.rightPanel.settings.documents.point1")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.documents.point2",
-                )}
+                {t("generative:rag.rightPanel.settings.documents.point2")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.documents.point3",
-                )}
+                {t("generative:rag.rightPanel.settings.documents.point3")}
               </Typography>
             </Box>
           </Box>
@@ -86,59 +80,39 @@ export default function RAGInfoBar() {
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.chunking.point1",
-                )}
+                {t("generative:rag.rightPanel.settings.chunking.point1")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.chunking.point2",
-                )}
+                {t("generative:rag.rightPanel.settings.chunking.point2")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.chunking.point3",
-                )}
+                {t("generative:rag.rightPanel.settings.chunking.point3")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.chunking.point4",
-                )}
+                {t("generative:rag.rightPanel.settings.chunking.point4")}
               </Typography>
             </Box>
           </Box>
 
           <Box>
             <Typography variant="body2">
-              {t(
-                "generative:rag.rightPanel.settings.retriever.title",
-              )}
+              {t("generative:rag.rightPanel.settings.retriever.title")}
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.retriever.point1",
-                )}
+                {t("generative:rag.rightPanel.settings.retriever.point1")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.retriever.point2",
-                )}
+                {t("generative:rag.rightPanel.settings.retriever.point2")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.retriever.point3",
-                )}
+                {t("generative:rag.rightPanel.settings.retriever.point3")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.retriever.point4",
-                )}
+                {t("generative:rag.rightPanel.settings.retriever.point4")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.retriever.point5",
-                )}
+                {t("generative:rag.rightPanel.settings.retriever.point5")}
               </Typography>
             </Box>
           </Box>
@@ -166,14 +140,10 @@ export default function RAGInfoBar() {
             </Typography>
             <Box component="ul" sx={{ pl: 2, my: 0 }}>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.prompt.point1",
-                )}
+                {t("generative:rag.rightPanel.settings.prompt.point1")}
               </Typography>
               <Typography component="li" variant="body2" color="textSecondary">
-                {t(
-                  "generative:rag.rightPanel.settings.prompt.point2",
-                )}
+                {t("generative:rag.rightPanel.settings.prompt.point2")}
               </Typography>
             </Box>
           </Box>

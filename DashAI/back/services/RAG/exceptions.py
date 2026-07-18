@@ -14,7 +14,6 @@ from DashAI.back.models.RAG.exceptions import (  # noqa: F401
     RAGPromptValidationError,
 )
 
-
 __all__ = [
     "RAGDatabaseError",
     "RAGPromptValidationError",

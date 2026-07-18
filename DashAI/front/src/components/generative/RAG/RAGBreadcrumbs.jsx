@@ -45,14 +45,40 @@ function RAGBreadcrumbs({ sessionName }) {
     if (!path.startsWith("/app/generative/RAG")) return [];
 
     const base = [
-      { label: t("generative:rag.breadcrumbs.generative"), path: "/app/generative" },
-      { label: t("generative:rag.breadcrumbs.rag"), path: "/app/generative/RAG" },
+      {
+        label: t("generative:rag.breadcrumbs.generative"),
+        path: "/app/generative",
+      },
+      {
+        label: t("generative:rag.breadcrumbs.rag"),
+        path: "/app/generative/RAG",
+      },
     ];
 
-    if (path === "/app/generative/RAG/documents") return [...base, { label: t("generative:rag.breadcrumbs.documents"), path: null, current: true }];
-    if (path === "/app/generative/RAG/prompts") return [...base, { label: t("generative:rag.breadcrumbs.prompts"), path: null, current: true }];
+    if (path === "/app/generative/RAG/documents")
+      return [
+        ...base,
+        {
+          label: t("generative:rag.breadcrumbs.documents"),
+          path: null,
+          current: true,
+        },
+      ];
+    if (path === "/app/generative/RAG/prompts")
+      return [
+        ...base,
+        {
+          label: t("generative:rag.breadcrumbs.prompts"),
+          path: null,
+          current: true,
+        },
+      ];
 
-    if (sessionName) return [...base, { label: sessionName, path: null, current: true, isSession: true }];
+    if (sessionName)
+      return [
+        ...base,
+        { label: sessionName, path: null, current: true, isSession: true },
+      ];
 
     base[1] = { ...base[1], path: null, current: true };
     return base;
@@ -92,13 +118,13 @@ function RAGBreadcrumbs({ sessionName }) {
   const showBackButton = breadcrumbs.length > 0;
 
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         mb: 2,
-        minHeight: '24px', // Ensure consistent height
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1
+        minHeight: "24px", // Ensure consistent height
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
       }}
     >
       {showBackButton && (
@@ -106,23 +132,23 @@ function RAGBreadcrumbs({ sessionName }) {
           onClick={handleBack}
           size="small"
           sx={{
-            color: 'text.secondary',
-            '&:hover': {
-              color: 'primary.main',
-              backgroundColor: 'action.hover'
-            }
+            color: "text.secondary",
+            "&:hover": {
+              color: "primary.main",
+              backgroundColor: "action.hover",
+            },
           }}
           aria-label={t("generative:rag.breadcrumbs.goBack")}
         >
           <ArrowBackIcon fontSize="small" />
         </IconButton>
       )}
-      <Breadcrumbs 
-        aria-label="breadcrumb" 
-        sx={{ 
-          minHeight: '24px', // Ensure consistent height
-          display: 'flex',
-          alignItems: 'center'
+      <Breadcrumbs
+        aria-label="breadcrumb"
+        sx={{
+          minHeight: "24px", // Ensure consistent height
+          display: "flex",
+          alignItems: "center",
         }}
       >
         {breadcrumbs.map((breadcrumb, index) => {
@@ -131,7 +157,8 @@ function RAGBreadcrumbs({ sessionName }) {
               <Typography key={index} color="text.primary">
                 {breadcrumb.isSession ? (
                   <>
-                    <em>{breadcrumb.label}</em> {t("generative:rag.breadcrumbs.sessionSuffix")}
+                    <em>{breadcrumb.label}</em>{" "}
+                    {t("generative:rag.breadcrumbs.sessionSuffix")}
                   </>
                 ) : (
                   breadcrumb.label

@@ -192,7 +192,7 @@ export const enqueueRAGProcessJob = async (
     },
   });
   return response.data;
-}
+};
 
 export const enqueueConverterJob = async (
   converterId: number,

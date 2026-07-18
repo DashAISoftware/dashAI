@@ -10,9 +10,9 @@ import {
   Typography,
 } from "@mui/material";
 
-export default function TemplateModal({ 
-  open, 
-  handleClose, 
+export default function TemplateModal({
+  open,
+  handleClose,
   template,
   title = "Prompt",
   formatText = true,

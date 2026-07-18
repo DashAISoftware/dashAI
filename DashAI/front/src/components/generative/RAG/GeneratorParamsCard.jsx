@@ -1,10 +1,5 @@
 import { useState, useMemo } from "react";
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-} from "@mui/material";
+import { Box, Typography, Card, CardContent } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import IconButton from "@mui/material/IconButton";
@@ -42,8 +37,13 @@ export default function GeneratorParamsCard({
 
   /** Whether any generator parameter differs from its initial (default) values. */
   const isAdvanced = useMemo(() => {
-    if (!generatorModel?.component || !generatorModel?.params || !initialModelParams) return false;
-    return Object.keys(generatorModel.params).some(key => {
+    if (
+      !generatorModel?.component ||
+      !generatorModel?.params ||
+      !initialModelParams
+    )
+      return false;
+    return Object.keys(generatorModel.params).some((key) => {
       return generatorModel.params[key] !== initialModelParams[key];
     });
   }, [generatorModel?.params, initialModelParams]);
@@ -52,7 +52,13 @@ export default function GeneratorParamsCard({
     <Card sx={{ width: "100%", backgroundColor: "background.paper" }}>
       <CardContent sx={{ p: 2 }}>
         <Box sx={{ mb: 2 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
             <Box>
               <Typography variant="subtitle2">
                 {t("generative:rag.generator.modelLabel")}
@@ -76,7 +82,13 @@ export default function GeneratorParamsCard({
                   </IconButton>
                 </Tooltip>
               )}
-              <Tooltip title={isExpanded ? t("generative:rag.prompt.collapse") : t("generative:rag.prompt.expand")}>
+              <Tooltip
+                title={
+                  isExpanded
+                    ? t("generative:rag.prompt.collapse")
+                    : t("generative:rag.prompt.expand")
+                }
+              >
                 <IconButton
                   size="small"
                   onClick={() => setIsExpanded((s) => !s)}
@@ -84,7 +96,10 @@ export default function GeneratorParamsCard({
                 >
                   <ExpandMoreIcon
                     fontSize="small"
-                    sx={{ transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+                    sx={{
+                      transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.2s",
+                    }}
                   />
                 </IconButton>
               </Tooltip>

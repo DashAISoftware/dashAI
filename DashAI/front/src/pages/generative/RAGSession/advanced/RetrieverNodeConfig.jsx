@@ -19,7 +19,11 @@ import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import { resolveDefaults } from "../../../../utils/schema";
 
-const COMPOSITE_TYPES = ["SequentialRetriever", "ParallelRetriever", "MMRRerankerRetriever"];
+const COMPOSITE_TYPES = [
+  "SequentialRetriever",
+  "ParallelRetriever",
+  "MMRRerankerRetriever",
+];
 
 /**
  * Dialog for configuring a single node in the composite retriever tree.
@@ -67,7 +71,8 @@ export default function RetrieverNodeConfig({
     setInitialParams(p);
   }, [nodeData, allOptions]);
 
-  const isComposite = selectedModel && COMPOSITE_TYPES.includes(selectedModel.name);
+  const isComposite =
+    selectedModel && COMPOSITE_TYPES.includes(selectedModel.name);
 
   /**
    * Resolves the display name from a component's display_name (string or multilingual object).
@@ -123,7 +128,11 @@ export default function RetrieverNodeConfig({
         }}
       >
         {t("generative:rag.composite.configureNode")}
-        <IconButton onClick={onClose} size="small" sx={{ color: "text.secondary" }}>
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{ color: "text.secondary" }}
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -137,11 +146,15 @@ export default function RetrieverNodeConfig({
             getOptionLabel={(opt) => getDisplay(opt)}
             isOptionEqualToValue={(a, b) => a.name === b.name}
             groupBy={(opt) => {
-              if (COMPOSITE_TYPES.includes(opt.name)) return t("generative:rag.composite.compositeGroup");
+              if (COMPOSITE_TYPES.includes(opt.name))
+                return t("generative:rag.composite.compositeGroup");
               return t("generative:rag.composite.simpleGroup");
             }}
             renderInput={(p) => (
-              <TextField {...p} label={t("generative:rag.composite.selectModel")} />
+              <TextField
+                {...p}
+                label={t("generative:rag.composite.selectModel")}
+              />
             )}
           />
 
@@ -157,7 +170,9 @@ export default function RetrieverNodeConfig({
               <Typography variant="subtitle2">
                 {t("generative:rag.composite.parameters")}
               </Typography>
-              <FormSchemaContainer key={`node-config-${nodeId}-${selectedModel.name}`}>
+              <FormSchemaContainer
+                key={`node-config-${nodeId}-${selectedModel.name}`}
+              >
                 <FormSchema
                   model={selectedModel.name}
                   initialValues={initialParams}
@@ -176,7 +191,11 @@ export default function RetrieverNodeConfig({
         <Button onClick={onClose} variant="outlined">
           {t("common:cancel")}
         </Button>
-        <Button onClick={handleSave} variant="contained" disabled={!selectedModel}>
+        <Button
+          onClick={handleSave}
+          variant="contained"
+          disabled={!selectedModel}
+        >
           {t("common:save")}
         </Button>
       </DialogActions>

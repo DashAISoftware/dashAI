@@ -61,7 +61,8 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
 
   const isRagSessionSelected =
     selectedTaskName === "RAGTask" && Boolean(globalSelectedSessionId);
-  const isRagChatActive = showRagChat && activeRagChatSessionId === globalSelectedSessionId;
+  const isRagChatActive =
+    showRagChat && activeRagChatSessionId === globalSelectedSessionId;
 
   const [setupKey, setSetupKey] = useState(0);
 
@@ -70,13 +71,10 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
    * @param {string|number} rawId - Raw id value.
    * @returns {number|null} Positive integer or null.
    */
-  const resolveSessionId = useCallback(
-    (rawId) => {
-      const num = Number(rawId);
-      return Number.isFinite(num) && num > 0 ? num : null;
-    },
-    [],
-  );
+  const resolveSessionId = useCallback((rawId) => {
+    const num = Number(rawId);
+    return Number.isFinite(num) && num > 0 ? num : null;
+  }, []);
 
   useEffect(() => {
     const sid = resolveSessionId(urlSessionId);
@@ -126,21 +124,31 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
    * @param {string} taskName
    * @param {string} taskDisplayName
    */
-  const handleSessionClick = useCallback((sessionId, taskName, taskDisplayName) => {
-    if (onSessionSelect) {
-      onSessionSelect(sessionId, taskName, taskDisplayName);
-      return;
-    }
+  const handleSessionClick = useCallback(
+    (sessionId, taskName, taskDisplayName) => {
+      if (onSessionSelect) {
+        onSessionSelect(sessionId, taskName, taskDisplayName);
+        return;
+      }
 
-    setGlobalSelectedSessionId?.(sessionId);
-    setSelectedTaskName?.(taskName);
-    setSelectedDisplayName?.(taskDisplayName);
-    setStepIndex?.(0);
-    setShowRagChat(false);
-    setActiveRagChatSessionId(null);
+      setGlobalSelectedSessionId?.(sessionId);
+      setSelectedTaskName?.(taskName);
+      setSelectedDisplayName?.(taskDisplayName);
+      setStepIndex?.(0);
+      setShowRagChat(false);
+      setActiveRagChatSessionId(null);
 
-    navigate(`/app/generative/sessions/${sessionId}`, { replace: true });
-  }, [onSessionSelect, navigate, setGlobalSelectedSessionId, setSelectedTaskName, setSelectedDisplayName, setStepIndex]);
+      navigate(`/app/generative/sessions/${sessionId}`, { replace: true });
+    },
+    [
+      onSessionSelect,
+      navigate,
+      setGlobalSelectedSessionId,
+      setSelectedTaskName,
+      setSelectedDisplayName,
+      setStepIndex,
+    ],
+  );
 
   /**
    * Reset state to show the RAG session setup form.
@@ -181,14 +189,18 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
 
     currentSetSessions?.((prev) => {
       const nextSessions = Array.isArray(prev) ? prev.slice() : [];
-      const exists = nextSessions.some((session) => session.id === createdSession.id);
+      const exists = nextSessions.some(
+        (session) => session.id === createdSession.id,
+      );
       if (!exists) {
         nextSessions.unshift(createdSession);
       }
       return nextSessions;
     });
 
-    navigate(`/app/generative/sessions/${createdSession.id}`, { replace: true });
+    navigate(`/app/generative/sessions/${createdSession.id}`, {
+      replace: true,
+    });
   };
 
   const centerContent = isRagSessionSelected ? (
@@ -215,7 +227,14 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
         <ModuleContainer>
           <LeftPanel data-tour="sessions-left-panel">
             {isRagSessionSelected ? (
-              <Box sx={{ display: "flex", flexDirection: "column", height: "100%", gap: 1 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  gap: 1,
+                }}
+              >
                 <Box sx={{ flex: "0 0 60%", minHeight: 0 }}>
                   <RAGDocumentsPanel
                     selectedSessionId={globalSelectedSessionId}
@@ -250,9 +269,7 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
             )}
           </LeftPanel>
 
-          <CenterPanel data-tour="task-gallery">
-            {centerContent}
-          </CenterPanel>
+          <CenterPanel data-tour="task-gallery">{centerContent}</CenterPanel>
 
           <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">
             <Box

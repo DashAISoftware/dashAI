@@ -83,7 +83,6 @@ function FormSchemaWithSelectedModel({
         </>
       )}
 
-
       <FormSchema
         model={selectedModel}
         initialValues={defaultValues}

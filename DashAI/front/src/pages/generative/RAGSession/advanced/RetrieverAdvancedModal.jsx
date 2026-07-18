@@ -80,8 +80,13 @@ export default function RetrieverAdvancedModal({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ bgcolor: "background.paper", minHeight: 400 }}>
-        <FormSchemaProvider key={`retriever-advanced-${retrieverModel?.component}`}>
+      <DialogContent
+        dividers
+        sx={{ bgcolor: "background.paper", minHeight: 400 }}
+      >
+        <FormSchemaProvider
+          key={`retriever-advanced-${retrieverModel?.component}`}
+        >
           <RetrieverConfigurationStep
             ref={retrieverStepRef}
             allParadigms={allParadigms}
@@ -108,4 +113,3 @@ export default function RetrieverAdvancedModal({
     </Dialog>
   );
 }
-

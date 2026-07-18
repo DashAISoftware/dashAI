@@ -1,11 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Autocomplete,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
@@ -39,22 +34,26 @@ export default function GeneratorConfigurationStep({
       const d = await resolveDefaults(selectedGenerator.name);
       if (!cancelled) setFetchedDefaults(d);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedGenerator]);
 
-  const formInitialValues = useMemo(
-    () => {
-      if (
-        generatorModel?.component === selectedGenerator?.name &&
-        generatorModel?.params &&
-        Object.keys(generatorModel.params).length > 0
-      ) {
-        return generatorModel.params;
-      }
-      return fetchedDefaults || {};
-    },
-    [selectedGenerator, generatorModel?.component, generatorModel?.params, fetchedDefaults],
-  );
+  const formInitialValues = useMemo(() => {
+    if (
+      generatorModel?.component === selectedGenerator?.name &&
+      generatorModel?.params &&
+      Object.keys(generatorModel.params).length > 0
+    ) {
+      return generatorModel.params;
+    }
+    return fetchedDefaults || {};
+  }, [
+    selectedGenerator,
+    generatorModel?.component,
+    generatorModel?.params,
+    fetchedDefaults,
+  ]);
 
   useEffect(() => {
     let isMounted = true;
@@ -112,7 +111,10 @@ export default function GeneratorConfigurationStep({
         onChange={handleSelection}
         isOptionEqualToValue={(option, value) => option.name === value?.name}
         renderInput={(params) => (
-          <TextField {...params} label={t("generative:rag.generatorConfig.modelLabel")} />
+          <TextField
+            {...params}
+            label={t("generative:rag.generatorConfig.modelLabel")}
+          />
         )}
       />
 

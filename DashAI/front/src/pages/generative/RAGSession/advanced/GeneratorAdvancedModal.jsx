@@ -72,8 +72,13 @@ export default function GeneratorAdvancedModal({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ bgcolor: "background.paper", minHeight: 400 }}>
-        <FormSchemaProvider key={`generator-advanced-${generatorModel?.component}`}>
+      <DialogContent
+        dividers
+        sx={{ bgcolor: "background.paper", minHeight: 400 }}
+      >
+        <FormSchemaProvider
+          key={`generator-advanced-${generatorModel?.component}`}
+        >
           <GeneratorConfigurationStep
             generatorModel={generatorModel}
             setGeneratorModel={setGeneratorModel}
@@ -98,4 +103,3 @@ export default function GeneratorAdvancedModal({
     </Dialog>
   );
 }
-

@@ -12,10 +12,6 @@ from DashAI.back.dependencies.database.models import (
     RAGPrompt,
 )
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
-from DashAI.back.services.RAG.exceptions import (
-    RAGDatabaseError,
-    RAGPromptValidationError,
-)
 from DashAI.back.models.RAG.prompts.generation.default_QA_RAG_generation_prompt import (
     DefaultQARAGGenerationPrompt,
 )
@@ -23,6 +19,10 @@ from DashAI.back.models.RAG.prompts.generation.default_RAG_generation_prompt imp
     DefaultRAGGenerationPrompt,
 )
 from DashAI.back.models.RAG.prompts.prompt import Prompt
+from DashAI.back.services.RAG.exceptions import (
+    RAGDatabaseError,
+    RAGPromptValidationError,
+)
 
 log = logging.getLogger(__name__)
 

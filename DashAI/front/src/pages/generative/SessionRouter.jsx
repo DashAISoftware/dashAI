@@ -47,7 +47,9 @@ export default function SessionRouter() {
         if (!cancelled) setLoading(false);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const effectiveView = loading ? prevViewRef.current.taskName : taskName;
@@ -55,7 +57,12 @@ export default function SessionRouter() {
 
   if (isFirstLoad) {
     return (
-      <Box display="flex" alignItems="center" justifyContent="center" height="100vh">
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        height="100vh"
+      >
         <CircularProgress />
       </Box>
     );
@@ -63,7 +70,12 @@ export default function SessionRouter() {
 
   if (!effectiveView) {
     return (
-      <Box display="flex" alignItems="center" justifyContent="center" height="100vh">
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        height="100vh"
+      >
         <Typography variant="h6" color="text.secondary">
           Session not found
         </Typography>

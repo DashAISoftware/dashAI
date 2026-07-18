@@ -7,7 +7,7 @@ import {
   Button,
   Alert,
   AlertTitle,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
@@ -51,21 +51,34 @@ export default function GeneratorSection({
   const theme = useTheme();
 
   const contextStats = useMemo(() => {
-    if (!generatorModel?.params || !selectedGenerator || !generatorModel.component) {
+    if (
+      !generatorModel?.params ||
+      !selectedGenerator ||
+      !generatorModel.component
+    ) {
       return { isValid: false, availableTokens: 0 };
     }
 
-    const contextWindow = generatorModel.params.context_window ?? DEFAULT_CONTEXT_WINDOW;
+    const contextWindow =
+      generatorModel.params.context_window ?? DEFAULT_CONTEXT_WINDOW;
     const maxTokens = generatorModel.params.max_tokens ?? DEFAULT_MAX_TOKENS;
     const chunkTokens = chunkSize * topK;
-    const availableForMessage = contextWindow - chunkTokens - promptTokenCount - maxTokens;
+    const availableForMessage =
+      contextWindow - chunkTokens - promptTokenCount - maxTokens;
     const isValid = availableForMessage > 0;
 
     return {
       isValid,
-      availableTokens: Math.max(0, Math.floor(availableForMessage))
+      availableTokens: Math.max(0, Math.floor(availableForMessage)),
     };
-  }, [generatorModel?.params, generatorModel?.component, selectedGenerator, chunkSize, topK, promptTokenCount]);
+  }, [
+    generatorModel?.params,
+    generatorModel?.component,
+    selectedGenerator,
+    chunkSize,
+    topK,
+    promptTokenCount,
+  ]);
 
   const isRemoteModel = useMemo(() => {
     if (!selectedGenerator || !generatorModel?.component) return false;
@@ -163,7 +176,9 @@ export default function GeneratorSection({
           options={generators}
           value={selectedGenerator}
           onChange={handleGeneratorChange}
-          getOptionLabel={(option) => getDescription(option.display_name, i18n) || option.name || ""}
+          getOptionLabel={(option) =>
+            getDescription(option.display_name, i18n) || option.name || ""
+          }
           isOptionEqualToValue={(option, value) => option?.name === value?.name}
           renderInput={(params) => (
             <TextField
@@ -185,29 +200,39 @@ export default function GeneratorSection({
             borderRadius: 1,
             display: "flex",
             flexDirection: "column",
-            gap: 1
+            gap: 1,
           }}
         >
           <Typography variant="body2">
             <Box component="span" sx={{ typography: "subtitle2" }}>
               {t("generative:rag.generator.modelInfo")}
-            </Box> {selectedGenerator.name}
+            </Box>{" "}
+            {selectedGenerator.name}
           </Typography>
 
-          <Typography variant="body2" sx={{ color: contextStats.isValid ? "success.main" : "error.main" }}>
-            {t("generative:validation.contextSpace", { availableChars: contextStats.availableTokens?.toLocaleString() })}
+          <Typography
+            variant="body2"
+            sx={{ color: contextStats.isValid ? "success.main" : "error.main" }}
+          >
+            {t("generative:validation.contextSpace", {
+              availableChars: contextStats.availableTokens?.toLocaleString(),
+            })}
           </Typography>
 
           {!contextStats.isValid && (
             <Alert severity="error" sx={{ mt: 1 }}>
-              <AlertTitle>{t("generative:validation.insufficientContextTitle")}</AlertTitle>
+              <AlertTitle>
+                {t("generative:validation.insufficientContextTitle")}
+              </AlertTitle>
               {t("generative:validation.insufficientContextDescription")}
             </Alert>
           )}
 
           {isApiKeyMissing && (
             <Alert severity="warning" sx={{ mt: 1 }}>
-              <AlertTitle>{t("generative:validation.apiKeyMissingTitle")}</AlertTitle>
+              <AlertTitle>
+                {t("generative:validation.apiKeyMissingTitle")}
+              </AlertTitle>
               {t("generative:validation.apiKeyMissingDescription")}
             </Alert>
           )}

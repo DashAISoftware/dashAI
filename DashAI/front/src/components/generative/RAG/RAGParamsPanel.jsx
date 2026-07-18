@@ -3,10 +3,7 @@ import { Box, Button, Typography } from "@mui/material";
 import SideBar from "../../threeSectionLayout/panelContainers/SideBar";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
-import {
-  getRAGSession,
-  updateGenerativeSessionParams,
-} from "../../../api/rag";
+import { getRAGSession, updateGenerativeSessionParams } from "../../../api/rag";
 import PromptParamsCard from "./PromptParamsCard";
 import GeneratorParamsCard from "./GeneratorParamsCard";
 
@@ -21,7 +18,10 @@ export default function RAGParamsPanel({ selectedSessionId }) {
   const { t } = useTranslation(["generative"]);
   const { enqueueSnackbar } = useSnackbar();
   const [promptModel, setPromptModel] = useState({ component: "", params: {} });
-  const [generatorModel, setGeneratorModel] = useState({ component: null, params: {} });
+  const [generatorModel, setGeneratorModel] = useState({
+    component: null,
+    params: {},
+  });
   const [loading, setLoading] = useState(false);
   const [isValid, setIsValid] = useState(true);
   const [savedVersion, setSavedVersion] = useState(0);
@@ -49,7 +49,9 @@ export default function RAGParamsPanel({ selectedSessionId }) {
       })
       .catch((err) => {
         console.error("Failed to load RAG session:", err);
-        enqueueSnackbar(t("generative:rag.paramsPanel.failedToLoad"), { variant: "error" });
+        enqueueSnackbar(t("generative:rag.paramsPanel.failedToLoad"), {
+          variant: "error",
+        });
       })
       .finally(() => setLoading(false));
   }, [selectedSessionId, enqueueSnackbar]);
@@ -58,9 +60,13 @@ export default function RAGParamsPanel({ selectedSessionId }) {
   const hasParamChanges = React.useMemo(() => {
     if (!originalParamsRef.current) return false;
     const original = originalParamsRef.current;
-    const hasPromptChanged = JSON.stringify(original.prompt) !== JSON.stringify(promptModel);
-    const hasComponentChanged = original.generation_model.component !== generatorModel.component;
-    const hasParamsChanged = JSON.stringify(original.generation_model.params) !== JSON.stringify(generatorModel.params);
+    const hasPromptChanged =
+      JSON.stringify(original.prompt) !== JSON.stringify(promptModel);
+    const hasComponentChanged =
+      original.generation_model.component !== generatorModel.component;
+    const hasParamsChanged =
+      JSON.stringify(original.generation_model.params) !==
+      JSON.stringify(generatorModel.params);
     return hasPromptChanged || hasComponentChanged || hasParamsChanged;
   }, [promptModel, generatorModel, savedVersion]);
 
@@ -78,25 +84,46 @@ export default function RAGParamsPanel({ selectedSessionId }) {
     };
 
     try {
-      await updateGenerativeSessionParams(selectedSessionId, payload.parameters);
-      enqueueSnackbar(t("generative:rag.paramsPanel.updated"), { variant: "success" });
+      await updateGenerativeSessionParams(
+        selectedSessionId,
+        payload.parameters,
+      );
+      enqueueSnackbar(t("generative:rag.paramsPanel.updated"), {
+        variant: "success",
+      });
       // Update the snapshot after successful save and trigger recalculation
       originalParamsRef.current = payload.parameters;
       setSavedVersion((v) => v + 1);
     } catch (err) {
       console.error("Failed to update RAG session:", err);
-      enqueueSnackbar(t("generative:rag.paramsPanel.failedToUpdate"), { variant: "error" });
+      enqueueSnackbar(t("generative:rag.paramsPanel.failedToUpdate"), {
+        variant: "error",
+      });
     }
   };
 
   return (
     <SideBar>
-      <Box sx={{ p: 2, height: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
-        <Typography variant="h6">{t("generative:rag.paramsPanel.title")}</Typography>
+      <Box
+        sx={{
+          p: 2,
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+        }}
+      >
+        <Typography variant="h6">
+          {t("generative:rag.paramsPanel.title")}
+        </Typography>
 
         <Box sx={{ overflow: "auto", flex: 1 }}>
           <Box sx={{ mb: 2 }}>
-            <PromptParamsCard promptModel={promptModel} setPromptModel={setPromptModel} onTokenCountChange={() => {}} />
+            <PromptParamsCard
+              promptModel={promptModel}
+              setPromptModel={setPromptModel}
+              onTokenCountChange={() => {}}
+            />
           </Box>
 
           <Box sx={{ mt: 2 }}>
@@ -111,11 +138,15 @@ export default function RAGParamsPanel({ selectedSessionId }) {
           </Box>
         </Box>
 
-        <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end", pt: 1 }}>
-          <Button 
-            variant="contained" 
-            onClick={handleSave} 
-            disabled={loading || !isValid || !selectedSessionId || !hasParamChanges}
+        <Box
+          sx={{ display: "flex", gap: 1, justifyContent: "flex-end", pt: 1 }}
+        >
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={
+              loading || !isValid || !selectedSessionId || !hasParamChanges
+            }
           >
             {t("generative:rag.paramsPanel.save")}
           </Button>

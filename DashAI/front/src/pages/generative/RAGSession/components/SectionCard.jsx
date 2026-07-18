@@ -22,8 +22,7 @@ export default function SectionCard({
   justifyContent,
 }) {
   const theme = useTheme();
-  const sectionGap =
-    typeof gap === "number" ? theme.spacing(gap) : gap;
+  const sectionGap = typeof gap === "number" ? theme.spacing(gap) : gap;
 
   return (
     <Box

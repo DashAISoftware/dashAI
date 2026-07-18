@@ -39,9 +39,7 @@ function deepEqual(a, b) {
  * retriever configurations while ignoring the top-K value.
  */
 const omitTopK = (obj) =>
-  Object.fromEntries(
-    Object.entries(obj || {}).filter(([k]) => k !== "top_k"),
-  );
+  Object.fromEntries(Object.entries(obj || {}).filter(([k]) => k !== "top_k"));
 
 /**
  * Compute the effective top-K value for a retriever model,
@@ -95,7 +93,10 @@ function buildSemanticModel(embeddingDefaults, retrieverDefaults, topK) {
     params: {
       embedding_model: {
         component: "SentenceTransformerEmbedding",
-        params: { ...embeddingDefaults, model_name: "microsoft/harrier-oss-v1-0.6b" },
+        params: {
+          ...embeddingDefaults,
+          model_name: "microsoft/harrier-oss-v1-0.6b",
+        },
       },
       similarity_metric: retrieverDefaults.similarity_metric || "cosine",
       top_k: topK,
@@ -111,7 +112,12 @@ function buildSemanticModel(embeddingDefaults, retrieverDefaults, topK) {
  * @param {number} topK               - Total top-K split across sub-retrievers.
  * @returns {object} Model config { component, params }.
  */
-function buildHybridModel(bm25Defaults, embeddingDefaults, retrieverDefaults, topK) {
+function buildHybridModel(
+  bm25Defaults,
+  embeddingDefaults,
+  retrieverDefaults,
+  topK,
+) {
   const kwTopK = Math.ceil(topK / 2);
   const seTopK = Math.floor(topK / 2);
   return {
@@ -128,7 +134,10 @@ function buildHybridModel(bm25Defaults, embeddingDefaults, retrieverDefaults, to
           params: {
             embedding_model: {
               component: "SentenceTransformerEmbedding",
-              params: { ...embeddingDefaults, model_name: "microsoft/harrier-oss-v1-0.6b" },
+              params: {
+                ...embeddingDefaults,
+                model_name: "microsoft/harrier-oss-v1-0.6b",
+              },
             },
             similarity_metric: retrieverDefaults.similarity_metric || "cosine",
             top_k: seTopK,
@@ -173,13 +182,30 @@ export default function RetrieverSection({
   );
 
   const semanticModel = useMemo(
-    () => buildSemanticModel(embeddingDefaults, denseRetrieverDefaults, effectiveTopK || topK),
+    () =>
+      buildSemanticModel(
+        embeddingDefaults,
+        denseRetrieverDefaults,
+        effectiveTopK || topK,
+      ),
     [embeddingDefaults, denseRetrieverDefaults, effectiveTopK, topK],
   );
 
   const hybridModel = useMemo(
-    () => buildHybridModel(bm25Defaults, embeddingDefaults, denseRetrieverDefaults, effectiveTopK || topK),
-    [bm25Defaults, embeddingDefaults, denseRetrieverDefaults, effectiveTopK, topK],
+    () =>
+      buildHybridModel(
+        bm25Defaults,
+        embeddingDefaults,
+        denseRetrieverDefaults,
+        effectiveTopK || topK,
+      ),
+    [
+      bm25Defaults,
+      embeddingDefaults,
+      denseRetrieverDefaults,
+      effectiveTopK,
+      topK,
+    ],
   );
 
   const isAdvanced = useMemo(() => {
@@ -205,9 +231,11 @@ export default function RetrieverSection({
       params: omitTopK(hybridModel.params),
     };
 
-    return !deepEqual(modelNoTopK, kwNoTopK)
-      && !deepEqual(modelNoTopK, seNoTopK)
-      && !deepEqual(modelNoTopK, hyNoTopK);
+    return (
+      !deepEqual(modelNoTopK, kwNoTopK) &&
+      !deepEqual(modelNoTopK, seNoTopK) &&
+      !deepEqual(modelNoTopK, hyNoTopK)
+    );
   }, [retrieverModel, keywordModel, semanticModel, hybridModel]);
 
   /**
@@ -216,34 +244,43 @@ export default function RetrieverSection({
    * @param {object} model - Retriever model config.
    * @returns {string|null} Group key or null for custom configs.
    */
-  const detectSelectedGroup = useCallback((model) => {
-    if (!model?.component) return null;
+  const detectSelectedGroup = useCallback(
+    (model) => {
+      if (!model?.component) return null;
 
-    const modelNoTopK = {
-      component: model.component,
-      params: omitTopK(model.params),
-    };
+      const modelNoTopK = {
+        component: model.component,
+        params: omitTopK(model.params),
+      };
 
-    if (deepEqual(modelNoTopK, {
-      component: keywordModel.component,
-      params: omitTopK(keywordModel.params),
-    })) {
-      return "keyword";
-    }
-    if (deepEqual(modelNoTopK, {
-      component: semanticModel.component,
-      params: omitTopK(semanticModel.params),
-    })) {
-      return "semantic";
-    }
-    if (deepEqual(modelNoTopK, {
-      component: hybridModel.component,
-      params: omitTopK(hybridModel.params),
-    })) {
-      return "hybrid";
-    }
-    return null;
-  }, [keywordModel, semanticModel, hybridModel]);
+      if (
+        deepEqual(modelNoTopK, {
+          component: keywordModel.component,
+          params: omitTopK(keywordModel.params),
+        })
+      ) {
+        return "keyword";
+      }
+      if (
+        deepEqual(modelNoTopK, {
+          component: semanticModel.component,
+          params: omitTopK(semanticModel.params),
+        })
+      ) {
+        return "semantic";
+      }
+      if (
+        deepEqual(modelNoTopK, {
+          component: hybridModel.component,
+          params: omitTopK(hybridModel.params),
+        })
+      ) {
+        return "hybrid";
+      }
+      return null;
+    },
+    [keywordModel, semanticModel, hybridModel],
+  );
 
   useEffect(() => {
     const tk = getEffectiveTopK(retrieverModel);
@@ -290,53 +327,80 @@ export default function RetrieverSection({
    * customised, open the advanced modal instead.
    * @param {string} groupKey - "keyword", "semantic", or "hybrid".
    */
-  const selectPreset = useCallback((groupKey) => {
-    const alreadySelected = !isAdvanced && selectedGroup === groupKey;
-    if (alreadySelected) {
-      setShowAdvanced(true);
-      return;
-    }
+  const selectPreset = useCallback(
+    (groupKey) => {
+      const alreadySelected = !isAdvanced && selectedGroup === groupKey;
+      if (alreadySelected) {
+        setShowAdvanced(true);
+        return;
+      }
 
-    setShowAdvanced(false);
-    setSelectedGroup(groupKey);
+      setShowAdvanced(false);
+      setSelectedGroup(groupKey);
 
-    if (groupKey === "keyword") {
-      setRetrieverModel(keywordModel);
-    } else if (groupKey === "semantic") {
-      setRetrieverModel(semanticModel);
-    } else if (groupKey === "hybrid") {
-      setRetrieverModel(hybridModel);
-    }
-  }, [isAdvanced, selectedGroup, keywordModel, semanticModel, hybridModel, setRetrieverModel]);
+      if (groupKey === "keyword") {
+        setRetrieverModel(keywordModel);
+      } else if (groupKey === "semantic") {
+        setRetrieverModel(semanticModel);
+      } else if (groupKey === "hybrid") {
+        setRetrieverModel(hybridModel);
+      }
+    },
+    [
+      isAdvanced,
+      selectedGroup,
+      keywordModel,
+      semanticModel,
+      hybridModel,
+      setRetrieverModel,
+    ],
+  );
 
   /**
    * Handle the top-K value change and rebuild the selected preset with the new value.
    * @param {string} newValue - The new top-K value as a string.
    */
-  const handleTopKChange = useCallback((newValue) => {
-    const value = parseInt(newValue);
-    if (isNaN(value) || value <= 0 || isAdvanced) return;
-    setTopK(value);
+  const handleTopKChange = useCallback(
+    (newValue) => {
+      const value = parseInt(newValue);
+      if (isNaN(value) || value <= 0 || isAdvanced) return;
+      setTopK(value);
 
-    if (selectedGroup === "keyword") {
-      setRetrieverModel(buildKeywordModel(bm25Defaults, value));
-    } else if (selectedGroup === "semantic") {
-      setRetrieverModel(buildSemanticModel(embeddingDefaults, denseRetrieverDefaults, value));
-    } else if (selectedGroup === "hybrid") {
-      setRetrieverModel(buildHybridModel(bm25Defaults, embeddingDefaults, denseRetrieverDefaults, value));
-    }
-  }, [
-    isAdvanced,
-    selectedGroup,
-    bm25Defaults,
-    embeddingDefaults,
-    denseRetrieverDefaults,
-    setRetrieverModel,
-  ]);
+      if (selectedGroup === "keyword") {
+        setRetrieverModel(buildKeywordModel(bm25Defaults, value));
+      } else if (selectedGroup === "semantic") {
+        setRetrieverModel(
+          buildSemanticModel(embeddingDefaults, denseRetrieverDefaults, value),
+        );
+      } else if (selectedGroup === "hybrid") {
+        setRetrieverModel(
+          buildHybridModel(
+            bm25Defaults,
+            embeddingDefaults,
+            denseRetrieverDefaults,
+            value,
+          ),
+        );
+      }
+    },
+    [
+      isAdvanced,
+      selectedGroup,
+      bm25Defaults,
+      embeddingDefaults,
+      denseRetrieverDefaults,
+      setRetrieverModel,
+    ],
+  );
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" sx={{ minHeight: 120 }}>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        sx={{ minHeight: 120 }}
+      >
         <CircularProgress />
       </Box>
     );
@@ -348,14 +412,21 @@ export default function RetrieverSection({
         {t("generative:rag.retriever.description")}
       </Typography>
 
-      <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap" }}>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1,
+          alignItems: "stretch",
+          flexWrap: "wrap",
+        }}
+      >
         <PresetCard
           key="keyword"
           selected={!isAdvanced && selectedGroup === "keyword"}
           onClick={() => selectPreset("keyword")}
           label={t("generative:rag.retriever.keywordLabel")}
           description="BM25"
-          sx={{ minWidth: 180}}
+          sx={{ minWidth: 180 }}
         />
         <PresetCard
           key="semantic"
@@ -363,7 +434,7 @@ export default function RetrieverSection({
           onClick={() => selectPreset("semantic")}
           label={t("generative:rag.retriever.semanticLabel")}
           description="Harrier OSS v1 0.6B"
-          sx={{ minWidth: 180}}
+          sx={{ minWidth: 180 }}
         />
         <PresetCard
           key="hybrid"
@@ -371,10 +442,18 @@ export default function RetrieverSection({
           onClick={() => selectPreset("hybrid")}
           label={t("generative:rag.retriever.hybridLabel")}
           description={t("generative:rag.retriever.hybridDescription")}
-          sx={{ minWidth: 180}}
+          sx={{ minWidth: 180 }}
         />
         {isAdvanced && retrieverModel?.component && (
-          <Box sx={{ flex: 1, minWidth: 180, display: "flex", flexDirection: "column", gap: 1 }}>
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 180,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
+          >
             <AdvancedConfigCard
               modelName={retrieverModel.component}
               onClick={() => setShowAdvanced(true)}
@@ -414,7 +493,15 @@ export default function RetrieverSection({
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 {t("generative:rag.retriever.topKLabel")}
               </Typography>
-              <Box sx={{ display: "flex", gap: 1, alignItems: "stretch", flexWrap: "wrap", width: "100%" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 1,
+                  alignItems: "stretch",
+                  flexWrap: "wrap",
+                  width: "100%",
+                }}
+              >
                 {TOP_K_OPTIONS.map((k) => (
                   <PresetCard
                     key={k}
@@ -422,7 +509,12 @@ export default function RetrieverSection({
                     onClick={() => handleTopKChange(String(k))}
                     label={String(k)}
                     description={""}
-                    sx={{ flex: "1 1 0", minWidth: 0, justifyContent: "center", alignItems: "center" }}
+                    sx={{
+                      flex: "1 1 0",
+                      minWidth: 0,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
                   />
                 ))}
               </Box>
@@ -435,11 +527,9 @@ export default function RetrieverSection({
         variant="contained"
         color="primary"
         size="small"
-        onClick={() => setShowAdvanced(true)
-        }
-        sx=
-        {{
-          alignSelf: "flex-start", 
+        onClick={() => setShowAdvanced(true)}
+        sx={{
+          alignSelf: "flex-start",
           width: "fit-content",
           border: "1px solid",
           borderColor: theme.palette.primary.main,

@@ -23,8 +23,7 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
 
   useImperativeHandle(ref, () => inputRef.current, []);
 
-  const bgColor =
-    theme.palette.placeholder?.bg || theme.palette.warning.light;
+  const bgColor = theme.palette.placeholder?.bg || theme.palette.warning.light;
   const textColor =
     theme.palette.placeholder?.text || theme.palette.warning.dark;
 
@@ -53,10 +52,7 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
   return (
     <Box sx={{ mt: 2, width: "100%", ...sx }}>
       {label && (
-        <Typography
-          variant="body2"
-          sx={{ mb: 0.5, color: "text.secondary" }}
-        >
+        <Typography variant="body2" sx={{ mb: 0.5, color: "text.secondary" }}>
           {label}
         </Typography>
       )}
@@ -84,10 +80,14 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
           }}
         >
           {value
-            ? renderTemplateWithHighlights(value, {
-                bg: bgColor,
-                text: textColor,
-              }, theme.typography.code.fontFamily)
+            ? renderTemplateWithHighlights(
+                value,
+                {
+                  bg: bgColor,
+                  text: textColor,
+                },
+                theme.typography.code.fontFamily,
+              )
             : placeholder || ""}
         </Box>
 

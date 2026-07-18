@@ -187,7 +187,16 @@ function Upload({ onFileUpload, emptyUploadText, multiple = false }) {
           multiple={multiple}
         />
 
-        <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
+        <Box
+          sx={{
+            textAlign: "center",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           {datasetState === EMPTY &&
             (dragActive ? (
               <Typography variant="subtitle1">

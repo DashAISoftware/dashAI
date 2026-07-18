@@ -141,10 +141,6 @@ class TestCreateRAGSession:
         assert response.status_code == 201, response.text
         assert response.json()["description"] == "A test session for RAG validation"
 
-    # ------------------------------------------------------------------
-    # Missing required top-level fields  (caught by GenerativeSessionParams Pydantic model → 422)
-    # ------------------------------------------------------------------
-
     @pytest.mark.parametrize("missing_key", ["model_name", "task_name", "name"])
     def test_create_rag_session_missing_top_level_field(
         self, client: TestClient, test_doc_id: int, missing_key: str
@@ -195,7 +191,7 @@ class TestCreateRAGSession:
     # ------------------------------------------------------------------
 
     @pytest.mark.parametrize(
-        "component_key, bad_value",
+        ("component_key", "bad_value"),
         [
             ("prompt", {"component": "CustomRAGGenerationPrompt"}),  # missing 'params'
             ("prompt", {"params": {"language": "en"}}),  # missing 'component'
@@ -226,7 +222,7 @@ class TestCreateRAGSession:
     # ------------------------------------------------------------------
 
     @pytest.mark.parametrize(
-        "component_key, invalid_name",
+        ("component_key", "invalid_name"),
         [
             ("prompt", "NonExistentPrompt"),
             ("chunking_model", "NonExistentChunker"),
@@ -273,7 +269,8 @@ class TestCreateRAGSession:
 
         response = client.post("/api/v1/generative-session/", json=params)
         assert response.status_code == 400, (
-            f"Expected 400 for unknown model, got {response.status_code}: {response.text}"
+            f"Expected 400 for unknown model, got {response.status_code}:"
+            f" {response.text}"
         )
 
     def test_create_rag_session_invalid_task_name(
@@ -286,7 +283,8 @@ class TestCreateRAGSession:
 
         response = client.post("/api/v1/generative-session/", json=params)
         assert response.status_code == 400, (
-            f"Expected 400 for unknown task, got {response.status_code}: {response.text}"
+            f"Expected 400 for unknown task, got {response.status_code}:"
+            f" {response.text}"
         )
 
     def test_create_rag_session_model_not_generative(
@@ -413,7 +411,7 @@ class TestCreateRAGSession:
 
 
 # ===================================================================
-# PUT  /api/v1/generative-session/{session_id}/parameters
+# PUT endpoint: /api/v1/generative-session/{session_id}/parameters
 # ===================================================================
 
 
@@ -577,7 +575,7 @@ class TestUpdateRAGSessionParams:
     # ------------------------------------------------------------------
 
     @pytest.mark.parametrize(
-        "component_key, invalid_name",
+        ("component_key", "invalid_name"),
         [
             ("prompt", "NonExistentPrompt"),
             ("chunking_model", "NonExistentChunker"),
@@ -592,7 +590,8 @@ class TestUpdateRAGSessionParams:
         component_key: str,
         invalid_name: str,
     ):
-        """Invalid component name in PUT now returns 400 (validated against registry)."""
+        """Invalid component name in PUT now returns 400 (validated against
+        registry)."""
         session = self._create_session(
             client, test_doc_id, f"test_update_invalid_{component_key}"
         )
@@ -617,7 +616,7 @@ class TestUpdateRAGSessionParams:
     # ------------------------------------------------------------------
 
     @pytest.mark.parametrize(
-        "component_key, bad_value, idx",
+        ("component_key", "bad_value", "idx"),
         [
             (
                 "prompt",
@@ -831,7 +830,7 @@ class TestPromptValidation:
         assert "placeholder" in resp.text.lower() or "template" in resp.text.lower()
 
     @pytest.mark.parametrize(
-        "class_name, params, expected_status",
+        ("class_name", "params", "expected_status"),
         [
             # valid: all placeholders present
             (

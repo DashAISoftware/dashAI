@@ -18,7 +18,10 @@ import {
 } from "../../../../api/rag";
 import NewPromptModal from "../advanced/NewPromptModal";
 import RAGSectionColumn from "../components/RAGSectionColumn";
-import { getDescription, renderTemplateWithHighlights } from "../components/sectionUtils";
+import {
+  getDescription,
+  renderTemplateWithHighlights,
+} from "../components/sectionUtils";
 
 import { LANGUAGE_CODES } from "../../../../constants/languages";
 
@@ -190,7 +193,11 @@ export default function PromptSection({
       return;
     }
 
-    if (!isInitializedRef.current && promptModel?.component === (selectedPrompt.class_name || selectedPrompt.name)) {
+    if (
+      !isInitializedRef.current &&
+      promptModel?.component ===
+        (selectedPrompt.class_name || selectedPrompt.name)
+    ) {
       isInitializedRef.current = true;
       return;
     }
@@ -330,14 +337,14 @@ export default function PromptSection({
         {t("generative:rag.prompt.description")}
       </Typography>
 
-            <Button
+      <Button
         variant="contained"
         color="primary"
         size="small"
         startIcon={<AddIcon />}
         onClick={() => setNewPromptModalOpen(true)}
         sx={{
-          alignSelf: "flex-start", 
+          alignSelf: "flex-start",
           width: "fit-content",
           border: "1px solid",
           borderColor: theme.palette.primary.main,
@@ -362,9 +369,7 @@ export default function PromptSection({
             <TextField
               {...params}
               label={t("generative:rag.prompt.selectTemplate")}
-              placeholder={t(
-                "generative:rag.prompt.selectTemplatePlaceholder",
-              )}
+              placeholder={t("generative:rag.prompt.selectTemplatePlaceholder")}
             />
           )}
           sx={{}}
@@ -390,7 +395,7 @@ export default function PromptSection({
 
       {selectedPrompt && (
         <RAGSectionColumn>
-          <Typography variant="subtitle2" >
+          <Typography variant="subtitle2">
             {t("generative:rag.prompt.selectedTemplate")}
           </Typography>
 
@@ -407,7 +412,11 @@ export default function PromptSection({
               wordBreak: "break-word",
             }}
           >
-            {renderTemplateWithHighlights(currentTemplate, placeholderColors, theme.typography.code.fontFamily)}
+            {renderTemplateWithHighlights(
+              currentTemplate,
+              placeholderColors,
+              theme.typography.code.fontFamily,
+            )}
           </Box>
 
           {getDescription(selectedPrompt.description, i18n) && (

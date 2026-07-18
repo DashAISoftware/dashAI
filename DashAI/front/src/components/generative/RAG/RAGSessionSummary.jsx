@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { 
-  Box, 
-  Typography, 
-  Button, 
-  Chip, 
-  Grid, 
-  Card, 
+import {
+  Box,
+  Typography,
+  Button,
+  Chip,
+  Grid,
+  Card,
   CardContent,
   Dialog,
   DialogTitle,
@@ -13,7 +13,7 @@ import {
   DialogActions,
   IconButton,
   Collapse,
-  TextField
+  TextField,
 } from "@mui/material";
 import ChatIcon from "@mui/icons-material/Chat";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -41,10 +41,7 @@ import RAGBreadcrumbs from "./RAGBreadcrumbs";
  * @param {function} props.onStartChat - Callback invoked when the user clicks "Open Chat".
  * @returns {JSX.Element} The full session summary view.
  */
-export default function RAGSessionSummary({
-  sessionId,
-  onStartChat,
-}) {
+export default function RAGSessionSummary({ sessionId, onStartChat }) {
   const { t } = useTranslation(["generative"]);
   const [sessionData, setSessionData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -58,16 +55,16 @@ export default function RAGSessionSummary({
   const [expandedSections, setExpandedSections] = useState({
     chunking: false,
     retriever: false,
-    generation: false
+    generation: false,
   });
   const { enqueueSnackbar } = useSnackbar();
   const originalMetadataRef = useRef({ name: "", description: "" });
 
   /** Toggles the expanded/collapsed state of a configuration section. @param {string} section - Section key (chunking, retriever, generation). */
   const toggleSection = (section) => {
-    setExpandedSections(prev => ({
+    setExpandedSections((prev) => ({
       ...prev,
-      [section]: !prev[section]
+      [section]: !prev[section],
     }));
   };
 
@@ -78,7 +75,10 @@ export default function RAGSessionSummary({
     const originalName = originalMetadataRef.current.name || "";
     const originalDescription = originalMetadataRef.current.description || "";
 
-    return normalizedName !== originalName || normalizedDescription !== originalDescription;
+    return (
+      normalizedName !== originalName ||
+      normalizedDescription !== originalDescription
+    );
   }, [editingDescription, editingName]);
 
   /** Toggles between read-only and edit mode for the session name/description. */
@@ -108,7 +108,9 @@ export default function RAGSessionSummary({
     const newName = (editingName || "").trim();
     if (!newName) {
       setNameError(t("generative:rag.validation.nameRequired"));
-      enqueueSnackbar(t("generative:rag.validation.nameRequired"), { variant: "error" });
+      enqueueSnackbar(t("generative:rag.validation.nameRequired"), {
+        variant: "error",
+      });
       return;
     }
 
@@ -117,10 +119,14 @@ export default function RAGSessionSummary({
 
       // Validate uniqueness: no other session (different id) should have the same name
       const allSessions = await getSessions();
-      const duplicate = allSessions.find((s) => s.name === newName && s.id !== sessionData.id);
+      const duplicate = allSessions.find(
+        (s) => s.name === newName && s.id !== sessionData.id,
+      );
       if (duplicate) {
         setNameError(t("generative:rag.validation.nameUnique"));
-        enqueueSnackbar(t("generative:rag.validation.nameUnique"), { variant: "error" });
+        enqueueSnackbar(t("generative:rag.validation.nameUnique"), {
+          variant: "error",
+        });
         setIsSaving(false);
         return;
       }
@@ -160,44 +166,56 @@ export default function RAGSessionSummary({
   /** Whether a parameter value is simple enough to display inline. @param {*} value */
   const isSimpleParameter = (value) => {
     return (
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean' ||
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean" ||
       value === null ||
       value === undefined ||
-      (Array.isArray(value) && value.length <= 3 && value.every(item => typeof item !== 'object'))
+      (Array.isArray(value) &&
+        value.length <= 3 &&
+        value.every((item) => typeof item !== "object"))
     );
   };
 
   const formatSimpleValue = (value) => {
-    if (value === null || value === undefined) return 'null';
-    if (typeof value === 'boolean') return value.toString();
-    if (Array.isArray(value)) return `[${value.join(', ')}]`;
+    if (value === null || value === undefined) return "null";
+    if (typeof value === "boolean") return value.toString();
+    if (Array.isArray(value)) return `[${value.join(", ")}]`;
     return String(value);
   };
 
   const isApiKey = (key) => {
-    return key.toLowerCase().includes('api');
+    return key.toLowerCase().includes("api");
   };
 
   const maskApiKey = (value) => {
     const stringValue = String(value);
     if (stringValue.length <= 10) return stringValue;
-    return stringValue.substring(0, 15) + '...';
+    return stringValue.substring(0, 15) + "...";
   };
 
   const handleCopyToClipboard = (value) => {
-    navigator.clipboard.writeText(String(value)).then(() => {
-      enqueueSnackbar(t("generative:rag.summary.apiKeyCopied"), { variant: "success" });
-    }).catch(() => {
-      enqueueSnackbar(t("generative:rag.summary.failedToCopyApiKey"), { variant: "error" });
-    });
+    navigator.clipboard
+      .writeText(String(value))
+      .then(() => {
+        enqueueSnackbar(t("generative:rag.summary.apiKeyCopied"), {
+          variant: "success",
+        });
+      })
+      .catch(() => {
+        enqueueSnackbar(t("generative:rag.summary.failedToCopyApiKey"), {
+          variant: "error",
+        });
+      });
   };
 
   const handleParameterClick = (paramName, paramValue, componentName) => {
     setModalContent({
-      title: t("generative:rag.summary.parameterDetailTitle", { component: componentName, param: paramName }),
-      content: paramValue
+      title: t("generative:rag.summary.parameterDetailTitle", {
+        component: componentName,
+        param: paramName,
+      }),
+      content: paramValue,
     });
     setModalOpen(true);
   };
@@ -221,14 +239,21 @@ export default function RAGSessionSummary({
     return Object.entries(params).map(([key, value]) => {
       const isSimple = isSimpleParameter(value);
       const isAPI = isApiKey(key);
-      
+
       return (
-        <Box key={key} display="flex" alignItems="center" sx={{ ml: 1, mb: 0.25 }}>
+        <Box
+          key={key}
+          display="flex"
+          alignItems="center"
+          sx={{ ml: 1, mb: 0.25 }}
+        >
           <Typography variant="caption" color="text.secondary">
-            • {key}: 
+            • {key}:
           </Typography>
           {isSimple ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 0.5 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 0.5, ml: 0.5 }}
+            >
               <Typography variant="caption" color="text.secondary">
                 {isAPI ? maskApiKey(value) : formatSimpleValue(value)}
               </Typography>
@@ -238,16 +263,16 @@ export default function RAGSessionSummary({
                   onClick={() => handleCopyToClipboard(value)}
                   sx={{
                     p: 0.25,
-                    minWidth: 'auto',
-                    color: 'text.secondary',
-                    '&:hover': {
-                      color: 'primary.main',
-                      backgroundColor: 'action.hover'
-                    }
+                    minWidth: "auto",
+                    color: "text.secondary",
+                    "&:hover": {
+                      color: "primary.main",
+                      backgroundColor: "action.hover",
+                    },
                   }}
                   title={t("generative:rag.summary.apiKeyCopied")}
                 >
-                  <ContentCopyIcon sx={{ fontSize: '0.75rem' }} />
+                  <ContentCopyIcon sx={{ fontSize: "0.75rem" }} />
                 </IconButton>
               )}
             </Box>
@@ -255,17 +280,17 @@ export default function RAGSessionSummary({
             <Button
               variant="text"
               size="small"
-              startIcon={<InfoIcon sx={{ fontSize: '0.75rem' }} />}
+              startIcon={<InfoIcon sx={{ fontSize: "0.75rem" }} />}
               onClick={() => handleParameterClick(key, value, componentName)}
-              sx={{ 
-                ml: 0.5, 
+              sx={{
+                ml: 0.5,
                 p: 0.25,
-                minHeight: 'auto',
-                textTransform: 'none',
-                color: 'primary.main',
-                '&:hover': {
-                  backgroundColor: 'action.hover'
-                }
+                minHeight: "auto",
+                textTransform: "none",
+                color: "primary.main",
+                "&:hover": {
+                  backgroundColor: "action.hover",
+                },
               }}
             >
               {t("generative:rag.summary.viewDetails")}
@@ -287,49 +312,61 @@ export default function RAGSessionSummary({
    * @param {string}  props.componentName - Display name for the component.
    * @returns {JSX.Element}
    */
-  const CollapsibleParameterCard = ({ icon, title, component, params, sectionKey, componentName }) => (
-    <Box 
-      sx={{ 
-        border: 1, 
-        borderColor: 'divider', 
-        borderRadius: 1, 
-        backgroundColor: 'background.box',
+  const CollapsibleParameterCard = ({
+    icon,
+    title,
+    component,
+    params,
+    sectionKey,
+    componentName,
+  }) => (
+    <Box
+      sx={{
+        border: 1,
+        borderColor: "divider",
+        borderRadius: 1,
+        backgroundColor: "background.box",
         mt: 2,
-        overflow: 'hidden',
-        mb: 2
+        overflow: "hidden",
+        mb: 2,
       }}
     >
       {/* Header */}
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           p: 2,
-          backgroundColor: 'background.box',
-          cursor: 'pointer'
+          backgroundColor: "background.box",
+          cursor: "pointer",
         }}
         onClick={() => toggleSection(sectionKey)}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           <Typography variant="body2">{icon}</Typography>
           <Typography variant="subtitle1">
-            {title}: <Typography component="span" color="text.primary">{component}</Typography>
+            {title}:{" "}
+            <Typography component="span" color="text.primary">
+              {component}
+            </Typography>
           </Typography>
         </Box>
-        
+
         <IconButton size="small">
-          <ExpandMoreIcon 
-            sx={{ 
-              transform: expandedSections[sectionKey] ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 0.3s'
-            }} 
+          <ExpandMoreIcon
+            sx={{
+              transform: expandedSections[sectionKey]
+                ? "rotate(180deg)"
+                : "rotate(0deg)",
+              transition: "transform 0.3s",
+            }}
           />
         </IconButton>
       </Box>
 
       <Collapse in={expandedSections[sectionKey]} timeout="auto">
-        <Box sx={{ p: 2, pt: 1, backgroundColor: 'background.box' }}>
+        <Box sx={{ p: 2, pt: 1, backgroundColor: "background.box" }}>
           {renderParametersList(params, componentName)}
         </Box>
       </Collapse>
@@ -401,8 +438,8 @@ export default function RAGSessionSummary({
       {/* RAG Breadcrumbs */}
       <RAGBreadcrumbs sessionName={sessionData?.name} />
 
-      <Box 
-        display="flex" 
+      <Box
+        display="flex"
         width="100%"
         justifyContent="space-between"
         alignItems="flex-start"
@@ -447,29 +484,30 @@ export default function RAGSessionSummary({
                 <IconButton
                   size="small"
                   onClick={handleToggleEditMode}
-                  sx={{ color: 'text.secondary' }}
+                  sx={{ color: "text.secondary" }}
                   aria-label={t("generative:rag.summary.edit")}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
               </Box>
               <Typography variant="body1" color="text.secondary" mb={2}>
-                {sessionData.description || t("generative:rag.summary.descriptionPlaceholder")}
+                {sessionData.description ||
+                  t("generative:rag.summary.descriptionPlaceholder")}
               </Typography>
               <Box display="flex" gap={1}>
-                <Chip 
-                  label={t("generative:rag.summary.title")} 
-                  color="text.secondary" 
+                <Chip
+                  label={t("generative:rag.summary.title")}
+                  color="text.secondary"
                   variant="outlined"
                   size="small"
-                  sx={{ color: 'text.secondary' }}
+                  sx={{ color: "text.secondary" }}
                 />
-                <Chip 
+                <Chip
                   label={`${t("generative:rag.summary.createdLabel")} ${new Date(sessionData.created).toLocaleDateString()}`}
                   variant="outlined"
                   size="small"
                   color="text.secondary"
-                  sx={{ color: 'text.secondary' }}
+                  sx={{ color: "text.secondary" }}
                 />
               </Box>
             </>
@@ -477,7 +515,12 @@ export default function RAGSessionSummary({
         </Box>
 
         {/* Right: Action Buttons */}
-        <Box display="flex" flexDirection="column" gap={1} alignItems="flex-end">
+        <Box
+          display="flex"
+          flexDirection="column"
+          gap={1}
+          alignItems="flex-end"
+        >
           {isEditing ? (
             <>
               <Button
@@ -495,7 +538,7 @@ export default function RAGSessionSummary({
                 onClick={handleToggleEditMode}
                 disabled={isSaving}
                 aria-label={t("generative:rag.summary.cancel")}
-                sx={{ color: 'text.secondary' }}
+                sx={{ color: "text.secondary" }}
               >
                 <CloseIcon fontSize="small" />
               </IconButton>
@@ -511,12 +554,12 @@ export default function RAGSessionSummary({
                 px: 4,
                 borderRadius: 2,
                 boxShadow: 3,
-                textTransform: 'none',
-                '&:hover': {
+                textTransform: "none",
+                "&:hover": {
                   boxShadow: 6,
-                  transform: 'translateY(-1px)',
+                  transform: "translateY(-1px)",
                 },
-                transition: 'all 0.2s ease-in-out'
+                transition: "all 0.2s ease-in-out",
               }}
             >
               {t("generative:rag.summary.openChatButton")}
@@ -525,20 +568,25 @@ export default function RAGSessionSummary({
         </Box>
       </Box>
 
-      <Grid container spacing={3} sx={{ width: '100%' }}>
-        <Grid item sx={{ backgroundColor: 'background.box', width: '100%' }}>
-          <Card sx={{ backgroundColor: 'background.box' }}>
+      <Grid container spacing={3} sx={{ width: "100%" }}>
+        <Grid item sx={{ backgroundColor: "background.box", width: "100%" }}>
+          <Card sx={{ backgroundColor: "background.box" }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={3}>
-                <SettingsIcon sx={{ mr: 1, color: 'primary.main' }} />
+                <SettingsIcon sx={{ mr: 1, color: "primary.main" }} />
                 <Typography variant="h6">
                   {t("generative:rag.summary.detailedConfig")}
                 </Typography>
               </Box>
-              
+
               {parameters.chunking_model && (
                 <CollapsibleParameterCard
-                  icon={<ContentCutIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
+                  icon={
+                    <ContentCutIcon
+                      fontSize="small"
+                      sx={{ color: "text.secondary" }}
+                    />
+                  }
                   title={t("generative:rag.summary.chunkingModel")}
                   component={parameters.chunking_model.component}
                   params={parameters.chunking_model.params}
@@ -549,7 +597,12 @@ export default function RAGSessionSummary({
 
               {parameters.retriever_model && (
                 <CollapsibleParameterCard
-                  icon={<LeaderboardIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
+                  icon={
+                    <LeaderboardIcon
+                      fontSize="small"
+                      sx={{ color: "text.secondary" }}
+                    />
+                  }
                   title={t("generative:rag.summary.retrieverModel")}
                   component={parameters.retriever_model.component}
                   params={parameters.retriever_model.params}
@@ -560,7 +613,12 @@ export default function RAGSessionSummary({
 
               {parameters.generation_model && (
                 <CollapsibleParameterCard
-                  icon={<BoltIcon fontSize="small" sx={{ color: 'text.secondary' }} />}
+                  icon={
+                    <BoltIcon
+                      fontSize="small"
+                      sx={{ color: "text.secondary" }}
+                    />
+                  }
                   title={t("generative:rag.summary.generationModel")}
                   component={parameters.generation_model.component}
                   params={parameters.generation_model.params}
@@ -580,9 +638,14 @@ export default function RAGSessionSummary({
         fullWidth
       >
         <DialogTitle>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
             <Typography variant="h6">
-              {modalContent?.title || t("generative:rag.summary.parameterDetails")}
+              {modalContent?.title ||
+                t("generative:rag.summary.parameterDetails")}
             </Typography>
             <IconButton onClick={() => setModalOpen(false)} size="small">
               <CloseIcon />
@@ -597,17 +660,21 @@ export default function RAGSessionSummary({
             <Box
               component="pre"
               sx={{
-                bgcolor: 'background.paper',
-                color: 'text.secondary',
+                bgcolor: "background.paper",
+                color: "text.secondary",
                 p: 2,
               }}
             >
-              {modalContent?.content ? JSON.stringify(modalContent.content, null, 2) : ''}
+              {modalContent?.content
+                ? JSON.stringify(modalContent.content, null, 2)
+                : ""}
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setModalOpen(false)}>{t("generative:rag.summary.close")}</Button>
+          <Button onClick={() => setModalOpen(false)}>
+            {t("generative:rag.summary.close")}
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

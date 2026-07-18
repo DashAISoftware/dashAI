@@ -1,4 +1,11 @@
-import { Box, Button, Dialog, IconButton, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Dialog,
+  IconButton,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import PropTypes from "prop-types";
 import AddIcon from "@mui/icons-material/AddCircleOutline";
@@ -45,7 +52,9 @@ export default function DocumentSelector({
   const [previewDoc, setPreviewDoc] = useState(null);
   const [txtContent, setTxtContent] = useState("");
 
-  const previousSelectedIdsRef = useRef(JSON.stringify([...initialSelectedIds].map(String).sort()));
+  const previousSelectedIdsRef = useRef(
+    JSON.stringify([...initialSelectedIds].map(String).sort()),
+  );
 
   const localization = i18n.language.startsWith("es")
     ? MRT_Localization_ES
@@ -86,7 +95,10 @@ export default function DocumentSelector({
   }, []);
 
   useEffect(() => {
-    if (getNormalizedIdsKey(selectedIds) !== getNormalizedIdsKey(initialSelectedIds)) {
+    if (
+      getNormalizedIdsKey(selectedIds) !==
+      getNormalizedIdsKey(initialSelectedIds)
+    ) {
       setSelectedIds([...initialSelectedIds]);
     }
   }, [initialSelectedIds]);
@@ -384,7 +396,7 @@ export default function DocumentSelector({
       <Typography variant="body2" color="textSecondary">
         {t("generative:rag.setup.selectDocumentsDescription")}
       </Typography>
-      
+
       <MaterialReactTable table={table} />
 
       <Button
@@ -409,7 +421,7 @@ export default function DocumentSelector({
             minHeight: "300px",
             display: "flex",
             flexDirection: "column",
-          }
+          },
         }}
       >
         <Upload
@@ -417,7 +429,6 @@ export default function DocumentSelector({
           multiple={true}
           emptyUploadText={t("generative:rag.documents.emptyUploadText")}
         />
-
       </Dialog>
       <DocumentPreviewModal
         open={previewOpen}

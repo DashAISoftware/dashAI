@@ -73,8 +73,10 @@ export default function RAGSessionSetup({
   const goToDocumentsDetail = () => navigate("/app/generative/RAG/documents");
 
   const [suggestedName, setSuggestedName] = useState(() => {
-    const sessionsList = Array.isArray(existingSessions) ? existingSessions : [];
-    const ragSessions = sessionsList.filter(s => s?.task_name === "RAGTask");
+    const sessionsList = Array.isArray(existingSessions)
+      ? existingSessions
+      : [];
+    const ragSessions = sessionsList.filter((s) => s?.task_name === "RAGTask");
     const { defaultName } = generateSequentialName({
       base: "RAG_Session",
       items: ragSessions,
@@ -85,20 +87,28 @@ export default function RAGSessionSetup({
 
   useEffect(() => {
     let cancelled = false;
-    getSessions().then((allSessions) => {
-      if (cancelled) return;
-      const ragSessions = (allSessions || []).filter(s => s?.task_name === "RAGTask");
-      const { defaultName } = generateSequentialName({
-        base: "RAG_Session",
-        items: ragSessions,
-        getName: (session) => session?.name,
-      });
-      setSuggestedName(defaultName || "RAG_Session_1");
-    }).catch(() => {});
-    return () => { cancelled = true; };
+    getSessions()
+      .then((allSessions) => {
+        if (cancelled) return;
+        const ragSessions = (allSessions || []).filter(
+          (s) => s?.task_name === "RAGTask",
+        );
+        const { defaultName } = generateSequentialName({
+          base: "RAG_Session",
+          items: ragSessions,
+          getName: (session) => session?.name,
+        });
+        setSuggestedName(defaultName || "RAG_Session_1");
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const [isNameTouched, setIsNameTouched] = useState(Boolean(initialData?.name));
+  const [isNameTouched, setIsNameTouched] = useState(
+    Boolean(initialData?.name),
+  );
   const [sessionData, setSessionData] = useState({
     ...defaultSessionData,
     name: initialData?.name || suggestedName,
@@ -119,9 +129,14 @@ export default function RAGSessionSetup({
 
   const [isGeneratorValidState, setIsGeneratorValidState] = useState(false);
 
-  let chunkSize = sessionData.parameters.chunking_model?.params?.chunk_size || 0;
+  let chunkSize =
+    sessionData.parameters.chunking_model?.params?.chunk_size || 0;
   // If chunking model is character based, use 1 token = 4 characters as a rough estimate
-  if (sessionData.parameters.chunking_model?.component?.toLowerCase().includes("character")) {
+  if (
+    sessionData.parameters.chunking_model?.component
+      ?.toLowerCase()
+      .includes("character")
+  ) {
     chunkSize = Math.ceil(chunkSize / 4);
   }
   const topK = sessionData.parameters.retriever_model?.params?.top_k || 0;
@@ -141,9 +156,11 @@ export default function RAGSessionSetup({
       return;
     }
 
-    const sessionsList = Array.isArray(existingSessions) ? existingSessions : [];
+    const sessionsList = Array.isArray(existingSessions)
+      ? existingSessions
+      : [];
     const isDuplicate = sessionsList.some(
-      (session) => session?.name?.toLowerCase() === trimmedValue
+      (session) => session?.name?.toLowerCase() === trimmedValue,
     );
     setIsDuplicateName(isDuplicate);
   }, [sessionData.name, existingSessions]);
@@ -265,11 +282,15 @@ export default function RAGSessionSetup({
    */
   const validateConfiguration = () => {
     if (!sessionData.name.trim()) {
-      enqueueSnackbar(t("generative:rag.validation.nameRequired"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.nameRequired"), {
+        variant: "warning",
+      });
       return false;
     }
     if (isDuplicateName) {
-      enqueueSnackbar(t("generative:rag.validation.nameUnique"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.nameUnique"), {
+        variant: "warning",
+      });
       return false;
     }
     if (sessionData.documents.length === 0) {
@@ -279,23 +300,33 @@ export default function RAGSessionSetup({
       return false;
     }
     if (!sessionData.parameters.chunking_model?.component) {
-      enqueueSnackbar(t("generative:rag.validation.chunkingRequired"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.chunkingRequired"), {
+        variant: "warning",
+      });
       return false;
     }
     if (!sessionData.parameters.retriever_model?.component) {
-      enqueueSnackbar(t("generative:rag.validation.retrieverRequired"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.retrieverRequired"), {
+        variant: "warning",
+      });
       return false;
     }
     if (!sessionData.parameters.generation_model?.component) {
-      enqueueSnackbar(t("generative:rag.validation.generatorRequired"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.generatorRequired"), {
+        variant: "warning",
+      });
       return false;
     }
     if (!isGeneratorValidState) {
-      enqueueSnackbar(t("generative:rag.validation.generatorInvalid"), { variant: "error" });
+      enqueueSnackbar(t("generative:rag.validation.generatorInvalid"), {
+        variant: "error",
+      });
       return false;
     }
     if (!sessionData.parameters.prompt?.component) {
-      enqueueSnackbar(t("generative:rag.validation.promptRequired"), { variant: "warning" });
+      enqueueSnackbar(t("generative:rag.validation.promptRequired"), {
+        variant: "warning",
+      });
       return false;
     }
     return true;
@@ -303,13 +334,28 @@ export default function RAGSessionSetup({
 
   const isConfigurationComplete = useMemo(() => {
     const isNameValid = Boolean(sessionData.name?.trim()) && !isDuplicateName;
-    const areDocsValid = Array.isArray(sessionData.documents) && sessionData.documents.length > 0;
-    const isChunkingValid = Boolean(sessionData.parameters.chunking_model?.component);
-    const isRetrieverValid = Boolean(sessionData.parameters.retriever_model?.component);
-    const isGeneratorSelected = Boolean(sessionData.parameters.generation_model?.component);
+    const areDocsValid =
+      Array.isArray(sessionData.documents) && sessionData.documents.length > 0;
+    const isChunkingValid = Boolean(
+      sessionData.parameters.chunking_model?.component,
+    );
+    const isRetrieverValid = Boolean(
+      sessionData.parameters.retriever_model?.component,
+    );
+    const isGeneratorSelected = Boolean(
+      sessionData.parameters.generation_model?.component,
+    );
     const isPromptValid = sessionData.parameters.prompt?.component;
 
-    return isNameValid && areDocsValid && isChunkingValid && isRetrieverValid && isGeneratorValidState && isGeneratorSelected && isPromptValid;
+    return (
+      isNameValid &&
+      areDocsValid &&
+      isChunkingValid &&
+      isRetrieverValid &&
+      isGeneratorValidState &&
+      isGeneratorSelected &&
+      isPromptValid
+    );
   }, [sessionData, isGeneratorValidState, isDuplicateName]);
 
   /**
@@ -338,7 +384,9 @@ export default function RAGSessionSetup({
       };
 
       const createdSession = await createRAGSession(finalSessionData);
-      enqueueSnackbar(t("generative:rag.messages.success"), { variant: "success" });
+      enqueueSnackbar(t("generative:rag.messages.success"), {
+        variant: "success",
+      });
 
       if (onSessionCreated) {
         onSessionCreated(createdSession);
@@ -349,7 +397,7 @@ export default function RAGSessionSetup({
       console.error("Error creating RAG session:", error);
       enqueueSnackbar(
         error.message || t("generative:error.failedToCreateSession"),
-        { variant: "error" }
+        { variant: "error" },
       );
     } finally {
       setSaving(false);
@@ -357,46 +405,48 @@ export default function RAGSessionSetup({
   };
 
   return (
+    <Box width="100%" height="100%" display="flex" flexDirection="column">
       <Box
-        width="100%"
-        height="100%"
-        display="flex"
-        flexDirection="column"
+        flex={1}
+        overflow="auto"
+        sx={{ display: "flex", flexDirection: "column", gap: 3 }}
       >
-        <Box flex={1} overflow="auto" sx={{display: "flex", flexDirection: "column", gap: 3}}>
+        <RAGSectionColumn>
+          <Typography variant="h5" component="h3">
+            {t("generative:rag.setup.title")}
+          </Typography>
+          <Typography variant="body2" color="textSecondary">
+            {t("generative:rag.setup.subtitle")}
+          </Typography>
+        </RAGSectionColumn>
 
-          <RAGSectionColumn>
-            <Typography variant="h5" component="h3">
-              {t("generative:rag.setup.title")}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              {t("generative:rag.setup.subtitle")}
-            </Typography>
-          </RAGSectionColumn>
+        <RAGCard
+          title={t("generative:rag.setup.sessionDetails")}
+          expanded={expandedSections.sessionDetails}
+          onChange={handleSectionChange("sessionDetails")}
+        >
+          <SectionCard>
+            <RAGSectionColumn>
+              <TextField
+                fullWidth
+                label={t("generative:rag.setup.sessionName")}
+                variant="outlined"
+                value={sessionData.name}
+                onChange={handleSessionNameChange}
+                placeholder={t("generative:rag.setup.sessionNamePlaceholder")}
+                error={Boolean(nameError) || isDuplicateName}
+                helperText={
+                  nameError ||
+                  (isDuplicateName
+                    ? t("generative:rag.setup.sessionNameDuplicate")
+                    : "")
+                }
+                size="medium"
+                disabled={saving}
+              />
 
-
-          <RAGCard
-            title={t("generative:rag.setup.sessionDetails")}
-            expanded={expandedSections.sessionDetails}
-            onChange={handleSectionChange("sessionDetails")}
-          >
-            <SectionCard>
-              <RAGSectionColumn>
-                <TextField
-                  fullWidth
-                  label={t("generative:rag.setup.sessionName")}
-                  variant="outlined"
-                  value={sessionData.name}
-                  onChange={handleSessionNameChange}
-                  placeholder={t("generative:rag.setup.sessionNamePlaceholder")}
-                  error={Boolean(nameError) || isDuplicateName}
-                  helperText={nameError || (isDuplicateName ? t("generative:rag.setup.sessionNameDuplicate") : "")}
-                  size="medium"
-                  disabled={saving}
-                  />
-
-                {isDuplicateName && (
-                  <Alert
+              {isDuplicateName && (
+                <Alert
                   severity="warning"
                   sx={{
                     p: 2,
@@ -408,148 +458,150 @@ export default function RAGSessionSetup({
                     alignItems: "center",
                     gap: 1,
                   }}
-                  >
-                    <Typography variant="body2">
-                      {t("generative:rag.setup.sessionNameDuplicateAlert")}
-                    </Typography>
-                  </Alert>
-                )}
+                >
+                  <Typography variant="body2">
+                    {t("generative:rag.setup.sessionNameDuplicateAlert")}
+                  </Typography>
+                </Alert>
+              )}
 
-                <TextField
-                  fullWidth
-                  label={t("generative:rag.setup.description")}
-                  variant="outlined"
-                  value={sessionData.description}
-                  onChange={handleSessionDescriptionChange}
-                  placeholder={t("generative:rag.setup.descriptionPlaceholder")}
-                  multiline
-                  rows={3}
-                  size="medium"
-                  disabled={saving}
-                  />
-              </RAGSectionColumn>
-            </SectionCard>
-          </RAGCard>
-
-          <RAGCard
-            title={t("generative:rag.setup.selectDocuments")}
-            expanded={expandedSections.documents}
-            onChange={handleSectionChange("documents")}
-            actions={[
-              {
-                icon: <ViewListIcon fontSize="small" />,
-                tooltip: t("generative:rag.setup.openDocumentsLibrary"),
-                onClick: goToDocumentsDetail,
-                ariaLabel: "open-documents-library",
-              },
-            ]}
-          >
-            <SectionCard>
-              <DocumentSelector
-                selectedIds={sessionData.documents}
-                onSelect={handleDocumentSelectionChange}
+              <TextField
+                fullWidth
+                label={t("generative:rag.setup.description")}
+                variant="outlined"
+                value={sessionData.description}
+                onChange={handleSessionDescriptionChange}
+                placeholder={t("generative:rag.setup.descriptionPlaceholder")}
+                multiline
+                rows={3}
+                size="medium"
+                disabled={saving}
               />
-            </SectionCard>
-          </RAGCard>
+            </RAGSectionColumn>
+          </SectionCard>
+        </RAGCard>
 
-          <RAGCard
-            title={t("generative:rag.setup.chunkingStrategy")}
-            expanded={expandedSections.chunking}
-            onChange={handleSectionChange("chunking")}
-          >
-            <SectionCard>  
-              <ChunkingSection
-                chunkingModel={sessionData.parameters.chunking_model}
-                setChunkingModel={updateChunkingModel}
-                />
-            </SectionCard>
-          </RAGCard>
-
-          <RAGCard
-            title={t("generative:rag.setup.retrieverModel")}
-            expanded={expandedSections.retriever}
-            onChange={handleSectionChange("retriever")}
-          >
-            <SectionCard>
-              <RetrieverSection
-                retrieverModel={sessionData.parameters.retriever_model}
-                setRetrieverModel={updateRetrieverModel}
-              />
-
-            </SectionCard>
-          </RAGCard>
-
-          <RAGCard
-            title={t("generative:rag.setup.promptTemplate")}
-            expanded={expandedSections.prompt}
-            onChange={handleSectionChange("prompt")}
-            actions={[
-              {
-                icon: <ViewListIcon fontSize="small" />,
-                tooltip: t("generative:rag.prompt.openPrompts"),
-                onClick: goToPromptsDetail,
-                ariaLabel: "open-prompt-library",
-              },
-            ]}
-          >
-            <SectionCard>
-              <PromptSection
-                promptModel={sessionData.parameters.prompt}
-                setPromptModel={updatePrompt}
-                onTokenCountChange={setPromptTokenCount}
-                />
-            </SectionCard>
-          </RAGCard>
-
-          <RAGCard
-            title={t("generative:rag.setup.languageModel")}
-            expanded={expandedSections.generator}
-            onChange={handleSectionChange("generator")}
-          >
-            <SectionCard>
-              <GeneratorSection
-                generatorModel={sessionData.parameters.generation_model}
-                setGeneratorModel={updateGeneratorModel}
-                chunkSize={chunkSize}
-                topK={topK}
-                promptTokenCount={promptTokenCount}
-                setIsValid={setIsGeneratorValidState}
-              />
-            </SectionCard>
-          </RAGCard>
-
-        </Box>
-
-        <Box
-          flexShrink={0}
-          display="flex"
-          justifyContent="flex-end"
-          gap={2}
-          sx={{
-            pt: 2,
-            pb: 0,
-            borderTop: "1px solid",
-            borderColor: "divider",
-          }}
+        <RAGCard
+          title={t("generative:rag.setup.selectDocuments")}
+          expanded={expandedSections.documents}
+          onChange={handleSectionChange("documents")}
+          actions={[
+            {
+              icon: <ViewListIcon fontSize="small" />,
+              tooltip: t("generative:rag.setup.openDocumentsLibrary"),
+              onClick: goToDocumentsDetail,
+              ariaLabel: "open-documents-library",
+            },
+          ]}
         >
-          <Button
-            variant="outlined"
-            color="inherit"
-            onClick={onClose}
-            disabled={saving}
-          >
-            {t("generative:rag.setup.cancel")}
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSave}
-            disabled={saving || !isConfigurationComplete}
-            sx={{ minWidth: 120 }}
-          >
-            {saving ? <CircularProgress size={20} /> : t("generative:rag.setup.saveSession")}
-          </Button>
-        </Box>
+          <SectionCard>
+            <DocumentSelector
+              selectedIds={sessionData.documents}
+              onSelect={handleDocumentSelectionChange}
+            />
+          </SectionCard>
+        </RAGCard>
+
+        <RAGCard
+          title={t("generative:rag.setup.chunkingStrategy")}
+          expanded={expandedSections.chunking}
+          onChange={handleSectionChange("chunking")}
+        >
+          <SectionCard>
+            <ChunkingSection
+              chunkingModel={sessionData.parameters.chunking_model}
+              setChunkingModel={updateChunkingModel}
+            />
+          </SectionCard>
+        </RAGCard>
+
+        <RAGCard
+          title={t("generative:rag.setup.retrieverModel")}
+          expanded={expandedSections.retriever}
+          onChange={handleSectionChange("retriever")}
+        >
+          <SectionCard>
+            <RetrieverSection
+              retrieverModel={sessionData.parameters.retriever_model}
+              setRetrieverModel={updateRetrieverModel}
+            />
+          </SectionCard>
+        </RAGCard>
+
+        <RAGCard
+          title={t("generative:rag.setup.promptTemplate")}
+          expanded={expandedSections.prompt}
+          onChange={handleSectionChange("prompt")}
+          actions={[
+            {
+              icon: <ViewListIcon fontSize="small" />,
+              tooltip: t("generative:rag.prompt.openPrompts"),
+              onClick: goToPromptsDetail,
+              ariaLabel: "open-prompt-library",
+            },
+          ]}
+        >
+          <SectionCard>
+            <PromptSection
+              promptModel={sessionData.parameters.prompt}
+              setPromptModel={updatePrompt}
+              onTokenCountChange={setPromptTokenCount}
+            />
+          </SectionCard>
+        </RAGCard>
+
+        <RAGCard
+          title={t("generative:rag.setup.languageModel")}
+          expanded={expandedSections.generator}
+          onChange={handleSectionChange("generator")}
+        >
+          <SectionCard>
+            <GeneratorSection
+              generatorModel={sessionData.parameters.generation_model}
+              setGeneratorModel={updateGeneratorModel}
+              chunkSize={chunkSize}
+              topK={topK}
+              promptTokenCount={promptTokenCount}
+              setIsValid={setIsGeneratorValidState}
+            />
+          </SectionCard>
+        </RAGCard>
       </Box>
-    );
+
+      <Box
+        flexShrink={0}
+        display="flex"
+        justifyContent="flex-end"
+        gap={2}
+        sx={{
+          pt: 2,
+          pb: 0,
+          borderTop: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Button
+          variant="outlined"
+          color="inherit"
+          onClick={onClose}
+          disabled={saving}
+        >
+          {t("generative:rag.setup.cancel")}
+        </Button>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleSave}
+          disabled={saving || !isConfigurationComplete}
+          sx={{ minWidth: 120 }}
+        >
+          {saving ? (
+            <CircularProgress size={20} />
+          ) : (
+            t("generative:rag.setup.saveSession")
+          )}
+        </Button>
+      </Box>
+    </Box>
+  );
 }
