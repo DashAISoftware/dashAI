@@ -14,7 +14,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.embeddings import DenseEmbedding
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
-
+from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 # NOTE: The entire chunk index (similarity_matrix) is loaded into memory,
 # which is fine for typical use with tens to low hundreds of documents but
 # may be a bottleneck for very large collections.
@@ -94,14 +94,6 @@ class DenseRetriever(UnitRetriever):
                 f"got {type(embedding_model).__name__}"
             )
         self.embedding_model = embedding_model
-        encoding_class_name = embedding_model.__class__.__name__
-        encoding_params = dict(sorted(embedding_model.params.items()))
-
-        self.params["encoding_model"] = {
-            "class_name": encoding_class_name,
-            "parameters": encoding_params,
-        }
-
         self.compute_missing_embeddings()
         self.init_similarity_matrix()
 
@@ -120,6 +112,8 @@ class DenseRetriever(UnitRetriever):
             if os.path.exists(matrix_path):
                 continue
             chunk_texts = [chunk.text for chunk in doc_chunks.values()]
+            if not chunk_texts:
+                raise RAGRetrieverError(f"No chunks found for document ID {doc_id}.")
             embeddings = self.embedding_model.batch_encode(chunk_texts)
             os.makedirs(matrix_dir, exist_ok=True)
             np.save(matrix_path, embeddings)

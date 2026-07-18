@@ -505,9 +505,10 @@ async def update_generative_session_params(
             # ── RAG-specific validation of new_params ──
             if task_class is not None and task_class == RAGTask:
                 try:
-                    normalized = RAGSetupService.validate_update_payload(
-                        new_params, db, component_registry
-                    )
+                    config = di["config"]
+                    normalized = RAGSetupService(
+                        db, component_registry, config["RAG_PATH"]
+                    ).validate_update_payload(new_params)
                 except (ValueError, RAGWorkflowError) as e:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)

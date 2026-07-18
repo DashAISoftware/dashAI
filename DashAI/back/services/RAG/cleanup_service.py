@@ -125,6 +125,8 @@ class CleanupService:
     def _delete_path(path_value: str | None) -> None:
         """Delete a filesystem path recursively if it exists.
 
+        Logs a warning if deletion fails (e.g. permission error, file in use).
+
         Args:
             path_value: Absolute path to delete. Silently skipped if
                 ``None`` or the path does not exist.
@@ -133,7 +135,10 @@ class CleanupService:
             return
         path = Path(path_value)
         if path.exists():
-            shutil.rmtree(path, ignore_errors=True)
+            try:
+                shutil.rmtree(path)
+            except OSError as exc:
+                log.warning("Failed to remove %s: %s", path_value, exc)
 
     def _other_sessions_with_same_config(
         self,

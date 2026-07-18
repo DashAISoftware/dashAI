@@ -43,8 +43,6 @@ class RAGModelsFactory:
                 names to their implementations.
         """
         self._registry = registry
-        self._llm_factory = LLMFactory(registry)
-        self._prompt_factory = PromptFactory(registry)
 
     def create_chunking_model(
         self,
@@ -70,8 +68,8 @@ class RAGModelsFactory:
 
     def create_prompt(self, component: str, params: dict) -> PromptFactoryResult:
         """Build a prompt via PromptFactory. Phase 1 only."""
-        return self._prompt_factory.create(component, params)
+        return PromptFactory(self._registry).create(component, params)
 
     def create_llm(self, component: str, params: dict) -> LLMFactoryResult:
         """Build an LLM via LLMFactory. Phase 1 only."""
-        return self._llm_factory.create(component, params)
+        return LLMFactory(self._registry).create(component, params)

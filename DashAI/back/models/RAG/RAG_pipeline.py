@@ -132,9 +132,6 @@ class RAGPipelineConfig:
         for key in RAG_PARAM_KEYS:
             if key not in kwargs:
                 missing.append(key)
-        for key in RAG_MODEL_KEYS:
-            if key not in kwargs:
-                missing.append(key)
         if missing:
             raise RAGPipelineConfigError(
                 f"Missing required parameters: {sorted(missing)}"

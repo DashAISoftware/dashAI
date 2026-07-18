@@ -123,9 +123,11 @@ class RAGJob(BaseJob):
     def run(self) -> None:
         """Execute the full RAG pipeline lifecycle as a background job.
 
-        Loads the generative process and session, filters parameters via
-        whitelist, instantiates the RAG pipeline, runs inference, and
-        persists the output.
+        Uses two separate DB sessions to avoid holding a connection open
+        during LLM inference (which may take minutes):
+        - **Session 1**: load data, build pipeline, prepare input, mark as started.
+        - **(no session)**: LLM inference via ``model.generate()``.
+        - **Session 2**: save output, mark as finished.
 
         Raises:
             JobError: If any stage of execution fails.
@@ -134,202 +136,136 @@ class RAGJob(BaseJob):
         session_factory = di["session_factory"]
         config = di["config"]
 
-        model = None
-        generative_process = None
-
-        # Validate required kwargs before any DB access
         if "generative_process_id" not in self.kwargs:
             raise JobError("RAGJob requires 'generative_process_id' in kwargs.")
 
-        # NOTE: The DB session spans the entire job lifecycle including LLM
-        # inference, which risks connection timeouts for long-running
-        # generations. Possible solutions: use a session-per-operation pattern
-        # (open/close for each DB interaction) or configure a longer connection
-        # timeout on the SQLAlchemy engine.
-        with session_factory() as db:
-            try:
-                generative_process_id: int = self.kwargs["generative_process_id"]
+        generative_process_id: int = self.kwargs["generative_process_id"]
+        model = None
 
-                try:
-                    generative_process: GenerativeProcess = db.get(
-                        GenerativeProcess, generative_process_id
-                    )
-                    if not generative_process:
-                        raise JobError(
-                            f"Generative process {generative_process_id} "
-                            "not found in DB."
-                        )
-                    log.debug("Loaded generative process %d", generative_process_id)
-                except Exception as e:
-                    log.exception(e)
-                    if generative_process:
-                        generative_process.set_status_as_error()
-                        db.commit()
-                    raise JobError("Error retrieving generative process.") from e
-
-                try:
-                    generative_session: GenerativeSession = db.get(
-                        GenerativeSession, generative_process.session_id
-                    )
-                    if not generative_session:
-                        raise JobError(
-                            f"Session {generative_process.session_id} not found in DB."
-                        )
-                    log.debug("Loaded generative session %d", generative_session.id)
-                except Exception as e:
-                    log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError("Error retrieving generative session.") from e
-
-                try:
-                    # Whitelist-only: accept only known RAG pipeline keys.
-                    # generative_session.parameters is a JSON column that may
-                    # contain legacy or metadata keys (e.g. prompt_id).
-                    raw_params = dict(generative_session.parameters)
-                    extra_keys: set[str] = set(raw_params) - _RAG_PARAM_KEYS
-                    if extra_keys:
-                        log.debug(
-                            "Filtered extra session parameter keys: %s",
-                            sorted(extra_keys),
-                        )
-                    clean_params = {}
-                    for key in raw_params:
-                        if key in _RAG_PARAM_KEYS:
-                            clean_params[key] = raw_params[key]
-                    pipeline_config = RAGPipelineConfig.from_kwargs(
-                        db=db,
-                        component_registry=component_registry,
-                        session_id=generative_session.id,
-                        env_RAG_path=config["RAG_PATH"],
-                        **clean_params,
-                    )
-                    log.debug(
-                        "Created RAG pipeline config for session %d",
-                        generative_session.id,
-                    )
-                    setup_service = RAGSetupService(
-                        db,
-                        component_registry,
-                        config["RAG_PATH"],
-                    )
-                    model: RAGPipeline = setup_service.build_pipeline(
-                        pipeline_config,
-                    )
-                    log.debug(
-                        "Created RAG pipeline model for session %d",
-                        generative_session.id,
-                    )
-                except Exception as e:
-                    log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
+        # ── Session 1: Load, build, prepare ────────────────────────────
+        try:
+            with session_factory() as db:
+                generative_process = db.get(GenerativeProcess, generative_process_id)
+                if not generative_process:
                     raise JobError(
-                        "Error instantiating RAG pipeline with given parameters."
-                    ) from e
+                        f"Generative process {generative_process_id} not found in DB."
+                    )
+                generative_session = db.get(
+                    GenerativeSession, generative_process.session_id
+                )
+                if not generative_session:
+                    raise JobError(
+                        f"Session {generative_process.session_id} not found in DB."
+                    )
 
+                # Whitelist-only: accept only known RAG pipeline keys.
+                raw_params = dict(generative_session.parameters)
+                extra_keys: set[str] = set(raw_params) - _RAG_PARAM_KEYS
+                if extra_keys:
+                    log.debug(
+                        "Filtered extra session parameter keys: %s",
+                        sorted(extra_keys),
+                    )
+                clean_params = {
+                    k: v for k, v in raw_params.items() if k in _RAG_PARAM_KEYS
+                }
+                pipeline_config = RAGPipelineConfig.from_kwargs(
+                    db=db,
+                    component_registry=component_registry,
+                    session_id=generative_session.id,
+                    env_RAG_path=config["RAG_PATH"],
+                    **clean_params,
+                )
+                setup_service = RAGSetupService(
+                    db,
+                    component_registry,
+                    config["RAG_PATH"],
+                )
+                model: RAGPipeline = setup_service.build_pipeline(pipeline_config)
+
+                # Build conversation history from prior finished processes
                 input_data = generative_process.input
-
-                try:
-                    task = RAGTask()
-                except Exception as e:
-                    log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError("Error instantiating RAG task.") from e
-
-                try:
-                    history = [
-                        (proc.input[0].data, proc.output[0].data)
-                        for proc in db.query(GenerativeProcess)
-                        .filter(GenerativeProcess.session_id == generative_session.id)
-                        .filter(GenerativeProcess.status == RunStatus.FINISHED)
-                        .all()
-                    ]
-                    input_data = task.prepare_for_task(
-                        input_data,
-                        history=history,
+                task = RAGTask()
+                finished_processes: list[GenerativeProcess] = (
+                    db.query(GenerativeProcess)
+                    .filter(
+                        GenerativeProcess.session_id == generative_session.id,
+                        GenerativeProcess.status == RunStatus.FINISHED,
                     )
-                except Exception as e:
-                    log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError("Error preparing task with history.") from e
+                    .all()
+                )
+                history = [
+                    (p.input[0].data, p.output[0].data) for p in finished_processes
+                ]
+                input_data = task.prepare_for_task(input_data, history=history)
 
-                try:
-                    log.debug(
-                        "Starting generation for process %d", generative_process_id
-                    )
-                    generative_process.set_status_as_started()
-                    db.commit()
-                except exc.SQLAlchemyError as e:
-                    log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
+                generative_process.set_status_as_started()
+                db.commit()
+
+                process_id = generative_process.id
+                log.debug(
+                    "Pipeline built and ready for process %d", generative_process_id
+                )
+        except JobError:
+            self.set_status_as_error()
+            raise
+        except Exception as e:
+            log.exception(e)
+            self.set_status_as_error()
+            raise JobError("Error during RAG pipeline setup.") from e
+
+        # ── Generation (no DB session) ──────────────────────────────────
+        try:
+            output: Any = model.generate(input_data)
+            log.debug("Generation completed for process %d", generative_process_id)
+        except Exception as e:
+            log.exception(e)
+            self.set_status_as_error()
+            raise JobError("Error during RAG model generation.") from e
+
+        # ── Session 2: Save output ──────────────────────────────────────
+        try:
+            with session_factory() as db:
+                generative_process = db.get(GenerativeProcess, process_id)
+                if not generative_process:
                     raise JobError(
-                        "Failed to update process status in database."
-                    ) from e
-
-                try:
-                    output: Any = model.generate(input_data)
-                    log.debug(
-                        "Generation completed for process %d", generative_process_id
+                        f"Generative process {process_id} not found when saving output."
                     )
-                except Exception as e:
-                    log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.add(
+
+                output_data = task.process_output(
+                    output, images_path=config["IMAGES_PATH"]
+                )
+                outputs_for_database = []
+                for o in output_data:
+                    if not isinstance(o, tuple) or len(o) != 2:
+                        raise JobError(
+                            "Output from task must be a list of tuples (data, type)."
+                        )
+                    data, data_type = o
+                    outputs_for_database.append(
                         ProcessData(
-                            data=f"Error details: {str(e)}",
-                            data_type="str",
+                            data=data,
+                            data_type=data_type,
                             process_id=generative_process.id,
                             is_input=False,
                         )
                     )
-                    db.commit()
-                    raise JobError("Error during RAG model generation.") from e
 
-                try:
-                    output = task.process_output(
-                        output, images_path=config["IMAGES_PATH"]
-                    )
-                    outputs_for_database = []
-                    for o in output:
-                        if not isinstance(o, tuple) or len(o) != 2:
-                            raise JobError(
-                                "Output from task must be a list of "
-                                "tuples (data, type)."
-                            )
-                        output_data, output_type = o
-                        process_data = ProcessData(
-                            data=output_data,
-                            data_type=output_type,
-                            process_id=generative_process.id,
-                            is_input=False,
-                        )
-                        outputs_for_database.append(process_data)
+                db.add_all(outputs_for_database)
+                db.commit()
 
-                    db.add_all(outputs_for_database)
-                    db.commit()
+                db.refresh(generative_process)
+                generative_process.set_status_as_finished()
+                db.commit()
+                log.debug("Output saved for process %d", generative_process_id)
+        except Exception as e:
+            log.exception(e)
+            self.set_status_as_error()
+            raise JobError("Error processing and saving RAG generation output.") from e
 
-                    db.refresh(generative_process)
-                    generative_process.set_status_as_finished()
-                    db.commit()
-                    log.debug(
-                        "Output processing completed for process %d",
-                        generative_process_id,
-                    )
-                except Exception as e:
-                    log.exception(e)
-                    generative_process.set_status_as_error()
-                    db.commit()
-                    raise JobError(
-                        "Error processing and saving RAG generation output."
-                    ) from e
-
-            finally:
-                if model:
-                    del model
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-                gc.collect()
+        finally:
+            if model:
+                del model
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+            gc.collect()

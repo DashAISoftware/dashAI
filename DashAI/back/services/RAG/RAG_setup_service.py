@@ -280,13 +280,14 @@ class RAGSetupService:
     # Parameter update validation
     # ------------------------------------------------------------------
 
-    @staticmethod
     def validate_update_payload(
+        self,
         new_params: dict[str, Any],
-        db: Session,
-        registry: ComponentRegistry,
     ) -> dict[str, Any]:
         """Validate a RAG parameter update payload.
+
+        Uses the already-injected ``self._db`` and ``self._registry``
+        from the instance, so callers do not need to pass them again.
 
         Normalizes the payload, validates structure of each component ref,
         checks components exist in the registry, validates documents and
@@ -297,10 +298,6 @@ class RAGSetupService:
         ----------
         new_params : dict
             Raw update payload from the request body.
-        db : Session
-            SQLAlchemy session.
-        registry : ComponentRegistry
-            Application component registry.
 
         Returns
         -------
@@ -329,7 +326,7 @@ class RAGSetupService:
                 raise ValueError(f"Missing 'params' in '{key}'.")
 
         # 3. Validate components exist in registry
-        component_errors = validate_component_refs(normalized, registry)
+        component_errors = validate_component_refs(normalized, self._registry)
         if component_errors:
             raise ValueError("; ".join(component_errors))
 
@@ -338,10 +335,10 @@ class RAGSetupService:
             docs = normalized["documents"]
             if not docs:
                 raise ValueError("Documents list must not be empty.")
-            DocumentService(db).validate_exist(docs)
+            DocumentService(self._db).validate_exist(docs)
 
         # 5. Validate and resolve prompt if provided
-        prompt_service = PromptService(db, registry)
+        prompt_service = PromptService(self._db, self._registry)
         if "prompt_id" in normalized:
             prompt_service.validate_prompt_exists(normalized["prompt_id"])
             normalized["prompt"] = prompt_service.resolve_prompt_id_to_component(

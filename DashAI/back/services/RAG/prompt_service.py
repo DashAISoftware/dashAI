@@ -12,7 +12,7 @@ from DashAI.back.dependencies.database.models import (
     RAGPrompt,
 )
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
-from DashAI.back.models.RAG.exceptions import (
+from DashAI.back.services.RAG.exceptions import (
     RAGDatabaseError,
     RAGPromptValidationError,
 )

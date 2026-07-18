@@ -42,6 +42,15 @@ class EmbeddingStorageService:
     # Path helpers
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def build_matrix_dir_name(
+        doc_id: int, chunk_set_id: int, embedding_model_id: int
+    ) -> str:
+        return (
+            f"doc_id-{doc_id}__chunk_set_id-{chunk_set_id}__"
+            f"embedding_model_id-{embedding_model_id}"
+        )
+
     def _matrix_dir(
         self, doc_id: int, chunk_set_id: int, embedding_model_id: int
     ) -> str:
@@ -50,11 +59,11 @@ class EmbeddingStorageService:
         Format: ``{env_RAG_path}/embeddings/doc_id-{doc_id}__
         chunk_set_id-{chunk_set_id}__embedding_model_id-{embedding_model_id}``
         """
-        folder_name = (
-            f"doc_id-{doc_id}__chunk_set_id-{chunk_set_id}__"
-            f"embedding_model_id-{embedding_model_id}"
+        return os.path.join(
+            self._env_RAG_path,
+            EMBEDDINGS_DIRNAME,
+            self.build_matrix_dir_name(doc_id, chunk_set_id, embedding_model_id),
         )
-        return os.path.join(self._env_RAG_path, EMBEDDINGS_DIRNAME, folder_name)
 
     def _matrix_path(
         self, doc_id: int, chunk_set_id: int, embedding_model_id: int

@@ -47,7 +47,9 @@ class RetrieverDBService:
 
     # ── Bridge / identity helpers ──────────────────────────────────────
 
-    def create_bridge(self, class_name: str, pipeline_id: int) -> RetrieverDBModel:
+    def create_bridge(
+        self, class_name: str, pipeline_id: int, commit: bool = True
+    ) -> RetrieverDBModel:
         """Insert a new canonical identity record in RAG_retriever.
 
         Every retriever (unit or composite) gets one bridge record.
@@ -55,6 +57,7 @@ class RetrieverDBService:
         Args:
             class_name: Retriever component class name.
             pipeline_id: FK to the owning pipeline.
+            commit: When ``True``, commit and refresh; otherwise only flush.
 
         Returns:
             The persisted bridge record with its auto-generated id.
@@ -65,26 +68,15 @@ class RetrieverDBService:
         )
         try:
             self.db.add(bridge_record)
-            self.db.commit()
-            self.db.refresh(bridge_record)
+            if commit:
+                self.db.commit()
+                self.db.refresh(bridge_record)
+            else:
+                self.db.flush()
         except SQLAlchemyError:
             self.db.rollback()
             raise
         return bridge_record
-
-    def get_bridge_by_id(self, bridge_id: int) -> Optional[RetrieverDBModel]:
-        """Fetch a bridge record by its primary key.
-
-        Args:
-            bridge_id: Primary key of the bridge record.
-
-        Returns:
-            The bridge record, or ``None`` if not found.
-        """
-        try:
-            return self.db.query(RetrieverDBModel).get(bridge_id)
-        except SQLAlchemyError:
-            raise
 
     def find_bridge_for_sub_table(
         self,
@@ -152,6 +144,7 @@ class RetrieverDBService:
         storage_folder: str,
         bridge_id: int,
         chunk_set_id: int,
+        commit: bool = True,
     ) -> SparseRetrieverDBModel:
         """Persist a new sparse retriever record and link it to its bridge.
 
@@ -161,6 +154,7 @@ class RetrieverDBService:
             storage_folder: On-disk folder for the sparse model.
             bridge_id: FK to the bridge record.
             chunk_set_id: FK to the chunk set.
+            commit: When ``True``, commit and refresh; otherwise only flush.
 
         Returns:
             The persisted sparse retriever record.
@@ -175,8 +169,11 @@ class RetrieverDBService:
         )
         try:
             self.db.add(record)
-            self.db.commit()
-            self.db.refresh(record)
+            if commit:
+                self.db.commit()
+                self.db.refresh(record)
+            else:
+                self.db.flush()
         except SQLAlchemyError:
             self.db.rollback()
             raise
@@ -241,6 +238,7 @@ class RetrieverDBService:
         bridge_id: int,
         chunk_set_id: int,
         embedding_model_id: int,
+        commit: bool = True,
     ) -> DenseRetrieverDBModel:
         """Persist a new dense retriever record and link it to its bridge.
 
@@ -250,6 +248,7 @@ class RetrieverDBService:
             bridge_id: FK to the bridge record.
             chunk_set_id: FK to the chunk set.
             embedding_model_id: FK to the embedding model.
+            commit: When ``True``, commit and refresh; otherwise only flush.
 
         Returns:
             The persisted dense retriever record.
@@ -264,8 +263,11 @@ class RetrieverDBService:
         )
         try:
             self.db.add(record)
-            self.db.commit()
-            self.db.refresh(record)
+            if commit:
+                self.db.commit()
+                self.db.refresh(record)
+            else:
+                self.db.flush()
         except SQLAlchemyError:
             self.db.rollback()
             raise
@@ -293,54 +295,12 @@ class RetrieverDBService:
 
     # ── Composite retriever ────────────────────────────────────────────
 
-    def find_composite(
-        self, pipeline_id: int, class_name: str
-    ) -> Optional[RetrieverDBModel]:
-        """Find the composite bridge record for a given pipeline.
-
-        Args:
-            pipeline_id: FK to the pipeline.
-            class_name: Composite retriever class name.
-
-        Returns:
-            The bridge record, or ``None`` if not found.
-        """
-        try:
-            return (
-                self.db.query(RetrieverDBModel)
-                .filter_by(
-                    pipeline_id=pipeline_id,
-                    class_name=class_name,
-                )
-                .first()
-            )
-        except SQLAlchemyError:
-            raise
-
-    def find_composite_children(self, parent_id: int) -> List[RAGRetrieverChild]:
-        """Return child links ordered by child_order.
-
-        Args:
-            parent_id: FK to the parent composite bridge record.
-
-        Returns:
-            List of child link records sorted by ``child_order``.
-        """
-        try:
-            return (
-                self.db.query(RAGRetrieverChild)
-                .filter_by(parent_id=parent_id)
-                .order_by(RAGRetrieverChild.child_order)
-                .all()
-            )
-        except SQLAlchemyError:
-            raise
-
     def save_composite(
         self,
         class_name: str,
         pipeline_id: int,
         child_bridge_ids: List[int],
+        commit: bool = True,
     ) -> RetrieverDBModel:
         """Persist a composite bridge record and its child links.
 
@@ -352,6 +312,8 @@ class RetrieverDBService:
             Owning pipeline.
         child_bridge_ids : list[int]
             Ordered list of child bridge ids (RAG_retriever.id).
+        commit : bool
+            When ``True``, commit and refresh; otherwise skip final commit.
 
         Returns
         -------
@@ -373,8 +335,9 @@ class RetrieverDBService:
                         child_order=order,
                     )
                 )
-            self.db.commit()
-            self.db.refresh(bridge_record)
+            if commit:
+                self.db.commit()
+                self.db.refresh(bridge_record)
         except SQLAlchemyError:
             self.db.rollback()
             raise
@@ -386,6 +349,7 @@ class RetrieverDBService:
         self,
         class_name: str,
         parameters: Dict[str, object],
+        commit: bool = True,
     ) -> EmbeddingDBModel:
         """Return an existing EmbeddingDBModel record or create one.
 
@@ -419,8 +383,11 @@ class RetrieverDBService:
         )
         try:
             self.db.add(record)
-            self.db.commit()
-            self.db.refresh(record)
+            if commit:
+                self.db.commit()
+                self.db.refresh(record)
+            else:
+                self.db.flush()
         except SQLAlchemyError:
             self.db.rollback()
             raise
@@ -500,6 +467,7 @@ class RetrieverDBService:
         embedding_model_id: int,
         storage_folder: str,
         matrix_shape: List[int],
+        commit: bool = True,
     ) -> EmbeddingMatrixDBModel:
         """Persist a new embedding matrix record.
 
@@ -509,6 +477,7 @@ class RetrieverDBService:
             embedding_model_id: FK to the embedding model.
             storage_folder: On-disk path to the matrix directory.
             matrix_shape: Shape of the numpy array as ``[rows, cols]``.
+            commit: When ``True``, commit and refresh; otherwise only flush.
 
         Returns:
             The persisted embedding matrix record.
@@ -522,8 +491,11 @@ class RetrieverDBService:
         )
         try:
             self.db.add(record)
-            self.db.commit()
-            self.db.refresh(record)
+            if commit:
+                self.db.commit()
+                self.db.refresh(record)
+            else:
+                self.db.flush()
         except SQLAlchemyError:
             self.db.rollback()
             raise
@@ -612,21 +584,6 @@ class RetrieverDBService:
             if bridge is not None:
                 self.db.delete(bridge)
                 self.db.commit()
-        except SQLAlchemyError:
-            self.db.rollback()
-            raise
-
-    def delete_child_links_by_parent(self, parent_id: int) -> None:
-        """Delete all RAGRetrieverChild rows whose parent_id matches.
-
-        Args:
-            parent_id: FK to the parent composite bridge record.
-        """
-        try:
-            self.db.query(RAGRetrieverChild).filter_by(parent_id=parent_id).delete(
-                synchronize_session="fetch"
-            )
-            self.db.commit()
         except SQLAlchemyError:
             self.db.rollback()
             raise

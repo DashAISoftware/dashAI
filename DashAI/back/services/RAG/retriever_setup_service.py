@@ -63,8 +63,15 @@ class RetrieverSetupService:
 
     The lifecycle is divided into three explicit phases:
         1. Construction — build the model in memory (no I/O, no DB).
+           **Note:** Phase 1 includes one exception — an idempotent
+           ``find_or_create_embedding_model`` call to resolve the embedding
+           model id used in the :class:`DensePersistence` stub.
         2. Initialization — heavy I/O (embeddings, similarity matrices).
         3. Persistence — save to DB (bridge records, sub-table rows).
+
+    **Composite retrievers** are never cached in the DB.  They are always
+    reconstructed fresh because they are lightweight to build (their
+    children are individually cached).
     """
 
     def __init__(
@@ -77,6 +84,9 @@ class RetrieverSetupService:
         pipeline_id: int,
     ):
         """Initialize the retriever setup service.
+
+        Internally creates :attr:`_db_service` (:class:`RetrieverDBService`)
+        and :attr:`_embedding_service` (:class:`EmbeddingStorageService`).
 
         Args:
             db: SQLAlchemy session.
@@ -167,8 +177,8 @@ class RetrieverSetupService:
     ) -> RetrieverSetupResult:
         """Set up a composite retriever (Sequential/Parallel) with children.
 
-        Checks the DB cache first; if found, returns the cached model.
-        Otherwise recursively sets up each child and persists the composite.
+        Always builds fresh — composites are NOT cached since they are
+        lightweight to reconstruct (children are individually cached).
 
         Args:
             model_class: The composite retriever class.
@@ -180,30 +190,31 @@ class RetrieverSetupService:
         Raises:
             RAGRetrieverEmptyChildrenError: If ``children`` is empty.
         """
-        existing = self._load_composite_from_db(model_class, params)
-        if existing is not None:
-            result = RetrieverSetupResult(
-                db_record_id=existing.get_id(),
-                model=existing,
-            )
-            return result
-
         children_configs = params.get("children", [])
-        if issubclass(model_class, CompositeRetriever) and not children_configs:
+        if not children_configs:
             raise RAGRetrieverEmptyChildrenError(
                 "Composite retriever must have at least one child"
             )
         children = [self._setup_child(c) for c in children_configs]
-        params["children"] = [c.model for c in children]
+        model = model_class(
+            children=[c.model for c in children],
+            **{k: v for k, v in params.items() if k != "children"},
+        )
+        model.inject_infra(self._env_RAG_path, self._chunks, None)
 
-        model = model_class(**params)
-        bridge_id = self._db_service.save_composite(
-            model_class.__name__,
-            self._pipeline_id,
-            [c.db_record_id for c in children],
-        ).id
-        model.set_id(bridge_id)
-        return RetrieverSetupResult(db_record_id=bridge_id, model=model)
+        try:
+            bridge = self._db_service.save_composite(
+                model_class.__name__,
+                self._pipeline_id,
+                [c.db_record_id for c in children],
+                commit=True,
+            )
+        except SQLAlchemyError:
+            log.exception("Failed to save composite retriever.")
+            raise
+
+        model.set_id(bridge.id)
+        return RetrieverSetupResult(db_record_id=bridge.id, model=model)
 
     def _setup_child(self, child_config: dict) -> RetrieverSetupResult:
         if "component" not in child_config or "params" not in child_config:
@@ -214,74 +225,6 @@ class RetrieverSetupService:
             component_name=child_config["component"],
             params=child_config["params"],
         )
-
-    def _load_composite_from_db(
-        self, model_class: type, params: dict[str, Any]
-    ) -> RetrieverModel | None:
-        """Attempt to load a composite retriever from the database cache.
-
-        Recursively loads children and rebuilds the composite in memory.
-
-        Args:
-            model_class: The composite retriever class.
-            params: Configuration parameters.
-
-        Returns:
-            A fully initialized composite retriever, or ``None`` if not cached.
-        """
-        bridge = self._db_service.find_composite(
-            self._pipeline_id, model_class.__name__
-        )
-        if bridge is None:
-            return None
-        child_links = self._db_service.find_composite_children(bridge.id)
-        if not child_links:
-            return None
-        children = []
-        for link in child_links:
-            child_bridge = self._db_service.get_bridge_by_id(link.child_id)
-            if child_bridge is None:
-                return None
-            child_params = self._load_child_params(
-                child_bridge.id, child_bridge.class_name
-            )
-            if child_params is None:
-                return None
-            children.append(
-                self.setup(
-                    component_name=child_bridge.class_name,
-                    params=child_params,
-                ).model,
-            )
-        model_class = self._registry[model_class.__name__]["class"]
-        model = model_class(
-            children=children,
-            **{k: v for k, v in params.items() if k != "children"},
-        )
-        model.set_id(bridge.id)
-        return model
-
-    def _load_child_params(
-        self, bridge_id: int, class_name: str
-    ) -> dict[str, Any] | None:
-        """Load a child retriever's persisted parameters from the DB.
-
-        Checks both sparse and dense sub-tables for the given bridge.
-
-        Args:
-            bridge_id: Bridge record id of the child.
-            class_name: Retriever class name.
-
-        Returns:
-            Sorted parameters dict, or ``None`` if no sub-table record found.
-        """
-        sparse = self._db_service.find_sparse_by_bridge_id(bridge_id)
-        if sparse is not None and sparse.parameters is not None:
-            return dict(sorted(sparse.parameters.items()))
-        dense = self._db_service.find_dense_by_bridge_id(bridge_id)
-        if dense is not None and dense.parameters is not None:
-            return dict(sorted(dense.parameters.items()))
-        return None
 
     # ── Private: Unit ──────────────────────────────────────────────────
 
@@ -401,24 +344,39 @@ class RetrieverSetupService:
             )
 
     def _build_dense_persistence_for(self, params: dict) -> DensePersistence:
-        """Build a DensePersistence object, creating the embedding model record first.
+        """Build a DensePersistence from the embedding model component ref.
+
+        Reads ``params["embedding_model"]`` which at Phase 1 always has the
+        schema-component format ``{"component": "<class>", "params": {...}}``,
+        set by ``DenseEmbeddingRetriever.__init__``.
+
+        When the embedding model key is absent (e.g. for
+        ``HuggingFaceDenseRetriever`` subclasses that create the embedding
+        internally during ``init_model()``), an empty persistence is returned
+        and the caller must handle embedding computation in Phase 2.
 
         Args:
-            params: Configuration parameters containing ``encoding_model``.
+            params: Configuration parameters containing ``embedding_model``
+                in component-ref format.
 
         Returns:
-            A DensePersistence instance with matrix directories and model id.
-
-        Raises:
-            SQLAlchemyError: On embedding model DB lookup/creation failure.
+            A DensePersistence with matrix directories and embedding model id,
+            or an empty one when no embedding model reference is present.
         """
-        enc = params.get("encoding_model", {})
-        if not enc:
+        emb_ref = params.get("embedding_model")
+        if not isinstance(emb_ref, dict):
             return DensePersistence(matrix_dirs={}, embedding_model_id=0)
+
+        class_name = emb_ref.get("component")
+        parameters = emb_ref.get("params")
+        if not class_name or not isinstance(parameters, dict):
+            return DensePersistence(matrix_dirs={}, embedding_model_id=0)
+
         try:
             emb_record = self._db_service.find_or_create_embedding_model(
-                enc["class_name"],
-                dict(sorted(enc["parameters"].items())),
+                class_name,
+                dict(sorted(parameters.items())),
+                commit=False,
             )
         except SQLAlchemyError:
             log.exception("Failed to find or create embedding model record.")
@@ -468,9 +426,10 @@ class RetrieverSetupService:
         """
         matrix_dirs: dict[int, str] = {}
         for doc_id in self._chunks:
-            folder = (
-                f"doc_id-{doc_id}__chunk_set_id-{self._chunk_set_id}__"
-                f"embedding_model_id-{embedding_model_id}"
+            folder = EmbeddingStorageService.build_matrix_dir_name(
+                doc_id,
+                self._chunk_set_id,
+                embedding_model_id,
             )
             matrix_dirs[doc_id] = os.path.join(
                 self._env_RAG_path,
@@ -506,8 +465,8 @@ class RetrieverSetupService:
     def _save_dense(self, model: DenseRetriever, sorted_params: dict[str, Any]) -> int:
         """Persist a dense retriever: embedding matrices, bridge, and detail record.
 
-        Writes any missing embedding matrices to the DB, creates a bridge
-        record, and saves the dense detail sub-table row.
+        All DB operations share a single transaction; the caller's session
+        is committed once at the end.
 
         Args:
             model: The initialized DenseRetriever.
@@ -518,63 +477,70 @@ class RetrieverSetupService:
 
         Raises:
             SQLAlchemyError: On any DB persistence failure.
+            IOError: If an embedding matrix file cannot be read.
+            OSError: If an embedding matrix file cannot be read.
+            ValueError: If an embedding matrix file contains invalid data.
         """
-        for doc_id, mdir in model.persistence.matrix_dirs.items():
-            path = os.path.join(mdir, "embeddings.npy")
-            if not os.path.exists(path):
-                continue
-            try:
-                exists = self._db_service.find_embedding_matrix(
-                    doc_id,
-                    self._chunk_set_id,
-                    model.persistence.embedding_model_id,
-                )
-            except SQLAlchemyError:
-                log.exception("Database error during embedding matrix lookup.")
-                raise
-            if exists:
-                continue
-            try:
-                shape = list(np.load(path).shape)
-            except (IOError, OSError, ValueError):
-                log.warning("Could not load %s to record its shape, skipping.", path)
-                continue
-            try:
+        try:
+            for doc_id, mdir in model.persistence.matrix_dirs.items():
+                path = os.path.join(mdir, "embeddings.npy")
+                if not os.path.exists(path):
+                    continue
+                try:
+                    exists = self._db_service.find_embedding_matrix(
+                        doc_id,
+                        self._chunk_set_id,
+                        model.persistence.embedding_model_id,
+                    )
+                except SQLAlchemyError:
+                    log.exception("Database error during embedding matrix lookup.")
+                    raise
+                if exists:
+                    continue
+                try:
+                    shape = list(np.load(path).shape)
+                except (IOError, OSError, ValueError) as exc:
+                    log.error("Failed to load %s to record its shape: %s", path, exc)
+                    raise
+
                 self._db_service.save_embedding_matrix(
                     doc_id,
                     self._chunk_set_id,
                     model.persistence.embedding_model_id,
                     mdir,
                     shape,
+                    commit=False,
                 )
-            except SQLAlchemyError:
-                log.exception("Failed to save embedding matrix record.")
-                raise
 
-        try:
             bridge = self._db_service.create_bridge(
-                model.__class__.__name__, self._pipeline_id
+                model.__class__.__name__,
+                self._pipeline_id,
+                commit=False,
             )
-        except SQLAlchemyError:
-            log.exception("Failed to create bridge record.")
-            raise
-        try:
             self._db_service.save_dense(
                 model.__class__.__name__,
                 sorted_params,
                 bridge.id,
                 self._chunk_set_id,
                 model.persistence.embedding_model_id,
+                commit=False,
             )
-        except SQLAlchemyError:
-            log.exception("Failed to save dense retriever record.")
+
+            self._db.commit()
+        except Exception:
+            self._db.rollback()
+            log.exception("Failed to persist dense retriever.")
             raise
+
         return bridge.id
 
     def _save_sparse(
         self, model: SparseRetriever, sorted_params: dict[str, Any]
     ) -> int:
         """Persist a sparse retriever: filesystem save, bridge, and detail record.
+
+        All DB operations share a single transaction; the caller's session
+        is committed once at the end.
 
         Args:
             model: The initialized SparseRetriever.
@@ -585,25 +551,28 @@ class RetrieverSetupService:
 
         Raises:
             SQLAlchemyError: On any DB persistence failure.
+            IOError: If the model cannot be saved to disk.
         """
         model.save()
 
         try:
             bridge = self._db_service.create_bridge(
-                model.__class__.__name__, self._pipeline_id
+                model.__class__.__name__,
+                self._pipeline_id,
+                commit=False,
             )
-        except SQLAlchemyError:
-            log.exception("Failed to create bridge record.")
-            raise
-        try:
             self._db_service.save_sparse(
                 model.__class__.__name__,
                 sorted_params,
                 model.persistence.model_dir,
                 bridge.id,
                 self._chunk_set_id,
+                commit=False,
             )
-        except SQLAlchemyError:
-            log.exception("Failed to save sparse retriever record.")
+            self._db.commit()
+        except Exception:
+            self._db.rollback()
+            log.exception("Failed to persist sparse retriever.")
             raise
+
         return bridge.id

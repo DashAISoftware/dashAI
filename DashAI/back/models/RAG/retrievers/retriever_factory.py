@@ -11,6 +11,7 @@ from DashAI.back.core.schema_fields.utils import fill_objects, normalize_payload
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.documents.chunk import Chunk
 from DashAI.back.models.RAG.exceptions import (
+    RAGComponentNotFoundError,
     RAGRetrieverError,
     RAGRetrieverMissingParameterError,
 )
@@ -69,7 +70,12 @@ class RetrieverFactory:
         persistence: DensePersistence | SparsePersistence | None = None,
     ) -> RetrieverFactoryResult:
         params = normalize_payload(params)
-        model_class = self._registry[component_name]["class"]
+        try:
+            model_class = self._registry[component_name]["class"]
+        except KeyError as err:
+            raise RAGComponentNotFoundError(
+                f"Component '{component_name}' not found in registry"
+            ) from err
 
         if issubclass(model_class, CompositeRetriever):
             return self._create_composite(model_class, params)
