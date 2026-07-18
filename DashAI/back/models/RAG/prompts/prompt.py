@@ -5,6 +5,12 @@ from DashAI.back.models.base_model import BaseModel
 
 
 class PromptSchema(BaseSchema):
+    """Schema for prompt templates.
+
+    Attributes:
+        template: The prompt template string with placeholders.
+    """
+
     template: str = schema_field(
         string_field(),
         placeholder="",
@@ -21,21 +27,41 @@ class Prompt(BaseModel):
     SCHEMA = PromptSchema
     DESCRIPTION: str = "Base class for RAG prompts."
     DISPLAY_NAME: str = "Base RAG Prompt"
-    id: int
-    name: str
     REQUIRED_EXTRA_KWARGS = []
 
-    def load(self, **kwargs: Any) -> None:
+    def load(self, filename: str = "") -> None:
+        """Load a prompt from a file.
+
+        Args:
+            filename: Path to the file to load from. If empty, uses the
+                default.
+        """
         pass
 
-    def save(self) -> None:
+    def save(self, filename: str = "") -> None:
+        """Save the prompt to a file.
+
+        Args:
+            filename: Path to save to. If empty, uses the default.
+        """
         pass
 
     def train(self, **kwargs: Any) -> None:
+        """No-op training method for compatibility with the model interface.
+
+        Args:
+            **kwargs: Ignored.
+        """
         pass
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
+        """Retrieve class metadata.
+
+        Returns:
+            Dictionary of metadata attributes if defined, otherwise an empty
+            dict.
+        """
         metadata = cls.metadata if hasattr(cls, "metadata") else {}
         return metadata
 
@@ -45,10 +71,14 @@ class Prompt(BaseModel):
         Get the list of required placeholders for the prompt template.
         Returns:
             List[str]: List of required placeholders.
+        Raises:
+            AttributeError: If the subclass does not define 'required_placeholders'.
         """
-        assert hasattr(cls, "required_placeholders"), (
-            "Subclasses must define 'required_placeholders' class attribute."
-        )
+        if not hasattr(cls, "required_placeholders"):
+            raise AttributeError(
+                f"Prompt subclass {cls.__name__} must define "
+                "'required_placeholders' class attribute."
+            )
         return cls.required_placeholders
 
     def get_optional_placeholders(self) -> List[str]:
@@ -56,10 +86,14 @@ class Prompt(BaseModel):
         Get the list of optional placeholders for the prompt template.
         Returns:
             List[str]: List of optional placeholders.
+        Raises:
+            AttributeError: If the subclass does not define 'optional_placeholders'.
         """
-        assert hasattr(self, "optional_placeholders"), (
-            "Subclasses must define 'optional_placeholders' class attribute."
-        )
+        if not hasattr(self, "optional_placeholders"):
+            raise AttributeError(
+                f"Prompt subclass {type(self).__name__} must define "
+                "'optional_placeholders' class attribute."
+            )
         return self.optional_placeholders
 
     @classmethod
@@ -73,8 +107,7 @@ class Prompt(BaseModel):
         """
         return all(placeholder in template for placeholder in cls.required_placeholders)
 
-    @staticmethod
-    def format(input: str, **kwargs: Any) -> str:
+    def format(self, input: str, **kwargs: Any) -> str:
         """
         Instantiate and format the prompt.
         Args:

@@ -17,6 +17,22 @@ import GeneratorAdvancedModal from "../advanced/GeneratorAdvancedModal";
 import AdvancedConfigCard from "./AdvancedConfigCard";
 import { getDescription } from "./sectionUtils";
 
+/**
+ * Reusable generator selection UI (autocomplete + context validation + advanced modal).
+ * Used both inline and inside the advanced config modal.
+ *
+ * @param {object}   props
+ * @param {object}   props.generatorModel         - Current { component, params } for the generator.
+ * @param {Function} props.setGeneratorModel       - Sets the generator model configuration.
+ * @param {number}   [props.chunkSize]             - Token size per chunk.
+ * @param {number}   [props.topK]                  - Number of retrieved chunks.
+ * @param {number}   [props.promptTokenCount]      - Token count of the prompt template.
+ * @param {Function} props.setIsValid              - Reports overall validity.
+ * @param {boolean}  [props.isAdvanced]            - Show advanced config card when true.
+ * @param {Function} [props.setInitialModelParams]  - Reports initial resolved params.
+ * @param {boolean}  [props.showDetails]           - Show context / API-key detail box.
+ * @returns {JSX.Element} The generator body.
+ */
 export default function GeneratorBody({
   generatorModel,
   setGeneratorModel,
@@ -110,6 +126,12 @@ export default function GeneratorBody({
     if (setInitialModelParams) setInitialModelParams({ ...generatorModel.params });
   }, [generators, generatorModel?.component, generatorModel?.params]);
 
+  /**
+   * Handle generator selection from the autocomplete.
+   * Resolves default params and sets sensible defaults.
+   * @param {object} event   - Autocomplete change event.
+   * @param {object} newValue - The selected generator component.
+   */
   const handleGeneratorChange = async (event, newValue) => {
     if (!newValue) {
       setSelectedGenerator(null);

@@ -1,13 +1,21 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
+from DashAI.back.models.RAG.documents.file_type import DocumentFileType
+
 
 class BaseDocument(ABC):
-    """
-    Base class for documents.
+    """Abstract base class for all document types.
+
+    Defines the interface that concrete document classes must implement,
+    including text extraction, metadata retrieval, and file type detection.
     """
 
-    SUPPORTED_FILE_TYPES = ["pdf", "txt"]
+    SUPPORTED_FILE_TYPES = [
+        DocumentFileType.PDF,
+        DocumentFileType.TXT,
+        # MD, RST, TEX, CSV are handled as TXT via TxtDocument
+    ]
 
     def __init__(
         self,
@@ -18,23 +26,24 @@ class BaseDocument(ABC):
         created: Optional[str] = None,
         optional_metadata: Optional[Dict[str, Any]] = None,
     ):
-        """
-        Initialize the document.
-        Args (from database):
-            id (int): The unique identifier of the document.
-            file_name (str): The name of the file.
-            file_path (str): The path to the file.
-            file_hash (str): A hash of the file content.
-            created (Optional[str]): The creation date of the document.
-            optional_metadata (Optional[Dict[str, Any]]): Additional
-                metadata for the document.
+        """Initialize a BaseDocument instance.
+
+        Args:
+            id: The unique identifier of the document.
+            file_name: The name of the file.
+            file_path: The path to the file.
+            file_hash: A hash of the file content.
+            created: The creation date of the document.
+            optional_metadata: Additional metadata for the document.
         """
         self.id = id
         self.file_name = file_name
         self.file_path = file_path
         self.file_hash = file_hash
-        self.created = created if created else None
-        self.optional_metadata = optional_metadata if optional_metadata else None
+        self.created = created
+        self.optional_metadata = (
+            optional_metadata if optional_metadata is not None else {}
+        )
 
     @abstractmethod
     def get_text(self) -> str:
@@ -99,16 +108,29 @@ class BaseDocument(ABC):
         """
         return self.file_hash
 
-    def get_file_type(self) -> Optional[str]:
+    def get_file_type(self) -> Optional[DocumentFileType]:
         """
         Get the filetype of the document.
 
         Returns:
-            Optional[str]: The filetype of the document, or None if not applicable.
+            Optional[DocumentFileType]: The filetype of the document,
+            or None if not applicable.
         """
-        return self.file_path.split(".")[-1].lower() if self.file_path else None
+        if not self.file_path:
+            return None
+        ext = self.file_path.split(".")[-1].lower()
+        try:
+            return DocumentFileType(ext)
+        except ValueError:
+            return None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
+        """Return a string representation of the BaseDocument.
+
+        Returns:
+            str: A string containing the document id, filename, first 50
+                characters of text, and metadata.
+        """
         return (
             f"BaseDocument(id={self.id}, filename='{self.get_file_name()}', "
             f"content='{self.get_text()[:50]}...', "

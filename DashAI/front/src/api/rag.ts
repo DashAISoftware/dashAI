@@ -6,6 +6,11 @@ import { IComponent } from "../types/component";
 import { IRAGPrompt } from "../types/ragPrompt";
 import { getChildComponents } from "./component";
 
+/**
+ * Creates a new RAG prompt via the API.
+ * @param prompt - The prompt data (class_name, name, optional parameters).
+ * @returns The created prompt metadata containing the new ID.
+ */
 export const createRAGPrompt = async (prompt: {
   class_name: string;
   name: string;
@@ -18,6 +23,7 @@ export const createRAGPrompt = async (prompt: {
   return response.data;
 };
 
+/** Fetches all generative sessions filtered to RAGTask. @returns List of RAG sessions. */
 export const getRAGSessions = async (): Promise<ISession[]> => {
   const response = await api.get<ISession[]>("/v1/generative-session/");
   if (response.status !== 200) {
@@ -30,6 +36,7 @@ export const getRAGSessions = async (): Promise<ISession[]> => {
   return ragSessions;
 };
 
+/** Fetches a single RAG session by ID. @param sessionId - The session ID. @returns The session object. */
 export const getRAGSession = async (sessionId: number): Promise<ISession> => {
   const response = await api.get<ISession>(
     `/v1/generative-session/${sessionId}`,
@@ -41,54 +48,22 @@ export const getRAGSession = async (sessionId: number): Promise<ISession> => {
   return response.data;
 };
 
+/**
+ * Creates a new RAG session with the given data, forcing task_name to "RAGTask".
+ * @param sessionData - Session creation payload (without id/created/last_modified).
+ * @returns The created session.
+ */
 export const createRAGSession = async (
   sessionData: Omit<ISession, "id" | "created" | "last_modified">,
 ): Promise<ISession> => {
-  console.log("Creating RAG session with data:", sessionData);
-  const params = sessionData.parameters as {
-    documents: number[];
-    chunking_model: {
-      component: string;
-      params: Record<string, any>;
-    };
-    retriever_model: {
-      component: string;
-      params: Record<string, any>;
-    };
-    generation_model: {
-      component: string;
-      params: Record<string, any>;
-    };
-    prompt: {
-      component: string;
-      params: Record<string, any>;
-    };
+  const transformedSession: Omit<ISession, "id" | "created" | "last_modified"> = {
+    name: sessionData.name,
+    description: sessionData.description,
+    task_name: "RAGTask",
+    model_name: "RAGPipeline",
+    display_name: "",
+    parameters: sessionData.parameters,
   };
-
-  const transformedSession: Omit<ISession, "id" | "created" | "last_modified"> =
-    {
-      name: sessionData.name,
-      description: sessionData.description,
-      task_name: "RAGTask",
-      model_name: "RAGPipeline",
-      display_name: "",
-      parameters: {
-        documents: params.documents,
-        chunking_model: {
-          component: params.chunking_model.component,
-          params: params.chunking_model.params,
-        },
-        retriever_model: {
-          component: params.retriever_model.component,
-          params: params.retriever_model.params,
-        },
-        generation_model: {
-          component: params.generation_model.component,
-          params: params.generation_model.params,
-        },
-        prompt: params.prompt,
-      },
-    };
 
   const response = await api.post<ISession>(
     "/v1/generative-session/",
@@ -102,6 +77,7 @@ export const createRAGSession = async (
   return response.data;
 };
 
+/** Updates an existing RAG session. @param sessionId - The session ID. @param sessionData - Partial fields to update. @returns The updated session. */
 export const updateRAGSession = async (
   sessionId: number,
   sessionData: Partial<ISession>,
@@ -117,6 +93,7 @@ export const updateRAGSession = async (
   return response.data;
 };
 
+/** Deletes a RAG session by ID. @param sessionId - The session ID. */
 export const deleteRAGSession = async (sessionId: number): Promise<void> => {
   const response = await api.delete(`/v1/generative-session/${sessionId}`);
   if (response.status !== 204) {
@@ -124,6 +101,7 @@ export const deleteRAGSession = async (sessionId: number): Promise<void> => {
   }
 };
 
+/** Updates only the parameters of an existing RAG session. @param sessionId - The session ID. @param newParams - The new parameters payload. @returns The updated session. */
 export const updateGenerativeSessionParams = async (
   sessionId: number,
   newParams: Record<string, any>,
@@ -140,6 +118,7 @@ export const updateGenerativeSessionParams = async (
   return response.data;
 };
 
+/** Fetches all available retriever paradigms (children of RetrieverModel). @returns List of retriever paradigm components. */
 export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
   const response = await getChildComponents("RetrieverModel", true);
   if (!response) {
@@ -148,6 +127,7 @@ export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
   return response;
 };
 
+/** Fetches child components (specific retrievers) for a given retrieval paradigm. @param retrievalParadigm - Parent paradigm name. @returns List of retriever components. */
 export const getRetrieverComponents = async (
   retrievalParadigm: string,
 ): Promise<IComponent[]> => {
@@ -160,6 +140,7 @@ export const getRetrieverComponents = async (
   return response;
 };
 
+/** Fetches generator components related to TextToTextGenerationTask. @returns List of generator components. */
 export const getGeneratorComponents = async (): Promise<IGenerativeTask[]> => {
   const response = await api.get(
     `/v1/component/?related_component=TextToTextGenerationTask`,
@@ -174,6 +155,7 @@ export const getGeneratorComponents = async (): Promise<IGenerativeTask[]> => {
   return response.data;
 };
 
+/** Fetches chunking model components (children of BaseChunkingModel). @returns List of chunking components. */
 export const getChunkingComponents = async (): Promise<IComponent[]> => {
   const response = await getChildComponents("BaseChunkingModel", false);
   if (!response) {
@@ -182,6 +164,7 @@ export const getChunkingComponents = async (): Promise<IComponent[]> => {
   return response;
 };
 
+/** Fetches all uploaded documents. @returns List of document responses. */
 export const loadDocuments = async (): Promise<IDocumentResponse[]> => {
   const response = await api.get<IDocumentResponse[]>("/v1/document/");
   if (response.status !== 200) {
@@ -190,6 +173,7 @@ export const loadDocuments = async (): Promise<IDocumentResponse[]> => {
   return response.data;
 };
 
+/** Fetches documents scoped to a specific RAG session. @param sessionId - The session ID. @returns List of document responses. */
 export const getSessionDocuments = async (
   sessionId: number,
 ): Promise<IDocumentResponse[]> => {
@@ -202,6 +186,7 @@ export const getSessionDocuments = async (
   return response.data;
 };
 
+/** Deletes a document by ID. @param documentId - The document ID. */
 export const deleteDocument = async (documentId: number): Promise<void> => {
   const response = await api.delete(`/v1/document/${documentId}`);
   if (response.status !== 204) {
@@ -209,6 +194,12 @@ export const deleteDocument = async (documentId: number): Promise<void> => {
   }
 };
 
+/**
+ * Uploads a document file with optional metadata via multipart/form-data.
+ * @param file - The File object to upload.
+ * @param optional_metadata - Optional metadata (name, source, etc.).
+ * @returns The saved document response.
+ */
 export const addDocument = async ({
   file,
   optional_metadata,
@@ -248,17 +239,22 @@ export const addDocument = async ({
 const AUGMENTATION_PROMPT_CLASS_PREFIX = "Augmentation";
 
 /**
- * Check whether a prompt's class_name corresponds to a generation prompt
+ * Checks whether a prompt's class_name corresponds to a generation prompt
  * (i.e. NOT an augmentation prompt).
+ *
+ * @param className - The prompt component class name to test.
+ * @returns `true` if the class is a generation prompt, `false` if it is an augmentation prompt.
  */
 export function isGenerationPromptClass(className: string): boolean {
   return !className.includes(AUGMENTATION_PROMPT_CLASS_PREFIX);
 }
 
+/** Fetches default prompt components (children of RAGGenerationPrompt). @returns List of default prompt components. */
 export const getDefaultPrompts = async (): Promise<IComponent[]> => {
   return getChildComponents("RAGGenerationPrompt", false);
 };
 
+/** Fetches all saved RAG prompts (user-created). @returns List of RAG prompts. */
 export const getRAGPrompts = async (): Promise<IRAGPrompt[]> => {
   const response = await api.get<IRAGPrompt[]>("/v1/prompt/");
   if (response.status !== 200) {
@@ -267,6 +263,11 @@ export const getRAGPrompts = async (): Promise<IRAGPrompt[]> => {
   return response.data;
 };
 
+/**
+ * Fetches custom (non-Default) prompt components for the given parent types.
+ * @param types - Array of parent component type names to fetch children from.
+ * @returns List of custom prompt components (excluding Default* classes).
+ */
 export const getCustomPrompts = async (
   types: string[] = ["RAGGenerationPrompt", "AugmentationPrompt"],
 ): Promise<IComponent[]> => {

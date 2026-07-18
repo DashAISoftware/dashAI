@@ -1,6 +1,16 @@
 import { Box } from "@mui/material";
 import PropTypes from "prop-types";
 
+/**
+ * A flex-column layout wrapper used inside RAG sections for consistent spacing.
+ *
+ * @param {object}          props
+ * @param {React.ReactNode} [props.children] - Content to render.
+ * @param {number|string}   [props.gap]      - Gap between children (default 4).
+ * @param {object|Array}    [props.sx]       - Additional MUI sx overrides.
+ * @param {object}          [props]          - Additional props spread to the Box.
+ * @returns {JSX.Element} The column wrapper.
+ */
 export default function RAGSectionColumn({ children, gap = 4, sx, ...props }) {
   return (
     <Box

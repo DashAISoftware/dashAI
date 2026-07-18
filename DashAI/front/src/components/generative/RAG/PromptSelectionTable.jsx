@@ -54,6 +54,19 @@ function expandPromptRows(prompts) {
   return rows;
 }
 
+/**
+ * DataGrid table of available prompts with expanded multi-language rows,
+ * view modal access, and "New Prompt" creation flow.
+ *
+ * @param {object}   props
+ * @param {Array}    [props.prompts=[]] - Initial prompt list.
+ * @param {boolean}  [props.loading=false] - Whether the table data is loading.
+ * @param {Array}    [props.rowSelectionModel=[]] - Currently selected row IDs.
+ * @param {function} [props.onRowSelectionModelChange] - Selection change callback.
+ * @param {boolean}  [props.showTableTitle=false] - Whether to show the heading row.
+ * @param {function} [props.setSessionData] - State setter for session data (updates prompt_id).
+ * @returns {JSX.Element}
+ */
 export default function PromptSelectionTable({
   prompts = [],
   loading = false,
@@ -163,6 +176,10 @@ export default function PromptSelectionTable({
     [t],
   );
 
+  /**
+   * Refetches prompts after creation and selects the newly created one.
+   * @param {number|string} newPromptId - ID of the newly created prompt.
+   */
   const handlePromptCreated = async (newPromptId) => {
     const updatedPrompts = await getRAGPrompts();
     updatedPrompts.sort((a, b) => new Date(b.created) - new Date(a.created));

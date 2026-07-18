@@ -4,6 +4,17 @@ import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { normalizeUrl } from "../../../utils/urlUtils";
 
+/**
+ * Full-screen modal for previewing document content (PDF via iframe, TXT as plain text).
+ * Portaled to document.body via createPortal.
+ *
+ * @param {object}   props
+ * @param {boolean}  props.open - Whether the dialog is visible.
+ * @param {function} props.onClose - Callback when the dialog is closed.
+ * @param {object}   [props.document] - The document object with file_type and preview URL.
+ * @param {string}   [props.txtContent] - Pre-fetched TXT content for plain-text previews.
+ * @returns {React.ReactPortal} A portal rendering the dialog.
+ */
 export default function DocumentPreviewModal({
   open,
   onClose,

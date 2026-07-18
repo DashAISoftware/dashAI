@@ -19,6 +19,16 @@ import RAGDocumentsPanel from "../../../components/generative/RAG/RAGDocumentsPa
 import RAGInfoBar from "../../../components/generative/RAG/RAGInfoBar";
 import RAGParamsPanel from "../../../components/generative/RAG/RAGParamsPanel";
 
+/**
+ * Top-level RAG session page with three-panel layout.
+ * Manages session selection, chat activation, session creation, and deletion.
+ *
+ * @param {object}   props
+ * @param {Function} [props.onSessionSelect]  - Override session selection behaviour.
+ * @param {Array}    [props.sessions]         - Optional sessions list override.
+ * @param {Function} [props.setSessions]      - Optional setter override.
+ * @returns {JSX.Element} Three-panel RAG page.
+ */
 function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
   const navigate = useNavigate();
   const { id: urlSessionId } = useParams();
@@ -55,6 +65,11 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
 
   const [setupKey, setSetupKey] = useState(0);
 
+  /**
+   * Parse and validate a raw session id from the URL.
+   * @param {string|number} rawId - Raw id value.
+   * @returns {number|null} Positive integer or null.
+   */
   const resolveSessionId = useCallback(
     (rawId) => {
       const num = Number(rawId);
@@ -96,11 +111,21 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
     setActiveRagChatSessionId(null);
   }, [globalSelectedSessionId]);
 
+  /**
+   * Activate the RAG chat view for the currently selected session.
+   */
   const handleStartRagChat = () => {
     setShowRagChat(true);
     setActiveRagChatSessionId(globalSelectedSessionId);
   };
 
+  /**
+   * Handle session selection from the SessionBar.
+   * Updates context and navigates to the session URL.
+   * @param {number} sessionId
+   * @param {string} taskName
+   * @param {string} taskDisplayName
+   */
   const handleSessionClick = useCallback((sessionId, taskName, taskDisplayName) => {
     if (onSessionSelect) {
       onSessionSelect(sessionId, taskName, taskDisplayName);
@@ -117,6 +142,9 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
     navigate(`/app/generative/sessions/${sessionId}`, { replace: true });
   }, [onSessionSelect, navigate, setGlobalSelectedSessionId, setSelectedTaskName, setSelectedDisplayName, setStepIndex]);
 
+  /**
+   * Reset state to show the RAG session setup form.
+   */
   const handleNewSessionButton = async () => {
     setGlobalSelectedSessionId?.(null);
     setSelectedTaskName?.("");
@@ -128,6 +156,10 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
     setSetupKey((prev) => prev + 1);
   };
 
+  /**
+   * Remove a session optimistically from local state and persist the deletion.
+   * @param {number} id - Session id to delete.
+   */
   const handleSessionDelete = async (id) => {
     currentSetSessions?.((prev) => prev.filter((s) => s.id !== id));
     if (id === globalSelectedSessionId) {
@@ -140,6 +172,10 @@ function RAGSessionPage({ onSessionSelect, sessions, setSessions }) {
     setSetupKey((prev) => prev + 1);
   };
 
+  /**
+   * After a session is created, add it to the session list and navigate to it.
+   * @param {object} createdSession - The newly created session object.
+   */
   const handleSessionCreated = (createdSession) => {
     if (!createdSession?.id) return;
 

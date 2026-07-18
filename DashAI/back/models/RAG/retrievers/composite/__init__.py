@@ -1,3 +1,5 @@
+"""Convenience re-exports for all composite retriever types."""
+
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )

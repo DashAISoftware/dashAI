@@ -11,6 +11,18 @@ def build_retriever_metadata(
     family_name: str,
     model_count: int,
 ) -> Dict[str, object]:
+    """Build a metadata dictionary describing a retriever family.
+
+    Args:
+        models: Mapping from model name to model info dicts (each
+            containing a ``"languages"`` key).
+        family_name: Human-readable name for the model family.
+        model_count: Total number of models in the family.
+
+    Returns:
+        A dictionary with keys ``family``, ``language_summary``,
+        ``language_count``, ``model_count``, and ``model_languages``.
+    """
     family_summary, family_count = build_family_language_summary(models)
     model_languages = build_model_language_summaries(models)
     return {

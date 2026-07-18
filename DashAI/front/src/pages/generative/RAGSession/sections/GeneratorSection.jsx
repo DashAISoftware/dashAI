@@ -18,6 +18,21 @@ import AdvancedConfigCard from "../components/AdvancedConfigCard";
 import RAGSectionColumn from "../components/RAGSectionColumn";
 import { getDescription } from "../components/sectionUtils";
 
+/**
+ * Generator (LLM) selection section.
+ * Lets the user pick a generator model via autocomplete, shows context
+ * window validation against chunk+prompt token usage, and provides an
+ * advanced configuration modal.
+ *
+ * @param {object}   props
+ * @param {object}   props.generatorModel     - Current { component, params } for the generator.
+ * @param {Function} props.setGeneratorModel   - Sets the generator model configuration.
+ * @param {number}   [props.chunkSize]         - Size of each chunk in tokens.
+ * @param {number}   [props.topK]              - Number of retrieved chunks.
+ * @param {number}   [props.promptTokenCount]  - Token count of the prompt template.
+ * @param {Function} props.setIsValid          - Callback to report overall validity (bool).
+ * @returns {JSX.Element} The generator picker.
+ */
 export default function GeneratorSection({
   generatorModel,
   setGeneratorModel,
@@ -106,6 +121,12 @@ export default function GeneratorSection({
     setSelectedGenerator(foundGenerator);
   }, [generators, generatorModel?.component, generatorModel?.params]);
 
+  /**
+   * Handle generator selection from the autocomplete.
+   * Resolves default params and sets sensible defaults for max_tokens / context_window.
+   * @param {object} event   - Autocomplete change event.
+   * @param {object} newValue - The selected generator component.
+   */
   const handleGeneratorChange = async (event, newValue) => {
     if (!newValue) {
       setSelectedGenerator(null);

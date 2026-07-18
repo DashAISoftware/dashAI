@@ -4,11 +4,22 @@ import DocumentListItem from "./DocumentListItem";
 import DocumentPreviewModal from "./DocumentPreviewModal";
 import { normalizeUrl } from "../../../utils/urlUtils";
 
+/**
+ * Renders a vertical list of document items with preview-on-click capability.
+ *
+ * @param {object} props
+ * @param {Array}  props.documents - Array of document objects to display.
+ * @returns {JSX.Element}
+ */
 export default function DocumentList({ documents }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [txtContent, setTxtContent] = useState("");
 
+  /**
+   * Opens the document preview modal, fetching TXT content if applicable.
+   * @param {object} doc - The document to preview.
+   */
   const handleOpenPreview = async (doc) => {
     setPreviewDoc(doc);
     if (doc.file_type === "txt" && doc.preview) {

@@ -12,6 +12,14 @@ METRICS = ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
 
 
 class DenseEmbeddingRetrieverSchema(BaseSchema):
+    """Schema for :class:`DenseEmbeddingRetriever`.
+
+    Attributes:
+        embedding_model: The embedding model component to use.
+        similarity_metric: Distance metric for vector comparison.
+        top_k: Number of chunks to select.
+    """
+
     embedding_model: schema_field(
         component_field(parent="DenseEmbedding"),
         placeholder={"component": "SentenceTransformerEmbedding", "params": {}},
@@ -41,7 +49,11 @@ class DenseEmbeddingRetrieverSchema(BaseSchema):
 
 
 class DenseEmbeddingRetriever(DenseRetriever):
-    """Concrete dense retriever that accepts any DenseEmbedding component."""
+    """Concrete dense retriever that accepts any :class:`DenseEmbedding` component.
+
+    The embedding component is specified in the schema and instantiated
+    by the factory via ``fill_objects``.
+    """
 
     FLAGS: list[str] = ["dense", "dense_embedding"]
     SCHEMA = DenseEmbeddingRetrieverSchema
@@ -57,6 +69,14 @@ class DenseEmbeddingRetriever(DenseRetriever):
     )
 
     def __init__(self, **kwargs):
+        """Initialize the dense embedding retriever.
+
+        Pops the ``embedding_model`` instance from kwargs and stores it.
+
+        Args:
+            **kwargs: Must contain ``embedding_model``,
+                ``similarity_metric``, and ``top_k``.
+        """
         embedding_instance = kwargs.pop("embedding_model")
         super().__init__(**kwargs)
         self.params["embedding_model"] = {

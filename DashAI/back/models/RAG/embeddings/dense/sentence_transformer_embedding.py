@@ -314,6 +314,15 @@ ST_MODEL_NAMES = list(ST_MODELS.keys())
 
 
 class SentenceTransformerEmbeddingSchema(BaseSchema):
+    """Configuration schema for :class:`SentenceTransformerEmbedding`.
+
+    Attributes:
+        model_name: Sentence Transformer model for embedding generation.
+        overflow_strategy: Strategy for chunks exceeding model max sequence length.
+        normalize: Whether to L2-normalize the output embeddings.
+        device: Device to run the model on.
+    """
+
     model_name: schema_field(
         enum_field(ST_MODEL_NAMES),
         placeholder="microsoft/harrier-oss-v1-0.6b",
@@ -352,6 +361,21 @@ class SentenceTransformerEmbeddingSchema(BaseSchema):
 
 
 class SentenceTransformerEmbedding(DenseEmbedding):
+    """Dense embeddings using Sentence Transformer models.
+
+    Wraps :class:`_SentenceTransformerEmbedding` and exposes it as a
+    DashAI component with a configurable schema
+    (:class:`SentenceTransformerEmbeddingSchema`).
+
+    Supports mean / last-token pooling, L2 normalisation, and overflow
+    strategies (truncate / aggregate).
+
+    FLAGS:
+        FAMILY:sentence_transformer: Groups this model under the
+            sentence-transformer family.
+        huggingface: Marks the model family as HuggingFace-based.
+    """
+
     SCHEMA = SentenceTransformerEmbeddingSchema
     FLAGS: list[str] = ["FAMILY:sentence_transformer", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
@@ -366,6 +390,11 @@ class SentenceTransformerEmbedding(DenseEmbedding):
     )
 
     def __init__(self, **kwargs):
+        """Initialise the embedding by validating parameters and creating the internal model.
+
+        Args:
+            **kwargs: Configuration matching :class:`SentenceTransformerEmbeddingSchema`.  # noqa: E501
+        """  # noqa: E501
         self.params = self.validate_and_transform(kwargs)
         model_name = self.params["model_name"]
         device = self.params["device"]
@@ -385,16 +414,33 @@ class SentenceTransformerEmbedding(DenseEmbedding):
         )
 
     def load(self):
+        """Load the Sentence Transformer model and tokenizer."""
         self._embedding.load()
 
     def encode(self, text: str):
+        """Encode a single text into a dense embedding.
+
+        Args:
+            text: Input string.
+
+        Returns:
+            A 1-D NumPy array of shape ``(embedding_dim,)``.
+        """
         return self._embedding.encode(text)
 
     def batch_encode(self, texts: List[str]):
+        """Encode a batch of texts into dense embeddings.
+
+        Args:
+            texts: List of input strings.
+
+        Returns:
+            A ``(batch, embedding_dim)`` float32 NumPy array.
+        """
         return self._embedding.batch_encode(texts)
 
     def save(self):
-        pass
+        """No-op. Persistence is handled externally."""
 
     def train(self, **kwargs):
-        return
+        """No-op. Pre-trained models are used as-is."""

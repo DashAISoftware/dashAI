@@ -1,16 +1,8 @@
-"""Abstract Factory (GoF) for RAG component creation.
+"""Unified factory that delegates to type-specific sub-factories.
 
-RAGModelsFactory provides a unified interface for creating the four
-RAG component types: prompts, chunking models, retrievers, and LLMs.
-
-Each ``create_*`` method delegates to a specialised sub-factory that
-encapsulates the component's full lifecycle (DB-record resolution,
-instantiation, and persistence).
+Phase 1 of the 3-phase lifecycle (Construction -> Initialization -> Persistence).
+Builds models in memory -- no I/O, no DB access.
 """
-
-from typing import Any, Dict
-
-from sqlalchemy.orm import Session
 
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.chunking_models.chunking_model_factory import (
@@ -19,13 +11,14 @@ from DashAI.back.models.RAG.chunking_models.chunking_model_factory import (
 )
 from DashAI.back.models.RAG.documents.base_document import BaseDocument
 from DashAI.back.models.RAG.documents.chunk import Chunk
-from DashAI.back.models.RAG.llm_factory import (
-    LLMFactory,
-    LLMFactoryResult,
-)
+from DashAI.back.models.RAG.llm_factory import LLMFactory, LLMFactoryResult
 from DashAI.back.models.RAG.prompts.prompt_factory import (
     PromptFactory,
     PromptFactoryResult,
+)
+from DashAI.back.models.RAG.retrievers.persistence import (
+    DensePersistence,
+    SparsePersistence,
 )
 from DashAI.back.models.RAG.retrievers.retriever_factory import (
     RetrieverFactory,
@@ -34,72 +27,51 @@ from DashAI.back.models.RAG.retrievers.retriever_factory import (
 
 
 class RAGModelsFactory:
-    """Abstract Factory for the family of RAG components.
+    """Delegates model construction to type-specific sub-factories.
 
-    Provides four ``create_*`` methods, each delegating to a
-    specialised sub-factory. Shared dependencies (db, registry,
-    env_rag_path) are injected once via the constructor.
+    Every ``create_*`` method:
+    - Accepts a component name + params dict
+    - Delegates to the corresponding sub-factory
+    - Returns the model -- no I/O, no DB
     """
 
-    def __init__(
-        self,
-        db: Session,
-        registry: ComponentRegistry,
-        env_rag_path: str,
-    ):
-        self._db = db
-        self._registry = registry
-        self._env_rag_path = env_rag_path
+    def __init__(self, registry: ComponentRegistry):
+        """Initialise the factory with a component registry.
 
-    def create_prompt(
-        self,
-        component_name: str,
-        params: Dict[str, Any],
-    ) -> PromptFactoryResult:
-        """Create a prompt with lookup-or-create semantics."""
-        factory = PromptFactory(self._db, self._registry)
-        return factory.create(component_name, params)
+        Args:
+            registry: The ComponentRegistry used to resolve component
+                names to their implementations.
+        """
+        self._registry = registry
+        self._llm_factory = LLMFactory(registry)
+        self._prompt_factory = PromptFactory(registry)
 
     def create_chunking_model(
         self,
-        documents: Dict[int, BaseDocument],
-        chunk_set_id: int,
-        component_name: str,
-        params: Dict[str, Any],
+        component: str,
+        params: dict,
+        documents: dict[int, BaseDocument],
     ) -> ChunkingFactoryResult:
-        """Create a chunking model, chunk documents, and persist chunks."""
-        factory = ChunkingModelFactory(
-            self._db,
-            self._registry,
-            documents,
-            chunk_set_id,
-        )
-        return factory.create(component_name, params)
+        """Build a chunking model via ChunkingModelFactory. Phase 1 only."""
+        factory = ChunkingModelFactory(self._registry, documents)
+        return factory.create(component, params.copy())
 
     def create_retriever(
         self,
-        pipeline_id: int,
-        chunks: Dict[int, Dict[int, Chunk]],
-        chunk_set_id: int,
-        component_name: str,
-        params: Dict[str, Any],
+        component: str,
+        params: dict,
+        RAG_path: str,  # noqa: N803
+        chunks: dict[int, dict[int, Chunk]],
+        persistence: DensePersistence | SparsePersistence | None = None,
     ) -> RetrieverFactoryResult:
-        """Create a retriever with full persistence lifecycle."""
-        factory = RetrieverFactory(
-            self._db,
-            pipeline_id,
-            self._registry,
-            self._env_rag_path,
-            chunks,
-            chunk_set_id,
-        )
-        return factory.create(component_name, params)
+        """Build a retriever via RetrieverFactory. Phase 1 only."""
+        factory = RetrieverFactory(self._registry, RAG_path, chunks)
+        return factory.create(component, params, persistence)
 
-    def create_llm(
-        self,
-        component_name: str,
-        params: Dict[str, Any],
-    ) -> LLMFactoryResult:
-        """Create an LLM with lookup-or-create DB semantics."""
-        factory = LLMFactory(self._db, self._registry)
-        return factory.create(component_name, params)
+    def create_prompt(self, component: str, params: dict) -> PromptFactoryResult:
+        """Build a prompt via PromptFactory. Phase 1 only."""
+        return self._prompt_factory.create(component, params)
+
+    def create_llm(self, component: str, params: dict) -> LLMFactoryResult:
+        """Build an LLM via LLMFactory. Phase 1 only."""
+        return self._llm_factory.create(component, params)

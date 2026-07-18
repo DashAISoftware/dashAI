@@ -9,9 +9,17 @@ from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.schema_fields.schema_field import schema_field
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
+from DashAI.back.models.RAG.exceptions import RAGEmbeddingEmptyInputError
 
 
 class FastTextEmbeddingSchema(BaseSchema):
+    """Configuration schema for :class:`FastTextEmbedding`.
+
+    Attributes:
+        model_name: Name of the pre-trained FastText model to use.
+        pooling_strategy: Pooling strategy (``"mean"`` or ``"max"``).
+    """
+
     model_name: schema_field(
         enum_field(["facebook/fasttext-es-vectors", "facebook/fasttext-en-vectors"]),
         "facebook/fasttext-en-vectors",
@@ -26,7 +34,14 @@ class FastTextEmbeddingSchema(BaseSchema):
 
 
 class FastTextEmbedding(DenseEmbedding):
-    """FastText embedding"""
+    """Dense embeddings using FastText word vectors with mean or max pooling.
+
+    Downloads the model binary from the HuggingFace Hub and aggregates
+    word-level vectors into a single sentence-level embedding.
+
+    FLAGS:
+        FAMILY:fasttext: Groups this model under the FastText family.
+    """
 
     FLAGS: list[str] = ["FAMILY:fasttext"]
     SCHEMA = FastTextEmbeddingSchema
@@ -40,6 +55,11 @@ class FastTextEmbedding(DenseEmbedding):
     )
 
     def __init__(self, **kwargs):
+        """Initialise the embedding by validating parameters and setting up pooling.
+
+        Args:
+            **kwargs: Configuration matching :class:`FastTextEmbeddingSchema`.
+        """
         self.params = self.validate_and_transform(kwargs)
         self.model_name = self.params["model_name"]
         self.pooling_strategy = self.params["pooling_strategy"]
@@ -48,25 +68,44 @@ class FastTextEmbedding(DenseEmbedding):
         self.model = None
 
     def load(self):
-        """Load the FastText model."""
+        """Download and load the FastText binary model from the HuggingFace Hub."""
         if self.model is not None:
             return
         model_path = hf_hub_download(repo_id=self.model_name, filename="model.bin")
         self.model = fasttext.load_model(model_path)
 
     def save(self):
-        pass
+        """No-op. The model is loaded from HF Hub on demand."""
 
     def train(self, **kwargs):
-        pass
+        """No-op. Pre-trained FastText vectors are used as-is."""
 
     def encode(self, text: str) -> np.ndarray:
-        """Encode text into an embedding."""
+        """Encode a single text by averaging/max-pooling its word vectors.
+
+        Args:
+            text: Input string (non-empty).
+
+        Returns:
+            A 1-D float32 NumPy array of shape ``(embedding_dim,)``.
+
+        Raises:
+            RAGEmbeddingEmptyInputError: If the input text is empty or blank.
+        """
+        if not text or not text.strip():
+            raise RAGEmbeddingEmptyInputError("Cannot encode empty text")
         token_embeddings = [self.model.get_word_vector(word) for word in text.split()]
         return self.pooling_function(np.array(token_embeddings), axis=0)
 
     def batch_encode(self, texts: List[str]) -> np.ndarray:
-        """Encode a batch of texts into embeddings."""
+        """Encode a batch of texts by pooling their word vectors.
+
+        Args:
+            texts: List of input strings.
+
+        Returns:
+            A ``(batch, embedding_dim)`` float32 NumPy array.
+        """
         all_embeddings = []
         for text in texts:
             embedding = self.encode(text)

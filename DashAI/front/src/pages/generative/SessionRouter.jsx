@@ -6,6 +6,12 @@ import Generative from "./Generative";
 import { GenerativeProvider } from "../../components/generative/GenerativeContext";
 import RAGSessionPage from "./RAGSession/RAGSessionPage";
 
+/**
+ * Route a session URL to the correct view based on the session's task_name.
+ * RAGTask sessions render RAGSessionPage; all others render the generic Generative view.
+ * Shows a loading spinner while fetching session metadata.
+ * @returns {JSX.Element} The appropriate session page or a loading indicator.
+ */
 export default function SessionRouter() {
   const { id } = useParams();
   const [taskName, setTaskName] = useState(null);

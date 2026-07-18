@@ -2,6 +2,18 @@ import { Typography, Paper } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import PropTypes from "prop-types";
 
+/**
+ * A clickable preset card used for chunking presets, retriever presets,
+ * and top-K option buttons. Highlights when selected.
+ *
+ * @param {object}   props
+ * @param {boolean}  [props.selected]    - Whether the card is currently selected.
+ * @param {Function} [props.onClick]     - Click handler.
+ * @param {string}   props.label         - Primary label text.
+ * @param {string}   [props.description] - Secondary description text.
+ * @param {object}   [props.sx]          - Additional MUI sx overrides.
+ * @returns {JSX.Element} The preset card.
+ */
 export default function PresetCard({
   selected = false,
   onClick,

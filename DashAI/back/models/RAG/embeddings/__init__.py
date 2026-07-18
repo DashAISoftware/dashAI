@@ -1,4 +1,8 @@
-"""Embedding model exports."""
+"""Embedding model exports.
+
+Provides public aliases for all dense embedding implementations
+registered with the DashAI component system.
+"""
 
 from DashAI.back.models.RAG.embeddings.dense.bert_embedding import BERTEmbedding
 from DashAI.back.models.RAG.embeddings.dense.distilbert_embedding import (

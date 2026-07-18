@@ -8,6 +8,11 @@ import {
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 
+/**
+ * Returns the appropriate MUI icon component for the given file type.
+ * @param {string} fileType - File extension (e.g. "pdf", "txt").
+ * @returns {React.ElementType} An icon component.
+ */
 const getDocumentIcon = (fileType) => {
   const iconMap = {
     pdf: PictureAsPdf,
@@ -18,6 +23,15 @@ const getDocumentIcon = (fileType) => {
   return IconComponent;
 };
 
+/**
+ * A single clickable document row with icon and metadata, shown inside a list.
+ *
+ * @param {object}  props
+ * @param {object}  props.document - The document object ({ id, name, type, ... }).
+ * @param {boolean} [props.disabled=false] - Whether the item is greyed out and non-interactive.
+ * @param {function} [props.onClick] - Click handler for the item.
+ * @returns {JSX.Element}
+ */
 export default function DocumentListItem({
   document,
   disabled = false,

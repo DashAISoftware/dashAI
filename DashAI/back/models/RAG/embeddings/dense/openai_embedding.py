@@ -12,6 +12,13 @@ from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 
 class OpenAIEmbeddingSchema(BaseSchema):
+    """Configuration schema for :class:`OpenAIEmbedding`.
+
+    Attributes:
+        model_name: OpenAI embedding model to use.
+        api_key: OpenAI API key.
+    """
+
     model_name: schema_field(
         enum_field(
             [
@@ -38,6 +45,16 @@ class OpenAIEmbeddingSchema(BaseSchema):
 
 
 class OpenAIEmbedding(DenseEmbedding):
+    """Dense embeddings via the OpenAI Embeddings API.
+
+    Supports ``text-embedding-ada-002``, ``text-embedding-3-small``, and
+    ``text-embedding-3-large`` models.
+
+    FLAGS:
+        FAMILY:openai: Groups this model under the OpenAI family.
+        remote: Marks this model as calling a remote API.
+    """
+
     FLAGS: list[str] = ["FAMILY:openai", "remote"]
     DISPLAY_NAME = MultilingualString(
         en="OpenAI Embedding",
@@ -50,21 +67,39 @@ class OpenAIEmbedding(DenseEmbedding):
     SCHEMA = OpenAIEmbeddingSchema
 
     def __init__(self, **kwargs):
+        """Initialise the embedding by validating parameters and creating the OpenAI client.
+
+        Args:
+            **kwargs: Configuration matching :class:`OpenAIEmbeddingSchema`.
+
+        Raises:
+            ValueError: If the API key is missing or empty.
+        """  # noqa: E501
         self.params = self.validate_and_transform(kwargs)
         self.model_name = self.params["model_name"]
         self.api_key = self.params["api_key"]
+        if not self.api_key or not self.api_key.strip():
+            raise ValueError("OpenAI API key is required but was not provided")
         self.client = OpenAI(api_key=self.api_key)
 
     def load(self):
-        pass
+        """No-op. The OpenAI client does not require model loading."""
 
     def save(self):
-        pass
+        """No-op. No local state to persist."""
 
     def train(self, **kwargs):
-        return
+        """No-op. OpenAI models cannot be fine-tuned through this interface."""
 
     def encode(self, text: str) -> np.ndarray:
+        """Encode a single text via the OpenAI API.
+
+        Args:
+            text: Input string.
+
+        Returns:
+            A 1-D float32 NumPy array of shape ``(embedding_dim,)``.
+        """
         response = self.client.embeddings.create(
             model=self.model_name,
             input=text,
@@ -72,6 +107,14 @@ class OpenAIEmbedding(DenseEmbedding):
         return np.array(response.data[0].embedding)
 
     def batch_encode(self, texts: List[str]) -> np.ndarray:
+        """Encode a batch of texts via the OpenAI API.
+
+        Args:
+            texts: List of input strings.
+
+        Returns:
+            A ``(batch, embedding_dim)`` float32 NumPy array.
+        """
         response = self.client.embeddings.create(
             model=self.model_name,
             input=texts,

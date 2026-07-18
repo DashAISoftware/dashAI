@@ -179,6 +179,14 @@ E5_MODEL_NAMES = list(E5_MODELS.keys())
 
 
 class E5EmbeddingSchema(BaseSchema):
+    """Configuration schema for :class:`E5Embedding`.
+
+    Attributes:
+        model_name: E5 model for embedding generation (uses query/passage prefixes).
+        overflow_strategy: Strategy for chunks exceeding model max sequence length.
+        device: Device to run the model on.
+    """
+
     model_name: schema_field(
         enum_field(E5_MODEL_NAMES),
         placeholder="intfloat/e5-small-v2",
@@ -208,6 +216,19 @@ class E5EmbeddingSchema(BaseSchema):
 
 
 class E5Embedding(DenseEmbedding):
+    """Dense embeddings using E5 models with average pooling + L2 normalization.
+
+    Automatically prepends ``"query: "`` or ``"passage: "`` prefixes to
+    input text (see :class:`_E5Embedding`).
+
+    Wraps :class:`_E5Embedding` and exposes it as a DashAI component with
+    a configurable schema (:class:`E5EmbeddingSchema`).
+
+    FLAGS:
+        FAMILY:e5: Groups this model under the E5 family.
+        huggingface: Marks the model family as HuggingFace-based.
+    """
+
     SCHEMA = E5EmbeddingSchema
     FLAGS: list[str] = ["FAMILY:e5", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
@@ -222,6 +243,11 @@ class E5Embedding(DenseEmbedding):
     )
 
     def __init__(self, **kwargs):
+        """Initialise the embedding by validating parameters and creating the internal model.
+
+        Args:
+            **kwargs: Configuration matching :class:`E5EmbeddingSchema`.
+        """  # noqa: E501
         self.params = self.validate_and_transform(kwargs)
         model_name = self.params["model_name"]
         device = self.params["device"]
@@ -235,16 +261,33 @@ class E5Embedding(DenseEmbedding):
         )
 
     def load(self):
+        """Load the E5 model and tokenizer."""
         self._embedding.load()
 
     def encode(self, text: str):
+        """Encode a single text into a dense embedding (prepends ``"query: "``).
+
+        Args:
+            text: Input string.
+
+        Returns:
+            A 1-D NumPy array of shape ``(embedding_dim,)``.
+        """
         return self._embedding.encode(text)
 
     def batch_encode(self, texts: List[str]):
+        """Encode a batch of texts into dense embeddings (prepends ``"passage: "``).
+
+        Args:
+            texts: List of input strings.
+
+        Returns:
+            A ``(batch, embedding_dim)`` float32 NumPy array.
+        """
         return self._embedding.batch_encode(texts)
 
     def save(self):
-        pass
+        """No-op. Persistence is handled externally."""
 
     def train(self, **kwargs):
-        return
+        """No-op. Pre-trained models are used as-is."""

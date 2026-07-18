@@ -23,6 +23,11 @@ const DENSE_EMBEDDING_PARENT = "DenseEmbedding";
 
 const COMPOSITE_NAMES = ["SequentialRetriever", "ParallelRetriever", "MMRRerankerRetriever"];
 
+/**
+ * Resolves a component's display name from its display_name field (string or multilingual).
+ * @param {object} component - The component definition object.
+ * @returns {string} The resolved display name or the component name as fallback.
+ */
 function getDisplayName(component) {
   if (!component) return "";
   const dn = component.display_name;
@@ -38,6 +43,16 @@ function getDisplayName(component) {
   return component.name || "";
 }
 
+/**
+ * Auto-saving form wrapper around FormSchema for retriever parameter configuration.
+ * Loads default values for the selected retriever and fires onParametersChange on edits.
+ *
+ * @param {object} props
+ * @param {object} props.selectedRetriever - The currently selected retriever component.
+ * @param {object} [props.retrieverModel] - The persisted retriever model { component, params }.
+ * @param {function} props.onParametersChange - Callback with the latest parameter values.
+ * @returns {JSX.Element} The auto-saving schema form.
+ */
 function AutoSaveFormSchema({
   selectedRetriever,
   retrieverModel,
@@ -87,6 +102,18 @@ function AutoSaveFormSchema({
   );
 }
 
+/**
+ * Step component for selecting and configuring a retriever (simple, dense embedding,
+ * or composite). Exposes a `saveFormValues` imperative handle for parent dialogs.
+ *
+ * @param {object} props
+ * @param {Array} [props.allParadigms] - All available retriever paradigms.
+ * @param {object} [props.retrieverModel] - The current retriever model { component, params }.
+ * @param {function} props.setRetrieverModel - State setter for the retriever model.
+ * @param {function} props.setNextEnabled - Callback to enable/disable the next/submit button.
+ * @param {object} ref - React ref for imperative handle (saveFormValues).
+ * @returns {JSX.Element} The retriever configuration step UI.
+ */
 const RetrieverConfigurationStep = forwardRef(
   function RetrieverConfigurationStep(
     { allParadigms, retrieverModel, setRetrieverModel, setNextEnabled },
@@ -99,6 +126,10 @@ const RetrieverConfigurationStep = forwardRef(
     const savedParamsRef = useRef(null);
     const retrieversRef = useRef([]);
 
+    /**
+     * Persists the current form parameter values into the retriever model state.
+     * Used by parent dialogs via the imperative ref handle.
+     */
     const saveCurrentFormValues = useCallback(() => {
       const values = savedParamsRef.current;
       if (values && Object.keys(values).length > 0 && selectedRetriever) {
@@ -188,6 +219,13 @@ const RetrieverConfigurationStep = forwardRef(
       load();
     }, []);
 
+    /**
+     * Handles selection of a new retriever or embedding from the autocomplete.
+     * Resolves defaults and builds the appropriate model structure (wrapping
+     * embeddings inside DenseEmbeddingRetriever if needed).
+     * @param {object} _event - The autocomplete event.
+     * @param {object|null} newValue - The selected component option.
+     */
     const handleRetrieverChange = useCallback(async (_event, newValue) => {
       savedParamsRef.current = null;
 
@@ -234,6 +272,10 @@ const RetrieverConfigurationStep = forwardRef(
       }
     }, [setRetrieverModel, setNextEnabled]);
 
+    /**
+     * Stores updated parameter values from the auto-saving form into the retriever model.
+     * @param {object} newParams - The latest parameter values from the form.
+     */
     const handleParametersSave = useCallback(
       (newParams) => {
         savedParamsRef.current = newParams;
@@ -246,6 +288,11 @@ const RetrieverConfigurationStep = forwardRef(
       [selectedRetriever?.name, setRetrieverModel, setNextEnabled],
     );
 
+    /**
+     * Receives the serialised tree from CompositeRetrieverBuilder and persists it
+     * into the retriever model.
+     * @param {object} updated - The updated composite model { component, params }.
+     */
     const handleCompositeChange = useCallback(
       (updated) => {
         savedParamsRef.current = updated.params;

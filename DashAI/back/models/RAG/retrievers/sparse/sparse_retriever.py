@@ -3,6 +3,12 @@ from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 
 
 class SparseRetriever(UnitRetriever):
+    """Abstract base for sparse (keyword-based) retrievers.
+
+    Uses term-frequency based representations (e.g. TF-IDF, BM25) for
+    document retrieval.
+    """
+
     FLAGS: list[str] = ["abstract"]
     DISPLAY_NAME: str = MultilingualString(
         en="Keyword Retriever",

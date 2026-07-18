@@ -21,6 +21,18 @@ import DocumentPreviewModal from "./DocumentPreviewModal";
 import { normalizeUrl } from "../../../utils/urlUtils";
 import { useTranslation } from "react-i18next";
 
+/**
+ * DataGrid table listing documents with preview, deletion, and upload actions.
+ *
+ * @param {object}   props
+ * @param {Array}    props.documents - Array of document objects.
+ * @param {function} props.onRemove - Callback invoked with document ID when deleting.
+ * @param {function} [props.onAddDocument] - Callback invoked with the saved document after upload.
+ * @param {boolean}  [props.isLoading=false] - Whether the data is still loading.
+ * @param {string}   [props.tableTitle=null] - Custom table title (shown when showTableTitle is true).
+ * @param {boolean}  [props.showTableTitle=false] - Whether to show the table title header.
+ * @returns {JSX.Element}
+ */
 export default function DocumentTable({
   documents,
   onRemove,
@@ -35,6 +47,10 @@ export default function DocumentTable({
   const [txtContent, setTxtContent] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
 
+  /**
+   * Opens the document preview modal, fetching TXT content if applicable.
+   * @param {object} doc - The document to preview.
+   */
   const handleOpenPreview = async (doc) => {
     setPreviewDoc(doc);
     if (doc.file_type === "txt" && doc.preview) {
@@ -53,6 +69,11 @@ export default function DocumentTable({
     if (onRemove) onRemove(id);
   };
 
+  /**
+   * Handles file upload from the Upload component, saving each file via the API.
+   * @param {File|File[]} files - File(s) to upload.
+   * @param {string} [url] - Optional source URL.
+   */
   const handleFileUpload = async (files, url) => {
     if (!files) return;
     const fileList = Array.isArray(files) ? files : [files];

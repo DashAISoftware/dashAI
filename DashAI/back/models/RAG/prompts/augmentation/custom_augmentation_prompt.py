@@ -1,5 +1,6 @@
 from typing import Any
 
+from DashAI.back.models.RAG.exceptions import RAGPromptTemplateError
 from DashAI.back.models.RAG.prompts.augmentation import AugmentationPrompt
 
 
@@ -28,7 +29,13 @@ class CustomAugmentationPrompt(AugmentationPrompt):
     optional_placeholders = []
 
     def __init__(self, **kwargs):
+        """Initialize the custom augmentation prompt with a user-defined template.
+
+        Args:
+            template: The user-defined prompt template string.
+        """
         self.template = kwargs.pop("template")
+        super().__init__(**kwargs)
 
     def format(
         self,
@@ -45,6 +52,11 @@ class CustomAugmentationPrompt(AugmentationPrompt):
         Returns:
             str: The formatted prompt.
         """
+        if not self.validate_template(self.template):
+            raise RAGPromptTemplateError(
+                "Template is missing required placeholders:"
+                f" {self.required_placeholders}"
+            )
         buffer = self.template
         buffer = buffer.replace("{input}", input)
         buffer = buffer.replace("{n_search_terms}", str(n_search_terms))

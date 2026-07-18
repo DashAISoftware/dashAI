@@ -14,7 +14,13 @@ class AugmentationPrompt(Prompt):
     optional_placeholders = []
 
     def __init__(self, **kwargs: Any):
+        """Initialize the augmentation prompt with a template.
+
+        Args:
+            template: The prompt template string.
+        """
         self.template = kwargs.pop("template")
+        super().__init__(**kwargs)
 
     def format(self, input: str, n_search_terms: int, **kwargs: Any) -> str:
         """

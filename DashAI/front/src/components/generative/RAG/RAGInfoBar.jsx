@@ -1,6 +1,13 @@
 import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
+/**
+ * A labelled section wrapper for the info bar.
+ * @param {object} props
+ * @param {string} props.title - Section heading.
+ * @param {JSX.Element} props.children - Section content.
+ * @returns {JSX.Element}
+ */
 function Section({ title, children }) {
   return (
     <Box>
@@ -12,6 +19,11 @@ function Section({ title, children }) {
   );
 }
 
+/**
+ * Right-side info panel explaining how the RAG feature works,
+ * listing settings documentation and usage tips.
+ * @returns {JSX.Element}
+ */
 export default function RAGInfoBar() {
   const { t } = useTranslation(["generative"]);
 

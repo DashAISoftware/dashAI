@@ -21,6 +21,17 @@ import HighlightedTextarea from "../../../../components/generative/RAG/Highlight
 import { getCustomPrompts, createRAGPrompt } from "../../../../api/rag";
 import { LANGUAGE_CODES } from "../../../../constants/languages";
 
+/**
+ * Modal dialog for creating a new custom RAG generation prompt.
+ * Provides a form for the prompt name, language, template with placeholder insertion.
+ *
+ * @param {object} props
+ * @param {boolean} props.open - Whether the dialog is open.
+ * @param {function} props.handleClose - Callback to close the dialog.
+ * @param {function} props.onPromptCreated - Callback invoked with the new prompt ID on success.
+ * @param {Array} [props.existingPrompts=[]] - List of existing prompts for name generation.
+ * @returns {JSX.Element} The new prompt modal.
+ */
 export default function NewPromptModal({
   open,
   handleClose,
@@ -38,6 +49,10 @@ export default function NewPromptModal({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const textareaRef = useRef(null);
 
+  /**
+   * Checks whether the prompt template contains all required placeholders.
+   * @returns {boolean} True if every required placeholder is present in the template.
+   */
   const allRequiredPresent = React.useMemo(() => {
     if (!selectedPromptType) return false;
     const selectedType = promptTypes.find(
@@ -70,20 +85,28 @@ export default function NewPromptModal({
     }
   }, [open, existingPrompts]);
 
+  /**
+   * Updates the prompt name on user input.
+   * @param {object} e - The input change event.
+   */
   const handlePromptNameChange = useCallback((e) => {
     setPromptName(e.target.value);
     setHasUnsavedChanges(true);
   }, []);
 
+  /**
+   * Updates the prompt template text on user input.
+   * @param {object} e - The textarea change event.
+   */
   const handlePromptTemplateChange = useCallback((e) => {
     setPromptTemplate(e.target.value);
     setHasUnsavedChanges(true);
   }, []);
 
   /**
-   * Insert a placeholder string (e.g., "{chunks}") at the current cursor
-   * position in the prompt template textarea. If text is selected, it
-   * is replaced by the placeholder.
+   * Inserts a placeholder string at the current cursor position in the
+   * prompt template textarea. Replaces any selected text with the placeholder.
+   * @param {string} placeholder - The placeholder string to insert (e.g. "{chunks}").
    */
   const handleInsertPlaceholder = useCallback(
     (placeholder) => {
@@ -109,6 +132,9 @@ export default function NewPromptModal({
     [promptTemplate],
   );
 
+  /**
+   * Closes the modal after checking for unsaved changes; prompts for confirmation if needed.
+   */
   const handleConfirmClose = useCallback(() => {
     if (hasUnsavedChanges) {
       const confirmed = window.confirm(
@@ -120,6 +146,9 @@ export default function NewPromptModal({
     handleClose();
   }, [hasUnsavedChanges, handleClose, t]);
 
+  /**
+   * Creates the prompt via the API and calls onPromptCreated with the new ID on success.
+   */
   const handleSave = useCallback(async () => {
     try {
       const result = await createRAGPrompt({

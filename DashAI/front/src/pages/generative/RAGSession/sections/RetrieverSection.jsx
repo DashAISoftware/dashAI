@@ -43,6 +43,12 @@ const omitTopK = (obj) =>
     Object.entries(obj || {}).filter(([k]) => k !== "top_k"),
   );
 
+/**
+ * Compute the effective top-K value for a retriever model,
+ * handling composite retrievers (Parallel, Sequential, MMRReranker).
+ * @param {object} model - Retriever model { component, params }.
+ * @returns {number|null} The effective top-K or null.
+ */
 function getEffectiveTopK(model) {
   if (!model?.params) return null;
   if (model.component === "ParallelRetriever") {
@@ -63,6 +69,12 @@ function getEffectiveTopK(model) {
   return typeof model.params.top_k === "number" ? model.params.top_k : null;
 }
 
+/**
+ * Build a BM25 keyword retriever configuration.
+ * @param {object} bm25Defaults - Default BM25 params.
+ * @param {number} topK         - Number of top results.
+ * @returns {object} Model config { component, params }.
+ */
 function buildKeywordModel(bm25Defaults, topK) {
   return {
     component: "BM25Retriever",
@@ -70,6 +82,13 @@ function buildKeywordModel(bm25Defaults, topK) {
   };
 }
 
+/**
+ * Build a DenseEmbedding (semantic) retriever configuration using SentenceTransformer.
+ * @param {object} embeddingDefaults  - Default embedding model params.
+ * @param {object} retrieverDefaults  - Default dense retriever params.
+ * @param {number} topK               - Number of top results.
+ * @returns {object} Model config { component, params }.
+ */
 function buildSemanticModel(embeddingDefaults, retrieverDefaults, topK) {
   return {
     component: "DenseEmbeddingRetriever",
@@ -84,6 +103,14 @@ function buildSemanticModel(embeddingDefaults, retrieverDefaults, topK) {
   };
 }
 
+/**
+ * Build a hybrid (Parallel) retriever configuration with BM25 + DenseEmbedding.
+ * @param {object} bm25Defaults       - Default BM25 params.
+ * @param {object} embeddingDefaults  - Default embedding model params.
+ * @param {object} retrieverDefaults  - Default dense retriever params.
+ * @param {number} topK               - Total top-K split across sub-retrievers.
+ * @returns {object} Model config { component, params }.
+ */
 function buildHybridModel(bm25Defaults, embeddingDefaults, retrieverDefaults, topK) {
   const kwTopK = Math.ceil(topK / 2);
   const seTopK = Math.floor(topK / 2);
@@ -112,6 +139,16 @@ function buildHybridModel(bm25Defaults, embeddingDefaults, retrieverDefaults, to
   };
 }
 
+/**
+ * Retriever model selection section.
+ * Provides keyword / semantic / hybrid presets, top-K picker,
+ * and an advanced configuration modal for custom retrievers.
+ *
+ * @param {object}   props
+ * @param {object}   props.retrieverModel    - Current { component, params } for the retriever.
+ * @param {Function} props.setRetrieverModel  - Sets the retriever model configuration.
+ * @returns {JSX.Element} The retriever preset picker.
+ */
 export default function RetrieverSection({
   retrieverModel,
   setRetrieverModel,
@@ -173,6 +210,12 @@ export default function RetrieverSection({
       && !deepEqual(modelNoTopK, hyNoTopK);
   }, [retrieverModel, keywordModel, semanticModel, hybridModel]);
 
+  /**
+   * Determine which preset group (keyword / semantic / hybrid / null) the
+   * current model configuration matches, ignoring the top-K value.
+   * @param {object} model - Retriever model config.
+   * @returns {string|null} Group key or null for custom configs.
+   */
   const detectSelectedGroup = useCallback((model) => {
     if (!model?.component) return null;
 
@@ -242,6 +285,11 @@ export default function RetrieverSection({
     load();
   }, []);
 
+  /**
+   * Select a retriever preset. If the same preset is already active and not
+   * customised, open the advanced modal instead.
+   * @param {string} groupKey - "keyword", "semantic", or "hybrid".
+   */
   const selectPreset = useCallback((groupKey) => {
     const alreadySelected = !isAdvanced && selectedGroup === groupKey;
     if (alreadySelected) {
@@ -261,6 +309,10 @@ export default function RetrieverSection({
     }
   }, [isAdvanced, selectedGroup, keywordModel, semanticModel, hybridModel, setRetrieverModel]);
 
+  /**
+   * Handle the top-K value change and rebuild the selected preset with the new value.
+   * @param {string} newValue - The new top-K value as a string.
+   */
   const handleTopKChange = useCallback((newValue) => {
     const value = parseInt(newValue);
     if (isNaN(value) || value <= 0 || isAdvanced) return;

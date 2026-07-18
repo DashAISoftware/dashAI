@@ -7,6 +7,7 @@ from DashAI.back.core.schema_fields import (
     string_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.RAG.exceptions import RAGPromptTemplateError
 from DashAI.back.models.RAG.prompts.augmentation.augmentation_prompt import (
     AugmentationPrompt,
 )
@@ -67,6 +68,13 @@ TEMPLATES = {
 
 
 class DefaultAugmentationPromptSchema(BaseSchema):
+    """Schema for the default augmentation prompt.
+
+    Attributes:
+        language: Language code for the response (en, es, pt).
+        template: The prompt template string with placeholders.
+    """
+
     language: schema_field(
         enum_field(enum=["en", "es", "pt"]),
         placeholder="en",
@@ -84,11 +92,7 @@ class DefaultAugmentationPromptSchema(BaseSchema):
 
 
 class DefaultAugmentationPrompt(AugmentationPrompt):
-    """
-    AugmentationPrompt class for generating augmented retrieval prompts,
-    it uses the language model to generate keywords or phrases that can be used
-    to augment the input.
-    """
+    """Default prompt template for generating augmented retrieval queries."""
 
     SCHEMA = DefaultAugmentationPromptSchema
     DESCRIPTION: str = MultilingualString(
@@ -130,7 +134,15 @@ class DefaultAugmentationPrompt(AugmentationPrompt):
                 default template for the selected language is used.
         """
         self.language = kwargs.pop("language")
-        self.template = kwargs.pop("template") or TEMPLATES.get(self.language, "")
+        if "template" in kwargs:
+            self.template = kwargs.pop("template")
+        else:
+            self.template = TEMPLATES.get(self.language, "")
+        if not self.template:
+            raise RAGPromptTemplateError(
+                f"No template available for language: {self.language}"
+            )
+        super().__init__(**kwargs)
 
     def format(
         self,
@@ -147,6 +159,11 @@ class DefaultAugmentationPrompt(AugmentationPrompt):
         Returns:
             Fully formatted prompt string ready for LLM input.
         """
+        if not self.validate_template(self.template):
+            raise RAGPromptTemplateError(
+                "Template is missing required placeholders:"
+                f" {self.required_placeholders}"
+            )
         buffer = self.template
         buffer = buffer.replace("{input}", input)
         buffer = buffer.replace("{n_search_terms}", str(n_search_terms))

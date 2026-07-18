@@ -12,6 +12,18 @@ import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import GeneratorConfigurationStep from "./GeneratorConfigurationStep";
 
+/**
+ * Full-screen modal dialog for advanced generator (LLM) configuration.
+ * Wraps GeneratorConfigurationStep in a dialog with save/cancel actions.
+ *
+ * @param {object} props
+ * @param {boolean} props.open - Whether the dialog is open.
+ * @param {function} props.onClose - Callback to close the dialog.
+ * @param {any} props.selectedGenerator - The currently selected generator paradigm.
+ * @param {object} [props.generatorModel] - The current generator model { component, params }.
+ * @param {function} props.setGeneratorModel - State setter for the generator model.
+ * @returns {JSX.Element} The advanced generator modal.
+ */
 export default function GeneratorAdvancedModal({
   open,
   onClose,
@@ -22,10 +34,12 @@ export default function GeneratorAdvancedModal({
   const { t } = useTranslation(["generative"]);
   const [stepValid, setStepValid] = useState(false);
 
+  /** Closes the modal without saving. */
   const handleClose = () => {
     onClose();
   };
 
+  /** Saves and closes the modal. */
   const handleSave = () => {
     onClose();
   };

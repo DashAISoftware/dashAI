@@ -76,6 +76,14 @@ LABSE_MODEL_NAMES = list(LABSE_MODELS.keys())
 
 
 class LaBSEmbeddingSchema(BaseSchema):
+    """Configuration schema for :class:`LaBSEmbedding`.
+
+    Attributes:
+        model_name: LaBSE model for multilingual embedding generation (109 languages).
+        overflow_strategy: Strategy for chunks exceeding model max sequence length.
+        device: Device to run the model on.
+    """
+
     model_name: schema_field(
         enum_field(LABSE_MODEL_NAMES),
         placeholder="sentence-transformers/LaBSE",
@@ -105,6 +113,17 @@ class LaBSEmbeddingSchema(BaseSchema):
 
 
 class LaBSEmbedding(DenseEmbedding):
+    """Dense embeddings using the LaBSE multilingual model (109 languages).
+
+    Wraps :class:`_SentenceTransformerEmbedding` (mean pooling, L2
+    normalisation forced on) and exposes it as a DashAI component with
+    a configurable schema (:class:`LaBSEmbeddingSchema`).
+
+    FLAGS:
+        FAMILY:labse: Groups this model under the LaBSE family.
+        huggingface: Marks the model family as HuggingFace-based.
+    """
+
     SCHEMA = LaBSEmbeddingSchema
     FLAGS: list[str] = ["FAMILY:labse", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
@@ -117,6 +136,11 @@ class LaBSEmbedding(DenseEmbedding):
     )
 
     def __init__(self, **kwargs):
+        """Initialise the embedding by validating parameters and creating the internal model.
+
+        Args:
+            **kwargs: Configuration matching :class:`LaBSEmbeddingSchema`.
+        """  # noqa: E501
         self.params = self.validate_and_transform(kwargs)
         model_name = self.params["model_name"]
         device = self.params["device"]
@@ -131,16 +155,33 @@ class LaBSEmbedding(DenseEmbedding):
         )
 
     def load(self):
+        """Load the LaBSE model and tokenizer."""
         self._embedding.load()
 
     def encode(self, text: str):
+        """Encode a single text into a dense embedding.
+
+        Args:
+            text: Input string.
+
+        Returns:
+            A 1-D NumPy array of shape ``(embedding_dim,)``.
+        """
         return self._embedding.encode(text)
 
     def batch_encode(self, texts: List[str]):
+        """Encode a batch of texts into dense embeddings.
+
+        Args:
+            texts: List of input strings.
+
+        Returns:
+            A ``(batch, embedding_dim)`` float32 NumPy array.
+        """
         return self._embedding.batch_encode(texts)
 
     def save(self):
-        pass
+        """No-op. Persistence is handled externally."""
 
     def train(self, **kwargs):
-        return
+        """No-op. Pre-trained models are used as-is."""

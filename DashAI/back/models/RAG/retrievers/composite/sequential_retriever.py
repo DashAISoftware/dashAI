@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -8,17 +8,20 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
-from DashAI.back.models.RAG.retrievers.exceptions import (
-    CompositeValidationError,
-    UnitRetrieverChildError,
-)
-from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
+from DashAI.back.models.RAG.retrievers.exceptions import CompositeValidationError
 
 
 class SequentialRetrieverSchema(BaseSchema):
+    """Schema for :class:`SequentialRetriever`.
+
+    Attributes:
+        children: Ordered list of at least 2 child retrievers.
+    """
+
     children: schema_field(
         list_field(component_field(parent="RetrieverModel"), min_items=2),
         placeholder=[],
@@ -34,6 +37,12 @@ class SequentialRetrieverSchema(BaseSchema):
 
 
 class SequentialRetriever(CompositeRetriever):
+    """Queries multiple retrievers in sequence, re-ranking at each step.
+
+    Each stage narrows the result set by requiring strictly decreasing
+    ``top_k`` values.  The last child is the authoritative scorer.
+    """
+
     FLAGS: list[str] = ["composite", "sequential"]
     SCHEMA = SequentialRetrieverSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -46,23 +55,36 @@ class SequentialRetriever(CompositeRetriever):
     )
 
     def __init__(self, **kwargs):
+        """Initialize and validate the sequential cascade.
+
+        Args:
+            **kwargs: Must contain a ``children`` key with at least 2
+                :class:`RetrieverModel` instances.
+
+        Raises:
+            CompositeValidationError: If ``top_k`` values are not strictly
+                decreasing.
+        """
         super().__init__(**kwargs)
         self._validate()
 
     def _validate(self) -> None:
+        """Validate cascade constraints on children.
+
+        Checks that ``top_k`` values are strictly decreasing so each
+        stage narrows the result set.  No type restrictions — any
+        ``RetrieverModel`` subclass is allowed as a child (Composite
+        pattern).
+
+        Raises:
+            CompositeValidationError: If child ``top_k`` values are not
+                strictly decreasing.
+        """
         children = getattr(self, "_children", [])
         if len(children) < 2:
             return
 
         children_k = [c.retrieval_top_k for c in children]
-
-        for _i, child in enumerate(children):
-            if not isinstance(child, UnitRetriever):
-                raise UnitRetrieverChildError(
-                    child_class=child.__class__.__name__,
-                    strategy="cascade",
-                )
-
         for i in range(1, len(children_k)):
             if children_k[i] >= children_k[i - 1]:
                 raise CompositeValidationError(
@@ -72,8 +94,31 @@ class SequentialRetriever(CompositeRetriever):
                 )
 
     def retrieve(self, query, **kwargs) -> List[Chunk]:
+        """Retrieve chunks through the sequential cascade.
+
+        The first child performs a broad retrieval; each subsequent child
+        re-ranks the results and narrows to its ``top_k``.
+
+        Args:
+            query: The search query string.
+            **kwargs: Additional retrieval parameters forwarded to the
+                first child.
+
+        Returns:
+            A list of :class:`Chunk` instances after all stages.
+
+        Raises:
+            RAGRetrieverError: If any chunk has a ``None`` ID.
+        """
         first = self._children[0]
         results = first.retrieve(query, **kwargs)
+
+        for c in results:
+            if c.id is None:
+                raise RAGRetrieverError(
+                    "Chunk with None id encountered in SequentialRetriever. "
+                    "Chunks must be persisted before sequential retrieval."
+                )
 
         for child in self._children[1:]:
             chunk_ids = [c.id for c in results]
@@ -84,8 +129,31 @@ class SequentialRetriever(CompositeRetriever):
 
         return results
 
+    def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
+        """Score chunks by delegating to the last child in the cascade.
+
+        The last child produces the final ranking, so it is the
+        authoritative scorer.
+
+        Args:
+            chunk_ids: List of chunk IDs to score.
+            query: The search query string.
+
+        Returns:
+            A list of ``(chunk_id, distance)`` tuples sorted by distance.
+        """
+        if not self._children:
+            return []
+        return self._children[-1].score_chunks(chunk_ids, query)
+
     @property
     def retrieval_top_k(self) -> int:
+        """Return the ``top_k`` of the last (most restrictive) child.
+
+        Returns:
+            The ``top_k`` of the last child, or ``1`` if there are no
+            children.
+        """
         if self._children:
             return self._children[-1].retrieval_top_k
         return 1

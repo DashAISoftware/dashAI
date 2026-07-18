@@ -18,6 +18,12 @@ import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { FormSchemaProvider } from "../../../contexts/schema";
 
+/**
+ * RAG documents management page.
+ * Shows a document table in the center, sessions in the left panel,
+ * and allows document upload / deletion.
+ * @returns {JSX.Element} Three-panel documents page.
+ */
 function RAGDocumentsPage() {
   const navigate = useNavigate();
   const threePanelLayout = useThreePanelLayout();
@@ -26,6 +32,9 @@ function RAGDocumentsPage() {
   const [documentsLoading, setDocumentsLoading] = useState(true);
   const [sessions, setSessions] = useState([]);
 
+  /**
+   * Fetch all sessions from the API.
+   */
   const loadSessions = useCallback(async () => {
     try {
       const allSessions = await getSessions();
@@ -35,6 +44,9 @@ function RAGDocumentsPage() {
     }
   }, []);
 
+  /**
+   * Load all RAG documents from the API.
+   */
   const fetchAllDocuments = useCallback(async () => {
     setDocumentsLoading(true);
     try {
@@ -52,6 +64,10 @@ function RAGDocumentsPage() {
     fetchAllDocuments();
   }, [loadSessions, fetchAllDocuments]);
 
+  /**
+   * Delete a document via the API and refresh the list.
+   * @param {number} id - Document id to delete.
+   */
   const handleRemoveDocumentFromTable = useCallback(
     async (id) => {
       try {
@@ -64,10 +80,20 @@ function RAGDocumentsPage() {
     [fetchAllDocuments],
   );
 
+  /**
+   * Prepend a newly uploaded document to the local list.
+   * @param {object} newDoc - The document returned by the upload API.
+   */
   const handleAddDocument = useCallback((newDoc) => {
     setAllDocuments((prev) => [newDoc, ...prev]);
   }, []);
 
+  /**
+   * Navigate to the main generative page with the selected session pre-selected.
+   * @param {number} sessionId
+   * @param {string} taskName
+   * @param {string} taskDisplayName
+   */
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
     navigate("/app/generative", {
       state: {
@@ -82,6 +108,10 @@ function RAGDocumentsPage() {
     navigate("/app/generative");
   };
 
+  /**
+   * Remove a session optimistically and persist the deletion.
+   * @param {number} id - Session id to delete.
+   */
   const handleSessionDelete = async (id) => {
     setSessions((prev) => prev.filter((s) => s.id !== id));
     await removeSession(id);

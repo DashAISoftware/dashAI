@@ -12,6 +12,19 @@ import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import RetrieverConfigurationStep from "./RetrieverConfigurationStep";
 
+/**
+ * Full-screen modal dialog for advanced retriever configuration.
+ * Wraps RetrieverConfigurationStep in a dialog with save/cancel actions.
+ *
+ * @param {object} props
+ * @param {boolean} props.open - Whether the dialog is open.
+ * @param {function} props.onClose - Callback to close the dialog.
+ * @param {any} props.selectedParadigm - The currently selected retriever paradigm.
+ * @param {Array} [props.allParadigms] - All available retriever paradigms.
+ * @param {object} [props.retrieverModel] - The current retriever model.
+ * @param {function} props.setRetrieverModel - State setter for the retriever model.
+ * @returns {JSX.Element} The advanced retriever modal.
+ */
 export default function RetrieverAdvancedModal({
   open,
   onClose,
@@ -24,10 +37,14 @@ export default function RetrieverAdvancedModal({
   const [stepValid, setStepValid] = useState(false);
   const retrieverStepRef = useRef(null);
 
+  /** Closes the modal without saving. */
   const handleClose = () => {
     onClose();
   };
 
+  /**
+   * Triggers a save of the current form values and closes the modal.
+   */
   const handleSave = () => {
     if (retrieverStepRef.current) {
       retrieverStepRef.current.saveFormValues();

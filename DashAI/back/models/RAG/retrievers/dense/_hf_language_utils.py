@@ -51,6 +51,17 @@ MAX_DISPLAY_LANGUAGES: int = 3
 
 
 def compute_language_summary(languages: List[str]) -> Tuple[str, int]:
+    """Build a human-readable summary and total count for a list of languages.
+
+    Shows up to ``MAX_DISPLAY_LANGUAGES`` (3) labels; overflow is
+    indicated with a ``+N`` suffix.
+
+    Args:
+        languages: List of ISO 639-1 language codes.
+
+    Returns:
+        A ``(summary_string, total_count)`` tuple.
+    """
     if not languages:
         return "", 0
     labels = [LANGUAGE_LABELS.get(lang, lang.title()) for lang in languages]
@@ -64,6 +75,16 @@ def compute_language_summary(languages: List[str]) -> Tuple[str, int]:
 def build_model_language_summaries(
     models: Dict[str, dict],
 ) -> Dict[str, Dict[str, object]]:
+    """Build per-model language summaries.
+
+    Args:
+        models: Mapping from model name to model info dicts (each
+            containing a ``"languages"`` key).
+
+    Returns:
+        A dict mapping model name to ``{"summary": str, "count": int,
+        "labels": list[str]}``.
+    """
     result: Dict[str, Dict[str, object]] = {}
     for model_name, info in models.items():
         summary, count = compute_language_summary(info.get("languages", []))
@@ -81,6 +102,17 @@ def build_model_language_summaries(
 def build_family_language_summary(
     models: Dict[str, dict],
 ) -> Tuple[str, int]:
+    """Build a language summary across all models in a family.
+
+    Collects unique languages from all models and summarises them.
+
+    Args:
+        models: Mapping from model name to model info dicts (each
+            containing a ``"languages"`` key).
+
+    Returns:
+        A ``(summary_string, total_unique_count)`` tuple.
+    """
     all_languages: List[str] = []
     seen: set[str] = set()
     for info in models.values():

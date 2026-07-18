@@ -19,6 +19,16 @@ import { normalizeUrl } from "../../../utils/urlUtils";
 import DocumentPreviewModal from "./DocumentPreviewModal";
 import RAGSectionColumn from "../../../pages/generative/RAGSession/components/RAGSectionColumn";
 
+/**
+ * Document selection table used in the RAG setup wizard. Supports multi-select,
+ * upload, delete, search, and preview of documents.
+ *
+ * @param {object}   props
+ * @param {Array}    [props.selectedIds=[]] - Initially selected document IDs.
+ * @param {function} [props.onSelect] - Callback invoked with the array of selected document objects.
+ * @param {object|Array|function} [props.sx] - MUI sx prop forwarded to the container.
+ * @returns {JSX.Element}
+ */
 export default function DocumentSelector({
   selectedIds: initialSelectedIds = [],
   onSelect,
@@ -102,6 +112,10 @@ export default function DocumentSelector({
     });
   }, []);
 
+  /**
+   * Opens the document preview modal, fetching TXT content if applicable.
+   * @param {object} doc - The document to preview.
+   */
   const handleOpenPreview = async (doc) => {
     setPreviewDoc(doc);
     if (doc.file_type === "txt" && doc.preview) {
@@ -140,6 +154,10 @@ export default function DocumentSelector({
     }
   }, []);
 
+  /**
+   * Deletes a document from the server and removes it from local state and selection.
+   * @param {number|string} id - The document ID to delete.
+   */
   const handleRemoveDocument = useCallback(async (id) => {
     try {
       await deleteDocument(id);
@@ -150,6 +168,11 @@ export default function DocumentSelector({
     }
   }, []);
 
+  /**
+   * Handles multi-file upload, saving each document and updating local state.
+   * @param {File|File[]} files - File(s) to upload.
+   * @param {string} [url] - Optional source URL.
+   */
   const handleFileUpload = useCallback(
     async (files, url) => {
       if (!files) return;

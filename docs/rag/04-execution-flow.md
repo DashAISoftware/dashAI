@@ -14,12 +14,27 @@ The user fills the `RAGSessionSetup` form:
 ### 2. Session Creation
 
 Frontend calls `POST /api/v1/generative-session/` with the full parameter
-payload. The endpoint validates parameters against `RAGPipeline.SCHEMA` and
-persists a `GenerativeSession` record in the database. The session stores:
+payload. The endpoint performs these validation steps before persisting:
+
+1. **Model & task validation** — checks `model_name` and `task_name` exist in
+   the component registry.
+2. **Document validation** — ensures documents list is non-empty and all IDs
+   exist in the database.
+3. **Parameter normalization** — `normalize_payload()` transforms frontend-style
+   property wrappers.
+4. **Prompt resolution** — if `prompt_id` is provided, it is resolved to a
+   `{component, params}` ref (validates prompt exists + template placeholders).
+5. **Schema validation** — `RAGPipeline.SCHEMA.model_validate()` validates
+   the full parameter structure.
+6. **Component validation** — `validate_component_refs()` recursively checks
+   that all `{component, params}` references exist in the registry.
+7. **Prompt template validation** — if an explicit template is given, validates
+   that it contains the required placeholders (`{input}`, `{chunks}`).
+
+On success, a `GenerativeSession` record is persisted with:
 - `task_name` — Set to `"RAGTask"` for RAG sessions.
 - `model_name` — Set to `"RAGPipeline"`.
-- `parameters` — The full configuration dict (documents, chunking, retriever,
-  prompt, generation model).
+- `parameters` — The validated configuration dict.
 
 ### 3. Process Creation
 
@@ -36,13 +51,14 @@ The frontend calls `POST /api/v1/job/` with `job_type="GenerativeJob"` and the
 
 `GenerativeJob.run()` performs an initial DB lookup:
 ```
-Query session → check task_name → if issubclass(RAGTask):
+Query session → check task_name → if task is RAGTask:
     delegate to RAGJob.run()
     return
 ```
 
 If the task is **not** a RAG task, `GenerativeJob` proceeds with the standard
-generation flow.
+generation flow. `RAGJob` itself is a standalone `BaseJob` subclass (not a
+subclass of `GenerativeJob`), instantiated and executed independently.
 
 ### 6. Pipeline Construction (in RAGJob)
 
@@ -54,44 +70,40 @@ RAGJob.run():
   ├── 2. Build RAGPipelineConfig.from_kwargs()
   │       Uses session parameters + injected DB + registry + env path
   │
-  ├── 3. Create RAGModelsFactory(db, registry, rag_path)
-  │
-  ├── 4. Create PipelineRepository(db)
-  │
-  ├── 5. Create DocumentLoader(db)
-  │
-  └── 6. Assemble RAGPipeline(config, models, repo, doc_loader)
+  └── 3. RAGSetupService.build_pipeline(config)
+         DocumentService → ChunkingService → RetrieverSetupService
+         → LLMService → PromptService → RAGPipeline
 ```
 
-### 7. Pipeline Initialisation
-
-During `RAGPipeline.__init__()`:
+### 7. RAGSetupService.build_pipeline()
 
 ```
   │
-  ├── a. PipelineRepository.ensure_db_record(session_id)
+  ├── a. _ensure_db_record(session_id)
   │       Creates or finds the rag_pipeline table row.
   │
-  ├── b. DocumentLoader.load(document_ids)
+  ├── b. DocumentService.load(documents)
   │       Fetches documents from DB, hydrates BaseDocument objects.
   │
-  ├── c. get_or_create_chunk_set(db, doc_ids, chunking_config)
+  ├── c. ChunkingService.get_or_create_chunk_set(doc_ids, config)
   │       SHA-256 signature → reuse or create new chunk set.
   │
-  ├── d. ModelsFactory.create_prompt(component, params)
-  │       Lookup-or-create prompt record in rag_prompt table.
+  ├── d. ChunkingService.create(docs, chunk_set, component, params)
+  │       Creates chunker → chunks docs → persists chunks.
   │
-  ├── e. ModelsFactory.create_chunking_model(docs, chunk_set, component, params)
-  │       Creates chunker → chunks docs → persists chunks → returns model.
+  ├── e. RetrieverSetupService.setup(component, params)
+  │       Lookup-or-create retriever → compute embeddings → persist.
   │
-  ├── f. ModelsFactory.create_retriever(pipeline_id, chunks, chunk_set, component, params)
-  │       Creates retriever → computes/trains → persists → returns model.
+  ├── f. LLMService.get_or_create(component, params)
+  │       Lookup-or-create LLM record.
   │
-  ├── g. ModelsFactory.create_llm(component, params)
-  │       Lookup-or-create LLM record in rag_generation_model table.
+  ├── g. PromptService.create(class_name, name, params)
+  │       Persists prompt record.
   │
-  └── h. PipelineRepository.update_db_record(...)
-        Patches the pipeline record with real component FK IDs.
+  ├── h. _update_db_record(...)
+  │       Patches the pipeline record with real component FK IDs.
+  │
+  └── i. Assemble and return RAGPipeline(config, documents, chunks, ...)
 ```
 
 ### 8. History Preparation
@@ -115,8 +127,9 @@ The job queries all previous `GenerativeProcess` records for the session with
 ```
   │
   ├── a. Extract input message + history from input_data
+  │       (reads the last entry as the current query)
   │
-  ├── b. retriever.retrieve(query)
+  ├── b. single_interaction(query) → retriever.retrieve(query)
   │       Returns top-k Chunk objects relevant to the query.
   │
   ├── c. _build_chunk_references(chunks)
@@ -125,7 +138,7 @@ The job queries all previous `GenerativeProcess` records for the session with
   ├── d. prompt_model.format(input=query, chunks=chunk_text)
   │       Renders the prompt template with query + chunk context.
   │
-  ├── e. llm_model.generate(history + prompt)
+  ├── e. llm_model.generate(list(history) + [{"role": "user", "content": prompt}])
   │       LLM generates a response text.
   │
   └── f. Return RAGGenerationOutput(message, chunks)

@@ -15,6 +15,12 @@ import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { FormSchemaProvider } from "../../../contexts/schema";
 
+/**
+ * RAG prompts management page.
+ * Displays a prompt selection table in the center, sessions in the left panel,
+ * and a document panel on the right.
+ * @returns {JSX.Element} Three-panel prompts page.
+ */
 function RAGPromptsPage() {
   const navigate = useNavigate();
   const threePanelLayout = useThreePanelLayout();
@@ -23,6 +29,9 @@ function RAGPromptsPage() {
   const [sessions, setSessions] = useState([]);
   const [documentRefreshTrigger, setDocumentRefreshTrigger] = useState(0);
 
+  /**
+   * Fetch all sessions from the API.
+   */
   const loadSessions = useCallback(async () => {
     try {
       const allSessions = await getSessions();
@@ -36,6 +45,12 @@ function RAGPromptsPage() {
     loadSessions();
   }, [loadSessions]);
 
+  /**
+   * Navigate to the main generative page with the selected session pre-selected.
+   * @param {number} sessionId
+   * @param {string} taskName
+   * @param {string} taskDisplayName
+   */
   const handleSessionClick = (sessionId, taskName, taskDisplayName) => {
     navigate("/app/generative", {
       state: {
@@ -50,6 +65,10 @@ function RAGPromptsPage() {
     navigate("/app/generative");
   };
 
+  /**
+   * Remove a session optimistically and persist the deletion.
+   * @param {number} id - Session id to delete.
+   */
   const handleSessionDelete = async (id) => {
     setSessions((prev) => prev.filter((s) => s.id !== id));
     await removeSession(id);

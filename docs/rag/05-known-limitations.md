@@ -64,13 +64,17 @@
 
 - **`GenerativeJob` and `RAGJob` share identical `set_status_as_delivered()`,
   `set_status_as_error()`, and `get_job_name()` methods.** The code is
-  duplicated rather than extracted into a shared helper. This is
-  **intentional** — `GenerativeJob` lives in the main `develop` branch while
-  `RAGJob` lives in the `RAG` branch; extracting shared code would require
-  either a shared module that crosses branch boundaries or continuous
-  backporting. The duplication is accepted technical debt to keep each job
-  self-contained and avoid cross-branch coupling.
+  duplicated rather than extracted into a shared helper. `RAGJob` is a
+  standalone `BaseJob` subclass (not a subclass of `GenerativeJob`), so the
+  common status-update logic is copied rather than inherited. This is accepted
+  technical debt; a future refactor should extract a shared mixin or base class.
 
-- **`GenerativeJob` must not be modified.** Any improvements to the shared
-  status-update logic should be applied to `RAGJob` independently, or
-  coordinated when the branches are merged.
+- **`FastTextEmbedding`** is defined in
+  `models/RAG/embeddings/dense/fasttext_embedding.py` but is **not exposed**
+  through `embeddings/dense/__init__.py`. It must be explicitly imported and
+  registered if needed.
+
+## Deprecated Patterns
+
+- The old `notebooks/`, `images/`, `explanations/` directories listed in the
+  runtime data layout are no longer actively used by the RAG module.

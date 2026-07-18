@@ -28,6 +28,13 @@ const DEFAULT_IDS = {
   DefaultQARAGGenerationPrompt: "default-QA",
 };
 
+/**
+ * Build a user-facing display name for a default (system) prompt option.
+ * Uses class_name to distinguish DefaultRAGGenerationPrompt vs DefaultQARAGGenerationPrompt.
+ * @param {object}   option - Prompt option object.
+ * @param {Function} t      - i18n translation function.
+ * @returns {string} Translated display name.
+ */
 function getDefaultDisplayName(option, t) {
   // Use class_name (set explicitly by our code) rather than name
   // (raw API field) to avoid potential encoding / serialization mismatches.
@@ -41,12 +48,31 @@ function getDefaultDisplayName(option, t) {
   return option.name || cname;
 }
 
+/**
+ * Compute the display label for a prompt autocomplete option.
+ * Handles "_isCreateNew", "_isDefault", and regular prompt items.
+ * @param {object}   option - Prompt option.
+ * @param {Function} t      - i18n translation function.
+ * @returns {string} The label to display.
+ */
 function getOptionLabel(option, t) {
   if (option._isCreateNew) return option.name;
   if (option._isDefault) return getDefaultDisplayName(option, t);
   return option.name;
 }
 
+/**
+ * Prompt template selection section.
+ * Allows the user to pick a default or custom prompt template, switch
+ * language for multi-template prompts, view a highlighted preview, and
+ * create new custom prompts.
+ *
+ * @param {object}   props
+ * @param {object}   props.promptModel           - Current { component, params } for the prompt.
+ * @param {Function} props.setPromptModel         - Sets the prompt configuration.
+ * @param {Function} [props.onTokenCountChange]   - Reports the current template token count.
+ * @returns {JSX.Element} The prompt picker.
+ */
 export default function PromptSection({
   promptModel,
   setPromptModel,
@@ -74,6 +100,10 @@ export default function PromptSection({
   const prevSelectedRef = useRef(null);
   const isInitializedRef = useRef(false);
 
+  /**
+   * Fetch custom (user-created) and default prompts from the API.
+   * Filters out augmentation prompts and the CustomRAGGenerationPrompt base class.
+   */
   const loadPrompts = useCallback(async () => {
     try {
       const dbPrompts = await getRAGPrompts();
@@ -218,6 +248,12 @@ export default function PromptSection({
     }
   }, [mergedOptions, promptModel]);
 
+  /**
+   * Handle prompt autocomplete selection.
+   * If "Create new" is selected, opens the creation modal instead.
+   * @param {object} _event   - Autocomplete change event (unused).
+   * @param {object} newValue - The selected prompt option.
+   */
   const handlePromptChange = (_event, newValue) => {
     if (newValue?._isCreateNew) {
       setNewPromptModalOpen(true);
@@ -235,6 +271,11 @@ export default function PromptSection({
     setSelectedLanguage(event.target.value);
   };
 
+  /**
+   * After a new prompt is created, refresh the prompt list and select the new prompt.
+   * Syncs the language and template immediately to avoid useEffect loops.
+   * @param {number|string} newPromptId - The newly created prompt's id.
+   */
   const handlePromptCreated = useCallback(
     async (newPromptId) => {
       const updatedPrompts = await getRAGPrompts();

@@ -10,6 +10,17 @@ import Upload from "../../shared/Upload";
 import { useSnackbar } from "notistack";
 import { getSessionDocuments, addDocument, loadDocuments } from "../../../api/rag";
 
+/**
+ * Documents sidebar showing a searchable list of documents for the current RAG session.
+ * Supports upload and navigation to the full document table view.
+ *
+ * @param {object}   props
+ * @param {number|string} [props.selectedSessionId] - Session ID to scope documents to.
+ * @param {string}   props.taskName - Task name for context (e.g. "RAGTask").
+ * @param {function} [props.onDocumentChange] - Callback fired after document upload.
+ * @param {boolean}  [props.showSearch=true] - Whether to show the search bar.
+ * @returns {JSX.Element}
+ */
 export default function DocumentsBar({ selectedSessionId, taskName, onDocumentChange, showSearch = true }) {
   const { t } = useTranslation("generative");
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,6 +81,11 @@ export default function DocumentsBar({ selectedSessionId, taskName, onDocumentCh
     setFilteredDocuments(filtered);
   }, [searchQuery, documents]);
 
+  /**
+   * Handles file upload, saving each file and updating local document state immediately.
+   * @param {File|File[]} files - File(s) to upload.
+   * @param {string} [url] - Optional source URL.
+   */
   const handleFileUpload = async (files, url) => {
     if (!files) return;
     

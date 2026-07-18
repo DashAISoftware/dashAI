@@ -28,6 +28,14 @@ INSTRUCTOR_MODEL_NAMES = list(INSTRUCTOR_MODELS.keys())
 
 
 class InstructorEmbeddingSchema(BaseSchema):
+    """Configuration schema for :class:`InstructorEmbedding`.
+
+    Attributes:
+        model_name: INSTRUCTOR model for instruction-tuned embedding generation.
+        instruction: Instruction text that guides the embedding model.
+        device: Device to run the model on.
+    """
+
     model_name: schema_field(
         enum_field(INSTRUCTOR_MODEL_NAMES),
         placeholder="hkunlp/instructor-base",
@@ -58,6 +66,18 @@ class InstructorEmbeddingSchema(BaseSchema):
 
 
 class InstructorEmbedding(DenseEmbedding):
+    """Dense embeddings using INSTRUCTOR instruction-tuned models.
+
+    Wraps :class:`_InstructorEmbedding` and exposes it as a DashAI component
+    with a configurable schema (:class:`InstructorEmbeddingSchema`).
+
+    Prepends a user-defined instruction string to every input text.
+
+    FLAGS:
+        FAMILY:instructor: Groups this model under the INSTRUCTOR family.
+        huggingface: Marks the model family as HuggingFace-based.
+    """
+
     SCHEMA = InstructorEmbeddingSchema
     FLAGS: list[str] = ["FAMILY:instructor", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
@@ -70,6 +90,12 @@ class InstructorEmbedding(DenseEmbedding):
     )
 
     def __init__(self, **kwargs):
+        """Initialise the embedding by validating parameters and creating the internal
+        model.
+
+        Args:
+            **kwargs: Configuration matching :class:`InstructorEmbeddingSchema`.
+        """
         self.params = self.validate_and_transform(kwargs)
         model_name = self.params["model_name"]
         device = self.params["device"]
@@ -81,16 +107,34 @@ class InstructorEmbedding(DenseEmbedding):
         )
 
     def load(self):
+        """Load the INSTRUCTOR model."""
         self._embedding.load()
 
     def encode(self, text: str):
+        """Encode a single text into a dense embedding with the configured instruction.
+
+        Args:
+            text: Input string.
+
+        Returns:
+            A 1-D NumPy array of shape ``(embedding_dim,)``.
+        """
         return self._embedding.encode(text)
 
     def batch_encode(self, texts: List[str]):
+        """Encode a batch of texts into dense embeddings with the configured
+        instruction.
+
+        Args:
+            texts: List of input strings.
+
+        Returns:
+            A ``(batch, embedding_dim)`` float32 NumPy array.
+        """
         return self._embedding.batch_encode(texts)
 
     def save(self):
-        pass
+        """No-op. Persistence is handled externally."""
 
     def train(self, **kwargs):
-        return
+        """No-op. Pre-trained models are used as-is."""

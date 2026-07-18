@@ -4,6 +4,8 @@ import pickle
 from typing import Dict, List, Tuple
 
 import numpy as np
+from scipy.sparse import lil_matrix
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import pairwise_distances
 
 from DashAI.back.core.schema_fields import (
@@ -27,6 +29,17 @@ log = logging.getLogger(__name__)
 
 
 class BM25VectorizerSchema(BaseSchema):
+    """Schema for the BM25 vectorizer parameters.
+
+    Attributes:
+        strip_accents: Whether to remove accents during preprocessing.
+        lowercase: Whether to convert all characters to lowercase.
+        stop_words: List of stop words (or ``None``).
+        max_df: Document frequency upper threshold.
+        min_df: Document frequency lower threshold.
+        max_features: Maximum number of features (or ``None``).
+    """
+
     strip_accents: schema_field(
         none_type(enum_field(enum=["ascii", "unicode"])),
         placeholder=None,
@@ -83,6 +96,12 @@ class BM25VectorizerSchema(BaseSchema):
 
 
 class BM25VectorizerModel(BaseModel):
+    """Model component that encapsulates a :class:`CountVectorizer` for BM25.
+
+    The vectorizer provides term-frequency counts; the BM25 weighting
+    is applied by the parent :class:`BM25Retriever`.
+    """
+
     DISPLAY_NAME: str = MultilingualString(
         en="BM25 Vectorizer",
         es="Vectorizador BM25",
@@ -97,8 +116,11 @@ class BM25VectorizerModel(BaseModel):
     SCHEMA = BM25VectorizerSchema
 
     def __init__(self, **kwargs):
-        from sklearn.feature_extraction.text import CountVectorizer
+        """Initialize and build the underlying ``CountVectorizer``.
 
+        Args:
+            **kwargs: Parameters matching :class:`BM25VectorizerSchema`.
+        """
         validated = self.SCHEMA.model_validate(kwargs)
         self.params = dict(validated)
         self.vectorizer = CountVectorizer(
@@ -111,16 +133,27 @@ class BM25VectorizerModel(BaseModel):
         )
 
     def load(self):
-        pass
+        """No-op load (state managed by the parent retriever)."""
 
     def save(self):
-        pass
+        """No-op save (state managed by the parent retriever)."""
 
     def train(self):
-        pass
+        """No-op train (fitting is done by the parent retriever)."""
 
 
 class BM25RetrieverSchema(BaseSchema):
+    """Schema for :class:`BM25Retriever`.
+
+    Attributes:
+        BM25Vectorizer: Parameters for the CountVectorizer component.
+        k1: BM25 term frequency saturation parameter.
+        b: BM25 length normalisation parameter.
+        delta: BM25 IDF smoothing parameter.
+        similarity_function: Distance metric for vector comparison.
+        top_k: Number of chunks to select.
+    """
+
     BM25Vectorizer: schema_field(
         component_field(parent="BM25VectorizerModel"),
         placeholder={"component": "BM25VectorizerModel", "params": {}},
@@ -177,6 +210,12 @@ class BM25RetrieverSchema(BaseSchema):
 
 
 class BM25Retriever(SparseRetriever):
+    """Sparse retriever using BM25 (Okapi) ranking for document retrieval.
+
+    Computes BM25-weighted term-frequency vectors and retrieves via
+    pairwise distance.
+    """
+
     FLAGS: list[str] = ["keyword", "sparse"]
     DISPLAY_NAME: str = MultilingualString(
         en="BM25 Retriever",
@@ -191,6 +230,12 @@ class BM25Retriever(SparseRetriever):
     SCHEMA = BM25RetrieverSchema
 
     def __init__(self, **kwargs):
+        """Initialize the BM25 retriever.
+
+        Args:
+            **kwargs: Must contain ``BM25Vectorizer``, ``k1``, ``b``,
+                ``delta``, ``similarity_function``, and ``top_k``.
+        """
         super().__init__(**kwargs)
 
         self.k1 = self.params.pop("k1")
@@ -203,28 +248,44 @@ class BM25Retriever(SparseRetriever):
         self._vectorizer = vectorizer_model.vectorizer
 
     def init_model(self) -> None:
+        """Restore saved state or fit BM25 from scratch."""
         if not self.load():
             self._fit()
 
     def load(self) -> bool:
+        """Load a previously saved BM25 state from disk.
+
+        Returns:
+            ``True`` if state was loaded successfully, ``False`` if
+            no saved state exists or loading failed.
+        """
         if self._persistence.model_dir is None:
             return False
         model_dir = self._persistence.model_dir
         try:
             with open(os.path.join(model_dir, "bm25_vectorizer.pkl"), "rb") as f:
-                self._vectorizer = pickle.load(f)
+                vectorizer = pickle.load(f)
             with open(os.path.join(model_dir, "bm25_tf_matrix.pkl"), "rb") as f:
-                self._tf_matrix = pickle.load(f)
+                tf_matrix = pickle.load(f)
             with open(os.path.join(model_dir, "bm25_matrix.pkl"), "rb") as f:
-                self._bm25_matrix = pickle.load(f)
+                bm25_matrix = pickle.load(f)
             with open(os.path.join(model_dir, "bm25_row_to_chunk.pkl"), "rb") as f:
-                self.matrix_row_to_chunk_map = pickle.load(f)
+                matrix_row_to_chunk_map = pickle.load(f)
+            self._vectorizer = vectorizer
+            self._tf_matrix = tf_matrix
+            self._bm25_matrix = bm25_matrix
+            self.matrix_row_to_chunk_map = matrix_row_to_chunk_map
             return True
         except Exception as e:
-            log.info("Error loading BM25 state: %s", e)
+            log.error("Error loading BM25 state: %s", e)
             return False
 
     def save(self) -> None:
+        """Persist the vectorizer, matrices, and chunk map to disk.
+
+        Raises:
+            ValueError: If ``persistence.model_dir`` is ``None``.
+        """
         model_dir = self._persistence.model_dir
         if model_dir is None:
             raise ValueError(
@@ -242,6 +303,7 @@ class BM25Retriever(SparseRetriever):
                 pickle.dump(obj, f)
 
     def _fit(self):
+        """Fit the CountVectorizer and compute the BM25-weighted matrix."""
         chunk_texts = []
         current_idx = 0
         self.matrix_row_to_chunk_map: Dict[int, Chunk] = {}
@@ -265,8 +327,6 @@ class BM25Retriever(SparseRetriever):
         idf += self.delta
         idf[idf < 0] = 0
 
-        from scipy.sparse import lil_matrix
-
         bm25 = lil_matrix(tf.shape)
         for i in range(tf.shape[0]):
             row = tf[i]
@@ -282,9 +342,24 @@ class BM25Retriever(SparseRetriever):
 
     @property
     def retrieval_top_k(self) -> int:
+        """Return the configured top-k value.
+
+        Returns:
+            Number of chunks to retrieve.
+        """
         return self._top_k
 
     def retrieve(self, query: str, top_k: int | None = None) -> List[Chunk]:
+        """Retrieve the top-k chunks by BM25-weighted similarity.
+
+        Args:
+            query: The search query string.
+            top_k: Override for the default ``top_k``. Uses the
+                configured value if ``None``.
+
+        Returns:
+            A list of :class:`Chunk` instances ordered by distance.
+        """
         self._check_infra()
         k = top_k if top_k is not None else self._top_k
         query_vec = self._vectorizer.transform([query])
@@ -297,6 +372,15 @@ class BM25Retriever(SparseRetriever):
         return [self.matrix_row_to_chunk_map[idx] for idx in top_indices]
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
+        """Score a set of chunk IDs against the query.
+
+        Args:
+            chunk_ids: List of chunk IDs to score.
+            query: The search query string.
+
+        Returns:
+            A list of ``(chunk_id, distance)`` tuples sorted by distance.
+        """
         self._check_infra()
         query_vec = self._vectorizer.transform([query])
         chunk_id_to_row = {c.id: r for r, c in self.matrix_row_to_chunk_map.items()}
@@ -319,6 +403,18 @@ class BM25Retriever(SparseRetriever):
         return scored
 
     def get_chunk_vectors(self, chunk_ids: List[int]) -> np.ndarray:
+        """Return the BM25-weighted vectors for the given chunk IDs.
+
+        Args:
+            chunk_ids: List of chunk IDs whose vectors are needed.
+
+        Returns:
+            A 2D numpy array of BM25-weighted vectors.
+
+        Raises:
+            ValueError: If none of the provided chunk IDs are found in
+                the matrix.
+        """
         chunk_id_to_row = {c.id: r for r, c in self.matrix_row_to_chunk_map.items()}
         rows = []
         for cid in chunk_ids:

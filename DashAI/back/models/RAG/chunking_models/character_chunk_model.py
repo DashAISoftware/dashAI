@@ -10,6 +10,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
     BaseChunkingModel,
 )
+from DashAI.back.models.RAG.exceptions import RAGChunkingOverlapError
 
 
 class CharacterChunkModelSchema(BaseSchema):
@@ -74,6 +75,11 @@ class CharacterChunkModel(BaseChunkingModel):
         Returns:
             List[str]: A list of text chunks.
         """
+        if self.chunk_overlap >= self.chunk_size:
+            raise RAGChunkingOverlapError(
+                f"chunk_overlap ({self.chunk_overlap}) must be less than "
+                f"chunk_size ({self.chunk_size})"
+            )
         chunks = []
         start = 0
         text_length = len(text)

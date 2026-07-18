@@ -22,26 +22,19 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.dependencies.database.models import (
-    RAGChunkSet,
-)
-from DashAI.back.dependencies.database.models import (
-    RAGPipeline as PipelineDBModel,
-)
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
-from DashAI.back.models.RAG.chunk_set_utils import get_or_create_chunk_set
-from DashAI.back.models.RAG.chunking_models.chunking_model_factory import (
-    ChunkingFactoryResult,
-)
-from DashAI.back.models.RAG.document_loader import DocumentLoader
 from DashAI.back.models.RAG.documents import BaseDocument, Chunk
-from DashAI.back.models.RAG.llm_factory import LLMFactoryResult
-from DashAI.back.models.RAG.pipeline_repository import PipelineRepository
-from DashAI.back.models.RAG.prompts.prompt_factory import PromptFactoryResult
-from DashAI.back.models.RAG.rag_models_factory import RAGModelsFactory
-from DashAI.back.models.RAG.retrievers.retriever_factory import (
-    RetrieverFactoryResult,
+from DashAI.back.models.RAG.exceptions import (
+    RAGPipelineConfigError,
+    RAGPipelineInputError,
+    RAGPipelineRuntimeError,
+)
+from DashAI.back.models.RAG.RAG_constants import (
+    RAG_INFRA_KEYS,
+    RAG_MODEL_KEYS,
+    RAG_PARAM_KEYS,
+    RAG_PARAM_KEYS_ALL,
 )
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
@@ -55,30 +48,6 @@ if TYPE_CHECKING:
     )
     from DashAI.back.models.RAG.prompts import Prompt
     from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
-
-
-class RAGPipelineError(Exception):
-    """Base exception for RAG pipeline errors."""
-
-
-class RAGPipelineParametersError(RAGPipelineError):
-    """Backward-compatible alias for RAGPipelineConfigError."""
-
-
-class RAGPipelineConfigError(RAGPipelineError):
-    """Invalid or missing parameters in pipeline configuration."""
-
-
-class RAGPipelineInitializationError(RAGPipelineError):
-    """Error during RAG pipeline initialization."""
-
-
-class RAGPipelineRuntimeError(RAGPipelineError):
-    """Error during RAG pipeline execution."""
-
-
-class RAGDatabaseError(RAGPipelineError):
-    """Database-related error in RAG pipeline."""
 
 
 @dataclass(frozen=True)
@@ -116,7 +85,7 @@ class ChunkReference:
 class RAGGenerationOutput:
     """Typed output from RAGPipeline.generate()."""
 
-    message: Any
+    message: str
     chunks: Dict[str, "ChunkReference"]
 
 
@@ -131,54 +100,39 @@ class RAGPipelineConfig:
     session_id: int
     db: Session
     component_registry: ComponentRegistry
-    env_rag_path: str
+    env_RAG_path: str  # noqa: N815
     documents: List[int]
     prompt: ModelRef
     chunking_model: ModelRef
     retriever_model: ModelRef
     generation_model: ModelRef
 
-    _MODEL_KEYS: Tuple[str, str, str, str] = (
-        "prompt",
-        "chunking_model",
-        "retriever_model",
-        "generation_model",
-    )
-    _INFRA_KEYS: Tuple[str, str, str, str] = (
-        "session_id",
-        "db",
-        "component_registry",
-        "env_rag_path",
-    )
-    _PARAM_KEYS: Tuple[str] = ("documents",)
-
-    @classmethod
-    def validate_model_refs(cls, params: Dict[str, Any]) -> None:
-        for key in cls._MODEL_KEYS:
-            if key not in params:
-                raise RAGPipelineConfigError(f"Missing '{key}'")
-            raw = params[key]
-            if not isinstance(raw, dict):
-                raise RAGPipelineConfigError(
-                    f"'{key}' must be a dict, got {type(raw).__name__}"
-                )
-            if "component" not in raw:
-                raise RAGPipelineConfigError(f"Missing 'component' in '{key}'")
-            if "params" not in raw:
-                raise RAGPipelineConfigError(f"Missing 'params' in '{key}'")
-        if "documents" not in params:
-            raise RAGPipelineConfigError("Missing required parameter 'documents'")
-
     @classmethod
     def from_kwargs(cls, **kwargs: Any) -> "RAGPipelineConfig":
+        """Parse and validate raw kwargs into a RAGPipelineConfig.
+
+        Args:
+            **kwargs: Raw pipeline parameter dict containing infrastructure
+                keys (session_id, db, component_registry, env_RAG_path),
+                model keys (prompt, chunking_model, retriever_model,
+                generation_model), and the documents list.
+
+        Returns:
+            A validated RAGPipelineConfig instance.
+
+        Raises:
+            RAGPipelineConfigError: If required keys are missing, model
+                refs are not dicts, model refs lack component/params, or
+                unknown keys are present.
+        """
         missing: List[str] = []
-        for key in cls._INFRA_KEYS:
+        for key in RAG_INFRA_KEYS:
             if key not in kwargs:
                 missing.append(key)
-        for key in cls._PARAM_KEYS:
+        for key in RAG_PARAM_KEYS:
             if key not in kwargs:
                 missing.append(key)
-        for key in cls._MODEL_KEYS:
+        for key in RAG_MODEL_KEYS:
             if key not in kwargs:
                 missing.append(key)
         if missing:
@@ -187,7 +141,7 @@ class RAGPipelineConfig:
             )
 
         model_refs: Dict[str, ModelRef] = {}
-        for key in cls._MODEL_KEYS:
+        for key in RAG_MODEL_KEYS:
             raw = kwargs[key]
             if not isinstance(raw, dict):
                 raise RAGPipelineConfigError(
@@ -202,10 +156,7 @@ class RAGPipelineConfig:
                 params=raw["params"],
             )
 
-        all_known: set[str] = (
-            set(cls._INFRA_KEYS) | set(cls._PARAM_KEYS) | set(cls._MODEL_KEYS)
-        )
-        extra: set[str] = set(kwargs) - all_known
+        extra: set[str] = set(kwargs) - RAG_PARAM_KEYS_ALL
         if extra:
             log.warning(
                 "Unknown parameters passed to RAGPipelineConfig.from_kwargs(): %s. "
@@ -222,7 +173,7 @@ class RAGPipelineConfig:
             session_id=kwargs["session_id"],
             db=kwargs["db"],
             component_registry=kwargs["component_registry"],
-            env_rag_path=kwargs["env_rag_path"],
+            env_RAG_path=kwargs["env_RAG_path"],
             documents=kwargs["documents"],
             prompt=model_refs["prompt"],
             chunking_model=model_refs["chunking_model"],
@@ -232,6 +183,14 @@ class RAGPipelineConfig:
 
 
 class RAGPipelineSchema(BaseSchema):
+    """Schema for RAG pipeline configuration parameters.
+
+    Defines the five configurable fields: documents, prompt,
+    chunking_model, retriever_model, and generation_model. Each
+    model field accepts a ``{"component": str, "params": dict}``
+    structure resolved by the ComponentRegistry.
+    """
+
     documents: schema_field(
         list_field(int_field(gt=0)),
         placeholder=None,
@@ -294,10 +253,10 @@ class RAGPipeline(BaseGenerativeModel):
 
     session_id: int
     pipeline_id: int
+    chunking_model_id: int
     documents_ids: List[int]
     documents: Dict[int, BaseDocument]
     prompt_model: Prompt
-    chunking_model_id: int
     chunking_model: BaseChunkingModel
     chunks: Dict[int, Dict[int, Chunk]]
     retriever: RetrieverModel
@@ -333,69 +292,38 @@ class RAGPipeline(BaseGenerativeModel):
     def __init__(
         self,
         config: RAGPipelineConfig,
-        models: RAGModelsFactory,
-        repo: PipelineRepository,
-        doc_loader: DocumentLoader,
+        pipeline_id: int,
+        chunking_model_id: int,
+        documents: Dict[int, BaseDocument],
+        chunks: Dict[int, Dict[int, Chunk]],
+        prompt_model: Prompt,
+        chunking_model: BaseChunkingModel,
+        retriever: RetrieverModel,
+        llm_model: TextToTextGenerationTaskModel,
     ) -> None:
-        pipeline_record: PipelineDBModel = repo.ensure_db_record(
-            config.session_id,
-        )
+        """Initialise the RAG pipeline with fully constructed dependencies.
 
-        documents = doc_loader.load(config.documents)
-
-        chunk_set: RAGChunkSet = get_or_create_chunk_set(
-            db=config.db,
-            document_ids=config.documents,
-            pipeline_config={
-                "chunking_model": {
-                    "component": config.chunking_model.component,
-                    "params": config.chunking_model.params,
-                }
-            },
-        )
-
-        prompt_result: PromptFactoryResult = models.create_prompt(
-            config.prompt.component,
-            config.prompt.params,
-        )
-
-        chunking_result: ChunkingFactoryResult = models.create_chunking_model(
-            documents,
-            chunk_set.id,
-            config.chunking_model.component,
-            config.chunking_model.params,
-        )
-
-        retriever_result: RetrieverFactoryResult = models.create_retriever(
-            pipeline_record.id,
-            chunking_result.chunks,
-            chunk_set.id,
-            config.retriever_model.component,
-            config.retriever_model.params,
-        )
-
-        llm_result: LLMFactoryResult = models.create_llm(
-            config.generation_model.component,
-            config.generation_model.params,
-        )
-
-        repo.update_db_record(
-            session_id=config.session_id,
-            chunking_model_id=chunking_result.db_record_id,
-            prompt_id=prompt_result.db_record_id,
-            generation_model_id=llm_result.db_record_id,
-        )
-
+        Args:
+            config: Validated pipeline configuration.
+            pipeline_id: Database ID for the pipeline run.
+            chunking_model_id: Database ID for the chunking model.
+            documents: Mapping of document IDs to BaseDocument instances.
+            chunks: Mapping of document IDs to their chunk dicts.
+            prompt_model: The prompt template model.
+            chunking_model: The chunking model instance.
+            retriever: The retriever model instance.
+            llm_model: The text generation (LLM) model instance.
+        """
         self.session_id = config.session_id
-        self.pipeline_id = pipeline_record.id
+        self.pipeline_id = pipeline_id
+        self.chunking_model_id = chunking_model_id
         self.documents_ids = config.documents
         self.documents = documents
-        self.prompt_model = prompt_result.model
-        self.chunking_model_id = chunking_result.db_record_id
-        self.chunking_model = chunking_result.model
-        self.chunks = chunking_result.chunks
-        self.retriever = retriever_result.model
-        self.llm_model = llm_result.model
+        self.prompt_model = prompt_model
+        self.chunking_model = chunking_model
+        self.chunks = chunks
+        self.retriever = retriever
+        self.llm_model = llm_model
 
     def single_interaction(
         self,
@@ -403,20 +331,14 @@ class RAGPipeline(BaseGenerativeModel):
     ) -> List[Chunk]:
         """Retrieve the top-K chunks for a single query.
 
-        Parameters
-        ----------
-        query : str
-            The search query string.
+        Args:
+            query: The search query string.
 
-        Returns
-        -------
-        List[Chunk]
+        Returns:
             Ranked list of retrieved chunks.
 
-        Raises
-        ------
-        RAGPipelineRuntimeError
-            If the retriever fails.
+        Raises:
+            RAGPipelineRuntimeError: If the retriever fails.
         """
         try:
             return self.retriever.retrieve(query)
@@ -429,21 +351,22 @@ class RAGPipeline(BaseGenerativeModel):
     ) -> Tuple[str, Dict[str, ChunkReference]]:
         """Build a text block and reference map from retrieved chunks.
 
-        Parameters
-        ----------
-        chunks : List[Chunk]
-            Chunks returned by the retriever.
+        Args:
+            chunks: Chunks returned by the retriever.
 
-        Returns
-        -------
-        Tuple[str, Dict[str, ChunkReference]]
-            Joined chunk texts and a mapping from chunk key to ChunkReference.
+        Returns:
+            Joined chunk texts and a mapping from chunk key to
+            ChunkReference.
         """
         chunks_texts: List[str] = []
         chunk_dict: Dict[str, ChunkReference] = {}
         for retrieved_chunk in chunks:
             document_id: int = retrieved_chunk.document_id
-            document: BaseDocument = self.documents[document_id]
+            document: BaseDocument | None = self.documents.get(document_id)
+            if document is None:
+                raise RAGPipelineRuntimeError(
+                    f"Document with ID {document_id} not found in pipeline documents."
+                )
             chunk_position: int = retrieved_chunk.document_position
             chunk_text: str = retrieved_chunk.text
             chunk_ref: str = f"{document_id}_{chunk_position}"
@@ -463,30 +386,31 @@ class RAGPipeline(BaseGenerativeModel):
         self,
         input_data: Tuple[Dict[str, str], ...],
     ) -> RAGGenerationOutput:
-        """Run the full RAG pipeline: retrieve → format → generate.
+        """Run the full RAG pipeline: retrieve, format, and generate.
 
-        Parameters
-        ----------
-        input_data : Tuple[Dict[str, str], ...]
-            Chat-format input with history as earlier entries and the
-            current user message as the last entry.
+        Args:
+            input_data: Chat-format input with history as earlier entries
+                and the current user message as the last entry.
 
-        Returns
-        -------
-        RAGGenerationOutput
+        Returns:
             The generated message and the chunks used for retrieval.
 
-        Raises
-        ------
-        RAGPipelineRuntimeError
-            If any stage fails (retrieval, formatting, or generation).
+        Raises:
+            RAGPipelineInputError: If input_data is empty or malformed.
+            RAGPipelineRuntimeError: If any pipeline stage fails.
         """
         if not input_data:
-            raise RAGPipelineRuntimeError("input_data must not be empty.")
+            raise RAGPipelineInputError("input_data must not be empty.")
         try:
             input_dict: Dict[str, str] = input_data[-1]
             input_message: str = input_dict["content"]
-            history: Tuple[Dict[str, str], ...] = input_data[:-1]
+        except (KeyError, IndexError, TypeError) as e:
+            raise RAGPipelineInputError(
+                f"Malformed input_data: expected Tuple[Dict[str, str], ...] "
+                f"with a 'content' key in the last entry, got {type(input_data)}: {e}"
+            ) from e
+        history: Tuple[Dict[str, str], ...] = input_data[:-1]
+        try:
             chunks: List[Chunk] = self.single_interaction(input_message)
         except Exception as e:
             raise RAGPipelineRuntimeError(f"Failed during retrieval: {str(e)}") from e
@@ -508,7 +432,16 @@ class RAGPipeline(BaseGenerativeModel):
             ]
             # NOTE: Output is not streamed — the user waits for the full response.
             output: List[Any] = self.llm_model.generate(model_input)
-            return RAGGenerationOutput(message=output[0], chunks=chunk_dict)
+            if not output:
+                raise RAGPipelineRuntimeError("LLM model returned empty output list.")
+            raw_message = output[0]
+            if not isinstance(raw_message, str):
+                raise RAGPipelineRuntimeError(
+                    f"LLM output is not a string, got {type(raw_message).__name__}"
+                )
+            return RAGGenerationOutput(message=raw_message, chunks=chunk_dict)
+        except RAGPipelineRuntimeError:
+            raise
         except Exception as e:
             raise RAGPipelineRuntimeError(
                 f"Failed during LLM generation: {str(e)}"

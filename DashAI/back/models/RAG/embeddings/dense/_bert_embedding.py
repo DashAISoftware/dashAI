@@ -1,9 +1,10 @@
 from typing import Dict
 
 import torch
+from transformers import AutoModel, AutoTokenizer
 
 from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
-    OverfloatHandler,
+    OverflowHandler,
 )
 
 CLS = "cls"
@@ -23,7 +24,15 @@ POOLING_STRATEGIES: Dict[str, str] = {
 }
 
 
-class _BERTEmbedding(OverfloatHandler):
+class _BERTEmbedding(OverflowHandler):
+    """Internal wrapper for BERT-family embedding models.
+
+    Supports multiple pooling strategies: CLS token, mean, max, and
+    concatenation of the last N hidden layers.
+    """
+
+    POOLING_STRATEGIES: Dict[str, str] = POOLING_STRATEGIES
+
     def __init__(
         self,
         model_name: str,
@@ -32,6 +41,16 @@ class _BERTEmbedding(OverfloatHandler):
         overflow_strategy: str,
         pooling_strategy: str,
     ):
+        """Initialise the BERT embedding wrapper.
+
+        Args:
+            model_name: HuggingFace model identifier.
+            device: Target device (``"cpu"`` or ``"cuda"``).
+            model_max_length: Maximum token length.
+            overflow_strategy: ``"truncate"`` or ``"aggregate"``.
+            pooling_strategy: One of ``"cls"``, ``"mean"``, ``"max"``,
+                ``"concat_2"``, ``"concat_3"``, ``"concat_4"``.
+        """
         super().__init__(
             model_name=model_name,
             device=device,
@@ -42,8 +61,7 @@ class _BERTEmbedding(OverfloatHandler):
         self.params["pooling_strategy"] = pooling_strategy
 
     def load(self):
-        from transformers import AutoModel, AutoTokenizer
-
+        """Download tokenizer and model, enabling hidden states for concat strategies."""  # noqa: E501
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModel.from_pretrained(
             self.model_name,
@@ -52,6 +70,18 @@ class _BERTEmbedding(OverfloatHandler):
         ).to(self.device)
 
     def _pool(self, model_output, attention_mask):
+        """Pool token embeddings according to the configured strategy.
+
+        Args:
+            model_output: Output from ``AutoModel`` (may contain ``hidden_states``).
+            attention_mask: Attention mask tensor.
+
+        Returns:
+            Pooled embedding tensor of shape ``(batch, embedding_dim)``.
+
+        Raises:
+            ValueError: If the pooling strategy is unknown.
+        """
         if self.pooling_strategy == CLS:
             return model_output[0][:, 0]
         if self.pooling_strategy == MAX:

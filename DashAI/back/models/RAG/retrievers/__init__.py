@@ -1,3 +1,5 @@
+"""Convenience re-exports for all retriever types under a single namespace."""
+
 from DashAI.back.models.RAG.retrievers.composite import (
     CompositeRetriever,
     MMRRerankerRetriever,
@@ -12,10 +14,8 @@ from DashAI.back.models.RAG.retrievers.dense import (
 from DashAI.back.models.RAG.retrievers.enums import MergeStrategy
 from DashAI.back.models.RAG.retrievers.exceptions import (
     CompositeValidationError,
-    ExtraKwargsMissingError,
     MissingParameterError,
     RetrieverError,
-    UnitRetrieverChildError,
 )
 from DashAI.back.models.RAG.retrievers.retriever_factory import (
     RetrieverFactory,

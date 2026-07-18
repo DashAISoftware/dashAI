@@ -112,7 +112,7 @@ from DashAI.back.job.generative_job import GenerativeJob
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.pipeline_job import PipelineJob
 from DashAI.back.job.predict_job import PredictJob
-from DashAI.back.job.rag_job import RAGJob
+from DashAI.back.job.RAG_job import RAGJob
 
 # Metrics
 from DashAI.back.metrics.classification.accuracy import Accuracy
@@ -224,7 +224,6 @@ from DashAI.back.models.RAG.embeddings.dense import (
     DistilBERTEmbedding,
     E5Embedding,
     GemmaEmbedding,
-    HuggingFaceEmbedding,
     InstructorEmbedding,
     LaBSEmbedding,
     OpenAIEmbedding,
@@ -422,7 +421,6 @@ def get_initial_components():
         OpusMtEsENTransformer,
         OpusMtFrEnTransformer,
         PixArtSigmaModel,
-        QwenModel,
         RandomForestClassifier,
         RobertaTransformer,
         RandomForestRegression,
@@ -558,15 +556,12 @@ def get_initial_components():
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
-        # RAG
-        RAGPipeline,
         # Chunking Models
         CharacterChunkModel,
         RecursiveCharacterChunkModel,
         TokenChunkModel,
         # Encodings
         OpenAIEmbedding,
-        HuggingFaceEmbedding,
         SentenceTransformerEmbedding,
         BERTEmbedding,
         DistilBERTEmbedding,

@@ -13,9 +13,12 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
     BaseChunkingModel,
 )
+from DashAI.back.models.RAG.exceptions import RAGChunkingOverlapError
 
 
 class RecursiveCharacterChunkModelSchema(BaseSchema):
+    """Schema for the recursive character chunking model configuration."""
+
     chunk_size: schema_field(
         int_field(gt=1),
         placeholder=1000,
@@ -52,6 +55,18 @@ class RecursiveCharacterChunkModelSchema(BaseSchema):
     @field_validator("chunk_overlap", mode="after")
     @classmethod
     def validate_chunk_overlap(cls, v, info):
+        """Validate that chunk_overlap is less than chunk_size.
+
+        Args:
+            v: The value of chunk_overlap.
+            info: Validation info containing the chunk_size field.
+
+        Returns:
+            int: The validated chunk_overlap value.
+
+        Raises:
+            ValueError: If chunk_overlap is greater than or equal to chunk_size.
+        """
         chunk_size = info.data.get("chunk_size")
         if chunk_size is not None and v >= chunk_size:
             raise ValueError(
@@ -62,6 +77,12 @@ class RecursiveCharacterChunkModelSchema(BaseSchema):
 
 
 class RecursiveCharacterChunkModel(BaseChunkingModel):
+    """Chunking model that recursively splits text using a prioritized list of separators.
+
+    Falls back to character-level splitting when no separator fits within the
+    chunk size.
+    """
+
     SCHEMA = RecursiveCharacterChunkModelSchema
 
     DISPLAY_NAME: str = MultilingualString(
@@ -72,17 +93,50 @@ class RecursiveCharacterChunkModel(BaseChunkingModel):
     FLAGS: list[str] = []
 
     def __init__(self, **kwargs):
+        """Initialize the recursive character chunking model.
+
+        Args:
+            **kwargs: Must include ``chunk_size``, ``chunk_overlap``, and
+                ``separators``, plus a ``documents`` mapping passed to the
+                parent class.
+        """
         self.chunk_size = kwargs["chunk_size"]
         self.chunk_overlap = kwargs["chunk_overlap"]
         self.separators = kwargs["separators"]
         super().__init__(**kwargs)
 
     def chunk_text(self, text: str) -> List[str]:
+        """Split text into chunks using recursive separator-based splitting.
+
+        Args:
+            text: The input text to be chunked.
+
+        Returns:
+            List[str]: A list of text chunks.
+
+        Raises:
+            RAGChunkingOverlapError: If chunk_overlap is not less than chunk_size.
+        """
+        if self.chunk_overlap >= self.chunk_size:
+            raise RAGChunkingOverlapError(
+                f"chunk_overlap ({self.chunk_overlap}) must be less than "
+                f"chunk_size ({self.chunk_size})"
+            )
         if len(text) <= self.chunk_size:
             return [text]
         return self._split_text(text, 0)
 
     def _split_text(self, text: str, separator_idx: int) -> List[str]:
+        """Recursively split text using the separator at the given index,
+        falling back to the next separator if needed.
+
+        Args:
+            text: The text to split.
+            separator_idx: Index into the ordered separators list.
+
+        Returns:
+            List[str]: A list of text chunks.
+        """
         if separator_idx >= len(self.separators):
             return self._force_split(text)
 
@@ -95,6 +149,15 @@ class RecursiveCharacterChunkModel(BaseChunkingModel):
         return self._recursive_split(splits, separator_idx + 1)
 
     def _recursive_split(self, splits: List[str], next_sep_idx: int) -> List[str]:
+        """Iterate over already-split segments and further split any that exceed chunk_size.
+
+        Args:
+            splits: Segments from a previous split operation.
+            next_sep_idx: Index of the next separator to try for oversize segments.
+
+        Returns:
+            List[str]: A flat list of chunks all within chunk_size.
+        """
         result: List[str] = []
         for split in splits:
             if len(split) <= self.chunk_size:
@@ -115,6 +178,14 @@ class RecursiveCharacterChunkModel(BaseChunkingModel):
         return result
 
     def _force_split(self, text: str) -> List[str]:
+        """Split text into fixed-size chunks with overlap when all separators fail.
+
+        Args:
+            text: The text to split.
+
+        Returns:
+            List[str]: A list of fixed-size character chunks.
+        """
         chunks: List[str] = []
         start = 0
         text_length = len(text)

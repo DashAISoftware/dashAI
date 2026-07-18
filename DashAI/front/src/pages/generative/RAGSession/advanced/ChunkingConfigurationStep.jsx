@@ -12,6 +12,16 @@ import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import { resolveDefaults, getModelFromSubform, getParamsFromSubform } from "../../../../utils/schema";
 
+/**
+ * Step component for selecting a chunking strategy and configuring its parameters.
+ * Includes validation that chunk_overlap is less than chunk_size.
+ *
+ * @param {object} props
+ * @param {object} [props.chunkingModel] - The current chunking model { component, params }.
+ * @param {function} props.setChunkingModel - State setter for the chunking model.
+ * @param {function} [props.setNextEnabled] - Callback to enable/disable the next button.
+ * @returns {JSX.Element} The chunking configuration step UI.
+ */
 export default function ChunkingConfigurationStep({
   chunkingModel,
   setChunkingModel,
@@ -89,6 +99,12 @@ export default function ChunkingConfigurationStep({
     }
   }, [chunkingOptions, chunkingModel]);
 
+  /**
+   * Handles selection of a chunking component from the autocomplete.
+   * Resolves default parameters and updates the chunking model.
+   * @param {object} event - The autocomplete change event.
+   * @param {object|null} newValue - The selected chunking component.
+   */
   const handleChunkingSelectionChange = async (event, newValue) => {
     setSelectedChunking(newValue);
     setError(null);
@@ -106,6 +122,11 @@ export default function ChunkingConfigurationStep({
     }
   };
 
+  /**
+   * Persists chunking parameter values after validating overlap < size constraint.
+   * Sets form-level error and disables next if validation fails.
+   * @param {object} values - The form values from the schema.
+   */
   const handleFormSubmit = (values) => {
     if (
       values.chunk_size !== undefined &&

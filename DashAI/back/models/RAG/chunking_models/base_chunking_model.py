@@ -4,26 +4,47 @@ from typing import Dict, Final, List
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.models.RAG.documents.base_document import BaseDocument
 from DashAI.back.models.RAG.documents.chunk import Chunk
-from DashAI.back.models.RAG.exceptions import RAGWorkflowError
+from DashAI.back.models.RAG.exceptions import RAGChunkingError
 
 
 class BaseChunkingModel(ConfigObject, metaclass=ABCMeta):
-    """
-    Base class for chunking models.
-    This class should be inherited by any specific chunking model implementation.
+    """Abstract base class for all chunking models.
+
+    Defines the interface and common workflow for chunking strategies.
+    Subclasses must implement :meth:`chunk_text`.
     """
 
     TYPE: Final[str] = "ChunkingModel"
     REQUIRED_EXTRA_KWARGS: Final[List[str]] = ["documents"]
 
     def __init__(self, **kwargs):
+        """Initialize the chunking model.
+
+        Validates that all required extra keyword arguments are present,
+        stores the document mapping, and validates/transforms model parameters.
+
+        Args:
+            **kwargs: Must include a ``documents`` key mapping document IDs
+                to :class:`BaseDocument` instances. Remaining keys are
+                validated and transformed by :meth:`validate_and_transform`.
+
+        Raises:
+            RAGChunkingError: If a required extra keyword argument is missing.
         """
-        Initialize the chunking model with any necessary parameters.
-        """
+        for required_key in self.REQUIRED_EXTRA_KWARGS:
+            if required_key not in kwargs:
+                raise RAGChunkingError(
+                    f"Missing required extra keyword argument: '{required_key}'"
+                )
         self.documents: Dict[int, BaseDocument] = kwargs.pop("documents")
         self.parameters = self.validate_and_transform(kwargs)
-        self.chunks = self.chunk_documents()
+        self.chunks = None
         self.id = None
+
+    def compute_chunks(self) -> None:
+        """Compute chunks if not already done."""
+        if self.chunks is None:
+            self.chunks = self.chunk_documents()
 
     @abstractmethod
     def chunk_text(self, text: str, **kwargs) -> List[str]:
@@ -89,6 +110,7 @@ class BaseChunkingModel(ConfigObject, metaclass=ABCMeta):
             to their respective dictionaries of chunk indices and Chunk
             objects.
         """
+        self.compute_chunks()
         return self.chunks
 
     def get_id(self) -> int:
@@ -110,6 +132,6 @@ class BaseChunkingModel(ConfigObject, metaclass=ABCMeta):
         if self.id is None:
             self.id = id
         else:
-            raise RAGWorkflowError(
+            raise RAGChunkingError(
                 "Chunking model ID is already set and cannot be modified."
             )

@@ -15,6 +15,16 @@ import AdvancedConfigCard from "../components/AdvancedConfigCard";
 import PresetCard from "../components/PresetCard";
 import RAGSectionColumn from "../components/RAGSectionColumn";
 
+/**
+ * Chunking strategy section.
+ * Lets the user pick between preset chunk sizes (small, paragraph, page, large)
+ * or open the advanced configuration modal.
+ *
+ * @param {object}   props
+ * @param {object}   props.chunkingModel    - Current { component, params } for chunking.
+ * @param {Function} props.setChunkingModel  - Sets the chunking model configuration.
+ * @returns {JSX.Element} The chunking preset picker.
+ */
 export default function ChunkingSection({
   chunkingModel,
   setChunkingModel,
@@ -45,6 +55,11 @@ export default function ChunkingSection({
     },
   ], [t]);
 
+  /**
+   * Build a human-readable description string for a chunking preset.
+   * @param {object} preset - A preset object with a `config.chunk_size` property.
+   * @returns {string} Description showing chars and estimated tokens.
+   */
   const getPresetDescription = (preset) => {
     const chars = preset.config.chunk_size;
     const tokens = Math.ceil(chars / 4);
@@ -96,6 +111,11 @@ export default function ChunkingSection({
     }
   }, [chunkingModel, CHUNKING_PRESETS]);
 
+  /**
+   * Match params against known presets and update `selectedPreset`.
+   * Falls back to "custom" when no preset matches.
+   * @param {object} params - Chunking parameters { chunk_size, chunk_overlap }.
+   */
   const updatePresetFromParams = (params) => {
     const preset = CHUNKING_PRESETS.find(p => 
       p.config.chunk_size === params?.chunk_size &&
@@ -108,12 +128,21 @@ export default function ChunkingSection({
     }
   };
 
+  /**
+   * Select the default chunker (CharacterChunkModel) and apply the "paragraph" preset.
+   * @param {Array} availableChunkers - List of available chunking components.
+   */
   const selectDefaultChunker = (availableChunkers) => {
     const defaultChunker = availableChunkers.find(c => c.name === "CharacterChunkModel") || availableChunkers[0];
     const preset = CHUNKING_PRESETS.find(p => p.value === "paragraph");
     applyPreset(defaultChunker, preset);
   };
 
+  /**
+   * Apply a chunking preset by resolving default params and merging preset config.
+   * @param {object} chunker - The chunker component to use.
+   * @param {object} [preset] - The preset config to merge (or null for custom).
+   */
   const applyPreset = async (chunker, preset) => {
     setSelectedChunker(chunker);
     setSelectedPreset(preset?.value || "custom");
@@ -130,6 +159,10 @@ export default function ChunkingSection({
     });
   };
 
+  /**
+   * Handle a preset card click — toggle preset or no-op if already selected.
+   * @param {string} presetValue - The preset key ("small", "paragraph", etc.).
+   */
   const handlePresetClick = (presetValue) => {
     if (!selectedChunker) return;
     if (presetValue === selectedPreset) return;

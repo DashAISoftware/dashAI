@@ -38,6 +38,12 @@ const DEFAULT_IDS = {
   DefaultQARAGGenerationPrompt: "default-QA",
 };
 
+/**
+ * Returns the translated display name for a default prompt option.
+ * @param {object} option - The prompt option object.
+ * @param {function} t - i18n translate function.
+ * @returns {string}
+ */
 function getDefaultDisplayName(option, t) {
   // Use class_name (set explicitly by our code) rather than name
   // (raw API field) to avoid potential encoding / serialization mismatches.
@@ -51,12 +57,28 @@ function getDefaultDisplayName(option, t) {
   return option.name || cname;
 }
 
+/**
+ * Returns the display label for a given prompt option (default, custom, or "create new").
+ * @param {object} option - The prompt option object.
+ * @param {function} t - i18n translate function.
+ * @returns {string}
+ */
 function getOptionLabel(option, t) {
   if (option._isCreateNew) return option.name;
   if (option._isDefault) return getDefaultDisplayName(option, t);
   return option.name;
 }
 
+/**
+ * Card for selecting and viewing a prompt template (default or custom), with
+ * language switcher, description toggle, and inline template preview with highlights.
+ *
+ * @param {object}   props
+ * @param {object}   props.promptModel - { component: string, params: { template, language, ... } }
+ * @param {function} props.setPromptModel - State setter for promptModel.
+ * @param {function} [props.onTokenCountChange] - Callback with estimated token count of the selected template.
+ * @returns {JSX.Element|null}
+ */
 export default function PromptParamsCard({
   promptModel,
   setPromptModel,
@@ -90,6 +112,10 @@ export default function PromptParamsCard({
   const prevSelectedRef = useRef(null);
   const isInitializedRef = useRef(false);
 
+  /**
+   * Loads custom RAG prompts and default prompt templates from the API.
+   * Excludes system defaults from custom prompts and CustomRAGGenerationPrompt from defaults.
+   */
   const loadPrompts = useCallback(async () => {
     try {
       const dbPrompts = await getRAGPrompts();
@@ -234,6 +260,12 @@ export default function PromptParamsCard({
     }
   }, [mergedOptions, promptModel]);
 
+  /**
+   * Handles selection change in the autocomplete. Intercepts the "Create new" option
+   * to open the creation modal instead of selecting it.
+   * @param {object} _event - The change event.
+   * @param {object|null} newValue - The newly selected option.
+   */
   const handlePromptChange = (_event, newValue) => {
     if (newValue?._isCreateNew) {
       setNewPromptModalOpen(true);
@@ -251,6 +283,10 @@ export default function PromptParamsCard({
     setSelectedLanguage(event.target.value);
   };
 
+  /**
+   * Refetches prompts after creation, selects the new prompt, and syncs state.
+   * @param {number|string} newPromptId - ID of the newly created prompt.
+   */
   const handlePromptCreated = useCallback(
     async (newPromptId) => {
       const updatedPrompts = await getRAGPrompts();

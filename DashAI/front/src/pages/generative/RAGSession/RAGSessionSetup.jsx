@@ -36,7 +36,7 @@ const defaultSessionData = {
       component: "",
       params: {},
     },
-    generator_model: {
+    generation_model: {
       component: "",
       params: {},
     },
@@ -47,6 +47,19 @@ const defaultSessionData = {
   },
 };
 
+/**
+ * RAG session creation wizard.
+ * Composes document, chunking, retriever, generator, and prompt
+ * sections into a multi-card accordion form and creates the session
+ * via the API.
+ *
+ * @param {object}   props
+ * @param {object}   [props.initialData]      - Pre-populated session data for editing.
+ * @param {Function} [props.onClose]           - Called when the user cancels or closes.
+ * @param {Function} [props.onSessionCreated]  - Called after a successful session create.
+ * @param {Array}    [props.existingSessions]  - Existing sessions for duplicate-name check.
+ * @returns {JSX.Element} The setup wizard.
+ */
 export default function RAGSessionSetup({
   initialData,
   onClose,
@@ -135,6 +148,10 @@ export default function RAGSessionSetup({
     setIsDuplicateName(isDuplicate);
   }, [sessionData.name, existingSessions]);
 
+  /**
+   * Update the session name and validate it is non-empty.
+   * @param {object} event - Input change event.
+   */
   const handleSessionNameChange = (event) => {
     const value = event.target.value;
     setIsNameTouched(true);
@@ -150,6 +167,10 @@ export default function RAGSessionSetup({
     }
   };
 
+  /**
+   * Update the session description.
+   * @param {object} event - Input change event.
+   */
   const handleSessionDescriptionChange = (event) => {
     const value = event.target.value;
     setSessionData((prev) => ({
@@ -158,6 +179,10 @@ export default function RAGSessionSetup({
     }));
   };
 
+  /**
+   * Store only the document IDs when the user changes the document selection.
+   * @param {Array} selectedDocs - Array of document objects with `id`.
+   */
   const handleDocumentSelectionChange = useCallback((selectedDocs) => {
     setSessionData((prev) => ({
       ...prev,
@@ -165,6 +190,10 @@ export default function RAGSessionSetup({
     }));
   }, []);
 
+  /**
+   * Replace the chunking model configuration.
+   * @param {object} model - { component, params } for the chunker.
+   */
   const updateChunkingModel = (model) => {
     setSessionData((prev) => ({
       ...prev,
@@ -175,6 +204,10 @@ export default function RAGSessionSetup({
     }));
   };
 
+  /**
+   * Replace the retriever model configuration.
+   * @param {object} model - { component, params } for the retriever.
+   */
   const updateRetrieverModel = (model) => {
     setSessionData((prev) => ({
       ...prev,
@@ -185,16 +218,24 @@ export default function RAGSessionSetup({
     }));
   };
 
+  /**
+   * Replace the generation model configuration.
+   * @param {object} model - { component, params } for the generator.
+   */
   const updateGeneratorModel = (model) => {
     setSessionData((prev) => ({
       ...prev,
       parameters: {
         ...prev.parameters,
-        generator_model: { ...model },
+        generation_model: { ...model },
       },
     }));
   };
 
+  /**
+   * Replace the prompt configuration.
+   * @param {object} prompt - { component, params } for the prompt.
+   */
   const updatePrompt = (prompt) => {
     setSessionData((prev) => ({
       ...prev,
@@ -205,6 +246,11 @@ export default function RAGSessionSetup({
     }));
   };
 
+  /**
+   * Return a handler that toggles the expanded state for a given accordion section.
+   * @param {string} section - Section key (e.g. "chunking", "retriever").
+   * @returns {Function} Event handler for the accordion onChange.
+   */
   const handleSectionChange = (section) => (event, isExpanded) => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -212,6 +258,11 @@ export default function RAGSessionSetup({
     }));
   };
 
+  /**
+   * Validate all required configuration fields before saving.
+   * Shows snackbar warnings for each missing/invalid field.
+   * @returns {boolean} True if the configuration is valid.
+   */
   const validateConfiguration = () => {
     if (!sessionData.name.trim()) {
       enqueueSnackbar(t("generative:rag.validation.nameRequired"), { variant: "warning" });
@@ -235,7 +286,7 @@ export default function RAGSessionSetup({
       enqueueSnackbar(t("generative:rag.validation.retrieverRequired"), { variant: "warning" });
       return false;
     }
-    if (!sessionData.parameters.generator_model?.component) {
+    if (!sessionData.parameters.generation_model?.component) {
       enqueueSnackbar(t("generative:rag.validation.generatorRequired"), { variant: "warning" });
       return false;
     }
@@ -255,12 +306,16 @@ export default function RAGSessionSetup({
     const areDocsValid = Array.isArray(sessionData.documents) && sessionData.documents.length > 0;
     const isChunkingValid = Boolean(sessionData.parameters.chunking_model?.component);
     const isRetrieverValid = Boolean(sessionData.parameters.retriever_model?.component);
-    const isGeneratorSelected = Boolean(sessionData.parameters.generator_model?.component);
+    const isGeneratorSelected = Boolean(sessionData.parameters.generation_model?.component);
     const isPromptValid = sessionData.parameters.prompt?.component;
 
     return isNameValid && areDocsValid && isChunkingValid && isRetrieverValid && isGeneratorValidState && isGeneratorSelected && isPromptValid;
   }, [sessionData, isGeneratorValidState, isDuplicateName]);
 
+  /**
+   * Validate and persist the RAG session via the API.
+   * Navigates to the created session on success.
+   */
   const handleSave = async () => {
     if (!validateConfiguration()) {
       return;
@@ -277,7 +332,7 @@ export default function RAGSessionSetup({
           documents: sessionData.documents,
           chunking_model: sessionData.parameters.chunking_model,
           retriever_model: sessionData.parameters.retriever_model,
-          generation_model: sessionData.parameters.generator_model,
+          generation_model: sessionData.parameters.generation_model,
           prompt: sessionData.parameters.prompt,
         },
       };
@@ -453,7 +508,7 @@ export default function RAGSessionSetup({
           >
             <SectionCard>
               <GeneratorSection
-                generatorModel={sessionData.parameters.generator_model}
+                generatorModel={sessionData.parameters.generation_model}
                 setGeneratorModel={updateGeneratorModel}
                 chunkSize={chunkSize}
                 topK={topK}

@@ -10,6 +10,13 @@ METRICS = ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
 
 
 class HuggingFaceDenseRetriever(DenseRetriever):
+    """Abstract dense retriever that creates a HuggingFace embedding model.
+
+    Subclasses must implement :meth:`_create_embedding` to return a
+    :class:`HuggingFaceEmbedding` instance with the desired model
+    configuration.
+    """
+
     FLAGS: list[str] = ["abstract", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
         en="HuggingFace Embedding Retriever",
@@ -22,13 +29,28 @@ class HuggingFaceDenseRetriever(DenseRetriever):
     )
 
     def __init__(self, **kwargs):
+        """Initialize the HuggingFace dense retriever.
+
+        Args:
+            **kwargs: Forwarded to :class:`DenseRetriever`.
+        """
         super().__init__(**kwargs)
 
     @abstractmethod
     def _create_embedding(self) -> HuggingFaceEmbedding:
+        """Create and return a HuggingFace embedding model.
+
+        Returns:
+            A :class:`HuggingFaceEmbedding` instance.
+        """
         raise NotImplementedError
 
     def init_model(self) -> None:
+        """Create, load, and initialise the HuggingFace embedding.
+
+        Calls ``_create_embedding()``, loads its resources, then
+        passes it to ``_init_embedding()``.
+        """
         embedding = self._create_embedding()
         embedding.load()
         self._init_embedding(embedding)

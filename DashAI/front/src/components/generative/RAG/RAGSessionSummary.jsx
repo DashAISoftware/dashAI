@@ -32,6 +32,15 @@ import { getGenerativeSession } from "../../../api/generativeTask";
 import { updateGenerativeSession, getSessions } from "../../../api/session";
 import RAGBreadcrumbs from "./RAGBreadcrumbs";
 
+/**
+ * Session summary page displaying RAG session metadata, editable name/description,
+ * and collapsible configuration cards for chunking, retriever, and generation models.
+ *
+ * @param {object}   props
+ * @param {number}   props.sessionId - The ID of the session to display.
+ * @param {function} props.onStartChat - Callback invoked when the user clicks "Open Chat".
+ * @returns {JSX.Element} The full session summary view.
+ */
 export default function RAGSessionSummary({
   sessionId,
   onStartChat,
@@ -54,6 +63,7 @@ export default function RAGSessionSummary({
   const { enqueueSnackbar } = useSnackbar();
   const originalMetadataRef = useRef({ name: "", description: "" });
 
+  /** Toggles the expanded/collapsed state of a configuration section. @param {string} section - Section key (chunking, retriever, generation). */
   const toggleSection = (section) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -61,6 +71,7 @@ export default function RAGSessionSummary({
     }));
   };
 
+  /** Whether the edited name or description differs from the original saved values. */
   const hasMetadataChanges = useMemo(() => {
     const normalizedName = (editingName || "").trim();
     const normalizedDescription = editingDescription || "";
@@ -70,7 +81,7 @@ export default function RAGSessionSummary({
     return normalizedName !== originalName || normalizedDescription !== originalDescription;
   }, [editingDescription, editingName]);
 
-  // Toggle edit mode
+  /** Toggles between read-only and edit mode for the session name/description. */
   const handleToggleEditMode = () => {
     if (!isEditing && sessionData) {
       const currentName = sessionData.name || "";
@@ -86,6 +97,10 @@ export default function RAGSessionSummary({
     setIsEditing(!isEditing);
   };
 
+  /**
+   * Validates and saves the edited session name/description to the server.
+   * Checks for empty name and duplicate name across all sessions before saving.
+   */
   const handleSaveMetadata = async () => {
     if (!sessionData) return;
     if (!hasMetadataChanges || isSaving) return;
@@ -142,7 +157,7 @@ export default function RAGSessionSummary({
     }
   };
 
-  // Helper function to determine if a parameter should be shown inline or in modal
+  /** Whether a parameter value is simple enough to display inline. @param {*} value */
   const isSimpleParameter = (value) => {
     return (
       typeof value === 'string' ||
@@ -187,6 +202,13 @@ export default function RAGSessionSummary({
     setModalOpen(true);
   };
 
+  /**
+   * Renders a list of parameter key-value pairs, with simple values shown inline
+   * and complex values shown in a modal on click.
+   * @param {object} params - The parameters object.
+   * @param {string} componentName - Display name of the owning component.
+   * @returns {JSX.Element}
+   */
   const renderParametersList = (params, componentName) => {
     if (!params || Object.keys(params).length === 0) {
       return (
@@ -254,6 +276,17 @@ export default function RAGSessionSummary({
     });
   };
 
+  /**
+   * A collapsible card that shows a component name and its parameters.
+   * @param {object}  props
+   * @param {JSX.Element} props.icon - Icon displayed next to the title.
+   * @param {string}  props.title - Section title.
+   * @param {string}  props.component - Component name string.
+   * @param {object}  props.params - Parameters object.
+   * @param {string}  props.sectionKey - Key for the expanded sections state.
+   * @param {string}  props.componentName - Display name for the component.
+   * @returns {JSX.Element}
+   */
   const CollapsibleParameterCard = ({ icon, title, component, params, sectionKey, componentName }) => (
     <Box 
       sx={{ 

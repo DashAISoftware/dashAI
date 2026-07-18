@@ -10,8 +10,11 @@ import { useTranslation } from "react-i18next";
 import { useGenerative } from "../GenerativeContext";
 
 /**
- * Breadcrumbs component for RAG navigation
- * @param {string} sessionName - Optional session name to show in breadcrumbs
+ * Breadcrumbs component for RAG navigation.
+ *
+ * @param {object}  props
+ * @param {string} [props.sessionName] - Optional session name to show in breadcrumbs.
+ * @returns {JSX.Element} The breadcrumbs bar with back button.
  */
 function RAGBreadcrumbs({ sessionName }) {
   const { t } = useTranslation(["generative"]);
@@ -24,6 +27,7 @@ function RAGBreadcrumbs({ sessionName }) {
     setStepIndex,
   } = useGenerative() ?? {};
 
+  /** Navigates to the top-level generative page, clearing all selection state. */
   const navigateToGenerative = () => {
     setSelectedSessionId?.(null);
     setSelectedTaskName?.(null);
@@ -32,6 +36,10 @@ function RAGBreadcrumbs({ sessionName }) {
     navigate("/app/generative");
   };
 
+  /**
+   * Builds an ordered breadcrumb trail based on the current URL path.
+   * @returns {Array<{label: string, path: string|null, current?: boolean, isSession?: boolean}>}
+   */
   const getBreadcrumbs = () => {
     const path = location.pathname;
     if (!path.startsWith("/app/generative/RAG")) return [];
@@ -52,6 +60,10 @@ function RAGBreadcrumbs({ sessionName }) {
 
   const breadcrumbs = getBreadcrumbs();
 
+  /**
+   * Navigates to the given breadcrumb path, resetting selection state as needed.
+   * @param {string} path - The target route path.
+   */
   const handleNavigate = (path) => {
     if (!path) return;
     if (path === "/app/generative") {
@@ -67,6 +79,7 @@ function RAGBreadcrumbs({ sessionName }) {
     navigate(path);
   };
 
+  /** Navigates to the parent breadcrumb, or to the generative page if already at root. */
   const handleBack = () => {
     if (breadcrumbs.length > 1) {
       const parentBreadcrumb = breadcrumbs[breadcrumbs.length - 2];

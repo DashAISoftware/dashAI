@@ -21,6 +21,20 @@ import { resolveDefaults } from "../../../../utils/schema";
 
 const COMPOSITE_TYPES = ["SequentialRetriever", "ParallelRetriever", "MMRRerankerRetriever"];
 
+/**
+ * Dialog for configuring a single node in the composite retriever tree.
+ * Allows selecting a retriever component and editing its parameters.
+ *
+ * @param {object} props
+ * @param {boolean} props.open - Whether the dialog is open.
+ * @param {string} props.nodeId - The target tree node ID.
+ * @param {object} [props.nodeData] - The current node data (component + params).
+ * @param {Array} props.allComponents - All available retriever paradigms.
+ * @param {object} props.leafRegistry - Map of leaf paradigm names to their concrete component arrays.
+ * @param {function} props.onSave - Callback with (nodeId, component, params).
+ * @param {function} props.onClose - Callback to close the dialog.
+ * @returns {JSX.Element} The configuration dialog.
+ */
 export default function RetrieverNodeConfig({
   open,
   nodeId,
@@ -55,6 +69,11 @@ export default function RetrieverNodeConfig({
 
   const isComposite = selectedModel && COMPOSITE_TYPES.includes(selectedModel.name);
 
+  /**
+   * Resolves the display name from a component's display_name (string or multilingual object).
+   * @param {object} opt - The component option object.
+   * @returns {string} The resolved display name.
+   */
   const getDisplay = (opt) => {
     if (!opt) return "";
     const dn = opt.display_name;
@@ -62,7 +81,6 @@ export default function RetrieverNodeConfig({
     if (typeof dn === "string") return dn;
     if (dn.en) return dn.en;
     if (dn.es) return dn.es;
-    // Fallback: try any available language key
     const keys = Object.keys(dn);
     for (const key of keys) {
       if (typeof dn[key] === "string") return dn[key];
@@ -70,6 +88,11 @@ export default function RetrieverNodeConfig({
     return opt.name || "";
   };
 
+  /**
+   * Handles selection of a new retriever component and loads its default parameters.
+   * @param {object} _e - The autocomplete event.
+   * @param {object|null} newVal - The newly selected component option.
+   */
   const handleModelChange = async (_e, newVal) => {
     setSelectedModel(newVal);
     if (newVal) {
@@ -81,6 +104,9 @@ export default function RetrieverNodeConfig({
     }
   };
 
+  /**
+   * Saves the current component selection and parameters.
+   */
   const handleSave = () => {
     if (!selectedModel) return;
     onSave(nodeId, selectedModel.name, params);

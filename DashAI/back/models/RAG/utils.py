@@ -2,7 +2,7 @@ import hashlib
 
 
 def hash_function(content: str | bytes) -> str:
-    """Generate a SHA-256 hash for the given content bytes.
+    """Generate a SHA-256 hash for the given content.
 
     Args:
         content: The content to hash (str or bytes).

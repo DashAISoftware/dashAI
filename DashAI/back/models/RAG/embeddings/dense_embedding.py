@@ -7,42 +7,55 @@ from DashAI.back.models.base_model import BaseModel
 
 
 class DenseEmbedding(BaseModel):
-    """
-    Base class for all encoding (embedding) models.
-    This class should be inherited by any specific encoding (embedding)
-    model implementation.
+    """Base class for all dense encoding (embedding) models.
+
+    Subclasses must override :meth:`encode`, :meth:`batch_encode`, and
+    :meth:`train`, and set :attr:`embedding_dim` during initialisation.
     """
 
     embedding_dim: int
 
     def __init__(self, **kwargs: Any):
+        """Initialise the embedding model with arbitrary keyword parameters.
+
+        Args:
+            **kwargs: Model configuration parameters forwarded to subclasses.
         """
-        Initialize the encoding (embedding) model with the given documents.
-        """
-        raise NotImplementedError("Subclasses must implement the __init__ method.")
+        self.params = kwargs
 
     def encode(self, text: str) -> List[float] | np.ndarray:
-        """
-        Method to generate encodings (embeddings) for the given text.
-        This method should be implemented by subclasses.
+        """Generate an embedding vector for a single text string.
 
-        :param text: The input text to encode (embed).
-        :return: A list representing the encodings (embeddings) of the input text.
+        Args:
+            text: The input text to encode.
+
+        Returns:
+            A 1-D vector (list or ndarray) representing the embedding.
+
+        Raises:
+            NotImplementedError: Subclasses must implement this method.
         """
         raise NotImplementedError("Subclasses must implement this method.")
 
     def batch_encode(self, texts: List[str]) -> List[List[float]] | np.ndarray:
-        """
-        Method to generate encodings (embeddings) for a batch of texts.
-        This method should be implemented by subclasses.
+        """Generate embedding vectors for a batch of texts.
 
-        :param texts: A list of input texts to encode (embed).
-        :return: A list of lists representing the encodings (embeddings)
-            of the input texts.
+        Args:
+            texts: A list of input texts to encode.
+
+        Returns:
+            A 2-D array (list of lists or ndarray) of embeddings, one per input.
+
+        Raises:
+            NotImplementedError: Subclasses must implement this method.
         """
         raise NotImplementedError("Subclasses must implement this method.")
 
     @abstractmethod
     def train(self, **kwargs):
-        """Train the embedding model."""
+        """Train the embedding model on the provided data.
+
+        Args:
+            **kwargs: Training configuration (data, hyperparameters, etc.).
+        """
         return

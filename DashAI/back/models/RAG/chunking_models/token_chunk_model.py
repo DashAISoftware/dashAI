@@ -11,9 +11,12 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
     BaseChunkingModel,
 )
+from DashAI.back.models.RAG.exceptions import RAGChunkingOverlapError
 
 
 class TokenChunkModelSchema(BaseSchema):
+    """Schema for the token-based chunking model configuration."""
+
     tokenizer_name: schema_field(
         enum_field(
             enum=[
@@ -58,18 +61,38 @@ if TYPE_CHECKING:
 
 
 class TokenChunkModel(BaseChunkingModel):
+    """Chunking model that splits text into chunks based on token count.
+
+    Uses a HuggingFace ``AutoTokenizer`` to tokenize the text and splits at
+    token boundaries with configurable overlap.
+    """
+
     SCHEMA = TokenChunkModelSchema
 
     def __init__(self, **kwargs):
-        self.parameters = kwargs
-        self.chunk_size = self.parameters["chunk_size"]
-        self.chunk_overlap = self.parameters["chunk_overlap"]
-        self.tokenizer_name = self.parameters["tokenizer_name"]
+        """Initialize the token chunking model.
+
+        Args:
+            **kwargs: Must include ``chunk_size``, ``chunk_overlap``, and
+                ``tokenizer_name``, plus a ``documents`` mapping passed to
+                the parent class.
+        """
+        # Extract parameters before super().__init__() pops "documents"
+        self.chunk_size = kwargs["chunk_size"]
+        self.chunk_overlap = kwargs["chunk_overlap"]
+        self.tokenizer_name = kwargs["tokenizer_name"]
         self._tokenizer: Optional["AutoTokenizer"] = None
+        # self.parameters is set by BaseChunkingModel.validate_and_transform()
         super().__init__(**kwargs)
 
     @property
-    def tokenizer(self):
+    def tokenizer(self) -> "AutoTokenizer":
+        """Lazily load and return the HuggingFace tokenizer.
+
+        Returns:
+            AutoTokenizer: The tokenizer loaded from the configured
+                ``tokenizer_name``.
+        """
         if self._tokenizer is None:
             from transformers import AutoTokenizer
 
@@ -77,6 +100,23 @@ class TokenChunkModel(BaseChunkingModel):
         return self._tokenizer
 
     def chunk_text(self, text: str) -> List[str]:
+        """Split text into chunks based on token count.
+
+        Args:
+            text: The input text to be chunked.
+
+        Returns:
+            List[str]: A list of text chunks, each converted back to a string
+                from its constituent tokens.
+
+        Raises:
+            RAGChunkingOverlapError: If chunk_overlap is not less than chunk_size.
+        """
+        if self.chunk_overlap >= self.chunk_size:
+            raise RAGChunkingOverlapError(
+                f"chunk_overlap ({self.chunk_overlap}) must be less than "
+                f"chunk_size ({self.chunk_size})"
+            )
         tokens = self.tokenizer.tokenize(text)
 
         token_chunks = []

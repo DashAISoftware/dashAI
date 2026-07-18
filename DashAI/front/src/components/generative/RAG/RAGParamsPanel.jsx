@@ -10,6 +10,13 @@ import {
 import PromptParamsCard from "./PromptParamsCard";
 import GeneratorParamsCard from "./GeneratorParamsCard";
 
+/**
+ * Side panel for viewing and editing RAG session parameters (prompt and generator config).
+ *
+ * @param {object} props
+ * @param {number|string} props.selectedSessionId - The currently selected RAG session ID.
+ * @returns {JSX.Element} The params panel with save capability.
+ */
 export default function RAGParamsPanel({ selectedSessionId }) {
   const { t } = useTranslation(["generative"]);
   const { enqueueSnackbar } = useSnackbar();
@@ -47,6 +54,7 @@ export default function RAGParamsPanel({ selectedSessionId }) {
       .finally(() => setLoading(false));
   }, [selectedSessionId, enqueueSnackbar]);
 
+  /** Whether the current prompt or generator params differ from the last saved snapshot. */
   const hasParamChanges = React.useMemo(() => {
     if (!originalParamsRef.current) return false;
     const original = originalParamsRef.current;
@@ -56,6 +64,7 @@ export default function RAGParamsPanel({ selectedSessionId }) {
     return hasPromptChanged || hasComponentChanged || hasParamsChanged;
   }, [promptModel, generatorModel, savedVersion]);
 
+  /** Persists the current prompt and generator parameters to the backend. */
   const handleSave = async () => {
     if (!selectedSessionId || !hasParamChanges) return;
     const payload = {

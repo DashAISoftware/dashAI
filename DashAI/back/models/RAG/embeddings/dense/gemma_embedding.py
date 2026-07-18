@@ -29,6 +29,15 @@ GEMMA_MODEL_NAMES = list(GEMMA_MODELS.keys())
 
 
 class GemmaEmbeddingSchema(BaseSchema):
+    """Configuration schema for :class:`GemmaEmbedding`.
+
+    Attributes:
+        model_name: Gemma embedding model (uses SentenceTransformers API).
+        task_type: Task type that optimises the query embedding for a specific use case.
+        overflow_strategy: Strategy for chunks exceeding model max sequence length.
+        device: Device to run the model on.
+    """
+
     model_name: schema_field(
         enum_field(GEMMA_MODEL_NAMES),
         placeholder="google/embeddinggemma-300m",
@@ -68,6 +77,18 @@ class GemmaEmbeddingSchema(BaseSchema):
 
 
 class GemmaEmbedding(DenseEmbedding):
+    """Dense embeddings using Gemma models via the SentenceTransformers API.
+
+    Wraps :class:`_GemmaEmbedding` and exposes it as a DashAI component with
+    a configurable schema (:class:`GemmaEmbeddingSchema`).
+
+    Supports task-aware query prompts (search, QA, classification, etc.).
+
+    FLAGS:
+        FAMILY:gemma: Groups this model under the Gemma family.
+        huggingface: Marks the model family as HuggingFace-based.
+    """
+
     SCHEMA = GemmaEmbeddingSchema
     FLAGS: list[str] = ["FAMILY:gemma", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
@@ -80,6 +101,11 @@ class GemmaEmbedding(DenseEmbedding):
     )
 
     def __init__(self, **kwargs):
+        """Initialise the embedding by validating parameters and creating the internal model.
+
+        Args:
+            **kwargs: Configuration matching :class:`GemmaEmbeddingSchema`.
+        """  # noqa: E501
         self.params = self.validate_and_transform(kwargs)
         model_name = self.params["model_name"]
         device = self.params["device"]
@@ -95,16 +121,33 @@ class GemmaEmbedding(DenseEmbedding):
         )
 
     def load(self):
+        """Load the Gemma model via SentenceTransformers."""
         self._embedding.load()
 
     def encode(self, text: str):
+        """Encode a single text into a dense embedding with the configured task prompt.
+
+        Args:
+            text: Input string.
+
+        Returns:
+            A 1-D NumPy array of shape ``(embedding_dim,)``.
+        """
         return self._embedding.encode(text)
 
     def batch_encode(self, texts: List[str]):
+        """Encode a batch of texts into dense embeddings with document prompts.
+
+        Args:
+            texts: List of input strings.
+
+        Returns:
+            A ``(batch, embedding_dim)`` float32 NumPy array.
+        """
         return self._embedding.batch_encode(texts)
 
     def save(self):
-        pass
+        """No-op. Persistence is handled externally."""
 
     def train(self, **kwargs):
-        return
+        """No-op. Pre-trained models are used as-is."""

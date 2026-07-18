@@ -1,4 +1,5 @@
-from typing import List
+import logging
+from typing import List, Tuple
 
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -17,8 +18,19 @@ from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
 
+log = logging.getLogger(__name__)
+
 
 class MMRRerankerRetrieverSchema(BaseSchema):
+    """Schema for :class:`MMRRerankerRetriever`.
+
+    Attributes:
+        mmr_lambda: Trade-off between relevance and diversity.
+        retrieval_factor: Multiplier for initial retrieval size.
+        top_k: Final number of chunks to select.
+        children: Exactly one child retriever whose results are re-ranked.
+    """
+
     mmr_lambda: schema_field(
         float_field(ge=0.0, le=1.0),
         placeholder=0.5,
@@ -57,6 +69,13 @@ class MMRRerankerRetrieverSchema(BaseSchema):
 
 
 class MMRRerankerRetriever(CompositeRetriever):
+    """Re-ranks retrieval results using Maximum Marginal Relevance for diversity.
+
+    Retrieves an expanded candidate set from the child, then selects a
+    diverse subset by balancing relevance and similarity among selected
+    chunks.
+    """
+
     FLAGS: list[str] = ["FAMILY:mmr", "composite", "reranker"]
     SCHEMA = MMRRerankerRetrieverSchema
     DISPLAY_NAME: str = MultilingualString(
@@ -70,6 +89,12 @@ class MMRRerankerRetriever(CompositeRetriever):
     )
 
     def __init__(self, **kwargs):
+        """Initialize the MMR reranker.
+
+        Args:
+            **kwargs: Must contain ``mmr_lambda``, ``retrieval_factor``,
+                ``top_k``, and ``children`` (exactly one child).
+        """
         super().__init__(**kwargs)
         self.mmr_lambda = self.params.pop("mmr_lambda")
         self.retrieval_factor = self.params.pop("retrieval_factor")
@@ -77,17 +102,36 @@ class MMRRerankerRetriever(CompositeRetriever):
 
     @property
     def retrieval_top_k(self) -> int:
+        """Return the final number of chunks selected.
+
+        Returns:
+            The value of ``top_k``.
+        """
         return self._top_k
 
-    def retrieve(self, query, **kwargs) -> List[Chunk]:
+    def retrieve(self, query: str, **kwargs) -> List[Chunk]:
+        """Retrieve and re-rank chunks using MMR diversity.
+
+        Fetches an expanded candidate set from the child, computes
+        pairwise cosine similarity among the candidates, then selects
+        a diverse subset via the MMR algorithm.
+
+        Args:
+            query: The search query string.
+            **kwargs: Additional retrieval parameters.
+
+        Returns:
+            A list of :class:`Chunk` instances selected for relevance
+            and diversity.
+        """
         child = self._children[0]
         expanded_k = self._top_k * self.retrieval_factor
         candidates = child.retrieve(query, top_k=expanded_k)
         if len(candidates) <= self._top_k:
             return candidates
 
-        chunk_ids = [c.id for c in candidates]
-        scored = child.score_chunks(chunk_ids, query)
+        chunk_ids: List[int] = [c.id for c in candidates]
+        scored: List[Tuple[int, float]] = child.score_chunks(chunk_ids, query)
         id_to_dist = dict(scored)
 
         ordered = [c for c in candidates if c.id in id_to_dist]
@@ -95,21 +139,55 @@ class MMRRerankerRetriever(CompositeRetriever):
             return ordered[: self._top_k]
 
         relevance = np.array([1.0 - id_to_dist[c.id] for c in ordered])
-        ordered_ids = [c.id for c in ordered]
+        ordered_ids: List[int] = [c.id for c in ordered]
         try:
             vectors = child.get_chunk_vectors(ordered_ids)
         except ValueError:
+            return ordered[: self._top_k]
+
+        if len(vectors) != len(ordered):
+            log.warning(
+                "MMRRerankerRetriever: vector count (%d) != ordered chunk count (%d). "
+                "Falling back to top-k without MMR.",
+                len(vectors),
+                len(ordered),
+            )
             return ordered[: self._top_k]
 
         pairwise = cosine_similarity(vectors)
         selected = self._mmr_select(relevance, pairwise)
         return [ordered[i] for i in selected]
 
+    def score_chunks(self, chunk_ids, query):
+        """Score chunks by delegating to the child retriever.
+
+        Args:
+            chunk_ids: List of chunk IDs to score.
+            query: The search query string.
+
+        Returns:
+            A list of ``(chunk_id, distance)`` tuples from the child.
+        """
+        child = self._children[0]
+        return child.score_chunks(chunk_ids, query)
+
     def _mmr_select(
         self,
         relevance: np.ndarray,
         pairwise: np.ndarray,
     ) -> List[int]:
+        """Select indices using Maximum Marginal Relevance.
+
+        Greedily picks the next candidate that maximises:
+        ``lambda * relevance(c) - (1 - lambda) * max_similarity(c, selected)``
+
+        Args:
+            relevance: Relevance scores for all candidates (shape ``(n,)``).
+            pairwise: Pairwise cosine similarity matrix (shape ``(n, n)``).
+
+        Returns:
+            List of selected indices (up to ``self._top_k``).
+        """
         n = len(relevance)
         best = int(np.argmax(relevance))
         selected = [best]

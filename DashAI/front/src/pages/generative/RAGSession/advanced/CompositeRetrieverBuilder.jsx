@@ -21,6 +21,16 @@ function nextId() {
   return `n_${++_nodeIdCounter}`;
 }
 
+/**
+ * Interactive tree builder for composite retriever types (Sequential, Parallel, MMR Reranker).
+ * Allows adding/removing child nodes and configuring each node's component and parameters.
+ *
+ * @param {object} props
+ * @param {string} props.rootComponent - Name of the root composite retriever component.
+ * @param {object} [props.rootParams] - Initial parameters for the root node, including children.
+ * @param {function} props.onChange - Callback with the serialised tree on every change.
+ * @returns {JSX.Element} The tree builder UI.
+ */
 export default function CompositeRetrieverBuilder({
   rootComponent,
   rootParams,
@@ -76,6 +86,11 @@ export default function CompositeRetrieverBuilder({
     });
   }, [ready, rootComponent]);
 
+  /**
+   * Finds a component definition by name across all paradigms and leaf registries.
+   * @param {string} name - Component name to look up.
+   * @returns {object|undefined} The component definition object, or undefined.
+   */
   const findComponent = (name) => {
     const direct = allComponents.find((c) => c.name === name);
     if (direct) return direct;
@@ -86,6 +101,10 @@ export default function CompositeRetrieverBuilder({
     return null;
   };
 
+  /**
+   * Serialises the current tree and fires the onChange callback.
+   * @param {object} t - The current tree root node.
+   */
   const emit = useCallback(
     (t) => {
       const ser = (n) => {
@@ -103,6 +122,13 @@ export default function CompositeRetrieverBuilder({
     [onChange],
   );
 
+  /**
+   * Immutably updates a tree node identified by its nodeId.
+   * @param {object} root - The root of the tree to traverse.
+   * @param {string} nodeId - The target node ID.
+   * @param {function} fn - A mutator function receiving the matched node.
+   * @returns {object} A new tree with the update applied.
+   */
   const updateAt = (root, nodeId, fn) => {
     const walk = (n) => {
       if (n.nodeId === nodeId) return fn(n);
@@ -112,6 +138,12 @@ export default function CompositeRetrieverBuilder({
     return walk(root);
   };
 
+  /**
+   * Persists a node's component selection and parameters into the tree.
+   * @param {string} nodeId - The target node ID.
+   * @param {string} component - The selected component name.
+   * @param {object} params - The component parameters.
+   */
   const handleSaveNode = (nodeId, component, params) => {
     const isComposite = COMPOSITE_TYPES.includes(component);
     setTree((prev) => {
@@ -127,6 +159,10 @@ export default function CompositeRetrieverBuilder({
     setEditing(null);
   };
 
+  /**
+   * Adds an empty child node under the specified parent.
+   * @param {string} parentId - The parent node ID to add a child under.
+   */
   const handleAddChild = (parentId) => {
     const id = nextId();
     setTree((prev) => {
@@ -139,6 +175,11 @@ export default function CompositeRetrieverBuilder({
     setEditing(id);
   };
 
+  /**
+   * Removes a child node from the specified parent.
+   * @param {string} parentId - The parent node ID.
+   * @param {string} childId - The child node ID to remove.
+   */
   const handleRemoveChild = (parentId, childId) => {
     setTree((prev) => {
       const updated = updateAt(prev, parentId, (n) => ({
@@ -272,6 +313,12 @@ CompositeRetrieverBuilder.propTypes = {
 };
 
 
+/**
+ * Recursively searches a tree for a node by its nodeId.
+ * @param {object} tree - The tree root to search.
+ * @param {string} nodeId - The node ID to find.
+ * @returns {object|null} The matching node, or null.
+ */
 function findNodeData(tree, nodeId) {
   if (tree.nodeId === nodeId) return tree;
   if (tree.children) {
@@ -283,7 +330,23 @@ function findNodeData(tree, nodeId) {
   return null;
 }
 
-
+/**
+ * Renders a single node in the composite retriever tree, including its
+ * icon, name, add/remove controls, and recursively renders children.
+ *
+ * @param {object} props
+ * @param {object} props.node - The tree node to render.
+ * @param {number} props.depth - Current depth level (used for indentation).
+ * @param {boolean} props.isRoot - Whether this is the root node.
+ * @param {string|null} props.parentId - The parent node ID (null for root).
+ * @param {function} props.findComponent - Lookup function for component definitions.
+ * @param {function} props.onEdit - Callback to open the config dialog for a node.
+ * @param {function} props.onAddChild - Callback to add a child node.
+ * @param {function} props.onRemoveChild - Callback to remove a child node.
+ * @param {object} props.theme - MUI theme object.
+ * @param {function} props.t - i18n translate function.
+ * @returns {JSX.Element|null} The tree node UI.
+ */
 function TreeNodeView({
   node,
   depth,

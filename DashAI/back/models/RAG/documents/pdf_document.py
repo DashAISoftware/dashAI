@@ -1,12 +1,19 @@
 from typing import Any, Dict, Optional
 
 from DashAI.back.models.RAG.documents.base_document import BaseDocument
-from DashAI.back.models.RAG.utils import hash_function
+from DashAI.back.models.RAG.exceptions import RAGDocumentParsingError
 
 
 def _clean_textract_output(text: str) -> str:
-    """Clean textract output by removing control characters
-    and normalizing whitespace."""
+    """Clean textract output by removing control characters and normalizing whitespace.
+
+    Args:
+        text: Raw text extracted by textract.
+
+    Returns:
+        str: Cleaned text with control characters replaced by spaces
+            and runs of whitespace collapsed.
+    """
     import re
 
     text = re.sub(r"[\x00-\x1f\x7f]", " ", text)
@@ -15,8 +22,9 @@ def _clean_textract_output(text: str) -> str:
 
 
 class PDFDocument(BaseDocument):
-    """
-    Class representing a PDF document.
+    """Document implementation for PDF files.
+
+    Supports two text-extraction backends: PyPDF2 and textract.
     """
 
     def __init__(
@@ -24,22 +32,30 @@ class PDFDocument(BaseDocument):
         id: int,
         file_name: str,
         file_path: str,
+        file_hash: str,
         created: Optional[str] = None,
         optional_metadata: Optional[Dict[str, Any]] = None,
-        **kwargs,
+        parser: str = "textract",
     ):
+        """Initialize a PDFDocument instance.
+
+        Args:
+            id: The unique identifier of the document.
+            file_name: The name of the file.
+            file_path: The path to the file.
+            file_hash: A hash of the file content (computed upstream).
+            created: The creation date of the document.
+            optional_metadata: Additional metadata for the document.
+            parser: PDF parser to use ("PyPDF2" or "textract").
+
+        Raises:
+            ValueError: If the parser is not "PyPDF2" or "textract".
         """
-        Initialize the document.
-        Args (from database):
-            id (int): The unique identifier of the document.
-            file_name (str): The name of the file.
-            file_path (str): The path to the file.
-            created (Optional[str]): The creation date of the document.
-            optional_metadata (Optional[Dict[str, Any]]): Additional
-                metadata for the document.
-        """
-        self.PARSER = kwargs.get("parser", "textract")
-        file_hash = hash_function(file_path)
+        if parser not in ("PyPDF2", "textract"):
+            raise ValueError(
+                f"Unsupported parser '{parser}'. Must be 'PyPDF2' or 'textract'."
+            )
+        self.PARSER = parser
         super().__init__(
             id=id,
             file_name=file_name,
@@ -50,6 +66,17 @@ class PDFDocument(BaseDocument):
         )
 
     def get_text(self) -> str:
+        """Extract and return the text content of the PDF document.
+
+        Uses either PyPDF2 or textract depending on the chosen parser.
+
+        Returns:
+            str: The extracted text with leading/trailing whitespace removed.
+
+        Raises:
+            ValueError: If the PDF file is empty or the parser is unsupported.
+            RAGDocumentParsingError: If text extraction with textract fails.
+        """
         if self.PARSER == "PyPDF2":
             from PyPDF2 import PdfReader
 
@@ -74,11 +101,17 @@ class PDFDocument(BaseDocument):
                 text = _clean_textract_output(text)
                 return text.strip()
             except Exception as e:
-                raise ValueError(
+                raise RAGDocumentParsingError(
                     f"Error extracting text from PDF file {self.file_path}: {str(e)}"
                 ) from e
         else:
             raise ValueError(f"Unsupported parser: {self.PARSER}")
 
-    def get_metadata(self):
+    def get_metadata(self) -> Dict[str, Any]:
+        """Get the optional metadata associated with the document.
+
+        Returns:
+            Dict[str, Any]: The metadata dictionary, or an empty dict
+                if no metadata was provided.
+        """
         return self.optional_metadata if self.optional_metadata else {}

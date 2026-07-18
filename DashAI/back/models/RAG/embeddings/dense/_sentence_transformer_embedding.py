@@ -2,14 +2,20 @@ import torch
 import torch.nn.functional as functional
 
 from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
-    OverfloatHandler,
+    OverflowHandler,
 )
 
 TRUNCATE = "truncate"
 AGGREGATE = "aggregate"
 
 
-class _SentenceTransformerEmbedding(OverfloatHandler):
+class _SentenceTransformerEmbedding(OverflowHandler):
+    """Internal wrapper that adds mean / last-token pooling and L2 normalisation
+    on top of :class:`OverflowHandler`.
+
+    Used by :class:`SentenceTransformerEmbedding` and :class:`LaBSEmbedding`.
+    """
+
     def __init__(
         self,
         model_name: str,
@@ -19,6 +25,16 @@ class _SentenceTransformerEmbedding(OverfloatHandler):
         normalize: bool,
         pooling: str = "mean",
     ):
+        """Initialise the embedding with pooling and normalisation options.
+
+        Args:
+            model_name: HuggingFace model identifier.
+            device: Target device (``"cpu"`` or ``"cuda"``).
+            model_max_length: Maximum number of tokens the model accepts.
+            overflow_strategy: ``"truncate"`` or ``"aggregate"``.
+            normalize: Whether to L2-normalise the output embeddings.
+            pooling: Pooling method — ``"mean"`` or ``"last_token"``.
+        """
         super().__init__(
             model_name=model_name,
             device=device,
@@ -31,6 +47,15 @@ class _SentenceTransformerEmbedding(OverfloatHandler):
         self.params["pooling"] = pooling
 
     def _pool(self, model_output, attention_mask):
+        """Mean-pool token embeddings, optionally normalised.
+
+        Args:
+            model_output: Output from ``AutoModel``.
+            attention_mask: Attention mask tensor.
+
+        Returns:
+            Pooled embedding tensor of shape ``(batch, embedding_dim)``.
+        """
         if self.pooling == "last_token":
             return self._last_token_pool(model_output, attention_mask)
         token_embeddings = model_output[0]
@@ -45,6 +70,17 @@ class _SentenceTransformerEmbedding(OverfloatHandler):
         return pooled
 
     def _last_token_pool(self, model_output, attention_mask):
+        """Extract the last non-padding token's hidden state.
+
+        Handles both left-padded and right-padded sequences.
+
+        Args:
+            model_output: Output from ``AutoModel``.
+            attention_mask: Attention mask tensor.
+
+        Returns:
+            Pooled embedding tensor of shape ``(batch, embedding_dim)``.
+        """
         last_hidden_states = model_output[0]
         left_padding = attention_mask[:, -1].sum() == attention_mask.shape[0]
         if left_padding:

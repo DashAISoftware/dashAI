@@ -14,6 +14,19 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import GeneratorBody from "../../../pages/generative/RAGSession/components/GeneratorBody";
 import RAGSectionColumn from "../../../pages/generative/RAGSession/components/RAGSectionColumn";
 
+/**
+ * Card for configuring the generation model parameters, with expand/collapse
+ * and an "advanced" indicator when non-default parameter values are set.
+ *
+ * @param {object}   props
+ * @param {object}   props.generatorModel - { component: string|null, params: object }
+ * @param {function} props.setGeneratorModel - State setter for generatorModel.
+ * @param {number}   [props.chunkSize=0] - Chunk size used by the retriever.
+ * @param {number}   [props.topK=0] - Top-K value used by the retriever.
+ * @param {number}   [props.promptTokenCount=0] - Token count of the selected prompt.
+ * @param {function} props.setIsValid - Callback to set the validity state of the form.
+ * @returns {JSX.Element}
+ */
 export default function GeneratorParamsCard({
   generatorModel,
   setGeneratorModel,
@@ -27,6 +40,7 @@ export default function GeneratorParamsCard({
   const [isExpanded, setIsExpanded] = useState(false);
   const [initialModelParams, setInitialModelParams] = useState(null);
 
+  /** Whether any generator parameter differs from its initial (default) values. */
   const isAdvanced = useMemo(() => {
     if (!generatorModel?.component || !generatorModel?.params || !initialModelParams) return false;
     return Object.keys(generatorModel.params).some(key => {

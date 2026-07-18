@@ -27,6 +27,15 @@ log = logging.getLogger(__name__)
 
 
 class TFIDFVectorizerSchema(BaseSchema):
+    """Schema for the TF-IDF vectorizer parameters.
+
+    Note:
+        ``"None"`` is used as a string value instead of ``none_type()``
+        because the current schema fields system does not support nullable
+        enum types. The value is converted to Python ``None`` in
+        :meth:`TFIDFVectorizerModel.__init__`.
+    """
+
     strip_accents: schema_field(
         enum_field(enum=["ascii", "unicode", "None"]),
         placeholder="None",
@@ -137,6 +146,12 @@ class TFIDFVectorizerSchema(BaseSchema):
 
 
 class TFIDFVectorizerModel(BaseModel):
+    """Model component that encapsulates a :class:`TfidfVectorizer`.
+
+    Validates parameters against :class:`TFIDFVectorizerSchema` and
+    constructs the underlying scikit-learn vectorizer.
+    """
+
     SCHEMA = TFIDFVectorizerSchema
     DISPLAY_NAME: str = MultilingualString(
         en="TF-IDF Vectorizer Model",
@@ -148,6 +163,11 @@ class TFIDFVectorizerModel(BaseModel):
     )
 
     def __init__(self, **kwargs) -> None:
+        """Initialize and build the underlying ``TfidfVectorizer``.
+
+        Args:
+            **kwargs: Parameters matching :class:`TFIDFVectorizerSchema`.
+        """
         validated = self.SCHEMA.model_validate(kwargs)
         self.params = dict(validated)
         if self.params.get("strip_accents") == "None":
@@ -170,16 +190,37 @@ class TFIDFVectorizerModel(BaseModel):
         )
 
     def save(self, filename: str = "") -> None:
-        pass
+        """No-op save (state managed by the parent retriever).
+
+        Args:
+            filename: Ignored.
+        """
 
     def load(self, filename: str = "") -> None:
-        pass
+        """No-op load (state managed by the parent retriever).
+
+        Args:
+            filename: Ignored.
+        """
 
     def train(self, **kwargs):
+        """No-op train (fitting is done by the parent retriever).
+
+        Args:
+            **kwargs: Ignored.
+        """
         return
 
 
 class TFIDFRetrieverSchema(BaseSchema):
+    """Schema for :class:`TFIDFRetriever`.
+
+    Attributes:
+        TFIDFVectorizer: Parameters for the TF-IDF vectorizer component.
+        similarity_function: Distance metric for vector comparison.
+        top_k: Number of chunks to select.
+    """
+
     TFIDFVectorizer: schema_field(
         component_field(parent="TFIDFVectorizerModel"),
         placeholder={"component": "TFIDFVectorizerModel", "params": {}},
@@ -209,6 +250,12 @@ class TFIDFRetrieverSchema(BaseSchema):
 
 
 class TFIDFRetriever(SparseRetriever):
+    """Sparse retriever using TF-IDF vectorization for document retrieval.
+
+    Fits a :class:`sklearn.feature_extraction.text.TfidfVectorizer` on
+    the injected chunks and retrieves via pairwise distance.
+    """
+
     FLAGS: list[str] = ["keyword", "sparse"]
     DISPLAY_NAME: str = MultilingualString(
         en="TF-IDF Retriever",
@@ -223,6 +270,12 @@ class TFIDFRetriever(SparseRetriever):
     SCHEMA = TFIDFRetrieverSchema
 
     def __init__(self, **kwargs):
+        """Initialize the TF-IDF retriever.
+
+        Args:
+            **kwargs: Must contain ``TFIDFVectorizer``,
+                ``similarity_function``, and ``top_k``.
+        """
         super().__init__(**kwargs)
 
         vectorizer_model = self.params.pop("TFIDFVectorizer")
@@ -231,28 +284,43 @@ class TFIDFRetriever(SparseRetriever):
         self._top_k = self.params.pop("top_k")
 
     def init_model(self) -> None:
+        """Restore saved state or fit the vectorizer from scratch."""
         if not self.load():
             self._fit()
 
     def load(self) -> bool:
+        """Load a previously saved TF-IDF state from disk.
+
+        Returns:
+            ``True`` if state was loaded successfully, ``False`` if
+            no saved state exists or loading failed.
+        """
         if self._persistence.model_dir is None:
             return False
         model_dir = self._persistence.model_dir
         try:
             with open(os.path.join(model_dir, "tfidf_vectorizer.pkl"), "rb") as f:
-                self._vectorizer = pickle.load(f)
+                vectorizer = pickle.load(f)
             with open(os.path.join(model_dir, "tf_idf_matrix.pkl"), "rb") as f:
-                self._tf_idf_matrix = pickle.load(f)
+                tf_idf_matrix = pickle.load(f)
             with open(
                 os.path.join(model_dir, "matrix_row_to_chunk_map.pkl"), "rb"
             ) as f:
-                self.matrix_row_to_chunk_map = pickle.load(f)
+                matrix_row_to_chunk_map = pickle.load(f)
+            self._vectorizer = vectorizer
+            self._tf_idf_matrix = tf_idf_matrix
+            self.matrix_row_to_chunk_map = matrix_row_to_chunk_map
             return True
         except Exception as e:
-            log.info("Error loading TFIDF state: %s", e)
+            log.error("Error loading TFIDF state: %s", e)
             return False
 
     def save(self) -> None:
+        """Persist the vectorizer, TF-IDF matrix, and chunk map to disk.
+
+        Raises:
+            ValueError: If ``persistence.model_dir`` is ``None``.
+        """
         model_dir = self._persistence.model_dir
         if model_dir is None:
             raise ValueError(
@@ -269,6 +337,7 @@ class TFIDFRetriever(SparseRetriever):
                 pickle.dump(obj, f)
 
     def _fit(self):
+        """Fit the TF-IDF vectorizer on all chunk texts and build the matrix."""
         chunk_texts = []
         current_idx = 0
         self.matrix_row_to_chunk_map: Dict[int, Chunk] = {}
@@ -283,9 +352,24 @@ class TFIDFRetriever(SparseRetriever):
 
     @property
     def retrieval_top_k(self) -> int:
+        """Return the configured top-k value.
+
+        Returns:
+            Number of chunks to retrieve.
+        """
         return self._top_k
 
     def retrieve(self, query: str, top_k: int | None = None) -> List[Chunk]:
+        """Retrieve the top-k chunks by TF-IDF similarity.
+
+        Args:
+            query: The search query string.
+            top_k: Override for the default ``top_k``. Uses the
+                configured value if ``None``.
+
+        Returns:
+            A list of :class:`Chunk` instances ordered by distance.
+        """
         self._check_infra()
         k = top_k if top_k is not None else self._top_k
         query_vector = self._vectorizer.transform([query])
@@ -298,6 +382,15 @@ class TFIDFRetriever(SparseRetriever):
         return [self.matrix_row_to_chunk_map[idx] for idx in top_indices]
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
+        """Score a set of chunk IDs against the query.
+
+        Args:
+            chunk_ids: List of chunk IDs to score.
+            query: The search query string.
+
+        Returns:
+            A list of ``(chunk_id, distance)`` tuples sorted by distance.
+        """
         self._check_infra()
         query_vector = self._vectorizer.transform([query])
         chunk_id_to_row = {c.id: r for r, c in self.matrix_row_to_chunk_map.items()}
@@ -319,6 +412,18 @@ class TFIDFRetriever(SparseRetriever):
         return scored
 
     def get_chunk_vectors(self, chunk_ids: List[int]) -> np.ndarray:
+        """Return the TF-IDF vectors for the given chunk IDs.
+
+        Args:
+            chunk_ids: List of chunk IDs whose vectors are needed.
+
+        Returns:
+            A 2D numpy array of TF-IDF vectors.
+
+        Raises:
+            ValueError: If none of the provided chunk IDs are found in
+                the matrix.
+        """
         chunk_id_to_row = {c.id: r for r, c in self.matrix_row_to_chunk_map.items()}
         rows = []
         for cid in chunk_ids:

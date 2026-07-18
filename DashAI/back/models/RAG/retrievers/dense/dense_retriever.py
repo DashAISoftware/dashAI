@@ -21,6 +21,13 @@ from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 
 
 class DenseRetrieverSchema(BaseSchema):
+    """Schema for :class:`DenseRetriever`.
+
+    Attributes:
+        similarity_metric: Distance metric for vector comparison.
+        top_k: Number of chunks to select.
+    """
+
     similarity_metric: schema_field(
         enum_field(enum=["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]),
         placeholder="cosine",
@@ -41,6 +48,12 @@ class DenseRetrieverSchema(BaseSchema):
 
 
 class DenseRetriever(UnitRetriever):
+    """Abstract base for dense (embedding-based) retrievers.
+
+    Maintains a similarity matrix of chunk embeddings loaded from
+    on-disk ``.npy`` files and retrieves via pairwise distance.
+    """
+
     FLAGS: list[str] = ["abstract"]
     DISPLAY_NAME: str = MultilingualString(
         en="Embedding Retriever",
@@ -55,12 +68,26 @@ class DenseRetriever(UnitRetriever):
     SCHEMA = DenseRetrieverSchema
 
     def __init__(self, **kwargs):
+        """Initialize the dense retriever.
+
+        Args:
+            **kwargs: Must contain ``similarity_metric`` and ``top_k``.
+        """
         super().__init__(**kwargs)
 
         self.similarity_metric = self.params.pop("similarity_metric")
         self._top_k = self.params.pop("top_k")
 
     def _init_embedding(self, embedding_model):
+        """Initialise the embedding model and build the similarity matrix.
+
+        Args:
+            embedding_model: A :class:`DenseEmbedding` instance used to
+                encode chunks.
+
+        Raises:
+            TypeError: If *embedding_model* is not a ``DenseEmbedding``.
+        """
         if not isinstance(embedding_model, DenseEmbedding):
             raise TypeError(
                 f"Expected DenseEmbedding instance, "
@@ -79,6 +106,12 @@ class DenseRetriever(UnitRetriever):
         self.init_similarity_matrix()
 
     def compute_missing_embeddings(self):
+        """Compute and persist embeddings for chunks that lack them.
+
+        Iterates over all documents; if an ``embeddings.npy`` file does
+        not yet exist at the expected path, the embedding model is used
+        to encode the chunk texts and the result is saved.
+        """
         for doc_id, doc_chunks in self.chunks.items():
             matrix_dir = self._persistence.matrix_dirs.get(doc_id)
             if matrix_dir is None:
@@ -92,6 +125,12 @@ class DenseRetriever(UnitRetriever):
             np.save(matrix_path, embeddings)
 
     def init_similarity_matrix(self):
+        """Load all persisted embedding matrices into a single similarity matrix.
+
+        Builds ``similarity_matrix`` (a vertical stack of all per-document
+        embedding arrays), ``matrix_row_to_chunk_id``, and
+        ``chunk_id_to_doc_id`` lookup mappings.
+        """
         self.similarity_matrix = None
         self.matrix_row_to_chunk_id = {}
         self.chunk_id_to_doc_id = {}
@@ -116,17 +155,33 @@ class DenseRetriever(UnitRetriever):
 
     @property
     def retrieval_top_k(self) -> int:
+        """Return the configured top-k value.
+
+        Returns:
+            Number of chunks to retrieve.
+        """
         return self._top_k
 
     def retrieve(self, query: str, top_k: int | None = None) -> List[Chunk]:
+        """Retrieve the top-k chunks by embedding similarity.
+
+        Args:
+            query: The search query string.
+            top_k: Override for the default ``top_k``. Uses the
+                configured value if ``None``.
+
+        Returns:
+            A list of :class:`Chunk` instances ordered by distance.
+
+        Raises:
+            ValueError: If the similarity matrix has not been
+                initialised.
+        """
         self._check_infra()
         if self.similarity_matrix is None:
             raise ValueError("Similarity matrix not initialized.")
         k = top_k if top_k is not None else self._top_k
         query_embedding = self.embedding_model.encode(query)
-        # NOTE: pairwise_distances computes O(n×dim) per query with no
-        # FAISS/HNSW indexing. Low priority since current use cases have
-        # small document sets.
         distances = pairwise_distances(
             query_embedding.reshape(1, -1),
             self.similarity_matrix,
@@ -141,6 +196,19 @@ class DenseRetriever(UnitRetriever):
         return results
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
+        """Score a set of chunk IDs against the query.
+
+        Args:
+            chunk_ids: List of chunk IDs to score.
+            query: The search query string.
+
+        Returns:
+            A list of ``(chunk_id, distance)`` tuples sorted by distance.
+
+        Raises:
+            ValueError: If the similarity matrix has not been
+                initialised.
+        """
         self._check_infra()
         if self.similarity_matrix is None:
             raise ValueError("Similarity matrix not initialized.")
@@ -162,6 +230,18 @@ class DenseRetriever(UnitRetriever):
         return scored
 
     def get_chunk_vectors(self, chunk_ids: List[int]) -> np.ndarray:
+        """Return embedding vectors for the given chunk IDs.
+
+        Args:
+            chunk_ids: List of chunk IDs whose vectors are needed.
+
+        Returns:
+            A 2D numpy array of embedding vectors.
+
+        Raises:
+            ValueError: If the similarity matrix has not been
+                initialised, or none of the chunk IDs are found.
+        """
         if self.similarity_matrix is None:
             raise ValueError("Similarity matrix not initialized.")
         chunk_id_to_row: Dict[int, int] = {

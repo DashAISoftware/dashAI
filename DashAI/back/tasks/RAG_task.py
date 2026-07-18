@@ -3,6 +3,7 @@ from typing import Any, List, Optional, Tuple
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
+from DashAI.back.models.RAG.exceptions import RAGTaskInputError
 from DashAI.back.models.RAG.RAG_pipeline import RAGGenerationOutput
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
@@ -19,8 +20,8 @@ class RAGTask(BaseGenerativeTask):
     }
 
     DISPLAY_NAME: str = MultilingualString(
-        en="RAG Task",
-        es="Tarea RAG",
+        en="Retrieval-Augmented Generation",
+        es="Generación Aumentada por Recuperación (RAG)",
     )
     DESCRIPTION: str = MultilingualString(
         en="""
@@ -62,6 +63,8 @@ class RAGTask(BaseGenerativeTask):
                  {"role": "assistant", "content": "Hello! How can I assist you today?"},
                  {"role": "user", "content": "Tell me a joke."}]
         """
+        if not input:
+            raise RAGTaskInputError("Task input list must not be empty")
         input = str(input[0].data)
 
         prepared_input = [{"role": "user", "content": input}]
@@ -108,10 +111,15 @@ class RAGTask(BaseGenerativeTask):
     ) -> List[Tuple[str, str]]:
         """Process the output of a generative model.
 
-        Parameters
-        ----------
-        output : RAGGenerationOutput
-            The typed output from RAGPipeline.generate().
+        Converts the generation output into a list of (data, type) tuples
+        suitable for database storage.
+
+        Args:
+            output: The typed output from ``RAGPipeline.generate()``.
+
+        Returns:
+            A list of ``(data, type)`` tuples: the message as ``"str"``
+            and the chunks as ``"Dict"`` (JSON-encoded).
         """
         message = output.message
         chunks = output.chunks

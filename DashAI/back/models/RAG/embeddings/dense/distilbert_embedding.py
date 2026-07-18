@@ -91,6 +91,15 @@ DISTILBERT_MODEL_NAMES = list(DISTILBERT_MODELS.keys())
 
 
 class DistilBERTEmbeddingSchema(BaseSchema):
+    """Configuration schema for :class:`DistilBERTEmbedding`.
+
+    Attributes:
+        model_name: DistilBERT model for embedding generation.
+        overflow_strategy: Strategy for chunks exceeding model max sequence length.
+        device: Device to run the model on.
+        pooling_strategy: Pooling strategy to aggregate token embeddings.
+    """
+
     model_name: schema_field(
         enum_field(DISTILBERT_MODEL_NAMES),
         placeholder="distilbert/distilbert-base-cased",
@@ -129,6 +138,17 @@ class DistilBERTEmbeddingSchema(BaseSchema):
 
 
 class DistilBERTEmbedding(DenseEmbedding):
+    """Dense embeddings using DistilBERT models with configurable pooling.
+
+    Wraps :class:`_BERTEmbedding` (reusing BERT pooling logic) and exposes
+    it as a DashAI component with a configurable schema
+    (:class:`DistilBERTEmbeddingSchema`).
+
+    FLAGS:
+        FAMILY:distilbert: Groups this model under the DistilBERT family.
+        huggingface: Marks the model family as HuggingFace-based.
+    """
+
     SCHEMA = DistilBERTEmbeddingSchema
     FLAGS: list[str] = ["FAMILY:distilbert", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
@@ -141,6 +161,11 @@ class DistilBERTEmbedding(DenseEmbedding):
     )
 
     def __init__(self, **kwargs):
+        """Initialise the embedding by validating parameters and creating the internal model.
+
+        Args:
+            **kwargs: Configuration matching :class:`DistilBERTEmbeddingSchema`.
+        """  # noqa: E501
         self.params = self.validate_and_transform(kwargs)
         model_name = self.params["model_name"]
         device = self.params["device"]
@@ -156,16 +181,33 @@ class DistilBERTEmbedding(DenseEmbedding):
         )
 
     def load(self):
+        """Load the DistilBERT model and tokenizer."""
         self._embedding.load()
 
     def encode(self, text: str):
+        """Encode a single text into a dense embedding.
+
+        Args:
+            text: Input string.
+
+        Returns:
+            A 1-D NumPy array of shape ``(embedding_dim,)``.
+        """
         return self._embedding.encode(text)
 
     def batch_encode(self, texts: List[str]):
+        """Encode a batch of texts into dense embeddings.
+
+        Args:
+            texts: List of input strings.
+
+        Returns:
+            A ``(batch, embedding_dim)`` float32 NumPy array.
+        """
         return self._embedding.batch_encode(texts)
 
     def save(self):
-        pass
+        """No-op. Persistence is handled externally."""
 
     def train(self, **kwargs):
-        return
+        """No-op. Pre-trained models are used as-is."""

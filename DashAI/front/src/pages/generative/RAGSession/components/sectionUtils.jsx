@@ -1,5 +1,12 @@
 import { Box } from "@mui/material";
 
+/**
+ * Resolve a multilingual or plain-string description to the current locale.
+ * Falls back to "en", then "es", then empty string.
+ * @param {string|object} desc - Plain string or multilingual object { en, es, ... }.
+ * @param {object}        i18n - i18next instance with a `language` property.
+ * @returns {string} Localised description string.
+ */
 export const getDescription = (desc, i18n) => {
   if (!desc) return "";
   if (typeof desc === "string") return desc;

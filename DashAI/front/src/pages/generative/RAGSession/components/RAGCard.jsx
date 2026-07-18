@@ -10,6 +10,18 @@ import {
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PropTypes from "prop-types";
 
+/**
+ * An accordion card for a single RAG configuration section (documents, chunking,
+ * retriever, etc.). Supports optional action buttons in the header.
+ *
+ * @param {object}          props
+ * @param {string}          props.title         - Card title.
+ * @param {boolean}         props.expanded      - Whether the accordion is expanded.
+ * @param {Function}        props.onChange      - Accordion change handler.
+ * @param {Array}           [props.actions]     - Header action buttons ({ icon, tooltip, onClick, ariaLabel }).
+ * @param {React.ReactNode} [props.children]    - Accordion content.
+ * @returns {JSX.Element} The accordion card.
+ */
 export default function RAGCard({
   title,
   expanded,

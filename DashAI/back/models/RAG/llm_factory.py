@@ -1,18 +1,15 @@
-"""Factory for text-to-text generation models (LLMs).
+"""Pure factory for text-to-text generation models (LLMs).
 
 Resolves a component name + parameters into an instantiated model
-via the component registry, with lookup-or-create DB semantics.
+via the component registry, without any database access.
+DB concerns are handled by LLMService.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any
 
-from sqlalchemy.orm import Session
-
-from DashAI.back.dependencies.database.models import (
-    RAGGenerationModel as GenerationDBModel,
-)
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+from DashAI.back.models.RAG.exceptions import RAGComponentNotFoundError
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
@@ -22,41 +19,44 @@ from DashAI.back.models.text_to_text_generation_model import (
 class LLMFactoryResult:
     """Result of LLM instantiation via LLMFactory."""
 
-    db_record_id: int
     model: TextToTextGenerationTaskModel
 
 
 class LLMFactory:
-    """Creates LLM instances with lookup-or-create DB semantics."""
+    """Creates LLM instances from the component registry."""
 
-    def __init__(self, db: Session, component_registry: ComponentRegistry):
-        self._db = db
+    def __init__(self, component_registry: ComponentRegistry):
+        """Initialize the factory with a component registry.
+
+        Args:
+            component_registry: The component registry to resolve LLM
+                components.
+        """
         self._registry = component_registry
 
-    def create(self, component_name: str, params: Dict[str, Any]) -> LLMFactoryResult:
-        sorted_params = dict(sorted(params.items()))
-        existing = (
-            self._db.query(GenerationDBModel)
-            .filter_by(class_name=component_name, parameters=sorted_params)
-            .first()
-        )
-        if existing is not None:
-            model_class = self._registry[existing.class_name]["class"]
-            return LLMFactoryResult(
-                db_record_id=existing.id,
-                model=model_class(**existing.parameters),
-            )
+    def create(self, component_name: str, params: dict[str, Any]) -> LLMFactoryResult:
+        """Build an LLM instance from a registered component.
 
-        db_record = GenerationDBModel(
-            class_name=component_name,
-            parameters=sorted_params,
-        )
-        self._db.add(db_record)
-        self._db.commit()
-        self._db.refresh(db_record)
+        Args:
+            component_name: Name of the registered LLM component.
+            params: Parameters to pass to the model constructor.
 
-        model_class = self._registry[component_name]["class"]
-        return LLMFactoryResult(
-            db_record_id=db_record.id,
-            model=model_class(**params),
-        )
+        Returns:
+            Contains only the instantiated model.
+
+        Raises:
+            RAGComponentNotFoundError: If the component_name is not found
+                in the registry.
+        """
+        try:
+            model_class = self._registry[component_name]["class"]
+        except KeyError as err:
+            raise RAGComponentNotFoundError(
+                f"Component '{component_name}' not found in registry"
+            ) from err
+
+        if hasattr(model_class, "SCHEMA") and model_class.SCHEMA is not None:
+            model_class.SCHEMA(**params)
+
+        model = model_class(**params)
+        return LLMFactoryResult(model=model)

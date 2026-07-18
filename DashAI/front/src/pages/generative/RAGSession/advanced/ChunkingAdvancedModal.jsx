@@ -13,6 +13,17 @@ import { FormSchemaProvider } from "../../../../contexts/schema";
 import ChunkingConfigurationStep from "./ChunkingConfigurationStep";
 import { getModelFromSubform } from "../../../../utils/schema";
 
+/**
+ * Full-screen modal dialog for advanced chunking configuration.
+ * Wraps ChunkingConfigurationStep in a dialog with save/cancel actions.
+ *
+ * @param {object} props
+ * @param {boolean} props.open - Whether the dialog is open.
+ * @param {function} props.onClose - Callback to close the dialog.
+ * @param {object} [props.chunkingModel] - The current chunking model { component, params }.
+ * @param {function} props.setChunkingModel - State setter for the chunking model.
+ * @returns {JSX.Element} The advanced chunking modal.
+ */
 export default function ChunkingAdvancedModal({
   open,
   onClose,
@@ -23,10 +34,12 @@ export default function ChunkingAdvancedModal({
   const [stepValid, setStepValid] = useState(false);
   const modelName = getModelFromSubform(chunkingModel);
 
+  /** Closes the modal without saving. */
   const handleClose = () => {
     onClose();
   };
 
+  /** Saves and closes the modal. */
   const handleSave = () => {
     onClose();
   };

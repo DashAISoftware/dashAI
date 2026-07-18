@@ -1,8 +1,6 @@
 import logging
-import shutil
 from datetime import datetime
-from pathlib import Path
-from typing import TYPE_CHECKING, Final, Union
+from typing import TYPE_CHECKING, Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from kink import di
@@ -12,26 +10,22 @@ from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
 )
 from DashAI.back.dependencies.database.models import (
-    Document,
     GenerativeProcess,
     GenerativeSession,
     GenerativeSessionParameterHistory,
     ProcessData,
-    RAGChunkingModel,
-    RAGDenseRetriever,
-    RAGEmbeddingMatrix,
-    RAGEmbeddingModel,
-    RAGPipeline,
-    RAGPrompt,
-    RAGRetriever,
-    RAGRetrieverChild,
-    RAGSparseRetriever,
 )
+from DashAI.back.services.RAG.cleanup_service import CleanupService
 from DashAI.back.tasks.RAG_task import RAGTask
+from DashAI.back.models.base_generative_model import BaseGenerativeModel
+from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
+from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
+from DashAI.back.services.RAG.document_service import DocumentService
+from DashAI.back.core.schema_fields.utils import normalize_payload
+from DashAI.back.services.RAG.prompt_service import PromptService
+from DashAI.back.core.component_validation import validate_component_refs
 
-COMPOSITE_RETRIEVER_NAMES: Final = frozenset(
-    {"SequentialRetriever", "ParallelRetriever"}
-)
+from DashAI.back.services.RAG.RAG_setup_service import RAGSetupService
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -43,250 +37,6 @@ router = APIRouter()
 log = logging.getLogger(__name__)
 
 
-def _delete_path(path_value: str | None) -> None:
-    if not path_value:
-        return
-    path = Path(path_value)
-    if path.exists():
-        shutil.rmtree(path, ignore_errors=True)
-
-
-def _other_sessions_with_same_config(
-    db,
-    session_id: int,
-    expected_parameters: dict,
-    *,
-    keys: tuple[str, ...],
-) -> bool:
-    """Return True when any other session matches all keys in `keys`.
-
-    This avoids generator/list comprehensions for clarity.
-    """
-    other_sessions = (
-        db.query(GenerativeSession).filter(GenerativeSession.id != session_id).all()
-    )
-
-    for other_session in other_sessions:
-        other_parameters = other_session.parameters or {}
-        all_keys_match = True
-        for key in keys:
-            if other_parameters.get(key) != expected_parameters.get(key):
-                all_keys_match = False
-                break
-        if all_keys_match:
-            return True
-
-    return False
-
-
-def _cleanup_orphaned_rag_resources(
-    db,
-    session_id: int,
-    old_parameters: dict,
-    new_parameters: dict | None = None,
-) -> None:
-    if not old_parameters:
-        return
-
-    def _component_changed(key: str) -> bool:
-        if new_parameters is None:
-            return True
-        return old_parameters.get(key) != new_parameters.get(key)
-
-    documents_ids = old_parameters.get("documents") or []
-    documents_ids = sorted(documents_ids)
-
-    # ── Retriever cleanup MUST run BEFORE chunking cleanup ──────────
-    # _cleanup_unit_retriever queries RAGChunkingModel to obtain
-    # chunking_model_id. If chunking models are deleted first, the
-    # query returns None and retriever rows are silently skipped.
-    # ─────────────────────────────────────────────────────────────────
-    retriever_model_params = old_parameters.get("retriever_model")
-    if not retriever_model_params:
-        retriever_model_params = {}
-
-    retriever_component_name = retriever_model_params.get("component", "")
-
-    should_cleanup_retriever = (
-        bool(retriever_model_params)
-        and _component_changed("retriever_model")
-        and not _other_sessions_with_same_config(
-            db,
-            session_id,
-            old_parameters,
-            keys=("documents", "chunking_model", "retriever_model"),
-        )
-    )
-
-    if should_cleanup_retriever:
-        if retriever_component_name in COMPOSITE_RETRIEVER_NAMES:
-            _cleanup_composite_retriever(db, old_parameters, documents_ids, session_id)
-        else:
-            _cleanup_unit_retriever(
-                db, old_parameters, documents_ids, retriever_model_params, session_id
-            )
-
-    # ── Chunking model cleanup (AFTER retriever) ──────────────────────
-    chunking_model_params = old_parameters.get("chunking_model")
-    if not chunking_model_params:
-        chunking_model_params = {}
-
-    should_cleanup_chunking = (
-        bool(chunking_model_params)
-        and _component_changed("chunking_model")
-        and not _other_sessions_with_same_config(
-            db, session_id, old_parameters, keys=("documents", "chunking_model")
-        )
-    )
-
-    if should_cleanup_chunking:
-        chunking_models = (
-            db.query(RAGChunkingModel)
-            .filter(
-                RAGChunkingModel.class_name == chunking_model_params.get("component"),
-                RAGChunkingModel.parameters == chunking_model_params.get("params"),
-            )
-            .all()
-        )
-        for chunking_model in chunking_models:
-            db.delete(chunking_model)
-
-
-def _find_pipeline_id(db, session_id: int) -> int | None:
-    pipeline = db.query(RAGPipeline).filter_by(session_id=session_id).first()
-    return pipeline.id if pipeline else None
-
-
-def _cleanup_composite_retriever(
-    db,
-    old_parameters,
-    documents_ids,
-    session_id,
-) -> None:
-    pipeline_id = _find_pipeline_id(db, session_id)
-    if pipeline_id is None:
-        return
-
-    retriever_component_name = old_parameters.get("retriever_model", {}).get(
-        "component"
-    )
-
-    composite_bridges = (
-        db.query(RAGRetriever)
-        .filter(
-            RAGRetriever.pipeline_id == pipeline_id,
-            RAGRetriever.class_name == retriever_component_name,
-        )
-        .all()
-    )
-
-    for bridge in composite_bridges:
-        child_links = (
-            db.query(RAGRetrieverChild)
-            .filter_by(parent_id=bridge.id)
-            .order_by(RAGRetrieverChild.child_order)
-            .all()
-        )
-        for link in child_links:
-            child_bridge = db.query(RAGRetriever).get(link.child_id)
-            if child_bridge is None:
-                continue
-            if child_bridge.sparse_detail:
-                _delete_path(child_bridge.sparse_detail.storage_folder)
-                db.delete(child_bridge.sparse_detail)
-            elif child_bridge.dense_detail:
-                db.delete(child_bridge.dense_detail)
-        db.delete(bridge)
-
-
-def _cleanup_unit_retriever(
-    db,
-    old_parameters,
-    documents_ids,
-    retriever_model_params,
-    session_id,
-) -> None:
-    # Previously queried non-existent columns (chunking_model_id, document_ids)
-    # on RAGDenseRetriever/RAGSparseRetriever. Fixed after schema refactor:
-    # trace through the pipeline chain to obtain the valid chunk_set_id column.
-    retriever_params = retriever_model_params.get("params", {})
-
-    pipeline_id = _find_pipeline_id(db, session_id)
-    if pipeline_id is None:
-        return
-
-    bridge = (
-        db.query(RAGRetriever)
-        .filter(
-            RAGRetriever.pipeline_id == pipeline_id,
-            RAGRetriever.class_name == retriever_model_params.get("component"),
-        )
-        .first()
-    )
-    if bridge is None:
-        return
-
-    if "encoding_model" in retriever_params:
-        dense_retriever = (
-            db.query(RAGDenseRetriever)
-            .filter(
-                RAGDenseRetriever.bridge_id == bridge.id,
-                RAGDenseRetriever.class_name == retriever_model_params.get("component"),
-                RAGDenseRetriever.parameters == retriever_params,
-            )
-            .first()
-        )
-        if dense_retriever is None:
-            return
-
-        chunk_set_id = dense_retriever.chunk_set_id
-        embedding_model_id = dense_retriever.embedding_model_id
-
-        embedding_matrices = (
-            db.query(RAGEmbeddingMatrix)
-            .filter(
-                RAGEmbeddingMatrix.chunk_set_id == chunk_set_id,
-                RAGEmbeddingMatrix.embedding_model_id == embedding_model_id,
-                RAGEmbeddingMatrix.document_id.in_(documents_ids),
-            )
-            .all()
-        )
-
-        matrix_ids = []
-        for matrix in embedding_matrices:
-            _delete_path(matrix.storage_folder)
-            matrix_ids.append(matrix.id)
-
-        if matrix_ids:
-            db.query(RAGEmbeddingMatrix).filter(
-                RAGEmbeddingMatrix.id.in_(matrix_ids)
-            ).delete(synchronize_session=False)
-
-        embedding_model = db.query(RAGEmbeddingModel).get(embedding_model_id)
-        if embedding_model is not None:
-            db.delete(embedding_model)
-
-        db.delete(dense_retriever)
-        db.delete(bridge)
-    else:
-        sparse_retriever = (
-            db.query(RAGSparseRetriever)
-            .filter(
-                RAGSparseRetriever.bridge_id == bridge.id,
-                RAGSparseRetriever.class_name
-                == retriever_model_params.get("component"),
-                RAGSparseRetriever.parameters == retriever_params,
-            )
-            .first()
-        )
-        if sparse_retriever is None:
-            return
-
-        _delete_path(sparse_retriever.storage_folder)
-        db.delete(sparse_retriever)
-        db.delete(bridge)
-
-
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def upload_generative_session(
     params: GenerativeSessionParams,
@@ -294,8 +44,6 @@ async def upload_generative_session(
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Create a new generative session and log the initial parameters in the history."""
-    from DashAI.back.models.base_generative_model import BaseGenerativeModel
-    from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 
     with session_factory() as db:
         try:
@@ -330,34 +78,44 @@ async def upload_generative_session(
             # RAG session but RAG pipeline expects the documents paths of the
             # backend-stored documents
             if task_class == RAGTask:
-                try:
-                    assert params.parameters["documents"]
-                    assert isinstance(params.parameters["documents"], list)
-                    assert len(params.parameters["documents"]) > 0
-
-                except (AssertionError, KeyError) as e:
+                docs = params.parameters.get("documents", [])
+                if not docs:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="RAG Task requires a non-empty list of document IDs.",
+                        detail="'documents' must be a non-empty list.",
+                    )
+                if not all(isinstance(d, int) for d in docs):
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="'documents' must be a list of integers.",
+                    )
+                try:
+                    DocumentService(db).validate_exist(docs)
+                except ValueError as e:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=str(e),
                     ) from e
 
-                documents_ids = []
-                for doc_id in params.parameters["documents"]:
-                    document = db.get(Document, doc_id)
-                    if not document:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Document with ID {doc_id} does not exist.",
-                        )
-                    documents_ids.append(document.id)
-
-                params.parameters["documents"] = documents_ids
-            # Continue with the session creation
-
-            # Normalise frontend properties wrapper and validate
-            from DashAI.back.core.schema_fields.utils import normalize_payload
+            # Normalise frontend properties wrapper
 
             params.parameters = normalize_payload(params.parameters)
+
+            # RAG: resolve prompt_id BEFORE schema validation
+            if task_class == RAGTask:
+                prompt_service = PromptService(db, component_registry)
+                if "prompt_id" in params.parameters:
+                    prompt_service.validate_prompt_exists(
+                        params.parameters["prompt_id"]
+                    )
+                    params.parameters["prompt"] = (
+                        prompt_service.resolve_prompt_id_to_component(
+                            params.parameters["prompt_id"]
+                        )
+                    )
+                    del params.parameters["prompt_id"]
+
+            # Validate schema (now with prompt resolved if applicable)
             try:
                 model_class.SCHEMA.model_validate(params.parameters)
             except ValueError as e:
@@ -365,6 +123,24 @@ async def upload_generative_session(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Invalid parameters for model {params.model_name}: {e}",
                 ) from e
+
+            # RAG: validate component refs and prompt template
+            if task_class == RAGTask:
+                component_errors = validate_component_refs(
+                    params.parameters, component_registry
+                )
+                if component_errors:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="; ".join(component_errors),
+                    )
+
+                # Validate inline prompt template if present
+                prompt_ref = params.parameters.get("prompt", {})
+                if prompt_ref and isinstance(prompt_ref, dict):
+                    PromptService(db, component_registry).validate_component_ref(
+                        prompt_ref
+                    )
 
             # Check if the task is a subclass of BaseGenerativeTask
             if not issubclass(task_class, BaseGenerativeTask):
@@ -581,8 +357,11 @@ async def delete_generative_session(
                 db.delete(entry)
             # Finally, delete the session itself
             db.delete(session)
-            _cleanup_orphaned_rag_resources(db, session_id, old_parameters)
+
+            CleanupService(db).cleanup_orphaned_resources(session_id, old_parameters)
             db.commit()
+        except HTTPException:
+            raise
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -596,7 +375,6 @@ async def delete_generative_session(
                 detail="Internal server error",
             ) from e
         finally:
-            db.rollback()
             db.close()
 
 
@@ -703,29 +481,6 @@ async def update_generative_session_params(
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
-    """Update the parameters of a generative session and log the change.
-
-    Parameters
-    ----------
-    session_id : int
-        The ID of the generative session to update.
-    new_params : dict
-        The new parameters to set for the generative session.
-    session_factory : Callable[..., ContextManager[Session]]
-        A factory that creates a context manager that handles a SQLAlchemy session.
-
-    Returns
-    -------
-    dict
-        A dictionary with the updated generative session.
-
-    Raises
-    ------
-    HTTPException
-        If the generative session does not exist or if there's an internal
-        database error.
-    """
-
     with session_factory() as db:
         try:
             session = db.get(GenerativeSession, session_id)
@@ -736,43 +491,41 @@ async def update_generative_session_params(
                 )
 
             old_parameters = dict(session.parameters or {})
-            updated_parameters = {**old_parameters, **new_params}
-
-            if "prompt_id" in updated_parameters:
-                if "prompt" not in updated_parameters:
-                    prompt_db = db.get(RAGPrompt, updated_parameters["prompt_id"])
-                    if prompt_db:
-                        raw_params = dict(prompt_db.parameters or {})
-                        prompt_params = {
-                            "template": raw_params.get(
-                                "template",
-                                raw_params.get("templates", {}).get("en", ""),
-                            ),
-                        }
-                        if "language" in raw_params:
-                            prompt_params["language"] = raw_params["language"]
-                        updated_parameters["prompt"] = {
-                            "component": prompt_db.class_name,
-                            "params": prompt_params,
-                        }
-                del updated_parameters["prompt_id"]
-
             try:
                 task_class = component_registry[session.task_name]["class"]
-            except KeyError:
-                task_class = None
+            except KeyError as e:
+                raise HTTPException(
+                    status_code=404,
+                    detail=(
+                        f"Task '{session.task_name}' is not registered"
+                        " in the component registry."
+                    ),
+                ) from e
 
+            # ── RAG-specific validation of new_params ──
             if task_class is not None and task_class == RAGTask:
-                from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline
-
                 try:
-                    RAGPipeline.SCHEMA.model_validate(updated_parameters)
-                except ValueError as e:
+                    normalized = RAGSetupService.validate_update_payload(
+                        new_params, db, component_registry
+                    )
+                except (ValueError, RAGWorkflowError) as e:
                     raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Invalid parameters for RAG session {session_id}: {e}",
+                        status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
                     ) from e
 
+                # Merge validated new params into old params
+                updated_parameters = {**old_parameters, **normalized}
+
+                # Cleanup orphaned RAG resources
+
+                CleanupService(db).cleanup_orphaned_resources(
+                    session_id, old_parameters, updated_parameters
+                )
+            else:
+                # Non-RAG update: simple merge without RAG validation
+                updated_parameters = {**old_parameters, **new_params}
+
+            # ── Persist ──
             session_params_entry = GenerativeSessionParameterHistory(
                 session_id=session.id,
                 parameters=updated_parameters,
@@ -782,10 +535,6 @@ async def update_generative_session_params(
 
             session.parameters = updated_parameters
             session.last_modified = datetime.now()
-
-            _cleanup_orphaned_rag_resources(
-                db, session_id, old_parameters, updated_parameters
-            )
             db.commit()
             db.refresh(session)
 

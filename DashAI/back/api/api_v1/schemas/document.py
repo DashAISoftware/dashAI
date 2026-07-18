@@ -10,6 +10,7 @@ class DocumentResponse(BaseModel):
     file_type: str
     file_hash: str
     created: datetime
+    last_modified: datetime
     optional_metadata: Optional[Dict[str, Any]]
     related_sessions: List[int] | None
     file_url: str

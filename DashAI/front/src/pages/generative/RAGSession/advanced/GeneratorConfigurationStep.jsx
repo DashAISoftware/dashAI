@@ -12,6 +12,15 @@ import FormSchemaContainer from "../../../../components/shared/FormSchemaContain
 import { getGeneratorComponents } from "../../../../api/rag";
 import { resolveDefaults } from "../../../../utils/schema";
 
+/**
+ * Step component for selecting a generator (LLM) and configuring its parameters.
+ *
+ * @param {object} props
+ * @param {object} [props.generatorModel] - The current generator model { component, params }.
+ * @param {function} props.setGeneratorModel - State setter for the generator model.
+ * @param {function} [props.setNextEnabled] - Callback to enable/disable the next button.
+ * @returns {JSX.Element} The generator configuration step UI.
+ */
 export default function GeneratorConfigurationStep({
   generatorModel,
   setGeneratorModel,
@@ -68,6 +77,12 @@ export default function GeneratorConfigurationStep({
     setNextEnabled(!!generatorModel?.component);
   }, [generators, generatorModel?.component]);
 
+  /**
+   * Handles selection of a generator component from the autocomplete.
+   * Resolves default parameters and updates the generator model.
+   * @param {object} event - The autocomplete change event.
+   * @param {object|null} newValue - The selected generator component.
+   */
   const handleSelection = async (event, newValue) => {
     setSelectedGenerator(newValue);
     if (newValue) {
