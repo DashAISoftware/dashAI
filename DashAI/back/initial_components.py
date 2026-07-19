@@ -59,9 +59,11 @@ from DashAI.back.converters.simple_converters.character_replacer import (
     CharacterReplacer,
 )
 from DashAI.back.converters.simple_converters.column_arithmetic import ColumnArithmetic
+from DashAI.back.converters.simple_converters.column_concat import ColumnConcat
 from DashAI.back.converters.simple_converters.column_remover import ColumnRemover
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 from DashAI.back.converters.simple_converters.numeric_expansion import NumericExpansion
+from DashAI.back.converters.simple_converters.type_cast import TypeCast
 
 # DataLoaders
 from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
@@ -473,7 +475,9 @@ def get_initial_components():
         NanRemover,
         CharacterReplacer,
         ColumnArithmetic,
+        ColumnConcat,
         NumericExpansion,
+        TypeCast,
         FastICA,
         IncrementalPCA,
         PCA,
