@@ -11,6 +11,7 @@ from DashAI.back.api.api_v1.schemas.explainers_params import (
     GlobalExplainerParams,
     LocalExplainerParams,
     ValidateDatasetParams,
+    ValidDatasetsParams,
 )
 from DashAI.back.core.enums.status import ExplainerStatus
 from DashAI.back.dependencies.database.models import (
@@ -887,3 +888,90 @@ async def validate_dataset(
 
     validation_response["dataset_status"] = "valid"
     return validation_response
+
+
+@router.post("/local/valid-datasets")
+@inject
+async def valid_datasets(
+    params: ValidDatasetsParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the ids of every dataset that can be explained by a run's model.
+
+    A dataset is valid when it has all the model's input and output columns and
+    their types match the training dataset. The run, model session and training
+    dataset are loaded once and every dataset is checked in a single request so
+    the frontend does not have to validate them one at a time.
+
+    Parameters
+    ----------
+    params : ValidDatasetsParams
+        The run whose model the datasets must be compatible with.
+
+    Returns
+    -------
+    dict
+        ``{"valid_dataset_ids": [...]}`` with the ids of the valid datasets.
+    """
+    # get_columns_spec reads only the Arrow schema metadata (column names +
+    # types), never the rows, so validating every dataset stays cheap even with
+    # many/large (e.g. image) datasets on the platform.
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
+    with session_factory() as db:
+        try:
+            run: Run = db.get(Run, params.run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Run not found",
+                )
+            model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+            if not model_session:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Model session not found",
+                )
+            training_dataset: Dataset = db.get(Dataset, model_session.dataset_id)
+            datasets = db.scalars(select(Dataset)).all()
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    required_columns = model_session.input_columns + model_session.output_columns
+
+    training_types = {}
+    if training_dataset:
+        try:
+            training_spec = get_columns_spec(f"{training_dataset.file_path}/dataset")
+            training_types = {
+                col: spec.get("type") for col, spec in training_spec.items()
+            }
+        except Exception as e:
+            log.warning(f"Could not read training dataset schema: {e}")
+
+    valid_dataset_ids = []
+    for dataset in datasets:
+        try:
+            columns_spec = get_columns_spec(f"{dataset.file_path}/dataset")
+        except Exception as e:
+            log.warning(f"Could not read dataset {dataset.id} schema: {e}")
+            continue
+
+        if any(col not in columns_spec for col in required_columns):
+            continue
+
+        type_mismatch = any(
+            col in training_types
+            and training_types[col] != columns_spec[col].get("type")
+            for col in required_columns
+        )
+        if type_mismatch:
+            continue
+
+        valid_dataset_ids.append(dataset.id)
+
+    return {"valid_dataset_ids": valid_dataset_ids}
