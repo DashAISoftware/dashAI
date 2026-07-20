@@ -45,6 +45,20 @@ Only flat (sparse + dense) and composite (sequential / parallel / MMR) retriever
 
 When chatting, the user might want a given response to use only a specific subset of their uploaded documents (e.g., "use only the documents I referenced in my previous message"). Currently the retriever always searches across all documents assigned to the session. A document-level filter per message would enable more fine-grained control.
 
+## FastTextEmbedding Registration
+
+`FastTextEmbedding` exists in the codebase at
+`models/RAG/embeddings/dense/fasttext_embedding.py` but is not exposed through
+the `embeddings/dense/__init__.py` public API. It needs to be added to
+`__all__` and registered in `get_initial_components()`.
+
+## Frontend Setup Refactor
+
+The `components/generative/RAG/setup/` directory contains empty `sections/`,
+`components/`, and `advanced/` subdirectories. These are placeholders for a
+planned refactor that would move setup-related components out of
+`pages/generative/RAGSession/` into reusable modules under `components/`.
+
 ## Multi-Modal Document Support
 
 Currently only text-based documents are supported (txt, pdf, md, rst, tex, csv). A major challenge is extending the pipeline to handle other modalities:
