@@ -78,6 +78,14 @@ export const validateDataset = async (
   return response.data;
 };
 
+export const getValidDatasets = async (runId: number): Promise<number[]> => {
+  const response = await api.post<{ valid_dataset_ids: number[] }>(
+    "/v1/explainer/local/valid-datasets",
+    { run_id: runId },
+  );
+  return response.data.valid_dataset_ids;
+};
+
 export const deleteExplainer = async (
   scope: string,
   id: string,
