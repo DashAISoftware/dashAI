@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Grid,
   Typography,
@@ -20,7 +20,6 @@ import {
   resetExplainerPlotOverride,
 } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
-import { getComponentById } from "../../api/component";
 
 const RUNNING_STATUSES = [1, 2]; // Delivered or Started
 
@@ -34,10 +33,10 @@ export default function ExplainersCard({
   scope,
   onDelete,
   compact = false,
+  displayName = null,
 }) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const [componentData, setComponentData] = useState(null);
   const [overriddenIndexes, setOverriddenIndexes] = useState([]);
   const { t } = useTranslation(["explainers"]);
   const isRunning = RUNNING_STATUSES.includes(explainer.status);
@@ -78,16 +77,6 @@ export default function ExplainersCard({
     setOverriddenIndexes((prev) => prev.filter((i) => i !== index));
   };
 
-  useEffect(() => {
-    getComponentById(explainer.explainer_name)
-      .then((data) => {
-        setComponentData(data);
-      })
-      .catch((error) => {
-        console.error("Error fetching component data:", error);
-      });
-  }, [explainer.explainer_name]);
-
   if (compact) {
     return (
       <>
@@ -123,9 +112,7 @@ export default function ExplainersCard({
                     wordBreak: "break-word",
                   }}
                 >
-                  {componentData
-                    ? componentData.display_name
-                    : plotName(explainer.explainer_name)}
+                  {displayName || plotName(explainer.explainer_name)}
                   <Typography
                     variant="caption"
                     color="text.secondary"
@@ -260,4 +247,5 @@ ExplainersCard.propTypes = {
   scope: PropTypes.string.isRequired,
   onDelete: PropTypes.func,
   compact: PropTypes.bool,
+  displayName: PropTypes.string,
 };

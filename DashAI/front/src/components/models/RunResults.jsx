@@ -42,6 +42,7 @@ import ManualPredictionPanel from "./ManualPredictionPanel";
 import LiveMetricsChart from "./LiveMetricsChart";
 import HyperparameterPlots from "./HyperparameterPlots";
 import { getExplainers } from "../../api/explainer";
+import { getComponents } from "../../api/component";
 import { getPredictions } from "../../api/predict";
 import { getModelSessionById } from "../../api/modelSession";
 import { getDatasetSample } from "../../api/datasets";
@@ -118,6 +119,10 @@ export default function RunResults({
   // Explainer keys seen on the previous fetch; null until the first load so
   // the initial batch is not treated as newly added.
   const seenExplainerKeysRef = useRef(null);
+  // Map of explainer component name -> human display name, fetched once so the
+  // cards don't each request their own (a per-card fetch shifted card heights
+  // and broke the scroll-to-new-card).
+  const [explainerDisplayNames, setExplainerDisplayNames] = useState({});
   // "dataset" | "manual",  which prediction section is shown
   const [predictionFilter, setPredictionFilter] = useState("dataset");
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
@@ -223,6 +228,28 @@ export default function RunResults({
         getPredictions(runId).catch(() => []),
       ]);
 
+      // Detect explainers added since the previous fetch. The first fetch only
+      // seeds the baseline (so existing explainers are not treated as newly
+      // added, which would auto-scroll on entering the tab); later fetches
+      // switch the scope toggle to a new explainer and scroll its card in.
+      const currentKeys = new Set([
+        ...globalExpls.map((e) => `global-${e.id}`),
+        ...localExpls.map((e) => `local-${e.id}`),
+      ]);
+      if (seenExplainerKeysRef.current === null) {
+        seenExplainerKeysRef.current = currentKeys;
+      } else {
+        const added = [...currentKeys].filter(
+          (key) => !seenExplainerKeysRef.current.has(key),
+        );
+        seenExplainerKeysRef.current = currentKeys;
+        if (added.length > 0) {
+          const key = added[added.length - 1];
+          setExplainerFilter(key.startsWith("global-") ? "global" : "local");
+          setFocusExplainerKey(key);
+        }
+      }
+
       setGlobalExplainers(globalExpls);
       setLocalExplainers(localExpls);
       setPredictions(preds);
@@ -234,6 +261,20 @@ export default function RunResults({
   useEffect(() => {
     fetchOperations();
   }, [fetchOperations, explainerRefreshTrigger]);
+
+  // Fetch explainer display names once and share them with every card, instead
+  // of each card fetching its own component (which shifted card heights).
+  useEffect(() => {
+    getComponents({ selectTypes: ["GlobalExplainer", "LocalExplainer"] })
+      .then((components) => {
+        const names = {};
+        components.forEach((component) => {
+          names[component.name] = component.display_name || component.name;
+        });
+        setExplainerDisplayNames(names);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const sessionId = run.model_session_id || session?.id;
@@ -278,31 +319,10 @@ export default function RunResults({
     return () => clearInterval(interval);
   }, [hasRunningExplainers, fetchOperations]);
 
-  // When a newly created explainer shows up (created from anywhere, picked up
-  // by polling), switch the scope toggle to it and queue its card to scroll
-  // into view. Skips the first load so existing explainers are not "focused".
-  useEffect(() => {
-    const currentKeys = new Set([
-      ...globalExplainers.map((e) => `global-${e.id}`),
-      ...localExplainers.map((e) => `local-${e.id}`),
-    ]);
-    if (seenExplainerKeysRef.current === null) {
-      seenExplainerKeysRef.current = currentKeys;
-      return;
-    }
-    const added = [...currentKeys].filter(
-      (key) => !seenExplainerKeysRef.current.has(key),
-    );
-    seenExplainerKeysRef.current = currentKeys;
-    if (added.length > 0) {
-      const key = added[added.length - 1];
-      setExplainerFilter(key.startsWith("global-") ? "global" : "local");
-      setFocusExplainerKey(key);
-    }
-  }, [globalExplainers, localExplainers]);
-
   // Scroll the just added explainer card into view once it renders under the
-  // (now switched) scope toggle.
+  // (now switched) scope toggle. The card to focus is chosen in
+  // fetchOperations, which only fires for explainers added after the first
+  // fetch (so entering the tab does not auto-scroll).
   useEffect(() => {
     if (!focusExplainerKey || activeExplainers.length === 0) return;
     const el = explainerCardRefs.current[focusExplainerKey];
@@ -600,6 +620,9 @@ export default function RunResults({
                     <ExplainersCard
                       explainer={explainer}
                       scope={explainerFilter}
+                      displayName={
+                        explainerDisplayNames[explainer.explainer_name]
+                      }
                       onDelete={handleExplainerDeleted}
                       compact
                     />
