@@ -27,6 +27,9 @@ export default function ManualInputForm({
   onRun = null,
   isPreviewing = false,
   isSaving = false,
+  showTarget = true,
+  title,
+  subtitle,
 }) {
   const theme = useTheme();
   const [rows, setRows] = useState(createInitialRows);
@@ -142,10 +145,10 @@ export default function ManualInputForm({
       onSubmit={handleSubmit}
     >
       <Typography variant="h6" mb={4} fontWeight={600}>
-        {t("prediction:label.manualInputData")}
+        {title ?? t("prediction:label.manualInputData")}
       </Typography>
       <Typography variant="body2" mb={6} sx={{ color: textSecondary }}>
-        {t("prediction:label.provideManualInput")}
+        {subtitle ?? t("prediction:label.provideManualInput")}
       </Typography>
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2 }}>
@@ -246,16 +249,18 @@ export default function ManualInputForm({
           <table style={{ borderCollapse: "collapse", tableLayout: "auto" }}>
             <thead>
               <tr>
-                <th
-                  style={{
-                    ...thStyle,
-                    color: theme.palette.primary.main,
-                    minWidth: 120,
-                    textAlign: "left",
-                  }}
-                >
-                  {targetLabel ?? ""}
-                </th>
+                {showTarget && (
+                  <th
+                    style={{
+                      ...thStyle,
+                      color: theme.palette.primary.main,
+                      minWidth: 120,
+                      textAlign: "left",
+                    }}
+                  >
+                    {targetLabel ?? ""}
+                  </th>
+                )}
                 <th
                   style={{
                     ...thStyle,
@@ -277,26 +282,28 @@ export default function ManualInputForm({
                   : undefined;
                 return (
                   <tr key={rowIndex}>
-                    <td
-                      style={{
-                        ...tdStyle,
-                        fontWeight: 500,
-                        color: theme.palette.primary.main,
-                        minWidth: 120,
-                        borderBottom:
-                          rowIndex === rows.length - 1
-                            ? "none"
-                            : `1px solid ${divider}`,
-                      }}
-                    >
-                      {predVal != null
-                        ? typeof predVal === "number"
-                          ? targetDecimals !== null
-                            ? predVal.toFixed(targetDecimals)
-                            : String(parseFloat(predVal.toPrecision(12)))
-                          : String(predVal)
-                        : ""}
-                    </td>
+                    {showTarget && (
+                      <td
+                        style={{
+                          ...tdStyle,
+                          fontWeight: 500,
+                          color: theme.palette.primary.main,
+                          minWidth: 120,
+                          borderBottom:
+                            rowIndex === rows.length - 1
+                              ? "none"
+                              : `1px solid ${divider}`,
+                        }}
+                      >
+                        {predVal != null
+                          ? typeof predVal === "number"
+                            ? targetDecimals !== null
+                              ? predVal.toFixed(targetDecimals)
+                              : String(parseFloat(predVal.toPrecision(12)))
+                            : String(predVal)
+                          : ""}
+                      </td>
+                    )}
                     <td
                       style={{
                         ...tdStyle,
