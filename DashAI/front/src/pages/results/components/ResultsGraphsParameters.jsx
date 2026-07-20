@@ -74,7 +74,17 @@ function ResultsGraphsParameters({
         onClose={handleClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{ paper: { sx: { mt: 1, width: 280 } } }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              width: 280,
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+            },
+          },
+        }}
       >
         <Box sx={{ p: 1.5 }}>
           <TextField
