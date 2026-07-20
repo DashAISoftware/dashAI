@@ -58,10 +58,13 @@ class NumericExpansion(FeatureEngineeringConverter, BaseConverter):
     ``sqrt``) become ``NaN`` in the corresponding output.
 
     The original columns are left untouched. ``square`` preserves the input
-    column's type (``Integer`` stays ``Integer``, ``Float`` stays ``Float``),
-    since squaring is exact for both. ``log1p`` and ``sqrt`` always produce a
-    ``Float`` column, since they can yield non-integer or ``NaN`` results
-    even from integer input.
+    column's type (``Integer`` stays ``Integer``, ``Float`` stays ``Float``)
+    when the source column has no missing values, since squaring is exact
+    for both. ``log1p`` and ``sqrt`` always produce a ``Float`` column, since
+    they can yield non-integer or ``NaN`` results even from integer input,
+    and ``square`` also falls back to ``Float`` when the source ``Integer``
+    column has missing values (since a missing value has no exact integer
+    representation).
     """
 
     SCHEMA = NumericExpansionSchema
@@ -163,7 +166,12 @@ class NumericExpansion(FeatureEngineeringConverter, BaseConverter):
             if isinstance(col_type, (Float, Integer)):
                 self._target_columns.append(col_name)
                 new_col_name = f"{self.operation}_{col_name}"
-                if self.operation == "square" and isinstance(col_type, Integer):
+                has_missing_values = x.arrow_table[col_name].null_count > 0
+                if (
+                    self.operation == "square"
+                    and isinstance(col_type, Integer)
+                    and not has_missing_values
+                ):
                     self._output_types[new_col_name] = Integer(arrow_type=pa.int64())
                 else:
                     self._output_types[new_col_name] = Float(arrow_type=pa.float64())

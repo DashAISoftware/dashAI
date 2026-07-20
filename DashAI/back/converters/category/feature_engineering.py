@@ -6,12 +6,14 @@ from DashAI.back.static.icons import Icon
 
 
 class FeatureEngineeringConverter(BaseConverter):
-    """Base class for converters that derive new numeric features from existing columns.
+    """Base class for converters that derive new features from existing columns.
 
     Feature engineering converters compute new columns out of one or more
     existing columns instead of modifying them in place. Examples include
-    ColumnArithmetic (arithmetic combinations of two columns) and
-    NumericExpansion (log1p, square, and square-root expansions of a column).
+    ColumnArithmetic (arithmetic combinations of two numeric columns),
+    NumericExpansion (log1p, square, and square-root expansions of a numeric
+    column), and ColumnConcat (string concatenation of two text/categorical
+    columns).
 
     Use these converters to craft new signals for models when the raw
     columns alone are not expressive enough.
