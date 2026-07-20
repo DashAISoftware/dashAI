@@ -78,3 +78,4 @@
 
 - The old `notebooks/`, `images/`, `explanations/` directories listed in the
   runtime data layout are no longer actively used by the RAG module.
+  

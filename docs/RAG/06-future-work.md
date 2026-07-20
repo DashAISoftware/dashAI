@@ -68,3 +68,4 @@ Currently only text-based documents are supported (txt, pdf, md, rst, tex, csv).
 - **Datasets** — structured tabular data as found in the rest of DashAI (e.g., CSV datasets used for ML training).
 - **Images** — both extracting text from images (OCR) and, more ambitiously, retrieving chunks based on visual similarity.
 - **Audio / video** — transcription and retrieval from spoken content.
+-
