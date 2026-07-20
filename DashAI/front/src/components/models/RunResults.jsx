@@ -184,6 +184,32 @@ export default function RunResults({
     },
   };
 
+  // Same pill-bar language and typography as pillTabsSx (same font/size as
+  // the Explainability/Predictions tabs above) — only the selected-state
+  // fill is toned down so it still reads as a secondary, in-page filter.
+  const pillToggleSx = {
+    minHeight: 40,
+    bgcolor: theme.palette.ui.box,
+    borderRadius: 1,
+    "& .MuiToggleButtonGroup-grouped": {
+      minHeight: 40,
+      fontSize: "0.85rem",
+      fontWeight: 400,
+      textTransform: "none",
+      border: "1px solid transparent",
+      borderRadius: "4px !important",
+      color: "text.secondary",
+      "&:hover": { bgcolor: theme.palette.action.hover },
+      "&.Mui-selected": {
+        bgcolor: "background.paper",
+        color: "primary.main",
+        fontWeight: 600,
+        borderBottom: `2px solid ${theme.palette.primary.main}`,
+        "&:hover": { bgcolor: "background.paper" },
+      },
+    },
+  };
+
   const runId = run.id;
   const fetchOperations = useCallback(async () => {
     if (!runId) return;
@@ -693,37 +719,13 @@ export default function RunResults({
                 onChange={(e, newValue) => {
                   if (newValue !== null) setPredictionFilter(newValue);
                 }}
-                size="small"
+                sx={pillToggleSx}
               >
-                <ToggleButton value="dataset" sx={{ gap: 1 }}>
+                <ToggleButton value="dataset" sx={{ px: 1.5 }}>
                   {t("common:dataset")}
-                  <Box
-                    component="span"
-                    sx={{
-                      bgcolor: "action.selected",
-                      borderRadius: 1,
-                      px: 1,
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {predictions.filter((p) => p.dataset_id).length}
-                  </Box>
                 </ToggleButton>
-                <ToggleButton value="manual" sx={{ gap: 1 }}>
+                <ToggleButton value="manual" sx={{ px: 1.5 }}>
                   {t("models:label.manual")}
-                  <Box
-                    component="span"
-                    sx={{
-                      bgcolor: "action.selected",
-                      borderRadius: 1,
-                      px: 1,
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {predictions.filter((p) => !p.dataset_id).length}
-                  </Box>
                 </ToggleButton>
               </ToggleButtonGroup>
 
