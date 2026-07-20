@@ -116,8 +116,8 @@ export default function RunResults({
   const [localExpanded, setLocalExpanded] = useState(true);
   const [datasetExpanded, setDatasetExpanded] = useState(true);
   const [manualExpanded, setManualExpanded] = useState(true);
-  // "all" | "dataset" | "manual" — which prediction section(s) are shown
-  const [predictionFilter, setPredictionFilter] = useState("all");
+  // "dataset" | "manual" — which prediction section is shown
+  const [predictionFilter, setPredictionFilter] = useState("dataset");
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
   const datasetRunRef = useRef(null);
   const [datasetRunState, setDatasetRunState] = useState({
@@ -695,21 +695,6 @@ export default function RunResults({
                 }}
                 size="small"
               >
-                <ToggleButton value="all" sx={{ gap: 1 }}>
-                  {t("common:all")}
-                  <Box
-                    component="span"
-                    sx={{
-                      bgcolor: "action.selected",
-                      borderRadius: 1,
-                      px: 1,
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {predictions.length}
-                  </Box>
-                </ToggleButton>
                 <ToggleButton value="dataset" sx={{ gap: 1 }}>
                   {t("common:dataset")}
                   <Box
