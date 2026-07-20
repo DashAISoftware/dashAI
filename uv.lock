@@ -1444,6 +1444,7 @@ dependencies = [
     { name = "imblearn" },
     { name = "joblib" },
     { name = "kink" },
+    { name = "lightgbm" },
     { name = "llvmlite" },
     { name = "numba", version = "0.47.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "numba", version = "0.66.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or platform_machine != 'x86_64' or sys_platform != 'darwin' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
@@ -1487,6 +1488,8 @@ dependencies = [
     { name = "transformers" },
     { name = "typer" },
     { name = "wordcloud" },
+    { name = "xgboost", version = "3.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "xgboost", version = "3.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "xlrd" },
 ]
 
@@ -1539,6 +1542,7 @@ requires-dist = [
     { name = "imblearn" },
     { name = "joblib" },
     { name = "kink" },
+    { name = "lightgbm" },
     { name = "llama-cpp-python", marker = "extra == 'cpu'", index = "https://abetlen.github.io/llama-cpp-python/whl/cpu", conflict = { package = "dashai", extra = "cpu" } },
     { name = "llama-cpp-python", marker = "extra == 'cuda'" },
     { name = "llvmlite" },
@@ -1577,6 +1581,7 @@ requires-dist = [
     { name = "transformers" },
     { name = "typer" },
     { name = "wordcloud" },
+    { name = "xgboost" },
     { name = "xlrd" },
 ]
 provides-extras = ["cpu", "cuda"]
@@ -3059,6 +3064,28 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/78/f0bb41a6f2bbd3c77bdcc66980dc0d69ca1192a0ecec25377afcc5e6db73/librt-0.12.0-cp314-cp314t-win32.whl", hash = "sha256:8d73191883553ee0739741544bf3b00aba2a1224e45d9580b30cbc29e21dc03b", size = 97752, upload-time = "2026-06-30T16:14:06.555Z" },
     { url = "https://files.pythonhosted.org/packages/92/24/e279c27972ab051a070237cfa45728fa51670c3f22f1a4d391711e9f4c31/librt-0.12.0-cp314-cp314t-win_amd64.whl", hash = "sha256:e1cbb037324e759f0afa270229731ff0047772667f3cb38ef5df2cabf0175ede", size = 119562, upload-time = "2026-06-30T16:14:07.908Z" },
     { url = "https://files.pythonhosted.org/packages/06/e6/42a475bfca683b0cd5366f6dd06580062b7e567bb8534d225c877c2f14f3/librt-0.12.0-cp314-cp314t-win_arm64.whl", hash = "sha256:bca1472acbd473eff61059b4409f802c5a1bcb4cd0344d06f939df9c4c125d40", size = 104282, upload-time = "2026-06-30T16:14:09.29Z" },
+]
+
+[[package]]
+name = "lightgbm"
+version = "4.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "narwhals" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.11' and platform_machine != 'x86_64') or (python_full_version == '3.11.*' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.11' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version != '3.11.*' and platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.11' and sys_platform != 'darwin') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/63/8e/4db5e29290d7e619c307fdb8dab0a0514090af2ce3ec483050e024ec6126/lightgbm-4.7.0.tar.gz", hash = "sha256:f8e20f682c9aabd000bcf4a7ed8aa6f473c1adfecccae34ec24e823d156f4af0", size = 1792896, upload-time = "2026-07-18T21:00:56.139Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cd/05/7213965863cba1ed0150ad045bceed6276a1afaaaedbaeff4699ec4f0ccb/lightgbm-4.7.0-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:dfc1cfe8e760387be1e7ba7a214688be21fdff96e4ed9749188f83e1877c2477", size = 1877851, upload-time = "2026-07-18T21:00:35.225Z" },
+    { url = "https://files.pythonhosted.org/packages/b2/86/f4fe714f2e0bf3941705a20d7f6849dc476276d71236e82ea6b0d6539b86/lightgbm-4.7.0-py3-none-macosx_12_0_arm64.whl", hash = "sha256:129535462686f274df179133643118c5c5c5667167fe6c3a28d955f0b3c8e868", size = 1498914, upload-time = "2026-07-18T21:00:36.549Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/a3/b29580948b92e8c2f84dea70118ac702ff067dc52ec4ffb5d73c953536a5/lightgbm-4.7.0-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d4529acec5c6fefe4768302a529707d0ead90f6a6f42df694b856212e09695b8", size = 3349492, upload-time = "2026-07-18T21:00:37.943Z" },
+    { url = "https://files.pythonhosted.org/packages/15/eb/837ea3b40cc36e22eeebb9785c01e42b2c255d033eea1d2d9ee8e2540e55/lightgbm-4.7.0-py3-none-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d23e922acd891e77212e4d0fbcee9ba973c96dee479491341d05ba595357ebb7", size = 3476028, upload-time = "2026-07-18T21:00:39.331Z" },
+    { url = "https://files.pythonhosted.org/packages/d5/0b/c5c17d862b12ce292f24cd85d40f2f8f8981668fbdbd43fdc2625eccbc79/lightgbm-4.7.0-py3-none-win_amd64.whl", hash = "sha256:f42d1e5b32b6f170e606d7c689c6165671da98d7bf37f1addec2623efc8740c9", size = 1360833, upload-time = "2026-07-18T21:00:40.865Z" },
 ]
 
 [[package]]
@@ -8920,6 +8947,85 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/48/9b/305ee6a2dac75fc9c28105db061408df6ecbf0f7a1de37636e8e4ea47ca7/xarray_einstats-0.10.0.tar.gz", hash = "sha256:d432a363fc8f09baad164f9826dc711551c684b9abd8098c1b961d18663a627d", size = 33449, upload-time = "2026-02-19T18:13:55.245Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/19/d4/225027a913621a879b429a043674aa35220e6ce67785acad4f7bd0c4ff33/xarray_einstats-0.10.0-py3-none-any.whl", hash = "sha256:fa3169b46cee29092db820d8bbc203148bada4fc970ee75e62cbf3dd7c5a8945", size = 39099, upload-time = "2026-02-19T18:13:53.174Z" },
+]
+
+[[package]]
+name = "xgboost"
+version = "3.2.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.11.*' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version < '3.11' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+]
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "nvidia-nccl-cu12", marker = "(python_full_version < '3.12' and sys_platform == 'linux') or (python_full_version >= '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'linux' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.17.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/91/bb/1eb0242409d22db725d7a88088e6cfd6556829fb0736f9ff69aa9f1e9455/xgboost-3.2.0.tar.gz", hash = "sha256:99b0e9a2a64896cdaf509c5e46372d336c692406646d20f2af505003c0c5d70d", size = 1263936, upload-time = "2026-02-10T11:03:05.542Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2d/49/6e4cdd877c24adf56cb3586bc96d93d4dcd780b5ea1efb32e1ee0de08bae/xgboost-3.2.0-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:2f661966d3e322536d9c448090a870fcba1e32ee5760c10b7c46bac7a342079a", size = 2507014, upload-time = "2026-02-10T10:50:57.44Z" },
+    { url = "https://files.pythonhosted.org/packages/93/f1/c09ef1add609453aa3ba5bafcd0d1c1a805c1263c0b60138ec968f8ec296/xgboost-3.2.0-py3-none-macosx_12_0_arm64.whl", hash = "sha256:eabbd40d474b8dbf6cb3536325f9150b9e6f0db32d18de9914fb3227d0bef5b7", size = 2328527, upload-time = "2026-02-10T10:51:17.502Z" },
+    { url = "https://files.pythonhosted.org/packages/96/9f/d9914a7b8df842832850b1a18e5f47aaa071c217cdd1da2ae9deb291018b/xgboost-3.2.0-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:852eabc6d3b3702a59bf78dbfdcd1cb9c4d3a3b6e5ed1f8781d8b9512354fdd2", size = 131100954, upload-time = "2026-02-10T11:02:42.704Z" },
+    { url = "https://files.pythonhosted.org/packages/79/98/679de17c2caa4fd3b0b4386ecf7377301702cb0afb22930a07c142fcb1d8/xgboost-3.2.0-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:99b4a6bbcb47212fec5cf5fbe12347215f073c08967431b0122cfbd1ee70312c", size = 131748579, upload-time = "2026-02-10T10:54:40.424Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/3d/1661dd114a914a67e3f7ab66fa1382e7599c2a8c340f314ad30a3e2b4d08/xgboost-3.2.0-py3-none-win_amd64.whl", hash = "sha256:0d169736fd836fc13646c7ab787167b3a8110351c2c6bc770c755ee1618f0442", size = 101681668, upload-time = "2026-02-10T10:59:31.202Z" },
+]
+
+[[package]]
+name = "xgboost"
+version = "3.3.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine != 'x86_64' and sys_platform == 'darwin' and extra == 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version >= '3.15' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.14.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.13.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "python_full_version == '3.12.*' and platform_machine == 'x86_64' and sys_platform == 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda'",
+    "(python_full_version >= '3.15' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version >= '3.15' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.14.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.14.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.13.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.13.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+    "(python_full_version == '3.12.*' and platform_machine != 'x86_64' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda') or (python_full_version == '3.12.*' and sys_platform != 'darwin' and extra != 'extra-6-dashai-cpu' and extra != 'extra-6-dashai-cuda')",
+]
+dependencies = [
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine != 'x86_64') or (python_full_version < '3.12' and platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (python_full_version >= '3.12' and sys_platform != 'darwin') or (platform_machine == 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "numpy", version = "2.5.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (platform_machine != 'x86_64' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'darwin' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "nvidia-nccl-cu12", marker = "(python_full_version >= '3.12' and sys_platform == 'linux') or (python_full_version < '3.12' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda') or (sys_platform != 'linux' and extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+    { name = "scipy", version = "1.18.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fd/41/846d4de2b8fc694073fd3ac5052caf68caa1ea11cb7fa32d7ad9c049b232/xgboost-3.3.0.tar.gz", hash = "sha256:58bcb8a4cace648cdab7b94fa4f16d2c9ff26d90dd4d26907168106fa06d8746", size = 1224702, upload-time = "2026-06-17T21:26:50.846Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fc/72/3b68983c0215ef65d48e9eeb1f168c3c6e3d62a61ece605de3209c79cae1/xgboost-3.3.0-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:07688a377046b8640897b62421150bf73c6cc7101823474ec6ad08b93290f587", size = 2553505, upload-time = "2026-06-17T21:21:32.146Z" },
+    { url = "https://files.pythonhosted.org/packages/c9/62/b49e756822b29909d0c95ed334662dc6c7c81a99ec6bc10dc18e69f3d6e7/xgboost-3.3.0-py3-none-macosx_12_0_arm64.whl", hash = "sha256:af7cea10f418b7c251ddc8da440f57bdab2990b5fc9f74a35a92b0f150ea287d", size = 2376040, upload-time = "2026-06-17T21:22:01.981Z" },
+    { url = "https://files.pythonhosted.org/packages/47/3a/a0adcd1ee28f525bd5c9dc3ebe78a7599bf97c22866d6449f967b829e338/xgboost-3.3.0-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:624a83aeb1e7ba081719795db179f4ce6fff12e79de05cd9baf15ee48fd22f0e", size = 98180629, upload-time = "2026-06-17T21:24:00.804Z" },
+    { url = "https://files.pythonhosted.org/packages/47/1f/8b3e578cfd8e3bcdb4374e2bbe0b40b4e5320accb5cbdcf535ecc512eb5c/xgboost-3.3.0-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:f59edaf28eccd1c519788607c72ed907ee6cedfa933d706620bc1612d24b354e", size = 98716607, upload-time = "2026-06-17T21:26:21.058Z" },
+    { url = "https://files.pythonhosted.org/packages/07/6b/087fd5d28fdbb90d385c50ee9308a820241b82feebdf42e72e19a48e4b32/xgboost-3.3.0-py3-none-win_amd64.whl", hash = "sha256:b06057f6a018fc04e6b3e0c15568ca636b8151a5b5f333478e500fcaf4fc7594", size = 69522696, upload-time = "2026-06-17T21:20:53.707Z" },
 ]
 
 [[package]]
