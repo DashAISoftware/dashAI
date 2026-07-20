@@ -112,8 +112,8 @@ export default function RunResults({
   const [localExpanded, setLocalExpanded] = useState(true);
   const [datasetExpanded, setDatasetExpanded] = useState(true);
   const [manualExpanded, setManualExpanded] = useState(true);
-  // "all" | "dataset" | "manual" — which prediction section(s) are shown
-  const [predictionFilter, setPredictionFilter] = useState("all");
+  // "dataset" | "manual" — which prediction section is shown
+  const [predictionFilter, setPredictionFilter] = useState("dataset");
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
   const datasetRunRef = useRef(null);
   const [datasetRunState, setDatasetRunState] = useState({
@@ -176,6 +176,32 @@ export default function RunResults({
           background:
             "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)",
         },
+      },
+    },
+  };
+
+  // Same pill-bar language and typography as pillTabsSx (same font/size as
+  // the Explainability/Predictions tabs above) — only the selected-state
+  // fill is toned down so it still reads as a secondary, in-page filter.
+  const pillToggleSx = {
+    minHeight: 40,
+    bgcolor: theme.palette.ui.box,
+    borderRadius: 1,
+    "& .MuiToggleButtonGroup-grouped": {
+      minHeight: 40,
+      fontSize: "0.85rem",
+      fontWeight: 400,
+      textTransform: "none",
+      border: "1px solid transparent",
+      borderRadius: "4px !important",
+      color: "text.secondary",
+      "&:hover": { bgcolor: theme.palette.action.hover },
+      "&.Mui-selected": {
+        bgcolor: "background.paper",
+        color: "primary.main",
+        fontWeight: 600,
+        borderBottom: `2px solid ${theme.palette.primary.main}`,
+        "&:hover": { bgcolor: "background.paper" },
       },
     },
   };
@@ -339,7 +365,7 @@ export default function RunResults({
                 pt: 1,
               }}
             >
-              {t("models:label.characteristics")}
+              {t("models:label.metrics")}
             </Typography>
             <Tabs
               value={[0, 3].includes(activeTab) ? activeTab : false}
@@ -640,52 +666,13 @@ export default function RunResults({
                 onChange={(e, newValue) => {
                   if (newValue !== null) setPredictionFilter(newValue);
                 }}
-                size="small"
+                sx={pillToggleSx}
               >
-                <ToggleButton value="all" sx={{ gap: 1 }}>
-                  {t("common:all")}
-                  <Box
-                    component="span"
-                    sx={{
-                      bgcolor: "action.selected",
-                      borderRadius: 1,
-                      px: 1,
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {predictions.length}
-                  </Box>
-                </ToggleButton>
-                <ToggleButton value="dataset" sx={{ gap: 1 }}>
+                <ToggleButton value="dataset" sx={{ px: 1.5 }}>
                   {t("common:dataset")}
-                  <Box
-                    component="span"
-                    sx={{
-                      bgcolor: "action.selected",
-                      borderRadius: 1,
-                      px: 1,
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {predictions.filter((p) => p.dataset_id).length}
-                  </Box>
                 </ToggleButton>
-                <ToggleButton value="manual" sx={{ gap: 1 }}>
+                <ToggleButton value="manual" sx={{ px: 1.5 }}>
                   {t("models:label.manual")}
-                  <Box
-                    component="span"
-                    sx={{
-                      bgcolor: "action.selected",
-                      borderRadius: 1,
-                      px: 1,
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {predictions.filter((p) => !p.dataset_id).length}
-                  </Box>
                 </ToggleButton>
               </ToggleButtonGroup>
 

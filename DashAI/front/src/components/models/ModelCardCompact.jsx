@@ -363,7 +363,7 @@ function ModelCardCompact({
             textTransform: "uppercase",
           }}
         >
-          {t("models:label.characteristics")} | {t("models:label.operations")}
+          {t("models:label.metrics")} | {t("models:label.operations")}
         </Typography>
         <ChevronRight
           className="card-chevron-icon"
