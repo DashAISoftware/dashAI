@@ -25,6 +25,9 @@ function ResultsGraphs({
   const [chartData, setChartData] = useState({});
   // { MetricName: { maximize: bool } } — fetched once on mount
   const [metricsMetadata, setMetricsMetadata] = useState({});
+  // Run ids the user deselected from the legend — excluded from the charts
+  // but still listed (dimmed) so they can be toggled back on.
+  const [hiddenRunIds, setHiddenRunIds] = useState(() => new Set());
 
   // Controlled or uncontrolled split
   const selectedSplit = splitProp ?? internalSplit;
@@ -102,6 +105,7 @@ function ResultsGraphs({
       // share an axis. Every run keeps the same color across all panels.
       const { panels, legend, yaxis } = smallMultiplesMaking(
         finishedRuns,
+        hiddenRunIds,
         selectedMetrics,
         metricsKey,
         theme,
@@ -111,6 +115,7 @@ function ResultsGraphs({
       // Heatmap is a single all-runs trace, unchanged.
       const heatmap = heatmapMaking(
         finishedRuns,
+        hiddenRunIds,
         selectedMetrics,
         metricsKey,
         theme,
@@ -127,6 +132,7 @@ function ResultsGraphs({
     }
   }, [
     finishedRuns,
+    hiddenRunIds,
     selectedSplit,
     selectedMetrics,
     theme,
@@ -134,6 +140,16 @@ function ResultsGraphs({
     enqueueSnackbar,
     t,
   ]);
+
+  // Reset deselected runs whenever the underlying run set changes (e.g. a
+  // run is deleted or a new one finishes), so a stale id can't stay hidden.
+  useEffect(() => {
+    const validIds = new Set(finishedRuns.map((r) => r.id));
+    setHiddenRunIds((prev) => {
+      const next = new Set([...prev].filter((id) => validIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [finishedRuns]);
 
   const handleToggleMetric = (metric) => {
     const canonicalOrder = availableMetrics[selectedSplit] ?? [];
@@ -148,6 +164,18 @@ function ResultsGraphs({
   const handleSelectAll = () =>
     setSelectedMetrics(availableMetrics[selectedSplit] ?? []);
   const handleClearAll = () => setSelectedMetrics([]);
+
+  const handleToggleRun = (runId) => {
+    setHiddenRunIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(runId)) {
+        next.delete(runId);
+      } else {
+        next.add(runId);
+      }
+      return next;
+    });
+  };
 
   if (finishedRuns.length === 0) {
     return (
@@ -168,6 +196,8 @@ function ResultsGraphs({
       handleSelectAll={handleSelectAll}
       handleClearAll={handleClearAll}
       chartData={chartData}
+      onToggleRun={handleToggleRun}
+      sessionId={finishedRuns[0]?.model_session_id}
     />
   );
 }

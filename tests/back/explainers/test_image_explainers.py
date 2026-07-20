@@ -117,9 +117,12 @@ def test_grad_cam(images, method):
     explanation = explainer.explain_instance(_FakeImageDataset(images))
     _assert_image_explanation(explanation, len(images))
 
-    artifacts = explainer.plot(explanation)
-    assert len(artifacts) == 2 * len(images)
-    assert [a.type for a in artifacts[:2]] == ["plotly", "text"]
+    plot = explainer.plot(explanation)
+    assert len(plot) == 1
+    groups = plot[0].groups
+    assert len(groups) == len(images)
+    for group in groups:
+        assert [a.type for a in group.artifacts] == ["plotly", "text"]
 
 
 def test_grad_cam_rejects_non_convolutional_models(images):
@@ -138,9 +141,12 @@ def test_occlusion_saliency(images):
     explanation = explainer.explain_instance(_FakeImageDataset(images))
     _assert_image_explanation(explanation, len(images))
 
-    artifacts = explainer.plot(explanation)
-    assert len(artifacts) == 2 * len(images)
-    assert [a.type for a in artifacts[:2]] == ["plotly", "text"]
+    plot = explainer.plot(explanation)
+    assert len(plot) == 1
+    groups = plot[0].groups
+    assert len(groups) == len(images)
+    for group in groups:
+        assert [a.type for a in group.artifacts] == ["plotly", "text"]
 
 
 def test_occlusion_saliency_works_without_conv_layers(images):

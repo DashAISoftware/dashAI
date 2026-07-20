@@ -147,6 +147,7 @@ def test_normalize_legacy_plotly_strings():
             "payload": '{"data": []}',
             "title": None,
             "role": "explanation",
+            "index": 0,
         }
     ]
 
@@ -159,14 +160,26 @@ def test_normalize_wraps_single_values():
 def test_normalize_artifact_instances():
     artifacts = normalize_artifacts([TextArtifact(payload="x", title="t")])
     assert artifacts == [
-        {"type": "text", "payload": "x", "title": "t", "role": "explanation"}
+        {
+            "type": "text",
+            "payload": "x",
+            "title": "t",
+            "role": "explanation",
+            "index": 0,
+        }
     ]
 
 
 def test_normalize_passes_artifact_dicts_through():
     item = {"type": "text", "payload": "x"}
     assert normalize_artifacts([item]) == [
-        {"type": "text", "payload": "x", "title": None, "role": "explanation"}
+        {
+            "type": "text",
+            "payload": "x",
+            "title": None,
+            "role": "explanation",
+            "index": 0,
+        }
     ]
 
 
@@ -179,6 +192,7 @@ def test_normalize_legacy_explorer_plotly():
             "payload": '{"data": []}',
             "title": None,
             "role": "explanation",
+            "index": 0,
         }
     ]
 
@@ -210,6 +224,7 @@ def test_normalize_unrenderable_falls_back_to_text():
         "payload": "42",
         "title": None,
         "role": "explanation",
+        "index": 0,
     }
 
 

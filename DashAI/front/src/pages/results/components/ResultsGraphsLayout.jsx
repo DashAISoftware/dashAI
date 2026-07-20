@@ -12,6 +12,8 @@ function ResultsGraphsLayout({
   handleSelectAll,
   handleClearAll,
   chartData,
+  onToggleRun,
+  sessionId,
 }) {
   return (
     <Box
@@ -22,17 +24,26 @@ function ResultsGraphsLayout({
       height="100%"
     >
       {/* Metric filter toolbar */}
-      <ResultsGraphsParameters
-        currentMetrics={currentMetrics}
-        selectedMetrics={selectedMetrics}
-        handleToggleMetric={handleToggleMetric}
-        handleSelectAll={handleSelectAll}
-        handleClearAll={handleClearAll}
-      />
+      <Box sx={{ display: "flex", justifyContent: "flex-end", px: 4, py: 3 }}>
+        <ResultsGraphsParameters
+          currentMetrics={currentMetrics}
+          selectedMetrics={selectedMetrics}
+          handleToggleMetric={handleToggleMetric}
+          handleSelectAll={handleSelectAll}
+          handleClearAll={handleClearAll}
+        />
+      </Box>
 
       {/* Plotly chart area — bar panels + heatmap in one grid */}
       <Box display="flex" flex={1} width="100%">
-        <ResultsGraphsPlot chartData={chartData} />
+        {/* Remounts (resetting the drag-order state cleanly) whenever the
+            session changes instead of reusing the instance across sessions */}
+        <ResultsGraphsPlot
+          key={sessionId}
+          chartData={chartData}
+          onToggleRun={onToggleRun}
+          sessionId={sessionId}
+        />
       </Box>
     </Box>
   );
@@ -45,6 +56,8 @@ ResultsGraphsLayout.propTypes = {
   handleSelectAll: PropTypes.func.isRequired,
   handleClearAll: PropTypes.func.isRequired,
   chartData: PropTypes.object.isRequired,
+  onToggleRun: PropTypes.func.isRequired,
+  sessionId: PropTypes.number,
 };
 
 export default ResultsGraphsLayout;

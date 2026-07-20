@@ -19,7 +19,7 @@ from DashAI.back.api.api_v1.endpoints.explainers import _apply_overrides
 def test_apply_overrides_replaces_plotly_payload():
     """An override at a plotly artifact's index replaces its payload."""
     artifacts = [
-        {"type": "plotly", "payload": "original", "title": "Plot 0"},
+        {"type": "plotly", "payload": "original", "title": "Plot 0", "index": 0},
     ]
     figure = {"data": [], "layout": {"title": "edited"}}
 
@@ -32,7 +32,7 @@ def test_apply_overrides_replaces_plotly_payload():
 def test_apply_overrides_leaves_non_plotly_artifact_unchanged():
     """An override targeting a non-plotly artifact index is ignored."""
     artifacts = [
-        {"type": "image", "payload": "original-image", "title": "Image 0"},
+        {"type": "image", "payload": "original-image", "title": "Image 0", "index": 0},
     ]
 
     result = _apply_overrides(artifacts, {"0": {"data": [], "layout": {}}})
@@ -43,7 +43,7 @@ def test_apply_overrides_leaves_non_plotly_artifact_unchanged():
 def test_apply_overrides_ignores_out_of_range_index():
     """An override with an out-of-range index does not raise or mutate."""
     artifacts = [
-        {"type": "plotly", "payload": "original", "title": "Plot 0"},
+        {"type": "plotly", "payload": "original", "title": "Plot 0", "index": 0},
     ]
 
     result = _apply_overrides(artifacts, {"5": {"data": []}})
