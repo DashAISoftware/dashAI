@@ -1,9 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import { useTranslation } from "react-i18next";
+import { DragIndicator } from "@mui/icons-material";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+const PANEL_ORDER_STORAGE_KEY = "dashai-results-panel-order";
+const HEATMAP_ID = "__heatmap__";
+// Matches the run cards grid's minmax floor (SessionVisualization.jsx) so
+// both sections switch between 1 and 2 columns at the same container width
+// instead of disagreeing in a narrow "dead zone".
+const PANEL_MIN_WIDTH = 340;
+const GRID_GAP = 24; // gap: 3 → 3 * 8px
 
 function EmptyState({ message }) {
   return (
@@ -25,7 +48,65 @@ function EmptyState({ message }) {
   );
 }
 
-function ResultsGraphsPlot({ chartData }) {
+/**
+ * One draggable card (a metric panel or the heatmap) — the drag handle is a
+ * small grip icon next to the title, so dragging never conflicts with
+ * hovering/clicking the plot itself (Plotly needs mouse events for its own
+ * hover tooltips).
+ */
+function SortableCard({ id, title, gridColumn, children }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    gridColumn,
+  };
+
+  return (
+    <Box
+      ref={setNodeRef}
+      style={style}
+      sx={{
+        border: 1,
+        borderColor: "divider",
+        borderRadius: 1,
+        p: 2,
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, px: 1 }}>
+        <Box
+          {...attributes}
+          {...listeners}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            color: "text.disabled",
+            cursor: "grab",
+            "&:active": { cursor: "grabbing" },
+            "&:hover": { color: "text.secondary" },
+          }}
+        >
+          <DragIndicator fontSize="small" />
+        </Box>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+          {title}
+        </Typography>
+      </Box>
+      {children}
+    </Box>
+  );
+}
+
+function ResultsGraphsPlot({ chartData, onToggleRun, sessionId }) {
   const { t } = useTranslation(["models"]);
   const theme = useTheme();
   const bgColor = theme.palette.background.paper;
@@ -37,11 +118,99 @@ function ResultsGraphsPlot({ chartData }) {
   const yaxis = chartData.yaxis;
   const heatmapData = chartData.heatmap ?? [];
 
+  // Scoped per session — otherwise dragging a card in one session's Graphs
+  // would silently reorder every other session's Graphs too, since it's the
+  // same metric/heatmap ids everywhere. The parent remounts this component
+  // (via `key={sessionId}`) whenever the session changes, so this only needs
+  // to be read once per mount.
+  const storageKey = sessionId
+    ? `${PANEL_ORDER_STORAGE_KEY}-${sessionId}`
+    : PANEL_ORDER_STORAGE_KEY;
+
+  const [order, setOrder] = useState(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Every draggable card — one per metric panel, plus the heatmap.
+  const cardIds = panels
+    .map((p) => p.metric)
+    .concat(heatmapData.length > 0 ? [HEATMAP_ID] : []);
+
+  // Keep the stored order in sync with whatever cards are actually being
+  // shown right now — known cards keep their saved position, newly
+  // selected ones (or ones seen for the first time) are appended at the end.
+  const cardIdsKey = cardIds.join("|");
+  useEffect(() => {
+    // Skip while chart data is still loading (cards momentarily empty) —
+    // reconciling against an empty list would wipe the saved order before
+    // the real cards ever arrive.
+    if (cardIds.length === 0) return;
+    setOrder((prev) => {
+      const known = prev.filter((id) => cardIds.includes(id));
+      const missing = cardIds.filter((id) => !known.includes(id));
+      const next = [...known, ...missing];
+      const unchanged =
+        next.length === prev.length && next.every((id, i) => id === prev[i]);
+      return unchanged ? prev : next;
+    });
+  }, [cardIdsKey]);
+
+  useEffect(() => {
+    if (order.length > 0) {
+      localStorage.setItem(storageKey, JSON.stringify(order));
+    }
+  }, [order, storageKey]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    setOrder((prev) => {
+      const oldIndex = prev.indexOf(active.id);
+      const newIndex = prev.indexOf(over.id);
+      if (oldIndex === -1 || newIndex === -1) return prev;
+      return arrayMove(prev, oldIndex, newIndex);
+    });
+  };
+
+  // The heatmap spans 2 grid columns, which forces the auto-fill grid to
+  // reserve 2 tracks even when the container is too narrow for two real
+  // 420px columns — CSS then resolves that shortage by splitting the
+  // columns unevenly instead of collapsing to one column per row. Only ask
+  // for the 2-column span once the container actually has room for it.
+  //
+  // Uses a state-backed (not plain useRef) callback ref: the grid only
+  // mounts once chartData finishes loading (before that, EmptyState renders
+  // instead), so a plain ref + `useEffect(..., [])` would fire before the
+  // node exists and never re-attach once it does.
+  const [gridNode, setGridNode] = useState(null);
+  const [canSpanTwoColumns, setCanSpanTwoColumns] = useState(true);
+
+  useEffect(() => {
+    if (!gridNode) return undefined;
+    const TWO_COLUMN_MIN_WIDTH = PANEL_MIN_WIDTH * 2 + GRID_GAP;
+    const observer = new ResizeObserver(([entry]) => {
+      setCanSpanTwoColumns(entry.contentRect.width >= TWO_COLUMN_MIN_WIDTH);
+    });
+    observer.observe(gridNode);
+    return () => observer.disconnect();
+  }, [gridNode]);
+
   if (panels.length === 0 && heatmapData.length === 0) {
     return (
       <EmptyState message={t("models:label.noMetricsAvailableForThisView")} />
     );
   }
+
+  const orderedIds = order.filter((id) => cardIds.includes(id));
 
   const panelLayout = {
     autosize: true,
@@ -83,10 +252,19 @@ function ResultsGraphsPlot({ chartData }) {
             px: 1,
           }}
         >
-          {legend.map(({ label, color }) => (
+          {legend.map(({ id, label, color, hidden }) => (
             <Box
-              key={label}
-              sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+              key={id}
+              onClick={() => onToggleRun(id)}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                cursor: "pointer",
+                opacity: hidden ? 0.4 : 1,
+                userSelect: "none",
+                "&:hover": { opacity: hidden ? 0.65 : 0.8 },
+              }}
             >
               <Box
                 sx={{
@@ -95,6 +273,7 @@ function ResultsGraphsPlot({ chartData }) {
                   borderRadius: "50%",
                   bgcolor: color,
                   flexShrink: 0,
+                  filter: hidden ? "grayscale(1)" : "none",
                 }}
               />
               <Typography variant="caption" color="text.secondary">
@@ -105,83 +284,86 @@ function ResultsGraphsPlot({ chartData }) {
         </Box>
       )}
 
-      <Box
-        sx={{
-          display: "grid",
-          gap: 3,
-          gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))",
-        }}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
       >
-        {panels.map((panel) => (
+        <SortableContext items={orderedIds} strategy={rectSortingStrategy}>
           <Box
-            key={panel.metric}
+            ref={setGridNode}
             sx={{
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-              p: 2,
+              display: "grid",
+              gap: 3,
+              gridTemplateColumns: `repeat(auto-fill, minmax(${PANEL_MIN_WIDTH}px, 1fr))`,
             }}
           >
-            <Typography
-              variant="subtitle2"
-              sx={{ fontWeight: 600, mb: 1, px: 1 }}
-            >
-              {panel.title}
-            </Typography>
-            <Plot
-              data={panel.data}
-              layout={panelLayout}
-              useResizeHandler
-              style={{ width: "100%", height: "240px" }}
-              config={{ responsive: true, displayModeBar: false }}
-            />
-          </Box>
-        ))}
+            {orderedIds.map((id) => {
+              if (id === HEATMAP_ID) {
+                return (
+                  <SortableCard
+                    key={id}
+                    id={id}
+                    title={t("models:label.heatmap")}
+                    gridColumn={canSpanTwoColumns ? "span 2" : undefined}
+                  >
+                    <Box sx={{ height: 480 }}>
+                      <Plot
+                        data={heatmapData}
+                        layout={{
+                          ...(chartData.generalLayout ?? {}),
+                          autosize: true,
+                          width: undefined,
+                        }}
+                        useResizeHandler
+                        style={{ width: "100%", height: "100%" }}
+                        config={{
+                          responsive: true,
+                          displayModeBar: false,
+                          staticPlot: true,
+                        }}
+                      />
+                    </Box>
+                  </SortableCard>
+                );
+              }
 
-        {/* Heatmap — spans the full grid width since it needs room for
-            every run × metric cell, but still reflows as one grid item */}
-        {heatmapData.length > 0 && (
-          <Box
-            sx={{
-              gridColumn: "1 / -1",
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-              p: 2,
-            }}
-          >
-            <Typography
-              variant="subtitle2"
-              sx={{ fontWeight: 600, mb: 1, px: 1 }}
-            >
-              {t("models:label.heatmap")}
-            </Typography>
-            <Box sx={{ height: 460 }}>
-              <Plot
-                data={heatmapData}
-                layout={{
-                  ...(chartData.generalLayout ?? {}),
-                  autosize: true,
-                  width: undefined,
-                }}
-                useResizeHandler
-                style={{ width: "100%", height: "100%" }}
-                config={{
-                  responsive: true,
-                  displayModeBar: false,
-                  staticPlot: true,
-                }}
-              />
-            </Box>
+              const panel = panels.find((p) => p.metric === id);
+              if (!panel) return null;
+              return (
+                <SortableCard key={id} id={id} title={panel.title}>
+                  <Plot
+                    data={panel.data}
+                    layout={panelLayout}
+                    useResizeHandler
+                    style={{ width: "100%", height: "240px" }}
+                    config={{ responsive: true, displayModeBar: false }}
+                  />
+                </SortableCard>
+              );
+            })}
           </Box>
-        )}
-      </Box>
+        </SortableContext>
+      </DndContext>
     </Box>
   );
 }
 
+SortableCard.propTypes = {
+  id: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  gridColumn: PropTypes.string,
+  children: PropTypes.node.isRequired,
+};
+
+SortableCard.defaultProps = {
+  gridColumn: undefined,
+};
+
 ResultsGraphsPlot.propTypes = {
   chartData: PropTypes.object.isRequired,
+  onToggleRun: PropTypes.func.isRequired,
+  sessionId: PropTypes.number,
 };
 
 export default ResultsGraphsPlot;
