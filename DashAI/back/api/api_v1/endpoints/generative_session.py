@@ -148,12 +148,15 @@ async def upload_generative_session(
                     detail=f"Task {params.task_name} is not a valid generative task.",
                 )
 
+            now = datetime.now()
             session = GenerativeSession(
                 model_name=params.model_name,
                 task_name=params.task_name,
                 parameters=params.parameters,
                 name=params.name,
                 description=params.description,
+                created=now,
+                last_modified=now,
             )
             db.add(session)
             try:
