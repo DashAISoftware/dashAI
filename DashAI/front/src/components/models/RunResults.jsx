@@ -336,7 +336,7 @@ export default function RunResults({
                 pt: 1,
               }}
             >
-              {t("models:label.characteristics")}
+              {t("models:label.metrics")}
             </Typography>
             <Tabs
               value={[0, 3].includes(activeTab) ? activeTab : false}
