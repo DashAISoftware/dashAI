@@ -11,6 +11,8 @@ class GroupKFoldSplitter(FoldSplitter):
         "TabularClassificationTask",
         "TextClassificationTask",
         "RegressionTask",
+        "TranslationTask",
+        "ImageClassificationTask",
     ]
     DISPLAY_NAME: str = MultilingualString(
         en="Group K-Fold",

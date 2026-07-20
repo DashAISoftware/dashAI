@@ -11,6 +11,8 @@ class LeaveOneOutSplitter(FoldSplitter):
         "TabularClassificationTask",
         "TextClassificationTask",
         "RegressionTask",
+        "TranslationTask",
+        "ImageClassificationTask",
     ]
     DISPLAY_NAME: str = MultilingualString(
         en="Leave-One-Out",

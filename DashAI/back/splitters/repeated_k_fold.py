@@ -11,6 +11,8 @@ class RepeatedKFoldSplitter(FoldSplitter):
         "TabularClassificationTask",
         "TextClassificationTask",
         "RegressionTask",
+        "TranslationTask",
+        "ImageClassificationTask",
     ]
     DISPLAY_NAME: str = MultilingualString(
         en="Repeated K-Fold",

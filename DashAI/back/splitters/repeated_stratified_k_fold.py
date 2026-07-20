@@ -7,7 +7,11 @@ from .fold_splitter import FoldSplitter
 
 
 class RepeatedStratifiedKFoldSplitter(FoldSplitter):
-    COMPATIBLE_COMPONENTS = ["TabularClassificationTask", "TextClassificationTask"]
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "ImageClassificationTask",
+    ]
     DISPLAY_NAME: str = MultilingualString(
         en="Repeated Stratified K-Fold",
         es="K-Fold Estratificado Repetido",

@@ -11,6 +11,8 @@ class KFoldSplitter(FoldSplitter):
         "TabularClassificationTask",
         "TextClassificationTask",
         "RegressionTask",
+        "TranslationTask",
+        "ImageClassificationTask",
     ]
     DISPLAY_NAME: str = MultilingualString(
         en="K-Fold",
