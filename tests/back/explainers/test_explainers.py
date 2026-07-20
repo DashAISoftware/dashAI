@@ -5,7 +5,7 @@ import pyarrow as pa
 import pytest
 from datasets import DatasetDict
 
-from DashAI.back.core.artifacts import PlotlyArtifact
+from DashAI.back.core.artifacts import GroupedArtifacts, PlotlyArtifact
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -130,14 +130,19 @@ def test_partial_dependence(trained_model: BaseModel, dataset):
     assert set(metadata["target_names"]) == set(TARGETS)
 
     assert len(explanation) == len(INPUT_COLUMNS)
-    # One plotly artifact per feature and class curve, so the frontend lists
-    # them in its instance selector instead of an in-figure dropdown.
-    assert len(plot) == len(INPUT_COLUMNS) * len(TARGETS)
-    for artifact in plot:
+    # A single grouped artifact with one group (a plotly curve) per feature and
+    # class, so the frontend renders a selector instead of an in-figure dropdown.
+    assert len(plot) == 1
+    grouped = plot[0]
+    assert isinstance(grouped, GroupedArtifacts)
+    assert len(grouped.groups) == len(INPUT_COLUMNS) * len(TARGETS)
+    for group in grouped.groups:
+        assert group.title.startswith("Feature: ")
+        assert len(group.artifacts) == 1
+        artifact = group.artifacts[0]
         assert isinstance(artifact, PlotlyArtifact)
         artifact_dict = artifact.to_dict()
         assert artifact_dict["type"] == "plotly"
-        assert artifact_dict["title"].startswith("Feature: ")
         json.loads(artifact_dict["payload"])
 
     for feature_key in explanation.values():
@@ -173,14 +178,20 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         key in explanation
         for key in ["features", "importances_mean", "importances_std"]
     )
-    # One plotly artifact per feature count (all features down to one), so the
-    # frontend lists the counts in its selector instead of an in-figure dropdown.
-    assert len(plot) == len(INPUT_COLUMNS)
-    for artifact in plot:
+    # A single grouped artifact with one group (a bar chart) per feature count
+    # (all features down to one), so the frontend lists the counts in a selector
+    # instead of an in-figure dropdown.
+    assert len(plot) == 1
+    grouped = plot[0]
+    assert isinstance(grouped, GroupedArtifacts)
+    assert len(grouped.groups) == len(INPUT_COLUMNS)
+    for group in grouped.groups:
+        assert group.title.startswith("Top ")
+        assert len(group.artifacts) == 1
+        artifact = group.artifacts[0]
         assert isinstance(artifact, PlotlyArtifact)
         artifact_dict = artifact.to_dict()
         assert artifact_dict["type"] == "plotly"
-        assert artifact_dict["title"].startswith("Top ")
         json.loads(artifact_dict["payload"])
 
     for values in explanation.values():
@@ -200,7 +211,8 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         key in explanation
         for key in ["features", "importances_mean", "importances_std"]
     )
-    assert len(plot) == len(INPUT_COLUMNS)
+    assert len(plot) == 1
+    assert len(plot[0].groups) == len(INPUT_COLUMNS)
 
     for values in explanation.values():
         assert len(values) == len(INPUT_COLUMNS)

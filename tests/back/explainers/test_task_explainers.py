@@ -169,10 +169,12 @@ def test_regression_kernel_shap(trained_regressor, regression_dataset):
         reconstructed = base_value + sum(instance["shap_values"])
         assert reconstructed == pytest.approx(instance["model_prediction"], abs=0.05)
 
-    artifacts = explainer.plot(explanation)
-    assert len(artifacts) == 2 * len(instance_keys)
-    assert [a.type for a in artifacts[:2]] == ["plotly", "text"]
-    assert "baseline" in artifacts[1].payload
+    plot = explainer.plot(explanation)
+    assert len(plot) == 1
+    groups = plot[0].groups
+    assert len(groups) == len(instance_keys)
+    assert [a.type for a in groups[0].artifacts] == ["plotly", "text"]
+    assert "baseline" in groups[0].artifacts[1].payload
 
 
 def test_regression_partial_dependence(trained_regressor, regression_dataset):
@@ -195,10 +197,12 @@ def test_regression_partial_dependence(trained_regressor, regression_dataset):
     petal_curve = explanation["PetalLengthCm"]["average"]
     assert max(petal_curve) - min(petal_curve) > 0.1
 
-    artifacts = explainer.plot(explanation)
-    assert len(artifacts) == len(REGRESSION_INPUT_COLUMNS)
-    assert all(a.type == "plotly" for a in artifacts)
-    assert artifacts[0].title in REGRESSION_INPUT_COLUMNS
+    plot = explainer.plot(explanation)
+    assert len(plot) == 1
+    groups = plot[0].groups
+    assert len(groups) == len(REGRESSION_INPUT_COLUMNS)
+    assert all(g.artifacts[0].type == "plotly" for g in groups)
+    assert groups[0].title in REGRESSION_INPUT_COLUMNS
 
 
 def test_regression_pdp_invalid_percentiles(trained_regressor):
@@ -268,16 +272,18 @@ def test_token_ablation_explains_influential_tokens():
         for importance in second["token_importances"]
     )
 
-    artifacts = explainer.plot(explanation)
-    assert len(artifacts) == 4
-    assert [a.type for a in artifacts[:2]] == ["plotly", "text"]
-    assert "good" in artifacts[1].payload
+    plot = explainer.plot(explanation)
+    assert len(plot) == 1
+    groups = plot[0].groups
+    assert len(groups) == 2
+    assert [a.type for a in groups[0].artifacts] == ["plotly", "text"]
+    assert "good" in groups[0].artifacts[1].payload
 
 
 def test_token_ablation_ignores_tokenizer_columns():
     # The explainer job hands over datasets already prepared by the model;
     # transformer models add input_ids/attention_mask columns. The explainer
-    # must rebuild a clean single-text-column dataset before predicting.
+    # must rebuild a clean single text-column dataset before predicting.
     explainer = TokenAblation(DummyTextModel(), max_tokens=10)
     explainer.metadata = {"target_names": ["negative", "positive"]}
 

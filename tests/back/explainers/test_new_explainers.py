@@ -137,15 +137,16 @@ def test_nearest_counterfactual(trained_model, dataset):
             assert counterfactual["distance"] >= 0
             assert len(counterfactual["values"]) == len(INPUT_COLUMNS)
 
-    artifacts = explainer.plot(explanation)
-    # One table and one text artifact per instance.
-    assert len(artifacts) == 2 * len(instance_keys)
-    tables = [a for a in artifacts if a.type == "table"]
-    texts = [a for a in artifacts if a.type == "text"]
-    assert len(tables) == len(instance_keys)
-    assert len(texts) == len(instance_keys)
+    plot = explainer.plot(explanation)
+    # A single grouped artifact with one group per instance, each holding a
+    # table and a text artifact.
+    assert len(plot) == 1
+    groups = plot[0].groups
+    assert len(groups) == len(instance_keys)
+    for group in groups:
+        assert [a.type for a in group.artifacts] == ["table", "text"]
 
-    first_table = tables[0].payload
+    first_table = groups[0].artifacts[0].payload
     # Feature rows plus the predicted class row.
     assert len(first_table.rows) == len(INPUT_COLUMNS) + 1
     for cell in first_table.highlight:
@@ -197,10 +198,12 @@ def test_contrastive_shap(trained_model, dataset):
         foil = np.asarray(instance["foil_shap_values"])
         assert np.allclose(delta, fact - foil, atol=1e-2)
 
-    artifacts = explainer.plot(explanation)
-    assert len(artifacts) == 2 * len(instance_keys)
-    assert [a.type for a in artifacts[:2]] == ["plotly", "text"]
-    assert "rather than" in artifacts[1].payload
+    plot = explainer.plot(explanation)
+    assert len(plot) == 1
+    groups = plot[0].groups
+    assert len(groups) == len(instance_keys)
+    assert [a.type for a in groups[0].artifacts] == ["plotly", "text"]
+    assert "rather than" in groups[0].artifacts[1].payload
 
 
 def test_contrastive_shap_fixed_foil(trained_model, dataset):

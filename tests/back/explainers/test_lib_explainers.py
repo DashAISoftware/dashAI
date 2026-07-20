@@ -136,10 +136,12 @@ def test_dice_counterfactual(trained_model, dataset):
     # DiCE's random search on iris should find counterfactuals.
     assert found_any
 
-    artifacts = explainer.plot(explanation)
-    assert len(artifacts) == 2 * len(instance_keys)
-    types = {a.type for a in artifacts}
-    assert types == {"table", "text"}
+    plot = explainer.plot(explanation)
+    assert len(plot) == 1
+    groups = plot[0].groups
+    assert len(groups) == len(instance_keys)
+    for group in groups:
+        assert [a.type for a in group.artifacts] == ["table", "text"]
 
 
 class DummyTextModel:
@@ -169,7 +171,9 @@ def test_lime_text():
     assert word_weights["good"] > 0
     assert word_weights["good"] == max(word_weights.values())
 
-    artifacts = explainer.plot(explanation)
-    assert len(artifacts) == 2
-    assert [a.type for a in artifacts] == ["plotly", "text"]
-    assert "good" in artifacts[1].payload
+    plot = explainer.plot(explanation)
+    assert len(plot) == 1
+    groups = plot[0].groups
+    assert len(groups) == 1
+    assert [a.type for a in groups[0].artifacts] == ["plotly", "text"]
+    assert "good" in groups[0].artifacts[1].payload
