@@ -67,7 +67,6 @@
     "modelCount_other": "{{count}} modelos",
     "bar": "Barra",
     "heatmap": "Mapa de calor",
-    "characteristics": "Resultados",
     "chooseTaskForSessionWithDataset": "Escolha a tarefa de aprendizado de máquina para sua sessão com o conjunto de dados \"{{datasetName}}\".",
     "configuration": "Configuração",
     "configureModel": "Configurar Modelo",

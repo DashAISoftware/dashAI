@@ -224,7 +224,7 @@ export default function ExplainersPlot({
 
   useEffect(() => {
     if (explainer.status === 3) getExplainerPlot();
-  }, [explainer.id, explainer.status]);
+  }, [explainer.id, explainer.status, scope]);
 
   if (loading || explainer.status !== 3) {
     if (explainer.status === 4) {

@@ -108,12 +108,18 @@ export default function RunResults({
   const [trainingDatasetSample, setTrainingDatasetSample] = useState(null);
   const [outputColumn, setOutputColumn] = useState(null);
 
-  const [globalExpanded, setGlobalExpanded] = useState(true);
-  const [localExpanded, setLocalExpanded] = useState(true);
   const [datasetExpanded, setDatasetExpanded] = useState(true);
   const [manualExpanded, setManualExpanded] = useState(true);
-  // "all" | "dataset" | "manual" — which prediction section(s) are shown
-  const [predictionFilter, setPredictionFilter] = useState("all");
+  // "global" | "local",  which explainer scope is shown
+  const [explainerFilter, setExplainerFilter] = useState("global");
+  // Composite "<scope>-<id>" key of a just added explainer to scroll into view.
+  const [focusExplainerKey, setFocusExplainerKey] = useState(null);
+  const explainerCardRefs = useRef({});
+  // Explainer keys seen on the previous fetch; null until the first load so
+  // the initial batch is not treated as newly added.
+  const seenExplainerKeysRef = useRef(null);
+  // "dataset" | "manual",  which prediction section is shown
+  const [predictionFilter, setPredictionFilter] = useState("dataset");
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
   const datasetRunRef = useRef(null);
   const [datasetRunState, setDatasetRunState] = useState({
@@ -180,6 +186,32 @@ export default function RunResults({
     },
   };
 
+  // Same pill-bar language and typography as pillTabsSx (same font/size as
+  // the Explainability/Predictions tabs above) — only the selected-state
+  // fill is toned down so it still reads as a secondary, in-page filter.
+  const pillToggleSx = {
+    minHeight: 40,
+    bgcolor: theme.palette.ui.box,
+    borderRadius: 1,
+    "& .MuiToggleButtonGroup-grouped": {
+      minHeight: 40,
+      fontSize: "0.85rem",
+      fontWeight: 400,
+      textTransform: "none",
+      border: "1px solid transparent",
+      borderRadius: "4px !important",
+      color: "text.secondary",
+      "&:hover": { bgcolor: theme.palette.action.hover },
+      "&.Mui-selected": {
+        bgcolor: "background.paper",
+        color: "primary.main",
+        fontWeight: 600,
+        borderBottom: `2px solid ${theme.palette.primary.main}`,
+        "&:hover": { bgcolor: "background.paper" },
+      },
+    },
+  };
+
   const runId = run.id;
   const fetchOperations = useCallback(async () => {
     if (!runId) return;
@@ -236,11 +268,49 @@ export default function RunResults({
     globalExplainers.some((e) => e.status === 1 || e.status === 2) ||
     localExplainers.some((e) => e.status === 1 || e.status === 2);
 
+  // Explainers shown under the current scope toggle (global / local).
+  const activeExplainers =
+    explainerFilter === "global" ? globalExplainers : localExplainers;
+
   useEffect(() => {
     if (!hasRunningExplainers) return;
     const interval = setInterval(fetchOperations, 3000);
     return () => clearInterval(interval);
   }, [hasRunningExplainers, fetchOperations]);
+
+  // When a newly created explainer shows up (created from anywhere, picked up
+  // by polling), switch the scope toggle to it and queue its card to scroll
+  // into view. Skips the first load so existing explainers are not "focused".
+  useEffect(() => {
+    const currentKeys = new Set([
+      ...globalExplainers.map((e) => `global-${e.id}`),
+      ...localExplainers.map((e) => `local-${e.id}`),
+    ]);
+    if (seenExplainerKeysRef.current === null) {
+      seenExplainerKeysRef.current = currentKeys;
+      return;
+    }
+    const added = [...currentKeys].filter(
+      (key) => !seenExplainerKeysRef.current.has(key),
+    );
+    seenExplainerKeysRef.current = currentKeys;
+    if (added.length > 0) {
+      const key = added[added.length - 1];
+      setExplainerFilter(key.startsWith("global-") ? "global" : "local");
+      setFocusExplainerKey(key);
+    }
+  }, [globalExplainers, localExplainers]);
+
+  // Scroll the just added explainer card into view once it renders under the
+  // (now switched) scope toggle.
+  useEffect(() => {
+    if (!focusExplainerKey || activeExplainers.length === 0) return;
+    const el = explainerCardRefs.current[focusExplainerKey];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      setFocusExplainerKey(null);
+    }
+  }, [focusExplainerKey, activeExplainers]);
 
   useEffect(() => {
     const handleOpenDialog = (event) => {
@@ -339,7 +409,7 @@ export default function RunResults({
                 pt: 1,
               }}
             >
-              {t("models:label.characteristics")}
+              {t("models:label.metrics")}
             </Typography>
             <Tabs
               value={[0, 3].includes(activeTab) ? activeTab : false}
@@ -478,147 +548,65 @@ export default function RunResults({
 
         {activeTab === 1 && isFinished && (
           <Box sx={{ py: 4, width: "100%" }}>
-            <Stack spacing={4}>
-              <Box
-                sx={{
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  p: 4,
-                  width: "100%",
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 2,
+                mb: 4,
+              }}
+            >
+              <ToggleButtonGroup
+                value={explainerFilter}
+                exclusive
+                onChange={(e, newValue) => {
+                  if (newValue !== null) setExplainerFilter(newValue);
                 }}
+                sx={pillToggleSx}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: globalExpanded ? 4 : 0,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="medium">
-                      {t("models:label.globalExplainers")}
-                    </Typography>
-                    <Chip
-                      label={globalExplainers.length}
-                      size="small"
-                      color="primary"
-                    />
-                  </Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => setGlobalExpanded((prev) => !prev)}
-                  >
-                    {globalExpanded ? (
-                      <ExpandLessIcon fontSize="small" />
-                    ) : (
-                      <ExpandMoreIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </Box>
-                <Collapse in={globalExpanded}>
-                  {globalExplainers.length === 0 ? (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      align="center"
-                      sx={{ py: 6 }}
-                    >
-                      {t("models:label.noGlobalExplainersYet")}
-                    </Typography>
-                  ) : (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 2,
-                      }}
-                    >
-                      {globalExplainers.map((explainer) => (
-                        <ExplainersCard
-                          key={explainer.id}
-                          explainer={explainer}
-                          scope="global"
-                          onDelete={handleExplainerDeleted}
-                          compact
-                        />
-                      ))}
-                    </Box>
-                  )}
-                </Collapse>
-              </Box>
+                <ToggleButton value="global" sx={{ px: 1.5 }}>
+                  {t("models:label.globalExplainers")}
+                </ToggleButton>
+                <ToggleButton value="local" sx={{ px: 1.5 }}>
+                  {t("models:label.localExplainers")}
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
 
-              <Box
-                sx={{
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  p: 4,
-                  width: "100%",
-                }}
+            {activeExplainers.length === 0 ? (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                align="center"
+                sx={{ py: 6 }}
               >
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    mb: localExpanded ? 4 : 0,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                    <Typography variant="subtitle2" fontWeight="medium">
-                      {t("models:label.localExplainers")}
-                    </Typography>
-                    <Chip
-                      label={localExplainers.length}
-                      size="small"
-                      color="primary"
+                {explainerFilter === "global"
+                  ? t("models:label.noGlobalExplainersYet")
+                  : t("models:label.noLocalExplainersYet")}
+              </Typography>
+            ) : (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {activeExplainers.map((explainer) => (
+                  <Box
+                    key={`${explainerFilter}-${explainer.id}`}
+                    ref={(el) => {
+                      explainerCardRefs.current[
+                        `${explainerFilter}-${explainer.id}`
+                      ] = el;
+                    }}
+                  >
+                    <ExplainersCard
+                      explainer={explainer}
+                      scope={explainerFilter}
+                      onDelete={handleExplainerDeleted}
+                      compact
                     />
                   </Box>
-                  <IconButton
-                    size="small"
-                    onClick={() => setLocalExpanded((prev) => !prev)}
-                  >
-                    {localExpanded ? (
-                      <ExpandLessIcon fontSize="small" />
-                    ) : (
-                      <ExpandMoreIcon fontSize="small" />
-                    )}
-                  </IconButton>
-                </Box>
-                <Collapse in={localExpanded}>
-                  {localExplainers.length === 0 ? (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      align="center"
-                      sx={{ py: 6 }}
-                    >
-                      {t("models:label.noLocalExplainersYet")}
-                    </Typography>
-                  ) : (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 2,
-                      }}
-                    >
-                      {localExplainers.map((explainer) => (
-                        <ExplainersCard
-                          key={explainer.id}
-                          explainer={explainer}
-                          scope="local"
-                          onDelete={handleExplainerDeleted}
-                          compact
-                        />
-                      ))}
-                    </Box>
-                  )}
-                </Collapse>
+                ))}
               </Box>
-            </Stack>
+            )}
           </Box>
         )}
 
@@ -640,52 +628,13 @@ export default function RunResults({
                 onChange={(e, newValue) => {
                   if (newValue !== null) setPredictionFilter(newValue);
                 }}
-                size="small"
+                sx={pillToggleSx}
               >
-                <ToggleButton value="all" sx={{ gap: 1 }}>
-                  {t("common:all")}
-                  <Box
-                    component="span"
-                    sx={{
-                      bgcolor: "action.selected",
-                      borderRadius: 1,
-                      px: 1,
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {predictions.length}
-                  </Box>
-                </ToggleButton>
-                <ToggleButton value="dataset" sx={{ gap: 1 }}>
+                <ToggleButton value="dataset" sx={{ px: 1.5 }}>
                   {t("common:dataset")}
-                  <Box
-                    component="span"
-                    sx={{
-                      bgcolor: "action.selected",
-                      borderRadius: 1,
-                      px: 1,
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {predictions.filter((p) => p.dataset_id).length}
-                  </Box>
                 </ToggleButton>
-                <ToggleButton value="manual" sx={{ gap: 1 }}>
+                <ToggleButton value="manual" sx={{ px: 1.5 }}>
                   {t("models:label.manual")}
-                  <Box
-                    component="span"
-                    sx={{
-                      bgcolor: "action.selected",
-                      borderRadius: 1,
-                      px: 1,
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {predictions.filter((p) => !p.dataset_id).length}
-                  </Box>
                 </ToggleButton>
               </ToggleButtonGroup>
 

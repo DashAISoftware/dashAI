@@ -65,7 +65,7 @@ export default function TableArtifact({
                         highlightedCells.has(`${rowIndex}-${columnIndex}`)
                           ? {
                               backgroundColor: alpha(
-                                theme.palette.warning.main,
+                                theme.palette.accent.coral,
                                 0.25,
                               ),
                               fontWeight: "bold",
