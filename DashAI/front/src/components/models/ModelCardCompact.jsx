@@ -21,6 +21,7 @@ import { getRunStatusColor } from "../../utils/runStatus";
 import { ModelIcon } from "./model/ModelIcon";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import RunEditDialog from "./RunEditDialog";
+import RunStatusDot from "../shared/RunStatusDot";
 
 const RING_SIZE = 36;
 
@@ -266,16 +267,13 @@ function ModelCardCompact({
             {run.name}
           </Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box
-              sx={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
-                bgcolor: statusMain,
-                flexShrink: 0,
-              }}
-            />
-            <Typography variant="caption" color="text.secondary" noWrap>
+            <RunStatusDot status={run.status} size={6} />
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              noWrap
+              sx={{ lineHeight: 1 }}
+            >
               {modelDisplayName}
             </Typography>
           </Box>

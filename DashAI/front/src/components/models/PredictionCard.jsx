@@ -3,19 +3,16 @@ import PropTypes from "prop-types";
 import {
   Typography,
   IconButton,
-  Chip,
   Box,
   Tooltip,
   CircularProgress,
 } from "@mui/material";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
+import RunStatusDot from "../shared/RunStatusDot";
 import {
   Delete as DeleteIcon,
   Download as DownloadIcon,
-  Dataset as DatasetIcon,
-  CalendarToday as CalendarTodayIcon,
 } from "@mui/icons-material";
-import { getPredictionStatus } from "../../utils/predictionStatus";
 import { deletePrediction } from "../../api/predict";
 import { useSnackbar } from "notistack";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
@@ -62,30 +59,8 @@ export default function PredictionCard({
 
   const statusText = prediction.status;
 
-  // Status color mapping
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 0: // Not Started
-        return "default";
-      case 1: // Delivered
-      case 2: // Started
-        return "info";
-      case 3: // Finished
-        return "success";
-      case 4: // Error
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
   const isRunning = RUNNING_STATUSES.includes(statusText);
   const isFinished = statusText === 3; // Finished
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString();
-  };
 
   const handleDelete = async () => {
     try {
@@ -176,91 +151,22 @@ export default function PredictionCard({
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "start",
+            alignItems: "center",
             mb: 2,
           }}
         >
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle2" fontWeight="medium">
+          <Box sx={{ flex: 1, display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography
+              variant="subtitle2"
+              fontWeight="medium"
+              sx={{ lineHeight: 1 }}
+            >
               {t("prediction:label.prediction")} #
               {displayNumber ?? prediction.id}
             </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 1 }}>
-              <Chip
-                icon={<CalendarTodayIcon fontSize="small" />}
-                variant="outlined"
-                size="small"
-                sx={{
-                  height: 26,
-                  "& .MuiChip-icon": {
-                    color: "text.secondary",
-                    ml: 1.5,
-                    fontSize: "1rem",
-                  },
-                  "& .MuiChip-label": { px: 2 },
-                }}
-                label={
-                  <Box component="span" sx={{ display: "flex", gap: 1 }}>
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      color="text.secondary"
-                    >
-                      {t("common:created")}
-                    </Typography>
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      sx={{ fontWeight: 600 }}
-                    >
-                      {formatDate(prediction.created)}
-                    </Typography>
-                  </Box>
-                }
-              />
-              {prediction.dataset_id && (
-                <Chip
-                  icon={<DatasetIcon fontSize="small" />}
-                  variant="outlined"
-                  size="small"
-                  sx={{
-                    height: 26,
-                    "& .MuiChip-icon": {
-                      color: "text.secondary",
-                      ml: 1.5,
-                      fontSize: "1rem",
-                    },
-                    "& .MuiChip-label": { px: 2 },
-                  }}
-                  label={
-                    <Box component="span" sx={{ display: "flex", gap: 1 }}>
-                      <Typography
-                        component="span"
-                        variant="caption"
-                        color="text.secondary"
-                      >
-                        {t("common:dataset")}
-                      </Typography>
-                      <Typography
-                        component="span"
-                        variant="caption"
-                        sx={{ fontWeight: 600 }}
-                      >
-                        {prediction.dataset?.name ||
-                          t("datasets:label.unknownDataset")}
-                      </Typography>
-                    </Box>
-                  }
-                />
-              )}
-            </Box>
+            <RunStatusDot status={statusText} />
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Chip
-              label={getPredictionStatus(statusText, t)}
-              color={getStatusColor(statusText)}
-              size="small"
-            />
             <Tooltip title={t("prediction:button.downloadResults")}>
               <span>
                 <IconButton
@@ -291,33 +197,15 @@ export default function PredictionCard({
         {/* Results */}
         {isFinished && (
           <Box sx={{ mt: 4 }}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ mb: 2, display: "block" }}
-            >
-              {t("prediction:label.resultsPreview")}
-            </Typography>
-            <Box
-              sx={{
-                border: 1,
-                borderColor: "divider",
-                bgcolor: "background.default",
-                borderRadius: 1,
-                overflow: "hidden",
-                p: 1,
-              }}
-            >
-              <DatasetTable
-                fetchPage={fetchPage}
-                initialPageSize={5}
-                datasetPath={prediction.results_path}
-                columnTypes={columnTypes}
-                showExportButton={false}
-                baseBackgroundColor={theme.palette.background.paper}
-                showBorder={false}
-              />
-            </Box>
+            <DatasetTable
+              fetchPage={fetchPage}
+              initialPageSize={5}
+              datasetPath={prediction.results_path}
+              columnTypes={columnTypes}
+              showExportButton={false}
+              baseBackgroundColor={theme.palette.background.paper}
+              showBorder={false}
+            />
           </Box>
         )}
 

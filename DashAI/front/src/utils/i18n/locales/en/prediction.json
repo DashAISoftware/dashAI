@@ -52,7 +52,6 @@
     "previewResults": "Preview Results",
     "previousPredictions": "Previous Predictions",
     "provideManualInput": "Enter data manually for prediction. Fill in the fields below and submit when ready.",
-    "resultsPreview": "Preview of first 100 rows. Download CSV for complete results.",
     "resultsPreviewDownloadInfo": "The table below displays a preview of the prediction results. You can download the full results as a CSV file using the \"Download CSV\" button below.",
     "reviewDetails": "Review your prediction configuration before submitting",
     "runFirstPrediction": "Run your first prediction to see it here",

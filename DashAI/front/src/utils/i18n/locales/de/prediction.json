@@ -52,7 +52,6 @@
     "previewResults": "Ergebnisse in der Vorschau anzeigen",
     "previousPredictions": "Frühere Vorhersagen",
     "provideManualInput": "Daten manuell für die Vorhersage eingeben. Füllen Sie die Felder aus und reichen Sie sie ein, wenn Sie bereit sind.",
-    "resultsPreview": "Vorschau der ersten 100 Zeilen. CSV herunterladen für vollständige Ergebnisse.",
     "resultsPreviewDownloadInfo": "Die Tabelle zeigt eine Vorschau der Vorhersageergebnisse. Sie können die vollständigen Ergebnisse als CSV-Datei herunterladen.",
     "reviewDetails": "Überprüfen Sie Ihre Vorhersagekonfiguration vor dem Einreichen",
     "runFirstPrediction": "Führen Sie Ihre erste Vorhersage aus, um sie hier zu sehen",
