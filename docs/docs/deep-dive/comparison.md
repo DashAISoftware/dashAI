@@ -30,7 +30,7 @@ KNIME's desktop client, the KNIME Analytics Platform, is free and open-source un
 
 ## Extensibility
 
-DashAI exposes [twelve base classes](https://docs.dash-ai.com/deep-dive/components/), organized by functional role, including `BaseModel`, `BaseMetric`, `BaseTask`, and `BaseGlobalExplainer`. A new component is implemented by subclassing the corresponding base class and declaring its parameters through a Pydantic schema; [the platform derives the configuration form shown in the interface directly from this schema](https://docs.dash-ai.com/deep-dive/architecture/), without additional frontend code. The resulting component is distributed via PyPI and installed from within the dashAI interface.
+DashAI exposes [twelve base classes](https://docs.dash-ai.com/deep-dive/components/), organized by functional role, including `BaseModel`, `BaseMetric`, `BaseTask`, and `BaseGlobalExplainer`. A new component is implemented by subclassing the corresponding base class and declaring its parameters through a Pydantic schema; [the platform derives the configuration form shown in the interface directly from this schema](https://docs.dash-ai.com/deep-dive/architecture/), without additional frontend code. The resulting component is packaged as a plugin and distributed via PyPI, then installed from within the dashAI interface.
 
 The extension mechanisms of the other three platforms are as follows:
 
@@ -54,7 +54,7 @@ The interface is available in Spanish, English, Chinese, German, and Portuguese.
 
 KNIME's officially maintained [AI Extension](https://docs.knime.com/latest/analytics_platform_ai_extension_guide/) provides offline LLM execution through two paths: the [Local GPT4All LLM Selector](https://hub.knime.com/knime/extensions/org.knime.python.features.llm/latest/org.knime.python3.nodes.extension.ExtensionNodeSetFactory%24DynamicExtensionNodeFactory:8f5a8be6) node, which runs a user-supplied GGUF model file entirely offline, and an [OpenAI-compatible connector pointed at a local Ollama endpoint](https://www.knime.com/blog/how-to-leverage-open-source-llms-ollama). Because these are general-purpose connector nodes rather than a curated set of bundled models, they do not map onto a fixed "number of models" the way dashAI's five preloaded LLMs do; the user supplies the model file or Ollama endpoint themselves.
 
-We could not find an equivalent officially maintained Orange add-on for local LLM inference; community write-ups describe wiring Orange's general-purpose Python Script widget to a locally running Ollama or LM Studio server, which is a valid but code-based integration rather than a no-code component, so Orange remains "No" on this dimension pending an official add-on.
+We could not find an equivalent officially maintained Orange add-on for local LLM inference; community write-ups describe wiring Orange's general-purpose Python Script widget to a locally running Ollama or LM Studio server, which is a valid but code-based integration rather than a no-code building block, so Orange remains "No" on this dimension pending an official add-on.
 
 ### Hyperparameter Optimization on Competing Platforms
 
