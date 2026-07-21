@@ -240,7 +240,9 @@ export default function ManualInputForm({
         <Box
           sx={{
             flexShrink: 0,
-            borderLeft: `2px solid ${predictionResults ? theme.palette.primary.main : divider}`,
+            borderLeft: `2px solid ${
+              predictionResults ? theme.palette.primary.main : divider
+            }`,
           }}
         >
           <table style={{ borderCollapse: "collapse", tableLayout: "auto" }}>
