@@ -116,9 +116,17 @@ ArtifactBatch.propTypes = {
  * values (the row index selects the group); global explainers omit it and get
  * a plain title list.
  */
-function GroupedArtifactsView({ grouped, ctx, datasetPath = null }) {
+function GroupedArtifactsView({
+  grouped,
+  ctx,
+  datasetPath = null,
+  selected: selectedProp = null,
+  onSelect = null,
+}) {
   const { t } = useTranslation(["explainers"]);
-  const [selected, setSelected] = useState(0);
+  const [localSelected, setLocalSelected] = useState(0);
+  const selected = selectedProp ?? localSelected;
+  const setSelected = onSelect ?? setLocalSelected;
   const groups = grouped.groups ?? [];
   if (groups.length === 0) return null;
 
@@ -166,6 +174,8 @@ GroupedArtifactsView.propTypes = {
   grouped: PropTypes.object.isRequired,
   ctx: PropTypes.object.isRequired,
   datasetPath: PropTypes.string,
+  selected: PropTypes.number,
+  onSelect: PropTypes.func,
 };
 
 /**
@@ -174,13 +184,15 @@ GroupedArtifactsView.propTypes = {
  * width). `datasetPath` is forwarded to grouped items so local explainers get
  * the dataset row picker.
  */
-function renderItem(item, ctx, datasetPath = null) {
+function renderItem(item, ctx, datasetPath = null, selection = null) {
   if (item.type === "grouped") {
     return (
       <GroupedArtifactsView
         grouped={item}
         ctx={ctx}
         datasetPath={datasetPath}
+        selected={selection ? selection.selected : null}
+        onSelect={selection ? selection.onSelect : null}
       />
     );
   }
@@ -193,10 +205,13 @@ export default function ExplainersPlot({
   onSaveOverride = null,
   onResetOverride = null,
   overriddenIndexes = [],
+  cacheEntry = null,
+  onCacheUpdate = null,
 }) {
   const { enqueueSnackbar } = useSnackbar();
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cachedItems = cacheEntry ? cacheEntry.items : null;
+  const [items, setItems] = useState(() => cachedItems ?? []);
+  const [loading, setLoading] = useState(() => cachedItems == null);
   const { t } = useTranslation(["explainers"]);
   const isLocal = scope === "local";
   const datasetPath = isLocal ? explainer.input_dataset_path : null;
@@ -207,12 +222,16 @@ export default function ExplainersPlot({
       const response = await getExplainerPlotRequest(explainer.id, scope);
       if (!response || response.length === 0) {
         setItems([]);
+        if (onCacheUpdate) onCacheUpdate({ items: [] });
         enqueueSnackbar(t("explainers:error.noData"), { variant: "warning" });
       } else {
-        setItems(parseExplanationArtifacts(response));
+        const parsed = parseExplanationArtifacts(response);
+        setItems(parsed);
+        if (onCacheUpdate) onCacheUpdate({ items: parsed });
       }
     } catch (error) {
       setItems([]);
+      if (onCacheUpdate) onCacheUpdate({ items: [] });
       enqueueSnackbar(t("explainers:error.fetchExplainers"), {
         variant: "error",
       });
@@ -223,7 +242,15 @@ export default function ExplainersPlot({
   };
 
   useEffect(() => {
-    if (explainer.status === 3) getExplainerPlot();
+    if (explainer.status !== 3) return;
+    // Cache hit: reuse fetched artifacts, skip the network entirely so a card
+    // scrolled back into view does not refetch.
+    if (cacheEntry && cacheEntry.items != null) {
+      setItems(cacheEntry.items);
+      setLoading(false);
+      return;
+    }
+    getExplainerPlot();
   }, [explainer.id, explainer.status, scope]);
 
   if (loading || explainer.status !== 3) {
@@ -252,7 +279,20 @@ export default function ExplainersPlot({
       sx={{ display: "flex", flexDirection: "column", gap: 3, width: "100%" }}
     >
       {items.map((item, i) => (
-        <Box key={i}>{renderItem(item, ctx, datasetPath)}</Box>
+        <Box key={i}>
+          {renderItem(item, ctx, datasetPath, {
+            selected: cacheEntry ? (cacheEntry.selectedGroups?.[i] ?? 0) : null,
+            onSelect: onCacheUpdate
+              ? (value) =>
+                  onCacheUpdate({
+                    selectedGroups: {
+                      ...(cacheEntry?.selectedGroups ?? {}),
+                      [i]: value,
+                    },
+                  })
+              : null,
+          })}
+        </Box>
       ))}
     </Box>
   );
@@ -268,4 +308,9 @@ ExplainersPlot.propTypes = {
   onSaveOverride: PropTypes.func,
   onResetOverride: PropTypes.func,
   overriddenIndexes: PropTypes.arrayOf(PropTypes.number),
+  cacheEntry: PropTypes.shape({
+    items: PropTypes.array,
+    selectedGroups: PropTypes.object,
+  }),
+  onCacheUpdate: PropTypes.func,
 };

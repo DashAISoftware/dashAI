@@ -7,7 +7,7 @@ import {
   Box,
   CircularProgress,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
@@ -34,10 +34,16 @@ export default function ExplainersCard({
   onDelete,
   compact = false,
   displayName = null,
+  cacheEntry = null,
+  onCacheUpdate = null,
+  isHighlighted = false,
 }) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const [overriddenIndexes, setOverriddenIndexes] = useState([]);
+  const [localOverriddenIndexes, setLocalOverriddenIndexes] = useState([]);
+  const overriddenIndexes = cacheEntry
+    ? (cacheEntry.overriddenIndexes ?? [])
+    : localOverriddenIndexes;
   const { t } = useTranslation(["explainers"]);
   const isRunning = RUNNING_STATUSES.includes(explainer.status);
 
@@ -67,14 +73,18 @@ export default function ExplainersCard({
 
   const handleSaveOverride = async (index, figure) => {
     await saveExplainerPlotOverride(scope, explainer.id, index, figure);
-    setOverriddenIndexes((prev) =>
-      prev.includes(index) ? prev : [...prev, index],
-    );
+    const next = overriddenIndexes.includes(index)
+      ? overriddenIndexes
+      : [...overriddenIndexes, index];
+    if (onCacheUpdate) onCacheUpdate({ overriddenIndexes: next });
+    else setLocalOverriddenIndexes(next);
   };
 
   const handleResetOverride = async (index) => {
     await resetExplainerPlotOverride(scope, explainer.id, index);
-    setOverriddenIndexes((prev) => prev.filter((i) => i !== index));
+    const next = overriddenIndexes.filter((i) => i !== index);
+    if (onCacheUpdate) onCacheUpdate({ overriddenIndexes: next });
+    else setLocalOverriddenIndexes(next);
   };
 
   if (compact) {
@@ -87,6 +97,18 @@ export default function ExplainersCard({
             bgcolor: "background.paper",
             borderColor: theme.palette.ui.border,
             borderRadius: 1,
+            position: "relative",
+            zIndex: isHighlighted ? 1 : 0,
+            "@keyframes newItemHighlight": {
+              "0%": { boxShadow: "none" },
+              "20%": {
+                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+              },
+              "100%": { boxShadow: "none" },
+            },
+            animation: isHighlighted
+              ? "newItemHighlight 4s ease-in-out forwards"
+              : "none",
           }}
         >
           <Grid container direction="column" gap={3}>
@@ -156,6 +178,8 @@ export default function ExplainersCard({
                   onSaveOverride={handleSaveOverride}
                   onResetOverride={handleResetOverride}
                   overriddenIndexes={overriddenIndexes}
+                  cacheEntry={cacheEntry}
+                  onCacheUpdate={onCacheUpdate}
                 />
               </Grid>
             )}
@@ -248,4 +272,11 @@ ExplainersCard.propTypes = {
   onDelete: PropTypes.func,
   compact: PropTypes.bool,
   displayName: PropTypes.string,
+  cacheEntry: PropTypes.shape({
+    items: PropTypes.array,
+    overriddenIndexes: PropTypes.arrayOf(PropTypes.number),
+    selectedGroups: PropTypes.object,
+  }),
+  onCacheUpdate: PropTypes.func,
+  isHighlighted: PropTypes.bool,
 };

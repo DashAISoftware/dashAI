@@ -97,120 +97,140 @@ export default function ModelDetailView({
   ].filter(Boolean);
 
   return (
-    <Box sx={{ px: 4, pt: 4, pb: 4 }}>
-      <ModelsBreadcrumbs />
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      <Box sx={{ flexShrink: 0, px: 4, pt: 4 }}>
+        <ModelsBreadcrumbs />
 
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          gap: 2,
-          mb: 1,
-        }}
-      >
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
-            gap: 2,
+            justifyContent: "space-between",
+            alignItems: "flex-start",
             flexWrap: "wrap",
+            gap: 2,
+            mb: 1,
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            {run.name}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {modelDisplayName}
-          </Typography>
-          <Chip
-            label={statusText}
-            color={getRunStatusColor(run.status)}
-            size="small"
-          />
-        </Box>
-
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {canTrain && (
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<PlayArrow />}
-              onClick={() => onTrain(run)}
-            >
-              {run.status === 3 ? t("common:retrain") : t("common:trainVerb")}
-            </Button>
-          )}
-          <Tooltip title={t("models:button.deleteRun")}>
-            <IconButton
-              size="small"
-              color="error"
-              disabled={isRunning}
-              onClick={() => setDeleteConfirmOpen(true)}
-            >
-              <Delete fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Box>
-
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 6 }}>
-        {statChips.map(({ icon, label, value }) => (
-          <Chip
-            key={label}
-            icon={icon}
-            variant="outlined"
-            size="small"
+          <Box
             sx={{
-              height: 26,
-              "& .MuiChip-icon": {
-                color: "text.secondary",
-                ml: 1.5,
-                fontSize: "1rem",
-              },
-              "& .MuiChip-label": { px: 2 },
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              flexWrap: "wrap",
             }}
-            label={
-              <Box component="span" sx={{ display: "flex", gap: 1 }}>
-                <Typography
-                  component="span"
-                  variant="caption"
-                  color="text.secondary"
-                >
-                  {label}
-                </Typography>
-                <Typography
-                  component="span"
-                  variant="caption"
-                  sx={{ fontWeight: 600 }}
-                >
-                  {value}
-                </Typography>
-              </Box>
-            }
-          />
-        ))}
+          >
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              {run.name}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {modelDisplayName}
+            </Typography>
+            <Chip
+              label={statusText}
+              color={getRunStatusColor(run.status)}
+              size="small"
+            />
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {canTrain && (
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={<PlayArrow />}
+                onClick={() => onTrain(run)}
+              >
+                {run.status === 3 ? t("common:retrain") : t("common:trainVerb")}
+              </Button>
+            )}
+            <Tooltip title={t("models:button.deleteRun")}>
+              <IconButton
+                size="small"
+                color="error"
+                disabled={isRunning}
+                onClick={() => setDeleteConfirmOpen(true)}
+              >
+                <Delete fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
+
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 6 }}>
+          {statChips.map(({ icon, label, value }) => (
+            <Chip
+              key={label}
+              icon={icon}
+              variant="outlined"
+              size="small"
+              sx={{
+                height: 26,
+                "& .MuiChip-icon": {
+                  color: "text.secondary",
+                  ml: 1.5,
+                  fontSize: "1rem",
+                },
+                "& .MuiChip-label": { px: 2 },
+              }}
+              label={
+                <Box component="span" sx={{ display: "flex", gap: 1 }}>
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    color="text.secondary"
+                  >
+                    {label}
+                  </Typography>
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    sx={{ fontWeight: 600 }}
+                  >
+                    {value}
+                  </Typography>
+                </Box>
+              }
+            />
+          ))}
+        </Box>
       </Box>
 
-      <RunCard
-        run={run}
-        models={models}
-        session={session}
-        onTrain={onTrain}
-        onDelete={onDelete}
-        explainerRefreshTrigger={explainerRefreshTrigger}
-        onOperationsRefresh={onOperationsRefresh}
-        existingRuns={existingRuns}
-        onRefresh={onRefresh}
-        forceExpanded
-        hideChrome
-        deleteConfirmOpen={deleteConfirmOpen}
-        setDeleteConfirmOpen={setDeleteConfirmOpen}
-        profiles={profiles}
-        selectedProfile={selectedProfile}
-        onProfileChange={onProfileChange}
-      />
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          px: 4,
+          pb: 4,
+        }}
+      >
+        <RunCard
+          run={run}
+          models={models}
+          session={session}
+          onTrain={onTrain}
+          onDelete={onDelete}
+          explainerRefreshTrigger={explainerRefreshTrigger}
+          onOperationsRefresh={onOperationsRefresh}
+          existingRuns={existingRuns}
+          onRefresh={onRefresh}
+          forceExpanded
+          hideChrome
+          deleteConfirmOpen={deleteConfirmOpen}
+          setDeleteConfirmOpen={setDeleteConfirmOpen}
+          profiles={profiles}
+          selectedProfile={selectedProfile}
+          onProfileChange={onProfileChange}
+        />
+      </Box>
     </Box>
   );
 }
