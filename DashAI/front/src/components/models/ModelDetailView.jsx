@@ -8,16 +8,11 @@ import {
   Chip,
   Tooltip,
 } from "@mui/material";
-import {
-  PlayArrow,
-  Delete,
-  Dataset as DatasetIcon,
-  CalendarToday,
-  AccessTime,
-} from "@mui/icons-material";
+import { PlayArrow, Delete, Info } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import RunCard from "./RunCard";
+import InfoModal from "../shared/InfoModal";
 import { getRunStatus, getRunStatusColor } from "../../utils/runStatus";
 
 function formatCreatedDate(dateStr, locale) {
@@ -67,6 +62,7 @@ export default function ModelDetailView({
   onProfileChange,
 }) {
   const { t, i18n } = useTranslation(["models", "common"]);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const model = models.find((m) => m.name === run.model_name);
@@ -77,24 +73,6 @@ export default function ModelDetailView({
 
   const createdLabel = formatCreatedDate(run.created, i18n.language);
   const durationLabel = formatDuration(run.start_time, run.end_time);
-
-  const statChips = [
-    datasetName && {
-      icon: <DatasetIcon fontSize="small" />,
-      label: t("common:dataset"),
-      value: datasetName,
-    },
-    createdLabel && {
-      icon: <CalendarToday fontSize="small" />,
-      label: t("common:created"),
-      value: createdLabel,
-    },
-    durationLabel && {
-      icon: <AccessTime fontSize="small" />,
-      label: t("common:duration"),
-      value: durationLabel,
-    },
-  ].filter(Boolean);
 
   return (
     <Box sx={{ px: 4, pt: 4, pb: 4 }}>
@@ -131,7 +109,7 @@ export default function ModelDetailView({
           />
         </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           {canTrain && (
             <Button
               variant="contained"
@@ -142,55 +120,29 @@ export default function ModelDetailView({
               {run.status === 3 ? t("common:retrain") : t("common:trainVerb")}
             </Button>
           )}
-          <Tooltip title={t("models:button.deleteRun")}>
-            <IconButton
-              size="small"
-              color="error"
-              disabled={isRunning}
-              onClick={() => setDeleteConfirmOpen(true)}
-            >
-              <Delete fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+            <Tooltip title={t("common:info")}>
+              <IconButton
+                size="small"
+                sx={{ p: 0.5 }}
+                onClick={() => setInfoModalOpen(true)}
+              >
+                <Info fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title={t("models:button.deleteRun")}>
+              <IconButton
+                size="small"
+                color="error"
+                sx={{ p: 0.5 }}
+                disabled={isRunning}
+                onClick={() => setDeleteConfirmOpen(true)}
+              >
+                <Delete fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
-      </Box>
-
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 6 }}>
-        {statChips.map(({ icon, label, value }) => (
-          <Chip
-            key={label}
-            icon={icon}
-            variant="outlined"
-            size="small"
-            sx={{
-              height: 26,
-              "& .MuiChip-icon": {
-                color: "text.secondary",
-                ml: 1.5,
-                fontSize: "1rem",
-              },
-              "& .MuiChip-label": { px: 2 },
-            }}
-            label={
-              <Box component="span" sx={{ display: "flex", gap: 1 }}>
-                <Typography
-                  component="span"
-                  variant="caption"
-                  color="text.secondary"
-                >
-                  {label}
-                </Typography>
-                <Typography
-                  component="span"
-                  variant="caption"
-                  sx={{ fontWeight: 600 }}
-                >
-                  {value}
-                </Typography>
-              </Box>
-            }
-          />
-        ))}
       </Box>
 
       <RunCard
@@ -210,6 +162,29 @@ export default function ModelDetailView({
         profiles={profiles}
         selectedProfile={selectedProfile}
         onProfileChange={onProfileChange}
+      />
+
+      <InfoModal
+        title={t("common:runInformation")}
+        subtitle={run.name}
+        rows={[
+          { label: t("common:id"), value: run.id },
+          { label: t("common:model"), value: modelDisplayName },
+          {
+            label: t("common:associatedDataset"),
+            value: datasetName || t("common:unknown"),
+          },
+          {
+            label: t("common:createdAt"),
+            value: createdLabel || t("common:unknown"),
+          },
+          {
+            label: t("common:duration"),
+            value: durationLabel || t("common:unknown"),
+          },
+        ]}
+        open={infoModalOpen}
+        onClose={() => setInfoModalOpen(false)}
       />
     </Box>
   );
