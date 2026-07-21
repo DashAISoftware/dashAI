@@ -52,7 +52,6 @@
     "previewResults": "预览结果",
     "previousPredictions": "历史预测",
     "provideManualInput": "手动输入数据进行预测。请填写下方字段，准备好后提交。",
-    "resultsPreview": "显示前 100 行预览。下载 CSV 获取完整结果。",
     "resultsPreviewDownloadInfo": "下表显示预测结果的预览。您可以使用下方的「下载 CSV」按钮下载完整结果。",
     "reviewDetails": "在提交前检查您的预测配置",
     "runFirstPrediction": "运行第一次预测以在此处查看结果",

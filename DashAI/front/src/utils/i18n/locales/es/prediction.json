@@ -52,7 +52,6 @@
     "previewResults": "Vista Previa de Resultados",
     "previousPredictions": "Predicciones Anteriores",
     "provideManualInput": "Ingrese datos manualmente para la predicción. Complete los campos a continuación y envíe cuando esté listo.",
-    "resultsPreview": "Vista previa de las primeras 100 filas. Descargue el CSV para obtener resultados completos.",
     "resultsPreviewDownloadInfo": "La tabla a continuación muestra una vista previa de los resultados de la predicción. Puede descargar los resultados completos como un archivo CSV usando el botón \"Descargar CSV\" a continuación.",
     "reviewDetails": "Revise la configuración de su predicción antes de enviar",
     "runFirstPrediction": "Ejecute su primera predicción para verla aquí",

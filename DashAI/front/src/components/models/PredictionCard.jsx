@@ -12,8 +12,6 @@ import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationMod
 import {
   Delete as DeleteIcon,
   Download as DownloadIcon,
-  Dataset as DatasetIcon,
-  CalendarToday as CalendarTodayIcon,
 } from "@mui/icons-material";
 import { getPredictionStatus } from "../../utils/predictionStatus";
 import { deletePrediction } from "../../api/predict";
@@ -81,11 +79,6 @@ export default function PredictionCard({
 
   const isRunning = RUNNING_STATUSES.includes(statusText);
   const isFinished = statusText === 3; // Finished
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString();
-  };
 
   const handleDelete = async () => {
     try {
@@ -185,75 +178,6 @@ export default function PredictionCard({
               {t("prediction:label.prediction")} #
               {displayNumber ?? prediction.id}
             </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 1 }}>
-              <Chip
-                icon={<CalendarTodayIcon fontSize="small" />}
-                variant="outlined"
-                size="small"
-                sx={{
-                  height: 26,
-                  "& .MuiChip-icon": {
-                    color: "text.secondary",
-                    ml: 1.5,
-                    fontSize: "1rem",
-                  },
-                  "& .MuiChip-label": { px: 2 },
-                }}
-                label={
-                  <Box component="span" sx={{ display: "flex", gap: 1 }}>
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      color="text.secondary"
-                    >
-                      {t("common:created")}
-                    </Typography>
-                    <Typography
-                      component="span"
-                      variant="caption"
-                      sx={{ fontWeight: 600 }}
-                    >
-                      {formatDate(prediction.created)}
-                    </Typography>
-                  </Box>
-                }
-              />
-              {prediction.dataset_id && (
-                <Chip
-                  icon={<DatasetIcon fontSize="small" />}
-                  variant="outlined"
-                  size="small"
-                  sx={{
-                    height: 26,
-                    "& .MuiChip-icon": {
-                      color: "text.secondary",
-                      ml: 1.5,
-                      fontSize: "1rem",
-                    },
-                    "& .MuiChip-label": { px: 2 },
-                  }}
-                  label={
-                    <Box component="span" sx={{ display: "flex", gap: 1 }}>
-                      <Typography
-                        component="span"
-                        variant="caption"
-                        color="text.secondary"
-                      >
-                        {t("common:dataset")}
-                      </Typography>
-                      <Typography
-                        component="span"
-                        variant="caption"
-                        sx={{ fontWeight: 600 }}
-                      >
-                        {prediction.dataset?.name ||
-                          t("datasets:label.unknownDataset")}
-                      </Typography>
-                    </Box>
-                  }
-                />
-              )}
-            </Box>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
             <Chip
@@ -291,33 +215,15 @@ export default function PredictionCard({
         {/* Results */}
         {isFinished && (
           <Box sx={{ mt: 4 }}>
-            <Typography
-              variant="caption"
-              color="text.secondary"
-              sx={{ mb: 2, display: "block" }}
-            >
-              {t("prediction:label.resultsPreview")}
-            </Typography>
-            <Box
-              sx={{
-                border: 1,
-                borderColor: "divider",
-                bgcolor: "background.default",
-                borderRadius: 1,
-                overflow: "hidden",
-                p: 1,
-              }}
-            >
-              <DatasetTable
-                fetchPage={fetchPage}
-                initialPageSize={5}
-                datasetPath={prediction.results_path}
-                columnTypes={columnTypes}
-                showExportButton={false}
-                baseBackgroundColor={theme.palette.background.paper}
-                showBorder={false}
-              />
-            </Box>
+            <DatasetTable
+              fetchPage={fetchPage}
+              initialPageSize={5}
+              datasetPath={prediction.results_path}
+              columnTypes={columnTypes}
+              showExportButton={false}
+              baseBackgroundColor={theme.palette.background.paper}
+              showBorder={false}
+            />
           </Box>
         )}
 
