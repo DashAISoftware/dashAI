@@ -13,7 +13,6 @@ import {
   Chip,
   Stack,
   Collapse,
-  Tabs,
   Tab,
   Divider,
   Grid,
@@ -23,10 +22,8 @@ import {
   DialogContent,
   DialogActions,
   Tooltip,
-  ToggleButtonGroup,
   ToggleButton,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
@@ -35,6 +32,8 @@ import {
   Dataset as DatasetIcon,
   EditNote as EditNoteIcon,
 } from "@mui/icons-material";
+import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
+import PillTabs from "../shared/PillTabs";
 import ExplainersCard from "../explainers/ExplainersCard";
 import PredictionCard from "./PredictionCard";
 import { LoadingButton } from "@mui/lab";
@@ -114,8 +113,6 @@ export default function RunResults({
   const [localCreatorOpen, setLocalCreatorOpen] = useState(false);
   const [globalExpanded, setGlobalExpanded] = useState(true);
   const [localExpanded, setLocalExpanded] = useState(true);
-  const [datasetExpanded, setDatasetExpanded] = useState(true);
-  const [manualExpanded, setManualExpanded] = useState(true);
   // "dataset" | "manual" — which prediction section is shown
   const [predictionFilter, setPredictionFilter] = useState("dataset");
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
@@ -135,7 +132,6 @@ export default function RunResults({
   const isFinished = run.status === 3;
   const isRunning = run.status === 1 || run.status === 2;
   const { t } = useTranslation(["models", "common"]);
-  const theme = useTheme();
 
   // Explains *why* a tab is disabled, so it reads as a real (if currently
   // unavailable) tab rather than being confused with the static group labels.
@@ -147,68 +143,6 @@ export default function RunResults({
     : optimizables === 0
       ? t("models:message.noOptimizableParamsForHpo")
       : "";
-
-  // Same "pill bar" tab styling used in DatasetVisualization, so both
-  // sections of the app read as one consistent tab component.
-  const pillTabsSx = {
-    minHeight: 40,
-    bgcolor: theme.palette.ui.box,
-    borderRadius: 1,
-    "& .MuiTabs-indicator": { height: "2px" },
-    "& .MuiTab-root": {
-      minHeight: 40,
-      fontSize: "0.85rem",
-      borderRadius: "4px",
-      transition: "all 0.2s",
-      border: "1px solid transparent",
-      textTransform: "none",
-      "&:hover": { bgcolor: theme.palette.action.hover },
-      "&.Mui-disabled": {
-        color: theme.palette.text.disabled,
-        bgcolor: theme.palette.ui.disabled,
-        borderColor: theme.palette.ui.border,
-        opacity: 0.6,
-        cursor: "not-allowed",
-        filter: "grayscale(0.6)",
-        position: "relative",
-        "&::after": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
-          borderRadius: "4px",
-          pointerEvents: "none",
-          background:
-            "repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)",
-        },
-      },
-    },
-  };
-
-  // Same pill-bar language and typography as pillTabsSx (same font/size as
-  // the Explainability/Predictions tabs above) — only the selected-state
-  // fill is toned down so it still reads as a secondary, in-page filter.
-  const pillToggleSx = {
-    minHeight: 40,
-    bgcolor: theme.palette.ui.box,
-    borderRadius: 1,
-    "& .MuiToggleButtonGroup-grouped": {
-      minHeight: 40,
-      fontSize: "0.85rem",
-      fontWeight: 400,
-      textTransform: "none",
-      border: "1px solid transparent",
-      borderRadius: "4px !important",
-      color: "text.secondary",
-      "&:hover": { bgcolor: theme.palette.action.hover },
-      "&.Mui-selected": {
-        bgcolor: "background.paper",
-        color: "primary.main",
-        fontWeight: 600,
-        borderBottom: `2px solid ${theme.palette.primary.main}`,
-        "&:hover": { bgcolor: "background.paper" },
-      },
-    },
-  };
 
   const runId = run.id;
   const fetchOperations = useCallback(async () => {
@@ -364,11 +298,10 @@ export default function RunResults({
             >
               {t("models:label.metrics")}
             </Typography>
-            <Tabs
+            <PillTabs
               value={[0, 3].includes(activeTab) ? activeTab : false}
               onChange={(e, newValue) => setActiveTab(newValue)}
               aria-label="Result characteristics tabs"
-              sx={pillTabsSx}
             >
               <Tab value={0} label={t("models:label.liveMetrics")} />
               <Tab
@@ -382,7 +315,7 @@ export default function RunResults({
                 }
                 disabled={!isFinished || optimizables === 0}
               />
-            </Tabs>
+            </PillTabs>
           </Box>
 
           {/* Empty spacer just for the horizontal gap between groups — kept
@@ -423,11 +356,10 @@ export default function RunResults({
             >
               {t("models:label.operations")}
             </Typography>
-            <Tabs
+            <PillTabs
               value={[1, 2].includes(activeTab) ? activeTab : false}
               onChange={(e, newValue) => setActiveTab(newValue)}
               aria-label="Result operations tabs"
-              sx={pillTabsSx}
             >
               <Tab
                 value={1}
@@ -481,7 +413,7 @@ export default function RunResults({
                 }
                 disabled={!isFinished}
               />
-            </Tabs>
+            </PillTabs>
           </Box>
         </Box>
 
@@ -713,13 +645,11 @@ export default function RunResults({
                 mb: 4,
               }}
             >
-              <ToggleButtonGroup
+              <PillToggleButtonGroup
                 value={predictionFilter}
-                exclusive
                 onChange={(e, newValue) => {
                   if (newValue !== null) setPredictionFilter(newValue);
                 }}
-                sx={pillToggleSx}
               >
                 <ToggleButton value="dataset" sx={{ px: 1.5 }}>
                   {t("common:dataset")}
@@ -727,7 +657,7 @@ export default function RunResults({
                 <ToggleButton value="manual" sx={{ px: 1.5 }}>
                   {t("models:label.manual")}
                 </ToggleButton>
-              </ToggleButtonGroup>
+              </PillToggleButtonGroup>
 
               <Box sx={{ display: "flex", gap: 2 }}>
                 {predictionFilter !== "manual" && (
@@ -882,167 +812,51 @@ export default function RunResults({
               </DialogActions>
             </Dialog>
 
-            <Stack spacing={2}>
-              {predictionFilter !== "manual" && (
-                <Box
-                  sx={{
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    p: 2,
-                    width: "100%",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      mb: datasetExpanded ? 2 : 0,
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <DatasetIcon fontSize="small" color="action" />
-                      <Typography variant="subtitle2" fontWeight="medium">
-                        {t("models:label.datasetPredictions")}
-                      </Typography>
-                      <Chip
-                        label={predictions.filter((p) => p.dataset_id).length}
-                        size="small"
-                        color="primary"
-                      />
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => setDatasetExpanded((prev) => !prev)}
-                    >
-                      {datasetExpanded ? (
-                        <ExpandLessIcon fontSize="small" />
-                      ) : (
-                        <ExpandMoreIcon fontSize="small" />
-                      )}
-                    </IconButton>
-                  </Box>
-                  <Collapse in={datasetExpanded}>
-                    {predictions.filter((p) => p.dataset_id).length === 0 ? (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        align="center"
-                        sx={{ py: 3 }}
-                      >
-                        {t("models:label.noDatasetPredictionsYet")}
-                      </Typography>
-                    ) : (
-                      <Box
-                        sx={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "repeat(auto-fill, minmax(680px, 1fr))",
-                          gap: 2,
-                        }}
-                      >
-                        {predictions
-                          .filter((p) => p.dataset_id)
-                          .map((prediction) => (
-                            <PredictionCard
-                              key={prediction.id}
-                              prediction={prediction}
-                              onDelete={handlePredictionDeleted}
-                              onUpdate={fetchOperations}
-                              targetColumn={outputColumn}
-                              datasetSample={trainingDatasetSample}
-                              displayNumber={predictionDisplayNumbers.get(
-                                prediction.id,
-                              )}
-                            />
-                          ))}
-                      </Box>
-                    )}
-                  </Collapse>
-                </Box>
-              )}
+            {(() => {
+              const visiblePredictions = predictions.filter((p) =>
+                predictionFilter === "dataset" ? p.dataset_id : !p.dataset_id,
+              );
 
-              {predictionFilter !== "dataset" && (
+              if (visiblePredictions.length === 0) {
+                return (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    align="center"
+                    sx={{ py: 3 }}
+                  >
+                    {predictionFilter === "dataset"
+                      ? t("models:label.noDatasetPredictionsYet")
+                      : t("models:label.noManualPredictionsYet")}
+                  </Typography>
+                );
+              }
+
+              return (
                 <Box
                   sx={{
-                    border: 1,
-                    borderColor: "divider",
-                    borderRadius: 1,
-                    p: 2,
-                    width: "100%",
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(680px, 1fr))",
+                    gap: 2,
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      mb: manualExpanded ? 2 : 0,
-                    }}
-                  >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <EditNoteIcon fontSize="small" color="action" />
-                      <Typography variant="subtitle2" fontWeight="medium">
-                        {t("models:label.manualPredictions")}
-                      </Typography>
-                      <Chip
-                        label={predictions.filter((p) => !p.dataset_id).length}
-                        size="small"
-                        color="primary"
-                      />
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => setManualExpanded((prev) => !prev)}
-                    >
-                      {manualExpanded ? (
-                        <ExpandLessIcon fontSize="small" />
-                      ) : (
-                        <ExpandMoreIcon fontSize="small" />
+                  {visiblePredictions.map((prediction) => (
+                    <PredictionCard
+                      key={prediction.id}
+                      prediction={prediction}
+                      onDelete={handlePredictionDeleted}
+                      onUpdate={fetchOperations}
+                      targetColumn={outputColumn}
+                      datasetSample={trainingDatasetSample}
+                      displayNumber={predictionDisplayNumbers.get(
+                        prediction.id,
                       )}
-                    </IconButton>
-                  </Box>
-                  <Collapse in={manualExpanded}>
-                    {predictions.filter((p) => !p.dataset_id).length === 0 ? (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        align="center"
-                        sx={{ py: 3 }}
-                      >
-                        {t("models:label.noManualPredictionsYet")}
-                      </Typography>
-                    ) : (
-                      <Box
-                        sx={{
-                          display: "grid",
-                          gridTemplateColumns:
-                            "repeat(auto-fill, minmax(680px, 1fr))",
-                          gap: 2,
-                        }}
-                      >
-                        {predictions
-                          .filter((p) => !p.dataset_id)
-                          .map((prediction) => (
-                            <PredictionCard
-                              key={prediction.id}
-                              prediction={prediction}
-                              onDelete={handlePredictionDeleted}
-                              onUpdate={fetchOperations}
-                              targetColumn={outputColumn}
-                              datasetSample={trainingDatasetSample}
-                              displayNumber={predictionDisplayNumbers.get(
-                                prediction.id,
-                              )}
-                            />
-                          ))}
-                      </Box>
-                    )}
-                  </Collapse>
+                    />
+                  ))}
                 </Box>
-              )}
-            </Stack>
+              );
+            })()}
           </Box>
         )}
 
