@@ -94,7 +94,7 @@ export default function ManualPredictionsTable({
   datasetSample,
   onDelete,
 }) {
-  const { t, i18n } = useTranslation(["prediction", "common"]);
+  const { t } = useTranslation(["prediction", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const [allRows, setAllRows] = useState([]);
   const [columnTypes, setColumnTypes] = useState({});
@@ -102,7 +102,6 @@ export default function ManualPredictionsTable({
   const [deleteTarget, setDeleteTarget] = useState(null);
 
   const predictionLabel = t("prediction:label.prediction");
-  const createdLabel = t("common:created");
 
   const finishedPredictions = useMemo(
     () => predictions.filter((p) => p.status === 3),
@@ -135,9 +134,6 @@ export default function ManualPredictionsTable({
             );
             return formatted.map((row) => ({
               [`${predictionLabel} #`]: displayNumbers.get(prediction.id),
-              [createdLabel]: new Date(prediction.created).toLocaleString(
-                i18n.language,
-              ),
               ...row,
               __predictionId: prediction.id,
             }));
@@ -158,8 +154,6 @@ export default function ManualPredictionsTable({
     datasetSample,
     displayNumbers,
     predictionLabel,
-    createdLabel,
-    i18n.language,
   ]);
 
   useEffect(() => {
@@ -169,10 +163,9 @@ export default function ManualPredictionsTable({
   const extendedColumnTypes = useMemo(
     () => ({
       [`${predictionLabel} #`]: "Integer",
-      [createdLabel]: "Categorical",
       ...columnTypes,
     }),
-    [columnTypes, predictionLabel, createdLabel],
+    [columnTypes, predictionLabel],
   );
 
   const fetchPage = useCallback(
@@ -247,6 +240,7 @@ export default function ManualPredictionsTable({
           columnTypes={extendedColumnTypes}
           showExportButton={false}
           rowActions={rowActions}
+          targetColumn={targetColumn}
         />
       )}
 

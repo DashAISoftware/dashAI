@@ -435,6 +435,7 @@
     "hideAll": "Hide all",
     "noRows": "No rows",
     "doubleClickToRename": "Double-click to rename",
+    "predictedColumn": "Prediction",
     "sortedAsc": "Sorted ascending - click for descending",
     "sortedDesc": "Sorted descending - click to clear",
     "clickToSort": "Click to sort ascending",

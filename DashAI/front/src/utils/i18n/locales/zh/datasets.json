@@ -421,6 +421,7 @@
     "hideAll": "隐藏全部",
     "noRows": "无行数据",
     "doubleClickToRename": "双击以重命名",
+    "predictedColumn": "预测",
     "sortedAsc": "升序排列 - 点击改为降序",
     "sortedDesc": "降序排列 - 点击取消排序",
     "clickToSort": "点击升序排列",

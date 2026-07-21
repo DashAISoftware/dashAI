@@ -205,6 +205,7 @@ export default function PredictionCard({
               showExportButton={false}
               baseBackgroundColor={theme.palette.background.paper}
               showBorder={false}
+              targetColumn={targetColumn}
             />
           </Box>
         )}

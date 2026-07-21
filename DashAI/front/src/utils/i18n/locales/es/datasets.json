@@ -450,6 +450,7 @@
     "hideAll": "Ocultar todas",
     "noRows": "Sin filas",
     "doubleClickToRename": "Doble clic para renombrar",
+    "predictedColumn": "Predicción",
     "sortedAsc": "Orden ascendente - clic para descendente",
     "sortedDesc": "Orden descendente - clic para quitar",
     "clickToSort": "Clic para ordenar ascendente",

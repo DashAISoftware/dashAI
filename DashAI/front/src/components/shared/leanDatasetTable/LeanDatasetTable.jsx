@@ -15,6 +15,11 @@ import { defaultOpForType, toBackendOperator } from "./operators";
 
 import "./leanDatasetTable.css";
 
+// Matches the fixed width set on .lean-th--actions / .lean-cell--actions in
+// leanDatasetTable.css — used to offset the pinned target column so it sits
+// flush against the actions column instead of underneath it.
+const ACTIONS_COLUMN_WIDTH = 70;
+
 /**
  * Lightweight dataset preview table. Renders a native ``<table>`` with a
  * sticky header and server-side pagination via ``fetchPage``. Supports
@@ -36,6 +41,7 @@ function LeanDatasetTable({
   enableColumnVisibility = true,
   showExportButton = true,
   rowActions,
+  targetColumn,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -174,10 +180,13 @@ function LeanDatasetTable({
       ? Object.keys(rows[0]).filter((k) => k !== "id" && !k.startsWith("__"))
       : Object.keys(columnTypes);
 
-  const visibleColumnKeys = useMemo(
-    () => allColumnKeys.filter((k) => !hiddenColumns.has(k)),
-    [allColumnKeys, hiddenColumns],
-  );
+  const visibleColumnKeys = useMemo(() => {
+    const base = allColumnKeys.filter((k) => !hiddenColumns.has(k));
+    if (targetColumn && base.includes(targetColumn)) {
+      return [...base.filter((k) => k !== targetColumn), targetColumn];
+    }
+    return base;
+  }, [allColumnKeys, hiddenColumns, targetColumn]);
 
   const highlightQuery = debouncedSearchValue.trim();
 
@@ -348,6 +357,8 @@ function LeanDatasetTable({
                     sortDir={sortDir}
                     allColumnKeys={allColumnKeys}
                     datasetId={datasetId}
+                    isPinned={key === targetColumn}
+                    pinnedOffset={rowActions ? ACTIONS_COLUMN_WIDTH : 0}
                     onStartEdit={() => setEditingColumn(key)}
                     onCommitEdit={handleCommitRename}
                     onCancelEdit={handleCancelRename}
@@ -357,11 +368,9 @@ function LeanDatasetTable({
                 );
               })}
               {rowActions && (
-                <th className="lean-th">
+                <th className="lean-th lean-th--actions">
                   <div className="lean-th-inner">
-                    <div className="lean-th-name-row">
-                      {t("common:actions")}
-                    </div>
+                    <div className="lean-th-name-row">{t("common:remove")}</div>
                   </div>
                 </th>
               )}
@@ -379,6 +388,8 @@ function LeanDatasetTable({
                       type={type}
                       operator={operator}
                       value={filterValues[key]}
+                      isPinned={key === targetColumn}
+                      pinnedOffset={rowActions ? ACTIONS_COLUMN_WIDTH : 0}
                       onOperatorChange={(op) =>
                         handleFilterOperatorChange(key, op)
                       }
@@ -386,7 +397,7 @@ function LeanDatasetTable({
                     />
                   );
                 })}
-                {rowActions && <td className="lean-cell" />}
+                {rowActions && <td className="lean-cell lean-cell--actions" />}
               </tr>
             )}
           </thead>
@@ -394,9 +405,19 @@ function LeanDatasetTable({
             {rows.map((row, i) => (
               <tr key={i} className="lean-row">
                 {visibleColumnKeys.map((key) => (
-                  <LeanCell key={key} value={row[key]} query={highlightQuery} />
+                  <LeanCell
+                    key={key}
+                    value={row[key]}
+                    query={highlightQuery}
+                    isPinned={key === targetColumn}
+                    pinnedOffset={rowActions ? ACTIONS_COLUMN_WIDTH : 0}
+                  />
                 ))}
-                {rowActions && <td className="lean-cell">{rowActions(row)}</td>}
+                {rowActions && (
+                  <td className="lean-cell lean-cell--actions">
+                    {rowActions(row)}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -461,6 +482,7 @@ LeanDatasetTable.propTypes = {
   enableColumnVisibility: PropTypes.bool,
   showExportButton: PropTypes.bool,
   rowActions: PropTypes.func,
+  targetColumn: PropTypes.string,
 };
 
 export default LeanDatasetTable;
