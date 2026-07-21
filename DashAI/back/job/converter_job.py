@@ -242,6 +242,8 @@ class ConverterJob(BaseJob):
                 log.exception(e)
                 raise JobError("Error loading converter info") from e
 
+            self.report_progress(0.1, "Loading dataset")
+
             # Get dataset
             try:
                 dataset_id = converter.notebook.dataset_id
@@ -318,11 +320,17 @@ class ConverterJob(BaseJob):
                     i += 1
 
                 # Apply each converter in sequence
-                for converter_info in converter_instances:
+                total_converters = len(converter_instances)
+                for converter_index, converter_info in enumerate(converter_instances):
                     converter_instance = converter_info["instance"]
                     converter_name = converter_info["name"]
                     converter_scope = converter_info["scope"]
 
+                    # Map converter progress onto the 0.2-0.9 band.
+                    self.report_progress(
+                        0.2 + 0.7 * (converter_index / max(total_converters, 1)),
+                        f"Applying {converter_name}",
+                    )
                     log.info(f"Applying converter: {converter_name}")
 
                     columns_scope = [
@@ -411,6 +419,7 @@ class ConverterJob(BaseJob):
 
                     dataset_original_columns = loaded_dataset.column_names
 
+                self.report_progress(0.95, "Saving dataset")
                 save_dataset(loaded_dataset, f"{dataset_path}")
                 converter.set_status_as_finished()
                 db.commit()

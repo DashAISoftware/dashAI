@@ -17,7 +17,8 @@
     "nameRequired": "Name ist erforderlich",
     "processError": "Der Prozess ist fehlgeschlagen. Wird gelöscht... {{error}}",
     "sessionNameEmpty": "Sitzungsname darf nicht leer sein",
-    "sessionNameExists": "Eine Sitzung mit diesem Namen existiert bereits"
+    "sessionNameExists": "Eine Sitzung mit diesem Namen existiert bereits",
+    "modelSwitchFailed": "Sitzungsmodell konnte nicht geändert werden"
   },
   "label": {
     "confirmDeleteSession": "Sind Sie sicher, dass Sie die Sitzung \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -38,6 +39,8 @@
     "startBySelectingATask": "Beginnen Sie mit der Auswahl einer generativen Aufgabe.",
     "noSessionsFound": "Keine Sitzungen gefunden",
     "parameterChangeEvent": "Parameter aktualisiert: <1></1>",
+    "modelChangeEvent": "Modell geändert: <1></1>",
+    "modelNotDownloaded": "Das Modell dieser Sitzung ist noch nicht heruntergeladen. Laden Sie es herunter, um fortzufahren.",
     "parameterChangeHistory": "Parameteränderungsverlauf für die aktuelle Sitzung",
     "searchSessions": "Sitzungen suchen",
     "selectGenerativeTask": "Generative Aufgabe für neue Sitzung auswählen",
@@ -57,7 +60,9 @@
     "attachMedia": "Medien anhängen",
     "attachMediaToContinue": "Medien anhängen, um fortzufahren",
     "noInputAvailable": "Keine Eingabe für diese Aufgabe verfügbar",
-    "selectModelCrumb": "Modell auswählen"
+    "selectModelCrumb": "Modell auswählen",
+    "sessionModel": "Modell",
+    "downloadRequired": "Download erforderlich"
   },
   "message": {
     "sessionCreatedSuccess": "Sitzung erfolgreich erstellt.",

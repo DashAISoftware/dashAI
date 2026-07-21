@@ -270,6 +270,7 @@ class OpusMtEnESTransformer(OpusMtTransformerMixin):
     MODEL_NAME: str = "Helsinki-NLP/opus-mt-en-es"
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_opus-mt-en-es"
     SCHEMA = OpusMtEnESTransformerSchema
+    DOWNLOAD_SIZE_BYTES = 315310815
     DISPLAY_NAME: str = MultilingualString(
         en="Opus MT En-Es Transformer",
         es="Transformer Opus MT En-Es",
@@ -280,24 +281,24 @@ class OpusMtEnESTransformer(OpusMtTransformerMixin):
     DESCRIPTION: str = MultilingualString(
         en=(
             "Pretrained transformer for English to Spanish translation. "
-            "Downloads weights from Hugging Face on first use (internet required)."
+            "Download its weights from Hugging Face before use (internet required)."
         ),
         es=(
             "Transformer preentrenado para traducción inglés-español. "
-            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+            "Descarga sus pesos de Hugging Face antes de usarlo (requiere internet)."
         ),
         pt=(
             "Transformer pré-treinado para tradução inglês-espanhol. "
-            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+            "Baixe seus pesos do Hugging Face antes de usar (requer internet)."
         ),
         de=(
             "Vortrainierter Transformer für Englisch-Spanisch-Übersetzung. "
-            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "Lädt die Gewichte vor der Nutzung von Hugging Face herunter "
             "(Internet erforderlich)."
         ),
         zh=(
             "用于英语到西班牙语翻译的预训练 Transformer。"
-            "首次使用时从 Hugging Face 下载权重（需要网络）。"
+            "使用前需从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#FFA500"

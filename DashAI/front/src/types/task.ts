@@ -11,4 +11,6 @@ export interface ITaskMetadataParameters {
   outputs_columns: string[];
   inputs_cardinality: "n" | number;
   outputs_cardinality: "n" | number;
+  requires_download?: boolean;
+  download_size_bytes?: number | null;
 }
