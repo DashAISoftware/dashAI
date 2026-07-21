@@ -17,7 +17,8 @@
     "nameRequired": "名称为必填项",
     "processError": "处理失败，正在删除...{{error}}",
     "sessionNameEmpty": "会话名称不能为空",
-    "sessionNameExists": "已存在同名会话"
+    "sessionNameExists": "已存在同名会话",
+    "modelSwitchFailed": "更改会话模型失败"
   },
   "label": {
     "confirmDeleteSession": "确定要删除会话 \"{{name}}\" 吗？此操作无法撤销。",
@@ -38,6 +39,8 @@
     "startBySelectingATask": "从选择生成式任务开始。",
     "noSessionsFound": "未找到会话",
     "parameterChangeEvent": "参数已更新：<1></1>",
+    "modelChangeEvent": "模型已更改：<1></1>",
+    "modelNotDownloaded": "该会话的模型尚未下载。请先下载后再继续。",
     "parameterChangeHistory": "当前会话的参数变更历史",
     "searchSessions": "搜索会话",
     "selectGenerativeTask": "选择生成式任务以开始新会话",
@@ -57,7 +60,9 @@
     "attachMedia": "附加媒体",
     "attachMediaToContinue": "附加媒体以继续",
     "noInputAvailable": "此任务无可用输入",
-    "selectModelCrumb": "选择模型"
+    "selectModelCrumb": "选择模型",
+    "sessionModel": "模型",
+    "downloadRequired": "需下载"
   },
   "message": {
     "sessionCreatedSuccess": "会话创建成功。",

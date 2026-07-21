@@ -43,7 +43,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         """
         metadata: Dict[str, Any] = {}
         metadata["icon"] = cls.ICON if cls.ICON else "Science"
-
+        metadata["requires_download"] = bool(getattr(cls, "REQUIRES_DOWNLOAD", False))
+        metadata["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
         return metadata
 
     @abstractmethod

@@ -1,13 +1,14 @@
 """ResNet-50 image classifier for DashAI."""
 
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import TorchvisionDownloadMixin
 from DashAI.back.models.base_torchvision_image_classifier import (
     TorchvisionImageClassifier,
     TorchvisionImageClassifierSchema,
 )
 
 
-class ResNet50ImageClassifier(TorchvisionImageClassifier):
+class ResNet50ImageClassifier(TorchvisionDownloadMixin, TorchvisionImageClassifier):
     """ResNet-50 image classifier (He et al., 2015).
 
     50-layer residual network using bottleneck blocks. Deeper and more
@@ -54,13 +55,21 @@ class ResNet50ImageClassifier(TorchvisionImageClassifier):
     )
     COLOR: str = "#1B5E20"
     ICON: str = "AccountTree"
+    DOWNLOAD_SIZE_BYTES: int = 100_000_000
+
+    @classmethod
+    def _weights(cls):
+        from torchvision.models import ResNet50_Weights
+
+        return ResNet50_Weights.DEFAULT
 
     def _build_backbone(self, num_classes: int, pretrained: bool):
         import torch.nn as nn
         from torchvision.models import ResNet50_Weights, resnet50
 
         weights = ResNet50_Weights.DEFAULT if pretrained else None
-        model = resnet50(weights=weights)
+        with self.local_hub():
+            model = resnet50(weights=weights)
         in_features = model.fc.in_features
         model.fc = nn.Sequential(
             nn.Dropout(self.dropout_rate),

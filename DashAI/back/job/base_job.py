@@ -1,7 +1,10 @@
 """Base Job abstract class."""
 
+import logging
 from abc import ABCMeta, abstractmethod
-from typing import Final
+from typing import Final, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class BaseJob(metaclass=ABCMeta):
@@ -19,6 +22,35 @@ class BaseJob(metaclass=ABCMeta):
         """
         job_kwargs = kwargs.pop("kwargs", {})
         self.kwargs = {**kwargs, **job_kwargs}
+
+    def report_progress(
+        self, fraction: Optional[float], message: Optional[str] = None
+    ) -> None:
+        """Report the job's progress to the job queue.
+
+        Jobs opt in by calling this at meaningful checkpoints. It is safe to
+        call from any job: it never raises and does nothing when the job has no
+        Huey id (e.g. immediate mode used in tests) or the queue is unavailable.
+
+        Parameters
+        ----------
+        fraction: Optional float
+            Completion in the range 0-1, or None when the total work is unknown
+            (the frontend then shows an indeterminate bar).
+        message: Optional str
+            Short description of the current phase.
+        """
+        try:
+            from kink import di
+
+            huey_id = self.kwargs.get("huey_id")
+            if not huey_id:
+                return
+
+            progress = None if fraction is None else max(0.0, min(1.0, fraction)) * 100
+            di["job_queue"].report_progress(huey_id, progress, message)
+        except Exception as e:  # pragma: no cover - progress must never break a job
+            logger.debug(f"Could not report job progress: {e}")
 
     @abstractmethod
     def set_status_as_delivered(self) -> None:

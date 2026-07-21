@@ -6,98 +6,108 @@ sidebar_label: Benchmark comparativo
 
 # Benchmark comparativo
 
-Esta sección compara dashAI con KNIME Analytics Platform, Orange Data Mining y WEKA, las principales plataformas no code ML open source con arquitectura comparable.
+Esta sección compara dashAI con KNIME Analytics Platform, Orange Data Mining y WEKA, tres plataformas de machine learning de código abierto y sin código que cumplen los criterios de selección descritos en la sección de Metodología a continuación.
 
 ---
 
 ## Metodología
 
-El subconjunto de plataformas se delimitó a herramientas que cumplen simultáneamente tres condiciones: distribución open source, operación sin código para el usuario final y arquitectura de catálogo extensible por terceros. KNIME Analytics Platform, Orange Data Mining y WEKA satisfacen ese criterio junto a dashAI.
+El conjunto de plataformas consideradas se restringió a herramientas que satisfacen conjuntamente tres condiciones: distribución de código abierto, operación sin código para el usuario final, y una arquitectura de catálogo que puede ser extendida por terceros. KNIME Analytics Platform, Orange Data Mining y WEKA cumplen estas condiciones junto con dashAI.
 
-La comparación se estructura en tres dimensiones medibles: condiciones de licencia, costo arquitectónico de extensión y cobertura paradigmática del catálogo nativo. Para la dimensión de extensibilidad, el boilerplate reportado corresponde a componentes de referencia implementados en cada plataforma a partir de sus repositorios oficiales; las fuentes están listadas al final de esta página.
+La comparación se organiza en torno a tres dimensiones medibles: los términos de licencia, el mecanismo de extensión, y la cobertura de paradigmas de tareas del catálogo nativo. Para las dimensiones de licencia y extensibilidad, cada afirmación a continuación está vinculada directamente a su fuente primaria (texto oficial de la licencia, documentación oficial para desarrolladores, o el archivo fuente correspondiente), ya sea en línea o en la sección de [Fuentes](#fuentes). Para la dimensión de cobertura de tareas, los conteos de catálogo se obtuvieron mediante inspección directa de la propia interfaz de cada plataforma (repositorio de nodos, catálogo de widgets, gestor de paquetes, o catálogo de modelos) en lugar de a partir de un único listado externo, ya que ninguna de las cuatro plataformas publica un conteo canónico desglosado de esta manera; consulte [Fuentes](#fuentes) para más detalle.
 
 ---
 
 ## Licencia
 
-dashAI se distribuye bajo licencia **MIT**, lo que permite su uso, modificación y distribución sin restricciones en proyectos comerciales o institucionales.
+dashAI se distribuye bajo la **[licencia MIT](https://docs.dash-ai.com/discover/overview/)**, que permite el uso, la modificación y la redistribución —incluso en entornos comerciales o institucionales— sujeto a la conservación del aviso de copyright y licencia original.
 
-KNIME y Orange utilizan GPLv3; WEKA, GPL. Las tres licencias incluyen copyleft sobre obras derivadas distribuidas. KNIME presenta además funcionalidades adicionales (scheduling, despliegue gobernado, RBAC y la AI Extension) disponibles únicamente a través de KNIME Business Hub bajo licenciamiento comercial.
+[KNIME](https://www.knime.com/downloads/full-license) y [Orange](https://orangedatamining.com/license/) se distribuyen bajo GPLv3; [WEKA](https://waikato.github.io/weka-wiki/faqs/commercial_applications/), bajo GPL. Las tres licencias imponen obligaciones de copyleft sobre los trabajos derivados distribuidos. KNIME además ofrece funcionalidades no incluidas en su distribución de código abierto —programación de tareas, despliegue gobernado, control de acceso basado en roles, y la AI Extension— disponibles únicamente a través de [KNIME Business Hub](https://www.knime.com/knime-business-hub) bajo una licencia comercial.
 
 ---
 
 ## Extensibilidad
 
-dashAI expone doce clases base organizadas por rol funcional: `BaseModel`, `BaseMetric`, `BaseTask`, `BaseExplainer`, entre otras. Un nuevo componente se implementa subclasificando la abstracción correspondiente y declarando sus parámetros mediante un schema Pydantic. A partir del schema, la plataforma genera automáticamente el formulario de configuración en la interfaz, sin requerir código de frontend. El componente se distribuye vía PyPI e instala directamente desde la interfaz de dashAI.
+dashAI expone [doce clases base](https://docs.dash-ai.com/api/back.html), organizadas por rol funcional, incluyendo `BaseModel`, `BaseMetric`, `BaseTask` y `BaseExplainer`. Un nuevo componente se implementa creando una subclase de la clase base correspondiente y declarando sus parámetros mediante un esquema de Pydantic; [la plataforma deriva el formulario de configuración que se muestra en la interfaz directamente de este esquema](https://docs.dash-ai.com/deep-dive/architecture/), sin código adicional de frontend. El componente resultante se distribuye vía PyPI y se instala desde la propia interfaz de dashAI.
 
-El boilerplate resultante es de aproximadamente **20-40 líneas de código** para componentes simples (métricas, clasificadores básicos) y **70-110 líneas** para modelos con múltiples hiperparámetros, donde la mayor parte del código corresponde a la declaración del schema de parámetros.
+Los mecanismos de extensión de las otras tres plataformas son los siguientes:
 
-Para referencia, los mecanismos de extensión de las otras plataformas evaluadas son los siguientes:
+- **Orange** permite [extensiones en Python](https://orange3.readthedocs.io/projects/orange-development/en/latest/tutorial.html), pero cada widget debe acoplarse a Qt/PyQt e [instanciar manualmente los controles de la interfaz](https://orange3.readthedocs.io/projects/orange-development/en/latest/tutorial-settings.html), ya que no existe generación automática de formularios a partir de esquemas.
+- **WEKA** se extiende en Java [heredando de `AbstractClassifier`](https://waikato.github.io/weka-blog/posts/2018-10-08-making-a-weka-classifier/) e implementando `buildClassifier(Instances)` y `distributionForInstance(Instance)` sobre la abstracción `Instances`. El framework está organizado en [seis jerarquías abstractas de nivel superior](https://github.com/Waikato/weka-3.8/tree/master) (clasificadores, agrupadores, asociadores, filtros, selección de atributos, y cargadores de datos), cada una con su propia clase base.
+- **KNIME**, por la vía oficial, requiere un [plugin OSGi/Eclipse con cuatro clases Java](https://docs.knime.com/latest/analytics_platform_new_node_quickstart_guide/) (`NodeFactory`, `NodeModel`, `NodeDialog` y `NodeView`), además de descriptores `plugin.xml` y `MANIFEST.MF`, y una compilación Maven/Tycho. Desde la versión 4.6 existe una [vía experimental en Python (Labs)](https://docs.knime.com/latest/pure_python_node_extensions_guide/) que genera un diálogo a partir de declaraciones de parámetros, pero no reemplaza la vía Java como enfoque oficial y requiere sus propias herramientas de empaquetado (`pixi`, `knime.yml`).
 
-- **Orange** permite extensiones en Python, pero cada widget requiere acoplarse a Qt/PyQt e instanciar manualmente los controles de interfaz (≈50-70 líneas de código).
-- **WEKA** se extiende en Java heredando de `AbstractClassifier` e implementando `buildClassifier(Instances)` y `distributionForInstance(Instance)` sobre la abstracción `Instances` (≈80-120 líneas de código).
-- **KNIME**, en su vía oficial, requiere un plugin OSGi/Eclipse con cuatro clases Java (`NodeFactory`, `NodeModel`, `NodeDialog` y `NodeView`), además de descriptores `plugin.xml` y `MANIFEST.MF`, y build con Maven/Tycho (≈150-250 líneas de código). Desde la versión 4.6 existe una vía experimental en Python (Labs) que genera UI desde declaraciones de parámetros, pero no reemplaza al camino Java como vía oficial y requiere herramientas de empaquetado propias (`pixi`, `knime.yml`).
+### Arquitectura de la interfaz
 
-### Arquitectura de interfaz
+dashAI adopta una [arquitectura cliente-servidor](https://docs.dash-ai.com/deep-dive/architecture/): un servidor FastAPI expone el catálogo de componentes, los datasets, los trabajos de entrenamiento y los resultados; un frontend en React consume esa API vía HTTP. Cuando se registra un nuevo componente, el servidor expone su esquema JSON y el frontend renderiza el formulario de configuración sin conocimiento previo del componente. El servidor puede ejecutarse en cualquier máquina y ser accedido desde un navegador, incluso desde otro dispositivo en la misma red local.
 
-dashAI adopta una arquitectura cliente servidor: un servidor FastAPI expone el catálogo de componentes, datasets, jobs de entrenamiento y resultados; un frontend React consume esa API vía HTTP. Cuando se registra un componente nuevo, el servidor expone su schema JSON y el frontend renderiza el formulario de configuración sin conocimiento previo del componente. El servidor puede ejecutarse en cualquier máquina y accederse desde un navegador, incluso desde otro dispositivo en la misma red local.
-
-KNIME está construido sobre Eclipse RCP, Orange sobre PyQt y WEKA sobre Java Swing. En los tres casos la interfaz y la lógica de negocio corren en el mismo proceso; añadir un componente nuevo implica modificar también la capa de presentación.
+[KNIME está construido sobre Eclipse RCP](https://www.knime.com/open-source-story), [Orange sobre PyQt](https://github.com/biolab/orange3), y [WEKA sobre Java Swing](https://weka.sourceforge.io/doc.stable/weka/gui/explorer/Explorer.html). En los tres casos la interfaz y la lógica de negocio se ejecutan en el mismo proceso; agregar un nuevo componente también requiere modificar la capa de presentación.
 
 ---
 
 ## Cobertura de tareas
 
-El catálogo nativo de dashAI cubre cuatro tareas predictivas (clasificación tabular, regresión, clasificación de texto y traducción) con aproximadamente quince modelos cada una, junto con cinco LLMs y once modelos de generación de imagen, todos ejecutables localmente. La optimización de hiperparámetros integra Optuna y HyperOpt.
+El catálogo nativo de dashAI cubre cuatro tareas predictivas: clasificación tabular, regresión y clasificación de texto, cada una con quince modelos, y traducción, con nueve. Además incluye cinco modelos de lenguaje de gran tamaño (LLMs) y once modelos de generación de imágenes. Todos los modelos del catálogo nativo se ejecutan localmente. La optimización de hiperparámetros se soporta mediante dos frameworks integrados, Optuna y HyperOpt.
 
-La interfaz está disponible en español e inglés.
+La interfaz está disponible en español, inglés, chino, alemán y portugués.
 
 ---
 
 ## Tabla comparativa
 
-| Criterio                        |             KNIME              |       Orange        |         WEKA         |        **dashAI**         |
-| ------------------------------- | :----------------------------: | :-----------------: | :------------------: | :-----------------------: |
-| **Licenciamiento**              |                                |                     |                      |                           |
-| Licencia                        |             GPLv3              |        GPLv3        |         GPL          |          **MIT**          |
-| Sín paywall productivo          |               No               |         Sí          |          Sí          |          **Sí**           |
-| **Extensibilidad**              |                                |                     |                      |                           |
-| Lenguaje de extensión           | Java (oficial) / Python (Labs) |  Python + Qt/PyQt   |         Java         |        **Python**         |
-| Abstracciones por rol funcional |       1 (nodo genérico)        | 1 (widget genérico) |  6 jerarquías Java   |    **12 clases base**     |
-| Tipo de interfaz                |       Desktop (Eclipse)        |   Desktop (PyQt)    | Desktop (Java Swing) | **Web (React + FastAPI)** |
-| UI generada automáticamente     |            Parcial             |         No          |          No          |          **Sí**           |
-| Boilerplate por componente      |       150-250 LdC (Java)       |      50-70 LdC      |      80-120 LdC      |       **20-40 LdC**       |
-| Soporte GPU                     |            Parcial             |       Parcial       |       Parcial        |        **Partial**        |
-| Interfaz multiidioma (ES/EN)    |               No               |         No          |          No          |          **Sí**           |
-| **Catálogo nativo**             |                                |                     |                      |                           |
-| Modelos clasificación tabular   |              ~11               |         ~12         |         ~39          |          **15**           |
-| Modelos de regresión            |               ~9               |         ~12         |         ~32          |          **15**           |
-| Modelos clasificación de texto  |            Parcial             |       Parcial       |       33 (BoW)       |          **15**           |
-| Modelos de traducción           |            Parcial             |         No          |          No          |           **9**           |
-| LLMs ejecutados localmente      |               No               |         No          |          No          |           **5**           |
-| Modelos de generación de imagen |            Parcial             |         No          |          No          |          **11**           |
-| Frameworks de HPO integrados    |               1                |          0          |          1           |           **2**           |
+| Criterio                          |              KNIME               |        Orange        |          WEKA           |         **dashAI**          |
+| ---------------------------------- | :-------------------------------: | :-------------------: | :----------------------: | :---------------------------: |
+| **Licencia**                       |                                   |                       |                          |                               |
+| Licencia                           |         [GPLv3](https://www.knime.com/downloads/full-license)         |    [GPLv3](https://orangedatamining.com/license/)    |     [GPL](https://waikato.github.io/weka-wiki/faqs/commercial_applications/)      |     **[MIT](https://docs.dash-ai.com/discover/overview/)**     |
+| Sin muro de pago en producción     |          [No](https://www.knime.com/knime-business-hub)          |    [Sí](https://orangedatamining.com/license/)         |      [Sí](https://waikato.github.io/weka-wiki/faqs/commercial_applications/)         |     **[Sí](https://docs.dash-ai.com/discover/overview/)**     |
+| **Extensibilidad**                 |                                   |                       |                          |                               |
+| Lenguaje de extensión              | [Java (oficial)](https://docs.knime.com/latest/analytics_platform_new_node_quickstart_guide/) / [Python (Labs)](https://docs.knime.com/latest/pure_python_node_extensions_guide/) |  [Python + Qt/PyQt](https://orange3.readthedocs.io/projects/orange-development/en/latest/tutorial.html)  |    [Java](https://waikato.github.io/weka-blog/posts/2018-10-08-making-a-weka-classifier/)     |        **[Python](https://docs.dash-ai.com/deep-dive/architecture/)**         |
+| Abstracciones por rol funcional    |        [1 (nodo genérico)](https://github.com/knime/knime-core/blob/master/org.knime.core/src/eclipse/org/knime/core/node/NodeFactory.java)         | [1 (widget genérico)](https://orange3.readthedocs.io/projects/orange-development/en/latest/widget.html) |  [6 jerarquías Java](https://github.com/Waikato/weka-3.8/tree/master)  |    **[12 clases base](https://docs.dash-ai.com/api/back.html)**    |
+| Tipo de interfaz                   |        [Escritorio (Eclipse)](https://www.knime.com/open-source-story)        |   [Escritorio (PyQt)](https://github.com/biolab/orange3)   | [Escritorio (Java Swing)](https://weka.sourceforge.io/doc.stable/weka/gui/explorer/Explorer.html) | **[Web (React + FastAPI)](https://docs.dash-ai.com/deep-dive/architecture/)** |
+| UI autogenerada                    |             [Parcial](https://docs.knime.com/latest/pure_python_node_extensions_guide/)             |         [No](https://orange3.readthedocs.io/projects/orange-development/en/latest/tutorial-settings.html)         |          [Parcial](https://waikato.github.io/weka-blog/posts/2018-10-08-making-a-weka-classifier/)          |          **[Sí](https://docs.dash-ai.com/deep-dive/architecture/)**          |
+| Soporte GPU                        |             Parcial              |        Parcial        |         Parcial          |          **Parcial**          |
+| Interfaz multilingüe               |                No                 |           No           |            No             |            **Sí**             |
+| **Catálogo nativo**                |                                   |                       |                          |                               |
+| Modelos de clasificación tabular   |                ~11                |          ~12           |            ~39            |              15               |
+| Modelos de regresión               |                ~9                 |          ~12           |            ~32            |              15               |
+| Modelos de clasificación de texto  |              Parcial              |        Parcial         |          Parcial          |              15               |
+| Modelos de traducción              |              Parcial              |           No           |             No             |               9               |
+| LLMs ejecutados localmente         |                No                 |           No           |            No             |               5               |
+| Modelos de generación de imágenes  |              Parcial              |           No           |            No             |              11               |
+| Frameworks de HPO integrados       |                 1                  |           0             |             1              |               2               |
 
-**Convenciones:** Sí = soporte nativo completo, Parcial = parcial o requiere extensiones adicionales, No = no soportado, LdC = líneas de código.
-
-:::note UI generada automáticamente
-La vía oficial de KNIME (Java) requiere programar `NodeDialog` y `NodeView` manualmente. La vía experimental Python (Labs, desde v4.6) genera UI desde declaraciones de parámetros, pero no es el camino oficial. Orange y WEKA requieren código de interfaz manual en todos los casos.
-:::
-
-:::note Boilerplate por componente
-Las 150-250 LdC de KNIME corresponden a la vía Java oficial. La vía Python (Labs) reduce ese número pero añade archivos de configuración propios (`knime.yml`, `pixi.toml`). En dashAI: ≈20-40 LdC para componentes simples; ≈70-110 LdC para modelos complejos con múltiples hiperparámetros, donde la mayor parte del código es la declaración del schema de parámetros.
-:::
-
-:::note Solapamiento entre tasks (dashAI)
-9 de los 15 modelos de clasificación tabular tienen contraparte en regresión (Random Forest, Gradient Boosting, SVM, entre otros); cada task dispone de su propia implementación y configuración independiente. En WEKA, regresión y clasificación heredan de `AbstractClassifier` y se diferencian por capability flag.
-:::
+**Leyenda:** Sí = soporte nativo completo, Parcial = soporte parcial o requiere extensiones adicionales, No = no soportado
 
 ---
 
 ## Fuentes
 
-- [knime-python-extension-template: `extension.py`](https://github.com/knime-oss/knime-python-extension-template/blob/releases/2025-12/src/extension.py)
-- [Orange3: `OWDataSamplerA.py`](https://github.com/biolab/orange3/blob/master/doc/development/source/orange-demo/orangedemo/OWDataSamplerA.py)
-- [knime-examples: `UnitConverterNodeModel.java`](https://github.com/knime-oss/knime-examples/blob/master/org.knime.examples.unitconverter/src/org/knime/examples/unitconverter/UnitConverterNodeModel.java)
-- [weka-3.8: `NBTree.java`](https://github.com/Waikato/weka-3.8/blob/master/packages/internal/naiveBayesTree/src/main/java/weka/classifiers/trees/NBTree.java)
-- [weka-3.8: `SMOTE.java`](https://github.com/Waikato/weka-3.8/blob/master/packages/external/SMOTE/src/main/java/weka/filters/supervised/instance/SMOTE.java)
+**Licencia**
+- Licencia de KNIME (GPLv3 + excepción de node-API): https://www.knime.com/downloads/full-license
+- Historia de código abierto de KNIME (contexto de licencia, base Eclipse): https://www.knime.com/open-source-story
+- KNIME Business Hub (funcionalidades solo comerciales: programación, gobernanza, RBAC, AI Gateway): https://www.knime.com/knime-business-hub
+- Licencia de Orange: https://orangedatamining.com/license/
+- Repositorio de Orange3 en GitHub (GPLv3+, dependencia de PyQt): https://github.com/biolab/orange3
+- FAQ de licenciamiento de WEKA (GPL 2.0 para 3.6, GPL 3.0 para >3.7.5): https://waikato.github.io/weka-wiki/faqs/commercial_applications/
+- Licencia de dashAI (MIT): https://docs.dash-ai.com/discover/overview/
+
+**Extensibilidad**
+- KNIME: Create a New KNIME Extension (Quickstart Guide, vía Java: NodeFactory/NodeModel/NodeDialog/NodeView, plugin.xml, MANIFEST.MF): https://docs.knime.com/latest/analytics_platform_new_node_quickstart_guide/
+- KNIME: Pure Python Node Extensions Guide (vía Labs, knime.yml, pixi): https://docs.knime.com/latest/pure_python_node_extensions_guide/
+- Código fuente de NodeFactory de KNIME (la única abstracción genérica de nodo): https://github.com/knime/knime-core/blob/master/org.knime.core/src/eclipse/org/knime/core/node/NodeFactory.java
+- Orange: Widget Development, Getting Started: https://orange3.readthedocs.io/projects/orange-development/en/latest/tutorial.html
+- Orange: Tutorial (construcción manual de la GUI con `gui.spin`, `gui.checkBox`, etc.): https://orange3.readthedocs.io/projects/orange-development/en/latest/tutorial-settings.html
+- Orange: referencia de OWWidget (la única abstracción genérica de widget): https://orange3.readthedocs.io/projects/orange-development/en/latest/widget.html
+- WEKA: "Making a Weka classifier" (blog oficial de WEKA: recorrido por AbstractClassifier, y el mecanismo `GenericObjectEditor`/`@OptionMetadata` que autogenera parcialmente la UI de la hoja de propiedades a partir de anotaciones): https://waikato.github.io/weka-blog/posts/2018-10-08-making-a-weka-classifier/
+- WEKA: Javadoc de AbstractClassifier: https://weka.sourceforge.io/doc.dev/weka/classifiers/AbstractClassifier.html
+- WEKA: seis jerarquías abstractas de nivel superior confirmadas contra la estructura del repositorio (`weka.classifiers.AbstractClassifier`, `weka.clusterers.AbstractClusterer`, `weka.associations.AbstractAssociator`, `weka.filters.Filter`, `weka.attributeSelection.ASEvaluation`, `weka.core.converters.AbstractLoader`): https://github.com/Waikato/weka-3.8/tree/master
+- dashAI: referencia de API de clases abstractas (12 clases base): https://docs.dash-ai.com/api/back.html
+- dashAI: profundización en arquitectura (FastAPI/React, autogeneración de Pydantic a JSON Schema): https://docs.dash-ai.com/deep-dive/architecture/
+
+**Arquitectura de la interfaz**
+- KNIME sobre Eclipse: https://www.knime.com/open-source-story
+- Orange sobre PyQt: https://github.com/biolab/orange3
+- WEKA Explorer extiende `javax.swing.JPanel` (Javadoc): https://weka.sourceforge.io/doc.stable/weka/gui/explorer/Explorer.html
+- Arquitectura cliente-servidor de dashAI: https://docs.dash-ai.com/deep-dive/architecture/
+
+**Catálogo nativo**
+Los conteos del catálogo (modelos por tarea, soporte GPU, disponibilidad multilingüe, frameworks de HPO) se obtuvieron mediante inspección directa de la propia interfaz de cada plataforma (repositorio de nodos de KNIME, catálogo de widgets de Orange, Explorer/Package Manager de WEKA, y catálogo de modelos de dashAI), en lugar de a partir de un único listado externo, ya que ninguna de las cuatro plataformas publica un conteo autoritativo desglosado exactamente de esta manera.

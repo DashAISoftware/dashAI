@@ -161,7 +161,7 @@ def render_block(data):
     ]
 
     for inst in data["institutions"]:
-        lines.append(f"* `{inst['name']} <{inst['url']}>`_ - {inst['role']}")
+        lines.append(f"* `{inst['name']} <{inst['url']}>`_ - {inst['role']['en']}")
     lines.append("")
 
     lines.append(data["acknowledgments"]["text"]["en"])
