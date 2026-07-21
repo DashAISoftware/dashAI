@@ -449,6 +449,8 @@
     "showAll": "Mostrar todas",
     "hideAll": "Ocultar todas",
     "noRows": "Sin filas",
+    "loadingMore": "Cargando más…",
+    "rowsLoaded": "{{count}} de {{total}} filas cargadas",
     "doubleClickToRename": "Doble clic para renombrar",
     "predictedColumn": "Predicción",
     "sortedAsc": "Orden ascendente - clic para descendente",

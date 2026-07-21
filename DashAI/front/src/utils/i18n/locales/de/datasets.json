@@ -440,6 +440,8 @@
     "showAll": "Alle anzeigen",
     "hideAll": "Alle ausblenden",
     "noRows": "Keine Zeilen",
+    "loadingMore": "Weitere werden geladen…",
+    "rowsLoaded": "{{count}} von {{total}} Zeilen geladen",
     "doubleClickToRename": "Doppelklick zum Umbenennen",
     "predictedColumn": "Vorhersage",
     "sortedAsc": "Aufsteigend sortiert - Klick für absteigend",

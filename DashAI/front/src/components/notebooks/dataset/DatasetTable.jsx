@@ -24,6 +24,9 @@ export default function DatasetTable({
   enableRowsPerPageSelector = true,
   rowActions = null,
   targetColumn = null,
+  editableRows = [],
+  infiniteScroll = false,
+  loadMoreStep = 25,
 }) {
   return (
     <LeanDatasetTable
@@ -42,6 +45,9 @@ export default function DatasetTable({
       showExportButton={showExportButton && enableTopToolbar}
       rowActions={rowActions}
       targetColumn={targetColumn}
+      editableRows={editableRows}
+      infiniteScroll={infiniteScroll}
+      loadMoreStep={loadMoreStep}
     />
   );
 }
@@ -60,4 +66,7 @@ DatasetTable.propTypes = {
   enableRowsPerPageSelector: PropTypes.bool,
   rowActions: PropTypes.func,
   targetColumn: PropTypes.string,
+  editableRows: PropTypes.array,
+  infiniteScroll: PropTypes.bool,
+  loadMoreStep: PropTypes.number,
 };

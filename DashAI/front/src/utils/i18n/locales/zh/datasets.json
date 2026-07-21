@@ -420,6 +420,8 @@
     "showAll": "显示全部",
     "hideAll": "隐藏全部",
     "noRows": "无行数据",
+    "loadingMore": "正在加载更多…",
+    "rowsLoaded": "已加载 {{count}} / {{total}} 行",
     "doubleClickToRename": "双击以重命名",
     "predictedColumn": "预测",
     "sortedAsc": "升序排列 - 点击改为降序",

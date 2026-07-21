@@ -146,6 +146,25 @@
   max-width: 320px;
 }
 
+.lean-row--editable .lean-cell {
+  background: rgba(100, 150, 255, 0.08);
+  overflow: visible;
+  white-space: normal;
+}
+
+/* Pinned/actions cells are sticky and need an opaque background (see the
+   pinned-column rules above) — a translucent tint here would let scrolled
+   content bleed through, so composite the tint over the solid body color
+   instead of using a plain rgba background. */
+.lean-row--editable .lean-cell--pinned,
+.lean-row--editable .lean-cell--actions {
+  background: linear-gradient(
+      rgba(100, 150, 255, 0.16),
+      rgba(100, 150, 255, 0.16)
+    ),
+    var(--lean-body-bg, #1f1f1f);
+}
+
 .lean-toolbar {
   display: flex;
   align-items: center;

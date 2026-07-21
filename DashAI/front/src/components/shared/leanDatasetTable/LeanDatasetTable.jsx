@@ -42,6 +42,9 @@ function LeanDatasetTable({
   showExportButton = true,
   rowActions,
   targetColumn,
+  editableRows = [],
+  infiniteScroll = false,
+  loadMoreStep = 25,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -293,6 +296,26 @@ function LeanDatasetTable({
 
   const handleCancelRename = useCallback(() => setEditingColumn(null), []);
 
+  // Grows the table by observing a sentinel below the last row rather than
+  // listening for scroll on `.lean-scroll` - the table has no bounded
+  // height, so it's the surrounding page that scrolls, not this container.
+  const sentinelRef = useRef(null);
+  useEffect(() => {
+    if (!infiniteScroll) return undefined;
+    const el = sentinelRef.current;
+    if (!el) return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading && rows.length < total) {
+          setPageSize((p) => p + loadMoreStep);
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [infiniteScroll, loading, rows.length, total, loadMoreStep]);
+
   return (
     <Box
       className="lean-root"
@@ -402,6 +425,33 @@ function LeanDatasetTable({
             )}
           </thead>
           <tbody>
+            {editableRows.map((draft) => (
+              <tr key={draft.key} className="lean-row lean-row--editable">
+                {visibleColumnKeys.map((key) => {
+                  const isPinned = key === targetColumn;
+                  return (
+                    <td
+                      key={key}
+                      className={
+                        isPinned ? "lean-cell lean-cell--pinned" : "lean-cell"
+                      }
+                      style={
+                        isPinned
+                          ? { right: rowActions ? ACTIONS_COLUMN_WIDTH : 0 }
+                          : undefined
+                      }
+                    >
+                      {draft.renderCell(key)}
+                    </td>
+                  );
+                })}
+                {rowActions && (
+                  <td className="lean-cell lean-cell--actions">
+                    {draft.renderActions ? draft.renderActions() : null}
+                  </td>
+                )}
+              </tr>
+            ))}
             {rows.map((row, i) => (
               <tr key={i} className="lean-row">
                 {visibleColumnKeys.map((key) => (
@@ -422,7 +472,7 @@ function LeanDatasetTable({
             ))}
           </tbody>
         </table>
-        {!loading && rows.length === 0 && (
+        {!loading && rows.length === 0 && editableRows.length === 0 && (
           <Typography
             variant="body2"
             color="text.secondary"
@@ -431,38 +481,68 @@ function LeanDatasetTable({
             {t("datasets:table.noRows")}
           </Typography>
         )}
+        {infiniteScroll && loading && rows.length > 0 && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ p: 1.5, textAlign: "center" }}
+          >
+            {t("datasets:table.loadingMore")}
+          </Typography>
+        )}
+        {infiniteScroll && rows.length < total && (
+          <div ref={sentinelRef} style={{ height: 1 }} />
+        )}
       </div>
-      <TablePagination
-        component="div"
-        sx={{
-          backgroundColor: "var(--lean-body-bg)",
-          border: "1px solid rgba(128, 128, 128, 0.3)",
-          borderTop: "none",
-          borderBottomLeftRadius: 4,
-          borderBottomRightRadius: 4,
-        }}
-        count={total}
-        page={page}
-        rowsPerPage={pageSize}
-        showFirstButton
-        showLastButton
-        onPageChange={(_e, p) => setPage(p)}
-        onRowsPerPageChange={(e) => {
-          setPageSize(parseInt(e.target.value, 10));
-          setPage(0);
-        }}
-        rowsPerPageOptions={
-          enableRowsPerPage
-            ? [...new Set([pageSize, 10, 25, 50])].sort((a, b) => a - b)
-            : [pageSize]
-        }
-        labelRowsPerPage={enableRowsPerPage ? undefined : ""}
-        slotProps={
-          enableRowsPerPage
-            ? undefined
-            : { select: { sx: { display: "none" } } }
-        }
-      />
+      {infiniteScroll ? (
+        <Box
+          sx={{
+            backgroundColor: "var(--lean-body-bg)",
+            border: "1px solid rgba(128, 128, 128, 0.3)",
+            borderTop: "none",
+            borderBottomLeftRadius: 4,
+            borderBottomRightRadius: 4,
+            px: 2,
+            py: 1,
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            {t("datasets:table.rowsLoaded", { count: rows.length, total })}
+          </Typography>
+        </Box>
+      ) : (
+        <TablePagination
+          component="div"
+          sx={{
+            backgroundColor: "var(--lean-body-bg)",
+            border: "1px solid rgba(128, 128, 128, 0.3)",
+            borderTop: "none",
+            borderBottomLeftRadius: 4,
+            borderBottomRightRadius: 4,
+          }}
+          count={total}
+          page={page}
+          rowsPerPage={pageSize}
+          showFirstButton
+          showLastButton
+          onPageChange={(_e, p) => setPage(p)}
+          onRowsPerPageChange={(e) => {
+            setPageSize(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={
+            enableRowsPerPage
+              ? [...new Set([pageSize, 10, 25, 50])].sort((a, b) => a - b)
+              : [pageSize]
+          }
+          labelRowsPerPage={enableRowsPerPage ? undefined : ""}
+          slotProps={
+            enableRowsPerPage
+              ? undefined
+              : { select: { sx: { display: "none" } } }
+          }
+        />
+      )}
     </Box>
   );
 }
@@ -483,6 +563,15 @@ LeanDatasetTable.propTypes = {
   showExportButton: PropTypes.bool,
   rowActions: PropTypes.func,
   targetColumn: PropTypes.string,
+  editableRows: PropTypes.arrayOf(
+    PropTypes.shape({
+      key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      renderCell: PropTypes.func.isRequired,
+      renderActions: PropTypes.func,
+    }),
+  ),
+  infiniteScroll: PropTypes.bool,
+  loadMoreStep: PropTypes.number,
 };
 
 export default LeanDatasetTable;
