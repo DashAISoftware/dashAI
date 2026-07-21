@@ -1,19 +1,12 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Typography,
-  Button,
-  IconButton,
-  Chip,
-  Tooltip,
-} from "@mui/material";
+import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
 import { PlayArrow, Delete, Info } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import RunCard from "./RunCard";
 import InfoModal from "../shared/InfoModal";
-import { getRunStatus, getRunStatusColor } from "../../utils/runStatus";
+import RunStatusDot from "../shared/RunStatusDot";
 
 function formatCreatedDate(dateStr, locale) {
   if (!dateStr) return null;
@@ -67,7 +60,6 @@ export default function ModelDetailView({
 
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
-  const statusText = getRunStatus(run.status, t);
   const canTrain = run.status === 0 || run.status === 3 || run.status === 4;
   const isRunning = run.status === 1 || run.status === 2;
 
@@ -102,11 +94,7 @@ export default function ModelDetailView({
           <Typography variant="body1" color="text.secondary">
             {modelDisplayName}
           </Typography>
-          <Chip
-            label={statusText}
-            color={getRunStatusColor(run.status)}
-            size="small"
-          />
+          <RunStatusDot status={run.status} />
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
