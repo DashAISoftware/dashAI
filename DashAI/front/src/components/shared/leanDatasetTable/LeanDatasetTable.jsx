@@ -418,7 +418,11 @@ function LeanDatasetTable({
           setPageSize(parseInt(e.target.value, 10));
           setPage(0);
         }}
-        rowsPerPageOptions={enableRowsPerPage ? [10, 25, 50] : [pageSize]}
+        rowsPerPageOptions={
+          enableRowsPerPage
+            ? [...new Set([pageSize, 10, 25, 50])].sort((a, b) => a - b)
+            : [pageSize]
+        }
         labelRowsPerPage={enableRowsPerPage ? undefined : ""}
         slotProps={
           enableRowsPerPage

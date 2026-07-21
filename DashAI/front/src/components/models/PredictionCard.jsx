@@ -3,17 +3,16 @@ import PropTypes from "prop-types";
 import {
   Typography,
   IconButton,
-  Chip,
   Box,
   Tooltip,
   CircularProgress,
 } from "@mui/material";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
+import RunStatusDot from "../shared/RunStatusDot";
 import {
   Delete as DeleteIcon,
   Download as DownloadIcon,
 } from "@mui/icons-material";
-import { getPredictionStatus } from "../../utils/predictionStatus";
 import { deletePrediction } from "../../api/predict";
 import { useSnackbar } from "notistack";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
@@ -59,23 +58,6 @@ export default function PredictionCard({
   }, [prediction?.results_path]);
 
   const statusText = prediction.status;
-
-  // Status color mapping
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 0: // Not Started
-        return "default";
-      case 1: // Delivered
-      case 2: // Started
-        return "info";
-      case 3: // Finished
-        return "success";
-      case 4: // Error
-        return "error";
-      default:
-        return "default";
-    }
-  };
 
   const isRunning = RUNNING_STATUSES.includes(statusText);
   const isFinished = statusText === 3; // Finished
@@ -169,22 +151,22 @@ export default function PredictionCard({
           sx={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "start",
+            alignItems: "center",
             mb: 2,
           }}
         >
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle2" fontWeight="medium">
+          <Box sx={{ flex: 1, display: "flex", alignItems: "center", gap: 2 }}>
+            <Typography
+              variant="subtitle2"
+              fontWeight="medium"
+              sx={{ lineHeight: 1 }}
+            >
               {t("prediction:label.prediction")} #
               {displayNumber ?? prediction.id}
             </Typography>
+            <RunStatusDot status={statusText} />
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Chip
-              label={getPredictionStatus(statusText, t)}
-              color={getStatusColor(statusText)}
-              size="small"
-            />
             <Tooltip title={t("prediction:button.downloadResults")}>
               <span>
                 <IconButton
