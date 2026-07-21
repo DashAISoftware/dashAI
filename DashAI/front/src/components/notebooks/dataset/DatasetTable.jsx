@@ -22,6 +22,7 @@ export default function DatasetTable({
   showExportButton = true,
   enableTopToolbar = true,
   enableRowsPerPageSelector = true,
+  rowActions = null,
 }) {
   return (
     <LeanDatasetTable
@@ -38,6 +39,7 @@ export default function DatasetTable({
       enableSearch={enableTopToolbar}
       enableRowsPerPage={enableRowsPerPageSelector}
       showExportButton={showExportButton && enableTopToolbar}
+      rowActions={rowActions}
     />
   );
 }
@@ -54,4 +56,5 @@ DatasetTable.propTypes = {
   showExportButton: PropTypes.bool,
   enableTopToolbar: PropTypes.bool,
   enableRowsPerPageSelector: PropTypes.bool,
+  rowActions: PropTypes.func,
 };

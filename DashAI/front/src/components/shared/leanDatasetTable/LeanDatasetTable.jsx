@@ -35,10 +35,11 @@ function LeanDatasetTable({
   enableRowsPerPage = true,
   enableColumnVisibility = true,
   showExportButton = true,
+  rowActions,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["datasets"]);
+  const { t } = useTranslation(["datasets", "common"]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [rows, setRows] = useState([]);
@@ -170,7 +171,7 @@ function LeanDatasetTable({
 
   const allColumnKeys =
     rows.length > 0
-      ? Object.keys(rows[0]).filter((k) => k !== "id")
+      ? Object.keys(rows[0]).filter((k) => k !== "id" && !k.startsWith("__"))
       : Object.keys(columnTypes);
 
   const visibleColumnKeys = useMemo(
@@ -355,6 +356,15 @@ function LeanDatasetTable({
                   />
                 );
               })}
+              {rowActions && (
+                <th className="lean-th">
+                  <div className="lean-th-inner">
+                    <div className="lean-th-name-row">
+                      {t("common:actions")}
+                    </div>
+                  </div>
+                </th>
+              )}
             </tr>
             {enableFilters && showFilters && (
               <tr>
@@ -376,6 +386,7 @@ function LeanDatasetTable({
                     />
                   );
                 })}
+                {rowActions && <td className="lean-cell" />}
               </tr>
             )}
           </thead>
@@ -385,6 +396,7 @@ function LeanDatasetTable({
                 {visibleColumnKeys.map((key) => (
                   <LeanCell key={key} value={row[key]} query={highlightQuery} />
                 ))}
+                {rowActions && <td className="lean-cell">{rowActions(row)}</td>}
               </tr>
             ))}
           </tbody>
@@ -448,6 +460,7 @@ LeanDatasetTable.propTypes = {
   enableRowsPerPage: PropTypes.bool,
   enableColumnVisibility: PropTypes.bool,
   showExportButton: PropTypes.bool,
+  rowActions: PropTypes.func,
 };
 
 export default LeanDatasetTable;

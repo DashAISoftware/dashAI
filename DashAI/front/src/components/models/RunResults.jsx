@@ -36,6 +36,7 @@ import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import PillTabs from "../shared/PillTabs";
 import ExplainersCard from "../explainers/ExplainersCard";
 import PredictionCard from "./PredictionCard";
+import ManualPredictionsTable from "./ManualPredictionsTable";
 import { LoadingButton } from "@mui/lab";
 import InlineExplainerCreator from "../explainers/InlineExplainerCreator";
 import DatasetPredictionPanel from "./DatasetPredictionPanel";
@@ -829,6 +830,18 @@ export default function RunResults({
                       ? t("models:label.noDatasetPredictionsYet")
                       : t("models:label.noManualPredictionsYet")}
                   </Typography>
+                );
+              }
+
+              if (predictionFilter === "manual") {
+                return (
+                  <ManualPredictionsTable
+                    predictions={visiblePredictions}
+                    displayNumbers={predictionDisplayNumbers}
+                    targetColumn={outputColumn}
+                    datasetSample={trainingDatasetSample}
+                    onDelete={handlePredictionDeleted}
+                  />
                 );
               }
 
