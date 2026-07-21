@@ -21,7 +21,8 @@ Each component class declares a `TYPE` class attribute that determines its categ
 | `GenerativeTask`  | `BaseGenerativeTask`  | Define generative task semantics     | TextToTextGenerationTask, TextToImageGenerationTask, ControlNetTask |
 | `Metric`          | `BaseMetric`          | Evaluate model performance           | Accuracy, F1, RMSE, MAE                                             |
 | `Explorer`        | `BaseExplorer`        | Visualize and analyze data           | ScatterPlotExplorer, HistogramPlotExplorer                          |
-| `Explainer`       | `BaseExplainer`       | Interpret model predictions          | KernelShap, PermutationFeatureImportance                            |
+| `GlobalExplainer` | `BaseGlobalExplainer` | Interpret overall model behavior     | PermutationFeatureImportance, PartialDependence                     |
+| `LocalExplainer`  | `BaseLocalExplainer`  | Interpret individual predictions     | KernelShap                                                          |
 | `Converter`       | `BaseConverter`       | Transform features                   | StandardScaler, OneHotEncoder, PCA, SMOTE                           |
 | `DataLoader`      | `BaseDataLoader`      | Load datasets from files             | CSVDataLoader, ExcelDataLoader                                      |
 | `Optimizer`       | `BaseOptimizer`       | Hyperparameter optimization          | Optuna based optimizers                                             |
