@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  Divider,
-  Button,
-  ToggleButtonGroup,
-  ToggleButton,
-} from "@mui/material";
+import { Box, Typography, Divider, Button, ToggleButton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
 import { PlayArrow } from "@mui/icons-material";
@@ -17,6 +10,7 @@ import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
+import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import { useTranslation } from "react-i18next";
 
 import { useModels } from "./ModelsContext";
@@ -494,13 +488,11 @@ export default function SessionVisualization() {
                   {(hasTrainMetrics ||
                     hasValidationMetrics ||
                     hasTestMetrics) && (
-                    <ToggleButtonGroup
+                    <PillToggleButtonGroup
                       value={metricSplit}
-                      exclusive
                       onChange={(e, newValue) => {
                         if (newValue !== null) setMetricSplit(newValue);
                       }}
-                      size="small"
                     >
                       {hasTrainMetrics && (
                         <ToggleButton value="train">
@@ -517,7 +509,7 @@ export default function SessionVisualization() {
                           {t("common:test")}
                         </ToggleButton>
                       )}
-                    </ToggleButtonGroup>
+                    </PillToggleButtonGroup>
                   )}
                 </Box>
               </Box>

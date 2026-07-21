@@ -3,7 +3,6 @@ import {
   Divider,
   MenuItem,
   Select,
-  ToggleButtonGroup,
   ToggleButton,
   Tooltip,
   Typography,
@@ -16,6 +15,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getModelSessionById } from "../../api/modelSession";
 import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
+import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import api from "../../api/api";
 
 // Same color source as the session results charts (ResultsGraphsPlot /
@@ -383,20 +383,18 @@ export function LiveMetricsChart({
         alignItems="center"
         mb={4}
       >
-        <ToggleButtonGroup
+        <PillToggleButtonGroup
           value={split}
-          exclusive
           onChange={(e, newValue) => {
             if (newValue !== null) setSplit(newValue);
           }}
-          size="small"
         >
           <ToggleButton value="TRAIN">{t("models:label.train")}</ToggleButton>
           <ToggleButton value="VALIDATION">
             {t("models:label.validation")}
           </ToggleButton>
           <ToggleButton value="TEST">{t("models:label.test")}</ToggleButton>
-        </ToggleButtonGroup>
+        </PillToggleButtonGroup>
 
         <ResultsGraphsParameters
           currentMetrics={Object.keys(filteredMetrics)}
