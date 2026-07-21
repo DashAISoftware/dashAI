@@ -158,7 +158,8 @@ async def get_global_explanation_plot(
     Returns
     -------
     List[dict]
-        A JSON with the explanation plot.
+        A list of artifact dicts (``{"type", "payload", "title"}``) with the
+        explanation plots.
 
     Raises
     ------
@@ -167,6 +168,8 @@ async def get_global_explanation_plot(
         database.
     """
     import pickle
+
+    from DashAI.back.core.artifacts import normalize_artifacts
 
     with session_factory() as db:
         try:
@@ -198,7 +201,7 @@ async def get_global_explanation_plot(
                 detail="Internal database error",
             ) from e
 
-    return plot
+    return normalize_artifacts(plot)
 
 
 @router.post("/global", status_code=status.HTTP_201_CREATED)
@@ -441,7 +444,8 @@ async def get_local_explanation_plot(
     Returns
     -------
     List[dict]
-        A JSON with the explanation plot.
+        A list of artifact dicts (``{"type", "payload", "title"}``) with the
+        explanation plots, typically one per explained instance.
 
     Raises
     ------
@@ -450,6 +454,8 @@ async def get_local_explanation_plot(
         database.
     """
     import pickle
+
+    from DashAI.back.core.artifacts import normalize_artifacts
 
     with session_factory() as db:
         try:
@@ -481,7 +487,7 @@ async def get_local_explanation_plot(
                 detail="Internal database error",
             ) from e
 
-    return plots
+    return normalize_artifacts(plots)
 
 
 @router.post("/local", status_code=status.HTTP_201_CREATED)
