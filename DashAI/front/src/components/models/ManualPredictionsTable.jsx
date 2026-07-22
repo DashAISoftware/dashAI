@@ -555,23 +555,6 @@ export default function ManualPredictionsTable({
         </LoadingButton>
       </Box>
 
-      {runningPredictions.length > 0 && (
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            color: "text.secondary",
-            mb: 3,
-          }}
-        >
-          <CircularProgress size={16} />
-          <Typography variant="body2">
-            {t("prediction:label.predictionInProgress")}
-          </Typography>
-        </Box>
-      )}
-
       {(finishedPredictions.length > 0 || editableRows.length > 0) && (
         <DatasetTable
           fetchPage={fetchPage}
