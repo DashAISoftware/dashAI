@@ -332,7 +332,27 @@ export default function SessionVisualization() {
           <>
             {/* Session header — breadcrumb, title, quick stats */}
             <Box sx={{ px: 4, pt: 4 }}>
-              <ModelsBreadcrumbs />
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <ModelsBreadcrumbs />
+                <IconButton
+                  size="small"
+                  onClick={() => setSessionInfoOpen(true)}
+                >
+                  <InfoIcon
+                    fontSize="small"
+                    sx={{
+                      color: "text.secondary",
+                      "&:hover": { color: "text.primary" },
+                    }}
+                  />
+                </IconButton>
+              </Box>
               <Box
                 sx={{
                   display: "flex",
@@ -354,32 +374,20 @@ export default function SessionVisualization() {
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  {runs.length > 0 && (
-                    <Button
-                      variant="contained"
-                      size="small"
-                      startIcon={<PlayArrow />}
-                      disabled={!runs.some((r) => r.status === 0)}
-                      onClick={() => {
-                        const notStartedRuns = runs.filter(
-                          (r) => r.status === 0,
-                        );
-                        notStartedRuns.forEach((run) => onTrain(run));
-                      }}
-                    >
-                      {t("models:button.runAll")}
-                    </Button>
-                  )}
-                  <IconButton onClick={() => setSessionInfoOpen(true)}>
-                    <InfoIcon
-                      sx={{
-                        color: "text.secondary",
-                        "&:hover": { color: "text.primary" },
-                      }}
-                    />
-                  </IconButton>
-                </Box>
+                {runs.length > 0 && (
+                  <Button
+                    variant="contained"
+                    size="small"
+                    startIcon={<PlayArrow />}
+                    disabled={!runs.some((r) => r.status === 0)}
+                    onClick={() => {
+                      const notStartedRuns = runs.filter((r) => r.status === 0);
+                      notStartedRuns.forEach((run) => onTrain(run));
+                    }}
+                  >
+                    {t("models:button.runAll")}
+                  </Button>
+                )}
               </Box>
             </Box>
 
