@@ -45,6 +45,7 @@ import { checkHowManyOptimazers } from "../../utils/schema";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { useModels } from "./ModelsContext";
+import { alpha } from "@mui/material/styles";
 import { Virtuoso } from "react-virtuoso";
 
 // Stable reference returned for cache misses.
@@ -656,33 +657,6 @@ export default function RunResults({
           />
         </PillTabs>
       </Box>
-
-      {/* Scope selector, shown only on the Explainability tab. Pushed right so
-          it reads as a filter on the tab, not a third tab group. */}
-      {activeTab === 1 && isFinished && (
-        <Box
-          sx={{
-            ml: "auto",
-            display: "flex",
-            alignItems: "flex-end",
-            alignSelf: "flex-end",
-          }}
-        >
-          <PillToggleButtonGroup
-            value={explainerFilter}
-            onChange={(e, newValue) => {
-              if (newValue !== null) setExplainerFilter(newValue);
-            }}
-          >
-            <ToggleButton value="global" sx={{ px: 1.5 }}>
-              {t("models:label.globalExplainers")}
-            </ToggleButton>
-            <ToggleButton value="local" sx={{ px: 1.5 }}>
-              {t("models:label.localExplainers")}
-            </ToggleButton>
-          </PillToggleButtonGroup>
-        </Box>
-      )}
     </Box>
   );
 
@@ -701,8 +675,38 @@ export default function RunResults({
       )}
 
       {activeTab === 1 && isFinished && (
-        <Box sx={{ py: 4, width: "100%" }}>
-          {/* Scope selector (global/local) lives in the tabs header now. */}
+        <Box sx={{ pb: 4, width: "100%" }}>
+          {/* Scope selector pinned to the upper right of the content, so it
+              stays visible while the card list scrolls. */}
+          <Box
+            sx={{
+              position: "sticky",
+              top: 0,
+              zIndex: 2,
+              display: "flex",
+              justifyContent: "flex-end",
+              mb: 2,
+            }}
+          >
+            <PillToggleButtonGroup
+              value={explainerFilter}
+              onChange={(e, newValue) => {
+                if (newValue !== null) setExplainerFilter(newValue);
+              }}
+              sx={{
+                bgcolor: (theme) => alpha(theme.palette.ui.box, 0.8),
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              <ToggleButton value="global" sx={{ px: 1.5 }}>
+                {t("models:label.globalExplainers")}
+              </ToggleButton>
+              <ToggleButton value="local" sx={{ px: 1.5 }}>
+                {t("models:label.localExplainers")}
+              </ToggleButton>
+            </PillToggleButtonGroup>
+          </Box>
+
           {activeExplainers.length === 0 ? (
             <Typography
               variant="body2"
