@@ -143,6 +143,8 @@
   "type": "Typ",
   "unknown": "Unbekannt",
   "unknownError": "Unbekannter Fehler",
+  "yes": "Ja",
+  "no": "Nein",
   "update": "Aktualisieren",
   "upload": "Hochladen",
   "user": "Benutzer",

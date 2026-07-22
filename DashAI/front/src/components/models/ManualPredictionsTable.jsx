@@ -1,0 +1,600 @@
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
+import PropTypes from "prop-types";
+import {
+  Box,
+  Typography,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+  Button,
+} from "@mui/material";
+import {
+  Delete as DeleteIcon,
+  AddCircleOutline,
+  PlayArrow as PlayArrowIcon,
+} from "@mui/icons-material";
+import { LoadingButton } from "@mui/lab";
+import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
+import DatasetTable from "../notebooks/dataset/DatasetTable";
+import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
+import InputField from "../predictions/InputField";
+import {
+  getDatasetFile,
+  getDatasetTypesByFilePath,
+  getDatasetTypes,
+  getDatasetSample,
+} from "../../api/datasets";
+import {
+  createPrediction,
+  deletePrediction,
+  getPredictions,
+} from "../../api/predict";
+import { enqueuePredictionJob } from "../../api/job";
+import { getModelSessionById } from "../../api/modelSession";
+import { startJobPolling } from "../../utils/jobPoller";
+import {
+  getTargetDecimals,
+  formatPredictionRows,
+} from "../../utils/predictionFormat";
+import "../shared/leanDatasetTable/leanDatasetTable.css";
+
+// Manual predictions are entered by hand, so each one only ever produces a
+// handful of rows — fetching the full result in one call (instead of the
+// paginated flow used for dataset predictions) is safe here.
+const FETCH_ALL_PAGE_SIZE = 10000;
+
+function applyFilter(rows, filterModel) {
+  if (!filterModel?.items?.length) return rows;
+  return rows.filter((row) =>
+    filterModel.items.every(({ field, operator, value }) => {
+      const cell = row[field];
+      switch (operator) {
+        case "isEmpty":
+          return cell === null || cell === undefined || cell === "";
+        case "isNotEmpty":
+          return cell !== null && cell !== undefined && cell !== "";
+        case "equals":
+          return String(cell) === String(value);
+        case "contains":
+          return String(cell ?? "")
+            .toLowerCase()
+            .includes(String(value ?? "").toLowerCase());
+        case "startsWith":
+          return String(cell ?? "")
+            .toLowerCase()
+            .startsWith(String(value ?? "").toLowerCase());
+        case "endsWith":
+          return String(cell ?? "")
+            .toLowerCase()
+            .endsWith(String(value ?? "").toLowerCase());
+        case "greaterThan":
+          return Number(cell) > Number(value);
+        case "greaterThanOrEqualTo":
+          return Number(cell) >= Number(value);
+        case "lessThan":
+          return Number(cell) < Number(value);
+        case "lessThanOrEqualTo":
+          return Number(cell) <= Number(value);
+        case "between": {
+          const [min, max] = value ?? [];
+          const num = Number(cell);
+          if (min != null && String(min).trim() !== "" && num < Number(min))
+            return false;
+          if (max != null && String(max).trim() !== "" && num > Number(max))
+            return false;
+          return true;
+        }
+        default:
+          return true;
+      }
+    }),
+  );
+}
+
+function applySort(rows, sortModel) {
+  if (!sortModel?.length) return rows;
+  const { id, desc } = sortModel[0];
+  const sorted = [...rows].sort((a, b) => {
+    const av = a[id];
+    const bv = b[id];
+    if (av == null && bv == null) return 0;
+    if (av == null) return -1;
+    if (bv == null) return 1;
+    if (typeof av === "number" && typeof bv === "number") return av - bv;
+    return String(av).localeCompare(String(bv));
+  });
+  return desc ? sorted.reverse() : sorted;
+}
+
+export default function ManualPredictionsTable({
+  run,
+  session,
+  predictions,
+  displayNumbers,
+  targetColumn,
+  datasetSample,
+  onSaved,
+  onDelete,
+}) {
+  const { t } = useTranslation(["prediction", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
+  const [allRows, setAllRows] = useState([]);
+  const [columnTypes, setColumnTypes] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Session metadata needed to render editable "add row" inputs.
+  const [modelSession, setModelSession] = useState(null);
+  const [inputTypes, setInputTypes] = useState({});
+  const [inputSample, setInputSample] = useState(null);
+  const [loadingSession, setLoadingSession] = useState(true);
+
+  // Each entry is `{ key, values, status: "draft" | "pending", predictionId }`.
+  // Rows stay in this same array across the whole draft -> pending -> real-row
+  // lifecycle so they never have to be removed and re-added elsewhere - once
+  // the real row lands in `allRows`, the entry is filtered out of
+  // `editableRows` (see below) instead of disappearing and popping back in.
+  const [manualEntries, setManualEntries] = useState([]);
+  const [isRunning, setIsRunning] = useState(false);
+  const nextEntryKeyRef = useRef(0);
+
+  const predictionLabel = t("prediction:label.prediction");
+
+  const finishedPredictions = useMemo(
+    () => predictions.filter((p) => p.status === 3),
+    [predictions],
+  );
+
+  const refetchRows = useCallback(() => {
+    if (finishedPredictions.length === 0) {
+      setAllRows([]);
+      setColumnTypes({});
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const targetDecimals = getTargetDecimals(datasetSample, targetColumn);
+
+    // Newest prediction first, so it doesn't get pushed out of view.
+    const orderedPredictions = [...finishedPredictions].reverse();
+
+    Promise.all(
+      orderedPredictions.map((prediction) =>
+        getDatasetFile(prediction.results_path, 0, FETCH_ALL_PAGE_SIZE).then(
+          (data) => {
+            const formatted = formatPredictionRows(
+              data.rows ?? [],
+              targetColumn,
+              targetDecimals,
+            );
+            return formatted.map((row) => ({
+              [`${predictionLabel} #`]: displayNumbers.get(prediction.id),
+              ...row,
+              __predictionId: prediction.id,
+            }));
+          },
+        ),
+      ),
+    )
+      .then((groups) => setAllRows(groups.flat()))
+      .catch(() => setAllRows([]))
+      .finally(() => setLoading(false));
+
+    getDatasetTypesByFilePath(finishedPredictions[0].results_path)
+      .then((types) => setColumnTypes(types))
+      .catch(() => {});
+  }, [
+    finishedPredictions,
+    targetColumn,
+    datasetSample,
+    displayNumbers,
+    predictionLabel,
+  ]);
+
+  useEffect(() => {
+    refetchRows();
+  }, [refetchRows]);
+
+  // Fetch the model session + input column metadata once, so "Add Row" can
+  // render editable fields matching the model's expected input schema.
+  useEffect(() => {
+    let cancelled = false;
+    const fetchSessionData = async () => {
+      if (!run) return;
+      setLoadingSession(true);
+      try {
+        const sessionData = await getModelSessionById(
+          run.model_session_id || session?.id,
+        );
+        if (cancelled) return;
+        setModelSession(sessionData);
+        const [types, sample] = await Promise.all([
+          getDatasetTypes(sessionData.dataset_id),
+          getDatasetSample(sessionData.dataset_id),
+        ]);
+        if (cancelled) return;
+        setInputTypes(types);
+        setInputSample(sample);
+      } catch (error) {
+        console.error(
+          "Error loading session data for manual predictions:",
+          error,
+        );
+      } finally {
+        if (!cancelled) setLoadingSession(false);
+      }
+    };
+    fetchSessionData();
+    return () => {
+      cancelled = true;
+    };
+  }, [run, session]);
+
+  const inputColumns = modelSession?.input_columns ?? [];
+
+  const createEmptyRow = useCallback(() => {
+    if (!inputSample || inputColumns.length === 0) return {};
+    const randomIndex = Math.floor(
+      Math.random() * inputSample[inputColumns[0]].length,
+    );
+    const row = {};
+    inputColumns.forEach((col) => {
+      const typeInfo = inputTypes[col];
+      if (typeInfo?.type === "Image") {
+        row[col] = null;
+      } else if (
+        typeInfo?.type === "Categorical" &&
+        typeInfo?.categories?.length > 0
+      ) {
+        row[col] =
+          typeInfo.categories[randomIndex % typeInfo.categories.length];
+      } else {
+        row[col] = inputSample[col][randomIndex];
+      }
+    });
+    return row;
+  }, [inputColumns, inputTypes, inputSample]);
+
+  const handleAddRow = () => {
+    const key = `manual-${nextEntryKeyRef.current++}`;
+    setManualEntries((prev) => [
+      ...prev,
+      { key, values: createEmptyRow(), status: "draft" },
+    ]);
+  };
+
+  const handleDraftChange = useCallback((key, col, value) => {
+    setManualEntries((prev) =>
+      prev.map((entry) =>
+        entry.key === key
+          ? { ...entry, values: { ...entry.values, [col]: value } }
+          : entry,
+      ),
+    );
+  }, []);
+
+  const handleDeleteDraftRow = (key) => {
+    setManualEntries((prev) => prev.filter((entry) => entry.key !== key));
+  };
+
+  const draftEntries = useMemo(
+    () => manualEntries.filter((entry) => entry.status === "draft"),
+    [manualEntries],
+  );
+
+  // Once a pending entry's real row shows up in `allRows`, drop it from
+  // state - it's already excluded from `editableRows` below by then, so this
+  // is just cleanup and never causes a visual gap.
+  useEffect(() => {
+    setManualEntries((prev) => {
+      const next = prev.filter(
+        (entry) =>
+          entry.status === "draft" ||
+          !allRows.some((r) => r.__predictionId === entry.predictionId),
+      );
+      return next.length === prev.length ? prev : next;
+    });
+  }, [allRows]);
+
+  const handleRunPrediction = async () => {
+    if (draftEntries.length === 0) return;
+    setIsRunning(true);
+    try {
+      // Each draft row becomes its own prediction, so every row can later
+      // be viewed/deleted independently.
+      const submissions = await Promise.all(
+        draftEntries.map(async (entry) => {
+          const prediction = await createPrediction(run.id, null);
+          const jobResponse = await enqueuePredictionJob(prediction.id, [
+            entry.values,
+          ]);
+          if (!jobResponse || !jobResponse.id) {
+            throw new Error("Failed to enqueue prediction job");
+          }
+          return { entry, prediction, jobId: jobResponse.id };
+        }),
+      );
+
+      enqueueSnackbar(t("prediction:message.predictionJobSubmitted"), {
+        variant: "success",
+      });
+
+      // Flip the submitted rows to "pending" in place rather than clearing
+      // them, so they stay put (as read-only, spinner rows) until the real
+      // row is ready instead of disappearing and popping back in elsewhere.
+      setManualEntries((prev) =>
+        prev.map((entry) => {
+          const match = submissions.find((s) => s.entry.key === entry.key);
+          return match
+            ? { ...entry, status: "pending", predictionId: match.prediction.id }
+            : entry;
+        }),
+      );
+
+      let predictionsAfterEnqueue = [];
+      try {
+        predictionsAfterEnqueue = await getPredictions(run.id);
+      } catch (refreshError) {
+        console.error(
+          "Error refreshing predictions after enqueueing jobs:",
+          refreshError,
+        );
+      }
+
+      submissions.forEach(({ entry, prediction, jobId }) => {
+        const freshlyCreated = predictionsAfterEnqueue.find(
+          (p) => p.id === prediction.id,
+        );
+        const optimisticPrediction = {
+          ...(freshlyCreated || prediction),
+          status: (freshlyCreated || prediction).status ?? 1,
+        };
+        if (onSaved) onSaved(optimisticPrediction);
+
+        startJobPolling(
+          jobId,
+          async () => {
+            const updatedPredictions = await getPredictions(run.id);
+            const updatedPrediction = updatedPredictions.find(
+              (p) => p.id === prediction.id,
+            );
+            enqueueSnackbar(t("prediction:message.predictionCompleted"), {
+              variant: "success",
+            });
+            if (onSaved) onSaved(updatedPrediction || prediction);
+          },
+          async (result) => {
+            console.error("Prediction job failed:", result);
+            enqueueSnackbar(
+              t("prediction:error.predictionFailed", {
+                error: result.error || t("common:unknownError"),
+              }),
+              { variant: "error" },
+            );
+            // This entry will never gain a real row, so it can't rely on the
+            // `allRows` cleanup effect - drop it here instead.
+            setManualEntries((prev) => prev.filter((e) => e.key !== entry.key));
+            try {
+              const updatedPredictions = await getPredictions(run.id);
+              const updatedPrediction = updatedPredictions.find(
+                (p) => p.id === prediction.id,
+              );
+              if (onSaved) onSaved(updatedPrediction || prediction);
+            } catch (refreshError) {
+              console.error(
+                "Error refreshing prediction after job failure:",
+                refreshError,
+              );
+            }
+          },
+        );
+      });
+    } catch (error) {
+      console.error("Error saving predictions:", error);
+      enqueueSnackbar(t("prediction:error.creatingPrediction"), {
+        variant: "error",
+      });
+    } finally {
+      setIsRunning(false);
+    }
+  };
+
+  const extendedColumnTypes = useMemo(() => {
+    const base = Object.keys(columnTypes).length > 0 ? columnTypes : inputTypes;
+    return {
+      [`${predictionLabel} #`]: "Integer",
+      ...base,
+    };
+  }, [columnTypes, inputTypes, predictionLabel]);
+
+  const editableRows = useMemo(() => {
+    // A pending entry keeps rendering here (instead of being removed) until
+    // its real row is actually present in `allRows` - see the cleanup effect
+    // above.
+    const visible = manualEntries.filter(
+      (entry) =>
+        entry.status === "draft" ||
+        !allRows.some((r) => r.__predictionId === entry.predictionId),
+    );
+    return visible.map((entry) => ({
+      key: entry.key,
+      renderCell: (colKey) => {
+        if (!inputColumns.includes(colKey)) {
+          return entry.status === "pending" ? (
+            <CircularProgress size={14} />
+          ) : (
+            "—"
+          );
+        }
+        if (entry.status === "pending") {
+          const value = entry.values[colKey];
+          const display =
+            value instanceof File ? value.name : String(value ?? "");
+          return (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ opacity: 0.7 }}
+            >
+              {display}
+            </Typography>
+          );
+        }
+        return (
+          <InputField
+            handleChange={handleDraftChange}
+            rowIndex={entry.key}
+            col={colKey}
+            typeInfo={inputTypes[colKey]}
+            value={entry.values[colKey]}
+            placeholder={inputSample?.[colKey]?.[0]}
+          />
+        );
+      },
+      renderActions: () =>
+        entry.status === "pending" ? (
+          <CircularProgress size={16} />
+        ) : (
+          <IconButton
+            size="small"
+            color="error"
+            onClick={() => handleDeleteDraftRow(entry.key)}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        ),
+    }));
+  }, [
+    manualEntries,
+    allRows,
+    inputColumns,
+    inputTypes,
+    inputSample,
+    handleDraftChange,
+  ]);
+
+  const fetchPage = useCallback(
+    async (page, pageSize, filterModel, sortModel) => {
+      let rows = applyFilter(allRows, filterModel);
+      rows = applySort(rows, sortModel);
+      const total = rows.length;
+      const start = page * pageSize;
+      return { rows: rows.slice(start, start + pageSize), total };
+    },
+    [allRows],
+  );
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deletePrediction(deleteTarget);
+      enqueueSnackbar(t("prediction:message.deletedSuccessfully"), {
+        variant: "success",
+      });
+      setDeleteTarget(null);
+      if (onDelete) onDelete();
+    } catch (error) {
+      console.error("Error deleting prediction:", error);
+      enqueueSnackbar(t("prediction:error.errorDeleting"), {
+        variant: "error",
+      });
+    }
+  };
+
+  const rowActions = useCallback(
+    (row) => (
+      <Tooltip title={t("common:delete")}>
+        <IconButton
+          size="small"
+          color="error"
+          onClick={() => setDeleteTarget(row.__predictionId)}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    ),
+    [t],
+  );
+
+  const toolbarActions = (
+    <>
+      <Button
+        startIcon={<AddCircleOutline />}
+        variant="outlined"
+        size="small"
+        onClick={handleAddRow}
+        disabled={loadingSession}
+        sx={{ textTransform: "none", fontWeight: 500 }}
+      >
+        {t("common:addRow")}
+      </Button>
+      <LoadingButton
+        variant="contained"
+        size="small"
+        color="primary"
+        startIcon={<PlayArrowIcon />}
+        onClick={handleRunPrediction}
+        disabled={draftEntries.length === 0}
+        loading={isRunning}
+        sx={{ textTransform: "none", fontWeight: 500 }}
+      >
+        {t("prediction:button.runPrediction")}
+      </LoadingButton>
+    </>
+  );
+
+  return (
+    <Box>
+      <DatasetTable
+        fetchPage={fetchPage}
+        initialPageSize={25}
+        deps={[allRows.length]}
+        columnTypes={extendedColumnTypes}
+        showExportButton={false}
+        rowActions={rowActions}
+        targetColumn={targetColumn}
+        editableRows={editableRows}
+        infiniteScroll
+        extraActions={toolbarActions}
+      />
+
+      <DeleteConfirmationModal
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteConfirm}
+        content={t("prediction:label.confirmDeletion")}
+      />
+    </Box>
+  );
+}
+
+ManualPredictionsTable.propTypes = {
+  run: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    model_session_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  }).isRequired,
+  session: PropTypes.shape({
+    id: PropTypes.number,
+  }),
+  predictions: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      status: PropTypes.number.isRequired,
+      created: PropTypes.string,
+      results_path: PropTypes.string,
+    }),
+  ).isRequired,
+  displayNumbers: PropTypes.instanceOf(Map).isRequired,
+  targetColumn: PropTypes.string,
+  datasetSample: PropTypes.object,
+  onSaved: PropTypes.func,
+  onDelete: PropTypes.func,
+};

@@ -32,6 +32,7 @@ const LeanToolbar = memo(function LeanToolbar({
   onSearchChange,
   onClearSearch,
   onExport,
+  extraActions,
 }) {
   const { t } = useTranslation(["datasets"]);
 
@@ -46,53 +47,7 @@ const LeanToolbar = memo(function LeanToolbar({
 
   return (
     <Box className="lean-toolbar">
-      {/* Left: export */}
-      {showExportButton && (
-        <Tooltip
-          title={
-            hasActiveFilters
-              ? t("datasets:table.exportTooltipFiltered")
-              : t("datasets:table.exportTooltipAll")
-          }
-          arrow
-        >
-          <span>
-            <Button
-              size="small"
-              variant="text"
-              onClick={onExport}
-              disabled={isExporting}
-              startIcon={
-                isExporting ? (
-                  <CircularProgress size={14} color="inherit" />
-                ) : (
-                  <FileDownloadIcon fontSize="small" />
-                )
-              }
-            >
-              {hasActiveFilters
-                ? t("datasets:table.exportFiltered")
-                : t("datasets:table.export")}
-            </Button>
-          </span>
-        </Tooltip>
-      )}
-
-      <Box sx={{ flex: 1 }} />
-
-      {/* Right: hidden-count badge, column-visibility, filters, search */}
-      {hiddenColumnsCount > 0 && (
-        <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
-          {t("datasets:table.hiddenCount", { count: hiddenColumnsCount })}
-        </Typography>
-      )}
-      {enableColumnVisibility && (
-        <Tooltip title={t("datasets:table.showHideColumns")}>
-          <IconButton size="small" onClick={onOpenColumnsMenu}>
-            <ViewColumnIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      )}
+      {/* Left: filters, search, hidden-count badge, column-visibility */}
       {enableFilters && (
         <Tooltip
           title={
@@ -131,6 +86,57 @@ const LeanToolbar = memo(function LeanToolbar({
           )}
         </Box>
       )}
+      {hiddenColumnsCount > 0 && (
+        <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>
+          {t("datasets:table.hiddenCount", { count: hiddenColumnsCount })}
+        </Typography>
+      )}
+      {enableColumnVisibility && (
+        <Tooltip title={t("datasets:table.showHideColumns")}>
+          <IconButton size="small" onClick={onOpenColumnsMenu}>
+            <ViewColumnIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      <Box sx={{ flex: 1 }} />
+
+      {/* Right: export, then any per-table custom actions */}
+      {showExportButton && (
+        <Tooltip
+          title={
+            hasActiveFilters
+              ? t("datasets:table.exportTooltipFiltered")
+              : t("datasets:table.exportTooltipAll")
+          }
+          arrow
+        >
+          <span>
+            <Button
+              size="small"
+              variant="text"
+              onClick={onExport}
+              disabled={isExporting}
+              startIcon={
+                isExporting ? (
+                  <CircularProgress size={14} color="inherit" />
+                ) : (
+                  <FileDownloadIcon fontSize="small" />
+                )
+              }
+            >
+              {hasActiveFilters
+                ? t("datasets:table.exportFiltered")
+                : t("datasets:table.export")}
+            </Button>
+          </span>
+        </Tooltip>
+      )}
+      {extraActions && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 1 }}>
+          {extraActions}
+        </Box>
+      )}
     </Box>
   );
 });
@@ -151,6 +157,7 @@ LeanToolbar.propTypes = {
   onSearchChange: PropTypes.func.isRequired,
   onClearSearch: PropTypes.func.isRequired,
   onExport: PropTypes.func.isRequired,
+  extraActions: PropTypes.node,
 };
 
 export default LeanToolbar;

@@ -143,6 +143,8 @@
   "type": "Tipo",
   "unknown": "Desconhecido",
   "unknownError": "Erro desconhecido",
+  "yes": "Sim",
+  "no": "Não",
   "update": "Atualizar",
   "upload": "Enviar",
   "user": "Usuário",

@@ -25,15 +25,14 @@ import {
 import {
   Close as CloseIcon,
   Dataset as DatasetIcon,
-  EditNote as EditNoteIcon,
 } from "@mui/icons-material";
 import PillTabs from "../shared/PillTabs";
 import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import ExplainersCard from "../explainers/ExplainersCard";
 import PredictionCard from "./PredictionCard";
+import ManualPredictionsTable from "./ManualPredictionsTable";
 import { LoadingButton } from "@mui/lab";
 import DatasetPredictionPanel from "./DatasetPredictionPanel";
-import ManualPredictionPanel from "./ManualPredictionPanel";
 import LiveMetricsChart from "./LiveMetricsChart";
 import HyperparameterPlots from "./HyperparameterPlots";
 import { getExplainers } from "../../api/explainer";
@@ -263,12 +262,6 @@ export default function RunResults({
   const [datasetRunState, setDatasetRunState] = useState({
     canRun: false,
     isSubmitting: false,
-  });
-  const [showManualPanel, setShowManualPanel] = useState(false);
-  const manualSaveRef = useRef(null);
-  const [manualSaveState, setManualSaveState] = useState({
-    canSave: false,
-    isSaving: false,
   });
 
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
@@ -823,8 +816,8 @@ export default function RunResults({
               </ToggleButton>
             </PillToggleButtonGroup>
 
-            <Box sx={{ display: "flex", gap: 2 }}>
-              {predictionFilter !== "manual" && (
+            {predictionFilter === "dataset" && (
+              <Box sx={{ display: "flex", gap: 2 }}>
                 <Button
                   variant="outlined"
                   size="small"
@@ -839,21 +832,8 @@ export default function RunResults({
                 >
                   {t("models:button.newDatasetPrediction")}
                 </Button>
-              )}
-              {predictionFilter !== "dataset" && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<EditNoteIcon />}
-                  onClick={() => {
-                    setManualSaveState({ canSave: false, isSaving: false });
-                    setShowManualPanel(true);
-                  }}
-                >
-                  {t("models:button.newManualPrediction")}
-                </Button>
-              )}
-            </Box>
+              </Box>
+            )}
           </Box>
 
           <Dialog
@@ -916,70 +896,25 @@ export default function RunResults({
             </DialogActions>
           </Dialog>
 
-          <Dialog
-            open={showManualPanel}
-            onClose={() => setShowManualPanel(false)}
-            maxWidth="lg"
-            fullWidth
-            PaperProps={{ sx: { minHeight: "500px" } }}
-          >
-            <DialogTitle sx={{ bgcolor: "background.paper" }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography variant="h6" component="span">
-                  {t("models:button.newManualPrediction")}
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => setShowManualPanel(false)}
-                  sx={{ color: "text.secondary" }}
-                >
-                  <CloseIcon />
-                </IconButton>
-              </Box>
-            </DialogTitle>
-            <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
-              <ManualPredictionPanel
-                run={run}
-                session={session}
-                onSaved={(prediction) => {
-                  handlePredictionCreated(prediction);
-                  setShowManualPanel(false);
-                }}
-                onClose={() => setShowManualPanel(false)}
-                saveRef={manualSaveRef}
-                onStateChange={setManualSaveState}
-              />
-            </DialogContent>
-            <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
-              <Button
-                variant="outlined"
-                onClick={() => setShowManualPanel(false)}
-                disabled={manualSaveState.isSaving}
-              >
-                {t("common:cancel")}
-              </Button>
-              <LoadingButton
-                variant="contained"
-                color="primary"
-                disabled={!manualSaveState.canSave}
-                loading={manualSaveState.isSaving}
-                onClick={() => manualSaveRef.current?.()}
-              >
-                {t("prediction:button.saveResults")}
-              </LoadingButton>
-            </DialogActions>
-          </Dialog>
-
           {(() => {
             const visiblePredictions = predictions.filter((p) =>
               predictionFilter === "dataset" ? p.dataset_id : !p.dataset_id,
             );
+
+            if (predictionFilter === "manual") {
+              return (
+                <ManualPredictionsTable
+                  run={run}
+                  session={session}
+                  predictions={visiblePredictions}
+                  displayNumbers={predictionDisplayNumbers}
+                  targetColumn={outputColumn}
+                  datasetSample={trainingDatasetSample}
+                  onSaved={handlePredictionCreated}
+                  onDelete={handlePredictionDeleted}
+                />
+              );
+            }
 
             if (visiblePredictions.length === 0) {
               return (
@@ -989,9 +924,7 @@ export default function RunResults({
                   align="center"
                   sx={{ py: 3 }}
                 >
-                  {predictionFilter === "dataset"
-                    ? t("models:label.noDatasetPredictionsYet")
-                    : t("models:label.noManualPredictionsYet")}
+                  {t("models:label.noDatasetPredictionsYet")}
                 </Typography>
               );
             }

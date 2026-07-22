@@ -143,6 +143,8 @@
   "type": "Type",
   "unknown": "Unknown",
   "unknownError": "Unknown error",
+  "yes": "Yes",
+  "no": "No",
   "update": "Update",
   "upload": "Upload",
   "user": "User",

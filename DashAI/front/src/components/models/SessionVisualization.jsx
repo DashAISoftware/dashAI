@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Divider, Button, ToggleButton } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Divider,
+  Button,
+  ToggleButton,
+  IconButton,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
-import { PlayArrow } from "@mui/icons-material";
+import { PlayArrow, Info as InfoIcon } from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
 import ModelDetailView from "./ModelDetailView";
 import ModelCardCompact from "./ModelCardCompact";
+import InfoSessionModal from "./InfoSessionModal";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
@@ -27,10 +35,13 @@ export default function SessionVisualization() {
   const params = useParams();
   const navigate = useNavigate();
 
+  const [sessionInfoOpen, setSessionInfoOpen] = useState(false);
+
   const {
     selectedSession: session,
     runs,
     datasets,
+    tasks,
     onTrainRun: onTrain,
     onDeleteRun,
     fetchRuns,
@@ -343,7 +354,27 @@ export default function SessionVisualization() {
           <>
             {/* Session header: breadcrumb, title, quick stats */}
             <Box sx={{ px: 4, pt: 4 }}>
-              <ModelsBreadcrumbs />
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <ModelsBreadcrumbs />
+                <IconButton
+                  size="small"
+                  onClick={() => setSessionInfoOpen(true)}
+                >
+                  <InfoIcon
+                    fontSize="small"
+                    sx={{
+                      color: "text.secondary",
+                      "&:hover": { color: "text.primary" },
+                    }}
+                  />
+                </IconButton>
+              </Box>
               <Box
                 sx={{
                   display: "flex",
@@ -381,6 +412,14 @@ export default function SessionVisualization() {
                 )}
               </Box>
             </Box>
+
+            <InfoSessionModal
+              sessionData={session}
+              datasets={datasets}
+              tasks={tasks}
+              open={sessionInfoOpen}
+              onClose={() => setSessionInfoOpen(false)}
+            />
 
             {/* Compact model cards: quick access to each model */}
             <Box

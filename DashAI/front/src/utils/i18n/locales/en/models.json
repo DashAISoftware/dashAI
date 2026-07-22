@@ -73,6 +73,8 @@
     "configureOptimizer": "Configure Optimizer",
     "configureSession": "Configure Session",
     "configureTasksTrainCompareModels": "Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow.",
+    "inputColumns": "Input columns",
+    "outputColumns": "Output columns",
     "customMetrics": "Custom Metrics",
     "datasetPredictions": "Dataset Predictions",
     "editRunParameters": "Edit parameters and re-run the model",

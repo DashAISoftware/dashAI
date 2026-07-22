@@ -73,6 +73,8 @@
     "configureOptimizer": "配置优化器",
     "configureSession": "配置会话",
     "configureTasksTrainCompareModels": "在有组织的会话中配置任务、训练并比较模型。选择一个任务开始建模工作流。",
+    "inputColumns": "输入列",
+    "outputColumns": "输出列",
     "customMetrics": "自定义指标",
     "datasetPredictions": "数据集预测",
     "editRunParameters": "编辑参数并重新运行模型",

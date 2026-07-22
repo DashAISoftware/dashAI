@@ -15,6 +15,11 @@ import { defaultOpForType, toBackendOperator } from "./operators";
 
 import "./leanDatasetTable.css";
 
+// Matches the fixed width set on .lean-th--actions / .lean-cell--actions in
+// leanDatasetTable.css — used to offset the pinned target column so it sits
+// flush against the actions column instead of underneath it.
+const ACTIONS_COLUMN_WIDTH = 70;
+
 /**
  * Lightweight dataset preview table. Renders a native ``<table>`` with a
  * sticky header and server-side pagination via ``fetchPage``. Supports
@@ -40,10 +45,16 @@ function LeanDatasetTable({
   enableRowSelection = false,
   selectedRowIndices = null,
   onRowSelectionChange = null,
+  rowActions,
+  targetColumn,
+  editableRows = [],
+  infiniteScroll = false,
+  loadMoreStep = 25,
+  extraActions,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["datasets"]);
+  const { t } = useTranslation(["datasets", "common"]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(initialPageSize);
   const [rows, setRows] = useState([]);
@@ -59,17 +70,17 @@ function LeanDatasetTable({
   const [debouncedFilterOperators, setDebouncedFilterOperators] = useState({});
   const filterDebounceRef = useRef(null);
   const [searchValue, setSearchValue] = useState("");
-  // Debounced version drives the cell highlighting work. Re-rendering every
+  // Debounced version drives the cell highlighting work. Re rendering every
   // cell on each keystroke is the dominant cost on wide datasets.
   const [debouncedSearchValue, setDebouncedSearchValue] = useState("");
   const searchDebounceRef = useRef(null);
 
   const [columnsAnchor, setColumnsAnchor] = useState(null);
   const [editingColumn, setEditingColumn] = useState(null);
-  // Single-column sort: ``{ id: columnName, desc: boolean }`` or null.
+  // Single column sort: ``{ id: columnName, desc: boolean }`` or null.
   const [sort, setSort] = useState(null);
   // Bumped after operations that mutate the dataset (e.g. column rename) to
-  // force the next fetch effect to re-run and pull rows with the new schema.
+  // force the next fetch effect to re run and pull rows with the new schema.
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -175,13 +186,16 @@ function LeanDatasetTable({
 
   const allColumnKeys =
     rows.length > 0
-      ? Object.keys(rows[0]).filter((k) => k !== "id")
+      ? Object.keys(rows[0]).filter((k) => k !== "id" && !k.startsWith("__"))
       : Object.keys(columnTypes);
 
-  const visibleColumnKeys = useMemo(
-    () => allColumnKeys.filter((k) => !hiddenColumns.has(k)),
-    [allColumnKeys, hiddenColumns],
-  );
+  const visibleColumnKeys = useMemo(() => {
+    const base = allColumnKeys.filter((k) => !hiddenColumns.has(k));
+    if (targetColumn && base.includes(targetColumn)) {
+      return [...base.filter((k) => k !== targetColumn), targetColumn];
+    }
+    return base;
+  }, [allColumnKeys, hiddenColumns, targetColumn]);
 
   const highlightQuery = debouncedSearchValue.trim();
 
@@ -223,7 +237,7 @@ function LeanDatasetTable({
   );
 
   // Stable callbacks for the memoized toolbar - without these, the toolbar
-  // re-renders on every page / row change because the inline arrows would
+  // re renders on every page / row change because the inline arrows would
   // change reference each render.
   const handleOpenColumnsMenu = useCallback(
     (e) => setColumnsAnchor(e.currentTarget),
@@ -288,7 +302,7 @@ function LeanDatasetTable({
 
   const handleCancelRename = useCallback(() => setEditingColumn(null), []);
 
-  // Absolute (cross-page) index of each rendered row. This is the row's real
+  // Absolute (cross page) index of each rendered row. This is the row's real
   // position in the dataset only while sort/filter are off, so callers that
   // rely on the selection for indexing should keep those disabled.
   const pageGlobalIndices = useMemo(
@@ -333,6 +347,26 @@ function LeanDatasetTable({
     pageGlobalIndices,
   ]);
 
+  // Grows the table by observing a sentinel below the last row rather than
+  // listening for scroll on `.lean-scroll`: the table has no bounded height,
+  // so it is the surrounding page that scrolls, not this container.
+  const sentinelRef = useRef(null);
+  useEffect(() => {
+    if (!infiniteScroll) return undefined;
+    const el = sentinelRef.current;
+    if (!el) return undefined;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading && rows.length < total) {
+          setPageSize((p) => p + loadMoreStep);
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [infiniteScroll, loading, rows.length, total, loadMoreStep]);
+
   return (
     <Box
       className="lean-root"
@@ -359,6 +393,7 @@ function LeanDatasetTable({
         onSearchChange={handleSearchChange}
         onClearSearch={handleClearSearch}
         onExport={handleExport}
+        extraActions={extraActions}
       />
 
       <LeanColumnsMenu
@@ -409,6 +444,8 @@ function LeanDatasetTable({
                     sortDir={sortDir}
                     allColumnKeys={allColumnKeys}
                     datasetId={datasetId}
+                    isPinned={key === targetColumn}
+                    pinnedOffset={rowActions ? ACTIONS_COLUMN_WIDTH : 0}
                     onStartEdit={() => setEditingColumn(key)}
                     onCommitEdit={handleCommitRename}
                     onCancelEdit={handleCancelRename}
@@ -417,6 +454,13 @@ function LeanDatasetTable({
                   />
                 );
               })}
+              {rowActions && (
+                <th className="lean-th lean-th--actions">
+                  <div className="lean-th-inner">
+                    <div className="lean-th-name-row">{t("common:remove")}</div>
+                  </div>
+                </th>
+              )}
             </tr>
             {enableFilters && showFilters && (
               <tr>
@@ -434,6 +478,8 @@ function LeanDatasetTable({
                       type={type}
                       operator={operator}
                       value={filterValues[key]}
+                      isPinned={key === targetColumn}
+                      pinnedOffset={rowActions ? ACTIONS_COLUMN_WIDTH : 0}
                       onOperatorChange={(op) =>
                         handleFilterOperatorChange(key, op)
                       }
@@ -441,10 +487,41 @@ function LeanDatasetTable({
                     />
                   );
                 })}
+                {rowActions && <td className="lean-cell lean-cell--actions" />}
               </tr>
             )}
           </thead>
           <tbody>
+            {editableRows.map((draft) => (
+              <tr key={draft.key} className="lean-row lean-row--editable">
+                {enableRowSelection && (
+                  <td className="lean-td lean-td--select" />
+                )}
+                {visibleColumnKeys.map((key) => {
+                  const isPinned = key === targetColumn;
+                  return (
+                    <td
+                      key={key}
+                      className={
+                        isPinned ? "lean-cell lean-cell--pinned" : "lean-cell"
+                      }
+                      style={
+                        isPinned
+                          ? { right: rowActions ? ACTIONS_COLUMN_WIDTH : 0 }
+                          : undefined
+                      }
+                    >
+                      {draft.renderCell(key)}
+                    </td>
+                  );
+                })}
+                {rowActions && (
+                  <td className="lean-cell lean-cell--actions">
+                    {draft.renderActions ? draft.renderActions() : null}
+                  </td>
+                )}
+              </tr>
+            ))}
             {rows.map((row, i) => {
               const globalIndex = page * pageSize + i;
               const isChecked =
@@ -488,14 +565,21 @@ function LeanDatasetTable({
                       key={key}
                       value={row[key]}
                       query={highlightQuery}
+                      isPinned={key === targetColumn}
+                      pinnedOffset={rowActions ? ACTIONS_COLUMN_WIDTH : 0}
                     />
                   ))}
+                  {rowActions && (
+                    <td className="lean-cell lean-cell--actions">
+                      {rowActions(row)}
+                    </td>
+                  )}
                 </tr>
               );
             })}
           </tbody>
         </table>
-        {!loading && rows.length === 0 && (
+        {!loading && rows.length === 0 && editableRows.length === 0 && (
           <Typography
             variant="body2"
             color="text.secondary"
@@ -504,38 +588,68 @@ function LeanDatasetTable({
             {t("datasets:table.noRows")}
           </Typography>
         )}
+        {infiniteScroll && loading && rows.length > 0 && (
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ p: 1.5, textAlign: "center" }}
+          >
+            {t("datasets:table.loadingMore")}
+          </Typography>
+        )}
+        {infiniteScroll && rows.length < total && (
+          <div ref={sentinelRef} style={{ height: 1 }} />
+        )}
       </div>
-      <TablePagination
-        component="div"
-        sx={{
-          backgroundColor: "var(--lean-body-bg)",
-          border: "1px solid rgba(128, 128, 128, 0.3)",
-          borderTop: "none",
-          borderBottomLeftRadius: 4,
-          borderBottomRightRadius: 4,
-        }}
-        count={total}
-        page={page}
-        rowsPerPage={pageSize}
-        showFirstButton
-        showLastButton
-        onPageChange={(_e, p) => setPage(p)}
-        onRowsPerPageChange={(e) => {
-          setPageSize(parseInt(e.target.value, 10));
-          setPage(0);
-        }}
-        rowsPerPageOptions={
-          enableRowsPerPage
-            ? [...new Set([pageSize, 10, 25, 50])].sort((a, b) => a - b)
-            : [pageSize]
-        }
-        labelRowsPerPage={enableRowsPerPage ? undefined : ""}
-        slotProps={
-          enableRowsPerPage
-            ? undefined
-            : { select: { sx: { display: "none" } } }
-        }
-      />
+      {infiniteScroll ? (
+        <Box
+          sx={{
+            backgroundColor: "var(--lean-body-bg)",
+            border: "1px solid rgba(128, 128, 128, 0.3)",
+            borderTop: "none",
+            borderBottomLeftRadius: 4,
+            borderBottomRightRadius: 4,
+            px: 2,
+            py: 1,
+          }}
+        >
+          <Typography variant="caption" color="text.secondary">
+            {t("datasets:table.rowsLoaded", { count: rows.length, total })}
+          </Typography>
+        </Box>
+      ) : (
+        <TablePagination
+          component="div"
+          sx={{
+            backgroundColor: "var(--lean-body-bg)",
+            border: "1px solid rgba(128, 128, 128, 0.3)",
+            borderTop: "none",
+            borderBottomLeftRadius: 4,
+            borderBottomRightRadius: 4,
+          }}
+          count={total}
+          page={page}
+          rowsPerPage={pageSize}
+          showFirstButton
+          showLastButton
+          onPageChange={(_e, p) => setPage(p)}
+          onRowsPerPageChange={(e) => {
+            setPageSize(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={
+            enableRowsPerPage
+              ? [...new Set([pageSize, 10, 25, 50])].sort((a, b) => a - b)
+              : [pageSize]
+          }
+          labelRowsPerPage={enableRowsPerPage ? undefined : ""}
+          slotProps={
+            enableRowsPerPage
+              ? undefined
+              : { select: { sx: { display: "none" } } }
+          }
+        />
+      )}
     </Box>
   );
 }
@@ -559,6 +673,18 @@ LeanDatasetTable.propTypes = {
   enableRowSelection: PropTypes.bool,
   selectedRowIndices: PropTypes.instanceOf(Set),
   onRowSelectionChange: PropTypes.func,
+  rowActions: PropTypes.func,
+  targetColumn: PropTypes.string,
+  editableRows: PropTypes.arrayOf(
+    PropTypes.shape({
+      key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+      renderCell: PropTypes.func.isRequired,
+      renderActions: PropTypes.func,
+    }),
+  ),
+  infiniteScroll: PropTypes.bool,
+  loadMoreStep: PropTypes.number,
+  extraActions: PropTypes.node,
 };
 
 export default LeanDatasetTable;
