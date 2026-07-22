@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Divider, Button, ToggleButton } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Divider,
+  Button,
+  ToggleButton,
+  IconButton,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
-import { PlayArrow } from "@mui/icons-material";
+import { PlayArrow, Info as InfoIcon } from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
 import ModelDetailView from "./ModelDetailView";
 import ModelCardCompact from "./ModelCardCompact";
+import InfoSessionModal from "./InfoSessionModal";
 import { getComponents } from "../../api/component";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
@@ -23,6 +31,7 @@ export default function SessionVisualization() {
   const [highlightedRunId, setHighlightedRunId] = useState(null);
   const [metricSplit, setMetricSplit] = useState("test");
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
+  const [sessionInfoOpen, setSessionInfoOpen] = useState(false);
   const { t } = useTranslation(["models", "common"]);
   const sessionTourContext = useTourContext();
   const params = useParams();
@@ -32,6 +41,7 @@ export default function SessionVisualization() {
     selectedSession: session,
     runs,
     datasets,
+    tasks,
     onTrainRun: onTrain,
     onDeleteRun,
     fetchRuns,
@@ -344,22 +354,42 @@ export default function SessionVisualization() {
                   </Typography>
                 </Box>
 
-                {runs.length > 0 && (
-                  <Button
-                    variant="contained"
-                    size="small"
-                    startIcon={<PlayArrow />}
-                    disabled={!runs.some((r) => r.status === 0)}
-                    onClick={() => {
-                      const notStartedRuns = runs.filter((r) => r.status === 0);
-                      notStartedRuns.forEach((run) => onTrain(run));
-                    }}
-                  >
-                    {t("models:button.runAll")}
-                  </Button>
-                )}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {runs.length > 0 && (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      startIcon={<PlayArrow />}
+                      disabled={!runs.some((r) => r.status === 0)}
+                      onClick={() => {
+                        const notStartedRuns = runs.filter(
+                          (r) => r.status === 0,
+                        );
+                        notStartedRuns.forEach((run) => onTrain(run));
+                      }}
+                    >
+                      {t("models:button.runAll")}
+                    </Button>
+                  )}
+                  <IconButton onClick={() => setSessionInfoOpen(true)}>
+                    <InfoIcon
+                      sx={{
+                        color: "text.secondary",
+                        "&:hover": { color: "text.primary" },
+                      }}
+                    />
+                  </IconButton>
+                </Box>
               </Box>
             </Box>
+
+            <InfoSessionModal
+              sessionData={session}
+              datasets={datasets}
+              tasks={tasks}
+              open={sessionInfoOpen}
+              onClose={() => setSessionInfoOpen(false)}
+            />
 
             {/* Compact model cards — quick access to each model */}
             <Box

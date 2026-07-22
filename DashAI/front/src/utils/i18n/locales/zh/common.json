@@ -143,6 +143,8 @@
   "type": "类型",
   "unknown": "未知",
   "unknownError": "未知错误",
+  "yes": "是",
+  "no": "否",
   "update": "更新",
   "upload": "上传",
   "user": "用户",

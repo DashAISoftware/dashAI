@@ -72,6 +72,8 @@
     "configureOptimizer": "Optimierer konfigurieren",
     "configureSession": "Sitzung konfigurieren",
     "configureTasksTrainCompareModels": "Aufgaben konfigurieren, Modelle trainieren und vergleichen. Wählen Sie eine Aufgabe, um Ihren Modellierungs-Workflow zu beginnen.",
+    "inputColumns": "Eingabespalten",
+    "outputColumns": "Ausgabespalten",
     "customMetrics": "Benutzerdefinierte Metriken",
     "datasetPredictions": "Datensatz-Vorhersagen",
     "editRunParameters": "Parameter bearbeiten und Modell neu ausführen",
