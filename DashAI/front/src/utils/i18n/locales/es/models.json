@@ -5,6 +5,7 @@
     "createLocalExplainer": "Nuevo Explicador Local",
     "createPrediction": "Crear Predicción",
     "createSession": "Crear Sesión",
+    "addNewPrediction": "Agregar Nueva Predicción",
     "deleteAndRetrain": "Eliminar y Re-entrenar",
     "deleteRun": "Eliminar Ejecución",
     "hideOperations": "Ocultar Operaciones",

@@ -24,7 +24,8 @@ import {
 } from "@mui/material";
 import {
   Close as CloseIcon,
-  Dataset as DatasetIcon,
+  AddCircleOutline,
+  PlayArrow as PlayArrowIcon,
 } from "@mui/icons-material";
 import PillTabs from "../shared/PillTabs";
 import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
@@ -278,6 +279,12 @@ export default function RunResults({
   const [datasetRunState, setDatasetRunState] = useState({
     canRun: false,
     isSubmitting: false,
+  });
+  const manualActionsRef = useRef(null);
+  const [manualRunState, setManualRunState] = useState({
+    canAddRow: false,
+    canRun: false,
+    isRunning: false,
   });
 
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
@@ -837,7 +844,7 @@ export default function RunResults({
               <Button
                 variant="outlined"
                 size="small"
-                startIcon={<DatasetIcon />}
+                startIcon={<AddCircleOutline />}
                 onClick={() => {
                   setDatasetRunState({
                     canRun: false,
@@ -845,12 +852,44 @@ export default function RunResults({
                   });
                   setShowDatasetPanel(true);
                 }}
+                sx={{ textTransform: "none", fontWeight: 500 }}
               >
-                {t("models:button.newDatasetPrediction")}
+                {t("models:button.addNewPrediction")}
               </Button>
             </Box>
           ) : (
-            <Box sx={{ gridColumn: "1", gridRow: "1" }} />
+            <Box
+              sx={{
+                gridColumn: "1",
+                gridRow: "1",
+                display: "flex",
+                alignItems: "flex-end",
+                gap: 2,
+              }}
+            >
+              <Button
+                startIcon={<AddCircleOutline />}
+                variant="outlined"
+                size="small"
+                onClick={() => manualActionsRef.current?.addRow()}
+                disabled={!manualRunState.canAddRow}
+                sx={{ textTransform: "none", fontWeight: 500 }}
+              >
+                {t("common:addRow")}
+              </Button>
+              <LoadingButton
+                variant="contained"
+                size="small"
+                color="primary"
+                startIcon={<PlayArrowIcon />}
+                onClick={() => manualActionsRef.current?.runPrediction()}
+                disabled={!manualRunState.canRun}
+                loading={manualRunState.isRunning}
+                sx={{ textTransform: "none", fontWeight: 500 }}
+              >
+                {t("prediction:button.runPrediction")}
+              </LoadingButton>
+            </Box>
           )}
 
           {/* Spans every row below it so its containing block covers the
@@ -881,10 +920,10 @@ export default function RunResults({
               }}
             >
               <ToggleButton value="dataset" sx={{ px: 1.5 }}>
-                {t("common:dataset")}
+                {t("models:label.datasetPredictions")}
               </ToggleButton>
               <ToggleButton value="manual" sx={{ px: 1.5 }}>
-                {t("models:label.manual")}
+                {t("models:label.manualPredictions")}
               </ToggleButton>
             </PillToggleButtonGroup>
           </Box>
@@ -966,6 +1005,8 @@ export default function RunResults({
                     datasetSample={trainingDatasetSample}
                     onSaved={handlePredictionCreated}
                     onDelete={handlePredictionDeleted}
+                    actionsRef={manualActionsRef}
+                    onStateChange={setManualRunState}
                   />
                 );
               }

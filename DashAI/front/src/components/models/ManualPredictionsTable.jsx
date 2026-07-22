@@ -12,14 +12,8 @@ import {
   CircularProgress,
   IconButton,
   Tooltip,
-  Button,
 } from "@mui/material";
-import {
-  Delete as DeleteIcon,
-  AddCircleOutline,
-  PlayArrow as PlayArrowIcon,
-} from "@mui/icons-material";
-import { LoadingButton } from "@mui/lab";
+import { Delete as DeleteIcon } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
@@ -122,6 +116,8 @@ export default function ManualPredictionsTable({
   datasetSample,
   onSaved,
   onDelete,
+  actionsRef = null,
+  onStateChange = null,
 }) {
   const { t } = useTranslation(["prediction", "common"]);
   const { enqueueSnackbar } = useSnackbar();
@@ -407,6 +403,27 @@ export default function ManualPredictionsTable({
     }
   };
 
+  // Add Row / Run Prediction live in the parent's header row (next to the
+  // Dataset/Manual sub-selector) instead of this table's own toolbar, so both
+  // prediction types look consistent. The parent triggers them through this
+  // ref and reads button-disabled state through onStateChange.
+  useEffect(() => {
+    if (actionsRef) {
+      actionsRef.current = {
+        addRow: handleAddRow,
+        runPrediction: handleRunPrediction,
+      };
+    }
+  });
+
+  useEffect(() => {
+    onStateChange?.({
+      canAddRow: !loadingSession,
+      canRun: draftEntries.length > 0,
+      isRunning,
+    });
+  }, [loadingSession, draftEntries.length, isRunning, onStateChange]);
+
   const extendedColumnTypes = useMemo(() => {
     const base = Object.keys(columnTypes).length > 0 ? columnTypes : inputTypes;
     return {
@@ -524,33 +541,6 @@ export default function ManualPredictionsTable({
     [t],
   );
 
-  const toolbarActions = (
-    <>
-      <Button
-        startIcon={<AddCircleOutline />}
-        variant="outlined"
-        size="small"
-        onClick={handleAddRow}
-        disabled={loadingSession}
-        sx={{ textTransform: "none", fontWeight: 500 }}
-      >
-        {t("common:addRow")}
-      </Button>
-      <LoadingButton
-        variant="contained"
-        size="small"
-        color="primary"
-        startIcon={<PlayArrowIcon />}
-        onClick={handleRunPrediction}
-        disabled={draftEntries.length === 0}
-        loading={isRunning}
-        sx={{ textTransform: "none", fontWeight: 500 }}
-      >
-        {t("prediction:button.runPrediction")}
-      </LoadingButton>
-    </>
-  );
-
   return (
     <Box>
       <DatasetTable
@@ -563,7 +553,6 @@ export default function ManualPredictionsTable({
         targetColumn={targetColumn}
         editableRows={editableRows}
         infiniteScroll
-        extraActions={toolbarActions}
       />
 
       <DeleteConfirmationModal
@@ -597,4 +586,6 @@ ManualPredictionsTable.propTypes = {
   datasetSample: PropTypes.object,
   onSaved: PropTypes.func,
   onDelete: PropTypes.func,
+  actionsRef: PropTypes.shape({ current: PropTypes.object }),
+  onStateChange: PropTypes.func,
 };
