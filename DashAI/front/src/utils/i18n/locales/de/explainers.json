@@ -54,6 +54,7 @@
     "selectDatasetToExplain": "Datensatz mit zu erklärenden Instanzen auswählen",
     "selectExplainer": "Name und Erklärungsmodell festlegen",
     "selectExplainerAndName": "Erklärungsmodell auswählen und Namen eingeben",
+    "selectInstance": "Instanz auswählen",
     "explainerInProgress": "Erklärungsmodell wird verarbeitet...",
     "splitSelectionSummary": "Prozentsatz: {{percentage}}% | Ausgewählte Zeilen: {{rowsSelected}} / {{totalRows}}",
     "searchExplainers": "Erklärungsmodelle suchen..."

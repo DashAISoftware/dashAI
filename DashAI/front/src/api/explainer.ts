@@ -1,4 +1,5 @@
 import api from "./api";
+import type { IArtifact } from "../types/artifact";
 import type { IExplainer } from "../types/explainer";
 
 export const getExplainers = async (
@@ -15,8 +16,8 @@ export const getExplainers = async (
 export const getExplainerPlot = async (
   explainerId: string = "",
   scope: string = "",
-): Promise<IExplainer[]> => {
-  const response = await api.get<IExplainer[]>(
+): Promise<IArtifact[]> => {
+  const response = await api.get<IArtifact[]>(
     `/v1/explainer/${scope}/plot/${explainerId}`,
   );
 

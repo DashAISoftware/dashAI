@@ -54,6 +54,7 @@
     "selectDatasetToExplain": "选择包含待解释实例的数据集",
     "selectExplainer": "设置名称和解释器",
     "selectExplainerAndName": "选择解释器并输入名称",
+    "selectInstance": "选择一个实例",
     "explainerInProgress": "解释器运行中...",
     "splitSelectionSummary": "百分比：{{percentage}}% | 已选行数：{{rowsSelected}} / {{totalRows}}",
     "searchExplainers": "搜索解释器..."

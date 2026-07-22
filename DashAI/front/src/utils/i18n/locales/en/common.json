@@ -164,6 +164,18 @@
   "columnNameInvalidCharacters": "Column name can only contain letters, numbers and underscores",
   "columnNameAlreadyExists": "A column with this name already exists",
   "errorRenamingColumn": "Error renaming column",
+  "componentDownload": {
+    "download": "Download ({{size}})",
+    "delete": "Delete download",
+    "deleteWithSize": "Delete download ({{size}})",
+    "downloading": "Downloading...",
+    "done": "Component downloaded",
+    "deleted": "Download deleted",
+    "failed": "Component download failed",
+    "mustDownload": "This model must be downloaded before use",
+    "mustDownloadNested": "These components must be downloaded first: {{names}}",
+    "confirmDelete": "Delete the downloaded files for {{name}}? You can download it again later."
+  },
   "jobQueue": {
     "title": "Job Queue",
     "refresh": "Refresh",
@@ -190,6 +202,7 @@
       "jobType": "Job Type",
       "lastUpdated": "Last Updated",
       "errorMessage": "Error Message",
+      "progress": "Progress",
       "unnamedJob": "Unnamed Job"
     },
     "status": {

@@ -189,6 +189,7 @@
     "chartType": "Diagrammtyp"
   },
   "message": {
+    "skippedUndownloadedRuns": "Durchläufe mit nicht heruntergeladenem Modell wurden übersprungen. Lade das Modell zuerst herunter.",
     "allRunsCompleted": "{{experiment}} hat alle Durchläufe abgeschlossen.",
     "tabAvailableAfterFinish": "Verfügbar, sobald der Durchlauf das Training abgeschlossen hat.",
     "noOptimizableParamsForHpo": "Keine Parameter sind für die Optimierung markiert — bearbeiten Sie die Konfiguration des Durchlaufs, um dies zu aktivieren.",

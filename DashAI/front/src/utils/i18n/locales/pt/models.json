@@ -191,6 +191,7 @@
     "chartType": "Tipo de gráfico"
   },
   "message": {
+    "skippedUndownloadedRuns": "Execuções cujo modelo não está baixado foram ignoradas. Baixe o modelo primeiro.",
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",
     "tabAvailableAfterFinish": "Estará disponível quando a execução terminar o treinamento.",
     "noOptimizableParamsForHpo": "Nenhum parâmetro está marcado para otimização — edite a configuração da execução para habilitar isso.",

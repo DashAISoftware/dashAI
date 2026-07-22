@@ -189,6 +189,7 @@
     "chartType": "Chart type"
   },
   "message": {
+    "skippedUndownloadedRuns": "Skipped runs whose model is not downloaded. Download the model first.",
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
     "tabAvailableAfterFinish": "Available once the run finishes training.",
     "noOptimizableParamsForHpo": "No parameters are marked for optimization — edit the run's configuration to enable this.",

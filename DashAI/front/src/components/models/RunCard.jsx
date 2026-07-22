@@ -24,6 +24,7 @@ import { getRunStatus, getRunStatusColor } from "../../utils/runStatus";
 import RunResults from "./RunResults";
 import RunEditDialog from "./RunEditDialog";
 import { getRunOperationsCount } from "../../api/run";
+import { useComponentDownloadState } from "./model/ComponentDownloadControl";
 import { useTranslation } from "react-i18next";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 
@@ -107,6 +108,15 @@ function RunCard({
   const statusText = getRunStatus(run.status, t);
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
+
+  // A download-required model must be downloaded before it can be trained.
+  // Track the live download state so the button reflects an inline download.
+  const { downloaded, downloading } = useComponentDownloadState(
+    model || { name: run.model_name },
+  );
+  const modelNotDownloaded =
+    Boolean(model?.metadata?.requires_download) &&
+    !(downloaded && !downloading);
 
   useEffect(() => {
     if (run.status !== 1 && run.status !== 2) {
@@ -226,32 +236,37 @@ function RunCard({
                 {canTrain && (
                   <Tooltip
                     title={
-                      run.status === 3 &&
-                      operationsCount &&
-                      (operationsCount.explainers > 0 ||
-                        operationsCount.predictions > 0)
-                        ? t("models:message.retrainWillResetOperations", {
-                            explainersCount: operationsCount.explainers,
-                            predictionsCount: operationsCount.predictions,
-                          })
-                        : ""
+                      modelNotDownloaded
+                        ? t("common:componentDownload.mustDownload")
+                        : run.status === 3 &&
+                            operationsCount &&
+                            (operationsCount.explainers > 0 ||
+                              operationsCount.predictions > 0)
+                          ? t("models:message.retrainWillResetOperations", {
+                              explainersCount: operationsCount.explainers,
+                              predictionsCount: operationsCount.predictions,
+                            })
+                          : ""
                     }
                   >
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      startIcon={<PlayArrow />}
-                      onClick={() => {
-                        setAutoExpand(true);
-                        onTrain(run, operationsCount);
-                      }}
-                      data-tour={isLastRun ? "train-button" : undefined}
-                    >
-                      {run.status === 3
-                        ? t("common:retrain")
-                        : t("common:trainVerb")}
-                    </Button>
+                    <span>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        disabled={modelNotDownloaded}
+                        startIcon={<PlayArrow />}
+                        onClick={() => {
+                          setAutoExpand(true);
+                          onTrain(run, operationsCount);
+                        }}
+                        data-tour={isLastRun ? "train-button" : undefined}
+                      >
+                        {run.status === 3
+                          ? t("common:retrain")
+                          : t("common:trainVerb")}
+                      </Button>
+                    </span>
                   </Tooltip>
                 )}
                 {isRunning && (

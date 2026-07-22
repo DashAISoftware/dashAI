@@ -164,6 +164,18 @@
   "columnNameInvalidCharacters": "列名只能包含字母、数字和下划线",
   "columnNameAlreadyExists": "已存在同名列",
   "errorRenamingColumn": "重命名列时出错",
+  "componentDownload": {
+    "download": "下载 ({{size}})",
+    "delete": "删除下载",
+    "deleteWithSize": "删除下载（{{size}}）",
+    "downloading": "下载中...",
+    "done": "组件已下载",
+    "deleted": "下载已删除",
+    "failed": "组件下载失败",
+    "mustDownload": "使用前必须先下载此模型",
+    "mustDownloadNested": "必须先下载这些组件：{{names}}",
+    "confirmDelete": "删除 {{name}} 的已下载文件？之后可以重新下载。"
+  },
   "jobQueue": {
     "title": "任务队列",
     "refresh": "刷新",
@@ -190,6 +202,7 @@
       "jobType": "任务类型",
       "lastUpdated": "最后更新",
       "errorMessage": "错误信息",
+      "progress": "进度",
       "unnamedJob": "未命名任务"
     },
     "status": {

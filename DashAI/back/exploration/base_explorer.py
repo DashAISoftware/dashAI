@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Final, List
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.core.artifacts import Artifact
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.static.icons import Icon
@@ -276,7 +277,7 @@ class BaseExplorer(ConfigObject, ABC):
     @abstractmethod
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    ) -> List[Artifact]:
         """Load a previously saved exploration result and return it for the frontend.
 
         Parameters
@@ -289,9 +290,11 @@ class BaseExplorer(ConfigObject, ABC):
 
         Returns
         -------
-        Dict[str, Any]
-            A dict with keys ``"data"`` (serialized result),
-            ``"type"`` (result type string, e.g. ``"plotly_json"``), and
-            ``"config"`` (frontend rendering config).
+        List[Artifact]
+            A list of artifacts (:class:`PlotlyArtifact`,
+            :class:`TableArtifact`, :class:`TextArtifact` or
+            :class:`ImageArtifact`) describing the exploration result.
+            Legacy explorers returning the old ``{"data", "type", "config"}``
+            dict are upgraded by ``normalize_artifacts`` at the API layer.
         """
         raise NotImplementedError

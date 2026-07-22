@@ -1,5 +1,6 @@
 from typing import Dict, List, Union
 
+from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -530,12 +531,11 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
         Returns
         -------
-        list of str
-            A single-element list containing the Plotly figure serialised to
-            JSON via ``plotly.io.to_json``.
+        List[Artifact]
+            A single-element list with the plotly artifact of the
+            explanation plot.
         """
         # Lazy imports
-        import plotly
         import plotly.express as px
 
         fig = px.bar(
@@ -584,9 +584,9 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
             ],
         )
 
-        return [plotly.io.to_json(fig)]
+        return [PlotlyArtifact(payload=fig, title="Permutation Feature Importance")]
 
-    def plot(self, explanation: dict) -> List[dict]:
+    def plot(self, explanation: dict) -> List[Artifact]:
         """Create a Plotly bar chart from a feature importance explanation dict.
 
         Parameters
@@ -597,9 +597,9 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
         Returns
         -------
-        list of str
-            A single-element list containing the Plotly figure serialised to
-            JSON (passed through :meth:`_create_plot`).
+        List[Artifact]
+            A single-element list with the plotly artifact of the
+            explanation plot (built by :meth:`_create_plot`).
         """
         n_features = 10
         # Lazy import

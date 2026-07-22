@@ -15,11 +15,13 @@ import ModelDetailView from "./ModelDetailView";
 import ModelCardCompact from "./ModelCardCompact";
 import InfoSessionModal from "./InfoSessionModal";
 import { getComponents } from "../../api/component";
+import { getComponentDownloadState } from "./model/ComponentDownloadControl";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
 
 import { useModels } from "./ModelsContext";
 import { useTourContext } from "../tour/TourProvider";
@@ -33,6 +35,7 @@ export default function SessionVisualization() {
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const [sessionInfoOpen, setSessionInfoOpen] = useState(false);
   const { t } = useTranslation(["models", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
   const sessionTourContext = useTourContext();
   const params = useParams();
   const navigate = useNavigate();
@@ -183,6 +186,34 @@ export default function SessionVisualization() {
     await onDeleteRun(run);
     if (params.runId && String(run.id) === params.runId) {
       navigate(`/app/models/sessions/${session.id}`);
+    }
+  };
+
+  // True when a run's model is ready to train: it either needs no download or
+  // its download is present and not in progress (live state overrides the
+  // possibly stale fetched flag).
+  const isRunModelReady = React.useCallback(
+    (run) => {
+      const model = models.find((m) => m.name === run.model_name);
+      if (!model?.metadata?.requires_download) return true;
+      const cached = getComponentDownloadState(run.model_name);
+      const downloaded = cached?.downloaded ?? Boolean(model.downloaded);
+      const downloading = Boolean(cached?.downloading);
+      return downloaded && !downloading;
+    },
+    [models],
+  );
+
+  // Train every not-started run whose model is downloaded, skipping (and warning
+  // about) any whose model still needs downloading.
+  const handleRunAll = () => {
+    const notStarted = runs.filter((r) => r.status === 0);
+    const ready = notStarted.filter(isRunModelReady);
+    ready.forEach((run) => onTrain(run));
+    if (ready.length < notStarted.length) {
+      enqueueSnackbar(t("models:message.skippedUndownloadedRuns"), {
+        variant: "warning",
+      });
     }
   };
 
@@ -380,10 +411,7 @@ export default function SessionVisualization() {
                     size="small"
                     startIcon={<PlayArrow />}
                     disabled={!runs.some((r) => r.status === 0)}
-                    onClick={() => {
-                      const notStartedRuns = runs.filter((r) => r.status === 0);
-                      notStartedRuns.forEach((run) => onTrain(run));
-                    }}
+                    onClick={handleRunAll}
                   >
                     {t("models:button.runAll")}
                   </Button>
