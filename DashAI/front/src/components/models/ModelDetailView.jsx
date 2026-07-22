@@ -1,19 +1,12 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Typography,
-  Button,
-  IconButton,
-  Chip,
-  Tooltip,
-} from "@mui/material";
+import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
 import { PlayArrow, Delete, Info } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import RunCard from "./RunCard";
 import InfoModal from "../shared/InfoModal";
-import { getRunStatus, getRunStatusColor } from "../../utils/runStatus";
+import RunStatusDot from "../shared/RunStatusDot";
 
 function formatCreatedDate(dateStr, locale) {
   if (!dateStr) return null;
@@ -68,7 +61,6 @@ export default function ModelDetailView({
 
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
-  const statusText = getRunStatus(run.status, t);
   const canTrain = run.status === 0 || run.status === 3 || run.status === 4;
   const isRunning = run.status === 1 || run.status === 2;
 
@@ -85,7 +77,20 @@ export default function ModelDetailView({
       }}
     >
       <Box sx={{ flexShrink: 0, px: 4, pt: 4 }}>
-        <ModelsBreadcrumbs />
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <ModelsBreadcrumbs />
+          <Tooltip title={t("common:info")}>
+            <IconButton size="small" onClick={() => setInfoModalOpen(true)}>
+              <Info fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
 
         <Box
           sx={{
@@ -111,11 +116,7 @@ export default function ModelDetailView({
             <Typography variant="body1" color="text.secondary">
               {modelDisplayName}
             </Typography>
-            <Chip
-              label={statusText}
-              color={getRunStatusColor(run.status)}
-              size="small"
-            />
+            <RunStatusDot status={run.status} />
           </Box>
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
@@ -129,28 +130,16 @@ export default function ModelDetailView({
                 {run.status === 3 ? t("common:retrain") : t("common:trainVerb")}
               </Button>
             )}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Tooltip title={t("common:info")}>
-                <IconButton
-                  size="small"
-                  sx={{ p: 0.5 }}
-                  onClick={() => setInfoModalOpen(true)}
-                >
-                  <Info fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={t("models:button.deleteRun")}>
-                <IconButton
-                  size="small"
-                  color="error"
-                  sx={{ p: 0.5 }}
-                  disabled={isRunning}
-                  onClick={() => setDeleteConfirmOpen(true)}
-                >
-                  <Delete fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
+            <Tooltip title={t("models:button.deleteRun")}>
+              <IconButton
+                size="small"
+                color="error"
+                disabled={isRunning}
+                onClick={() => setDeleteConfirmOpen(true)}
+              >
+                <Delete fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
         </Box>
       </Box>
