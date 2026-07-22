@@ -21,28 +21,16 @@ import { useTranslation } from "react-i18next";
 import {
   createGlobalExplainer as createGlobalExplainerRequest,
   createLocalExplainer as createLocalExplainerRequest,
-  getExplainers,
 } from "../../api/explainer";
 import { enqueueExplainerJob as enqueueExplainerJobRequest } from "../../api/job";
 import { startJobPolling } from "../../utils/jobPoller";
 import TimestampWrapper from "../shared/TimestampWrapper";
 import { TIMESTAMP_KEYS } from "../../constants/timestamp";
-import { generateSequentialName } from "../../utils/nameGenerator";
 import ConfigureExplainerStep from "./ConfigureExplainerStep";
 import SelectDatasetStep from "./SelectDatasetStep";
 import SetNameAndExplainerStep from "./SetNameAndExplainerStep";
 
 const SNACKBAR_AUTO_HIDE_MS = 5000;
-
-const getNextExplainerName = (scope, existingExplainers = []) => {
-  const { defaultName } = generateSequentialName({
-    base: scope === "local" ? "Explainer_local" : "Explainer_global",
-    items: existingExplainers,
-    getName: (explainer) => explainer?.name,
-  });
-
-  return defaultName;
-};
 
 export default function InlineExplainerCreator({
   open,
@@ -66,7 +54,6 @@ export default function InlineExplainerCreator({
     () =>
       isLocal
         ? {
-            name: "",
             run_id: runId,
             explainer_name: preselectedExplainer ?? null,
             scope: {
@@ -81,7 +68,6 @@ export default function InlineExplainerCreator({
             manual_input: null,
           }
         : {
-            name: "",
             run_id: runId,
             explainer_name: preselectedExplainer ?? null,
             parameters: null,
@@ -107,51 +93,17 @@ export default function InlineExplainerCreator({
   const [activeStep, setActiveStep] = useState(0);
   const [nextEnabled, setNextEnabled] = useState(false);
   const [newExpl, setNewExpl] = useState(defaultNewExplainer);
-  const [existingExplainers, setExistingExplainers] = useState([]);
-  const [existingExplainersLoaded, setExistingExplainersLoaded] =
-    useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const resetState = () => {
     setActiveStep(0);
     setNewExpl(defaultNewExplainer);
     setNextEnabled(false);
-    setExistingExplainers([]);
-    setExistingExplainersLoaded(false);
-  };
-
-  const loadExistingExplainers = async () => {
-    try {
-      const explainers = await getExplainers(undefined, scope);
-      setExistingExplainers(explainers);
-    } catch (error) {
-      console.error("Error loading existing explainers:", error);
-      setExistingExplainers([]);
-    } finally {
-      setExistingExplainersLoaded(true);
-    }
   };
 
   useEffect(() => {
-    if (open) {
-      setExistingExplainersLoaded(false);
-      loadExistingExplainers();
-      return;
-    }
-
-    resetState();
+    if (!open) resetState();
   }, [open]);
-
-  useEffect(() => {
-    if (!open || !existingExplainersLoaded || newExpl.name.trim()) {
-      return;
-    }
-
-    setNewExpl((prev) => ({
-      ...prev,
-      name: getNextExplainerName(scope, existingExplainers),
-    }));
-  }, [open, existingExplainersLoaded, existingExplainers, newExpl.name, scope]);
 
   const enqueueExplainerJob = async (explainerId) => {
     try {
@@ -222,7 +174,6 @@ export default function InlineExplainerCreator({
 
       const response = isLocal
         ? await createLocalExplainerRequest(
-            newExpl.name,
             newExpl.run_id,
             newExpl.explainer_name,
             newExpl.dataset_id,
@@ -231,14 +182,12 @@ export default function InlineExplainerCreator({
             newExpl.scope,
           )
         : await createGlobalExplainerRequest(
-            newExpl.name,
             newExpl.run_id,
             newExpl.explainer_name,
             newExpl.parameters,
           );
 
       await enqueueExplainerJob(response.id);
-      await loadExistingExplainers();
       if (onCreated) onCreated();
       return true;
     } catch (error) {
@@ -329,7 +278,6 @@ export default function InlineExplainerCreator({
             scope={isLocal ? "Local" : "Global"}
             taskName={taskName}
             modelName={modelName}
-            existingExplainers={existingExplainers}
           />
         )}
         {isLocal && activeStep === datasetStepIndex && (
@@ -337,7 +285,6 @@ export default function InlineExplainerCreator({
             newExpl={newExpl}
             setNewExpl={setNewExpl}
             setNextEnabled={setNextEnabled}
-            existingExplainers={existingExplainers}
           />
         )}
         {activeStep === configureStepIndex && (
@@ -370,11 +317,7 @@ export default function InlineExplainerCreator({
             onClick={handleNext}
             variant="contained"
             color="primary"
-            disabled={
-              !nextEnabled ||
-              isLoading ||
-              (activeStep === steps.length - 1 && !newExpl.name.trim())
-            }
+            disabled={!nextEnabled || isLoading}
             loading={isLoading}
           >
             {activeStep === steps.length - 1

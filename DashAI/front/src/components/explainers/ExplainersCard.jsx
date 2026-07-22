@@ -135,13 +135,6 @@ export default function ExplainersCard({
                   }}
                 >
                   {displayName || plotName(explainer.explainer_name)}
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    component="span"
-                  >
-                    {explainer.name}
-                  </Typography>
                 </Typography>
               </Grid>
               <Grid sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -210,9 +203,6 @@ export default function ExplainersCard({
           <Grid>
             <Typography variant="h6">
               {plotName(explainer.explainer_name)}
-            </Typography>
-            <Typography variant="h7">
-              {t("explainers:label.forExplainer", { name: explainer.name })}
             </Typography>
           </Grid>
           <Grid sx={{ display: "flex", alignItems: "center", gap: 1 }}>

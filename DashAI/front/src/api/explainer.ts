@@ -25,13 +25,11 @@ export const getExplainerPlot = async (
 };
 
 export const createGlobalExplainer = async (
-  name: string,
   runId: number,
   explainerName: string,
   parameters: object,
 ): Promise<IExplainer> => {
   const data = {
-    name,
     run_id: runId,
     explainer_name: explainerName,
     parameters,
@@ -42,7 +40,6 @@ export const createGlobalExplainer = async (
 };
 
 export const createLocalExplainer = async (
-  name: string,
   runId: number,
   explainerName: string,
   datasetId: string,
@@ -51,7 +48,6 @@ export const createLocalExplainer = async (
   scope: object,
 ): Promise<IExplainer> => {
   const data = {
-    name,
     run_id: runId,
     dataset_id: datasetId,
     explainer_name: explainerName,

@@ -342,7 +342,10 @@ class GlobalExplainer(Base):
     Table to store all the information about a global explainer.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    # Deprecated: the user facing explainer name was removed. Kept nullable so
+    # existing rows are preserved; new explainers leave it null and are
+    # identified by explainer_name.
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=True)
     run_id: Mapped[int] = mapped_column(nullable=False)
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     explainer_name: Mapped[str] = mapped_column(String, nullable=False)

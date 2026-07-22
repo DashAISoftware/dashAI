@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -47,7 +47,6 @@ export default function SelectDatasetStep({
   newExpl,
   setNewExpl,
   setNextEnabled,
-  existingExplainers = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["explainers", "common", "datasets"]);
@@ -87,19 +86,6 @@ export default function SelectDatasetStep({
   const [manualSample, setManualSample] = useState(null);
   const [loadingManual, setLoadingManual] = useState(false);
   const [manualRows, setManualRows] = useState([]);
-
-  // Name validation.
-  const [nameTouched, setNameTouched] = useState(false);
-  const trimmedName = (newExpl.name ?? "").trim();
-  const nameTooShort = trimmedName.length < 4;
-  const nameExists = useMemo(
-    () =>
-      existingExplainers.some(
-        (e) => e?.name?.trim().toLowerCase() === trimmedName.toLowerCase(),
-      ),
-    [existingExplainers, trimmedName],
-  );
-  const nameOk = !nameTooShort && !nameExists;
 
   // ----- data fetching -------------------------------------------------
 
@@ -256,15 +242,10 @@ export default function SelectDatasetStep({
         : datasetReady;
 
   useEffect(() => {
-    setNextEnabled(nameOk && dataValid);
-  }, [nameOk, dataValid]);
+    setNextEnabled(dataValid);
+  }, [dataValid]);
 
   // ----- handlers ------------------------------------------------------
-
-  const handleNameChange = (event) => {
-    setNameTouched(true);
-    setNewExpl((prev) => ({ ...prev, name: event.target.value }));
-  };
 
   const fractionFor = (splitValue) =>
     splitValue === "val"
@@ -284,24 +265,6 @@ export default function SelectDatasetStep({
 
   return (
     <Box sx={{ width: "100%" }}>
-      <TextField
-        id="explainer-name-input"
-        label={t("explainers:label.explainerName")}
-        value={newExpl.name ?? ""}
-        fullWidth
-        autoComplete="off"
-        sx={{ mb: 4 }}
-        onChange={handleNameChange}
-        error={nameTouched && !nameOk}
-        helperText={
-          nameTouched && nameExists
-            ? t("explainers:error.nameAlreadyExists")
-            : nameTouched && nameTooShort
-              ? t("explainers:error.nameTooShort")
-              : ""
-        }
-      />
-
       <ExplainerSourceToggle source={source} onChange={setSource} />
 
       {source === "manual" ? (
@@ -484,7 +447,6 @@ export default function SelectDatasetStep({
 SelectDatasetStep.propTypes = {
   newExpl: PropTypes.shape({
     run_id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    name: PropTypes.string,
     explainer_name: PropTypes.string,
     dataset_id: PropTypes.number,
     parameters: PropTypes.object,
@@ -492,5 +454,4 @@ SelectDatasetStep.propTypes = {
   }),
   setNewExpl: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
-  existingExplainers: PropTypes.array,
 };

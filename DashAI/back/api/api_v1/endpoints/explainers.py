@@ -284,8 +284,6 @@ async def upload_global_explainer(
 
     Parameters
     ----------
-    name: string
-        User's name for the explainer
     run_id: int
         Id of the run associated with the explainer
     explainer_name: str
@@ -315,7 +313,6 @@ async def upload_global_explainer(
                 )
 
             explainer = GlobalExplainer(
-                name=params.name,
                 run_id=params.run_id,
                 explainer_name=params.explainer_name,
                 parameters=params.parameters,
@@ -676,8 +673,6 @@ async def upload_local_explainer(
 
     Parameters
     ----------
-    name: string
-        User's name for the explainer
     run_id: int
         Id of the run associated with the explainer
     explainer_name: str
@@ -711,7 +706,6 @@ async def upload_local_explainer(
                 )
 
             explainer = LocalExplainer(
-                name=params.name,
                 run_id=params.run_id,
                 explainer_name=params.explainer_name,
                 dataset_id=params.dataset_id,
