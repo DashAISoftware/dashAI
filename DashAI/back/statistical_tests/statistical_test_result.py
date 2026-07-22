@@ -8,6 +8,7 @@ class PairwiseResult:
 
     run_1: int
     run_2: int
+    statistic: float | None
     p_value: float
     significant: bool
 
