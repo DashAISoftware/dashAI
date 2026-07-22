@@ -69,10 +69,16 @@ export default function InlineExplainerCreator({
             name: "",
             run_id: runId,
             explainer_name: preselectedExplainer ?? null,
-            scope: { split: "test", percentage: 20 },
+            scope: {
+              mode: "split",
+              split: "test",
+              percentage: 20,
+              shuffle: false,
+            },
             dataset_id: null,
             parameters: null,
             fit_parameters: null,
+            manual_input: null,
           }
         : {
             name: "",
@@ -149,7 +155,15 @@ export default function InlineExplainerCreator({
 
   const enqueueExplainerJob = async (explainerId) => {
     try {
-      const response = await enqueueExplainerJobRequest(explainerId, scope);
+      const manualInput =
+        isLocal && newExpl.scope?.mode === "manual"
+          ? newExpl.manual_input
+          : undefined;
+      const response = await enqueueExplainerJobRequest(
+        explainerId,
+        scope,
+        manualInput,
+      );
       enqueueSnackbar(
         t(
           isLocal
@@ -266,7 +280,7 @@ export default function InlineExplainerCreator({
     <Dialog
       open={open}
       onClose={onCancel}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       PaperProps={{
         sx: { minHeight: "500px" },
@@ -323,6 +337,7 @@ export default function InlineExplainerCreator({
             newExpl={newExpl}
             setNewExpl={setNewExpl}
             setNextEnabled={setNextEnabled}
+            existingExplainers={existingExplainers}
           />
         )}
         {activeStep === configureStepIndex && (

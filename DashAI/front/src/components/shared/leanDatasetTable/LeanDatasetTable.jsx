@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { Box, TablePagination, Typography } from "@mui/material";
+import { Box, Checkbox, TablePagination, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
@@ -37,6 +37,9 @@ function LeanDatasetTable({
   showExportButton = true,
   onRowClick = null,
   selectedRowIndex = null,
+  enableRowSelection = false,
+  selectedRowIndices = null,
+  onRowSelectionChange = null,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -285,6 +288,51 @@ function LeanDatasetTable({
 
   const handleCancelRename = useCallback(() => setEditingColumn(null), []);
 
+  // Absolute (cross-page) index of each rendered row. This is the row's real
+  // position in the dataset only while sort/filter are off, so callers that
+  // rely on the selection for indexing should keep those disabled.
+  const pageGlobalIndices = useMemo(
+    () => rows.map((_, i) => page * pageSize + i),
+    [rows, page, pageSize],
+  );
+
+  const allPageSelected =
+    enableRowSelection &&
+    pageGlobalIndices.length > 0 &&
+    selectedRowIndices != null &&
+    pageGlobalIndices.every((idx) => selectedRowIndices.has(idx));
+  const somePageSelected =
+    enableRowSelection &&
+    selectedRowIndices != null &&
+    pageGlobalIndices.some((idx) => selectedRowIndices.has(idx));
+
+  const toggleRowSelected = useCallback(
+    (globalIndex) => {
+      if (!onRowSelectionChange) return;
+      const next = new Set(selectedRowIndices ?? []);
+      if (next.has(globalIndex)) next.delete(globalIndex);
+      else next.add(globalIndex);
+      onRowSelectionChange(next);
+    },
+    [onRowSelectionChange, selectedRowIndices],
+  );
+
+  const toggleAllOnPage = useCallback(() => {
+    if (!onRowSelectionChange) return;
+    const next = new Set(selectedRowIndices ?? []);
+    if (allPageSelected) {
+      pageGlobalIndices.forEach((idx) => next.delete(idx));
+    } else {
+      pageGlobalIndices.forEach((idx) => next.add(idx));
+    }
+    onRowSelectionChange(next);
+  }, [
+    onRowSelectionChange,
+    selectedRowIndices,
+    allPageSelected,
+    pageGlobalIndices,
+  ]);
+
   return (
     <Box
       className="lean-root"
@@ -327,6 +375,17 @@ function LeanDatasetTable({
         <table className="lean-table">
           <thead>
             <tr>
+              {enableRowSelection && (
+                <th className="lean-th lean-th--select">
+                  <Checkbox
+                    size="small"
+                    checked={allPageSelected}
+                    indeterminate={!allPageSelected && somePageSelected}
+                    onChange={toggleAllOnPage}
+                    disabled={pageGlobalIndices.length === 0}
+                  />
+                </th>
+              )}
               {visibleColumnKeys.map((key) => {
                 const type = getColType(key);
                 const colSpec = columnTypes[key];
@@ -361,6 +420,9 @@ function LeanDatasetTable({
             </tr>
             {enableFilters && showFilters && (
               <tr>
+                {enableRowSelection && (
+                  <th className="lean-th lean-th--select" />
+                )}
                 {visibleColumnKeys.map((key) => {
                   const type = getColType(key);
                   const operator =
@@ -385,22 +447,42 @@ function LeanDatasetTable({
           <tbody>
             {rows.map((row, i) => {
               const globalIndex = page * pageSize + i;
-              const isSelected = selectedRowIndex === globalIndex;
+              const isChecked =
+                enableRowSelection &&
+                selectedRowIndices != null &&
+                selectedRowIndices.has(globalIndex);
+              const isSelected = selectedRowIndex === globalIndex || isChecked;
+              const clickable = Boolean(onRowClick) || enableRowSelection;
+              const handleRowClick = onRowClick
+                ? () => onRowClick(row, globalIndex)
+                : enableRowSelection
+                  ? () => toggleRowSelected(globalIndex)
+                  : undefined;
               return (
                 <tr
                   key={i}
                   className={
-                    onRowClick ? "lean-row lean-row--clickable" : "lean-row"
+                    clickable ? "lean-row lean-row--clickable" : "lean-row"
                   }
-                  onClick={
-                    onRowClick ? () => onRowClick(row, globalIndex) : undefined
-                  }
+                  onClick={handleRowClick}
                   style={{
                     backgroundColor: isSelected
                       ? theme.palette.action.selected
                       : undefined,
                   }}
                 >
+                  {enableRowSelection && (
+                    <td
+                      className="lean-td lean-td--select"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Checkbox
+                        size="small"
+                        checked={Boolean(isChecked)}
+                        onChange={() => toggleRowSelected(globalIndex)}
+                      />
+                    </td>
+                  )}
                   {visibleColumnKeys.map((key) => (
                     <LeanCell
                       key={key}
@@ -474,6 +556,9 @@ LeanDatasetTable.propTypes = {
   showExportButton: PropTypes.bool,
   onRowClick: PropTypes.func,
   selectedRowIndex: PropTypes.number,
+  enableRowSelection: PropTypes.bool,
+  selectedRowIndices: PropTypes.instanceOf(Set),
+  onRowSelectionChange: PropTypes.func,
 };
 
 export default LeanDatasetTable;

@@ -298,6 +298,19 @@
   opacity: 1;
 }
 
+.lean-th--select {
+  min-width: 0;
+  width: 48px;
+  padding: 0 4px;
+}
+
+.lean-td--select {
+  width: 48px;
+  padding: 0 4px;
+  text-align: center;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+}
+
 .lean-row--clickable {
   cursor: pointer;
 }

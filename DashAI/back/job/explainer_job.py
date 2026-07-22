@@ -216,56 +216,103 @@ class ExplainerJob(BaseJob):
                     f"Can not load instance from path {instance.file_path}",
                 ) from e
             try:
-                prepared_instance = task.prepare_for_task(
-                    loaded_instance,
-                    input_columns=self.input_columns,
-                    output_columns=self.output_columns,
-                )
+                # The data source is selected via scope["mode"]. It defaults to
+                # "split" so explainers created before this field existed keep
+                # their original split + percentage behavior.
+                mode = self.explainer_db.scope.get("mode", "split")
 
-                split = self.explainer_db.scope.get("split")
-                if split not in ["train", "test", "val", "all"]:
-                    raise JobError(f"{split} is not a valid split")
-
-                if split != "all":
-                    if not same_dataset:
-                        if isinstance(splits, str):
-                            splits = json.loads(splits)
-                        prepared_dataset_dict, splits = prepare_for_model_session(
-                            dataset=prepared_instance,
-                            splits=splits,
-                            output_columns=self.output_columns,
+                if mode == "manual":
+                    # Build the instances from values the user typed in by hand,
+                    # reusing the same conversion the manual prediction flow uses.
+                    # The rows (and any image files rewritten by the job endpoint)
+                    # travel in the job kwargs, not in scope.
+                    manual_input_data = self.kwargs.get("manual_input_data") or []
+                    if not manual_input_data:
+                        raise JobError(
+                            "No manual input data provided for the explanation"
                         )
-                        split_key = "validation" if split == "val" else split
-                        prepared_instance = prepared_dataset_dict[split_key]
+                    prepared_instance = task.process_manual_input(
+                        manual_input_data,
+                        f"{instance.file_path}/dataset",
+                    )
+                    # Manual input carries only the input columns (no target), so
+                    # keep just those instead of the standard input/output split.
+                    # select_columns returns a DashAIDataset (same shape the
+                    # split path produces), which is what the explainers expect.
+                    X = prepared_instance.select_columns(self.input_columns)
+                else:
+                    prepared_instance = task.prepare_for_task(
+                        loaded_instance,
+                        input_columns=self.input_columns,
+                        output_columns=self.output_columns,
+                    )
+
+                    if mode == "rows":
+                        # Explain a set of rows the user marked in the table.
+                        # Indexes are over the whole dataset (the split does not
+                        # apply in this mode).
+                        row_indexes = self.explainer_db.scope.get("row_indexes") or []
+                        valid_indexes = [
+                            i
+                            for i in row_indexes
+                            if isinstance(i, int)
+                            and 0 <= i < prepared_instance.num_rows
+                        ]
+                        if row_indexes and not valid_indexes:
+                            raise JobError(
+                                "No valid row indexes provided for the explanation"
+                            )
+                        if valid_indexes:
+                            prepared_instance = prepared_instance.select(valid_indexes)
                     else:
-                        prepared_instance = split_dataset(
-                            prepared_instance,
-                            train_indexes=splits["train_indexes"],
-                            test_indexes=splits["test_indexes"],
-                            val_indexes=splits["val_indexes"],
-                        )
-                        split_key = "validation" if split == "val" else split
-                        prepared_instance = prepared_instance[split_key]
+                        split = self.explainer_db.scope.get("split")
+                        if split not in ["train", "test", "val", "all"]:
+                            raise JobError(f"{split} is not a valid split")
 
-                prepared_instance = prepared_instance.select(
-                    range(
-                        max(
+                        if split != "all":
+                            if not same_dataset:
+                                if isinstance(splits, str):
+                                    splits = json.loads(splits)
+                                (
+                                    prepared_dataset_dict,
+                                    splits,
+                                ) = prepare_for_model_session(
+                                    dataset=prepared_instance,
+                                    splits=splits,
+                                    output_columns=self.output_columns,
+                                )
+                                split_key = "validation" if split == "val" else split
+                                prepared_instance = prepared_dataset_dict[split_key]
+                            else:
+                                prepared_instance = split_dataset(
+                                    prepared_instance,
+                                    train_indexes=splits["train_indexes"],
+                                    test_indexes=splits["test_indexes"],
+                                    val_indexes=splits["val_indexes"],
+                                )
+                                split_key = "validation" if split == "val" else split
+                                prepared_instance = prepared_instance[split_key]
+
+                        n_rows = max(
                             1,
                             int(
                                 prepared_instance.num_rows
                                 * self.explainer_db.scope.get("percentage")
                                 / 100
                             ),
-                        ),
-                    )
-                )
+                        )
+                        # When "shuffle" is set the percentage is taken as a random
+                        # sample of the split; otherwise it is the leading rows.
+                        if self.explainer_db.scope.get("shuffle"):
+                            prepared_instance = prepared_instance.shuffle(seed=42)
+                        prepared_instance = prepared_instance.select(range(n_rows))
 
-                prepared_instance = DatasetDict({"train": prepared_instance})
-                X, _ = select_columns(
-                    prepared_instance,
-                    self.input_columns,
-                    self.output_columns,
-                )
+                    prepared_instance = DatasetDict({"train": prepared_instance})
+                    X, _ = select_columns(
+                        prepared_instance,
+                        self.input_columns,
+                        self.output_columns,
+                    )
                 # Persist the original selected rows (the model input for each
                 # explained instance) as a DashAIDataset before the model's own
                 # preprocessing runs, so the frontend can read them back with

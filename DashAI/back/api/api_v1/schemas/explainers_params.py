@@ -21,3 +21,7 @@ class LocalExplainerParams(BaseModel):
 class ValidateDatasetParams(BaseModel):
     run_id: int
     dataset_id: int
+
+
+class ValidDatasetsParams(BaseModel):
+    run_id: int
