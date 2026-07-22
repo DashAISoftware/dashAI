@@ -77,20 +77,7 @@ export default function ModelDetailView({
       }}
     >
       <Box sx={{ flexShrink: 0, px: 4, pt: 4 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <ModelsBreadcrumbs />
-          <Tooltip title={t("common:info")}>
-            <IconButton size="small" onClick={() => setInfoModalOpen(true)}>
-              <Info fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
+        <ModelsBreadcrumbs />
 
         <Box
           sx={{
@@ -130,6 +117,11 @@ export default function ModelDetailView({
                 {run.status === 3 ? t("common:retrain") : t("common:trainVerb")}
               </Button>
             )}
+            <Tooltip title={t("common:info")}>
+              <IconButton size="small" onClick={() => setInfoModalOpen(true)}>
+                <Info fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title={t("models:button.deleteRun")}>
               <IconButton
                 size="small"
