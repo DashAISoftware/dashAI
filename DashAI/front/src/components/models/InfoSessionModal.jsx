@@ -1,5 +1,6 @@
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
+import Chip from "@mui/material/Chip";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -52,7 +53,6 @@ export default function InfoSessionModal({
 
   const rows = [
     { label: t("common:id"), value: sessionData.id },
-    { label: t("common:task"), value: getTaskDisplayName() },
     { label: t("common:associatedDataset"), value: getDatasetName() },
     { label: t("common:createdAt"), value: formatDate(sessionData.created) },
     {
@@ -116,6 +116,13 @@ export default function InfoSessionModal({
 
   const extraContent = (
     <>
+      <Chip
+        label={getTaskDisplayName()}
+        color="primary"
+        size="small"
+        sx={{ mb: 2 }}
+      />
+
       {sessionData.description && sessionData.description.trim() && (
         <Box sx={{ mb: 6 }}>
           <Typography variant="subtitle2" sx={{ mb: 2 }}>
