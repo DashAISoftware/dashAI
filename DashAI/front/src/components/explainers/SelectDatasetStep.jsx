@@ -8,7 +8,6 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
-  FormLabel,
   Link,
   Radio,
   RadioGroup,
@@ -335,31 +334,6 @@ export default function SelectDatasetStep({
 
           {datasetReady && (
             <Box sx={{ mt: 6 }}>
-              {rowMode === "percentage" && (
-                <FormControl component="fieldset" sx={{ width: "100%", mb: 4 }}>
-                  <FormLabel component="legend">
-                    {t("explainers:label.datasetSplit")}
-                  </FormLabel>
-                  <RadioGroup
-                    row
-                    value={split}
-                    onChange={(e) => setSplit(e.target.value)}
-                    sx={{ mt: 2 }}
-                  >
-                    {SPLIT_VALUES.map((value) => (
-                      <FormControlLabel
-                        key={value}
-                        value={value}
-                        control={<Radio />}
-                        label={t(
-                          `common:${value === "val" ? "validation" : value}`,
-                        )}
-                      />
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-              )}
-
               <Typography variant="subtitle2" sx={{ mb: 2 }}>
                 {t("explainers:label.rowSelectionMode")}
               </Typography>
@@ -367,6 +341,31 @@ export default function SelectDatasetStep({
 
               {rowMode === "percentage" ? (
                 <Box sx={{ mt: 4 }}>
+                  <FormControl
+                    component="fieldset"
+                    sx={{ width: "100%", mb: 4 }}
+                  >
+                    <Typography gutterBottom>
+                      {t("explainers:label.datasetSplit")}
+                    </Typography>
+                    <RadioGroup
+                      row
+                      value={split}
+                      onChange={(e) => setSplit(e.target.value)}
+                      sx={{ mt: 2 }}
+                    >
+                      {SPLIT_VALUES.map((value) => (
+                        <FormControlLabel
+                          key={value}
+                          value={value}
+                          control={<Radio />}
+                          label={t(
+                            `common:${value === "val" ? "validation" : value}`,
+                          )}
+                        />
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
                   <Typography gutterBottom>
                     {t("explainers:label.percentageOfSplitToUse")}
                   </Typography>
