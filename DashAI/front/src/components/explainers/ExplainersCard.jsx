@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
+import RunStatusDot from "../shared/RunStatusDot";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import PropTypes from "prop-types";
@@ -135,10 +136,10 @@ export default function ExplainersCard({
                   }}
                 >
                   {displayName || plotName(explainer.explainer_name)}
+                  <RunStatusDot status={explainer.status} />
                 </Typography>
               </Grid>
               <Grid sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                {isRunning && <CircularProgress size={18} />}
                 <IconButton
                   size="small"
                   aria-label="delete"
