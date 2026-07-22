@@ -9,7 +9,7 @@ import {
   Button,
   ButtonGroup,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -376,26 +376,16 @@ export function LiveMetricsChart({
   };
 
   return (
-    <Box p={2}>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={4}
-      >
-        <PillToggleButtonGroup
-          value={split}
-          onChange={(e, newValue) => {
-            if (newValue !== null) setSplit(newValue);
-          }}
-        >
-          <ToggleButton value="TRAIN">{t("models:label.train")}</ToggleButton>
-          <ToggleButton value="VALIDATION">
-            {t("models:label.validation")}
-          </ToggleButton>
-          <ToggleButton value="TEST">{t("models:label.test")}</ToggleButton>
-        </PillToggleButtonGroup>
-
+    <Box
+      sx={{
+        p: 2,
+        display: "grid",
+        gridTemplateColumns: "1fr auto",
+        columnGap: 2,
+        rowGap: 4,
+      }}
+    >
+      <Box sx={{ gridColumn: "1", gridRow: "1" }}>
         <ResultsGraphsParameters
           currentMetrics={Object.keys(filteredMetrics)}
           selectedMetrics={selectedMetrics}
@@ -405,233 +395,280 @@ export function LiveMetricsChart({
         />
       </Box>
 
-      {summaryMetrics.length > 0 && (
-        <Box
+      {/* Spans every row below it so its containing block covers the whole
+          scrollable panel, not just this header row - otherwise it would
+          stop sticking as soon as the header row itself scrolls out of view. */}
+      <Box
+        sx={{
+          gridColumn: "2",
+          gridRow: "1 / -1",
+          justifySelf: "end",
+          alignSelf: "start",
+          position: "sticky",
+          top: 0,
+          zIndex: 2,
+        }}
+      >
+        <PillToggleButtonGroup
+          value={split}
+          onChange={(e, newValue) => {
+            if (newValue !== null) setSplit(newValue);
+          }}
           sx={{
-            display: "flex",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: 4,
-            mb: 4,
-            px: 3,
-            py: 2,
-            border: 1,
-            borderColor: "divider",
-            borderRadius: 1,
+            bgcolor: (theme) => alpha(theme.palette.ui.box, 0.8),
+            backdropFilter: "blur(8px)",
           }}
         >
-          {profiles && profiles.length > 0 && (
-            <>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ whiteSpace: "nowrap" }}
-                >
-                  {t("models:label.scoreProfile")}:
-                </Typography>
-                <Select
-                  value={selectedProfile || ""}
-                  onChange={(e) => onProfileChange?.(e.target.value)}
-                  size="small"
-                  sx={{
-                    fontSize: "0.75rem",
-                    height: 24,
-                    "& .MuiSelect-select": { py: 0, px: 1 },
-                  }}
-                >
-                  {profiles.map((p) => (
-                    <MenuItem
-                      key={p.id}
-                      value={p.id}
-                      sx={{ fontSize: "0.8rem" }}
-                    >
-                      {t(`models:label.profile_${p.id}`)}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </Box>
-              <Divider orientation="vertical" flexItem />
-            </>
-          )}
+          <ToggleButton value="TRAIN" sx={{ px: 1.5 }}>
+            {t("models:label.train")}
+          </ToggleButton>
+          <ToggleButton value="VALIDATION" sx={{ px: 1.5 }}>
+            {t("models:label.validation")}
+          </ToggleButton>
+          <ToggleButton value="TEST" sx={{ px: 1.5 }}>
+            {t("models:label.test")}
+          </ToggleButton>
+        </PillToggleButtonGroup>
+      </Box>
 
-          {runScore && (
-            <>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">
-                  {t("models:label.score")}
-                </Typography>
-                <Tooltip
-                  title={
-                    <Typography
-                      variant="body2"
-                      component="div"
-                      sx={{ lineHeight: 1.6 }}
-                    >
-                      {runScore.breakdown.map(
-                        ({ metric_name, value, normalized_weight }, i) => (
-                          <Typography
-                            variant="body2"
-                            component="div"
-                            key={metric_name}
-                          >
-                            {i === 0 ? "=" : "+"} {metric_name} (
-                            {value.toFixed(4)}) ×{" "}
-                            {(normalized_weight * 100).toFixed(0)}%
-                          </Typography>
-                        ),
-                      )}
-                    </Typography>
-                  }
-                  placement="top"
-                  arrow
+      <Box sx={{ gridColumn: "1 / -1", gridRow: "2", minWidth: 0 }}>
+        {summaryMetrics.length > 0 && (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 4,
+              mb: 4,
+              px: 3,
+              py: 2,
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+            }}
+          >
+            {profiles && profiles.length > 0 && (
+              <>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
                 >
-                  <Box
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ whiteSpace: "nowrap" }}
+                  >
+                    {t("models:label.scoreProfile")}:
+                  </Typography>
+                  <Select
+                    value={selectedProfile || ""}
+                    onChange={(e) => onProfileChange?.(e.target.value)}
+                    size="small"
                     sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 0.5,
-                      cursor: "help",
-                      fontWeight: 700,
+                      fontSize: "0.75rem",
+                      height: 24,
+                      "& .MuiSelect-select": { py: 0, px: 1 },
                     }}
                   >
+                    {profiles.map((p) => (
+                      <MenuItem
+                        key={p.id}
+                        value={p.id}
+                        sx={{ fontSize: "0.8rem" }}
+                      >
+                        {t(`models:label.profile_${p.id}`)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </Box>
+                <Divider orientation="vertical" flexItem />
+              </>
+            )}
+
+            {runScore && (
+              <>
+                <Box
+                  sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+                >
+                  <Typography variant="caption" color="text.secondary">
+                    {t("models:label.score")}
+                  </Typography>
+                  <Tooltip
+                    title={
+                      <Typography
+                        variant="body2"
+                        component="div"
+                        sx={{ lineHeight: 1.6 }}
+                      >
+                        {runScore.breakdown.map(
+                          ({ metric_name, value, normalized_weight }, i) => (
+                            <Typography
+                              variant="body2"
+                              component="div"
+                              key={metric_name}
+                            >
+                              {i === 0 ? "=" : "+"} {metric_name} (
+                              {value.toFixed(4)}) ×{" "}
+                              {(normalized_weight * 100).toFixed(0)}%
+                            </Typography>
+                          ),
+                        )}
+                      </Typography>
+                    }
+                    placement="top"
+                    arrow
+                  >
                     <Box
-                      component="span"
-                      sx={{ color: "warning.main", fontSize: "0.875rem" }}
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                        cursor: "help",
+                        fontWeight: 700,
+                      }}
                     >
-                      ★
+                      <Box
+                        component="span"
+                        sx={{ color: "warning.main", fontSize: "0.875rem" }}
+                      >
+                        ★
+                      </Box>
+                      <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                        {runScore.score.toFixed(1)}
+                      </Typography>
                     </Box>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      {runScore.score.toFixed(1)}
-                    </Typography>
-                  </Box>
-                </Tooltip>
-              </Box>
-              <Divider orientation="vertical" flexItem />
-            </>
-          )}
+                  </Tooltip>
+                </Box>
+                <Divider orientation="vertical" flexItem />
+              </>
+            )}
 
-          {summaryMetrics.map(([name, value]) => (
-            <Box
-              key={name}
-              sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                {name}
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {value.toFixed(4)}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      )}
-
-      {panels.length === 0 ? (
-        <Box
-          height={350}
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          border="1px dashed grey"
-        >
-          <Typography color="textSecondary">
-            {t("models:label.noMetricsAvailableForThisView")}
-          </Typography>
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            display: "grid",
-            gap: 3,
-            gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))",
-          }}
-        >
-          {panels.map((panel) => (
-            <Box
-              key={panel.metric}
-              sx={{ border: 1, borderColor: "divider", borderRadius: 1, p: 2 }}
-            >
-              <Typography
-                variant="subtitle2"
-                sx={{ fontWeight: 600, mb: 1, px: 1 }}
+            {summaryMetrics.map(([name, value]) => (
+              <Box
+                key={name}
+                sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
               >
-                {panel.metric}
-              </Typography>
-              <Plot
-                data={[
-                  {
-                    type: "scatter",
-                    mode: panel.x.length > 1 ? "lines" : "markers",
-                    x: panel.x,
-                    y: panel.y,
-                    line: {
-                      color: panel.color,
-                      width: 2,
-                      shape: "spline",
-                      smoothing: 0.7,
-                    },
-                    marker: { color: panel.color },
-                    hovertemplate: "%{x}: %{y:.4f}<extra></extra>",
-                  },
-                ]}
-                layout={{
-                  autosize: true,
-                  height: 240,
-                  margin: { l: 50, r: 12, t: 8, b: 40 },
-                  showlegend: false,
-                  paper_bgcolor: theme.palette.background.paper,
-                  plot_bgcolor: theme.palette.background.paper,
-                  font: {
-                    color: theme.palette.text.primary,
-                    family: theme.typography.fontFamily,
-                    size: 11,
-                  },
-                  xaxis: {
-                    title: levelLabel,
-                    gridcolor: theme.palette.divider,
-                    zerolinecolor: theme.palette.divider,
-                    tickfont: { color: theme.palette.text.primary, size: 10 },
-                  },
-                  yaxis: {
-                    gridcolor: theme.palette.divider,
-                    tickfont: { color: theme.palette.text.primary, size: 10 },
-                    automargin: true,
-                  },
-                }}
-                useResizeHandler
-                style={{ width: "100%", height: "240px" }}
-                config={{ responsive: true, displayModeBar: false }}
-              />
-            </Box>
-          ))}
-        </Box>
-      )}
+                <Typography variant="caption" color="text.secondary">
+                  {name}
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  {value.toFixed(4)}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        )}
 
-      <Box display="flex" justifyContent="flex-end" mt={2}>
-        <ButtonGroup size="small" variant="outlined">
-          <Button
-            variant={level === "TRIAL" ? "contained" : "outlined"}
-            onClick={() => handleLevelChange("TRIAL")}
-            disabled={!hasTrialData}
+        {panels.length === 0 ? (
+          <Box
+            height={350}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            border="1px dashed grey"
           >
-            {t("models:label.trial")}
-          </Button>
-          <Button
-            variant={level === "STEP" ? "contained" : "outlined"}
-            onClick={() => handleLevelChange("STEP")}
-            disabled={!hasStepData}
+            <Typography color="textSecondary">
+              {t("models:label.noMetricsAvailableForThisView")}
+            </Typography>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: "grid",
+              gap: 3,
+              gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))",
+            }}
           >
-            {t("models:label.step")}
-          </Button>
-          <Button
-            variant={level === "EPOCH" ? "contained" : "outlined"}
-            onClick={() => handleLevelChange("EPOCH")}
-            disabled={!hasEpochData}
-          >
-            {t("models:label.epoch")}
-          </Button>
-        </ButtonGroup>
+            {panels.map((panel) => (
+              <Box
+                key={panel.metric}
+                sx={{
+                  border: 1,
+                  borderColor: "divider",
+                  borderRadius: 1,
+                  p: 2,
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{ fontWeight: 600, mb: 1, px: 1 }}
+                >
+                  {panel.metric}
+                </Typography>
+                <Plot
+                  data={[
+                    {
+                      type: "scatter",
+                      mode: panel.x.length > 1 ? "lines" : "markers",
+                      x: panel.x,
+                      y: panel.y,
+                      line: {
+                        color: panel.color,
+                        width: 2,
+                        shape: "spline",
+                        smoothing: 0.7,
+                      },
+                      marker: { color: panel.color },
+                      hovertemplate: "%{x}: %{y:.4f}<extra></extra>",
+                    },
+                  ]}
+                  layout={{
+                    autosize: true,
+                    height: 240,
+                    margin: { l: 50, r: 12, t: 8, b: 40 },
+                    showlegend: false,
+                    paper_bgcolor: theme.palette.background.paper,
+                    plot_bgcolor: theme.palette.background.paper,
+                    font: {
+                      color: theme.palette.text.primary,
+                      family: theme.typography.fontFamily,
+                      size: 11,
+                    },
+                    xaxis: {
+                      title: levelLabel,
+                      gridcolor: theme.palette.divider,
+                      zerolinecolor: theme.palette.divider,
+                      tickfont: { color: theme.palette.text.primary, size: 10 },
+                    },
+                    yaxis: {
+                      gridcolor: theme.palette.divider,
+                      tickfont: { color: theme.palette.text.primary, size: 10 },
+                      automargin: true,
+                    },
+                  }}
+                  useResizeHandler
+                  style={{ width: "100%", height: "240px" }}
+                  config={{ responsive: true, displayModeBar: false }}
+                />
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        <Box display="flex" justifyContent="flex-end" mt={2}>
+          <ButtonGroup size="small" variant="outlined">
+            <Button
+              variant={level === "TRIAL" ? "contained" : "outlined"}
+              onClick={() => handleLevelChange("TRIAL")}
+              disabled={!hasTrialData}
+            >
+              {t("models:label.trial")}
+            </Button>
+            <Button
+              variant={level === "STEP" ? "contained" : "outlined"}
+              onClick={() => handleLevelChange("STEP")}
+              disabled={!hasStepData}
+            >
+              {t("models:label.step")}
+            </Button>
+            <Button
+              variant={level === "EPOCH" ? "contained" : "outlined"}
+              onClick={() => handleLevelChange("EPOCH")}
+              disabled={!hasEpochData}
+            >
+              {t("models:label.epoch")}
+            </Button>
+          </ButtonGroup>
+        </Box>
       </Box>
     </Box>
   );

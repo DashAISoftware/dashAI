@@ -814,21 +814,70 @@ export default function RunResults({
       )}
 
       {activeTab === 2 && isFinished && (
-        <Box sx={{ py: 4, width: "100%" }}>
+        <Box
+          sx={{
+            py: 4,
+            width: "100%",
+            display: "grid",
+            gridTemplateColumns: "1fr auto",
+            columnGap: 2,
+            rowGap: 4,
+          }}
+        >
+          {predictionFilter === "dataset" ? (
+            <Box
+              sx={{
+                gridColumn: "1",
+                gridRow: "1",
+                display: "flex",
+                alignItems: "flex-end",
+                gap: 2,
+              }}
+            >
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<DatasetIcon />}
+                onClick={() => {
+                  setDatasetRunState({
+                    canRun: false,
+                    isSubmitting: false,
+                  });
+                  setShowDatasetPanel(true);
+                }}
+              >
+                {t("models:button.newDatasetPrediction")}
+              </Button>
+            </Box>
+          ) : (
+            <Box sx={{ gridColumn: "1", gridRow: "1" }} />
+          )}
+
+          {/* Spans every row below it so its containing block covers the
+              whole scrollable list, not just this header row - otherwise it
+              would stop sticking as soon as the header row itself scrolls
+              out of view. zIndex above the Manual table's own sticky header
+              (max z-index 2, see leanDatasetTable.css) so it always paints
+              on top instead of being covered once both reach top:0. */}
           <Box
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              flexWrap: "wrap",
-              gap: 2,
-              mb: 4,
+              gridColumn: "2",
+              gridRow: "1 / -1",
+              justifySelf: "end",
+              alignSelf: "start",
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
             }}
           >
             <PillToggleButtonGroup
               value={predictionFilter}
               onChange={(e, newValue) => {
                 if (newValue !== null) setPredictionFilter(newValue);
+              }}
+              sx={{
+                bgcolor: (theme) => alpha(theme.palette.ui.box, 0.8),
+                backdropFilter: "blur(8px)",
               }}
             >
               <ToggleButton value="dataset" sx={{ px: 1.5 }}>
@@ -838,142 +887,128 @@ export default function RunResults({
                 {t("models:label.manual")}
               </ToggleButton>
             </PillToggleButtonGroup>
-
-            {predictionFilter === "dataset" && (
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<DatasetIcon />}
-                  onClick={() => {
-                    setDatasetRunState({
-                      canRun: false,
-                      isSubmitting: false,
-                    });
-                    setShowDatasetPanel(true);
-                  }}
-                >
-                  {t("models:button.newDatasetPrediction")}
-                </Button>
-              </Box>
-            )}
           </Box>
 
-          <Dialog
-            open={showDatasetPanel}
-            onClose={() => setShowDatasetPanel(false)}
-            maxWidth="md"
-            fullWidth
-            PaperProps={{ sx: { minHeight: "500px" } }}
-          >
-            <DialogTitle sx={{ bgcolor: "background.paper" }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <Typography variant="h6" component="span">
-                  {t("models:button.newDatasetPrediction")}
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => setShowDatasetPanel(false)}
-                  sx={{ color: "text.secondary" }}
+          <Box sx={{ gridColumn: "1 / -1", gridRow: "2", minWidth: 0 }}>
+            <Dialog
+              open={showDatasetPanel}
+              onClose={() => setShowDatasetPanel(false)}
+              maxWidth="md"
+              fullWidth
+              PaperProps={{ sx: { minHeight: "500px" } }}
+            >
+              <DialogTitle sx={{ bgcolor: "background.paper" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
                 >
-                  <CloseIcon />
-                </IconButton>
-              </Box>
-            </DialogTitle>
-            <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
-              <DatasetPredictionPanel
-                run={run}
-                session={session}
-                onSaved={(prediction) => {
-                  handlePredictionCreated(prediction);
-                  setShowDatasetPanel(false);
-                }}
-                onClose={() => setShowDatasetPanel(false)}
-                runRef={datasetRunRef}
-                onStateChange={setDatasetRunState}
-              />
-            </DialogContent>
-            <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
-              <Button
-                variant="outlined"
-                onClick={() => setShowDatasetPanel(false)}
-                disabled={datasetRunState.isSubmitting}
-              >
-                {t("common:cancel")}
-              </Button>
-              <LoadingButton
-                variant="contained"
-                color="primary"
-                disabled={!datasetRunState.canRun}
-                loading={datasetRunState.isSubmitting}
-                onClick={() => datasetRunRef.current?.()}
-              >
-                {t("prediction:button.runPrediction")}
-              </LoadingButton>
-            </DialogActions>
-          </Dialog>
-
-          {(() => {
-            const visiblePredictions = predictions.filter((p) =>
-              predictionFilter === "dataset" ? p.dataset_id : !p.dataset_id,
-            );
-
-            if (predictionFilter === "manual") {
-              return (
-                <ManualPredictionsTable
+                  <Typography variant="h6" component="span">
+                    {t("models:button.newDatasetPrediction")}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => setShowDatasetPanel(false)}
+                    sx={{ color: "text.secondary" }}
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                </Box>
+              </DialogTitle>
+              <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
+                <DatasetPredictionPanel
                   run={run}
                   session={session}
-                  predictions={visiblePredictions}
-                  displayNumbers={predictionDisplayNumbers}
-                  targetColumn={outputColumn}
-                  datasetSample={trainingDatasetSample}
-                  onSaved={handlePredictionCreated}
-                  onDelete={handlePredictionDeleted}
+                  onSaved={(prediction) => {
+                    handlePredictionCreated(prediction);
+                    setShowDatasetPanel(false);
+                  }}
+                  onClose={() => setShowDatasetPanel(false)}
+                  runRef={datasetRunRef}
+                  onStateChange={setDatasetRunState}
                 />
-              );
-            }
-
-            if (visiblePredictions.length === 0) {
-              return (
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  align="center"
-                  sx={{ py: 3 }}
+              </DialogContent>
+              <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowDatasetPanel(false)}
+                  disabled={datasetRunState.isSubmitting}
                 >
-                  {t("models:label.noDatasetPredictionsYet")}
-                </Typography>
-              );
-            }
+                  {t("common:cancel")}
+                </Button>
+                <LoadingButton
+                  variant="contained"
+                  color="primary"
+                  disabled={!datasetRunState.canRun}
+                  loading={datasetRunState.isSubmitting}
+                  onClick={() => datasetRunRef.current?.()}
+                >
+                  {t("prediction:button.runPrediction")}
+                </LoadingButton>
+              </DialogActions>
+            </Dialog>
 
-            return (
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(680px, 1fr))",
-                  gap: 2,
-                }}
-              >
-                {visiblePredictions.map((prediction) => (
-                  <PredictionCard
-                    key={prediction.id}
-                    prediction={prediction}
-                    onDelete={handlePredictionDeleted}
-                    onUpdate={fetchOperations}
+            {(() => {
+              const visiblePredictions = predictions.filter((p) =>
+                predictionFilter === "dataset" ? p.dataset_id : !p.dataset_id,
+              );
+
+              if (predictionFilter === "manual") {
+                return (
+                  <ManualPredictionsTable
+                    run={run}
+                    session={session}
+                    predictions={visiblePredictions}
+                    displayNumbers={predictionDisplayNumbers}
                     targetColumn={outputColumn}
                     datasetSample={trainingDatasetSample}
-                    displayNumber={predictionDisplayNumbers.get(prediction.id)}
+                    onSaved={handlePredictionCreated}
+                    onDelete={handlePredictionDeleted}
                   />
-                ))}
-              </Box>
-            );
-          })()}
+                );
+              }
+
+              if (visiblePredictions.length === 0) {
+                return (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    align="center"
+                    sx={{ py: 3 }}
+                  >
+                    {t("models:label.noDatasetPredictionsYet")}
+                  </Typography>
+                );
+              }
+
+              return (
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(680px, 1fr))",
+                    gap: 2,
+                  }}
+                >
+                  {visiblePredictions.map((prediction) => (
+                    <PredictionCard
+                      key={prediction.id}
+                      prediction={prediction}
+                      onDelete={handlePredictionDeleted}
+                      onUpdate={fetchOperations}
+                      targetColumn={outputColumn}
+                      datasetSample={trainingDatasetSample}
+                      displayNumber={predictionDisplayNumbers.get(
+                        prediction.id,
+                      )}
+                    />
+                  ))}
+                </Box>
+              );
+            })()}
+          </Box>
         </Box>
       )}
 
