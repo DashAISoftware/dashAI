@@ -152,7 +152,14 @@ function RunCard({
       elevation={hideChrome ? 0 : 2}
       sx={
         hideChrome
-          ? { bgcolor: "transparent", boxShadow: "none" }
+          ? {
+              bgcolor: "transparent",
+              boxShadow: "none",
+              display: "flex",
+              flexDirection: "column",
+              flex: 1,
+              minHeight: 0,
+            }
           : {
               mb: 4,
               bgcolor: "background.box",
@@ -184,7 +191,18 @@ function RunCard({
       }
     >
       <CardContent
-        sx={hideChrome ? { p: 0, "&:last-child": { pb: 0 } } : undefined}
+        sx={
+          hideChrome
+            ? {
+                p: 0,
+                "&:last-child": { pb: 0 },
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                minHeight: 0,
+              }
+            : undefined
+        }
       >
         {!hideChrome && (
           <>
@@ -359,7 +377,18 @@ function RunCard({
           </>
         )}
 
-        <Box sx={{ mt: hideChrome ? 0 : 4 }}>
+        <Box
+          sx={
+            hideChrome
+              ? {
+                  display: "flex",
+                  flexDirection: "column",
+                  flex: 1,
+                  minHeight: 0,
+                }
+              : { mt: 4 }
+          }
+        >
           <RunResults
             run={run}
             session={session}
@@ -368,6 +397,7 @@ function RunCard({
             resultsVisible={isResultsVisible}
             setResultsVisible={setResultsVisible}
             autoExpand={autoExpand}
+            fillHeight={hideChrome}
             profiles={profiles}
             selectedProfile={selectedProfile}
             onProfileChange={onProfileChange}

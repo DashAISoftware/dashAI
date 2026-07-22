@@ -3,7 +3,13 @@
     "addExplainer": "Adicionar Explicador",
     "backToExplainers": "Voltar para explicadores",
     "hidePlot": "Ocultar Gráfico",
-    "showPlot": "Mostrar Gráfico"
+    "showPlot": "Mostrar Gráfico",
+    "download": "Baixar",
+    "downloadPng": "Baixar como PNG",
+    "downloadSvg": "Baixar como SVG",
+    "editPlot": "Editar gráfico",
+    "resetPlot": "Redefinir edições",
+    "fullscreen": "Tela cheia"
   },
   "error": {
     "explainerFailed": "Erro ao gerar o explicador.",

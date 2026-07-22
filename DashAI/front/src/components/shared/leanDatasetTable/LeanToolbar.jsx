@@ -35,6 +35,16 @@ const LeanToolbar = memo(function LeanToolbar({
   extraActions,
 }) {
   const { t } = useTranslation(["datasets"]);
+
+  if (
+    !enableFilters &&
+    !enableSearch &&
+    !enableColumnVisibility &&
+    !showExportButton
+  ) {
+    return null;
+  }
+
   return (
     <Box className="lean-toolbar">
       {/* Left: filters, search, hidden-count badge, column-visibility */}

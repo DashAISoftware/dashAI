@@ -3,7 +3,13 @@
     "addExplainer": "Erklärungsmodell hinzufügen",
     "backToExplainers": "Zurück zu Erklärungsmodellen",
     "hidePlot": "Plot ausblenden",
-    "showPlot": "Plot anzeigen"
+    "showPlot": "Plot anzeigen",
+    "download": "Herunterladen",
+    "downloadPng": "Als PNG herunterladen",
+    "downloadSvg": "Als SVG herunterladen",
+    "editPlot": "Diagramm bearbeiten",
+    "resetPlot": "Bearbeitungen zuruecksetzen",
+    "fullscreen": "Vollbild"
   },
   "error": {
     "explainerFailed": "Erklärungsmodell konnte nicht generiert werden.",

@@ -1,25 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Grid,
   Typography,
   IconButton,
   Paper,
-  Button,
-  Collapse,
   Box,
   CircularProgress,
 } from "@mui/material";
+import { useTheme, alpha } from "@mui/material/styles";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import PropTypes from "prop-types";
 import ExplainersPlot from "./ExplainersPlot";
 import { useNavigate } from "react-router-dom";
-import { deleteExplainer } from "../../api/explainer";
+import {
+  deleteExplainer,
+  saveExplainerPlotOverride,
+  resetExplainerPlotOverride,
+} from "../../api/explainer";
 import { useTranslation } from "react-i18next";
-import { getComponentById } from "../../api/component";
 
 const RUNNING_STATUSES = [1, 2]; // Delivered or Started
 
@@ -33,18 +33,17 @@ export default function ExplainersCard({
   scope,
   onDelete,
   compact = false,
+  displayName = null,
+  cacheEntry = null,
+  onCacheUpdate = null,
+  isHighlighted = false,
 }) {
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const expandedStorageKey = `explainer-${scope}-${explainer.id}-expanded`;
-  const [expanded, setExpanded] = useState(() => {
-    const saved = localStorage.getItem(expandedStorageKey);
-    return saved !== null ? JSON.parse(saved) : true;
-  });
-
-  useEffect(() => {
-    localStorage.setItem(expandedStorageKey, JSON.stringify(expanded));
-  }, [expanded, expandedStorageKey]);
-  const [componentData, setComponentData] = useState(null);
+  const [localOverriddenIndexes, setLocalOverriddenIndexes] = useState([]);
+  const overriddenIndexes = cacheEntry
+    ? (cacheEntry.overriddenIndexes ?? [])
+    : localOverriddenIndexes;
   const { t } = useTranslation(["explainers"]);
   const isRunning = RUNNING_STATUSES.includes(explainer.status);
 
@@ -72,21 +71,47 @@ export default function ExplainersCard({
     }
   };
 
-  useEffect(() => {
-    getComponentById(explainer.explainer_name)
-      .then((data) => {
-        setComponentData(data);
-      })
-      .catch((error) => {
-        console.error("Error fetching component data:", error);
-      });
-  }, [explainer.explainer_name]);
+  const handleSaveOverride = async (index, figure) => {
+    await saveExplainerPlotOverride(scope, explainer.id, index, figure);
+    const next = overriddenIndexes.includes(index)
+      ? overriddenIndexes
+      : [...overriddenIndexes, index];
+    if (onCacheUpdate) onCacheUpdate({ overriddenIndexes: next });
+    else setLocalOverriddenIndexes(next);
+  };
+
+  const handleResetOverride = async (index) => {
+    await resetExplainerPlotOverride(scope, explainer.id, index);
+    const next = overriddenIndexes.filter((i) => i !== index);
+    if (onCacheUpdate) onCacheUpdate({ overriddenIndexes: next });
+    else setLocalOverriddenIndexes(next);
+  };
 
   if (compact) {
     return (
       <>
-        <Paper elevation={2} sx={{ p: 4 }}>
-          <Grid container direction="column" gap={2}>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: 4,
+            bgcolor: "background.paper",
+            borderColor: theme.palette.ui.border,
+            borderRadius: 1,
+            position: "relative",
+            zIndex: isHighlighted ? 1 : 0,
+            "@keyframes newItemHighlight": {
+              "0%": { boxShadow: "none" },
+              "20%": {
+                boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+              },
+              "100%": { boxShadow: "none" },
+            },
+            animation: isHighlighted
+              ? "newItemHighlight 4s ease-in-out forwards"
+              : "none",
+          }}
+        >
+          <Grid container direction="column" gap={3}>
             <Grid
               item
               container
@@ -94,7 +119,10 @@ export default function ExplainersCard({
               justifyContent="space-between"
               alignItems="center"
             >
-              <Grid sx={{ width: 300, minWidth: 0, overflow: "hidden" }}>
+              <Grid
+                item
+                sx={{ flex: 1, minWidth: 0, overflow: "hidden", mr: 2 }}
+              >
                 <Typography
                   variant="body1"
                   fontWeight="medium"
@@ -106,9 +134,7 @@ export default function ExplainersCard({
                     wordBreak: "break-word",
                   }}
                 >
-                  {componentData
-                    ? componentData.display_name
-                    : plotName(explainer.explainer_name)}
+                  {displayName || plotName(explainer.explainer_name)}
                   <Typography
                     variant="caption"
                     color="text.secondary"
@@ -140,22 +166,21 @@ export default function ExplainersCard({
               </Box>
             ) : (
               <Grid sx={{ width: "100%" }}>
-                <Button
-                  size="small"
-                  onClick={() => setExpanded(!expanded)}
-                  endIcon={expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                  sx={{ textTransform: "none" }}
+                <Box
+                  sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}
                 >
-                  {expanded
-                    ? t("explainers:button.hidePlot")
-                    : t("explainers:button.showPlot")}
-                </Button>
-
-                <Collapse in={expanded} timeout="auto" unmountOnExit>
-                  <Box sx={{ mt: 4 }}>
-                    <ExplainersPlot explainer={explainer} scope={scope} />
-                  </Box>
-                </Collapse>
+                  {/* Reserved slot for the future "generate story" action button.
+                      Kept hidden until that feature lands. */}
+                </Box>
+                <ExplainersPlot
+                  explainer={explainer}
+                  scope={scope}
+                  onSaveOverride={handleSaveOverride}
+                  onResetOverride={handleResetOverride}
+                  overriddenIndexes={overriddenIndexes}
+                  cacheEntry={cacheEntry}
+                  onCacheUpdate={onCacheUpdate}
+                />
               </Grid>
             )}
           </Grid>
@@ -246,4 +271,12 @@ ExplainersCard.propTypes = {
   scope: PropTypes.string.isRequired,
   onDelete: PropTypes.func,
   compact: PropTypes.bool,
+  displayName: PropTypes.string,
+  cacheEntry: PropTypes.shape({
+    items: PropTypes.array,
+    overriddenIndexes: PropTypes.arrayOf(PropTypes.number),
+    selectedGroups: PropTypes.object,
+  }),
+  onCacheUpdate: PropTypes.func,
+  isHighlighted: PropTypes.bool,
 };

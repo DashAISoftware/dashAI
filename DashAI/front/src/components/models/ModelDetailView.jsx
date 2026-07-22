@@ -1,12 +1,19 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  Chip,
+  Tooltip,
+} from "@mui/material";
 import { PlayArrow, Delete, Info } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import RunCard from "./RunCard";
 import InfoModal from "../shared/InfoModal";
-import RunStatusDot from "../shared/RunStatusDot";
+import { getRunStatus, getRunStatusColor } from "../../utils/runStatus";
 
 function formatCreatedDate(dateStr, locale) {
   if (!dateStr) return null;
@@ -35,9 +42,10 @@ function formatDuration(startTime, endTime) {
 }
 
 /**
- * Full-screen detail view for a single model run — header with the run's
- * identity/actions, a quick-facts line, and RunResults' tabs (Configuración,
- * Métricas, Explicabilidad, Predicción, HPO) below.
+ * Full-screen detail view for a single model run: header with the run's
+ * identity and actions, an info modal with quick facts, and RunCard's tabs
+ * below. The column layout keeps the header fixed and lets RunCard (in
+ * fillHeight mode) own the scroll.
  */
 export default function ModelDetailView({
   run,
@@ -60,6 +68,7 @@ export default function ModelDetailView({
 
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
+  const statusText = getRunStatus(run.status, t);
   const canTrain = run.status === 0 || run.status === 3 || run.status === 4;
   const isRunning = run.status === 1 || run.status === 2;
 
@@ -67,90 +76,114 @@ export default function ModelDetailView({
   const durationLabel = formatDuration(run.start_time, run.end_time);
 
   return (
-    <Box sx={{ px: 4, pt: 4, pb: 4 }}>
-      <ModelsBreadcrumbs />
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+      }}
+    >
+      <Box sx={{ flexShrink: 0, px: 4, pt: 4 }}>
+        <ModelsBreadcrumbs />
 
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          gap: 2,
-          mb: 1,
-        }}
-      >
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
-            gap: 2,
+            justifyContent: "space-between",
+            alignItems: "flex-start",
             flexWrap: "wrap",
+            gap: 2,
+            mb: 1,
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>
-            {run.name}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {modelDisplayName}
-          </Typography>
-          <RunStatusDot status={run.status} />
-        </Box>
-
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          {canTrain && (
-            <Button
-              variant="contained"
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              flexWrap: "wrap",
+            }}
+          >
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+              {run.name}
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {modelDisplayName}
+            </Typography>
+            <Chip
+              label={statusText}
+              color={getRunStatusColor(run.status)}
               size="small"
-              startIcon={<PlayArrow />}
-              onClick={() => onTrain(run)}
-            >
-              {run.status === 3 ? t("common:retrain") : t("common:trainVerb")}
-            </Button>
-          )}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Tooltip title={t("common:info")}>
-              <IconButton
+            />
+          </Box>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            {canTrain && (
+              <Button
+                variant="contained"
                 size="small"
-                sx={{ p: 0.5 }}
-                onClick={() => setInfoModalOpen(true)}
+                startIcon={<PlayArrow />}
+                onClick={() => onTrain(run)}
               >
-                <Info fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={t("models:button.deleteRun")}>
-              <IconButton
-                size="small"
-                color="error"
-                sx={{ p: 0.5 }}
-                disabled={isRunning}
-                onClick={() => setDeleteConfirmOpen(true)}
-              >
-                <Delete fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                {run.status === 3 ? t("common:retrain") : t("common:trainVerb")}
+              </Button>
+            )}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Tooltip title={t("common:info")}>
+                <IconButton
+                  size="small"
+                  sx={{ p: 0.5 }}
+                  onClick={() => setInfoModalOpen(true)}
+                >
+                  <Info fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title={t("models:button.deleteRun")}>
+                <IconButton
+                  size="small"
+                  color="error"
+                  sx={{ p: 0.5 }}
+                  disabled={isRunning}
+                  onClick={() => setDeleteConfirmOpen(true)}
+                >
+                  <Delete fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
           </Box>
         </Box>
       </Box>
 
-      <RunCard
-        run={run}
-        models={models}
-        session={session}
-        onTrain={onTrain}
-        onDelete={onDelete}
-        explainerRefreshTrigger={explainerRefreshTrigger}
-        onOperationsRefresh={onOperationsRefresh}
-        existingRuns={existingRuns}
-        onRefresh={onRefresh}
-        forceExpanded
-        hideChrome
-        deleteConfirmOpen={deleteConfirmOpen}
-        setDeleteConfirmOpen={setDeleteConfirmOpen}
-        profiles={profiles}
-        selectedProfile={selectedProfile}
-        onProfileChange={onProfileChange}
-      />
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          px: 4,
+          pb: 4,
+        }}
+      >
+        <RunCard
+          run={run}
+          models={models}
+          session={session}
+          onTrain={onTrain}
+          onDelete={onDelete}
+          explainerRefreshTrigger={explainerRefreshTrigger}
+          onOperationsRefresh={onOperationsRefresh}
+          existingRuns={existingRuns}
+          onRefresh={onRefresh}
+          forceExpanded
+          hideChrome
+          deleteConfirmOpen={deleteConfirmOpen}
+          setDeleteConfirmOpen={setDeleteConfirmOpen}
+          profiles={profiles}
+          selectedProfile={selectedProfile}
+          onProfileChange={onProfileChange}
+        />
+      </Box>
 
       <InfoModal
         title={t("common:runInformation")}

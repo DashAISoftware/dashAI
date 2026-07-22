@@ -32,13 +32,13 @@ export default function SessionVisualization() {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [highlightedRunId, setHighlightedRunId] = useState(null);
   const [metricSplit, setMetricSplit] = useState("test");
-  const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
-  const [sessionInfoOpen, setSessionInfoOpen] = useState(false);
   const { t } = useTranslation(["models", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const sessionTourContext = useTourContext();
   const params = useParams();
   const navigate = useNavigate();
+
+  const [sessionInfoOpen, setSessionInfoOpen] = useState(false);
 
   const {
     selectedSession: session,
@@ -56,6 +56,9 @@ export default function SessionVisualization() {
     lastAddedRunId,
     clearLastAddedRunId,
     selectModel,
+    openExplainerCreator,
+    explainerRefreshTrigger,
+    triggerExplainerRefresh,
   } = useModels();
 
   const { profiles, selectedProfile, setSelectedProfile, scores } =
@@ -67,7 +70,11 @@ export default function SessionVisualization() {
 
   useEffect(() => {
     const onStart = (e) => {
-      if (e.dataTransfer.types.includes("application/x-dashai-model")) {
+      const types = e.dataTransfer.types;
+      if (
+        types.includes("application/x-dashai-model") ||
+        types.includes("application/x-dashai-explainer")
+      ) {
         setIsDragging(true);
       }
     };
@@ -247,14 +254,20 @@ export default function SessionVisualization() {
         data-session-viz
         onDragOver={(e) => {
           if (e.dataTransfer.types.includes("Files")) e.preventDefault();
-          if (!e.dataTransfer.types.includes("application/x-dashai-model"))
+          if (
+            !e.dataTransfer.types.includes("application/x-dashai-model") &&
+            !e.dataTransfer.types.includes("application/x-dashai-explainer")
+          )
             return;
           e.preventDefault();
           e.dataTransfer.dropEffect = "copy";
         }}
         onDragEnter={(e) => {
           if (e.dataTransfer.types.includes("Files")) e.preventDefault();
-          if (!e.dataTransfer.types.includes("application/x-dashai-model"))
+          if (
+            !e.dataTransfer.types.includes("application/x-dashai-model") &&
+            !e.dataTransfer.types.includes("application/x-dashai-explainer")
+          )
             return;
           e.preventDefault();
           setIsDragOver(true);
@@ -266,13 +279,24 @@ export default function SessionVisualization() {
           }
         }}
         onDrop={(e) => {
+          const types = e.dataTransfer.types;
+          const isModel = types.includes("application/x-dashai-model");
+          const isExplainer = types.includes("application/x-dashai-explainer");
+          if (!isModel && !isExplainer) return;
           e.preventDefault();
           setIsDragOver(false);
           try {
-            const model = JSON.parse(
-              e.dataTransfer.getData("application/x-dashai-model"),
-            );
-            if (model?.name) selectModel(model);
+            if (isExplainer) {
+              const explainer = JSON.parse(
+                e.dataTransfer.getData("application/x-dashai-explainer"),
+              );
+              if (explainer?.name) openExplainerCreator(explainer);
+            } else {
+              const model = JSON.parse(
+                e.dataTransfer.getData("application/x-dashai-model"),
+              );
+              if (model?.name) selectModel(model);
+            }
           } catch {
             // ignore invalid drops
           }
@@ -322,7 +346,7 @@ export default function SessionVisualization() {
             </Typography>
           </Box>
         )}
-        {/* Model detail — full-screen view for a single run */}
+        {/* Model detail: full-screen view for a single run */}
         {params.runId ? (
           activeRun ? (
             <ModelDetailView
@@ -333,9 +357,7 @@ export default function SessionVisualization() {
               onTrain={handleTrainWithTour}
               onDelete={handleDeleteRun}
               explainerRefreshTrigger={explainerRefreshTrigger}
-              onOperationsRefresh={() =>
-                setExplainerRefreshTrigger((prev) => prev + 1)
-              }
+              onOperationsRefresh={triggerExplainerRefresh}
               existingRuns={runs}
               onRefresh={fetchRuns}
               profiles={profiles}
@@ -361,7 +383,7 @@ export default function SessionVisualization() {
           )
         ) : (
           <>
-            {/* Session header — breadcrumb, title, quick stats */}
+            {/* Session header: breadcrumb, title, quick stats */}
             <Box sx={{ px: 4, pt: 4 }}>
               <Box
                 sx={{
@@ -427,7 +449,7 @@ export default function SessionVisualization() {
               onClose={() => setSessionInfoOpen(false)}
             />
 
-            {/* Compact model cards — quick access to each model */}
+            {/* Compact model cards: quick access to each model */}
             <Box
               data-tour="run-cards-section"
               sx={{
@@ -499,7 +521,7 @@ export default function SessionVisualization() {
 
             <Divider sx={{ my: 2 }} />
 
-            {/* Comparison analysis area — table/graphs across all models */}
+            {/* Comparison analysis area: table/graphs across all models */}
             <Box
               data-tour="model-comparison-panel"
               sx={{
@@ -529,7 +551,7 @@ export default function SessionVisualization() {
                     flexWrap: "wrap",
                   }}
                 >
-                  {/* Metric Split Selector — controls both table and graph views */}
+                  {/* Metric Split Selector: controls both table and graph views */}
                   {(hasTrainMetrics ||
                     hasValidationMetrics ||
                     hasTestMetrics) && (

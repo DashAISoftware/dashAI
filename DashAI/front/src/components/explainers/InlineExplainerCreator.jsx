@@ -48,6 +48,7 @@ export default function InlineExplainerCreator({
   open,
   scope,
   explainerConfig,
+  preselectedExplainer = null,
   onCreated,
   onCancel,
 }) {
@@ -55,8 +56,11 @@ export default function InlineExplainerCreator({
   const { t } = useTranslation(["explainers", "common"]);
   const formSubmitRef = useRef(null);
 
-  const { runId, taskName } = explainerConfig;
+  const { runId, taskName, modelName } = explainerConfig;
   const isLocal = scope === "local";
+  // With a preselected explainer the selection step is skipped entirely; the
+  // stepper starts at dataset selection (local) or parameter configuration.
+  const hasPreselected = Boolean(preselectedExplainer);
 
   const defaultNewExplainer = useMemo(
     () =>
@@ -64,35 +68,41 @@ export default function InlineExplainerCreator({
         ? {
             name: "",
             run_id: runId,
-            explainer_name: null,
-            scope: { split: "test", percentage: 20 },
+            explainer_name: preselectedExplainer ?? null,
+            scope: {
+              mode: "split",
+              split: "test",
+              percentage: 20,
+              shuffle: false,
+            },
             dataset_id: null,
             parameters: null,
             fit_parameters: null,
+            manual_input: null,
           }
         : {
             name: "",
             run_id: runId,
-            explainer_name: null,
+            explainer_name: preselectedExplainer ?? null,
             parameters: null,
           },
-    [isLocal, runId],
+    [isLocal, runId, preselectedExplainer],
   );
 
-  const steps = useMemo(
-    () =>
-      isLocal
-        ? [
-            t("explainers:label.selectExplainer"),
-            t("explainers:label.selectDataset"),
-            t("explainers:label.configureExplainerParameters"),
-          ]
-        : [
-            t("explainers:label.selectExplainer"),
-            t("explainers:label.configureExplainerParameters"),
-          ],
-    [isLocal, t],
-  );
+  const steps = useMemo(() => {
+    const stepLabels = [];
+    if (!hasPreselected) {
+      stepLabels.push(t("explainers:label.selectExplainer"));
+    }
+    if (isLocal) {
+      stepLabels.push(t("explainers:label.selectDataset"));
+    }
+    stepLabels.push(t("explainers:label.configureExplainerParameters"));
+    return stepLabels;
+  }, [isLocal, hasPreselected, t]);
+
+  const datasetStepIndex = hasPreselected ? 0 : 1;
+  const configureStepIndex = (hasPreselected ? 0 : 1) + (isLocal ? 1 : 0);
 
   const [activeStep, setActiveStep] = useState(0);
   const [nextEnabled, setNextEnabled] = useState(false);
@@ -145,7 +155,15 @@ export default function InlineExplainerCreator({
 
   const enqueueExplainerJob = async (explainerId) => {
     try {
-      const response = await enqueueExplainerJobRequest(explainerId, scope);
+      const manualInput =
+        isLocal && newExpl.scope?.mode === "manual"
+          ? newExpl.manual_input
+          : undefined;
+      const response = await enqueueExplainerJobRequest(
+        explainerId,
+        scope,
+        manualInput,
+      );
       enqueueSnackbar(
         t(
           isLocal
@@ -262,7 +280,7 @@ export default function InlineExplainerCreator({
     <Dialog
       open={open}
       onClose={onCancel}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       PaperProps={{
         sx: { minHeight: "500px" },
@@ -282,6 +300,7 @@ export default function InlineExplainerCreator({
                 ? "explainers:label.newLocalExplainer"
                 : "explainers:label.newGlobalExplainer",
             )}
+            {hasPreselected ? `: ${preselectedExplainer}` : ""}
           </Typography>
           <IconButton
             onClick={onCancel}
@@ -302,24 +321,26 @@ export default function InlineExplainerCreator({
           ))}
         </Stepper>
 
-        {activeStep === 0 && (
+        {!hasPreselected && activeStep === 0 && (
           <SetNameAndExplainerStep
             newExpl={newExpl}
             setNewExpl={setNewExpl}
             setNextEnabled={setNextEnabled}
             scope={isLocal ? "Local" : "Global"}
             taskName={taskName}
+            modelName={modelName}
             existingExplainers={existingExplainers}
           />
         )}
-        {isLocal && activeStep === 1 && (
+        {isLocal && activeStep === datasetStepIndex && (
           <SelectDatasetStep
             newExpl={newExpl}
             setNewExpl={setNewExpl}
             setNextEnabled={setNextEnabled}
+            existingExplainers={existingExplainers}
           />
         )}
-        {((isLocal && activeStep === 2) || (!isLocal && activeStep === 1)) && (
+        {activeStep === configureStepIndex && (
           <ConfigureExplainerStep
             newExpl={newExpl}
             setNewExpl={setNewExpl}
@@ -349,7 +370,11 @@ export default function InlineExplainerCreator({
             onClick={handleNext}
             variant="contained"
             color="primary"
-            disabled={!nextEnabled || isLoading}
+            disabled={
+              !nextEnabled ||
+              isLoading ||
+              (activeStep === steps.length - 1 && !newExpl.name.trim())
+            }
             loading={isLoading}
           >
             {activeStep === steps.length - 1
@@ -368,7 +393,9 @@ InlineExplainerCreator.propTypes = {
   explainerConfig: PropTypes.shape({
     runId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     taskName: PropTypes.string,
+    modelName: PropTypes.string,
   }).isRequired,
+  preselectedExplainer: PropTypes.string,
   onCreated: PropTypes.func,
   onCancel: PropTypes.func.isRequired,
 };

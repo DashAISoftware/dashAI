@@ -3,7 +3,13 @@
     "addExplainer": "添加解释器",
     "backToExplainers": "返回解释器列表",
     "hidePlot": "隐藏图表",
-    "showPlot": "显示图表"
+    "showPlot": "显示图表",
+    "download": "下载",
+    "downloadPng": "下载为 PNG",
+    "downloadSvg": "下载为 SVG",
+    "editPlot": "编辑图表",
+    "resetPlot": "重置编辑",
+    "fullscreen": "全屏"
   },
   "error": {
     "explainerFailed": "解释器生成失败。",
