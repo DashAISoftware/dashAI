@@ -94,12 +94,19 @@ export default function ManualInputForm({
     if (onSubmit) onSubmit(rows);
   };
 
-  const headerBg =
-    theme.palette.mode === "dark"
-      ? "rgba(255,255,255,0.05)"
-      : "rgba(0,0,0,0.02)";
+  // Match the lean dataset table's look (see leanDatasetTable.css): a panelDark
+  // surface, hairline gray borders, 13px text, a sticky header, and the blue
+  // accent used for its pinned/target column.
+  const headerBg = theme.palette.ui.panelDark;
+  const bodyBg = theme.palette.ui.panelDark;
+  const containerBorder = "rgba(128, 128, 128, 0.3)";
+  const headerBorder = "rgba(128, 128, 128, 0.4)";
+  const accent = "rgb(100, 150, 255)";
+  const targetHeaderBg = `linear-gradient(rgba(100, 150, 255, 0.16), rgba(100, 150, 255, 0.16)), ${headerBg}`;
+  const targetCellBg = `linear-gradient(rgba(100, 150, 255, 0.08), rgba(100, 150, 255, 0.08)), ${bodyBg}`;
 
-  const divider = theme.palette.divider;
+  // Hairline used for internal cell and column borders (lean's cell border).
+  const divider = "rgba(128, 128, 128, 0.15)";
   const textPrimary = theme.palette.text.primary;
   const textSecondary = theme.palette.text.secondary;
 
@@ -107,25 +114,29 @@ export default function ManualInputForm({
     ? predictionResults.columns[predictionResults.columns.length - 1]
     : targetColumn;
 
-  // Shared plain-<td> styles - no Emotion per-cell cost.
+  // Plain td styles, kept inline to avoid the per cell Emotion cost.
   const thStyle = {
-    padding: "8px 12px",
+    padding: "6px 10px",
     whiteSpace: "nowrap",
     minWidth: 120,
     fontWeight: 600,
-    fontSize: "0.875rem",
+    fontSize: 13,
     color: textPrimary,
     height: HEADER_HEIGHT,
     background: headerBg,
-    borderBottom: `2px solid ${divider}`,
+    borderBottom: `1px solid ${headerBorder}`,
     verticalAlign: "middle",
     textAlign: "left",
+    position: "sticky",
+    top: 0,
+    zIndex: 1,
   };
 
   const tdStyle = {
-    padding: "6px 12px",
+    padding: "4px 10px",
     whiteSpace: "nowrap",
     minWidth: 120,
+    fontSize: 13,
     color: textPrimary,
     height: ROW_HEIGHT,
     borderBottom: `1px solid ${divider}`,
@@ -184,10 +195,10 @@ export default function ManualInputForm({
       <Box
         sx={{
           display: "flex",
-          border: `1px solid ${divider}`,
+          border: `1px solid ${containerBorder}`,
           borderRadius: 1,
           overflow: "auto",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+          bgcolor: bodyBg,
         }}
       >
         {/* Scrollable input columns */}
@@ -243,9 +254,10 @@ export default function ManualInputForm({
         <Box
           sx={{
             flexShrink: 0,
-            borderLeft: `2px solid ${
-              predictionResults ? theme.palette.primary.main : divider
+            borderLeft: `1px solid ${
+              predictionResults ? accent : containerBorder
             }`,
+            boxShadow: "-2px 0 4px rgba(0, 0, 0, 0.35)",
           }}
         >
           <table style={{ borderCollapse: "collapse", tableLayout: "auto" }}>
@@ -255,9 +267,10 @@ export default function ManualInputForm({
                   <th
                     style={{
                       ...thStyle,
-                      color: theme.palette.primary.main,
+                      color: accent,
                       minWidth: 120,
                       textAlign: "left",
+                      background: targetHeaderBg,
                     }}
                   >
                     {targetLabel ?? ""}
@@ -266,7 +279,8 @@ export default function ManualInputForm({
                 <th
                   style={{
                     ...thStyle,
-                    width: 60,
+                    width: 64,
+                    minWidth: 64,
                     textAlign: "center",
                     borderLeft: `1px solid ${divider}`,
                   }}
