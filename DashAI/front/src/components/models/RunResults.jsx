@@ -63,6 +63,22 @@ const DEFAULT_CARD_HEIGHT = 520;
 const explainerCacheKey = (scope, e) =>
   `${scope}-${e.id}-${e.explainer_name ?? ""}-${e.created ?? ""}`;
 
+// Reuse the previous object for any explainer whose meaningful fields are
+// unchanged, so a poll that returns identical data keeps stable references.
+// Without this, every 3s poll hands each card a brand new object, defeating
+// LazyExplainerCard's React.memo and re-rendering the whole list (Plotly
+// included) on every tick.
+const mergeExplainers = (prev, next) =>
+  next.map((e) => {
+    const old = prev.find((p) => p.id === e.id);
+    return old &&
+      old.status === e.status &&
+      old.created === e.created &&
+      old.explainer_name === e.explainer_name
+      ? old
+      : e;
+  });
+
 // IntersectionObserver margin (top right bottom left) for when a card mounts
 // its plot. Bigger on top so cards render before entering view when scrolling
 // up, so their height has settled and does not cause a correction that tears.
@@ -311,8 +327,8 @@ export default function RunResults({
         }
       }
 
-      setGlobalExplainers(globalExpls);
-      setLocalExplainers(localExpls);
+      setGlobalExplainers((prev) => mergeExplainers(prev, globalExpls));
+      setLocalExplainers((prev) => mergeExplainers(prev, localExpls));
       setPredictions(preds);
 
       // Drop cached state for explainers that no longer exist (deleted on
@@ -371,8 +387,15 @@ export default function RunResults({
     };
   }, [run.model_session_id, session?.id]);
 
-  // Refetch when run parameters change (after editing)
+  // Refetch when run parameters change (after editing). Skip the first run:
+  // the mount fetch is already covered by the effect above, so firing here on
+  // mount too would double every initial request.
+  const paramsChangedFirstRun = useRef(true);
   useEffect(() => {
+    if (paramsChangedFirstRun.current) {
+      paramsChangedFirstRun.current = false;
+      return;
+    }
     fetchOperations();
   }, [
     run.parameters,
