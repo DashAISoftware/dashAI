@@ -27,6 +27,7 @@ export default function DatasetTable({
   editableRows = [],
   infiniteScroll = false,
   loadMoreStep = 25,
+  extraActions = null,
 }) {
   return (
     <LeanDatasetTable
@@ -48,6 +49,7 @@ export default function DatasetTable({
       editableRows={editableRows}
       infiniteScroll={infiniteScroll}
       loadMoreStep={loadMoreStep}
+      extraActions={extraActions}
     />
   );
 }
@@ -69,4 +71,5 @@ DatasetTable.propTypes = {
   editableRows: PropTypes.array,
   infiniteScroll: PropTypes.bool,
   loadMoreStep: PropTypes.number,
+  extraActions: PropTypes.node,
 };

@@ -123,7 +123,7 @@ export default function ManualPredictionsTable({
   onSaved,
   onDelete,
 }) {
-  const { t } = useTranslation(["prediction", "common", "models"]);
+  const { t } = useTranslation(["prediction", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const [allRows, setAllRows] = useState([]);
   const [columnTypes, setColumnTypes] = useState({});
@@ -149,10 +149,6 @@ export default function ManualPredictionsTable({
 
   const finishedPredictions = useMemo(
     () => predictions.filter((p) => p.status === 3),
-    [predictions],
-  );
-  const runningPredictions = useMemo(
-    () => predictions.filter((p) => p.status === 1 || p.status === 2),
     [predictions],
   );
 
@@ -528,59 +524,47 @@ export default function ManualPredictionsTable({
     [t],
   );
 
+  const toolbarActions = (
+    <>
+      <Button
+        startIcon={<AddCircleOutline />}
+        variant="outlined"
+        size="small"
+        onClick={handleAddRow}
+        disabled={loadingSession}
+        sx={{ textTransform: "none", fontWeight: 500 }}
+      >
+        {t("common:addRow")}
+      </Button>
+      <LoadingButton
+        variant="contained"
+        size="small"
+        color="primary"
+        startIcon={<PlayArrowIcon />}
+        onClick={handleRunPrediction}
+        disabled={draftEntries.length === 0}
+        loading={isRunning}
+        sx={{ textTransform: "none", fontWeight: 500 }}
+      >
+        {t("prediction:button.runPrediction")}
+      </LoadingButton>
+    </>
+  );
+
   return (
     <Box>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2 }}>
-        <Button
-          startIcon={<AddCircleOutline />}
-          variant="outlined"
-          size="small"
-          onClick={handleAddRow}
-          disabled={loadingSession}
-          sx={{ textTransform: "none", fontWeight: 500 }}
-        >
-          {t("common:addRow")}
-        </Button>
-        <LoadingButton
-          variant="contained"
-          size="small"
-          color="primary"
-          startIcon={<PlayArrowIcon />}
-          onClick={handleRunPrediction}
-          disabled={draftEntries.length === 0}
-          loading={isRunning}
-          sx={{ textTransform: "none", fontWeight: 500 }}
-        >
-          {t("prediction:button.runPrediction")}
-        </LoadingButton>
-      </Box>
-
-      {(finishedPredictions.length > 0 || editableRows.length > 0) && (
-        <DatasetTable
-          fetchPage={fetchPage}
-          initialPageSize={25}
-          deps={[allRows.length]}
-          columnTypes={extendedColumnTypes}
-          showExportButton={false}
-          rowActions={rowActions}
-          targetColumn={targetColumn}
-          editableRows={editableRows}
-          infiniteScroll
-        />
-      )}
-
-      {finishedPredictions.length === 0 &&
-        manualEntries.length === 0 &&
-        runningPredictions.length === 0 && (
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            align="center"
-            sx={{ py: 3 }}
-          >
-            {t("models:label.noManualPredictionsYet")}
-          </Typography>
-        )}
+      <DatasetTable
+        fetchPage={fetchPage}
+        initialPageSize={25}
+        deps={[allRows.length]}
+        columnTypes={extendedColumnTypes}
+        showExportButton={false}
+        rowActions={rowActions}
+        targetColumn={targetColumn}
+        editableRows={editableRows}
+        infiniteScroll
+        extraActions={toolbarActions}
+      />
 
       <DeleteConfirmationModal
         open={Boolean(deleteTarget)}

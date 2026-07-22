@@ -45,6 +45,7 @@ function LeanDatasetTable({
   editableRows = [],
   infiniteScroll = false,
   loadMoreStep = 25,
+  extraActions,
 }) {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
@@ -341,6 +342,7 @@ function LeanDatasetTable({
         onSearchChange={handleSearchChange}
         onClearSearch={handleClearSearch}
         onExport={handleExport}
+        extraActions={extraActions}
       />
 
       <LeanColumnsMenu
@@ -572,6 +574,7 @@ LeanDatasetTable.propTypes = {
   ),
   infiniteScroll: PropTypes.bool,
   loadMoreStep: PropTypes.number,
+  extraActions: PropTypes.node,
 };
 
 export default LeanDatasetTable;
