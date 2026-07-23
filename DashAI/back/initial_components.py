@@ -295,25 +295,22 @@ from DashAI.back.splitters.repeated_stratified_k_fold import (
 )
 from DashAI.back.splitters.stratified_group_k_fold import StratifiedGroupKFoldSplitter
 from DashAI.back.splitters.stratified_k_fold import StratifiedKFoldSplitter
+from DashAI.back.statistical_tests.anova_test import AnovaTest
+from DashAI.back.statistical_tests.corrected_paired_t_test import (
+    CorrectedPairedTTest,
+)
+from DashAI.back.statistical_tests.friedman_test import (
+    FriedmanTest,
+)
 
 # Statistical tests
 from DashAI.back.statistical_tests.helper_tests.bartlett_test import BartlettTest
 from DashAI.back.statistical_tests.helper_tests.levene_test import LeveneTest
 from DashAI.back.statistical_tests.helper_tests.shapiro_test import ShapiroTest
-from DashAI.back.statistical_tests.multi_model_comparison.anova_test import AnovaTest
-from DashAI.back.statistical_tests.multi_model_comparison.friedman_test import (
-    FriedmanTest,
-)
-from DashAI.back.statistical_tests.multi_model_comparison.pairw_wilcoxon_test import (
-    PairwiseWilcoxonTest,
-)
+from DashAI.back.statistical_tests.paired_t_test import PairedTTest
 from DashAI.back.statistical_tests.post_hoc_tests.nemenyi_test import NemenyiTest
 from DashAI.back.statistical_tests.post_hoc_tests.tukey_test import TukeyHSDTest
-from DashAI.back.statistical_tests.two_model_comparison.corrected_paired_t_test import (
-    CorrectedPairedTTest,
-)
-from DashAI.back.statistical_tests.two_model_comparison.paired_t_test import PairedTTest
-from DashAI.back.statistical_tests.two_model_comparison.wilcoxon_sr_test import (
+from DashAI.back.statistical_tests.wilcoxon_sr_test import (
     WilcoxonSRTest,
 )
 
@@ -547,7 +544,6 @@ def get_initial_components():
         # Statistical tests
         AnovaTest,
         FriedmanTest,
-        PairwiseWilcoxonTest,
         CorrectedPairedTTest,
         PairedTTest,
         WilcoxonSRTest,

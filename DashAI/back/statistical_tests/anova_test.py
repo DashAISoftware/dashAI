@@ -3,46 +3,47 @@ from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalT
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 
-class FriedmanTest(BaseStatisticalTest):
-    """Non-parametric alternative to ANOVA for comparing 3+ models."""
+class AnovaTest(BaseStatisticalTest):
+    """Parametric test for comparing 3 or more models on identical data."""
 
     DISPLAY_NAME: str = MultilingualString(
-        en="Friedman",
-        es="Friedman",
-        pt="Friedman",
+        en="ANOVA",
+        es="ANOVA",
+        pt="ANOVA",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Non-parametric test for comparing multiple models on the same folds. ",
-            "Does not assume normality.",
+            "Parametric test for comparing the means of three or more groups. ",
+            "Requires normality and homoscedasticity.",
         ),
         es=(
-            "Prueba no paramétrica para comparar múltiples modelos sobre ",
-            "los mismos folds. No asume normalidad.",
+            "Prueba paramétrica para comparar las medias de tres o más grupos. ",
+            "Requiere normalidad y homocedasticidad.",
         ),
         pt=(
-            "Teste não-paramétrico para comparar múltiplos modelos sobre ",
-            "as mesmas folds. Não assume normalidade.",
+            "Teste paramétrico para comparar as médias de três ou mais grupos. ",
+            "Requer normalidade e homocedasticidade.",
         ),
     )
-    ICON: str = "Leaderboard"
-    COLOR: str = "#FFD54F"
+    ICON: str = "BarChart"
+    COLOR: str = "#64B5F6"
 
     @classmethod
     def get_metadata(cls) -> dict:
-        """Metadata for Friedman Test."""
+        """Metadata for ANOVA Test."""
         return {
             "icon": cls.ICON,
-            "is_parametric": False,
-            "posthoc": False,
+            "is_parametric": True,
+            "is_posthoc": False,
             "min_runs": 3,
             "max_runs": None,
             "supports_alternative": False,
+            "supports_correction": False,
             "interpretation": MultilingualString(
                 en={
                     "significant": (
                         "There are significant differences between the models. "
-                        "Post-hoc pairwise comparisons (Nemenyi) identify which "
+                        "Post-hoc pairwise comparisons (Tukey HSD) identify which "
                         "pairs differ."
                     ),
                     "not_significant": (
@@ -53,7 +54,7 @@ class FriedmanTest(BaseStatisticalTest):
                 es={
                     "significant": (
                         "Hay diferencias significativas entre los modelos. "
-                        "Las comparaciones post-hoc (Nemenyi) identifican qué "
+                        "Las comparaciones post-hoc (Tukey HSD) identifican qué "
                         "pares difieren."
                     ),
                     "not_significant": (
@@ -64,7 +65,7 @@ class FriedmanTest(BaseStatisticalTest):
                 pt={
                     "significant": (
                         "Há diferenças significativas entre os modelos. "
-                        "Comparações post-hoc (Nemenyi) identificam quais "
+                        "Comparações post-hoc (Tukey HSD) identificam quais "
                         "pares diferem."
                     ),
                     "not_significant": (
@@ -82,10 +83,13 @@ class FriedmanTest(BaseStatisticalTest):
         **kwargs,
     ) -> StatisticalTestResult:
         import numpy as np
-        from scipy.stats import friedmanchisquare
+        from scipy.stats import f_oneway
 
         if len(scores) < 3:
-            raise ValueError("Friedman Test requires at least three sets of scores.")
+            raise ValueError(
+                "ANOVA Test requires at least three sets of scores. "
+                "For comparing two models use Paired t-test instead."
+            )
 
         run_names = list(scores.keys())
         score_arrays = [np.array(scores[run_name]) for run_name in run_names]
@@ -98,7 +102,7 @@ class FriedmanTest(BaseStatisticalTest):
                     "All sets of scores must have the same number of observations."
                 )
 
-        statistic, p_value = friedmanchisquare(*score_arrays)
+        statistic, p_value = f_oneway(*score_arrays)
 
         significant = p_value < alpha
 

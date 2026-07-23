@@ -7,9 +7,9 @@ class ShapiroTest(BaseStatisticalTest):
     """Test for normality of a single set of scores."""
 
     DISPLAY_NAME: str = MultilingualString(
-        en="Shapiro-Wilk",
-        es="Shapiro-Wilk",
-        pt="Shapiro-Wilk",
+        en="Shapiro-Wilk Test",
+        es="Prueba de Shapiro-Wilk",
+        pt="Teste de Shapiro-Wilk",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -34,11 +34,12 @@ class ShapiroTest(BaseStatisticalTest):
         return {
             "icon": cls.ICON,
             "is_parametric": None,
-            "posthoc": False,
+            "is_posthoc": False,
             "min_runs": 1,
             "max_runs": None,
             "per_run": True,
             "supports_alternative": False,
+            "supports_correction": False,
             "interpretation": MultilingualString(
                 en={
                     "significant": (

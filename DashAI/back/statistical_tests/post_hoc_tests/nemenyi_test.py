@@ -22,9 +22,9 @@ class NemenyiTest(BaseStatisticalTest):
     """
 
     DISPLAY_NAME: str = MultilingualString(
-        en="Nemenyi",
-        es="Nemenyi",
-        pt="Nemenyi",
+        en="Nemenyi Test",
+        es="Prueba de Nemenyi",
+        pt="Teste de Nemenyi",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -48,10 +48,11 @@ class NemenyiTest(BaseStatisticalTest):
         return {
             "icon": cls.ICON,
             "is_parametric": False,
-            "posthoc": True,
+            "is_posthoc": True,
             "min_runs": 3,
             "max_runs": None,
             "supports_alternative": False,
+            "supports_correction": False,
             "interpretation": MultilingualString(
                 en={
                     "significant": (

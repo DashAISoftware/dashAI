@@ -1,0 +1,254 @@
+from DashAI.back.core.utils import MultilingualString
+from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
+from DashAI.back.statistical_tests.statistical_test_result import (
+    PairwiseResult,
+    StatisticalTestResult,
+)
+from DashAI.back.statistical_tests.utils import CorrectionMethod, correct_p_values
+
+
+class PairedTTest(BaseStatisticalTest):
+    """Parametric test for comparing two models on identical data."""
+
+    DISPLAY_NAME: str = MultilingualString(
+        en="Paired t-test",
+        es="Prueba t pareada",
+        pt="Teste t pareado",
+    )
+    DESCRIPTION: str = MultilingualString(
+        en=(
+            "Parametric test for comparing two related groups. Requires "
+            "normality of pairwise differences and independence between "
+            "observations.",
+        ),
+        es=(
+            "Prueba paramétrica para comparar dos grupos relacionados. Requiere ",
+            "normalidad de las diferencias entre pares e independencia entre ",
+            "observaciones.",
+        ),
+        pt=(
+            "Teste paramétrico para comparar dois grupos relacionados. Requer ",
+            "normalidade das diferenças entre pares e independência entre ",
+            "observações.",
+        ),
+    )
+    ICON: str = "CompareArrows"
+    COLOR: str = "#64B5F6"
+
+    @classmethod
+    def get_metadata(cls) -> dict:
+        """Metadata for Paired T-Test."""
+        return {
+            "icon": cls.ICON,
+            "is_parametric": True,
+            "is_posthoc": False,
+            "min_runs": 2,
+            "max_runs": None,
+            "supports_alternative": True,
+            "supports_correction": True,
+            "interpretation": MultilingualString(
+                en={
+                    "significant": (
+                        "There is a significant difference between the two models. "
+                        "The results are statistically significantly different."
+                    ),
+                    "not_significant": (
+                        "No significant difference between the two models. "
+                        "They perform similarly."
+                    ),
+                },
+                es={
+                    "significant": (
+                        "Hay una diferencia significativa entre los dos modelos. "
+                        "Los resultados son estadísticamente significativamente "
+                        "diferentes."
+                    ),
+                    "not_significant": (
+                        "No hay diferencia significativa entre los dos modelos. "
+                        "Tienen un rendimiento similar."
+                    ),
+                },
+                pt={
+                    "significant": (
+                        "Há uma diferença significativa entre os dois modelos. "
+                        "Os resultados são estatisticamente significativamente "
+                        "diferentes."
+                    ),
+                    "not_significant": (
+                        "Não há diferença significativa entre os dois modelos. "
+                        "Eles têm desempenho similar."
+                    ),
+                },
+            ),
+        }
+
+    def run(
+        self,
+        scores: dict[str, list[float]],  # {run_name: [fold_scores]}
+        alpha: float = 0.05,
+        alternative: str = "two-sided",
+        correction_method: str = None,
+        **kwargs,
+    ) -> StatisticalTestResult:
+        import numpy as np
+        from scipy.stats import ttest_rel
+
+        if len(scores) < 2:
+            raise ValueError("Paired T-Test requires at least two sets of scores.")
+
+        run_names = list(scores.keys())
+
+        # simple case: exactly two models, no correction needed
+        if len(scores) == 2 and correction_method is None:
+            scores1 = np.array(scores[run_names[0]])
+            scores2 = np.array(scores[run_names[1]])
+
+            if len(scores1) != len(scores2):
+                raise ValueError(
+                    "Both sets of scores must have the same number of observations."
+                )
+
+            # Validar que haya suficientes observaciones
+            if len(scores1) < 2:
+                raise ValueError(
+                    "Paired T-Test requires at least 2 observations per group."
+                )
+
+            # Validar que no haya valores NaN
+            if np.isnan(scores1).any() or np.isnan(scores2).any():
+                raise ValueError(
+                    "Scores contain NaN values. Please check your input data."
+                )
+
+            differences = scores1 - scores2
+
+            # Validar que haya varianza en las diferencias apareadas
+            if np.var(differences, ddof=1) == 0:
+                raise ValueError(
+                    "The paired differences have zero variance. "
+                    "All differences are identical, making the t-test undefined."
+                )
+
+            result = ttest_rel(scores1, scores2, alternative=alternative)
+            statistic = result.statistic
+            p_value = result.pvalue
+            deg = getattr(result, "df", len(scores1) - 1)
+
+            significant = p_value < alpha
+
+            return StatisticalTestResult(
+                statistic=float(statistic),
+                p_value=float(p_value),
+                significant=significant,
+                alpha=alpha,
+                details={
+                    "degrees_of_freedom": deg,
+                    "alternative": alternative,
+                },
+            )
+
+        # more than two models: perform pairwise comparisons with correction
+        preliminary_results = []
+        pre_correction_p_values = []
+
+        for i in range(len(run_names)):
+            for j in range(i + 1, len(run_names)):
+                scores1 = np.array(scores[run_names[i]])
+                scores2 = np.array(scores[run_names[j]])
+
+                if len(scores1) != len(scores2):
+                    raise ValueError(
+                        f"Both sets of scores for {run_names[i]} and {run_names[j]} "
+                        "must have the same number of observations."
+                    )
+
+                # Validar que haya suficientes observaciones
+                if len(scores1) < 2:
+                    raise ValueError(
+                        f"Paired T-Test requires at least 2 observations per group for "
+                        f"{run_names[i]} and {run_names[j]}."
+                    )
+
+                # Validar que no haya valores NaN
+                if np.isnan(scores1).any() or np.isnan(scores2).any():
+                    raise ValueError(
+                        f"Scores for {run_names[i]} and {run_names[j]} contain NaN "
+                        "values. Please check your input data."
+                    )
+
+                differences = scores1 - scores2
+
+                # Validar que haya varianza en las diferencias apareadas
+                if np.var(differences, ddof=1) == 0:
+                    raise ValueError(
+                        f"The paired differences for {run_names[i]} and {run_names[j]} "
+                        "have zero variance. All differences are identical, "
+                        "making the t-test undefined."
+                    )
+
+                result = ttest_rel(scores1, scores2, alternative=alternative)
+                statistic = result.statistic
+                p_value = result.pvalue
+
+                preliminary_results.append((run_names[i], run_names[j], statistic))
+                pre_correction_p_values.append(p_value)
+
+        # Apply correction to the p-values
+        corrected_p_values = correct_p_values(
+            p_values=pre_correction_p_values,
+            method=CorrectionMethod[correction_method.upper()],
+            alpha=alpha,
+        )
+
+        results = [
+            (a, b, stat, p)
+            for (a, b, stat), p in zip(preliminary_results, corrected_p_values)
+        ]
+
+        overall_significant = any(p < alpha for _, _, _, p in results)
+        pairwise = []
+
+        for a, b, stat, p in results:
+            pairwise.append(
+                PairwiseResult(
+                    run_1=a,
+                    run_2=b,
+                    statistic=stat,
+                    p_value=p,
+                    significant=p < alpha,
+                )
+            )
+
+        return StatisticalTestResult(
+            statistic=float("nan"),  # no single omnibus statistic
+            p_value=float("nan"),
+            significant=overall_significant,
+            alpha=alpha,
+            details={},
+            posthoc=pairwise,
+        )
+
+    def get_schema(self) -> dict:
+        return {
+            "type": "object",
+            "properties": {
+                "alpha": {
+                    "type": "number",
+                    "default": 0.05,
+                    "minimum": 0.001,
+                    "maximum": 0.2,
+                    "description": "Significance level for the hypothesis test.",
+                },
+                "alternative": {
+                    "type": "string",
+                    "enum": ["two-sided", "greater", "less"],
+                    "default": "two-sided",
+                    "description": (
+                        "Alternative hypothesis. "
+                        "'two-sided': the distributions differ. "
+                        "'greater': the first model scores higher. "
+                        "'less': the second model scores higher."
+                    ),
+                },
+            },
+        }

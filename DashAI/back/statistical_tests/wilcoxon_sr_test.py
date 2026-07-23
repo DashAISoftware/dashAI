@@ -11,9 +11,9 @@ class WilcoxonSRTest(BaseStatisticalTest):
     """Non-parametric alternative to paired t-test for two models."""
 
     DISPLAY_NAME: str = MultilingualString(
-        en="Wilcoxon Signed-Rank",
-        es="Wilcoxon Rango con Signo",
-        pt="Wilcoxon Posto com Sinal",
+        en="Wilcoxon Signed-Rank Test",
+        es="Prueba de Rangos con signo de Wilcoxon",
+        pt="Teste de Rangos com sinal de Wilcoxon",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -38,10 +38,11 @@ class WilcoxonSRTest(BaseStatisticalTest):
         return {
             "icon": cls.ICON,
             "is_parametric": False,
-            "posthoc": False,
+            "is_posthoc": False,
             "min_runs": 2,
             "max_runs": None,
             "supports_alternative": True,
+            "supports_correction": True,
             "interpretation": MultilingualString(
                 en={
                     "significant": (
@@ -83,7 +84,7 @@ class WilcoxonSRTest(BaseStatisticalTest):
         scores: dict[str, list[float]],  # {run_name: [fold_scores]}
         alpha: float = 0.05,
         alternative: str = "two-sided",
-        correction_method: str = "holm",
+        correction_method: str = None,
         **kwargs,
     ) -> StatisticalTestResult:
         import numpy as np
@@ -127,6 +128,7 @@ class WilcoxonSRTest(BaseStatisticalTest):
         # more than two models: perform pairwise comparisons with correction
         preliminary_results = []
         pre_correction_p_values = []
+
         for i in range(len(run_names)):
             for j in range(i + 1, len(run_names)):
                 scores1 = np.array(scores[run_names[i]])

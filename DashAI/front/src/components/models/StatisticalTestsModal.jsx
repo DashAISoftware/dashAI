@@ -47,6 +47,7 @@ export default function StatisticalTestsModal({
   const [selectedRuns, setSelectedRuns] = useState([]);
   const [alpha, setAlpha] = useState(0.05);
   const [alternative, setAlternative] = useState("two-sided");
+  const [correctionMethod, setCorrectionMethod] = useState("");
   const [availableMetrics, setAvailableMetrics] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -62,6 +63,7 @@ export default function StatisticalTestsModal({
   const minRuns = test?.metadata?.min_runs ?? 2;
   const maxRuns = test?.metadata?.max_runs ?? Infinity;
   const supportsAlternative = test?.metadata?.supports_alternative === true;
+  const supportsCorrection = test?.metadata?.supports_correction === true;
   // Per-run tests (e.g. Shapiro-Wilk normality) run independently on each
   // selected run instead of producing a single omnibus result.
   const isPerRun = test?.metadata?.per_run === true;
@@ -111,6 +113,7 @@ export default function StatisticalTestsModal({
       setCustomName("");
       setCustomDescription("");
       setAlternative("two-sided");
+      setCorrectionMethod("");
       setSelectedMetric("");
       setSelectedSplit("test");
     }
@@ -156,6 +159,38 @@ export default function StatisticalTestsModal({
     });
   };
 
+  useEffect(() => {
+    if (supportsAlternative) {
+      if (selectedRuns.length >= 3) {
+        setAlternative("two-sided");
+      }
+    }
+  }, [selectedRuns.length, supportsAlternative]);
+
+  useEffect(() => {
+    if (supportsCorrection) {
+      if (selectedRuns.length >= 3) {
+        setCorrectionMethod((prev) => (prev ? prev : "holm"));
+      } else {
+        setCorrectionMethod("");
+      }
+    }
+  }, [selectedRuns.length, supportsCorrection]);
+
+  const buildTestParams = () => {
+    const params = {};
+
+    if (supportsAlternative) {
+      params.alternative = selectedRuns.length >= 3 ? "two-sided" : alternative;
+    }
+
+    if (supportsCorrection && selectedRuns.length >= 3 && correctionMethod) {
+      params.correction_method = correctionMethod;
+    }
+
+    return params;
+  };
+
   const handleExecuteTest = async () => {
     if (!countValid) {
       setError(runsRequirementText);
@@ -175,6 +210,8 @@ export default function StatisticalTestsModal({
     setCustomDescription("");
 
     try {
+      const params = buildTestParams();
+
       if (isPerRun) {
         // Fan-out: one independent request per selected run, in parallel.
         // Each request sends a single run, so len(scores) == 1 on the backend
@@ -191,7 +228,7 @@ export default function StatisticalTestsModal({
               run_names: { [run.id.toString()]: run.name },
               fold_metrics: { [run.id]: data },
               alpha,
-              params: {},
+              params,
             });
             return { id: run.id, name: run.name, resp };
           }),
@@ -215,7 +252,7 @@ export default function StatisticalTestsModal({
         run_names: runNames,
         fold_metrics: foldMetricsData,
         alpha,
-        params: supportsAlternative ? { alternative } : {},
+        params,
       });
 
       setResults(testResponse);
@@ -273,7 +310,7 @@ export default function StatisticalTestsModal({
           statistic: results.statistic ?? null,
           p_value: results.p_value ?? null,
           interpretation: results.interpretation ?? null,
-          params: supportsAlternative ? { alternative } : {},
+          params: buildTestParams(),
           details: results.details ?? null,
           posthoc: results.posthoc ?? null,
           model_session_id: modelSessionId,
@@ -471,9 +508,16 @@ export default function StatisticalTestsModal({
 
         <Divider sx={{ my: 2 }} />
 
-        {/* Alpha + alternative hypothesis (single horizontal row) */}
-        <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start" }}>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+        {/* Alpha + hypothesis/correction options */}
+        <Box
+          sx={{
+            display: "flex",
+            gap: 3,
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+          }}
+        >
+          <Box sx={{ flex: 1, minWidth: 220 }}>
             <Box
               sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
             >
@@ -504,7 +548,7 @@ export default function StatisticalTestsModal({
           </Box>
 
           {supportsAlternative ? (
-            <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ flex: 1, minWidth: 220 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>
                   {t("models:label.alternativeHypothesis")}
@@ -513,6 +557,7 @@ export default function StatisticalTestsModal({
                   value={alternative}
                   onChange={(e) => setAlternative(e.target.value)}
                   label={t("models:label.alternativeHypothesis")}
+                  disabled={selectedRuns.length >= 3}
                 >
                   <MenuItem value="two-sided">
                     {t("models:alternative.twoSided")}
@@ -539,9 +584,27 @@ export default function StatisticalTestsModal({
                 </Typography>
               )}
             </Box>
-          ) : (
-            <Box sx={{ flex: 1 }} />
-          )}
+          ) : null}
+
+          {supportsCorrection ? (
+            <Box sx={{ flex: 1, minWidth: 220 }}>
+              <FormControl fullWidth size="small">
+                <InputLabel>{t("models:label.correctionMethod")}</InputLabel>
+                <Select
+                  value={correctionMethod}
+                  onChange={(e) => setCorrectionMethod(e.target.value)}
+                  label={t("models:label.correctionMethod")}
+                  disabled={selectedRuns.length < 3}
+                >
+                  <MenuItem value="holm">Holm</MenuItem>
+                  <MenuItem value="bonferroni">Bonferroni</MenuItem>
+                  <MenuItem value="benjamini_hochberg">
+                    Benjamini-Hochberg
+                  </MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          ) : null}
         </Box>
 
         {/* Results */}

@@ -34,10 +34,11 @@ class BartlettTest(BaseStatisticalTest):
         return {
             "icon": cls.ICON,
             "is_parametric": None,
-            "posthoc": False,
+            "is_posthoc": False,
             "min_runs": 2,
             "max_runs": None,
             "supports_alternative": False,
+            "supports_correction": False,
             "interpretation": MultilingualString(
                 en={
                     "significant": (

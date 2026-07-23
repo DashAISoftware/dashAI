@@ -8,7 +8,7 @@ class CorrectionMethod(Enum):
 
     HOLM = "holm"
     BONFERRONI = "bonferroni"
-    BENJAMINI_HOCHBERG = "benjamini_hochberg"
+    BENJAMINI_HOCHBERG = "fdr_bh"
 
 
 def correct_p_values(

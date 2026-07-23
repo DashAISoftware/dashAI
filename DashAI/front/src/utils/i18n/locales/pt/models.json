@@ -221,6 +221,7 @@
     "tukeyPairwiseComparisons": "Comparações post-hoc de Tukey após o teste ANOVA",
     "wilcoxonPairwiseComparisons": "Testes de Wilcoxon aos pares com correção de Holmes",
     "alternativeHypothesis": "Hipótese Alternativa",
+    "correctionMethod": "Método de correção",
     "result": "Resultado",
     "statistic": "Estatística",
     "significant": "Significativo",

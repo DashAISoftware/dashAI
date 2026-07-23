@@ -17,9 +17,9 @@ class TukeyHSDTest(BaseStatisticalTest):
     """
 
     DISPLAY_NAME: str = MultilingualString(
-        en="Tukey HSD",
-        es="Tukey HSD",
-        pt="Tukey HSD",
+        en="Tukey HSD Test",
+        es="Prueba de Tukey HSD",
+        pt="Teste de Tukey HSD",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -46,10 +46,11 @@ class TukeyHSDTest(BaseStatisticalTest):
         return {
             "icon": cls.ICON,
             "is_parametric": True,
-            "posthoc": True,
+            "is_posthoc": True,
             "min_runs": 3,
             "max_runs": None,
             "supports_alternative": False,
+            "supports_correction": False,
             "interpretation": MultilingualString(
                 en={
                     "significant": (

@@ -226,6 +226,7 @@
     "tukeyPairwiseComparisons": "Comparaciones post-hoc de Tukey después del test ANOVA",
     "wilcoxonPairwiseComparisons": "Tests de Wilcoxon por pares con corrección de Holmes",
     "alternativeHypothesis": "Hipótesis Alternativa",
+    "correctionMethod": "Método de corrección",
     "repetition": "Repetición",
     "allRepetitions": "Todas las Repeticiones",
     "averaged": "Promediado",

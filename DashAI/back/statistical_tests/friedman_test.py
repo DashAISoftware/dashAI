@@ -3,46 +3,47 @@ from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalT
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
 
 
-class AnovaTest(BaseStatisticalTest):
-    """Parametric test for comparing 3 or more models on identical data."""
+class FriedmanTest(BaseStatisticalTest):
+    """Non-parametric alternative to ANOVA for comparing 3+ models."""
 
     DISPLAY_NAME: str = MultilingualString(
-        en="ANOVA",
-        es="ANOVA",
-        pt="ANOVA",
+        en="Friedman Test",
+        es="Prueba de Friedman",
+        pt="Teste de Friedman",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "Parametric test for comparing the means of three or more groups. ",
-            "Requires normality and homoscedasticity.",
+            "Non-parametric test for comparing multiple models on the same folds. ",
+            "Does not assume normality.",
         ),
         es=(
-            "Prueba paramétrica para comparar las medias de tres o más grupos. ",
-            "Requiere normalidad y homocedasticidad.",
+            "Prueba no paramétrica para comparar múltiples modelos sobre ",
+            "los mismos folds. No asume normalidad.",
         ),
         pt=(
-            "Teste paramétrico para comparar as médias de três ou mais grupos. ",
-            "Requer normalidade e homocedasticidade.",
+            "Teste não-paramétrico para comparar múltiplos modelos sobre ",
+            "as mesmas folds. Não assume normalidade.",
         ),
     )
-    ICON: str = "BarChart"
-    COLOR: str = "#64B5F6"
+    ICON: str = "Leaderboard"
+    COLOR: str = "#FFD54F"
 
     @classmethod
     def get_metadata(cls) -> dict:
-        """Metadata for ANOVA Test."""
+        """Metadata for Friedman Test."""
         return {
             "icon": cls.ICON,
-            "is_parametric": True,
-            "posthoc": False,
+            "is_parametric": False,
+            "is_posthoc": False,
             "min_runs": 3,
             "max_runs": None,
             "supports_alternative": False,
+            "supports_correction": False,
             "interpretation": MultilingualString(
                 en={
                     "significant": (
                         "There are significant differences between the models. "
-                        "Post-hoc pairwise comparisons (Tukey HSD) identify which "
+                        "Post-hoc pairwise comparisons (Nemenyi) identify which "
                         "pairs differ."
                     ),
                     "not_significant": (
@@ -53,7 +54,7 @@ class AnovaTest(BaseStatisticalTest):
                 es={
                     "significant": (
                         "Hay diferencias significativas entre los modelos. "
-                        "Las comparaciones post-hoc (Tukey HSD) identifican qué "
+                        "Las comparaciones post-hoc (Nemenyi) identifican qué "
                         "pares difieren."
                     ),
                     "not_significant": (
@@ -64,7 +65,7 @@ class AnovaTest(BaseStatisticalTest):
                 pt={
                     "significant": (
                         "Há diferenças significativas entre os modelos. "
-                        "Comparações post-hoc (Tukey HSD) identificam quais "
+                        "Comparações post-hoc (Nemenyi) identificam quais "
                         "pares diferem."
                     ),
                     "not_significant": (
@@ -82,13 +83,10 @@ class AnovaTest(BaseStatisticalTest):
         **kwargs,
     ) -> StatisticalTestResult:
         import numpy as np
-        from scipy.stats import f_oneway
+        from scipy.stats import friedmanchisquare
 
         if len(scores) < 3:
-            raise ValueError(
-                "ANOVA Test requires at least three sets of scores. "
-                "For comparing two models use Paired t-test instead."
-            )
+            raise ValueError("Friedman Test requires at least three sets of scores.")
 
         run_names = list(scores.keys())
         score_arrays = [np.array(scores[run_name]) for run_name in run_names]
@@ -101,7 +99,7 @@ class AnovaTest(BaseStatisticalTest):
                     "All sets of scores must have the same number of observations."
                 )
 
-        statistic, p_value = f_oneway(*score_arrays)
+        statistic, p_value = friedmanchisquare(*score_arrays)
 
         significant = p_value < alpha
 
