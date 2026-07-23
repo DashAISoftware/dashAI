@@ -41,7 +41,9 @@ export const setCredentialStatuses = (credentials) => {
 // share the same in-flight request so a screen with many gates fetches once.
 export const refreshCredentialStatuses = () => {
   if (inFlight) return inFlight;
-  inFlight = getCredentials()
+  // Wrap in Promise.resolve so a synchronous/non-promise return (e.g. a mocked
+  // getCredentials in tests) can never throw on `.then`.
+  inFlight = Promise.resolve(getCredentials())
     .then((data) => setCredentialStatuses(data))
     .catch(() => {})
     .finally(() => {
@@ -76,12 +78,12 @@ export const useCredentialStatuses = () => {
 
 // Derive a human label from a credential component name, e.g.
 // "HuggingFaceCredential" -> "HuggingFace". Falls back to the raw name so it
-// works for any backend-registered credential without frontend changes.
+// works for any backend registered credential without frontend changes.
 export const credentialLabel = (name) =>
   name.replace(/Credential$/, "") || name;
 
 // Compute a component's credential gating from the live statuses. Falls back to
-// the component's server-provided `credentials_satisfied` flag until the live
+// the component's server provided `credentials_satisfied` flag until the live
 // cache has loaded, so the gate is correct on first paint.
 export const getComponentCredentialState = (component, statuses, isLoaded) => {
   const requiredCredentials = component?.required_credentials ?? [];
