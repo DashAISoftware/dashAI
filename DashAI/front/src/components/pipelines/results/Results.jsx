@@ -116,6 +116,7 @@ function buildBranchResults({
 function PipelineResults({ pipelineId, onClose }) {
   const [results, setResults] = useState(null);
   const [trainTab, setTrainTab] = useState(0);
+  const [metricsTab, setMetricsTab] = useState(0);
   const [polling, setPolling] = useState(false);
   const pollingRef = useRef(null);
 
@@ -180,6 +181,10 @@ function PipelineResults({ pipelineId, onClose }) {
     setTrainTab(newValue);
   };
 
+  const handleMetricsTabChange = (event, newValue) => {
+    setMetricsTab(newValue);
+  };
+
   if (!results) {
     return <Typography>Loading results...</Typography>;
   }
@@ -202,8 +207,9 @@ function PipelineResults({ pipelineId, onClose }) {
   const hasExploration =
     results.exploration && results.exploration !== "No exploration data";
   const hasTrain =
-    branchResults.filter((branch) => branch.parameters || branch.metrics)
-      .length > 0;
+    branchResults.filter((branch) => branch.parameters).length > 0;
+  const hasMetrics =
+    branchResults.filter((branch) => !!branch.metrics).length > 0;
   const hasPrediction =
     branchResults.filter((branch) => !!branch.prediction).length > 0;
 
@@ -226,6 +232,7 @@ function PipelineResults({ pipelineId, onClose }) {
   if (
     !hasExploration &&
     !hasTrain &&
+    !hasMetrics &&
     !hasPrediction &&
     !hasDataSelector &&
     !hasSplitData &&
@@ -403,7 +410,7 @@ function PipelineResults({ pipelineId, onClose }) {
           <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
             <Box mx={10} my={2} display="flex" flexDirection="column" gap={3}>
               {branchResults
-                .filter((branch) => branch.parameters || branch.metrics)
+                .filter((branch) => branch.parameters)
                 .map((branch, branchIndex) => {
                   const paramData = { parameters: branch.parameters };
 
@@ -425,8 +432,6 @@ function PipelineResults({ pipelineId, onClose }) {
                       >
                         <Tab label="Info" />
                         <Tab label="Parameters" />
-                        <Tab label="Metrics" />
-                        <Tab label="Graphs" />
                       </Tabs>
 
                       <Box sx={{ p: 3 }}>
@@ -445,22 +450,58 @@ function PipelineResults({ pipelineId, onClose }) {
                             <ResultsTabParameters runData={paramData} />
                           </Box>
                         )}
-                        {trainTab === 2 && (
-                          <Box>
-                            <PipelineResultsMetrics
-                              metricsData={branch.metrics}
-                            />
-                          </Box>
-                        )}
-                        {trainTab === 3 && (
-                          <Box>
-                            <PipelineResultsGraphs metrics={branch.metrics} />
-                          </Box>
-                        )}
                       </Box>
                     </Paper>
                   );
                 })}
+            </Box>
+          </AccordionDetails>
+        </Accordion>
+      )}
+
+      {hasMetrics && (
+        <Accordion defaultExpanded>
+          <AccordionSummary expandIcon={<ExpandMore />}>
+            <Typography variant="h6">Metrics</Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ borderTop: "1px solid #383838" }}>
+            <Box mx={10} my={2} display="flex" flexDirection="column" gap={3}>
+              {branchResults
+                .filter((branch) => !!branch.metrics)
+                .map((branch, branchIndex) => (
+                  <Paper sx={{ width: "100%" }} key={branch.branchKey}>
+                    <Box sx={{ px: 3, pt: 2, pb: 1 }}>
+                      <Typography variant="subtitle1">
+                        Path {branchIndex + 1} | Dataset: {branch.datasetName}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: "gray" }}>
+                        {branch.taskName} | {branch.modelName}
+                      </Typography>
+                    </Box>
+
+                    <Tabs
+                      value={metricsTab}
+                      onChange={handleMetricsTabChange}
+                      variant="scrollable"
+                    >
+                      <Tab label="Metrics" />
+                      <Tab label="Graphs" />
+                    </Tabs>
+
+                    <Box sx={{ p: 3 }}>
+                      {metricsTab === 0 && (
+                        <Box>
+                          <PipelineResultsMetrics metricsData={branch.metrics} />
+                        </Box>
+                      )}
+                      {metricsTab === 1 && (
+                        <Box>
+                          <PipelineResultsGraphs metrics={branch.metrics} />
+                        </Box>
+                      )}
+                    </Box>
+                  </Paper>
+                ))}
             </Box>
           </AccordionDetails>
         </Accordion>
