@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { getModelSessionById } from "../../api/modelSession";
 import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
 import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
+import PlotActions from "../shared/PlotActions";
 import api from "../../api/api";
 
 // Same color source as the session results charts (ResultsGraphsPlot /
@@ -576,69 +577,106 @@ export function LiveMetricsChart({
               gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))",
             }}
           >
-            {panels.map((panel) => (
-              <Box
-                key={panel.metric}
-                sx={{
-                  border: 1,
-                  borderColor: "divider",
-                  borderRadius: 1,
-                  p: 2,
-                }}
-              >
-                <Typography
-                  variant="subtitle2"
-                  sx={{ fontWeight: 600, mb: 1, px: 1 }}
-                >
-                  {panel.metric}
-                </Typography>
-                <Plot
-                  data={[
-                    {
-                      type: "scatter",
-                      mode: panel.x.length > 1 ? "lines" : "markers",
-                      x: panel.x,
-                      y: panel.y,
-                      line: {
-                        color: panel.color,
-                        width: 2,
-                        shape: "spline",
-                        smoothing: 0.7,
-                      },
-                      marker: { color: panel.color },
-                      hovertemplate: "%{x}: %{y:.4f}<extra></extra>",
+            {panels.map((panel) => {
+              let containerEl = null;
+              const plotData = [
+                {
+                  type: "scatter",
+                  mode: panel.x.length > 1 ? "lines" : "markers",
+                  x: panel.x,
+                  y: panel.y,
+                  line: {
+                    color: panel.color,
+                    width: 2,
+                    shape: "spline",
+                    smoothing: 0.7,
+                  },
+                  marker: { color: panel.color },
+                  hovertemplate: "%{x}: %{y:.4f}<extra></extra>",
+                },
+              ];
+              const plotLayout = {
+                autosize: true,
+                height: 240,
+                margin: { l: 50, r: 12, t: 8, b: 55 },
+                showlegend: false,
+                paper_bgcolor: theme.palette.background.paper,
+                plot_bgcolor: theme.palette.background.paper,
+                font: {
+                  color: theme.palette.text.primary,
+                  family: theme.typography.fontFamily,
+                  size: 11,
+                },
+                xaxis: {
+                  title: { text: levelLabel, standoff: 10 },
+                  gridcolor: theme.palette.divider,
+                  zerolinecolor: theme.palette.divider,
+                  tickfont: {
+                    color: theme.palette.text.primary,
+                    size: 10,
+                  },
+                },
+                yaxis: {
+                  gridcolor: theme.palette.divider,
+                  tickfont: {
+                    color: theme.palette.text.primary,
+                    size: 10,
+                  },
+                  automargin: true,
+                },
+              };
+              return (
+                <Box
+                  key={panel.metric}
+                  ref={(node) => {
+                    containerEl = node;
+                  }}
+                  sx={{
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    p: 2,
+                    "& .plot-actions": {
+                      opacity: 0,
+                      transition: "opacity 0.15s ease",
                     },
-                  ]}
-                  layout={{
-                    autosize: true,
-                    height: 240,
-                    margin: { l: 50, r: 12, t: 8, b: 55 },
-                    showlegend: false,
-                    paper_bgcolor: theme.palette.background.paper,
-                    plot_bgcolor: theme.palette.background.paper,
-                    font: {
-                      color: theme.palette.text.primary,
-                      family: theme.typography.fontFamily,
-                      size: 11,
+                    "&:hover .plot-actions, &:focus-within .plot-actions": {
+                      opacity: 1,
                     },
-                    xaxis: {
-                      title: { text: levelLabel, standoff: 10 },
-                      gridcolor: theme.palette.divider,
-                      zerolinecolor: theme.palette.divider,
-                      tickfont: { color: theme.palette.text.primary, size: 10 },
-                    },
-                    yaxis: {
-                      gridcolor: theme.palette.divider,
-                      tickfont: { color: theme.palette.text.primary, size: 10 },
-                      automargin: true,
+                    "@media (hover: none)": {
+                      "& .plot-actions": { opacity: 1 },
                     },
                   }}
-                  useResizeHandler
-                  style={{ width: "100%", height: "240px" }}
-                  config={{ responsive: true, displayModeBar: false }}
-                />
-              </Box>
-            ))}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 1,
+                      px: 1,
+                    }}
+                  >
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      {panel.metric}
+                    </Typography>
+                    <PlotActions
+                      getContainer={() => containerEl}
+                      data={plotData}
+                      layout={plotLayout}
+                      filename={panel.metric}
+                    />
+                  </Box>
+                  <Plot
+                    data={plotData}
+                    layout={plotLayout}
+                    useResizeHandler
+                    style={{ width: "100%", height: "240px" }}
+                    config={{ responsive: true, displayModeBar: false }}
+                  />
+                </Box>
+              );
+            })}
           </Box>
         )}
 

@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import { useTranslation } from "react-i18next";
 import { DragIndicator } from "@mui/icons-material";
+import PlotActions from "../../../components/shared/PlotActions";
 import {
   DndContext,
   closestCenter,
@@ -54,7 +55,14 @@ function EmptyState({ message }) {
  * hovering/clicking the plot itself (Plotly needs mouse events for its own
  * hover tooltips).
  */
-function SortableCard({ id, title, gridColumn, children }) {
+function SortableCard({
+  id,
+  title,
+  gridColumn,
+  plotData,
+  plotLayout,
+  children,
+}) {
   const {
     attributes,
     listeners,
@@ -63,6 +71,7 @@ function SortableCard({ id, title, gridColumn, children }) {
     transition,
     isDragging,
   } = useSortable({ id });
+  const containerRef = useRef(null);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -73,33 +82,59 @@ function SortableCard({ id, title, gridColumn, children }) {
 
   return (
     <Box
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node);
+        containerRef.current = node;
+      }}
       style={style}
       sx={{
         border: 1,
         borderColor: "divider",
         borderRadius: 1,
         p: 2,
+        "& .plot-actions": { opacity: 0, transition: "opacity 0.15s ease" },
+        "&:hover .plot-actions, &:focus-within .plot-actions": {
+          opacity: 1,
+        },
+        "@media (hover: none)": {
+          "& .plot-actions": { opacity: 1 },
+        },
       }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1, px: 1 }}>
-        <Box
-          {...attributes}
-          {...listeners}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            color: "text.disabled",
-            cursor: "grab",
-            "&:active": { cursor: "grabbing" },
-            "&:hover": { color: "text.secondary" },
-          }}
-        >
-          <DragIndicator fontSize="small" />
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 1,
+          px: 1,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box
+            {...attributes}
+            {...listeners}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              color: "text.disabled",
+              cursor: "grab",
+              "&:active": { cursor: "grabbing" },
+              "&:hover": { color: "text.secondary" },
+            }}
+          >
+            <DragIndicator fontSize="small" />
+          </Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            {title}
+          </Typography>
         </Box>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          {title}
-        </Typography>
+        <PlotActions
+          getContainer={() => containerRef.current}
+          data={plotData}
+          layout={plotLayout}
+          filename={title}
+        />
       </Box>
       {children}
     </Box>
@@ -300,21 +335,24 @@ function ResultsGraphsPlot({ chartData, onToggleRun, sessionId }) {
           >
             {orderedIds.map((id) => {
               if (id === HEATMAP_ID) {
+                const heatmapLayout = {
+                  ...(chartData.generalLayout ?? {}),
+                  autosize: true,
+                  width: undefined,
+                };
                 return (
                   <SortableCard
                     key={id}
                     id={id}
                     title={t("models:label.heatmap")}
                     gridColumn={canSpanTwoColumns ? "span 2" : undefined}
+                    plotData={heatmapData}
+                    plotLayout={heatmapLayout}
                   >
                     <Box sx={{ height: 480 }}>
                       <Plot
                         data={heatmapData}
-                        layout={{
-                          ...(chartData.generalLayout ?? {}),
-                          autosize: true,
-                          width: undefined,
-                        }}
+                        layout={heatmapLayout}
                         useResizeHandler
                         style={{ width: "100%", height: "100%" }}
                         config={{
@@ -331,7 +369,13 @@ function ResultsGraphsPlot({ chartData, onToggleRun, sessionId }) {
               const panel = panels.find((p) => p.metric === id);
               if (!panel) return null;
               return (
-                <SortableCard key={id} id={id} title={panel.title}>
+                <SortableCard
+                  key={id}
+                  id={id}
+                  title={panel.title}
+                  plotData={panel.data}
+                  plotLayout={panelLayout}
+                >
                   <Plot
                     data={panel.data}
                     layout={panelLayout}
@@ -353,6 +397,8 @@ SortableCard.propTypes = {
   id: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   gridColumn: PropTypes.string,
+  plotData: PropTypes.array.isRequired,
+  plotLayout: PropTypes.object,
   children: PropTypes.node.isRequired,
 };
 
