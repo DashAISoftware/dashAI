@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import {
   Box,
   Button,
@@ -136,6 +136,38 @@ function NewPipeline() {
   } = usePipelineState(pipelineId, location, navigate);
 
   const { getConnectedNodeData } = useConnectedNodeData(nodes, nodeData, edges);
+
+  // Contextual palette highlighting to guide pipeline construction (never
+  // restricts what can be dragged):
+  //  - a node is focused → emphasize the node types that can come after it;
+  //  - the canvas is empty → suggest the root node(s) as the starting point.
+  const nodeHighlight = useMemo(() => {
+    const focusedType = nodeHelp?.type || nodeHelp?.data?.type;
+    const focusedContract = focusedType
+      ? availableNodes.find((n) => n.type === focusedType)
+      : null;
+
+    if (focusedContract) {
+      return {
+        highlightMode: "successors",
+        highlightedTypes: focusedContract.successors || [],
+        highlightLabel: `Puede ir después de: ${
+          focusedContract.name || focusedType
+        }`,
+      };
+    }
+
+    if (nodes.length === 0 && availableNodes.length > 0) {
+      const roots = availableNodes.filter((n) => n.source && !n.target);
+      return {
+        highlightMode: "start",
+        highlightedTypes: roots.map((n) => n.type),
+        highlightLabel: "Selecciona y arrastra para comenzar tu pipeline",
+      };
+    }
+
+    return { highlightMode: null, highlightedTypes: [], highlightLabel: "" };
+  }, [nodeHelp, availableNodes, nodes.length]);
 
   const handleApplyTemplate = (templateId) => {
     const selectedTemplate = PIPELINE_TEMPLATES.find(
@@ -453,6 +485,9 @@ function NewPipeline() {
                         availableNodes={availableNodes}
                         onDragStart={onDragStart}
                         nodeHelp={nodeHelp}
+                        highlightMode={nodeHighlight.highlightMode}
+                        highlightedTypes={nodeHighlight.highlightedTypes}
+                        highlightLabel={nodeHighlight.highlightLabel}
                       />
 
                       <Box
