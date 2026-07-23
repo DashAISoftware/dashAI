@@ -178,6 +178,7 @@
   },
   "message": {
     "skippedUndownloadedRuns": "Skipped runs whose model is not downloaded. Download the model first.",
+    "skippedUnavailableRuns": "Skipped runs whose model still needs a download or credentials. Resolve those first.",
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
     "confirmDeleteRun": "Are you sure you want to delete this run? This action cannot be undone.",
     "editingParametersWarning": "Editing parameters will reset this run's status to 'Not Started'. All existing metrics and results will be lost.",

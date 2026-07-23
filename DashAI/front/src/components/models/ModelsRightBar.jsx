@@ -6,11 +6,12 @@ import {
   TextField,
   CircularProgress,
   Tooltip,
+  Stack,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import {
   Search as SearchIcon,
-  LockOutlined as LockIcon,
+  VpnKeyOutlined as KeyIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
@@ -58,15 +59,25 @@ function ModelRow({ model, onUse, onDownload, onNeedsCredentials, dataTour }) {
     else onDownload(model);
   };
 
-  const action = locked ? (
-    <Tooltip
-      title={t("credentials:requiredTooltip", { platform: requiredPlatforms })}
-    >
-      <LockIcon fontSize="small" color="warning" />
-    </Tooltip>
-  ) : requiresDownload ? (
-    <ModelDownloadStatusIcon model={model} />
-  ) : null;
+  // A locked row shows a key; when it also needs a download, the download
+  // icon sits beside the key so both requirements are visible at a glance.
+  const action =
+    locked || requiresDownload ? (
+      <Stack direction="row" spacing={0.5} alignItems="center">
+        {locked && (
+          <Tooltip
+            title={t("credentials:requiredTooltip", {
+              platform: requiredPlatforms,
+            })}
+          >
+            <KeyIcon fontSize="small" color="warning" />
+          </Tooltip>
+        )}
+        {requiresDownload && (
+          <ModelDownloadStatusIcon model={model} disabled={locked} />
+        )}
+      </Stack>
+    ) : null;
 
   return (
     <ModelListItem

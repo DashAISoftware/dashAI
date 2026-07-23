@@ -178,6 +178,7 @@
   },
   "message": {
     "skippedUndownloadedRuns": "Durchläufe mit nicht heruntergeladenem Modell wurden übersprungen. Lade das Modell zuerst herunter.",
+    "skippedUnavailableRuns": "Durchläufe, deren Modell noch einen Download oder Anmeldedaten benötigt, wurden übersprungen. Behebe dies zuerst.",
     "allRunsCompleted": "{{experiment}} hat alle Durchläufe abgeschlossen.",
     "confirmDeleteRun": "Sind Sie sicher, dass Sie diesen Durchlauf löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "editingParametersWarning": "Das Bearbeiten von Parametern setzt den Status dieses Durchlaufs auf 'Nicht gestartet' zurück. Alle vorhandenen Metriken und Ergebnisse gehen verloren.",
