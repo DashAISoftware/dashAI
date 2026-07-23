@@ -7,6 +7,7 @@ import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import RunCard from "./RunCard";
 import InfoModal from "../shared/InfoModal";
 import RunStatusDot from "../shared/RunStatusDot";
+import ModelConfigurationContent from "./ModelConfigurationContent";
 
 function formatCreatedDate(dateStr, locale) {
   if (!dateStr) return null;
@@ -169,6 +170,11 @@ export default function ModelDetailView({
       <InfoModal
         title={t("common:runInformation")}
         subtitle={run.name}
+        extraContent={
+          <Box sx={{ mb: 4 }}>
+            <ModelConfigurationContent run={run} model={model} />
+          </Box>
+        }
         rows={[
           { label: t("common:id"), value: run.id },
           { label: t("common:model"), value: modelDisplayName },
@@ -201,6 +207,10 @@ ModelDetailView.propTypes = {
     created: PropTypes.string,
     start_time: PropTypes.string,
     end_time: PropTypes.string,
+    parameters: PropTypes.object,
+    optimizer_name: PropTypes.string,
+    optimizer_parameters: PropTypes.object,
+    goal_metric: PropTypes.string,
   }).isRequired,
   models: PropTypes.array,
   session: PropTypes.shape({

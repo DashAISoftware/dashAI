@@ -7,29 +7,30 @@ import {
   TableBody,
   TableCell,
   TableContainer,
-  TableHead,
   TableRow,
   Paper,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { renderParamValue } from "./ModelParamBlock";
 
+// Same look as the Metadata table in InfoModal (no header row, dark fill,
+// right-aligned values) so both sections of the Run Information modal read
+// as one consistent style instead of two different table treatments.
 function ParamsTable({ rows }) {
-  const { t } = useTranslation(["common"]);
   return (
-    <TableContainer component={Paper} variant="outlined">
+    <TableContainer component={Paper} sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
       <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell>{t("common:parameter")}</TableCell>
-            <TableCell>{t("common:value")}</TableCell>
-          </TableRow>
-        </TableHead>
         <TableBody>
           {rows.map(([key, value]) => (
             <TableRow key={key}>
-              <TableCell>{key}</TableCell>
-              <TableCell>{value}</TableCell>
+              <TableCell
+                component="th"
+                scope="row"
+                sx={{ color: "text.secondary" }}
+              >
+                {key}
+              </TableCell>
+              <TableCell align="right">{value}</TableCell>
             </TableRow>
           ))}
         </TableBody>
