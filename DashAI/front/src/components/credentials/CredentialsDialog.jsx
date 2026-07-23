@@ -214,30 +214,9 @@ export default function CredentialsDialog({ open, onClose }) {
   }, [open]);
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      PaperProps={{ sx: { borderRadius: 3 } }}
-    >
-      <DialogTitle sx={{ pb: 1 }}>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ pb: 1, bgcolor: "background.paper" }}>
         <Stack direction="row" alignItems="flex-start" spacing={1.5}>
-          <Box
-            sx={(theme) => ({
-              width: 36,
-              height: 36,
-              borderRadius: 1.5,
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: theme.palette.primary.main,
-              backgroundColor: theme.palette.ui.hover,
-            })}
-          >
-            <VpnKeyOutlinedIcon fontSize="small" />
-          </Box>
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
               {t("title")}
@@ -256,7 +235,10 @@ export default function CredentialsDialog({ open, onClose }) {
           </IconButton>
         </Stack>
       </DialogTitle>
-      <DialogContent sx={{ pb: 3 }}>
+      <DialogContent
+        dividers
+        sx={{ pt: 3, pb: 3, bgcolor: "background.paper" }}
+      >
         <Stack spacing={1.5} sx={{ mt: 0.5 }}>
           {credentials.map((credential) => (
             <CredentialRow
