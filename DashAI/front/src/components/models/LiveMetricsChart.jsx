@@ -612,7 +612,7 @@ export function LiveMetricsChart({
                   layout={{
                     autosize: true,
                     height: 240,
-                    margin: { l: 50, r: 12, t: 8, b: 40 },
+                    margin: { l: 50, r: 12, t: 8, b: 55 },
                     showlegend: false,
                     paper_bgcolor: theme.palette.background.paper,
                     plot_bgcolor: theme.palette.background.paper,
@@ -622,7 +622,7 @@ export function LiveMetricsChart({
                       size: 11,
                     },
                     xaxis: {
-                      title: levelLabel,
+                      title: { text: levelLabel, standoff: 10 },
                       gridcolor: theme.palette.divider,
                       zerolinecolor: theme.palette.divider,
                       tickfont: { color: theme.palette.text.primary, size: 10 },
