@@ -282,7 +282,12 @@ async def get_hyperparameter_optimization_plot(
                 detail="Internal database error",
             ) from e
 
-    return plot
+    from DashAI.back.core.artifacts import normalize_artifacts
+
+    # Re-normalized on every read (not just on save) so plots pickled before
+    # this endpoint returned typed artifacts (plain plotly JSON strings)
+    # still come back in the same {type, payload, title} shape.
+    return normalize_artifacts(plot)[0]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
