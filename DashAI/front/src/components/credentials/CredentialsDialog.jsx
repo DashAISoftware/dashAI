@@ -25,6 +25,7 @@ import {
   authenticateCredential,
   deleteCredential,
 } from "../../api/credentials";
+import { setCredentialStatus, setCredentialStatuses } from "./credentialStatus";
 
 function CredentialRow({ credential, onChanged }) {
   const { t } = useTranslation("credentials");
@@ -38,7 +39,13 @@ function CredentialRow({ credential, onChanged }) {
   const handleVerify = async () => {
     setBusy(true);
     try {
-      await authenticateCredential(credential.name, key);
+      const { is_authenticated } = await authenticateCredential(
+        credential.name,
+        key,
+      );
+      // Broadcast so every open component list re-derives its lock state
+      // without a manual refresh.
+      setCredentialStatus(credential.name, is_authenticated);
       enqueueSnackbar(t("verifySuccess"), { variant: "success" });
       onChanged();
     } catch {
@@ -51,7 +58,8 @@ function CredentialRow({ credential, onChanged }) {
   const handleRemove = async () => {
     setBusy(true);
     try {
-      await deleteCredential(credential.name);
+      const { is_authenticated } = await deleteCredential(credential.name);
+      setCredentialStatus(credential.name, is_authenticated);
       setKey("");
       onChanged();
     } finally {
@@ -190,7 +198,10 @@ export default function CredentialsDialog({ open, onClose }) {
   const refresh = async () => {
     try {
       const data = await getCredentials();
-      setCredentials(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      setCredentials(list);
+      // Keep the shared store in sync with the freshly fetched truth.
+      setCredentialStatuses(list);
     } catch {
       // silently ignore fetch errors (e.g. in test environments)
     }

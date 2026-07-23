@@ -17,11 +17,14 @@ import {
   Clear as ClearIcon,
   ExpandMore as ExpandMoreIcon,
   Check as CheckIcon,
-  LockOutlined as LockIcon,
   VpnKeyOutlined as KeyIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import ComponentDownloadControl from "../models/model/ComponentDownloadControl";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
 
 const ALL_CATEGORY = "All";
 const SEARCH_THRESHOLD = 10;
@@ -32,13 +35,6 @@ function getLabel(component) {
 
 function getDescription(component, fallback = "") {
   return component.description ?? fallback;
-}
-
-// Derive a human label from a credential component name, e.g.
-// "HuggingFaceCredential" -> "HuggingFace". Falls back to the raw name so it
-// works for any backend-registered credential without frontend changes.
-function credentialLabel(name) {
-  return name.replace(/Credential$/, "") || name;
 }
 
 function ComponentSelector({
@@ -55,6 +51,10 @@ function ComponentSelector({
   onDownloadChange = null,
 }) {
   const { t } = useTranslation(["custom", "credentials", "common"]);
+  // Live credential statuses so a card's lock state updates the instant a
+  // credential is verified, without a manual page refresh.
+  const { statuses: credentialStatuses, loaded: credentialsLoaded } =
+    useCredentialStatuses();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY);
 
@@ -119,17 +119,16 @@ function ComponentSelector({
   const renderCard = (component) => {
     const isSelected = selected?.name === component.name;
     const icon = getIcon?.(component);
-    const requiredCredentials = component.required_credentials ?? [];
-    const optionalCredentials = component.optional_credentials ?? [];
-    const credentialsSatisfied = component.credentials_satisfied !== false;
-    // Unmet required credentials make the component unusable: lock and disable.
-    const locked = !credentialsSatisfied && requiredCredentials.length > 0;
-    const requiredPlatforms = requiredCredentials
-      .map(credentialLabel)
-      .join(", ");
-    const optionalPlatforms = optionalCredentials
-      .map(credentialLabel)
-      .join(", ");
+    const {
+      optionalCredentials,
+      locked,
+      requiredPlatforms,
+      optionalPlatforms,
+    } = getComponentCredentialState(
+      component,
+      credentialStatuses,
+      credentialsLoaded,
+    );
     const requiresDownload = Boolean(component.metadata?.requires_download);
     const needsDownload = requiresDownload && !component.downloaded;
     // Component is usable only when its download is present AND its required
@@ -207,20 +206,12 @@ function ComponentSelector({
               {getDescription(component, t("noDescriptionAvailable"))}
             </Typography>
           </Box>
-          {isSelected && (
-            <CheckIcon
-              fontSize="small"
-              color="primary"
-              sx={{ flexShrink: 0, mt: 1 }}
-            />
-          )}
-        </Box>
-        {(locked || optionalCredentials.length > 0) && (
+          {/* Credential status and selection check share the top right corner. */}
           <Stack
             direction="row"
             spacing={1}
             alignItems="center"
-            sx={{ flexShrink: 0 }}
+            sx={{ flexShrink: 0, mt: 1 }}
           >
             {locked && (
               <Tooltip
@@ -228,7 +219,7 @@ function ComponentSelector({
                   platform: requiredPlatforms,
                 })}
               >
-                <LockIcon fontSize="small" color="warning" />
+                <KeyIcon fontSize="small" color="warning" />
               </Tooltip>
             )}
             {!locked && optionalCredentials.length > 0 && (
@@ -240,8 +231,9 @@ function ComponentSelector({
                 <KeyIcon fontSize="small" color="action" />
               </Tooltip>
             )}
+            {isSelected && <CheckIcon fontSize="small" color="primary" />}
           </Stack>
-        )}
+        </Box>
         {requiresDownload && (
           <Box onClick={(e) => e.stopPropagation()}>
             <ComponentDownloadControl
