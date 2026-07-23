@@ -28,6 +28,9 @@ export default function DatasetTable({
   infiniteScroll = false,
   loadMoreStep = 25,
   extraActions = null,
+  enableRowSelection = false,
+  selectedRowIndices = null,
+  onRowSelectionChange = null,
 }) {
   return (
     <LeanDatasetTable
@@ -50,6 +53,9 @@ export default function DatasetTable({
       infiniteScroll={infiniteScroll}
       loadMoreStep={loadMoreStep}
       extraActions={extraActions}
+      enableRowSelection={enableRowSelection}
+      selectedRowIndices={selectedRowIndices}
+      onRowSelectionChange={onRowSelectionChange}
     />
   );
 }
@@ -72,4 +78,7 @@ DatasetTable.propTypes = {
   infiniteScroll: PropTypes.bool,
   loadMoreStep: PropTypes.number,
   extraActions: PropTypes.node,
+  enableRowSelection: PropTypes.bool,
+  selectedRowIndices: PropTypes.instanceOf(Set),
+  onRowSelectionChange: PropTypes.func,
 };

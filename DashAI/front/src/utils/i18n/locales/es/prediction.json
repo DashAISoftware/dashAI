@@ -1,5 +1,6 @@
 {
   "button": {
+    "deleteSelected": "Eliminar Seleccionadas ({{count}})",
     "downloadResults": "Descargar Resultados de Predicción",
     "hideResults": "Ocultar Resultados",
     "runPrediction": "Ejecutar Predicción",
@@ -9,6 +10,7 @@
   "error": {
     "creatingPrediction": "Error al crear predicción",
     "errorDeleting": "Error al eliminar predicción",
+    "errorDeletingSelected": "Error al eliminar las predicciones seleccionadas",
     "errorDownloading": "Error al descargar predicción",
     "fetchingDatasets": "Error al obtener datasets para predicción.",
     "loadingPredictionData": "Error al cargar datos de predicción",
@@ -25,6 +27,7 @@
     "clickToViewOrDelete": "Haga clic en una predicción para ver los detalles o eliminarla usando el icono de eliminar.",
     "configureInput": "Configurar Entrada",
     "confirm": "Confirmar",
+    "confirmBulkDeletion": "¿Está seguro de que desea eliminar las {{count}} predicciones seleccionadas? Esta acción no se puede deshacer.",
     "confirmDeletion": "¿Está seguro de que desea eliminar esta predicción? Esta acción no se puede deshacer.",
     "confirmDeletionTitle": "¿Eliminar Predicción?",
     "confirmPrediction": "Confirmar Predicción",
@@ -61,6 +64,7 @@
     "selectDataset": "Seleccione un dataset para la predicción",
     "selectDatasetFromPlatform": "Seleccione un dataset de la plataforma",
     "selectMode": "Seleccionar Modo",
+    "selectRowsToDelete": "Seleccionar filas para eliminar",
     "selectPredictionMode": "Seleccione cómo desea proporcionar datos de entrada para la predicción",
     "targetColumn": "Columna Objetivo",
     "useExistingDataset": "Usar Dataset Existente"
@@ -69,6 +73,7 @@
     "deletedSuccessfully": "Predicción eliminada exitosamente",
     "downloadedSuccessfully": "Predicción descargada exitosamente",
     "predictionCompleted": "Predicción completada exitosamente",
-    "predictionJobSubmitted": "Trabajo de predicción enviado exitosamente"
+    "predictionJobSubmitted": "Trabajo de predicción enviado exitosamente",
+    "predictionsDeleted": "{{count}} predicciones eliminadas correctamente"
   }
 }

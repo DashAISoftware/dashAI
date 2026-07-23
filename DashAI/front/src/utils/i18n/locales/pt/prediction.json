@@ -1,5 +1,6 @@
 {
   "button": {
+    "deleteSelected": "Excluir Selecionadas ({{count}})",
     "downloadResults": "Baixar Resultados da Previsão",
     "hideResults": "Ocultar Resultados",
     "runPrediction": "Executar Previsão",
@@ -9,6 +10,7 @@
   "error": {
     "creatingPrediction": "Erro ao criar previsão",
     "errorDeleting": "Erro ao excluir previsão",
+    "errorDeletingSelected": "Erro ao excluir as previsões selecionadas",
     "errorDownloading": "Erro ao baixar previsão",
     "fetchingDatasets": "Erro ao obter conjuntos de dados para previsão.",
     "loadingPredictionData": "Erro ao carregar dados de previsão",
@@ -25,6 +27,7 @@
     "clickToViewOrDelete": "Clique em uma previsão para ver os detalhes ou excluí-la usando o ícone de excluir.",
     "configureInput": "Configurar Entrada",
     "confirm": "Confirmar",
+    "confirmBulkDeletion": "Tem certeza de que deseja excluir as {{count}} previsões selecionadas? Esta ação não pode ser desfeita.",
     "confirmDeletion": "Tem certeza de que deseja excluir esta previsão? Esta ação não pode ser desfeita.",
     "confirmDeletionTitle": "Excluir Previsão?",
     "confirmPrediction": "Confirmar Previsão",
@@ -61,6 +64,7 @@
     "selectDataset": "Selecione um conjunto de dados para a previsão",
     "selectDatasetFromPlatform": "Selecione um conjunto de dados da plataforma",
     "selectMode": "Selecionar Modo",
+    "selectRowsToDelete": "Selecionar linhas para excluir",
     "selectPredictionMode": "Selecione como deseja fornecer dados de entrada para a previsão",
     "targetColumn": "Coluna Alvo",
     "useExistingDataset": "Usar Conjunto de Dados Existente"
@@ -69,6 +73,7 @@
     "deletedSuccessfully": "Previsão excluída com sucesso",
     "downloadedSuccessfully": "Previsão baixada com sucesso",
     "predictionCompleted": "Previsão concluída com sucesso",
-    "predictionJobSubmitted": "Trabalho de previsão enviado com sucesso"
+    "predictionJobSubmitted": "Trabalho de previsão enviado com sucesso",
+    "predictionsDeleted": "{{count}} previsões excluídas com sucesso"
   }
 }

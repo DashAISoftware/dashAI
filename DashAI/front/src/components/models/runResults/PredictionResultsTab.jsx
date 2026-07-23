@@ -14,7 +14,6 @@ import {
 import { LoadingButton } from "@mui/lab";
 import {
   Close as CloseIcon,
-  Dataset as DatasetIcon,
   AddCircleOutline,
   PlayArrow as PlayArrowIcon,
 } from "@mui/icons-material";
@@ -91,13 +90,14 @@ export default function PredictionResultsTab({
           <Button
             variant="outlined"
             size="small"
-            startIcon={<DatasetIcon />}
+            startIcon={<AddCircleOutline />}
             onClick={() => {
               setDatasetRunState({ canRun: false, isSubmitting: false });
               setShowDatasetPanel(true);
             }}
+            sx={{ textTransform: "none", fontWeight: 500 }}
           >
-            {t("models:button.newDatasetPrediction")}
+            {t("models:button.addNewPrediction")}
           </Button>
         </Box>
       ) : (
@@ -116,6 +116,7 @@ export default function PredictionResultsTab({
             startIcon={<AddCircleOutline />}
             onClick={() => manualActionsRef.current?.addRow()}
             disabled={!manualRunState.canAddRow}
+            sx={{ textTransform: "none", fontWeight: 500 }}
           >
             {t("common:addRow")}
           </Button>
@@ -127,6 +128,7 @@ export default function PredictionResultsTab({
             onClick={() => manualActionsRef.current?.runPrediction()}
             disabled={!manualRunState.canRun}
             loading={manualRunState.isRunning}
+            sx={{ textTransform: "none", fontWeight: 500 }}
           >
             {t("prediction:button.runPrediction")}
           </LoadingButton>
@@ -161,10 +163,10 @@ export default function PredictionResultsTab({
           }}
         >
           <ToggleButton value="dataset" sx={{ px: 1.5 }}>
-            {t("common:dataset")}
+            {t("models:label.datasetPredictions")}
           </ToggleButton>
           <ToggleButton value="manual" sx={{ px: 1.5 }}>
-            {t("models:label.manual")}
+            {t("models:label.manualPredictions")}
           </ToggleButton>
         </PillToggleButtonGroup>
       </Box>
@@ -235,7 +237,6 @@ export default function PredictionResultsTab({
             run={run}
             session={session}
             predictions={visiblePredictions}
-            displayNumbers={predictionDisplayNumbers}
             targetColumn={outputColumn}
             datasetSample={trainingDatasetSample}
             onSaved={onSaved}
