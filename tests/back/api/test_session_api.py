@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 def create_session_1(client: TestClient):
     """Create testing session 1 using job system."""
     params = {
-        "model_name": "StableDiffusionV2Model",
+        "model_name": "StableDiffusion2",
         "task_name": "TextToImageGenerationTask",
         "parameters": {
             "num_inference_steps": 1,
@@ -54,17 +54,20 @@ def create_session_2(client: TestClient):
 
 @pytest.fixture(scope="module", name="response_3")
 def create_session_3(client: TestClient):
-    """Create testing session 3 using job system."""
+    """Create testing session 3 using a non-download-required model."""
     params = {
-        "model_name": "QwenModel",
-        "task_name": "TextToTextGenerationTask",
+        "model_name": "StableDiffusion2",
+        "task_name": "TextToImageGenerationTask",
         "parameters": {
-            "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
-            "max_tokens": 100,
-            "temperature": 0.9,
-            "frequency_penalty": 0.1,
-            "context_window": 512,
+            "num_inference_steps": 1,
+            "model_name": "sd2-community/stable-diffusion-2",
+            "guidance_scale": 6.0,
             "device": "CPU",
+            "negative_prompt": "",
+            "seed": 42,
+            "width": 256,
+            "height": 256,
+            "num_images_per_prompt": 1,
         },
         "name": "session_3",
         "description": None,
@@ -80,17 +83,20 @@ def create_session_3(client: TestClient):
 
 @pytest.fixture(scope="module", name="response_4")
 def create_session_4(client: TestClient):
-    """Create testing session 4 using job system."""
+    """Create testing session 4 with an invalid task (valid model)."""
     params = {
-        "model_name": "QwenModel",
+        "model_name": "StableDiffusion2",
         "task_name": "SomeTask",
         "parameters": {
-            "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
-            "max_tokens": 100,
-            "temperature": 0.9,
-            "frequency_penalty": 0.1,
-            "context_window": 512,
+            "num_inference_steps": 1,
+            "model_name": "sd2-community/stable-diffusion-2",
+            "guidance_scale": 6.0,
             "device": "CPU",
+            "negative_prompt": "",
+            "seed": 42,
+            "width": 256,
+            "height": 256,
+            "num_images_per_prompt": 1,
         },
         "name": "session_4",
         "description": None,
@@ -110,7 +116,7 @@ def test_create_session(response_1):
     data = response_1.json()
     assert data["id"] is not None, "Session ID is missing"
     assert data["name"] == "session_1", "Session name does not match"
-    assert data["model_name"] == "StableDiffusionV2Model", "Model name does not match"
+    assert data["model_name"] == "StableDiffusion2", "Model name does not match"
     assert data["task_name"] == "TextToImageGenerationTask", "Task name does not match"
 
 
@@ -129,7 +135,7 @@ def test_get_session_by_id(client: TestClient, response_1):
     data = response.json()
     assert data["id"] == session_id, "Retrieved session ID does not match"
     assert data["name"] == "session_1", "Session name does not match"
-    assert data["model_name"] == "StableDiffusionV2Model", "Model name does not match"
+    assert data["model_name"] == "StableDiffusion2", "Model name does not match"
     assert data["task_name"] == "TextToImageGenerationTask", "Task name does not match"
 
 

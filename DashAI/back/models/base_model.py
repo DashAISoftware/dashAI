@@ -43,7 +43,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         """
         metadata: Dict[str, Any] = {}
         metadata["icon"] = cls.ICON if cls.ICON else "Science"
-
+        metadata["requires_download"] = bool(getattr(cls, "REQUIRES_DOWNLOAD", False))
+        metadata["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
         return metadata
 
     @abstractmethod
@@ -300,10 +301,10 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     def prepare_dataset(
         self, dataset: "DashAIDataset", is_fit: bool = False
     ) -> "DashAIDataset":
-        """Hook for model-specific preprocessing of input features.
+        """Hook for model specific preprocessing of input features.
 
         Override in subclasses that require custom tokenization, encoding,
-        or any other input transformation. Must not mutate the input in-place.
+        or any other input transformation. Must not mutate the input in place.
 
         Parameters
         ----------

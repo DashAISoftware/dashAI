@@ -14,14 +14,15 @@ logger = logging.getLogger(__name__)
 
 _SEED_ZIP = Path(__file__).parent / "seed_datasets.zip"
 _MANIFEST = Path(__file__).parent / "manifest.json"
+_SENTINEL = ".seeded_v2"
 
 
 def seed_datasets_if_first_run() -> None:
-    """Copy pre-processed seed datasets into the local store on first run."""
+    """Seed example datasets on first run or when the seed version changes."""
     config = di["config"]
     session_factory = di["session_factory"]
 
-    sentinel = Path(config["LOCAL_PATH"]) / ".seeded"
+    sentinel = Path(config["LOCAL_PATH"]) / _SENTINEL
     if sentinel.exists():
         return
 
@@ -34,9 +35,15 @@ def seed_datasets_if_first_run() -> None:
         return
 
     with _MANIFEST.open() as f:
-        manifest: dict = json.load(f)
+        raw = "\n".join(
+            line for line in f if not line.lstrip().startswith("//")
+        )
+        manifest: dict = json.loads(raw)
 
-    logger.info("First run detected - seeding datasets from %s.", _SEED_ZIP)
+    logger.info("Seeding example datasets from %s.", _SEED_ZIP)
+
+    datasets_path = Path(config["DATASETS_PATH"])
+    _delete_example_datasets(session_factory, datasets_path)
 
     folder_id = _get_or_create_example_folder(session_factory)
 
@@ -45,7 +52,6 @@ def seed_datasets_if_first_run() -> None:
         with zipfile.ZipFile(_SEED_ZIP) as zf:
             zf.extractall(tmp_dir)
 
-        datasets_path = Path(config["DATASETS_PATH"])
         for dataset_name, meta in manifest.items():
             dataset_dir = tmp_dir / dataset_name
             if not dataset_dir.is_dir():
@@ -65,6 +71,26 @@ def seed_datasets_if_first_run() -> None:
 
     sentinel.touch()
     logger.info("Dataset seeding complete.")
+
+
+def _delete_example_datasets(session_factory, datasets_path: Path) -> None:
+    """Remove all datasets inside the 'Example datasets' folder from DB and disk."""
+    try:
+        with session_factory() as db:
+            folder = db.query(Folder).filter(Folder.name == "Example datasets").first()
+            if not folder:
+                return
+            datasets = db.query(Dataset).filter(Dataset.folder_id == folder.id).all()
+            for dataset in datasets:
+                dest = Path(dataset.file_path)
+                if dest.exists():
+                    shutil.rmtree(dest, ignore_errors=True)
+                    logger.info("Deleted dataset files at '%s'.", dest)
+                db.delete(dataset)
+            db.commit()
+            logger.info("Cleared %d example dataset(s) for re-seeding.", len(datasets))
+    except Exception:
+        logger.exception("Failed to delete example datasets.")
 
 
 def _get_or_create_example_folder(session_factory) -> int | None:

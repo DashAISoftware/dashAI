@@ -93,12 +93,15 @@
     "requiresExactColumns_other": "Erfordert genau {{required}} gültige Spalten, aber {{available}} verfügbar.",
     "requiresMinColumns_one": "Erfordert mindestens {{required}} gültige Spalte, aber nur {{available}} verfügbar.",
     "requiresMinColumns_other": "Erfordert mindestens {{required}} gültige Spalten, aber nur {{available}} verfügbar.",
-    "zipContentsNotCompatible": "ZIP enthält keine mit dem ausgewählten Datenlader kompatiblen Dateien"
+    "zipContentsNotCompatible": "ZIP enthält keine mit dem ausgewählten Datenlader kompatiblen Dateien",
+    "cannotSaveEmptyDataset": "Dataset kann nicht gespeichert werden: Alle Spalten wurden entfernt."
   },
   "label": {
+    "task": "Aufgabe",
     "all": "alle",
     "allowedDataTypes": "Zulässige Datentypen: <1><0></0></1>",
     "allowedValueTypes": "Zulässige Wertetypen: <1><0></0></1>",
+    "excludedDataTypes": "Ausgeschlossene Datentypen: {{dtypes}}",
     "allTypeChangesValid": "Alle Typänderungen sind gültig und können sicher angewendet werden.",
     "analysisTools": "Analysewerkzeuge",
     "appearance": "Erscheinungsbild",
@@ -266,6 +269,7 @@
     "missingValuesOverview": "Übersicht fehlender Werte",
     "mostFrequent": "Am häufigsten",
     "nameYourNotebook": "Notizbuch benennen",
+    "nComponentsColumnInfo": "Sie haben {{n}} Spalte(n) ausgewählt. n_components muss kleiner oder gleich {{n}} sein. Reduzieren Sie n_components oder wählen Sie mehr Spalten aus, um Fehler zu vermeiden.",
     "newDatasetCreatedWithTransformations": "Ein neuer Datensatz wird mit diesen Transformationen erstellt. Er kann mit anderen Modulen verwendet werden, ohne das Original zu beeinflussen.",
     "noDataQualityIssuesDetected": "Keine Datenqualitätsprobleme erkannt",
     "noDuplicateRows": "Keine doppelten Zeilen im Datensatz gefunden.",
@@ -460,5 +464,13 @@
       "endsWith": "Endet mit"
     }
   },
-  "searchDataloaders": "Datenlader suchen..."
+  "searchDataloaders": "Datenlader suchen...",
+  "task": {
+    "tabularClassification": "Tabellarische Klassifikation",
+    "imageClassification": "Bildklassifikation",
+    "textClassification": "Textklassifikation",
+    "translation": "Übersetzung",
+    "regression": "Regression",
+    "eda": "EDA"
+  }
 }

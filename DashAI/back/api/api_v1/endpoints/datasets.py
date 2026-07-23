@@ -1,12 +1,14 @@
 import asyncio
 import hashlib
 import io
+import json
 import logging
 import os
 import time
 import zipfile
 from collections import OrderedDict
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
@@ -118,6 +120,21 @@ def _image_bytes_to_thumbnail_data_uri(img_bytes: bytes, max_size: int = 64) -> 
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+_SEED_MANIFEST_PATH = (
+    Path(__file__).parent.parent.parent.parent / "seeds" / "manifest.json"
+)
+
+
+def _load_seed_tasks() -> dict:
+    try:
+        with _SEED_MANIFEST_PATH.open() as f:
+            return {name: meta.get("task") for name, meta in json.load(f).items()}
+    except Exception:
+        return {}
+
+
+_SEED_TASKS: dict = _load_seed_tasks()
 
 
 # ---------------------------------------------------------------------------
@@ -362,6 +379,8 @@ async def filter_dataset_file(
     pagination over the same filter+sort combination avoids re-reading
     and re-filtering the Arrow file.
     """
+    import pyarrow as pa
+
     cached = _filtered_table_cache.get(path, filter_model, sort_model)
     if cached is not None:
         table, total = cached
@@ -493,7 +512,12 @@ async def get_datasets(
                 detail="Internal database error",
             ) from e
 
-    return datasets
+    result = []
+    for ds in datasets:
+        data = jsonable_encoder(ds)
+        data["task"] = _SEED_TASKS.get(ds.name)
+        result.append(data)
+    return result
 
 
 @router.get("/{dataset_id}")
@@ -1555,8 +1579,10 @@ def _build_image_zip(table: "pa.Table") -> io.BytesIO:
     """Build a ZIP buffer from an image dataset table.
 
     Uses ZIP_STORED (no compression) because image formats (JPEG, PNG) are
-    already compressed — DEFLATE gains nothing but wastes significant CPU time.
+    already compressed, so DEFLATE gains nothing but wastes significant CPU time.
     """
+    import pyarrow as pa
+
     label_col = next(
         (
             col
@@ -1646,6 +1672,7 @@ async def _build_export_response(
     StreamingResponse
         ZIP (image datasets) or CSV (tabular datasets).
     """
+    import pyarrow as pa
     import pyarrow.csv as csv
 
     image_cols = [

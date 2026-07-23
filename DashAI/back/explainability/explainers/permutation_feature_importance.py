@@ -1,5 +1,6 @@
 from typing import Dict, List, Union
 
+from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -148,8 +149,8 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
     uncertainty.
 
     Unlike impurity-based importance (from decision trees), PFI is computed on
-    held-out data and is therefore not biased towards high-cardinality features.
-    It is model-agnostic and captures interaction effects, but assumes that
+    held out data and is therefore not biased towards high cardinality features.
+    It is model agnostic and captures interaction effects, but assumes that
     permuting a feature does not violate important correlations in the data.
 
     References
@@ -238,7 +239,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         """Map logical feature names to their column indices, grouping OHE columns.
 
         When the underlying model has a ``one_hot_encoder`` attribute, all
-        one-hot-encoded dummy columns that originated from the same categorical
+        one hot encoded dummy columns that originated from the same categorical
         feature are collected into a single group so that permutation importance
         is computed jointly. Non-encoded columns get a single-element group.
 
@@ -413,7 +414,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         """Compute permutation feature importance for the fitted model.
 
         Extracts the test split from ``dataset``, optionally encodes the
-        target column, groups one-hot-encoded columns, and computes importance
+        target column, groups one hot encoded columns, and computes importance
         scores by permuting each feature group and measuring the resulting
         drop in the configured scoring metric.
 
@@ -530,12 +531,11 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
         Returns
         -------
-        list of str
-            A single-element list containing the Plotly figure serialised to
-            JSON via ``plotly.io.to_json``.
+        List[Artifact]
+            A single-element list with the plotly artifact of the
+            explanation plot.
         """
         # Lazy imports
-        import plotly
         import plotly.express as px
 
         fig = px.bar(
@@ -584,9 +584,9 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
             ],
         )
 
-        return [plotly.io.to_json(fig)]
+        return [PlotlyArtifact(payload=fig, title="Permutation Feature Importance")]
 
-    def plot(self, explanation: dict) -> List[dict]:
+    def plot(self, explanation: dict) -> List[Artifact]:
         """Create a Plotly bar chart from a feature importance explanation dict.
 
         Parameters
@@ -597,9 +597,9 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
         Returns
         -------
-        list of str
-            A single-element list containing the Plotly figure serialised to
-            JSON (passed through :meth:`_create_plot`).
+        List[Artifact]
+            A single-element list with the plotly artifact of the
+            explanation plot (built by :meth:`_create_plot`).
         """
         n_features = 10
         # Lazy import

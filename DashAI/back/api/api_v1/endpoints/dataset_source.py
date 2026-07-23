@@ -52,6 +52,7 @@ async def search_datasets(
     q: str = Query(default="", description="Search query"),
     limit: int = Query(default=20, ge=1, le=100),
     cursor: str = Query(default="", description="Pagination cursor from previous page"),
+    tags: list[str] = Query(default=[]),
     registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> Dict[str, Any]:
     """Search for datasets in a registered source.
@@ -67,6 +68,9 @@ async def search_datasets(
     cursor : str
         Opaque pagination token returned by the previous call.  Empty string
         means first page.
+    tags : list[str]
+        Repeated tag filter strings (e.g. ``?tags=nlp&tags=tabular``).  Passed
+        through to the datasource via ``**filters``.
     registry : ComponentRegistry
         Injected component registry.
 
@@ -76,7 +80,7 @@ async def search_datasets(
         ``{"results": [...], "next_cursor": str | null}``
     """
     source = _get_source(source_name, registry)
-    page = source.search(q, limit=limit, cursor=cursor or None)
+    page = source.search(q, limit=limit, cursor=cursor or None, tags=tags)
     return {
         "results": [
             {
@@ -164,7 +168,7 @@ async def preview_dataset_with_params(
     """Fetch a sample preview using a DataLoader and params.
 
     If ``hub_download_id`` is provided the already-downloaded local file is
-    used directly — no re-download from the source occurs.
+    used directly; no redownload from the source occurs.
 
     Parameters
     ----------
@@ -319,7 +323,7 @@ async def import_dataset(
     body : ImportRequest
         Contains the DashAI dataset_id and params. ``params`` may include
         ``compute_metadata: bool`` (default True). When False, ``DatasetJob``
-        only computes base metadata (column names, row count, NaN counts) —
+        only computes base metadata (column names, row count, NaN counts),
         extended EDA fields (correlations, stats, quality) are omitted.
     registry : ComponentRegistry
         Injected component registry.
@@ -329,7 +333,7 @@ async def import_dataset(
     Returns
     -------
     dict
-        ``{"job_id": int, "dataset_id": int}`` — the enqueued job and dataset IDs.
+        ``{"job_id": int, "dataset_id": int}``: the enqueued job and dataset IDs.
     """
     from DashAI.back.job.dataset_job import DatasetJob
 

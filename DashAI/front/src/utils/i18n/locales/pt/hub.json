@@ -18,6 +18,7 @@
   "importing": "Importando...",
   "importSuccess": "Arquivo importado com sucesso.",
   "importError": "Falha ao importar o arquivo.",
+  "datasetNameExists": "Já existe um dataset com este nome.",
   "previewError": "Falha ao carregar a pré-visualização do arquivo.",
   "selectDatasetToPreview": "Selecione um arquivo para ver os detalhes.",
   "stepFormat": "Formato",
@@ -60,5 +61,6 @@
   "datasetDetails": "Detalhes do Arquivo",
   "checkQueue": "Verifique a fila de trabalhos para mais detalhes",
   "deleteSuccess": "Arquivo \"{{name}}\" excluído.",
-  "deleteError": "Falha ao excluir o arquivo."
+  "deleteError": "Falha ao excluir o arquivo.",
+  "tagFilterPlaceholder": "Filtrar por tag, pressione Enter para adicionar..."
 }

@@ -11,9 +11,6 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
-from DashAI.back.models.scikit_learn.sklearn_like_model import (
-    CategoricalEncodingStrategy,
-)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -315,7 +312,7 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
     deviations beyond that are penalised linearly. The regularisation parameter
     ``C`` controls the trade-off between margin width and training error. Because it
     uses a linear kernel and relies on liblinear internally, LinearSVR scales to
-    large datasets much more efficiently than ``SVR`` with a non-linear kernel.
+    large datasets much more efficiently than ``SVR`` with a nonlinear kernel.
 
     Key hyperparameters include ``C``, ``epsilon``, ``loss`` (epsilon-insensitive or
     squared epsilon-insensitive), ``fit_intercept``, ``dual``, ``tol``, and
@@ -347,8 +344,6 @@ class LinearSVR(RegressionModel, SklearnLikeRegressor, _LinearSVR):
     )
     COLOR: str = "#2196F3"
     ICON: str = "Timeline"
-
-    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
         """Initialise the model by forwarding all kwargs to the parent class.

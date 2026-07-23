@@ -19,6 +19,10 @@ import { useTranslation } from "react-i18next";
 import { useTableLocalization } from "../../utils/useTableLocalization";
 import api from "../../api/api";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
+import {
+  getComponentDownloadState,
+  subscribeAnyDownloadState,
+} from "./model/ComponentDownloadControl";
 
 /**
  * Compact comparison table showing all runs in a session.
@@ -43,8 +47,26 @@ function ModelComparisonTable({
   const [loadingScores, setLoadingScores] = useState(false);
   const [runs, setRuns] = useState(initialRuns);
   const [runToDelete, setRunToDelete] = useState(null);
+  // Bump to re-render when a download finishes so the train button enables.
+  const [, setDownloadVersion] = useState(0);
 
-  const { t } = useTranslation(["models", "common"]);
+  useEffect(
+    () => subscribeAnyDownloadState(() => setDownloadVersion((v) => v + 1)),
+    [],
+  );
+
+  // A run is trainable only if its model needs no download or the download is
+  // present and not in progress (live state overrides a stale fetched flag).
+  const isModelReady = (modelName) => {
+    const model = models.find((m) => m.name === modelName);
+    if (!model?.metadata?.requires_download) return true;
+    const cached = getComponentDownloadState(modelName);
+    const downloaded = cached?.downloaded ?? Boolean(model.downloaded);
+    const downloading = Boolean(cached?.downloading);
+    return downloaded && !downloading;
+  };
+
+  const { t, i18n } = useTranslation(["models", "common"]);
   const theme = useTheme();
   const localization = useTableLocalization();
 
@@ -70,7 +92,7 @@ function ModelComparisonTable({
       }
     };
     fetchModels();
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -82,7 +104,7 @@ function ModelComparisonTable({
       }
     };
     fetchMetrics();
-  }, []);
+  }, [i18n.language]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Fetch scoring profiles for this session's task
@@ -420,10 +442,17 @@ function ModelComparisonTable({
             row.original.status === 3;
           const isRunning =
             row.original.status === 1 || row.original.status === 2;
+          const modelReady = isModelReady(row.original.model_name);
 
           return (
             <Box sx={{ display: "flex", gap: 1 }}>
-              <Tooltip title={t("common:train")}>
+              <Tooltip
+                title={
+                  modelReady
+                    ? t("common:train")
+                    : t("common:componentDownload.mustDownload")
+                }
+              >
                 <span>
                   <IconButton
                     size="small"
@@ -431,7 +460,7 @@ function ModelComparisonTable({
                       e.stopPropagation();
                       onTrain(runs.find((r) => r.id === row.original.id));
                     }}
-                    disabled={!canTrain}
+                    disabled={!canTrain || !modelReady}
                     color="primary"
                   >
                     <PlayArrow fontSize="small" />

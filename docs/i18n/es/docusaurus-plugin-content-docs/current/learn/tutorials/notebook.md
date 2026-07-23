@@ -8,7 +8,7 @@ sidebar_label: Notebooks
 Un Notebook es el espacio de trabajo interactivo de dashAI para explorar y transformar un dataset.
 Proporciona un entorno en vivo y temporal donde puedes aplicar herramientas de análisis y
 transformaciones de datos, observar su efecto en los datos en tiempo real, y registrar cada operación
-como una línea de tiempo secuencial — sin modificar el dataset original hasta que decidas guardar.
+como una línea de tiempo secuencial, todo sin modificar el dataset original hasta que decidas guardar.
 
 Cuando estés satisfecho con el resultado, puedes guardar todo el proceso como un nuevo dataset,
 preservando los datos originales intactos.
@@ -46,18 +46,18 @@ sesiones de trabajo independientes para el mismo dataset.
 
 Cuando un notebook está abierto, la pantalla se divide en dos áreas:
 
-### Área principal — Vista previa del dataset y línea de tiempo
+### Área principal: Vista previa del dataset y línea de tiempo
 
 El área central muestra:
 
-- **Título del notebook** — se muestra como `Notebook: [Nombre del dataset]` en la parte superior.
-- **Barra de herramientas** — dos controles disponibles en todo momento:
-  - **FILTERS** — aplica filtros a nivel de fila para enfocar la vista previa en un subconjunto de los datos.
-  - **EXPORT** — descarga el estado actual de la vista previa del dataset.
-- **Tabla de vista previa del dataset** — una vista paginada y desplazable del dataset en su estado
-  actual. Los nombres de columna y sus tipos se muestran como sub-encabezados. A medida que agregas Converters,
+- **Título del notebook**: se muestra como `Notebook: [Nombre del dataset]` en la parte superior.
+- **Barra de herramientas**: dos controles disponibles en todo momento:
+  - **FILTERS**: aplica filtros a nivel de fila para enfocar la vista previa en un subconjunto de los datos.
+  - **EXPORT**: descarga el estado actual de la vista previa del dataset.
+- **Tabla de vista previa del dataset**: una vista paginada y desplazable del dataset en su estado
+  actual. Los nombres de columna y sus tipos se muestran como subencabezados. A medida que agregas Converters,
   los valores de esta tabla se actualizan para reflejar cada transformación.
-- **Línea de tiempo de operaciones** — cada Explorer o Converter que agregues aparece como un bloque debajo
+- **Línea de tiempo de operaciones**: cada Explorer o Converter que agregues aparece como un bloque debajo
   de la tabla de vista previa, en el orden en que fueron aplicados. Cada bloque muestra:
   - El nombre y tipo de la herramienta.
   - Una tabla resumen de su configuración (columna objetivo, alcance, parámetros).
@@ -65,14 +65,14 @@ El área central muestra:
   - Un botón de **Información/Editar** para revisar o modificar su configuración.
   - Un botón de eliminar para quitar la operación de la línea de tiempo.
 
-### Panel derecho — Herramientas de análisis
+### Panel derecho: Herramientas de análisis
 
 El panel derecho es la biblioteca de herramientas. Tiene dos pestañas:
 
 | Pestaña     | Propósito                                                                                                              |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | **EXPLORE** | Herramientas de análisis que generan visualizaciones o resúmenes estadísticos de los datos, sin modificarlos.          |
-| **CONVERT** | Herramientas de transformación que modifican los datos — codificación, escalado, imputación y otras operaciones de preprocesamiento. |
+| **CONVERT** | Herramientas de transformación que modifican los datos: codificación, escalado, imputación y otras operaciones de preprocesamiento. |
 
 Ambas pestañas comparten el mismo patrón de interacción: una lista de herramientas con búsqueda y categorías,
 con una vista previa en miniatura y descripción al pasar el cursor.
@@ -93,7 +93,7 @@ Al pasar el cursor sobre cualquier tarjeta de herramienta aparece un popup con:
 
 **Modo de vista**
 
-El panel admite dos modos de visualización — lista y cuadrícula — que se alternan con los iconos junto a
+El panel admite dos modos de visualización (lista y cuadrícula), que se alternan con los iconos junto a
 **View Mode** en la parte superior del panel.
 
 **Búsqueda**
@@ -108,8 +108,8 @@ Los Explorers son herramientas de análisis. Leen el estado actual del dataset y
 una visualización o un resumen estadístico en línea en la línea de tiempo del notebook. No
 modifican los datos.
 
-Usa los Explorers para entender la estructura de tus datos en cualquier punto del proceso de transformación
-— antes de aplicar converters, entre pasos o después de completar todas las transformaciones.
+Usa los Explorers para entender la estructura de tus datos en cualquier punto del proceso de transformación:
+antes de aplicar converters, entre pasos o después de completar todas las transformaciones.
 
 ### Agregar un Explorer
 
@@ -120,14 +120,14 @@ Usa los Explorers para entender la estructura de tus datos en cualquier punto de
 ### Configurar un Explorer
 
 El modal de configuración tiene dos pasos, mostrados como un indicador de progreso en la parte superior:
-**1 — Configure Scope → 2 — Configure Parameters**.
+**1. Configure Scope → 2. Configure Parameters**.
 
 El modal también tiene dos pestañas internas: **DESCRIPTION** y **DATASET**.
 
 - **DESCRIPTION** muestra qué hace la herramienta y su configuración de alcance.
 - **DATASET** muestra una vista previa del dataset como referencia durante la configuración.
 
-**Paso 1 — Configurar el alcance**
+**Paso 1: Configurar el alcance**
 
 Selecciona qué columnas usará el Explorer.
 
@@ -150,7 +150,7 @@ o selecciona individualmente haciendo clic en cada fila.
 
 Haz clic en **NEXT** una vez que se satisfaga el requisito de columnas.
 
-**Paso 2 — Configurar los parámetros**
+**Paso 2: Configurar los parámetros**
 
 Cada Explorer tiene su propio conjunto de parámetros. Estos varían según la herramienta.
 Los tipos de parámetros comunes incluyen menús desplegables (p. ej., método de correlación: `pearson`),
@@ -164,14 +164,14 @@ Haz clic en **BACK** para volver al Paso 1.
 ### Resultado del Explorer
 
 Una vez creado, el Explorer aparece como un bloque en la línea de tiempo debajo de la vista previa de datos.
-El resultado se renderiza en línea — por ejemplo, una matriz de correlación se muestra como un
+El resultado se renderiza en línea. Por ejemplo, una matriz de correlación se muestra como un
 mapa de calor interactivo directamente en el notebook.
 
 El encabezado del bloque muestra:
 
 - El nombre e icono del Explorer.
 - Una insignia **Finalizado** cuando el procesamiento está completo.
-- Un botón de **Información/Editar** — abre el modal de configuración para revisar la configuración
+- Un botón de **Información/Editar** que abre el modal de configuración para revisar la configuración
   o modificar el alcance y los parámetros.
 - Un botón de eliminar para quitar el Explorer de la línea de tiempo.
 
@@ -194,9 +194,9 @@ escala columnas numéricas, maneja valores faltantes y más.
 ### Configurar un Converter
 
 El modal de configuración sigue la misma estructura de dos pasos que los Explorers:
-**1 — Configure Scope → 2 — Configure Parameters**.
+**1. Configure Scope → 2. Configure Parameters**.
 
-**Paso 1 — Configurar el alcance**
+**Paso 1: Configurar el alcance**
 
 A diferencia de los Explorers, los Converters te permiten definir el alcance tanto para **columnas** como para **filas**.
 
@@ -220,9 +220,9 @@ procesará el Converter:
 
 Haz clic en **NEXT** una vez que el alcance esté configurado.
 
-**Paso 2 — Configurar los parámetros**
+**Paso 2: Configurar los parámetros**
 
-Cada Converter expone sus propios parámetros. Estos varían según la herramienta — por ejemplo:
+Cada Converter expone sus propios parámetros. Estos varían según la herramienta. Por ejemplo:
 
 - Un **Binarizer** tiene un parámetro `Threshold` y una casilla `copy`.
 - Un **Min-Max Scaler** tiene parámetros `feature_range_min` y `feature_range_max`.
@@ -241,8 +241,8 @@ El bloque muestra una tabla resumen con:
 | Campo               | Descripción                                                            |
 | ------------------- | ---------------------------------------------------------------------- |
 | **Target Column**   | La columna designada como objetivo/salida, si corresponde.             |
-| **Scope — Columns** | Las columnas a las que se aplicó el Converter.                         |
-| **Scope — Rows**    | La selección de filas utilizada (p. ej., `All`).                       |
+| **Scope (Columns)** | Las columnas a las que se aplicó el Converter.                         |
+| **Scope (Rows)**    | La selección de filas utilizada (p. ej., `All`).                       |
 
 La misma insignia **Finalizado**, el botón de **Información/Editar** y el botón de eliminar
 están disponibles al igual que con los Explorers.
@@ -261,11 +261,11 @@ La pestaña EXPLORE organiza las herramientas en cinco categorías:
 
 | Categoría                     | Qué contiene                                                                                                                          |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| **Preview Inspection**        | Vistas directas de los datos en bruto — Describe Dataset (tabla de resumen estadístico) y Show Rows (vista de registros paginada).    |
-| **Relationship Analysis**     | Herramientas para analizar cómo se relacionan pares de variables — Density Heatmap, Multiple Scatter Plot, Scatter Plot.              |
-| **Statistical Analysis**      | Medidas cuantitativas formales de estructura — Correlation Matrix, Covariance Matrix.                                                 |
-| **Distribution Analysis**     | Forma y dispersión de variables individuales — Box Plot, Empirical Cumulative Distribution, Histogram Plot, Word Cloud.               |
-| **Multidimensional Analysis** | Patrones a través de múltiples variables simultáneamente — Multiple Column Chart, Parallel Categories, Parallel Coordinates.          |
+| **Preview Inspection**        | Vistas directas de los datos en bruto: Describe Dataset (tabla de resumen estadístico) y Show Rows (vista de registros paginada).     |
+| **Relationship Analysis**     | Herramientas para analizar cómo se relacionan pares de variables: Density Heatmap, Multiple Scatter Plot, Scatter Plot.               |
+| **Statistical Analysis**      | Medidas cuantitativas formales de estructura: Correlation Matrix, Covariance Matrix.                                                  |
+| **Distribution Analysis**     | Forma y dispersión de variables individuales: Box Plot, Empirical Cumulative Distribution, Histogram Plot, Word Cloud.                |
+| **Multidimensional Analysis** | Patrones a través de múltiples variables simultáneamente: Multiple Column Chart, Parallel Categories, Parallel Coordinates.           |
 
 ---
 
@@ -275,14 +275,14 @@ La pestaña CONVERT organiza las herramientas en ocho categorías:
 
 | Categoría                        | Qué contiene                                                                                                                                      |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Basic Preprocessing**          | Limpieza fundamental de datos — NaN Remover, Simple Imputer, KNN Imputer, Missing Indicator, Column Remover, Character Replacer.                  |
-| **Encoding**                     | Conversión categórica a numérica — Binarizer, Label Binarizer, Label Encoder, One-Hot Encoder, Ordinal Encoder.                                   |
-| **Scaling and Normalization**    | Ajuste de rangos numéricos — Max Abs Scaler, Min-Max Scaler, Normalizer.                                                                          |
-| **Dimensionality Reduction**     | Compresión de variables — PCA, Incremental PCA, Truncated SVD, Fast ICA, Nystroem Approximation, Variance Threshold.                             |
-| **Feature Selection**            | Eliminación de variables guiada estadísticamente — Select K Best, Select Percentile, Select FDR, Select FPR, Select FWE, Generic Univariate Filter. |
-| **Polynomial & Kernel Methods**  | Expansión no lineal de características — Polynomial Features, RBF Sampler, Additive Chi² Sampler, Skewed Chi² Sampler.                            |
-| **Resampling & Class Balancing** | Corrección de desequilibrio de clases — SMOTE, SMOTE-ENN, Random Under-Sampler.                                                                   |
-| **Advanced Preprocessing**       | Transformación de texto a numérico — TF-IDF, Bag of Words, Tokenizer, Embedding.                                                                  |
+| **Basic Preprocessing**          | Limpieza fundamental de datos: NaN Remover, Simple Imputer, KNN Imputer, Missing Indicator, Column Remover, Character Replacer.                   |
+| **Encoding**                     | Conversión categórica a numérica: Binarizer, Label Binarizer, Label Encoder, One-Hot Encoder, Ordinal Encoder.                                    |
+| **Scaling and Normalization**    | Ajuste de rangos numéricos: Max Abs Scaler, Min-Max Scaler, Normalizer.                                                                           |
+| **Dimensionality Reduction**     | Compresión de variables: PCA, Incremental PCA, Truncated SVD, Fast ICA, Nystroem Approximation, Variance Threshold.                              |
+| **Feature Selection**            | Eliminación de variables guiada estadísticamente: Select K Best, Select Percentile, Select FDR, Select FPR, Select FWE, Generic Univariate Filter. |
+| **Polynomial & Kernel Methods**  | Expansión no lineal de características: Polynomial Features, RBF Sampler, Additive Chi² Sampler, Skewed Chi² Sampler.                             |
+| **Resampling & Class Balancing** | Corrección de desequilibrio de clases: SMOTE, SMOTE-ENN, Random Under-Sampler.                                                                    |
+| **Advanced Preprocessing**       | Transformación de texto a numérico: TF-IDF, Bag of Words, Tokenizer, Embedding.                                                                   |
 
 ---
 
@@ -313,8 +313,8 @@ notebook guardando en diferentes puntos de la línea de tiempo.
   después de aplicar una transformación.
 - Si un Converter produce resultados inesperados, haz clic en **Información/Editar** en su
   bloque de la línea de tiempo para revisar el alcance y los parámetros, o elimínalo y vuelve a configurarlo.
-- El **Selected Order** de columnas en el selector de alcance importa para algunas herramientas —
-  por ejemplo, herramientas que tratan la primera columna seleccionada como referencia.
+- El **Selected Order** de columnas en el selector de alcance importa para algunas herramientas,
+  por ejemplo herramientas que tratan la primera columna seleccionada como referencia.
 
 ## Solución de problemas
 

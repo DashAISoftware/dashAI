@@ -13,4 +13,5 @@ export interface IComponent {
   required_credentials?: string[];
   optional_credentials?: string[];
   credentials_satisfied?: boolean;
+  downloaded?: boolean;
 }

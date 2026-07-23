@@ -19,8 +19,8 @@ class Recall(ClassificationMetric):
 
     Recall (also called sensitivity or true positive rate) measures the
     ability of the classifier to find all positive samples. It is the metric
-    of choice when the cost of false negatives is high — e.g. in medical
-    screening, missing a disease is more costly than a false alarm.
+    of choice when the cost of false negatives is high. For example, in
+    medical screening, missing a disease is more costly than a false alarm.
 
     For binary tasks the standard binary recall is used. For multiclass tasks,
     macro averaging (unweighted mean over all classes) is applied.

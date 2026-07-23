@@ -9,9 +9,6 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
-from DashAI.back.models.scikit_learn.sklearn_like_model import (
-    CategoricalEncodingStrategy,
-)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -135,7 +132,7 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
     This model has no regularisation, so it can overfit when the number of features
     is large or predictors are highly collinear (consider ``RidgeRegression`` in those
     cases). Key hyperparameters are ``fit_intercept``, ``positive`` (constraint to
-    non-negative coefficients), ``copy_X``, and ``n_jobs``. The implementation wraps
+    nonnegative coefficients), ``copy_X``, and ``n_jobs``. The implementation wraps
     scikit-learn's ``LinearRegression``.
 
     References
@@ -160,8 +157,6 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
     )
     COLOR: str = "#3F51B5"
     ICON: str = "ShowChart"
-
-    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
         """Initialise the model by forwarding all kwargs to the parent class.

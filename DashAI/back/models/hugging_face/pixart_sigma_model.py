@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
@@ -18,69 +21,51 @@ from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_
 class PixArtSigmaSchema(BaseSchema):
     """Configuration schema for PixArt-Sigma text-to-image generation.
 
-    Configures the checkpoint variant (``model_name``), prompt conditioning
+    Configures the checkpoint (``checkpoint``), prompt conditioning
     (``negative_prompt``), denoising schedule (``num_inference_steps``),
-    classifier-free guidance strength (``guidance_scale``), output dimensions
+    classifier free guidance strength (``guidance_scale``), output dimensions
     (``width``, ``height``), reproducibility (``seed``), hardware target
     (``device``), and batch size (``num_images_per_prompt``) for
     ``PixArtSigmaModel``.
     """
 
-    model_name: schema_field(
-        enum_field(
-            enum=[
-                "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
-                "PixArt-alpha/PixArt-Sigma-XL-2-512-MS",
-            ]
-        ),
-        placeholder="PixArt-alpha/PixArt-Sigma-XL-2-1024-MS",
+    checkpoint: schema_field(
+        enum_field(enum=["1024", "512"]),
+        placeholder="1024",
         description=MultilingualString(
             en=(
-                "The PixArt-Sigma checkpoint to load. "
-                "'PixArt-Sigma-XL-2-1024-MS' is the high-resolution variant "
-                "trained at 1024px with multi-scale support, delivering the best "
-                "image quality. "
-                "'PixArt-Sigma-XL-2-512-MS' is the 512px variant, faster and lighter "
-                "while still producing sharp results."
+                "Which PixArt-Sigma checkpoint to use: '1024' for best quality "
+                "at 1024x1024 px, or '512' for a faster, lighter model at "
+                "512x512 px. Both checkpoints are downloaded together."
             ),
             es=(
-                "El checkpoint PixArt-Sigma a cargar. "
-                "'PixArt-Sigma-XL-2-1024-MS' es la variante de alta resolución "
-                "entrenada a 1024px con soporte multi-escala, entregando la mejor "
-                "calidad de imagen. "
-                "'PixArt-Sigma-XL-2-512-MS' es la variante de 512px, más rápida y "
-                "ligera manteniendo resultados nítidos."
+                "Qué checkpoint de PixArt-Sigma usar: '1024' para mejor calidad "
+                "a 1024x1024 px, o '512' para un modelo más rápido y ligero a "
+                "512x512 px. Ambos checkpoints se descargan juntos."
             ),
             pt=(
-                "O checkpoint PixArt-Sigma a carregar. "
-                "'PixArt-Sigma-XL-2-1024-MS' é a variante de alta resolução "
-                "treinada a 1024px com suporte multi-escala, entregando a melhor "
-                "qualidade de imagem. "
-                "'PixArt-Sigma-XL-2-512-MS' é a variante de 512px, mais rápida e "
-                "leve, mantendo resultados nítidos."
+                "Qual checkpoint do PixArt-Sigma usar: '1024' para melhor "
+                "qualidade a 1024x1024 px, ou '512' para um modelo mais rápido "
+                "e leve a 512x512 px. Ambos os checkpoints são baixados juntos."
             ),
             de=(
-                "Der zu ladende PixArt-Sigma-Checkpoint. "
-                "'PixArt-Sigma-XL-2-1024-MS' ist die hochauflösende Variante, "
-                "bei 1024px mit Multi-Skalen-Unterstützung trainiert und liefert "
-                "die beste Bildqualität. "
-                "'PixArt-Sigma-XL-2-512-MS' ist die 512px-Variante, schneller und "
-                "leichter bei dennoch scharfen Ergebnissen."
+                "Welcher PixArt-Sigma-Checkpoint verwendet wird: '1024' für "
+                "beste Qualität bei 1024x1024 px oder '512' für ein schnelleres, "
+                "leichteres Modell bei 512x512 px. Beide Checkpoints werden "
+                "zusammen heruntergeladen."
             ),
             zh=(
-                "要加载的 PixArt-Sigma 检查点。"
-                "'PixArt-Sigma-XL-2-1024-MS' 是以 1024px 训练的高分辨率变体，"
-                "支持多尺度，图像质量最佳。"
-                "'PixArt-Sigma-XL-2-512-MS' 是 512px 变体，速度更快、更轻量，"
-                "同样能产生清晰效果。"
+                "使用哪个 PixArt-Sigma 检查点：'1024' 表示 1024x1024 "
+                "像素的最佳质量，'512' 表示 512x512 像素更快更轻量的模型。"
+                "两个检查点会一起下载。"
             ),
         ),
         alias=MultilingualString(
-            en="Model name",
-            es="Nombre del modelo",
-            pt="Nome do modelo",
-            de="Modellname",
-            zh="模型名称",
+            en="Checkpoint",
+            es="Checkpoint",
+            pt="Checkpoint",
+            de="Checkpoint",
+            zh="检查点",
         ),
     )  # type: ignore
 
@@ -376,17 +361,17 @@ class PixArtSigmaSchema(BaseSchema):
     )  # type: ignore
 
 
-class PixArtSigmaModel(TextToImageGenerationTaskModel):
-    """Diffusion Transformer model for high-efficiency text-to-image generation.
+class PixArtSigma(HFPretrainedDownloadMixin, TextToImageGenerationTaskModel):
+    """Diffusion Transformer model for high efficiency text-to-image generation.
 
     Wraps the PixArt-Sigma pipeline, which replaces the U-Net backbone used
     in Stable Diffusion with a scalable Diffusion Transformer (DiT)
     architecture. Text conditioning is provided by a T5-XXL encoder,
     enabling richer semantic understanding than CLIP-based models.
 
-    PixArt-Sigma achieves state-of-the-art image quality with 14-25 denoising
+    PixArt-Sigma achieves state of the art image quality with 14-25 denoising
     steps (compared to 20-50 for comparable U-Net models) and supports
-    flexible multi-scale resolutions up to 2048 px. Two checkpoint sizes are
+    flexible multiscale resolutions up to 2048 px. Two checkpoint sizes are
     available: 512 px (lighter) and 1024 px (best quality).
 
     References
@@ -398,6 +383,12 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
     """
 
     SCHEMA = PixArtSigmaSchema
+    # The 1024 checkpoint is a full pipeline (T5, VAE, scheduler, tokenizer).
+    # The 512 checkpoint ships only a transformer, injected into this pipeline
+    # when the 512 variant is selected, so both repos are downloaded together.
+    MODEL_NAME: str = "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
+    TRANSFORMER_512_REPO: str = "PixArt-alpha/PixArt-Sigma-XL-2-512-MS"
+    DOWNLOAD_SIZE_BYTES: int = 24280249290
     COLOR: str = "#6a1b9a"
     DISPLAY_NAME: str = MultilingualString(
         en="PixArt-Sigma",
@@ -408,13 +399,13 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
     )
     DESCRIPTION: str = MultilingualString(
         en=(
-            "PixArt-Sigma is a high-efficiency Diffusion Transformer (DiT) model for "
+            "PixArt-Sigma is a high efficiency Diffusion Transformer (DiT) model for "
             "text-to-image generation, developed by the PixArt team. It uses a T5 "
             "text encoder for rich semantic understanding and achieves "
-            "state-of-the-art image quality with fewer inference steps than "
+            "state of the art image quality with fewer inference steps than "
             "U-Net models. Supports "
-            "flexible multi-scale resolutions up to 2048px. Available in 512px and "
-            "1024px variants. Significantly more parameter-efficient than comparable "
+            "flexible multiscale resolutions up to 2048px. Available in 512px and "
+            "1024px variants. Significantly more parameter efficient than comparable "
             "models. Models at "
             "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-1024-MS and "
             "https://huggingface.co/PixArt-alpha/PixArt-Sigma-XL-2-512-MS."
@@ -424,7 +415,7 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
             "para generación de imágenes a partir de texto, desarrollado por el equipo "
             "PixArt. Usa un codificador de texto T5 para rica comprensión semántica y "
             "logra calidad de imagen de última generación con menos pasos de "
-            "inferencia que los modelos U-Net. Soporta resoluciones multi-escala "
+            "inferencia que los modelos U-Net. Soporta resoluciones multiescala "
             "flexibles hasta "
             "2048px. Disponible en variantes de 512px y 1024px. "
             "Significativamente más eficiente en parámetros que modelos comparables. "
@@ -437,7 +428,7 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
             "para geração de imagens a partir de texto, desenvolvido pela equipe "
             "PixArt. Usa um codificador de texto T5 para rica compreensão semântica e "
             "atinge qualidade de imagem de última geração com menos etapas de "
-            "inferência do que modelos U-Net. Suporta resoluções multi-escala "
+            "inferência do que modelos U-Net. Suporta resoluções multiescala "
             "flexíveis até "
             "2048px. Disponível nas variantes de 512px e 1024px. "
             "Significativamente mais eficiente em parâmetros do que modelos "
@@ -502,22 +493,14 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
             num_images_per_prompt : int
                 Number of images to generate per prompt call.
         """
-        import torch
-        from diffusers import PixArtSigmaPipeline
-
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
         self.device = (
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
-        self.model_name = kwargs.get(
-            "model_name", "PixArt-alpha/PixArt-Sigma-XL-2-1024-MS"
-        )
 
-        self.model = PixArtSigmaPipeline.from_pretrained(
-            self.model_name,
-            torch_dtype=torch.float16 if use_gpu else torch.float32,
-        ).to(self.device)
+        self.checkpoint = kwargs.get("checkpoint")
+        self.model = self._build_pipeline(use_gpu).to(self.device)
 
         self.negative_prompt = kwargs.get("negative_prompt")
         self.num_inference_steps = kwargs.get("num_inference_steps")
@@ -526,6 +509,57 @@ class PixArtSigmaModel(TextToImageGenerationTaskModel):
         self.width = kwargs.get("width")
         self.height = kwargs.get("height")
         self.num_images_per_prompt = kwargs.get("num_images_per_prompt")
+
+    @classmethod
+    def hf_repos(cls):
+        """Download both the 1024 (full pipeline) and 512 (transformer) repos.
+
+        Returns
+        -------
+        list of tuple of (str, str)
+            The 1024 checkpoint (T5, VAE, scheduler, tokenizer, transformer)
+            and the 512 checkpoint (transformer only), so either variant can be
+            used after a single download.
+        """
+        return [(cls.MODEL_NAME, "model"), (cls.TRANSFORMER_512_REPO, "model")]
+
+    def _build_pipeline(self, use_gpu: bool):
+        """Load the PixArt-Sigma pipeline for the selected checkpoint.
+
+        The pipeline scaffold (T5, VAE, scheduler, tokenizer) always comes from
+        the 1024 repo. For the ``"1024"`` checkpoint its own transformer is
+        used; for ``"512"`` the transformer from the 512 repo is injected (the
+        512 repo has no ``model_index.json`` and cannot be loaded on its own).
+
+        Parameters
+        ----------
+        use_gpu : bool
+            Whether a GPU is available (selects float16 vs float32).
+
+        Returns
+        -------
+        diffusers.PixArtSigmaPipeline
+            The loaded pipeline (not yet moved to a device).
+        """
+        import torch
+        from diffusers import PixArtSigmaPipeline
+
+        dtype = torch.float16 if use_gpu else torch.float32
+        pipeline_dir = str(self._repo_dir(self.MODEL_NAME))
+        self.model_name = pipeline_dir
+
+        if self.checkpoint == "512":
+            from diffusers import Transformer2DModel
+
+            transformer_dir = str(self._repo_dir(self.TRANSFORMER_512_REPO))
+            transformer = Transformer2DModel.from_pretrained(
+                transformer_dir, subfolder="transformer", torch_dtype=dtype
+            )
+            return PixArtSigmaPipeline.from_pretrained(
+                pipeline_dir, transformer=transformer, torch_dtype=dtype
+            )
+
+        return PixArtSigmaPipeline.from_pretrained(pipeline_dir, torch_dtype=dtype)
 
     def generate(self, input: str) -> List[Any]:
         """Generate images from a text prompt.

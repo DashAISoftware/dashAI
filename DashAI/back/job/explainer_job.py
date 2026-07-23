@@ -127,13 +127,15 @@ class ExplainerJob(BaseJob):
 
         from kink import di
 
+        from DashAI.back.core.artifacts import normalize_artifacts
+
         explainer_id: int = self.kwargs["explainer_id"]
         session_factory = di["session_factory"]
         config = di["config"]
         with session_factory() as db:
             try:
                 explanation = explainer.explain(dataset)
-                plot = explainer.plot(explanation)
+                plot = normalize_artifacts(explainer.plot(explanation))
             except Exception as e:
                 log.exception(e)
                 raise JobError(
@@ -184,6 +186,7 @@ class ExplainerJob(BaseJob):
         from datasets import DatasetDict
         from kink import di
 
+        from DashAI.back.core.artifacts import normalize_artifacts
         from DashAI.back.dataloaders.classes.dashai_dataset import (
             load_dataset,
             prepare_for_model_session,
@@ -271,14 +274,14 @@ class ExplainerJob(BaseJob):
                 ) from e
             try:
                 explanation = explainer.explain_instance(X)
-                plots = explainer.plot(explanation)
+                plots = normalize_artifacts(explainer.plot(explanation))
             except Exception as e:
                 log.exception(e)
                 raise JobError(
                     "Failed to generate the explanation",
                 ) from e
             try:
-                explanation_filename = f"local_explanation_{explainer_id}.json"
+                explanation_filename = f"local_explanation_{explainer_id}.pickle"
                 explanation_path = os.path.join(
                     config["EXPLANATIONS_PATH"], explanation_filename
                 )

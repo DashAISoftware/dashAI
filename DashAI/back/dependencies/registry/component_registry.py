@@ -30,6 +30,7 @@ class ComponentRegistry:
         "description": "...",  # An object description.
         "display_name": "...",  # A readable label.
         "color": "...",  # A color associated to the component.
+        "downloaded": True,  # False until a download-required component is fetched.
     }
     ```
 
@@ -63,6 +64,9 @@ class ComponentRegistry:
         if initial_components is not None:
             for component in initial_components:
                 self.register_component(component)
+
+        # Ensure every component carries the downloaded flag.
+        self.seed_download_status()
 
     @property
     @beartype
@@ -235,6 +239,8 @@ class ComponentRegistry:
         else:
             self._registry[base_type][new_component.__name__] = new_register_component
 
+        self._set_download_status(new_register_component)
+
         if hasattr(new_component, "COMPATIBLE_COMPONENTS"):
             for compatible_component in new_component.COMPATIBLE_COMPONENTS:
                 self._relationship_manager.add_relationship(
@@ -252,6 +258,62 @@ class ComponentRegistry:
             self._relationship_manager.add_relationship(
                 new_component.__name__, credential_name, "optional_credentials"
             )
+
+    def seed_download_status(self) -> None:
+        """Populate the ``downloaded`` flag for every registered component.
+
+        Downloadable components are checked via their ``is_downloaded`` method;
+        all other components are always considered available.
+        """
+        for type_dict in self._registry.values():
+            for _name, component_dict in type_dict.items():
+                self._set_download_status(component_dict)
+
+    def refresh_download_status(self, name: str) -> bool:
+        """Recheck a single component's download status and update the registry.
+
+        Parameters
+        ----------
+        name : str
+            The component class name.
+
+        Returns
+        -------
+        bool
+            The reconciled ``downloaded`` value.
+        """
+        component_dict = self[name]
+        return self._set_download_status(component_dict)
+
+    def _set_download_status(self, component_dict: dict) -> bool:
+        """Set the ``downloaded`` key on a component dict and return the value.
+
+        Parameters
+        ----------
+        component_dict : dict
+            A registry component dict to update in place.
+
+        Returns
+        -------
+        bool
+            The resolved download status for the component.
+
+        Notes
+        -----
+        Exceptions from ``is_downloaded()`` are suppressed and treated as
+        not-downloaded, so a component may appear not-downloaded without raising.
+        """
+        component_class = component_dict["class"]
+        requires = bool(getattr(component_class, "REQUIRES_DOWNLOAD", False))
+        if requires:
+            try:
+                downloaded = bool(component_class.is_downloaded())
+            except Exception:
+                downloaded = False
+        else:
+            downloaded = True
+        component_dict["downloaded"] = downloaded
+        return downloaded
 
     @beartype
     def unregister_component(self, component: Type) -> None:

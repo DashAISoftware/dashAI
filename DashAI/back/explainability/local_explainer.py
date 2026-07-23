@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Final, List, Tuple
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.core.artifacts import Artifact
 from DashAI.back.models.base_model import BaseModel
 
 if TYPE_CHECKING:
@@ -19,7 +20,7 @@ class BaseLocalExplainer(ConfigObject, ABC):
 
     Concrete implementations must provide :meth:`fit` (prepare background data or
     internal state), :meth:`explain_instance` (compute per-instance attributions),
-    and :meth:`plot` (serialise explanations as Plotly figures).
+    and :meth:`plot` (turn explanations into renderable artifacts).
     """
 
     TYPE: Final[str] = "LocalExplainer"
@@ -87,12 +88,12 @@ class BaseLocalExplainer(ConfigObject, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def plot(self, explanation: dict) -> List[dict]:
-        """Generate serialised plots from a previously computed explanation.
+    def plot(self, explanation: dict) -> List[Artifact]:
+        """Generate renderable artifacts from a previously computed explanation.
 
         Concrete implementations must convert the explanation dictionary
-        returned by :meth:`explain_instance` into one or more serialised plot
-        objects that can be rendered on the frontend.
+        returned by :meth:`explain_instance` into one or more typed artifacts
+        that can be rendered on the frontend.
 
         Parameters
         ----------
@@ -101,10 +102,11 @@ class BaseLocalExplainer(ConfigObject, ABC):
 
         Returns
         -------
-        List[dict]
-            A list of serialised plot objects.  Each element is a JSON string
-            (produced by ``plotly.io.to_json``) representing a single Plotly
-            figure.
+        List[Artifact]
+            A list of artifacts (:class:`PlotlyArtifact`,
+            :class:`TableArtifact`, :class:`TextArtifact` or
+            :class:`ImageArtifact`) describing the explanation, typically
+            one per explained instance.
 
         Raises
         ------

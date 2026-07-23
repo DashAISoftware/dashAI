@@ -274,7 +274,7 @@ class DistilBertTransformerSchema(BaseSchema):
 
 
 class DistilBertTransformer(HuggingFaceTextClassificationTransformer):
-    """Pre-trained transformer DistilBERT allowing English text classification.
+    """Pretrained transformer DistilBERT allowing English text classification.
 
     DistilBERT is a small, fast, cheap and light Transformer model trained by
     distilling BERT base.
@@ -305,4 +305,5 @@ class DistilBertTransformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "Psychology"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "distilbert-base-uncased"
+    DOWNLOAD_SIZE_BYTES: int = 536641210
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_distilbert"

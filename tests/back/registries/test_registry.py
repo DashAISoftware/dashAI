@@ -83,6 +83,7 @@ COMPONENT1_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
+    "downloaded": True,
 }
 COMPONENT2_DICT = {
     "name": "Component2",
@@ -97,6 +98,7 @@ COMPONENT2_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
+    "downloaded": True,
 }
 SUBCOMPONENT1_DICT = {
     "name": "SubComponent1",
@@ -111,6 +113,7 @@ SUBCOMPONENT1_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
+    "downloaded": True,
 }
 COMPONENT3_DICT = {
     "name": "Component3",
@@ -125,6 +128,7 @@ COMPONENT3_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
+    "downloaded": True,
 }
 COMPONENT3_DICT_MS = COMPONENT3_DICT.copy()
 COMPONENT3_DICT_MS["description"] = MultilingualString(en="Some static component")
@@ -142,6 +146,7 @@ RELATED_COMPONENT1_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
+    "downloaded": True,
 }
 RELATED_COMPONENT2_DICT = {
     "name": "RelatedComponent2",
@@ -156,6 +161,7 @@ RELATED_COMPONENT2_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
+    "downloaded": True,
 }
 
 

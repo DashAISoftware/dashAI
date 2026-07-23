@@ -277,8 +277,13 @@ def main(
 
     logger.info("Starting Huey consumer.")
 
-    if getattr(sys, "frozen", False):
-        logger.info("Running inside PyInstaller bundle.")
+    # In a PyInstaller bundle or an AppImage, sys.executable is the bundled
+    # launcher (not a bare Python), so spawning the Huey consumer as
+    # "sys.executable -m huey..." re-enters the app instead of running Python.
+    # Run it in a thread in those cases.
+    in_appimage = bool(os.environ.get("APPIMAGE") or os.environ.get("APPDIR"))
+    if getattr(sys, "frozen", False) or in_appimage:
+        logger.info("Running inside a bundled launcher (PyInstaller/AppImage).")
         _start_huey_thread()
         logger.info("Started embedded Huey consumer (thread).")
     else:

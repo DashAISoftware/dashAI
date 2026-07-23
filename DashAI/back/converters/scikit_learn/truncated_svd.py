@@ -145,7 +145,7 @@ class TruncatedSVD(
     Key properties:
 
     - Works on both dense and sparse input matrices.
-    - No mean-centering: safe for high-dimensional sparse data.
+    - No mean centering: safe for high dimensional sparse data.
     - Supports a randomized solver (fast, approximate) and ARPACK (exact).
     - The ``n_oversamples`` and ``power_iteration_normalizer`` parameters
       control the accuracy-speed trade-off of the randomized solver.
@@ -211,6 +211,7 @@ class TruncatedSVD(
     metadata = {
         "allowed_types": [Float, Integer],
         "allowed_dtypes": [],
+        "input_cardinality": {"min": 2},
     }
 
     def __init__(self, **kwargs):

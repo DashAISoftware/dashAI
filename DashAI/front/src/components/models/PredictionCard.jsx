@@ -33,12 +33,23 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 
+import {
+  getTargetDecimals,
+  formatPredictionRows,
+} from "../../utils/predictionFormat";
+
 const RUNNING_STATUSES = [1, 2]; // Delivered or Started
 
 /**
  * PredictionCard - Displays a single prediction with results table
  */
-export default function PredictionCard({ prediction, onDelete, onUpdate }) {
+export default function PredictionCard({
+  prediction,
+  onDelete,
+  onUpdate,
+  targetColumn = null,
+  datasetSample = null,
+}) {
   const [expanded, setExpanded] = useState(() => {
     const saved = localStorage.getItem(`prediction-${prediction.id}-expanded`);
     return saved !== null ? JSON.parse(saved) : true;
@@ -151,9 +162,17 @@ export default function PredictionCard({ prediction, onDelete, onUpdate }) {
             sortModel,
           )
         : await getDatasetFile(prediction.results_path, page, pageSize);
-      return { rows: data.rows ?? [], total: data.total ?? 0 };
+      const targetDecimals = getTargetDecimals(datasetSample, targetColumn);
+      return {
+        rows: formatPredictionRows(
+          data.rows ?? [],
+          targetColumn,
+          targetDecimals,
+        ),
+        total: data.total ?? 0,
+      };
     },
-    [prediction.results_path],
+    [prediction.results_path, datasetSample, targetColumn],
   );
 
   return (

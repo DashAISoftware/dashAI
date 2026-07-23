@@ -91,12 +91,15 @@
     "requiresExactColumns_other": "Requires exactly {{required}} valid columns, but {{available}} available.",
     "requiresMinColumns_one": "Requires at least {{required}} valid column, but only {{available}} available.",
     "requiresMinColumns_other": "Requires at least {{required}} valid columns, but only {{available}} available.",
-    "zipContentsNotCompatible": "ZIP does not contain files compatible with the selected dataloader"
+    "zipContentsNotCompatible": "ZIP does not contain files compatible with the selected dataloader",
+    "cannotSaveEmptyDataset": "Cannot save dataset: all columns have been removed."
   },
   "label": {
+    "task": "Task",
     "all": "all",
     "allowedDataTypes": "Allowed data types: <1><0></0></1>",
     "allowedValueTypes": "Allowed value types: <1><0></0></1>",
+    "excludedDataTypes": "Excluded data types: {{dtypes}}",
     "allTypeChangesValid": "All type changes are valid and can be applied safely.",
     "analysisTools": "Analysis Tools",
     "appearance": "Appearance",
@@ -266,6 +269,7 @@
     "missingValuesOverview": "Missing Values Overview",
     "mostFrequent": "Most Frequent",
     "nameYourNotebook": "Name your Notebook",
+    "nComponentsColumnInfo": "You selected {{n}} column(s). n_components must be less than or equal to {{n}}. Reduce n_components or add more columns to avoid errors.",
     "newDatasetCreatedWithTransformations": "A new dataset will be created with these transformations. It can be used with other modules without affecting the original.",
     "noDataQualityIssuesDetected": "No data quality issues detected",
     "noDuplicateRows": "No duplicate rows detected in the dataset.",
@@ -454,5 +458,13 @@
       "endsWith": "Ends With"
     }
   },
-  "searchDataloaders": "Search data loaders..."
+  "searchDataloaders": "Search data loaders...",
+  "task": {
+    "tabularClassification": "Tabular Classification",
+    "imageClassification": "Image Classification",
+    "textClassification": "Text Classification",
+    "translation": "Translation",
+    "regression": "Regression",
+    "eda": "EDA"
+  }
 }

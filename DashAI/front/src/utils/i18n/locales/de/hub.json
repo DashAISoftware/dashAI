@@ -18,6 +18,7 @@
   "importing": "Wird importiert...",
   "importSuccess": "Datei erfolgreich importiert.",
   "importError": "Fehler beim Importieren der Datei.",
+  "datasetNameExists": "Ein Datensatz mit diesem Namen existiert bereits.",
   "previewError": "Fehler beim Laden der Dateivorschau.",
   "selectDatasetToPreview": "Wählen Sie eine Datei aus, um Details anzuzeigen.",
   "stepFormat": "Format",
@@ -60,5 +61,6 @@
   "datasetDetails": "Dateidetails",
   "checkQueue": "Details in der Aufgabenwarteschlange prüfen",
   "deleteSuccess": "Datei \"{{name}}\" gelöscht.",
-  "deleteError": "Fehler beim Löschen der Datei."
+  "deleteError": "Fehler beim Löschen der Datei.",
+  "tagFilterPlaceholder": "Nach Tag filtern, Enter drücken zum Hinzufügen..."
 }

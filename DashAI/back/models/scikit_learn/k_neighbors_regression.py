@@ -8,9 +8,6 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
-from DashAI.back.models.scikit_learn.sklearn_like_model import (
-    CategoricalEncodingStrategy,
-)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -161,8 +158,8 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
 
     KNeighborsRegressor predicts the target value by computing the (weighted)
     mean of the ``n_neighbors`` closest training points. It is a non-parametric
-    method: no training phase is needed, and predictions can capture non-linear
-    patterns. Performance degrades in high-dimensional spaces.
+    method: no training phase is needed, and predictions can capture nonlinear
+    patterns. Performance degrades in high dimensional spaces.
 
     Key hyperparameters include ``n_neighbors``, ``weights``, ``algorithm``, and
     ``metric``. The implementation wraps scikit-learn's ``KNeighborsRegressor``.
@@ -197,7 +194,6 @@ class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsReg
     )
     COLOR: str = "#FFA726"
     ICON: str = "ScatterPlot"
-    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
         """Initialise the model by forwarding all kwargs to the parent class.

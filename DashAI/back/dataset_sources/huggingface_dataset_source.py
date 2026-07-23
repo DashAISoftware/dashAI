@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class HuggingFaceDatasetSource(BaseDatasetSource):
     """Dataset source that fetches public datasets from HuggingFace Hub.
 
-    Uses ``huggingface_hub.HfApi`` — no authentication required for public
+    Uses ``huggingface_hub.HfApi``, with no authentication required for public
     datasets.  ``HfApi.list_datasets`` exposes an iterator rather than native
     cursors, so pagination is implemented by treating the cursor as a numeric
     offset and slicing the iterator.
@@ -101,7 +101,9 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
             Pagination cursor returned by the previous call (encoded numeric
             offset).  ``None`` fetches the first page.
         **filters : Any
-            Unused; reserved for future tag/task filters.
+            Supported keys:
+              tags (list[str]): Filter by HuggingFace tag strings.
+                Passed directly as the ``filter`` argument to ``list_datasets``.
 
         Returns
         -------
@@ -112,11 +114,13 @@ class HuggingFaceDatasetSource(BaseDatasetSource):
 
         try:
             offset = int(cursor) if cursor else 0
+            tags: list[str] = filters.get("tags") or []
 
             iterator = HfApi().list_datasets(
                 search=query or None,
                 full=True,
                 limit=offset + limit + 1,
+                filter=tags if tags else None,
             )
             window = list(islice(iterator, offset, offset + limit + 1))
             has_next = len(window) > limit

@@ -177,6 +177,7 @@
     "chartType": "图表类型"
   },
   "message": {
+    "skippedUndownloadedRuns": "已跳过模型未下载的运行。请先下载模型。",
     "allRunsCompleted": "{{experiment}} 已完成所有运行。",
     "confirmDeleteRun": "确定要删除此运行吗？此操作无法撤销。",
     "editingParametersWarning": "编辑参数将把此运行的状态重置为「未开始」。所有现有指标和结果将丢失。",

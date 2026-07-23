@@ -21,6 +21,7 @@ import {
   VpnKeyOutlined as KeyIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
+import ComponentDownloadControl from "../models/model/ComponentDownloadControl";
 
 const ALL_CATEGORY = "All";
 const SEARCH_THRESHOLD = 10;
@@ -51,8 +52,9 @@ function ComponentSelector({
   flat = false,
   tourDataFor = null,
   tourDataMatchFn = null,
+  onDownloadChange = null,
 }) {
-  const { t } = useTranslation(["custom", "credentials"]);
+  const { t } = useTranslation(["custom", "credentials", "common"]);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY);
 
@@ -128,6 +130,11 @@ function ComponentSelector({
     const optionalPlatforms = optionalCredentials
       .map(credentialLabel)
       .join(", ");
+    const requiresDownload = Boolean(component.metadata?.requires_download);
+    const needsDownload = requiresDownload && !component.downloaded;
+    // Component is usable only when its download is present AND its required
+    // credentials are satisfied; either gap disables selection.
+    const disabled = locked || needsDownload;
     const isCsvComponent =
       tourDataFor &&
       (tourDataMatchFn
@@ -138,84 +145,113 @@ function ComponentSelector({
         key={component.name}
         elevation={0}
         onClick={() => {
-          if (!locked) handleSelect(component);
+          if (!disabled) handleSelect(component);
         }}
-        aria-disabled={locked}
+        aria-disabled={disabled}
         data-tour={isCsvComponent ? tourDataFor : undefined}
         sx={{
           p: 3,
           display: "flex",
+          flexDirection: "column",
           gap: 3,
-          alignItems: "flex-start",
-          cursor: locked ? "not-allowed" : "pointer",
-          opacity: locked ? 0.55 : 1,
+          cursor: disabled ? "not-allowed" : "pointer",
           border: 1,
           borderColor: isSelected ? "primary.main" : "divider",
           bgcolor: isSelected ? "action.selected" : "background.paper",
           transition: "border-color 0.15s, background 0.15s",
-          "&:hover": locked ? undefined : { borderColor: "primary.light" },
+          "&:hover": disabled ? undefined : { borderColor: "secondary.main" },
         }}
       >
-        {icon && (
-          <Box
-            sx={{
-              p: 2,
-              borderRadius: 1,
-              bgcolor: isSelected ? "primary.main" : "action.hover",
-              color: isSelected ? "primary.contrastText" : "text.primary",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
+        {/* Dim only the card content while it is unusable, so the download
+            control below keeps its normal color (CSS opacity on the card would
+            otherwise cap the button's opacity too). */}
+        <Box
+          sx={{
+            display: "flex",
+            gap: 3,
+            alignItems: "flex-start",
+            opacity: disabled ? 0.6 : 1,
+          }}
+        >
+          {icon && (
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: 1,
+                bgcolor: isSelected ? "primary.main" : "action.hover",
+                color: isSelected ? "primary.contrastText" : "text.primary",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {icon}
+            </Box>
+          )}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
+              {getLabel(component)}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                mt: 1,
+              }}
+            >
+              {getDescription(component, t("noDescriptionAvailable"))}
+            </Typography>
+          </Box>
+          {isSelected && (
+            <CheckIcon
+              fontSize="small"
+              color="primary"
+              sx={{ flexShrink: 0, mt: 1 }}
+            />
+          )}
+        </Box>
+        {(locked || optionalCredentials.length > 0) && (
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{ flexShrink: 0 }}
           >
-            {icon}
+            {locked && (
+              <Tooltip
+                title={t("credentials:requiredTooltip", {
+                  platform: requiredPlatforms,
+                })}
+              >
+                <LockIcon fontSize="small" color="warning" />
+              </Tooltip>
+            )}
+            {!locked && optionalCredentials.length > 0 && (
+              <Tooltip
+                title={t("credentials:optionalTooltip", {
+                  platform: optionalPlatforms,
+                })}
+              >
+                <KeyIcon fontSize="small" color="action" />
+              </Tooltip>
+            )}
+          </Stack>
+        )}
+        {requiresDownload && (
+          <Box onClick={(e) => e.stopPropagation()}>
+            <ComponentDownloadControl
+              component={component}
+              onStatusChange={(isDownloaded) =>
+                onDownloadChange?.(component, isDownloaded)
+              }
+            />
           </Box>
         )}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
-            {getLabel(component)}
-          </Typography>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              mt: 1,
-            }}
-          >
-            {getDescription(component, t("noDescriptionAvailable"))}
-          </Typography>
-        </Box>
-        <Stack
-          direction="row"
-          spacing={1}
-          alignItems="center"
-          sx={{ flexShrink: 0, mt: 1 }}
-        >
-          {locked && (
-            <Tooltip
-              title={t("credentials:requiredTooltip", {
-                platform: requiredPlatforms,
-              })}
-            >
-              <LockIcon fontSize="small" color="warning" />
-            </Tooltip>
-          )}
-          {!locked && optionalCredentials.length > 0 && (
-            <Tooltip
-              title={t("credentials:optionalTooltip", {
-                platform: optionalPlatforms,
-              })}
-            >
-              <KeyIcon fontSize="small" color="action" />
-            </Tooltip>
-          )}
-          {isSelected && <CheckIcon fontSize="small" color="primary" />}
-        </Stack>
       </Paper>
     );
   };
@@ -402,7 +438,9 @@ ComponentSelector.propTypes = {
   emptyText: PropTypes.string,
   getIcon: PropTypes.func,
   flat: PropTypes.bool,
+  tourDataFor: PropTypes.string,
   tourDataMatchFn: PropTypes.func,
+  onDownloadChange: PropTypes.func,
 };
 
 export default ComponentSelector;

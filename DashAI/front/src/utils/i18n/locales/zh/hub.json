@@ -18,6 +18,7 @@
   "importing": "导入中...",
   "importSuccess": "数据文件导入成功。",
   "importError": "导入数据文件失败。",
+  "datasetNameExists": "已存在同名数据集。",
   "previewError": "加载数据文件预览失败。",
   "selectDatasetToPreview": "选择一个数据文件查看详情。",
   "stepFormat": "格式",
@@ -60,5 +61,6 @@
   "datasetDetails": "数据文件详情",
   "checkQueue": "在任务队列中查看详情",
   "deleteSuccess": "数据文件 \"{{name}}\" 已删除。",
-  "deleteError": "删除数据文件失败。"
+  "deleteError": "删除数据文件失败。",
+  "tagFilterPlaceholder": "按标签过滤，按 Enter 添加..."
 }

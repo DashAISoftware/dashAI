@@ -8,6 +8,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFDownloadableMixin,
+)
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -177,12 +180,13 @@ class SD15DepthControlNetSchema(BaseSchema):
     )  # type: ignore
 
 
-def get_depth_map_sd15(image, device):
+def get_depth_map_sd15(image, device, model_source="Intel/dpt-hybrid-midas"):
     """Convert an input image to a normalised depth map for SD 1.5 ControlNet.
 
     Uses Intel's DPT-Hybrid-MiDaS model to estimate per-pixel depth, then
-    bilinearly interpolates the result to 512x512 and normalises values to the
-    [0, 1] range before returning a three-channel PIL image.
+    interpolates the result back to the source image resolution (rounded down
+    to a multiple of 8) and normalises values to the [0, 1] range before
+    returning a three-channel PIL image.
 
     Parameters
     ----------
@@ -195,18 +199,17 @@ def get_depth_map_sd15(image, device):
     Returns
     -------
     PIL.Image.Image
-        A 512x512 RGB image where each channel encodes the normalised depth
-        value, ready to be used as a ControlNet conditioning signal.
+        An RGB image at the source resolution (each side rounded down to a
+        multiple of 8) where each channel encodes the normalised depth value,
+        ready to be used as a ControlNet conditioning signal.
     """
     import numpy as np
     import torch
     from PIL import Image
     from transformers import DPTForDepthEstimation, DPTImageProcessor
 
-    depth_estimator = DPTForDepthEstimation.from_pretrained(
-        "Intel/dpt-hybrid-midas"
-    ).to(device)
-    feature_extractor = DPTImageProcessor.from_pretrained("Intel/dpt-hybrid-midas")
+    depth_estimator = DPTForDepthEstimation.from_pretrained(model_source).to(device)
+    feature_extractor = DPTImageProcessor.from_pretrained(model_source)
 
     pixel_values = feature_extractor(images=image, return_tensors="pt").pixel_values.to(
         device
@@ -215,9 +218,16 @@ def get_depth_map_sd15(image, device):
     with torch.no_grad(), torch.autocast(device, dtype=torch.float16):
         depth_map = depth_estimator(pixel_values).predicted_depth
 
+    # Preserve the source resolution. SD 1.5's UNet downsamples by 8 in latent
+    # space, so both dimensions must be divisible by 8; round down to the
+    # nearest multiple to avoid a pipeline shape error.
+    width, height = image.size
+    width = max(8, (width // 8) * 8)
+    height = max(8, (height // 8) * 8)
+
     depth_map = torch.nn.functional.interpolate(
         depth_map.unsqueeze(1),
-        size=(512, 512),
+        size=(height, width),
         mode="bicubic",
         align_corners=False,
     )
@@ -230,7 +240,7 @@ def get_depth_map_sd15(image, device):
     return image
 
 
-class SD15DepthControlNetModel(BaseControlNetModel):
+class SD15DepthControlNetModel(HFDownloadableMixin, BaseControlNetModel):
     """Depth-conditioned ControlNet pipeline built on Stable Diffusion 1.5.
 
     Takes an input image and a text prompt. A depth map is estimated from the
@@ -248,6 +258,12 @@ class SD15DepthControlNetModel(BaseControlNetModel):
     """
 
     SCHEMA = SD15DepthControlNetSchema
+    HF_REPOS = [
+        ("runwayml/stable-diffusion-v1-5", "model"),
+        ("lllyasviel/sd-controlnet-depth", "model"),
+        ("Intel/dpt-hybrid-midas", "model"),
+    ]
+    DOWNLOAD_SIZE_BYTES = 50640633273
     COLOR: str = "#4e342e"
     DISPLAY_NAME: str = MultilingualString(
         en="SD 1.5 Depth ControlNet",
@@ -340,12 +356,12 @@ class SD15DepthControlNetModel(BaseControlNetModel):
         )
 
         controlnet = ControlNetModel.from_pretrained(
-            "lllyasviel/sd-controlnet-depth",
+            self._local_or_repo("lllyasviel/sd-controlnet-depth"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.pipe = StableDiffusionControlNetPipeline.from_pretrained(
-            "runwayml/stable-diffusion-v1-5",
+            self._local_or_repo("runwayml/stable-diffusion-v1-5"),
             controlnet=controlnet,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
@@ -373,7 +389,9 @@ class SD15DepthControlNetModel(BaseControlNetModel):
         image = input[0]
         prompt = input[1]
 
-        depth_map = get_depth_map_sd15(image, self.device)
+        depth_map = get_depth_map_sd15(
+            image, self.device, self._local_or_repo("Intel/dpt-hybrid-midas")
+        )
         output = self.pipe(
             prompt=prompt,
             image=depth_map,

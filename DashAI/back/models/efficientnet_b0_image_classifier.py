@@ -1,18 +1,21 @@
 """EfficientNet-B0 image classifier for DashAI."""
 
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import TorchvisionDownloadMixin
 from DashAI.back.models.base_torchvision_image_classifier import (
     TorchvisionImageClassifier,
     TorchvisionImageClassifierSchema,
 )
 
 
-class EfficientNetB0ImageClassifier(TorchvisionImageClassifier):
+class EfficientNetB0ImageClassifier(
+    TorchvisionDownloadMixin, TorchvisionImageClassifier
+):
     """EfficientNet-B0 image classifier (Tan & Le, 2019).
 
     Compact baseline of the EfficientNet family, which scales network width,
     depth, and resolution jointly. The classifier head is replaced to match
-    the number of target classes. Supports ImageNet pre-trained weights.
+    the number of target classes. Supports ImageNet pretrained weights.
     """
 
     SCHEMA = TorchvisionImageClassifierSchema
@@ -53,13 +56,21 @@ class EfficientNetB0ImageClassifier(TorchvisionImageClassifier):
     )
     COLOR: str = "#00838F"
     ICON: str = "Speed"
+    DOWNLOAD_SIZE_BYTES: int = 21_000_000
+
+    @classmethod
+    def _weights(cls):
+        from torchvision.models import EfficientNet_B0_Weights
+
+        return EfficientNet_B0_Weights.DEFAULT
 
     def _build_backbone(self, num_classes: int, pretrained: bool):
         import torch.nn as nn
         from torchvision.models import EfficientNet_B0_Weights, efficientnet_b0
 
         weights = EfficientNet_B0_Weights.DEFAULT if pretrained else None
-        model = efficientnet_b0(weights=weights)
+        with self.local_hub():
+            model = efficientnet_b0(weights=weights)
         in_features = model.classifier[1].in_features
         model.classifier = nn.Sequential(
             nn.Dropout(self.dropout_rate),

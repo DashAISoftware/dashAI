@@ -29,6 +29,7 @@ export default function CreateSessionCenter() {
     step,
     models,
     loadingModels,
+    markModelDownloaded,
     selectedModel,
     handleSelectModel,
     formik,
@@ -67,9 +68,20 @@ export default function CreateSessionCenter() {
     }
   }, [step]);
 
-  const canGoNext = !!selectedModel;
+  // Read the download status from the (in place updated) models list so the
+  // gate reacts to an inline download without needing selectedModel to change.
+  const selectedModelState =
+    models.find((m) => m.name === selectedModel?.name) || selectedModel;
+  const selectedNeedsDownload =
+    Boolean(selectedModelState?.metadata?.requires_download) &&
+    !selectedModelState?.downloaded;
+
+  const canGoNext = !!selectedModel && !selectedNeedsDownload;
   const canCreate =
-    !!selectedModel && !!formik.values.name?.trim() && !submitting;
+    !!selectedModel &&
+    !selectedNeedsDownload &&
+    !!formik.values.name?.trim() &&
+    !submitting;
 
   return (
     <Box
@@ -126,6 +138,9 @@ export default function CreateSessionCenter() {
               components={models}
               selected={selectedModel}
               onSelect={handleSelectModelWithTour}
+              onDownloadChange={(model, isDownloaded) =>
+                markModelDownloaded(model.name, isDownloaded)
+              }
               categoryKey="task_display_name"
               searchPlaceholder={t("generative:label.searchModels")}
               tourDataFor={tourContext?.run ? "model-card-qwen" : null}

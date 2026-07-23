@@ -132,7 +132,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
     ``CountVectorizer`` with a configurable n-gram range, then passes the
     resulting sparse feature matrix to any DashAI ``TabularClassificationModel``
     for training and prediction. This decouples text featurisation from the
-    choice of classifier, allowing any registered DashAI tabular model (tree-based,
+    choice of classifier, allowing any registered DashAI tabular model (tree based,
     SVM, linear, etc.) to be applied to text classification without modification.
 
     During training the vectorizer is fitted on the input text column and the
@@ -176,7 +176,7 @@ class BagOfWordsTextClassificationModel(TextClassificationModel):
         """Initialise the Bag-of-Words text classification meta-model.
 
         Creates a ``CountVectorizer`` with the configured n-gram range and
-        stores the pre-instantiated tabular classifier that will be trained on
+        stores the preinstantiated tabular classifier that will be trained on
         the resulting token-count matrix.
 
         Parameters

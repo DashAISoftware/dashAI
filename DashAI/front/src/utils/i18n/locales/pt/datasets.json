@@ -96,12 +96,15 @@
     "requiresMinColumns_one": "Requer pelo menos {{required}} coluna válida, mas apenas {{available}} disponível.",
     "requiresMinColumns_many": "Requer pelo menos {{required}} colunas válidas, mas apenas {{available}} disponíveis.",
     "requiresMinColumns_other": "Requer pelo menos {{required}} colunas válidas, mas apenas {{available}} disponíveis.",
-    "zipContentsNotCompatible": "O arquivo ZIP não contém arquivos compatíveis com o dataloader selecionado"
+    "zipContentsNotCompatible": "O arquivo ZIP não contém arquivos compatíveis com o dataloader selecionado",
+    "cannotSaveEmptyDataset": "Não é possível salvar o dataset: todas as colunas foram removidas."
   },
   "label": {
+    "task": "Tarefa",
     "all": "todos",
     "allowedDataTypes": "Tipos de dados permitidos: <1><0></0></1>",
     "allowedValueTypes": "Tipos de valores permitidos: <1><0></0></1>",
+    "excludedDataTypes": "Tipos de dados excluídos: {{dtypes}}",
     "allTypeChangesValid": "Todas as alterações de tipo são válidas e podem ser aplicadas com segurança.",
     "analysisTools": "Ferramentas de Análise",
     "appearance": "Aparência",
@@ -272,6 +275,7 @@
     "missingValuesOverview": "Resumo de Valores Ausentes",
     "mostFrequent": "Mais Frequente",
     "nameYourNotebook": "Nomeie seu Caderno",
+    "nComponentsColumnInfo": "Você selecionou {{n}} coluna(s). n_components deve ser menor ou igual a {{n}}. Reduza n_components ou adicione mais colunas para evitar erros.",
     "newDatasetCreatedWithTransformations": "Um novo conjunto de dados será criado com estas transformações. Pode ser usado com outros módulos sem afetar o original.",
     "noDataQualityIssuesDetected": "Nenhum problema de qualidade de dados detectado",
     "noDuplicateRows": "Nenhuma linha duplicada detectada no conjunto de dados.",
@@ -469,5 +473,13 @@
       "endsWith": "Termina com"
     }
   },
-  "searchDataloaders": "Pesquisar carregadores de dados..."
+  "searchDataloaders": "Pesquisar carregadores de dados...",
+  "task": {
+    "tabularClassification": "Classificação Tabular",
+    "imageClassification": "Classificação de Imagens",
+    "textClassification": "Classificação de Texto",
+    "translation": "Tradução",
+    "regression": "Regressão",
+    "eda": "EDA"
+  }
 }
