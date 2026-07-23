@@ -8,12 +8,17 @@ import React, {
 import PropTypes from "prop-types";
 import {
   Box,
+  Button,
   Typography,
   CircularProgress,
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { Delete as DeleteIcon } from "@mui/icons-material";
+import { LoadingButton } from "@mui/lab";
+import {
+  Delete as DeleteIcon,
+  DisabledByDefaultOutlined as SelectRowsIcon,
+} from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
@@ -111,7 +116,6 @@ export default function ManualPredictionsTable({
   run,
   session,
   predictions,
-  displayNumbers,
   targetColumn,
   datasetSample,
   onSaved,
@@ -124,7 +128,17 @@ export default function ManualPredictionsTable({
   const [allRows, setAllRows] = useState([]);
   const [columnTypes, setColumnTypes] = useState({});
   const [loading, setLoading] = useState(true);
-  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Row-selection mode: lets the user pick several finished predictions and
+  // delete them all at once, instead of a delete icon sitting on every row.
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedRowIndices, setSelectedRowIndices] = useState(() => new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  // Selection indices are positions in the filtered+sorted row list that
+  // `fetchPage` computes internally - this ref keeps the latest version of
+  // that list around so indices can be mapped back to real rows on delete.
+  const lastFilteredSortedRef = useRef([]);
 
   // Session metadata needed to render editable "add row" inputs.
   const [modelSession, setModelSession] = useState(null);
@@ -140,8 +154,6 @@ export default function ManualPredictionsTable({
   const [manualEntries, setManualEntries] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
   const nextEntryKeyRef = useRef(0);
-
-  const predictionLabel = t("prediction:label.prediction");
 
   const finishedPredictions = useMemo(
     () => predictions.filter((p) => p.status === 3),
@@ -172,7 +184,6 @@ export default function ManualPredictionsTable({
               targetDecimals,
             );
             return formatted.map((row) => ({
-              [`${predictionLabel} #`]: displayNumbers.get(prediction.id),
               ...row,
               __predictionId: prediction.id,
             }));
@@ -187,13 +198,7 @@ export default function ManualPredictionsTable({
     getDatasetTypesByFilePath(finishedPredictions[0].results_path)
       .then((types) => setColumnTypes(types))
       .catch(() => {});
-  }, [
-    finishedPredictions,
-    targetColumn,
-    datasetSample,
-    displayNumbers,
-    predictionLabel,
-  ]);
+  }, [finishedPredictions, targetColumn, datasetSample]);
 
   useEffect(() => {
     refetchRows();
@@ -424,13 +429,10 @@ export default function ManualPredictionsTable({
     });
   }, [loadingSession, draftEntries.length, isRunning, onStateChange]);
 
-  const extendedColumnTypes = useMemo(() => {
-    const base = Object.keys(columnTypes).length > 0 ? columnTypes : inputTypes;
-    return {
-      [`${predictionLabel} #`]: "Integer",
-      ...base,
-    };
-  }, [columnTypes, inputTypes, predictionLabel]);
+  const extendedColumnTypes = useMemo(
+    () => (Object.keys(columnTypes).length > 0 ? columnTypes : inputTypes),
+    [columnTypes, inputTypes],
+  );
 
   const editableRows = useMemo(() => {
     // A pending entry keeps rendering here (instead of being removed) until
@@ -502,6 +504,7 @@ export default function ManualPredictionsTable({
     async (page, pageSize, filterModel, sortModel) => {
       let rows = applyFilter(allRows, filterModel);
       rows = applySort(rows, sortModel);
+      lastFilteredSortedRef.current = rows;
       const total = rows.length;
       const start = page * pageSize;
       return { rows: rows.slice(start, start + pageSize), total };
@@ -509,36 +512,76 @@ export default function ManualPredictionsTable({
     [allRows],
   );
 
-  const handleDeleteConfirm = async () => {
-    if (!deleteTarget) return;
+  const handleExitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedRowIndices(new Set());
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    const targetIds = [
+      ...new Set(
+        [...selectedRowIndices]
+          .map((index) => lastFilteredSortedRef.current[index]?.__predictionId)
+          .filter((id) => id != null),
+      ),
+    ];
+    if (targetIds.length === 0) {
+      setBulkDeleteOpen(false);
+      return;
+    }
+    setBulkDeleting(true);
     try {
-      await deletePrediction(deleteTarget);
-      enqueueSnackbar(t("prediction:message.deletedSuccessfully"), {
-        variant: "success",
-      });
-      setDeleteTarget(null);
+      await Promise.all(targetIds.map((id) => deletePrediction(id)));
+      enqueueSnackbar(
+        t("prediction:message.predictionsDeleted", {
+          count: targetIds.length,
+        }),
+        { variant: "success" },
+      );
+      setBulkDeleteOpen(false);
+      handleExitSelectionMode();
       if (onDelete) onDelete();
     } catch (error) {
-      console.error("Error deleting prediction:", error);
-      enqueueSnackbar(t("prediction:error.errorDeleting"), {
+      console.error("Error deleting selected predictions:", error);
+      enqueueSnackbar(t("prediction:error.errorDeletingSelected"), {
         variant: "error",
       });
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
-  const rowActions = useCallback(
-    (row) => (
-      <Tooltip title={t("common:delete")}>
-        <IconButton
-          size="small"
-          color="error"
-          onClick={() => setDeleteTarget(row.__predictionId)}
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    ),
-    [t],
+  // Finished predictions no longer carry an inline delete icon on every row -
+  // deleting them goes through the select-then-delete flow above instead. The
+  // actions column still shows up while there's a draft row to cancel.
+  const rowActions = editableRows.length > 0 ? () => null : null;
+
+  const selectionToolbarActions = selectionMode ? (
+    <>
+      <LoadingButton
+        size="small"
+        variant="contained"
+        color="error"
+        startIcon={<DeleteIcon fontSize="small" />}
+        disabled={selectedRowIndices.size === 0}
+        loading={bulkDeleting}
+        onClick={() => setBulkDeleteOpen(true)}
+        sx={{ textTransform: "none", fontWeight: 500 }}
+      >
+        {t("prediction:button.deleteSelected", {
+          count: selectedRowIndices.size,
+        })}
+      </LoadingButton>
+      <Button size="small" onClick={handleExitSelectionMode}>
+        {t("common:cancel")}
+      </Button>
+    </>
+  ) : (
+    <Tooltip title={t("prediction:label.selectRowsToDelete")}>
+      <IconButton size="small" onClick={() => setSelectionMode(true)}>
+        <SelectRowsIcon fontSize="small" />
+      </IconButton>
+    </Tooltip>
   );
 
   return (
@@ -553,13 +596,19 @@ export default function ManualPredictionsTable({
         targetColumn={targetColumn}
         editableRows={editableRows}
         infiniteScroll
+        extraActions={selectionToolbarActions}
+        enableRowSelection={selectionMode}
+        selectedRowIndices={selectedRowIndices}
+        onRowSelectionChange={setSelectedRowIndices}
       />
 
       <DeleteConfirmationModal
-        open={Boolean(deleteTarget)}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDeleteConfirm}
-        content={t("prediction:label.confirmDeletion")}
+        open={bulkDeleteOpen}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        content={t("prediction:label.confirmBulkDeletion", {
+          count: selectedRowIndices.size,
+        })}
       />
     </Box>
   );
@@ -581,7 +630,6 @@ ManualPredictionsTable.propTypes = {
       results_path: PropTypes.string,
     }),
   ).isRequired,
-  displayNumbers: PropTypes.instanceOf(Map).isRequired,
   targetColumn: PropTypes.string,
   datasetSample: PropTypes.object,
   onSaved: PropTypes.func,
