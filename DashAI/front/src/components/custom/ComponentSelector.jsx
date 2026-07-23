@@ -21,6 +21,7 @@ import {
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import ComponentDownloadControl from "../models/model/ComponentDownloadControl";
+import CredentialsDialog from "../credentials/CredentialsDialog";
 import {
   useCredentialStatuses,
   getComponentCredentialState,
@@ -57,6 +58,7 @@ function ComponentSelector({
     useCredentialStatuses();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY);
+  const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
 
   const categories = useMemo(() => {
     const set = new Set();
@@ -131,9 +133,10 @@ function ComponentSelector({
     );
     const requiresDownload = Boolean(component.metadata?.requires_download);
     const needsDownload = requiresDownload && !component.downloaded;
-    // Component is usable only when its download is present AND its required
-    // credentials are satisfied; either gap disables selection.
-    const disabled = locked || needsDownload;
+    // The card is always selectable so its details show in the side bar; the
+    // unmet download/credential requirements only dim the content as a hint.
+    // Actual usability is enforced by the downstream action buttons.
+    const notReady = locked || needsDownload;
     const isCsvComponent =
       tourDataFor &&
       (tourDataMatchFn
@@ -143,25 +146,22 @@ function ComponentSelector({
       <Paper
         key={component.name}
         elevation={0}
-        onClick={() => {
-          if (!disabled) handleSelect(component);
-        }}
-        aria-disabled={disabled}
+        onClick={() => handleSelect(component)}
         data-tour={isCsvComponent ? tourDataFor : undefined}
         sx={{
           p: 3,
           display: "flex",
           flexDirection: "column",
           gap: 3,
-          cursor: disabled ? "not-allowed" : "pointer",
+          cursor: "pointer",
           border: 1,
           borderColor: isSelected ? "primary.main" : "divider",
           bgcolor: isSelected ? "action.selected" : "background.paper",
           transition: "border-color 0.15s, background 0.15s",
-          "&:hover": disabled ? undefined : { borderColor: "secondary.main" },
+          "&:hover": { borderColor: "secondary.main" },
         }}
       >
-        {/* Dim only the card content while it is unusable, so the download
+        {/* Dim only the card content while it is not ready, so the download
             control below keeps its normal color (CSS opacity on the card would
             otherwise cap the button's opacity too). */}
         <Box
@@ -169,7 +169,7 @@ function ComponentSelector({
             display: "flex",
             gap: 3,
             alignItems: "flex-start",
-            opacity: disabled ? 0.6 : 1,
+            opacity: notReady ? 0.6 : 1,
           }}
         >
           {icon && (
@@ -219,7 +219,17 @@ function ComponentSelector({
                   platform: requiredPlatforms,
                 })}
               >
-                <KeyIcon fontSize="small" color="warning" />
+                <IconButton
+                  size="small"
+                  color="warning"
+                  aria-label={t("credentials:manage")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCredentialsDialogOpen(true);
+                  }}
+                >
+                  <KeyIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             )}
             {!locked && optionalCredentials.length > 0 && (
@@ -228,7 +238,17 @@ function ComponentSelector({
                   platform: optionalPlatforms,
                 })}
               >
-                <KeyIcon fontSize="small" color="action" />
+                <IconButton
+                  size="small"
+                  color="default"
+                  aria-label={t("credentials:manage")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCredentialsDialogOpen(true);
+                  }}
+                >
+                  <KeyIcon fontSize="small" />
+                </IconButton>
               </Tooltip>
             )}
             {isSelected && <CheckIcon fontSize="small" color="primary" />}
@@ -410,6 +430,11 @@ function ComponentSelector({
           />
         )}
       </Box>
+
+      <CredentialsDialog
+        open={credentialsDialogOpen}
+        onClose={() => setCredentialsDialogOpen(false)}
+      />
     </Stack>
   );
 }
