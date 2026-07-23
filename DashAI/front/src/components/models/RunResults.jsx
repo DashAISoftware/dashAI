@@ -69,17 +69,9 @@ export default function RunResults({
     ? setControlledVisible
     : setInternalVisible;
 
-  const [activeTab, setActiveTab] = useState(() => {
-    const saved = localStorage.getItem(`run-${run.id}-active-tab`);
-    if (saved !== null) {
-      const savedTab = JSON.parse(saved);
-      // Tabs 1+ (Explainability, Predictions, Hyperparameters) require a
-      // finished run.
-      if (savedTab > 0 && run.status !== 3) return 0;
-      return savedTab;
-    }
-    return 0;
-  });
+  // Always land on Live Metrics (tab 0) when a run's results are shown -
+  // no per-run "last tab" persistence, so opening a model card is predictable.
+  const [activeTab, setActiveTab] = useState(0);
 
   // Detail view scroll container, kept in state so the explainer list receives
   // it as its virtualization scroll parent.
@@ -117,10 +109,6 @@ export default function RunResults({
       JSON.stringify(resultsVisible),
     );
   }, [resultsVisible, run.id, isControlled]);
-
-  useEffect(() => {
-    localStorage.setItem(`run-${run.id}-active-tab`, JSON.stringify(activeTab));
-  }, [activeTab, run.id]);
 
   // Expose the active tab while this run is shown full screen, so the right
   // sidebar can swap its content (e.g. list explainers on the explainers tab).
