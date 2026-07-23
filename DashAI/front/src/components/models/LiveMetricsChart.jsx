@@ -44,6 +44,35 @@ function toFinalValue(value) {
   return Number.isNaN(num) ? null : num;
 }
 
+// Non-iterative models (e.g. plain scikit-learn ones) never call
+// calculate_metrics during training, so the only row the backend ever writes
+// for TRAIN/VALIDATION is a single final "LAST" value - the same story TEST
+// always has, since it's only ever computed once at the end regardless of
+// model. The live-metrics websocket only understands TRIAL/STEP/EPOCH levels,
+// so without this fallback that single final value has nowhere to render and
+// the tab just shows "no metrics available" even though the value exists.
+// Used only for splits with zero real TRIAL/STEP/EPOCH data (see
+// `hasAnyRealMetrics` below), so it never overwrites/mixes with a real curve.
+function toFallbackBuckets(rawMetrics) {
+  if (!rawMetrics) return null;
+  const formatted = {};
+  for (const metricName in rawMetrics) {
+    const value = rawMetrics[metricName];
+    formatted[metricName] = Array.isArray(value)
+      ? value
+      : [{ step: 1, value, timestamp: new Date().toISOString() }];
+  }
+  if (Object.keys(formatted).length === 0) return null;
+  return { TRIAL: formatted, STEP: formatted, EPOCH: formatted };
+}
+
+function hasAnyRealMetrics(splitData) {
+  if (!splitData) return false;
+  return ["TRIAL", "STEP", "EPOCH"].some(
+    (lvl) => splitData[lvl] && Object.keys(splitData[lvl]).length > 0,
+  );
+}
+
 export function LiveMetricsChart({
   run,
   session,
@@ -69,33 +98,6 @@ export function LiveMetricsChart({
     TEST: null,
   });
   const socketRef = useRef(null);
-
-  useEffect(() => {
-    if (run.status === 3 && run.test_metrics) {
-      setData((prev) => {
-        const next = structuredClone(prev);
-
-        const formattedTestMetrics = {};
-        for (const metricName in run.test_metrics) {
-          const value = run.test_metrics[metricName];
-          if (Array.isArray(value)) {
-            formattedTestMetrics[metricName] = value;
-          } else {
-            formattedTestMetrics[metricName] = [
-              { step: 1, value: value, timestamp: new Date().toISOString() },
-            ];
-          }
-        }
-
-        next.TEST = {
-          TRIAL: formattedTestMetrics,
-          STEP: formattedTestMetrics,
-          EPOCH: formattedTestMetrics,
-        };
-        return next;
-      });
-    }
-  }, [run.status, run.test_metrics]);
 
   useEffect(() => {
     if (socketRef.current) {
@@ -161,38 +163,6 @@ export function LiveMetricsChart({
       });
     };
 
-    ws.onclose = () => {
-      if (run.test_metrics) {
-        setData((prev) => {
-          // Skip if TEST data already exists to avoid duplicate re-render
-          if (prev.TEST && Object.keys(prev.TEST).length > 0) {
-            return prev;
-          }
-
-          const next = structuredClone(prev);
-
-          const formattedTestMetrics = {};
-          for (const metricName in run.test_metrics) {
-            const value = run.test_metrics[metricName];
-            if (Array.isArray(value)) {
-              formattedTestMetrics[metricName] = value;
-            } else {
-              formattedTestMetrics[metricName] = [
-                { step: 1, value: value, timestamp: new Date().toISOString() },
-              ];
-            }
-          }
-
-          next.TEST = {
-            TRIAL: formattedTestMetrics,
-            STEP: formattedTestMetrics,
-            EPOCH: formattedTestMetrics,
-          };
-          return next;
-        });
-      }
-    };
-
     ws.onerror = (error) => {
       console.error("WebSocket error:", error);
     };
@@ -228,13 +198,31 @@ export function LiveMetricsChart({
     };
   }, [run.model_session_id]);
 
+  // Fallback bucket per split, built from the run's final metrics rather
+  // than the websocket. Only ever read when the split has zero real
+  // TRIAL/STEP/EPOCH data (see `splitHasRealData` below), so it never
+  // overwrites or mixes with an actual curve.
+  const fallbackBySplit = useMemo(
+    () => ({
+      TRAIN: toFallbackBuckets(run.train_metrics),
+      VALIDATION: toFallbackBuckets(run.validation_metrics),
+      TEST: toFallbackBuckets(run.test_metrics),
+    }),
+    [run.train_metrics, run.validation_metrics, run.test_metrics],
+  );
+
+  const splitHasRealData = hasAnyRealMetrics(data[split]);
+  const splitFallback = fallbackBySplit[split];
+
   const filteredMetrics = useMemo(() => {
-    const metrics = data[split]?.[level] ?? {};
+    const metrics = splitHasRealData
+      ? (data[split]?.[level] ?? {})
+      : (splitFallback?.[level] ?? {});
     const allowedMetrics = availableMetrics[split] ?? [];
     return Object.fromEntries(
       Object.entries(metrics).filter(([name]) => allowedMetrics.includes(name)),
     );
-  }, [data, split, level, availableMetrics]);
+  }, [data, split, level, availableMetrics, splitHasRealData, splitFallback]);
 
   // Compact final-value summary for whichever split is selected — same
   // numbers/score shown in the session's comparison table, scoped to the
@@ -296,12 +284,22 @@ export function LiveMetricsChart({
     });
   }, [selectedMetrics, filteredMetrics, theme]);
 
-  const hasTrialData =
-    data[split]?.TRIAL && Object.keys(data[split].TRIAL).length > 0;
-  const hasStepData =
-    data[split]?.STEP && Object.keys(data[split].STEP).length > 0;
-  const hasEpochData =
-    data[split]?.EPOCH && Object.keys(data[split].EPOCH).length > 0;
+  // A split with no real curve at all (e.g. a non-iterative model with no
+  // hyperparameter optimization) only ever has a single final value - the
+  // fallback exposes it as if every level had that one point, same as the
+  // three toggle buttons below already do for a real curve.
+  const splitHasFallbackData =
+    !splitHasRealData && Object.keys(splitFallback?.TRIAL ?? {}).length > 0;
+
+  const hasTrialData = splitHasRealData
+    ? Boolean(data[split]?.TRIAL && Object.keys(data[split].TRIAL).length > 0)
+    : splitHasFallbackData;
+  const hasStepData = splitHasRealData
+    ? Boolean(data[split]?.STEP && Object.keys(data[split].STEP).length > 0)
+    : splitHasFallbackData;
+  const hasEpochData = splitHasRealData
+    ? Boolean(data[split]?.EPOCH && Object.keys(data[split].EPOCH).length > 0)
+    : splitHasFallbackData;
 
   const levelLabel = useMemo(() => {
     if (!level) return "";
