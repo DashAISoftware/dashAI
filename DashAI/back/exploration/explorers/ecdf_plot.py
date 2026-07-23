@@ -288,21 +288,48 @@ class ECDFPlotExplorer(DistributionExplorer):
         _df = dataset.to_pandas()
         columns = [col["columnName"] for col in explorer_info.columns]
 
-        fig = px.ecdf(
-            _df,
-            x=columns[0] if len(columns) == 1 else columns,
-            color=self.color_column,
-            facet_col=self.facet_col,
-            facet_row=self.facet_row,
-            ecdfnorm=(
-                self.ecdf_norm.value if self.ecdf_norm is not ECDFNorm.NONE else None
-            ),
-            title=(
-                f"ECDF Plot of {len(columns)} columns"
-                if len(columns) > 1
-                else f"ECDF Plot of {columns[0]}"
-            ),
+        ecdfnorm = (
+            self.ecdf_norm.value if self.ecdf_norm is not ECDFNorm.NONE else None
         )
+
+        if len(columns) == 1:
+            fig = px.ecdf(
+                _df,
+                x=columns[0],
+                color=self.color_column,
+                facet_col=self.facet_col,
+                facet_row=self.facet_row,
+                ecdfnorm=ecdfnorm,
+                title=f"ECDF Plot of {columns[0]}",
+            )
+        else:
+            # Reshape wide -> long (tidy data) so that several columns can be
+            # overlaid in a single ECDF even when their dtypes differ. Plotly
+            # Express cannot process wide-form data whose columns are of
+            # different type, and its own documentation recommends long-form for
+            # this case (Wickham, 2014, "Tidy Data"). Each selected column
+            # becomes a colored series; an explicit color column, if provided,
+            # takes precedence over this per-column grouping.
+            id_vars = [
+                col
+                for col in {self.color_column, self.facet_col, self.facet_row}
+                if col and col not in columns
+            ]
+            long_df = _df.melt(
+                id_vars=id_vars,
+                value_vars=columns,
+                var_name="variable",
+                value_name="value",
+            )
+            fig = px.ecdf(
+                long_df,
+                x="value",
+                color=self.color_column or "variable",
+                facet_col=self.facet_col,
+                facet_row=self.facet_row,
+                ecdfnorm=ecdfnorm,
+                title=f"ECDF Plot of {len(columns)} columns",
+            )
 
         if explorer_info.name is not None and explorer_info.name != "":
             fig.update_layout(title=f"{explorer_info.name}")
