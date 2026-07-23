@@ -288,9 +288,7 @@ class ECDFPlotExplorer(DistributionExplorer):
         _df = dataset.to_pandas()
         columns = [col["columnName"] for col in explorer_info.columns]
 
-        ecdfnorm = (
-            self.ecdf_norm.value if self.ecdf_norm is not ECDFNorm.NONE else None
-        )
+        ecdfnorm = self.ecdf_norm.value if self.ecdf_norm is not ECDFNorm.NONE else None
 
         if len(columns) == 1:
             fig = px.ecdf(

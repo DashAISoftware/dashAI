@@ -491,7 +491,9 @@ function PipelineResults({ pipelineId, onClose }) {
                     <Box sx={{ p: 3 }}>
                       {metricsTab === 0 && (
                         <Box>
-                          <PipelineResultsMetrics metricsData={branch.metrics} />
+                          <PipelineResultsMetrics
+                            metricsData={branch.metrics}
+                          />
                         </Box>
                       )}
                       {metricsTab === 1 && (
