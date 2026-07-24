@@ -8,7 +8,19 @@ from DashAI.back.statistical_tests.utils import CorrectionMethod, correct_p_valu
 
 
 class WilcoxonSRTest(BaseStatisticalTest):
-    """Non-parametric alternative to paired t-test for two models."""
+    """Non-parametric alternative to the paired t-test for related samples.
+
+    This implementation uses the Wilcoxon signed-rank test on the paired score
+    differences between two models evaluated on the same folds. It is suitable
+    when the paired differences are not approximately normal and is commonly
+    used as a robust alternative to the paired t-test.
+
+    References
+    ----------
+    - https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.wilcoxon.html
+    - Wilcoxon, F. (1945). Individual comparisons by ranking methods.
+      Biometrics Bulletin, 1(6), 80-83.
+    """
 
     DISPLAY_NAME: str = MultilingualString(
         en="Wilcoxon Signed-Rank Test",
@@ -34,7 +46,7 @@ class WilcoxonSRTest(BaseStatisticalTest):
 
     @classmethod
     def get_metadata(cls) -> dict:
-        """Metadata for Wilcoxon Signed-Rank Test."""
+        """Return UI metadata describing the test capabilities and interpretation."""
         return {
             "icon": cls.ICON,
             "is_parametric": False,
@@ -87,6 +99,34 @@ class WilcoxonSRTest(BaseStatisticalTest):
         correction_method: str = None,
         **kwargs,
     ) -> StatisticalTestResult:
+        """Run the Wilcoxon signed-rank test on paired score differences.
+
+        Parameters
+        ----------
+        scores : dict[str, list[float]]
+            Mapping from model/run names to paired score vectors.
+        alpha : float, optional
+            Significance level used to decide whether the null hypothesis is
+            rejected, by default 0.05.
+        alternative : str, optional
+            Direction of the alternative hypothesis: ``two-sided``, ``greater``,
+            or ``less``.
+        correction_method : str or None, optional
+            Method used to adjust p-values when more than two models are being
+            compared.
+
+        Returns
+        -------
+        StatisticalTestResult
+            A result object with the signed-rank statistic, p-value, and the
+            significance decision.
+
+        Raises
+        ------
+        ValueError
+            If the input does not contain at least two score sets or if the
+            score vectors are not aligned.
+        """
         import numpy as np
         from scipy.stats import wilcoxon
 
@@ -176,6 +216,7 @@ class WilcoxonSRTest(BaseStatisticalTest):
         )
 
     def get_schema(self) -> dict:
+        """Return the configuration schema exposed to the frontend for this test."""
         return {
             "type": "object",
             "properties": {

@@ -4,7 +4,17 @@ from DashAI.back.statistical_tests.statistical_test_result import StatisticalTes
 
 
 class ShapiroTest(BaseStatisticalTest):
-    """Test for normality of a single set of scores."""
+    """Test for normality of a single set of scores.
+
+    This helper test assesses whether a sample is plausibly drawn from a normal
+    distribution. It is frequently used as a diagnostic step before applying
+    parametric tests that assume normality, such as ANOVA or paired t-tests.
+
+    References
+    ----------
+    Shapiro, S. S., & Wilk, M. B. (1965). An analysis of variance test for
+    normality (complete samples). Biometrika, 52(3/4), 591-611.
+    """
 
     DISPLAY_NAME: str = MultilingualString(
         en="Shapiro-Wilk Test",
@@ -75,7 +85,7 @@ class ShapiroTest(BaseStatisticalTest):
         }
 
     def get_schema(self) -> dict:
-        """Schema for Shapiro-Wilk Test configuration."""
+        """Return the configuration schema exposed to the frontend for this test."""
         return {
             "type": "object",
             "properties": {
@@ -95,6 +105,27 @@ class ShapiroTest(BaseStatisticalTest):
         alpha: float = 0.05,
         **kwargs,
     ) -> StatisticalTestResult:
+        """Run the Shapiro-Wilk test for normality of a single score sample.
+
+        Parameters
+        ----------
+        scores : dict[str, list[float]]
+            Mapping containing exactly one score vector to evaluate.
+        alpha : float, optional
+            Significance level used to judge the null hypothesis of normality,
+            by default 0.05.
+
+        Returns
+        -------
+        StatisticalTestResult
+            A result object containing the Shapiro statistic, p-value, and the
+            significance outcome.
+
+        Raises
+        ------
+        ValueError
+            If the input does not contain exactly one score set.
+        """
         import numpy as np
         from scipy.stats import shapiro
 

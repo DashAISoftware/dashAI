@@ -4,7 +4,20 @@ from DashAI.back.statistical_tests.statistical_test_result import StatisticalTes
 
 
 class LeveneTest(BaseStatisticalTest):
-    """Test for homogeneity of variances across groups."""
+    """Robust test for homogeneity of variances across groups.
+
+    This test evaluates whether several independent samples share a common
+    variance while being less sensitive to departures from normality than
+    Bartlett's test. It is commonly used as a preliminary check before applying
+    parametric analyses such as ANOVA or t-tests, especially when the data may
+    be mildly non-normal.
+
+    References
+    ----------
+    Levene, H. (1960). Robust Tests for Equality of Variances. In Olkin, I.
+    et al. (eds.), Contributions to Probability and Statistics: Essays in
+    Honor of Harold Hotelling, Stanford University Press.
+    """
 
     DISPLAY_NAME: str = MultilingualString(
         en="Levene's Test",
@@ -74,7 +87,7 @@ class LeveneTest(BaseStatisticalTest):
         }
 
     def get_schema(self) -> dict:
-        """Schema for Levene's Test configuration."""
+        """Return the configuration schema exposed to the frontend for this test."""
         return {
             "type": "object",
             "properties": {
@@ -94,6 +107,28 @@ class LeveneTest(BaseStatisticalTest):
         alpha: float = 0.05,
         **kwargs,
     ) -> StatisticalTestResult:
+        """Run Levene's test for equality of variances across groups.
+
+        Parameters
+        ----------
+        scores : dict[str, list[float]]
+            Mapping from group names to score vectors whose variances will be
+            compared.
+        alpha : float, optional
+            Significance level used to decide whether the variance equality
+            assumption is rejected, by default 0.05.
+
+        Returns
+        -------
+        StatisticalTestResult
+            A result object containing the Levene statistic, p-value, and the
+            significance outcome.
+
+        Raises
+        ------
+        ValueError
+            If fewer than two score sets are provided.
+        """
         import numpy as np
         from scipy.stats import levene
 

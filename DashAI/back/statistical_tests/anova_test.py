@@ -4,7 +4,18 @@ from DashAI.back.statistical_tests.statistical_test_result import StatisticalTes
 
 
 class AnovaTest(BaseStatisticalTest):
-    """Parametric test for comparing 3 or more models on identical data."""
+    """Parametric omnibus test for comparing three or more models on identical data.
+
+    This implementation wraps SciPy's ``f_oneway`` and is suitable when the
+    compared models are evaluated on the same folds and the assumptions of
+    normality and homoscedasticity are reasonable. It is typically followed by
+    a post-hoc test such as Tukey HSD to identify which pairs of models differ.
+
+    References
+    ----------
+    - https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.f_oneway.html
+    - Fisher, R. A. (1925). Statistical Methods for Research Workers.
+    """
 
     DISPLAY_NAME: str = MultilingualString(
         en="ANOVA",
@@ -31,7 +42,7 @@ class AnovaTest(BaseStatisticalTest):
 
     @classmethod
     def get_metadata(cls) -> dict:
-        """Metadata for ANOVA Test."""
+        """Return UI metadata describing the test capabilities and interpretation."""
         return {
             "icon": cls.ICON,
             "is_parametric": True,
@@ -83,6 +94,29 @@ class AnovaTest(BaseStatisticalTest):
         alpha: float = 0.05,
         **kwargs,
     ) -> StatisticalTestResult:
+        """Run a one-way ANOVA over the provided score collections.
+
+        Parameters
+        ----------
+        scores : dict[str, list[float]]
+            Mapping from model/run names to lists of scores collected over the
+            same folds or repeated evaluations.
+        alpha : float, optional
+            Significance level used to decide whether the omnibus null
+            hypothesis is rejected, by default 0.05.
+
+        Returns
+        -------
+        StatisticalTestResult
+            A result object with the ANOVA statistic, p-value, and a boolean
+            flag indicating whether the differences are significant.
+
+        Raises
+        ------
+        ValueError
+            If fewer than three score sets are provided or if the score vectors
+            do not contain the same number of observations.
+        """
         import numpy as np
         from scipy.stats import f_oneway
 
@@ -116,6 +150,7 @@ class AnovaTest(BaseStatisticalTest):
         )
 
     def get_schema(self) -> dict:
+        """Return the configuration schema exposed to the frontend for this test."""
         return {
             "type": "object",
             "properties": {

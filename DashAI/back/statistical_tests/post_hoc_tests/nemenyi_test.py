@@ -97,6 +97,34 @@ class NemenyiTest(BaseStatisticalTest):
         p_value: float = None,  # Friedman p-value
         **kwargs,
     ) -> StatisticalTestResult:
+        """Run the Nemenyi post-hoc test after a significant Friedman test.
+
+        Parameters
+        ----------
+        scores : dict[str, list[float]]
+            Mapping from model/run names to score vectors evaluated over the same
+            folds.
+        alpha : float, optional
+            Significance level used to judge the pairwise p-values, by default 0.05.
+        statistic : float or None, optional
+            Precomputed Friedman statistic. If provided, it is reused instead of
+            recomputing the omnibus statistic.
+        p_value : float or None, optional
+            Precomputed Friedman p-value. If provided, it is reused instead of
+            recomputing the omnibus statistic.
+
+        Returns
+        -------
+        StatisticalTestResult
+            A result object with the omnibus Friedman outcome and the pairwise
+            post-hoc comparisons.
+
+        Raises
+        ------
+        ValueError
+            If fewer than three models are provided or if the score vectors are
+            not aligned across models.
+        """
         import numpy as np
         import scikit_posthocs as sp
         from scipy.stats import friedmanchisquare

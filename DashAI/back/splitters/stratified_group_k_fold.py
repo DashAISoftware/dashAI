@@ -7,6 +7,19 @@ from .fold_splitter import FoldSplitter
 
 
 class StratifiedGroupKFoldSplitter(FoldSplitter):
+    """Splitter that preserves both class balance and group membership in each fold.
+
+    This strategy is particularly valuable for grouped classification tasks where
+    the target labels are imbalanced and the samples are also organized into
+    non-independent groups. It simultaneously prevents leakage across groups and
+    keeps the class distribution similar across folds, which makes the
+    evaluation more reliable and less biased.
+
+    References
+    ----------
+    - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedGroupKFold.html
+    """
+
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
         "TextClassificationTask",
@@ -23,11 +36,38 @@ class StratifiedGroupKFoldSplitter(FoldSplitter):
     COMPATIBLE_INNER_SPLITTERS = ["GroupKFoldSplitter", "StratifiedGroupKFoldSplitter"]
 
     def __init__(self, splits_data):
+        """Initialize the stratified group-based K-fold splitter.
+
+        Parameters
+        ----------
+        splits_data : dict
+            Configuration dictionary that may include the name of the group
+            column used to define the groups.
+        """
         super().__init__(splits_data)
         self.group_column = splits_data.get("group_column", None)
 
     def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
-        """Generate lists with train and test indexes for each fold."""
+        """Generate train/test index pairs preserving both labels and groups.
+
+        Parameters
+        ----------
+        x : object
+            Input dataset that can be converted to a pandas DataFrame.
+        y : object
+            Target values used to preserve class balance across folds.
+        n_splits : int
+            Number of folds to create.
+        shuffle : bool
+            Whether samples should be shuffled before folding.
+        random_state : int, optional
+            Seed used for reproducible shuffling, by default 42.
+
+        Returns
+        -------
+        list[tuple]
+            A list of train/test index pairs preserving group and label balance.
+        """
         indexes = np.arange(len(x))
 
         try:

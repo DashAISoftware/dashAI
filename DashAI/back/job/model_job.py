@@ -221,7 +221,38 @@ class ModelJob(BaseJob):
     def _prepare_dataset_and_components(
         self, run_id: int, db, component_registry
     ) -> Dict[str, Any]:
-        """Prepare the dataset and components for the model training."""
+        """Prepare the dataset, task, splitter, metrics, model, and evaluation strategy.
+
+        This helper resolves the persisted training configuration for a run,
+        loads the associated dataset from disk, prepares it for the selected
+        task, instantiates the required components from the component registry,
+        and builds the model factory together with the evaluation strategy.
+
+        Parameters
+        ----------
+        run_id : int
+            Identifier of the training run whose configuration and artifacts must
+            be loaded.
+        db : object
+            Database access object used to retrieve the run, model session, and
+            related persisted entities.
+        component_registry : object
+            Registry containing the available task, splitter, metric, model,
+            optimizer, and evaluation strategy implementations.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the prepared input and output datasets, the
+            parsed split configuration, the instantiated splitter, the model
+            factory, and the evaluation strategy.
+
+        Raises
+        ------
+        JobError
+            If the run, model session, dataset, task, splitter, metrics, model,
+            optimizer, or evaluation strategy cannot be resolved or instantiated.
+        """
 
         import json
 

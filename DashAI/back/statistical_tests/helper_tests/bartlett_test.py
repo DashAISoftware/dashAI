@@ -4,7 +4,20 @@ from DashAI.back.statistical_tests.statistical_test_result import StatisticalTes
 
 
 class BartlettTest(BaseStatisticalTest):
-    """Test for homogeneity of variances across groups."""
+    """Test for homogeneity of variances across groups.
+
+    This helper test evaluates whether several independent samples have the
+    same variance, which is a common assumption for parametric procedures such
+    as ANOVA. It is appropriate when the samples are approximately normal, and
+    it is often used as a preliminary check before applying variance-based
+    analyses.
+
+    References
+    ----------
+    Bartlett, M. S. (1937). Properties of Sufficiency and Statistical Tests.
+    Proceedings of the Royal Society of London. Series A, Mathematical and
+    Physical Sciences, 160(901), 268-282.
+    """
 
     DISPLAY_NAME: str = MultilingualString(
         en="Bartlett's Test",
@@ -74,7 +87,7 @@ class BartlettTest(BaseStatisticalTest):
         }
 
     def get_schema(self) -> dict:
-        """Schema for Bartlett's Test configuration."""
+        """Return the configuration schema exposed to the frontend for this test."""
         return {
             "type": "object",
             "properties": {
@@ -94,6 +107,28 @@ class BartlettTest(BaseStatisticalTest):
         alpha: float = 0.05,
         **kwargs,
     ) -> StatisticalTestResult:
+        """Run Bartlett's test for equality of variances across groups.
+
+        Parameters
+        ----------
+        scores : dict[str, list[float]]
+            Mapping from group names to score vectors whose variances will be
+            compared.
+        alpha : float, optional
+            Significance level used to decide whether the variance equality
+            assumption is rejected, by default 0.05.
+
+        Returns
+        -------
+        StatisticalTestResult
+            A result object containing the Bartlett statistic, p-value, and the
+            significance outcome.
+
+        Raises
+        ------
+        ValueError
+            If fewer than two score sets are provided.
+        """
         import numpy as np
         from scipy.stats import bartlett
 

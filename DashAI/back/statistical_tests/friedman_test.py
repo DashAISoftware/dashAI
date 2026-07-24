@@ -4,7 +4,20 @@ from DashAI.back.statistical_tests.statistical_test_result import StatisticalTes
 
 
 class FriedmanTest(BaseStatisticalTest):
-    """Non-parametric alternative to ANOVA for comparing 3+ models."""
+    """Non-parametric omnibus test for comparing three or more models.
+
+    This test is the rank-based alternative to ANOVA for repeated-measures or
+    paired evaluations such as cross-validation results. It is commonly used
+    when the assumptions of normality are not satisfied and is typically paired
+    with a post-hoc test such as Nemenyi.
+
+    References
+    ----------
+    - https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.friedmanchisquare.html
+    - Friedman, M. (1937). The use of ranks to avoid the assumption of
+      normality implicit in the analysis of variance. Journal of the American
+      Statistical Association, 32(200), 675-701.
+    """
 
     DISPLAY_NAME: str = MultilingualString(
         en="Friedman Test",
@@ -31,7 +44,7 @@ class FriedmanTest(BaseStatisticalTest):
 
     @classmethod
     def get_metadata(cls) -> dict:
-        """Metadata for Friedman Test."""
+        """Return UI metadata describing the test capabilities and interpretation."""
         return {
             "icon": cls.ICON,
             "is_parametric": False,
@@ -83,6 +96,29 @@ class FriedmanTest(BaseStatisticalTest):
         alpha: float = 0.05,
         **kwargs,
     ) -> StatisticalTestResult:
+        """Run the Friedman test over the provided score collections.
+
+        Parameters
+        ----------
+        scores : dict[str, list[float]]
+            Mapping from model/run names to score vectors evaluated on the same
+            folds or repeated evaluation blocks.
+        alpha : float, optional
+            Significance level used to decide whether the omnibus null
+            hypothesis is rejected, by default 0.05.
+
+        Returns
+        -------
+        StatisticalTestResult
+            A result object with the Friedman statistic, p-value, and the
+            significance flag.
+
+        Raises
+        ------
+        ValueError
+            If fewer than three score sets are provided or if the score vectors
+            do not contain the same number of observations.
+        """
         import numpy as np
         from scipy.stats import friedmanchisquare
 
@@ -113,6 +149,7 @@ class FriedmanTest(BaseStatisticalTest):
         )
 
     def get_schema(self) -> dict:
+        """Return the configuration schema exposed to the frontend for this test."""
         return {
             "type": "object",
             "properties": {

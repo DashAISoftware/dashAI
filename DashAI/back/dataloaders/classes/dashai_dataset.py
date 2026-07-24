@@ -1166,6 +1166,26 @@ def split_dataset_cv(
     train_indexes: List = None,
     test_indexes: List = None,
 ) -> object:
+    """
+    Split a dataset into train and test subsets for cross-validation.
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        A HuggingFace DashAIDataset containing the data to be partitioned.
+    indices : Dict[Dict[str, List[int]]]
+        Mapping of split names to their corresponding train and test index
+        lists, which is stored in the dataset metadata.
+    train_indexes : List, optional
+        Indices of the rows assigned to the training subset.
+    test_indexes : List, optional
+        Indices of the rows assigned to the test subset.
+
+    Returns
+    -------
+    DatasetDict
+        A dataset dictionary containing the train and test splits.
+    """
     import numpy as np
 
     # Get the number of records

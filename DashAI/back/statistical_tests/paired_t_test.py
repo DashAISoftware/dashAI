@@ -8,7 +8,18 @@ from DashAI.back.statistical_tests.utils import CorrectionMethod, correct_p_valu
 
 
 class PairedTTest(BaseStatisticalTest):
-    """Parametric test for comparing two models on identical data."""
+    """Parametric test for comparing two related model evaluations.
+
+    This implementation uses SciPy's paired t-test on the differences between
+    paired scores from two models evaluated on the same folds. It is appropriate
+    when the differences are approximately normally distributed and the samples
+    are paired, which is the usual case for cross-validated comparisons.
+
+    References
+    ----------
+    - https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_rel.html
+    - Student. (1908). The probable error of a mean. Biometrika, 6(1), 1-25.
+    """
 
     DISPLAY_NAME: str = MultilingualString(
         en="Paired t-test",
@@ -37,7 +48,7 @@ class PairedTTest(BaseStatisticalTest):
 
     @classmethod
     def get_metadata(cls) -> dict:
-        """Metadata for Paired T-Test."""
+        """Return UI metadata describing the test capabilities and interpretation."""
         return {
             "icon": cls.ICON,
             "is_parametric": True,
@@ -90,6 +101,33 @@ class PairedTTest(BaseStatisticalTest):
         correction_method: str = None,
         **kwargs,
     ) -> StatisticalTestResult:
+        """Run a paired t-test over two or more model score collections.
+
+        Parameters
+        ----------
+        scores : dict[str, list[float]]
+            Mapping from model/run names to paired score vectors.
+        alpha : float, optional
+            Significance level, by default 0.05.
+        alternative : str, optional
+            Direction of the hypothesis test: ``two-sided``, ``greater``, or
+            ``less``.
+        correction_method : str or None, optional
+            Method used to adjust p-values when more than two models are being
+            compared.
+
+        Returns
+        -------
+        StatisticalTestResult
+            A result object with the test statistic, adjusted or unadjusted
+            p-values, and the overall significance decision.
+
+        Raises
+        ------
+        ValueError
+            If the input does not contain enough score sets, if the score lists
+            are not aligned, or if the paired differences have zero variance.
+        """
         import numpy as np
         from scipy.stats import ttest_rel
 
@@ -229,6 +267,7 @@ class PairedTTest(BaseStatisticalTest):
         )
 
     def get_schema(self) -> dict:
+        """Return the configuration schema exposed to the frontend for this test."""
         return {
             "type": "object",
             "properties": {

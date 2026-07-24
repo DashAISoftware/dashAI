@@ -7,6 +7,21 @@ from .fold_splitter import FoldSplitter
 
 
 class StratifiedKFoldSplitter(FoldSplitter):
+    """Splitter that generates folds while preserving the class distribution.
+
+    This strategy is particularly useful for classification problems with
+    imbalanced labels, where each fold should retain a similar proportion of
+    each class to produce a more meaningful and less biased estimate of model
+    performance.
+
+    It is commonly used in tabular and image classification tasks when the
+    evaluation must reflect the original class distribution.
+
+    References
+    ----------
+    - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html
+    """
+
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
         "TextClassificationTask",
@@ -22,10 +37,30 @@ class StratifiedKFoldSplitter(FoldSplitter):
     COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
 
     def __init__(self, splits_data):
+        """Initialize the stratified K-fold splitter with the provided configuration."""
         super().__init__(splits_data)
 
     def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
-        """Generate lists with train and test indexes for each fold."""
+        """Generate train/test index pairs while preserving class proportions.
+
+        Parameters
+        ----------
+        x : object
+            Input dataset whose length determines the number of available samples.
+        y : object
+            Target values used to preserve the class distribution across folds.
+        n_splits : int
+            Number of folds to create.
+        shuffle : bool
+            Whether samples should be shuffled before folding.
+        random_state : int, optional
+            Seed used for reproducible shuffling, by default 42.
+
+        Returns
+        -------
+        list[tuple]
+            A list of train/test index pairs for every stratified fold.
+        """
         indexes = np.arange(len(x))
 
         try:

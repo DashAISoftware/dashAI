@@ -14,6 +14,11 @@ class TukeyHSDTest(BaseStatisticalTest):
     as ANOVA). For non-normal data, use Nemenyi after Friedman instead.
 
     Requires the `statsmodels` package.
+
+    References
+    ----------
+    - Tukey, J. W. (1949). Comparing individual means in the analysis of
+      variance. Biometrics, 5(2), 99-114.
     """
 
     DISPLAY_NAME: str = MultilingualString(
@@ -95,6 +100,35 @@ class TukeyHSDTest(BaseStatisticalTest):
         p_value: float = None,  # ANOVA p-value
         **kwargs,
     ) -> StatisticalTestResult:
+        """Run Tukey's HSD post-hoc test after a significant ANOVA result.
+
+        Parameters
+        ----------
+        scores : dict[str, list[float]]
+            Mapping from model/run names to score vectors evaluated over the same
+            folds.
+        alpha : float, optional
+            Significance level used to judge the adjusted pairwise comparisons,
+            by default 0.05.
+        statistic : float or None, optional
+            Precomputed ANOVA statistic. If provided, it is reused instead of
+            recomputing the omnibus statistic.
+        p_value : float or None, optional
+            Precomputed ANOVA p-value. If provided, it is reused instead of
+            recomputing the omnibus statistic.
+
+        Returns
+        -------
+        StatisticalTestResult
+            A result object with the omnibus ANOVA decision and the pairwise
+            Tukey HSD comparisons.
+
+        Raises
+        ------
+        ValueError
+            If fewer than three models are provided or if the score vectors are
+            not aligned across models.
+        """
         import numpy as np
         from scipy.stats import f_oneway
         from statsmodels.stats.multicomp import pairwise_tukeyhsd

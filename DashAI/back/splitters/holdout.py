@@ -6,7 +6,32 @@ from .base_splitter import BaseSplitter
 
 
 class HoldoutSplitter(BaseSplitter):
+    """Splitter that creates train, test, and validation partitions for holdout
+    evaluation.
+
+    This strategy is appropriate when a single representative split is sufficient
+    for model selection or final assessment. It is commonly used for quick
+    experiments, hyperparameter tuning, and production-ready evaluation where
+    the computational cost of repeated cross-validation would be excessive.
+
+    It is especially useful for large datasets and for workflows that require a
+    simple partitioning scheme with clear train/test/validation boundaries.
+
+    References
+    ----------
+    - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html
+    """
+
     def __init__(self, splits_data):
+        """Initialize the holdout splitter with the requested proportions.
+
+        Parameters
+        ----------
+        splits_data : dict
+            Configuration dictionary containing train, test, and validation
+            proportions, as well as optional custom indices and stratification
+            settings.
+        """
         super().__init__(splits_data)
         self.train_size = splits_data.get("train", None)
         self.test_size = splits_data.get("test", None)
@@ -15,7 +40,22 @@ class HoldoutSplitter(BaseSplitter):
         self.stratify = splits_data.get("stratify", False)
 
     def split(self, x, y) -> Tuple[object, object, Dict[str, Any]]:
-        # Si algún tamaño es None, se asume que se asignaron indices manualmente
+        """Split the input data into holdout partitions and return the
+        resulting datasets.
+
+        Parameters
+        ----------
+        x : object
+            Input dataset to partition.
+        y : object
+            Target values associated with ``x``.
+
+        Returns
+        -------
+        tuple
+            A tuple containing the partitioned input and output datasets, along
+            with the indices used for each split.
+        """
         if all(idx is None for idx in [self.train_size, self.test_size, self.val_size]):
             train_indices = self.splitted_indexes.get("train_indexes", [])
             test_indices = self.splitted_indexes.get("test_indexes", [])
@@ -98,16 +138,15 @@ class HoldoutSplitter(BaseSplitter):
             If True, the data will be shuffled when splitting the dataset,
             by default True.
         stratify : bool, optional
-            If True, the data will be stratified when splitting the dataset,
-            by default False.
+            Whether the split should preserve class proportions, by default False.
+        labels : List or None, optional
+            Labels used for stratified splitting when requested.
 
         Returns
         -------
-        Tuple[List, List, List]
-            Train, Test and Validation indexes.
+        tuple[List, List, List]
+            Lists of indices for the training, test, and validation partitions.
         """
-
-        # Generate shuffled indexes
         if seed is None:
             seed = 42
         import numpy as np

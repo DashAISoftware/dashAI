@@ -15,6 +15,11 @@ class PairwiseResult:
 
 @dataclass
 class StatisticalTestResult:
+    """
+    Result of a statistical test, including post-hoc pairwise
+    comparisons if applicable.
+    """
+
     statistic: float
     p_value: float
     significant: bool

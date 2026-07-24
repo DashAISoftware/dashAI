@@ -7,6 +7,18 @@ from .fold_splitter import FoldSplitter
 
 
 class RepeatedStratifiedKFoldSplitter(FoldSplitter):
+    """Splitter that repeats the stratified K-fold procedure multiple times.
+
+    This strategy preserves class proportions in each fold while repeating the
+    partitioning scheme several times, which makes it particularly useful for
+    imbalanced classification problems where a stable and representative estimate
+    is needed.
+
+    References
+    ----------
+    - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RepeatedStratifiedKFold.html
+    """
+
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
         "TextClassificationTask",
@@ -22,11 +34,37 @@ class RepeatedStratifiedKFoldSplitter(FoldSplitter):
     COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
 
     def __init__(self, splits_data):
+        """Initialize the repeated stratified K-fold splitter.
+
+        Parameters
+        ----------
+        splits_data : dict
+            Configuration dictionary that may include the number of repeats.
+        """
         super().__init__(splits_data)
         self.n_repeats = splits_data.get("n_repeats", 2)
 
     def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
-        """Generate lists with train and test indexes for each fold."""
+        """Generate train/test index pairs preserving class proportions.
+
+        Parameters
+        ----------
+        x : object
+            Input dataset whose length determines the number of available samples.
+        y : object
+            Target values used to preserve class distribution across folds.
+        n_splits : int
+            Number of folds to create in each repetition.
+        shuffle : bool
+            Whether samples should be shuffled before folding.
+        random_state : int, optional
+            Seed used for reproducible shuffling, by default 42.
+
+        Returns
+        -------
+        list[tuple]
+            A list of train/test index pairs for all folds and repeats.
+        """
         indexes = np.arange(len(x))
 
         try:

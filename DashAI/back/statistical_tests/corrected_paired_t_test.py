@@ -106,6 +106,36 @@ class CorrectedPairedTTest(BaseStatisticalTest):
         correction_method: str | None = None,
         **kwargs,
     ) -> StatisticalTestResult:
+        """Run the corrected paired t-test for cross-validated score differences.
+
+        Parameters
+        ----------
+        scores : dict[str, list[float]]
+            Mapping from model/run names to paired score vectors collected over
+            the same cross-validation folds.
+        alpha : float, optional
+            Significance level used to decide whether the null hypothesis is
+            rejected, by default 0.05.
+        alternative : str, optional
+            Direction of the alternative hypothesis: ``two-sided``, ``greater``,
+            or ``less``.
+        correction_method : str or None, optional
+            Method used to adjust p-values when more than two models are being
+            compared.
+
+        Returns
+        -------
+        StatisticalTestResult
+            A result object containing the corrected test statistic, p-value,
+            significance decision, and additional details about the variance
+            correction applied to the fold-wise differences.
+
+        Raises
+        ------
+        ValueError
+            If fewer than two score sets are provided, if the score vectors are
+            not aligned, or if the corrected standard deviation is zero.
+        """
         import numpy as np
         from scipy import stats
 
