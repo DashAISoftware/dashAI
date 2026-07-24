@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, Typography, Divider, TextField, Alert } from "@mui/material";
+import { Box, Typography, TextField } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
@@ -8,14 +8,16 @@ import OptimizationTableSelectOptimizer from "./modelSession/OptimizationTableSe
 import ModelsTableSelectMetric from "./modelSession/ModelsTableSelectMetric";
 
 /**
- * The actual "edit a run's parameters" form body — run name, model
- * parameters, and optimizer configuration if any parameter is marked for
- * tuning. Shared by the "Edit Run" modal (RunEditDialog) and the model
- * detail view's sidebar (ModelConfigSidebar); each wraps it in its own
- * chrome (dialog vs. inline panel) and Save/Cancel actions.
+ * The actual "edit a run's parameters" form body, split into the same two
+ * steps as AddModelDialog: step 0 is the run name and model parameters,
+ * step 1 (only reachable when a parameter is marked for optimization) is
+ * the goal metric, optimizer, and its parameters. Rendered inside the
+ * "Edit Run" dialog (RunEditDialog), which owns the step/Stepper and the
+ * Back/Next/Save actions.
  */
 export default function RunEditForm({
   run,
+  activeStep,
   taskName,
   editedName,
   setEditedName,
@@ -28,16 +30,57 @@ export default function RunEditForm({
   handleOptimizerSelected,
   editedGoalMetric,
   setEditedGoalMetric,
-  hasOptimizableParams,
 }) {
   const { t } = useTranslation(["models", "common"]);
 
+  if (activeStep === 1) {
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <Typography variant="subtitle2">
+          {t("models:label.optimizerConfiguration")}
+        </Typography>
+
+        <Box>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            {t("models:label.goalMetric")} *
+          </Typography>
+          <ModelsTableSelectMetric
+            taskName={taskName}
+            metricName={editedGoalMetric}
+            handleSelectedMetric={setEditedGoalMetric}
+            required
+          />
+        </Box>
+
+        <OptimizationTableSelectOptimizer
+          taskName={taskName}
+          optimizerName={editedOptimizer}
+          handleSelectedOptimizer={handleOptimizerSelected}
+        />
+
+        {editedOptimizer && (
+          <Box>
+            <Typography variant="subtitle2" sx={{ mb: 4 }}>
+              {t("common:optimizerParameters")}
+            </Typography>
+            <FormSchemaContainer key={editedOptimizer}>
+              <FormSchemaWithSelectedModel
+                modelToConfigure={editedOptimizer}
+                initialValues={editedOptimizerParams}
+                onFormSubmit={(values) => setEditedOptimizerParams(values)}
+                onValuesChange={handleOptimizerParamsChange}
+                onCancel={() => {}}
+                hideButtons
+              />
+            </FormSchemaContainer>
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Alert severity="info">
-        {t("models:message.editingParametersWarning")}
-      </Alert>
-
       <TextField
         label={t("models:label.runName")}
         value={editedName}
@@ -64,54 +107,6 @@ export default function RunEditForm({
           </FormSchemaContainer>
         </Box>
       )}
-
-      {hasOptimizableParams && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Divider />
-          <Typography variant="subtitle2">
-            {t("models:label.hyperparameterOptimizerConfiguration")}
-          </Typography>
-          <Alert severity="warning" icon={false}>
-            {t("models:message.parametersMarkedForOptimization")}
-          </Alert>
-
-          <Box>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              {t("models:label.goalMetric")} *
-            </Typography>
-            <ModelsTableSelectMetric
-              taskName={taskName}
-              metricName={editedGoalMetric}
-              handleSelectedMetric={setEditedGoalMetric}
-              required
-            />
-          </Box>
-
-          <OptimizationTableSelectOptimizer
-            taskName={taskName}
-            optimizerName={editedOptimizer}
-            handleSelectedOptimizer={handleOptimizerSelected}
-          />
-
-          {editedOptimizer && (
-            <Box>
-              <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                {t("common:optimizerParameters")}
-              </Typography>
-              <FormSchemaContainer>
-                <FormSchemaWithSelectedModel
-                  modelToConfigure={editedOptimizer}
-                  initialValues={editedOptimizerParams}
-                  onFormSubmit={(values) => setEditedOptimizerParams(values)}
-                  onValuesChange={handleOptimizerParamsChange}
-                  onCancel={() => {}}
-                  hideButtons
-                />
-              </FormSchemaContainer>
-            </Box>
-          )}
-        </Box>
-      )}
     </Box>
   );
 }
@@ -120,6 +115,7 @@ RunEditForm.propTypes = {
   run: PropTypes.shape({
     model_name: PropTypes.string,
   }).isRequired,
+  activeStep: PropTypes.number.isRequired,
   taskName: PropTypes.string,
   editedName: PropTypes.string.isRequired,
   setEditedName: PropTypes.func.isRequired,
@@ -132,5 +128,4 @@ RunEditForm.propTypes = {
   handleOptimizerSelected: PropTypes.func.isRequired,
   editedGoalMetric: PropTypes.string.isRequired,
   setEditedGoalMetric: PropTypes.func.isRequired,
-  hasOptimizableParams: PropTypes.bool.isRequired,
 };

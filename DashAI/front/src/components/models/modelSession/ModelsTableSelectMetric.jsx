@@ -7,6 +7,7 @@ function ModelsTableSelectMetric({
   metricName,
   handleSelectedMetric,
   required = false,
+  variant = "outlined",
 }) {
   const { compatibleMetrics } = useMetricsByTask({ taskName });
   const [selectedMetric, setSelectedMetric] = useState(metricName);
@@ -23,7 +24,7 @@ function ModelsTableSelectMetric({
       value={selectedMetric || ""}
       onChange={handleChange}
       size="small"
-      variant="standard"
+      variant={variant}
       fullWidth
       required={required}
       error={required && !selectedMetric}

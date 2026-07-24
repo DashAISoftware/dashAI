@@ -74,27 +74,34 @@ export default function InfoModal({
         <Box sx={{ p: 6 }}>
           {extraContent}
 
-          <Typography variant="subtitle2" sx={{ mb: 2 }}>
-            {t("common:metadata")}
-          </Typography>
-          <TableContainer component={Paper} sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
-            <Table size="small">
-              <TableBody>
-                {rows.map(({ label, value }) => (
-                  <TableRow key={label}>
-                    <TableCell
-                      component="th"
-                      scope="row"
-                      sx={{ color: "text.secondary" }}
-                    >
-                      {label}
-                    </TableCell>
-                    <TableCell align="right">{value}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          {rows.length > 0 && (
+            <>
+              <Typography variant="subtitle2" sx={{ mb: 2 }}>
+                {t("common:metadata")}
+              </Typography>
+              <TableContainer
+                component={Paper}
+                sx={{ bgcolor: "rgba(0,0,0,0.2)" }}
+              >
+                <Table size="small">
+                  <TableBody>
+                    {rows.map(({ label, value }) => (
+                      <TableRow key={label}>
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          sx={{ color: "text.secondary" }}
+                        >
+                          {label}
+                        </TableCell>
+                        <TableCell align="right">{value}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          )}
         </Box>
       </Box>
     </Modal>

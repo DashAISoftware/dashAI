@@ -338,7 +338,6 @@ export default function SessionVisualization() {
               run={activeRun}
               models={models}
               session={session}
-              datasetName={datasetName}
               onTrain={handleTrainWithTour}
               onDelete={handleDeleteRun}
               explainerRefreshTrigger={explainerRefreshTrigger}

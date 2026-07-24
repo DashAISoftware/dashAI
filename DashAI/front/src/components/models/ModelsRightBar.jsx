@@ -57,7 +57,7 @@ import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
 import ColumnInsights from "../notebooks/dataset/ColumnInsights";
-import ModelConfigSidebar from "./ModelConfigSidebar";
+import RunInfoSidebar from "./RunInfoSidebar";
 import ExplainersSidebar from "../explainers/ExplainersSidebar";
 
 const EXPLAINERS_TAB = 1;
@@ -84,9 +84,10 @@ export default function ModelsRightBar({ onToggle }) {
     datasetInfo,
     setDatasetTab,
     sessionRightContent,
-    fetchRuns,
     runDetailTab,
     triggerExplainerRefresh,
+    datasets,
+    tasks,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -191,12 +192,18 @@ export default function ModelsRightBar({ onToggle }) {
         />
       );
     }
+    const activeModel = models.find((m) => m.name === activeRun.model_name);
+    const datasetName = datasets.find(
+      (d) => d.id === session?.dataset_id,
+    )?.name;
     return (
-      <ModelConfigSidebar
+      <RunInfoSidebar
         run={activeRun}
+        model={activeModel}
+        datasetName={datasetName}
         session={session}
-        existingRuns={existingRuns}
-        onRefresh={fetchRuns}
+        datasets={datasets}
+        tasks={tasks}
       />
     );
   }

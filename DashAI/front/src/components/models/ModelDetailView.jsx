@@ -1,51 +1,23 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
-import { PlayArrow, Delete, Info } from "@mui/icons-material";
+import { PlayArrow, Delete, Edit } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import RunCard from "./RunCard";
-import InfoModal from "../shared/InfoModal";
+import RunEditDialog from "./RunEditDialog";
 import RunStatusDot from "../shared/RunStatusDot";
-import ModelConfigurationContent from "./ModelConfigurationContent";
-
-function formatCreatedDate(dateStr, locale) {
-  if (!dateStr) return null;
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleString(locale, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatDuration(startTime, endTime) {
-  if (!startTime || !endTime) return null;
-  const totalSeconds = Math.max(
-    0,
-    Math.round((new Date(endTime) - new Date(startTime)) / 1000),
-  );
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return minutes > 0
-    ? `${minutes}m ${String(seconds).padStart(2, "0")}s`
-    : `${seconds}s`;
-}
 
 /**
  * Full-screen detail view for a single model run: header with the run's
- * identity and actions, an info modal with quick facts, and RunCard's tabs
- * below. The column layout keeps the header fixed and lets RunCard (in
+ * identity and actions, an edit dialog for its parameters, and RunCard's
+ * tabs below. The column layout keeps the header fixed and lets RunCard (in
  * fillHeight mode) own the scroll.
  */
 export default function ModelDetailView({
   run,
   models = [],
   session,
-  datasetName,
   onTrain,
   onDelete,
   explainerRefreshTrigger,
@@ -53,17 +25,14 @@ export default function ModelDetailView({
   existingRuns = [],
   onRefresh,
 }) {
-  const { t, i18n } = useTranslation(["models", "common"]);
-  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const { t } = useTranslation(["models", "common"]);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
   const canTrain = run.status === 0 || run.status === 3 || run.status === 4;
   const isRunning = run.status === 1 || run.status === 2;
-
-  const createdLabel = formatCreatedDate(run.created, i18n.language);
-  const durationLabel = formatDuration(run.start_time, run.end_time);
 
   return (
     <Box
@@ -115,9 +84,9 @@ export default function ModelDetailView({
                 {run.status === 3 ? t("common:retrain") : t("common:trainVerb")}
               </Button>
             )}
-            <Tooltip title={t("common:info")}>
-              <IconButton size="small" onClick={() => setInfoModalOpen(true)}>
-                <Info fontSize="small" />
+            <Tooltip title={t("common:edit")}>
+              <IconButton size="small" onClick={() => setEditModalOpen(true)}>
+                <Edit fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title={t("models:button.deleteRun")}>
@@ -161,32 +130,13 @@ export default function ModelDetailView({
         />
       </Box>
 
-      <InfoModal
-        title={t("common:runInformation")}
-        subtitle={run.name}
-        extraContent={
-          <Box sx={{ mb: 4 }}>
-            <ModelConfigurationContent run={run} model={model} />
-          </Box>
-        }
-        rows={[
-          { label: t("common:id"), value: run.id },
-          { label: t("common:model"), value: modelDisplayName },
-          {
-            label: t("common:associatedDataset"),
-            value: datasetName || t("common:unknown"),
-          },
-          {
-            label: t("common:createdAt"),
-            value: createdLabel || t("common:unknown"),
-          },
-          {
-            label: t("common:duration"),
-            value: durationLabel || t("common:unknown"),
-          },
-        ]}
-        open={infoModalOpen}
-        onClose={() => setInfoModalOpen(false)}
+      <RunEditDialog
+        run={run}
+        session={session}
+        existingRuns={existingRuns}
+        onRefresh={onRefresh}
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
       />
     </Box>
   );
@@ -212,7 +162,6 @@ ModelDetailView.propTypes = {
     name: PropTypes.string,
     task_name: PropTypes.string,
   }),
-  datasetName: PropTypes.string,
   onTrain: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   explainerRefreshTrigger: PropTypes.number,

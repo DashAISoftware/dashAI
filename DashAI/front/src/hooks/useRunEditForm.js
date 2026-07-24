@@ -6,14 +6,12 @@ import { updateRunParameters, getRunOperationsCount } from "../api/run";
 import { checkIfHaveOptimazers } from "../utils/schema";
 
 /**
- * Shared editable-parameters state/logic for a run — used both by the
- * "Edit Run" modal (RunEditDialog) and the model detail view's sidebar
- * (ModelConfigSidebar), so both entry points behave identically.
+ * Shared editable-parameters state/logic for a run's "Edit Run" dialog
+ * (RunEditDialog), used from the compact model card, RunCard, and the model
+ * detail view, so every entry point behaves identically.
  *
  * `enabled` gates the reset-on-mount and operations-count fetch: pass the
- * dialog's `open` flag for the modal (resets every time it reopens), or
- * leave it `true` for a persistently-mounted sidebar (resets only when the
- * run itself changes).
+ * dialog's `open` flag so the form resets every time it reopens.
  */
 export default function useRunEditForm({
   run,
@@ -135,10 +133,13 @@ export default function useRunEditForm({
     }
   };
 
-  const handleSaveEdit = async () => {
+  // Shared by the "Next" step transition (only the name needs to be valid to
+  // move on to the optimizer step) and the final save (which additionally
+  // requires the optimizer/goal metric once there are optimizable params).
+  const validateBasics = () => {
     if (!editedName.trim()) {
       enqueueSnackbar(t("models:error.runNameEmpty"), { variant: "warning" });
-      return;
+      return false;
     }
 
     const nameExists = existingRuns.some(
@@ -152,8 +153,14 @@ export default function useRunEditForm({
         t("models:error.runNameExists", { name: editedName.trim() }),
         { variant: "error" },
       );
-      return;
+      return false;
     }
+
+    return true;
+  };
+
+  const handleSaveEdit = async () => {
+    if (!validateBasics()) return;
 
     if (hasOptimizableParams) {
       if (!editedOptimizer) {
@@ -215,6 +222,7 @@ export default function useRunEditForm({
     hasOptimizableParams,
     isDirty,
     canSave,
+    validateBasics,
     operationsCount,
     isSaving,
     saveConfirmOpen,

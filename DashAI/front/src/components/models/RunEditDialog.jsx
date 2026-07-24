@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -9,8 +9,12 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  Stepper,
+  Step,
+  StepLabel,
+  Alert,
 } from "@mui/material";
-import { Save, Cancel, Close as CloseIcon } from "@mui/icons-material";
+import { Close as CloseIcon } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import RunEditForm from "./RunEditForm";
@@ -21,6 +25,9 @@ import useRunEditForm from "../../hooks/useRunEditForm";
  * before training, pre-filled with its current values. Shared by RunCard's
  * "Editar" button and the compact model card's quick-edit action so both
  * entry points open the exact same modal.
+ *
+ * Same two-step Stepper pattern as AddModelDialog: a second "Configure
+ * Optimizer" step only appears once a parameter is marked for optimization.
  */
 export default function RunEditDialog({
   run,
@@ -31,6 +38,7 @@ export default function RunEditDialog({
   onClose,
 }) {
   const { t } = useTranslation(["models", "common"]);
+  const [activeStep, setActiveStep] = useState(0);
 
   const formProps = useRunEditForm({
     run,
@@ -43,14 +51,42 @@ export default function RunEditDialog({
 
   const {
     canSave,
+    hasOptimizableParams,
+    validateBasics,
     operationsCount,
     isSaving,
     saveConfirmOpen,
     setSaveConfirmOpen,
     doSave,
     handleSaveEdit,
-    taskName,
   } = formProps;
+
+  // Always start on the first step when the dialog (re)opens.
+  useEffect(() => {
+    if (open) setActiveStep(0);
+  }, [open]);
+
+  const steps = hasOptimizableParams
+    ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
+    : [t("models:label.configureModel")];
+  const isLastStep = activeStep === steps.length - 1;
+
+  const handleNext = () => {
+    if (!validateBasics()) return;
+    setActiveStep(1);
+  };
+
+  const handleBack = () => {
+    if (activeStep > 0) setActiveStep(activeStep - 1);
+  };
+
+  const handlePrimaryAction = () => {
+    if (isLastStep) {
+      handleSaveEdit();
+    } else {
+      handleNext();
+    }
+  };
 
   return (
     <>
@@ -83,25 +119,42 @@ export default function RunEditDialog({
         </DialogTitle>
 
         <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
-          <RunEditForm run={run} {...formProps} />
+          <Alert severity="info" sx={{ mb: 6 }}>
+            {t("models:message.editingParametersWarning")}
+          </Alert>
+
+          <Stepper activeStep={activeStep} sx={{ mb: 6 }}>
+            {steps.map((label) => (
+              <Step key={label} completed={false}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+
+          <RunEditForm run={run} activeStep={activeStep} {...formProps} />
         </DialogContent>
 
         <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
-          <Button
-            variant="outlined"
-            startIcon={<Cancel />}
-            onClick={onClose}
-            disabled={isSaving}
-          >
+          <Button variant="outlined" onClick={onClose} disabled={isSaving}>
             {t("common:cancel")}
           </Button>
+          {activeStep > 0 && (
+            <Button variant="outlined" onClick={handleBack} disabled={isSaving}>
+              {t("common:back")}
+            </Button>
+          )}
           <Button
             variant="contained"
-            startIcon={<Save />}
-            onClick={handleSaveEdit}
-            disabled={isSaving || !canSave}
+            onClick={handlePrimaryAction}
+            disabled={
+              isSaving || (isLastStep ? !canSave : !formProps.editedName.trim())
+            }
           >
-            {isSaving ? t("common:saving") : t("common:save")}
+            {isLastStep
+              ? isSaving
+                ? t("common:saving")
+                : t("common:save")
+              : t("common:next")}
           </Button>
         </DialogActions>
       </Dialog>
