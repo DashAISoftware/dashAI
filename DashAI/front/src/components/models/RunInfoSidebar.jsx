@@ -12,7 +12,6 @@ import {
   Tabs,
   Tab,
 } from "@mui/material";
-import { Info as InfoIcon, Layers as LayersIcon } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
@@ -103,22 +102,8 @@ export default function RunInfoSidebar({
           borderBottom: `1px solid ${theme.palette.ui.border}`,
         }}
       >
-        <Tab
-          label={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <InfoIcon sx={{ fontSize: 18 }} />
-              {t("common:model")}
-            </Box>
-          }
-        />
-        <Tab
-          label={
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <LayersIcon sx={{ fontSize: 18 }} />
-              {t("common:session")}
-            </Box>
-          }
-        />
+        <Tab label={t("common:model")} />
+        <Tab label={t("common:session")} />
       </Tabs>
 
       <Box sx={{ flex: 1, overflowY: "auto", p: 4 }}>
