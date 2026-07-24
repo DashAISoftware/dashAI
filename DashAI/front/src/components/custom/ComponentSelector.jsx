@@ -255,7 +255,10 @@ function ComponentSelector({
           </Stack>
         </Box>
         {requiresDownload && (
-          <Box onClick={(e) => e.stopPropagation()}>
+          <Box
+            onClick={(e) => e.stopPropagation()}
+            sx={{ display: "inline-flex", alignSelf: "flex-start" }}
+          >
             <ComponentDownloadControl
               component={component}
               onStatusChange={(isDownloaded) =>

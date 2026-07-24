@@ -8,7 +8,6 @@ import {
 } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import DeleteIcon from "@mui/icons-material/Delete";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import {
@@ -257,7 +256,7 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
             size="small"
             variant="outlined"
             color="warning"
-            startIcon={<LockOutlinedIcon />}
+            startIcon={<DownloadIcon />}
             disabled
           >
             {t("credentials:authRequired", { platform: requiredPlatforms })}
