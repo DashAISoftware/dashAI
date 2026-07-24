@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import {
+  Close as CloseIcon,
   Delete as DeleteIcon,
   DisabledByDefaultOutlined as SelectRowsIcon,
 } from "@mui/icons-material";
@@ -447,11 +448,26 @@ export default function ManualPredictionsTable({
       key: entry.key,
       renderCell: (colKey) => {
         if (!inputColumns.includes(colKey)) {
-          return entry.status === "pending" ? (
-            <CircularProgress size={14} />
-          ) : (
-            "—"
-          );
+          if (entry.status === "pending") return <CircularProgress size={14} />;
+          // No dedicated actions column for draft rows (it looked odd sitting
+          // mostly empty next to finished rows) - the target column has no
+          // result yet anyway, so the row's own cancel button lives there.
+          if (colKey === targetColumn) {
+            return (
+              <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                <Tooltip title={t("common:delete")}>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDeleteDraftRow(entry.key)}
+                    sx={{ color: "#fff" }}
+                  >
+                    <CloseIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            );
+          }
+          return "—";
         }
         if (entry.status === "pending") {
           const value = entry.values[colKey];
@@ -478,18 +494,6 @@ export default function ManualPredictionsTable({
           />
         );
       },
-      renderActions: () =>
-        entry.status === "pending" ? (
-          <CircularProgress size={16} />
-        ) : (
-          <IconButton
-            size="small"
-            color="error"
-            onClick={() => handleDeleteDraftRow(entry.key)}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        ),
     }));
   }, [
     manualEntries,
@@ -551,11 +555,6 @@ export default function ManualPredictionsTable({
     }
   };
 
-  // Finished predictions no longer carry an inline delete icon on every row -
-  // deleting them goes through the select-then-delete flow above instead. The
-  // actions column still shows up while there's a draft row to cancel.
-  const rowActions = editableRows.length > 0 ? () => null : null;
-
   const selectionToolbarActions = selectionMode ? (
     <>
       <LoadingButton
@@ -592,7 +591,6 @@ export default function ManualPredictionsTable({
         deps={[allRows.length]}
         columnTypes={extendedColumnTypes}
         showExportButton={false}
-        rowActions={rowActions}
         targetColumn={targetColumn}
         editableRows={editableRows}
         infiniteScroll

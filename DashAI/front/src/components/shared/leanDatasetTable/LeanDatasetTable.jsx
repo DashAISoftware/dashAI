@@ -414,6 +414,7 @@ function LeanDatasetTable({
                 <th className="lean-th lean-th--select">
                   <Checkbox
                     size="small"
+                    sx={{ p: 0.5 }}
                     checked={allPageSelected}
                     indeterminate={!allPageSelected && somePageSelected}
                     onChange={toggleAllOnPage}
@@ -555,6 +556,7 @@ function LeanDatasetTable({
                     >
                       <Checkbox
                         size="small"
+                        sx={{ p: 0.5 }}
                         checked={Boolean(isChecked)}
                         onChange={() => toggleRowSelected(globalIndex)}
                       />

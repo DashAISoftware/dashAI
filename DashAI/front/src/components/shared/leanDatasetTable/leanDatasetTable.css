@@ -393,14 +393,26 @@
   opacity: 1;
 }
 
-.lean-th--select {
+/* Overrides the base `.lean-table thead th.lean-th` rule's min-width: 120px
+   (that selector is more specific than `.lean-th--select` alone) - this
+   column only ever holds a checkbox, so it should never be forced that wide. */
+.lean-table thead th.lean-th--select {
+  /* width: 1% is a standard trick for auto-layout tables: it makes the
+     browser shrink this column to its content's width instead of sharing in
+     the extra space distributed across columns when the table stretches to
+     fill its container (min-width: 100% on .lean-table). */
+  width: 1%;
   min-width: 0;
-  width: 48px;
-  padding: 0 4px;
+  white-space: nowrap;
+  /* Same top padding as every other header cell (padding: 6px 10px on
+     .lean-th) so the checkbox lines up with the other columns' name text
+     instead of sitting flush against the top of the (taller) header row. */
+  padding: 6px 4px 0;
 }
 
 .lean-td--select {
-  width: 48px;
+  width: 1%;
+  white-space: nowrap;
   padding: 0 4px;
   text-align: center;
   border-bottom: 1px solid rgba(128, 128, 128, 0.15);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
-import { Grid, CircularProgress, Box, Typography } from "@mui/material";
+import { CircularProgress, Box, Typography } from "@mui/material";
 import { getHyperparameterPlot as getHyperparameterPlotRequest } from "../../api/run";
 import { enqueueSnackbar } from "notistack";
 import { checkHowManyOptimazers } from "../../utils/schema";
@@ -155,17 +155,27 @@ function HyperparameterPlots({ run }) {
 
   return (
     <Box sx={{ p: 4 }}>
-      <Grid container spacing={4} direction="column">
+      <Box
+        sx={{
+          display: "grid",
+          gap: 4,
+          // Wider floor than Live Metrics' panels (420px) - these plots carry
+          // more horizontal detail (legend, colorbar, wide trial axis) and
+          // look sparse/oversized stretched full width on a wide screen, but
+          // still don't need a whole row to themselves once there's room for
+          // a second column.
+          gridTemplateColumns: "repeat(auto-fit, minmax(600px, 1fr))",
+        }}
+      >
         {artifacts.map((artifact, index) => (
-          <Grid key={artifact.index ?? index} sx={{ width: "100%" }}>
-            <ArtifactViewer
-              artifact={artifact}
-              siblingArtifacts={artifacts}
-              siblingIndex={index}
-            />
-          </Grid>
+          <ArtifactViewer
+            key={artifact.index ?? index}
+            artifact={artifact}
+            siblingArtifacts={artifacts}
+            siblingIndex={index}
+          />
         ))}
-      </Grid>
+      </Box>
     </Box>
   );
 }
