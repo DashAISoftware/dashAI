@@ -52,9 +52,6 @@ export default function ModelDetailView({
   onOperationsRefresh,
   existingRuns = [],
   onRefresh,
-  profiles,
-  selectedProfile,
-  onProfileChange,
 }) {
   const { t, i18n } = useTranslation(["models", "common"]);
   const [infoModalOpen, setInfoModalOpen] = useState(false);
@@ -161,9 +158,6 @@ export default function ModelDetailView({
           hideChrome
           deleteConfirmOpen={deleteConfirmOpen}
           setDeleteConfirmOpen={setDeleteConfirmOpen}
-          profiles={profiles}
-          selectedProfile={selectedProfile}
-          onProfileChange={onProfileChange}
         />
       </Box>
 
@@ -225,7 +219,4 @@ ModelDetailView.propTypes = {
   onOperationsRefresh: PropTypes.func,
   existingRuns: PropTypes.array,
   onRefresh: PropTypes.func,
-  profiles: PropTypes.array,
-  selectedProfile: PropTypes.string,
-  onProfileChange: PropTypes.func,
 };

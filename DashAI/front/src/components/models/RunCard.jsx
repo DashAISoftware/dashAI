@@ -49,9 +49,6 @@ function RunCard({
   setIsEditing: setControlledIsEditing = undefined,
   deleteConfirmOpen: controlledDeleteConfirmOpen = undefined,
   setDeleteConfirmOpen: setControlledDeleteConfirmOpen = undefined,
-  profiles,
-  selectedProfile,
-  onProfileChange,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "common"]);
@@ -398,9 +395,6 @@ function RunCard({
             setResultsVisible={setResultsVisible}
             autoExpand={autoExpand}
             fillHeight={hideChrome}
-            profiles={profiles}
-            selectedProfile={selectedProfile}
-            onProfileChange={onProfileChange}
           />
         </Box>
         <DeleteConfirmationModal
@@ -462,9 +456,6 @@ RunCard.propTypes = {
   setIsEditing: PropTypes.func,
   deleteConfirmOpen: PropTypes.bool,
   setDeleteConfirmOpen: PropTypes.func,
-  profiles: PropTypes.array,
-  selectedProfile: PropTypes.string,
-  onProfileChange: PropTypes.func,
 };
 
 export default RunCard;

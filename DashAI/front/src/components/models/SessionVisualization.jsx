@@ -17,7 +17,6 @@ import { useSnackbar } from "notistack";
 
 import { useModels } from "./ModelsContext";
 import { useTourContext } from "../tour/TourProvider";
-import { useRunScores } from "../../hooks/models/useRunScores";
 
 export default function SessionVisualization() {
   const [models, setModels] = useState([]);
@@ -49,9 +48,6 @@ export default function SessionVisualization() {
     explainerRefreshTrigger,
     triggerExplainerRefresh,
   } = useModels();
-
-  const { profiles, selectedProfile, setSelectedProfile, scores } =
-    useRunScores({ session, runs, metricSplit });
 
   const theme = useTheme();
   const [isDragOver, setIsDragOver] = useState(false);
@@ -349,9 +345,6 @@ export default function SessionVisualization() {
               onOperationsRefresh={triggerExplainerRefresh}
               existingRuns={runs}
               onRefresh={fetchRuns}
-              profiles={profiles}
-              selectedProfile={selectedProfile}
-              onProfileChange={setSelectedProfile}
             />
           ) : (
             <Box sx={{ px: 4, pt: 4 }}>
@@ -461,7 +454,6 @@ export default function SessionVisualization() {
                       <ModelCardCompact
                         run={run}
                         models={models}
-                        score={scores[run.id]}
                         session={session}
                         existingRuns={runs}
                         onTrain={handleTrainWithTour}
@@ -559,15 +551,11 @@ export default function SessionVisualization() {
                 <>
                   <ModelComparisonTable
                     runs={runs}
-                    session={session}
                     onTrain={onTrain}
                     onViewDetails={handleViewDetails}
                     onDelete={onDeleteRun}
                     onRowClick={handleRowClick}
                     metricSplit={metricSplit}
-                    profiles={profiles}
-                    selectedProfile={selectedProfile}
-                    onProfileChange={setSelectedProfile}
                   />
 
                   <Typography

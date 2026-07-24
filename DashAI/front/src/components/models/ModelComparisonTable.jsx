@@ -5,19 +5,11 @@ import {
   useMaterialReactTable,
 } from "material-react-table";
 import { useTheme } from "@mui/material/styles";
-import {
-  Box,
-  IconButton,
-  MenuItem,
-  Select,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
 import { useTableLocalization } from "../../utils/useTableLocalization";
-import api from "../../api/api";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import {
   getComponentDownloadState,
@@ -32,20 +24,14 @@ import {
  */
 function ModelComparisonTable({
   runs: initialRuns = [],
-  session,
   onTrain,
   onViewDetails,
   onDelete,
   onRowClick,
   metricSplit = "test",
-  profiles = [],
-  selectedProfile = null,
-  onProfileChange,
 }) {
   const [models, setModels] = useState([]);
   const [metrics, setMetrics] = useState([]);
-  const [scores, setScores] = useState({});
-  const [loadingScores, setLoadingScores] = useState(false);
   const [runs, setRuns] = useState(initialRuns);
   const [runToDelete, setRunToDelete] = useState(null);
   // Bump to re-render when a download finishes so the train button enables.
@@ -106,58 +92,6 @@ function ModelComparisonTable({
     };
     fetchMetrics();
   }, [i18n.language]);
-
-  // Scoring profiles and the selected profile are owned by the parent
-  // (shared with the compact model cards via useRunScores) and passed in
-  // as props, so both views always score against the same profile.
-
-  // Stable string that changes only when a run's status changes.
-  // Used as a dep so the score fetch re-triggers after training completes
-  // without firing on every unrelated re-render of the parent.
-  const runStatusSignature = useMemo(
-    () => initialRuns.map((r) => `${r.id}:${r.status}`).join(","),
-    [initialRuns],
-  );
-
-  // ────────────────────────────────────────────────────────────────────────
-  // Fetch scores when profile, split, session or any run status changes
-  // ────────────────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!initialRuns.length || !selectedProfile || !session?.id) return;
-
-    const fetchScores = async () => {
-      setLoadingScores(true);
-      try {
-        const response = await api.get("/v1/run/", {
-          params: {
-            model_session_id: session.id,
-            include_scores: true,
-            profile_id: selectedProfile,
-            metric_split: metricSplit,
-          },
-        });
-
-        // Update runs with metrics and scores
-        setRuns(response.data);
-
-        // Extract scores into separate map for easy lookup
-        const scoresMap = {};
-        response.data.forEach((run) => {
-          if (run.score) {
-            scoresMap[run.id] = run.score;
-          }
-        });
-        setScores(scoresMap);
-      } catch (error) {
-        console.error("Error fetching scores:", error);
-      } finally {
-        setLoadingScores(false);
-      }
-    };
-
-    fetchScores();
-  }, [selectedProfile, metricSplit, session?.id, runStatusSignature]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Build columns
@@ -285,80 +219,6 @@ function ModelComparisonTable({
   const data = useMemo(() => runs, [runs]);
 
   const columns = useMemo(() => {
-    const scoreColumn = {
-      id: "score",
-      header: t("models:label.score"),
-      size: 90,
-      accessorFn: (row) => scores[row.id]?.score ?? -1,
-      Header: () => (
-        <Tooltip
-          title={t("models:label.scoreHeaderTooltip")}
-          arrow
-          placement="top"
-        >
-          <Box sx={{ fontWeight: "bold", cursor: "help" }}>
-            {t("models:label.score")}
-          </Box>
-        </Tooltip>
-      ),
-      Cell: ({ row }) => {
-        const { status, id } = row.original;
-        const isRunning = status === 1 || status === 2;
-        if (isRunning) return "-";
-
-        const scoreData = scores[id];
-        if (!scoreData) return "-";
-
-        const { score, breakdown } = scoreData;
-
-        // Find the best score across all runs
-        const allScores = Object.values(scores)
-          .filter((s) => s && s.score !== undefined)
-          .map((s) => s.score);
-        const bestScore = allScores.length > 0 ? Math.max(...allScores) : null;
-        const isBest = bestScore !== null && Math.abs(score - bestScore) < 1e-6;
-
-        const tooltipContent = (
-          <Typography variant="body2" component="div" sx={{ lineHeight: 1.6 }}>
-            <Typography
-              variant="body2"
-              component="div"
-              sx={{ fontWeight: "bold", mb: 1 }}
-            >
-              {t("models:label.score")}: {score.toFixed(1)}/100
-            </Typography>
-            {breakdown.map(({ metric_name, value, normalized_weight }, i) => (
-              <Typography variant="body2" component="div" key={metric_name}>
-                {i === 0 ? "=" : "+"} {metric_name} ({value.toFixed(4)}) ×{" "}
-                {(normalized_weight * 100).toFixed(0)}%
-              </Typography>
-            ))}
-          </Typography>
-        );
-
-        return (
-          <Tooltip title={tooltipContent} placement="top" arrow>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                cursor: "help",
-                fontWeight: "bold",
-              }}
-            >
-              {isBest && (
-                <Box component="span" sx={{ color: "warning.main" }}>
-                  ★
-                </Box>
-              )}
-              {score.toFixed(1)}
-            </Box>
-          </Tooltip>
-        );
-      },
-    };
-
     return [
       {
         accessorKey: "name",
@@ -402,7 +262,6 @@ function ModelComparisonTable({
           </Tooltip>
         ),
       },
-      scoreColumn,
       ...getMetricColumns(),
       {
         id: "actions",
@@ -478,17 +337,7 @@ function ModelComparisonTable({
         },
       },
     ];
-  }, [
-    models,
-    metrics,
-    runs,
-    scores,
-    metricSplit,
-    t,
-    onTrain,
-    onViewDetails,
-    onDelete,
-  ]);
+  }, [models, metrics, runs, metricSplit, t, onTrain, onViewDetails, onDelete]);
 
   const columnOrder = useMemo(
     () => columns.map((col) => col.id ?? col.accessorKey).filter(Boolean),
@@ -528,13 +377,6 @@ function ModelComparisonTable({
     }),
   });
 
-  const activeProfile = profiles.find((p) => p.id === selectedProfile);
-  const profileWeightsLabel = activeProfile
-    ? Object.entries(activeProfile.weights)
-        .map(([metric, w]) => `${metric}: ${(w * 100).toFixed(0)}%`)
-        .join(" · ")
-    : "";
-
   return (
     <Box
       sx={{
@@ -543,58 +385,6 @@ function ModelComparisonTable({
         flexDirection: "column",
       }}
     >
-      {/* Profile selector */}
-      <Box
-        sx={{
-          px: 3,
-          py: 1,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          borderBottom: "1px solid",
-          borderColor: "divider",
-          flexShrink: 0,
-          flexWrap: "wrap",
-        }}
-      >
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ whiteSpace: "nowrap" }}
-        >
-          {t("models:label.scoreProfile")}:
-        </Typography>
-        <Select
-          value={selectedProfile || ""}
-          onChange={(e) => onProfileChange?.(e.target.value)}
-          size="small"
-          disabled={profiles.length === 0 || loadingScores}
-          sx={{
-            fontSize: "0.75rem",
-            height: 24,
-            "& .MuiSelect-select": { py: 0, px: 1 },
-          }}
-        >
-          {profiles.map((p) => (
-            <MenuItem key={p.id} value={p.id} sx={{ fontSize: "0.8rem" }}>
-              {t(`models:label.profile_${p.id}`)}
-            </MenuItem>
-          ))}
-        </Select>
-        <Typography variant="caption" color="text.secondary">
-          {profileWeightsLabel}
-        </Typography>
-        {loadingScores && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ ml: "auto" }}
-          >
-            {t("common:loading")}
-          </Typography>
-        )}
-      </Box>
-
       {/* Table */}
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <MaterialReactTable table={table} />
@@ -615,19 +405,11 @@ function ModelComparisonTable({
 
 ModelComparisonTable.propTypes = {
   runs: PropTypes.array.isRequired,
-  session: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    task_name: PropTypes.string,
-  }),
   onTrain: PropTypes.func.isRequired,
   onViewDetails: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,
   onRowClick: PropTypes.func,
   metricSplit: PropTypes.oneOf(["train", "validation", "test"]),
-  profiles: PropTypes.array,
-  selectedProfile: PropTypes.string,
-  onProfileChange: PropTypes.func,
 };
 
 export default ModelComparisonTable;

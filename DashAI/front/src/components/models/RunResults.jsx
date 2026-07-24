@@ -29,9 +29,6 @@ export default function RunResults({
   setResultsVisible: setControlledVisible = undefined,
   autoExpand = false,
   fillHeight = false,
-  profiles,
-  selectedProfile,
-  onProfileChange,
 }) {
   const isControlled = controlledVisible !== undefined;
 
@@ -137,13 +134,7 @@ export default function RunResults({
     <>
       {activeTab === 0 && (
         <Box sx={{ py: 4 }}>
-          <LiveMetricsChart
-            run={run}
-            session={session}
-            profiles={profiles}
-            selectedProfile={selectedProfile}
-            onProfileChange={onProfileChange}
-          />
+          <LiveMetricsChart run={run} />
         </Box>
       )}
 
@@ -250,7 +241,4 @@ RunResults.propTypes = {
   setResultsVisible: PropTypes.func,
   autoExpand: PropTypes.bool,
   fillHeight: PropTypes.bool,
-  profiles: PropTypes.array,
-  selectedProfile: PropTypes.string,
-  onProfileChange: PropTypes.func,
 };

@@ -1,7 +1,7 @@
 import logging
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Union
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
@@ -18,12 +18,10 @@ from DashAI.back.dependencies.database.models import (
     RunStatus,
 )
 from DashAI.back.dependencies.downloads.nested import missing_downloads
-from DashAI.back.services.scoring_service import ScoringService
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
-    from DashAI.back.dependencies.registry import ComponentRegistry
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -78,40 +76,25 @@ def get_metrics_for_run(db, run_id: int):
 @inject
 async def get_runs(
     model_session_id: Union[int, None] = None,
-    include_scores: bool = Query(False),
-    profile_id: Optional[str] = Query(None),
-    metric_split: Literal["train", "validation", "test"] = Query("test"),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
-    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Retrieve a list of the stored model session runs in the database.
 
     The runs can be filtered by model_session_id if the parameter is passed.
-    Optionally includes computed scores for each run.
 
     Parameters
     ----------
     model_session_id: Union[int, None], optional
         If specified, the function will return all the runs associated with
         the model session, by default None.
-    include_scores: bool, optional
-        If True, compute and include scores for each run, by default False.
-    profile_id: Optional[str], optional
-        Scoring profile ID (e.g., "balanced"). Only used if include_scores=True.
-        If not provided, defaults to first available profile for the session task.
-    metric_split: str, optional
-        Which metrics to use: "train", "validation", or "test", by default "test".
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
-    component_registry : ComponentRegistry
-        Registry for metric metadata (injected).
 
     Returns
     -------
     List[dict]
-        A list with all selected runs. If include_scores=True, each run includes
-        a "score" dict with "value" (0-100) and "breakdown" (list of metrics).
+        A list with all selected runs.
 
     Raises
     ------
@@ -120,7 +103,6 @@ async def get_runs(
     """
     with session_factory() as db:
         try:
-            model_session = None
             if model_session_id is not None:
                 model_session = db.get(ModelSession, model_session_id)
                 if not model_session:
@@ -145,40 +127,6 @@ async def get_runs(
                 run.train_metrics = metrics["train_metrics"]
                 run.validation_metrics = metrics["validation_metrics"]
                 run.test_metrics = metrics["test_metrics"]
-
-            # Compute scores if requested
-            if include_scores and runs:
-                scoring_service = ScoringService()
-
-                # Determine profile to use
-                task_name = model_session.task_name if model_session else None
-                available_profiles = scoring_service.get_available_profiles(task_name)
-
-                if not profile_id and available_profiles:
-                    profile_id = available_profiles[0]["id"]
-
-                # Only compute if a profile is available
-                if profile_id:
-                    # Determine which metrics dict to use based on split
-                    metrics_key = f"{metric_split}_metrics"
-
-                    # Prepare runs data for scoring
-                    runs_metrics = [
-                        {
-                            "run_id": run.id,
-                            "metrics": getattr(run, metrics_key, {}) or {},
-                        }
-                        for run in runs
-                    ]
-
-                    # Compute all scores
-                    scores = scoring_service.compute_scores_for_comparison(
-                        runs_metrics, profile_id
-                    )
-
-                    # Attach scores to runs
-                    for run in runs:
-                        run.score = scores.get(run.id)
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
