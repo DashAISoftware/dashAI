@@ -1,4 +1,4 @@
-import { MenuItem, Tooltip, IconButton } from "@mui/material";
+import { Box, MenuItem, Tooltip, IconButton } from "@mui/material";
 import PropTypes from "prop-types";
 import { Input } from "../configurableObject/Inputs/InputStyles";
 import React from "react";
@@ -12,6 +12,7 @@ import useModelParents from "../../hooks/useModelParents";
 import { Settings } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import FormSchemaFieldCard from "./FormSchemaFieldCard";
+import ComponentDownloadControl from "../models/model/ComponentDownloadControl";
 
 /**
  * Renders a parent-model selector field as a card.
@@ -26,10 +27,14 @@ function FormSchemaFieldWithParent({
   errorMessage,
 }) {
   const { addProperty, getModelFromCurrentProperty } = useFormSchemaStore();
-  const { models } = useModelParents({
+  const { models, markDownloaded } = useModelParents({
     parent: field.value?.properties.component,
   });
   const { t } = useTranslation(["common"]);
+
+  const selectedComponent = models?.find(
+    (model) => model.name === getModelFromCurrentProperty(name),
+  );
 
   const handleOnChange = async (event) => {
     const model = models?.find((model) => model.name === event.target.value);
@@ -79,6 +84,16 @@ function FormSchemaFieldWithParent({
           </MenuItem>
         ))}
       </Input>
+      {selectedComponent?.metadata?.requires_download && (
+        <Box sx={{ mt: 1 }}>
+          <ComponentDownloadControl
+            component={selectedComponent}
+            onStatusChange={(isDownloaded) =>
+              markDownloaded(selectedComponent.name, isDownloaded)
+            }
+          />
+        </Box>
+      )}
     </FormSchemaFieldCard>
   );
 }

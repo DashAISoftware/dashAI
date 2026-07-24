@@ -1,9 +1,11 @@
 import copy
+import json
 
 import pyarrow as pa
 import pytest
 from datasets import DatasetDict
 
+from DashAI.back.core.artifacts import PlotlyArtifact
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     DashAIDataset,
@@ -129,6 +131,10 @@ def test_partial_dependence(trained_model: BaseModel, dataset):
 
     assert len(explanation) == len(INPUT_COLUMNS)
     assert len(plot) == 1
+    assert isinstance(plot[0], PlotlyArtifact)
+    artifact_dict = plot[0].to_dict()
+    assert artifact_dict["type"] == "plotly"
+    json.loads(artifact_dict["payload"])
 
     for feature_key in explanation.values():
         assert "grid_values" in feature_key
@@ -164,6 +170,10 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         for key in ["features", "importances_mean", "importances_std"]
     )
     assert len(plot) == 1
+    assert isinstance(plot[0], PlotlyArtifact)
+    artifact_dict = plot[0].to_dict()
+    assert artifact_dict["type"] == "plotly"
+    json.loads(artifact_dict["payload"])
 
     for values in explanation.values():
         assert len(values) == len(INPUT_COLUMNS)

@@ -11,6 +11,8 @@ build/
 develop-eggs/
 dist/
 downloads/
+!DashAI/back/dependencies/downloads/
+!tests/back/downloads/
 eggs/
 .eggs/
 lib/

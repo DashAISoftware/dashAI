@@ -107,6 +107,7 @@ from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
+from DashAI.back.job.component_download_job import ComponentDownloadJob
 from DashAI.back.job.converter_job import ConverterJob
 from DashAI.back.job.datafile_job import DatafileJob
 from DashAI.back.job.dataset_job import DatasetJob
@@ -150,11 +151,21 @@ from DashAI.back.models.hugging_face.beto_transformer import BetoTransformer
 from DashAI.back.models.hugging_face.deberta_v3_transformer import DebertaV3Transformer
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
 from DashAI.back.models.hugging_face.electra_transformer import ElectraTransformer
-from DashAI.back.models.hugging_face.llama_model import LlamaModel
+from DashAI.back.models.hugging_face.llama_model import (
+    Llama31_8BInstruct,
+    Llama32_1BInstruct,
+    Llama32_3BInstruct,
+)
 from DashAI.back.models.hugging_face.m2m100_transformer import M2M100Transformer
 from DashAI.back.models.hugging_face.minilm_transformer import MiniLMTransformer
-from DashAI.back.models.hugging_face.mistral_model import MistralModel
-from DashAI.back.models.hugging_face.mixtral_model import MixtralModel
+from DashAI.back.models.hugging_face.mistral_model import (
+    Mistral7BInstructV03,
+    MistralNemoInstruct2407,
+)
+from DashAI.back.models.hugging_face.mixtral_model import (
+    Mixtral8x7BInstructQ2K,
+    Mixtral8x7BInstructQ4KM,
+)
 from DashAI.back.models.hugging_face.modernbert_transformer import ModernBertTransformer
 from DashAI.back.models.hugging_face.multilingual_bert_transformer import (
     MultilingualBertTransformer,
@@ -181,8 +192,11 @@ from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
 from DashAI.back.models.hugging_face.opus_mt_roa_en_transformer import (
     OpusMtRoaEnTransformer,
 )
-from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
-from DashAI.back.models.hugging_face.qwen_model import QwenModel
+from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigma
+from DashAI.back.models.hugging_face.qwen_model import (
+    Qwen25_05BInstruct,
+    Qwen25_15BInstruct,
+)
 from DashAI.back.models.hugging_face.roberta_transformer import RobertaTransformer
 from DashAI.back.models.hugging_face.sd15_depth_controlnet_model import (
     SD15DepthControlNetModel,
@@ -197,21 +211,34 @@ from DashAI.back.models.hugging_face.sdxl_canny_controlnet_model import (
     SDXLCannyControlNetModel,
 )
 from DashAI.back.models.hugging_face.sdxl_turbo_model import SDXLTurboModel
-from DashAI.back.models.hugging_face.smol_lm_model import SmolLMModel
+from DashAI.back.models.hugging_face.smol_lm_model import (
+    SmolLM2_17BInstruct,
+    SmolLM2_360MInstruct,
+)
 from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import (
     StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
-    StableDiffusionV2Model,
+    StableDiffusion2,
+    StableDiffusion2_512,
+    StableDiffusion21,
+    StableDiffusion21_512,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
-    StableDiffusionV3Model,
+    StableDiffusion3Medium,
+    StableDiffusion35Large,
+    StableDiffusion35LargeTurbo,
+    StableDiffusion35Medium,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_xl_model import (
-    StableDiffusionXLModel,
+    RealVisXLV4,
+    StableDiffusionXL,
 )
 from DashAI.back.models.hugging_face.t5_small_transformer import T5SmallTransformer
-from DashAI.back.models.hugging_face.tongyi_z_image_model import TongyiZImageModel
+from DashAI.back.models.hugging_face.tongyi_z_image_model import (
+    TongyiZImage,
+    TongyiZImageTurbo,
+)
 from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
 )
@@ -359,12 +386,16 @@ def get_initial_components():
         LinearRegression,
         LinearSVCClassifier,
         LinearSVR,
-        LlamaModel,
+        Llama31_8BInstruct,
+        Llama32_1BInstruct,
+        Llama32_3BInstruct,
         LogisticRegression,
         M2M100Transformer,
         MiniLMTransformer,
-        MistralModel,
-        MixtralModel,
+        Mistral7BInstructV03,
+        MistralNemoInstruct2407,
+        Mixtral8x7BInstructQ2K,
+        Mixtral8x7BInstructQ4KM,
         MultilingualBertTransformer,
         MLPClassifier,
         MLPRegression,
@@ -376,9 +407,10 @@ def get_initial_components():
         OpusMtEnRoaTransformer,
         OpusMtEsENTransformer,
         OpusMtFrEnTransformer,
+        PixArtSigma,
+        Qwen25_05BInstruct,
+        Qwen25_15BInstruct,
         OpusMtRoaEnTransformer,
-        PixArtSigmaModel,
-        QwenModel,
         RandomForestClassifier,
         RobertaTransformer,
         RandomForestRegression,
@@ -389,17 +421,26 @@ def get_initial_components():
         SDXLCannyControlNetModel,
         SDXLTurboModel,
         SGDClassifier,
-        SmolLMModel,
-        StableDiffusionV2Model,
-        StableDiffusionV3Model,
-        StableDiffusionXLModel,
+        SmolLM2_360MInstruct,
+        SmolLM2_17BInstruct,
+        StableDiffusion2,
+        StableDiffusion2_512,
+        StableDiffusion21,
+        StableDiffusion21_512,
+        StableDiffusion3Medium,
+        StableDiffusion35Medium,
+        StableDiffusion35Large,
+        StableDiffusion35LargeTurbo,
+        StableDiffusionXL,
+        RealVisXLV4,
         StableDiffusionXLV1ControlNet,
         SVC,
         SVR,
         T5SmallTransformer,
         TfIdfLogRegTextClassificationModel,
-        TongyiZImageModel,
         XGBClassifier,
+        TongyiZImage,
+        TongyiZImageTurbo,
         XlmRobertaTransformer,
         XlnetTransformer,
         MLPImageClassifier,
@@ -442,6 +483,7 @@ def get_initial_components():
         OptunaOptimizer,
         HyperOptOptimizer,
         # Jobs
+        ComponentDownloadJob,
         DatafileJob,
         ExplainerJob,
         ModelJob,

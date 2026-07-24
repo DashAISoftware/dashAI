@@ -1,5 +1,6 @@
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, List
 
+from DashAI.back.core.artifacts import Artifact, TableArtifact, TablePayload
 from DashAI.back.core.schema_fields import bool_field, int_field, schema_field
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
@@ -237,40 +238,41 @@ class RowExplorer(PreviewInspectionExplorer):
 
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    ) -> List[Artifact]:
         """Load and return the saved row sample for the frontend.
 
-        Reads the JSON file written by ``save_notebook`` and converts it to a
-        nested dictionary for tabular display.
+        Reads the JSON file written by ``save_notebook`` and returns it as a
+        table artifact with the row labels in an index column.
 
         Parameters
         ----------
         exploration_path : str
-            Path to the JSON file saved by
-            ``save_notebook``.
+            Path to the JSON file saved by ``save_notebook``.
         options : Dict[str, Any]
-            Rendering options from the frontend.
-            Supports ``"orientation"`` (str, default ``"dict"``), which is
-            forwarded to ``pandas.DataFrame.to_dict``.
+            Rendering options from the frontend (unused).
 
         Returns
         -------
-        Dict[str, Any]
-            Dictionary with keys ``"data"`` (nested dict of
-            the sampled rows in the requested orientation), ``"type"``
-            (``"tabular"``), and ``"config"`` (dict containing
-            ``{"orient": <orientation>}``).
+        List[Artifact]
+            A single-element list with the table artifact of the sampled
+            rows.
         """
         from pathlib import Path
 
         import numpy as np
         import pandas as pd
 
-        resultType = "tabular"
-        orientation = options.get("orientation", "dict")
-        config = {"orient": orientation}
-
-        path = Path(exploration_path)
-
-        result = pd.read_json(path).replace({np.nan: None}).to_dict(orient=orientation)
-        return {"type": resultType, "data": result, "config": config}
+        sample = pd.read_json(Path(exploration_path)).replace({np.nan: None})
+        return [
+            TableArtifact(
+                payload=TablePayload(
+                    columns=["index", *sample.columns.astype(str)],
+                    rows=[
+                        [str(index), *row]
+                        for index, row in zip(
+                            sample.index, sample.to_numpy().tolist(), strict=True
+                        )
+                    ],
+                )
+            )
+        ]

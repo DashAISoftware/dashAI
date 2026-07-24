@@ -151,8 +151,20 @@ class GenerativeJob(BaseJob):
                     model_class = component_registry[generative_session.model_name][
                         "class"
                     ]
+                    if (
+                        getattr(model_class, "REQUIRES_DOWNLOAD", False)
+                        and not model_class.is_downloaded()
+                    ):
+                        raise JobError(
+                            f"Model {generative_session.model_name} is not downloaded."
+                            " Download it before use."
+                        )
                     params = generative_session.parameters
                     model: BaseGenerativeModel = model_class(**params)
+                except JobError:
+                    generative_process.set_status_as_error()
+                    db.commit()
+                    raise
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()
