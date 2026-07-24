@@ -24,7 +24,7 @@ function ResultsGraphsLayout({
       height="100%"
     >
       {/* Metric filter toolbar */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", px: 4, py: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-start", px: 4, py: 3 }}>
         <ResultsGraphsParameters
           currentMetrics={currentMetrics}
           selectedMetrics={selectedMetrics}
