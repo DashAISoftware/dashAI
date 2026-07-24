@@ -29,12 +29,6 @@ log = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Tests that trigger automatic post-hoc when significant
-POSTHOC_MAP = {
-    "FriedmanTest": "NemenyiTest",
-    "AnovaTest": "TukeyHSDTest",
-}
-
 
 def _get_interpretation(
     metadata: Optional[Dict],
@@ -154,13 +148,12 @@ async def run_statistical_test(
 
         # Run post-hoc automatically if the primary test is significant
         # and a post-hoc exists for this test
+        posthoc = component_registry.get_related_components(request.test_name)
+
         posthoc_results = None
-        if result.significant and request.test_name in POSTHOC_MAP:
-            posthoc_test_name = POSTHOC_MAP[request.test_name]
+        if result.significant and posthoc:
             try:
-                posthoc_instance: BaseStatisticalTest = component_registry[
-                    posthoc_test_name
-                ]["class"]()
+                posthoc_instance: BaseStatisticalTest = posthoc[0]["class"]()
 
                 # Pass precalculated omnibus values to avoid recomputing
                 posthoc_result: StatisticalTestResult = posthoc_instance.run(
@@ -170,24 +163,22 @@ async def run_statistical_test(
                     p_value=result.p_value,
                 )
 
-                if posthoc_result.posthoc:
-                    posthoc_results = [
-                        PairwiseResultResponse(
-                            run_1=pr.run_1,
-                            run_1_name=request.run_names.get(str(pr.run_1), None),
-                            run_2=pr.run_2,
-                            run_2_name=request.run_names.get(str(pr.run_2), None),
-                            p_value=pr.p_value,
-                            significant=pr.significant,
-                        )
-                        for pr in posthoc_result.posthoc
-                    ]
+                posthoc_results = [
+                    PairwiseResultResponse(
+                        run_1=pr.run_1,
+                        run_1_name=request.run_names.get(str(pr.run_1), None),
+                        run_2=pr.run_2,
+                        run_2_name=request.run_names.get(str(pr.run_2), None),
+                        p_value=pr.p_value,
+                        significant=pr.significant,
+                    )
+                    for pr in posthoc_result.posthoc
+                ]
             except Exception as e:
                 log.warning(f"Post-hoc test failed, skipping: {str(e)}")
 
-        # Also expose pairwise results from tests that include them directly
-        # (PairwiseWilcoxon, NemenyiTest, TukeyHSDTest when called directly)
-        if posthoc_results is None and result.posthoc:
+        # If the primary test saved results as posthoc (multiple pairwise comparisons)
+        elif result.posthoc:
             posthoc_results = [
                 PairwiseResultResponse(
                     run_1=pr.run_1,

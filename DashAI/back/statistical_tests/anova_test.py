@@ -27,6 +27,7 @@ class AnovaTest(BaseStatisticalTest):
     )
     ICON: str = "BarChart"
     COLOR: str = "#64B5F6"
+    COMPATIBLE_COMPONENTS = ["TukeyHSDTest"]
 
     @classmethod
     def get_metadata(cls) -> dict:

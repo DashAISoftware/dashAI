@@ -27,6 +27,7 @@ class FriedmanTest(BaseStatisticalTest):
     )
     ICON: str = "Leaderboard"
     COLOR: str = "#FFD54F"
+    COMPATIBLE_COMPONENTS = ["NemenyiTest"]
 
     @classmethod
     def get_metadata(cls) -> dict:

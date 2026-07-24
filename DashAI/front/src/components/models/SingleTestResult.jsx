@@ -21,7 +21,6 @@ import TechnicalDetails from "./TechnicalDetails";
 const POSTHOC_TEST_LABELS = {
   FriedmanTest: "models:label.nemenyiPairwiseComparisons",
   AnovaTest: "models:label.tukeyPairwiseComparisons",
-  PairwiseWilcoxonTest: "models:label.wilcoxonPairwiseComparisons",
 };
 
 /**
@@ -132,10 +131,7 @@ const SingleTestResult = forwardRef(function SingleTestResult(
       {result.posthoc && result.posthoc.length > 0 && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-            {t(
-              POSTHOC_TEST_LABELS[result.test_name] ||
-                "models:label.pairwiseComparisons",
-            )}
+            {t(POSTHOC_TEST_LABELS[result.test_name])}
           </Typography>
           <Table size="small">
             <TableHead>
