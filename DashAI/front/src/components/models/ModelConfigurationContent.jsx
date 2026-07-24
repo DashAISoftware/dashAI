@@ -1,47 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-  Paper,
-} from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { renderParamValue } from "./ModelParamBlock";
-
-// Same look as the Metadata table in InfoModal (no header row, dark fill,
-// right-aligned values) so both sections of the Run Information modal read
-// as one consistent style instead of two different table treatments.
-function ParamsTable({ rows }) {
-  return (
-    <TableContainer component={Paper} sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
-      <Table size="small">
-        <TableBody>
-          {rows.map(([key, value]) => (
-            <TableRow key={key}>
-              <TableCell
-                component="th"
-                scope="row"
-                sx={{ color: "text.secondary" }}
-              >
-                {key}
-              </TableCell>
-              <TableCell align="right">{value}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-}
-
-ParamsTable.propTypes = {
-  rows: PropTypes.arrayOf(PropTypes.array).isRequired,
-};
+import ParamInfoList from "./ParamInfoBox";
 
 /**
  * Shared body for a run's "Configuración" view — the parameters it was
@@ -70,12 +31,12 @@ function ModelConfigurationContent({ run, model }) {
       {hasParams && (
         <Box>
           <Typography variant="subtitle2" gutterBottom>
-            {t("common:modelParameters")}
+            {t("models:label.modelConfiguration")}
           </Typography>
-          <ParamsTable
+          <ParamInfoList
             rows={Object.entries(run.parameters).map(([key, value]) => [
               getParamLabel(key),
-              renderParamValue(value),
+              value,
             ])}
           />
         </Box>
@@ -88,9 +49,9 @@ function ModelConfigurationContent({ run, model }) {
           </Typography>
           {run.optimizer_parameters &&
             Object.keys(run.optimizer_parameters).length > 0 && (
-              <ParamsTable
+              <ParamInfoList
                 rows={Object.entries(run.optimizer_parameters).map(
-                  ([key, value]) => [key, renderParamValue(value)],
+                  ([key, value]) => [key, value],
                 )}
               />
             )}

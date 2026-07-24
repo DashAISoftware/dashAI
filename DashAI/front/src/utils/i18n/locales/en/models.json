@@ -71,6 +71,8 @@
     "chooseTaskForSessionWithDataset": "Choose the machine learning task for your session with dataset \"{{datasetName}}\".",
     "configureModel": "Configure Model",
     "configuration": "Configuration",
+    "modelConfiguration": "Model Configuration",
+    "sessionConfiguration": "Session Configuration",
     "configureOptimizer": "Configure Optimizer",
     "configureSession": "Configure Session",
     "configureTasksTrainCompareModels": "Configure tasks, train and compare models in organized sessions. Select a task to begin your modeling workflow.",

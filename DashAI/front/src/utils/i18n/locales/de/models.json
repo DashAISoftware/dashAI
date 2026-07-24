@@ -70,6 +70,8 @@
     "heatmap": "Heatmap",
     "chooseTaskForSessionWithDataset": "Wählen Sie die ML-Aufgabe für Ihre Sitzung mit dem Datensatz \"{{datasetName}}\".",
     "configuration": "Konfiguration",
+    "modelConfiguration": "Modellkonfiguration",
+    "sessionConfiguration": "Sitzungskonfiguration",
     "configureModel": "Modell konfigurieren",
     "configureOptimizer": "Optimierer konfigurieren",
     "configureSession": "Sitzung konfigurieren",

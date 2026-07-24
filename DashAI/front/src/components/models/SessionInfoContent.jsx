@@ -1,52 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Typography,
-  Chip,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-} from "@mui/material";
+import { Box, Typography, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../utils";
+import ParamInfoList from "./ParamInfoBox";
 
 const SPLIT_TYPE_LABEL_KEYS = {
   random: "experiments:label.random",
   manual: "experiments:label.manual",
   predefined: "experiments:label.predefined",
-};
-
-function InfoTable({ rows }) {
-  return (
-    <TableContainer component={Paper} sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
-      <Table size="small">
-        <TableBody>
-          {rows.map(({ label, value }) => (
-            <TableRow key={label}>
-              <TableCell
-                component="th"
-                scope="row"
-                sx={{ color: "text.secondary" }}
-              >
-                {label}
-              </TableCell>
-              <TableCell align="right">{value}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-}
-
-InfoTable.propTypes = {
-  rows: PropTypes.arrayOf(
-    PropTypes.shape({ label: PropTypes.node, value: PropTypes.node }),
-  ).isRequired,
 };
 
 /**
@@ -83,13 +45,10 @@ export default function SessionInfoContent({
   };
 
   const metadataRows = [
-    { label: t("common:id"), value: session.id },
-    { label: t("common:associatedDataset"), value: getDatasetName() },
-    { label: t("common:createdAt"), value: formatDate(session.created) },
-    {
-      label: t("common:lastModified"),
-      value: formatDate(session.last_modified),
-    },
+    [t("common:id"), session.id],
+    [t("common:associatedDataset"), getDatasetName()],
+    [t("common:createdAt"), formatDate(session.created)],
+    [t("common:lastModified"), formatDate(session.last_modified)],
   ];
 
   let splits = null;
@@ -105,42 +64,33 @@ export default function SessionInfoContent({
   const yesNo = (value) => t(value ? "common:yes" : "common:no");
 
   const configRows = [
-    {
-      label: t("models:label.inputColumns"),
-      value: (session.input_columns || []).join(", "),
-    },
-    {
-      label: t("models:label.outputColumns"),
-      value: (session.output_columns || []).join(", "),
-    },
+    [t("models:label.inputColumns"), (session.input_columns || []).join(", ")],
+    [
+      t("models:label.outputColumns"),
+      (session.output_columns || []).join(", "),
+    ],
   ];
 
   if (splits?.splitType) {
-    configRows.push({
-      label: t("experiments:label.splitType"),
-      value: t(SPLIT_TYPE_LABEL_KEYS[splits.splitType] || splits.splitType),
-    });
+    configRows.push([
+      t("experiments:label.splitType"),
+      t(SPLIT_TYPE_LABEL_KEYS[splits.splitType] || splits.splitType),
+    ]);
 
     if (splits.splitType === "random") {
       configRows.push(
-        { label: t("common:train"), value: splits.train },
-        { label: t("common:validation"), value: splits.validation },
-        { label: t("common:test"), value: splits.test },
-        { label: t("experiments:label.shuffle"), value: yesNo(splits.shuffle) },
-        {
-          label: t("experiments:label.stratify"),
-          value: yesNo(splits.stratify),
-        },
-        { label: t("experiments:label.seed"), value: splits.seed },
+        [t("common:train"), splits.train],
+        [t("common:validation"), splits.validation],
+        [t("common:test"), splits.test],
+        [t("experiments:label.shuffle"), yesNo(splits.shuffle)],
+        [t("experiments:label.stratify"), yesNo(splits.stratify)],
+        [t("experiments:label.seed"), splits.seed],
       );
     } else {
       configRows.push(
-        { label: t("common:train"), value: (splits.train || []).length },
-        {
-          label: t("common:validation"),
-          value: (splits.validation || []).length,
-        },
-        { label: t("common:test"), value: (splits.test || []).length },
+        [t("common:train"), (splits.train || []).length],
+        [t("common:validation"), (splits.validation || []).length],
+        [t("common:test"), (splits.test || []).length],
       );
     }
   }
@@ -168,16 +118,16 @@ export default function SessionInfoContent({
 
       <Box>
         <Typography variant="subtitle2" gutterBottom>
-          {t("common:metadata")}
+          {t("models:label.sessionConfiguration")}
         </Typography>
-        <InfoTable rows={metadataRows} />
+        <ParamInfoList rows={configRows} />
       </Box>
 
       <Box>
         <Typography variant="subtitle2" gutterBottom>
-          {t("models:label.configuration")}
+          {t("common:metadata")}
         </Typography>
-        <InfoTable rows={configRows} />
+        <ParamInfoList rows={metadataRows} />
       </Box>
     </Box>
   );

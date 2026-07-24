@@ -1,22 +1,12 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableRow,
-  Paper,
-  Tabs,
-  Tab,
-} from "@mui/material";
+import { Box, Typography, Tabs, Tab } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import ModelConfigurationContent from "./ModelConfigurationContent";
 import SessionInfoContent from "./SessionInfoContent";
+import ParamInfoList from "./ParamInfoBox";
 
 function formatCreatedDate(dateStr, locale) {
   if (!dateStr) return null;
@@ -115,27 +105,7 @@ export default function RunInfoSidebar({
               <Typography variant="subtitle2" gutterBottom>
                 {t("common:metadata")}
               </Typography>
-              <TableContainer
-                component={Paper}
-                sx={{ bgcolor: "rgba(0,0,0,0.2)" }}
-              >
-                <Table size="small">
-                  <TableBody>
-                    {rows.map(([key, value]) => (
-                      <TableRow key={key}>
-                        <TableCell
-                          component="th"
-                          scope="row"
-                          sx={{ color: "text.secondary" }}
-                        >
-                          {key}
-                        </TableCell>
-                        <TableCell align="right">{value}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <ParamInfoList rows={rows} />
             </Box>
           </Box>
         ) : (

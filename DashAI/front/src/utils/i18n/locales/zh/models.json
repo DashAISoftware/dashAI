@@ -70,6 +70,8 @@
     "heatmap": "热图",
     "chooseTaskForSessionWithDataset": "为使用数据集 \"{{datasetName}}\" 的会话选择机器学习任务。",
     "configuration": "配置",
+    "modelConfiguration": "模型配置",
+    "sessionConfiguration": "会话配置",
     "configureModel": "配置模型",
     "configureOptimizer": "配置优化器",
     "configureSession": "配置会话",

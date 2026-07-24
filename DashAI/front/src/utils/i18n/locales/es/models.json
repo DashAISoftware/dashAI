@@ -70,6 +70,8 @@
     "heatmap": "Mapa de calor",
     "chooseTaskForSessionWithDataset": "Elija la tarea de aprendizaje automático para su sesión con el dataset \"{{datasetName}}\".",
     "configuration": "Configuración",
+    "modelConfiguration": "Configuración del Modelo",
+    "sessionConfiguration": "Configuración de la Sesión",
     "configureModel": "Configurar Modelo",
     "configureOptimizer": "Configurar Optimizador",
     "configureSession": "Configurar Sesión",
