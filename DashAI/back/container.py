@@ -38,8 +38,13 @@ def build_container(config: Dict[str, str]) -> Container:
     di["component_registry"] = ComponentRegistry(
         initial_components=config["INITIAL_COMPONENTS"]
     )
+
     job_queue = HueyJobQueue("job_queue", path_db=config["LOCAL_PATH"])
 
+    agent_job_queue = HueyJobQueue("agent_job_queue", path_db=config["LOCAL_PATH"])
+
     di["job_queue"] = job_queue
+
+    di["agent_job_queue"] = agent_job_queue
 
     return di

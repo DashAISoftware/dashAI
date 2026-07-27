@@ -354,9 +354,10 @@ const JobQueueWidget = () => {
                 }
               : {
                   bottom: { xs: 16, sm: (theme) => theme.spacing(3) },
-                  right: { xs: 16, sm: (theme) => theme.spacing(3) },
+                  right: { xs: 16, sm: (theme) => `calc(${theme.spacing(3)}` },
                 }),
             zIndex: 1300,
+            transition: "right 0.2s ease",
             width: { xs: "calc(100vw - 32px)", sm: 320 },
             maxWidth: 320,
             maxHeight: { xs: "60vh", sm: "80vh" },

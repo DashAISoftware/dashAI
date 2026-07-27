@@ -1,0 +1,154 @@
+{
+  "gpt-4o-mini": {
+    "test_upload_notebook": {
+      "duration_seconds": 22.379008800024167,
+      "message_count": 4,
+      "total_tokens": 82307,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 1,
+        "response_structure": 1,
+        "clarity_response": 0.9,
+        "enthusiasm_response": 0.8,
+        "logical_coherence": 1.0
+      },
+      "timestamp": "2026-07-04T19:57:22.052330"
+    },
+    "test_delete_notebook": {
+      "duration_seconds": 9.52926729992032,
+      "message_count": 4,
+      "total_tokens": 82251,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 1,
+        "response_structure": 1,
+        "clarity_response": 0.9,
+        "enthusiasm_response": 0.8,
+        "logical_coherence": 1.0
+      },
+      "timestamp": "2026-07-04T19:57:53.430036"
+    },
+    "test_get_notebooks": {
+      "duration_seconds": 10.553672099951655,
+      "message_count": 4,
+      "total_tokens": 82406,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 1,
+        "response_structure": 1,
+        "clarity_response": 0.9,
+        "enthusiasm_response": 0.8,
+        "logical_coherence": 1.0
+      },
+      "timestamp": "2026-07-04T19:58:24.215919"
+    },
+    "test_get_notebook_explorer_list_by_notebook_id": {
+      "duration_seconds": 9.455688299960457,
+      "message_count": 4,
+      "total_tokens": 82294,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 1,
+        "response_structure": 1,
+        "clarity_response": 0.9,
+        "enthusiasm_response": 0.8,
+        "logical_coherence": 1.0
+      },
+      "timestamp": "2026-07-04T19:58:55.880357"
+    },
+    "test_get_rows_dataset_by_notebook_id": {
+      "duration_seconds": 15.115223299944773,
+      "message_count": 4,
+      "total_tokens": 82846,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 1,
+        "response_structure": 1,
+        "clarity_response": 0.9,
+        "enthusiasm_response": 0.8,
+        "logical_coherence": 1.0
+      },
+      "timestamp": "2026-07-04T19:59:31.329895"
+    },
+    "test_get_notebook_converters_list_by_notebook_id": {
+      "duration_seconds": 10.978478199918754,
+      "message_count": 4,
+      "total_tokens": 82304,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 1,
+        "response_structure": 1,
+        "clarity_response": 0.9,
+        "enthusiasm_response": 0.8,
+        "logical_coherence": 0.95
+      },
+      "timestamp": "2026-07-04T20:00:03.218321"
+    }
+  }
+}

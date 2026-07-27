@@ -90,6 +90,12 @@ import pluginsZH from "./locales/zh/plugins.json";
 import generativeTourZH from "./locales/zh/generativeTour.json";
 import hubZH from "./locales/zh/hub.json";
 
+import agentEN from "./locales/en/agent.json";
+import agentES from "./locales/es/agent.json";
+
+import chatsidebarEN from "./locales/en/chatsidebar.json";
+import chatsidebarES from "./locales/es/chatsidebar.json";
+
 // the translations
 // (tip move them in a JSON file and import them,
 // or even better, manage them separated from your code: https://react.i18next.com/guides/multiple-translation-files)
@@ -105,6 +111,7 @@ const resources = {
     datasets: datasetsEN,
     prediction: predictionEN,
     plugins: pluginsEN,
+    agent: agentEN,
     home: homeEN,
     homeTour: homeTourEN,
     datasetsTour: datasetsTourEN,
@@ -112,6 +119,7 @@ const resources = {
     modelsTour: modelsTourEN,
     modelsSessionTour: modelsSessionTourEN,
     generativeTour: generativeTourEN,
+    chatsidebar: chatsidebarEN,
     hub: hubEN,
   },
   es: {
@@ -125,6 +133,7 @@ const resources = {
     datasets: datasetsES,
     prediction: predictionES,
     plugins: pluginsES,
+    agent: agentES,
     home: homeES,
     homeTour: homeTourES,
     datasetsTour: datasetsTourES,
@@ -132,6 +141,7 @@ const resources = {
     modelsTour: modelsTourES,
     modelsSessionTour: modelsSessionTourES,
     generativeTour: generativeTourES,
+    chatsidebar: chatsidebarES,
     hub: hubES,
   },
   pt: {
@@ -220,7 +230,9 @@ i18n
       "modelsTour",
       "modelsSessionTour",
       "plugins",
+      "agent",
       "generativeTour",
+      "chatsidebar",
       "hub",
     ],
     defaultNS: "common",

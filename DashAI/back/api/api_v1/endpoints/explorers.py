@@ -203,7 +203,6 @@ async def create_explorer(
         validate_explorer_params(
             session=db, component_registry=component_registry, explorer=explorer
         )
-
         db.add(explorer)
         db.commit()
         db.refresh(explorer)

@@ -61,6 +61,7 @@ def create_notebook(
     db: "Session"
 
     with session_factory() as db:
+        print("los parámetros con los que se está creando el notebook:", params)
         try:
             dataset_id = params.dataset_id
             # Get the dataset

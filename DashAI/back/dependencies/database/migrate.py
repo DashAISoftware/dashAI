@@ -64,3 +64,13 @@ def migrate_on_startup(sqlite_file_path: Path) -> None:
             )
             raise backup_exc from exc
         raise exc
+    try:
+        from langgraph.checkpoint.sqlite import SqliteSaver
+
+        with SqliteSaver.from_conn_string(str(sqlite_file_path)) as checkpointer:
+            checkpointer.setup()
+            logger.info(
+                "SqliteSaver checkpointer tables ensured by migrate_on_startup."
+            )
+    except Exception as e:
+        logger.exception("Failed to ensure SqliteSaver tables: %s", e)

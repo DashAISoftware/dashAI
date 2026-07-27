@@ -12,11 +12,15 @@ import ResponsiveAppBar from "./components/ResponsiveAppBar";
 import PluginsPage from "./pages/plugins/Plugins";
 import PipelinesPage from "./pages/pipelines/Pipelines";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
+import AgentPage from "./pages/agent/Agent";
 import Generative from "./pages/generative/Generative";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import HubContent from "./pages/hub/HubContent";
 import HubImportPage from "./pages/hub/HubImportPage";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
+import { ChatSidebarProvider } from "./components/chatSidebar/ChatSidebarContext";
+import FloatingChatBubble from "./components/chatSidebar/FloatingChatBubble";
+import ChatSidebar from "./components/chatSidebar/ChatSidebar";
 import { DatasetsAndNotebooksProvider } from "./components/custom/contexts/DatasetsAndNotebooksContext";
 
 function DataSectionLayout() {
@@ -81,7 +85,13 @@ function App() {
               <Route path="details/:id" element={<PluginsDetails />} />
             </Route>
           </Route>
+          <Route path="/app/agent" element={<AgentPage />} />
         </Routes>
+
+        <ChatSidebarProvider>
+          <FloatingChatBubble />
+          <ChatSidebar />
+        </ChatSidebarProvider>
         <JobQueueWidget />
       </BrowserRouter>
     </TourRegistryProvider>

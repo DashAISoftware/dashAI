@@ -101,6 +101,7 @@ from DashAI.back.exploration.explorers.row_explorer import RowExplorer
 from DashAI.back.exploration.explorers.scatter_matrix import ScatterMatrixExplorer
 from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
+from DashAI.back.job.agentic_job import AgenticJob
 
 # Jobs
 from DashAI.back.job.converter_job import ConverterJob
@@ -131,10 +132,14 @@ from DashAI.back.metrics.regression.rmse import RMSE
 from DashAI.back.metrics.translation.bleu import Bleu
 from DashAI.back.metrics.translation.chrf import Chrf
 from DashAI.back.metrics.translation.ter import Ter
+from DashAI.back.models.agentic_model import AgenticModel
 from DashAI.back.models.cnn_image_classifier import CNNImageClassifier
 from DashAI.back.models.efficientnet_b0_image_classifier import (
     EfficientNetB0ImageClassifier,
 )
+from DashAI.back.models.gpt4omini_agent import Gpt4oMiniAgent
+from DashAI.back.models.gpt5_agent import Gpt5Agent
+from DashAI.back.models.gpt5mini_agent import Gpt5MiniAgent
 
 # Models
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
@@ -279,6 +284,7 @@ from DashAI.back.pipeline.train_node import Train
 
 # Plugins
 from DashAI.back.plugins.utils import get_available_plugins
+from DashAI.back.tasks.agent_task import AgentTask
 
 # Tasks
 from DashAI.back.tasks.controlnet_task import ControlNetTask
@@ -305,6 +311,7 @@ def get_initial_components():
         Lista de todas las clases de componentes disponibles
     """
     # Componentes básicos que siempre deben estar disponibles
+
     basic_components = [
         # Tasks
         TabularClassificationTask,
@@ -314,6 +321,7 @@ def get_initial_components():
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
+        AgentTask,
         ImageClassificationTask,
         # Models
         AdaBoostClassifier,
@@ -340,6 +348,11 @@ def get_initial_components():
         HistGradientBoostingClassifier,
         HistGradientBoostingRegression,
         KNeighborsClassifier,
+        AgenticModel,
+        Gpt4oMiniAgent,
+        Gpt5MiniAgent,
+        Gpt5Agent,
+        QwenModel,
         KNeighborsRegression,
         LassoRegression,
         LinearRegression,
@@ -432,6 +445,7 @@ def get_initial_components():
         ConverterJob,
         DatasetJob,
         GenerativeJob,
+        AgenticJob,
         PipelineJob,
         # Explainers
         KernelShap,
@@ -487,14 +501,14 @@ def get_initial_components():
         SelectFdr,
         SelectFwe,
         Nystroem,
+        SMOTEConverter,
+        SMOTEENNConverter,
+        RandomUnderSamplerConverter,
         DataSelector,
         DataExploration,
         Train,
         RetrieveModel,
         Prediction,
-        SMOTEConverter,
-        SMOTEENNConverter,
-        RandomUnderSamplerConverter,
     ]
 
     # Obtener plugins instalados

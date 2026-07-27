@@ -10,6 +10,7 @@ from streaming_form_data.targets import FileTarget, ValueTarget
 from streaming_form_data.validators import MaxSizeValidator
 
 from DashAI.back.dependencies.job_queues.base_job_queue import JobQueueError
+from DashAI.back.job.agentic_job import AgenticJob
 from DashAI.back.job.base_job import JobError
 
 if TYPE_CHECKING:
@@ -169,6 +170,49 @@ async def get_job_details(
         ) from e
 
 
+@router.post("/agentic/", status_code=status.HTTP_201_CREATED)
+@inject
+async def enqueue_agentic_job(
+    request: Request,
+    job_queue: "BaseJobQueue" = Depends(lambda: di["agent_job_queue"]),
+):
+    try:
+        logger.debug("Starting agentic job enqueue process")
+        params = await request.json()
+        process_id = params.get("agentic_process_id")
+        configuration_id = params.get("configuration_id")
+        if process_id is None or configuration_id is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Missing agentic_process_id or configuration_id",
+            )
+
+        agentic_job = AgenticJob(
+            agentic_process_id=process_id,
+            configuration_id=configuration_id,
+        )
+
+        try:
+            agentic_job.set_status_as_delivered()
+        except JobError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Job not delivered",
+            ) from e
+
+        job_id = job_queue.put(agentic_job).id
+        return {"id": job_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.exception(f"Uncaught error in enqueue_job: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        ) from e
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def enqueue_job(
@@ -218,14 +262,16 @@ async def enqueue_job(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail="Missing job_type or kwargs",
                 )
-
             kwargs = json.loads(kwargs_str)
+            print("Estos son los argumentos previo al update son: ", kwargs)
             kwargs.update(
                 file_path=file_path,
                 temp_dir=temp_dir,
                 filename=filename,
                 n_sample=n_sample,
             )
+            print("este es el file_path ", file_path)
+            print("Este es el filename", filename)
 
         # parse regular form data
         else:
@@ -240,6 +286,8 @@ async def enqueue_job(
                 )
 
             kwargs = json.loads(kwargs_str)
+            print("Estos son los kwargs ", kwargs)
+            print("Este es el job_type", job_type)
 
             # Handle image files for manual predictions
             import re
@@ -270,10 +318,12 @@ async def enqueue_job(
         # instantiate job with only primitive args
         JobClass = component_registry[job_type]["class"]
         job = JobClass(**kwargs)
+        print("Punto control 00")
 
         # mark delivered
         try:
             job.set_status_as_delivered()
+            print("Punto control 01")
         except JobError as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -283,6 +333,7 @@ async def enqueue_job(
         # enqueue
         try:
             job_id = job_queue.put(job).id
+            print("Punto control 02")
             return {"id": job_id}
         except JobQueueError as e:
             raise HTTPException(

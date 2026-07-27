@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from DashAI.back.api.api_v1.endpoints.agent import router as agent
 from DashAI.back.api.api_v1.endpoints.components import router as components
 from DashAI.back.api.api_v1.endpoints.converters import router as converters
 from DashAI.back.api.api_v1.endpoints.datafile import router as datafile_router
@@ -26,6 +27,7 @@ from DashAI.back.api.api_v1.endpoints.runs import router as runs
 from DashAI.back.api.api_v1.endpoints.scoring import router as scoring
 
 api_router_v1 = APIRouter()
+api_router_v1.include_router(agent, prefix="/agent")
 api_router_v1.include_router(converters, prefix="/converter")
 api_router_v1.include_router(components, prefix="/component")
 api_router_v1.include_router(datasets, prefix="/dataset")

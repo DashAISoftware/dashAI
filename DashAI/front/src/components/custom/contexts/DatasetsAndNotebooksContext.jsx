@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../../hooks/datasets/useDatasets";
@@ -75,6 +75,24 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
 
   useEffect(() => {
     fetchNotebooks();
+  }, []);
+
+  const fetchDatasetsRef = useRef(fetchDatasets);
+  const fetchNotebooksRef = useRef(fetchNotebooks);
+  useEffect(() => {
+    fetchDatasetsRef.current = fetchDatasets;
+  }, [fetchDatasets]);
+  useEffect(() => {
+    fetchNotebooksRef.current = fetchNotebooks;
+  }, [fetchNotebooks]);
+
+  useEffect(() => {
+    const handler = () => {
+      fetchDatasetsRef.current();
+      fetchNotebooksRef.current();
+    };
+    window.addEventListener("dashai-refresh", handler);
+    return () => window.removeEventListener("dashai-refresh", handler);
   }, []);
 
   const value = {

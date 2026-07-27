@@ -221,6 +221,8 @@ async def create_model_session(
                     detail="Column index out of range",
                 )
 
+            print("Estos son los params", params)
+
             model_session = ModelSession(
                 dataset_id=params.dataset_id,
                 task_name=params.task_name,

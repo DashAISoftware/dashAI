@@ -1,0 +1,52 @@
+{
+  "button": {
+    "newConversation": "New Conversation",
+    "newConfiguration": "New Configuration",
+    "saveConfiguration": "Save configuration",
+    "deselectAll": "Deselect all tools",
+    "selectAll": "Select all tools"
+  },
+  "label": {
+    "confirmDeleteConversation": "Are you sure you want to delete the conversation '{{name}}'? This action cannot be undone.",
+    "searchConversations": "Search conversations",
+    "conversations": "Conversations",
+    "conversationsModule": "Conversations",
+    "typeYourMessage": "Type a message",
+    "configurationTitle": "Configuration parameters",
+    "availableConfigurations": "Available configurations",
+    "searchConfigurations": "Search configurations",
+    "configurations": "Configurations",
+    "configurationName": "Configuration name",
+    "configurationDescription": "Configuration description",
+    "familyModel": "Model family",
+    "modelName": "Model name",
+    "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to leave without saving?",
+    "unsavedChangesTitle": "Unsaved changes",
+    "agentModality": "Agent Modality"
+  },
+  "prompt": {
+    "renameConversation": "New conversation name",
+    "newConversation": "New Conversation"
+  },
+  "message": {
+    "updateTitleConversationSuccess": "Conversation title updated successfully",
+    "deleteConversationSuccess": "Conversation deleted successfully",
+    "configurationSaved": "Configuration saved successfully",
+    "deleteConfigurationSuccess": "Configuration deleted successfully",
+    "configurationUpdated": "Configuration updated successfully",
+    "agentDescription1": "The agent acts directly on the platform to save time and accelerate progress: it uploads and analyzes datasets, creates notebooks, applies transformations and visualizations, and trains, validates and tests models for classification, regression, text and translation, including hyperparameter optimization when applicable. It automates and chains preprocessing steps (imputation, scaling, encoding, feature selection) to deliver reproducible pipelines ready for decision-making. The agent interprets metrics and technical outputs and translates them into concrete, prioritized recommendations to improve model performance or data quality. Because it can execute complete workflows and provide actionable next steps, using the agent from the start speeds up results and reduces manual effort.",
+    "agentDescription2": "The agent adapts explanations to the user’s level and teaches concepts step by step so learning happens while work progresses. It detects common data issues (missing values, outliers, ID-like columns, class imbalance) and proposes practical fixes that can be applied immediately. The agent also helps compare experiments, generate visuals and export results for sharing with the team, and can guide the user to upload a dataset and present a concrete plan of action.",
+    "dontShowAgain": "Don't show this again"
+  },
+  "error": {
+    "conversationNameExists": "A conversation with this name already exists",
+    "conversationNameEmpty": "Conversation name cannot be empty",
+    "failedToUpdateConversationTitle": "Failed to update conversation title",
+    "failedToDeleteConversation": "Failed to delete conversation",
+    "fetchMessages": "Failed to fetch messages",
+    "sendMessage": "Failed to send message",
+    "processError": "An error occurred during the process",
+    "configurationRequired": "Select a configuration before sending a message"
+
+  }
+}

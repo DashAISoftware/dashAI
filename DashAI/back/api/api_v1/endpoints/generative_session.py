@@ -257,6 +257,19 @@ async def delete_generative_session(
                     detail=f"Generative session {session_id} does not exist in DB.",
                 )
 
+            try:
+                if session.task_name == "TextToTextGenerationTask":
+                    from langgraph.checkpoint.sqlite import SqliteSaver
+
+                    config = di["config"]
+                    with SqliteSaver.from_conn_string(
+                        str(config["SQLITE_DB_PATH"])
+                    ) as checkpointer:
+                        checkpointer.delete_thread(str(session_id))
+
+            except Exception:
+                log.exception("Error while attempting to remove checkpointer thread")
+
             # Delete all the processes associated with the session
             processes = (
                 db.query(GenerativeProcess)

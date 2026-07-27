@@ -424,6 +424,109 @@ class LocalExplainer(Base):
         self.status = ExplainerStatus.ERROR
 
 
+class AgenticConversations(Base):
+    __tablename__ = "agentic_conversations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str] = mapped_column(String, nullable=True)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+
+    processes: Mapped[list["AgenticProcess"]] = relationship(
+        "AgenticProcess", cascade="all, delete-orphan", back_populates="conversation"
+    )
+
+
+class AgenticProcess(Base):
+    __tablename__ = "agentic_process"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    conversation_id: Mapped[int] = mapped_column(
+        ForeignKey("agentic_conversations.id", ondelete="CASCADE")
+    )
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    status: Mapped[RunStatus] = mapped_column(
+        Enum(RunStatus), nullable=False, default=RunStatus.NOT_STARTED
+    )
+
+    conversation: Mapped["AgenticConversations"] = relationship(
+        "AgenticConversations", back_populates="processes"
+    )
+
+    input: Mapped[list["AgenticConversationMessages"]] = relationship(
+        "AgenticConversationMessages",
+        primaryjoin=(
+            "and_("
+            "AgenticProcess.id == AgenticConversationMessages.process_id, "
+            "AgenticConversationMessages.is_input == True)"
+        ),
+        lazy="selectin",
+        overlaps="output,process",
+        cascade="all, delete-orphan",
+    )
+    output: Mapped[list["AgenticConversationMessages"]] = relationship(
+        "AgenticConversationMessages",
+        primaryjoin=(
+            "and_("
+            "AgenticProcess.id == AgenticConversationMessages.process_id, "
+            "AgenticConversationMessages.is_input == False)"
+        ),
+        lazy="selectin",
+        overlaps="input,process",
+        cascade="all, delete-orphan",
+    )
+
+    def set_status_as_delivered(self) -> None:
+        self.status = RunStatus.DELIVERED
+
+    def set_status_as_started(self) -> None:
+        self.status = RunStatus.STARTED
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        self.status = RunStatus.FINISHED
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self) -> None:
+        self.status = RunStatus.ERROR
+
+
+class AgenticConversationMessages(Base):
+    __tablename__ = "agentic_conversation_messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    text: Mapped[str] = mapped_column(String, nullable=False)
+    process_id: Mapped[int] = mapped_column(
+        ForeignKey("agentic_process.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    is_input: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    process: Mapped["AgenticProcess"] = relationship(
+        "AgenticProcess", foreign_keys=[process_id], overlaps="input,output"
+    )
+
+
+class AgenticParameters(Base):
+    __tablename__ = "agentic_parameters"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    configuration_name: Mapped[str] = mapped_column(String, nullable=False)
+    configuration_description: Mapped[str] = mapped_column(String, nullable=True)
+    family_model_name: Mapped[str] = mapped_column(String, nullable=False)
+    model_name: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[dict] = mapped_column(JSON, nullable=False)
+    tools: Mapped[dict] = mapped_column(JSON, nullable=False)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime, default=datetime.now, onupdate=datetime.now
+    )
+
+
 class GenerativeProcess(Base):
     __tablename__ = "generative_process"
     """

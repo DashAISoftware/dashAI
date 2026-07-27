@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useRef,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../hooks/datasets/useDatasets";
@@ -107,6 +108,18 @@ export function ModelsProvider({ children }) {
   useEffect(() => {
     fetchTasks();
   }, [i18n.language]);
+
+  const fetchDatasetsRef = useRef(fetchDatasets);
+  const fetchSessionsRef = useRef(fetchSessions);
+
+  useEffect(() => {
+    const handler = () => {
+      fetchDatasetsRef.current();
+      fetchSessionsRef.current();
+    };
+    window.addEventListener("dashai-refresh", handler);
+    return () => window.removeEventListener("dashai-refresh", handler);
+  }, []);
 
   const value = {
     selectedModel,

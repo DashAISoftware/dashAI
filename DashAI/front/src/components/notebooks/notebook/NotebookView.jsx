@@ -167,6 +167,12 @@ export default function NotebookView({ notebook }) {
     fetchExplorersAndConverters();
   }, [fetchExplorersAndConverters]);
 
+  useEffect(() => {
+    const handler = () => fetchExplorersAndConverters();
+    window.addEventListener("dashai-refresh", handler);
+    return () => window.removeEventListener("dashai-refresh", handler);
+  }, [fetchExplorersAndConverters]);
+
   const handleExplorerDeleteClick = useCallback((explorer) => {
     setExplorerToDelete(explorer);
     setDeleteModalContent(

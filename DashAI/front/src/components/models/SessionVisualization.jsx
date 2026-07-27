@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -214,6 +214,16 @@ export default function SessionVisualization() {
         setTableHeight(clampedHeight);
       }
     }
+  }, []);
+
+  const fetchRunsRef = useRef(fetchRuns);
+
+  useEffect(() => {
+    const handler = () => {
+      fetchRunsRef.current();
+    };
+    window.addEventListener("dashai-refresh", handler);
+    return () => window.removeEventListener("dashai-refresh", handler);
   }, []);
 
   const handleMouseUp = React.useCallback(() => {

@@ -1,0 +1,11 @@
+{
+    "emptyConfigurations": "No configurations available. Configure the agent to use it.",
+    "emptyConversations": "No conversations available. Create a new conversation to use the agent.",
+    "configurations": "Configurations",
+    "conversations": "Conversations",
+    "navigateConfigurationButton": "Configure agent",
+    "navigateConversationButton": "Create conversation",
+    "emptyConversation": "Send a message to start the conversation",
+    "typeYourMessage": "Type a message",
+    "bubbleChat": "Agentic chat"
+}

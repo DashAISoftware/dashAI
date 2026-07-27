@@ -5,6 +5,7 @@ import NumberInput from "../configurableObject/Inputs/NumberInput";
 import SelectInput from "../configurableObject/Inputs/SelectInput";
 import TextInput from "../configurableObject/Inputs/TextInput";
 import ArrayInput from "../configurableObject/Inputs/ArrayInput";
+import MultiSelectInput from "../configurableObject/Inputs/MultiSelectInput";
 import PropTypes from "prop-types";
 
 /**
@@ -57,6 +58,15 @@ function FormSchemaField({ objName, paramJsonSchema, field, error }) {
     case "boolean":
       return <BooleanInput {...commonProps} />;
     case "array":
+      if (paramJsonSchema.items?.enum) {
+        return (
+          <MultiSelectInput
+            {...commonProps}
+            options={paramJsonSchema.items.enum}
+            optionNames={paramJsonSchema.enumNames}
+          />
+        );
+      }
       return (
         <ArrayInput
           {...commonProps}

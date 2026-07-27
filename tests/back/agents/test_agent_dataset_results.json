@@ -1,0 +1,54 @@
+{
+  "gpt-4o-mini": {
+    "test_upload_dataset_csv": {
+      "duration_seconds": 39.246938699972816,
+      "message_count": 4,
+      "total_tokens": 82572,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 1,
+        "response_structure": 1,
+        "clarity_response": 0.9,
+        "enthusiasm_response": 0.8,
+        "logical_coherence": 1.0
+      },
+      "timestamp": "2026-07-04T19:55:25.637312"
+    },
+    "test_upload_dataset_excel": {
+      "duration_seconds": 39.194734500022605,
+      "message_count": 4,
+      "total_tokens": 82603,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.3,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T18:44:17.982596"
+    }
+  }
+}

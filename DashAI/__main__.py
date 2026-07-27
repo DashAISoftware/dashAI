@@ -85,6 +85,32 @@ def _start_huey_thread() -> threading.Thread:
         "0.1",
         "--backoff",
         "1",
+        "-w",
+        "1",
+    ]
+
+    t = threading.Thread(target=consumer_main, daemon=True)
+    t.start()
+    return t
+
+
+def _start_agentic_huey_thread() -> threading.Thread:
+    from huey.bin.huey_consumer import consumer_main
+
+    def dummy_signal(signalnum, handler):
+        return None
+
+    signal.signal = dummy_signal
+
+    sys.argv = [
+        "huey_consumer",
+        "DashAI.back.dependencies.job_queues.huey_job_queue.agent_huey",
+        "--delay",
+        "0.1",
+        "--backoff",
+        "1",
+        "-w",
+        "1",
     ]
 
     t = threading.Thread(target=consumer_main, daemon=True)
@@ -286,6 +312,8 @@ def main(
         logger.info("Running inside a bundled launcher (PyInstaller/AppImage).")
         _start_huey_thread()
         logger.info("Started embedded Huey consumer (thread).")
+        _start_agentic_huey_thread()
+        logger.info("Started embedded Agentic Huey consumer (thread).")
     else:
         logger.info("Running in development mode.")
 
@@ -298,9 +326,27 @@ def main(
             "0.1",
             "--backoff",
             "1",
+            "-w",
+            "1",
         ]
         huey_process = subprocess.Popen(huey_cmd, env=child_env)
         logger.info(f"Started external Huey consumer (PID: {huey_process.pid})")
+        agentic_huey_cmd = [
+            sys.executable,
+            "-m",
+            "huey.bin.huey_consumer",
+            "DashAI.back.dependencies.job_queues.huey_job_queue.agent_huey",
+            "--delay",
+            "0.1",
+            "--backoff",
+            "1",
+            "-w",
+            "1",
+        ]
+        agentic_huey_process = subprocess.Popen(agentic_huey_cmd, env=child_env)
+        logger.info(
+            f"Started external Agentic Huey consumer (PID: {agentic_huey_process.pid})"
+        )
 
     try:
         if webview:
@@ -332,6 +378,13 @@ def main(
             with suppress(Exception):
                 huey_process.terminate()
                 huey_process.wait(timeout=5)
+        if agentic_huey_process:
+            logger.info(
+                f"Terminating Agentic Huey consumer (PID: {agentic_huey_process.pid})"
+            )
+            with suppress(Exception):
+                agentic_huey_process.terminate()
+                agentic_huey_process.wait(timeout=5)
 
 
 def run():

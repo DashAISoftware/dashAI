@@ -152,7 +152,9 @@ class GenerativeJob(BaseJob):
                         "class"
                     ]
                     params = generative_session.parameters
-                    model: BaseGenerativeModel = model_class(**params)
+                    model: BaseGenerativeModel = model_class(
+                        **{**params, "session_id": generative_session.id}
+                    )
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()

@@ -1,0 +1,404 @@
+{
+  "gpt-4o-mini": {
+    "test_get_explorers": {
+      "duration_seconds": 23.78293190000113,
+      "message_count": 4,
+      "total_tokens": 89747,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:34:52.105973"
+    },
+    "test_get_explorer_results_by_explorer_id": {
+      "duration_seconds": 9.56858750001993,
+      "message_count": 4,
+      "total_tokens": 82277,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.2,
+        "enthusiasm_response": 0.1,
+        "logical_coherence": 0.3
+      },
+      "timestamp": "2026-07-05T16:36:04.387435"
+    },
+    "test_create_correlation_matrix": {
+      "duration_seconds": 17.276254800031893,
+      "message_count": 6,
+      "total_tokens": 123700,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 1,
+        "response_structure": 1,
+        "clarity_response": 0.9,
+        "enthusiasm_response": 0.8,
+        "logical_coherence": 0.95
+      },
+      "timestamp": "2026-07-05T19:06:35.246027"
+    },
+    "test_create_covariance_matrix": {
+      "duration_seconds": 57.86538979993202,
+      "message_count": 14,
+      "total_tokens": 292868,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:38:26.342865"
+    },
+    "test_create_multi_column_box_plot": {
+      "duration_seconds": 46.830830799997784,
+      "message_count": 12,
+      "total_tokens": 253948,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:39:30.697050"
+    },
+    "test_create_parallel_categories": {
+      "duration_seconds": 45.51538200001232,
+      "message_count": 12,
+      "total_tokens": 260036,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:40:33.911356"
+    },
+    "test_create_parallel_coordinates": {
+      "duration_seconds": 61.44310230005067,
+      "message_count": 14,
+      "total_tokens": 307078,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:41:53.162144"
+    },
+    "test_create_box_plot": {
+      "duration_seconds": 29.370518199983053,
+      "message_count": 6,
+      "total_tokens": 124078,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:42:40.145904"
+    },
+    "test_create_ecdf_plot": {
+      "duration_seconds": 60.49890839995351,
+      "message_count": 10,
+      "total_tokens": 220071,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.3,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:43:58.970101"
+    },
+    "test_create_histogram": {
+      "duration_seconds": 6.603853299980983,
+      "message_count": 2,
+      "total_tokens": 41082,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:44:23.885407"
+    },
+    "test_create_wordcloud": {
+      "duration_seconds": 57.176976799964905,
+      "message_count": 12,
+      "total_tokens": 270724,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:45:47.869033"
+    },
+    "test_create_scatter_plot": {
+      "duration_seconds": 3.352964600082487,
+      "message_count": 2,
+      "total_tokens": 41087,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.3,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:46:09.429120"
+    },
+    "test_create_density_heatmap": {
+      "duration_seconds": 46.880511400057,
+      "message_count": 12,
+      "total_tokens": 260239,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:47:16.541188"
+    },
+    "test_create_scatter_matrix": {
+      "duration_seconds": 66.65902069990989,
+      "message_count": 14,
+      "total_tokens": 321077,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:48:40.615577"
+    },
+    "test_create_describe_dataset": {
+      "duration_seconds": 55.52694120001979,
+      "message_count": 14,
+      "total_tokens": 296795,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.5,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.3
+      },
+      "timestamp": "2026-07-05T16:49:55.591665"
+    },
+    "test_create_row_explorer": {
+      "duration_seconds": 27.23810489999596,
+      "message_count": 6,
+      "total_tokens": 134179,
+      "result_tool_calling_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": true,
+        "comment": null,
+        "metadata": null
+      },
+      "result_tool_args_evaluator": {
+        "key": "trajectory_superset_match",
+        "score": false,
+        "comment": null,
+        "metadata": null
+      },
+      "result_llm_evaluator": {
+        "request_fulfillment_text": 0,
+        "response_structure": 0,
+        "clarity_response": 0.3,
+        "enthusiasm_response": 0.2,
+        "logical_coherence": 0.4
+      },
+      "timestamp": "2026-07-05T16:50:40.369489"
+    }
+  }
+}

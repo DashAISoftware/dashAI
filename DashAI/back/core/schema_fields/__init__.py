@@ -1,5 +1,7 @@
 # flake8: noqa
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.schema_fields.agent_schema import AgentSchema
+from DashAI.back.core.schema_fields.openAI_api_schema import OpenAIAPISchema
 from DashAI.back.core.schema_fields.bool_field import bool_field
 from DashAI.back.core.schema_fields.component_field import component_field
 from DashAI.back.core.schema_fields.enum_field import enum_field

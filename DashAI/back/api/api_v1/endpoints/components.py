@@ -58,13 +58,24 @@ def _filter_by_language(
     # Extract just the language code (e.g., 'en' from 'en-US')
     lang_code = language.split("-")[0].lower() if language else "en"
 
+    # Language codes used in the project for detecting serialized
+    # MultilingualString dicts produced by Pydantic's model_json_schema().
+    _KNOWN_LANGS = {"en", "es"}
+
     def process_value(value):
         # If it's a MultilingualString, use its get method
         if isinstance(value, MultilingualString):
             return value.get(lang_code)
 
-        # If it's a dictionary, recursively process it
+        # If it's a dictionary, check if it looks like a serialized
+        # MultilingualString (e.g. {"en": "Hello", "es": "Hola"}).
         elif isinstance(value, dict):
+            if (
+                "en" in value
+                and set(value.keys()) <= _KNOWN_LANGS
+                and all(isinstance(v, str) for v in value.values())
+            ):
+                return value.get(lang_code, value.get("en", ""))
             return {k: process_value(v) for k, v in value.items()}
 
         # If it's a list, recursively process each item
@@ -229,7 +240,6 @@ async def get_components(
             selected_components,
             components_with_related_type,
         )
-
     return [
         _filter_by_language(_delete_class(component_dict), accept_language)
         for component_dict in selected_components.values()

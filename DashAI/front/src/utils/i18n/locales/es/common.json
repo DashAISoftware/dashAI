@@ -93,6 +93,7 @@
   "parameters": "Parámetros",
   "pipelines": "Pipelines",
   "plugins": "Plugins",
+  "agent": "Agente",
   "processing": "Procesando...",
   "remove": "Eliminar",
   "required": "Requerido",

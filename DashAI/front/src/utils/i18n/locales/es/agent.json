@@ -1,0 +1,51 @@
+{
+  "button": {
+    "newConversation": "Nueva conversación",
+    "newConfiguration": "Nueva configuración",
+    "saveConfiguration": "Guardar configuración",
+    "deselectAll": "Deseleccionar todas las herramientas",
+    "selectAll": "Seleccionar todas las herramientas"
+  },
+  "label": {
+    "confirmDeleteConversation": "¿Estás seguro de que deseas eliminar la conversación '{{name}}'? Esta acción no se puede deshacer.",
+    "searchConversations": "Buscar conversaciones",
+    "conversations": "Conversaciones",
+    "conversationsModule": "Conversaciones",
+    "typeYourMessage": "Escribe un mensaje",
+    "configurationTitle": "Parámetros de configuración",
+    "availableConfigurations": "Configuraciones disponibles",
+    "searchConfigurations": "Buscar configuraciones",
+    "configurations": "Configuraciones",
+    "configurationName": "Nombre de la configuración",
+    "configurationDescription": "Descripción de la configuración",
+    "familyModel": "Familia del modelo",
+    "modelName": "Nombre del modelo",
+    "unsavedChangesMessage": "Tienes cambios sin guardar. ¿Estás seguro de que deseas salir sin guardar?",
+    "unsavedChangesTitle": "Cambios sin guardar",
+    "agentModality": "Modalidad agentica"
+  },
+  "prompt": {
+    "renameConversation": "Nuevo nombre de la conversación",
+    "newConversation": "Nueva conversación"
+  },
+  "message": {
+    "updateTitleConversationSuccess": "Título de la conversación actualizado con éxito",
+    "deleteConversationSuccess": "Conversación eliminada con éxito",
+    "configurationSaved": "Configuración guardada con éxito",
+    "deleteConfigurationSuccess": "Configuración eliminada con éxito",
+    "configurationUpdated": "Configuración actualizada con éxito",
+    "agentDescription1": "El agente actúa directamente en la plataforma para ahorrar tiempo y acelerar el progreso: sube y analiza datasets, crea notebooks, aplica transformaciones y visualizaciones, y entrena, valida y prueba modelos de clasificación, regresión, texto y traducción, incluyendo optimización de hiperparámetros cuando procede. Automatiza y encadena pasos de preprocesamiento (imputación, escalado, codificación, selección de características) para entregar pipelines reproducibles listos para la toma de decisiones. El agente interpreta métricas y resultados técnicos y los traduce en recomendaciones concretas y priorizadas para mejorar el desempeño del modelo o la calidad de los datos. Por su capacidad de ejecutar flujos completos y ofrecer pasos accionables, usar el agente desde el inicio acelera los resultados y reduce el esfuerzo manual.",
+    "agentDescription2": "El agente adapta las explicaciones al nivel del usuario y enseña conceptos paso a paso para que el aprendizaje ocurra mientras se avanza en el proyecto. Detecta problemas comunes de datos (valores faltantes, outliers, columnas con aspecto de ID, desbalance de clases) y propone correcciones prácticas que se pueden aplicar de inmediato. El agente también facilita comparar experimentos, generar visuales y exportar resultados para compartir con el equipo, y puede guiar al usuario a subir un dataset y presentar un plan de acción concreto.",
+    "dontShowAgain": "No mostrar esto de nuevo"
+  },
+  "error": {
+    "conversationNameExists": "Ya existe una conversación con este nombre",
+    "conversationNameEmpty": "El nombre de la conversación no puede estar vacío",
+    "failedToUpdateConversationTitle": "Error al actualizar el título de la conversación",
+    "failedToDeleteConversation": "Error al eliminar la conversación",
+    "fetchMessages": "Error al obtener los mensajes",
+    "sendMessage": "Error al enviar el mensaje",
+    "processError": "Ocurrió un error durante el proceso",
+    "configurationRequired": "Selecciona una configuración antes de enviar un mensaje"
+  }
+}
