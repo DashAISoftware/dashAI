@@ -1,17 +1,4 @@
-const getTraceColors = (theme) => [
-  theme.palette.primary.main,
-  theme.palette.secondary.main,
-  ...(theme.palette.chart?.palette || [
-    "#66bb6a",
-    "#42a5f5",
-    "#ff9800",
-    "#ab47bc",
-    "#ef5350",
-    "#26a69a",
-    "#8d6e63",
-    "#78909c",
-  ]),
-];
+import { getTraceColors } from "../../../utils/chartColors";
 
 /**
  * Append one run's bar trace to graphsToView.

@@ -14,24 +14,7 @@ import { getModelSessionById } from "../../api/modelSession";
 import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
 import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import PlotActions from "../shared/PlotActions";
-
-// Same color source as the session results charts (ResultsGraphsPlot /
-// graphsMaking) so a metric's line color stays visually consistent with the
-// rest of the app.
-const getTraceColors = (theme) => [
-  theme.palette.primary.main,
-  theme.palette.secondary.main,
-  ...(theme.palette.chart?.palette || [
-    "#66bb6a",
-    "#42a5f5",
-    "#ff9800",
-    "#ab47bc",
-    "#ef5350",
-    "#26a69a",
-    "#8d6e63",
-    "#78909c",
-  ]),
-];
+import { getTraceColors } from "../../utils/chartColors";
 
 function toFinalValue(value) {
   const resolved = Array.isArray(value)
