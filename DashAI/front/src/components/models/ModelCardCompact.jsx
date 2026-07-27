@@ -9,6 +9,7 @@ import { ModelIcon } from "./model/ModelIcon";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import RunEditDialog from "./RunEditDialog";
 import RunStatusDot from "../shared/RunStatusDot";
+import { useComponentDownloadState } from "./model/ComponentDownloadControl";
 
 /**
  * Compact launcher card for a single run — shows just enough to identify
@@ -34,6 +35,16 @@ function ModelCardCompact({
   const modelDisplayName = model?.display_name || run.model_name;
   const canTrain = run.status === 0 || run.status === 3 || run.status === 4;
   const isRunning = run.status === 1 || run.status === 2;
+
+  // A download-required model must be downloaded before it can be trained —
+  // otherwise clicking Train silently re-triggers a download for a model the
+  // user just deleted. Mirrors the same gate in RunCard.
+  const { downloaded, downloading } = useComponentDownloadState(
+    model || { name: run.model_name },
+  );
+  const modelNotDownloaded =
+    Boolean(model?.metadata?.requires_download) &&
+    !(downloaded && !downloading);
 
   const statusColorKey = getRunStatusColor(run.status);
   const statusMain =
@@ -120,12 +131,22 @@ function ModelCardCompact({
           {canTrain && (
             <Tooltip
               title={
-                run.status === 3 ? t("common:retrain") : t("common:trainVerb")
+                modelNotDownloaded
+                  ? t("common:componentDownload.mustDownload")
+                  : run.status === 3
+                    ? t("common:retrain")
+                    : t("common:trainVerb")
               }
             >
-              <IconButton size="small" onClick={() => onTrain(run)}>
-                <PlayArrow fontSize="small" />
-              </IconButton>
+              <span>
+                <IconButton
+                  size="small"
+                  disabled={modelNotDownloaded}
+                  onClick={() => onTrain(run)}
+                >
+                  <PlayArrow fontSize="small" />
+                </IconButton>
+              </span>
             </Tooltip>
           )}
           <Tooltip title={t("common:edit")}>

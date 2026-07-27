@@ -7,6 +7,7 @@ import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import RunCard from "./RunCard";
 import RunEditDialog from "./RunEditDialog";
 import RunStatusDot from "../shared/RunStatusDot";
+import { useComponentDownloadState } from "./model/ComponentDownloadControl";
 
 /**
  * Full-screen detail view for a single model run: header with the run's
@@ -33,6 +34,16 @@ export default function ModelDetailView({
   const modelDisplayName = model?.display_name || run.model_name;
   const canTrain = run.status === 0 || run.status === 3 || run.status === 4;
   const isRunning = run.status === 1 || run.status === 2;
+
+  // A download-required model must be downloaded before it can be trained —
+  // otherwise clicking Train silently re-triggers a download for a model the
+  // user just deleted. Mirrors the same gate in RunCard.
+  const { downloaded, downloading } = useComponentDownloadState(
+    model || { name: run.model_name },
+  );
+  const modelNotDownloaded =
+    Boolean(model?.metadata?.requires_download) &&
+    !(downloaded && !downloading);
 
   return (
     <Box
@@ -75,14 +86,27 @@ export default function ModelDetailView({
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             {canTrain && (
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={<PlayArrow />}
-                onClick={() => onTrain(run)}
+              <Tooltip
+                title={
+                  modelNotDownloaded
+                    ? t("common:componentDownload.mustDownload")
+                    : ""
+                }
               >
-                {run.status === 3 ? t("common:retrain") : t("common:trainVerb")}
-              </Button>
+                <span>
+                  <Button
+                    variant="contained"
+                    size="small"
+                    disabled={modelNotDownloaded}
+                    startIcon={<PlayArrow />}
+                    onClick={() => onTrain(run)}
+                  >
+                    {run.status === 3
+                      ? t("common:retrain")
+                      : t("common:trainVerb")}
+                  </Button>
+                </span>
+              </Tooltip>
             )}
             <Tooltip title={t("common:edit")}>
               <IconButton size="small" onClick={() => setEditModalOpen(true)}>
