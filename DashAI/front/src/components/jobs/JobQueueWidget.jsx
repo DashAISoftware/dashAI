@@ -12,6 +12,7 @@ import {
   Badge,
   Collapse,
   List,
+  LinearProgress,
   CircularProgress,
   ListItem,
   ListItemButton,
@@ -518,6 +519,7 @@ const JobQueueWidget = () => {
                             <StatusIcon status={job.status} />
                           </ListItemIcon>
                           <ListItemText
+                            secondaryTypographyProps={{ component: "div" }}
                             primary={
                               <Box display="flex" alignItems="center">
                                 <Tooltip title={job.job_name || ""}>
@@ -532,26 +534,54 @@ const JobQueueWidget = () => {
                               </Box>
                             }
                             secondary={
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{ display: "flex", alignItems: "center" }}
-                              >
-                                <span>{getStatusText(job.status, t)}</span>
-                                {job.status === "error" && (
-                                  <Tooltip
-                                    title={
-                                      job.error_msg || t("common:unknownError")
+                              <Box component="span" sx={{ display: "block" }}>
+                                <Typography
+                                  variant="caption"
+                                  component="span"
+                                  color="text.secondary"
+                                  sx={{ display: "flex", alignItems: "center" }}
+                                >
+                                  <span>
+                                    {job.status === "started" &&
+                                    job.progress_message
+                                      ? job.progress_message
+                                      : getStatusText(job.status, t)}
+                                  </span>
+                                  {job.status === "error" && (
+                                    <Tooltip
+                                      title={
+                                        job.error_msg ||
+                                        t("common:unknownError")
+                                      }
+                                    >
+                                      <ErrorIcon
+                                        fontSize="inherit"
+                                        color="error"
+                                        sx={{ ml: 1, fontSize: "1rem" }}
+                                      />
+                                    </Tooltip>
+                                  )}
+                                </Typography>
+                                {job.status === "started" && (
+                                  <LinearProgress
+                                    variant={
+                                      job.progress != null
+                                        ? "determinate"
+                                        : "indeterminate"
                                     }
-                                  >
-                                    <ErrorIcon
-                                      fontSize="inherit"
-                                      color="error"
-                                      sx={{ ml: 1, fontSize: "1rem" }}
-                                    />
-                                  </Tooltip>
+                                    value={
+                                      job.progress != null
+                                        ? job.progress
+                                        : undefined
+                                    }
+                                    sx={{
+                                      mt: 0.5,
+                                      height: 4,
+                                      borderRadius: 1,
+                                    }}
+                                  />
                                 )}
-                              </Typography>
+                              </Box>
                             }
                           />
                         </ListItemButton>

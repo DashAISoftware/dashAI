@@ -3,6 +3,7 @@
   "selectAnItemToShowInfo": "Select an item to see the description.",
   "selectInferenceMethods": "Select the inference methods you want to apply",
   "search": "Search",
+  "modelSize": "Size: {{size}}",
   "noItemsFound": "No components found",
   "tryAdjustingSearch": "Try adjusting your search or filters",
   "componentsAvailable_one": "{{count}} component available",

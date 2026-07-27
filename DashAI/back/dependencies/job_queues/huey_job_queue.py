@@ -78,6 +78,7 @@ class HueyJobQueue(BaseJobQueue):
         )
         self._enable_wal()
         self._ensure_task_copy_table()
+        self._ensure_progress_columns()
         self._register_signals()
 
         @self.huey.task(context=True, priority=0)
@@ -190,7 +191,7 @@ class HueyJobQueue(BaseJobQueue):
         def on_success(signal, task, *args):
             exec_sql(
                 (
-                    "UPDATE task_copy SET status = ?, "
+                    "UPDATE task_copy SET status = ?, progress = 100, "
                     f"last_update = {NOW_MICRO} "
                     "WHERE id = ?"
                 ),
@@ -229,6 +230,8 @@ class HueyJobQueue(BaseJobQueue):
         'deleted', 'error'
         - last_update (DATETIME NOT NULL): defaults to CURRENT_TIMESTAMP (UTC)
         - error_msg (TEXT): optional error message when a task fails
+        - progress (REAL): optional completion percentage in the range 0-100
+        - progress_message (TEXT): optional short description of the current phase
         """
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
@@ -240,7 +243,9 @@ class HueyJobQueue(BaseJobQueue):
                     enqueued_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     status TEXT NOT NULL,
                     last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    error_msg TEXT
+                    error_msg TEXT,
+                    progress REAL,
+                    progress_message TEXT
                 )
                 """
             )
@@ -251,12 +256,29 @@ class HueyJobQueue(BaseJobQueue):
                 )
             )
 
+    def _ensure_progress_columns(self):
+        """Add the progress columns to an existing 'task_copy' table.
+
+        Installs created before progress tracking existed have a 'task_copy'
+        table without the 'progress' and 'progress_message' columns. SQLite has
+        no 'ADD COLUMN IF NOT EXISTS', so inspect the current columns via
+        PRAGMA table_info and add only the ones that are missing.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            cur = conn.execute("PRAGMA table_info(task_copy)")
+            existing = {row[1] for row in cur.fetchall()}
+            if "progress" not in existing:
+                conn.execute("ALTER TABLE task_copy ADD COLUMN progress REAL")
+            if "progress_message" not in existing:
+                conn.execute("ALTER TABLE task_copy ADD COLUMN progress_message TEXT")
+
     def status(self, job_id: str) -> dict:
         conn = sqlite3.connect(self.db_path)
         cur = conn.cursor()
         cur.execute(
             """
-            SELECT status, last_update, error_msg, job_name
+            SELECT status, last_update, error_msg, job_name, progress,
+                   progress_message
             FROM task_copy WHERE id = ?
             """,
             (str(job_id),),
@@ -270,7 +292,39 @@ class HueyJobQueue(BaseJobQueue):
             "updated": row[1],
             "error": row[2],
             "job_name": row[3],
+            "progress": row[4],
+            "progress_message": row[5],
         }
+
+    def report_progress(
+        self, job_id: str, progress: float | None, message: str | None = None
+    ) -> None:
+        """Update the progress of a running job.
+
+        Parameters
+        ----------
+        job_id : str
+            The UUID of the job (its Huey task id).
+        progress : float or None
+            Completion percentage in the range 0-100, or None for jobs whose
+            total work is unknown (the frontend renders an indeterminate bar).
+        message : str or None
+            Optional short description of the current phase.
+
+        Notes
+        -----
+        This also refreshes 'last_update' so the change surfaces through
+        'changes_since' and the frontend polling channel.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                (
+                    "UPDATE task_copy SET progress = ?, progress_message = ?, "
+                    "last_update = STRFTIME('%Y-%m-%d %H:%M:%f','now') "
+                    "WHERE id = ?"
+                ),
+                (progress, message, str(job_id)),
+            )
 
     def put(self, job: BaseJob) -> int:
         result = self._execute(job)
@@ -284,7 +338,7 @@ class HueyJobQueue(BaseJobQueue):
             cur.execute(
                 """
                 SELECT id, task_type, job_name, enqueued_at, status, last_update,
-                       error_msg
+                       error_msg, progress, progress_message
                 FROM task_copy
                 ORDER BY last_update DESC
                 """
@@ -304,7 +358,7 @@ class HueyJobQueue(BaseJobQueue):
             cur.execute(
                 """
                 SELECT id, task_type, job_name, enqueued_at, status, last_update,
-                        error_msg
+                        error_msg, progress, progress_message
                 FROM task_copy
                 WHERE last_update >= ?
                 ORDER BY last_update DESC

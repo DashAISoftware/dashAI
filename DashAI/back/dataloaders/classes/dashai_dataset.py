@@ -264,7 +264,9 @@ class DashAIDataset(Dataset):
         dict
             Dictionary with statistics for each numeric column.
         """
-        numeric_keys = self._get_numeric_columns()
+        numeric_keys = [
+            k for k in self._get_numeric_columns() if k in dataset_df.columns
+        ]
         numeric_cols = dataset_df[numeric_keys]
         numeric_stats = {}
 
@@ -316,7 +318,9 @@ class DashAIDataset(Dataset):
         dict
             Dictionary with statistics for each categorical column.
         """
-        categorical_keys = self._get_categorical_columns()
+        categorical_keys = [
+            k for k in self._get_categorical_columns() if k in dataset_df.columns
+        ]
         categorical_cols = dataset_df[categorical_keys]
         categorical_stats = {}
 
@@ -388,6 +392,9 @@ class DashAIDataset(Dataset):
             Dictionary with quality indicators including completeness,
             constant columns, high cardinality columns, and quality score.
         """
+        if dataset_df.empty:
+            return {}
+
         # Count rows with missing values
         rows_with_any_nan = int(dataset_df.isna().any(axis=1).sum())
         rows_with_multiple_nan = int((dataset_df.isna().sum(axis=1) > 1).sum())
@@ -465,7 +472,9 @@ class DashAIDataset(Dataset):
         dict
             Nested dictionary representing the correlation matrix.
         """
-        numeric_keys = self._get_numeric_columns()
+        numeric_keys = [
+            k for k in self._get_numeric_columns() if k in dataset_df.columns
+        ]
         numeric_cols = dataset_df[numeric_keys]
 
         if numeric_cols.empty:
@@ -508,6 +517,11 @@ class DashAIDataset(Dataset):
         modified_dataset = super().remove_columns(column_names)
         # Update self with modified dataset attributes
         self.__dict__.update(modified_dataset.__dict__)
+
+        # Keep self.types in sync so Arrow metadata stays consistent
+        if self.types is not None:
+            for col in column_names:
+                self.types.pop(col, None)
 
         return self
 

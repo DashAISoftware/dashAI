@@ -3,10 +3,11 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List, Union
 
-from fastapi import APIRouter, Depends, Header, Query, status
+from fastapi import APIRouter, Depends, Header, Query, Response, status
 from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 from kink import di, inject
+from pydantic import BaseModel
 from typing_extensions import Annotated
 
 from DashAI.back.core.utils import MultilingualString
@@ -240,9 +241,197 @@ async def get_components(
             selected_components,
             components_with_related_type,
         )
+
+    # Reconcile the download state of download required components against the
+    # filesystem before returning. Downloads happen in the worker process, so
+    # the in memory registry flag can be stale; a fresh check (a cheap folder
+    # stat per downloadable component) keeps the list truthful.
+    for comp_name, component_dict in selected_components.items():
+        if getattr(component_dict.get("class"), "REQUIRES_DOWNLOAD", False):
+            component_registry.refresh_download_status(comp_name)
+
     return [
         _filter_by_language(_delete_class(component_dict), accept_language)
         for component_dict in selected_components.values()
+    ]
+
+
+@router.get("/{name}/download")
+@inject
+async def get_component_download_status(
+    name: str,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """Return the reconciled download status of a component.
+
+    Parameters
+    ----------
+    name : str
+        The component class name.
+
+    Returns
+    -------
+    dict
+        ``{"downloaded": bool, "requires_download": bool}``.
+    """
+    try:
+        component_class = component_registry[name]["class"]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    requires = bool(getattr(component_class, "REQUIRES_DOWNLOAD", False))
+    downloaded = component_registry.refresh_download_status(name)
+    return {"downloaded": downloaded, "requires_download": requires}
+
+
+@router.post("/{name}/download", status_code=status.HTTP_201_CREATED)
+@inject
+async def download_component(
+    name: str,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    job_queue=Depends(lambda: di["job_queue"]),
+):
+    """Enqueue a job to download the component's artifacts.
+
+    Parameters
+    ----------
+    name : str
+        The component class name.
+
+    Returns
+    -------
+    dict
+        ``{"id": job_id}`` of the enqueued download job.
+
+    Raises
+    ------
+    HTTPException
+        404 if unknown; 409 if not downloadable or already downloaded.
+    """
+    from DashAI.back.job.component_download_job import ComponentDownloadJob
+
+    try:
+        component_class = component_registry[name]["class"]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    if not getattr(component_class, "REQUIRES_DOWNLOAD", False):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Component {name} does not require a download",
+        )
+    if component_registry.refresh_download_status(name):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Component {name} is already downloaded",
+        )
+    job = ComponentDownloadJob(component_name=name)
+    job.set_status_as_delivered()
+    job_id = job_queue.put(job).id
+    return {"id": job_id}
+
+
+@router.delete("/{name}/download", status_code=status.HTTP_204_NO_CONTENT)
+@inject
+async def delete_component_download(
+    name: str,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """Delete a component's downloaded artifacts and reconcile its status.
+
+    Parameters
+    ----------
+    name : str
+        The component class name.
+    """
+    try:
+        component_class = component_registry[name]["class"]
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    if not getattr(component_class, "REQUIRES_DOWNLOAD", False):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Component {name} does not support download and cannot be deleted",
+        )
+    component_class.delete()
+    component_registry.refresh_download_status(name)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class RequiredDownloadsParams(BaseModel):
+    """Request body for resolving nested download-required components.
+
+    Attributes
+    ----------
+    model_name : str or None
+        The parent component being configured. When set and it still needs a
+        download, it is included in the result so the caller can gate on a
+        single list.
+    parameters : dict
+        The parameters dict as produced by the configuration UI.
+    """
+
+    model_name: Union[str, None] = None
+    parameters: Dict[str, Any] = {}
+
+
+@router.post("/downloads/required")
+@inject
+async def get_required_downloads(
+    params: RequiredDownloadsParams,
+    accept_language: str | None = Header(default=None),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+) -> List[Dict[str, Any]]:
+    """Return the components a configuration still needs downloaded.
+
+    Walks the ``parameters`` dict for nested components (a component selected as
+    another component's parameter) and, optionally, checks the parent
+    ``model_name`` itself. Each component is reconciled against the filesystem so
+    the answer reflects downloads finished after startup.
+
+    Parameters
+    ----------
+    params : RequiredDownloadsParams
+        The parent ``model_name`` (optional) and its ``parameters`` dict.
+    accept_language : str | None
+        The 'Accept-Language' header used to localize display names.
+    component_registry : ComponentRegistry
+        Registry that resolves component classes and download state.
+
+    Returns
+    -------
+    list[dict]
+        One entry per not-yet-downloaded component, each with ``name``,
+        ``display_name``, ``parent``, and ``download_size_bytes``.
+    """
+    from DashAI.back.dependencies.downloads.nested import missing_downloads
+
+    missing = missing_downloads(params.parameters, component_registry)
+
+    # Optionally fold in the parent model so callers can gate on one list.
+    if params.model_name and params.model_name in component_registry:
+        parent_class = component_registry[params.model_name]["class"]
+        if getattr(
+            parent_class, "REQUIRES_DOWNLOAD", False
+        ) and not component_registry.refresh_download_status(params.model_name):
+            missing.insert(
+                0,
+                {
+                    "name": params.model_name,
+                    "parent": None,
+                    "download_size_bytes": getattr(
+                        parent_class, "DOWNLOAD_SIZE_BYTES", None
+                    ),
+                },
+            )
+
+    def _localized_name(name: str) -> str:
+        display = component_registry[name].get("display_name")
+        if isinstance(display, MultilingualString):
+            lang = (accept_language or "en").split("-")[0].lower()
+            return display.get(lang)
+        return display or name
+
+    return [
+        {**entry, "display_name": _localized_name(entry["name"])} for entry in missing
     ]
 
 

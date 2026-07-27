@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, CircularProgress } from "@mui/material";
-import { visualizersKeys } from "../useExplorerResults";
+import { visualizersKeys } from "../../../../utils/artifactVisualizerData";
 import ImageVisualizer from "../visualizations/ImageVisualizer";
 import PlotlyJsonVisualizer from "../visualizations/PlotlyJsonVisualizer";
 import TabularVisualizer from "../visualizations/TabularVisualizer";

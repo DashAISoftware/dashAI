@@ -761,6 +761,10 @@ class GenerativeSessionParameterHistory(Base):
         nullable=False,
     )
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
+    # Model active when this snapshot was taken. Nullable so pre-migration rows
+    # remain valid; the parameters-history derivation only emits a model-change
+    # event when two consecutive snapshots both carry a model name that differs.
+    model_name: Mapped[str] = mapped_column(String, nullable=True)
     modified_at: Mapped[DateTime] = mapped_column(
         DateTime,
         default=datetime.now,

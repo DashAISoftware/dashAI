@@ -107,6 +107,28 @@ class BaseJobQueue(metaclass=ABCMeta):
         """
         raise NotImplementedError
 
+    def report_progress(
+        self,
+        job_id: str,
+        progress: Optional[float],
+        message: Optional[str] = None,
+    ) -> None:
+        """Update the progress of a running job.
+
+        The default implementation is a no-op so queues that do not track
+        progress remain valid. Concrete queues may override it.
+
+        Parameters
+        ----------
+        job_id: str
+            Identifier of the job to update.
+        progress: Optional float
+            Completion percentage in the range 0-100, or None when unknown.
+        message: Optional str
+            Short description of the current phase.
+        """
+        return None
+
 
 class JobQueueError(Exception):
     """Exception raised when a method of the job queue fails."""

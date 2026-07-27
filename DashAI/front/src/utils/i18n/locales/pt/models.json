@@ -179,6 +179,7 @@
     "chartType": "Tipo de gráfico"
   },
   "message": {
+    "skippedUndownloadedRuns": "Execuções cujo modelo não está baixado foram ignoradas. Baixe o modelo primeiro.",
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",
     "confirmDeleteRun": "Tem certeza de que deseja excluir esta execução? Esta ação não pode ser desfeita.",
     "editingParametersWarning": "Ao editar os parâmetros, o estado desta execução será redefinido para 'Não Iniciado'. Todas as métricas e resultados existentes serão perdidos.",
