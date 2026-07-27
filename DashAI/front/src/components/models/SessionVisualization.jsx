@@ -22,7 +22,7 @@ export default function SessionVisualization() {
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [highlightedRunId, setHighlightedRunId] = useState(null);
-  const [metricSplit, setMetricSplit] = useState("test");
+  const [metricSplit, setMetricSplit] = useState("train");
   const { t } = useTranslation(["models", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const sessionTourContext = useTourContext();
@@ -52,6 +52,14 @@ export default function SessionVisualization() {
   const theme = useTheme();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // This component stays mounted across session navigations (same route,
+  // different :sessionId), so metricSplit would otherwise carry over from
+  // whatever split was last viewed in a previous session. Reset to the
+  // default landing split every time the session actually changes.
+  useEffect(() => {
+    setMetricSplit("train");
+  }, [session?.id]);
 
   useEffect(() => {
     const onStart = (e) => {

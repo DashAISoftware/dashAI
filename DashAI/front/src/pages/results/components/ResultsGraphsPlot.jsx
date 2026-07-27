@@ -177,8 +177,14 @@ function ResultsGraphsPlot({ chartData, onToggleRun, sessionId }) {
     .concat(heatmapData.length > 0 ? [HEATMAP_ID] : []);
 
   // Keep the stored order in sync with whatever cards are actually being
-  // shown right now — known cards keep their saved position, newly
-  // selected ones (or ones seen for the first time) are appended at the end.
+  // shown right now — known cards keep their saved (customized) relative
+  // order; newly-seen ones are inserted at the natural position they'd have
+  // had if nothing were customized (i.e. right before whichever known card
+  // naturally comes after them), not always shoved to the very end. Without
+  // this, a heatmap dragged ahead of a single metric would permanently trap
+  // every later-appearing metric behind it, since "appended at the end"
+  // means "after the heatmap" too — which is exactly what made the heatmap's
+  // position look inconsistent across sessions.
   const cardIdsKey = cardIds.join("|");
   useEffect(() => {
     // Skip while chart data is still loading (cards momentarily empty) —
@@ -188,7 +194,13 @@ function ResultsGraphsPlot({ chartData, onToggleRun, sessionId }) {
     setOrder((prev) => {
       const known = prev.filter((id) => cardIds.includes(id));
       const missing = cardIds.filter((id) => !known.includes(id));
-      const next = [...known, ...missing];
+      const naturalIndex = new Map(cardIds.map((id, i) => [id, i]));
+      const next = [...known];
+      missing.forEach((id) => {
+        const idx = naturalIndex.get(id);
+        const insertAt = next.findIndex((k) => naturalIndex.get(k) > idx);
+        next.splice(insertAt === -1 ? next.length : insertAt, 0, id);
+      });
       const unchanged =
         next.length === prev.length && next.every((id, i) => id === prev[i]);
       return unchanged ? prev : next;

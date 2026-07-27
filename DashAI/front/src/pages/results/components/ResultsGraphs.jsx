@@ -20,7 +20,7 @@ function ResultsGraphs({
   const { t } = useTranslation(["models"]);
 
   // Internal split state — used only when no controlled prop is provided
-  const [internalSplit, setInternalSplit] = useState("test");
+  const [internalSplit, setInternalSplit] = useState("train");
   const [selectedMetrics, setSelectedMetrics] = useState([]);
   const [chartData, setChartData] = useState({});
   // { MetricName: { maximize: bool } } — fetched once on mount
@@ -78,13 +78,15 @@ function ResultsGraphs({
     };
   }, [finishedRuns]);
 
-  // Auto-select a split only when running in uncontrolled mode
+  // Auto-select a split only when running in uncontrolled mode. Train is
+  // always the default landing split when entering a session; only fall
+  // back to another split if train genuinely has no metrics to show.
   useEffect(() => {
     if (splitProp !== undefined) return;
-    if (availableMetrics.test.length > 0) setInternalSplit("test");
+    if (availableMetrics.train.length > 0) setInternalSplit("train");
     else if (availableMetrics.validation.length > 0)
       setInternalSplit("validation");
-    else if (availableMetrics.train.length > 0) setInternalSplit("train");
+    else if (availableMetrics.test.length > 0) setInternalSplit("test");
   }, [availableMetrics, splitProp]);
 
   useEffect(() => {
