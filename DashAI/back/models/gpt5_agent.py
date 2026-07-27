@@ -1,7 +1,6 @@
 import sqlite3
 from typing import Any
 
-from dotenv import load_dotenv
 from kink import di
 from langchain.agents import create_agent
 from langchain.agents.middleware import SummarizationMiddleware, ToolRetryMiddleware
@@ -19,7 +18,6 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.agentic_model import AgenticModel
 from DashAI.back.models.Prompts.agent_prompt import SYSTEM_PROMPT
 
-load_dotenv()
 
 
 class Gpt5AgentSchema(BaseSchema, AgentSchema, OpenAIAPISchema):

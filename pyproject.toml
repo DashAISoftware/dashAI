@@ -72,6 +72,16 @@ dependencies = [
     "pywebview",
     "openml",
     "oslo.concurrency",
+    "langchain",
+    "langchain-core",
+    "langchain-openai",
+    "langchain-protocol",
+    "langgraph",
+    "langgraph-checkpoint",
+    "langgraph-checkpoint-sqlite"
+    "langgraph-prebuilt",
+    "langgraph-sdk",
+
 ]
 
 [project.optional-dependencies]

@@ -385,7 +385,6 @@ def get_initial_components():
         Gpt4oMiniAgent,
         Gpt5MiniAgent,
         Gpt5Agent,
-        QwenModel,
         KNeighborsRegression,
         LassoRegression,
         LinearRegression,
