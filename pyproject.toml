@@ -78,7 +78,7 @@ dependencies = [
     "langchain-protocol",
     "langgraph",
     "langgraph-checkpoint",
-    "langgraph-checkpoint-sqlite"
+    "langgraph-checkpoint-sqlite",
     "langgraph-prebuilt",
     "langgraph-sdk",
 
