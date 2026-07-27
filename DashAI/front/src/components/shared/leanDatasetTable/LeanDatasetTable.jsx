@@ -169,9 +169,7 @@ function LeanDatasetTable({
   }, [page, pageSize, filterModel, sortModel, refreshKey, ...deps]);
 
   const allColumnKeys =
-    rows.length > 0
-      ? Object.keys(rows[0]).filter((k) => k !== "id")
-      : Object.keys(columnTypes);
+    rows.length > 0 ? Object.keys(rows[0]) : Object.keys(columnTypes);
 
   const visibleColumnKeys = useMemo(
     () => allColumnKeys.filter((k) => !hiddenColumns.has(k)),
