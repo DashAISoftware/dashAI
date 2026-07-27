@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import React, { useEffect, useMemo, useState } from "react";
-import { Alert, AlertTitle } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
@@ -179,10 +179,11 @@ function ResultsGraphs({
 
   if (finishedRuns.length === 0) {
     return (
-      <Alert severity="warning" sx={{ mb: 4 }}>
-        <AlertTitle>No information from the experiments</AlertTitle>
-        There are no completed experiments or all have an error status.
-      </Alert>
+      <Box sx={{ display: "flex", justifyContent: "center", py: 16 }}>
+        <Typography color="text.secondary">
+          {t("models:label.noCompletedRuns")}
+        </Typography>
+      </Box>
     );
   }
 

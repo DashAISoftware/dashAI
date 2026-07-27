@@ -113,6 +113,7 @@
     "noCompatibleModelsFound": "No compatible models found",
     "noConfigurationAvailable": "No configuration available for this run",
     "dropModelHere": "Drop here to add",
+    "noCompletedRuns": "No completed runs yet",
     "noDatasetPredictionsYet": "No dataset predictions yet",
     "noGlobalExplainersYet": "No global explainers yet",
     "noLocalExplainersYet": "No local explainers yet",
