@@ -62,11 +62,15 @@ function AddModelDialog({
   const { defaultValues: defaultModelParams } = useSchema({
     modelName: open ? selectedModel : null,
   });
+  // Fetched as soon as the dialog opens (not gated on activeStep === 1) so it
+  // has the whole step-1 dwell time to resolve before the user reaches step 2
+  // — otherwise the "Parámetros del Optimizador" section briefly renders
+  // empty right after clicking "Siguiente", shrinking the dialog for a beat.
   const {
     defaultValues: defaultOptimizerParams,
     loading: optimizerSchemaLoading,
   } = useSchema({
-    modelName: open && activeStep === 1 ? selectedOptimizer : null,
+    modelName: open ? selectedOptimizer : null,
   });
 
   const tourContext = useTourContext();

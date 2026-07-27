@@ -41,6 +41,16 @@ function useFormSchema({
     }
   }, [formSubmitRef, formik]);
 
+  // The shared formValues context starts empty on every fresh mount (e.g.
+  // switching wizard steps remounts this hook) and gets seeded from
+  // initialValues/defaultValues here, one render after mount. Exposed so the
+  // onValuesChange effect below can avoid notifying the parent with this
+  // still-empty value before the seed lands.
+  const hasPendingSeed =
+    Object.keys(formValues ?? {}).length === 0 &&
+    ((initialValues && Object.keys(initialValues).length > 0) ||
+      (defaultValues && Object.keys(defaultValues).length > 0));
+
   // Updates the formik schema with the merged initial values if the formValues is empty
   useEffect(() => {
     if (formValues && Object.keys(formValues).length === 0) {
@@ -60,11 +70,16 @@ function useFormSchema({
     }
   }, [formik.errors, setError]);
 
+  // Skip while a seed is pending — the shared context still holds the empty
+  // value from this fresh mount, and notifying now would overwrite the
+  // parent's already-correct saved values with that empty object for a beat
+  // (visible as a flash of schema-default values) before the seed effect
+  // above corrects it.
   useEffect(() => {
-    if (onValuesChange) {
+    if (onValuesChange && !hasPendingSeed) {
       onValuesChange();
     }
-  }, [formik.values]);
+  }, [formik.values, hasPendingSeed]);
 
   const formProps = {
     formik,

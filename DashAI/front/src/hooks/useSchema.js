@@ -8,13 +8,29 @@ import { useTranslation } from "react-i18next";
  * @param {string} modelName - The name of the model to get the schema
  */
 
+// Formatted schemas rarely change mid-session (only a plugin install/restart
+// would alter them), so cache by model name — multiple mounted callers asking
+// for the same model (e.g. a dialog's own prefetch and the form it renders a
+// step later) share one network round trip instead of each re-fetching from
+// scratch, which previously showed an empty form for a beat every time.
+const schemaCache = new Map();
+
 export default function useSchema({ modelName = null } = {}) {
-  const [model, setModel] = useState(null);
+  const [model, setModel] = useState(() =>
+    modelName ? (schemaCache.get(modelName) ?? null) : null,
+  );
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
     let cancelled = false;
+
+    const cached = modelName ? schemaCache.get(modelName) : null;
+    if (cached) {
+      setModel(cached);
+      return undefined;
+    }
+
     setModel(null);
 
     const getModel = async () => {
@@ -23,6 +39,7 @@ export default function useSchema({ modelName = null } = {}) {
         const result = await getComponents({ model: modelName });
         const formattedSchema = await formattedModel(result?.schema);
         if (!cancelled) {
+          schemaCache.set(modelName, formattedSchema);
           setModel(formattedSchema);
         }
       } catch (error) {
