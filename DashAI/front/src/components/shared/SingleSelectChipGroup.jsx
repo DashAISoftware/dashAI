@@ -1,34 +1,57 @@
-import { Chip, Grid } from "@mui/material";
+import { ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import React from "react";
 import PropTypes from "prop-types";
 
 /**
- * This component is a single select chip group
+ * This component is a single select toggle group — the options are rendered
+ * as one connected control (not separate buttons) so it reads as a switch
+ * between mutually exclusive choices, e.g. "Int" vs "Null" for a nullable
+ * field's type.
  * @param {Array} options - The options to display
  * @param {function} onChange - The function to update the selected option
  * @param {string} selected - The selected option
  */
 
 const SingleSelectChipGroup = ({ options, onChange, selected }) => {
-  const handleChipClick = (option) => {
-    onChange(option);
+  const theme = useTheme();
+
+  const handleChange = (event, value) => {
+    if (value !== null) onChange(value);
   };
 
   return (
-    <Grid container spacing={2} role="group" aria-label="type selector">
+    <ToggleButtonGroup
+      value={selected}
+      exclusive
+      onChange={handleChange}
+      size="small"
+      aria-label="type selector"
+      sx={{ bgcolor: theme.palette.ui.box, borderRadius: 1 }}
+    >
       {options.map((option, index) => (
-        <Grid key={"option-" + option.key + "-" + index} size="auto">
-          <Chip
-            label={option.label}
-            sx={{ borderRadius: 2 }}
-            clickable
-            variant={selected === option.key ? "filled" : "outlined"}
-            onClick={() => handleChipClick(option.key)}
-            color={selected === option.key ? "primary" : "default"}
-          />
-        </Grid>
+        <ToggleButton
+          key={"option-" + option.key + "-" + index}
+          value={option.key}
+          sx={{
+            textTransform: "none",
+            px: 3,
+            border: "1px solid transparent",
+            color: "text.secondary",
+            // A soft tint (not a solid fill, which read too much like the
+            // app's primary action buttons) marks the active option.
+            "&.Mui-selected": {
+              bgcolor: "action.selected",
+              color: "primary.main",
+              fontWeight: 600,
+              "&:hover": { bgcolor: "action.selected" },
+            },
+          }}
+        >
+          {option.label}
+        </ToggleButton>
       ))}
-    </Grid>
+    </ToggleButtonGroup>
   );
 };
 
