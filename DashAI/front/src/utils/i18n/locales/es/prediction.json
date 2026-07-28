@@ -1,6 +1,8 @@
 {
   "button": {
-    "deleteSelected": "Eliminar Seleccionadas ({{count}})",
+    "deleteSelected_one": "Eliminar Seleccionada ({{count}})",
+    "deleteSelected_many": "Eliminar Seleccionadas ({{count}})",
+    "deleteSelected_other": "Eliminar Seleccionadas ({{count}})",
     "downloadResults": "Descargar Resultados de Predicción",
     "hideResults": "Ocultar Resultados",
     "runPrediction": "Ejecutar Predicción",
@@ -27,7 +29,9 @@
     "clickToViewOrDelete": "Haga clic en una predicción para ver los detalles o eliminarla usando el icono de eliminar.",
     "configureInput": "Configurar Entrada",
     "confirm": "Confirmar",
-    "confirmBulkDeletion": "¿Está seguro de que desea eliminar las {{count}} predicciones seleccionadas? Esta acción no se puede deshacer.",
+    "confirmBulkDeletion_one": "¿Está seguro de que desea eliminar la predicción seleccionada? Esta acción no se puede deshacer.",
+    "confirmBulkDeletion_many": "¿Está seguro de que desea eliminar las {{count}} predicciones seleccionadas? Esta acción no se puede deshacer.",
+    "confirmBulkDeletion_other": "¿Está seguro de que desea eliminar las {{count}} predicciones seleccionadas? Esta acción no se puede deshacer.",
     "confirmDeletion": "¿Está seguro de que desea eliminar esta predicción? Esta acción no se puede deshacer.",
     "confirmDeletionTitle": "¿Eliminar Predicción?",
     "confirmPrediction": "Confirmar Predicción",
@@ -74,6 +78,8 @@
     "downloadedSuccessfully": "Predicción descargada exitosamente",
     "predictionCompleted": "Predicción completada exitosamente",
     "predictionJobSubmitted": "Trabajo de predicción enviado exitosamente",
-    "predictionsDeleted": "{{count}} predicciones eliminadas correctamente"
+    "predictionsDeleted_one": "{{count}} predicción eliminada correctamente",
+    "predictionsDeleted_many": "{{count}} predicciones eliminadas correctamente",
+    "predictionsDeleted_other": "{{count}} predicciones eliminadas correctamente"
   }
 }

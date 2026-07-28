@@ -9,7 +9,8 @@
     "downloadSvg": "Download as SVG",
     "editPlot": "Edit plot",
     "resetPlot": "Reset edits",
-    "fullscreen": "Fullscreen"
+    "fullscreen": "Fullscreen",
+    "close": "Close"
   },
   "error": {
     "explainerFailed": "Explainer failed to generate.",

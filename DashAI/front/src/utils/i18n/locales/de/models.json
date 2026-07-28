@@ -113,6 +113,7 @@
     "noCompatibleModelsFound": "Keine kompatiblen Modelle gefunden",
     "noConfigurationAvailable": "Keine Konfiguration für diesen Durchlauf verfügbar",
     "dropModelHere": "Hier ablegen zum Hinzufügen",
+    "noCompletedRuns": "Noch keine abgeschlossenen Durchläufe",
     "noDatasetPredictionsYet": "Noch keine Datensatz-Vorhersagen",
     "noGlobalExplainersYet": "Noch keine globalen Erklärungsmodelle",
     "noLocalExplainersYet": "Noch keine lokalen Erklärungsmodelle",

@@ -65,6 +65,7 @@
     "availableExplainers": "Explicadores Disponibles",
     "availableModels": "Modelos Disponibles",
     "modelCount_one": "{{count}} modelo",
+    "modelCount_many": "{{count}} modelos",
     "modelCount_other": "{{count}} modelos",
     "bar": "Barra",
     "heatmap": "Mapa de calor",

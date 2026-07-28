@@ -9,7 +9,8 @@
     "downloadSvg": "下载为 SVG",
     "editPlot": "编辑图表",
     "resetPlot": "重置编辑",
-    "fullscreen": "全屏"
+    "fullscreen": "全屏",
+    "close": "关闭"
   },
   "error": {
     "explainerFailed": "解释器生成失败。",
@@ -63,7 +64,20 @@
     "selectInstance": "选择一个实例",
     "explainerInProgress": "解释器运行中...",
     "splitSelectionSummary": "百分比：{{percentage}}% | 已选行数：{{rowsSelected}} / {{totalRows}}",
-    "searchExplainers": "搜索解释器..."
+    "searchExplainers": "搜索解释器...",
+    "sourceFromDataset": "来自数据集",
+    "sourceManualInput": "手动输入",
+    "enterInstancesManually": "输入要解释的实例",
+    "manualInputDescription": "为每个要解释的实例填写特征值。",
+    "explanationInfo": "解释信息",
+    "inputColumns": "输入列：",
+    "targetColumn": "目标列：",
+    "markRowsToExplain": "标记要解释的行",
+    "rowSelectionMode": "行选择模式",
+    "rowModePercentage": "百分比滑块",
+    "rowModeManual": "手动选择",
+    "shuffleRows": "打乱选中的行（随机抽样）",
+    "rowsSelectedManually": "手动选择的行数：{{selected}} / {{total}}"
   },
   "message": {
     "explainerJobCompleted": "解释器 {{name}} 成功完成",

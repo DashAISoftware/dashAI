@@ -1,6 +1,7 @@
 {
   "button": {
-    "deleteSelected": "Ausgewählte löschen ({{count}})",
+    "deleteSelected_one": "Ausgewählte löschen ({{count}})",
+    "deleteSelected_other": "Ausgewählte löschen ({{count}})",
     "downloadResults": "Vorhersageergebnisse herunterladen",
     "hideResults": "Ergebnisse ausblenden",
     "runPrediction": "Vorhersage ausführen",
@@ -27,7 +28,8 @@
     "clickToViewOrDelete": "Klicken Sie auf eine Vorhersage, um Details anzuzeigen oder sie mit dem Lösch-Symbol zu löschen.",
     "configureInput": "Eingabe konfigurieren",
     "confirm": "Bestätigen",
-    "confirmBulkDeletion": "Möchten Sie die {{count}} ausgewählten Vorhersagen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmBulkDeletion_one": "Möchten Sie die ausgewählte Vorhersage wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmBulkDeletion_other": "Möchten Sie die {{count}} ausgewählten Vorhersagen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "confirmDeletion": "Sind Sie sicher, dass Sie diese Vorhersage löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "confirmDeletionTitle": "Vorhersage löschen?",
     "confirmPrediction": "Vorhersage bestätigen",
@@ -74,6 +76,7 @@
     "downloadedSuccessfully": "Vorhersage erfolgreich heruntergeladen",
     "predictionCompleted": "Vorhersage erfolgreich abgeschlossen",
     "predictionJobSubmitted": "Vorhersage-Job erfolgreich eingereicht",
-    "predictionsDeleted": "{{count}} Vorhersagen erfolgreich gelöscht"
+    "predictionsDeleted_one": "{{count}} Vorhersage erfolgreich gelöscht",
+    "predictionsDeleted_other": "{{count}} Vorhersagen erfolgreich gelöscht"
   }
 }

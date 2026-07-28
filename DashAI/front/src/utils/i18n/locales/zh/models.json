@@ -113,6 +113,7 @@
     "noCompatibleModelsFound": "未找到兼容模型",
     "noConfigurationAvailable": "此运行没有可用的配置",
     "dropModelHere": "拖放此处以添加",
+    "noCompletedRuns": "暂无已完成的运行",
     "noDatasetPredictionsYet": "暂无数据集预测",
     "noGlobalExplainersYet": "暂无全局解释器",
     "noLocalExplainersYet": "暂无局部解释器",

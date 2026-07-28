@@ -9,7 +9,8 @@
     "downloadSvg": "Baixar como SVG",
     "editPlot": "Editar gráfico",
     "resetPlot": "Redefinir edições",
-    "fullscreen": "Tela cheia"
+    "fullscreen": "Tela cheia",
+    "close": "Fechar"
   },
   "error": {
     "explainerFailed": "Erro ao gerar o explicador.",
@@ -63,7 +64,20 @@
     "selectInstance": "Selecione uma instância",
     "explainerInProgress": "Explicador em andamento...",
     "splitSelectionSummary": "Percentual: {{percentage}}% | Linhas selecionadas: {{rowsSelected}} / {{totalRows}}",
-    "searchExplainers": "Pesquisar explicadores..."
+    "searchExplainers": "Pesquisar explicadores...",
+    "sourceFromDataset": "De um conjunto de dados",
+    "sourceManualInput": "Inserir manualmente",
+    "enterInstancesManually": "Insira as instâncias a explicar",
+    "manualInputDescription": "Preencha os valores das características para cada instância que deseja explicar.",
+    "explanationInfo": "Informações da Explicação",
+    "inputColumns": "Colunas de Entrada:",
+    "targetColumn": "Coluna Alvo:",
+    "markRowsToExplain": "Marque as linhas a explicar",
+    "rowSelectionMode": "Modo de seleção de linhas",
+    "rowModePercentage": "Controle deslizante de porcentagem",
+    "rowModeManual": "Seleção manual",
+    "shuffleRows": "Embaralhar linhas selecionadas (amostra aleatória)",
+    "rowsSelectedManually": "Linhas selecionadas manualmente: {{selected}} / {{total}}"
   },
   "message": {
     "explainerJobCompleted": "Explicador {{name}} concluído com sucesso",
