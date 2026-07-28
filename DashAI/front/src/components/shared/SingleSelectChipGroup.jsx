@@ -1,5 +1,4 @@
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
 import React from "react";
 import PropTypes from "prop-types";
 
@@ -14,8 +13,6 @@ import PropTypes from "prop-types";
  */
 
 const SingleSelectChipGroup = ({ options, onChange, selected }) => {
-  const theme = useTheme();
-
   const handleChange = (event, value) => {
     if (value !== null) onChange(value);
   };
@@ -27,7 +24,7 @@ const SingleSelectChipGroup = ({ options, onChange, selected }) => {
       onChange={handleChange}
       size="small"
       aria-label="type selector"
-      sx={{ bgcolor: theme.palette.ui.box, borderRadius: 1 }}
+      sx={{ borderRadius: 1 }}
     >
       {options.map((option, index) => (
         <ToggleButton
@@ -38,13 +35,17 @@ const SingleSelectChipGroup = ({ options, onChange, selected }) => {
             px: 3,
             border: "1px solid transparent",
             color: "text.secondary",
-            // A soft tint (not a solid fill, which read too much like the
-            // app's primary action buttons) marks the active option.
+            bgcolor: "ui.box",
+            // Same "current state, not an action" treatment as the app's
+            // tab-style toggles (PillToggleButtonGroup) — a solid fill here
+            // read too much like the primary action buttons elsewhere.
             "&.Mui-selected": {
-              bgcolor: "action.selected",
+              bgcolor: "background.paper",
               color: "primary.main",
               fontWeight: 600,
-              "&:hover": { bgcolor: "action.selected" },
+              borderBottom: "2px solid",
+              borderBottomColor: "primary.main",
+              "&:hover": { bgcolor: "background.paper" },
             },
           }}
         >
