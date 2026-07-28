@@ -1,6 +1,10 @@
 from typing import List
 
-from DashAI.back.core.artifacts import Artifact, TextArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    TextArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     int_field,
@@ -297,7 +301,7 @@ class OcclusionSaliency(BaseLocalExplainer):
 
         return explanation
 
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Render each image as a saliency overlay plus a text summary.
 
         Parameters
@@ -307,9 +311,9 @@ class OcclusionSaliency(BaseLocalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A list of typed artifacts: one plotly overlay and one text
-            artifact per explained image.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group per explained image, each
+            holding that image's saliency overlay and text summary.
         """
         import numpy as np
 
@@ -317,7 +321,7 @@ class OcclusionSaliency(BaseLocalExplainer):
         metadata = exp.pop("metadata")
         target_names = metadata["target_names"]
 
-        artifacts = []
+        groups = []
         for i in exp:
             instance = exp[i]
             predicted_class = instance["predicted_class"]
@@ -328,20 +332,16 @@ class OcclusionSaliency(BaseLocalExplainer):
 
             title = f"Image {int(i) + 1}"
             subtitle = f"Occlusion saliency for {predicted_name} (p={predicted_prob})"
-            artifacts.append(
-                heatmap_overlay_artifact(
-                    instance["image"], instance["heatmap"], title, subtitle
-                )
+            overlay = heatmap_overlay_artifact(
+                instance["image"], instance["heatmap"], title, subtitle
             )
-            artifacts.append(
-                TextArtifact(
-                    payload=(
-                        f"The model predicted {predicted_name} "
-                        f"(p={predicted_prob}). Highlighted regions are those "
-                        "whose occlusion most lowered that probability."
-                    ),
-                    title=title,
-                )
+            text = TextArtifact(
+                payload=(
+                    f"The model predicted {predicted_name} "
+                    f"(p={predicted_prob}). Highlighted regions are those "
+                    "whose occlusion most lowered that probability."
+                ),
             )
+            groups.append(ArtifactGroup(title=title, artifacts=[overlay, text]))
 
-        return artifacts
+        return [GroupedArtifacts(groups=groups)]

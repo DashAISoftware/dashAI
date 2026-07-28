@@ -1,6 +1,11 @@
 from typing import List
 
-from DashAI.back.core.artifacts import Artifact, PlotlyArtifact, TextArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotlyArtifact,
+    TextArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
@@ -388,7 +393,7 @@ class ContrastiveShap(BaseLocalExplainer):
 
         return fig
 
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Render each instance as a contrastive bar plot plus a text summary.
 
         Parameters
@@ -398,9 +403,9 @@ class ContrastiveShap(BaseLocalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A list of typed artifacts: one plotly and one text artifact per
-            explained instance.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group per explained instance,
+            each holding that instance's contrastive plot and text summary.
         """
         import numpy as np
         import pandas as pd
@@ -411,7 +416,7 @@ class ContrastiveShap(BaseLocalExplainer):
         target_names = metadata["target_names"]
         max_features = 8
 
-        artifacts = []
+        groups = []
         for i in exp:
             instance = exp[i]
             fact_class = instance["fact_class"]
@@ -437,7 +442,7 @@ class ContrastiveShap(BaseLocalExplainer):
 
             title = f"Instance {int(i) + 1}"
             fig = self._create_plot(data, fact_name, foil_name, fact_prob, foil_prob)
-            artifacts.append(PlotlyArtifact(payload=fig, title=title))
+            plot = PlotlyArtifact(payload=fig)
 
             top = data.iloc[::-1].head(3)
             top_features = ", ".join(
@@ -453,6 +458,7 @@ class ContrastiveShap(BaseLocalExplainer):
                 f"{foil_name} (p={foil_prob}) mainly because of: "
                 f"{top_features}."
             )
-            artifacts.append(TextArtifact(payload=summary, title=title))
+            text = TextArtifact(payload=summary)
+            groups.append(ArtifactGroup(title=title, artifacts=[plot, text]))
 
-        return artifacts
+        return [GroupedArtifacts(groups=groups)]

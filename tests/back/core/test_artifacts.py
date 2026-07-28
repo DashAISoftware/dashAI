@@ -24,6 +24,7 @@ def test_plotly_artifact_to_dict():
         "type": "plotly",
         "payload": '{"data": []}',
         "title": "A plot",
+        "role": "explanation",
     }
 
 
@@ -53,6 +54,7 @@ def test_table_artifact_to_dict():
             "highlight": [{"row": 1, "column": 0}],
         },
         "title": "A table",
+        "role": "explanation",
     }
 
 
@@ -76,6 +78,7 @@ def test_text_artifact_to_dict():
         "type": "text",
         "payload": "line 1\nline 2",
         "title": None,
+        "role": "explanation",
     }
 
 
@@ -138,7 +141,15 @@ def test_normalize_none_is_empty():
 
 def test_normalize_legacy_plotly_strings():
     artifacts = normalize_artifacts(['{"data": []}'])
-    assert artifacts == [{"type": "plotly", "payload": '{"data": []}', "title": None}]
+    assert artifacts == [
+        {
+            "type": "plotly",
+            "payload": '{"data": []}',
+            "title": None,
+            "role": "explanation",
+            "index": 0,
+        }
+    ]
 
 
 def test_normalize_wraps_single_values():
@@ -148,20 +159,42 @@ def test_normalize_wraps_single_values():
 
 def test_normalize_artifact_instances():
     artifacts = normalize_artifacts([TextArtifact(payload="x", title="t")])
-    assert artifacts == [{"type": "text", "payload": "x", "title": "t"}]
+    assert artifacts == [
+        {
+            "type": "text",
+            "payload": "x",
+            "title": "t",
+            "role": "explanation",
+            "index": 0,
+        }
+    ]
 
 
 def test_normalize_passes_artifact_dicts_through():
     item = {"type": "text", "payload": "x"}
     assert normalize_artifacts([item]) == [
-        {"type": "text", "payload": "x", "title": None}
+        {
+            "type": "text",
+            "payload": "x",
+            "title": None,
+            "role": "explanation",
+            "index": 0,
+        }
     ]
 
 
 def test_normalize_legacy_explorer_plotly():
     legacy = {"type": "plotly_json", "data": '{"data": []}', "config": {}}
     artifacts = normalize_artifacts([legacy])
-    assert artifacts == [{"type": "plotly", "payload": '{"data": []}', "title": None}]
+    assert artifacts == [
+        {
+            "type": "plotly",
+            "payload": '{"data": []}',
+            "title": None,
+            "role": "explanation",
+            "index": 0,
+        }
+    ]
 
 
 def test_normalize_legacy_explorer_tabular():
@@ -186,4 +219,111 @@ def test_normalize_legacy_explorer_image():
 
 def test_normalize_unrenderable_falls_back_to_text():
     [artifact] = normalize_artifacts([42])
-    assert artifact == {"type": "text", "payload": "42", "title": None}
+    assert artifact == {
+        "type": "text",
+        "payload": "42",
+        "title": None,
+        "role": "explanation",
+        "index": 0,
+    }
+
+
+def test_normalize_wraps_local_explainer_items_in_grouped_artifacts():
+    artifacts = normalize_artifacts(
+        [
+            TextArtifact(payload="x", title="Instance 1"),
+            TextArtifact(payload="y", title="Instance 2"),
+        ],
+        create_grouped=True,
+    )
+    assert artifacts == [
+        {
+            "type": "grouped",
+            "title": None,
+            "groups": [
+                {
+                    "title": "Instance 1",
+                    "artifacts": [
+                        {
+                            "type": "text",
+                            "payload": "x",
+                            "title": "Instance 1",
+                            "role": "explanation",
+                            "index": 0,
+                        }
+                    ],
+                },
+                {
+                    "title": "Instance 2",
+                    "artifacts": [
+                        {
+                            "type": "text",
+                            "payload": "y",
+                            "title": "Instance 2",
+                            "role": "explanation",
+                            "index": 1,
+                        }
+                    ],
+                },
+            ],
+        }
+    ]
+
+
+def test_artifact_role_defaults_to_explanation():
+    from DashAI.back.core.artifacts import TextArtifact
+
+    artifact = TextArtifact(payload="hi")
+    assert artifact.to_dict()["role"] == "explanation"
+
+
+def test_artifact_role_roundtrips_input():
+    from DashAI.back.core.artifacts import TableArtifact, TablePayload
+
+    artifact = TableArtifact(
+        payload=TablePayload(columns=["a"], rows=[[1]]),
+        role="input",
+    )
+    assert artifact.to_dict()["role"] == "input"
+
+
+def test_normalize_artifacts_preserves_role():
+    from DashAI.back.core.artifacts import normalize_artifacts
+
+    result = normalize_artifacts(
+        [{"type": "text", "payload": "x", "title": "Instance 1", "role": "input"}]
+    )
+    assert result[0]["role"] == "input"
+
+
+def test_build_tabular_input_artifact():
+    from DashAI.back.core.artifacts import build_tabular_input_artifact
+
+    artifact = build_tabular_input_artifact(["age", "city"], [42, "NY"], "Instance 1")
+    payload = artifact.to_dict()
+    assert payload["role"] == "input"
+    assert payload["title"] == "Instance 1"
+    assert payload["payload"]["columns"] == ["age", "city"]
+    assert payload["payload"]["rows"] == [[42, "NY"]]
+
+
+def test_build_text_input_artifact():
+    from DashAI.back.core.artifacts import build_text_input_artifact
+
+    artifact = build_text_input_artifact("hello world", "Instance 2")
+    payload = artifact.to_dict()
+    assert payload["role"] == "input"
+    assert payload["type"] == "text"
+    assert payload["payload"] == "hello world"
+
+
+def test_build_image_input_artifact():
+    from DashAI.back.core.artifacts import build_image_input_artifact
+    from DashAI.back.types.dashai_image import DashAIImage
+
+    image = DashAIImage(bytes=PNG_BYTES, path="img.png")
+    artifact = build_image_input_artifact(image, "Instance 3")
+    payload = artifact.to_dict()
+    assert payload["role"] == "input"
+    assert payload["type"] == "image"
+    assert payload["title"] == "Instance 3"

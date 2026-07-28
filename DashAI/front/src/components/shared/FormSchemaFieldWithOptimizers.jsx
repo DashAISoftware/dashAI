@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { FormControlLabel, Switch, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import OptimizeIntegerInput from "../configurableObject/Inputs/IntegerInputOptimize";
@@ -17,19 +17,15 @@ function FormSchemaFieldWithOptimizers({ objName, paramJsonSchema, field }) {
 
   const canOptimize = paramJsonSchema?.placeholder?.optimize !== undefined;
 
-  const initialOptimize =
+  // Derived directly from field.value rather than mirrored into local state —
+  // a local copy synced via useEffect lags the real value by a render, which
+  // briefly flashed the wrong mode (fixed-value defaults instead of the
+  // saved range) whenever this field remounted with a fresh value.
+  const switchState =
     field?.value?.optimize ?? paramJsonSchema?.placeholder?.optimize ?? false;
-  const [switchState, setSwitchState] = useState(initialOptimize);
-
-  useEffect(() => {
-    setSwitchState(
-      field?.value?.optimize ?? paramJsonSchema?.placeholder?.optimize ?? false,
-    );
-  }, [field?.value?.optimize, paramJsonSchema?.placeholder?.optimize]);
 
   const handleSwitchChange = () => {
     const toggled = !switchState;
-    setSwitchState(toggled);
     const placeholder = paramJsonSchema?.placeholder;
     const hasError = field?.error !== undefined;
     field.onChange({

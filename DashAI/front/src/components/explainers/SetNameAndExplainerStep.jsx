@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, CircularProgress, TextField, Typography } from "@mui/material";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
@@ -14,15 +14,9 @@ function SetNameAndExplainerStep({
   scope,
   taskName,
   modelName,
-  existingExplainers = [],
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [loading, setLoading] = useState(false);
-
-  const [nModifications, setNModifications] = useState(0);
-  const [explNameOk, setExplNameOk] = useState(false);
-  const [explNameError, setExplNameError] = useState(false);
-  const [explNameExistsError, setExplNameExistsError] = useState(false);
 
   const [explainers, setExplainers] = useState([]);
   const [selectedExplainer, setSelectedExplainer] = useState({});
@@ -70,21 +64,6 @@ function SetNameAndExplainerStep({
     }
   };
 
-  const handleNameInputChange = (event) => {
-    setNewExpl({ ...newExpl, name: event.target.value });
-    setNModifications(nModifications + 1);
-
-    if (nModifications + 1 >= 4) {
-      if (event.target.value.length < 4) {
-        setExplNameError(true);
-        setExplNameOk(false);
-      } else {
-        setExplNameError(false);
-        setExplNameOk(true);
-      }
-    }
-  };
-
   useEffect(() => {
     if (selectedExplainer && "name" in selectedExplainer) {
       setNewExpl({
@@ -100,54 +79,11 @@ function SetNameAndExplainerStep({
   }, []);
 
   useEffect(() => {
-    if (typeof newExpl.name === "string" && newExpl.name.length >= 4) {
-      const normalizedName = newExpl.name.trim().toLowerCase();
-      const nameExists = existingExplainers.some(
-        (explainer) => explainer?.name?.trim().toLowerCase() === normalizedName,
-      );
-
-      setExplNameExistsError(nameExists);
-      setExplNameOk(true);
-      setExplNameError(false);
-      setNModifications(4);
-    } else {
-      setExplNameOk(false);
-      setExplNameExistsError(false);
-      if (nModifications >= 4) {
-        setExplNameError(true);
-      }
-    }
-  }, [newExpl.name, nModifications, existingExplainers]);
-
-  useEffect(() => {
-    if (explNameOk && selectedExplainerOk && !explNameExistsError) {
-      setNextEnabled(true);
-    } else {
-      setNextEnabled(false);
-    }
-  }, [explNameOk, selectedExplainerOk, explNameExistsError]);
+    setNextEnabled(selectedExplainerOk);
+  }, [selectedExplainerOk]);
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <TextField
-        id="explainer-name-input"
-        label={t("explainers:label.explainerName")}
-        value={newExpl.name}
-        fullWidth
-        onChange={handleNameInputChange}
-        autoComplete="off"
-        error={explNameError || explNameExistsError}
-        helperText={
-          explNameExistsError
-            ? t("explainers:error.nameAlreadyExists", {
-                defaultValue: "Name already exists",
-              })
-            : explNameError
-              ? t("explainers:error.nameTooShort")
-              : ""
-        }
-      />
-
       <Typography variant="subtitle2">
         {t("explainers:label.selectExplainer")}
       </Typography>
@@ -173,7 +109,6 @@ function SetNameAndExplainerStep({
 
 SetNameAndExplainerStep.propTypes = {
   newExpl: PropTypes.shape({
-    name: PropTypes.string,
     explainer_name: PropTypes.string,
     dataset_id: PropTypes.number,
     parameters: PropTypes.object,
@@ -184,7 +119,6 @@ SetNameAndExplainerStep.propTypes = {
   scope: PropTypes.string.isRequired,
   taskName: PropTypes.string,
   modelName: PropTypes.string,
-  existingExplainers: PropTypes.array,
 };
 
 export default SetNameAndExplainerStep;

@@ -3,7 +3,14 @@
     "addExplainer": "Erklärungsmodell hinzufügen",
     "backToExplainers": "Zurück zu Erklärungsmodellen",
     "hidePlot": "Plot ausblenden",
-    "showPlot": "Plot anzeigen"
+    "showPlot": "Plot anzeigen",
+    "download": "Herunterladen",
+    "downloadPng": "Als PNG herunterladen",
+    "downloadSvg": "Als SVG herunterladen",
+    "editPlot": "Diagramm bearbeiten",
+    "resetPlot": "Bearbeitungen zuruecksetzen",
+    "fullscreen": "Vollbild",
+    "close": "Schließen"
   },
   "error": {
     "explainerFailed": "Erklärungsmodell konnte nicht generiert werden.",
@@ -57,7 +64,20 @@
     "selectInstance": "Instanz auswählen",
     "explainerInProgress": "Erklärungsmodell wird verarbeitet...",
     "splitSelectionSummary": "Prozentsatz: {{percentage}}% | Ausgewählte Zeilen: {{rowsSelected}} / {{totalRows}}",
-    "searchExplainers": "Erklärungsmodelle suchen..."
+    "searchExplainers": "Erklärungsmodelle suchen...",
+    "sourceFromDataset": "Aus Datensatz",
+    "sourceManualInput": "Manuell eingeben",
+    "enterInstancesManually": "Geben Sie die zu erklärenden Instanzen ein",
+    "manualInputDescription": "Geben Sie die Merkmalswerte für jede zu erklärende Instanz ein.",
+    "explanationInfo": "Erklärungsinformationen",
+    "inputColumns": "Eingabespalten:",
+    "targetColumn": "Zielspalte:",
+    "markRowsToExplain": "Markieren Sie die zu erklärenden Zeilen",
+    "rowSelectionMode": "Zeilenauswahlmodus",
+    "rowModePercentage": "Prozent-Schieberegler",
+    "rowModeManual": "Manuelle Auswahl",
+    "shuffleRows": "Ausgewählte Zeilen mischen (Zufallsstichprobe)",
+    "rowsSelectedManually": "Manuell ausgewählte Zeilen: {{selected}} / {{total}}"
   },
   "message": {
     "explainerJobCompleted": "Erklärungsmodell {{name}} erfolgreich abgeschlossen",

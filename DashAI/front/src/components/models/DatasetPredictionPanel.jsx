@@ -10,7 +10,7 @@ import {
   getPredictions,
 } from "../../api/predict";
 import { enqueuePredictionJob } from "../../api/job";
-import { getDatasetInfo } from "../../api/datasets";
+import { getDatasets } from "../../api/datasets";
 import { getModelSessionById } from "../../api/modelSession";
 import { startJobPolling } from "../../utils/jobPoller";
 
@@ -51,19 +51,19 @@ export default function DatasetPredictionPanel({
       if (!run?.id) return;
       setLoading(true);
       try {
-        const [availableDatasets, sessionData] = await Promise.all([
+        // Only datasets compatible with the run's model (matching input
+        // columns) can be used. A single endpoint validates them all
+        // server-side and returns just the valid ids, which we use to filter
+        // the already-cheap full dataset list instead of fetching per-dataset
+        // info for every candidate up front.
+        const [allDatasets, validIds, sessionData] = await Promise.all([
+          getDatasets(),
           filterDatasets({ run_id: run.id }),
           getModelSessionById(run.model_session_id || session?.id),
         ]);
 
-        const availableDatasetsWithInfo = await Promise.all(
-          availableDatasets.map(async (dataset) => {
-            const datasetInfo = await getDatasetInfo(dataset.id);
-            return { ...dataset, ...datasetInfo };
-          }),
-        );
-
-        setDatasets(availableDatasetsWithInfo);
+        const validIdSet = new Set(validIds.map(String));
+        setDatasets(allDatasets.filter((ds) => validIdSet.has(String(ds.id))));
         setModelSession(sessionData);
       } catch (error) {
         console.error("Error loading dataset prediction data:", error);

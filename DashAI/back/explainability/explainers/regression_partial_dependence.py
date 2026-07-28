@@ -1,6 +1,10 @@
 from typing import List
 
-from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotlyArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     float_field,
@@ -202,8 +206,8 @@ class RegressionPartialDependence(BaseGlobalExplainer):
 
         return explanation
 
-    def plot(self, explanation: dict) -> List[Artifact]:
-        """Create one line-plot artifact per feature.
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
+        """Create a grouped artifact with one line plot group per feature.
 
         Parameters
         ----------
@@ -212,8 +216,9 @@ class RegressionPartialDependence(BaseGlobalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A list of artifacts: one plotly artifact per numeric feature.
+        List[GroupedArtifacts]
+            A single grouped artifact whose groups are one plotly curve per
+            numeric feature.
         """
         import plotly.graph_objs as go
 
@@ -221,7 +226,7 @@ class RegressionPartialDependence(BaseGlobalExplainer):
         metadata = exp.pop("metadata")
         output_column = metadata["output_column"]
 
-        artifacts = []
+        groups = []
         for feature, curve in exp.items():
             fig = go.Figure(
                 go.Scatter(
@@ -239,6 +244,8 @@ class RegressionPartialDependence(BaseGlobalExplainer):
                 yaxis={"title_text": f"Average predicted {output_column}"},
                 margin={"l": 60, "r": 30, "t": 50, "b": 50},
             )
-            artifacts.append(PlotlyArtifact(payload=fig, title=feature))
+            groups.append(
+                ArtifactGroup(title=feature, artifacts=[PlotlyArtifact(payload=fig)])
+            )
 
-        return artifacts
+        return [GroupedArtifacts(groups=groups)]
