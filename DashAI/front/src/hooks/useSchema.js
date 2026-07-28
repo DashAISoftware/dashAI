@@ -8,24 +8,43 @@ import { useTranslation } from "react-i18next";
  * @param {string} modelName - The name of the model to get the schema
  */
 
-// Formatted schemas rarely change mid-session (only a plugin install/restart
-// would alter them), so cache by model name — multiple mounted callers asking
-// for the same model (e.g. a dialog's own prefetch and the form it renders a
-// step later) share one network round trip instead of each re-fetching from
-// scratch, which previously showed an empty form for a beat every time.
-const schemaCache = new Map();
+// This hook backs every configurable-object form in the app (pipelines,
+// converters, explorers, dataloaders, models...), not just the dialogs that
+// prompted this cache — a wizard step's own prefetch and the form it renders
+// a step later both call this hook for the same model within milliseconds of
+// each other, and without sharing that one fetch, the second consumer showed
+// an empty form for a beat. But nothing here should keep serving a schema
+// fetched minutes ago to some unrelated form (or care about a plugin
+// install/uninstall changing it) — so the cache is short-lived: long enough
+// to dedupe that one burst of near-simultaneous mounts, short enough that
+// everything else still gets a fresh fetch per mount, same as before.
+const CACHE_TTL_MS = 10_000;
+const schemaCache = new Map(); // modelName -> { value, expiresAt }
+
+function getCachedSchema(modelName) {
+  if (!modelName) return null;
+  const entry = schemaCache.get(modelName);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    schemaCache.delete(modelName);
+    return null;
+  }
+  return entry.value;
+}
+
+function setCachedSchema(modelName, value) {
+  schemaCache.set(modelName, { value, expiresAt: Date.now() + CACHE_TTL_MS });
+}
 
 export default function useSchema({ modelName = null } = {}) {
-  const [model, setModel] = useState(() =>
-    modelName ? (schemaCache.get(modelName) ?? null) : null,
-  );
+  const [model, setModel] = useState(() => getCachedSchema(modelName));
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
     let cancelled = false;
 
-    const cached = modelName ? schemaCache.get(modelName) : null;
+    const cached = getCachedSchema(modelName);
     if (cached) {
       setModel(cached);
       return undefined;
@@ -39,7 +58,7 @@ export default function useSchema({ modelName = null } = {}) {
         const result = await getComponents({ model: modelName });
         const formattedSchema = await formattedModel(result?.schema);
         if (!cancelled) {
-          schemaCache.set(modelName, formattedSchema);
+          setCachedSchema(modelName, formattedSchema);
           setModel(formattedSchema);
         }
       } catch (error) {

@@ -43,24 +43,34 @@ function useFormSchema({
 
   // The shared formValues context starts empty on every fresh mount (e.g.
   // switching wizard steps remounts this hook) and gets seeded from
-  // initialValues/defaultValues here, one render after mount. Exposed so the
-  // onValuesChange effect below can avoid notifying the parent with this
-  // still-empty value before the seed lands.
+  // initialValues/defaultValues here, one render after mount. hasPendingSeed
+  // is exposed so the onValuesChange effect below can avoid notifying the
+  // parent with this still-empty value before the seed lands.
+  const formValuesEmpty = Object.keys(formValues ?? {}).length === 0;
+  const hasInitialValues = Boolean(
+    initialValues && Object.keys(initialValues).length > 0,
+  );
+  const hasDefaultValues = Boolean(
+    defaultValues && Object.keys(defaultValues).length > 0,
+  );
   const hasPendingSeed =
-    Object.keys(formValues ?? {}).length === 0 &&
-    ((initialValues && Object.keys(initialValues).length > 0) ||
-      (defaultValues && Object.keys(defaultValues).length > 0));
+    formValuesEmpty && (hasInitialValues || hasDefaultValues);
 
   // Updates the formik schema with the merged initial values if the formValues is empty
   useEffect(() => {
-    if (formValues && Object.keys(formValues).length === 0) {
-      if (initialValues && Object.keys(initialValues).length > 0) {
-        handleUpdateSchema({ ...defaultValues, ...initialValues });
-      } else if (defaultValues && Object.keys(defaultValues).length > 0) {
-        handleUpdateSchema(defaultValues);
-      }
+    if (!formValuesEmpty) return;
+    if (hasInitialValues) {
+      handleUpdateSchema({ ...defaultValues, ...initialValues });
+    } else if (hasDefaultValues) {
+      handleUpdateSchema(defaultValues);
     }
-  }, [formValues, initialValues, defaultValues]);
+  }, [
+    formValuesEmpty,
+    hasInitialValues,
+    hasDefaultValues,
+    initialValues,
+    defaultValues,
+  ]);
 
   // Sets the error state of the form if setError is not null
   useEffect(() => {

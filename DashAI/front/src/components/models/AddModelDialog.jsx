@@ -380,6 +380,7 @@ function AddModelDialog({
                 metricName={goalMetric}
                 handleSelectedMetric={setGoalMetric}
                 required
+                autoSelectDefault
               />
             </Box>
 

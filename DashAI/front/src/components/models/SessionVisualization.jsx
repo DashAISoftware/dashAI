@@ -152,23 +152,38 @@ export default function SessionVisualization() {
     [runs],
   );
 
-  const activeRun = params.runId
-    ? runs.find((r) => String(r.id) === params.runId)
-    : null;
+  const activeRun = React.useMemo(
+    () =>
+      params.runId ? runs.find((r) => String(r.id) === params.runId) : null,
+    [runs, params.runId],
+  );
 
-  const datasetName = datasets.find((d) => d.id === session?.dataset_id)?.name;
+  const datasetName = React.useMemo(
+    () => datasets.find((d) => d.id === session?.dataset_id)?.name,
+    [datasets, session?.dataset_id],
+  );
 
-  // Check which metrics are available
-  const hasTrainMetrics = runs.some(
-    (run) => run.train_metrics && Object.keys(run.train_metrics).length > 0,
-  );
-  const hasValidationMetrics = runs.some(
-    (run) =>
-      run.validation_metrics && Object.keys(run.validation_metrics).length > 0,
-  );
-  const hasTestMetrics = runs.some(
-    (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
-  );
+  // Check which metrics are available. This re-scan only needs to happen
+  // when `runs` itself changes, not on every render (e.g. drag state, tour
+  // steps, or the highlight timer toggling elsewhere in this component).
+  const { hasTrainMetrics, hasValidationMetrics, hasTestMetrics } =
+    React.useMemo(
+      () => ({
+        hasTrainMetrics: runs.some(
+          (run) =>
+            run.train_metrics && Object.keys(run.train_metrics).length > 0,
+        ),
+        hasValidationMetrics: runs.some(
+          (run) =>
+            run.validation_metrics &&
+            Object.keys(run.validation_metrics).length > 0,
+        ),
+        hasTestMetrics: runs.some(
+          (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
+        ),
+      }),
+      [runs],
+    );
 
   const handleTrainWithTour = (run) => {
     if (onTrain) onTrain(run);

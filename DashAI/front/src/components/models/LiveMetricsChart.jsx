@@ -206,7 +206,7 @@ export function LiveMetricsChart({ run }) {
     return Object.entries(rawMetrics)
       .map(([name, value]) => [name, toFinalValue(value)])
       .filter(([, value]) => value !== null);
-  }, [run, split]);
+  }, [run.train_metrics, run.validation_metrics, run.test_metrics, split]);
 
   // One small panel per metric — each keeps its own x/y scale instead of
   // sharing a single overlaid axis, same "small multiples" approach used for

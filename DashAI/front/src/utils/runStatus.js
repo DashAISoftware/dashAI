@@ -30,3 +30,13 @@ export function getRunStatusColor(statusNumber) {
       return "default";
   }
 }
+
+// Not Started, Finished, or Error — anything eligible for a (re)train action.
+export function canTrainRun(statusNumber) {
+  return statusNumber === 0 || statusNumber === 3 || statusNumber === 4;
+}
+
+// Delivered or Started — currently executing, nothing new can be triggered.
+export function isRunActive(statusNumber) {
+  return statusNumber === 1 || statusNumber === 2;
+}

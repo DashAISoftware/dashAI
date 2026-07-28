@@ -15,6 +15,7 @@ import {
   getComponentDownloadState,
   subscribeAnyDownloadState,
 } from "./model/ComponentDownloadControl";
+import { canTrainRun, isRunActive } from "../../utils/runStatus";
 
 /**
  * Compact comparison table showing all runs in a session.
@@ -183,7 +184,7 @@ function ModelComparisonTable({
         ),
         Cell: ({ row, cell }) => {
           const { status } = row.original;
-          const isRunning = status === 1 || status === 2;
+          const isRunning = isRunActive(status);
 
           if (isRunning) return "-";
           const val = cell.getValue();
@@ -270,12 +271,8 @@ function ModelComparisonTable({
         enableColumnFilter: false,
         size: 150,
         Cell: ({ row }) => {
-          const canTrain =
-            row.original.status === 0 ||
-            row.original.status === 4 ||
-            row.original.status === 3;
-          const isRunning =
-            row.original.status === 1 || row.original.status === 2;
+          const canTrain = canTrainRun(row.original.status);
+          const isRunning = isRunActive(row.original.status);
           const modelReady = isModelReady(row.original.model_name);
 
           return (

@@ -6,6 +6,7 @@ import { useParams } from "react-router-dom";
 import LiveMetricsChart from "./LiveMetricsChart";
 import HyperparameterPlots from "./HyperparameterPlots";
 import { checkHowManyOptimazers } from "../../utils/schema";
+import { isRunActive } from "../../utils/runStatus";
 import { useModels } from "./ModelsContext";
 import useRunResultsData from "./runResults/useRunResultsData";
 import ResultsTabsHeader from "./runResults/ResultsTabsHeader";
@@ -77,7 +78,7 @@ export default function RunResults({
 
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
   const isFinished = run.status === 3;
-  const isRunning = run.status === 1 || run.status === 2;
+  const isRunning = isRunActive(run.status);
 
   useEffect(() => {
     const handleOpenDialog = (event) => {

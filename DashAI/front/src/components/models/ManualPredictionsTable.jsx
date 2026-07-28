@@ -50,6 +50,11 @@ import "../shared/leanDatasetTable/leanDatasetTable.css";
 // paginated flow used for dataset predictions) is safe here.
 const FETCH_ALL_PAGE_SIZE = 10000;
 
+// Stable reference for the "no columns yet" fallback below — a fresh `[]`
+// literal on every render would invalidate the `editableRows` memo that
+// depends on it for the entire loading window.
+const EMPTY_ARRAY = [];
+
 function applyFilter(rows, filterModel) {
   if (!filterModel?.items?.length) return rows;
   return rows.filter((row) =>
@@ -240,7 +245,7 @@ export default function ManualPredictionsTable({
     };
   }, [run, session]);
 
-  const inputColumns = modelSession?.input_columns ?? [];
+  const inputColumns = modelSession?.input_columns ?? EMPTY_ARRAY;
 
   const createEmptyRow = useCallback(() => {
     if (!inputSample || inputColumns.length === 0) return {};

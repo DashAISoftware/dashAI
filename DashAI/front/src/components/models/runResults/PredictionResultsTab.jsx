@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -62,8 +62,12 @@ export default function PredictionResultsTab({
     isRunning: false,
   });
 
-  const visiblePredictions = predictions.filter((p) =>
-    predictionFilter === "dataset" ? p.dataset_id : !p.dataset_id,
+  const visiblePredictions = useMemo(
+    () =>
+      predictions.filter((p) =>
+        predictionFilter === "dataset" ? p.dataset_id : !p.dataset_id,
+      ),
+    [predictions, predictionFilter],
   );
 
   return (

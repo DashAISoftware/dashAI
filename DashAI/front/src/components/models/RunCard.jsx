@@ -20,11 +20,16 @@ import {
   ExpandMore,
   ExpandLess,
 } from "@mui/icons-material";
-import { getRunStatus, getRunStatusColor } from "../../utils/runStatus";
+import {
+  getRunStatus,
+  getRunStatusColor,
+  canTrainRun,
+  isRunActive,
+} from "../../utils/runStatus";
 import RunResults from "./RunResults";
 import RunEditDialog from "./RunEditDialog";
 import { getRunOperationsCount } from "../../api/run";
-import { useComponentDownloadState } from "./model/ComponentDownloadControl";
+import { useModelDownloadGate } from "./model/ComponentDownloadControl";
 import { useTranslation } from "react-i18next";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 
@@ -108,12 +113,7 @@ function RunCard({
 
   // A download-required model must be downloaded before it can be trained.
   // Track the live download state so the button reflects an inline download.
-  const { downloaded, downloading } = useComponentDownloadState(
-    model || { name: run.model_name },
-  );
-  const modelNotDownloaded =
-    Boolean(model?.metadata?.requires_download) &&
-    !(downloaded && !downloading);
+  const { modelNotDownloaded } = useModelDownloadGate(model, run.model_name);
 
   useEffect(() => {
     if (run.status !== 1 && run.status !== 2) {
@@ -121,8 +121,8 @@ function RunCard({
     }
   }, [run.status]);
 
-  const canTrain = run.status === 0 || run.status === 3 || run.status === 4; // Not Started, Finished, Error
-  const isRunning = run.status === 1 || run.status === 2; // Delivered, Started
+  const canTrain = canTrainRun(run.status);
+  const isRunning = isRunActive(run.status);
 
   const getMetrics = () => {
     if (!run.trained_models || run.trained_models.length === 0) {

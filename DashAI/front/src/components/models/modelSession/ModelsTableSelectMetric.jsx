@@ -8,21 +8,34 @@ function ModelsTableSelectMetric({
   handleSelectedMetric,
   required = false,
   variant = "outlined",
+  autoSelectDefault = false,
 }) {
   const { compatibleMetrics, loading } = useMetricsByTask({ taskName });
   const [selectedMetric, setSelectedMetric] = useState(metricName);
 
-  // Every other field in this form (optimizer, its parameters) starts out
-  // with a default value — the goal metric was the one exception, left
-  // empty until the user picked one. Default to the first compatible metric
-  // once the list loads, same as the rest.
+  // Opt-in only: the run-edit/add-model wizard wants a default goal metric
+  // like its other fields (optimizer, its parameters) already have, but the
+  // batch-experiment table (ModelsTable.jsx) relies on this field staying
+  // empty/required so each row forces an explicit per-row choice — leave
+  // that behavior untouched for callers that don't ask for a default.
   useEffect(() => {
-    if (!selectedMetric && !loading && compatibleMetrics.length > 0) {
+    if (
+      autoSelectDefault &&
+      !selectedMetric &&
+      !loading &&
+      compatibleMetrics.length > 0
+    ) {
       const defaultMetric = compatibleMetrics[0].name;
       setSelectedMetric(defaultMetric);
       handleSelectedMetric(defaultMetric);
     }
-  }, [selectedMetric, loading, compatibleMetrics, handleSelectedMetric]);
+  }, [
+    autoSelectDefault,
+    selectedMetric,
+    loading,
+    compatibleMetrics,
+    handleSelectedMetric,
+  ]);
 
   const handleChange = (e) => {
     const goalMetric = e.target.value;
@@ -39,16 +52,17 @@ function ModelsTableSelectMetric({
       variant={variant}
       fullWidth
       required={required}
-      // A non-empty list with nothing selected is only ever the one render
-      // between the list loading and the auto-select effect above filling it
-      // in — never a state the user can actually leave sitting empty — so it
-      // isn't a real error. Only an empty list (no compatible metric to
-      // default to) is worth flagging.
+      // Without autoSelectDefault, an empty selection is always a real error
+      // once loaded (ModelsTable.jsx's batch rows require an explicit
+      // per-row choice). With it, a non-empty list with nothing selected yet
+      // is only the one render between the list loading and the auto-select
+      // effect above filling it in — not a real error — so only a truly
+      // empty list (no compatible metric to default to) is worth flagging.
       error={
         required &&
         !selectedMetric &&
         !loading &&
-        compatibleMetrics.length === 0
+        (!autoSelectDefault || compatibleMetrics.length === 0)
       }
       slotProps={{
         MenuProps: {

@@ -49,6 +49,7 @@ export default function RunEditForm({
             metricName={editedGoalMetric}
             handleSelectedMetric={setEditedGoalMetric}
             required
+            autoSelectDefault
           />
         </Box>
 
