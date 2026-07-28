@@ -503,6 +503,22 @@ def test_relationships_module():
     ]
 
 
+def test_get_related_components_skips_unregistered_names():
+    test_registry = ComponentRegistry(initial_components=[Component1])
+
+    # RelatedComponent2 declares Component1 (registered) and Component2
+    # (NOT registered): lookups must skip the unregistered name.
+    test_registry.register_component(RelatedComponent2)
+
+    assert test_registry.get_related_components("RelatedComponent2") == [
+        COMPONENT1_DICT
+    ]
+    assert [
+        component["name"]
+        for component in test_registry.get_related_components("Component1")
+    ] == ["RelatedComponent2"]
+
+
 def test_compatible_components_merge_across_bases():
     test_registry = ComponentRegistry(
         initial_components=[
