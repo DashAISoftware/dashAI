@@ -12,8 +12,24 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float, Integer
+
+NUMERIC_DTYPES = [
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "float16",
+    "float32",
+    "float64",
+    "bool",
+]
 
 
 class SMOTEENNSchema(BaseSchema):
@@ -118,8 +134,8 @@ class SMOTEENNConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTEENN):
     IMAGE_PREVIEW = "smoteenn.png"
 
     metadata = {
-        "allowed_types": [Float, Integer],
-        "allowed_dtypes": [],
+        "allowed_types": [Float, Integer, Categorical],
+        "allowed_dtypes": NUMERIC_DTYPES,
     }
 
     def __init__(self, **kwargs):
