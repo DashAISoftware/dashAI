@@ -16,6 +16,7 @@ import {
   subscribeAnyDownloadState,
 } from "./model/ComponentDownloadControl";
 import { canTrainRun, isRunActive } from "../../utils/runStatus";
+import { useModels } from "./ModelsContext";
 
 /**
  * Compact comparison table showing all runs in a session.
@@ -37,6 +38,8 @@ function ModelComparisonTable({
   const [runToDelete, setRunToDelete] = useState(null);
   // Bump to re-render when a download finishes so the train button enables.
   const [, setDownloadVersion] = useState(0);
+  // Get the selected session from context to determine if cross-validation is used.
+  const { selectedSession } = useModels();
 
   useEffect(
     () => subscribeAnyDownloadState(() => setDownloadVersion((v) => v + 1)),
@@ -99,7 +102,8 @@ function ModelComparisonTable({
   // ────────────────────────────────────────────────────────────────────────
 
   const isCrossValidation =
-    session.evaluation_strategy === "CrossValidationEvaluationStrategy";
+    selectedSession?.evaluation_strategy ===
+    "CrossValidationEvaluationStrategy";
 
   // Run type color using existing theme.palette.accent tokens
   const getRunType = (run) => {
