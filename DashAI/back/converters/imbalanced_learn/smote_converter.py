@@ -93,9 +93,9 @@ class SMOTEConverter(SamplingConverter, ImbalancedLearnWrapper, SMOTE):
 
     SCHEMA = SMOTESchema
     DESCRIPTION = MultilingualString(
-        en="SMOTE: Synthetic Minority Over-sampling Technique.",
-        es="SMOTE: Técnica de Sobre-muestreo de la Minoría Sintética.",
-        pt="SMOTE: Técnica de Super-amostragem de Minoria Sintética.",
+        en="SMOTE: Synthetic Minority Oversampling Technique.",
+        es="SMOTE: Técnica de Sobremuestreo de la Minoría Sintética.",
+        pt="SMOTE: Técnica de Superamostragem de Minoria Sintética.",
         de="SMOTE: Synthetische Überabtastungstechnik für die Minderheitsklasse.",
         zh="SMOTE（合成少数类过采样技术）。",
     )

@@ -48,6 +48,21 @@ metadata = MetaData(naming_convention=naming_convention)
 Base = declarative_base(metadata=metadata)
 
 
+class Folder(Base):
+    __tablename__ = "folder"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    datasets: Mapped[List["Dataset"]] = relationship(back_populates="folder")
+
+
 class Dataset(Base):
     __tablename__ = "dataset"
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -62,6 +77,9 @@ class Dataset(Base):
     file_path: Mapped[str] = mapped_column(String, nullable=False)
     total_rows: Mapped[int] = mapped_column(Integer, nullable=True)
     total_columns: Mapped[int] = mapped_column(Integer, nullable=True)
+    folder_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("folder.id", ondelete="SET NULL"), nullable=True
+    )
 
     notebooks: Mapped[List["Notebook"]] = relationship(
         cascade="all, delete-orphan", back_populates="dataset"
@@ -72,6 +90,7 @@ class Dataset(Base):
     predictions: Mapped[List["Prediction"]] = relationship(
         "Prediction", cascade="all, delete-orphan", back_populates="dataset"
     )
+    folder: Mapped[Optional["Folder"]] = relationship(back_populates="datasets")
 
     status: Mapped[Enum] = mapped_column(
         Enum(DatasetStatus), nullable=False, default=DatasetStatus.NOT_STARTED
@@ -289,6 +308,9 @@ class Plugin(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     author: Mapped[str] = mapped_column(String, nullable=False)
+    verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
     installed_version: Mapped[str] = mapped_column(String, nullable=False)
     lastest_version: Mapped[str] = mapped_column(String, nullable=False)
     tags: Mapped[List["Tag"]] = relationship(
@@ -325,12 +347,13 @@ class GlobalExplainer(Base):
     Table to store all the information about a global explainer.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=True)
     run_id: Mapped[int] = mapped_column(nullable=False)
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     explainer_name: Mapped[str] = mapped_column(String, nullable=False)
     explanation_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_path: Mapped[str] = mapped_column(String, nullable=True)
+    plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     status: Mapped[Enum] = mapped_column(
@@ -366,13 +389,15 @@ class LocalExplainer(Base):
     Table to store all the information about a local explainer.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=True)
     run_id: Mapped[int] = mapped_column(nullable=False)
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     explainer_name: Mapped[str] = mapped_column(String, nullable=False)
     dataset_id: Mapped[int] = mapped_column(nullable=False)
     explanation_path: Mapped[str] = mapped_column(String, nullable=True)
     plots_path: Mapped[str] = mapped_column(String, nullable=True)
+    plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    input_dataset_path: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON)
     fit_parameters: Mapped[JSON] = mapped_column(JSON)
     scope: Mapped[JSON] = mapped_column(JSON)
@@ -641,6 +666,10 @@ class GenerativeSessionParameterHistory(Base):
         nullable=False,
     )
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
+    # Model active when this snapshot was taken. Nullable so pre-migration rows
+    # remain valid; the parameters-history derivation only emits a model-change
+    # event when two consecutive snapshots both carry a model name that differs.
+    model_name: Mapped[str] = mapped_column(String, nullable=True)
     modified_at: Mapped[DateTime] = mapped_column(
         DateTime,
         default=datetime.now,

@@ -19,6 +19,35 @@ _PYPI_SIMPLE_JSON_ACCEPT = "application/vnd.pypi.simple.v1+json"
 _PYPI_SIMPLE_URL = "https://pypi.org/simple/"
 _REQUEST_TIMEOUT_SECONDS = 15
 
+# Author metadata that identifies a plugin as published by the official
+# DashAI account (PyPI user "dashai.nocode"). PyPI does not expose the
+# uploader account through its API, so verification is approximated by
+# matching the package's declared author metadata.
+_VERIFIED_AUTHOR_EMAIL = "dashaisoftware@gmail.com"
+_VERIFIED_AUTHOR_NAME = "dashai team"
+
+
+def _is_verified_author(author: str, author_email: str) -> bool:
+    """Check whether a plugin's author metadata matches the official DashAI
+    account.
+
+    Parameters
+    ----------
+    author : str
+        The author name declared in the package metadata.
+    author_email : str
+        The author email declared in the package metadata. PyPI may format
+        this as a bare address or as "Name <address>".
+
+    Returns
+    -------
+    bool
+        True if the metadata matches the official DashAI author, else False.
+    """
+    email = (author_email or "").lower()
+    name = (author or "").lower()
+    return _VERIFIED_AUTHOR_EMAIL in email or name == _VERIFIED_AUTHOR_NAME
+
 
 def _get_pypi_project_status(plugin_name: str) -> str:
     """
@@ -120,6 +149,10 @@ def get_plugin_by_name_from_pypi(plugin_name: str) -> dict:
     keywords = [keyword for keyword in keywords if keyword in posible_tags]
 
     raw_plugin["tags"] = [{"name": keyword} for keyword in keywords]
+
+    raw_plugin["verified"] = _is_verified_author(
+        raw_plugin.get("author"), raw_plugin.get("author_email")
+    )
 
     if raw_plugin["author"] is None or raw_plugin["author"] == "":
         raw_plugin["author"] = "Unknown author"

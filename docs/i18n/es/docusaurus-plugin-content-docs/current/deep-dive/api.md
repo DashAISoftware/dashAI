@@ -64,7 +64,7 @@ DELETE /api/v1/model-session/{session_id}
 POST   /api/v1/model-session/validation
 ```
 
-Una ModelSession captura la configuración completa del experimento — dataset, tarea, columnas de entrada/salida, proporciones de división y métricas seleccionadas. `POST /validation` verifica que las columnas del dataset seleccionado son compatibles con la tarea elegida antes de crear la sesión.
+Una ModelSession captura la configuración completa del experimento: dataset, tarea, columnas de entrada/salida, proporciones de división y métricas seleccionadas. `POST /validation` verifica que las columnas del dataset seleccionado son compatibles con la tarea elegida antes de crear la sesión.
 
 ### Ejecuciones
 
@@ -80,7 +80,7 @@ GET    /api/v1/run/{run_id}/operations/count
 GET    /api/v1/run/plot/{run_id}/{plot_type}
 ```
 
-Cada ejecución pertenece a una ModelSession y almacena el nombre del modelo, los parámetros, la configuración del optimizador y los artefactos de entrenamiento. `PATCH /{run_id}/reset` restablece una ejecución al estado `NOT_STARTED`. `/operations/count` devuelve el número de explicadores y predicciones asociados a una ejecución; `DELETE /operations` los elimina todos. `/plot/{run_id}/{plot_type}` obtiene los gráficos de optimización de hiperparámetros — `plot_type` es uno de `history`, `slice`, `contour` o `importance`.
+Cada ejecución pertenece a una ModelSession y almacena el nombre del modelo, los parámetros, la configuración del optimizador y los artefactos de entrenamiento. `PATCH /{run_id}/reset` restablece una ejecución al estado `NOT_STARTED`. `/operations/count` devuelve el número de explicadores y predicciones asociados a una ejecución; `DELETE /operations` los elimina todos. `/plot/{run_id}/{plot_type}` obtiene los gráficos de optimización de hiperparámetros, donde `plot_type` es uno de `history`, `slice`, `contour` o `importance`.
 
 ### Trabajos
 
@@ -147,7 +147,7 @@ GET    /api/v1/predict/filter_datasets
 POST   /api/v1/predict/preview
 ```
 
-`POST /` crea un trabajo de predicción persistido vinculado a una ejecución entrenada. `GET /filter_datasets` devuelve solo los datasets cuyo esquema de columnas es compatible con el dataset de entrenamiento de la ejecución. `POST /preview` ejecuta una predicción sincrónica y devuelve el resultado de inmediato sin persistirlo — útil para inferencia interactiva rápida.
+`POST /` crea un trabajo de predicción persistido vinculado a una ejecución entrenada. `GET /filter_datasets` devuelve solo los datasets cuyo esquema de columnas es compatible con el dataset de entrenamiento de la ejecución. `POST /preview` ejecuta una predicción sincrónica y devuelve el resultado de inmediato sin persistirlo, lo que resulta útil para inferencia interactiva rápida.
 
 ### Sesiones y Procesos Generativos
 

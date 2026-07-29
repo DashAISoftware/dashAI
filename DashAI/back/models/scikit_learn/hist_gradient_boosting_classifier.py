@@ -4,6 +4,8 @@ from sklearn.ensemble import (
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
+    enum_field,
+    none_type,
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
@@ -53,12 +55,14 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
                 "Faktor für Blattwerte verwendet. Verwenden Sie 1 für keine "
                 "Schrumpfung."
             ),
+            zh="学习率，也称为收缩率。用作叶节点值的乘法因子。使用1表示不收缩。",
         ),
         alias=MultilingualString(
             en="Learning rate",
             es="Tasa de aprendizaje",
             pt="Taxa de aprendizado",
             de="Lernrate",
+            zh="学习率",
         ),
     )  # type: ignore
     max_iter: schema_field(
@@ -86,12 +90,14 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
                 "Die maximale Anzahl von Iterationen des Boosting-Prozesses, d.h. die "
                 "maximale Anzahl von Bäumen für binäre Klassifikation."
             ),
+            zh="提升过程的最大迭代次数，即二元分类的最大树数。",
         ),
         alias=MultilingualString(
             en="Max iterations",
             es="Máximas iteraciones",
             pt="Máximas iterações",
             de="Maximale Iterationen",
+            zh="最大迭代次数",
         ),
     )  # type: ignore
     max_depth: schema_field(
@@ -122,12 +128,14 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
                 "Die maximale Tiefe jedes Baums. Die Tiefe ist die Anzahl der Kanten "
                 "von der Wurzel bis zum tiefsten Blatt. Standardmäßig nicht begrenzt."
             ),
+            zh="每棵树的最大深度。深度是从根节点到最深叶节点的边数。默认不限制深度。",
         ),
         alias=MultilingualString(
             en="Max depth",
             es="Profundidad máxima",
             pt="Profundidade máxima",
             de="Maximale Tiefe",
+            zh="最大深度",
         ),
     )  # type: ignore
     max_leaf_nodes: schema_field(
@@ -155,12 +163,14 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
                 "Die maximale Anzahl von Blättern für jeden Baum. Muss strikt "
                 "größer als 1 sein. Bei None gibt es kein Maximum."
             ),
+            zh="每棵树的最大叶节点数。必须严格大于1。若为None则无上限。",
         ),
         alias=MultilingualString(
             en="Max leaf nodes",
             es="Nodos de hoja máximos",
             pt="Máximos nós folha",
             de="Maximale Blattknoten",
+            zh="最大叶节点数",
         ),
     )  # type: ignore
     min_samples_leaf: schema_field(
@@ -179,12 +189,14 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
                 "Die Mindestanzahl von Stichproben, die an einem Blattknoten "
                 "erforderlich sind."
             ),
+            zh="叶节点所需的最小样本数。",
         ),
         alias=MultilingualString(
             en="Min samples leaf",
             es="Muestras de hoja mínimas",
             pt="Mínimas amostras para folha",
             de="Minimale Stichproben für Blatt",
+            zh="最小叶节点样本数",
         ),
     )  # type: ignore
     l2_regularization: schema_field(
@@ -208,12 +220,54 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
                 "Der L2-Regularisierungsparameter. Verwenden Sie 0 für keine "
                 "Regularisierung."
             ),
+            zh="L2正则化参数。使用0表示不正则化。",
         ),
         alias=MultilingualString(
             en="L2 regularization",
             es="Regularización L2",
             pt="Regularização L2",
             de="L2-Regularisierung",
+            zh="L2正则化",
+        ),
+    )  # type: ignore
+    class_weight: schema_field(
+        none_type(enum_field(enum=["balanced"])),
+        placeholder=None,
+        description=MultilingualString(
+            en=(
+                "Weights associated with classes, used to correct for class "
+                "imbalance. 'balanced' automatically adjusts weights inversely "
+                "proportional to class frequencies. Use None for no weighting."
+            ),
+            es=(
+                "Pesos asociados a las clases, usados para corregir el desbalance "
+                "de clases. 'balanced' ajusta automáticamente los pesos de forma "
+                "inversamente proporcional a la frecuencia de cada clase. Use None "
+                "para no aplicar ponderación."
+            ),
+            pt=(
+                "Pesos associados às classes, usados para corrigir o "
+                "desbalanceamento de classes. 'balanced' ajusta automaticamente os "
+                "pesos de forma inversamente proporcional à frequência de cada "
+                "classe. Use None para não aplicar ponderação."
+            ),
+            de=(
+                "Gewichte, die den Klassen zugeordnet sind, um "
+                "Klassenungleichgewichte auszugleichen. 'balanced' passt die "
+                "Gewichte automatisch umgekehrt proportional zur "
+                "Klassenhäufigkeit an. Verwenden Sie None für keine Gewichtung."
+            ),
+            zh=(
+                "与类别关联的权重，用于纠正类别不平衡。'balanced'会根据类别频率的"
+                "反比自动调整权重。使用None表示不加权。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Class weight",
+            es="Peso de clase",
+            pt="Peso da classe",
+            de="Klassengewicht",
+            zh="类别权重",
         ),
     )  # type: ignore
 

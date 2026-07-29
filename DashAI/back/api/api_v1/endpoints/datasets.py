@@ -1,15 +1,16 @@
 import asyncio
 import hashlib
 import io
+import json
 import logging
 import os
 import time
 import zipfile
 from collections import OrderedDict
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-import pyarrow as pa
 from fastapi import APIRouter, Depends, File, Form, Query, Response, UploadFile, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
@@ -24,9 +25,10 @@ from DashAI.back.api.api_v1.schemas.datasets_params import (
     DatasetRenameColumnParams,
     DatasetUpdateParams,
 )
-from DashAI.back.dependencies.database.models import Dataset, ModelSession
+from DashAI.back.dependencies.database.models import Dataset, Folder, ModelSession
 
 if TYPE_CHECKING:
+    import pyarrow as pa
     from sqlalchemy.orm.session import sessionmaker
 
     from DashAI.back.dependencies.registry import ComponentRegistry
@@ -119,6 +121,21 @@ def _image_bytes_to_thumbnail_data_uri(img_bytes: bytes, max_size: int = 64) -> 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+_SEED_MANIFEST_PATH = (
+    Path(__file__).parent.parent.parent.parent / "seeds" / "manifest.json"
+)
+
+
+def _load_seed_tasks() -> dict:
+    try:
+        with _SEED_MANIFEST_PATH.open() as f:
+            return {name: meta.get("task") for name, meta in json.load(f).items()}
+    except Exception:
+        return {}
+
+
+_SEED_TASKS: dict = _load_seed_tasks()
+
 
 # ---------------------------------------------------------------------------
 # Cache for filtered + sorted PyArrow tables
@@ -131,7 +148,7 @@ class _FilteredTableCache:
     """LRU cache for filtered/sorted PyArrow tables with TTL eviction."""
 
     def __init__(self, max_size: int = _CACHE_MAX_SIZE, ttl: int = _CACHE_TTL_SECONDS):
-        self._store: OrderedDict[str, tuple[float, pa.Table, int]] = OrderedDict()
+        self._store: OrderedDict[str, tuple[float, "pa.Table", int]] = OrderedDict()
         self._max_size = max_size
         self._ttl = ttl
 
@@ -164,7 +181,7 @@ class _FilteredTableCache:
         path: str,
         filter_model: str | None,
         sort_model: str | None,
-        table: pa.Table,
+        table: "pa.Table",
         total: int,
     ):
         key = self._make_key(path, filter_model, sort_model)
@@ -185,7 +202,7 @@ def _load_and_filter_table(
     path: str,
     filter_model: str | None,
     sort_model: str | None,
-) -> tuple[pa.Table, int, bool]:
+) -> tuple["pa.Table", int, bool]:
     """Load arrow file, apply filters and sorting.
 
     Returns (table, total, was_filtered).
@@ -362,6 +379,8 @@ async def filter_dataset_file(
     pagination over the same filter+sort combination avoids re-reading
     and re-filtering the Arrow file.
     """
+    import pyarrow as pa
+
     cached = _filtered_table_cache.get(path, filter_model, sort_model)
     if cached is not None:
         table, total = cached
@@ -493,7 +512,12 @@ async def get_datasets(
                 detail="Internal database error",
             ) from e
 
-    return datasets
+    result = []
+    for ds in datasets:
+        data = jsonable_encoder(ds)
+        data["task"] = _SEED_TASKS.get(ds.name)
+        result.append(data)
+    return result
 
 
 @router.get("/{dataset_id}")
@@ -1045,7 +1069,7 @@ async def update_dataset(
     params: DatasetUpdateParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
-    """Updates the name of a dataset with the provided ID.
+    """Updates the name and/or folder of a dataset with the provided ID.
 
     Parameters
     ----------
@@ -1071,27 +1095,36 @@ async def update_dataset(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
             )
 
-        if not params.name or not params.name.strip():
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Name cannot be empty",
-            )
+        if params.name is not None:
+            if not params.name.strip():
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Name cannot be empty",
+                )
+            new_name = params.name.strip()
+            if new_name != dataset.name:
+                exists = db.execute(
+                    select(Dataset.id).where(
+                        Dataset.name == new_name, Dataset.id != dataset_id
+                    )
+                ).scalar()
+                if exists:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail="Dataset name already exists",
+                    )
+                dataset.name = new_name
 
-        new_name = params.name.strip()
+        if "folder_id" in params.model_fields_set:
+            if params.folder_id is not None:
+                folder = db.get(Folder, params.folder_id)
+                if folder is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Folder not found",
+                    )
+            dataset.folder_id = params.folder_id
 
-        if new_name == dataset.name:
-            return dataset
-
-        exists = db.execute(
-            select(Dataset.id).where(Dataset.name == new_name, Dataset.id != dataset_id)
-        ).scalar()
-        if exists:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Dataset name already exists",
-            )
-
-        dataset.name = new_name
         try:
             db.commit()
             db.refresh(dataset)
@@ -1546,8 +1579,10 @@ def _build_image_zip(table: "pa.Table") -> io.BytesIO:
     """Build a ZIP buffer from an image dataset table.
 
     Uses ZIP_STORED (no compression) because image formats (JPEG, PNG) are
-    already compressed — DEFLATE gains nothing but wastes significant CPU time.
+    already compressed, so DEFLATE gains nothing but wastes significant CPU time.
     """
+    import pyarrow as pa
+
     label_col = next(
         (
             col
@@ -1637,6 +1672,7 @@ async def _build_export_response(
     StreamingResponse
         ZIP (image datasets) or CSV (tabular datasets).
     """
+    import pyarrow as pa
     import pyarrow.csv as csv
 
     image_cols = [

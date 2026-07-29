@@ -20,6 +20,8 @@ import {
   listDatafileFiles,
   previewHubDataset,
 } from "../../api/hub";
+import { useDatasetsAndNotebooks } from "../custom/contexts/DatasetsAndNotebooksContext";
+import { getNextAvailableName } from "../../utils/nameGenerator";
 import { getComponents } from "../../api/component";
 import ComponentSelector from "../custom/ComponentSelector";
 import PreviewDataset from "../notebooks/datasetCreation/PreviewDataset";
@@ -47,6 +49,7 @@ export default function HubImportPanel({
   const { t } = useTranslation(["hub", "common", "datasets"]);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const { datasets } = useDatasetsAndNotebooks();
   const [localStep, setLocalStep] = useState(0);
   const [localSelectedLoader, setLocalSelectedLoader] = useState(null);
   const stepValue = step ?? localStep;
@@ -203,7 +206,20 @@ export default function HubImportPanel({
     if (!name.trim() || !dataset || !selectedValue || formHasErrors) return;
     setImporting(true);
     try {
-      const created = await createDataset(name.trim());
+      let effectiveName = name.trim();
+      let created;
+      try {
+        created = await createDataset(effectiveName);
+      } catch (createError) {
+        if (createError?.response?.status === 409) {
+          effectiveName = getNextAvailableName(effectiveName, datasets);
+          setName(effectiveName);
+          created = await createDataset(effectiveName);
+        } else {
+          throw createError;
+        }
+      }
+
       // eslint-disable-next-line no-unused-vars
       const { compute_metadata, ...dataloaderParams } = formValues || {};
       const importParams = {

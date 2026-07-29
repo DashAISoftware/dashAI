@@ -5,6 +5,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Final
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.core.artifacts import PlotlyArtifact
 
 log = logging.getLogger(__name__)
 
@@ -89,11 +90,10 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         Returns
         -------
-            fig (json): json with the plot data
+            artifact (PlotlyArtifact): typed artifact wrapping the plot data
         """
         # Lazy imports
         import numpy as np
-        import plotly
         import plotly.graph_objects as go
 
         x = list(range(1, len(trials) + 1))
@@ -128,16 +128,17 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
                 line_width=2,
             )
         )
+        title = (
+            "Optimization History with Current Max Value"
+            if goal_metric["metadata"]["maximize"]
+            else "Optimization History with Current Min Value"
+        )
         fig.update_layout(
-            title=(
-                "Optimization History with Current Max Value"
-                if goal_metric["metadata"]["maximize"]
-                else "Optimization History with Current Min Value"
-            ),
+            title=title,
             xaxis_title="Trial",
             yaxis_title=goal_metric["name"],
         )
-        return plotly.io.to_json(fig)
+        return PlotlyArtifact(payload=fig, title=title)
 
     def slice_plot(self, trials, goal_metric):
         """
@@ -150,10 +151,9 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         Returns
         -------
-            fig (json): json with the plot data
+            artifact (PlotlyArtifact): typed artifact wrapping the plot data
         """
         # Lazy imports
-        import plotly
         import plotly.graph_objects as go
 
         param_names = list(trials[0]["params"].keys())
@@ -201,15 +201,16 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         updatemenus = [{"buttons": buttons, "direction": "down", "showactive": True}]
 
+        title = f"Slice plot for {param_names[0]}"
         fig = go.Figure(data=traces)
         fig.update_layout(
             updatemenus=updatemenus,
-            title=f"Slice plot for {param_names[0]}",
+            title=title,
             xaxis_title=param_names[0],
             yaxis_title=goal_metric["name"],
         )
 
-        return plotly.io.to_json(fig)
+        return PlotlyArtifact(payload=fig, title=title)
 
     def contour_plot(self, trials, goal_metric):
         """
@@ -222,10 +223,9 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         Returns
         -------
-            fig (json): json with the plot data
+            artifact (PlotlyArtifact): typed artifact wrapping the plot data
         """
         # Lazy imports
-        import plotly
         import plotly.graph_objects as go
 
         param_names = list(trials[0]["params"].keys())
@@ -300,14 +300,15 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         updatemenus = [{"buttons": buttons, "direction": "down", "showactive": True}]
 
+        title = f"Contour plot for {traces[0]['name']}"
         fig = go.Figure(data=traces + scatter_traces)
         fig.update_layout(
             updatemenus=updatemenus,
-            title=f"Contour plot for {traces[0]['name']}",
+            title=title,
             xaxis_title=param_names[0],
             yaxis_title=param_names[1],
         )
-        return plotly.io.to_json(fig)
+        return PlotlyArtifact(payload=fig, title=title)
 
     def importance_plot(self, trials, goal_metric):
         """
@@ -320,11 +321,10 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         Returns
         -------
-            fig (json): json with the plot data
+            artifact (PlotlyArtifact): typed artifact wrapping the plot data
         """
         # Lazy imports
         import optuna
-        import plotly
         import plotly.graph_objects as go
         from optuna.importance import FanovaImportanceEvaluator
 
@@ -373,14 +373,15 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
             ]
         )
 
+        title = "Hyperparameter importance"
         fig.update_layout(
-            title="Hyperparameter importance",
+            title=title,
             xaxis_title="Importance",
             yaxis_title="Hyperparameter",
             yaxis={"tickangle": 0},
         )
 
-        return plotly.io.to_json(fig)
+        return PlotlyArtifact(payload=fig, title=title)
 
     def create_plots(self, trials, run_id, n_params, goal_metric):
         """
@@ -397,7 +398,8 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
 
         Returns
         -------
-            fig (json): json with the plot data
+            plots_filenames (list): Filenames to persist each plot under.
+            plots_list (list): The matching list of PlotlyArtifact instances.
         """
         if n_params >= 2:
             plots_filenames = [

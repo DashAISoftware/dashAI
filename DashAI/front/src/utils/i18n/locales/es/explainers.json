@@ -3,7 +3,14 @@
     "addExplainer": "Agregar Explicador",
     "backToExplainers": "Volver a explicadores",
     "hidePlot": "Ocultar Gráfico",
-    "showPlot": "Mostrar Gráfico"
+    "showPlot": "Mostrar Gráfico",
+    "download": "Descargar",
+    "downloadPng": "Descargar como PNG",
+    "downloadSvg": "Descargar como SVG",
+    "editPlot": "Editar gráfico",
+    "resetPlot": "Restablecer ediciones",
+    "fullscreen": "Pantalla completa",
+    "close": "Cerrar"
   },
   "error": {
     "explainerFailed": "Error al generar el explicador.",
@@ -20,7 +27,9 @@
     "localExplainerJobEnqueueError": "Error al intentar encolar el trabajo del explicador local.",
     "localExplainerJobFailed": "El trabajo del explicador local falló: {{error}}",
     "nameTooShort": "El nombre del explicador debe tener al menos 4 caracteres alfanuméricos.",
-    "validateDataset": "Error al intentar validar el dataset seleccionado."
+    "validateDataset": "Error al intentar validar el dataset seleccionado.",
+    "noData": "No hay datos disponibles",
+    "nameAlreadyExists": "El nombre ya existe"
   },
   "label": {
     "configureExplainer": "Configure su Explicador",
@@ -52,8 +61,23 @@
     "selectDatasetToExplain": "Seleccione un dataset con instancias para explicar",
     "selectExplainer": "Establecer nombre y explicador",
     "selectExplainerAndName": "Seleccione un explicador e ingrese un nombre",
+    "selectInstance": "Selecciona una instancia",
     "explainerInProgress": "Explicador en progreso...",
-    "splitSelectionSummary": "Porcentaje: {{percentage}}% | Filas seleccionadas: {{rowsSelected}} / {{totalRows}}"
+    "splitSelectionSummary": "Porcentaje: {{percentage}}% | Filas seleccionadas: {{rowsSelected}} / {{totalRows}}",
+    "searchExplainers": "Buscar explicadores...",
+    "sourceFromDataset": "Desde un dataset",
+    "sourceManualInput": "Ingresar manualmente",
+    "enterInstancesManually": "Ingrese las instancias a explicar",
+    "manualInputDescription": "Complete los valores de las características para cada instancia que desea explicar.",
+    "explanationInfo": "Información de la Explicación",
+    "inputColumns": "Columnas de Entrada:",
+    "targetColumn": "Columna Objetivo:",
+    "markRowsToExplain": "Marque las filas a explicar",
+    "rowSelectionMode": "Modo de selección de filas",
+    "rowModePercentage": "Control deslizante de porcentaje",
+    "rowModeManual": "Selección manual",
+    "shuffleRows": "Mezclar filas seleccionadas (muestra aleatoria)",
+    "rowsSelectedManually": "Filas seleccionadas manualmente: {{selected}} / {{total}}"
   },
   "message": {
     "explainerJobCompleted": "Explicador {{name}} completado exitosamente",

@@ -46,15 +46,11 @@ function PrepareDatasetStep({
   const [infoLoading, setInfoLoading] = useState(true);
   const { t } = useTranslation(["experiments", "common"]);
 
-  const [taskRequirements, setTaskRequirements] = useState({
-    name: "",
-    metadata: {
-      inputs_types: [],
-      inputs_cardinality: "",
-      outputs_types: [],
-      outputs_cardinality: "",
-    },
-  });
+  // null means "not fetched yet" — distinct from the empty-but-loaded shape
+  // getTaskRequirements falls back to when the task genuinely isn't found.
+  // The banner below only renders once this is non-null, otherwise it briefly
+  // interpolates its message with blank task name/types/cardinality.
+  const [taskRequirements, setTaskRequirements] = useState(null);
 
   const [inputColumnNames, setInputColumnNames] = useState(
     newExp.input_columns,
@@ -65,6 +61,11 @@ function PrepareDatasetStep({
 
   const [columnsReady, setColumnsReady] = useState(false);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
+  // True until the current column selection has actually been checked against
+  // the backend at least once — distinct from columnsAreValid=false, so the
+  // banner doesn't flash red while columns are still being auto-selected or a
+  // check is in flight, only once a real valid/invalid result is known.
+  const [validationPending, setValidationPending] = useState(true);
   const [shuffle, setShuffle] = useState(true);
   const [stratify, setStratify] = useState(false);
   const [seed, setSeed] = useState(42);
@@ -204,21 +205,21 @@ function PrepareDatasetStep({
   };
 
   const validateColumns = async () => {
-    if (
-      !datasetInfo ||
-      !datasetInfo.column_names ||
-      datasetInfo.column_names.length === 0
-    ) {
-      setColumnsAreValid(false);
-      return;
-    }
-
-    if (inputColumnNames.length === 0 || outputColumnNames.length === 0) {
-      setColumnsAreValid(false);
-      return;
-    }
-
     try {
+      if (
+        !datasetInfo ||
+        !datasetInfo.column_names ||
+        datasetInfo.column_names.length === 0
+      ) {
+        setColumnsAreValid(false);
+        return;
+      }
+
+      if (inputColumnNames.length === 0 || outputColumnNames.length === 0) {
+        setColumnsAreValid(false);
+        return;
+      }
+
       const validation = await validateColumnsRequest(
         newExp.task_name,
         dataset.id,
@@ -236,6 +237,8 @@ function PrepareDatasetStep({
         console.error("Unknown Error", error.message);
       }
       setColumnsAreValid(false);
+    } finally {
+      setValidationPending(false);
     }
   };
 
@@ -308,9 +311,11 @@ function PrepareDatasetStep({
       datasetInfo.column_names &&
       datasetInfo.column_names.length > 0
     ) {
+      setValidationPending(true);
       validateColumns();
     } else {
       setColumnsAreValid(false);
+      setValidationPending(true);
     }
   }, [
     columnsReady,
@@ -484,81 +489,79 @@ function PrepareDatasetStep({
           </Alert>
         ) : null
       ) : null}
-      <Alert
-        severity={columnsAreValid ? "success" : "error"}
-        sx={{
-          mb: 2,
-          "& .MuiAlert-icon": { fontSize: 24 },
-          bgcolor: (theme) =>
-            `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
-          border: (theme) =>
-            `1px solid ${theme.palette[columnsAreValid ? "success" : "error"].main}`,
-        }}
-        data-tour="models-validation-alert"
-      >
-        <AlertTitle>
-          {taskRequirements
-            ? t(
-                columnsAreValid
-                  ? "experiments:label.columnsValidRequirements"
-                  : "experiments:label.columnsInvalidRequirements",
-                { taskName: taskRequirements.display_name },
-              )
-            : null}
-        </AlertTitle>
-        <Grid container spacing={4}>
-          <Grid size={{ xs: 12 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                flexWrap: "wrap",
-              }}
-            >
-              <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
-                <span>The input columns must be of the types</span>
-                {taskRequirements
-                  ? renderTypesAsChips(taskRequirements.metadata.inputs_types)
-                  : null}
-                <span>
-                  , and they should have a cardinality of
+      {taskRequirements && !validationPending && (
+        <Alert
+          severity={columnsAreValid ? "success" : "error"}
+          sx={{
+            mb: 2,
+            "& .MuiAlert-icon": { fontSize: 24 },
+            bgcolor: (theme) =>
+              `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
+            border: (theme) =>
+              `1px solid ${theme.palette[columnsAreValid ? "success" : "error"].main}`,
+          }}
+          data-tour="models-validation-alert"
+        >
+          <AlertTitle>
+            {t(
+              columnsAreValid
+                ? "experiments:label.columnsValidRequirements"
+                : "experiments:label.columnsInvalidRequirements",
+              { taskName: taskRequirements.display_name },
+            )}
+          </AlertTitle>
+          <Grid container spacing={4}>
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
+                  <span>The input columns must be of the types</span>
+                  {renderTypesAsChips(taskRequirements.metadata.inputs_types)}
                   <span>
+                    , and they should have a cardinality of
+                    <span>
+                      {{
+                        cardinality:
+                          taskRequirements.metadata.inputs_cardinality,
+                      }}
+                      .
+                    </span>
+                  </span>
+                </Trans>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
+                  <span>The output columns must be of the types</span>
+                  {renderTypesAsChips(taskRequirements.metadata.outputs_types)}
+                  <span>
+                    , and they should have a cardinality of
                     {{
-                      cardinality: taskRequirements.metadata.inputs_cardinality,
+                      cardinality:
+                        taskRequirements.metadata.outputs_cardinality,
                     }}
                     .
                   </span>
-                </span>
-              </Trans>
-            </Box>
+                </Trans>
+              </Box>
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                flexWrap: "wrap",
-              }}
-            >
-              <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
-                <span>The output columns must be of the types</span>
-                {taskRequirements
-                  ? renderTypesAsChips(taskRequirements.metadata.outputs_types)
-                  : null}
-                <span>
-                  , and they should have a cardinality of
-                  {{
-                    cardinality: taskRequirements.metadata.outputs_cardinality,
-                  }}
-                  .
-                </span>
-              </Trans>
-            </Box>
-          </Grid>
-        </Grid>
-      </Alert>
+        </Alert>
+      )}
 
       {!infoLoading ? (
         <Grid container spacing={2}>

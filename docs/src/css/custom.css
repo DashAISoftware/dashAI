@@ -91,7 +91,7 @@
 
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.07);
 
-  /* DashAI semantic palette — brand module colors */
+  /* DashAI semantic palette - brand module colors */
   --dashai-blue: #2C7AFF;
   --dashai-blue-dim: rgba(44, 122, 255, 0.08);
   --dashai-blue-border: rgba(44, 122, 255, 0.22);
@@ -106,7 +106,7 @@
   --dashai-amber-border: rgba(121, 49, 12, 0.20);
 }
 
-/* ── Dark theme — DashAI Dusk palette ── */
+/* ── Dark theme - DashAI Dusk palette ── */
 [data-theme='dark'] {
   /* DashAI blue as primary */
   --ifm-color-primary: #A7C7FF;
@@ -153,7 +153,7 @@
   --dashai-error: #ff8383;
   --dashai-info: #A7C7FF;
 
-  /* 4 macro-section colors (dark) — DashAI brand palette */
+  /* 4 macro-section colors (dark) - DashAI brand palette */
   --dashai-discover: #A7C7FF;
   --dashai-discover-bg: rgba(167, 199, 255, 0.07);
   --dashai-discover-border: rgba(167, 199, 255, 0.2);
@@ -176,7 +176,7 @@
 
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 
-  /* DashAI semantic palette — brand module colors */
+  /* DashAI semantic palette - brand module colors */
   --dashai-blue: #A7C7FF;
   --dashai-blue-dim: rgba(167, 199, 255, 0.08);
   --dashai-blue-border: rgba(167, 199, 255, 0.22);
@@ -191,7 +191,7 @@
   --dashai-amber-border: rgba(255, 165, 120, 0.22);
 }
 
-/* DashAI light mode semantic vars — brand palette overrides for white bg */
+/* DashAI light mode semantic vars - brand palette overrides for white bg */
 :root:not([data-theme='dark']) {
   --dashai-blue: #2C7AFF;
   --dashai-blue-dim: rgba(44, 122, 255, 0.08);
@@ -320,7 +320,7 @@ a:focus-visible {
   gap: 6px;
 }
 
-/* GitHub navbar link — bordered button like JSX */
+/* GitHub navbar link - bordered button like JSX */
 .navbar__items--right .navbar__link {
   display: flex;
   align-items: center;
@@ -342,7 +342,7 @@ a:focus-visible {
   text-decoration: none;
 }
 
-/* GitHub icon-only link — matches theme toggle style */
+/* GitHub icon-only link - matches theme toggle style */
 .navbar__item:has(.navbar-github-icon),
 .navbar__item.dropdown.dropdown--hoverable.dropdown--right {
   padding: 0;
@@ -381,7 +381,7 @@ a:focus-visible {
   display: none;
 }
 
-/* Theme toggle button — bordered icon button */
+/* Theme toggle button - bordered icon button */
 .navbar__items--right [class*="colorModeToggle"] button,
 .navbar__items--right [class*="toggle_"] button {
   border: 1px solid var(--dashai-border) !important;
@@ -403,7 +403,7 @@ a:focus-visible {
   background: none !important;
 }
 
-/* Search bar — local search plugin */
+/* Search bar - local search plugin */
 [class*="navbarSearchContainer"] {
   padding: 0 !important;
   width: 250px !important;
@@ -487,7 +487,7 @@ a:focus-visible {
   border-left-color: var(--dashai-section-accent);
 }
 
-/* Navbar section tab colors — bottom border accent */
+/* Navbar section tab colors - bottom border accent */
 .navbar__link {
   font-size: 0.8125rem;
   font-weight: 500;
@@ -622,7 +622,7 @@ a:focus-visible {
   letter-spacing: 0.05em;
 }
 
-/* ── Swizzled sidebar — hamburger in header row ── */
+/* ── Swizzled sidebar - hamburger in header row ── */
 
 .dashai-sidebar-desktop {
   display: flex;
@@ -648,7 +648,7 @@ a:focus-visible {
   z-index: 1;
 }
 
-/* Minimal hamburger toggle — matches HTML exactly */
+/* Minimal hamburger toggle - matches HTML exactly */
 .dashai-sidebar-toggle-btn {
   border: none;
   background: none;
@@ -815,7 +815,7 @@ pre code {
   --ifm-alert-color: var(--dashai-error);
 }
 
-/* ── Footer — minimal single bar ── */
+/* ── Footer - minimal single bar ── */
 .footer {
   background: var(--dashai-bg-surface);
   border-top: 1px solid var(--dashai-border);
@@ -845,7 +845,7 @@ pre code {
   color: var(--dashai-text-dim);
 }
 
-/* ══ Homepage — full-bleed, fills viewport so the footer band sits at the bottom ══ */
+/* ══ Homepage - full-bleed, fills viewport so the footer band sits at the bottom ══ */
 .dashai-home {
   max-width: none;
   margin: 0;
@@ -1044,7 +1044,7 @@ pre code {
   margin: 0;
 }
 
-/* 4 macro-section cards — wide grid */
+/* 4 macro-section cards - wide grid */
 .dashai-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1061,7 +1061,7 @@ pre code {
   }
 }
 
-/* Card — app HomeButton anatomy. Per-section accent flows through --card-* props. */
+/* Card - app HomeButton anatomy. Per-section accent flows through --card-* props. */
 .dashai-landing-card {
   display: flex;
   flex-direction: column;
@@ -1156,7 +1156,7 @@ pre code {
   height: 25px;
 }
 
-/* Shared monospace badge — used by status tag and footer chips */
+/* Shared monospace badge - used by status tag and footer chips */
 .dashai-landing-card__badge {
   font-family: var(--ifm-font-family-monospace);
   font-size: 0.53125rem; /* 8.5px */
@@ -1220,8 +1220,8 @@ pre code {
   margin-left: 16px;
 }
 
-/* "New to DashAI?" — full-bleed branded CTA band (distinct in both themes) */
-/* "New to DashAI?" — teal strip with a filled accent square, below the cards */
+/* "New to DashAI?" - full-bleed branded CTA band (distinct in both themes) */
+/* "New to DashAI?" - teal strip with a filled accent square, below the cards */
 .dashai-startcta {
   margin-top: 28px;
   display: flex;
@@ -1339,7 +1339,7 @@ pre code {
   text-decoration: none !important;
 }
 
-/* Acknowledgments — open section, refined logo row */
+/* Acknowledgments - open section, refined logo row */
 .dashai-ack__logos {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -1798,7 +1798,7 @@ tbody tr:hover {
     -webkit-backdrop-filter: none;
   }
 
-  /* Show only search bar on mobile — hide everything else */
+  /* Show only search bar on mobile - hide everything else */
   .navbar__items--right .navbar__link,
   .navbar-github-icon,
   .navbar__item.dropdown.dropdown--hoverable.dropdown--right,
@@ -1811,6 +1811,20 @@ tbody tr:hover {
   [class*="searchBarContainer"],
   [class*="navbarSearchContainer"] {
     display: flex !important;
+  }
+
+  /* Let search shrink instead of overlapping the logo on narrow screens */
+  [class*="navbarSearchContainer"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto !important;
+    max-width: 180px !important;
+    margin-left: 8px !important;
+  }
+
+  [class*="searchBar_"],
+  .navbar__search {
+    max-width: 100% !important;
   }
 
 
@@ -1878,7 +1892,7 @@ tbody tr:hover {
 
 /* ── Component API pages ── */
 
-/* Type badge — pill above the class name */
+/* Type badge - pill above the class name */
 .sk-badge {
   display: inline-block;
   padding: 2px 10px;
@@ -1895,7 +1909,7 @@ tbody tr:hover {
   font-family: var(--ifm-font-family-base);
 }
 
-/* Per-type badge tints — brand palette: blue=models/data, teal=generative, amber=datasets/converters */
+/* Per-type badge tints - brand palette: blue=models/data, teal=generative, amber=datasets/converters */
 .sk-badge--task           { background: var(--dashai-blue-dim);   color: var(--dashai-blue);   border-color: var(--dashai-blue-border); }
 .sk-badge--model          { background: var(--dashai-blue-dim);   color: var(--dashai-blue);   border-color: var(--dashai-blue-border); }
 .sk-badge--generativemodel{ background: var(--dashai-teal-dim);   color: var(--dashai-teal);   border-color: var(--dashai-teal-border); }
@@ -1909,7 +1923,7 @@ tbody tr:hover {
 .sk-badge--job            { background: var(--dashai-bg-elevated); color: var(--dashai-text-muted); border-color: var(--dashai-border); }
 .sk-badge--generativetask { background: var(--dashai-teal-dim);   color: var(--dashai-teal);   border-color: var(--dashai-teal-border); }
 
-/* Class signature block — shows the full dotted module path */
+/* Class signature block - shows the full dotted module path */
 .sk-sig {
   background: var(--dashai-bg-elevated);
   border: 1px solid var(--dashai-border);

@@ -3,6 +3,7 @@ from sklearn.linear_model import LogisticRegression as _LogisticRegression
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
+    none_type,
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
@@ -10,9 +11,6 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
-)
-from DashAI.back.models.scikit_learn.sklearn_like_model import (
-    CategoricalEncodingStrategy,
 )
 from DashAI.back.models.tabular_classification_model import TabularClassificationModel
 
@@ -35,9 +33,14 @@ class LogisticRegressionSchema(BaseSchema):
             es="Especifica la norma de la penalización",
             pt="Especifica a norma da penalidade",
             de="Gibt die Norm der Bestrafung an",
+            zh="指定惩罚项的范数",
         ),
         alias=MultilingualString(
-            en="Penalty", es="Penalización", pt="Penalidade", de="Bestrafung"
+            en="Penalty",
+            es="Penalización",
+            pt="Penalidade",
+            de="Bestrafung",
+            zh="惩罚项",
         ),
     )  # type: ignore
     tol: schema_field(
@@ -53,9 +56,10 @@ class LogisticRegressionSchema(BaseSchema):
             es="Tolerancia para el criterio de detención.",
             pt="Tolerância para o critério de parada.",
             de="Toleranz für das Abbruchkriterium.",
+            zh="停止准则的容差。",
         ),
         alias=MultilingualString(
-            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz"
+            en="Tolerance", es="Tolerancia", pt="Tolerância", de="Toleranz", zh="容差"
         ),
     )  # type: ignore
     C: schema_field(
@@ -84,8 +88,9 @@ class LogisticRegressionSchema(BaseSchema):
                 "Kehrwert der Regularisierungsstärke; kleinere Werte bedeuten stärkere "
                 "Regularisierung. Muss eine positive Zahl sein."
             ),
+            zh=("正则化强度的倒数，较小的值表示更强的正则化。必须为正数。"),
         ),
-        alias=MultilingualString(en="C", es="C", pt="C", de="C"),
+        alias=MultilingualString(en="C", es="C", pt="C", de="C", zh="C"),
     )  # type: ignore
     max_iter: schema_field(
         optimizer_int_field(ge=50),
@@ -100,12 +105,54 @@ class LogisticRegressionSchema(BaseSchema):
             es=("Número máximo de iteraciones para que los solucionadores converjan."),
             pt=("Número máximo de iterações para os solvers convergirem."),
             de=("Maximale Anzahl von Iterationen für die Konvergenz der Löser."),
+            zh=("求解器收敛所需的最大迭代次数。"),
         ),
         alias=MultilingualString(
             en="Max iterations",
             es="Máximas iteraciones",
             pt="Máximas iterações",
             de="Maximale Iterationen",
+            zh="最大迭代次数",
+        ),
+    )  # type: ignore
+    class_weight: schema_field(
+        none_type(enum_field(enum=["balanced"])),
+        placeholder=None,
+        description=MultilingualString(
+            en=(
+                "Weights associated with classes, used to correct for class "
+                "imbalance. 'balanced' automatically adjusts weights inversely "
+                "proportional to class frequencies. Use None for no weighting."
+            ),
+            es=(
+                "Pesos asociados a las clases, usados para corregir el desbalance "
+                "de clases. 'balanced' ajusta automáticamente los pesos de forma "
+                "inversamente proporcional a la frecuencia de cada clase. Use None "
+                "para no aplicar ponderación."
+            ),
+            pt=(
+                "Pesos associados às classes, usados para corrigir o "
+                "desbalanceamento de classes. 'balanced' ajusta automaticamente os "
+                "pesos de forma inversamente proporcional à frequência de cada "
+                "classe. Use None para não aplicar ponderação."
+            ),
+            de=(
+                "Gewichte, die den Klassen zugeordnet sind, um "
+                "Klassenungleichgewichte auszugleichen. 'balanced' passt die "
+                "Gewichte automatisch umgekehrt proportional zur "
+                "Klassenhäufigkeit an. Verwenden Sie None für keine Gewichtung."
+            ),
+            zh=(
+                "与类别关联的权重，用于纠正类别不平衡。'balanced'会根据类别频率的"
+                "反比自动调整权重。使用None表示不加权。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Class weight",
+            es="Peso de clase",
+            pt="Peso da classe",
+            de="Klassengewicht",
+            zh="类别权重",
         ),
     )  # type: ignore
 
@@ -149,8 +196,6 @@ class LogisticRegression(
     )
     COLOR: str = "#64B5F6"
     ICON: str = "TrendingUp"
-
-    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
         """Initialise the model by forwarding all kwargs to the parent class.

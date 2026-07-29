@@ -164,6 +164,7 @@ def test_get_component_by_id(client: TestClient):
         "description": "Task 1.",
         "display_name": "Test Task 1",
         "color": "#795548",
+        "downloaded": True,
     }
 
     response = client.get("/api/v1/component/TestTask2/")
@@ -182,6 +183,7 @@ def test_get_component_by_id(client: TestClient):
         "description": "Task 2.",
         "display_name": None,
         "color": None,
+        "downloaded": True,
     }
 
     response = client.get("/api/v1/component/TestDataloader1/")
@@ -199,6 +201,7 @@ def test_get_component_by_id(client: TestClient):
         "description": None,
         "display_name": None,
         "color": None,
+        "downloaded": True,
     }
 
 
@@ -292,6 +295,7 @@ def test_get_components_select_only_tasks(client: TestClient):
             "description": "Task 1.",
             "display_name": "Test Task 1",
             "color": "#795548",
+            "downloaded": True,
         },
         {
             "name": "TestTask2",
@@ -307,6 +311,7 @@ def test_get_components_select_only_tasks(client: TestClient):
             "description": "Task 2.",
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
     ]
 
@@ -330,6 +335,7 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -344,6 +350,7 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader3",
@@ -358,6 +365,7 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
     ]
 
@@ -438,6 +446,7 @@ def test_get_components_ignore_models(client: TestClient):
             "description": "Task 1.",
             "display_name": "Test Task 1",
             "color": "#795548",
+            "downloaded": True,
         },
         {
             "name": "TestTask2",
@@ -453,6 +462,7 @@ def test_get_components_ignore_models(client: TestClient):
             "description": "Task 2.",
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader1",
@@ -467,6 +477,7 @@ def test_get_components_ignore_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -481,6 +492,7 @@ def test_get_components_ignore_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader3",
@@ -495,6 +507,7 @@ def test_get_components_ignore_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
     ]
 
@@ -517,6 +530,7 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -531,6 +545,7 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader3",
@@ -545,6 +560,7 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
     ]
 
@@ -608,6 +624,7 @@ def test_get_components_related_inverse_relation(client: TestClient):
             "description": "Task 1.",
             "display_name": "Test Task 1",
             "color": "#795548",
+            "downloaded": True,
         }
     ]
 
@@ -653,6 +670,7 @@ def test_get_components_dataloader_component_parent(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -667,6 +685,7 @@ def test_get_components_dataloader_component_parent(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
     ]
 
@@ -706,6 +725,7 @@ def test_get_components_by_type_and_task(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -720,6 +740,7 @@ def test_get_components_by_type_and_task(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
     ]
 
@@ -758,6 +779,7 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -772,6 +794,7 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader3",
@@ -786,6 +809,7 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
     ]
 
@@ -811,6 +835,7 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -825,5 +850,6 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "downloaded": True,
         },
     ]

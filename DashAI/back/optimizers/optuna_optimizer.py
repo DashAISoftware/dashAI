@@ -37,7 +37,6 @@ class OptunaSchema(BaseSchema):
             enum=[
                 "TPESampler",
                 "CmaEsSampler",
-                "GridSampler",
                 "GPSampler",
                 "NSGAIISampler",
                 "QMCSampler",

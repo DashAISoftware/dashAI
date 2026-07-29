@@ -58,8 +58,12 @@ from DashAI.back.converters.scikit_learn.variance_threshold import VarianceThres
 from DashAI.back.converters.simple_converters.character_replacer import (
     CharacterReplacer,
 )
+from DashAI.back.converters.simple_converters.column_arithmetic import ColumnArithmetic
+from DashAI.back.converters.simple_converters.column_concat import ColumnConcat
 from DashAI.back.converters.simple_converters.column_remover import ColumnRemover
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
+from DashAI.back.converters.simple_converters.numeric_expansion import NumericExpansion
+from DashAI.back.converters.simple_converters.type_cast import TypeCast
 
 # DataLoaders
 from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
@@ -80,11 +84,31 @@ from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 
 # Explainers
+from DashAI.back.explainability.explainers.contrastive_shap import ContrastiveShap
+from DashAI.back.explainability.explainers.dice_counterfactual import (
+    DiceCounterfactual,
+)
+from DashAI.back.explainability.explainers.grad_cam import GradCam
 from DashAI.back.explainability.explainers.kernel_shap import KernelShap
+from DashAI.back.explainability.explainers.lime_text import LimeText
+from DashAI.back.explainability.explainers.nearest_counterfactual import (
+    NearestCounterfactual,
+)
+from DashAI.back.explainability.explainers.occlusion_saliency import OcclusionSaliency
 from DashAI.back.explainability.explainers.partial_dependence import PartialDependence
 from DashAI.back.explainability.explainers.permutation_feature_importance import (
     PermutationFeatureImportance,
 )
+from DashAI.back.explainability.explainers.regression_kernel_shap import (
+    RegressionKernelShap,
+)
+from DashAI.back.explainability.explainers.regression_partial_dependence import (
+    RegressionPartialDependence,
+)
+from DashAI.back.explainability.explainers.regression_permutation_feature_importance import (  # noqa: E501
+    RegressionPermutationFeatureImportance,
+)
+from DashAI.back.explainability.explainers.token_ablation import TokenAblation
 
 # Explorers
 from DashAI.back.exploration.explorers.box_plot import BoxPlotExplorer
@@ -107,6 +131,7 @@ from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
+from DashAI.back.job.component_download_job import ComponentDownloadJob
 from DashAI.back.job.converter_job import ConverterJob
 from DashAI.back.job.datafile_job import DatafileJob
 from DashAI.back.job.dataset_job import DatasetJob
@@ -119,10 +144,12 @@ from DashAI.back.job.predict_job import PredictJob
 
 # Metrics
 from DashAI.back.metrics.classification.accuracy import Accuracy
+from DashAI.back.metrics.classification.balanced_accuracy import BalancedAccuracy
 from DashAI.back.metrics.classification.cohen_kappa import CohenKappa
 from DashAI.back.metrics.classification.f1 import F1
 from DashAI.back.metrics.classification.hamming_distance import HammingDistance
 from DashAI.back.metrics.classification.log_loss import LogLoss
+from DashAI.back.metrics.classification.matthews_corrcoef import MatthewsCorrCoef
 from DashAI.back.metrics.classification.precision import Precision
 from DashAI.back.metrics.classification.recall import Recall
 from DashAI.back.metrics.classification.roc_auc import ROCAUC
@@ -148,11 +175,21 @@ from DashAI.back.models.hugging_face.beto_transformer import BetoTransformer
 from DashAI.back.models.hugging_face.deberta_v3_transformer import DebertaV3Transformer
 from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTransformer
 from DashAI.back.models.hugging_face.electra_transformer import ElectraTransformer
-from DashAI.back.models.hugging_face.llama_model import LlamaModel
+from DashAI.back.models.hugging_face.llama_model import (
+    Llama31_8BInstruct,
+    Llama32_1BInstruct,
+    Llama32_3BInstruct,
+)
 from DashAI.back.models.hugging_face.m2m100_transformer import M2M100Transformer
 from DashAI.back.models.hugging_face.minilm_transformer import MiniLMTransformer
-from DashAI.back.models.hugging_face.mistral_model import MistralModel
-from DashAI.back.models.hugging_face.mixtral_model import MixtralModel
+from DashAI.back.models.hugging_face.mistral_model import (
+    Mistral7BInstructV03,
+    MistralNemoInstruct2407,
+)
+from DashAI.back.models.hugging_face.mixtral_model import (
+    Mixtral8x7BInstructQ2K,
+    Mixtral8x7BInstructQ4KM,
+)
 from DashAI.back.models.hugging_face.modernbert_transformer import ModernBertTransformer
 from DashAI.back.models.hugging_face.multilingual_bert_transformer import (
     MultilingualBertTransformer,
@@ -167,8 +204,8 @@ from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
 from DashAI.back.models.hugging_face.opus_mt_en_fr_transformer import (
     OpusMtEnFrTransformer,
 )
-from DashAI.back.models.hugging_face.opus_mt_en_pt_transformer import (
-    OpusMtEnPtTransformer,
+from DashAI.back.models.hugging_face.opus_mt_en_roa_transformer import (
+    OpusMtEnRoaTransformer,
 )
 from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
     OpusMtEsENTransformer,
@@ -176,8 +213,14 @@ from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
 from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
     OpusMtFrEnTransformer,
 )
-from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigmaModel
-from DashAI.back.models.hugging_face.qwen_model import QwenModel
+from DashAI.back.models.hugging_face.opus_mt_roa_en_transformer import (
+    OpusMtRoaEnTransformer,
+)
+from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigma
+from DashAI.back.models.hugging_face.qwen_model import (
+    Qwen25_05BInstruct,
+    Qwen25_15BInstruct,
+)
 from DashAI.back.models.hugging_face.roberta_transformer import RobertaTransformer
 from DashAI.back.models.hugging_face.sd15_depth_controlnet_model import (
     SD15DepthControlNetModel,
@@ -192,27 +235,41 @@ from DashAI.back.models.hugging_face.sdxl_canny_controlnet_model import (
     SDXLCannyControlNetModel,
 )
 from DashAI.back.models.hugging_face.sdxl_turbo_model import SDXLTurboModel
-from DashAI.back.models.hugging_face.smol_lm_model import SmolLMModel
+from DashAI.back.models.hugging_face.smol_lm_model import (
+    SmolLM2_17BInstruct,
+    SmolLM2_360MInstruct,
+)
 from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import (
     StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
-    StableDiffusionV2Model,
+    StableDiffusion2,
+    StableDiffusion2_512,
+    StableDiffusion21,
+    StableDiffusion21_512,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
-    StableDiffusionV3Model,
+    StableDiffusion3Medium,
+    StableDiffusion35Large,
+    StableDiffusion35LargeTurbo,
+    StableDiffusion35Medium,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_xl_model import (
-    StableDiffusionXLModel,
+    RealVisXLV4,
+    StableDiffusionXL,
 )
 from DashAI.back.models.hugging_face.t5_small_transformer import T5SmallTransformer
-from DashAI.back.models.hugging_face.tongyi_z_image_model import TongyiZImageModel
+from DashAI.back.models.hugging_face.tongyi_z_image_model import (
+    TongyiZImage,
+    TongyiZImageTurbo,
+)
 from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
     XlmRobertaTransformer,
 )
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
 from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
+from DashAI.back.models.pymc.bart_regression import BARTRegression
 from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
@@ -250,6 +307,7 @@ from DashAI.back.models.scikit_learn.hist_gradient_boosting_regression import (
 from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsClassifier
 from DashAI.back.models.scikit_learn.k_neighbors_regression import KNeighborsRegression
 from DashAI.back.models.scikit_learn.lasso_regression import LassoRegression
+from DashAI.back.models.scikit_learn.lightgbm_classifier import LGBMClassifier
 from DashAI.back.models.scikit_learn.linear_regression import LinearRegression
 from DashAI.back.models.scikit_learn.linear_svc_classifier import LinearSVCClassifier
 from DashAI.back.models.scikit_learn.linearSVR import LinearSVR
@@ -269,6 +327,7 @@ from DashAI.back.models.scikit_learn.svr import SVR
 from DashAI.back.models.scikit_learn.tfidf_logreg_text_classification_model import (
     TfIdfLogRegTextClassificationModel,
 )
+from DashAI.back.models.scikit_learn.xgboost_classifier import XGBClassifier
 
 # Optimizers
 from DashAI.back.optimizers.hyperopt_optimizer import HyperOptOptimizer
@@ -359,6 +418,7 @@ def get_initial_components():
         BertinTransformer,
         BetoTransformer,
         BayesianRidgeRegression,
+        BARTRegression,
         DebertaV3Transformer,
         DecisionTreeClassifier,
         DecisionTreeRegression,
@@ -376,15 +436,20 @@ def get_initial_components():
         KNeighborsClassifier,
         KNeighborsRegression,
         LassoRegression,
+        LGBMClassifier,
         LinearRegression,
         LinearSVCClassifier,
         LinearSVR,
-        LlamaModel,
+        Llama31_8BInstruct,
+        Llama32_1BInstruct,
+        Llama32_3BInstruct,
         LogisticRegression,
         M2M100Transformer,
         MiniLMTransformer,
-        MistralModel,
-        MixtralModel,
+        Mistral7BInstructV03,
+        MistralNemoInstruct2407,
+        Mixtral8x7BInstructQ2K,
+        Mixtral8x7BInstructQ4KM,
         MultilingualBertTransformer,
         MLPClassifier,
         MLPRegression,
@@ -393,11 +458,13 @@ def get_initial_components():
         OpusMtEnDeTransformer,
         OpusMtEnESTransformer,
         OpusMtEnFrTransformer,
-        OpusMtEnPtTransformer,
+        OpusMtEnRoaTransformer,
         OpusMtEsENTransformer,
         OpusMtFrEnTransformer,
-        PixArtSigmaModel,
-        QwenModel,
+        PixArtSigma,
+        Qwen25_05BInstruct,
+        Qwen25_15BInstruct,
+        OpusMtRoaEnTransformer,
         RandomForestClassifier,
         RobertaTransformer,
         RandomForestRegression,
@@ -408,16 +475,26 @@ def get_initial_components():
         SDXLCannyControlNetModel,
         SDXLTurboModel,
         SGDClassifier,
-        SmolLMModel,
-        StableDiffusionV2Model,
-        StableDiffusionV3Model,
-        StableDiffusionXLModel,
+        SmolLM2_360MInstruct,
+        SmolLM2_17BInstruct,
+        StableDiffusion2,
+        StableDiffusion2_512,
+        StableDiffusion21,
+        StableDiffusion21_512,
+        StableDiffusion3Medium,
+        StableDiffusion35Medium,
+        StableDiffusion35Large,
+        StableDiffusion35LargeTurbo,
+        StableDiffusionXL,
+        RealVisXLV4,
         StableDiffusionXLV1ControlNet,
         SVC,
         SVR,
         T5SmallTransformer,
         TfIdfLogRegTextClassificationModel,
-        TongyiZImageModel,
+        XGBClassifier,
+        TongyiZImage,
+        TongyiZImageTurbo,
         XlmRobertaTransformer,
         XlnetTransformer,
         MLPImageClassifier,
@@ -439,6 +516,7 @@ def get_initial_components():
         # Metrics
         F1,
         Accuracy,
+        BalancedAccuracy,
         Precision,
         Recall,
         Bleu,
@@ -454,10 +532,12 @@ def get_initial_components():
         LogLoss,
         HammingDistance,
         CohenKappa,
+        MatthewsCorrCoef,
         # Optimizers
         OptunaOptimizer,
         HyperOptOptimizer,
         # Jobs
+        ComponentDownloadJob,
         DatafileJob,
         ExplainerJob,
         ModelJob,
@@ -468,9 +548,19 @@ def get_initial_components():
         GenerativeJob,
         PipelineJob,
         # Explainers
+        ContrastiveShap,
+        DiceCounterfactual,
+        GradCam,
         KernelShap,
+        LimeText,
+        NearestCounterfactual,
+        OcclusionSaliency,
         PartialDependence,
         PermutationFeatureImportance,
+        RegressionKernelShap,
+        RegressionPartialDependence,
+        RegressionPermutationFeatureImportance,
+        TokenAblation,
         # Explorers
         DescribeExplorer,
         ScatterPlotExplorer,
@@ -490,6 +580,10 @@ def get_initial_components():
         ColumnRemover,
         NanRemover,
         CharacterReplacer,
+        ColumnArithmetic,
+        ColumnConcat,
+        NumericExpansion,
+        TypeCast,
         FastICA,
         IncrementalPCA,
         PCA,

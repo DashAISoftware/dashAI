@@ -9,7 +9,10 @@ import PrepareDatasetStep from "./modelSession/PrepareDatasetStep";
 import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomplete";
 import { createModelSession } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
-import { generateSequentialName } from "../../utils/nameGenerator";
+import {
+  generateSequentialName,
+  getNextAvailableName,
+} from "../../utils/nameGenerator";
 import { useTranslation } from "react-i18next";
 import { useModels } from "./ModelsContext";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
@@ -57,7 +60,14 @@ function CreateSessionSteps({
 
   const handleDatasetChange = (newDataset) => {
     setSelectedDataset(newDataset);
-    setNewExp((prev) => ({ ...prev, dataset: newDataset }));
+    setNextEnabled(false);
+    setNewExp((prev) => ({
+      ...prev,
+      dataset: newDataset,
+      input_columns: [],
+      output_columns: [],
+      splits: {},
+    }));
     if (
       tourContext?.run &&
       tourContext?.stepIndex === 5 &&
@@ -134,29 +144,8 @@ function CreateSessionSteps({
     return () => setSessionRightContent(null);
   }, [selectedDataset]);
 
-  const getNameError = () => {
-    const currentName = formik.values.name.trim();
-    if (!currentName || currentName.length < 4) {
-      return null;
-    }
-
-    const nameExists = existingSessions.some(
-      (session) =>
-        session.name &&
-        session.name.toLowerCase() === currentName.toLowerCase(),
-    );
-    if (nameExists) {
-      return t("models:error.sessionNameExists");
-    }
-
-    return null;
-  };
-
-  const nameError = getNameError();
-
   const isNextEnabled =
     formik.values.name.trim().length >= 4 &&
-    !nameError &&
     selectedDataset !== null &&
     nextEnabled;
 
@@ -185,19 +174,41 @@ function CreateSessionSteps({
         (newExp.splits.test !== undefined && newExp.splits.test !== 0) ||
         evaluationStrategy === "CrossValidationEvaluationStrategy";
 
-      const response = await createModelSession(
-        selectedDataset.id,
-        selectedTask?.name || newExp.task_name,
-        sessionName,
-        newExp.input_columns,
-        newExp.output_columns,
-        hasTrain ? allMetricNames : [],
-        hasValidation ? allMetricNames : [],
-        hasTest ? allMetricNames : [],
-        newExp.evaluation_strategy,
-        JSON.stringify(newExp.splits),
-      );
-      console.log(newExp.splits);
+      let effectiveName = sessionName;
+      let response;
+      try {
+        response = await createModelSession(
+          selectedDataset.id,
+          selectedTask?.name || newExp.task_name,
+          effectiveName,
+          newExp.input_columns,
+          newExp.output_columns,
+          hasTrain ? allMetricNames : [],
+          hasValidation ? allMetricNames : [],
+          hasTest ? allMetricNames : [],
+          newExp.evaluation_strategy,
+          JSON.stringify(newExp.splits),
+        );
+      } catch (createError) {
+        if (createError?.response?.status === 409) {
+          effectiveName = getNextAvailableName(effectiveName, existingSessions);
+          formik.setFieldValue("name", effectiveName);
+          response = await createModelSession(
+            selectedDataset.id,
+            selectedTask?.name || newExp.task_name,
+            effectiveName,
+            newExp.input_columns,
+            newExp.output_columns,
+            hasTrain ? allMetricNames : [],
+            hasValidation ? allMetricNames : [],
+            hasTest ? allMetricNames : [],
+            newExp.evaluation_strategy,
+            JSON.stringify(newExp.splits),
+          );
+        } else {
+          throw createError;
+        }
+      }
 
       enqueueSnackbar(t("models:message.sessionCreatedSuccess"), {
         variant: "success",
@@ -250,7 +261,7 @@ function CreateSessionSteps({
           gap: 4,
         }}
       >
-        <SetNameAndDatasetStep formik={formik} nameError={nameError} />
+        <SetNameAndDatasetStep formik={formik} />
         <DatasetAutocomplete
           datasets={datasets}
           selectedDataset={selectedDataset}
@@ -258,6 +269,7 @@ function CreateSessionSteps({
         />
         {selectedDataset && (
           <PrepareDatasetStep
+            key={selectedDataset.id}
             newExp={newExp}
             setNewExp={setNewExp}
             setNextEnabled={setNextEnabled}

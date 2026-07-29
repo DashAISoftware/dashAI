@@ -181,7 +181,7 @@ class PolynomialFeatures(
         Parameters
         ----------
         column_name : str or None, optional
-            Name of the output column. Not used — all columns receive the
+            Name of the output column. Not used, since all columns receive the
             same ``Float64`` type. Default ``None``.
 
         Returns

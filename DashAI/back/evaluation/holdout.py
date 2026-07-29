@@ -1,8 +1,3 @@
-import os
-import pickle
-
-from kink import di
-
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Metric, Run
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
@@ -16,7 +11,6 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
         super().__init__(model, optimizer, run_optimizable_parameters, goal_metric)
 
     def execute(self, x, y, factory: ModelFactory, run: Run, db):
-        config = di["config"]
         plot_paths = []
 
         # set the data used for model training and evaluation
@@ -26,20 +20,7 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
         # Execute HPO if optimizer and there are parameters to optimize
         if self.optimizer and self.run_optimizable_parameters:
             self._do_hpo(x, y, factory, run, db)
-
-            # Generate hyperparameter plot
-            trials = self.optimizer.get_trials_values()
-            plot_filenames, plots = self.optimizer.create_plots(
-                trials,
-                run.id,
-                n_params=len(self.run_optimizable_parameters),
-                goal_metric=self.goal_metric,
-            )
-            for filename, plot in zip(plot_filenames, plots, strict=False):
-                plot_path = os.path.join(config["RUNS_PATH"], filename)
-                with open(plot_path, "wb") as file:
-                    pickle.dump(plot, file)
-                    plot_paths.append(plot_path)
+            plot_paths = self._generate_hpo_plots(run)
 
         # Train the model with the provided data and return it
         self.model.train(x["train"], y["train"], x["validation"], y["validation"])

@@ -343,12 +343,12 @@ def test_filter_datasets_endpoint(
         params={"run_id": trained_run_id},
     )
     assert response.status_code == 200, response.text
-    datasets = response.json()
-    assert isinstance(datasets, list)
-    assert len(datasets) == 1
-    dataset_names = [ds["name"] for ds in datasets]
-    assert dataset["name"] in dataset_names
-    assert dataset_2["name"] not in dataset_names
+    body = response.json()
+    valid_dataset_ids = body["valid_dataset_ids"]
+    assert isinstance(valid_dataset_ids, list)
+    assert len(valid_dataset_ids) == 1
+    assert dataset["id"] in valid_dataset_ids
+    assert dataset_2["id"] not in valid_dataset_ids
 
 
 def test_delete_prediction(client: TestClient, trained_run_id: int):

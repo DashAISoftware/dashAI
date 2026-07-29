@@ -5,30 +5,26 @@ import {
   useMaterialReactTable,
 } from "material-react-table";
 import { useTheme } from "@mui/material/styles";
-import {
-  Box,
-  IconButton,
-  MenuItem,
-  Select,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
 import { useTableLocalization } from "../../utils/useTableLocalization";
-import api from "../../api/api";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
+import {
+  getComponentDownloadState,
+  subscribeAnyDownloadState,
+} from "./model/ComponentDownloadControl";
+import { canTrainRun, isRunActive } from "../../utils/runStatus";
 
 /**
  * Compact comparison table showing all runs in a session.
- * Designed for sticky header display with fixed height.
+ * Renders at its natural content height — the page scrolls, not the table.
  *
  * Scores are computed server-side and fetched from the backend.
  */
 function ModelComparisonTable({
   runs: initialRuns = [],
-  session,
   onTrain,
   onViewDetails,
   onDelete,
@@ -37,14 +33,28 @@ function ModelComparisonTable({
 }) {
   const [models, setModels] = useState([]);
   const [metrics, setMetrics] = useState([]);
-  const [profiles, setProfiles] = useState([]);
-  const [selectedProfile, setSelectedProfile] = useState(null);
-  const [scores, setScores] = useState({});
-  const [loadingScores, setLoadingScores] = useState(false);
   const [runs, setRuns] = useState(initialRuns);
   const [runToDelete, setRunToDelete] = useState(null);
+  // Bump to re-render when a download finishes so the train button enables.
+  const [, setDownloadVersion] = useState(0);
 
-  const { t } = useTranslation(["models", "common"]);
+  useEffect(
+    () => subscribeAnyDownloadState(() => setDownloadVersion((v) => v + 1)),
+    [],
+  );
+
+  // A run is trainable only if its model needs no download or the download is
+  // present and not in progress (live state overrides a stale fetched flag).
+  const isModelReady = (modelName) => {
+    const model = models.find((m) => m.name === modelName);
+    if (!model?.metadata?.requires_download) return true;
+    const cached = getComponentDownloadState(modelName);
+    const downloaded = cached?.downloaded ?? Boolean(model.downloaded);
+    const downloading = Boolean(cached?.downloading);
+    return downloaded && !downloading;
+  };
+
+  const { t, i18n } = useTranslation(["models", "common"]);
   const theme = useTheme();
   const localization = useTableLocalization();
 
@@ -70,7 +80,7 @@ function ModelComparisonTable({
       }
     };
     fetchModels();
-  }, []);
+  }, [i18n.language]);
 
   useEffect(() => {
     const fetchMetrics = async () => {
@@ -82,85 +92,7 @@ function ModelComparisonTable({
       }
     };
     fetchMetrics();
-  }, []);
-
-  // ────────────────────────────────────────────────────────────────────────
-  // Fetch scoring profiles for this session's task
-  // ────────────────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    const fetchProfiles = async () => {
-      try {
-        const params = {};
-        if (session?.task_name) {
-          params.task_name = session.task_name;
-        }
-        const response = await api.get("/v1/scoring/profiles", { params });
-        const profilesList = response.data;
-        setProfiles(profilesList);
-
-        // Keep current profile only if still valid; otherwise select first
-        setSelectedProfile((prevProfile) => {
-          if (profilesList.length === 0) {
-            return null;
-          }
-          const profileExists = profilesList.some((p) => p.id === prevProfile);
-          return profileExists ? prevProfile : profilesList[0].id;
-        });
-      } catch (error) {
-        console.error("Error fetching scoring profiles:", error);
-      }
-    };
-    fetchProfiles();
-  }, [session?.task_name]);
-
-  // Stable string that changes only when a run's status changes.
-  // Used as a dep so the score fetch re-triggers after training completes
-  // without firing on every unrelated re-render of the parent.
-  const runStatusSignature = useMemo(
-    () => initialRuns.map((r) => `${r.id}:${r.status}`).join(","),
-    [initialRuns],
-  );
-
-  // ────────────────────────────────────────────────────────────────────────
-  // Fetch scores when profile, split, session or any run status changes
-  // ────────────────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (!initialRuns.length || !selectedProfile || !session?.id) return;
-
-    const fetchScores = async () => {
-      setLoadingScores(true);
-      try {
-        const response = await api.get("/v1/run/", {
-          params: {
-            model_session_id: session.id,
-            include_scores: true,
-            profile_id: selectedProfile,
-            metric_split: metricSplit,
-          },
-        });
-
-        // Update runs with metrics and scores
-        setRuns(response.data);
-
-        // Extract scores into separate map for easy lookup
-        const scoresMap = {};
-        response.data.forEach((run) => {
-          if (run.score) {
-            scoresMap[run.id] = run.score;
-          }
-        });
-        setScores(scoresMap);
-      } catch (error) {
-        console.error("Error fetching scores:", error);
-      } finally {
-        setLoadingScores(false);
-      }
-    };
-
-    fetchScores();
-  }, [selectedProfile, metricSplit, session?.id, runStatusSignature]);
+  }, [i18n.language]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Build columns
@@ -280,7 +212,7 @@ function ModelComparisonTable({
         ),
         Cell: ({ row, cell }) => {
           const { status } = row.original;
-          const isRunning = status === 1 || status === 2;
+          const isRunning = isRunActive(status);
 
           if (isRunning) return "-";
           const val = cell.getValue();
@@ -337,80 +269,6 @@ function ModelComparisonTable({
   const data = useMemo(() => runs, [runs]);
 
   const columns = useMemo(() => {
-    const scoreColumn = {
-      id: "score",
-      header: t("models:label.score"),
-      size: 90,
-      accessorFn: (row) => scores[row.id]?.score ?? -1,
-      Header: () => (
-        <Tooltip
-          title={t("models:label.scoreHeaderTooltip")}
-          arrow
-          placement="top"
-        >
-          <Box sx={{ fontWeight: "bold", cursor: "help" }}>
-            {t("models:label.score")}
-          </Box>
-        </Tooltip>
-      ),
-      Cell: ({ row }) => {
-        const { status, id } = row.original;
-        const isRunning = status === 1 || status === 2;
-        if (isRunning) return "-";
-
-        const scoreData = scores[id];
-        if (!scoreData) return "-";
-
-        const { score, breakdown } = scoreData;
-
-        // Find the best score across all runs
-        const allScores = Object.values(scores)
-          .filter((s) => s && s.score !== undefined)
-          .map((s) => s.score);
-        const bestScore = allScores.length > 0 ? Math.max(...allScores) : null;
-        const isBest = bestScore !== null && Math.abs(score - bestScore) < 1e-6;
-
-        const tooltipContent = (
-          <Typography variant="body2" component="div" sx={{ lineHeight: 1.6 }}>
-            <Typography
-              variant="body2"
-              component="div"
-              sx={{ fontWeight: "bold", mb: 1 }}
-            >
-              {t("models:label.score")}: {score.toFixed(1)}/100
-            </Typography>
-            {breakdown.map(({ metric_name, value, normalized_weight }, i) => (
-              <Typography variant="body2" component="div" key={metric_name}>
-                {i === 0 ? "=" : "+"} {metric_name} ({value.toFixed(4)}) ×{" "}
-                {(normalized_weight * 100).toFixed(0)}%
-              </Typography>
-            ))}
-          </Typography>
-        );
-
-        return (
-          <Tooltip title={tooltipContent} placement="top" arrow>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                cursor: "help",
-                fontWeight: "bold",
-              }}
-            >
-              {isBest && (
-                <Box component="span" sx={{ color: "warning.main" }}>
-                  ★
-                </Box>
-              )}
-              {score.toFixed(1)}
-            </Box>
-          </Tooltip>
-        );
-      },
-    };
-
     return [
       {
         accessorKey: "name",
@@ -454,7 +312,6 @@ function ModelComparisonTable({
           </Tooltip>
         ),
       },
-      scoreColumn,
       ...getMetricColumns(),
       {
         id: "actions",
@@ -463,16 +320,19 @@ function ModelComparisonTable({
         enableColumnFilter: false,
         size: 150,
         Cell: ({ row }) => {
-          const canTrain =
-            row.original.status === 0 ||
-            row.original.status === 4 ||
-            row.original.status === 3;
-          const isRunning =
-            row.original.status === 1 || row.original.status === 2;
+          const canTrain = canTrainRun(row.original.status);
+          const isRunning = isRunActive(row.original.status);
+          const modelReady = isModelReady(row.original.model_name);
 
           return (
             <Box sx={{ display: "flex", gap: 1 }}>
-              <Tooltip title={t("common:train")}>
+              <Tooltip
+                title={
+                  modelReady
+                    ? t("common:train")
+                    : t("common:componentDownload.mustDownload")
+                }
+              >
                 <span>
                   <IconButton
                     size="small"
@@ -480,7 +340,7 @@ function ModelComparisonTable({
                       e.stopPropagation();
                       onTrain(runs.find((r) => r.id === row.original.id));
                     }}
-                    disabled={!canTrain}
+                    disabled={!canTrain || !modelReady}
                     color="primary"
                   >
                     <PlayArrow fontSize="small" />
@@ -523,17 +383,7 @@ function ModelComparisonTable({
         },
       },
     ];
-  }, [
-    models,
-    metrics,
-    runs,
-    scores,
-    metricSplit,
-    t,
-    onTrain,
-    onViewDetails,
-    onDelete,
-  ]);
+  }, [models, metrics, runs, metricSplit, t, onTrain, onViewDetails, onDelete]);
 
   const columnOrder = useMemo(
     () => columns.map((col) => col.id ?? col.accessorKey).filter(Boolean),
@@ -547,17 +397,15 @@ function ModelComparisonTable({
     muiTablePaperProps: {
       elevation: 0,
       sx: {
-        height: "100%",
         display: "flex",
         flexDirection: "column",
         border: "1px solid",
         borderColor: "divider",
       },
     },
-    muiTableContainerProps: { sx: { flex: 1, overflow: "auto" } },
     localization,
     initialState: { density: "compact" },
-    enableStickyHeader: true,
+    enableStickyHeader: false,
     enableRowSelection: false,
     enablePagination: false,
     enableTopToolbar: false,
@@ -582,120 +430,14 @@ function ModelComparisonTable({
     },
   });
 
-  const activeProfile = profiles.find((p) => p.id === selectedProfile);
-  const profileWeightsLabel = activeProfile
-    ? Object.entries(activeProfile.weights)
-        .map(([metric, w]) => `${metric}: ${(w * 100).toFixed(0)}%`)
-        .join(" · ")
-    : "";
-
   return (
     <Box
       sx={{
-        height: "100%",
         width: "100%",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      {/* Profile selector */}
-      <Box
-        sx={{
-          px: 3,
-          py: 1,
-          display: "flex",
-          alignItems: "center",
-          gap: 1,
-          borderBottom: "1px solid",
-          borderColor: "divider",
-          flexShrink: 0,
-          flexWrap: "wrap",
-        }}
-      >
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ whiteSpace: "nowrap" }}
-        >
-          {t("models:label.scoreProfile")}:
-        </Typography>
-        <Select
-          value={selectedProfile || ""}
-          onChange={(e) => setSelectedProfile(e.target.value)}
-          size="small"
-          disabled={profiles.length === 0 || loadingScores}
-          sx={{
-            fontSize: "0.75rem",
-            height: 24,
-            "& .MuiSelect-select": { py: 0, px: 1 },
-          }}
-        >
-          {profiles.map((p) => (
-            <MenuItem key={p.id} value={p.id} sx={{ fontSize: "0.8rem" }}>
-              {t(`models:label.profile_${p.id}`)}
-            </MenuItem>
-          ))}
-        </Select>
-        <Typography variant="caption" color="text.secondary">
-          {profileWeightsLabel}
-        </Typography>
-        {loadingScores && (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ ml: "auto" }}
-          >
-            {t("common:loading")}
-          </Typography>
-        )}
-
-        {/* Run type legend — right side of profile bar */}
-        <Box
-          sx={{
-            ml: loadingScores ? 2 : "auto",
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-          }}
-        >
-          {[
-            { key: "noHpo", label: t("models:label.withoutHpo") },
-            { key: "hpo", label: t("models:label.withHpo") },
-            ...(isCrossValidation
-              ? [
-                  {
-                    key: "nestedCv",
-                    label: t("models:label.nestedCv"),
-                  },
-                ]
-              : []),
-          ].map(({ key, label }) => (
-            <Box
-              key={key}
-              sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
-            >
-              <Box
-                sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "2px",
-                  backgroundColor: runTypeStyles[key].bg,
-                  border: `1.5px solid ${runTypeStyles[key].border}`,
-                  flexShrink: 0,
-                }}
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ whiteSpace: "nowrap" }}
-              >
-                {label}
-              </Typography>
-            </Box>
-          ))}
-        </Box>
-      </Box>
-
       {/* Table */}
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <MaterialReactTable table={table} />
@@ -716,11 +458,6 @@ function ModelComparisonTable({
 
 ModelComparisonTable.propTypes = {
   runs: PropTypes.array.isRequired,
-  session: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    task_name: PropTypes.string,
-  }),
   onTrain: PropTypes.func.isRequired,
   onViewDetails: PropTypes.func.isRequired,
   onDelete: PropTypes.func.isRequired,

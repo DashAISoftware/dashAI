@@ -32,7 +32,7 @@ class TokenizerSchema(BaseSchema):
         ),
         "bert-base-uncased",
         description=MultilingualString(
-            en="Name of the pre-trained tokenizer model",
+            en="Name of the pretrained tokenizer model",
             es="Nombre del modelo de tokenización preentrenado",
             pt="Nome do modelo de tokenizer pré-treinado",
             de="Name des vortrainierten Tokenizer-Modells",
@@ -184,6 +184,11 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
                     f"tok_{column}_{i}",
                     pa.array(input_ids[:, i].tolist(), type=pa.int64()),
                 )
+
+        # Remove original text columns — they are replaced by their tok_* counterparts
+        for column in batch.column_names:
+            col_idx = result_table.column_names.index(column)
+            result_table = result_table.remove_column(col_idx)
 
         return DashAIDataset(result_table)
 

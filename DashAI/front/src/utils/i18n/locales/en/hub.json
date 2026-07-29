@@ -18,6 +18,7 @@
   "importing": "Importing...",
   "importSuccess": "Datafile imported successfully.",
   "importError": "Failed to import datafile.",
+  "datasetNameExists": "A dataset with this name already exists.",
   "previewError": "Failed to load datafile preview.",
   "selectDatasetToPreview": "Select a datafile to see details.",
   "stepFormat": "Format",
@@ -60,5 +61,6 @@
   "datasetDetails": "Datafile Details",
   "checkQueue": "Check the job queue for details",
   "deleteSuccess": "Datafile \"{{name}}\" deleted.",
-  "deleteError": "Failed to delete datafile."
+  "deleteError": "Failed to delete datafile.",
+  "tagFilterPlaceholder": "Filter by tag, press Enter to add..."
 }

@@ -5,6 +5,7 @@ from kink import inject
 from sqlalchemy import exc
 
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
+from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
@@ -107,6 +108,7 @@ class ModelJob(BaseJob):
             run: Run = db.get(Run, run_id)
             run.huey_id = self.kwargs.get("huey_id", None)
             db.commit()
+            self.report_progress(0.05, "Preparing data")
             try:
                 try:
                     # Get the dataset and components prepared for the model training
@@ -146,6 +148,7 @@ class ModelJob(BaseJob):
                         "Connection with the database failed",
                     ) from e
 
+                self.report_progress(0.2, "Training")
                 try:
                     # Hyperparameter Tunning
                     plot_paths = []
@@ -183,6 +186,7 @@ class ModelJob(BaseJob):
                         f"Hyperparameter plot path saving failed {e}",
                     ) from e
 
+                self.report_progress(0.95, "Saving model")
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))
                     model.save(run_path)
@@ -378,6 +382,23 @@ class ModelJob(BaseJob):
             raise JobError(
                 f"Unable to find Model with name {run.model_name} in registry.",
             ) from e
+
+        # Make sure the model (and any nested components) are downloaded
+        # before attempting to train, otherwise fail fast with a clear error.
+        if getattr(run_model_class, "REQUIRES_DOWNLOAD", False) and not (
+            run_model_class.is_downloaded()
+        ):
+            raise JobError(
+                f"Model {run.model_name} is not downloaded. "
+                "Download it before training."
+            )
+        nested_missing = missing_downloads(run.parameters, component_registry)
+        if nested_missing:
+            names = ", ".join(m["name"] for m in nested_missing)
+            raise JobError(
+                "These components are not downloaded. "
+                f"Download them before training: {names}."
+            )
 
         try:
             # Get the optimizer if defined

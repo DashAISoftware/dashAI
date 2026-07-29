@@ -80,10 +80,18 @@ class DummyMetric(BaseMetric):
         return 1
 
 
-@pytest.fixture(autouse=True, name="test_registry")
-def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
-    """Setup a test registry with test task, dataloader and model components."""
+@pytest.fixture(scope="module", name="test_registry", autouse=True)
+def setup_test_registry(client):
+    """Setup a test registry with test task, dataloader and model components.
+
+    Module-scoped (with a manual swap, since ``monkeypatch`` is function
+    scoped) so the test components are registered before the module-scoped
+    ``create_run`` / ``create_model_session`` fixtures run.
+    """
     container = client.app.container
+    sentinel = object()
+    services = container._services
+    old = services.get("component_registry", sentinel)
 
     test_registry = ComponentRegistry(
         initial_components=[
@@ -98,13 +106,12 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             HoldoutEvaluationStrategy,
         ]
     )
-
-    monkeypatch.setitem(
-        container._services,
-        "component_registry",
-        test_registry,
-    )
-    return test_registry
+    services["component_registry"] = test_registry
+    yield test_registry
+    if old is sentinel:
+        del services["component_registry"]
+    else:
+        services["component_registry"] = old
 
 
 @pytest.fixture(scope="module", name="dataset_id")
@@ -114,7 +121,7 @@ def dataset_id(dataset_1: Dataset) -> int:
 
 
 @pytest.fixture(scope="module", name="model_session_id", autouse=True)
-def create_model_session(client: TestClient, dataset_id: int):
+def create_model_session(client: TestClient, dataset_id: int, test_registry):
     container = client.app.container
     session = container["session_factory"]
 
@@ -156,7 +163,7 @@ def create_model_session(client: TestClient, dataset_id: int):
 
 
 @pytest.fixture(scope="module", name="run_id", autouse=True)
-def create_run(client: TestClient, model_session_id: int):
+def create_run(client: TestClient, model_session_id: int, test_registry):
     response = client.post(
         "/api/v1/run/",
         json={
@@ -188,7 +195,7 @@ def create_run(client: TestClient, model_session_id: int):
 
 
 @pytest.fixture(scope="module", name="failed_run_id", autouse=True)
-def create_failed_run(client: TestClient, model_session_id: int):
+def create_failed_run(client: TestClient, model_session_id: int, test_registry):
     container = client.app.container
     session_factory = container["session_factory"]
 
