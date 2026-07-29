@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Final, List, Tuple
 
 from DashAI.back.config_object import ConfigObject
-from DashAI.back.core.artifacts import Artifact
+from DashAI.back.core.artifacts import GroupedArtifacts
 from DashAI.back.models.base_model import BaseModel
 
 if TYPE_CHECKING:
@@ -88,12 +88,14 @@ class BaseLocalExplainer(ConfigObject, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Generate renderable artifacts from a previously computed explanation.
 
         Concrete implementations must convert the explanation dictionary
-        returned by :meth:`explain_instance` into one or more typed artifacts
-        that can be rendered on the frontend.
+        returned by :meth:`explain_instance` into typed artifacts that can be
+        rendered on the frontend. Local explainers typically return a single
+        :class:`GroupedArtifacts` whose groups are one explained instance each
+        (the frontend renders its selector as the explained rows picker).
 
         Parameters
         ----------
@@ -102,11 +104,9 @@ class BaseLocalExplainer(ConfigObject, ABC):
 
         Returns
         -------
-        List[Artifact]
-            A list of artifacts (:class:`PlotlyArtifact`,
-            :class:`TableArtifact`, :class:`TextArtifact` or
-            :class:`ImageArtifact`) describing the explanation, typically
-            one per explained instance.
+        List[GroupedArtifacts]
+            A list containing a single grouped artifact whose groups
+            are one explained instance each.
 
         Raises
         ------

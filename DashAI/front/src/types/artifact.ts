@@ -10,4 +10,5 @@ export interface IArtifact {
   type: string;
   payload: unknown;
   title: string | null;
+  role?: "input" | "explanation";
 }

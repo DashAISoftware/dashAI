@@ -317,6 +317,8 @@ class ModelJob(BaseJob):
                         db.commit()
 
                         # Generate hyperparameter plot
+                        from DashAI.back.core.artifacts import normalize_artifacts
+
                         trials = optimizer.get_trials_values()
                         plot_filenames, plots = optimizer.create_plots(
                             trials,
@@ -324,7 +326,10 @@ class ModelJob(BaseJob):
                             n_params=len(run_optimizable_parameters),
                             goal_metric=goal_metric,
                         )
-                        for filename, plot in zip(plot_filenames, plots, strict=False):
+                        normalized_plots = normalize_artifacts(plots)
+                        for filename, plot in zip(
+                            plot_filenames, normalized_plots, strict=False
+                        ):
                             plot_path = os.path.join(config["RUNS_PATH"], filename)
                             with open(plot_path, "wb") as file:
                                 pickle.dump(plot, file)

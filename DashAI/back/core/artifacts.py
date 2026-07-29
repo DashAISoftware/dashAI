@@ -14,6 +14,14 @@ Supported types:
 - ``"text"``: payload is a plain string rendered as preformatted text.
 - ``"image"``: payload is ``{"data": <base64 str>, "mime": <str>}``.
 
+A component may also return a :class:`GroupedArtifacts` alongside plain
+artifacts. It bundles several :class:`ArtifactGroup` entries (each a titled
+batch of leaf artifacts, e.g. a summary table next to its plot) into one
+interactive selector: the frontend lists every group's title and shows one
+group's artifacts at a time. It serializes to ``{"type": "grouped", "title":
+<Optional[str]>, "groups": [{"title": <Optional[str]>, "artifacts": [<leaf
+artifact dict>, ...]}, ...]}``; a group cannot itself contain another group.
+
 Components created before this module returned other shapes: explainers
 returned lists of plotly JSON strings, explorers returned a single
 ``{"data", "type", "config"}`` dict. :func:`normalize_artifacts` upgrades
@@ -62,10 +70,13 @@ class Artifact(BaseModel):
         Discriminator naming the artifact kind; fixed per subclass.
     title : Optional[str]
         Human readable title shown above the rendered artifact.
+    role : Literal["input", "explanation"]
+        Role indicating artifact type, defaulting to explanation.
     """
 
     type: str
     title: Optional[str] = None
+    role: Literal["input", "explanation"] = "explanation"
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize the artifact to its wire format.
@@ -277,6 +288,67 @@ AnyArtifact = Annotated[
 _ANY_ARTIFACT_ADAPTER: TypeAdapter = TypeAdapter(AnyArtifact)
 
 
+class ArtifactGroup(BaseModel):
+    """One selectable entry inside a :class:`GroupedArtifacts`.
+
+    A group is a titled batch of leaf artifacts (e.g. a summary table next to
+    its plot) shown together when its entry is selected. It cannot itself
+    contain another group: ``artifacts`` is typed as leaf :data:`AnyArtifact`
+    only.
+
+    Attributes
+    ----------
+    title : Optional[str]
+        Human readable label for this entry, shown as one row in the parent
+        group's selector.
+    artifacts : List[AnyArtifact]
+        The leaf artifacts shown when this entry is selected, in display
+        order.
+    """
+
+    title: Optional[str] = None
+    artifacts: List[AnyArtifact]
+
+
+class GroupedArtifacts(BaseModel):
+    """A selector over several :class:`ArtifactGroup` entries.
+
+    Lets a component (typically a global explainer producing one set of
+    artifacts per curve/count) return a single interactive unit: the frontend
+    renders a selector listing every group's title and shows one group's
+    artifacts at a time. A component may return several ``GroupedArtifacts``
+    in its ``plot`` output; each becomes its own independent selector.
+
+    Attributes
+    ----------
+    title : Optional[str]
+        Optional overall title for the selector.
+    groups : List[ArtifactGroup]
+        The selectable groups, in listing order.
+    """
+
+    type: Literal["grouped"] = "grouped"
+    title: Optional[str] = None
+    groups: List[ArtifactGroup]
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize the grouped artifacts to their wire format.
+
+        Returns
+        -------
+        Dict[str, Any]
+            ``{"type": "grouped", "title", "groups"}`` with each group's
+            artifacts serialized to their own wire format dicts.
+        """
+        return self.model_dump()
+
+
+AnyArtifactOrGroup = Annotated[
+    Union[PlotlyArtifact, TableArtifact, TextArtifact, ImageArtifact, GroupedArtifacts],
+    Field(discriminator="type"),
+]
+
+
 def _legacy_explorer_artifact(item: Dict[str, Any]) -> Dict[str, Any]:
     """Convert a legacy explorer result dict into an artifact dict.
 
@@ -312,41 +384,173 @@ def _legacy_explorer_artifact(item: Dict[str, Any]) -> Dict[str, Any]:
     return TextArtifact(payload=str(data)).to_dict()
 
 
-def normalize_artifacts(items: Any) -> List[Dict[str, Any]]:
-    """Coerce any component output into a list of artifact wire dicts.
+def normalize_artifacts(
+    items: Any, *, create_grouped: bool = False
+) -> List[Dict[str, Any]]:
+    """Coerce any component output into a list of artifact/group wire dicts.
 
-    Handles current values (``Artifact`` instances or artifact dicts) and
-    legacy shapes: plain plotly JSON strings from old explainers, and
-    ``{"data", "type", "config"}`` dicts from old explorers. Anything else
-    is stringified into a text artifact so the frontend never receives an
-    unrenderable value.
+    Handles current values (``Artifact`` or :class:`GroupedArtifacts`
+    instances, or their wire dicts) and legacy shapes: plain plotly JSON
+    strings from old explainers, and ``{"data", "type", "config"}`` dicts
+    from old explorers. Anything else is stringified into a text artifact so
+    the frontend never receives an unrenderable value.
+
+    Every leaf artifact, whether at the top level or nested inside a
+    group's ``artifacts``, is stamped with a flat, sequential ``index`` so
+    the frontend (and the plot override endpoints) can address any leaf by a
+    single integer regardless of nesting depth.
 
     Parameters
     ----------
     items : Any
         The value returned by an explainer ``plot`` method, an explorer
         ``get_results`` method, or loaded from a persisted result file.
+    create_grouped : bool, optional
+        When ``True``, wrap a list of leaf artifacts into a single grouped
+        artifact container with one selectable group per input item. This is
+        useful for local explainers whose output is a list of per-instance
+        artifacts.
 
     Returns
     -------
     List[Dict[str, Any]]
-        A list of artifact dicts in wire format.
+        A list of artifact/grouped wire dicts; leaf artifacts carry an
+        ``"index"`` key. A grouped dict is
+        ``{"type": "grouped", "title", "groups": [{"title", "artifacts"}]}``.
     """
     if items is None:
         return []
-    if isinstance(items, (str, dict, Artifact)):
+    if isinstance(items, (str, dict, Artifact, GroupedArtifacts)):
         items = [items]
 
-    artifacts: List[Dict[str, Any]] = []
-    for item in items:
+    next_index = 0
+
+    def normalize_leaf(item: Any) -> Dict[str, Any]:
+        nonlocal next_index
         if isinstance(item, Artifact):
-            artifacts.append(item.to_dict())
+            data = item.to_dict()
         elif isinstance(item, str):
-            artifacts.append(PlotlyArtifact(payload=item).to_dict())
+            data = PlotlyArtifact(payload=item).to_dict()
         elif isinstance(item, dict) and "type" in item and "payload" in item:
-            artifacts.append({"title": None, **item})
+            data = {"title": None, "role": "explanation", **item}
         elif isinstance(item, dict) and "type" in item and "data" in item:
-            artifacts.append(_legacy_explorer_artifact(item))
+            data = _legacy_explorer_artifact(item)
         else:
-            artifacts.append(TextArtifact(payload=str(item)).to_dict())
-    return artifacts
+            data = TextArtifact(payload=str(item)).to_dict()
+        data["index"] = next_index
+        next_index += 1
+        return data
+
+    def normalize_group(group: Any) -> Dict[str, Any]:
+        if isinstance(group, ArtifactGroup):
+            title, artifacts = group.title, group.artifacts
+        else:
+            title, artifacts = group.get("title"), group.get("artifacts", [])
+        return {
+            "title": title,
+            "artifacts": [normalize_leaf(a) for a in artifacts],
+        }
+
+    def normalize_item(item: Any) -> Dict[str, Any]:
+        if isinstance(item, GroupedArtifacts):
+            return {
+                "type": "grouped",
+                "title": item.title,
+                "groups": [normalize_group(g) for g in item.groups],
+            }
+        if isinstance(item, dict) and item.get("type") == "grouped":
+            return {
+                "type": "grouped",
+                "title": item.get("title"),
+                "groups": [normalize_group(g) for g in item.get("groups", [])],
+            }
+        return normalize_leaf(item)
+
+    def is_grouped(value: Any) -> bool:
+        return isinstance(value, GroupedArtifacts) or (
+            isinstance(value, dict) and value.get("type") == "grouped"
+        )
+
+    # Migrate a flat list of per instance leaf artifacts (e.g. an old local
+    # explainer's output) into a single grouped artifact with one selectable
+    # group per instance. A payload that is already grouped is passed through
+    # unchanged.
+    if create_grouped and items and not is_grouped(items[0]):
+        groups = [
+            {"title": leaf.get("title"), "artifacts": [leaf]}
+            for leaf in (normalize_leaf(item) for item in items)
+        ]
+        return [{"type": "grouped", "title": None, "groups": groups}]
+
+    return [normalize_item(item) for item in items]
+
+
+def build_tabular_input_artifact(
+    feature_names: List[str],
+    instance_values: List[Any],
+    title: Optional[str] = None,
+) -> "TableArtifact":
+    """Build an input artifact holding one instance's feature values.
+
+    Parameters
+    ----------
+    feature_names : List[str]
+        Column headers, one per feature.
+    instance_values : List[Any]
+        The feature values fed to the model for this instance.
+    title : Optional[str]
+        Group title shared with the instance's explanation artifacts.
+
+    Returns
+    -------
+    TableArtifact
+        A single-row table artifact with role "input".
+    """
+    return TableArtifact(
+        payload=TablePayload(
+            columns=[str(name) for name in feature_names],
+            rows=[list(instance_values)],
+        ),
+        title=title,
+        role="input",
+    )
+
+
+def build_text_input_artifact(text: str, title: Optional[str] = None) -> "TextArtifact":
+    """Build an input artifact holding the text fed to the model.
+
+    Parameters
+    ----------
+    text : str
+        The input text for this instance.
+    title : Optional[str]
+        Group title shared with the instance's explanation artifacts.
+
+    Returns
+    -------
+    TextArtifact
+        A text artifact with role "input".
+    """
+    return TextArtifact(payload=text, title=title, role="input")
+
+
+def build_image_input_artifact(
+    image: Any, title: Optional[str] = None
+) -> "ImageArtifact":
+    """Build an input artifact from the image fed to the model.
+
+    Parameters
+    ----------
+    image : DashAIImage
+        The input image instance for this explained sample.
+    title : Optional[str]
+        Group title shared with the instance's explanation artifacts.
+
+    Returns
+    -------
+    ImageArtifact
+        An image artifact with role "input".
+    """
+    artifact = ImageArtifact.from_dashai_image(image, title=title)
+    artifact.role = "input"
+    return artifact

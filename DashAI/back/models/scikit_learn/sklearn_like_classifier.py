@@ -9,14 +9,20 @@ if TYPE_CHECKING:
 
 
 class SklearnLikeClassifier(SklearnLikeModel):
-    """Abstract mixin for scikit-learn-style classification models.
+    """Abstract mixin for scikit-learn style classification models.
 
     Extends ``SklearnLikeModel`` with a ``predict`` method that converts a
     ``DashAIDataset`` into a NumPy array, calls the wrapped sklearn estimator's
-    ``predict_proba``, and returns the class-probability matrix.  Concrete
+    ``predict_proba``, and returns the class probability matrix.  Concrete
     classifier wrappers (e.g. ``SVC``, ``RandomForestClassifier``) inherit
     from this class and from a ``BaseSchema`` subclass.
+
+    Declares the model specific explainers that need sklearn classifier
+    semantics (``predict_proba``); subclasses inherit them through the
+    registry's MRO merge of ``COMPATIBLE_COMPONENTS``.
     """
+
+    COMPATIBLE_COMPONENTS = ["DiceCounterfactual"]
 
     def predict(self, x_pred: "DashAIDataset") -> "ndarray":
         """Make a prediction with the model

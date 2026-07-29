@@ -1,5 +1,7 @@
 {
   "button": {
+    "deleteSelected_one": "Ausgewählte löschen ({{count}})",
+    "deleteSelected_other": "Ausgewählte löschen ({{count}})",
     "downloadResults": "Vorhersageergebnisse herunterladen",
     "hideResults": "Ergebnisse ausblenden",
     "runPrediction": "Vorhersage ausführen",
@@ -9,6 +11,7 @@
   "error": {
     "creatingPrediction": "Fehler beim Erstellen der Vorhersage",
     "errorDeleting": "Fehler beim Löschen der Vorhersage",
+    "errorDeletingSelected": "Fehler beim Löschen der ausgewählten Vorhersagen",
     "errorDownloading": "Fehler beim Herunterladen der Vorhersage",
     "fetchingDatasets": "Fehler beim Abrufen der Datensätze für die Vorhersage.",
     "loadingPredictionData": "Fehler beim Laden der Vorhersagedaten",
@@ -25,6 +28,8 @@
     "clickToViewOrDelete": "Klicken Sie auf eine Vorhersage, um Details anzuzeigen oder sie mit dem Lösch-Symbol zu löschen.",
     "configureInput": "Eingabe konfigurieren",
     "confirm": "Bestätigen",
+    "confirmBulkDeletion_one": "Möchten Sie die ausgewählte Vorhersage wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmBulkDeletion_other": "Möchten Sie die {{count}} ausgewählten Vorhersagen wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
     "confirmDeletion": "Sind Sie sicher, dass Sie diese Vorhersage löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "confirmDeletionTitle": "Vorhersage löschen?",
     "confirmPrediction": "Vorhersage bestätigen",
@@ -52,7 +57,6 @@
     "previewResults": "Ergebnisse in der Vorschau anzeigen",
     "previousPredictions": "Frühere Vorhersagen",
     "provideManualInput": "Daten manuell für die Vorhersage eingeben. Füllen Sie die Felder aus und reichen Sie sie ein, wenn Sie bereit sind.",
-    "resultsPreview": "Vorschau der ersten 100 Zeilen. CSV herunterladen für vollständige Ergebnisse.",
     "resultsPreviewDownloadInfo": "Die Tabelle zeigt eine Vorschau der Vorhersageergebnisse. Sie können die vollständigen Ergebnisse als CSV-Datei herunterladen.",
     "reviewDetails": "Überprüfen Sie Ihre Vorhersagekonfiguration vor dem Einreichen",
     "runFirstPrediction": "Führen Sie Ihre erste Vorhersage aus, um sie hier zu sehen",
@@ -62,6 +66,7 @@
     "selectDataset": "Datensatz für die Vorhersage auswählen",
     "selectDatasetFromPlatform": "Datensatz von der Plattform auswählen",
     "selectMode": "Modus auswählen",
+    "selectRowsToDelete": "Zeilen zum Löschen auswählen",
     "selectPredictionMode": "Wählen Sie, wie Sie Eingabedaten für die Vorhersage bereitstellen möchten",
     "targetColumn": "Zielspalte",
     "useExistingDataset": "Vorhandenen Datensatz verwenden"
@@ -70,6 +75,8 @@
     "deletedSuccessfully": "Vorhersage erfolgreich gelöscht",
     "downloadedSuccessfully": "Vorhersage erfolgreich heruntergeladen",
     "predictionCompleted": "Vorhersage erfolgreich abgeschlossen",
-    "predictionJobSubmitted": "Vorhersage-Job erfolgreich eingereicht"
+    "predictionJobSubmitted": "Vorhersage-Job erfolgreich eingereicht",
+    "predictionsDeleted_one": "{{count}} Vorhersage erfolgreich gelöscht",
+    "predictionsDeleted_other": "{{count}} Vorhersagen erfolgreich gelöscht"
   }
 }

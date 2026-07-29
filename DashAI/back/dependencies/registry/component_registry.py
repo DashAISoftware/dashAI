@@ -171,6 +171,33 @@ class ComponentRegistry:
 
         return base_classes_cantidates[0].TYPE
 
+    @staticmethod
+    @beartype
+    def _collect_compatible_components(component: type) -> List[str]:
+        """Collect the union of ``COMPATIBLE_COMPONENTS`` declared along the MRO.
+
+        Each class in the component's MRO contributes only the entries it
+        declares itself, so mixins and base classes compose instead of the
+        first declaration shadowing the rest (e.g. a task mixin declaring the
+        task plus a model base class declaring its supported explainers).
+
+        Parameters
+        ----------
+        component : type
+            The component class to inspect.
+
+        Returns
+        -------
+        List[str]
+            Deduplicated compatible component names in MRO order.
+        """
+        compatible_components: List[str] = []
+        for klass in component.__mro__:
+            for entry in vars(klass).get("COMPATIBLE_COMPONENTS", []):
+                if entry not in compatible_components:
+                    compatible_components.append(entry)
+        return compatible_components
+
     @beartype
     def register_component(self, new_component: Type) -> None:
         """Register a component within the registry.
@@ -232,7 +259,9 @@ class ComponentRegistry:
         self._set_download_status(new_register_component)
 
         if hasattr(new_component, "COMPATIBLE_COMPONENTS"):
-            for compatible_component in new_component.COMPATIBLE_COMPONENTS:
+            for compatible_component in self._collect_compatible_components(
+                new_component
+            ):
                 self._relationship_manager.add_relationship(
                     new_component.__name__,
                     compatible_component,
@@ -316,12 +345,11 @@ class ComponentRegistry:
                 f"in the registry. Exception: {e}"
             ) from e
 
-        if hasattr(component, "COMPATIBLE_COMPONENTS"):
-            for compatible_component in component.COMPATIBLE_COMPONENTS:
-                self._relationship_manager.remove_relationship(
-                    component.__name__,
-                    compatible_component,
-                )
+        for compatible_component in self._collect_compatible_components(component):
+            self._relationship_manager.remove_relationship(
+                component.__name__,
+                compatible_component,
+            )
 
     @beartype
     def get_components_by_types(
@@ -491,7 +519,8 @@ class ComponentRegistry:
         """Obtain any related component of the given component name.
 
         If the component has no related components, then the method returns an empty
-        list.
+        list. Related names that are not registered components (e.g. an explainer
+        declared by a model but provided by an uninstalled plugin) are skipped.
 
         Parameters
         ----------
@@ -516,4 +545,5 @@ class ComponentRegistry:
         return [
             self.__getitem__(related_component_id)
             for related_component_id in self._relationship_manager[component_id]
+            if self.__contains__(related_component_id)
         ]

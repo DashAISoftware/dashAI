@@ -80,11 +80,31 @@ from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSourc
 from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSource
 
 # Explainers
+from DashAI.back.explainability.explainers.contrastive_shap import ContrastiveShap
+from DashAI.back.explainability.explainers.dice_counterfactual import (
+    DiceCounterfactual,
+)
+from DashAI.back.explainability.explainers.grad_cam import GradCam
 from DashAI.back.explainability.explainers.kernel_shap import KernelShap
+from DashAI.back.explainability.explainers.lime_text import LimeText
+from DashAI.back.explainability.explainers.nearest_counterfactual import (
+    NearestCounterfactual,
+)
+from DashAI.back.explainability.explainers.occlusion_saliency import OcclusionSaliency
 from DashAI.back.explainability.explainers.partial_dependence import PartialDependence
 from DashAI.back.explainability.explainers.permutation_feature_importance import (
     PermutationFeatureImportance,
 )
+from DashAI.back.explainability.explainers.regression_kernel_shap import (
+    RegressionKernelShap,
+)
+from DashAI.back.explainability.explainers.regression_partial_dependence import (
+    RegressionPartialDependence,
+)
+from DashAI.back.explainability.explainers.regression_permutation_feature_importance import (  # noqa: E501
+    RegressionPermutationFeatureImportance,
+)
+from DashAI.back.explainability.explainers.token_ablation import TokenAblation
 
 # Explorers
 from DashAI.back.exploration.explorers.box_plot import BoxPlotExplorer
@@ -494,9 +514,19 @@ def get_initial_components():
         GenerativeJob,
         PipelineJob,
         # Explainers
+        ContrastiveShap,
+        DiceCounterfactual,
+        GradCam,
         KernelShap,
+        LimeText,
+        NearestCounterfactual,
+        OcclusionSaliency,
         PartialDependence,
         PermutationFeatureImportance,
+        RegressionKernelShap,
+        RegressionPartialDependence,
+        RegressionPermutationFeatureImportance,
+        TokenAblation,
         # Explorers
         DescribeExplorer,
         ScatterPlotExplorer,

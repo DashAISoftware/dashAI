@@ -40,7 +40,7 @@ dependencies = [
     "Pillow",
     "beartype",
     "plotly",
-    "shap",
+    "shap>=0.48",
     "pymc-bart",
     # pymc still imports the pre-1.0 arviz API (InferenceData, concat) but its
     # metadata sets no upper bound, so the resolver must be capped here
@@ -74,6 +74,9 @@ dependencies = [
     "pywebview",
     "openml",
     "oslo.concurrency",
+    "grad-cam>=1.5.5",
+    "dice-ml>=0.12",
+    "lime>=0.2.0.1",
 ]
 
 [project.optional-dependencies]

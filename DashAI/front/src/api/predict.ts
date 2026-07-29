@@ -3,11 +3,18 @@ import api from "./api";
 import { IParamsFilter } from "../types/predict";
 const predictEndpoint = "/v1/predict";
 
-export const filterDatasets = async (requestData: IParamsFilter) => {
-  const response = await api.get(`${predictEndpoint}/filter_datasets`, {
-    params: requestData,
-  });
-  return response.data;
+// Returns only the ids of datasets compatible with the run's model - the
+// backend checks every dataset's schema in one request, so the frontend can
+// filter an already-fetched dataset list by id instead of fetching per-dataset
+// info for every candidate up front.
+export const filterDatasets = async (
+  requestData: IParamsFilter,
+): Promise<number[]> => {
+  const response = await api.get<{ valid_dataset_ids: number[] }>(
+    `${predictEndpoint}/filter_datasets`,
+    { params: requestData },
+  );
+  return response.data.valid_dataset_ids;
 };
 
 export const downloadPredict = async (prediction_id: string) => {
