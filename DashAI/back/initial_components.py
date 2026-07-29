@@ -58,8 +58,12 @@ from DashAI.back.converters.scikit_learn.variance_threshold import VarianceThres
 from DashAI.back.converters.simple_converters.character_replacer import (
     CharacterReplacer,
 )
+from DashAI.back.converters.simple_converters.column_arithmetic import ColumnArithmetic
+from DashAI.back.converters.simple_converters.column_concat import ColumnConcat
 from DashAI.back.converters.simple_converters.column_remover import ColumnRemover
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
+from DashAI.back.converters.simple_converters.numeric_expansion import NumericExpansion
+from DashAI.back.converters.simple_converters.type_cast import TypeCast
 
 # DataLoaders
 from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
@@ -136,6 +140,7 @@ from DashAI.back.job.predict_job import PredictJob
 
 # Metrics
 from DashAI.back.metrics.classification.accuracy import Accuracy
+from DashAI.back.metrics.classification.balanced_accuracy import BalancedAccuracy
 from DashAI.back.metrics.classification.cohen_kappa import CohenKappa
 from DashAI.back.metrics.classification.f1 import F1
 from DashAI.back.metrics.classification.hamming_distance import HammingDistance
@@ -298,6 +303,7 @@ from DashAI.back.models.scikit_learn.hist_gradient_boosting_regression import (
 from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsClassifier
 from DashAI.back.models.scikit_learn.k_neighbors_regression import KNeighborsRegression
 from DashAI.back.models.scikit_learn.lasso_regression import LassoRegression
+from DashAI.back.models.scikit_learn.lightgbm_classifier import LGBMClassifier
 from DashAI.back.models.scikit_learn.linear_regression import LinearRegression
 from DashAI.back.models.scikit_learn.linear_svc_classifier import LinearSVCClassifier
 from DashAI.back.models.scikit_learn.linearSVR import LinearSVR
@@ -317,6 +323,7 @@ from DashAI.back.models.scikit_learn.svr import SVR
 from DashAI.back.models.scikit_learn.tfidf_logreg_text_classification_model import (
     TfIdfLogRegTextClassificationModel,
 )
+from DashAI.back.models.scikit_learn.xgboost_classifier import XGBClassifier
 
 # Optimizers
 from DashAI.back.optimizers.hyperopt_optimizer import HyperOptOptimizer
@@ -395,6 +402,7 @@ def get_initial_components():
         KNeighborsClassifier,
         KNeighborsRegression,
         LassoRegression,
+        LGBMClassifier,
         LinearRegression,
         LinearSVCClassifier,
         LinearSVR,
@@ -450,6 +458,7 @@ def get_initial_components():
         SVR,
         T5SmallTransformer,
         TfIdfLogRegTextClassificationModel,
+        XGBClassifier,
         TongyiZImage,
         TongyiZImageTurbo,
         XlmRobertaTransformer,
@@ -473,6 +482,7 @@ def get_initial_components():
         # Metrics
         F1,
         Accuracy,
+        BalancedAccuracy,
         Precision,
         Recall,
         Bleu,
@@ -536,6 +546,10 @@ def get_initial_components():
         ColumnRemover,
         NanRemover,
         CharacterReplacer,
+        ColumnArithmetic,
+        ColumnConcat,
+        NumericExpansion,
+        TypeCast,
         FastICA,
         IncrementalPCA,
         PCA,

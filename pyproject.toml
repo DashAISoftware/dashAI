@@ -31,6 +31,8 @@ dependencies = [
     "pydantic-settings",
     "starlette",
     "scikit-learn<1.8.0",
+    "lightgbm",
+    "xgboost",
     "datasets",
     "diffusers",
     "evaluate",

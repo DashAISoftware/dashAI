@@ -46,6 +46,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
 
+      - name: Install libomp (macOS only, required by lightgbm/xgboost)
+        if: runner.os == 'macOS'
+        run: brew install libomp
+
       - name: Install dependencies
         run: uv sync --locked --extra cpu --no-install-package llama-cpp-python
 
