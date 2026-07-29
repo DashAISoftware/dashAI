@@ -196,12 +196,18 @@ class NearestCounterfactual(BaseLocalExplainer):
         """
         import numpy as np
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = background_dataset
+        # Candidates and explained instances are compared feature by feature,
+        # so both are kept in the model feature space. predict() keeps taking
+        # the raw split, since it applies that preparation itself.
         x_train = x["train"]
+        x_train_prepared = prepare_model_input(self.model, x_train)
         y_train = y["train"]
 
-        self.background_data = x_train.to_pandas()
-        self.feature_names = list(x_train.column_names)
+        self.background_data = x_train_prepared.to_pandas()
+        self.feature_names = list(x_train_prepared.column_names)
 
         background_probs = self.model.predict(x_train)
         self.background_classes = np.argmax(np.asarray(background_probs), axis=1)
@@ -282,9 +288,10 @@ class NearestCounterfactual(BaseLocalExplainer):
         import numpy as np
 
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.explainability.model_input import prepare_model_input
 
         dataset = to_dashai_dataset(instances)
-        X = dataset.to_pandas()
+        X = prepare_model_input(self.model, dataset).to_pandas()
 
         predictions = np.asarray(self.model.predict(dataset))
 

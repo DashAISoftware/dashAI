@@ -245,8 +245,12 @@ class RegressionPermutationFeatureImportance(BaseGlobalExplainer):
         """
         import numpy as np
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = dataset
-        x_test = x["test"].to_pandas()
+        # The permuted frames are passed straight to the model, bypassing the
+        # model preparation.
+        x_test = prepare_model_input(self.model, x["test"]).to_pandas()
         y_test = y["test"].to_pandas().to_numpy().ravel()
 
         rng = np.random.RandomState(self.random_state)

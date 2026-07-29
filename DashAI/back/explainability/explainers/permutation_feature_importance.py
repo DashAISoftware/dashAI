@@ -442,9 +442,13 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         from sklearn.metrics import make_scorer
         from sklearn.preprocessing import LabelEncoder
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = dataset
 
-        x_test = x["test"]
+        # permutation_importance permutes the frame and calls the model with
+        # it, bypassing the model preparation.
+        x_test = prepare_model_input(self.model, x["test"])
         y_test = y["test"]
 
         X_df = x_test.to_pandas()

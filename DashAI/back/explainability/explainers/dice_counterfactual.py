@@ -238,8 +238,12 @@ class DiceCounterfactual(BaseLocalExplainer):
         import dice_ml
         import numpy as np
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = background_dataset
-        x_train = x["train"]
+        # DiCE samples the training frame and queries the model with plain
+        # frames, so both must be in the model feature space.
+        x_train = prepare_model_input(self.model, x["train"])
         y_train = y["train"]
 
         train_frame = x_train.to_pandas()
@@ -323,9 +327,10 @@ class DiceCounterfactual(BaseLocalExplainer):
         import numpy as np
 
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.explainability.model_input import prepare_model_input
 
         dataset = to_dashai_dataset(instances)
-        X = dataset.to_pandas()[self.feature_names]
+        X = prepare_model_input(self.model, dataset).to_pandas()[self.feature_names]
 
         predictions = np.asarray(self.model.predict(dataset))
 
