@@ -26,6 +26,7 @@ from DashAI.back.core.enums.status import (
     ConverterStatus,
     DatafileStatus,
     DatasetStatus,
+    DiagnosticStatus,
     ExplainerStatus,
     ExplorerStatus,
     PluginStatus,
@@ -380,6 +381,45 @@ class GlobalExplainer(Base):
     def set_status_as_error(self) -> None:
         """Update the status of the global explainer to error."""
         self.status = ExplainerStatus.ERROR
+
+
+class Diagnostic(Base):
+    __tablename__ = "diagnostic"
+    """
+    Table to store an evaluation diagnostic computed over one split of a run.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=True)
+    run_id: Mapped[int] = mapped_column(
+        ForeignKey("run.id", ondelete="CASCADE"), nullable=False
+    )
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
+    diagnostic_name: Mapped[str] = mapped_column(String, nullable=False)
+    # Which prediction set the diagnostic describes: train, validation or test.
+    split: Mapped[str] = mapped_column(String, nullable=False, default="test")
+    parameters: Mapped[JSON] = mapped_column(JSON)
+    artifacts_path: Mapped[str] = mapped_column(String, nullable=True)
+    plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    status: Mapped[Enum] = mapped_column(
+        Enum(DiagnosticStatus), nullable=False, default=DiagnosticStatus.NOT_STARTED
+    )
+
+    def set_status_as_delivered(self) -> None:
+        """Update the status of the diagnostic to delivered."""
+        self.status = DiagnosticStatus.DELIVERED
+
+    def set_status_as_started(self) -> None:
+        """Update the status of the diagnostic to started."""
+        self.status = DiagnosticStatus.STARTED
+
+    def set_status_as_finished(self) -> None:
+        """Update the status of the diagnostic to finished."""
+        self.status = DiagnosticStatus.FINISHED
+
+    def set_status_as_error(self) -> None:
+        """Update the status of the diagnostic to error."""
+        self.status = DiagnosticStatus.ERROR
 
 
 class LocalExplainer(Base):

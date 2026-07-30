@@ -79,6 +79,19 @@ from DashAI.back.dataset_sources.huggingface_dataset_source import (
 from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
 from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSource
 
+# Diagnostics
+from DashAI.back.diagnostics.classification.classification_report import (
+    ClassificationReport,
+)
+from DashAI.back.diagnostics.classification.confusion_matrix import ConfusionMatrix
+from DashAI.back.diagnostics.classification.precision_recall_curve import (
+    PrecisionRecallCurve,
+)
+from DashAI.back.diagnostics.classification.roc_curve import RocCurve
+from DashAI.back.diagnostics.regression.predicted_vs_actual import PredictedVsActual
+from DashAI.back.diagnostics.regression.residual_histogram import ResidualHistogram
+from DashAI.back.diagnostics.regression.residual_plot import ResidualPlot
+
 # Explainers
 from DashAI.back.explainability.explainers.contrastive_shap import ContrastiveShap
 from DashAI.back.explainability.explainers.dice_counterfactual import (
@@ -131,6 +144,7 @@ from DashAI.back.job.component_download_job import ComponentDownloadJob
 from DashAI.back.job.converter_job import ConverterJob
 from DashAI.back.job.datafile_job import DatafileJob
 from DashAI.back.job.dataset_job import DatasetJob
+from DashAI.back.job.diagnostic_job import DiagnosticJob
 from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.job.explorer_job import ExplorerJob
 from DashAI.back.job.generative_job import GenerativeJob
@@ -509,12 +523,21 @@ def get_initial_components():
         ExplainerJob,
         ModelJob,
         ModelVisualizationJob,
+        DiagnosticJob,
         ExplorerJob,
         PredictJob,
         ConverterJob,
         DatasetJob,
         GenerativeJob,
         PipelineJob,
+        # Diagnostics
+        ConfusionMatrix,
+        RocCurve,
+        PrecisionRecallCurve,
+        ClassificationReport,
+        PredictedVsActual,
+        ResidualPlot,
+        ResidualHistogram,
         # Explainers
         ContrastiveShap,
         DiceCounterfactual,

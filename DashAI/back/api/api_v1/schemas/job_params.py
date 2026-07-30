@@ -10,6 +10,7 @@ class JobParams(BaseModel):
         "ModelJob",
         "ModelVisualizationJob",
         "ExplainerJob",
+        "DiagnosticJob",
         "PredictJob",
         "DatasetJob",
         "ExplorerJob",

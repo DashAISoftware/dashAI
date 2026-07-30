@@ -9,6 +9,7 @@ from sqlalchemy import exc, select
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
 from DashAI.back.core.enums.metrics import LevelEnum
 from DashAI.back.dependencies.database.models import (
+    Diagnostic,
     GlobalExplainer,
     LocalExplainer,
     Metric,
@@ -625,9 +626,15 @@ async def get_run_operations_count(
                 db.query(Prediction).filter(Prediction.run_id == run_id).count()
             )
 
+            # Count diagnostics
+            diagnostics_count = (
+                db.query(Diagnostic).filter(Diagnostic.run_id == run_id).count()
+            )
+
             return {
                 "explainers": global_explainers_count + local_explainers_count,
                 "predictions": predictions_count,
+                "diagnostics": diagnostics_count,
             }
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -677,7 +684,22 @@ async def delete_run_operations(
                 "global_explainers": 0,
                 "local_explainers": 0,
                 "predictions": 0,
+                "diagnostics": 0,
             }
+
+            # Delete diagnostics: they describe the predictions of the fit
+            # being replaced, so a retrain must not leave them behind.
+            diagnostics = db.query(Diagnostic).filter(Diagnostic.run_id == run_id).all()
+            for diagnostic in diagnostics:
+                if diagnostic.artifacts_path and os.path.exists(
+                    diagnostic.artifacts_path
+                ):
+                    try:
+                        remove_path(diagnostic.artifacts_path)
+                    except Exception as e:
+                        log.warning(f"Failed to delete diagnostic file: {e}")
+                db.delete(diagnostic)
+                deleted_count["diagnostics"] += 1
 
             # Delete global explainers
             global_explainers = (
