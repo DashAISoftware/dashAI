@@ -187,6 +187,10 @@ class Run(Base):
     goal_metric: Mapped[str] = mapped_column(String)
     # artifacts
     artifacts: Mapped[str] = mapped_column(JSON, nullable=True)
+    # model visualization: renderable views of the trained model itself,
+    # generated on demand by ModelVisualizationJob and cleared on retrain.
+    model_artifacts_path: Mapped[str] = mapped_column(String, nullable=True)
+    model_artifacts_status: Mapped[Enum] = mapped_column(Enum(RunStatus), nullable=True)
     # metadata
     name: Mapped[str] = mapped_column(String)
     description: Mapped[str] = mapped_column(String, nullable=True)
