@@ -8,6 +8,7 @@ class JobParams(BaseModel):
 
     job_type: Literal[
         "ModelJob",
+        "ModelVisualizationJob",
         "ExplainerJob",
         "PredictJob",
         "DatasetJob",

@@ -281,6 +281,11 @@ class ModelJob(BaseJob):
                     ) from e
                 try:
                     run.set_status_as_started()
+                    # Any stored model visualization describes the previous
+                    # fit, so drop it rather than let a retrained run serve
+                    # plots of a model that no longer exists.
+                    run.model_artifacts_path = None
+                    run.model_artifacts_status = None
                     db.commit()
                 except exc.SQLAlchemyError as e:
                     log.exception(e)

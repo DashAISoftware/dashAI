@@ -304,6 +304,31 @@ def test_execute_jobs(client: TestClient, run_id: int, failed_run_id: int):
     assert data["end_time"] is None
 
 
+def test_retraining_clears_the_stored_model_visualization(
+    client: TestClient, run_id: int
+):
+    """A retrained run must not serve plots of the model it replaced."""
+    from DashAI.back.core.enums.status import RunStatus
+
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        run = db.get(Run, run_id)
+        run.model_artifacts_path = "stale.pickle"
+        run.model_artifacts_status = RunStatus.FINISHED
+        db.commit()
+
+    response = client.post(
+        "/api/v1/job/",
+        data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
+    )
+    assert response.status_code == 201, response.text
+
+    with session_factory() as db:
+        run = db.get(Run, run_id)
+        assert run.model_artifacts_path is None
+        assert run.model_artifacts_status is None
+
+
 def test_job_with_wrong_run(client: TestClient):
     response = client.post(
         "/api/v1/job/",
