@@ -8,6 +8,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    KNeighborsArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -153,7 +156,12 @@ class KNeighborsRegressionSchema(BaseSchema):
     )  # type: ignore
 
 
-class KNeighborsRegression(RegressionModel, SklearnLikeRegressor, _KNeighborsRegressor):
+class KNeighborsRegression(
+    KNeighborsArtifactsMixin,
+    RegressionModel,
+    SklearnLikeRegressor,
+    _KNeighborsRegressor,
+):
     """K-Nearest Neighbours regressor that averages the targets of nearest samples.
 
     KNeighborsRegressor predicts the target value by computing the (weighted)

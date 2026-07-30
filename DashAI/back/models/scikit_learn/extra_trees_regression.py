@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    TreeEnsembleArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -198,7 +201,12 @@ class ExtraTreesRegressionSchema(BaseSchema):
     )  # type: ignore
 
 
-class ExtraTreesRegression(RegressionModel, SklearnLikeRegressor, _ExtraTreesRegressor):
+class ExtraTreesRegression(
+    TreeEnsembleArtifactsMixin,
+    RegressionModel,
+    SklearnLikeRegressor,
+    _ExtraTreesRegressor,
+):
     """Extra-Trees regressor using fully randomised decision tree splits.
 
     Extremely Randomised Trees pick thresholds at random instead of searching for

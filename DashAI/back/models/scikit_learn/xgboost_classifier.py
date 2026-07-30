@@ -7,6 +7,9 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    BoostedTreeArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
@@ -316,8 +319,10 @@ class XGBClassifierSchema(BaseSchema):
     )  # type: ignore
 
 
-class _XGBoostDashAIMixin(TabularClassificationModel, SklearnLikeClassifier):
-    """Combines DashAI's two mixins into a single class.
+class _XGBoostDashAIMixin(
+    BoostedTreeArtifactsMixin, TabularClassificationModel, SklearnLikeClassifier
+):
+    """Combines DashAI's mixins into a single class.
 
     ``xgboost.XGBModel.get_params()`` does not use cooperative ``super()``
     dispatch; it inspects ``type(self).__bases__`` directly and assumes
@@ -325,7 +330,9 @@ class _XGBoostDashAIMixin(TabularClassificationModel, SklearnLikeClassifier):
     ``ClassifierMixin``) followed by the real estimator class. With three
     separate bases the lookup mis-resolves to a mixin that lacks
     ``get_params`` and raises ``AttributeError``. Folding both DashAI mixins
-    into one intermediate class keeps that assumption satisfied.
+    into one intermediate class keeps that assumption satisfied. The model
+    artifact mixin is folded in here for the same reason: attaching it to
+    ``XGBClassifier`` directly would give that class a third base.
 
     Note: this class must not have "Base" in its name — DashAI's
     ``ComponentRegistry._get_base_type`` matches ancestor classes by that

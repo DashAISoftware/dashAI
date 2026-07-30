@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    TreeEnsembleArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
@@ -251,7 +254,10 @@ class GradientBoostingClassifierSchema(BaseSchema):
 
 
 class GradientBoostingClassifier(
-    TabularClassificationModel, SklearnLikeClassifier, _GradientBoostingClassifier
+    TreeEnsembleArtifactsMixin,
+    TabularClassificationModel,
+    SklearnLikeClassifier,
+    _GradientBoostingClassifier,
 ):
     """Gradient boosting classifier that builds an ensemble of trees sequentially.
 

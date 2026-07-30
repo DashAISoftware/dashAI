@@ -13,6 +13,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    TreeEnsembleArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -535,7 +538,12 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
 
-class GradientBoostingR(RegressionModel, SklearnLikeRegressor, _GBRegressor):
+class GradientBoostingR(
+    TreeEnsembleArtifactsMixin,
+    RegressionModel,
+    SklearnLikeRegressor,
+    _GBRegressor,
+):
     """Gradient boosting regressor that builds
     an ensemble of decision trees sequentially.
 

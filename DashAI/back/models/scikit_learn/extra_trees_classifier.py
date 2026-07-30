@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    TreeEnsembleArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
@@ -250,7 +253,10 @@ class ExtraTreesClassifierSchema(BaseSchema):
 
 
 class ExtraTreesClassifier(
-    TabularClassificationModel, SklearnLikeClassifier, _ExtraTreesClassifier
+    TreeEnsembleArtifactsMixin,
+    TabularClassificationModel,
+    SklearnLikeClassifier,
+    _ExtraTreesClassifier,
 ):
     """Extra-Trees classifier using fully randomised decision tree splits.
 

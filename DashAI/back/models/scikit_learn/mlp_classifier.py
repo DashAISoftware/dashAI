@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    MLPArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
@@ -228,7 +231,12 @@ class MLPClassifierSchema(BaseSchema):
     )  # type: ignore
 
 
-class MLPClassifier(TabularClassificationModel, SklearnLikeClassifier, _MLPClassifier):
+class MLPClassifier(
+    MLPArtifactsMixin,
+    TabularClassificationModel,
+    SklearnLikeClassifier,
+    _MLPClassifier,
+):
     """Multi-layer Perceptron classifier trained with backpropagation.
 
     MLPClassifier is a fully-connected feedforward neural network. The network

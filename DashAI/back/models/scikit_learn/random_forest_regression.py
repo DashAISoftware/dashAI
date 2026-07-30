@@ -13,6 +13,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    TreeEnsembleArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -425,7 +428,10 @@ class RandomForestRegressionSchema(BaseSchema):
 
 
 class RandomForestRegression(
-    RegressionModel, SklearnLikeRegressor, _RandomForestRegressor
+    TreeEnsembleArtifactsMixin,
+    RegressionModel,
+    SklearnLikeRegressor,
+    _RandomForestRegressor,
 ):
     """Random forest regressor that averages predictions from multiple decision trees.
 

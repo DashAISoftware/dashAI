@@ -13,6 +13,9 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.categorical_encoder_mixin import CategoricalEncoderMixin
 from DashAI.back.models.regression_model import RegressionModel
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    MLPArtifactsMixin,
+)
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 if TYPE_CHECKING:
@@ -291,7 +294,11 @@ class MLPRegressorSchema(BaseSchema):
     )  # type: ignore
 
 
-class MLPRegression(CategoricalEncoderMixin, RegressionModel):
+class MLPRegression(
+    MLPArtifactsMixin,
+    CategoricalEncoderMixin,
+    RegressionModel,
+):
     """Single hidden-layer MLP regressor implemented in PyTorch.
 
     A Multi-layer Perceptron (MLP) is a feedforward neural network composed of an

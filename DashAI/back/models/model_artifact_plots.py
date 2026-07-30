@@ -368,7 +368,11 @@ def plot_decision_surface(
     grid[:, second] = mesh_y.ravel()
     grid_frame = pd.DataFrame(grid, columns=context.x_train.columns)
 
-    predictions = np.asarray(model.predict(grid_frame)).reshape(mesh_x.shape)
+    # DashAI classifiers return class probabilities from ``predict`` while a
+    # raw scikit-learn estimator returns labels, so collapse a probability
+    # matrix down to the winning class index before reshaping.
+    raw = np.asarray(model.predict(grid_frame))
+    predictions = (raw.argmax(axis=1) if raw.ndim == 2 else raw).reshape(mesh_x.shape)
 
     figure = go.Figure()
     figure.add_trace(

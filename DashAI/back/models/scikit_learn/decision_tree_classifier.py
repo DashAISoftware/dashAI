@@ -10,6 +10,9 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    TreeArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
@@ -227,7 +230,10 @@ class DecisionTreeClassifierSchema(BaseSchema):
 
 
 class DecisionTreeClassifier(
-    TabularClassificationModel, SklearnLikeClassifier, _DecisionTreeClassifier
+    TreeArtifactsMixin,
+    TabularClassificationModel,
+    SklearnLikeClassifier,
+    _DecisionTreeClassifier,
 ):
     """Decision tree classifier that learns axis-aligned decision rules from data.
 

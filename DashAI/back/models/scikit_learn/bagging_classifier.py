@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    TreeEnsembleArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
@@ -191,7 +194,10 @@ class BaggingClassifierSchema(BaseSchema):
 
 
 class BaggingClassifier(
-    TabularClassificationModel, SklearnLikeClassifier, _BaggingClassifier
+    TreeEnsembleArtifactsMixin,
+    TabularClassificationModel,
+    SklearnLikeClassifier,
+    _BaggingClassifier,
 ):
     """Bagging classifier that aggregates predictions from bootstrap subsets.
 

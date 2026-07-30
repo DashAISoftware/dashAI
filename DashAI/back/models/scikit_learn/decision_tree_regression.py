@@ -9,6 +9,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    TreeArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -219,7 +222,10 @@ class DecisionTreeRegressionSchema(BaseSchema):
 
 
 class DecisionTreeRegression(
-    RegressionModel, SklearnLikeRegressor, _DecisionTreeRegressor
+    TreeArtifactsMixin,
+    RegressionModel,
+    SklearnLikeRegressor,
+    _DecisionTreeRegressor,
 ):
     """Decision tree regressor that recursively partitions the feature space.
 

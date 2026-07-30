@@ -10,6 +10,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    TreeEnsembleArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -161,7 +164,12 @@ class AdaBoostRegressionSchema(BaseSchema):
     )  # type: ignore
 
 
-class AdaBoostRegression(RegressionModel, SklearnLikeRegressor, _AdaBoostRegressor):
+class AdaBoostRegression(
+    TreeEnsembleArtifactsMixin,
+    RegressionModel,
+    SklearnLikeRegressor,
+    _AdaBoostRegressor,
+):
     """AdaBoost regressor that focuses on samples with high prediction errors.
 
     AdaBoostRegressor fits weak regressors (decision stumps by default) sequentially

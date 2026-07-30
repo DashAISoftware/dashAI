@@ -8,6 +8,9 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.scikit_learn.model_artifact_mixins import (
+    TreeEnsembleArtifactsMixin,
+)
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
@@ -281,7 +284,10 @@ class RandomForestClassifierSchema(BaseSchema):
 
 
 class RandomForestClassifier(
-    TabularClassificationModel, SklearnLikeClassifier, _RandomForestClassifier
+    TreeEnsembleArtifactsMixin,
+    TabularClassificationModel,
+    SklearnLikeClassifier,
+    _RandomForestClassifier,
 ):
     """Random forest classifier that aggregates predictions from many decision trees.
 
