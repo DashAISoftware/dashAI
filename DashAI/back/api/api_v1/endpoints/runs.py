@@ -238,6 +238,76 @@ async def get_hyperparameter_optimization_plot(
     return normalize_artifacts(plot)[0]
 
 
+@router.get("/{run_id}/model_artifacts")
+@inject
+async def get_run_model_artifacts(
+    run_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the stored visualizations of a run's trained model.
+
+    Parameters
+    ----------
+    run_id : int
+        Id of the run whose model artifacts are requested.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy
+        session. The generated session can be used to access and query the
+        database.
+
+    Returns
+    -------
+    dict
+        ``{"status": Optional[str], "artifacts": List[dict]}``. The status is
+        None and the list empty when generation has never run for this run.
+
+    Raises
+    ------
+    HTTPException
+        If the run does not exist or its stored artifacts cannot be read.
+    """
+    import pickle
+
+    from DashAI.back.core.artifacts import normalize_artifacts
+
+    with session_factory() as db:
+        try:
+            run = db.get(Run, run_id)
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+        if not run:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Run not found",
+            )
+
+        artifacts_status = (
+            run.model_artifacts_status.name if run.model_artifacts_status else None
+        )
+        if not run.model_artifacts_path:
+            return {"status": artifacts_status, "artifacts": []}
+
+        try:
+            with open(run.model_artifacts_path, "rb") as file:
+                stored = pickle.load(file)
+        except OSError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Model artifacts file not found",
+            ) from e
+
+    # Re-normalized on read for the same reason the hyperparameter plot
+    # endpoint does it: artifacts pickled by an older version still come back
+    # in the current wire shape.
+    return {"status": artifacts_status, "artifacts": normalize_artifacts(stored)}
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def upload_run(
