@@ -23,7 +23,9 @@
     "saveAndRunModel": "Save and Run Model",
     "showOperations": "Show Operations",
     "showParameters": "Show Parameters",
-    "updateAndRetrain": "Update & Retrain"
+    "updateAndRetrain": "Update & Retrain",
+    "generateVisualization": "Generate",
+    "regenerateVisualization": "Regenerate"
   },
   "error": {
     "completeRequiredFields": "Please complete all required fields",
@@ -178,7 +180,9 @@
     "lowerIsBetter": "Lower is better",
     "bestModel": "Best",
     "editRun": "Edit Run",
-    "chartType": "Chart type"
+    "chartType": "Chart type",
+    "model": "Model",
+    "visualization": "Visualization"
   },
   "message": {
     "skippedUndownloadedRuns": "Skipped runs whose model is not downloaded. Download the model first.",
@@ -219,6 +223,11 @@
     "runUpdatedSuccess": "Run \"{{runName}}\" updated successfully. Status changed to Not Started.",
     "runStartedSuccessfully": "Run {{runId}} started successfully",
     "sessionCreatedSuccess": "Session successfully created.",
-    "sessionUpdated": "Session updated successfully"
+    "sessionUpdated": "Session updated successfully",
+    "modelHasNoVisualization": "This model does not provide a visualization",
+    "noVisualizationYet": "Generate a visualization to see how this model looks after training",
+    "generatingVisualization": "Generating visualization",
+    "visualizationFailed": "Visualization generation failed",
+    "visualizationFetchFailed": "Could not load the model visualization"
   }
 }

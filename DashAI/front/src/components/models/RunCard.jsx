@@ -395,6 +395,9 @@ function RunCard({
             setResultsVisible={setResultsVisible}
             autoExpand={autoExpand}
             fillHeight={hideChrome}
+            supportsModelArtifacts={Boolean(
+              model?.metadata?.supports_model_artifacts,
+            )}
           />
         </Box>
         <DeleteConfirmationModal

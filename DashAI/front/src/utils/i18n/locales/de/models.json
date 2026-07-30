@@ -23,7 +23,9 @@
     "saveAndRunModel": "Modell speichern und ausführen",
     "showOperations": "Operationen anzeigen",
     "showParameters": "Parameter anzeigen",
-    "updateAndRetrain": "Aktualisieren und neu trainieren"
+    "updateAndRetrain": "Aktualisieren und neu trainieren",
+    "generateVisualization": "Erzeugen",
+    "regenerateVisualization": "Neu erzeugen"
   },
   "error": {
     "completeRequiredFields": "Bitte füllen Sie alle Pflichtfelder aus",
@@ -178,7 +180,9 @@
     "lowerIsBetter": "Niedriger ist besser",
     "bestModel": "Bestes",
     "editRun": "Durchlauf bearbeiten",
-    "chartType": "Diagrammtyp"
+    "chartType": "Diagrammtyp",
+    "model": "Modell",
+    "visualization": "Visualisierung"
   },
   "message": {
     "skippedUndownloadedRuns": "Durchläufe mit nicht heruntergeladenem Modell wurden übersprungen. Lade das Modell zuerst herunter.",
@@ -219,6 +223,11 @@
     "runUpdatedSuccess": "Durchlauf \"{{runName}}\" erfolgreich aktualisiert. Status auf 'Nicht gestartet' geändert.",
     "runStartedSuccessfully": "Durchlauf {{runId}} erfolgreich gestartet",
     "sessionCreatedSuccess": "Sitzung erfolgreich erstellt.",
-    "sessionUpdated": "Sitzung erfolgreich aktualisiert"
+    "sessionUpdated": "Sitzung erfolgreich aktualisiert",
+    "modelHasNoVisualization": "Dieses Modell bietet keine Visualisierung",
+    "noVisualizationYet": "Erzeugen Sie eine Visualisierung, um zu sehen, wie dieses Modell nach dem Training aussieht",
+    "generatingVisualization": "Visualisierung wird erzeugt",
+    "visualizationFailed": "Die Visualisierung konnte nicht erzeugt werden",
+    "visualizationFetchFailed": "Die Modellvisualisierung konnte nicht geladen werden"
   }
 }

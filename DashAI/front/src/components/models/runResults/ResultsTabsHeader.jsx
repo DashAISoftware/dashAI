@@ -12,10 +12,31 @@ const groupLabelSx = {
   pt: 1,
 };
 
+/** The vertical rule that separates two tab groups. */
+function GroupDivider() {
+  // Empty spacer just for the horizontal gap between groups. Kept out of the
+  // flex height/alignment calculation so the actual rule (positioned
+  // absolutely inside it) can be sized freely without pushing the tabs around.
+  return (
+    <Box sx={{ position: "relative", alignSelf: "stretch", width: 0, mx: 4 }}>
+      <Box
+        sx={{
+          position: "absolute",
+          top: 32,
+          bottom: -16,
+          left: 0,
+          width: "1px",
+          bgcolor: "divider",
+        }}
+      />
+    </Box>
+  );
+}
+
 /**
- * The two grouped pill tab bars (Metrics: Live/Hyperparameters, Operations:
- * Explainability/Predictions) shown above a run's results, with a vertical
- * rule between the groups. Purely presentational.
+ * The three grouped pill tab bars (Metrics: Live/Hyperparameters, Operations:
+ * Explainability/Predictions, Model: Visualization) shown above a run's
+ * results, with a vertical rule between the groups. Purely presentational.
  */
 export default function ResultsTabsHeader({
   activeTab,
@@ -24,6 +45,7 @@ export default function ResultsTabsHeader({
   optimizables,
   explainerCount,
   predictionCount,
+  supportsModelArtifacts = false,
 }) {
   const { t } = useTranslation(["models"]);
 
@@ -36,6 +58,11 @@ export default function ResultsTabsHeader({
     ? notFinishedTooltip
     : optimizables === 0
       ? t("models:message.noOptimizableParamsForHpo")
+      : "";
+  const visualizationTooltip = !isFinished
+    ? notFinishedTooltip
+    : !supportsModelArtifacts
+      ? t("models:message.modelHasNoVisualization")
       : "";
 
   return (
@@ -64,22 +91,7 @@ export default function ResultsTabsHeader({
         </PillTabs>
       </Box>
 
-      {/* Empty spacer just for the horizontal gap between groups. Kept out of
-          the flex height/alignment calculation so the actual rule (positioned
-          absolutely inside it) can be sized freely without pushing the tabs
-          around. */}
-      <Box sx={{ position: "relative", alignSelf: "stretch", width: 0, mx: 4 }}>
-        <Box
-          sx={{
-            position: "absolute",
-            top: 32,
-            bottom: -16,
-            left: 0,
-            width: "1px",
-            bgcolor: "divider",
-          }}
-        />
-      </Box>
+      <GroupDivider />
 
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         <Typography variant="caption" color="text.secondary" sx={groupLabelSx}>
@@ -138,6 +150,31 @@ export default function ResultsTabsHeader({
           />
         </PillTabs>
       </Box>
+
+      <GroupDivider />
+
+      <Box sx={{ display: "flex", flexDirection: "column" }}>
+        <Typography variant="caption" color="text.secondary" sx={groupLabelSx}>
+          {t("models:label.model")}
+        </Typography>
+        <PillTabs
+          value={activeTab === 4 ? 4 : false}
+          onChange={(e, newValue) => onTabChange(newValue)}
+          aria-label="Model tabs"
+        >
+          <Tab
+            value={4}
+            label={
+              <Tooltip title={visualizationTooltip}>
+                <span style={{ pointerEvents: "auto" }}>
+                  {t("models:label.visualization")}
+                </span>
+              </Tooltip>
+            }
+            disabled={!isFinished || !supportsModelArtifacts}
+          />
+        </PillTabs>
+      </Box>
     </Box>
   );
 }
@@ -149,4 +186,5 @@ ResultsTabsHeader.propTypes = {
   optimizables: PropTypes.number,
   explainerCount: PropTypes.number,
   predictionCount: PropTypes.number,
+  supportsModelArtifacts: PropTypes.bool,
 };

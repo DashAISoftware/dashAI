@@ -23,7 +23,9 @@
     "saveAndRunModel": "Salvar e Executar Modelo",
     "showOperations": "Mostrar Operações",
     "showParameters": "Mostrar Parâmetros",
-    "updateAndRetrain": "Atualizar e Retreinar"
+    "updateAndRetrain": "Atualizar e Retreinar",
+    "generateVisualization": "Gerar",
+    "regenerateVisualization": "Gerar novamente"
   },
   "error": {
     "completeRequiredFields": "Por favor, preencha todos os campos obrigatórios",
@@ -181,7 +183,9 @@
     "lowerIsBetter": "Menor é melhor",
     "bestModel": "Melhor",
     "editRun": "Editar execução",
-    "chartType": "Tipo de gráfico"
+    "chartType": "Tipo de gráfico",
+    "model": "Modelo",
+    "visualization": "Visualização"
   },
   "message": {
     "skippedUndownloadedRuns": "Execuções cujo modelo não está baixado foram ignoradas. Baixe o modelo primeiro.",
@@ -225,6 +229,11 @@
     "runUpdatedSuccess": "Execução \"{{runName}}\" atualizada corretamente. Estado alterado para Não Iniciado.",
     "runStartedSuccessfully": "Execução {{runId}} iniciada com sucesso",
     "sessionCreatedSuccess": "Sessão criada com sucesso.",
-    "sessionUpdated": "Sessão atualizada com sucesso"
+    "sessionUpdated": "Sessão atualizada com sucesso",
+    "modelHasNoVisualization": "Este modelo não oferece uma visualização",
+    "noVisualizationYet": "Gere uma visualização para ver como este modelo fica após o treinamento",
+    "generatingVisualization": "Gerando visualização",
+    "visualizationFailed": "Falha ao gerar a visualização",
+    "visualizationFetchFailed": "Não foi possível carregar a visualização do modelo"
   }
 }

@@ -12,6 +12,7 @@ import useRunResultsData from "./runResults/useRunResultsData";
 import ResultsTabsHeader from "./runResults/ResultsTabsHeader";
 import ExplainerResultsTab from "./runResults/ExplainerResultsTab";
 import PredictionResultsTab from "./runResults/PredictionResultsTab";
+import ModelVisualizationTab from "./runResults/ModelVisualizationTab";
 
 /**
  * Shows a run's results as two tab groups (metrics: live/hyperparameters,
@@ -30,6 +31,7 @@ export default function RunResults({
   setResultsVisible: setControlledVisible = undefined,
   autoExpand = false,
   fillHeight = false,
+  supportsModelArtifacts = false,
 }) {
   const isControlled = controlledVisible !== undefined;
 
@@ -128,6 +130,7 @@ export default function RunResults({
       optimizables={optimizables}
       explainerCount={globalExplainers.length + localExplainers.length}
       predictionCount={predictions.length}
+      supportsModelArtifacts={supportsModelArtifacts}
     />
   );
 
@@ -178,6 +181,10 @@ export default function RunResults({
         <Box sx={{ py: 4 }}>
           <HyperparameterPlots run={run} />
         </Box>
+      )}
+
+      {activeTab === 4 && isFinished && supportsModelArtifacts && (
+        <ModelVisualizationTab run={run} />
       )}
     </>
   );
@@ -242,4 +249,5 @@ RunResults.propTypes = {
   setResultsVisible: PropTypes.func,
   autoExpand: PropTypes.bool,
   fillHeight: PropTypes.bool,
+  supportsModelArtifacts: PropTypes.bool,
 };

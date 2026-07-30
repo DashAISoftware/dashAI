@@ -23,7 +23,9 @@
     "showOperations": "显示操作",
     "showParameters": "显示参数",
     "updateAndRetrain": "更新并重新训练",
-    "modelsHub": "模型中心"
+    "modelsHub": "模型中心",
+    "generateVisualization": "生成",
+    "regenerateVisualization": "重新生成"
   },
   "error": {
     "completeRequiredFields": "请填写所有必填字段",
@@ -178,7 +180,9 @@
     "lowerIsBetter": "越低越好",
     "bestModel": "最优",
     "editRun": "编辑运行",
-    "chartType": "图表类型"
+    "chartType": "图表类型",
+    "model": "模型",
+    "visualization": "可视化"
   },
   "message": {
     "skippedUndownloadedRuns": "已跳过模型未下载的运行。请先下载模型。",
@@ -219,6 +223,11 @@
     "runUpdatedSuccess": "运行 \"{{runName}}\" 更新成功。状态已更改为「未开始」。",
     "runStartedSuccessfully": "运行 {{runId}} 成功启动",
     "sessionCreatedSuccess": "会话创建成功。",
-    "sessionUpdated": "会话更新成功"
+    "sessionUpdated": "会话更新成功",
+    "modelHasNoVisualization": "该模型不提供可视化。",
+    "noVisualizationYet": "生成可视化以查看该模型训练后的结构。",
+    "generatingVisualization": "正在生成可视化",
+    "visualizationFailed": "可视化生成失败",
+    "visualizationFetchFailed": "无法加载模型可视化"
   }
 }

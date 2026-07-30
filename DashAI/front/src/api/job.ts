@@ -51,6 +51,20 @@ export const enqueueRunnerJob = async (runId: number): Promise<object> => {
   return response.data;
 };
 
+export const enqueueModelVisualizationJob = async (
+  runId: number,
+): Promise<object> => {
+  const formData = new FormData();
+  formData.append("job_type", "ModelVisualizationJob");
+  formData.append("kwargs", JSON.stringify({ run_id: runId }));
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
 export const enqueueDatasetJob = async (
   dataset_id: number,
   file: File | null,

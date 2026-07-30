@@ -21,6 +21,24 @@ export const getHyperparameterPlot = async (
   return response.data;
 };
 
+export interface IModelArtifactsResponse {
+  status: string | null;
+  artifacts: any[];
+}
+
+/**
+ * Read the stored visualizations of a run's trained model. `status` is null
+ * and `artifacts` empty when generation has never run for this run.
+ */
+export const getRunModelArtifacts = async (
+  runId: string,
+): Promise<IModelArtifactsResponse> => {
+  const response = await api.get<IModelArtifactsResponse>(
+    `/v1/run/${runId}/model_artifacts`,
+  );
+  return response.data;
+};
+
 export const createRun = async (
   modelSessionId: string,
   modelName: string,
