@@ -10,7 +10,6 @@ import { useTheme, alpha } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getModelSessionById } from "../../api/modelSession";
 import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
 import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import PlotActions from "../shared/PlotActions";
@@ -53,7 +52,7 @@ function hasAnyRealMetrics(splitData) {
   );
 }
 
-export function LiveMetricsChart({ run }) {
+export function LiveMetricsChart({ run, modelSessionDetail = null }) {
   const { t } = useTranslation("models");
   const theme = useTheme();
   const [level, setLevel] = useState(null);
@@ -73,12 +72,11 @@ export function LiveMetricsChart({ run }) {
   });
   const socketRef = useRef(null);
 
+  // When a new training starts, clear all previous metrics. Kept separate
+  // from the WebSocket effect below so a run's status changing (e.g.
+  // running -> finished) doesn't tear down and reopen the live connection —
+  // the socket only needs to change when the run itself changes.
   useEffect(() => {
-    if (socketRef.current) {
-      socketRef.current.close();
-    }
-
-    // When a new training starts, clear all previous metrics
     const isStarting = run.status === 1 || run.status === 2;
     if (isStarting) {
       setData({});
@@ -89,7 +87,9 @@ export function LiveMetricsChart({ run }) {
         TEST: null,
       };
     }
+  }, [run.status]);
 
+  useEffect(() => {
     const wsOrigin = new URL(
       process.env.REACT_APP_API_URL || "/",
       window.location.origin,
@@ -150,27 +150,19 @@ export function LiveMetricsChart({ run }) {
         console.log("WebSocket already closed");
       }
     };
-  }, [run.id, run.status]);
+  }, [run.id]);
 
+  // The session detail (with train/validation/test metric names) is fetched
+  // once by the parent (useRunResultsData) and passed down, instead of this
+  // component independently re-fetching the same /model-session/{id}.
   useEffect(() => {
-    if (!run.model_session_id) return;
-
-    let mounted = true;
-
-    getModelSessionById(run.model_session_id.toString()).then((session) => {
-      if (!mounted) return;
-
-      setAvailableMetrics({
-        TRAIN: session.train_metrics ?? [],
-        VALIDATION: session.validation_metrics ?? [],
-        TEST: session.test_metrics ?? [],
-      });
+    if (!modelSessionDetail) return;
+    setAvailableMetrics({
+      TRAIN: modelSessionDetail.train_metrics ?? [],
+      VALIDATION: modelSessionDetail.validation_metrics ?? [],
+      TEST: modelSessionDetail.test_metrics ?? [],
     });
-
-    return () => {
-      mounted = false;
-    };
-  }, [run.model_session_id]);
+  }, [modelSessionDetail]);
 
   // Fallback bucket per split, built from the run's final metrics rather
   // than the websocket. Only ever read when the split has zero real
