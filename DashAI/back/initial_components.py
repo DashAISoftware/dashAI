@@ -69,6 +69,7 @@ from DashAI.back.converters.simple_converters.type_cast import TypeCast
 from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dataloaders.classes.excel_dataloader import ExcelDataLoader
+from DashAI.back.dataloaders.classes.hdf5_dataloader import HDF5DataLoader
 from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 
@@ -473,6 +474,7 @@ def get_initial_components():
         ARFFDataLoader,
         CSVDataLoader,
         ExcelDataLoader,
+        HDF5DataLoader,
         ImageDataLoader,
         JSONDataLoader,
         # Dataset Sources
