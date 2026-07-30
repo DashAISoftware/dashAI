@@ -172,8 +172,12 @@ class RegressionPartialDependence(BaseGlobalExplainer):
         """
         import numpy as np
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = dataset
-        x_test = x["test"].to_pandas()
+        # The grid frames are passed straight to the model, bypassing the
+        # model preparation.
+        x_test = prepare_model_input(self.model, x["test"]).to_pandas()
 
         # Cap rows to bound the number of model evaluations.
         max_rows = 200
