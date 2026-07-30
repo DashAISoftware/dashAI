@@ -3,7 +3,7 @@
 import logging
 import math
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Final, final
+from typing import TYPE_CHECKING, Any, Dict, Final, List, Union, final
 
 from kink import di
 
@@ -12,7 +12,9 @@ from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Metric
 
 if TYPE_CHECKING:
+    from DashAI.back.core.artifacts import Artifact, GroupedArtifacts
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+    from DashAI.back.models.model_artifact_context import ModelArtifactContext
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +47,46 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         metadata["icon"] = cls.ICON if cls.ICON else "Science"
         metadata["requires_download"] = bool(getattr(cls, "REQUIRES_DOWNLOAD", False))
         metadata["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
+        metadata["supports_model_artifacts"] = cls.supports_model_artifacts()
         return metadata
+
+    def get_model_artifacts(
+        self, context: "ModelArtifactContext"
+    ) -> List[Union["Artifact", "GroupedArtifacts"]]:
+        """Build renderable views of the fitted model itself.
+
+        Optional hook. Models that can show their own structure (a tree, a
+        weight matrix, a decision surface) override it; everything else keeps
+        the empty default. Returning a ``GroupedArtifacts`` turns a long list
+        into a selector in the frontend instead of a stack of plots.
+
+        Parameters
+        ----------
+        context : ModelArtifactContext
+            Training data and naming. Implementations that visualise the model
+            structure alone may ignore it.
+
+        Returns
+        -------
+        List[Union[Artifact, GroupedArtifacts]]
+            Artifacts describing the fitted model, empty when unavailable.
+        """
+        return []
+
+    @classmethod
+    def supports_model_artifacts(cls) -> bool:
+        """Report whether this model overrides ``get_model_artifacts``.
+
+        Detected by comparison against the base implementation rather than by
+        a class flag, so support cannot be declared without being implemented,
+        nor implemented without being declared.
+
+        Returns
+        -------
+        bool
+            True when the class provides its own hook implementation.
+        """
+        return cls.get_model_artifacts is not BaseModel.get_model_artifacts
 
     @abstractmethod
     def save(self, filename: str) -> None:
