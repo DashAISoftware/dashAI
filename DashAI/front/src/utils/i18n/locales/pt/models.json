@@ -185,7 +185,8 @@
     "editRun": "Editar execução",
     "chartType": "Tipo de gráfico",
     "model": "Modelo",
-    "visualization": "Visualização"
+    "visualization": "Visualização",
+    "diagnostics": "Diagnósticos"
   },
   "message": {
     "skippedUndownloadedRuns": "Execuções cujo modelo não está baixado foram ignoradas. Baixe o modelo primeiro.",

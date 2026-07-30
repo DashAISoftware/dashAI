@@ -182,7 +182,8 @@
     "editRun": "Durchlauf bearbeiten",
     "chartType": "Diagrammtyp",
     "model": "Modell",
-    "visualization": "Visualisierung"
+    "visualization": "Visualisierung",
+    "diagnostics": "Diagnosen"
   },
   "message": {
     "skippedUndownloadedRuns": "Durchläufe mit nicht heruntergeladenem Modell wurden übersprungen. Lade das Modell zuerst herunter.",

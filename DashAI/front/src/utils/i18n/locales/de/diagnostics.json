@@ -1,0 +1,36 @@
+{
+  "label": {
+    "availableDiagnostics": "Verfügbare Diagnosen",
+    "searchDiagnostics": "Diagnosen suchen",
+    "noDiagnosticsMatchSearch": "Keine Diagnose passt zur Suche",
+    "noCompatibleDiagnosticsFound": "Keine kompatiblen Diagnosen gefunden",
+    "split": "Aufteilung",
+    "split_train": "Training",
+    "split_validation": "Validierung",
+    "split_test": "Test",
+    "parameters": "Parameter",
+    "newDiagnostic": "Neue Diagnose",
+    "selectSplit": "Aufteilung wählen",
+    "configureParameters": "Parameter konfigurieren",
+    "name": "Name",
+    "namePlaceholder": "Optionaler Name für diese Diagnose"
+  },
+  "button": {
+    "create": "Erstellen",
+    "delete": "Diagnose löschen"
+  },
+  "message": {
+    "created": "Diagnose erstellt",
+    "computing": "Wird berechnet",
+    "failed": "Diese Diagnose konnte nicht berechnet werden",
+    "noData": "Diese Diagnose hat keine Ausgabe erzeugt",
+    "empty": "Noch keine Diagnosen. Fügen Sie eine über das rechte Panel hinzu.",
+    "noParameters": "Diese Diagnose hat keine konfigurierbaren Parameter.",
+    "splitHelp": "Welchen Vorhersagesatz die Diagnose beschreibt."
+  },
+  "error": {
+    "fetch": "Die Diagnosen konnten nicht geladen werden",
+    "create": "Die Diagnose konnte nicht erstellt werden",
+    "delete": "Die Diagnose konnte nicht gelöscht werden"
+  }
+}

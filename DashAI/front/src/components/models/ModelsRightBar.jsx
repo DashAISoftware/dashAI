@@ -59,8 +59,10 @@ import AddModelDialog from "./AddModelDialog";
 import ColumnInsights from "../notebooks/dataset/ColumnInsights";
 import RunInfoSidebar from "./RunInfoSidebar";
 import ExplainersSidebar from "../explainers/ExplainersSidebar";
+import DiagnosticsSidebar from "../diagnostics/DiagnosticsSidebar";
 
 const EXPLAINERS_TAB = 1;
+const DIAGNOSTICS_TAB = 5;
 
 export default function ModelsRightBar({ onToggle }) {
   const theme = useTheme();
@@ -86,6 +88,7 @@ export default function ModelsRightBar({ onToggle }) {
     sessionRightContent,
     runDetailTab,
     triggerExplainerRefresh,
+    triggerDiagnosticRefresh,
     datasets,
     tasks,
   } = useModels();
@@ -189,6 +192,17 @@ export default function ModelsRightBar({ onToggle }) {
           run={activeRun}
           session={session}
           onCreated={triggerExplainerRefresh}
+        />
+      );
+    }
+    // Same idea on the diagnostics tab: offer the diagnostics compatible with
+    // the session's task, one click away from being computed.
+    if (runDetailTab === DIAGNOSTICS_TAB && activeRun.status === 3) {
+      return (
+        <DiagnosticsSidebar
+          run={activeRun}
+          session={session}
+          onCreated={triggerDiagnosticRefresh}
         />
       );
     }

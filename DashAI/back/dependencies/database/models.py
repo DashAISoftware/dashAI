@@ -389,7 +389,6 @@ class Diagnostic(Base):
     Table to store an evaluation diagnostic computed over one split of a run.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, nullable=True)
     run_id: Mapped[int] = mapped_column(
         ForeignKey("run.id", ondelete="CASCADE"), nullable=False
     )

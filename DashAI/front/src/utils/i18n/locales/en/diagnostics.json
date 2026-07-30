@@ -1,0 +1,36 @@
+{
+  "label": {
+    "availableDiagnostics": "Available Diagnostics",
+    "searchDiagnostics": "Search diagnostics",
+    "noDiagnosticsMatchSearch": "No diagnostics match your search",
+    "noCompatibleDiagnosticsFound": "No compatible diagnostics found",
+    "split": "Split",
+    "split_train": "Train",
+    "split_validation": "Validation",
+    "split_test": "Test",
+    "parameters": "Parameters",
+    "newDiagnostic": "New Diagnostic",
+    "selectSplit": "Select split",
+    "configureParameters": "Configure parameters",
+    "name": "Name",
+    "namePlaceholder": "Optional name for this diagnostic"
+  },
+  "button": {
+    "create": "Create",
+    "delete": "Delete diagnostic"
+  },
+  "message": {
+    "created": "Diagnostic created",
+    "computing": "Computing",
+    "failed": "This diagnostic failed to compute",
+    "noData": "This diagnostic produced no output",
+    "empty": "No diagnostics yet. Add one from the panel on the right.",
+    "noParameters": "This diagnostic has no parameters to configure.",
+    "splitHelp": "Which prediction set the diagnostic describes."
+  },
+  "error": {
+    "fetch": "Could not load the diagnostics",
+    "create": "Could not create the diagnostic",
+    "delete": "Could not delete the diagnostic"
+  }
+}

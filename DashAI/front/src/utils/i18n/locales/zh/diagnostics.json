@@ -1,0 +1,36 @@
+{
+  "label": {
+    "availableDiagnostics": "可用诊断",
+    "searchDiagnostics": "搜索诊断",
+    "noDiagnosticsMatchSearch": "没有匹配的诊断",
+    "noCompatibleDiagnosticsFound": "未找到兼容的诊断",
+    "split": "数据划分",
+    "split_train": "训练集",
+    "split_validation": "验证集",
+    "split_test": "测试集",
+    "parameters": "参数",
+    "newDiagnostic": "新建诊断",
+    "selectSplit": "选择数据划分",
+    "configureParameters": "配置参数",
+    "name": "名称",
+    "namePlaceholder": "该诊断的可选名称"
+  },
+  "button": {
+    "create": "创建",
+    "delete": "删除诊断"
+  },
+  "message": {
+    "created": "诊断已创建",
+    "computing": "正在计算",
+    "failed": "该诊断计算失败",
+    "noData": "该诊断未产生任何输出",
+    "empty": "暂无诊断。请从右侧面板添加。",
+    "noParameters": "该诊断没有可配置的参数。",
+    "splitHelp": "该诊断所描述的预测集合。"
+  },
+  "error": {
+    "fetch": "无法加载诊断",
+    "create": "无法创建诊断",
+    "delete": "无法删除诊断"
+  }
+}

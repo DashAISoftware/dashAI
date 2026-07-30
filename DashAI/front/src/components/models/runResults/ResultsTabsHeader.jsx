@@ -45,6 +45,7 @@ export default function ResultsTabsHeader({
   optimizables,
   explainerCount,
   predictionCount,
+  diagnosticCount = 0,
   supportsModelArtifacts = false,
 }) {
   const { t } = useTranslation(["models"]);
@@ -98,7 +99,7 @@ export default function ResultsTabsHeader({
           {t("models:label.operations")}
         </Typography>
         <PillTabs
-          value={[1, 2].includes(activeTab) ? activeTab : false}
+          value={[1, 2, 5].includes(activeTab) ? activeTab : false}
           onChange={(e, newValue) => onTabChange(newValue)}
           aria-label="Result operations tabs"
         >
@@ -148,6 +149,31 @@ export default function ResultsTabsHeader({
             }
             disabled={!isFinished}
           />
+          <Tab
+            value={5}
+            label={
+              <Tooltip title={notFinishedTooltip}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    pointerEvents: "auto",
+                  }}
+                >
+                  <span>{t("models:label.diagnostics")}</span>
+                  {isFinished && (
+                    <Chip
+                      label={diagnosticCount}
+                      size="small"
+                      color="primary"
+                    />
+                  )}
+                </Box>
+              </Tooltip>
+            }
+            disabled={!isFinished}
+          />
         </PillTabs>
       </Box>
 
@@ -186,5 +212,6 @@ ResultsTabsHeader.propTypes = {
   optimizables: PropTypes.number,
   explainerCount: PropTypes.number,
   predictionCount: PropTypes.number,
+  diagnosticCount: PropTypes.number,
   supportsModelArtifacts: PropTypes.bool,
 };

@@ -106,8 +106,9 @@ class DiagnosticJob(BaseJob):
             with di["session_factory"]() as db:
                 diagnostic: Diagnostic = db.get(Diagnostic, diagnostic_id)
                 if diagnostic:
-                    label = diagnostic.name or diagnostic.diagnostic_name
-                    return f"Diagnose: {label} ({diagnostic.split})"
+                    return (
+                        f"Diagnose: {diagnostic.diagnostic_name} ({diagnostic.split})"
+                    )
         except Exception:
             pass
         return f"Diagnostic ({diagnostic_id})"

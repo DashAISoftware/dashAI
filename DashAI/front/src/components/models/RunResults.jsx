@@ -13,6 +13,8 @@ import ResultsTabsHeader from "./runResults/ResultsTabsHeader";
 import ExplainerResultsTab from "./runResults/ExplainerResultsTab";
 import PredictionResultsTab from "./runResults/PredictionResultsTab";
 import ModelVisualizationTab from "./runResults/ModelVisualizationTab";
+import DiagnosticResultsTab from "./runResults/DiagnosticResultsTab";
+import { getDiagnostics } from "../../api/diagnostic";
 
 /**
  * Shows a run's results as two tab groups (metrics: live/hyperparameters,
@@ -78,6 +80,23 @@ export default function RunResults({
   const [explainerScrollParent, setExplainerScrollParent] = useState(null);
   const [showDatasetPanel, setShowDatasetPanel] = useState(false);
 
+  const modelsContext = useModels();
+
+  // Only the count is held here, for the tab chip; the tab body owns the rows.
+  const [diagnosticCount, setDiagnosticCount] = useState(0);
+  const diagnosticRefreshTrigger = modelsContext?.diagnosticRefreshTrigger;
+  useEffect(() => {
+    let cancelled = false;
+    getDiagnostics(run.id)
+      .then((rows) => {
+        if (!cancelled) setDiagnosticCount(rows.length);
+      })
+      .catch((error) => console.error("Error counting diagnostics:", error));
+    return () => {
+      cancelled = true;
+    };
+  }, [run.id, diagnosticRefreshTrigger]);
+
   const optimizables = checkHowManyOptimazers({ params: run.parameters });
   const isFinished = run.status === 3;
   const isRunning = isRunActive(run.status);
@@ -113,7 +132,6 @@ export default function RunResults({
   // Expose the active tab while this run is shown full screen, so the right
   // sidebar can swap its content (e.g. list explainers on the explainers tab).
   const params = useParams();
-  const modelsContext = useModels();
   const setRunDetailTab = modelsContext?.setRunDetailTab;
   const isDetailView = String(params.runId ?? "") === String(run.id);
   useEffect(() => {
@@ -130,6 +148,7 @@ export default function RunResults({
       optimizables={optimizables}
       explainerCount={globalExplainers.length + localExplainers.length}
       predictionCount={predictions.length}
+      diagnosticCount={diagnosticCount}
       supportsModelArtifacts={supportsModelArtifacts}
     />
   );
@@ -185,6 +204,14 @@ export default function RunResults({
 
       {activeTab === 4 && isFinished && supportsModelArtifacts && (
         <ModelVisualizationTab run={run} />
+      )}
+
+      {activeTab === 5 && isFinished && (
+        <DiagnosticResultsTab
+          run={run}
+          session={session}
+          refreshTrigger={diagnosticRefreshTrigger}
+        />
       )}
     </>
   );

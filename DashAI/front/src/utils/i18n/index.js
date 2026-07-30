@@ -9,7 +9,9 @@ import customEN from "./locales/en/custom.json";
 import customES from "./locales/es/custom.json";
 import experimentsEN from "./locales/en/experiments.json";
 import experimentsES from "./locales/es/experiments.json";
+import diagnosticsEN from "./locales/en/diagnostics.json";
 import explainersEN from "./locales/en/explainers.json";
+import diagnosticsES from "./locales/es/diagnostics.json";
 import explainersES from "./locales/es/explainers.json";
 import generativeEN from "./locales/en/generative.json";
 import generativeES from "./locales/es/generative.json";
@@ -41,6 +43,7 @@ import configurableObjectPT from "./locales/pt/configurableObject.json";
 import commonPT from "./locales/pt/common.json";
 import customPT from "./locales/pt/custom.json";
 import experimentsPT from "./locales/pt/experiments.json";
+import diagnosticsPT from "./locales/pt/diagnostics.json";
 import explainersPT from "./locales/pt/explainers.json";
 import generativePT from "./locales/pt/generative.json";
 import modelsPT from "./locales/pt/models.json";
@@ -58,6 +61,7 @@ import configurableObjectDE from "./locales/de/configurableObject.json";
 import commonDE from "./locales/de/common.json";
 import customDE from "./locales/de/custom.json";
 import experimentsDE from "./locales/de/experiments.json";
+import diagnosticsDE from "./locales/de/diagnostics.json";
 import explainersDE from "./locales/de/explainers.json";
 import generativeDE from "./locales/de/generative.json";
 import modelsDE from "./locales/de/models.json";
@@ -75,6 +79,7 @@ import configurableObjectZH from "./locales/zh/configurableObject.json";
 import commonZH from "./locales/zh/common.json";
 import customZH from "./locales/zh/custom.json";
 import experimentsZH from "./locales/zh/experiments.json";
+import diagnosticsZH from "./locales/zh/diagnostics.json";
 import explainersZH from "./locales/zh/explainers.json";
 import generativeZH from "./locales/zh/generative.json";
 import modelsZH from "./locales/zh/models.json";
@@ -100,6 +105,7 @@ const resources = {
     custom: customEN,
     experiments: experimentsEN,
     explainers: explainersEN,
+    diagnostics: diagnosticsEN,
     generative: generativeEN,
     models: modelsEN,
     datasets: datasetsEN,
@@ -120,6 +126,7 @@ const resources = {
     custom: customES,
     experiments: experimentsES,
     explainers: explainersES,
+    diagnostics: diagnosticsES,
     generative: generativeES,
     models: modelsES,
     datasets: datasetsES,
@@ -140,6 +147,7 @@ const resources = {
     custom: customPT,
     experiments: experimentsPT,
     explainers: explainersPT,
+    diagnostics: diagnosticsPT,
     generative: generativePT,
     models: modelsPT,
     datasets: datasetsPT,
@@ -159,6 +167,7 @@ const resources = {
     custom: customDE,
     experiments: experimentsDE,
     explainers: explainersDE,
+    diagnostics: diagnosticsDE,
     generative: generativeDE,
     models: modelsDE,
     datasets: datasetsDE,
@@ -178,6 +187,7 @@ const resources = {
     custom: customZH,
     experiments: experimentsZH,
     explainers: explainersZH,
+    diagnostics: diagnosticsZH,
     generative: generativeZH,
     models: modelsZH,
     datasets: datasetsZH,
@@ -209,6 +219,7 @@ i18n
       "configurableObject",
       "experiments",
       "explainers",
+      "diagnostics",
       "generative",
       "models",
       "datasets",

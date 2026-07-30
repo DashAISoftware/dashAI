@@ -23,7 +23,6 @@ def upgrade() -> None:
     op.create_table(
         "diagnostic",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("name", sa.String(), nullable=True),
         sa.Column("run_id", sa.Integer(), nullable=False),
         sa.Column("huey_id", sa.String(), nullable=True),
         sa.Column("diagnostic_name", sa.String(), nullable=False),

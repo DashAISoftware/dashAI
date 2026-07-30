@@ -93,9 +93,25 @@ export function ModelsProvider({ children }) {
   const [runDetailTab, setRunDetailTab] = useState(null);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const [explainerToCreate, setExplainerToCreate] = useState(null);
+  const [diagnosticRefreshTrigger, setDiagnosticRefreshTrigger] = useState(0);
+  const [diagnosticToCreate, setDiagnosticToCreate] = useState(null);
 
   const triggerExplainerRefresh = useCallback(() => {
     setExplainerRefreshTrigger((prev) => prev + 1);
+  }, []);
+
+  const triggerDiagnosticRefresh = useCallback(() => {
+    setDiagnosticRefreshTrigger((prev) => prev + 1);
+  }, []);
+
+  // Open the diagnostic creation dialog for a given component, mirroring how
+  // openExplainerCreator drives the explainer stepper from the sidebar.
+  const openDiagnosticCreator = useCallback((diagnostic) => {
+    setDiagnosticToCreate(diagnostic);
+  }, []);
+
+  const closeDiagnosticCreator = useCallback(() => {
+    setDiagnosticToCreate(null);
   }, []);
 
   // Open the explainer creation dialog for a given {scope, name}. Shared so both
@@ -207,6 +223,11 @@ export function ModelsProvider({ children }) {
       explainerToCreate,
       openExplainerCreator,
       closeExplainerCreator,
+      diagnosticRefreshTrigger,
+      triggerDiagnosticRefresh,
+      diagnosticToCreate,
+      openDiagnosticCreator,
+      closeDiagnosticCreator,
     }),
     [
       selectedModel,
@@ -266,6 +287,11 @@ export function ModelsProvider({ children }) {
       explainerToCreate,
       openExplainerCreator,
       closeExplainerCreator,
+      diagnosticRefreshTrigger,
+      triggerDiagnosticRefresh,
+      diagnosticToCreate,
+      openDiagnosticCreator,
+      closeDiagnosticCreator,
     ],
   );
 

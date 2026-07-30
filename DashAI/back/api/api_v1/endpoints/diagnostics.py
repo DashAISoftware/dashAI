@@ -163,7 +163,6 @@ async def upload_diagnostic(
                 diagnostic_name=params.diagnostic_name,
                 parameters=params.parameters,
                 split=params.split,
-                name=params.name,
             )
             db.add(diagnostic)
             db.commit()

@@ -1,0 +1,36 @@
+{
+  "label": {
+    "availableDiagnostics": "Diagnósticos Disponibles",
+    "searchDiagnostics": "Buscar diagnósticos",
+    "noDiagnosticsMatchSearch": "Ningún diagnóstico coincide con la búsqueda",
+    "noCompatibleDiagnosticsFound": "No se encontraron diagnósticos compatibles",
+    "split": "Partición",
+    "split_train": "Entrenamiento",
+    "split_validation": "Validación",
+    "split_test": "Prueba",
+    "parameters": "Parámetros",
+    "newDiagnostic": "Nuevo Diagnóstico",
+    "selectSplit": "Seleccionar partición",
+    "configureParameters": "Configurar parámetros",
+    "name": "Nombre",
+    "namePlaceholder": "Nombre opcional para este diagnóstico"
+  },
+  "button": {
+    "create": "Crear",
+    "delete": "Eliminar diagnóstico"
+  },
+  "message": {
+    "created": "Diagnóstico creado",
+    "computing": "Calculando",
+    "failed": "Este diagnóstico no se pudo calcular",
+    "noData": "Este diagnóstico no produjo resultados",
+    "empty": "Aún no hay diagnósticos. Agregue uno desde el panel de la derecha.",
+    "noParameters": "Este diagnóstico no tiene parámetros para configurar.",
+    "splitHelp": "Qué conjunto de predicciones describe el diagnóstico."
+  },
+  "error": {
+    "fetch": "No se pudieron cargar los diagnósticos",
+    "create": "No se pudo crear el diagnóstico",
+    "delete": "No se pudo eliminar el diagnóstico"
+  }
+}

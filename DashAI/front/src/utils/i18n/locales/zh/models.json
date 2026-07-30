@@ -182,7 +182,8 @@
     "editRun": "编辑运行",
     "chartType": "图表类型",
     "model": "模型",
-    "visualization": "可视化"
+    "visualization": "可视化",
+    "diagnostics": "诊断"
   },
   "message": {
     "skippedUndownloadedRuns": "已跳过模型未下载的运行。请先下载模型。",
