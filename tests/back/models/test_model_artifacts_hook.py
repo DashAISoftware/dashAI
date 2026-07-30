@@ -1,8 +1,5 @@
 """Tests for the optional model artifact hook on BaseModel."""
 
-import numpy as np
-import pandas as pd
-
 from DashAI.back.core.artifacts import TextArtifact
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.model_artifact_context import ModelArtifactContext
@@ -30,12 +27,7 @@ class _VisualModel(_PlainModel):
 
 
 def _context():
-    return ModelArtifactContext(
-        x_train=pd.DataFrame({"a": [1, 2], "b": [3, 4]}),
-        y_train=np.array([0, 1]),
-        feature_names=["a", "b"],
-        class_names=["no", "yes"],
-    )
+    return ModelArtifactContext(feature_names=["a", "b"], class_names=["no", "yes"])
 
 
 def test_plain_model_does_not_support_artifacts():

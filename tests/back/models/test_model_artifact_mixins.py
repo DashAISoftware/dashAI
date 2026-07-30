@@ -20,18 +20,26 @@ from DashAI.back.models.scikit_learn.random_forest_classifier import (
 
 @pytest.fixture
 def context():
+    return ModelArtifactContext(feature_names=["a", "b"], class_names=["no", "yes"])
+
+
+@pytest.fixture
+def training_frame():
     rng = np.random.default_rng(0)
     x = pd.DataFrame({"a": rng.normal(0, 3, 80), "b": rng.normal(0, 1, 80)})
-    y = (x["a"] > 0).astype(int).to_numpy()
-    return ModelArtifactContext(
-        x_train=x, y_train=y, feature_names=["a", "b"], class_names=["no", "yes"]
-    )
+    return x, (x["a"] > 0).astype(int).to_numpy()
 
 
-def _fitted(model_class, context, target=None, **params):
-    model = model_class(**params)
-    model.fit(context.x_train, context.y_train if target is None else target)
-    return model
+@pytest.fixture
+def fitted(training_frame):
+    x, y = training_frame
+
+    def _fitted(model_class, **params):
+        model = model_class(**params)
+        model.fit(x, y)
+        return model
+
+    return _fitted
 
 
 def _types(artifacts):
@@ -42,89 +50,61 @@ def test_unfitted_model_returns_no_artifacts(context):
     assert DecisionTreeClassifier(max_depth=3).get_model_artifacts(context) == []
 
 
-def test_decision_tree_returns_tree_and_importances(context):
-    artifacts = _fitted(
-        DecisionTreeClassifier, context, max_depth=3
-    ).get_model_artifacts(context)
+def test_decision_tree_returns_tree_and_importances(context, fitted):
+    artifacts = fitted(DecisionTreeClassifier, max_depth=3).get_model_artifacts(context)
+
     assert _types(artifacts) == ["plotly", "plotly"]
     assert normalize_artifacts(artifacts)[0]["index"] == 0
 
 
-def test_forest_groups_its_trees_and_states_the_truncation(context):
-    artifacts = _fitted(
-        RandomForestClassifier, context, n_estimators=30, max_depth=2
+def test_forest_groups_its_trees_and_states_the_truncation(context, fitted):
+    artifacts = fitted(
+        RandomForestClassifier, n_estimators=30, max_depth=2
     ).get_model_artifacts(context)
+
     grouped = [item for item in artifacts if getattr(item, "type", None) == "grouped"]
     assert len(grouped) == 1
     assert len(grouped[0].groups) == MAX_PLOTTED_TREES
     assert "text" in _types(artifacts)
 
 
-def test_small_forest_is_not_truncated(context):
-    artifacts = _fitted(
-        RandomForestClassifier, context, n_estimators=3, max_depth=2
+def test_small_forest_is_not_truncated(context, fitted):
+    artifacts = fitted(
+        RandomForestClassifier, n_estimators=3, max_depth=2
     ).get_model_artifacts(context)
+
     grouped = [item for item in artifacts if getattr(item, "type", None) == "grouped"]
     assert len(grouped[0].groups) == 3
     assert "text" not in _types(artifacts)
 
 
-def test_mlp_groups_its_layers(context):
-    artifacts = _fitted(
-        MLPClassifier, context, hidden_layer_size=4, max_iter=20
+def test_mlp_returns_only_its_weights(context, fitted):
+    """The training loss curve belongs to the metrics system, not here.
+
+    It is one scalar per epoch, which ``Metric`` already models at STEP level,
+    so the visualization must not carry a second copy of it.
+    """
+    artifacts = fitted(
+        MLPClassifier, hidden_layer_size=4, max_iter=20
     ).get_model_artifacts(context)
-    grouped = [item for item in artifacts if getattr(item, "type", None) == "grouped"]
-    assert len(grouped[0].groups) == 2
+
+    assert _types(artifacts) == ["grouped"]
+    assert len(artifacts[0].groups) == 2
 
 
-def test_k_neighbors_classifier_returns_a_decision_surface(context):
-    artifacts = _fitted(
-        KNeighborsClassifier, context, n_neighbors=3
-    ).get_model_artifacts(context)
-    assert _types(artifacts) == ["plotly"]
-
-
-def test_k_neighbors_regression_returns_a_curve(context):
-    regression_context = ModelArtifactContext(
-        x_train=context.x_train,
-        y_train=context.y_train.astype(float),
-        feature_names=context.feature_names,
-        class_names=None,
-    )
-    artifacts = _fitted(
-        KNeighborsRegression,
-        regression_context,
-        target=regression_context.y_train,
-        n_neighbors=3,
-    ).get_model_artifacts(regression_context)
-    assert _types(artifacts) == ["plotly"]
-
-
-def test_every_mixin_output_normalizes(context):
-    models = (
-        _fitted(DecisionTreeClassifier, context, max_depth=3),
-        _fitted(RandomForestClassifier, context, n_estimators=5, max_depth=2),
-        _fitted(MLPClassifier, context, hidden_layer_size=4, max_iter=20),
-        _fitted(KNeighborsClassifier, context, n_neighbors=3),
-    )
-    for model in models:
-        items = normalize_artifacts(model.get_model_artifacts(context))
-        assert items
-        for item in items:
-            assert item["type"] in {"plotly", "table", "text", "image", "grouped"}
-
-
-def test_xgboost_dumps_its_trees(context):
+def test_xgboost_dumps_its_trees(context, fitted):
     from DashAI.back.models.scikit_learn.xgboost_classifier import XGBClassifier
 
-    model = _fitted(XGBClassifier, context, n_estimators=3, max_depth=2)
-    artifacts = model.get_model_artifacts(context)
+    artifacts = fitted(XGBClassifier, n_estimators=3, max_depth=2).get_model_artifacts(
+        context
+    )
+
     grouped = [item for item in artifacts if getattr(item, "type", None) == "grouped"]
     assert grouped
     assert grouped[0].groups[0].artifacts[0].type == "text"
 
 
-def test_boosted_trees_keep_get_params_working(context):
+def test_boosted_trees_keep_get_params_working():
     """The artifact mixin must not become a third base of the concrete class.
 
     ``xgboost`` and ``lightgbm`` read ``type(self).__bases__`` directly and
@@ -139,6 +119,19 @@ def test_boosted_trees_keep_get_params_working(context):
         assert model_class(n_estimators=2).get_params()
 
 
+def test_every_mixin_output_normalizes(context, fitted):
+    models = (
+        fitted(DecisionTreeClassifier, max_depth=3),
+        fitted(RandomForestClassifier, n_estimators=5, max_depth=2),
+        fitted(MLPClassifier, hidden_layer_size=4, max_iter=20),
+    )
+    for model in models:
+        items = normalize_artifacts(model.get_model_artifacts(context))
+        assert items
+        for item in items:
+            assert item["type"] in {"plotly", "table", "text", "image", "grouped"}
+
+
 def test_wired_models_report_support():
     from DashAI.back.models.scikit_learn.lightgbm_classifier import LGBMClassifier
     from DashAI.back.models.scikit_learn.xgboost_classifier import XGBClassifier
@@ -147,9 +140,18 @@ def test_wired_models_report_support():
         DecisionTreeClassifier,
         RandomForestClassifier,
         MLPClassifier,
-        KNeighborsClassifier,
-        KNeighborsRegression,
         XGBClassifier,
         LGBMClassifier,
     ):
         assert model_class.supports_model_artifacts() is True
+
+
+def test_nearest_neighbours_has_no_model_visualization():
+    """A decision surface is a behavioral probe, so it is a global explainer.
+
+    Nothing in a fitted k-neighbours model is renderable without sweeping a
+    feature range through ``predict``, so these models declare no support at
+    all rather than borrowing the explainer's job.
+    """
+    assert KNeighborsClassifier.supports_model_artifacts() is False
+    assert KNeighborsRegression.supports_model_artifacts() is False

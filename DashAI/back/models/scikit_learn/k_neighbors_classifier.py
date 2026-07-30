@@ -7,9 +7,6 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.scikit_learn.model_artifact_mixins import (
-    KNeighborsArtifactsMixin,
-)
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
 )
@@ -94,10 +91,7 @@ class KNeighborsClassifierSchema(BaseSchema):
 
 
 class KNeighborsClassifier(
-    KNeighborsArtifactsMixin,
-    TabularClassificationModel,
-    SklearnLikeClassifier,
-    _KNeighborsClassifier,
+    TabularClassificationModel, SklearnLikeClassifier, _KNeighborsClassifier
 ):
     """K-nearest neighbours classifier that predicts
     the majority class among neighbours.

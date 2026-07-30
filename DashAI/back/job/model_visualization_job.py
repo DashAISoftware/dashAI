@@ -238,11 +238,13 @@ class ModelVisualizationJob(BaseJob):
                     self._save(run, [], db)
                     return
 
-                self.report_progress(0.3, "Rebuilding the training split")
+                self.report_progress(0.3, "Reading the feature space")
                 try:
-                    # Same reconstruction the explainer job performs: split,
-                    # prepare for the task, select the input/output columns,
-                    # then split each side.
+                    # The hook receives no training data, only the labels for
+                    # the model's own feature space. Deriving those labels
+                    # still means running the input columns through the task
+                    # and the model's own preprocessing, since encoding decides
+                    # the final column set. The targets are never touched.
                     loaded_dataset = load_dataset(f"{dataset.file_path}/dataset")
                     splits = json.loads(run.split_indexes)
                     loaded_dataset = split_dataset(
@@ -259,19 +261,13 @@ class ModelVisualizationJob(BaseJob):
                         input_columns=model_session.input_columns,
                         output_columns=model_session.output_columns,
                     )
-                    data_x, data_y = select_columns(
+                    data_x, _ = select_columns(
                         prepared_dataset,
                         model_session.input_columns,
                         model_session.output_columns,
                     )
                     data_x = split_dataset(
                         data_x,
-                        train_indexes=splits["train_indexes"],
-                        test_indexes=splits["test_indexes"],
-                        val_indexes=splits["val_indexes"],
-                    )
-                    data_y = split_dataset(
-                        data_y,
                         train_indexes=splits["train_indexes"],
                         test_indexes=splits["test_indexes"],
                         val_indexes=splits["val_indexes"],
@@ -284,17 +280,10 @@ class ModelVisualizationJob(BaseJob):
 
                 self.report_progress(0.6, "Generating the visualization")
                 try:
-                    # The context is expressed in the model's own feature space
-                    # so tree feature names match the columns it split on.
                     x_prepared = trained_model.prepare_dataset(
                         data_x["train"], is_fit=False
                     ).to_pandas()
-                    y_prepared = trained_model.prepare_output(
-                        data_y["train"], is_fit=False
-                    ).to_pandas()
                     context = ModelArtifactContext(
-                        x_train=x_prepared,
-                        y_train=y_prepared.to_numpy().ravel(),
                         feature_names=[str(c) for c in x_prepared.columns],
                         class_names=self._class_names(trained_model),
                     )

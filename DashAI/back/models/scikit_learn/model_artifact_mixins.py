@@ -18,9 +18,7 @@ from DashAI.back.core.artifacts import (
     TextArtifact,
 )
 from DashAI.back.models.model_artifact_plots import (
-    plot_decision_surface,
     plot_feature_importances,
-    plot_regression_curve,
     plot_sklearn_tree,
     plot_weight_heatmap,
 )
@@ -215,24 +213,23 @@ class MLPArtifactsMixin:
         ]
 
     def get_model_artifacts(self, context: "ModelArtifactContext") -> ArtifactList:
-        """Build a per layer weight heatmap selector and the loss curve.
+        """Build a per layer weight heatmap selector.
+
+        The training loss curve is deliberately absent: it is a scalar per
+        epoch, which the metrics system already models as a ``STEP`` level
+        metric, so it belongs on the live metrics chart rather than here.
 
         Parameters
         ----------
         context : ModelArtifactContext
-            Training data and naming.
+            Feature and class naming for the fitted model.
 
         Returns
         -------
         ArtifactList
-            A grouped artifact with one heatmap per layer, plus the training
-            loss curve when the backend records one. Empty when the network has
-            not been fitted.
+            A grouped artifact with one heatmap per layer, empty when the
+            network has not been fitted.
         """
-        import plotly.graph_objects as go
-
-        from DashAI.back.core.artifacts import PlotlyArtifact
-
         matrices = self._weight_matrices()
         if not matrices:
             return []
@@ -252,50 +249,7 @@ class MLPArtifactsMixin:
             )
             for index, matrix in enumerate(matrices)
         ]
-        artifacts: ArtifactList = [GroupedArtifacts(title="Weights", groups=groups)]
-
-        loss_curve = getattr(self, "loss_curve_", None)
-        if loss_curve is not None and len(loss_curve) > 0:
-            figure = go.Figure(
-                go.Scatter(
-                    x=list(range(1, len(loss_curve) + 1)),
-                    y=[float(value) for value in loss_curve],
-                    mode="lines",
-                    line={"width": 3, "color": "#42a5f5"},
-                )
-            )
-            figure.update_layout(
-                title="Training loss",
-                xaxis_title="Iteration",
-                yaxis_title="Loss",
-                margin={"l": 20, "r": 20, "t": 50, "b": 40},
-            )
-            artifacts.append(PlotlyArtifact(payload=figure, title="Training loss"))
-
-        return artifacts
-
-
-class KNeighborsArtifactsMixin:
-    """Render what a fitted nearest neighbours model predicts."""
-
-    def get_model_artifacts(self, context: "ModelArtifactContext") -> ArtifactList:
-        """Build a decision surface for a classifier or a curve for a regressor.
-
-        Parameters
-        ----------
-        context : ModelArtifactContext
-            Training data and naming.
-
-        Returns
-        -------
-        ArtifactList
-            One plot, or an empty list when the model has not been fitted.
-        """
-        if getattr(self, "_fit_X", None) is None:
-            return []
-        if context.class_names is not None:
-            return [plot_decision_surface(self, context, title="Decision surface")]
-        return [plot_regression_curve(self, context, title="Prediction curve")]
+        return [GroupedArtifacts(title="Weights", groups=groups)]
 
 
 class BoostedTreeArtifactsMixin:
@@ -369,7 +323,6 @@ class BoostedTreeArtifactsMixin:
 __all__ = [
     "MAX_PLOTTED_TREES",
     "BoostedTreeArtifactsMixin",
-    "KNeighborsArtifactsMixin",
     "MLPArtifactsMixin",
     "TreeArtifactsMixin",
     "TreeEnsembleArtifactsMixin",
