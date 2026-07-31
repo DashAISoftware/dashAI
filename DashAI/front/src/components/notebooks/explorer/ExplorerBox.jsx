@@ -29,7 +29,8 @@ export default function ExplorerBox({
   const theme = useTheme();
   const [explorerComponent, setExplorerComponent] = useState({});
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
-  const { loading, data, dataType, setData } = useExplorerResults(explorer);
+  const { loading, data, dataType, setData, error } =
+    useExplorerResults(explorer);
 
   const statusLabel = explorer.status;
 
@@ -94,7 +95,10 @@ export default function ExplorerBox({
         "@keyframes newItemHighlight": {
           "0%": { boxShadow: "none" },
           "20%": {
-            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+            boxShadow: `0 0 0 3px ${alpha(
+              theme.palette.primary.main,
+              0.65,
+            )}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
           },
           "100%": { boxShadow: "none" },
         },
@@ -125,7 +129,9 @@ export default function ExplorerBox({
               sx={{ color: theme.palette.primary.main, fontSize: 20 }}
             />
             <Typography variant="h6">
-              {explorerComponent.display_name}
+              {explorerComponent.display_name ??
+                explorer.exploration_type ??
+                t("datasets:unknownComponent")}
             </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -193,6 +199,7 @@ export default function ExplorerBox({
               data={data}
               loading={loading}
               dataType={dataType}
+              error={error}
             />
           </Box>
         ) : statusLabel === 4 ? ( // Error
@@ -241,6 +248,7 @@ export default function ExplorerBox({
             dataType={dataType}
             loading={loading}
             setData={setData}
+            error={error}
           />
         )}
       </CardContent>

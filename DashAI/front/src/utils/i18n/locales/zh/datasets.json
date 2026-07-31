@@ -61,6 +61,7 @@
     "errorCreatingNotebook": "创建笔记本时出错",
     "errorProcessingExplorer": "处理探索器时出错：{{error}}",
     "explorerFailed": "处理探索器时发生错误。",
+    "explorerResultsUnavailable": "该探索器的结果已不可用。",
     "failedToCreateDataset": "创建数据集时出错：{{error}}",
     "failedToCreateDatasetFromNotebook": "从笔记本创建数据集失败",
     "failedToCreateExplorer": "创建探索器失败",
@@ -477,5 +478,6 @@
     "translation": "翻译",
     "regression": "回归",
     "eda": "EDA"
-  }
+  },
+  "unknownComponent": "未知组件"
 }
