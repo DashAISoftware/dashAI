@@ -5,7 +5,7 @@ import {
   useMaterialReactTable,
 } from "material-react-table";
 import { useTheme } from "@mui/material/styles";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
@@ -108,27 +108,35 @@ function ModelComparisonTable({
   // Run type color using existing theme.palette.accent tokens
   const getRunType = (run) => {
     if (run.nested) return "nestedCv";
-    if (run.optimizer_name) return "hpo";
-    return "noHpo";
+    if (run.optimizer_name) return "withHpo";
+    return "withoutHpo";
   };
 
   const runTypeStyles = {
-    noHpo: {
+    withoutHpo: {
       bg: theme.palette.dataType.default,
       border: theme.palette.dataType.default,
       color: theme.palette.dataType.default,
+      label: "Sin HPO",
     },
-    hpo: {
+    withHpo: {
       bg: theme.palette.accent.tealDim,
       border: theme.palette.accent.tealBorder,
       color: theme.palette.accent.teal,
+      label: "HPO",
     },
     nestedCv: {
       bg: "#585370",
       border: "#585370",
       color: "#585370",
+      label: "CV anidado",
     },
   };
+
+  const runTypeLegend = Object.entries(runTypeStyles).map(([key, value]) => ({
+    key,
+    ...value,
+  }));
 
   const getMetricColumns = () => {
     const metricsSet = new Set();
@@ -446,6 +454,33 @@ function ModelComparisonTable({
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <MaterialReactTable table={table} />
       </Box>
+
+      {/* Legend for run types (default, hpo, nestedCv) */}
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{ mt: 1, flexWrap: "wrap", alignItems: "center" }}
+      >
+        {runTypeLegend.map((item) => (
+          <Box
+            key={item.key}
+            sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+          >
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                backgroundColor: item.bg,
+                border: `1px solid ${item.border}`,
+              }}
+            />
+            <Typography variant="body2" color="text.secondary">
+              {t(`models:label.${item.key}`)}
+            </Typography>
+          </Box>
+        ))}
+      </Stack>
 
       <DeleteConfirmationModal
         open={Boolean(runToDelete)}

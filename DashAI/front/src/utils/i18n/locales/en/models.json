@@ -275,9 +275,10 @@
     "saveResult": "Save Result",
     "withHpo": "With HPO",
     "withoutHpo": "Without HPO",
-    "nestedCv": "Nested CV",
+    "nestedCv": "Nested Cross Validation",
     "editRun": "Edit Run",
-    "chartType": "Chart type"
+    "chartType": "Chart type",
+    "savedTests": "Saved Tests"
   },
   "message": {
     "skippedUndownloadedRuns": "Skipped runs whose model is not downloaded. Download the model first.",

@@ -24,7 +24,7 @@ export default function SessionVisualization() {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [highlightedRunId, setHighlightedRunId] = useState(null);
   const [metricSplit, setMetricSplit] = useState("train");
-  const [view, setView] = useState("table");
+  const [view, setView] = useState("graphs");
   const { t } = useTranslation(["models", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const sessionTourContext = useTourContext();
@@ -112,10 +112,10 @@ export default function SessionVisualization() {
   }, [sessionTourContext]);
 
   useEffect(() => {
-    if (!isCrossValidation && view === "tests") {
-      setView("table");
+    if (!isCrossValidation) {
+      setView("graphs");
     }
-  }, [isCrossValidation, view]);
+  }, [isCrossValidation, session?.id]);
 
   // Scroll to a newly added run card and mark it to be highlighted
   useEffect(() => {
@@ -590,18 +590,57 @@ export default function SessionVisualization() {
                     metricSplit={metricSplit}
                   />
 
-                  <Typography
-                    variant="h6"
-                    color="text.primary"
-                    sx={{ mt: 6, mb: 2 }}
-                  >
-                    {t("common:graphs")}
-                  </Typography>
-                  <ResultsGraphs
-                    runs={runs}
-                    selectedSplit={metricSplit}
-                    onSplitChange={setMetricSplit}
-                  />
+                  {/* Graphs and statistical tests button toggle just when cross validation is being used */}
+                  {isCrossValidation ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-start",
+                        alignItems: "center",
+                        gap: 2,
+                        mt: 6,
+                        mb: 2,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <PillToggleButtonGroup
+                        value={view}
+                        onChange={(e, newValue) => {
+                          if (newValue !== null) setView(newValue);
+                        }}
+                      >
+                        <ToggleButton value="graphs" sx={{ px: 1.5 }}>
+                          <Typography variant="h6" color="text.primary">
+                            {t("common:graphs")}
+                          </Typography>
+                        </ToggleButton>
+                        <ToggleButton value="tests" sx={{ px: 1.5 }}>
+                          <Typography variant="h6" color="text.primary">
+                            {t("models:label.savedTests")}
+                          </Typography>
+                        </ToggleButton>
+                      </PillToggleButtonGroup>
+                    </Box>
+                  ) : (
+                    <Typography
+                      variant="h6"
+                      color="text.primary"
+                      sx={{ mt: 6, mb: 2 }}
+                    >
+                      {t("common:graphs")}
+                    </Typography>
+                  )}
+
+                  {/* Graphs or statistical tests table, depending on the selected view */}
+                  {view === "graphs" ? (
+                    <ResultsGraphs
+                      runs={runs}
+                      selectedSplit={metricSplit}
+                      onSplitChange={setMetricSplit}
+                    />
+                  ) : (
+                    <StatisticalTestTable runs={runs} />
+                  )}
                 </>
               )}
             </Box>

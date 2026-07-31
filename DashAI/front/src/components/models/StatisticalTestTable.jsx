@@ -137,13 +137,10 @@ export default function StatisticalTestTable({ session }) {
         sx={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           mb: 1,
         }}
       >
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          {t("models:label.savedStatisticalTests")}
-        </Typography>
         <Tooltip title={t("common:refresh")}>
           <span>
             <IconButton size="small" onClick={fetchTests} disabled={loading}>
@@ -174,12 +171,36 @@ export default function StatisticalTestTable({ session }) {
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>{t("models:label.name")}</TableCell>
-                <TableCell>{t("models:label.test")}</TableCell>
-                <TableCell>{t("models:label.metric")}</TableCell>
-                <TableCell>{t("models:label.metricSplit")}</TableCell>
-                <TableCell align="center">{t("models:label.result")}</TableCell>
-                <TableCell align="right">{t("common:date")}</TableCell>
+                <TableCell>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    {t("models:label.name")}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    {t("models:label.test")}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    {t("models:label.metric")}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    {t("models:label.metricSplit")}
+                  </Typography>
+                </TableCell>
+                <TableCell align="center">
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    {t("models:label.result")}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    {t("common:date")}
+                  </Typography>
+                </TableCell>
                 <TableCell sx={{ width: 48 }} />
               </TableRow>
             </TableHead>

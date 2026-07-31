@@ -278,9 +278,10 @@
     "saveResult": "Salvar resultado",
     "withHpo": "Com HPO",
     "withoutHpo": "Sem HPO",
-    "nestedCv": "CV Aninhada",
+    "nestedCv": "Validação Cruzada Aninhada",
     "editRun": "Editar execução",
-    "chartType": "Tipo de gráfico"
+    "chartType": "Tipo de gráfico",
+    "savedTests": "Testes salvos"
   },
   "message": {
     "skippedUndownloadedRuns": "Execuções cujo modelo não está baixado foram ignoradas. Baixe o modelo primeiro.",
