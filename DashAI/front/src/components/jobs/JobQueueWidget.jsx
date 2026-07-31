@@ -147,6 +147,43 @@ const JobQueueWidget = () => {
     }
   }, [position]);
 
+  // A saved drag position is an absolute pixel offset from a past viewport
+  // size. Browser zoom changes window.innerWidth/innerHeight (fewer CSS
+  // pixels fit as you zoom in), so a position that was on-screen before can
+  // end up beyond the new viewport edge — the widget silently goes offscreen.
+  // Re-clamp on mount (covers loading the app while already zoomed) and on
+  // every resize (covers zooming while the app is open).
+  useEffect(() => {
+    const clampToViewport = () => {
+      setPosition((prev) => {
+        if (!prev) return prev;
+        const rect = dragRef.current?.getBoundingClientRect();
+        const width = rect?.width ?? 320;
+        const height = rect?.height ?? 56;
+        const maxLeft = Math.max(0, window.innerWidth - width);
+        const clampedLeft = Math.min(Math.max(prev.left, 0), maxLeft);
+
+        if (prev.top !== undefined) {
+          const maxTop = Math.max(0, window.innerHeight - height);
+          const clampedTop = Math.min(Math.max(prev.top, 0), maxTop);
+          if (clampedLeft === prev.left && clampedTop === prev.top) return prev;
+          return { left: clampedLeft, top: clampedTop };
+        }
+
+        const maxBottom = Math.max(0, window.innerHeight - height);
+        const clampedBottom = Math.min(Math.max(prev.bottom, 0), maxBottom);
+        if (clampedLeft === prev.left && clampedBottom === prev.bottom) {
+          return prev;
+        }
+        return { left: clampedLeft, bottom: clampedBottom };
+      });
+    };
+
+    clampToViewport();
+    window.addEventListener("resize", clampToViewport);
+    return () => window.removeEventListener("resize", clampToViewport);
+  }, []);
+
   const handleClearAllJobs = () => {
     setConfirmClearAll(true);
   };
