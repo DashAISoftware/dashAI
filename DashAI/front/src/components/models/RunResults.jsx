@@ -134,7 +134,7 @@ export default function RunResults({
   const tabContent = (
     <>
       {activeTab === 0 && (
-        <Box sx={{ py: 4 }}>
+        <Box sx={{ pb: 4 }}>
           <LiveMetricsChart run={run} />
         </Box>
       )}
@@ -175,7 +175,7 @@ export default function RunResults({
       )}
 
       {activeTab === 3 && isFinished && optimizables > 0 && (
-        <Box sx={{ py: 4 }}>
+        <Box sx={{ pb: 4 }}>
           <HyperparameterPlots run={run} />
         </Box>
       )}
