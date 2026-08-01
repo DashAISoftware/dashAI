@@ -16,7 +16,7 @@ class SaveModelUnit(BaseUnit):
     belongs to, so a re-run overwrites its own artifact and never another's.
     """
 
-    REQUIRES = ("model",)
+    REQUIRES = ("model", "run_id")
     PROVIDES = ("model_path",)
 
     def execute(self, ctx: ExecutionContext) -> None:

@@ -170,8 +170,7 @@ class PrepareAndSplitUnit(BaseUnit):
         except Exception as e:
             log.exception(e)
             raise JobError(
-                f"""Can not prepare Dataset {ctx.get("dataset_id")}
-                        for Task {task_name}""",
+                f"Can not prepare Dataset {ctx.get('dataset_id')} for Task {task_name}",
             ) from e
 
         ctx.put_ref("task_name", task_name)
