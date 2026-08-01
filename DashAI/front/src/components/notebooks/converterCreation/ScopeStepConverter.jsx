@@ -29,6 +29,7 @@ export default function ScopeStepConverter({
   const tourContext = useTourContext();
   const allowedTypes = tool?.metadata?.allowed_types || [];
   const allowedDtypes = tool?.metadata?.allowed_dtypes || [];
+  const nonAllowedDtypes = tool?.metadata?.non_allowed_dtypes || [];
   const inputCardinality = tool?.metadata?.input_cardinality || {};
   const { t } = useTranslation(["common", "datasets"]);
   const { columnTypes } = useExplorersAndConverters();
@@ -102,6 +103,7 @@ export default function ScopeStepConverter({
           tool={tool}
           allowedTypes={allowedTypes}
           allowedDtypes={allowedDtypes}
+          nonAllowedDtypes={nonAllowedDtypes}
           excludedColumnIds={excludedColumnIds}
           inputCardinality={inputCardinality}
           columnTypes={columnTypes}

@@ -6,17 +6,12 @@ from DashAI.back.core.artifacts import Artifact
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.dependencies.database.models import Explorer, Notebook
 from DashAI.back.static.icons import Icon
+from DashAI.back.types.utils import NON_NUMERIC_DTYPES  # noqa: F401
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-
-
-# Dtypes that cannot be plotted on a numeric axis. Shared default for plot
-# explorers that accept the Categorical semantic type but only when it is
-# numerically encoded (an empty dtype means the dtype is unknown).
-NON_NUMERIC_DTYPES: Final[List[str]] = ["string", "bool", ""]
 
 
 class BaseExplorerSchema(BaseSchema):
