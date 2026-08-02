@@ -206,13 +206,19 @@ class PartialDependence(BaseGlobalExplainer):
         import numpy as np
         from sklearn.inspection import partial_dependence
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = dataset
 
-        x_test = x["test"].to_pandas()
+        # scikit-learn's partial_dependence calls the model with plain frames,
+        # bypassing the model preparation, so both splits are moved into the
+        # model feature space here.
+        x_test_dataset = prepare_model_input(self.model, x["test"])
+        x_test = x_test_dataset.to_pandas()
 
-        types = x["train"].types
+        types = prepare_model_input(self.model, x["train"]).types
 
-        features_names = x["test"].column_names
+        features_names = x_test_dataset.column_names
 
         categorical_features = [
             1 if isinstance(types[feature], Categorical) else 0

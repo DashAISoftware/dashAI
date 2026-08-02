@@ -178,7 +178,6 @@ class ExplainerJob(BaseJob):
         splits: Dict[str, Any],
         task: BaseTask,
         same_dataset: bool,
-        trained_model: BaseModel,
     ) -> None:
         import json
         import os
@@ -323,7 +322,10 @@ class ExplainerJob(BaseJob):
                     f"local_explanation_input_{explainer_id}",
                 )
                 save_dataset(input_source, os.path.join(input_dataset_path, "dataset"))
-                X = trained_model.prepare_dataset(X, is_fit=False)
+                # The instances are handed over unprepared, the same way the
+                # prediction job calls model.predict: the model applies its own
+                # preprocessing. Explainers that need the model feature space
+                # ask for it with prepare_model_input.
 
             except Exception as e:
                 log.exception(e)
@@ -512,10 +514,10 @@ class ExplainerJob(BaseJob):
                         test_indexes=splits["test_indexes"],
                         val_indexes=splits["val_indexes"],
                     )
-                    for split_name in data_x:
-                        data_x[split_name] = trained_model.prepare_dataset(
-                            data_x[split_name], is_fit=False
-                        )
+                    # Inputs stay unprepared (see the note in the local
+                    # explanation path); targets are encoded because explainers
+                    # compare them against the model's class indexes.
+                    for split_name in data_y:
                         data_y[split_name] = trained_model.prepare_output(
                             data_y[split_name], is_fit=False
                         )
@@ -551,7 +553,6 @@ class ExplainerJob(BaseJob):
                         splits=splits,
                         task=task,
                         same_dataset=same_dataset,
-                        trained_model=trained_model,
                     )
                 else:
                     raise JobError(f"{explainer_scope} is an invalid explainer type")
