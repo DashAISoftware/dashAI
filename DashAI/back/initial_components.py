@@ -347,11 +347,13 @@ from DashAI.back.tasks.text_to_text_generation_task import TextToTextGenerationT
 from DashAI.back.tasks.translation_task import TranslationTask
 
 # Units
+from DashAI.back.units.apply_converter_unit import ApplyConverterUnit
 from DashAI.back.units.build_model_unit import BuildModelUnit
 from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
 from DashAI.back.units.fit_model_unit import FitModelUnit
 from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
+from DashAI.back.units.save_dataset_unit import SaveDatasetUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 
 logging.basicConfig(level=logging.DEBUG)
@@ -523,6 +525,8 @@ def get_initial_components():
         FitModelUnit,
         EvaluateModelUnit,
         SaveModelUnit,
+        ApplyConverterUnit,
+        SaveDatasetUnit,
         # Explainers
         ContrastiveShap,
         DiceCounterfactual,
