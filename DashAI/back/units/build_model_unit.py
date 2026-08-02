@@ -218,7 +218,7 @@ class BuildModelUnit(BaseUnit):
         except Exception as e:
             log.exception(e)
             raise JobError(
-                f"Unable to find metrics associated withTask {task_name} in registry",
+                f"Unable to find metrics associated with Task {task_name} in registry",
             ) from e
 
         try:

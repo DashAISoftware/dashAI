@@ -142,6 +142,16 @@ class ConverterJob(BaseJob):
                 converter.set_status_as_error()
                 db.commit()
                 raise JobError("Error loading dataset info") from e
+            except Exception:
+                # Anything the load unit raises (missing notebook, unreadable
+                # dataset) also has to leave the row in ERROR. Nothing marks it
+                # otherwise: the Huey error signal only writes to its own
+                # task_copy table, never to the Converter row, so without this
+                # the converter would stay STARTED forever. Re-raised as-is so
+                # the unit's specific message survives.
+                converter.set_status_as_error()
+                db.commit()
+                raise
 
             apply_converter = ApplyConverterUnit(
                 converter={

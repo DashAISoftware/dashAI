@@ -1,7 +1,7 @@
 """Unit that applies a single converter to the dataset in the context."""
 
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -231,7 +231,7 @@ class ApplyConverterUnit(BaseUnit):
         """
         return self.config.get("scope") or EMPTY_SCOPE
 
-    def _target_index(self) -> int:
+    def _target_index(self) -> Optional[int]:
         """The 1-based target column index, or None when there is no target."""
         target = self.config.get("target")
         if target is None:
@@ -276,7 +276,7 @@ class ApplyConverterUnit(BaseUnit):
 
     def _resolve_scope(
         self, dataset: "DashAIDataset"
-    ) -> Tuple[List[str], List[int], Any]:
+    ) -> Tuple[List[str], List[int], Optional[str]]:
         """Turn the 1-based scope into names and indexes for this dataset."""
         scope = self._scope()
         column_names = dataset.column_names
