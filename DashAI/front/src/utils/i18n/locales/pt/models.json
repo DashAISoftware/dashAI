@@ -281,7 +281,8 @@
     "nestedCv": "Validação Cruzada Aninhada",
     "editRun": "Editar execução",
     "chartType": "Tipo de gráfico",
-    "savedTests": "Testes salvos"
+    "savedTests": "Testes salvos",
+    "foldGraphs": "Gráficos de Folds"
   },
   "message": {
     "skippedUndownloadedRuns": "Execuções cujo modelo não está baixado foram ignoradas. Baixe o modelo primeiro.",

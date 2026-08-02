@@ -278,7 +278,8 @@
     "nestedCv": "Nested Cross Validation",
     "editRun": "Edit Run",
     "chartType": "Chart type",
-    "savedTests": "Saved Tests"
+    "savedTests": "Saved Tests",
+    "foldGraphs": "Fold Graphs"
   },
   "message": {
     "skippedUndownloadedRuns": "Skipped runs whose model is not downloaded. Download the model first.",

@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Box, Typography, Tab, Tooltip, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import PillTabs from "../../shared/PillTabs";
+import { useModels } from "../ModelsContext";
 
 const groupLabelSx = {
   textTransform: "uppercase",
@@ -48,6 +49,12 @@ export default function ResultsTabsHeader({
       ? t("models:message.noOptimizableParamsForHpo")
       : "";
 
+  // Get session from context to check if the evaluation strategy is Cross Validation
+  const { selectedSession } = useModels();
+  const isCrossValidation =
+    selectedSession?.evaluation_strategy ===
+    "CrossValidationEvaluationStrategy";
+
   return (
     <Box sx={{ display: "flex", alignItems: "flex-end" }}>
       <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -55,7 +62,7 @@ export default function ResultsTabsHeader({
           {t("models:label.metrics")}
         </Typography>
         <PillTabs
-          value={[0, 3].includes(activeTab) ? activeTab : false}
+          value={[0, 3, 4].includes(activeTab) ? activeTab : false}
           onChange={(e, newValue) => onTabChange(newValue)}
           aria-label="Result characteristics tabs"
         >
@@ -76,6 +83,15 @@ export default function ResultsTabsHeader({
             }
             disabled={!isFinished || optimizables === 0}
           />
+          {isCrossValidation && (
+            <Tab
+              value={4}
+              label={
+                <Box sx={tabLabelRowSx}>{t("models:label.foldGraphs")}</Box>
+              }
+              disabled={!isFinished}
+            />
+          )}
         </PillTabs>
       </Box>
 

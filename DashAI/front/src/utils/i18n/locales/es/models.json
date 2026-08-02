@@ -281,7 +281,8 @@
     "nestedCv": "Validación Cruzada Anidada",
     "editRun": "Editar ejecución",
     "chartType": "Tipo de gráfico",
-    "savedTests": "Pruebas guardadas"
+    "savedTests": "Pruebas guardadas",
+    "foldGraphs": "Gráficos de Pliegues"
   },
   "message": {
     "skippedUndownloadedRuns": "Se omitieron las ejecuciones cuyo modelo no está descargado. Descarga el modelo primero.",

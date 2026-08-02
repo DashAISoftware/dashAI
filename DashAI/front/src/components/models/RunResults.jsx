@@ -12,6 +12,7 @@ import useRunResultsData from "./runResults/useRunResultsData";
 import ResultsTabsHeader from "./runResults/ResultsTabsHeader";
 import ExplainerResultsTab from "./runResults/ExplainerResultsTab";
 import PredictionResultsTab from "./runResults/PredictionResultsTab";
+import FoldMetricsChart from "./FoldMetricsChart";
 
 /**
  * Shows a run's results as two tab groups (metrics: live/hyperparameters,
@@ -177,6 +178,12 @@ export default function RunResults({
       {activeTab === 3 && isFinished && optimizables > 0 && (
         <Box sx={{ pb: 4 }}>
           <HyperparameterPlots run={run} />
+        </Box>
+      )}
+
+      {activeTab === 4 && isFinished && (
+        <Box sx={{ pb: 4 }}>
+          <FoldMetricsChart run={run} />
         </Box>
       )}
     </>

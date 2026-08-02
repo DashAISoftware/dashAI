@@ -13,9 +13,6 @@ import {
   Alert,
   AlertTitle,
   ToggleButton,
-  ToggleButtonGroup,
-  Tabs,
-  Tab,
   FormControl,
   InputLabel,
   Select,
@@ -25,7 +22,7 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { getFoldMetrics, isRepeatedFoldMetrics } from "../../api/run";
 import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
-import OuterFoldMetricsTable from "./OuterFoldMetricsTable";
+import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 
 // ─── Pure helpers (defined outside component — stable references) ─────────────
 
@@ -102,6 +99,7 @@ const buildBoxplotTraces = (foldMetrics, selectedMetrics, colors) =>
       type: "box",
       boxmean: "sd",
       marker: { color: colors[index % colors.length] },
+      showlegend: false,
       hovertemplate:
         "<b>%{fullData.name}</b><br>Value: %{y:.4f}<extra></extra>",
     }));
@@ -121,6 +119,7 @@ const buildLineTraces = (foldMetrics, selectedMetrics, colors) =>
         mode: "lines+markers",
         line: { color, width: 2 },
         marker: { size: 6, color },
+        showlegend: false,
         hovertemplate:
           "<b>%{fullData.name}</b><br>Fold: %{x}<br>Value: %{y:.4f}<extra></extra>",
       };
@@ -136,6 +135,7 @@ const buildHistogramTraces = (foldMetrics, selectedMetrics, colors) =>
       type: "histogram",
       nbinsx: Math.max(5, Math.ceil(Math.sqrt(foldMetrics[metricName].length))),
       marker: { color: colors[index % colors.length], opacity: 0.7 },
+      showlegend: false,
       hovertemplate: "<b>%{fullData.name}</b><br>Count: %{y}<extra></extra>",
     }));
 
@@ -164,6 +164,7 @@ const buildQQTraces = (foldMetrics, selectedMetrics, colors) => {
         type: "scatter",
         mode: "markers",
         marker: { size: 8, color: colors[index % colors.length] },
+        showlegend: false,
         hovertemplate:
           "<b>%{fullData.name}</b><br>Theoretical: %{x:.3f}<br>Sample: %{y:.3f}<extra></extra>",
       });
@@ -181,7 +182,7 @@ const buildQQTraces = (foldMetrics, selectedMetrics, colors) => {
       mode: "lines",
       line: { color: "#ff7f0e", dash: "solid", width: 3 },
       hoverinfo: "skip",
-      showlegend: true,
+      showlegend: false,
     });
   }
 
@@ -190,7 +191,7 @@ const buildQQTraces = (foldMetrics, selectedMetrics, colors) => {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function FoldMetricsChart({ runId, isNestedCV = false }) {
+export default function FoldMetricsChart({ run }) {
   const theme = useTheme();
   const { t } = useTranslation("models");
   const colors = useMemo(() => THEME_COLORS(theme), [theme]);
@@ -203,7 +204,6 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
   const [error, setError] = useState(null);
   const [chartType, setChartType] = useState("boxplot");
   const [foldScope, setFoldScope] = useState("default");
-  const [viewMode, setViewMode] = useState("charts");
   const [split, setSplit] = useState("TRAIN");
   const [selectedMetrics, setSelectedMetrics] = useState([]);
 
@@ -212,10 +212,11 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
   const hasDataRef = useRef(false);
 
   const metricSplit = split === "TRAIN" ? "train" : "test";
+  const isNestedCV = !!run.nested;
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!runId) return;
+    if (!run) return;
 
     // If we already have data (e.g. split change), show a non-blocking overlay
     // instead of unmounting the chart entirely
@@ -231,7 +232,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
     const fetchFoldMetrics = async () => {
       try {
         const scope = isNestedCV && foldScope === "outer" ? "outer" : "default";
-        const data = await getFoldMetrics(runId, {
+        const data = await getFoldMetrics(run.id, {
           metricSplit,
           scope,
           signal: controller.signal,
@@ -276,7 +277,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
     return () => controller.abort();
     // selectedRepetition intentionally excluded — we only read it as "current value at fetch time"
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [runId, metricSplit, foldScope, isNestedCV]);
+  }, [run, metricSplit, foldScope, isNestedCV]);
 
   // ── Derived data ───────────────────────────────────────────────────────────
 
@@ -383,15 +384,6 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
       margin: { l: 40, r: 0, t: 40, b: 40 },
       autosize: true,
       showlegend: false,
-      yaxis: {
-        title: {
-          text: t("models:label.metricValue"),
-          font: { color: textColor },
-        },
-        gridcolor: gridColor,
-        titlefont: { color: textColor },
-        tickfont: { color: textColor },
-      },
     };
 
     const FormatAxis = (title) => ({
@@ -442,7 +434,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
   }, [theme, chartType, t]);
 
   // ── Early returns ──────────────────────────────────────────────────────────
-  if (!runId) {
+  if (!run) {
     return (
       <Alert severity="info">
         <AlertTitle>No Run Selected</AlertTitle>
@@ -451,7 +443,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
     );
   }
 
-  if (viewMode === "charts" && loading) {
+  if (loading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
         <CircularProgress />
@@ -459,7 +451,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
     );
   }
 
-  if (viewMode === "charts" && error) {
+  if (error) {
     return (
       <Alert severity="warning">
         <AlertTitle>No Fold Data Available</AlertTitle>
@@ -468,7 +460,7 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
     );
   }
 
-  if (viewMode === "charts" && (!allRepetitionsData || !selectedRepetition)) {
+  if (!allRepetitionsData || !selectedRepetition) {
     return (
       <Alert severity="info">
         <AlertTitle>No Fold Metrics</AlertTitle>
@@ -487,224 +479,192 @@ export default function FoldMetricsChart({ runId, isNestedCV = false }) {
         minHeight: 400,
       }}
     >
-      {isNestedCV && (
-        <Box sx={{ borderBottom: 1, borderColor: "divider", px: 1.5 }}>
-          <Tabs
-            value={viewMode}
-            onChange={(_, v) => setViewMode(v)}
-            sx={{ minHeight: 36 }}
+      {/* Header row 1 — metric selector (left) / train-test split (right) */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 1.5,
+          px: 1.5,
+          py: 1,
+        }}
+      >
+        <ResultsGraphsParameters
+          currentMetrics={availableMetrics}
+          selectedMetrics={selectedMetrics}
+          handleToggleMetric={handleToggleMetric}
+          handleSelectAll={handleSelectAll}
+          handleClearAll={handleClearAll}
+        />
+
+        <PillToggleButtonGroup
+          value={split}
+          onChange={(_, v) => {
+            if (v) setSplit(v);
+          }}
+        >
+          <ToggleButton value="TRAIN" sx={{ px: 1.5 }}>
+            {t("models:label.train")}
+          </ToggleButton>
+          <ToggleButton value="TEST" sx={{ px: 1.5 }}>
+            {t("models:label.test")}
+          </ToggleButton>
+        </PillToggleButtonGroup>
+      </Box>
+
+      {/* Header row 2 — chart type (left) / fold scope: default vs outer (right) */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: 1.5,
+          px: 1.5,
+          py: 1,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <PillToggleButtonGroup
+            value={chartType}
+            onChange={(_, v) => {
+              if (v) setChartType(v);
+            }}
           >
-            <Tab
-              value="charts"
-              label={t("models:label.graphs")}
-              sx={{ textTransform: "none", minHeight: 36, py: 0 }}
-            />
-            <Tab
-              value="nested"
-              label={t("models:label.nestedCrossValidation")}
-              sx={{ textTransform: "none", minHeight: 36, py: 0 }}
-            />
-          </Tabs>
+            {[
+              {
+                value: "boxplot",
+                label: "Boxplot",
+              },
+              {
+                value: "line",
+                label: t("models:label.lines"),
+              },
+              {
+                value: "qq",
+                label: "Q-Q",
+              },
+              {
+                value: "histogram",
+                label: t("models:label.histogramPlot"),
+              },
+            ].map(({ value, label, title }) => (
+              <ToggleButton
+                key={value}
+                value={value}
+                title={title}
+                sx={{ px: 1.5 }}
+              >
+                {label}
+              </ToggleButton>
+            ))}
+          </PillToggleButtonGroup>
+
+          {availableReps.length > 1 && (
+            <FormControl sx={{ minWidth: 140 }} size="small">
+              <InputLabel sx={{ fontSize: "0.85rem" }}>
+                {t("models:label.repetition")}
+              </InputLabel>
+              <Select
+                value={selectedRepetition ?? ""}
+                label={t("models:label.repetition")}
+                onChange={(e) => setSelectedRepetition(e.target.value)}
+                sx={{ fontSize: "0.85rem" }}
+              >
+                <MenuItem value="averaged">
+                  {chartType === "qq"
+                    ? t("models:label.allRepetitions")
+                    : t("models:label.averaged")}
+                </MenuItem>
+                {availableReps.map((rep) => (
+                  <MenuItem key={rep} value={rep}>
+                    {t("models:label.repetition")}{" "}
+                    {parseInt(rep.split("_")[1]) + 1}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
         </Box>
-      )}
 
-      {isNestedCV && viewMode === "nested" ? (
-        <OuterFoldMetricsTable runId={runId} />
-      ) : (
-        <>
-          {/* Toolbar */}
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 1.5,
-              px: 1.5,
-              py: 1,
+        {isNestedCV && (
+          <PillToggleButtonGroup
+            value={foldScope}
+            onChange={(_, v) => {
+              if (v) setFoldScope(v);
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <ToggleButtonGroup
-                exclusive
-                value={split}
-                onChange={(_, v) => {
-                  if (v) setSplit(v);
-                }}
-                size="small"
-                sx={{ height: 28 }}
-              >
-                <ToggleButton
-                  value="TRAIN"
-                  sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
-                >
-                  {t("models:label.train")}
-                </ToggleButton>
-                <ToggleButton
-                  value="TEST"
-                  sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
-                >
-                  {t("models:label.test")}
-                </ToggleButton>
-              </ToggleButtonGroup>
-
-              {isNestedCV && (
-                <ToggleButtonGroup
-                  exclusive
-                  value={foldScope}
-                  onChange={(_, v) => {
-                    if (v) setFoldScope(v);
-                  }}
-                  size="small"
-                  sx={{ height: 28 }}
-                >
-                  <ToggleButton
-                    value="outer"
-                    title="Outer folds — reliable generalization estimate from nested CV"
-                    sx={{ px: 0.75, py: 0, fontSize: "0.75rem" }}
-                  >
-                    Outer
-                  </ToggleButton>
-                  <ToggleButton
-                    value="default"
-                    title="Folds used during final HPO training to produce the model"
-                    sx={{ px: 0.75, py: 0, fontSize: "0.75rem" }}
-                  >
-                    Default
-                  </ToggleButton>
-                </ToggleButtonGroup>
-              )}
-
-              {availableReps.length > 1 && (
-                <FormControl sx={{ minWidth: 140 }} size="small">
-                  <InputLabel sx={{ fontSize: "0.85rem" }}>
-                    {t("models:label.repetition")}
-                  </InputLabel>
-                  <Select
-                    value={selectedRepetition ?? ""}
-                    label={t("models:label.repetition")}
-                    onChange={(e) => setSelectedRepetition(e.target.value)}
-                    sx={{ fontSize: "0.85rem" }}
-                  >
-                    <MenuItem value="averaged">
-                      {chartType === "qq"
-                        ? t("models:label.allRepetitions")
-                        : t("models:label.averaged")}
-                    </MenuItem>
-                    {availableReps.map((rep) => (
-                      <MenuItem key={rep} value={rep}>
-                        {t("models:label.repetition")}{" "}
-                        {parseInt(rep.split("_")[1]) + 1}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
-            </Box>
-
-            <ToggleButtonGroup
-              exclusive
-              value={chartType}
-              onChange={(_, v) => {
-                if (v) setChartType(v);
-              }}
-              size="small"
-              sx={{ height: 28 }}
+            <ToggleButton
+              value="default"
+              title="Folds used during final HPO training to produce the model"
+              sx={{ px: 1.5 }}
             >
-              {[
-                {
-                  value: "boxplot",
-                  label: "Boxplot",
-                  title: "Boxplot with statistics",
-                },
-                {
-                  value: "line",
-                  label: t("models:label.lines"),
-                  title: "Line chart showing fold progression",
-                },
-                {
-                  value: "qq",
-                  label: "Q-Q",
-                  title: "Q-Q plot for normality assessment",
-                },
-                {
-                  value: "histogram",
-                  label: "Hist",
-                  title: "Distribution histogram",
-                },
-              ].map(({ value, label, title }) => (
-                <ToggleButton
-                  key={value}
-                  value={value}
-                  title={title}
-                  sx={{ px: 1, py: 0, fontSize: "0.75rem" }}
-                >
-                  {label}
-                </ToggleButton>
-              ))}
-            </ToggleButtonGroup>
-          </Box>
+              Default
+            </ToggleButton>
+            <ToggleButton
+              value="outer"
+              title="Outer folds — reliable generalization estimate from nested CV"
+              sx={{ px: 1.5 }}
+            >
+              Outer
+            </ToggleButton>
+          </PillToggleButtonGroup>
+        )}
+      </Box>
 
-          {/* Chart and metrics sidebar */}
+      {/* Chart */}
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          width: "100%",
+          position: "relative",
+          p: 0.5,
+        }}
+      >
+        {refreshing && (
           <Box
             sx={{
+              position: "absolute",
+              inset: 0,
+              zIndex: 10,
               display: "flex",
-              flex: 1,
-              minHeight: 0,
-              width: "100%",
-              position: "relative",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "action.disabledBackground",
+              borderRadius: 1,
+              opacity: 0.6,
+              pointerEvents: "none",
             }}
           >
-            {refreshing && (
-              <Box
-                sx={{
-                  position: "absolute",
-                  inset: 0,
-                  zIndex: 10,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  bgcolor: "action.disabledBackground",
-                  borderRadius: 1,
-                  opacity: 0.6,
-                  pointerEvents: "none",
-                }}
-              >
-                <CircularProgress size={28} />
-              </Box>
-            )}
-            <ResultsGraphsParameters
-              currentMetrics={availableMetrics}
-              selectedMetrics={selectedMetrics}
-              handleToggleMetric={handleToggleMetric}
-              handleSelectAll={handleSelectAll}
-              handleClearAll={handleClearAll}
-            />
-            <Box sx={{ flex: 1, minHeight: 0, width: "100%", p: 0.5 }}>
-              <Plot
-                data={traces}
-                layout={layout}
-                config={{
-                  responsive: true,
-                  displayModeBar: true,
-                  displaylogo: false,
-                  modeBarButtonsToRemove: [
-                    "select2d",
-                    "lasso2d",
-                    "zoomIn2d",
-                    "autoScale2d",
-                  ],
-                }}
-                style={{ width: "100%", height: "100%" }}
-              />
-            </Box>
+            <CircularProgress size={28} />
           </Box>
-        </>
-      )}
+        )}
+        <Plot
+          data={traces}
+          layout={layout}
+          config={{
+            responsive: true,
+            displayModeBar: true,
+            displaylogo: false,
+            modeBarButtonsToRemove: [
+              "select2d",
+              "lasso2d",
+              "zoomIn2d",
+              "autoScale2d",
+            ],
+          }}
+          style={{ width: "100%", height: "100%" }}
+        />
+      </Box>
     </Box>
   );
 }
 
 FoldMetricsChart.propTypes = {
-  runId: PropTypes.number,
-  isNestedCV: PropTypes.bool,
+  run: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    nested: PropTypes.object.isRequired,
+  }).isRequired,
 };
