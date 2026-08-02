@@ -17,22 +17,17 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { getFoldMetrics, isRepeatedFoldMetrics } from "../../api/run";
 import ResultsGraphsParameters from "../../pages/results/components/ResultsGraphsParameters";
 import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
+import PlotActions from "../shared/PlotActions";
+import { getTraceColors } from "../../utils/chartColors";
 
 // ─── Pure helpers (defined outside component — stable references) ─────────────
-
-const THEME_COLORS = (theme) => [
-  theme.palette.primary.main,
-  theme.palette.secondary.main,
-  theme.palette.success.main,
-  theme.palette.warning.main,
-  theme.palette.error.main,
-];
 
 const errorInverse = (x) => {
   const a = 0.147;
@@ -88,105 +83,83 @@ const computeConcatenated = (allRepetitionsData) => {
 };
 
 // ─── Trace builders (pure functions, defined outside component) ───────────────
+// Each builds the trace(s) for a single metric's own panel/plot, mirroring
+// the small-multiples approach used by LiveMetricsChart — one metric per
+// card instead of every metric overlaid on a single shared axis.
 
-const buildBoxplotTraces = (foldMetrics, selectedMetrics, colors) =>
-  Object.keys(foldMetrics)
-    .sort()
-    .filter((name) => selectedMetrics.includes(name))
-    .map((metricName, index) => ({
-      y: foldMetrics[metricName],
+const buildBoxplotTrace = (metricName, values, color) => [
+  {
+    y: values,
+    name: "",
+    type: "box",
+    boxpoints: "outliers",
+    marker: { color },
+    hovertemplate: "Value: %{y:.4f}<extra></extra>",
+  },
+];
+
+const buildLineTrace = (metricName, values, color) => [
+  {
+    x: Array.from({ length: values.length }, (_, i) => i + 1),
+    y: values,
+    name: metricName,
+    type: "scatter",
+    mode: "lines+markers",
+    line: { color, width: 2 },
+    marker: { size: 6, color },
+    hovertemplate: "Fold: %{x}<br>Value: %{y:.4f}<extra></extra>",
+  },
+];
+
+const buildHistogramTrace = (metricName, values, color) => [
+  {
+    x: values,
+    name: metricName,
+    type: "histogram",
+    nbinsx: Math.max(5, Math.ceil(Math.sqrt(values.length))),
+    marker: { color, opacity: 0.7 },
+    hovertemplate: "Count: %{y}<extra></extra>",
+  },
+];
+
+// Returns null when there isn't enough data for a meaningful Q-Q plot (needs
+// the metric skipped rather than rendering an empty/misleading panel).
+const buildQQTrace = (metricName, values, color) => {
+  if (values.length < 3) return null;
+
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  const std = Math.sqrt(
+    values.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / values.length,
+  );
+  const quantileData = calculateNormalQuantiles(values);
+  const sampleQ = quantileData.map((q) => q.sample);
+  const theoreticalQ = quantileData.map((q) => mean + q.theoretical * std);
+
+  const tMin = Math.min(...theoreticalQ);
+  const tMax = Math.max(...theoreticalQ);
+  const pad = (tMax - tMin) * 0.1 || 1;
+
+  return [
+    {
+      x: theoreticalQ,
+      y: sampleQ,
       name: metricName,
-      type: "box",
-      boxmean: "sd",
-      marker: { color: colors[index % colors.length] },
-      showlegend: false,
-      hovertemplate:
-        "<b>%{fullData.name}</b><br>Value: %{y:.4f}<extra></extra>",
-    }));
-
-const buildLineTraces = (foldMetrics, selectedMetrics, colors) =>
-  Object.keys(foldMetrics)
-    .sort()
-    .filter((name) => selectedMetrics.includes(name))
-    .map((metricName, index) => {
-      const values = foldMetrics[metricName];
-      const color = colors[index % colors.length];
-      return {
-        x: Array.from({ length: values.length }, (_, i) => i + 1),
-        y: values,
-        name: metricName,
-        type: "scatter",
-        mode: "lines+markers",
-        line: { color, width: 2 },
-        marker: { size: 6, color },
-        showlegend: false,
-        hovertemplate:
-          "<b>%{fullData.name}</b><br>Fold: %{x}<br>Value: %{y:.4f}<extra></extra>",
-      };
-    });
-
-const buildHistogramTraces = (foldMetrics, selectedMetrics, colors) =>
-  Object.keys(foldMetrics)
-    .sort()
-    .filter((name) => selectedMetrics.includes(name))
-    .map((metricName, index) => ({
-      x: foldMetrics[metricName],
-      name: metricName,
-      type: "histogram",
-      nbinsx: Math.max(5, Math.ceil(Math.sqrt(foldMetrics[metricName].length))),
-      marker: { color: colors[index % colors.length], opacity: 0.7 },
-      showlegend: false,
-      hovertemplate: "<b>%{fullData.name}</b><br>Count: %{y}<extra></extra>",
-    }));
-
-const buildQQTraces = (foldMetrics, selectedMetrics, colors) => {
-  const traces = [];
-  const allTheoretical = [];
-
-  Object.keys(foldMetrics)
-    .sort()
-    .filter((name) => selectedMetrics.includes(name))
-    .forEach((metricName, index) => {
-      const values = foldMetrics[metricName];
-      if (values.length < 3) return;
-      const mean = values.reduce((a, b) => a + b, 0) / values.length;
-      const std = Math.sqrt(
-        values.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / values.length,
-      );
-      const quantileData = calculateNormalQuantiles(values);
-      const sampleQ = quantileData.map((q) => q.sample);
-      const theoreticalQ = quantileData.map((q) => mean + q.theoretical * std);
-      allTheoretical.push(...theoreticalQ);
-      traces.push({
-        x: theoreticalQ,
-        y: sampleQ,
-        name: metricName,
-        type: "scatter",
-        mode: "markers",
-        marker: { size: 8, color: colors[index % colors.length] },
-        showlegend: false,
-        hovertemplate:
-          "<b>%{fullData.name}</b><br>Theoretical: %{x:.3f}<br>Sample: %{y:.3f}<extra></extra>",
-      });
-    });
-
-  if (allTheoretical.length > 0) {
-    const tMin = Math.min(...allTheoretical);
-    const tMax = Math.max(...allTheoretical);
-    const pad = (tMax - tMin) * 0.1;
-    traces.push({
+      type: "scatter",
+      mode: "markers",
+      marker: { size: 8, color },
+      hovertemplate: "Theoretical: %{x:.3f}<br>Sample: %{y:.3f}<extra></extra>",
+    },
+    {
       x: [tMin - pad, tMax + pad],
       y: [tMin - pad, tMax + pad],
       name: "Reference (Normal)",
       type: "scatter",
       mode: "lines",
-      line: { color: "#ff7f0e", dash: "solid", width: 3 },
+      line: { color: "#ff7f0e", dash: "solid", width: 2 },
       hoverinfo: "skip",
       showlegend: false,
-    });
-  }
-
-  return traces;
+    },
+  ];
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -194,13 +167,11 @@ const buildQQTraces = (foldMetrics, selectedMetrics, colors) => {
 export default function FoldMetricsChart({ run }) {
   const theme = useTheme();
   const { t } = useTranslation("models");
-  const colors = useMemo(() => THEME_COLORS(theme), [theme]);
+  const colors = useMemo(() => getTraceColors(theme), [theme]);
 
   const [allRepetitionsData, setAllRepetitionsData] = useState(null);
   const [selectedRepetition, setSelectedRepetition] = useState(null);
-  // Separate "refreshing" from full "loading" — avoids unmounting the chart
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [chartType, setChartType] = useState("boxplot");
   const [foldScope, setFoldScope] = useState("default");
@@ -208,8 +179,6 @@ export default function FoldMetricsChart({ run }) {
   const [selectedMetrics, setSelectedMetrics] = useState([]);
 
   const selectedMetricsRef = useRef([]);
-  // Track whether we already have data to decide between full-load and refresh
-  const hasDataRef = useRef(false);
 
   const metricSplit = split === "TRAIN" ? "train" : "test";
   const isNestedCV = !!run.nested;
@@ -218,13 +187,7 @@ export default function FoldMetricsChart({ run }) {
   useEffect(() => {
     if (!run) return;
 
-    // If we already have data (e.g. split change), show a non-blocking overlay
-    // instead of unmounting the chart entirely
-    if (hasDataRef.current) {
-      setRefreshing(true);
-    } else {
-      setLoading(true);
-    }
+    setLoading(true);
     setError(null);
 
     const controller = new AbortController();
@@ -261,14 +224,12 @@ export default function FoldMetricsChart({ run }) {
 
         setAllRepetitionsData(nextData);
         setSelectedRepetition(nextRepetition);
-        hasDataRef.current = true;
       } catch (err) {
         if (err.name === "CanceledError" || err.name === "AbortError") return;
         setError(err.response?.data?.detail || "Failed to load fold metrics");
         console.error("Error fetching fold metrics:", err);
       } finally {
         setLoading(false);
-        setRefreshing(false);
       }
     };
 
@@ -351,85 +312,76 @@ export default function FoldMetricsChart({ run }) {
     setSelectedMetrics([]);
   }, []);
 
-  // ── Traces ─────────────────────────────────────────────────────────────────
-  const traces = useMemo(() => {
+  // ── Panels — one metric per small-multiple card, same approach as
+  // LiveMetricsChart's panels (each keeps its own scale instead of sharing a
+  // single overlaid axis across metrics of possibly very different ranges).
+  const panels = useMemo(() => {
     const fm = chartType === "qq" ? qqFoldMetrics : currentFoldMetrics;
     if (!fm) return [];
-    switch (chartType) {
-      case "line":
-        return buildLineTraces(fm, selectedMetrics, colors);
-      case "histogram":
-        return buildHistogramTraces(fm, selectedMetrics, colors);
-      case "qq":
-        return buildQQTraces(fm, selectedMetrics, colors);
-      default:
-        return buildBoxplotTraces(fm, selectedMetrics, colors);
-    }
+
+    const builder = {
+      line: buildLineTrace,
+      histogram: buildHistogramTrace,
+      qq: buildQQTrace,
+      boxplot: buildBoxplotTrace,
+    }[chartType];
+
+    return Object.keys(fm)
+      .sort()
+      .filter((name) => selectedMetrics.includes(name))
+      .map((metricName, index) => {
+        const color = colors[index % colors.length];
+        const data = builder(metricName, fm[metricName], color);
+        return data && { metric: metricName, data };
+      })
+      .filter(Boolean);
   }, [chartType, currentFoldMetrics, qqFoldMetrics, selectedMetrics, colors]);
 
-  // ── Layout ─────────────────────────────────────────────────────────────────
-  const layout = useMemo(() => {
+  // ── Panel layout — shared by every panel of the current chart type ─────────
+  const panelLayout = useMemo(() => {
     const { palette, typography } = theme;
     const textColor = palette.text.primary;
     const gridColor = palette.divider;
+    const tickfont = { color: textColor, size: 10 };
 
-    const base = {
-      paper_bgcolor: palette.background.paper,
-      plot_bgcolor: palette.background.default,
-      font: {
-        color: textColor,
-        family: typography.fontFamily,
+    const axisTitle = (text) => (text ? { text, standoff: 10 } : undefined);
+
+    const axisTitles = {
+      boxplot: { x: undefined, y: t("models:label.metricValue") },
+      line: {
+        x: t("models:label.foldNumber"),
+        y: t("models:label.metricValue"),
       },
-      hovermode: "closest",
-      margin: { l: 40, r: 0, t: 40, b: 40 },
-      autosize: true,
-      showlegend: false,
-    };
-
-    const FormatAxis = (title) => ({
-      ...(title ? { title: { text: title, font: { color: textColor } } } : {}),
-      gridcolor: gridColor,
-      titlefont: { color: textColor },
-      tickfont: { color: textColor },
-    });
-
-    const titles = {
-      boxplot: t("models:label.boxPlot"),
-      line: t("models:label.linesPlot"),
-      qq: t("models:label.qqPlot"),
-      histogram: t("models:label.histogramPlot"),
-    };
-
-    const extra = {
-      boxplot: { xaxis: FormatAxis() },
-      line: { xaxis: FormatAxis(t("models:label.foldNumber")) },
       qq: {
-        showlegend: false,
-        xaxis: FormatAxis(t("models:label.theoricalQuantiles")),
-        yaxis: {
-          ...base.yaxis,
-          title: {
-            text: t("models:label.sampleQuantiles"),
-            font: { color: textColor },
-          },
-        },
+        x: t("models:label.theoricalQuantiles"),
+        y: t("models:label.sampleQuantiles"),
       },
       histogram: {
-        xaxis: FormatAxis(t("models:label.metricValue")),
-        yaxis: {
-          ...base.yaxis,
-          title: {
-            text: t("models:label.frequency"),
-            font: { color: textColor },
-          },
-        },
+        x: t("models:label.metricValue"),
+        y: t("models:label.frequency"),
       },
-    };
+    }[chartType];
 
     return {
-      ...base,
-      title: { text: titles[chartType], font: { size: 14 } },
-      ...extra[chartType],
+      autosize: true,
+      height: 240,
+      margin: { l: 50, r: 12, t: 8, b: 45 },
+      showlegend: false,
+      paper_bgcolor: palette.background.paper,
+      plot_bgcolor: palette.background.paper,
+      font: { color: textColor, family: typography.fontFamily, size: 11 },
+      xaxis: {
+        title: axisTitle(axisTitles.x),
+        gridcolor: gridColor,
+        zerolinecolor: gridColor,
+        tickfont,
+      },
+      yaxis: {
+        title: axisTitle(axisTitles.y),
+        gridcolor: gridColor,
+        tickfont,
+        automargin: true,
+      },
     };
   }, [theme, chartType, t]);
 
@@ -613,50 +565,92 @@ export default function FoldMetricsChart({ run }) {
         )}
       </Box>
 
-      {/* Chart */}
+      {/* Chart panels — one per selected metric */}
       <Box
         sx={{
           flex: 1,
           minHeight: 0,
           width: "100%",
-          position: "relative",
+          overflowY: "auto",
           p: 0.5,
         }}
       >
-        {refreshing && (
+        {panels.length === 0 ? (
+          <Box
+            height={350}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            border="1px dashed grey"
+          >
+            <Typography color="textSecondary">
+              {t("models:label.noMetricsAvailableForThisView")}
+            </Typography>
+          </Box>
+        ) : (
           <Box
             sx={{
-              position: "absolute",
-              inset: 0,
-              zIndex: 10,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "action.disabledBackground",
-              borderRadius: 1,
-              opacity: 0.6,
-              pointerEvents: "none",
+              display: "grid",
+              gap: 3,
+              gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
             }}
           >
-            <CircularProgress size={28} />
+            {panels.map((panel) => {
+              let containerEl = null;
+              return (
+                <Box
+                  key={panel.metric}
+                  ref={(node) => {
+                    containerEl = node;
+                  }}
+                  sx={{
+                    border: 1,
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    p: 2,
+                    "& .plot-actions": {
+                      opacity: 0,
+                      transition: "opacity 0.15s ease",
+                    },
+                    "&:hover .plot-actions, &:focus-within .plot-actions": {
+                      opacity: 1,
+                    },
+                    "@media (hover: none)": {
+                      "& .plot-actions": { opacity: 1 },
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 1,
+                      px: 1,
+                    }}
+                  >
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      {panel.metric}
+                    </Typography>
+                    <PlotActions
+                      getContainer={() => containerEl}
+                      data={panel.data}
+                      layout={panelLayout}
+                      filename={panel.metric}
+                    />
+                  </Box>
+                  <Plot
+                    data={panel.data}
+                    layout={panelLayout}
+                    useResizeHandler
+                    style={{ width: "100%", height: "240px" }}
+                    config={{ responsive: true, displayModeBar: false }}
+                  />
+                </Box>
+              );
+            })}
           </Box>
         )}
-        <Plot
-          data={traces}
-          layout={layout}
-          config={{
-            responsive: true,
-            displayModeBar: true,
-            displaylogo: false,
-            modeBarButtonsToRemove: [
-              "select2d",
-              "lasso2d",
-              "zoomIn2d",
-              "autoScale2d",
-            ],
-          }}
-          style={{ width: "100%", height: "100%" }}
-        />
       </Box>
     </Box>
   );
