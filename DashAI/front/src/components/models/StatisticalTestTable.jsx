@@ -100,6 +100,14 @@ export default function StatisticalTestTable({ session }) {
   };
 
   const groups = groupSavedTests(tests);
+  const tableHeaders = [
+    { label: t("models:label.name"), align: "left" },
+    { label: t("models:label.test"), align: "left" },
+    { label: t("models:label.metric"), align: "left" },
+    { label: t("models:label.metricSplit"), align: "left" },
+    { label: t("models:label.result"), align: "center" },
+    { label: t("common:date"), align: "right" },
+  ];
 
   const resultCell = (items) => {
     const head = items[0];
@@ -171,36 +179,13 @@ export default function StatisticalTestTable({ session }) {
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {t("models:label.name")}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {t("models:label.test")}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {t("models:label.metric")}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {t("models:label.metricSplit")}
-                  </Typography>
-                </TableCell>
-                <TableCell align="center">
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {t("models:label.result")}
-                  </Typography>
-                </TableCell>
-                <TableCell align="right">
-                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    {t("common:date")}
-                  </Typography>
-                </TableCell>
+                {tableHeaders.map(({ label, align }) => (
+                  <TableCell key={label} align={align}>
+                    <Typography variant="subtitle3" sx={{ fontWeight: 700 }}>
+                      {label}
+                    </Typography>
+                  </TableCell>
+                ))}
                 <TableCell sx={{ width: 48 }} />
               </TableRow>
             </TableHead>
