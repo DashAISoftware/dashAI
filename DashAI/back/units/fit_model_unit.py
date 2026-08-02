@@ -92,18 +92,26 @@ class FitModelUnit(BaseUnit):
         "x",
         "y",
         "task",
+        "run_id",
     )
     PROVIDES = ("model", "plot_paths")
 
-    def validate(self, ctx: ExecutionContext) -> None:
-        # ctx.require, not ctx.get: "optimizable_parameters" is one of this
-        # unit's REQUIRES, so its absence means BuildModelUnit hasn't run yet
-        # — a call-order mistake, not "there is nothing to optimize". Only an
-        # empty value (the key present, genuinely no optimizable parameters)
-        # skips the optimizer/goal-metric checks below, so no registry lookup
-        # is needed either.
-        if not ctx.require("optimizable_parameters"):
-            return
+    def __init__(self, **config) -> None:
+        super().__init__(**config)
+        self._optimizer = None
+        self._goal_metric = None
+
+    def _resolve_search(self):
+        """Resolve the optimizer and the goal metric, memoized on this unit.
+
+        Kept on the instance rather than in the context on purpose. These are
+        this unit's own state, not something it hands to another unit: two
+        ``FitModelUnit`` instances sharing a context — a DAG with two training
+        nodes — would otherwise overwrite each other's optimizer, and the
+        second one would silently run the first one's.
+        """
+        if self._optimizer is not None:
+            return self._optimizer, self._goal_metric
 
         from kink import di
 
@@ -132,8 +140,21 @@ class FitModelUnit(BaseUnit):
                 f"Error instantiating optimizer {optimizer_name}, {e}",
             ) from e
 
-        ctx.put("goal_metric", goal_metric)
-        ctx.put("optimizer", optimizer)
+        self._goal_metric = goal_metric
+        self._optimizer = optimizer
+        return optimizer, goal_metric
+
+    def validate(self, ctx: ExecutionContext) -> None:
+        # ctx.require, not ctx.get: "optimizable_parameters" is one of this
+        # unit's REQUIRES, so its absence means BuildModelUnit hasn't run yet
+        # — a call-order mistake, not "there is nothing to optimize". Only an
+        # empty value (the key present, genuinely no optimizable parameters)
+        # skips the optimizer/goal-metric checks below, so no registry lookup
+        # is needed either.
+        if not ctx.require("optimizable_parameters"):
+            return
+
+        self._resolve_search()
 
     def execute(self, ctx: ExecutionContext) -> None:
         import os
@@ -146,6 +167,7 @@ class FitModelUnit(BaseUnit):
         model = ctx.require("model")
         x = ctx.require("x")
         y = ctx.require("y")
+        run_id = ctx.require("run_id")
         optimizable_parameters = ctx.require("optimizable_parameters")
 
         plot_paths = []
@@ -153,12 +175,10 @@ class FitModelUnit(BaseUnit):
             if not optimizable_parameters:
                 model.train(x["train"], y["train"], x["validation"], y["validation"])
             else:
-                # __call__ always runs validate() immediately before execute(),
-                # so "optimizer"/"goal_metric" are already in ctx here.
-                optimizer = ctx.require("optimizer")
-                goal_metric = ctx.require("goal_metric")
+                # Memoized: validate() resolved these already, and resolving
+                # again here would be the same lookup.
+                optimizer, goal_metric = self._resolve_search()
                 factory = ctx.require("factory")
-                run_id = ctx.get("run_id")
 
                 optimizer.optimize(
                     model,

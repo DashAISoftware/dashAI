@@ -10,6 +10,8 @@ EXPECTED_UNITS = {
     "FitModelUnit",
     "EvaluateModelUnit",
     "SaveModelUnit",
+    "ApplyConverterUnit",
+    "SaveDatasetUnit",
 }
 
 
@@ -36,7 +38,10 @@ def test_units_expose_a_schema_the_front_can_render(units):
 
 
 def test_unit_schemas_describe_their_configuration(units):
-    assert "dataset_id" in units["LoadDatasetUnit"]["schema"]["properties"]
+    assert set(units["LoadDatasetUnit"]["schema"]["properties"]) == {
+        "dataset_id",
+        "notebook_id",
+    }
     assert set(units["PrepareAndSplitUnit"]["schema"]["properties"]) == {
         "task_name",
         "input_columns",
@@ -45,6 +50,13 @@ def test_unit_schemas_describe_their_configuration(units):
     }
     assert "model" in units["BuildModelUnit"]["schema"]["properties"]
     assert "optimizer" in units["FitModelUnit"]["schema"]["properties"]
+    assert set(units["ApplyConverterUnit"]["schema"]["properties"]) == {
+        "converter",
+        "scope",
+        "target",
+    }
+    # SaveDatasetUnit is configuration-free: it saves where the load said.
+    assert units["SaveDatasetUnit"]["schema"]["properties"] == {}
 
 
 def test_component_fields_tell_the_front_which_components_to_offer(units):
@@ -56,10 +68,13 @@ def test_component_fields_tell_the_front_which_components_to_offer(units):
     """
     model = units["BuildModelUnit"]["schema"]["properties"]["model"]
     optimizer = units["FitModelUnit"]["schema"]["properties"]["optimizer"]
+    converter = units["ApplyConverterUnit"]["schema"]["properties"]["converter"]
 
     assert model["parent"] == "BaseModel"
     assert optimizer["parent"] == "BaseOptimizer"
+    assert converter["parent"] == "BaseConverter"
     assert set(model["properties"]) == {"component", "params"}
+    assert set(converter["properties"]) == {"component", "params"}
 
 
 def test_a_component_field_parent_resolves_to_real_components(client: TestClient):
