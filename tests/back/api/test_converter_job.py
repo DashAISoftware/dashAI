@@ -294,6 +294,28 @@ def test_an_out_of_bounds_target_index_reports_cannot_load_dataset(client, noteb
     assert _notebook_dataset(notebook).column_names == IRIS_COLUMNS
 
 
+def test_a_dataset_that_cannot_be_loaded_still_leaves_the_row_in_error(
+    client, notebook
+):
+    """A load failure must not leave the converter stuck in STARTED.
+
+    Nothing else would fix it: the Huey error signal writes only to its own
+    ``task_copy`` table and never touches the ``Converter`` row, and the job
+    runs with no outer handler. Before this, only ``SQLAlchemyError`` was
+    caught here, so an unreadable dataset left the row STARTED forever and the
+    UI showed the converter as still running.
+    """
+    import shutil
+
+    converter_id = _create_converter(client, notebook["id"], "ColumnRemover")
+    shutil.rmtree(f"{notebook['file_path']}/dataset")
+
+    with pytest.raises(JobError, match="Can not load dataset from path"):
+        ConverterJob(converter_id=converter_id).run()
+
+    assert _stored_converter(client, converter_id)["status"] == ConverterStatus.ERROR
+
+
 def test_a_failing_converter_leaves_the_dataset_untouched(client, notebook):
     """``ColumnRemover`` raises when asked for a column that is not there.
 
