@@ -23,14 +23,14 @@ const fmt = (mean, std) => {
 /**
  * Table with the averaged metrics across the outer folds of a nested-CV run
  */
-export default function OuterFoldMetricsTable({ runId }) {
+export default function OuterFoldMetricsTable({ run }) {
   const { t } = useTranslation("models");
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!runId) return;
+    if (!run.id) return;
 
     const controller = new AbortController();
     setLoading(true);
@@ -38,7 +38,7 @@ export default function OuterFoldMetricsTable({ runId }) {
 
     const fetchAveraged = async () => {
       try {
-        const data = await getOuterAveragedMetrics(runId, {
+        const data = await getOuterAveragedMetrics(run.id, {
           signal: controller.signal,
         });
         setMetrics(data);
@@ -53,7 +53,7 @@ export default function OuterFoldMetricsTable({ runId }) {
     fetchAveraged();
 
     return () => controller.abort();
-  }, [runId]);
+  }, [run.id]);
 
   if (loading) {
     return (

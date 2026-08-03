@@ -282,7 +282,8 @@
     "editRun": "Editar ejecución",
     "chartType": "Tipo de gráfico",
     "savedTests": "Pruebas guardadas",
-    "foldGraphs": "Gráficos de Pliegues"
+    "foldGraphs": "Gráficos de Pliegues",
+    "nestedCvResults": "Resultados Anidados"
   },
   "message": {
     "skippedUndownloadedRuns": "Se omitieron las ejecuciones cuyo modelo no está descargado. Descarga el modelo primero.",
@@ -332,24 +333,11 @@
     "computationalCostNestedCV": "Costo computacional: Alto O(Folds externos x Folds internos x Trials)",
     "computationalCostNormalHPO": "Costo computacional: Estándar O(Folds x Trials)",
     "innerFoldsOutOfRange": "Para la validación cruzada anidada, el número de folds internos debe estar entre 2 y el largo de los folds externos ({{max}}). Por favor ajuste el número de folds internos.",
-    "normalityDetected": "Condición de Normalidad Cumplida",
-    "normalityCheckMethod": "Test Shapiro-Wilk (α=0.05): Los datos se consideran normales si el p-valor > 0.05.",
-    "recommendParametricTests": "Los datos cumplen con los requisitos de normalidad. Se recomiendan tests paramétricos (ej: test t pareado, ANOVA) para mayor potencia estadística.",
-    "normalityNotDetected": "Condición de Normalidad No Cumplida",
-    "recommendNonParametricTests": "Los datos no cumplen con los requisitos de normalidad. Se recomiendan tests no paramétricos (ej: Wilcoxon, Friedman) por su robustez.",
-    "normalityCheckTooltip": "Verifica si los valores de la métrica siguen una distribución normal usando el test Shapiro-Wilk con nivel de significancia α=0.05. Se recomienda analizar el grafico Q-Q para confirmar visualmente la normalidad de los datos.",
     "hypothesis_reject": "rechazamos",
     "hypothesis_failToReject": "no rechazamos",
     "hypothesisDecision": "Con un p-valor de {{pValue}}, {{decision}} la hipótesis nula a un nivel de significancia de {{alpha}}.",
-    "noOuterMetrics": "No hay métricas de outer folds para esta run."
-  },
-  "test": {
-    "pairedTTest": "Test t pareado",
-    "correctedPairedTTest": "Test t pareado corregido",
-    "wilcoxonSignedRankTest": "Test de Wilcoxon de rangos con signo",
-    "anovaTest": "Test ANOVA",
-    "friedmanTest": "Test de Friedman",
-    "pairwiseWilcoxonTest": "Test de Wilcoxon por pares"
+    "noOuterMetrics": "No hay métricas de outer folds para esta run.",
+    "nestedCvResultsOnlyForNestedCv": "Los resultados de validación cruzada anidada solo están disponibles cuando se activa en la configuración de optimización de hiperparámetros. Edite la configuración del run para habilitar esto."
   },
   "alternative": {
     "twoSided": "Ambos lados (Modelo 1 ≠ Modelo 2)",

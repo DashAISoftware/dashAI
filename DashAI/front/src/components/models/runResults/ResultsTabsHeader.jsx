@@ -35,6 +35,7 @@ export default function ResultsTabsHeader({
   optimizables,
   explainerCount,
   predictionCount,
+  run,
 }) {
   const { t } = useTranslation(["models"]);
 
@@ -48,12 +49,18 @@ export default function ResultsTabsHeader({
     : optimizables === 0
       ? t("models:message.noOptimizableParamsForHpo")
       : "";
+  const nestedCvResultsTooltip = !isFinished
+    ? notFinishedTooltip
+    : !run?.nested
+      ? t("models:message.nestedCvResultsOnlyForNestedCv")
+      : "";
 
   // Get session from context to check if the evaluation strategy is Cross Validation
   const { selectedSession } = useModels();
   const isCrossValidation =
     selectedSession?.evaluation_strategy ===
     "CrossValidationEvaluationStrategy";
+  const isNestedCrossValidation = !!run?.nested;
 
   return (
     <Box sx={{ display: "flex", alignItems: "flex-end" }}>
@@ -62,7 +69,7 @@ export default function ResultsTabsHeader({
           {t("models:label.metrics")}
         </Typography>
         <PillTabs
-          value={[0, 3, 4].includes(activeTab) ? activeTab : false}
+          value={[0, 3, 4, 5].includes(activeTab) ? activeTab : false}
           onChange={(e, newValue) => onTabChange(newValue)}
           aria-label="Result characteristics tabs"
         >
@@ -90,6 +97,19 @@ export default function ResultsTabsHeader({
                 <Box sx={tabLabelRowSx}>{t("models:label.foldGraphs")}</Box>
               }
               disabled={!isFinished}
+            />
+          )}
+          {isCrossValidation && (
+            <Tab
+              value={5}
+              label={
+                <Tooltip title={nestedCvResultsTooltip}>
+                  <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
+                    {t("models:label.nestedCvResults")}
+                  </Box>
+                </Tooltip>
+              }
+              disabled={!isFinished || !isNestedCrossValidation}
             />
           )}
         </PillTabs>
