@@ -12,6 +12,13 @@ from DashAI.back.dependencies.database.models import Dataset, ModelSession, Pred
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
+from DashAI.back.units.context import ExecutionContext
+from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
+from DashAI.back.units.load_trained_model_unit import LoadTrainedModelUnit
+from DashAI.back.units.load_training_dataset_unit import LoadTrainingDatasetUnit
+from DashAI.back.units.predict_unit import PredictUnit
+from DashAI.back.units.save_prediction_unit import SavePredictionUnit
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -274,18 +281,9 @@ class PredictJob(BaseJob):
     def run(
         self,
     ) -> List[Any]:
-        import uuid
-        from pathlib import Path
-
-        from DashAI.back.dataloaders.classes.dashai_dataset import (
-            load_dataset,
-            save_dataset,
-            to_dashai_dataset,
-        )
-
-        component_registry = di["component_registry"]
         session_factory = di["session_factory"]
-        config = di["config"]
+
+        ctx = ExecutionContext()
 
         prediction_id: int = self.kwargs["prediction_id"]
         manual_input_data: List[dict] = self.kwargs.get("manual_input_data", [])
@@ -329,17 +327,16 @@ class PredictJob(BaseJob):
                         detail="Model session not found",
                     )
 
-                # Retrieve Dataset if dataset_id is provided
-                dataset: Dataset = None
+                # The dataset the model was trained on. The one to predict on,
+                # when there is one, is resolved by the unit that loads it.
                 dataset_trained: Dataset = db.get(Dataset, model_session.dataset_id)
                 if not dataset_trained:
+                    prediction.set_status_as_error()
+                    db.commit()
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="Training dataset not found",
                     )
-
-                if dataset_id:
-                    dataset: Dataset = db.get(Dataset, dataset_id)
 
                 if not model_session.input_columns:
                     prediction.set_status_as_error()
@@ -364,74 +361,66 @@ class PredictJob(BaseJob):
                     detail="Internal database error",
                 ) from e
 
-            # Retrieve Task
+            # The prediction step owns the task, and resolving it here — before
+            # the model is even looked up — is what keeps a missing task
+            # reported as a task problem instead of being overtaken by
+            # whatever fails next. Same shape as ModelJob validating the fit
+            # unit ahead of the status change.
+            predict = PredictUnit(
+                task_name=model_session.task_name,
+                input_columns=model_session.input_columns,
+                output_columns=model_session.output_columns,
+            )
             try:
-                task: BaseTask = component_registry[model_session.task_name]["class"]()
+                predict.validate(ctx)
             except Exception as e:
                 prediction.set_status_as_error()
                 db.commit()
                 log.exception(e)
-                raise JobError(
-                    f"Task {model_session.task_name} not found in the registry",
-                ) from e
+                raise
 
-            # Load Model
+            # Load Model. The unit reports both the registry miss and the
+            # unreadable artifact with the same texts the job used to build
+            # here; re-raised as-is so they reach the user intact.
             try:
-                model = component_registry[prediction.run.model_name]["class"]
-            except KeyError as e:
-                prediction.set_status_as_error()
-                db.commit()
-                log.exception(e)
-                raise JobError(
-                    f"Model {prediction.run.model_name} not found in the registry"
-                ) from e
-
-            try:
-                trained_model: BaseModel = model.load(prediction.run.run_path)
+                LoadTrainedModelUnit(run_id=prediction.run_id)(ctx)
             except Exception as e:
                 prediction.set_status_as_error()
                 db.commit()
                 log.exception(e)
-                raise JobError(
-                    f"Failed to load model {prediction.run.model_name} "
-                    f"from path {prediction.run.run_path}"
-                ) from e
+                raise
 
-            # Load Dataset and make Predictions
+            # Load training dataset for type info and label processing. Loaded
+            # before the dataset to predict on, which is the order the error
+            # messages depend on when both are unreadable.
             try:
-                # Load training dataset for type info and label processing
-                train_dataset: "DashAIDataset" = load_dataset(
-                    str(Path(f"{dataset_trained.file_path}/dataset/"))
-                )
+                LoadTrainingDatasetUnit(
+                    train_dataset_file_path=dataset_trained.file_path
+                )(ctx)
             except Exception as e:
+                # This branch used to skip set_status_as_error, unlike every
+                # one around it, leaving the prediction STARTED forever.
+                # Re-raised as-is so the unit's specific message survives.
+                prediction.set_status_as_error()
+                db.commit()
                 log.exception(e)
-                raise JobError(
-                    f"Cannot load training dataset from "
-                    f"{dataset_trained.file_path}/dataset/"
-                ) from e
+                raise
 
             try:
-                # Load or create prediction dataset
+                # Load or create prediction dataset. Both branches publish the
+                # same "dataset" key, so the prediction below cannot tell a
+                # dataset read from disk from one typed in by hand.
                 if dataset_id:
-                    loaded_dataset: "DashAIDataset" = load_dataset(
-                        str(Path(f"{dataset.file_path}/dataset/"))
-                    )
+                    LoadDatasetUnit(dataset_id=dataset_id)(ctx)
                 else:
-                    dataset_trained_path = str(
-                        Path(f"{dataset_trained.file_path}/dataset/")
-                    )
-                    loaded_dataset = task.process_manual_input(
-                        manual_input_data, dataset_trained_path
-                    )
+                    BuildManualInputUnit(
+                        task_name=model_session.task_name,
+                        train_dataset_file_path=dataset_trained.file_path,
+                        manual_input_data=manual_input_data,
+                    )(ctx)
 
                 self.report_progress(0.4, "Running prediction")
-                _, y_pred = _run_prediction_pipeline(
-                    task=task,
-                    trained_model=trained_model,
-                    train_dataset=train_dataset,
-                    loaded_dataset=loaded_dataset,
-                    model_session=model_session,
-                )
+                predict(ctx)
 
             except ValueError as ve:
                 prediction.set_status_as_error()
@@ -442,6 +431,11 @@ class PredictJob(BaseJob):
                     detail=f"Invalid input data: {str(ve)}",
                 ) from ve
             except TypeError as te:
+                # Marked as failed like its ValueError neighbour: this branch
+                # used to return 400 without touching the row, which left the
+                # prediction STARTED forever.
+                prediction.set_status_as_error()
+                db.commit()
                 log.error(f"Type Error: {te}")
                 raise HTTPException(
                     status_code=400,
@@ -459,41 +453,13 @@ class PredictJob(BaseJob):
 
             # Save Predictions to Arrow file
             try:
-                # Create unique folder for predictions
-                path = str(Path(f"{config['DATASETS_PATH']}/predictions/"))
-                folder_name = str(uuid.uuid4())
-                full_path = Path(path) / folder_name
-                full_path.mkdir(parents=True, exist_ok=True)
-
-                output_col = model_session.output_columns[0]
-                base_columns = [
-                    col for col in loaded_dataset.column_names if col != output_col
-                ]
-                output_dataset = loaded_dataset.select_columns(base_columns)
-                dataset_with_prediction = to_dashai_dataset(
-                    output_dataset.add_column(output_col, y_pred)
-                )
-
-                # Filter schema from trained dataset
-                trained_schema = train_dataset.types
-                filtered_schema = {
-                    key: value.to_string()
-                    for key, value in trained_schema.items()
-                    if key in model_session.input_columns + model_session.output_columns
-                }
-
-                # Store num of rows, columns, and column names
-                dataset_with_prediction.compute_base_metadata()
-
-                # Save dataset with predictions
-                save_dataset(
-                    dataset_with_prediction,
-                    str(full_path / "dataset"),
-                    filtered_schema,
-                )
+                SavePredictionUnit(
+                    input_columns=model_session.input_columns,
+                    output_columns=model_session.output_columns,
+                )(ctx)
 
                 # Update Prediction record
-                prediction.results_path = str(full_path)
+                prediction.results_path = ctx.require("results_path")
                 prediction.set_status_as_finished()
                 db.commit()
             except Exception as e:
@@ -503,3 +469,5 @@ class PredictJob(BaseJob):
                 raise JobError(
                     "Can not save prediction to json file",
                 ) from e
+            finally:
+                ctx.clear_cache()
