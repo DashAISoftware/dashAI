@@ -304,6 +304,7 @@
     "position": "位置",
     "possibleIDColumns": "可能的 ID 列",
     "presetScale": "预设色阶",
+    "processingTitle": "正在处理您的数据集...",
     "processingMessage": "根据数据大小，这可能需要几分钟。",
     "proportion": "比例",
     "q1": "Q1",

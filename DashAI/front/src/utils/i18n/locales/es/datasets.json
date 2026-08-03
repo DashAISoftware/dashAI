@@ -310,6 +310,7 @@
     "position": "Posición",
     "possibleIDColumns": "Posibles Columnas de ID",
     "presetScale": "Escala Preestablecida",
+    "processingTitle": "Procesando tu dataset...",
     "processingMessage": "Esto puede tardar unos minutos dependiendo del tamaño del dataset.",
     "proportion": "Proporción",
     "q1": "Q1",
