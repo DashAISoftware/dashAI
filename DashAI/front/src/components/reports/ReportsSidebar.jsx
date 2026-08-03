@@ -120,6 +120,12 @@ export default function ReportsSidebar({ run, session, onCreated }) {
               <ModelListItem
                 key={report.name}
                 model={report}
+                draggable
+                dragType="application/x-dashai-report"
+                dragPayload={{
+                  name: report.name,
+                  display_name: report.display_name,
+                }}
                 onClick={() => openReportCreator(report)}
               />
             ))}
