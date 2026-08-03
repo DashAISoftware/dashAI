@@ -24,7 +24,8 @@
     "noData": "Este relatório não produziu resultados",
     "empty": "Ainda não há relatórios. Adicione um pelo painel à direita.",
     "noParameters": "Este relatório não tem parâmetros para configurar.",
-    "splitHelp": "Qual conjunto de previsões o relatório descreve."
+    "splitHelp": "Qual conjunto de previsões o relatório descreve.",
+    "confirmDelete": "Tem certeza de que deseja excluir este relatório? Esta ação não pode ser desfeita."
   },
   "error": {
     "fetch": "Não foi possível carregar os relatórios",

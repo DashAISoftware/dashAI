@@ -24,7 +24,8 @@
     "noData": "Dieser Bericht hat keine Ausgabe erzeugt",
     "empty": "Noch keine Berichte. Fügen Sie einen über das rechte Panel hinzu.",
     "noParameters": "Dieser Bericht hat keine konfigurierbaren Parameter.",
-    "splitHelp": "Welchen Vorhersagesatz der Bericht beschreibt."
+    "splitHelp": "Welchen Vorhersagesatz der Bericht beschreibt.",
+    "confirmDelete": "Möchten Sie diesen Bericht wirklich löschen? Dies kann nicht rückgängig gemacht werden."
   },
   "error": {
     "fetch": "Die Berichte konnten nicht geladen werden",

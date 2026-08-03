@@ -24,7 +24,8 @@
     "noData": "Este reporte no produjo resultados",
     "empty": "Aún no hay reportes. Agregue uno desde el panel de la derecha.",
     "noParameters": "Este reporte no tiene parámetros para configurar.",
-    "splitHelp": "Qué conjunto de predicciones describe el reporte."
+    "splitHelp": "Qué conjunto de predicciones describe el reporte.",
+    "confirmDelete": "¿Seguro que desea eliminar este reporte? Esta acción no se puede deshacer."
   },
   "error": {
     "fetch": "No se pudieron cargar los reportes",

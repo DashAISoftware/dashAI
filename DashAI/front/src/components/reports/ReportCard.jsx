@@ -17,6 +17,7 @@ import { useTranslation } from "react-i18next";
 import { getReportArtifacts, saveReportPlotOverride } from "../../api/report";
 import ArtifactList from "../shared/ArtifactList";
 import RunStatusDot from "../shared/RunStatusDot";
+import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import { patchArtifactPayload } from "../../utils/artifactOverrides";
 
 /** Status codes shared with the backend ReportStatus enum. */
@@ -39,6 +40,7 @@ const POLL_INTERVAL_MS = 3000;
 export default function ReportCard({ report, displayName, onDelete }) {
   const theme = useTheme();
   const { t } = useTranslation(["reports", "common"]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [artifacts, setArtifacts] = useState([]);
   const [loading, setLoading] = useState(report.status === STATUS.FINISHED);
   const [status, setStatus] = useState(report.status);
@@ -125,7 +127,7 @@ export default function ReportCard({ report, displayName, onDelete }) {
             <IconButton
               size="small"
               color="error"
-              onClick={() => onDelete(report)}
+              onClick={() => setConfirmOpen(true)}
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
@@ -154,6 +156,16 @@ export default function ReportCard({ report, displayName, onDelete }) {
           />
         )}
       </CardContent>
+
+      <DeleteConfirmationModal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          onDelete(report);
+        }}
+        content={t("reports:message.confirmDelete")}
+      />
     </Card>
   );
 }

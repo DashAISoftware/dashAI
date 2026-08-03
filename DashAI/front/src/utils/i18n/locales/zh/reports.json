@@ -24,7 +24,8 @@
     "noData": "该报告未产生任何输出",
     "empty": "暂无报告。请从右侧面板添加。",
     "noParameters": "该报告没有可配置的参数。",
-    "splitHelp": "该报告所描述的预测集合。"
+    "splitHelp": "该报告所描述的预测集合。",
+    "confirmDelete": "确定要删除该报告吗？此操作无法撤销。"
   },
   "error": {
     "fetch": "无法加载报告",

@@ -24,7 +24,8 @@
     "noData": "This report produced no output",
     "empty": "No reports yet. Add one from the panel on the right.",
     "noParameters": "This report has no parameters to configure.",
-    "splitHelp": "Which prediction set the report describes."
+    "splitHelp": "Which prediction set the report describes.",
+    "confirmDelete": "Are you sure you want to delete this report? This cannot be undone."
   },
   "error": {
     "fetch": "Could not load the reports",
