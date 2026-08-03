@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
@@ -26,13 +26,37 @@ export default function ReportResultsTab({ run, session, refreshTrigger }) {
   const [reports, setReports] = useState([]);
   const [displayNames, setDisplayNames] = useState({});
   const [loading, setLoading] = useState(true);
+  // A just added report: pendingScroll brings it into view, highlightedId
+  // drives the ring. Both are keyed by id so a poll that returns the same rows
+  // cannot replay either.
+  const [pendingScroll, setPendingScroll] = useState(null);
+  const [highlightedId, setHighlightedId] = useState(null);
+  // null until the first fetch lands, so the first render can tell "opened the
+  // tab" (jump to the bottom) apart from "a report was added" (glide to it).
+  const seenIdsRef = useRef(null);
 
   const fetchReports = useCallback(async () => {
     try {
       const response = await getReports(run.id);
       // Oldest first, so a newly added report lands at the bottom of the list
       // the way a newly added explainer does.
-      setReports([...response].sort((a, b) => a.id - b.id));
+      const ordered = [...response].sort((a, b) => a.id - b.id);
+      setReports(ordered);
+
+      const ids = ordered.map((item) => item.id);
+      const newest = ids[ids.length - 1] ?? null;
+      if (seenIdsRef.current === null) {
+        // Opening the tab lands at the bottom, matching the explainer list.
+        if (newest !== null) setPendingScroll({ id: newest, smooth: false });
+      } else {
+        const added = ids.filter((id) => !seenIdsRef.current.has(id));
+        if (added.length > 0) {
+          const addedNewest = added[added.length - 1];
+          setPendingScroll({ id: addedNewest, smooth: true });
+          setHighlightedId(addedNewest);
+        }
+      }
+      seenIdsRef.current = new Set(ids);
     } catch (error) {
       console.error("Error fetching reports:", error);
       enqueueSnackbar(t("reports:error.fetch"), { variant: "error" });
@@ -64,6 +88,34 @@ export default function ReportResultsTab({ run, session, refreshTrigger }) {
       )
       .catch((error) => console.error("Error fetching report names:", error));
   }, [session?.task_name]);
+
+  // The card has to exist before it can be scrolled to, so this waits a beat
+  // after the list renders, the way the explainer tab does.
+  useEffect(() => {
+    if (!pendingScroll) return undefined;
+    const timer = setTimeout(() => {
+      const element = document.getElementById(
+        `report-card-${pendingScroll.id}`,
+      );
+      if (element) {
+        element.scrollIntoView({
+          block: "end",
+          behavior: pendingScroll.smooth ? "smooth" : "auto",
+        });
+      }
+      setPendingScroll(null);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [pendingScroll, reports]);
+
+  // Clear the highlight after the animation, in its own effect so nothing else
+  // cancels the timer and leaves the card flagged, replaying the ring on every
+  // remount.
+  useEffect(() => {
+    if (!highlightedId) return undefined;
+    const timer = setTimeout(() => setHighlightedId(null), 4000);
+    return () => clearTimeout(timer);
+  }, [highlightedId]);
 
   const anyRunning = reports.some((item) => IN_FLIGHT.includes(item.status));
 
@@ -102,13 +154,17 @@ export default function ReportResultsTab({ run, session, refreshTrigger }) {
   }
 
   return (
-    <Box sx={{ py: 4, display: "flex", flexDirection: "column", gap: 3 }}>
+    // px gives the highlight ring room so the scroller does not clip its sides.
+    <Box
+      sx={{ py: 4, px: 1.5, display: "flex", flexDirection: "column", gap: 3 }}
+    >
       {reports.map((report) => (
         <ReportCard
           key={report.id}
           report={report}
           displayName={displayNames[report.report_name]}
           onDelete={handleDelete}
+          isHighlighted={highlightedId === report.id}
         />
       ))}
     </Box>

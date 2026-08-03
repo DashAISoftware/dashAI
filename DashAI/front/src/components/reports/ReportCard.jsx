@@ -10,7 +10,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useTranslation } from "react-i18next";
 
@@ -37,7 +37,12 @@ const POLL_INTERVAL_MS = 3000;
  * artifacts. Polls only while the job is outstanding, so a settled card makes
  * no requests.
  */
-export default function ReportCard({ report, displayName, onDelete }) {
+export default function ReportCard({
+  report,
+  displayName,
+  onDelete,
+  isHighlighted = false,
+}) {
   const theme = useTheme();
   const { t } = useTranslation(["reports", "common"]);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -91,11 +96,25 @@ export default function ReportCard({ report, displayName, onDelete }) {
   // one family rather than two.
   return (
     <Card
+      // The tab scrolls to this id when the report is created.
+      id={`report-card-${report.id}`}
       variant="outlined"
       sx={{
         bgcolor: "background.paper",
         borderColor: theme.palette.ui.border,
         borderRadius: 1,
+        position: "relative",
+        zIndex: isHighlighted ? 1 : 0,
+        "@keyframes newItemHighlight": {
+          "0%": { boxShadow: "none" },
+          "20%": {
+            boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.65)}, 0 0 24px 8px ${alpha(theme.palette.primary.main, 0.2)}`,
+          },
+          "100%": { boxShadow: "none" },
+        },
+        animation: isHighlighted
+          ? "newItemHighlight 4s ease-in-out forwards"
+          : "none",
       }}
     >
       <CardContent>
@@ -179,4 +198,5 @@ ReportCard.propTypes = {
   }).isRequired,
   displayName: PropTypes.string,
   onDelete: PropTypes.func.isRequired,
+  isHighlighted: PropTypes.bool,
 };
