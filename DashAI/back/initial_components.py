@@ -137,6 +137,7 @@ from DashAI.back.job.generative_job import GenerativeJob
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.pipeline_job import PipelineJob
 from DashAI.back.job.predict_job import PredictJob
+from DashAI.back.job.report_job import ReportJob
 
 # Metrics
 from DashAI.back.metrics.classification.accuracy import Accuracy
@@ -338,6 +339,19 @@ from DashAI.back.pipeline.train_node import Train
 
 # Plugins
 from DashAI.back.plugins.utils import get_available_plugins
+from DashAI.back.reports.classification.confusion_matrix import ConfusionMatrix
+
+# Reports
+from DashAI.back.reports.classification.per_class_breakdown import (
+    PerClassBreakdown,
+)
+from DashAI.back.reports.classification.precision_recall_curve import (
+    PrecisionRecallCurve,
+)
+from DashAI.back.reports.classification.roc_curve import RocCurve
+from DashAI.back.reports.regression.predicted_vs_actual import PredictedVsActual
+from DashAI.back.reports.regression.residual_histogram import ResidualHistogram
+from DashAI.back.reports.regression.residual_plot import ResidualPlot
 
 # Tasks
 from DashAI.back.tasks.controlnet_task import ControlNetTask
@@ -507,12 +521,21 @@ def get_initial_components():
         DatafileJob,
         ExplainerJob,
         ModelJob,
+        ReportJob,
         ExplorerJob,
         PredictJob,
         ConverterJob,
         DatasetJob,
         GenerativeJob,
         PipelineJob,
+        # Reports
+        ConfusionMatrix,
+        RocCurve,
+        PrecisionRecallCurve,
+        PerClassBreakdown,
+        PredictedVsActual,
+        ResidualPlot,
+        ResidualHistogram,
         # Explainers
         ContrastiveShap,
         DiceCounterfactual,
