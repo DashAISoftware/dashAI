@@ -48,6 +48,9 @@ export default function TraceForm({
   const colorscaleSrc = usesSharedColorAxis
     ? layout.coloraxis?.colorscale
     : trace.colorscale;
+  const reversescaleSrc = usesSharedColorAxis
+    ? layout.coloraxis?.reversescale
+    : trace.reversescale;
 
   const setColorscale = (newScale) => {
     if (usesSharedColorAxis) {
@@ -57,6 +60,19 @@ export default function TraceForm({
       });
     } else {
       handleTraceChange(index, "colorscale", newScale);
+    }
+  };
+
+  // Plotly reverses a scale with a flag rather than by rewriting its stops, so
+  // this works for a named preset and a hand built array alike.
+  const setReversescale = (isReversed) => {
+    if (usesSharedColorAxis) {
+      handleChange("coloraxis", {
+        ...layout.coloraxis,
+        reversescale: isReversed,
+      });
+    } else {
+      handleTraceChange(index, "reversescale", isReversed);
     }
   };
 
@@ -141,7 +157,12 @@ export default function TraceForm({
       {/* --- Heatmap Options --- */}
       {usesColormap(trace) && (
         <>
-          <ColorscaleSelector value={colorscaleSrc} onChange={setColorscale} />
+          <ColorscaleSelector
+            value={colorscaleSrc}
+            onChange={setColorscale}
+            reversed={reversescaleSrc}
+            onReversedChange={setReversescale}
+          />
 
           <DebouncedColorPicker
             label={t("datasets:label.colorbarBorderColor")}
