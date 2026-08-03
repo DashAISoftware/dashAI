@@ -238,6 +238,56 @@ def test_an_incompatible_report_fails_with_its_own_message(
     client.delete(f"/api/v1/report/{report_id}")
 
 
+def test_plot_edits_survive_a_reload(client: TestClient, trained_run_id: int):
+    """A saved edit replaces the computed figure on every later read."""
+    report_id = _create(client, trained_run_id, "ConfusionMatrix")
+    ReportJob(report_id=report_id).run()
+
+    edited = {"data": [{"type": "heatmap", "z": [[1]]}], "layout": {"title": "mine"}}
+    response = client.put(
+        f"/api/v1/report/{report_id}/override",
+        json={"index": 0, "figure": edited},
+    )
+    assert response.status_code == 200, response.text
+
+    artifacts = client.get(f"/api/v1/report/{report_id}/artifacts").json()
+    assert json.loads(artifacts[0]["payload"])["layout"]["title"] == "mine"
+    # The flag tells the frontend to render the edit verbatim rather than
+    # re-theming it, which would clobber the colors the user chose.
+    assert artifacts[0]["overridden"] is True
+
+    client.delete(f"/api/v1/report/{report_id}")
+
+
+def test_resetting_an_edit_restores_the_computed_figure(
+    client: TestClient, trained_run_id: int
+):
+    report_id = _create(client, trained_run_id, "ConfusionMatrix")
+    ReportJob(report_id=report_id).run()
+
+    client.put(
+        f"/api/v1/report/{report_id}/override",
+        json={"index": 0, "figure": {"data": [], "layout": {"title": "mine"}}},
+    )
+    response = client.delete(f"/api/v1/report/{report_id}/override/0")
+    assert response.status_code == 200, response.text
+
+    artifacts = client.get(f"/api/v1/report/{report_id}/artifacts").json()
+    figure = json.loads(artifacts[0]["payload"])
+    assert figure["layout"]["title"]["text"].startswith("Confusion matrix")
+    assert "overridden" not in artifacts[0]
+
+    client.delete(f"/api/v1/report/{report_id}")
+
+
+def test_overriding_an_unknown_report_is_404(client: TestClient):
+    response = client.put(
+        "/api/v1/report/99999/override",
+        json={"index": 0, "figure": {"data": []}},
+    )
+    assert response.status_code == 404
+
+
 def test_invalid_split_is_rejected(client: TestClient, trained_run_id: int):
     response = client.post(
         "/api/v1/report/",

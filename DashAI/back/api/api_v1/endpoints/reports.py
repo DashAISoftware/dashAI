@@ -8,7 +8,10 @@ from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
 
-from DashAI.back.api.api_v1.schemas.reports_params import ReportParams
+from DashAI.back.api.api_v1.schemas.reports_params import (
+    PlotOverrideBody,
+    ReportParams,
+)
 from DashAI.back.dependencies.database.models import Report, Run
 
 if TYPE_CHECKING:
@@ -88,7 +91,7 @@ async def get_report_artifacts(
     """
     import pickle
 
-    from DashAI.back.core.artifacts import normalize_artifacts
+    from DashAI.back.core.artifacts import apply_plot_overrides, normalize_artifacts
 
     with session_factory() as db:
         try:
@@ -119,9 +122,13 @@ async def get_report_artifacts(
                 detail="Report artifacts file not found",
             ) from e
 
+        plot_overrides = report.plot_overrides
+
     # Re-normalized on read for the same reason the explainer plot endpoints
     # do it: artifacts pickled by an older version still come back current.
-    return normalize_artifacts(stored)
+    # Overrides are applied last so a user's saved edits win over the computed
+    # figure and survive a reload.
+    return apply_plot_overrides(normalize_artifacts(stored), plot_overrides)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -175,6 +182,93 @@ async def upload_report(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.put("/{report_id}/override")
+@inject
+async def save_plot_override(
+    report_id: int,
+    body: PlotOverrideBody,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Persist an edited plotly figure for one artifact of a report.
+
+    Parameters
+    ----------
+    report_id : int
+        Id of the report whose plot is being edited.
+    body : PlotOverrideBody
+        The artifact index and the edited plotly figure.
+    session_factory : Callable[..., ContextManager[Session]]
+        Factory yielding a SQLAlchemy session.
+
+    Returns
+    -------
+    dict
+        ``{"status": "ok"}`` on success.
+
+    Raises
+    ------
+    HTTPException
+        If the report does not exist.
+    """
+    import json
+
+    with session_factory() as db:
+        report = db.get(Report, report_id)
+        if report is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Report not found"
+            )
+        overrides = dict(report.plot_overrides or {})
+        figure = body.figure
+        overrides[str(body.index)] = (
+            figure if isinstance(figure, str) else json.dumps(figure)
+        )
+        report.plot_overrides = overrides
+        db.commit()
+    return {"status": "ok"}
+
+
+@router.delete("/{report_id}/override/{index}")
+@inject
+async def delete_plot_override(
+    report_id: int,
+    index: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Remove a stored plot override, reverting to the computed figure.
+
+    Parameters
+    ----------
+    report_id : int
+        Id of the report.
+    index : int
+        Artifact index whose override is removed.
+    session_factory : Callable[..., ContextManager[Session]]
+        Factory yielding a SQLAlchemy session.
+
+    Returns
+    -------
+    dict
+        ``{"status": "ok"}``.
+
+    Raises
+    ------
+    HTTPException
+        If the report does not exist.
+    """
+    with session_factory() as db:
+        report = db.get(Report, report_id)
+        if report is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Report not found"
+            )
+        overrides = dict(report.plot_overrides or {})
+        overrides.pop(str(index), None)
+        report.plot_overrides = overrides or None
+        db.commit()
+    return {"status": "ok"}
 
 
 @router.delete("/{report_id}")

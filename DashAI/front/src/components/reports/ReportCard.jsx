@@ -14,7 +14,11 @@ import { useTheme } from "@mui/material/styles";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useTranslation } from "react-i18next";
 
-import { getReportArtifacts } from "../../api/report";
+import {
+  getReportArtifacts,
+  resetReportPlotOverride,
+  saveReportPlotOverride,
+} from "../../api/report";
 import ArtifactList from "../shared/ArtifactList";
 
 /** Status codes shared with the backend ReportStatus enum. */
@@ -29,6 +33,22 @@ const STATUS = {
 /** How often an unfinished report re-reads its artifacts. */
 const POLL_INTERVAL_MS = 3000;
 
+/** Collect the indexes of artifacts the backend flagged as edited. */
+function collectOverridden(items) {
+  const indexes = [];
+  const walk = (list) => {
+    list.forEach((item) => {
+      if (item.type === "grouped") {
+        (item.groups ?? []).forEach((group) => walk(group.artifacts ?? []));
+      } else if (item.overridden) {
+        indexes.push(item.index);
+      }
+    });
+  };
+  walk(items);
+  return indexes;
+}
+
 /**
  * One computed report: its name, the split it describes, and its
  * artifacts. Polls only while the job is outstanding, so a settled card makes
@@ -40,11 +60,17 @@ export default function ReportCard({ report, displayName, onDelete }) {
   const [artifacts, setArtifacts] = useState([]);
   const [loading, setLoading] = useState(report.status === STATUS.FINISHED);
   const [status, setStatus] = useState(report.status);
+  // Which artifacts carry a saved edit, so each one can offer a reset. Seeded
+  // from the response rather than tracked only from this session's saves, so a
+  // reload still shows the edit as overridden.
+  const [overriddenIndexes, setOverriddenIndexes] = useState([]);
 
   const fetchArtifacts = useCallback(async () => {
     try {
       const response = await getReportArtifacts(report.id);
-      setArtifacts(response ?? []);
+      const items = response ?? [];
+      setArtifacts(items);
+      setOverriddenIndexes(collectOverridden(items));
     } catch (error) {
       console.error("Error fetching report artifacts:", error);
     }
@@ -69,6 +95,28 @@ export default function ReportCard({ report, displayName, onDelete }) {
     const handle = setInterval(fetchArtifacts, POLL_INTERVAL_MS);
     return () => clearInterval(handle);
   }, [running, fetchArtifacts]);
+
+  const handleSaveOverride = async (index, figure) => {
+    try {
+      await saveReportPlotOverride(report.id, index, figure);
+      setOverriddenIndexes((prev) =>
+        prev.includes(index) ? prev : [...prev, index],
+      );
+    } catch (error) {
+      console.error("Error saving report plot override:", error);
+    }
+  };
+
+  const handleResetOverride = async (index) => {
+    try {
+      await resetReportPlotOverride(report.id, index);
+      setOverriddenIndexes((prev) => prev.filter((i) => i !== index));
+      // Pull the computed figure back so the plot reverts immediately.
+      await fetchArtifacts();
+    } catch (error) {
+      console.error("Error resetting report plot override:", error);
+    }
+  };
 
   return (
     <Card
@@ -119,7 +167,14 @@ export default function ReportCard({ report, displayName, onDelete }) {
             {t("reports:message.noData")}
           </Typography>
         ) : (
-          <ArtifactList items={artifacts} />
+          <ArtifactList
+            items={artifacts}
+            ctx={{
+              onSaveOverride: handleSaveOverride,
+              onResetOverride: handleResetOverride,
+              overriddenIndexes,
+            }}
+          />
         )}
       </CardContent>
     </Card>

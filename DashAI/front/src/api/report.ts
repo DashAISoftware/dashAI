@@ -41,3 +41,20 @@ export const createReport = async (
 export const deleteReport = async (reportId: number): Promise<void> => {
   await api.delete(`/v1/report/${reportId}`);
 };
+
+/** Persist an edited plotly figure so it survives a reload. */
+export const saveReportPlotOverride = async (
+  reportId: number,
+  index: number,
+  figure: unknown,
+): Promise<void> => {
+  await api.put(`/v1/report/${reportId}/override`, { index, figure });
+};
+
+/** Drop a stored edit, reverting the artifact to its computed figure. */
+export const resetReportPlotOverride = async (
+  reportId: number,
+  index: number,
+): Promise<void> => {
+  await api.delete(`/v1/report/${reportId}/override/${index}`);
+};

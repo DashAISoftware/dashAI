@@ -485,6 +485,61 @@ def normalize_artifacts(
     return [normalize_item(item) for item in items]
 
 
+def apply_plot_overrides(
+    artifacts: List[Dict[str, Any]], overrides: Optional[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Replace plotly artifact payloads with stored edited figures.
+
+    Leaves nested inside a ``"grouped"`` selector, i.e. under each group's
+    ``artifacts``, are matched by their stamped ``"index"`` just like top level
+    ones, so a group's plotly artifact can be edited and reset the same way as
+    a top level one.
+
+    Parameters
+    ----------
+    artifacts : List[Dict[str, Any]]
+        Normalized artifact/grouped dicts from :func:`normalize_artifacts`.
+    overrides : Optional[Dict[str, Any]]
+        Mapping of ``str(index)`` to an edited plotly figure, either a JSON
+        string or a dict.
+
+    Returns
+    -------
+    List[Dict[str, Any]]
+        The artifacts with overridden plotly payloads applied.
+    """
+    if not overrides:
+        return artifacts
+
+    import json
+
+    leaves_by_index: Dict[Any, Dict[str, Any]] = {}
+
+    def collect_leaves(items: List[Dict[str, Any]]) -> None:
+        for item in items:
+            if item.get("type") == "grouped":
+                for group in item.get("groups", []):
+                    collect_leaves(group.get("artifacts", []))
+            else:
+                leaves_by_index[item.get("index")] = item
+
+    collect_leaves(artifacts)
+
+    for key, figure in overrides.items():
+        try:
+            index = int(key)
+        except (TypeError, ValueError):
+            continue
+        leaf = leaves_by_index.get(index)
+        if leaf is not None and leaf.get("type") == "plotly":
+            leaf["payload"] = figure if isinstance(figure, str) else json.dumps(figure)
+            # Flag so the frontend renders the user's edited figure verbatim
+            # instead of re-applying the app theme (which would clobber the
+            # edited colors/background).
+            leaf["overridden"] = True
+    return artifacts
+
+
 def build_tabular_input_artifact(
     feature_names: List[str],
     instance_values: List[Any],
