@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 
 import { getReportArtifacts, saveReportPlotOverride } from "../../api/report";
 import ArtifactList from "../shared/ArtifactList";
+import RunStatusDot from "../shared/RunStatusDot";
 import { patchArtifactPayload } from "../../utils/artifactOverrides";
 
 /** Status codes shared with the backend ReportStatus enum. */
@@ -104,8 +105,19 @@ export default function ReportCard({ report, displayName, onDelete }) {
             mb: 2,
           }}
         >
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+            }}
+          >
             {displayName || report.report_name}
+            {/* ReportStatus mirrors the explainer and run status codes, so the
+                shared dot maps them without a second colour table. */}
+            <RunStatusDot status={status} />
           </Typography>
           <Chip size="small" label={t(`reports:label.split_${report.split}`)} />
           <Box sx={{ flex: 1 }} />
