@@ -36,16 +36,32 @@ export default function TraceForm({
   const showMarker = !isScatter || mode === "" || mode.includes("markers");
 
   // px.imshow() (correlation matrix, density heatmap) sets coloraxis: "coloraxis"
-  // on the trace, so the colorbar lives in layout.coloraxis.colorbar, not trace.colorbar.
-  // Other heatmap types that don't reference a shared coloraxis keep their colorbar
-  // directly on the trace.
-  const colorbarInLayout = Boolean(trace.coloraxis);
-  const colorbarSrc = colorbarInLayout
+  // on the trace, so its colorscale and colorbar live under layout.coloraxis and
+  // the trace's own fields are ignored. A figure built straight from go.Heatmap
+  // (the confusion matrix report) references no shared axis and reads both off
+  // the trace instead, so every write below has to follow the same rule or it
+  // lands on a key nothing renders from.
+  const usesSharedColorAxis = Boolean(trace.coloraxis);
+  const colorbarSrc = usesSharedColorAxis
     ? layout.coloraxis?.colorbar
     : trace.colorbar;
+  const colorscaleSrc = usesSharedColorAxis
+    ? layout.coloraxis?.colorscale
+    : trace.colorscale;
+
+  const setColorscale = (newScale) => {
+    if (usesSharedColorAxis) {
+      handleChange("coloraxis", {
+        ...layout.coloraxis,
+        colorscale: newScale,
+      });
+    } else {
+      handleTraceChange(index, "colorscale", newScale);
+    }
+  };
 
   const setColorbarField = (field, value) => {
-    if (colorbarInLayout) {
+    if (usesSharedColorAxis) {
       handleChange("coloraxis", {
         ...layout.coloraxis,
         colorbar: { ...layout.coloraxis?.colorbar, [field]: value },
@@ -125,15 +141,7 @@ export default function TraceForm({
       {/* --- Heatmap Options --- */}
       {usesColormap(trace) && (
         <>
-          <ColorscaleSelector
-            value={layout.coloraxis?.colorscale}
-            onChange={(newScale) =>
-              handleChange("coloraxis", {
-                ...layout.coloraxis,
-                colorscale: newScale,
-              })
-            }
-          />
+          <ColorscaleSelector value={colorscaleSrc} onChange={setColorscale} />
 
           <DebouncedColorPicker
             label={t("datasets:label.colorbarBorderColor")}
