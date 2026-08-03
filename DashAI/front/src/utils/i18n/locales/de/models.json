@@ -178,7 +178,8 @@
     "lowerIsBetter": "Niedriger ist besser",
     "bestModel": "Bestes",
     "editRun": "Durchlauf bearbeiten",
-    "chartType": "Diagrammtyp"
+    "chartType": "Diagrammtyp",
+    "reports": "Berichte"
   },
   "message": {
     "skippedUndownloadedRuns": "Durchläufe mit nicht heruntergeladenem Modell wurden übersprungen. Lade das Modell zuerst herunter.",

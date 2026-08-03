@@ -1,0 +1,34 @@
+{
+  "label": {
+    "availableReports": "Verfügbare Berichte",
+    "searchReports": "Berichte suchen",
+    "noReportsMatchSearch": "Kein Bericht passt zur Suche",
+    "noCompatibleReportsFound": "Keine kompatiblen Berichte gefunden",
+    "split": "Aufteilung",
+    "split_train": "Training",
+    "split_validation": "Validierung",
+    "split_test": "Test",
+    "parameters": "Parameter",
+    "newReport": "Neuer Bericht",
+    "selectSplit": "Aufteilung wählen",
+    "configureParameters": "Parameter konfigurieren"
+  },
+  "button": {
+    "create": "Erstellen",
+    "delete": "Bericht löschen"
+  },
+  "message": {
+    "created": "Bericht erstellt",
+    "computing": "Wird berechnet",
+    "failed": "Dieser Bericht konnte nicht berechnet werden",
+    "noData": "Dieser Bericht hat keine Ausgabe erzeugt",
+    "empty": "Noch keine Berichte. Fügen Sie einen über das rechte Panel hinzu.",
+    "noParameters": "Dieser Bericht hat keine konfigurierbaren Parameter.",
+    "splitHelp": "Welchen Vorhersagesatz der Bericht beschreibt."
+  },
+  "error": {
+    "fetch": "Die Berichte konnten nicht geladen werden",
+    "create": "Der Bericht konnte nicht erstellt werden",
+    "delete": "Der Bericht konnte nicht gelöscht werden"
+  }
+}

@@ -178,7 +178,8 @@
     "lowerIsBetter": "越低越好",
     "bestModel": "最优",
     "editRun": "编辑运行",
-    "chartType": "图表类型"
+    "chartType": "图表类型",
+    "reports": "报告"
   },
   "message": {
     "skippedUndownloadedRuns": "已跳过模型未下载的运行。请先下载模型。",

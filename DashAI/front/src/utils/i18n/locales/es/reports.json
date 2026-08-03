@@ -1,0 +1,34 @@
+{
+  "label": {
+    "availableReports": "Reportes Disponibles",
+    "searchReports": "Buscar reportes",
+    "noReportsMatchSearch": "Ningún reporte coincide con la búsqueda",
+    "noCompatibleReportsFound": "No se encontraron reportes compatibles",
+    "split": "Partición",
+    "split_train": "Entrenamiento",
+    "split_validation": "Validación",
+    "split_test": "Prueba",
+    "parameters": "Parámetros",
+    "newReport": "Nuevo Reporte",
+    "selectSplit": "Seleccionar partición",
+    "configureParameters": "Configurar parámetros"
+  },
+  "button": {
+    "create": "Crear",
+    "delete": "Eliminar reporte"
+  },
+  "message": {
+    "created": "Reporte creado",
+    "computing": "Calculando",
+    "failed": "Este reporte no se pudo calcular",
+    "noData": "Este reporte no produjo resultados",
+    "empty": "Aún no hay reportes. Agregue uno desde el panel de la derecha.",
+    "noParameters": "Este reporte no tiene parámetros para configurar.",
+    "splitHelp": "Qué conjunto de predicciones describe el reporte."
+  },
+  "error": {
+    "fetch": "No se pudieron cargar los reportes",
+    "create": "No se pudo crear el reporte",
+    "delete": "No se pudo eliminar el reporte"
+  }
+}

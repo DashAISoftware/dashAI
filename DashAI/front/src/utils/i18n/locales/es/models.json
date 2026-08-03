@@ -181,7 +181,8 @@
     "lowerIsBetter": "Menor es mejor",
     "bestModel": "Mejor",
     "editRun": "Editar ejecución",
-    "chartType": "Tipo de gráfico"
+    "chartType": "Tipo de gráfico",
+    "reports": "Reportes"
   },
   "message": {
     "skippedUndownloadedRuns": "Se omitieron las ejecuciones cuyo modelo no está descargado. Descarga el modelo primero.",

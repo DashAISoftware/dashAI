@@ -1,0 +1,34 @@
+{
+  "label": {
+    "availableReports": "Relatórios Disponíveis",
+    "searchReports": "Buscar relatórios",
+    "noReportsMatchSearch": "Nenhum relatório corresponde à busca",
+    "noCompatibleReportsFound": "Nenhum relatório compatível encontrado",
+    "split": "Partição",
+    "split_train": "Treino",
+    "split_validation": "Validação",
+    "split_test": "Teste",
+    "parameters": "Parâmetros",
+    "newReport": "Novo Relatório",
+    "selectSplit": "Selecionar partição",
+    "configureParameters": "Configurar parâmetros"
+  },
+  "button": {
+    "create": "Criar",
+    "delete": "Excluir relatório"
+  },
+  "message": {
+    "created": "Relatório criado",
+    "computing": "Calculando",
+    "failed": "Este relatório falhou ao calcular",
+    "noData": "Este relatório não produziu resultados",
+    "empty": "Ainda não há relatórios. Adicione um pelo painel à direita.",
+    "noParameters": "Este relatório não tem parâmetros para configurar.",
+    "splitHelp": "Qual conjunto de previsões o relatório descreve."
+  },
+  "error": {
+    "fetch": "Não foi possível carregar os relatórios",
+    "create": "Não foi possível criar o relatório",
+    "delete": "Não foi possível excluir o relatório"
+  }
+}

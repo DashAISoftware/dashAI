@@ -93,9 +93,25 @@ export function ModelsProvider({ children }) {
   const [runDetailTab, setRunDetailTab] = useState(null);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const [explainerToCreate, setExplainerToCreate] = useState(null);
+  const [reportRefreshTrigger, setReportRefreshTrigger] = useState(0);
+  const [reportToCreate, setReportToCreate] = useState(null);
 
   const triggerExplainerRefresh = useCallback(() => {
     setExplainerRefreshTrigger((prev) => prev + 1);
+  }, []);
+
+  const triggerReportRefresh = useCallback(() => {
+    setReportRefreshTrigger((prev) => prev + 1);
+  }, []);
+
+  // Open the report creation dialog for a given component, mirroring how
+  // openExplainerCreator drives the explainer stepper from the sidebar.
+  const openReportCreator = useCallback((report) => {
+    setReportToCreate(report);
+  }, []);
+
+  const closeReportCreator = useCallback(() => {
+    setReportToCreate(null);
   }, []);
 
   // Open the explainer creation dialog for a given {scope, name}. Shared so both
@@ -207,6 +223,11 @@ export function ModelsProvider({ children }) {
       explainerToCreate,
       openExplainerCreator,
       closeExplainerCreator,
+      reportRefreshTrigger,
+      triggerReportRefresh,
+      reportToCreate,
+      openReportCreator,
+      closeReportCreator,
     }),
     [
       selectedModel,
@@ -266,6 +287,11 @@ export function ModelsProvider({ children }) {
       explainerToCreate,
       openExplainerCreator,
       closeExplainerCreator,
+      reportRefreshTrigger,
+      triggerReportRefresh,
+      reportToCreate,
+      openReportCreator,
+      closeReportCreator,
     ],
   );
 

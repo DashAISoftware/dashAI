@@ -1,0 +1,34 @@
+{
+  "label": {
+    "availableReports": "Available Reports",
+    "searchReports": "Search reports",
+    "noReportsMatchSearch": "No reports match your search",
+    "noCompatibleReportsFound": "No compatible reports found",
+    "split": "Split",
+    "split_train": "Train",
+    "split_validation": "Validation",
+    "split_test": "Test",
+    "parameters": "Parameters",
+    "newReport": "New Report",
+    "selectSplit": "Select split",
+    "configureParameters": "Configure parameters"
+  },
+  "button": {
+    "create": "Create",
+    "delete": "Delete report"
+  },
+  "message": {
+    "created": "Report created",
+    "computing": "Computing",
+    "failed": "This report failed to compute",
+    "noData": "This report produced no output",
+    "empty": "No reports yet. Add one from the panel on the right.",
+    "noParameters": "This report has no parameters to configure.",
+    "splitHelp": "Which prediction set the report describes."
+  },
+  "error": {
+    "fetch": "Could not load the reports",
+    "create": "Could not create the report",
+    "delete": "Could not delete the report"
+  }
+}
