@@ -560,14 +560,12 @@ export default function StatisticalTestsModal({
                   disabled={selectedRuns.length >= 3}
                 >
                   <MenuItem value="two-sided">
-                    {t("models:alternative.twoSided")}
+                    {t("models:label.twoSided")}
                   </MenuItem>
                   <MenuItem value="greater">
-                    {t("models:alternative.greater")}
+                    {t("models:label.greater")}
                   </MenuItem>
-                  <MenuItem value="less">
-                    {t("models:alternative.less")}
-                  </MenuItem>
+                  <MenuItem value="less">{t("models:label.less")}</MenuItem>
                 </Select>
               </FormControl>
               {selectedRuns.length === 2 && (

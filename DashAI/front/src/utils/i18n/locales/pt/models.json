@@ -283,7 +283,12 @@
     "chartType": "Tipo de gráfico",
     "savedTests": "Testes salvos",
     "foldGraphs": "Gráficos de Folds",
-    "nestedCvResults": "Resultados Aninhados"
+    "nestedCvResults": "Resultados Aninhados",
+    "outerFoldFetch": "Folds Externos",
+    "finalFoldFetch": "Folds Finais",
+    "twoSided": "Ambos os lados (Modelo 1 ≠ Modelo 2)",
+    "greater": "Maior (Modelo 1 > Modelo 2)",
+    "less": "Menor (Modelo 1 < Modelo 2)"
   },
   "message": {
     "skippedUndownloadedRuns": "Execuções cujo modelo não está baixado foram ignoradas. Baixe o modelo primeiro.",
@@ -337,11 +342,8 @@
     "computationalCostNormalHPO": "Custo computacional: Padrão O(Folds x Trials)",
     "innerFoldsOutOfRange": "Para validação cruzada aninhada, o número de folds internos deve estar entre 2 e o comprimento dos folds externos ({{max}}). Por favor, ajuste o número de folds internos.",
     "noOuterMetrics": "Não há métricas de folds externos para esta execução.",
-    "nestedCvResultsOnlyForNestedCv": "Os resultados de validação cruzada aninhada estão disponíveis apenas quando ativados na configuração de otimização de hiperparâmetros. Edite a configuração da execução para habilitar isso."
-  },
-  "alternative": {
-    "twoSided": "Ambos os lados (Modelo 1 ≠ Modelo 2)",
-    "greater": "Maior (Modelo 1 > Modelo 2)",
-    "less": "Menor (Modelo 1 < Modelo 2)"
+    "nestedCvResultsOnlyForNestedCv": "Os resultados de validação cruzada aninhada estão disponíveis apenas quando ativados na configuração de otimização de hiperparâmetros. Edite a configuração da execução para habilitar isso.",
+    "outerFoldFetch": "Métricas obtidas a partir dos folds externos da validação cruzada aninhada.",
+    "finalFoldFetch": "Métricas obtidas da avaliação final do modelo após a validação cruzada aninhada."
   }
 }

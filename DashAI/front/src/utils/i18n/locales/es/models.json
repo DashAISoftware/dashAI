@@ -257,7 +257,7 @@
     "qqPlot": "Gráfico Q-Q",
     "linesPlot": "Gráfico de Líneas",
     "histogramPlot": "Histograma",
-    "foldNumber": "Número de Fold",
+    "foldNumber": "Número de Pliegue",
     "theoricalQuantiles": "Cuantiles Teóricos",
     "sampleQuantiles": "Cuantiles de la Muestra",
     "metricValue": "Valor de la Métrica",
@@ -283,7 +283,12 @@
     "chartType": "Tipo de gráfico",
     "savedTests": "Pruebas guardadas",
     "foldGraphs": "Gráficos de Pliegues",
-    "nestedCvResults": "Resultados Anidados"
+    "nestedCvResults": "Resultados Anidados",
+    "outerFoldFetch": "Pliegues Externos",
+    "finalFoldFetch": "Pliegues Finales",
+    "twoSided": "Ambos lados (Modelo 1 ≠ Modelo 2)",
+    "greater": "Mayor (Modelo 1 > Modelo 2)",
+    "less": "Menor (Modelo 1 < Modelo 2)"
   },
   "message": {
     "skippedUndownloadedRuns": "Se omitieron las ejecuciones cuyo modelo no está descargado. Descarga el modelo primero.",
@@ -337,11 +342,8 @@
     "hypothesis_failToReject": "no rechazamos",
     "hypothesisDecision": "Con un p-valor de {{pValue}}, {{decision}} la hipótesis nula a un nivel de significancia de {{alpha}}.",
     "noOuterMetrics": "No hay métricas de outer folds para esta run.",
-    "nestedCvResultsOnlyForNestedCv": "Los resultados de validación cruzada anidada solo están disponibles cuando se activa en la configuración de optimización de hiperparámetros. Edite la configuración del run para habilitar esto."
-  },
-  "alternative": {
-    "twoSided": "Ambos lados (Modelo 1 ≠ Modelo 2)",
-    "greater": "Mayor (Modelo 1 > Modelo 2)",
-    "less": "Menor (Modelo 1 < Modelo 2)"
+    "nestedCvResultsOnlyForNestedCv": "Los resultados de validación cruzada anidada solo están disponibles cuando se activa en la configuración de optimización de hiperparámetros. Edite la configuración del run para habilitar esto.",
+    "outerFoldFetch": "Métricas obtenidas de los pliegues externos de validación cruzada anidada.",
+    "finalFoldFetch": "Métricas obtenidas de la evaluación final del modelo después de la validación cruzada anidada."
   }
 }

@@ -549,17 +549,17 @@ export default function FoldMetricsChart({ run }) {
           >
             <ToggleButton
               value="default"
-              title="Folds used during final HPO training to produce the model"
+              title={t("models:message.finalFoldFetch")}
               sx={{ px: 1.5 }}
             >
-              Default
+              {t("models:label.finalFoldFetch")}
             </ToggleButton>
             <ToggleButton
               value="outer"
-              title="Outer folds — reliable generalization estimate from nested CV"
+              title={t("models:message.outerFoldFetch")}
               sx={{ px: 1.5 }}
             >
-              Outer
+              {t("models:label.outerFoldFetch")}
             </ToggleButton>
           </PillToggleButtonGroup>
         )}

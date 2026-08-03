@@ -280,7 +280,12 @@
     "chartType": "Chart type",
     "savedTests": "Saved Tests",
     "foldGraphs": "Fold Graphs",
-    "nestedCvResults": "Nested results"
+    "nestedCvResults": "Nested results",
+    "outerFoldFetch": "Outer Folds",
+    "finalFoldFetch": "Final Folds",
+    "twoSided": "Two-sided (Model 1 ≠ Model 2)",
+    "greater": "Greater (Model 1 > Model 2)",
+    "less": "Less (Model 1 < Model 2)"
   },
   "message": {
     "skippedUndownloadedRuns": "Skipped runs whose model is not downloaded. Download the model first.",
@@ -331,11 +336,8 @@
     "hypothesis_failToReject": "fail to reject",
     "hypothesisDecision": "With a p-value of {{pValue}}, we {{decision}} the null hypothesis at the alpha level of {{alpha}}.",
     "noOuterMetrics": "There are no outer fold metrics for this run.",
-    "nestedCvResultsOnlyForNestedCv": "Nested cross validation results are only available when activated in the hyperparameter optimization configuration. Edit the run configuration to enable this."
-  },
-  "alternative": {
-    "twoSided": "Two-sided (Model 1 ≠ Model 2)",
-    "greater": "Greater (Model 1 > Model 2)",
-    "less": "Less (Model 1 < Model 2)"
+    "nestedCvResultsOnlyForNestedCv": "Nested cross validation results are only available when activated in the hyperparameter optimization configuration. Edit the run configuration to enable this.",
+    "outerFoldFetch": "Metrics obtained from the outer folds of nested cross validation.",
+    "finalFoldFetch": "Metrics obtained from the final model evaluation after nested cross validation."
   }
 }
