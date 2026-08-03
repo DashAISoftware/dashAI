@@ -11,6 +11,8 @@ EXPECTED_UNITS = {
     "EvaluateModelUnit",
     "SaveModelUnit",
     "ApplyConverterUnit",
+    "FitConverterUnit",
+    "TransformDatasetUnit",
     "SaveDatasetUnit",
 }
 
@@ -52,6 +54,16 @@ def test_unit_schemas_describe_their_configuration(units):
     assert "optimizer" in units["FitModelUnit"]["schema"]["properties"]
     assert set(units["ApplyConverterUnit"]["schema"]["properties"]) == {
         "converter",
+        "scope",
+        "target",
+    }
+    assert set(units["FitConverterUnit"]["schema"]["properties"]) == {
+        "converter",
+        "scope",
+        "target",
+    }
+    # No converter to pick: it arrives already fitted through the context.
+    assert set(units["TransformDatasetUnit"]["schema"]["properties"]) == {
         "scope",
         "target",
     }
