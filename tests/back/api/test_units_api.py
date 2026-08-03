@@ -14,6 +14,19 @@ EXPECTED_UNITS = {
     "FitConverterUnit",
     "TransformDatasetUnit",
     "SaveDatasetUnit",
+    "RunExplorationUnit",
+    "SaveExplorationUnit",
+    "LoadTrainedModelUnit",
+    "LoadTrainingDatasetUnit",
+    "BuildManualInputUnit",
+    "PredictUnit",
+    "SavePredictionUnit",
+    "LoadRunModelUnit",
+    "BuildGlobalExplainerUnit",
+    "BuildLocalExplainerUnit",
+    "PrepareExplanationDataUnit",
+    "GenerateGlobalExplanationUnit",
+    "GenerateLocalExplanationUnit",
 }
 
 
@@ -69,6 +82,32 @@ def test_unit_schemas_describe_their_configuration(units):
     }
     # SaveDatasetUnit is configuration-free: it saves where the load said.
     assert units["SaveDatasetUnit"]["schema"]["properties"] == {}
+    assert set(units["RunExplorationUnit"]["schema"]["properties"]) == {
+        "explorer_id",
+        "explorer",
+    }
+    # SaveExplorationUnit only picks the destination; how the result is
+    # serialised belongs to the explorer that produced it.
+    assert set(units["SaveExplorationUnit"]["schema"]["properties"]) == {"explorer_id"}
+    assert set(units["LoadTrainedModelUnit"]["schema"]["properties"]) == {"run_id"}
+    assert set(units["PredictUnit"]["schema"]["properties"]) == {
+        "task_name",
+        "input_columns",
+        "output_columns",
+    }
+    assert set(units["SavePredictionUnit"]["schema"]["properties"]) == {
+        "input_columns",
+        "output_columns",
+    }
+    assert set(units["BuildGlobalExplainerUnit"]["schema"]["properties"]) == {
+        "explainer"
+    }
+    assert set(units["BuildLocalExplainerUnit"]["schema"]["properties"]) == {
+        "explainer"
+    }
+    assert set(units["GenerateGlobalExplanationUnit"]["schema"]["properties"]) == {
+        "explainer_id"
+    }
 
 
 def test_component_fields_tell_the_front_which_components_to_offer(units):
@@ -81,10 +120,23 @@ def test_component_fields_tell_the_front_which_components_to_offer(units):
     model = units["BuildModelUnit"]["schema"]["properties"]["model"]
     optimizer = units["FitModelUnit"]["schema"]["properties"]["optimizer"]
     converter = units["ApplyConverterUnit"]["schema"]["properties"]["converter"]
+    explorer = units["RunExplorationUnit"]["schema"]["properties"]["explorer"]
 
     assert model["parent"] == "BaseModel"
     assert optimizer["parent"] == "BaseOptimizer"
     assert converter["parent"] == "BaseConverter"
+    assert explorer["parent"] == "BaseExplorer"
+
+    # Global and local explainers are separate registries with separate base
+    # classes, and a component field carries a single parent hint. Hence two
+    # sibling units with one required field each: making a single field cover
+    # both scopes would need it to be optional, and an optional component field
+    # is emitted as an anyOf, which hides the hint from the front — that is what
+    # the assertions below would catch.
+    global_explainer = units["BuildGlobalExplainerUnit"]["schema"]["properties"]
+    local_explainer = units["BuildLocalExplainerUnit"]["schema"]["properties"]
+    assert global_explainer["explainer"]["parent"] == "BaseGlobalExplainer"
+    assert local_explainer["explainer"]["parent"] == "BaseLocalExplainer"
     assert set(model["properties"]) == {"component", "params"}
     assert set(converter["properties"]) == {"component", "params"}
 

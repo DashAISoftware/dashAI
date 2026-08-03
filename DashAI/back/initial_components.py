@@ -352,14 +352,31 @@ from DashAI.back.tasks.translation_task import TranslationTask
 
 # Units
 from DashAI.back.units.apply_converter_unit import ApplyConverterUnit
+from DashAI.back.units.build_global_explainer_unit import BuildGlobalExplainerUnit
+from DashAI.back.units.build_local_explainer_unit import BuildLocalExplainerUnit
+from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
 from DashAI.back.units.build_model_unit import BuildModelUnit
 from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
 from DashAI.back.units.fit_converter_unit import FitConverterUnit
 from DashAI.back.units.fit_model_unit import FitModelUnit
+from DashAI.back.units.generate_global_explanation_unit import (
+    GenerateGlobalExplanationUnit,
+)
+from DashAI.back.units.generate_local_explanation_unit import (
+    GenerateLocalExplanationUnit,
+)
 from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
+from DashAI.back.units.load_run_model_unit import LoadRunModelUnit
+from DashAI.back.units.load_trained_model_unit import LoadTrainedModelUnit
+from DashAI.back.units.load_training_dataset_unit import LoadTrainingDatasetUnit
+from DashAI.back.units.predict_unit import PredictUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
+from DashAI.back.units.prepare_explanation_data_unit import PrepareExplanationDataUnit
+from DashAI.back.units.run_exploration_unit import RunExplorationUnit
 from DashAI.back.units.save_dataset_unit import SaveDatasetUnit
+from DashAI.back.units.save_exploration_unit import SaveExplorationUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
+from DashAI.back.units.save_prediction_unit import SavePredictionUnit
 from DashAI.back.units.transform_dataset_unit import TransformDatasetUnit
 
 logging.basicConfig(level=logging.DEBUG)
@@ -538,6 +555,19 @@ def get_initial_components():
         FitConverterUnit,
         TransformDatasetUnit,
         SaveDatasetUnit,
+        RunExplorationUnit,
+        SaveExplorationUnit,
+        LoadTrainedModelUnit,
+        LoadTrainingDatasetUnit,
+        BuildManualInputUnit,
+        PredictUnit,
+        SavePredictionUnit,
+        LoadRunModelUnit,
+        BuildGlobalExplainerUnit,
+        BuildLocalExplainerUnit,
+        PrepareExplanationDataUnit,
+        GenerateGlobalExplanationUnit,
+        GenerateLocalExplanationUnit,
         # Explainers
         ContrastiveShap,
         DiceCounterfactual,

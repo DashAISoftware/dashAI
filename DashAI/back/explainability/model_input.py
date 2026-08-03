@@ -17,10 +17,48 @@ that both live in the same space, and must query the model through
 the already prepared matrix a second time.
 """
 
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+def as_shap_predictor(model: Any) -> Callable:
+    """Wrap ``model.predict`` so SHAP receives a plain function, not a method.
+
+    SHAP suppresses scikit-learn's "X does not have valid feature names"
+    warning by blanking ``feature_names_in_`` on whatever object the callable
+    is bound to (``shap.utils._legacy.convert_to_model``). It reaches that
+    object through ``__self__``, so it only does this when handed a *bound
+    method*, and it assumes the attribute is writable.
+
+    That assumption does not hold for every model DashAI ships: the LightGBM
+    and XGBoost wrappers inherit ``feature_names_in_`` from their upstream
+    estimator as a read-only ``property``, so the assignment raises
+    ``AttributeError: property 'feature_names_in_' ... has no setter`` and the
+    explanation fails before it starts.
+
+    Handing over a plain closure instead leaves ``__self__`` absent, so SHAP
+    skips that step entirely — a function is SHAP's primary documented
+    interface for ``model``. The only thing lost is the suppression of a
+    cosmetic scikit-learn warning.
+
+    Parameters
+    ----------
+    model : Any
+        The trained model being explained.
+
+    Returns
+    -------
+    Callable
+        A one-argument function calling ``model.predict`` positionally, the
+        same way SHAP calls it today.
+    """
+
+    def predict(x):
+        return model.predict(x)
+
+    return predict
 
 
 def prepare_model_input(model: Any, dataset: "DashAIDataset") -> "DashAIDataset":
