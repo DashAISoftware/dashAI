@@ -14,12 +14,9 @@ import { useTheme } from "@mui/material/styles";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useTranslation } from "react-i18next";
 
-import {
-  getReportArtifacts,
-  resetReportPlotOverride,
-  saveReportPlotOverride,
-} from "../../api/report";
+import { getReportArtifacts, saveReportPlotOverride } from "../../api/report";
 import ArtifactList from "../shared/ArtifactList";
+import { patchArtifactPayload } from "../../utils/artifactOverrides";
 
 /** Status codes shared with the backend ReportStatus enum. */
 const STATUS = {
@@ -33,22 +30,6 @@ const STATUS = {
 /** How often an unfinished report re-reads its artifacts. */
 const POLL_INTERVAL_MS = 3000;
 
-/** Collect the indexes of artifacts the backend flagged as edited. */
-function collectOverridden(items) {
-  const indexes = [];
-  const walk = (list) => {
-    list.forEach((item) => {
-      if (item.type === "grouped") {
-        (item.groups ?? []).forEach((group) => walk(group.artifacts ?? []));
-      } else if (item.overridden) {
-        indexes.push(item.index);
-      }
-    });
-  };
-  walk(items);
-  return indexes;
-}
-
 /**
  * One computed report: its name, the split it describes, and its
  * artifacts. Polls only while the job is outstanding, so a settled card makes
@@ -60,17 +41,11 @@ export default function ReportCard({ report, displayName, onDelete }) {
   const [artifacts, setArtifacts] = useState([]);
   const [loading, setLoading] = useState(report.status === STATUS.FINISHED);
   const [status, setStatus] = useState(report.status);
-  // Which artifacts carry a saved edit, so each one can offer a reset. Seeded
-  // from the response rather than tracked only from this session's saves, so a
-  // reload still shows the edit as overridden.
-  const [overriddenIndexes, setOverriddenIndexes] = useState([]);
 
   const fetchArtifacts = useCallback(async () => {
     try {
       const response = await getReportArtifacts(report.id);
-      const items = response ?? [];
-      setArtifacts(items);
-      setOverriddenIndexes(collectOverridden(items));
+      setArtifacts(response ?? []);
     } catch (error) {
       console.error("Error fetching report artifacts:", error);
     }
@@ -99,31 +74,25 @@ export default function ReportCard({ report, displayName, onDelete }) {
   const handleSaveOverride = async (index, figure) => {
     try {
       await saveReportPlotOverride(report.id, index, figure);
-      setOverriddenIndexes((prev) =>
-        prev.includes(index) ? prev : [...prev, index],
+      // Keep the fetched list in step with what was just persisted, so a
+      // grouped selector switching entry and back still shows the edit.
+      setArtifacts((prev) =>
+        patchArtifactPayload(prev, index, JSON.stringify(figure)),
       );
     } catch (error) {
       console.error("Error saving report plot override:", error);
     }
   };
 
-  const handleResetOverride = async (index) => {
-    try {
-      await resetReportPlotOverride(report.id, index);
-      setOverriddenIndexes((prev) => prev.filter((i) => i !== index));
-      // Pull the computed figure back so the plot reverts immediately.
-      await fetchArtifacts();
-    } catch (error) {
-      console.error("Error resetting report plot override:", error);
-    }
-  };
-
+  // Same surface the explainer cards use, so the two operation tabs read as
+  // one family rather than two.
   return (
     <Card
-      elevation={0}
+      variant="outlined"
       sx={{
-        border: `1px solid ${theme.palette.ui.border}`,
-        bgcolor: theme.palette.ui.box,
+        bgcolor: "background.paper",
+        borderColor: theme.palette.ui.border,
+        borderRadius: 1,
       }}
     >
       <CardContent>
@@ -169,11 +138,7 @@ export default function ReportCard({ report, displayName, onDelete }) {
         ) : (
           <ArtifactList
             items={artifacts}
-            ctx={{
-              onSaveOverride: handleSaveOverride,
-              onResetOverride: handleResetOverride,
-              overriddenIndexes,
-            }}
+            ctx={{ onSaveOverride: handleSaveOverride }}
           />
         )}
       </CardContent>

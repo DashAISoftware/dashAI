@@ -50,11 +50,3 @@ export const saveReportPlotOverride = async (
 ): Promise<void> => {
   await api.put(`/v1/report/${reportId}/override`, { index, figure });
 };
-
-/** Drop a stored edit, reverting the artifact to its computed figure. */
-export const resetReportPlotOverride = async (
-  reportId: number,
-  index: number,
-): Promise<void> => {
-  await api.delete(`/v1/report/${reportId}/override/${index}`);
-};

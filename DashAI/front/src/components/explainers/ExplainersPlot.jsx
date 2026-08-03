@@ -6,6 +6,7 @@ import { useSnackbar } from "notistack";
 import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
 import ArtifactList from "../shared/ArtifactList";
+import { patchArtifactPayload } from "../../utils/artifactOverrides";
 import ExplainerInstanceTable from "./ExplainerInstanceTable";
 
 /** Wrap legacy plotly JSON strings as plotly artifacts; pass typed dicts through. */
@@ -21,8 +22,6 @@ export default function ExplainersPlot({
   explainer,
   scope,
   onSaveOverride = null,
-  onResetOverride = null,
-  overriddenIndexes = [],
   cacheEntry = null,
   onCacheUpdate = null,
 }) {
@@ -86,12 +85,28 @@ export default function ExplainersPlot({
     return <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>;
   }
 
+  // A grouped selector swaps which artifact sits in each slot, which drops the
+  // viewer's local copy of an edit. Writing the saved figure back into the
+  // fetched list means switching instance and back still shows it.
+  const handleSaveOverride = onSaveOverride
+    ? async (index, figure) => {
+        await onSaveOverride(index, figure);
+        const patched = patchArtifactPayload(
+          items,
+          index,
+          JSON.stringify(figure),
+        );
+        setItems(patched);
+        if (onCacheUpdate) onCacheUpdate({ items: patched });
+      }
+    : null;
+
   // Local explainers pass the explained rows dataset path so their grouped
   // selector shows the instance feature values instead of plain labels.
   return (
     <ArtifactList
       items={items}
-      ctx={{ onSaveOverride, onResetOverride, overriddenIndexes }}
+      ctx={{ onSaveOverride: handleSaveOverride }}
       renderGroupSelector={(selectorProps) => (
         <ExplainerInstanceTable datasetPath={datasetPath} {...selectorProps} />
       )}
@@ -125,8 +140,6 @@ ExplainersPlot.propTypes = {
   }).isRequired,
   scope: PropTypes.string.isRequired,
   onSaveOverride: PropTypes.func,
-  onResetOverride: PropTypes.func,
-  overriddenIndexes: PropTypes.arrayOf(PropTypes.number),
   cacheEntry: PropTypes.shape({
     items: PropTypes.array,
     selectedGroups: PropTypes.object,

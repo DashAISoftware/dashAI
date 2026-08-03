@@ -102,14 +102,3 @@ export const saveExplainerPlotOverride = async (
   );
   return response.data;
 };
-
-export const resetExplainerPlotOverride = async (
-  scope: string,
-  explainerId: number,
-  index: number,
-): Promise<object> => {
-  const response = await api.delete(
-    `/v1/explainer/${scope}/plot/${explainerId}/override/${index}`,
-  );
-  return response.data;
-};

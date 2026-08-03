@@ -18,7 +18,6 @@ import { useNavigate } from "react-router-dom";
 import {
   deleteExplainer,
   saveExplainerPlotOverride,
-  resetExplainerPlotOverride,
 } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
 
@@ -41,10 +40,6 @@ export default function ExplainersCard({
 }) {
   const theme = useTheme();
   const [open, setOpen] = useState(false);
-  const [localOverriddenIndexes, setLocalOverriddenIndexes] = useState([]);
-  const overriddenIndexes = cacheEntry
-    ? (cacheEntry.overriddenIndexes ?? [])
-    : localOverriddenIndexes;
   const { t } = useTranslation(["explainers"]);
   const isRunning = RUNNING_STATUSES.includes(explainer.status);
 
@@ -74,18 +69,6 @@ export default function ExplainersCard({
 
   const handleSaveOverride = async (index, figure) => {
     await saveExplainerPlotOverride(scope, explainer.id, index, figure);
-    const next = overriddenIndexes.includes(index)
-      ? overriddenIndexes
-      : [...overriddenIndexes, index];
-    if (onCacheUpdate) onCacheUpdate({ overriddenIndexes: next });
-    else setLocalOverriddenIndexes(next);
-  };
-
-  const handleResetOverride = async (index) => {
-    await resetExplainerPlotOverride(scope, explainer.id, index);
-    const next = overriddenIndexes.filter((i) => i !== index);
-    if (onCacheUpdate) onCacheUpdate({ overriddenIndexes: next });
-    else setLocalOverriddenIndexes(next);
   };
 
   if (compact) {
@@ -170,8 +153,6 @@ export default function ExplainersCard({
                   explainer={explainer}
                   scope={scope}
                   onSaveOverride={handleSaveOverride}
-                  onResetOverride={handleResetOverride}
-                  overriddenIndexes={overriddenIndexes}
                   cacheEntry={cacheEntry}
                   onCacheUpdate={onCacheUpdate}
                 />
@@ -265,7 +246,6 @@ ExplainersCard.propTypes = {
   displayName: PropTypes.string,
   cacheEntry: PropTypes.shape({
     items: PropTypes.array,
-    overriddenIndexes: PropTypes.arrayOf(PropTypes.number),
     selectedGroups: PropTypes.object,
   }),
   onCacheUpdate: PropTypes.func,

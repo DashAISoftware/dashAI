@@ -5,17 +5,12 @@ import { Box } from "@mui/material";
 import ArtifactViewer from "./ArtifactViewer";
 import ArtifactGroupSelector from "./ArtifactGroupSelector";
 
-/** Build the onSaveEdit/onResetEdit/canReset props shared by every leaf. */
-function leafProps(
-  artifact,
-  { onSaveOverride, onResetOverride, overriddenIndexes } = {},
-) {
+/** Build the onSaveEdit prop shared by every leaf. */
+function leafProps(artifact, { onSaveOverride } = {}) {
   return {
-    canReset: (overriddenIndexes ?? []).includes(artifact.index),
     onSaveEdit: onSaveOverride
       ? (figure) => onSaveOverride(artifact.index, figure)
       : null,
-    onResetEdit: onResetOverride ? () => onResetOverride(artifact.index) : null,
   };
 }
 

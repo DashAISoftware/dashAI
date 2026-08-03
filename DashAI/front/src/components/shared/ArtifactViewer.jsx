@@ -13,7 +13,6 @@ import {
 import DownloadIcon from "@mui/icons-material/Download";
 import EditIcon from "@mui/icons-material/Edit";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
@@ -37,8 +36,6 @@ import { downloadArtifact } from "../../utils/downloadArtifact";
 export default function ArtifactViewer({
   artifact,
   onSaveEdit = null,
-  onResetEdit = null,
-  canReset = false,
   siblingArtifacts = null,
   siblingIndex = 0,
 }) {
@@ -230,20 +227,6 @@ export default function ArtifactViewer({
           <Tooltip title={t("explainers:button.editPlot")}>
             <IconButton size="small" sx={actionButtonSx} onClick={startEdit}>
               <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        )}
-        {canReset && onResetEdit && (
-          <Tooltip title={t("explainers:button.resetPlot")}>
-            <IconButton
-              size="small"
-              sx={actionButtonSx}
-              onClick={() => {
-                setLocalPayload(null);
-                onResetEdit();
-              }}
-            >
-              <RestartAltIcon fontSize="small" />
             </IconButton>
           </Tooltip>
         )}
@@ -463,8 +446,6 @@ ArtifactViewer.propTypes = {
     role: PropTypes.string,
   }).isRequired,
   onSaveEdit: PropTypes.func,
-  onResetEdit: PropTypes.func,
-  canReset: PropTypes.bool,
   siblingArtifacts: PropTypes.array,
   siblingIndex: PropTypes.number,
 };
