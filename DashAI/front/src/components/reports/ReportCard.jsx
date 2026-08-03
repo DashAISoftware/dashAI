@@ -29,9 +29,6 @@ const STATUS = {
   ERROR: 4,
 };
 
-/** How often an unfinished report re-reads its artifacts. */
-const POLL_INTERVAL_MS = 3000;
-
 /**
  * One computed report: its name, the split it describes, and its
  * artifacts. Polls only while the job is outstanding, so a settled card makes
@@ -70,14 +67,11 @@ export default function ReportCard({
   }, [status, fetchArtifacts]);
 
   const running = status === STATUS.DELIVERED || status === STATUS.STARTED;
-
-  // The parent list refreshes rows on its own trigger; this keeps a single
-  // running card honest between those refreshes without a global poll.
-  useEffect(() => {
-    if (!running) return undefined;
-    const handle = setInterval(fetchArtifacts, POLL_INTERVAL_MS);
-    return () => clearInterval(handle);
-  }, [running, fetchArtifacts]);
+  // No poll here on purpose. A running report has no artifacts to fetch yet,
+  // and the parent already polls the list while any report is running, so a
+  // second timer would only double the requests during the window the user is
+  // waiting through. The status arriving from the parent is what flips this
+  // card, and that triggers the fetch above.
 
   const handleSaveOverride = async (index, figure) => {
     try {

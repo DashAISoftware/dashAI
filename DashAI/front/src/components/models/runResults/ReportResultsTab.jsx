@@ -63,8 +63,11 @@ export default function ReportResultsTab({ run, session, refreshTrigger }) {
     }
   }, [run.id, enqueueSnackbar, t]);
 
+  // Only the very first load shows a spinner. Flipping it back on for every
+  // refresh would unmount the whole list and replace it with a spinner each
+  // time a report is added and again when its job lands, which reads as lag
+  // rather than as progress. Later fetches swap the rows in place.
   useEffect(() => {
-    setLoading(true);
     fetchReports().finally(() => setLoading(false));
   }, [fetchReports, refreshTrigger]);
 
