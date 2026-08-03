@@ -5,7 +5,7 @@ import { useSnackbar } from "notistack";
 
 import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
-import ArtifactViewer from "../shared/ArtifactViewer";
+import ArtifactList from "../shared/ArtifactList";
 import ExplainerInstanceTable from "./ExplainerInstanceTable";
 
 /** Wrap legacy plotly JSON strings as plotly artifacts; pass typed dicts through. */
@@ -15,188 +15,6 @@ function parseExplanationArtifacts(items) {
       ? { type: "plotly", payload: item, title: null, role: "explanation" }
       : item,
   );
-}
-
-/** Build the onSaveEdit/onResetEdit/canReset props shared by every leaf. */
-function leafProps(
-  artifact,
-  { onSaveOverride, onResetOverride, overriddenIndexes },
-) {
-  return {
-    canReset: overriddenIndexes.includes(artifact.index),
-    onSaveEdit: onSaveOverride
-      ? (figure) => onSaveOverride(artifact.index, figure)
-      : null,
-    onResetEdit: onResetOverride ? () => onResetOverride(artifact.index) : null,
-  };
-}
-
-/**
- * Lay out a batch of leaf artifacts: the first artifact fills the row beside
- * whatever `leading` element is passed (a selector, or nothing); any further
- * artifacts stack below at full width, most recent first. `siblings` is the
- * full artifact list of the batch so the fullscreen viewer can navigate
- * between them.
- */
-function ArtifactBatch({
-  artifacts,
-  siblings,
-  ctx,
-  leading = null,
-  leadingFlex,
-  leadingMinWidth = 0,
-  siblingOffset = 0,
-}) {
-  // Key by position within the batch, not by artifact.index: switching the
-  // selected group then reuses the same viewer/Plot instance at each slot and
-  // updates it in place (Plotly diffs) instead of unmounting the tall old plot
-  // and mounting a new one, which briefly collapses page height and makes the
-  // window scroll up.
-  //
-  // siblingIndex maps this leaf into `siblings` (which may span every group,
-  // not just this batch) via siblingOffset, so the fullscreen viewer can page
-  // across groups even when each group has a single artifact.
-  const renderLeaf = (artifact, i) => (
-    <ArtifactViewer
-      key={i}
-      artifact={artifact}
-      siblingArtifacts={siblings}
-      siblingIndex={siblingOffset + i}
-      {...leafProps(artifact, ctx)}
-    />
-  );
-
-  const [firstArtifact, ...rest] = artifacts;
-  const stacked = rest.map((artifact, i) => ({ artifact, i: i + 1 })).reverse();
-
-  return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 3, width: "100%" }}
-    >
-      <Box sx={{ display: "flex", gap: 3, alignItems: "stretch" }}>
-        {leading && (
-          <Box
-            sx={{
-              flex: leadingFlex,
-              minWidth: leadingMinWidth,
-              // Flex + stretch so the leading element (a table whose root is
-              // height:100%) fills this cell and matches the first artifact's
-              // height instead of collapsing to its own content.
-              display: "flex",
-              minHeight: 0,
-            }}
-          >
-            {leading}
-          </Box>
-        )}
-        <Box sx={{ flex: 1, minWidth: 0 }}>{renderLeaf(firstArtifact, 0)}</Box>
-      </Box>
-      {stacked.map(({ artifact, i }) => renderLeaf(artifact, i))}
-    </Box>
-  );
-}
-
-ArtifactBatch.propTypes = {
-  artifacts: PropTypes.array.isRequired,
-  siblings: PropTypes.array.isRequired,
-  ctx: PropTypes.object.isRequired,
-  leading: PropTypes.node,
-  leadingFlex: PropTypes.string,
-  leadingMinWidth: PropTypes.number,
-  siblingOffset: PropTypes.number,
-};
-
-/**
- * Render a GroupedArtifacts item: a selector listing every group, beside the
- * selected group's first artifact (with the rest stacked below). Holds its own
- * selection state, so multiple selectors on one card are independent.
- *
- * The selector widget depends on `datasetPath`: local explainers pass the
- * explained rows dataset path so the picker shows the actual instance feature
- * values (the row index selects the group); global explainers omit it and get
- * a plain title list.
- */
-function GroupedArtifactsView({
-  grouped,
-  ctx,
-  datasetPath = null,
-  selected: selectedProp = null,
-  onSelect = null,
-}) {
-  const { t } = useTranslation(["explainers"]);
-  const [localSelected, setLocalSelected] = useState(0);
-  const selected = selectedProp ?? localSelected;
-  const setSelected = onSelect ?? setLocalSelected;
-  const groups = grouped.groups ?? [];
-  if (groups.length === 0) return null;
-
-  const group = groups[selected] ?? groups[0];
-  const titles = groups.map(
-    (g, i) =>
-      g.title ?? t("explainers:label.instanceNumber", { number: i + 1 }),
-  );
-  const wide = Boolean(datasetPath);
-
-  // Fullscreen navigation spans every group's artifacts (flattened), so the
-  // viewer can page across groups even when each group has a single artifact.
-  // The selected group's artifacts occupy the slice starting at `offset`.
-  const allArtifacts = groups.flatMap((g) => g.artifacts);
-  const offset = groups
-    .slice(0, selected)
-    .reduce((n, g) => n + g.artifacts.length, 0);
-
-  // Rendered directly (no height cap): ExplainerInstanceTable's root is
-  // height:100%, so it fills the stretched batch cell and matches the height
-  // of the first artifact beside it, scrolling internally when long.
-  const selector = (
-    <ExplainerInstanceTable
-      datasetPath={datasetPath}
-      titles={titles}
-      selectedIndex={selected}
-      onSelect={setSelected}
-    />
-  );
-
-  return (
-    <ArtifactBatch
-      artifacts={group.artifacts}
-      siblings={allArtifacts}
-      siblingOffset={offset}
-      ctx={ctx}
-      leading={selector}
-      leadingFlex={wide ? "0 0 46%" : "0 0 25%"}
-      leadingMinWidth={wide ? 320 : 220}
-    />
-  );
-}
-
-GroupedArtifactsView.propTypes = {
-  grouped: PropTypes.object.isRequired,
-  ctx: PropTypes.object.isRequired,
-  datasetPath: PropTypes.string,
-  selected: PropTypes.number,
-  onSelect: PropTypes.func,
-};
-
-/**
- * Render one top level response item: a "grouped" selector
- * (`GroupedArtifactsView`) or a plain leaf artifact (shown alone at full
- * width). `datasetPath` is forwarded to grouped items so local explainers get
- * the dataset row picker.
- */
-function renderItem(item, ctx, datasetPath = null, selection = null) {
-  if (item.type === "grouped") {
-    return (
-      <GroupedArtifactsView
-        grouped={item}
-        ctx={ctx}
-        datasetPath={datasetPath}
-        selected={selection ? selection.selected : null}
-        onSelect={selection ? selection.onSelect : null}
-      />
-    );
-  }
-  return <ArtifactViewer artifact={item} {...leafProps(item, ctx)} />;
 }
 
 export default function ExplainersPlot({
@@ -268,33 +86,34 @@ export default function ExplainersPlot({
     return <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>;
   }
 
-  const ctx = { onSaveOverride, onResetOverride, overriddenIndexes };
-
-  // Every top level item renders continuously: a plain artifact at full width,
-  // a "grouped" item as its own self contained selector. Local explainers pass
-  // the explained rows dataset path so their grouped selector shows the
-  // instance feature values instead of plain labels.
+  // Local explainers pass the explained rows dataset path so their grouped
+  // selector shows the instance feature values instead of plain labels.
   return (
-    <Box
-      sx={{ display: "flex", flexDirection: "column", gap: 3, width: "100%" }}
-    >
-      {items.map((item, i) => (
-        <Box key={i}>
-          {renderItem(item, ctx, datasetPath, {
-            selected: cacheEntry ? (cacheEntry.selectedGroups?.[i] ?? 0) : null,
-            onSelect: onCacheUpdate
-              ? (value) =>
-                  onCacheUpdate({
-                    selectedGroups: {
-                      ...(cacheEntry?.selectedGroups ?? {}),
-                      [i]: value,
-                    },
-                  })
-              : null,
-          })}
-        </Box>
-      ))}
-    </Box>
+    <ArtifactList
+      items={items}
+      ctx={{ onSaveOverride, onResetOverride, overriddenIndexes }}
+      renderGroupSelector={(selectorProps) => (
+        <ExplainerInstanceTable datasetPath={datasetPath} {...selectorProps} />
+      )}
+      wideSelector={Boolean(datasetPath)}
+      fallbackGroupTitle={(index) =>
+        t("explainers:label.instanceNumber", { number: index + 1 })
+      }
+      selection={
+        onCacheUpdate
+          ? {
+              selectedFor: (index) => cacheEntry?.selectedGroups?.[index] ?? 0,
+              onSelect: (index, value) =>
+                onCacheUpdate({
+                  selectedGroups: {
+                    ...(cacheEntry?.selectedGroups ?? {}),
+                    [index]: value,
+                  },
+                }),
+            }
+          : null
+      }
+    />
   );
 }
 
