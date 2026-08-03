@@ -15,8 +15,9 @@ const IN_FLIGHT = [1, 2];
 const POLL_INTERVAL_MS = 3000;
 
 /**
- * Lists the evaluation reports created for a run, newest first. New ones
- * are added from the right sidebar, mirroring how explainers are added.
+ * Lists the evaluation reports created for a run, oldest first so the newest
+ * lands at the bottom. New ones are added from the right sidebar, mirroring
+ * how explainers are added and ordered.
  */
 export default function ReportResultsTab({ run, session, refreshTrigger }) {
   const { t } = useTranslation(["reports"]);
@@ -29,7 +30,9 @@ export default function ReportResultsTab({ run, session, refreshTrigger }) {
   const fetchReports = useCallback(async () => {
     try {
       const response = await getReports(run.id);
-      setReports([...response].sort((a, b) => b.id - a.id));
+      // Oldest first, so a newly added report lands at the bottom of the list
+      // the way a newly added explainer does.
+      setReports([...response].sort((a, b) => a.id - b.id));
     } catch (error) {
       console.error("Error fetching reports:", error);
       enqueueSnackbar(t("reports:error.fetch"), { variant: "error" });
