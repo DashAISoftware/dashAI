@@ -5,15 +5,17 @@ import pytest
 from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
-from DashAI.back.core.artifacts import TextArtifact
+from DashAI.back.core.artifacts import ArtifactGroup, GroupedArtifacts, TextArtifact
 from DashAI.back.dependencies.database.models import (
     Dataset,
     GlobalExplainer,
+    LocalExplainer,
     ModelSession,
     Run,
 )
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
+from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.job.explainer_story_job import ExplainerStoryJob
 from DashAI.back.models.base_model import BaseModel
@@ -125,6 +127,65 @@ class StorylessGlobalExplainer(BaseGlobalExplainer):
         return [TextArtifact(payload="a plot summary")]
 
 
+class StoryableLocalExplainer(BaseLocalExplainer):
+    """Local explainer with a deterministic, testable story() per instance."""
+
+    COMPATIBLE_COMPONENTS = ["DummyTask"]
+
+    def __init__(self, model: BaseModel) -> None:
+        self.model = model
+        self.explanation = None
+
+    @classmethod
+    def get_schema(cls):
+        return {}
+
+    def fit(self, dataset, **kwargs):
+        return self
+
+    def explain_instance(self, instances):
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
+        return {"n_instances": to_dashai_dataset(instances).num_rows}
+
+    def plot(self, explanation):
+        groups = [
+            ArtifactGroup(
+                title=f"Instance {i}", artifacts=[TextArtifact(payload=f"plot {i}")]
+            )
+            for i in range(explanation["n_instances"])
+        ]
+        return [GroupedArtifacts(groups=groups)]
+
+    def story(self, explainer_output, prediction_context):
+        group = explainer_output.groups[0]
+        text = group.artifacts[0].payload
+        return f"Local story for '{text}', context rows={prediction_context.num_rows}"
+
+
+class StorylessLocalExplainer(BaseLocalExplainer):
+    """Local explainer that never defines story() at all."""
+
+    COMPATIBLE_COMPONENTS = ["DummyTask"]
+
+    def __init__(self, model: BaseModel) -> None:
+        self.model = model
+        self.explanation = None
+
+    @classmethod
+    def get_schema(cls):
+        return {}
+
+    def fit(self, dataset, **kwargs):
+        return self
+
+    def explain_instance(self, instances):
+        return {}
+
+    def plot(self, explanation):
+        return [TextArtifact(payload="a plot summary")]
+
+
 @pytest.fixture(autouse=True, name="test_registry")
 def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
     container = client.app.container
@@ -135,6 +196,8 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             DummyModel,
             StoryableGlobalExplainer,
             StorylessGlobalExplainer,
+            StoryableLocalExplainer,
+            StorylessLocalExplainer,
             ExplainerJob,
             ExplainerStoryJob,
         ]
@@ -227,6 +290,32 @@ def create_global_explainer(client: TestClient, run_id: int):
         yield global_explainer.id
 
         db.delete(global_explainer)
+        db.commit()
+        db.close()
+
+
+@pytest.fixture(scope="module", name="local_explainer_id")
+def create_local_explainer(client: TestClient, run_id: int, dataset_id: int):
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        local_explainer = LocalExplainer(
+            name="test_story_local",
+            run_id=run_id,
+            explainer_name="StoryableLocalExplainer",
+            dataset_id=dataset_id,
+            scope={"split": "test", "percentage": 100},
+            parameters={},
+            fit_parameters={},
+        )
+        db.add(local_explainer)
+        db.commit()
+        db.refresh(local_explainer)
+
+        yield local_explainer.id
+
+        db.delete(local_explainer)
         db.commit()
         db.close()
 
@@ -333,4 +422,118 @@ def test_global_story_endpoint_rejects_explainer_without_story(
     assert response.status_code == 201, response.text
 
     response = client.post(f"/api/v1/explainer/global/{storyless_id}/story")
+    assert response.status_code == 400, response.text
+
+
+def test_local_story_job(client: TestClient, local_explainer_id: int):
+    # Compute the local explanation first, same as any other local explainer.
+    response = client.post(
+        "/api/v1/job/",
+        data={
+            "job_type": "ExplainerJob",
+            "kwargs": json.dumps(
+                {
+                    "explainer_id": local_explainer_id,
+                    "explainer_scope": "local",
+                }
+            ),
+        },
+    )
+    assert response.status_code == 201, response.text
+
+    container = client.app.container
+    session_factory = container["session_factory"]
+    with session_factory() as db:
+        explainer = db.get(LocalExplainer, local_explainer_id)
+        assert explainer.plots_path, explainer
+        assert explainer.stories is None
+
+    # Now request the story for instance 0 through the dedicated endpoint.
+    response = client.post(
+        f"/api/v1/explainer/local/{local_explainer_id}/story",
+        json={"group_index": 0},
+    )
+    assert response.status_code == 201, response.text
+    story_job_id = response.json()["id"]
+
+    response = client.get(f"/api/v1/job/status/{story_job_id}")
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == "finished", response.json()
+
+    with session_factory() as db:
+        explainer = db.get(LocalExplainer, local_explainer_id)
+        assert explainer.stories == {"0": "Local story for 'plot 0', context rows=1"}
+
+
+def test_local_story_endpoint_requires_finished_explanation(
+    client: TestClient, run_id: int, dataset_id: int
+):
+    container = client.app.container
+    session_factory = container["session_factory"]
+    with session_factory() as db:
+        unstarted_explainer = LocalExplainer(
+            run_id=run_id,
+            explainer_name="StoryableLocalExplainer",
+            dataset_id=dataset_id,
+            scope={"split": "test", "percentage": 100},
+            parameters={},
+            fit_parameters={},
+        )
+        db.add(unstarted_explainer)
+        db.commit()
+        db.refresh(unstarted_explainer)
+        unstarted_id = unstarted_explainer.id
+
+    response = client.post(
+        f"/api/v1/explainer/local/{unstarted_id}/story",
+        json={"group_index": 0},
+    )
+    assert response.status_code == 404, response.text
+
+
+def test_local_story_endpoint_requires_existing_explainer(client: TestClient):
+    response = client.post(
+        "/api/v1/explainer/local/999999/story", json={"group_index": 0}
+    )
+    assert response.status_code == 404, response.text
+
+
+def test_local_story_endpoint_rejects_explainer_without_story(
+    client: TestClient, run_id: int, dataset_id: int
+):
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        storyless_explainer = LocalExplainer(
+            run_id=run_id,
+            explainer_name="StorylessLocalExplainer",
+            dataset_id=dataset_id,
+            scope={"split": "test", "percentage": 100},
+            parameters={},
+            fit_parameters={},
+        )
+        db.add(storyless_explainer)
+        db.commit()
+        db.refresh(storyless_explainer)
+        storyless_id = storyless_explainer.id
+
+    response = client.post(
+        "/api/v1/job/",
+        data={
+            "job_type": "ExplainerJob",
+            "kwargs": json.dumps(
+                {
+                    "explainer_id": storyless_id,
+                    "explainer_scope": "local",
+                }
+            ),
+        },
+    )
+    assert response.status_code == 201, response.text
+
+    response = client.post(
+        f"/api/v1/explainer/local/{storyless_id}/story",
+        json={"group_index": 0},
+    )
     assert response.status_code == 400, response.text

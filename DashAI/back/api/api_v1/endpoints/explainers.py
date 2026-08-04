@@ -652,6 +652,113 @@ async def get_local_explanation_plot(
     )
 
 
+class LocalStoryBody(BaseModel):
+    """Request body for requesting a local explainer's story.
+
+    Parameters
+    ----------
+    group_index : int
+        Index of the explained instance (its position among the explanation's
+        groups) whose story is being requested.
+    """
+
+    group_index: int
+
+
+@router.post("/local/{explainer_id}/story", status_code=status.HTTP_201_CREATED)
+@inject
+async def create_local_explainer_story(
+    explainer_id: int,
+    body: LocalStoryBody,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
+    component_registry=Depends(lambda: di["component_registry"]),
+):
+    """Enqueue story generation for one instance of a local explanation.
+
+    Parameters
+    ----------
+    explainer_id : int
+        Id of the local explainer whose explanation the story narrates.
+    body : LocalStoryBody
+        Carries ``group_index``, the explained instance to narrate.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+    job_queue : BaseJobQueue
+        The job queue used to enqueue the story generation job.
+
+    Returns
+    -------
+    dict
+        ``{"id": job_id}``, the huey job id; poll it via
+        ``GET /job/status/{job_id}`` the same way as any other job, or read
+        the finished result back from ``GET /local/{explainer_id}`` (the
+        ``stories`` field, keyed by ``str(group_index)``).
+
+    Raises
+    ------
+    HTTPException
+        If the explainer does not exist, its explanation has not finished
+        computing yet, or its explainer type does not support story
+        generation.
+    """
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.job.explainer_story_job import ExplainerStoryJob
+
+    with session_factory() as db:
+        try:
+            local_explainer = db.get(LocalExplainer, explainer_id)
+
+            if not local_explainer:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Explainer not found",
+                )
+
+            if local_explainer.status != ExplainerStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Explanation not found",
+                )
+
+            explainer_component = None
+            if local_explainer.explainer_name in component_registry:
+                explainer_component = component_registry[local_explainer.explainer_name]
+            if not explainer_component or not explainer_component.get("supports_story"):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"{local_explainer.explainer_name} does not support "
+                        "story generation."
+                    ),
+                )
+
+            job = ExplainerStoryJob(
+                explainer_id=explainer_id,
+                explainer_scope="local",
+                group_index=body.group_index,
+            )
+            try:
+                job.set_status_as_delivered()
+            except JobError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Story job not delivered",
+                ) from e
+
+            job_id = job_queue.put(job).id
+
+            return {"id": job_id}
+
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
 @router.put("/{scope}/plot/{explainer_id}/override")
 @inject
 async def save_plot_override(
