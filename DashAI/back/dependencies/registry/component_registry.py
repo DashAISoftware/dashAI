@@ -172,6 +172,36 @@ class ComponentRegistry:
         return base_classes_cantidates[0].TYPE
 
     @staticmethod
+    def _overrides_story(component: type) -> bool:
+        """Whether ``component`` provides its own ``story`` implementation.
+
+        ``BaseGlobalExplainer``/``BaseLocalExplainer`` both declare a
+        ``story`` method that just raises ``NotImplementedError``, so
+        inheriting it unmodified means the explainer does not support story
+        generation. Walks the MRO (most derived first) to find which class
+        actually defines ``story``, rather than importing the base classes
+        directly (avoids a needless coupling to the explainability module).
+
+        Parameters
+        ----------
+        component : type
+            The component class to inspect.
+
+        Returns
+        -------
+        bool
+            ``True`` if some class more specific than the two base
+            explainer classes defines ``story``.
+        """
+        for klass in component.__mro__:
+            if "story" in vars(klass):
+                return klass.__name__ not in (
+                    "BaseGlobalExplainer",
+                    "BaseLocalExplainer",
+                )
+        return False
+
+    @staticmethod
     @beartype
     def _collect_compatible_components(component: type) -> List[str]:
         """Collect the union of ``COMPATIBLE_COMPONENTS`` declared along the MRO.
@@ -250,6 +280,11 @@ class ComponentRegistry:
             "display_name": getattr(new_component, "DISPLAY_NAME", None),
             "color": getattr(new_component, "COLOR", None),
         }
+
+        if hasattr(new_component, "story"):
+            new_register_component["supports_story"] = self._overrides_story(
+                new_component
+            )
 
         if base_type not in self._registry:
             self._registry[base_type] = {new_component.__name__: new_register_component}

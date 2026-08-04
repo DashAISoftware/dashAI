@@ -1,6 +1,7 @@
 from typing import Dict, List, Union
 
 from DashAI.back.core.artifacts import (
+    Artifact,
     ArtifactGroup,
     GroupedArtifacts,
     PlotlyArtifact,
@@ -589,3 +590,47 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         data = data.sort_values(by=["importances_mean"], ascending=True)
 
         return self._create_plot(data)
+
+    def story(self, explainer_output: Union[Artifact, GroupedArtifacts]) -> str:
+        """Summarize the feature ranking in a deterministic natural-language story.
+
+        Built directly from ``self.explanation`` (see :meth:`explain`), not
+        from ``explainer_output``: every feature count selector shows the
+        same ranking, so there is nothing instance-specific to pick out.
+
+        Parameters
+        ----------
+        explainer_output : Artifact or GroupedArtifacts
+            Unused; present only to satisfy the base class signature.
+
+        Returns
+        -------
+        str
+            A natural-language summary of which features the model relies on
+            most and least.
+        """
+        features = self.explanation["features"]
+        means = self.explanation["importances_mean"]
+
+        ranking = sorted(
+            zip(features, means, strict=True), key=lambda pair: pair[1], reverse=True
+        )
+
+        top = ranking[:3]
+        top_text = ", ".join(f"{name} ({value:+.3f})" for name, value in top)
+        least_name, least_value = ranking[-1]
+
+        story = (
+            f"The model relies most on {top_text}. "
+            f"{least_name} contributes the least to its predictions "
+            f"(importance={least_value:+.3f})."
+        )
+
+        if least_value <= 0:
+            story += (
+                " A near-zero or negative importance means shuffling that "
+                "feature barely changed (or even improved) performance, so "
+                "the model may not need it."
+            )
+
+        return story

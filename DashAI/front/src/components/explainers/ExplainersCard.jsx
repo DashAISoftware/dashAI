@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Grid,
   Typography,
   IconButton,
   Paper,
   Box,
+  Button,
   CircularProgress,
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
@@ -12,6 +13,7 @@ import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationMod
 import RunStatusDot from "../shared/RunStatusDot";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import PropTypes from "prop-types";
 import ExplainersPlot from "./ExplainersPlot";
 import { useNavigate } from "react-router-dom";
@@ -19,7 +21,10 @@ import {
   deleteExplainer,
   saveExplainerPlotOverride,
   resetExplainerPlotOverride,
+  createGlobalExplainerStory,
+  getExplainers,
 } from "../../api/explainer";
+import { startJobPolling } from "../../utils/jobPoller";
 import { useTranslation } from "react-i18next";
 
 const RUNNING_STATUSES = [1, 2]; // Delivered or Started
@@ -35,6 +40,7 @@ export default function ExplainersCard({
   onDelete,
   compact = false,
   displayName = null,
+  supportsStory = false,
   cacheEntry = null,
   onCacheUpdate = null,
   isHighlighted = false,
@@ -47,6 +53,43 @@ export default function ExplainersCard({
     : localOverriddenIndexes;
   const { t } = useTranslation(["explainers"]);
   const isRunning = RUNNING_STATUSES.includes(explainer.status);
+
+  // Story generation is a separate, on-demand job: kept as local state so a
+  // page that doesn't refetch the explainer list still reflects the result.
+  const [storyState, setStoryState] = useState({
+    story: explainer.story || null,
+    status: "idle", // idle | loading | error
+  });
+
+  useEffect(() => {
+    setStoryState((prev) =>
+      prev.status === "loading"
+        ? prev
+        : { ...prev, story: explainer.story || null },
+    );
+  }, [explainer.story]);
+
+  const handleGenerateStory = async () => {
+    setStoryState({ story: null, status: "loading" });
+    try {
+      const { id: jobId } = await createGlobalExplainerStory(explainer.id);
+      startJobPolling(
+        jobId,
+        async () => {
+          try {
+            const refreshed = await getExplainers(explainer.run_id, "global");
+            const updated = refreshed.find((e) => e.id === explainer.id);
+            setStoryState({ story: updated?.story || null, status: "idle" });
+          } catch {
+            setStoryState({ story: null, status: "error" });
+          }
+        },
+        () => setStoryState({ story: null, status: "error" }),
+      );
+    } catch {
+      setStoryState({ story: null, status: "error" });
+    }
+  };
 
   function plotName(name) {
     return name.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
@@ -160,12 +203,37 @@ export default function ExplainersCard({
               </Box>
             ) : (
               <Grid sx={{ width: "100%" }}>
-                <Box
-                  sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}
-                >
-                  {/* Reserved slot for the future "generate story" action button.
-                      Kept hidden until that feature lands. */}
-                </Box>
+                {scope === "global" && supportsStory && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "flex-end",
+                      mb: 1,
+                    }}
+                  >
+                    {storyState.status === "loading" ? (
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <CircularProgress size={16} />
+                        <Typography variant="caption" color="text.secondary">
+                          {t("explainers:label.generatingStory")}
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<AutoAwesomeIcon fontSize="small" />}
+                        onClick={handleGenerateStory}
+                      >
+                        {storyState.story
+                          ? t("explainers:label.regenerateStory")
+                          : t("explainers:label.generateStory")}
+                      </Button>
+                    )}
+                  </Box>
+                )}
                 <ExplainersPlot
                   explainer={explainer}
                   scope={scope}
@@ -175,6 +243,28 @@ export default function ExplainersCard({
                   cacheEntry={cacheEntry}
                   onCacheUpdate={onCacheUpdate}
                 />
+                {storyState.story && (
+                  <Paper
+                    variant="outlined"
+                    sx={{
+                      p: 2,
+                      mt: 1,
+                      bgcolor: (t) => alpha(t.palette.primary.main, 0.04),
+                      borderColor: theme.palette.ui.border,
+                    }}
+                  >
+                    <Typography variant="body2">{storyState.story}</Typography>
+                  </Paper>
+                )}
+                {storyState.status === "error" && (
+                  <Typography
+                    variant="caption"
+                    color="error"
+                    sx={{ display: "block", mt: 1 }}
+                  >
+                    {t("explainers:error.storyGenerationFailed")}
+                  </Typography>
+                )}
               </Grid>
             )}
           </Grid>
@@ -258,11 +348,13 @@ ExplainersCard.propTypes = {
     ),
     created: PropTypes.string,
     status: PropTypes.number,
+    story: PropTypes.string,
   }).isRequired,
   scope: PropTypes.string.isRequired,
   onDelete: PropTypes.func,
   compact: PropTypes.bool,
   displayName: PropTypes.string,
+  supportsStory: PropTypes.bool,
   cacheEntry: PropTypes.shape({
     items: PropTypes.array,
     overriddenIndexes: PropTypes.arrayOf(PropTypes.number),

@@ -26,6 +26,7 @@ export default function ExplainerResultsTab({
   fillHeight,
   scrollParent,
   explainerDisplayNames,
+  explainerSupportsStory,
   cardHeightsRef,
   getCacheEntry,
   updateCacheEntry,
@@ -141,6 +142,9 @@ export default function ExplainerResultsTab({
                 explainer={explainer}
                 scope={explainerFilter}
                 displayName={explainerDisplayNames[explainer.explainer_name]}
+                supportsStory={Boolean(
+                  explainerSupportsStory[explainer.explainer_name],
+                )}
                 onDelete={onDelete}
                 cacheEntry={getCacheEntry(
                   explainerCacheKey(explainerFilter, explainer),
@@ -166,6 +170,9 @@ export default function ExplainerResultsTab({
                 explainer={explainer}
                 scope={explainerFilter}
                 displayName={explainerDisplayNames[explainer.explainer_name]}
+                supportsStory={Boolean(
+                  explainerSupportsStory[explainer.explainer_name],
+                )}
                 onDelete={onDelete}
                 cacheEntry={getCacheEntry(key)}
                 onCacheUpdate={(patch) => updateCacheEntry(key, patch)}
@@ -190,6 +197,7 @@ ExplainerResultsTab.propTypes = {
   fillHeight: PropTypes.bool,
   scrollParent: PropTypes.instanceOf(Element),
   explainerDisplayNames: PropTypes.object.isRequired,
+  explainerSupportsStory: PropTypes.object.isRequired,
   cardHeightsRef: PropTypes.shape({ current: PropTypes.object }).isRequired,
   getCacheEntry: PropTypes.func.isRequired,
   updateCacheEntry: PropTypes.func.isRequired,

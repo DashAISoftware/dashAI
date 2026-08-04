@@ -105,6 +105,26 @@ class StoryableGlobalExplainer(BaseGlobalExplainer):
         return f"Story based on '{explainer_output.payload}': {headline}"
 
 
+class StorylessGlobalExplainer(BaseGlobalExplainer):
+    """Global explainer that never defines story() at all."""
+
+    COMPATIBLE_COMPONENTS = ["DummyTask"]
+
+    def __init__(self, model: BaseModel) -> None:
+        self.model = model
+        self.explanation = None
+
+    @classmethod
+    def get_schema(cls):
+        return {}
+
+    def explain(self, dataset):
+        return {"headline": "irrelevant"}
+
+    def plot(self, explanation):
+        return [TextArtifact(payload="a plot summary")]
+
+
 @pytest.fixture(autouse=True, name="test_registry")
 def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
     container = client.app.container
@@ -114,6 +134,7 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             DummyTask,
             DummyModel,
             StoryableGlobalExplainer,
+            StorylessGlobalExplainer,
             ExplainerJob,
             ExplainerStoryJob,
         ]
@@ -278,3 +299,38 @@ def test_global_story_endpoint_requires_finished_explanation(
 def test_global_story_endpoint_requires_existing_explainer(client: TestClient):
     response = client.post("/api/v1/explainer/global/999999/story")
     assert response.status_code == 404, response.text
+
+
+def test_global_story_endpoint_rejects_explainer_without_story(
+    client: TestClient, run_id: int
+):
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        storyless_explainer = GlobalExplainer(
+            run_id=run_id,
+            explainer_name="StorylessGlobalExplainer",
+            parameters={},
+        )
+        db.add(storyless_explainer)
+        db.commit()
+        db.refresh(storyless_explainer)
+        storyless_id = storyless_explainer.id
+
+    response = client.post(
+        "/api/v1/job/",
+        data={
+            "job_type": "ExplainerJob",
+            "kwargs": json.dumps(
+                {
+                    "explainer_id": storyless_id,
+                    "explainer_scope": "global",
+                }
+            ),
+        },
+    )
+    assert response.status_code == 201, response.text
+
+    response = client.post(f"/api/v1/explainer/global/{storyless_id}/story")
+    assert response.status_code == 400, response.text

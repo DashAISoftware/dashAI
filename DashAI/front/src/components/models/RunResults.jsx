@@ -45,6 +45,7 @@ export default function RunResults({
     highlightedExplainerKey,
     setHighlightedExplainerKey,
     explainerDisplayNames,
+    explainerSupportsStory,
     cardHeightsRef,
     getCacheEntry,
     updateCacheEntry,
@@ -147,6 +148,7 @@ export default function RunResults({
           fillHeight={fillHeight}
           scrollParent={explainerScrollParent}
           explainerDisplayNames={explainerDisplayNames}
+          explainerSupportsStory={explainerSupportsStory}
           cardHeightsRef={cardHeightsRef}
           getCacheEntry={getCacheEntry}
           updateCacheEntry={updateCacheEntry}

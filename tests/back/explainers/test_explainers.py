@@ -218,6 +218,38 @@ def test_permutation_feature_importance(trained_model: BaseModel, dataset: Datas
         assert len(values) == len(INPUT_COLUMNS)
 
 
+def test_permutation_feature_importance_story(
+    trained_model: BaseModel, dataset: DatasetDict
+):
+    explainer = PermutationFeatureImportance(
+        trained_model,
+        scoring="accuracy",
+        n_repeats=5,
+        random_state=0,
+        max_samples_fraction=1.0,
+    )
+    explanation = explainer.explain(copy.deepcopy(dataset))
+    plot = explainer.plot(explanation)
+
+    # The job assigns this from the persisted pickle instead of recomputing
+    # explain(); story() must work from it, not from a fresh explain() call.
+    explainer.explanation = explanation
+
+    story = explainer.story(plot[0])
+
+    assert isinstance(story, str)
+    ranking = sorted(
+        zip(explanation["features"], explanation["importances_mean"], strict=True),
+        key=lambda pair: pair[1],
+        reverse=True,
+    )
+    most_important_feature = ranking[0][0]
+    least_important_feature = ranking[-1][0]
+
+    assert most_important_feature in story
+    assert least_important_feature in story
+
+
 def plot(self, explanation: list[dict]):
     """Create explanation plots using plotly, tolerant to missing metadata."""
     import numpy as np

@@ -29,7 +29,8 @@
     "nameTooShort": "解释器名称至少需要 4 个字母或数字字符。",
     "validateDataset": "验证所选数据集时出错。",
     "noData": "暂无数据",
-    "nameAlreadyExists": "名称已存在"
+    "nameAlreadyExists": "名称已存在",
+    "storyGenerationFailed": "生成故事失败。"
   },
   "label": {
     "configureExplainer": "配置解释器",
@@ -77,7 +78,10 @@
     "rowModePercentage": "百分比滑块",
     "rowModeManual": "手动选择",
     "shuffleRows": "打乱选中的行（随机抽样）",
-    "rowsSelectedManually": "手动选择的行数：{{selected}} / {{total}}"
+    "rowsSelectedManually": "手动选择的行数：{{selected}} / {{total}}",
+    "generateStory": "生成故事",
+    "regenerateStory": "重新生成故事",
+    "generatingStory": "正在生成故事..."
   },
   "message": {
     "explainerJobCompleted": "解释器 {{name}} 成功完成",

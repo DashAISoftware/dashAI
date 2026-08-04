@@ -10,4 +10,6 @@ export interface IExplainer {
   fit_parameters: object;
   created: Date;
   status: number;
+  story?: string | null;
+  story_huey_id?: string | null;
 }

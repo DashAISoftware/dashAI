@@ -48,6 +48,9 @@ export default function useRunResultsData({
   // Explainer component name to display name, fetched once and shared so cards
   // do not each fetch it (a per card fetch shifted heights).
   const [explainerDisplayNames, setExplainerDisplayNames] = useState({});
+  // Explainer component name to whether it implements story(), fetched once
+  // alongside the display names so cards know whether to show the button.
+  const [explainerSupportsStory, setExplainerSupportsStory] = useState({});
   // Per card plot state (items, edits, selection), so the list can unmount
   // offscreen cards without refetching or losing edits.
   const [explainerCache, setExplainerCache] = useState({});
@@ -151,10 +154,13 @@ export default function useRunResultsData({
     getComponents({ selectTypes: ["GlobalExplainer", "LocalExplainer"] })
       .then((components) => {
         const names = {};
+        const supportsStory = {};
         components.forEach((component) => {
           names[component.name] = component.display_name || component.name;
+          supportsStory[component.name] = Boolean(component.supports_story);
         });
         setExplainerDisplayNames(names);
+        setExplainerSupportsStory(supportsStory);
       })
       .catch(() => {});
   }, []);
@@ -263,6 +269,7 @@ export default function useRunResultsData({
     highlightedExplainerKey,
     setHighlightedExplainerKey,
     explainerDisplayNames,
+    explainerSupportsStory,
     cardHeightsRef,
     getCacheEntry,
     updateCacheEntry,

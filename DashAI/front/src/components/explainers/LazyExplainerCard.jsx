@@ -22,6 +22,7 @@ const LazyExplainerCard = React.memo(function LazyExplainerCard({
   explainer,
   scope,
   displayName,
+  supportsStory,
   onDelete,
   cacheEntry,
   updateCacheEntry,
@@ -80,6 +81,7 @@ const LazyExplainerCard = React.memo(function LazyExplainerCard({
           explainer={explainer}
           scope={scope}
           displayName={displayName}
+          supportsStory={supportsStory}
           onDelete={onDelete}
           cacheEntry={cacheEntry}
           onCacheUpdate={onCacheUpdate}
@@ -98,6 +100,7 @@ LazyExplainerCard.propTypes = {
   explainer: PropTypes.object.isRequired,
   scope: PropTypes.string.isRequired,
   displayName: PropTypes.string,
+  supportsStory: PropTypes.bool,
   onDelete: PropTypes.func,
   cacheEntry: PropTypes.object,
   updateCacheEntry: PropTypes.func.isRequired,

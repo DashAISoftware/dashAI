@@ -112,6 +112,10 @@ class ExplainerStoryJob(BaseJob):
         self, db: "Session", explainer_db, component_registry
     ) -> str:
         explainer = self._load_explainer(db, explainer_db, component_registry)
+        if not hasattr(explainer, "story"):
+            raise JobError(
+                f"{explainer_db.explainer_name} does not support story generation."
+            )
 
         artifact_index = self.kwargs.get("artifact_index", 0)
         try:
@@ -124,8 +128,6 @@ class ExplainerStoryJob(BaseJob):
 
         try:
             return explainer.story(explainer_output)
-        except NotImplementedError as e:
-            raise JobError(str(e)) from e
         except Exception as e:
             log.exception(e)
             raise JobError("Failed to generate the story") from e
@@ -140,6 +142,10 @@ class ExplainerStoryJob(BaseJob):
             raise JobError("group_index is required to generate a local story")
 
         explainer = self._load_explainer(db, explainer_db, component_registry)
+        if not hasattr(explainer, "story"):
+            raise JobError(
+                f"{explainer_db.explainer_name} does not support story generation."
+            )
 
         artifact_index = self.kwargs.get("artifact_index", 0)
         try:
@@ -164,8 +170,6 @@ class ExplainerStoryJob(BaseJob):
 
         try:
             return explainer.story(explainer_output, prediction_context)
-        except NotImplementedError as e:
-            raise JobError(str(e)) from e
         except Exception as e:
             log.exception(e)
             raise JobError("Failed to generate the story") from e

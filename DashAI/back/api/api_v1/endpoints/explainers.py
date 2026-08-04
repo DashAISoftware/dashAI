@@ -282,6 +282,7 @@ async def create_global_explainer_story(
     explainer_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
+    component_registry=Depends(lambda: di["component_registry"]),
 ):
     """Enqueue story generation for an already-computed global explanation.
 
@@ -325,6 +326,20 @@ async def create_global_explainer_story(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Explanation not found",
+                )
+
+            explainer_component = None
+            if global_explainer.explainer_name in component_registry:
+                explainer_component = component_registry[
+                    global_explainer.explainer_name
+                ]
+            if not explainer_component or not explainer_component.get("supports_story"):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"{global_explainer.explainer_name} does not support "
+                        "story generation."
+                    ),
                 )
 
             job = ExplainerStoryJob(explainer_id=explainer_id, explainer_scope="global")
