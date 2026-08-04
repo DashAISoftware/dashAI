@@ -13,7 +13,6 @@ import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationMod
 import RunStatusDot from "../shared/RunStatusDot";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import PropTypes from "prop-types";
 import ExplainersPlot from "./ExplainersPlot";
 import ArtifactViewer from "../shared/ArtifactViewer";
@@ -237,7 +236,6 @@ export default function ExplainersCard({
                         <Button
                           size="small"
                           variant="text"
-                          startIcon={<AutoAwesomeIcon fontSize="small" />}
                           onClick={handleGenerateStory}
                         >
                           {storyState.story

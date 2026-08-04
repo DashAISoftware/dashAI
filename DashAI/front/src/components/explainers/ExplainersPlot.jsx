@@ -1,6 +1,5 @@
 import { React, useEffect, useState } from "react";
 import { CircularProgress, Box, Button, Typography } from "@mui/material";
-import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
@@ -133,7 +132,6 @@ function InstanceStoryBox({ groupIndex, story, status, onGenerate }) {
           <Button
             size="small"
             variant="text"
-            startIcon={<AutoAwesomeIcon fontSize="small" />}
             onClick={() => onGenerate(groupIndex)}
           >
             {story
