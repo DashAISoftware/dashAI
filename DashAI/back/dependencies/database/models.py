@@ -394,6 +394,7 @@ class LocalExplainer(Base):
     explanation_path: Mapped[str] = mapped_column(String, nullable=True)
     plots_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    stories: Mapped[JSON] = mapped_column(JSON, nullable=True)
     input_dataset_path: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON)
     fit_parameters: Mapped[JSON] = mapped_column(JSON)
