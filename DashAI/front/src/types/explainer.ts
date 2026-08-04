@@ -12,4 +12,5 @@ export interface IExplainer {
   status: number;
   story?: string | null;
   story_huey_id?: string | null;
+  stories?: Record<string, string> | null;
 }

@@ -16,6 +16,7 @@ import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import PropTypes from "prop-types";
 import ExplainersPlot from "./ExplainersPlot";
+import ArtifactViewer from "../shared/ArtifactViewer";
 import { useNavigate } from "react-router-dom";
 import {
   deleteExplainer,
@@ -203,67 +204,63 @@ export default function ExplainersCard({
               </Box>
             ) : (
               <Grid sx={{ width: "100%" }}>
-                {scope === "global" && supportsStory && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      mb: 1,
-                    }}
-                  >
-                    {storyState.status === "loading" ? (
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <CircularProgress size={16} />
-                        <Typography variant="caption" color="text.secondary">
-                          {t("explainers:label.generatingStory")}
-                        </Typography>
-                      </Box>
-                    ) : (
-                      <Button
-                        size="small"
-                        variant="text"
-                        startIcon={<AutoAwesomeIcon fontSize="small" />}
-                        onClick={handleGenerateStory}
-                      >
-                        {storyState.story
-                          ? t("explainers:label.regenerateStory")
-                          : t("explainers:label.generateStory")}
-                      </Button>
-                    )}
-                  </Box>
-                )}
                 <ExplainersPlot
                   explainer={explainer}
                   scope={scope}
+                  supportsStory={supportsStory}
                   onSaveOverride={handleSaveOverride}
                   onResetOverride={handleResetOverride}
                   overriddenIndexes={overriddenIndexes}
                   cacheEntry={cacheEntry}
                   onCacheUpdate={onCacheUpdate}
                 />
-                {storyState.story && (
-                  <Paper
-                    variant="outlined"
-                    sx={{
-                      p: 2,
-                      mt: 1,
-                      bgcolor: (t) => alpha(t.palette.primary.main, 0.04),
-                      borderColor: theme.palette.ui.border,
-                    }}
-                  >
-                    <Typography variant="body2">{storyState.story}</Typography>
-                  </Paper>
-                )}
-                {storyState.status === "error" && (
-                  <Typography
-                    variant="caption"
-                    color="error"
-                    sx={{ display: "block", mt: 1 }}
-                  >
-                    {t("explainers:error.storyGenerationFailed")}
-                  </Typography>
+                {scope === "global" && supportsStory && (
+                  <>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        mt: 1,
+                        mb: 1,
+                      }}
+                    >
+                      {storyState.status === "loading" ? (
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                        >
+                          <CircularProgress size={16} />
+                          <Typography variant="caption" color="text.secondary">
+                            {t("explainers:label.generatingStory")}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Button
+                          size="small"
+                          variant="text"
+                          startIcon={<AutoAwesomeIcon fontSize="small" />}
+                          onClick={handleGenerateStory}
+                        >
+                          {storyState.story
+                            ? t("explainers:label.regenerateStory")
+                            : t("explainers:label.generateStory")}
+                        </Button>
+                      )}
+                    </Box>
+                    {storyState.story && (
+                      <ArtifactViewer
+                        artifact={{ type: "text", payload: storyState.story }}
+                      />
+                    )}
+                    {storyState.status === "error" && (
+                      <Typography
+                        variant="caption"
+                        color="error"
+                        sx={{ display: "block", mt: 1 }}
+                      >
+                        {t("explainers:error.storyGenerationFailed")}
+                      </Typography>
+                    )}
+                  </>
                 )}
               </Grid>
             )}
@@ -325,7 +322,11 @@ export default function ExplainersCard({
             />
           </Grid>
         </Grid>
-        <ExplainersPlot explainer={explainer} scope={scope} />
+        <ExplainersPlot
+          explainer={explainer}
+          scope={scope}
+          supportsStory={supportsStory}
+        />
       </Grid>
     </Paper>
   );

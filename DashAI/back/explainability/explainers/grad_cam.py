@@ -3,7 +3,6 @@ from typing import List
 from DashAI.back.core.artifacts import (
     ArtifactGroup,
     GroupedArtifacts,
-    TextArtifact,
 )
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -241,10 +240,48 @@ class GradCam(BaseLocalExplainer):
                     "predicted_class": predicted_class,
                 }
 
+        self.explanation = explanation
         return explanation
 
+    def _summarize_instance(self, instance: dict, metadata: dict) -> str:
+        """Build the heatmap description sentence for one explained image.
+
+        Computed directly from the explanation's own numbers, independent of
+        how :meth:`plot` renders the heatmap overlay, so :meth:`story` can
+        call this without depending on a rendered artifact.
+
+        Parameters
+        ----------
+        instance : dict
+            One image's entry from the explanation dict.
+        metadata : dict
+            The explanation's ``"metadata"`` entry (``target_names``).
+
+        Returns
+        -------
+        str
+            The heatmap description sentence.
+        """
+        import numpy as np
+
+        target_names = metadata["target_names"]
+        predicted_class = instance["predicted_class"]
+        predicted_name = target_names[predicted_class]
+        predicted_prob = float(
+            np.round(instance["model_prediction"][predicted_class], 3)
+        )
+
+        return (
+            f"The model predicted {predicted_name} "
+            f"(p={predicted_prob}). Highlighted regions are the "
+            "areas whose activations most supported this class."
+        )
+
     def plot(self, explanation: dict) -> List[GroupedArtifacts]:
-        """Render each image as a heatmap overlay plus a text summary.
+        """Render each image as a heatmap overlay.
+
+        The narrative summary is not computed here: it is only built on
+        demand by :meth:`story`.
 
         Parameters
         ----------
@@ -255,7 +292,7 @@ class GradCam(BaseLocalExplainer):
         -------
         List[GroupedArtifacts]
             A single grouped artifact with one group per explained image, each
-            holding that image's heatmap overlay and text summary.
+            holding that image's heatmap overlay.
         """
         import numpy as np
 
@@ -280,13 +317,51 @@ class GradCam(BaseLocalExplainer):
             overlay = heatmap_overlay_artifact(
                 instance["image"], instance["heatmap"], title, subtitle
             )
-            text = TextArtifact(
-                payload=(
-                    f"The model predicted {predicted_name} "
-                    f"(p={predicted_prob}). Highlighted regions are the "
-                    "areas whose activations most supported this class."
-                ),
-            )
-            groups.append(ArtifactGroup(title=title, artifacts=[overlay, text]))
+            groups.append(ArtifactGroup(title=title, artifacts=[overlay]))
 
         return [GroupedArtifacts(groups=groups)]
+
+    def story(self, explainer_output, prediction_context):
+        """Build the heatmap description sentence from ``self.explanation``.
+
+        Computed on demand, only when a story is requested: :meth:`plot`
+        never builds this narrative, so no cost is paid unless it is asked
+        for.
+
+        Parameters
+        ----------
+        explainer_output : GroupedArtifacts
+            The explained image's group, as produced by :meth:`plot`. Only
+            its ``title`` (``"Image {n}"``) is used, to recover which entry
+            of ``self.explanation`` this call is about.
+        prediction_context : DashAIDataset
+            Unused; the summary is built entirely from ``self.explanation``.
+
+        Returns
+        -------
+        str
+            The instance's heatmap description.
+
+        Raises
+        ------
+        ValueError
+            If the instance's title cannot be matched to an explained
+            instance, or ``self.explanation`` was not set before calling this
+            (see :meth:`explain_instance`).
+        """
+        if not self.explanation:
+            raise ValueError(
+                "self.explanation must be set before calling story() "
+                "(see explain_instance)."
+            )
+
+        title = explainer_output.groups[0].title or ""
+        try:
+            index = int(title.rsplit(" ", 1)[-1]) - 1
+            instance = self.explanation[index]
+        except (ValueError, KeyError) as e:
+            raise ValueError(
+                f"Could not match group title {title!r} to an explained instance."
+            ) from e
+
+        return self._summarize_instance(instance, self.explanation["metadata"])

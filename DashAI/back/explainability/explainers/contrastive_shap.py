@@ -4,7 +4,6 @@ from DashAI.back.core.artifacts import (
     ArtifactGroup,
     GroupedArtifacts,
     PlotlyArtifact,
-    TextArtifact,
 )
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -452,7 +451,10 @@ class ContrastiveShap(BaseLocalExplainer):
         )
 
     def plot(self, explanation: dict) -> List[GroupedArtifacts]:
-        """Render each instance as a contrastive bar plot plus a text summary.
+        """Render each instance as a contrastive bar plot.
+
+        The narrative summary is not computed here: it is only built on
+        demand by :meth:`story`.
 
         Parameters
         ----------
@@ -463,7 +465,7 @@ class ContrastiveShap(BaseLocalExplainer):
         -------
         List[GroupedArtifacts]
             A single grouped artifact with one group per explained instance,
-            each holding that instance's contrastive plot and text summary.
+            each holding that instance's contrastive plot.
         """
         import numpy as np
         import pandas as pd
@@ -502,19 +504,16 @@ class ContrastiveShap(BaseLocalExplainer):
             fig = self._create_plot(data, fact_name, foil_name, fact_prob, foil_prob)
             plot = PlotlyArtifact(payload=fig)
 
-            summary = self._summarize_instance(instance, metadata)
-            text = TextArtifact(payload=summary)
-            groups.append(ArtifactGroup(title=title, artifacts=[plot, text]))
+            groups.append(ArtifactGroup(title=title, artifacts=[plot]))
 
         return [GroupedArtifacts(groups=groups)]
 
     def story(self, explainer_output, prediction_context):
-        """Rebuild the contrastive summary from ``self.explanation``.
+        """Build the "why P rather than Q" sentence from ``self.explanation``.
 
-        Builds the same "why P rather than Q" sentence :meth:`plot` writes
-        into each instance's :class:`TextArtifact`, but from the explanation's
-        own numbers rather than by reading that already-rendered text, so it
-        keeps working even if :meth:`plot`'s artifact layout changes.
+        Computed on demand, only when a story is requested: :meth:`plot`
+        never builds this narrative, so no cost is paid unless it is asked
+        for.
 
         Parameters
         ----------

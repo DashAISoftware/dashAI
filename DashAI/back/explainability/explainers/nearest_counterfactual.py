@@ -5,7 +5,6 @@ from DashAI.back.core.artifacts import (
     GroupedArtifacts,
     TableArtifact,
     TablePayload,
-    TextArtifact,
 )
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -334,10 +333,60 @@ class NearestCounterfactual(BaseLocalExplainer):
                 "counterfactuals": counterfactuals,
             }
 
+        self.explanation = explanation
         return explanation
 
+    def _summarize_instance(self, instance: dict, metadata: dict) -> str:
+        """Build the counterfactual comparison sentence for one instance.
+
+        Computed directly from the explanation's own numbers, independent of
+        how :meth:`plot` renders the comparison table, so :meth:`story` can
+        call this without depending on a rendered artifact.
+
+        Parameters
+        ----------
+        instance : dict
+            One instance's entry from the explanation dict.
+        metadata : dict
+            The explanation's ``"metadata"`` entry (``target_names``).
+
+        Returns
+        -------
+        str
+            The counterfactual comparison summary.
+        """
+        import numpy as np
+
+        target_names = metadata["target_names"]
+        predicted_class = instance["predicted_class"]
+        predicted_name = target_names[predicted_class]
+        predicted_prob = float(
+            np.round(instance["model_prediction"][predicted_class], 3)
+        )
+        counterfactuals = instance["counterfactuals"]
+
+        if not counterfactuals:
+            return (
+                f"The model predicted {predicted_name} (p={predicted_prob}). "
+                "No counterfactual examples were found in the training data."
+            )
+
+        lines = [f"The model predicted {predicted_name} (p={predicted_prob})."]
+        for cf_idx, counterfactual in enumerate(counterfactuals):
+            cf_name = target_names[counterfactual["predicted_class"]]
+            changed = ", ".join(counterfactual["changed_features"]) or "nothing"
+            lines.append(
+                f"Counterfactual {cf_idx + 1}: changing {changed} "
+                f"yields {cf_name} "
+                f"(distance {counterfactual['distance']})."
+            )
+        return "\n".join(lines)
+
     def plot(self, explanation: dict) -> List[GroupedArtifacts]:
-        """Render each instance as a comparison table plus a text summary.
+        """Render each instance as a comparison table.
+
+        The narrative summary is not computed here: it is only built on
+        demand by :meth:`story`.
 
         Parameters
         ----------
@@ -348,10 +397,8 @@ class NearestCounterfactual(BaseLocalExplainer):
         -------
         List[GroupedArtifacts]
             A single grouped artifact with one group per explained instance,
-            each holding that instance's comparison table and text summary.
+            each holding that instance's comparison table.
         """
-        import numpy as np
-
         exp = explanation.copy()
         metadata = exp.pop("metadata")
         feature_names = metadata["feature_names"]
@@ -363,9 +410,6 @@ class NearestCounterfactual(BaseLocalExplainer):
             instance_values = instance["instance_values"]
             predicted_class = instance["predicted_class"]
             predicted_name = target_names[predicted_class]
-            predicted_prob = float(
-                np.round(instance["model_prediction"][predicted_class], 3)
-            )
             counterfactuals = instance["counterfactuals"]
 
             columns = ["Feature", "Instance"] + [
@@ -393,24 +437,51 @@ class NearestCounterfactual(BaseLocalExplainer):
             table = TableArtifact(
                 payload=TablePayload(columns=columns, rows=rows, highlight=highlight),
             )
-
-            if counterfactuals:
-                lines = [f"The model predicted {predicted_name} (p={predicted_prob})."]
-                for cf_idx, counterfactual in enumerate(counterfactuals):
-                    cf_name = target_names[counterfactual["predicted_class"]]
-                    changed = ", ".join(counterfactual["changed_features"]) or "nothing"
-                    lines.append(
-                        f"Counterfactual {cf_idx + 1}: changing {changed} "
-                        f"yields {cf_name} "
-                        f"(distance {counterfactual['distance']})."
-                    )
-                summary = "\n".join(lines)
-            else:
-                summary = (
-                    f"The model predicted {predicted_name} (p={predicted_prob}). "
-                    "No counterfactual examples were found in the training data."
-                )
-            text = TextArtifact(payload=summary)
-            groups.append(ArtifactGroup(title=title, artifacts=[table, text]))
+            groups.append(ArtifactGroup(title=title, artifacts=[table]))
 
         return [GroupedArtifacts(groups=groups)]
+
+    def story(self, explainer_output, prediction_context):
+        """Build the counterfactual comparison sentence from ``self.explanation``.
+
+        Computed on demand, only when a story is requested: :meth:`plot`
+        never builds this narrative, so no cost is paid unless it is asked
+        for.
+
+        Parameters
+        ----------
+        explainer_output : GroupedArtifacts
+            The explained instance's group, as produced by :meth:`plot`. Only
+            its ``title`` (``"Instance {n}"``) is used, to recover which
+            entry of ``self.explanation`` this call is about.
+        prediction_context : DashAIDataset
+            Unused; the summary is built entirely from ``self.explanation``.
+
+        Returns
+        -------
+        str
+            The instance's counterfactual comparison summary.
+
+        Raises
+        ------
+        ValueError
+            If the instance's title cannot be matched to an explained
+            instance, or ``self.explanation`` was not set before calling this
+            (see :meth:`explain_instance`).
+        """
+        if not self.explanation:
+            raise ValueError(
+                "self.explanation must be set before calling story() "
+                "(see explain_instance)."
+            )
+
+        title = explainer_output.groups[0].title or ""
+        try:
+            index = int(title.rsplit(" ", 1)[-1]) - 1
+            instance = self.explanation[index]
+        except (ValueError, KeyError) as e:
+            raise ValueError(
+                f"Could not match group title {title!r} to an explained instance."
+            ) from e
+
+        return self._summarize_instance(instance, self.explanation["metadata"])

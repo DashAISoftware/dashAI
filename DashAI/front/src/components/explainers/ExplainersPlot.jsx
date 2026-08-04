@@ -1,9 +1,15 @@
 import { React, useEffect, useState } from "react";
-import { CircularProgress, Box } from "@mui/material";
+import { CircularProgress, Box, Button, Typography } from "@mui/material";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
-import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
+import {
+  getExplainerPlot as getExplainerPlotRequest,
+  createLocalExplainerStory,
+  getExplainers,
+} from "../../api/explainer";
+import { startJobPolling } from "../../utils/jobPoller";
 import { useTranslation } from "react-i18next";
 import ArtifactViewer from "../shared/ArtifactViewer";
 import ExplainerInstanceTable from "./ExplainerInstanceTable";
@@ -107,6 +113,60 @@ ArtifactBatch.propTypes = {
 };
 
 /**
+ * Story trigger + result for one explained instance (local explainers only).
+ * `groupIndex` identifies the instance within the explainer's `stories` map.
+ */
+function InstanceStoryBox({ groupIndex, story, status, onGenerate }) {
+  const { t } = useTranslation(["explainers"]);
+
+  return (
+    <Box sx={{ width: "100%" }}>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
+        {status === "loading" ? (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <CircularProgress size={16} />
+            <Typography variant="caption" color="text.secondary">
+              {t("explainers:label.generatingStory")}
+            </Typography>
+          </Box>
+        ) : (
+          <Button
+            size="small"
+            variant="text"
+            startIcon={<AutoAwesomeIcon fontSize="small" />}
+            onClick={() => onGenerate(groupIndex)}
+          >
+            {story
+              ? t("explainers:label.regenerateStory")
+              : t("explainers:label.generateStory")}
+          </Button>
+        )}
+      </Box>
+      {/* Same box used for every other text artifact (ArtifactViewer over a
+          "text" artifact), so a generated story looks identical to the
+          caption explainers used to render automatically in plot(). */}
+      {story && <ArtifactViewer artifact={{ type: "text", payload: story }} />}
+      {status === "error" && (
+        <Typography
+          variant="caption"
+          color="error"
+          sx={{ display: "block", mb: 1 }}
+        >
+          {t("explainers:error.storyGenerationFailed")}
+        </Typography>
+      )}
+    </Box>
+  );
+}
+
+InstanceStoryBox.propTypes = {
+  groupIndex: PropTypes.number.isRequired,
+  story: PropTypes.string,
+  status: PropTypes.string,
+  onGenerate: PropTypes.func.isRequired,
+};
+
+/**
  * Render a GroupedArtifacts item: a selector listing every group, beside the
  * selected group's first artifact (with the rest stacked below). Holds its own
  * selection state, so multiple selectors on one card are independent.
@@ -115,6 +175,10 @@ ArtifactBatch.propTypes = {
  * explained rows dataset path so the picker shows the actual instance feature
  * values (the row index selects the group); global explainers omit it and get
  * a plain title list.
+ *
+ * `story` (optional) wires up the per-instance "generate story" action for
+ * the selected group: only passed for local explainers whose explainer type
+ * supports it.
  */
 function GroupedArtifactsView({
   grouped,
@@ -122,6 +186,7 @@ function GroupedArtifactsView({
   datasetPath = null,
   selected: selectedProp = null,
   onSelect = null,
+  story = null,
 }) {
   const { t } = useTranslation(["explainers"]);
   const [localSelected, setLocalSelected] = useState(0);
@@ -137,13 +202,25 @@ function GroupedArtifactsView({
   );
   const wide = Boolean(datasetPath);
 
+  // When the story box is shown, it takes over the space of any pre-existing
+  // text artifact (e.g. ContrastiveShap's plot already carries the same
+  // sentence as a caption) instead of showing both. Falls back to the
+  // unfiltered list if a group has nothing left after dropping its text
+  // artifact(s), so a text-only group never renders empty.
+  const dropCaption = Boolean(story);
+  const displayedArtifacts = (arts) => {
+    if (!dropCaption) return arts;
+    const withoutText = arts.filter((a) => a.type !== "text");
+    return withoutText.length > 0 ? withoutText : arts;
+  };
+
   // Fullscreen navigation spans every group's artifacts (flattened), so the
   // viewer can page across groups even when each group has a single artifact.
   // The selected group's artifacts occupy the slice starting at `offset`.
-  const allArtifacts = groups.flatMap((g) => g.artifacts);
+  const allArtifacts = groups.flatMap((g) => displayedArtifacts(g.artifacts));
   const offset = groups
     .slice(0, selected)
-    .reduce((n, g) => n + g.artifacts.length, 0);
+    .reduce((n, g) => n + displayedArtifacts(g.artifacts).length, 0);
 
   // Rendered directly (no height cap): ExplainerInstanceTable's root is
   // height:100%, so it fills the stretched batch cell and matches the height
@@ -158,15 +235,27 @@ function GroupedArtifactsView({
   );
 
   return (
-    <ArtifactBatch
-      artifacts={group.artifacts}
-      siblings={allArtifacts}
-      siblingOffset={offset}
-      ctx={ctx}
-      leading={selector}
-      leadingFlex={wide ? "0 0 46%" : "0 0 25%"}
-      leadingMinWidth={wide ? 320 : 220}
-    />
+    <Box
+      sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}
+    >
+      <ArtifactBatch
+        artifacts={displayedArtifacts(group.artifacts)}
+        siblings={allArtifacts}
+        siblingOffset={offset}
+        ctx={ctx}
+        leading={selector}
+        leadingFlex={wide ? "0 0 46%" : "0 0 25%"}
+        leadingMinWidth={wide ? 320 : 220}
+      />
+      {story && (
+        <InstanceStoryBox
+          groupIndex={selected}
+          story={story.getStory(selected)}
+          status={story.getStatus(selected)}
+          onGenerate={story.onGenerate}
+        />
+      )}
+    </Box>
   );
 }
 
@@ -176,6 +265,11 @@ GroupedArtifactsView.propTypes = {
   datasetPath: PropTypes.string,
   selected: PropTypes.number,
   onSelect: PropTypes.func,
+  story: PropTypes.shape({
+    getStory: PropTypes.func.isRequired,
+    getStatus: PropTypes.func.isRequired,
+    onGenerate: PropTypes.func.isRequired,
+  }),
 };
 
 /**
@@ -184,7 +278,13 @@ GroupedArtifactsView.propTypes = {
  * width). `datasetPath` is forwarded to grouped items so local explainers get
  * the dataset row picker.
  */
-function renderItem(item, ctx, datasetPath = null, selection = null) {
+function renderItem(
+  item,
+  ctx,
+  datasetPath = null,
+  selection = null,
+  story = null,
+) {
   if (item.type === "grouped") {
     return (
       <GroupedArtifactsView
@@ -193,6 +293,7 @@ function renderItem(item, ctx, datasetPath = null, selection = null) {
         datasetPath={datasetPath}
         selected={selection ? selection.selected : null}
         onSelect={selection ? selection.onSelect : null}
+        story={story}
       />
     );
   }
@@ -202,6 +303,7 @@ function renderItem(item, ctx, datasetPath = null, selection = null) {
 export default function ExplainersPlot({
   explainer,
   scope,
+  supportsStory = false,
   onSaveOverride = null,
   onResetOverride = null,
   overriddenIndexes = [],
@@ -215,6 +317,61 @@ export default function ExplainersPlot({
   const { t } = useTranslation(["explainers"]);
   const isLocal = scope === "local";
   const datasetPath = isLocal ? explainer.input_dataset_path : null;
+
+  // Per-instance story text/status, keyed by group index (as a string, to
+  // match how `stories` is keyed on the explainer). Overrides
+  // explainer.stories once (re)generated, since the parent list may not
+  // refetch immediately.
+  const [localStories, setLocalStories] = useState({});
+  const [storyStatus, setStoryStatus] = useState({});
+
+  const handleGenerateStory = async (groupIndex) => {
+    const key = String(groupIndex);
+    setStoryStatus((prev) => ({ ...prev, [key]: "loading" }));
+    try {
+      const { id: jobId } = await createLocalExplainerStory(
+        explainer.id,
+        groupIndex,
+      );
+      startJobPolling(
+        jobId,
+        async () => {
+          try {
+            const refreshed = await getExplainers(explainer.run_id, "local");
+            const updated = refreshed.find((e) => e.id === explainer.id);
+            setLocalStories((prev) => ({
+              ...prev,
+              [key]: updated?.stories?.[key] ?? null,
+            }));
+            setStoryStatus((prev) => {
+              const next = { ...prev };
+              delete next[key];
+              return next;
+            });
+          } catch {
+            setStoryStatus((prev) => ({ ...prev, [key]: "error" }));
+          }
+        },
+        () => setStoryStatus((prev) => ({ ...prev, [key]: "error" })),
+      );
+    } catch {
+      setStoryStatus((prev) => ({ ...prev, [key]: "error" }));
+    }
+  };
+
+  const storyProps =
+    isLocal && supportsStory
+      ? {
+          getStory: (groupIndex) => {
+            const key = String(groupIndex);
+            return key in localStories
+              ? localStories[key]
+              : (explainer.stories?.[key] ?? null);
+          },
+          getStatus: (groupIndex) => storyStatus[String(groupIndex)],
+          onGenerate: handleGenerateStory,
+        }
+      : null;
 
   const getExplainerPlot = async () => {
     setLoading(true);
@@ -280,18 +437,26 @@ export default function ExplainersPlot({
     >
       {items.map((item, i) => (
         <Box key={i}>
-          {renderItem(item, ctx, datasetPath, {
-            selected: cacheEntry ? (cacheEntry.selectedGroups?.[i] ?? 0) : null,
-            onSelect: onCacheUpdate
-              ? (value) =>
-                  onCacheUpdate({
-                    selectedGroups: {
-                      ...(cacheEntry?.selectedGroups ?? {}),
-                      [i]: value,
-                    },
-                  })
-              : null,
-          })}
+          {renderItem(
+            item,
+            ctx,
+            datasetPath,
+            {
+              selected: cacheEntry
+                ? (cacheEntry.selectedGroups?.[i] ?? 0)
+                : null,
+              onSelect: onCacheUpdate
+                ? (value) =>
+                    onCacheUpdate({
+                      selectedGroups: {
+                        ...(cacheEntry?.selectedGroups ?? {}),
+                        [i]: value,
+                      },
+                    })
+                : null,
+            },
+            storyProps,
+          )}
         </Box>
       ))}
     </Box>
@@ -301,10 +466,13 @@ export default function ExplainersPlot({
 ExplainersPlot.propTypes = {
   explainer: PropTypes.shape({
     id: PropTypes.number,
+    run_id: PropTypes.number,
     status: PropTypes.number,
     input_dataset_path: PropTypes.string,
+    stories: PropTypes.object,
   }).isRequired,
   scope: PropTypes.string.isRequired,
+  supportsStory: PropTypes.bool,
   onSaveOverride: PropTypes.func,
   onResetOverride: PropTypes.func,
   overriddenIndexes: PropTypes.arrayOf(PropTypes.number),
