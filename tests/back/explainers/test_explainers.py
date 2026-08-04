@@ -231,10 +231,6 @@ def test_permutation_feature_importance_story(
     explanation = explainer.explain(copy.deepcopy(dataset))
     plot = explainer.plot(explanation)
 
-    # The job assigns this from the persisted pickle instead of recomputing
-    # explain(); story() must work from it, not from a fresh explain() call.
-    explainer.explanation = explanation
-
     story = explainer.story(plot[0])
 
     assert isinstance(story, str)

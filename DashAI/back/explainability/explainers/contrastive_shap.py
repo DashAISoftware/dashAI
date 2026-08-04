@@ -307,7 +307,8 @@ class ContrastiveShap(BaseLocalExplainer):
         -------
         dict
             Dictionary with, for each instance, the fact and foil classes and
-            the per-feature attribution difference (fact minus foil).
+            the per-feature attribution difference (fact minus foil). Also
+            cached on ``self.explanation`` for :meth:`story`.
         """
         import numpy as np
 
@@ -342,6 +343,7 @@ class ContrastiveShap(BaseLocalExplainer):
                 "delta_values": np.round(delta, 3).tolist(),
             }
 
+        self.explanation = explanation
         return explanation
 
     def _create_plot(self, data, fact_name, foil_name, fact_prob, foil_prob):
@@ -398,6 +400,57 @@ class ContrastiveShap(BaseLocalExplainer):
 
         return fig
 
+    def _summarize_instance(self, instance: dict, metadata: dict) -> str:
+        """Build the "why P rather than Q" sentence for one explained instance.
+
+        Computed directly from the explanation's own numbers (fact/foil
+        class, their probabilities, and the top contributing features by
+        absolute delta), independent of how :meth:`plot` renders them, so
+        :meth:`story` can call this without depending on a rendered artifact.
+
+        Parameters
+        ----------
+        instance : dict
+            One instance's entry from the explanation dict (i.e.
+            ``explanation[i]`` for some index ``i``, excluding the top-level
+            ``"metadata"`` entry).
+        metadata : dict
+            The explanation's ``"metadata"`` entry (``feature_names``,
+            ``target_names``).
+
+        Returns
+        -------
+        str
+            The contrastive summary sentence.
+        """
+        import numpy as np
+
+        feature_names = metadata["feature_names"]
+        target_names = metadata["target_names"]
+
+        fact_class = instance["fact_class"]
+        foil_class = instance["foil_class"]
+        fact_name = target_names[fact_class]
+        foil_name = target_names[foil_class]
+        prediction = instance["model_prediction"]
+        fact_prob = float(np.round(prediction[fact_class], 3))
+        foil_prob = float(np.round(prediction[foil_class], 3))
+
+        instance_values = instance["instance_values"]
+        delta = np.asarray(instance["delta_values"])
+        # Stable sort to match plot()'s previous pandas-based tie-breaking:
+        # largest |delta| first among the top 3.
+        top_indices = np.argsort(np.abs(delta), kind="stable")[::-1][:3]
+        top_features = ", ".join(
+            f"{feature_names[j]}={instance_values[j]}" for j in top_indices
+        )
+
+        return (
+            f"The model predicted {fact_name} (p={fact_prob}) rather than "
+            f"{foil_name} (p={foil_prob}) mainly because of: "
+            f"{top_features}."
+        )
+
     def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Render each instance as a contrastive bar plot plus a text summary.
 
@@ -449,21 +502,54 @@ class ContrastiveShap(BaseLocalExplainer):
             fig = self._create_plot(data, fact_name, foil_name, fact_prob, foil_prob)
             plot = PlotlyArtifact(payload=fig)
 
-            top = data.iloc[::-1].head(3)
-            top_features = ", ".join(
-                f"{feature}={value}"
-                for feature, value in zip(
-                    top["features"].tolist(),
-                    top["values"].tolist(),
-                    strict=True,
-                )
-            )
-            summary = (
-                f"The model predicted {fact_name} (p={fact_prob}) rather than "
-                f"{foil_name} (p={foil_prob}) mainly because of: "
-                f"{top_features}."
-            )
+            summary = self._summarize_instance(instance, metadata)
             text = TextArtifact(payload=summary)
             groups.append(ArtifactGroup(title=title, artifacts=[plot, text]))
 
         return [GroupedArtifacts(groups=groups)]
+
+    def story(self, explainer_output, prediction_context):
+        """Rebuild the contrastive summary from ``self.explanation``.
+
+        Builds the same "why P rather than Q" sentence :meth:`plot` writes
+        into each instance's :class:`TextArtifact`, but from the explanation's
+        own numbers rather than by reading that already-rendered text, so it
+        keeps working even if :meth:`plot`'s artifact layout changes.
+
+        Parameters
+        ----------
+        explainer_output : GroupedArtifacts
+            The explained instance's group, as produced by :meth:`plot`. Only
+            its ``title`` (``"Instance {n}"``) is used, to recover which
+            entry of ``self.explanation`` this call is about.
+        prediction_context : DashAIDataset
+            Unused; the summary is built entirely from ``self.explanation``.
+
+        Returns
+        -------
+        str
+            The instance's contrastive summary sentence.
+
+        Raises
+        ------
+        ValueError
+            If the instance's title cannot be matched to an explained
+            instance, or ``self.explanation`` was not set before calling this
+            (see :meth:`explain_instance`).
+        """
+        if not self.explanation:
+            raise ValueError(
+                "self.explanation must be set before calling story() "
+                "(see explain_instance)."
+            )
+
+        title = explainer_output.groups[0].title or ""
+        try:
+            index = int(title.rsplit(" ", 1)[-1]) - 1
+            instance = self.explanation[index]
+        except (ValueError, KeyError) as e:
+            raise ValueError(
+                f"Could not match group title {title!r} to an explained instance."
+            ) from e
+
+        return self._summarize_instance(instance, self.explanation["metadata"])

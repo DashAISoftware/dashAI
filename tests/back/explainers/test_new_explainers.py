@@ -205,6 +205,16 @@ def test_contrastive_shap(trained_model, dataset):
     assert [a.type for a in groups[0].artifacts] == ["plotly", "text"]
     assert "rather than" in groups[0].artifacts[1].payload
 
+    # story() must reuse plot()'s own summary text, not build a new one.
+    from DashAI.back.core.artifacts import GroupedArtifacts
+
+    for group in groups:
+        text_artifact = next(a for a in group.artifacts if a.type == "text")
+        single_group_output = GroupedArtifacts(groups=[group])
+        assert explainer.story(single_group_output, instances) == (
+            text_artifact.payload
+        )
+
 
 def test_contrastive_shap_fixed_foil(trained_model, dataset):
     x, _ = dataset

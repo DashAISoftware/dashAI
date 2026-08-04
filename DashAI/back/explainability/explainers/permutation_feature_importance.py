@@ -434,7 +434,8 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         dict
             Dictionary with keys ``"features"`` (list of str),
             ``"importances_mean"`` (list of float, rounded to 3 dp), and
-            ``"importances_std"`` (list of float, rounded to 3 dp).
+            ``"importances_std"`` (list of float, rounded to 3 dp). Also
+            cached on ``self.explanation`` for :meth:`story`.
         """
         # Lazy imports
         import numpy as np
@@ -481,11 +482,13 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
             results = self._calculate_grouped_importance(
                 X_df, y_df, feature_groups, max_samples
             )
-            return {
+            explanation = {
                 "features": results["features"],
                 "importances_mean": np.round(results["importances_mean"], 3).tolist(),
                 "importances_std": np.round(results["importances_std"], 3).tolist(),
             }
+            self.explanation = explanation
+            return explanation
         else:
 
             def patched_metric(y_true, y_pred_probas):
@@ -520,11 +523,13 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 max_samples=max_samples,
             )
 
-            return {
+            explanation = {
                 "features": input_columns,
                 "importances_mean": np.round(pfi["importances_mean"], 3).tolist(),
                 "importances_std": np.round(pfi["importances_std"], 3).tolist(),
             }
+            self.explanation = explanation
+            return explanation
 
     def _create_plot(self, data) -> List[GroupedArtifacts]:
         """Build one selector over feature counts.
