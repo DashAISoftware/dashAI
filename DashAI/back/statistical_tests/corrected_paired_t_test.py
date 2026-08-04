@@ -251,7 +251,9 @@ class CorrectedPairedTTest(BaseStatisticalTest):
 
         results = [
             (a, b, stat, p)
-            for (a, b, stat), p in zip(preliminary_results, corrected_p_values)
+            for (a, b, stat), p in zip(
+                preliminary_results, corrected_p_values, strict=False
+            )
         ]
 
         overall_significant = any(p < alpha for _, _, _, p in results)
@@ -276,28 +278,3 @@ class CorrectedPairedTTest(BaseStatisticalTest):
             details={},
             posthoc=pairwise,
         )
-
-    def get_schema(self) -> dict:
-        return {
-            "type": "object",
-            "properties": {
-                "alpha": {
-                    "type": "number",
-                    "default": 0.05,
-                    "minimum": 0.001,
-                    "maximum": 0.2,
-                    "description": "Significance level for the hypothesis test.",
-                },
-                "alternative": {
-                    "type": "string",
-                    "enum": ["two-sided", "greater", "less"],
-                    "default": "two-sided",
-                    "description": (
-                        "Alternative hypothesis."
-                        "'two-sided': the distributions differ. "
-                        "'greater': the first model scores higher. "
-                        "'less': the second model scores higher."
-                    ),
-                },
-            },
-        }

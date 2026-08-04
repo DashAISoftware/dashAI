@@ -146,13 +146,13 @@ class PairedTTest(BaseStatisticalTest):
                     "Both sets of scores must have the same number of observations."
                 )
 
-            # Validar que haya suficientes observaciones
+            # Ensure there are enough observations
             if len(scores1) < 2:
                 raise ValueError(
                     "Paired T-Test requires at least 2 observations per group."
                 )
 
-            # Validar que no haya valores NaN
+            # Ensure there are no NaN values
             if np.isnan(scores1).any() or np.isnan(scores2).any():
                 raise ValueError(
                     "Scores contain NaN values. Please check your input data."
@@ -160,7 +160,7 @@ class PairedTTest(BaseStatisticalTest):
 
             differences = scores1 - scores2
 
-            # Validar que haya varianza en las diferencias apareadas
+            # Ensure the paired differences have variance
             if np.var(differences, ddof=1) == 0:
                 raise ValueError(
                     "The paired differences have zero variance. "
@@ -200,14 +200,14 @@ class PairedTTest(BaseStatisticalTest):
                         "must have the same number of observations."
                     )
 
-                # Validar que haya suficientes observaciones
+                # Ensure there are enough observations
                 if len(scores1) < 2:
                     raise ValueError(
                         f"Paired T-Test requires at least 2 observations per group for "
                         f"{run_names[i]} and {run_names[j]}."
                     )
 
-                # Validar que no haya valores NaN
+                # Ensure there are no NaN values
                 if np.isnan(scores1).any() or np.isnan(scores2).any():
                     raise ValueError(
                         f"Scores for {run_names[i]} and {run_names[j]} contain NaN "
@@ -216,7 +216,7 @@ class PairedTTest(BaseStatisticalTest):
 
                 differences = scores1 - scores2
 
-                # Validar que haya varianza en las diferencias apareadas
+                # Ensure the paired differences have variance
                 if np.var(differences, ddof=1) == 0:
                     raise ValueError(
                         f"The paired differences for {run_names[i]} and {run_names[j]} "
@@ -240,7 +240,9 @@ class PairedTTest(BaseStatisticalTest):
 
         results = [
             (a, b, stat, p)
-            for (a, b, stat), p in zip(preliminary_results, corrected_p_values)
+            for (a, b, stat), p in zip(
+                preliminary_results, corrected_p_values, strict=False
+            )
         ]
 
         overall_significant = any(p < alpha for _, _, _, p in results)
@@ -265,29 +267,3 @@ class PairedTTest(BaseStatisticalTest):
             details={},
             posthoc=pairwise,
         )
-
-    def get_schema(self) -> dict:
-        """Return the configuration schema exposed to the frontend for this test."""
-        return {
-            "type": "object",
-            "properties": {
-                "alpha": {
-                    "type": "number",
-                    "default": 0.05,
-                    "minimum": 0.001,
-                    "maximum": 0.2,
-                    "description": "Significance level for the hypothesis test.",
-                },
-                "alternative": {
-                    "type": "string",
-                    "enum": ["two-sided", "greater", "less"],
-                    "default": "two-sided",
-                    "description": (
-                        "Alternative hypothesis. "
-                        "'two-sided': the distributions differ. "
-                        "'greater': the first model scores higher. "
-                        "'less': the second model scores higher."
-                    ),
-                },
-            },
-        }

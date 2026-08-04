@@ -86,21 +86,6 @@ class BartlettTest(BaseStatisticalTest):
             ),
         }
 
-    def get_schema(self) -> dict:
-        """Return the configuration schema exposed to the frontend for this test."""
-        return {
-            "type": "object",
-            "properties": {
-                "alpha": {
-                    "type": "number",
-                    "default": 0.05,
-                    "minimum": 0.001,
-                    "maximum": 0.2,
-                    "description": "Significance level for the hypothesis test.",
-                },
-            },
-        }
-
     def run(
         self,
         scores: dict[str, list[float]],  # {run_name: [fold_scores]}

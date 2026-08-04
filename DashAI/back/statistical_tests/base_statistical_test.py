@@ -7,11 +7,10 @@ from DashAI.back.statistical_tests.statistical_test_result import StatisticalTes
 class BaseStatisticalTest(metaclass=ABCMeta):
     """Abstract interface for all statistical tests used by the application.
 
-    Concrete implementations define how a particular hypothesis test is executed,
-    how its configuration is exposed to the frontend, and which metadata is
-    presented to the user. This class establishes the common contract shared by
-    every statistical test so that they can be handled uniformly by the rest of
-    the system.
+    Concrete implementations define how a particular hypothesis test is executed
+    and which metadata ispresented to the user. This class establishes the common
+    contract shared by every statistical test so that they can be handled uniformly
+    by the rest of the system.
     """
 
     TYPE = "StatisticalTest"
@@ -40,16 +39,6 @@ class BaseStatisticalTest(metaclass=ABCMeta):
         StatisticalTestResult
             Result object containing the test statistic, p-value, significance
             decision, and any additional details produced by the implementation.
-        """
-        raise NotImplementedError("Subclasses must implement this method")
-
-    @abstractmethod
-    def get_schema(self) -> dict:
-        """Return the configuration schema exposed to the frontend.
-
-        The schema describes the parameters accepted by the test, such as the
-        significance level or alternative hypothesis, so that the user interface
-        can render the appropriate form dynamically.
         """
         raise NotImplementedError("Subclasses must implement this method")
 

@@ -158,7 +158,10 @@ class TukeyHSDTest(BaseStatisticalTest):
         # Build flat arrays for statsmodels
         all_scores = np.concatenate(score_arrays)
         all_labels = np.concatenate(
-            [np.full(len(arr), name) for name, arr in zip(run_names, score_arrays)]
+            [
+                np.full(len(arr), name)
+                for name, arr in zip(run_names, score_arrays, strict=False)
+            ]
         )
 
         tukey = pairwise_tukeyhsd(all_scores, all_labels, alpha=alpha)
@@ -193,17 +196,3 @@ class TukeyHSDTest(BaseStatisticalTest):
             },
             posthoc=pairwise,
         )
-
-    def get_schema(self) -> dict:
-        return {
-            "type": "object",
-            "properties": {
-                "alpha": {
-                    "type": "number",
-                    "default": 0.05,
-                    "minimum": 0.001,
-                    "maximum": 0.2,
-                    "description": "Significance level for the hypothesis test.",
-                },
-            },
-        }

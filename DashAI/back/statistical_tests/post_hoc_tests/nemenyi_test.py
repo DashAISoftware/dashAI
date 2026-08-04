@@ -183,17 +183,3 @@ class NemenyiTest(BaseStatisticalTest):
             },
             posthoc=pairwise,
         )
-
-    def get_schema(self) -> dict:
-        return {
-            "type": "object",
-            "properties": {
-                "alpha": {
-                    "type": "number",
-                    "default": 0.05,
-                    "minimum": 0.001,
-                    "maximum": 0.2,
-                    "description": "Significance level for the hypothesis test.",
-                },
-            },
-        }
