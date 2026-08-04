@@ -349,6 +349,8 @@ class GlobalExplainer(Base):
     explanation_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    story: Mapped[str] = mapped_column(String, nullable=True)
+    story_huey_id: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     status: Mapped[Enum] = mapped_column(
