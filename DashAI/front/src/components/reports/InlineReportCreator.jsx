@@ -14,11 +14,9 @@ import { LoadingButton } from "@mui/lab";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 
-import { createReport as createReportRequest } from "../../api/report";
-import { enqueueReportJob as enqueueReportJobRequest } from "../../api/job";
-import { startJobPolling } from "../../utils/jobPoller";
 import useSchema from "../../hooks/useSchema";
 import ConfigureReportStep from "./ConfigureReportStep";
+import { createAndRunReport } from "./createAndRunReport";
 
 const SNACKBAR_AUTO_HIDE_MS = 5000;
 
@@ -63,42 +61,17 @@ export default function InlineReportCreator({
     }
   }, [open, defaultNewReport]);
 
-  const enqueueJob = async (reportId) => {
-    const response = await enqueueReportJobRequest(reportId);
-    enqueueSnackbar(t("reports:message.created"), {
-      variant: "success",
-      autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
-    });
-
-    if (response && response.id) {
-      startJobPolling(
-        response.id,
-        () => {
-          if (onCreated) onCreated();
-        },
-        (result) => {
-          console.error("Report job failed:", result);
-          enqueueSnackbar(t("reports:message.failed"), {
-            variant: "error",
-            autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
-          });
-          if (onCreated) onCreated();
-        },
-      );
-    }
-    return response;
-  };
-
   const handleCreate = async () => {
     setIsLoading(true);
     try {
-      const response = await createReportRequest(
-        newReport.run_id,
-        newReport.report_name,
-        newReport.parameters ?? {},
-      );
-      await enqueueJob(response.id);
-      if (onCreated) onCreated();
+      await createAndRunReport({
+        runId: newReport.run_id,
+        reportName: newReport.report_name,
+        parameters: newReport.parameters ?? {},
+        t,
+        enqueueSnackbar,
+        onCreated,
+      });
       onCancel();
     } catch (error) {
       enqueueSnackbar(t("reports:error.create"), {

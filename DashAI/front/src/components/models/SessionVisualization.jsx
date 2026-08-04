@@ -14,6 +14,10 @@ import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
+import {
+  createAndRunReport,
+  hasConfigurableParameters,
+} from "../reports/createAndRunReport";
 
 import { useModels } from "./ModelsContext";
 import { useTourContext } from "../tour/TourProvider";
@@ -46,6 +50,7 @@ export default function SessionVisualization() {
     selectModel,
     openExplainerCreator,
     openReportCreator,
+    triggerReportRefresh,
     explainerRefreshTrigger,
     triggerExplainerRefresh,
   } = useModels();
@@ -308,7 +313,26 @@ export default function SessionVisualization() {
               const report = JSON.parse(
                 e.dataTransfer.getData("application/x-dashai-report"),
               );
-              if (report?.name) openReportCreator(report);
+              if (report?.name) {
+                // Same rule as clicking the row in the sidebar: nothing to
+                // configure means nothing to ask.
+                if (hasConfigurableParameters(report) || !activeRun) {
+                  openReportCreator(report);
+                } else {
+                  createAndRunReport({
+                    runId: activeRun.id,
+                    reportName: report.name,
+                    t,
+                    enqueueSnackbar,
+                    onCreated: triggerReportRefresh,
+                  }).catch((error) => {
+                    console.error("Error creating report:", error);
+                    enqueueSnackbar(t("reports:error.create"), {
+                      variant: "error",
+                    });
+                  });
+                }
+              }
             } else {
               const model = JSON.parse(
                 e.dataTransfer.getData("application/x-dashai-model"),

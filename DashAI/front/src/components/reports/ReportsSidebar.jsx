@@ -10,6 +10,10 @@ import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
 import ModelListItem from "../models/model/ModelListItem";
 import InlineReportCreator from "./InlineReportCreator";
+import {
+  createAndRunReport,
+  hasConfigurableParameters,
+} from "./createAndRunReport";
 import { useModels } from "../models/ModelsContext";
 
 const matchesQuery = (component, query) =>
@@ -19,7 +23,8 @@ const matchesQuery = (component, query) =>
 /**
  * Right-side panel shown while the model detail view is on its Reports
  * tab. Lists the reports compatible with the session's task, mirroring the
- * add-explainers sidebar; clicking one opens its creation dialog.
+ * add-explainers sidebar. Clicking one adds it outright, or opens the
+ * parameter dialog when the report has something to configure.
  */
 export default function ReportsSidebar({ run, session, onCreated }) {
   const theme = useTheme();
@@ -53,6 +58,27 @@ export default function ReportsSidebar({ run, session, onCreated }) {
   useEffect(() => {
     fetchReports();
   }, [fetchReports]);
+
+  // A report with nothing to configure is added on the click. Opening a
+  // dialog whose only control is a Create button would be pure friction.
+  const handleSelect = async (report) => {
+    if (hasConfigurableParameters(report)) {
+      openReportCreator(report);
+      return;
+    }
+    try {
+      await createAndRunReport({
+        runId: run.id,
+        reportName: report.name,
+        t,
+        enqueueSnackbar,
+        onCreated,
+      });
+    } catch (error) {
+      console.error("Error creating report:", error);
+      enqueueSnackbar(t("reports:error.create"), { variant: "error" });
+    }
+  };
 
   const query = searchQuery.trim().toLowerCase();
   const filtered = query
@@ -125,8 +151,12 @@ export default function ReportsSidebar({ run, session, onCreated }) {
                 dragPayload={{
                   name: report.name,
                   display_name: report.display_name,
+                  // Lets the drop target decide between adding the report
+                  // outright and opening the parameter dialog, exactly as
+                  // handleSelect does for a click.
+                  schema: report.schema,
                 }}
-                onClick={() => openReportCreator(report)}
+                onClick={() => handleSelect(report)}
               />
             ))}
           </Box>
