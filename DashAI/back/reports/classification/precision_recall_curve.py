@@ -1,10 +1,10 @@
 """Precision recall curve report."""
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import numpy as np
 
-from DashAI.back.core.artifacts import Artifact, GroupedArtifacts, PlotlyArtifact
+from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.reports.base_report import (
     BaseReport,
@@ -71,7 +71,7 @@ class PrecisionRecallCurve(BaseReport):
         y_true,
         y_pred,
         class_names: Optional[List[str]] = None,
-    ) -> List[Union[Artifact, GroupedArtifacts]]:
+    ) -> List[Artifact]:
         """Build the one vs rest precision recall curves.
 
         Parameters
@@ -85,7 +85,7 @@ class PrecisionRecallCurve(BaseReport):
 
         Returns
         -------
-        List[Union[Artifact, GroupedArtifacts]]
+        List[Artifact]
             A single figure holding one curve per class.
         """
         import plotly.graph_objects as go

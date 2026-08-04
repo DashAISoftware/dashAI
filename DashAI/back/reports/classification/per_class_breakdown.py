@@ -1,10 +1,9 @@
 """Per class precision, recall, F1 and support as a table."""
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from DashAI.back.core.artifacts import (
     Artifact,
-    GroupedArtifacts,
     TableArtifact,
     TablePayload,
 )
@@ -59,7 +58,7 @@ class PerClassBreakdown(BaseReport):
         y_true,
         y_pred,
         class_names: Optional[List[str]] = None,
-    ) -> List[Union[Artifact, GroupedArtifacts]]:
+    ) -> List[Artifact]:
         """Build the per class report table.
 
         Parameters
@@ -73,7 +72,7 @@ class PerClassBreakdown(BaseReport):
 
         Returns
         -------
-        List[Union[Artifact, GroupedArtifacts]]
+        List[Artifact]
             A single table artifact, one row per class plus the averages.
         """
         import numpy as np

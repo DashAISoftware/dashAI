@@ -4,13 +4,8 @@
     "searchReports": "Search reports",
     "noReportsMatchSearch": "No reports match your search",
     "noCompatibleReportsFound": "No compatible reports found",
-    "split": "Split",
-    "split_train": "Train",
-    "split_validation": "Validation",
-    "split_test": "Test",
     "parameters": "Parameters",
     "newReport": "New Report",
-    "selectSplit": "Select split",
     "configureParameters": "Configure parameters"
   },
   "button": {
@@ -24,8 +19,8 @@
     "noData": "This report produced no output",
     "empty": "No reports yet. Add one from the panel on the right.",
     "noParameters": "This report has no parameters to configure.",
-    "splitHelp": "Which prediction set the report describes.",
-    "confirmDelete": "Are you sure you want to delete this report? This cannot be undone."
+    "confirmDelete": "Are you sure you want to delete this report? This cannot be undone.",
+    "coversEveryPartition": "This report covers every evaluation partition of the run."
   },
   "error": {
     "fetch": "Could not load the reports",

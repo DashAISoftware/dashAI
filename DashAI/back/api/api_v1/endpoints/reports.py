@@ -142,7 +142,7 @@ async def upload_report(
     Parameters
     ----------
     params : ReportParams
-        Run id, report component name, parameters and split.
+        Run id, report component name and parameters.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy
         session.
@@ -169,7 +169,6 @@ async def upload_report(
                 run_id=params.run_id,
                 report_name=params.report_name,
                 parameters=params.parameters,
-                split=params.split,
             )
             db.add(report)
             db.commit()

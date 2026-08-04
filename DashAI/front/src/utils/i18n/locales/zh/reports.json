@@ -4,13 +4,8 @@
     "searchReports": "搜索报告",
     "noReportsMatchSearch": "没有匹配的报告",
     "noCompatibleReportsFound": "未找到兼容的报告",
-    "split": "数据划分",
-    "split_train": "训练集",
-    "split_validation": "验证集",
-    "split_test": "测试集",
     "parameters": "参数",
     "newReport": "新建报告",
-    "selectSplit": "选择数据划分",
     "configureParameters": "配置参数"
   },
   "button": {
@@ -24,8 +19,8 @@
     "noData": "该报告未产生任何输出",
     "empty": "暂无报告。请从右侧面板添加。",
     "noParameters": "该报告没有可配置的参数。",
-    "splitHelp": "该报告所描述的预测集合。",
-    "confirmDelete": "确定要删除该报告吗？此操作无法撤销。"
+    "confirmDelete": "确定要删除该报告吗？此操作无法撤销。",
+    "coversEveryPartition": "该报告涵盖此次运行的所有评估划分。"
   },
   "error": {
     "fetch": "无法加载报告",

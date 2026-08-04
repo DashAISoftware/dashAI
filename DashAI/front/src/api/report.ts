@@ -4,7 +4,6 @@ export interface IReport {
   id: number;
   run_id: number;
   report_name: string;
-  split: string;
   parameters: object;
   artifacts_path: string | null;
   status: number;
@@ -26,13 +25,11 @@ export const getReportArtifacts = async (reportId: number): Promise<any[]> => {
 export const createReport = async (
   runId: number,
   reportName: string,
-  split: string,
   parameters: object = {},
 ): Promise<IReport> => {
   const response = await api.post<IReport>("/v1/report/", {
     run_id: runId,
     report_name: reportName,
-    split,
     parameters,
   });
   return response.data;

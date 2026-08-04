@@ -1,10 +1,10 @@
 """Base Report abstract class."""
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Final, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Final, List, Optional
 
 from DashAI.back.config_object import ConfigObject
-from DashAI.back.core.artifacts import Artifact, GroupedArtifacts
+from DashAI.back.core.artifacts import Artifact
 
 if TYPE_CHECKING:
     from numpy import ndarray
@@ -75,7 +75,7 @@ class BaseReport(ConfigObject, ABC):
         y_true: "ndarray",
         y_pred: "ndarray",
         class_names: Optional[List[str]] = None,
-    ) -> List[Union[Artifact, GroupedArtifacts]]:
+    ) -> List[Artifact]:
         """Build renderable artifacts comparing predictions against the truth.
 
         Parameters
@@ -93,8 +93,10 @@ class BaseReport(ConfigObject, ABC):
 
         Returns
         -------
-        List[Union[Artifact, GroupedArtifacts]]
-            The artifacts to render, in display order.
+        List[Artifact]
+            The artifacts to render, in display order. Leaves only: the job
+            calls this once per evaluation partition and wraps each result in
+            a group, and a group cannot contain another group.
 
         Raises
         ------

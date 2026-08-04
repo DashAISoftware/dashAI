@@ -4,13 +4,8 @@
     "searchReports": "Buscar reportes",
     "noReportsMatchSearch": "Ningún reporte coincide con la búsqueda",
     "noCompatibleReportsFound": "No se encontraron reportes compatibles",
-    "split": "Partición",
-    "split_train": "Entrenamiento",
-    "split_validation": "Validación",
-    "split_test": "Prueba",
     "parameters": "Parámetros",
     "newReport": "Nuevo Reporte",
-    "selectSplit": "Seleccionar partición",
     "configureParameters": "Configurar parámetros"
   },
   "button": {
@@ -24,8 +19,8 @@
     "noData": "Este reporte no produjo resultados",
     "empty": "Aún no hay reportes. Agregue uno desde el panel de la derecha.",
     "noParameters": "Este reporte no tiene parámetros para configurar.",
-    "splitHelp": "Qué conjunto de predicciones describe el reporte.",
-    "confirmDelete": "¿Seguro que desea eliminar este reporte? Esta acción no se puede deshacer."
+    "confirmDelete": "¿Seguro que desea eliminar este reporte? Esta acción no se puede deshacer.",
+    "coversEveryPartition": "Este reporte cubre todas las particiones de evaluación de la ejecución."
   },
   "error": {
     "fetch": "No se pudieron cargar los reportes",

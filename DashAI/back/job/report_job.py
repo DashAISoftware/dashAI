@@ -21,8 +21,20 @@ if TYPE_CHECKING:
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
-#: Split name as stored on the row mapped to the key the split dict uses.
-SPLIT_KEYS = {"train": "train", "validation": "validation", "test": "test"}
+#: Evaluation partitions of a holdout run, in the order they are offered.
+#:
+#: A report covers every partition the run exposes rather than one chosen at
+#: creation, so the set of partitions is data rather than part of the API
+#: contract. Teaching DashAI cross validation means yielding k folds here; no
+#: report class changes, because none of them know what a partition is.
+PARTITIONS = ("train", "validation", "test")
+
+#: Human readable label per partition, used as the selector entry title.
+PARTITION_LABELS = {
+    "train": "Train",
+    "validation": "Validation",
+    "test": "Test",
+}
 
 
 class ReportJob(BaseJob):
@@ -104,7 +116,7 @@ class ReportJob(BaseJob):
             with di["session_factory"]() as db:
                 report: Report = db.get(Report, report_id)
                 if report:
-                    return f"Report: {report.report_name} ({report.split})"
+                    return f"Report: {report.report_name}"
         except Exception:
             pass
         return f"Report ({report_id})"
@@ -149,7 +161,12 @@ class ReportJob(BaseJob):
 
         from kink import di
 
-        from DashAI.back.core.artifacts import normalize_artifacts
+        from DashAI.back.core.artifacts import (
+            ArtifactGroup,
+            GroupedArtifacts,
+            TextArtifact,
+            normalize_artifacts,
+        )
         from DashAI.back.dataloaders.classes.dashai_dataset import (
             load_dataset,
             select_columns,
@@ -182,10 +199,6 @@ class ReportJob(BaseJob):
                     raise JobError(
                         f"Dataset {model_session.dataset_id} does not exist in DB."
                     )
-
-                split = report.split
-                if split not in SPLIT_KEYS:
-                    raise JobError(f"{split} is not a valid split")
 
                 try:
                     report.set_status_as_started()
@@ -254,39 +267,75 @@ class ReportJob(BaseJob):
                         f"Can not prepare dataset {dataset.id} for the report"
                     ) from e
 
-                self.report_progress(0.6, "Predicting")
-                try:
-                    split_key = SPLIT_KEYS[split]
-                    # Inputs go in unprepared, exactly as the prediction job
-                    # feeds them: the model applies its own preprocessing.
-                    y_pred = trained_model.predict(data_x[split_key])
-                    # Targets are encoded so they line up with the class
-                    # indexes the model predicts.
-                    y_true = (
-                        trained_model.prepare_output(data_y[split_key], is_fit=False)
-                        .to_pandas()
-                        .to_numpy()
-                        .ravel()
-                    )
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Failed to predict the {split} split for the report"
-                    ) from e
+                self.report_progress(0.6, "Computing every partition")
+                class_names = self._class_names(trained_model)
+                groups = []
+                skipped = []
+                last_error = None
 
-                self.report_progress(0.8, "Computing the report")
-                try:
-                    artifacts = normalize_artifacts(
-                        instance.compute(
-                            y_true, y_pred, self._class_names(trained_model)
+                for partition in PARTITIONS:
+                    if partition not in data_x:
+                        continue
+                    try:
+                        # Inputs go in unprepared, exactly as the prediction job
+                        # feeds them: the model applies its own preprocessing.
+                        y_pred = trained_model.predict(data_x[partition])
+                        # Targets are encoded so they line up with the class
+                        # indexes the model predicts.
+                        y_true = (
+                            trained_model.prepare_output(
+                                data_y[partition], is_fit=False
+                            )
+                            .to_pandas()
+                            .to_numpy()
+                            .ravel()
+                        )
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            f"Failed to predict the {partition} partition"
+                        ) from e
+
+                    try:
+                        leaves = instance.compute(y_true, y_pred, class_names)
+                    except ReportError as e:
+                        # One degenerate partition, such as a split holding a
+                        # single class, must not cost the user the partitions
+                        # that did compute. Skipping is stated below rather
+                        # than left for them to notice.
+                        log.warning("Skipping %s partition: %s", partition, e)
+                        skipped.append(f"{PARTITION_LABELS[partition]}: {e}")
+                        last_error = e
+                        continue
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError("Failed to compute the report") from e
+
+                    if leaves:
+                        groups.append(
+                            ArtifactGroup(
+                                title=PARTITION_LABELS[partition],
+                                artifacts=leaves,
+                            )
+                        )
+
+                if not groups:
+                    raise JobError(
+                        str(last_error)
+                        if last_error
+                        else "The report produced no output for any partition."
+                    )
+
+                self.report_progress(0.8, "Saving the report")
+                items = [GroupedArtifacts(title=None, groups=groups)]
+                if skipped:
+                    items.append(
+                        TextArtifact(
+                            payload="\n".join(skipped),
+                            title="Partitions not shown",
                         )
                     )
-                except ReportError as e:
-                    log.exception(e)
-                    raise JobError(str(e)) from e
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError("Failed to compute the report") from e
+                artifacts = normalize_artifacts(items)
 
                 try:
                     path = os.path.join(

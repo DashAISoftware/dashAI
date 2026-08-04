@@ -4,13 +4,8 @@
     "searchReports": "Berichte suchen",
     "noReportsMatchSearch": "Kein Bericht passt zur Suche",
     "noCompatibleReportsFound": "Keine kompatiblen Berichte gefunden",
-    "split": "Aufteilung",
-    "split_train": "Training",
-    "split_validation": "Validierung",
-    "split_test": "Test",
     "parameters": "Parameter",
     "newReport": "Neuer Bericht",
-    "selectSplit": "Aufteilung wählen",
     "configureParameters": "Parameter konfigurieren"
   },
   "button": {
@@ -24,8 +19,8 @@
     "noData": "Dieser Bericht hat keine Ausgabe erzeugt",
     "empty": "Noch keine Berichte. Fügen Sie einen über das rechte Panel hinzu.",
     "noParameters": "Dieser Bericht hat keine konfigurierbaren Parameter.",
-    "splitHelp": "Welchen Vorhersagesatz der Bericht beschreibt.",
-    "confirmDelete": "Möchten Sie diesen Bericht wirklich löschen? Dies kann nicht rückgängig gemacht werden."
+    "confirmDelete": "Möchten Sie diesen Bericht wirklich löschen? Dies kann nicht rückgängig gemacht werden.",
+    "coversEveryPartition": "Dieser Bericht deckt alle Auswertungspartitionen des Laufs ab."
   },
   "error": {
     "fetch": "Die Berichte konnten nicht geladen werden",

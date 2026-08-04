@@ -1,8 +1,8 @@
 """Residual against predicted report."""
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
-from DashAI.back.core.artifacts import Artifact, GroupedArtifacts, PlotlyArtifact
+from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.reports.base_report import BaseReport
 from DashAI.back.reports.regression.predicted_vs_actual import flat_predictions
@@ -47,7 +47,7 @@ class ResidualPlot(BaseReport):
         y_true,
         y_pred,
         class_names: Optional[List[str]] = None,
-    ) -> List[Union[Artifact, GroupedArtifacts]]:
+    ) -> List[Artifact]:
         """Build the residual against predicted scatter.
 
         Parameters
@@ -61,7 +61,7 @@ class ResidualPlot(BaseReport):
 
         Returns
         -------
-        List[Union[Artifact, GroupedArtifacts]]
+        List[Artifact]
             A single scatter figure with the zero reference line.
         """
         import plotly.graph_objects as go

@@ -4,13 +4,8 @@
     "searchReports": "Buscar relatórios",
     "noReportsMatchSearch": "Nenhum relatório corresponde à busca",
     "noCompatibleReportsFound": "Nenhum relatório compatível encontrado",
-    "split": "Partição",
-    "split_train": "Treino",
-    "split_validation": "Validação",
-    "split_test": "Teste",
     "parameters": "Parâmetros",
     "newReport": "Novo Relatório",
-    "selectSplit": "Selecionar partição",
     "configureParameters": "Configurar parâmetros"
   },
   "button": {
@@ -24,8 +19,8 @@
     "noData": "Este relatório não produziu resultados",
     "empty": "Ainda não há relatórios. Adicione um pelo painel à direita.",
     "noParameters": "Este relatório não tem parâmetros para configurar.",
-    "splitHelp": "Qual conjunto de previsões o relatório descreve.",
-    "confirmDelete": "Tem certeza de que deseja excluir este relatório? Esta ação não pode ser desfeita."
+    "confirmDelete": "Tem certeza de que deseja excluir este relatório? Esta ação não pode ser desfeita.",
+    "coversEveryPartition": "Este relatório cobre todas as partições de avaliação da execução."
   },
   "error": {
     "fetch": "Não foi possível carregar os relatórios",

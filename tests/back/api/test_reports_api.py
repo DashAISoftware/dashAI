@@ -152,7 +152,6 @@ def _create(client: TestClient, run_id: int, name: str, **overrides) -> int:
         "run_id": run_id,
         "report_name": name,
         "parameters": {},
-        "split": "test",
         **overrides,
     }
     response = client.post("/api/v1/report/", json=body)
@@ -178,8 +177,10 @@ def test_create_lists_and_computes_a_confusion_matrix(
 
     artifacts = client.get(f"/api/v1/report/{report_id}/artifacts").json()
     assert len(artifacts) == 1
-    assert artifacts[0]["type"] == "plotly"
-    figure = json.loads(artifacts[0]["payload"])
+    assert artifacts[0]["type"] == "grouped"
+    leaf = artifacts[0]["groups"][0]["artifacts"][0]
+    assert leaf["type"] == "plotly"
+    figure = json.loads(leaf["payload"])
     # Class names come from the model's own output encoder.
     assert "Iris-setosa" in figure["data"][0]["x"]
 
@@ -196,31 +197,39 @@ def test_roc_curve_runs_on_real_probabilities(client: TestClient, trained_run_id
     ReportJob(report_id=report_id).run()
 
     artifacts = client.get(f"/api/v1/report/{report_id}/artifacts").json()
-    figure = json.loads(artifacts[0]["payload"])
-    assert any("AUC" in trace.get("name", "") for trace in figure["data"])
+    # Every partition produced a curve, so each is its own selector entry.
+    assert len(artifacts[0]["groups"]) == 3
+    for group in artifacts[0]["groups"]:
+        figure = json.loads(group["artifacts"][0]["payload"])
+        assert any("AUC" in trace.get("name", "") for trace in figure["data"])
 
     client.delete(f"/api/v1/report/{report_id}")
 
 
-def test_each_split_is_its_own_report(client: TestClient, trained_run_id: int):
-    train_id = _create(client, trained_run_id, "PerClassBreakdown", split="train")
-    test_id = _create(client, trained_run_id, "PerClassBreakdown", split="test")
+def test_one_report_covers_every_partition(client: TestClient, trained_run_id: int):
+    """Partitions are selector entries of one report, not separate reports."""
+    report_id = _create(client, trained_run_id, "PerClassBreakdown")
+    ReportJob(report_id=report_id).run()
 
-    ReportJob(report_id=train_id).run()
-    ReportJob(report_id=test_id).run()
+    artifacts = client.get(f"/api/v1/report/{report_id}/artifacts").json()
+    assert len(artifacts) == 1
+    assert artifacts[0]["type"] == "grouped"
 
-    train_rows = client.get(f"/api/v1/report/{train_id}/artifacts").json()[0][
-        "payload"
-    ]["rows"]
-    test_rows = client.get(f"/api/v1/report/{test_id}/artifacts").json()[0]["payload"][
-        "rows"
+    titles = [group["title"] for group in artifacts[0]["groups"]]
+    assert titles == ["Train", "Validation", "Test"]
+
+    # Support is the row count of the partition, so the groups must disagree.
+    supports = [
+        group["artifacts"][0]["payload"]["rows"][-1][-1]
+        for group in artifacts[0]["groups"]
     ]
+    assert len(set(supports)) > 1
 
-    # Support is the row count of the split, so the two must disagree.
-    assert train_rows[-1][-1] != test_rows[-1][-1]
+    # Indexes are stamped flat across groups so an edit can address any leaf.
+    indexes = [group["artifacts"][0]["index"] for group in artifacts[0]["groups"]]
+    assert indexes == [0, 1, 2]
 
-    client.delete(f"/api/v1/report/{train_id}")
-    client.delete(f"/api/v1/report/{test_id}")
+    client.delete(f"/api/v1/report/{report_id}")
 
 
 def test_an_incompatible_report_fails_with_its_own_message(
@@ -250,11 +259,13 @@ def test_plot_edits_survive_a_reload(client: TestClient, trained_run_id: int):
     )
     assert response.status_code == 200, response.text
 
-    artifacts = client.get(f"/api/v1/report/{report_id}/artifacts").json()
-    assert json.loads(artifacts[0]["payload"])["layout"]["title"] == "mine"
+    edited_leaf = client.get(f"/api/v1/report/{report_id}/artifacts").json()[0][
+        "groups"
+    ][0]["artifacts"][0]
+    assert json.loads(edited_leaf["payload"])["layout"]["title"] == "mine"
     # The flag tells the frontend to render the edit verbatim rather than
     # re-theming it, which would clobber the colors the user chose.
-    assert artifacts[0]["overridden"] is True
+    assert edited_leaf["overridden"] is True
 
     client.delete(f"/api/v1/report/{report_id}")
 
@@ -272,10 +283,12 @@ def test_resetting_an_edit_restores_the_computed_figure(
     response = client.delete(f"/api/v1/report/{report_id}/override/0")
     assert response.status_code == 200, response.text
 
-    artifacts = client.get(f"/api/v1/report/{report_id}/artifacts").json()
-    figure = json.loads(artifacts[0]["payload"])
+    leaf = client.get(f"/api/v1/report/{report_id}/artifacts").json()[0]["groups"][0][
+        "artifacts"
+    ][0]
+    figure = json.loads(leaf["payload"])
     assert figure["layout"]["title"]["text"].startswith("Confusion matrix")
-    assert "overridden" not in artifacts[0]
+    assert "overridden" not in leaf
 
     client.delete(f"/api/v1/report/{report_id}")
 
@@ -288,19 +301,6 @@ def test_overriding_an_unknown_report_is_404(client: TestClient):
     assert response.status_code == 404
 
 
-def test_invalid_split_is_rejected(client: TestClient, trained_run_id: int):
-    response = client.post(
-        "/api/v1/report/",
-        json={
-            "run_id": trained_run_id,
-            "report_name": "ConfusionMatrix",
-            "parameters": {},
-            "split": "holdout",
-        },
-    )
-    assert response.status_code == 422
-
-
 def test_creating_for_an_unknown_run_is_404(client: TestClient):
     response = client.post(
         "/api/v1/report/",
@@ -308,7 +308,6 @@ def test_creating_for_an_unknown_run_is_404(client: TestClient):
             "run_id": 99999,
             "report_name": "ConfusionMatrix",
             "parameters": {},
-            "split": "test",
         },
     )
     assert response.status_code == 404

@@ -26,7 +26,6 @@ def upgrade() -> None:
         sa.Column("run_id", sa.Integer(), nullable=False),
         sa.Column("huey_id", sa.String(), nullable=True),
         sa.Column("report_name", sa.String(), nullable=False),
-        sa.Column("split", sa.String(), nullable=False),
         sa.Column("parameters", sa.JSON(), nullable=True),
         sa.Column("artifacts_path", sa.String(), nullable=True),
         sa.Column("plot_overrides", sa.JSON(), nullable=True),

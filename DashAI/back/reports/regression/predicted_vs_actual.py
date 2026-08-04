@@ -1,8 +1,8 @@
 """Predicted against actual report."""
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
-from DashAI.back.core.artifacts import Artifact, GroupedArtifacts, PlotlyArtifact
+from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.reports.base_report import BaseReport
 
@@ -65,7 +65,7 @@ class PredictedVsActual(BaseReport):
         y_true,
         y_pred,
         class_names: Optional[List[str]] = None,
-    ) -> List[Union[Artifact, GroupedArtifacts]]:
+    ) -> List[Artifact]:
         """Build the predicted against actual scatter.
 
         Parameters
@@ -79,7 +79,7 @@ class PredictedVsActual(BaseReport):
 
         Returns
         -------
-        List[Union[Artifact, GroupedArtifacts]]
+        List[Artifact]
             A single scatter figure with the identity reference line.
         """
         import plotly.graph_objects as go

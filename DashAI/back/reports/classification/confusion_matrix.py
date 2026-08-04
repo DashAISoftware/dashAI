@@ -1,8 +1,8 @@
 """Confusion matrix report."""
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
-from DashAI.back.core.artifacts import Artifact, GroupedArtifacts, PlotlyArtifact
+from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.schema_fields import BaseSchema, enum_field, schema_field
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.reports.base_report import (
@@ -116,7 +116,7 @@ class ConfusionMatrix(BaseReport):
         y_true,
         y_pred,
         class_names: Optional[List[str]] = None,
-    ) -> List[Union[Artifact, GroupedArtifacts]]:
+    ) -> List[Artifact]:
         """Build the confusion matrix heatmap.
 
         Parameters
@@ -130,7 +130,7 @@ class ConfusionMatrix(BaseReport):
 
         Returns
         -------
-        List[Union[Artifact, GroupedArtifacts]]
+        List[Artifact]
             A single heatmap artifact.
         """
         import numpy as np

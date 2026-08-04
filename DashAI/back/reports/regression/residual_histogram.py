@@ -1,8 +1,8 @@
 """Residual distribution report."""
 
-from typing import List, Optional, Union
+from typing import List, Optional
 
-from DashAI.back.core.artifacts import Artifact, GroupedArtifacts, PlotlyArtifact
+from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.schema_fields import BaseSchema, int_field, schema_field
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.reports.base_report import BaseReport
@@ -75,7 +75,7 @@ class ResidualHistogram(BaseReport):
         y_true,
         y_pred,
         class_names: Optional[List[str]] = None,
-    ) -> List[Union[Artifact, GroupedArtifacts]]:
+    ) -> List[Artifact]:
         """Build the residual histogram.
 
         Parameters
@@ -89,7 +89,7 @@ class ResidualHistogram(BaseReport):
 
         Returns
         -------
-        List[Union[Artifact, GroupedArtifacts]]
+        List[Artifact]
             A single histogram figure with a zero reference line.
         """
         import plotly.graph_objects as go

@@ -4,7 +4,6 @@ import {
   Box,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
   IconButton,
   Tooltip,
@@ -30,9 +29,9 @@ const STATUS = {
 };
 
 /**
- * One computed report: its name, the split it describes, and its
- * artifacts. Polls only while the job is outstanding, so a settled card makes
- * no requests.
+ * One computed report: its name, its job status, and its artifacts. The
+ * artifacts arrive as one selector entry per evaluation partition, so the
+ * partition is chosen inside the card rather than at creation.
  */
 export default function ReportCard({
   report,
@@ -134,7 +133,6 @@ export default function ReportCard({
                 shared dot maps them without a second colour table. */}
             <RunStatusDot status={status} />
           </Typography>
-          <Chip size="small" label={t(`reports:label.split_${report.split}`)} />
           <Box sx={{ flex: 1 }} />
           <Tooltip title={t("reports:button.delete")}>
             <IconButton
@@ -187,7 +185,6 @@ ReportCard.propTypes = {
   report: PropTypes.shape({
     id: PropTypes.number.isRequired,
     report_name: PropTypes.string,
-    split: PropTypes.string,
     status: PropTypes.number,
   }).isRequired,
   displayName: PropTypes.string,

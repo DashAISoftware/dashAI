@@ -382,7 +382,8 @@ class GlobalExplainer(Base):
 class Report(Base):
     __tablename__ = "report"
     """
-    Table to store an evaluation report computed over one split of a run.
+    Table to store an evaluation report of a run. One row covers every
+    evaluation partition; the artifacts carry one group per partition.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
     run_id: Mapped[int] = mapped_column(
@@ -390,8 +391,6 @@ class Report(Base):
     )
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     report_name: Mapped[str] = mapped_column(String, nullable=False)
-    # Which prediction set the report describes: train, validation or test.
-    split: Mapped[str] = mapped_column(String, nullable=False, default="test")
     parameters: Mapped[JSON] = mapped_column(JSON)
     artifacts_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
