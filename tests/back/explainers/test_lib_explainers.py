@@ -141,7 +141,13 @@ def test_dice_counterfactual(trained_model, dataset):
     groups = plot[0].groups
     assert len(groups) == len(instance_keys)
     for group in groups:
-        assert [a.type for a in group.artifacts] == ["table", "text"]
+        assert [a.type for a in group.artifacts] == ["table"]
+
+    from DashAI.back.core.artifacts import GroupedArtifacts
+
+    single_group_output = GroupedArtifacts(groups=[groups[0]])
+    story = explainer.story(single_group_output, instances)
+    assert "predicted" in story
 
 
 class DummyTextModel:

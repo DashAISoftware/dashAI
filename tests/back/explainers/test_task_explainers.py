@@ -173,8 +173,13 @@ def test_regression_kernel_shap(trained_regressor, regression_dataset):
     assert len(plot) == 1
     groups = plot[0].groups
     assert len(groups) == len(instance_keys)
-    assert [a.type for a in groups[0].artifacts] == ["plotly", "text"]
-    assert "baseline" in groups[0].artifacts[1].payload
+    assert [a.type for a in groups[0].artifacts] == ["plotly"]
+
+    from DashAI.back.core.artifacts import GroupedArtifacts
+
+    single_group_output = GroupedArtifacts(groups=[groups[0]])
+    story = explainer.story(single_group_output, instances)
+    assert "baseline" in story
 
 
 def test_regression_partial_dependence(trained_regressor, regression_dataset):
@@ -276,8 +281,13 @@ def test_token_ablation_explains_influential_tokens():
     assert len(plot) == 1
     groups = plot[0].groups
     assert len(groups) == 2
-    assert [a.type for a in groups[0].artifacts] == ["plotly", "text"]
-    assert "good" in groups[0].artifacts[1].payload
+    assert [a.type for a in groups[0].artifacts] == ["plotly"]
+
+    from DashAI.back.core.artifacts import GroupedArtifacts
+
+    single_group_output = GroupedArtifacts(groups=[groups[0]])
+    story = explainer.story(single_group_output, instances)
+    assert "good" in story
 
 
 def test_token_ablation_ignores_tokenizer_columns():

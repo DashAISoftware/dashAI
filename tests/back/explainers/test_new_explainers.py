@@ -139,12 +139,12 @@ def test_nearest_counterfactual(trained_model, dataset):
 
     plot = explainer.plot(explanation)
     # A single grouped artifact with one group per instance, each holding a
-    # table and a text artifact.
+    # table. The narrative is not computed here: only story() builds it.
     assert len(plot) == 1
     groups = plot[0].groups
     assert len(groups) == len(instance_keys)
     for group in groups:
-        assert [a.type for a in group.artifacts] == ["table", "text"]
+        assert [a.type for a in group.artifacts] == ["table"]
 
     first_table = groups[0].artifacts[0].payload
     # Feature rows plus the predicted class row.
@@ -152,6 +152,12 @@ def test_nearest_counterfactual(trained_model, dataset):
     for cell in first_table.highlight:
         assert 0 <= cell.row < len(first_table.rows)
         assert 0 <= cell.column < len(first_table.columns)
+
+    from DashAI.back.core.artifacts import GroupedArtifacts
+
+    single_group_output = GroupedArtifacts(groups=[groups[0]])
+    story = explainer.story(single_group_output, instances)
+    assert "predicted" in story
 
 
 def test_nearest_counterfactual_distance_l2(trained_model, dataset):
@@ -202,18 +208,17 @@ def test_contrastive_shap(trained_model, dataset):
     assert len(plot) == 1
     groups = plot[0].groups
     assert len(groups) == len(instance_keys)
-    assert [a.type for a in groups[0].artifacts] == ["plotly", "text"]
-    assert "rather than" in groups[0].artifacts[1].payload
+    # plot() never computes the narrative: only the chart is rendered eagerly.
+    assert [a.type for a in groups[0].artifacts] == ["plotly"]
 
-    # story() must reuse plot()'s own summary text, not build a new one.
+    # story() is the only place the "why P rather than Q" sentence is built,
+    # and only when explicitly requested.
     from DashAI.back.core.artifacts import GroupedArtifacts
 
     for group in groups:
-        text_artifact = next(a for a in group.artifacts if a.type == "text")
         single_group_output = GroupedArtifacts(groups=[group])
-        assert explainer.story(single_group_output, instances) == (
-            text_artifact.payload
-        )
+        story = explainer.story(single_group_output, instances)
+        assert "rather than" in story
 
 
 def test_contrastive_shap_fixed_foil(trained_model, dataset):
