@@ -132,6 +132,7 @@ from DashAI.back.job.converter_job import ConverterJob
 from DashAI.back.job.datafile_job import DatafileJob
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.explainer_job import ExplainerJob
+from DashAI.back.job.explainer_story_job import ExplainerStoryJob
 from DashAI.back.job.explorer_job import ExplorerJob
 from DashAI.back.job.generative_job import GenerativeJob
 from DashAI.back.job.model_job import ModelJob
@@ -506,6 +507,7 @@ def get_initial_components():
         ComponentDownloadJob,
         DatafileJob,
         ExplainerJob,
+        ExplainerStoryJob,
         ModelJob,
         ExplorerJob,
         PredictJob,
