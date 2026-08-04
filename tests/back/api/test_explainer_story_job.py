@@ -231,18 +231,10 @@ def test_global_story_job(client: TestClient, global_explainer_id: int):
     explainers = response.json()
     assert explainers[0]["plot_path"], explainers
 
-    # Now request the story for the already-computed explanation.
+    # Now request the story for the already-computed explanation, through the
+    # dedicated endpoint (not the generic /job/ POST).
     response = client.post(
-        "/api/v1/job/",
-        data={
-            "job_type": "ExplainerStoryJob",
-            "kwargs": json.dumps(
-                {
-                    "explainer_id": global_explainer_id,
-                    "explainer_scope": "global",
-                }
-            ),
-        },
+        f"/api/v1/explainer/global/{global_explainer_id}/story",
     )
     assert response.status_code == 201, response.text
     story_job_id = response.json()["id"]
@@ -256,6 +248,33 @@ def test_global_story_job(client: TestClient, global_explainer_id: int):
     session_factory = container["session_factory"]
     with session_factory() as db:
         explainer = db.get(GlobalExplainer, global_explainer_id)
+        assert explainer.story_huey_id == story_job_id
         assert explainer.story == (
             "Story based on 'a plot summary': feature X matters most"
         )
+
+
+def test_global_story_endpoint_requires_finished_explanation(
+    client: TestClient, run_id: int
+):
+    # A fresh explainer that was never run still has status NOT_STARTED.
+    container = client.app.container
+    session_factory = container["session_factory"]
+    with session_factory() as db:
+        unstarted_explainer = GlobalExplainer(
+            run_id=run_id,
+            explainer_name="StoryableGlobalExplainer",
+            parameters={},
+        )
+        db.add(unstarted_explainer)
+        db.commit()
+        db.refresh(unstarted_explainer)
+        unstarted_id = unstarted_explainer.id
+
+    response = client.post(f"/api/v1/explainer/global/{unstarted_id}/story")
+    assert response.status_code == 404, response.text
+
+
+def test_global_story_endpoint_requires_existing_explainer(client: TestClient):
+    response = client.post("/api/v1/explainer/global/999999/story")
+    assert response.status_code == 404, response.text

@@ -25,6 +25,8 @@ from DashAI.back.dependencies.database.models import (
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
+    from DashAI.back.dependencies.job_queues import BaseJobQueue
+
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
@@ -272,6 +274,81 @@ async def get_global_explanation_plot(
             ) from e
 
     return _apply_overrides(normalize_artifacts(plot), plot_overrides)
+
+
+@router.post("/global/{explainer_id}/story", status_code=status.HTTP_201_CREATED)
+@inject
+async def create_global_explainer_story(
+    explainer_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
+):
+    """Enqueue story generation for an already-computed global explanation.
+
+    Parameters
+    ----------
+    explainer_id : int
+        Id of the global explainer whose explanation the story narrates.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+    job_queue : BaseJobQueue
+        The job queue used to enqueue the story generation job.
+
+    Returns
+    -------
+    dict
+        ``{"id": job_id}``, the huey job id; poll it via
+        ``GET /job/status/{job_id}`` the same way as any other job, or read
+        the finished result back from ``GET /global/{explainer_id}``.
+
+    Raises
+    ------
+    HTTPException
+        If the explainer does not exist or its explanation has not finished
+        computing yet.
+    """
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.job.explainer_story_job import ExplainerStoryJob
+
+    with session_factory() as db:
+        try:
+            global_explainer = db.get(GlobalExplainer, explainer_id)
+
+            if not global_explainer:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Explainer not found",
+                )
+
+            if global_explainer.status != ExplainerStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Explanation not found",
+                )
+
+            job = ExplainerStoryJob(explainer_id=explainer_id, explainer_scope="global")
+            try:
+                job.set_status_as_delivered()
+            except JobError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Story job not delivered",
+                ) from e
+
+            job_id = job_queue.put(job).id
+            global_explainer.story = None
+            global_explainer.story_huey_id = job_id
+            db.commit()
+
+            return {"id": job_id}
+
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
 
 
 @router.post("/global", status_code=status.HTTP_201_CREATED)
