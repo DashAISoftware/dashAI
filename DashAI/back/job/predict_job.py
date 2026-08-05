@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from fastapi import status
@@ -10,8 +9,6 @@ from sqlalchemy import exc
 
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.models.base_model import BaseModel
-from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
 from DashAI.back.units.context import ExecutionContext
 from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
@@ -27,24 +24,6 @@ if TYPE_CHECKING:
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
-
-
-def _run_prediction_pipeline(
-    task: BaseTask,
-    trained_model: BaseModel,
-    train_dataset: "DashAIDataset",
-    loaded_dataset: "DashAIDataset",
-    model_session: ModelSession,
-) -> Tuple["DashAIDataset", Any]:
-    """Run shared prediction steps from prepared input data to final predictions."""
-    import numpy as np
-
-    prepared_dataset = loaded_dataset.select_columns(model_session.input_columns)
-    y_pred_proba = np.array(trained_model.predict(prepared_dataset))
-    y_pred = task.process_predictions(
-        train_dataset, y_pred_proba, model_session.output_columns[0]
-    )
-    return prepared_dataset, y_pred
 
 
 def _build_preview_rows(
@@ -85,10 +64,19 @@ def _build_preview_rows(
 def run_manual_prediction(
     run_id: int,
     manual_input_data: List[Dict],
-    component_registry: Any,
     session_factory: "sessionmaker",
 ) -> Tuple[List[str], List[List]]:
     """Execute a manual prediction synchronously without persisting results.
+
+    Composes the same units ``PredictJob`` does, so there is one definition of
+    what predicting means. The difference is entirely in the orchestration: no
+    state row to advance, nothing written to disk, and failures reported as
+    ``HTTPException`` because this runs inside a request instead of a worker.
+
+    Each unit call sits in its own ``try`` so the HTTP response is decided by
+    *which step* failed, never by matching on an error message. That is what
+    keeps the endpoint's contract — eleven distinct responses across four status
+    codes — independent of how the units happen to word their errors.
 
     Parameters
     ----------
@@ -96,10 +84,11 @@ def run_manual_prediction(
         The ID of the trained run.
     manual_input_data : List[Dict]
         List of row dicts keyed by input column name.
-    component_registry : Any
-        The DashAI component registry.
     session_factory : sessionmaker
-        SQLAlchemy session factory.
+        SQLAlchemy session factory, used for this function's own row reads. It
+        must be the container's: the units resolve ``session_factory`` and
+        ``component_registry`` from the DI container themselves, so a different
+        one passed here would leave the two halves reading different databases.
 
     Returns
     -------
@@ -112,10 +101,11 @@ def run_manual_prediction(
     HTTPException
         On missing run, model session, or prediction failure.
     """
-    with session_factory() as db:
-        from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
-        from DashAI.back.dependencies.database.models import Run
+    from DashAI.back.dependencies.database.models import Run
 
+    # Read everything this function needs off the rows, then let the session go:
+    # nothing here writes, and the units open their own sessions.
+    with session_factory() as db:
         run = db.get(Run, run_id)
         if not run:
             raise HTTPException(
@@ -149,54 +139,65 @@ def run_manual_prediction(
                 detail="Model session has no output columns configured",
             )
 
+        task_name = model_session.task_name
+        input_columns = list(model_session.input_columns)
+        output_columns = list(model_session.output_columns)
+        train_dataset_file_path = dataset_trained.file_path
+
+    ctx = ExecutionContext()
+
+    build_input = BuildManualInputUnit(
+        task_name=task_name,
+        train_dataset_file_path=train_dataset_file_path,
+        manual_input_data=manual_input_data,
+    )
+    predict = PredictUnit(
+        task_name=task_name,
+        input_columns=input_columns,
+        output_columns=output_columns,
+    )
+
+    try:
+        # Both units resolve the task; validating up front keeps a missing task
+        # reported as a task problem, ahead of the model, the way it always was.
         try:
-            task: BaseTask = component_registry[model_session.task_name]["class"]()
-        except Exception as e:
+            build_input.validate(ctx)
+            predict.validate(ctx)
+        except JobError as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Task {model_session.task_name} not found in the registry",
+                detail=f"Task {task_name} not found in the registry",
             ) from e
 
         try:
-            model_cls = component_registry[run.model_name]["class"]
-        except KeyError as e:
+            LoadTrainedModelUnit(run_id=run_id)(ctx)
+        except JobError as e:
+            # The unit distinguishes "not in the registry" from "cannot be read
+            # from disk" with the same two texts this endpoint has always
+            # returned, so its message is forwarded rather than rebuilt.
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Model {run.model_name} not found in the registry",
+                detail=str(e),
             ) from e
 
         try:
-            trained_model: BaseModel = model_cls.load(run.run_path)
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=(
-                    f"Failed to load model {run.model_name} from path {run.run_path}"
-                ),
-            ) from e
-
-        try:
-            train_dataset: "DashAIDataset" = load_dataset(
-                str(Path(f"{dataset_trained.file_path}/dataset/"))
+            LoadTrainingDatasetUnit(train_dataset_file_path=train_dataset_file_path)(
+                ctx
             )
-        except Exception as e:
+        except JobError as e:
+            # Not forwarded: the unit names the path, this endpoint never has.
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Cannot load training dataset",
             ) from e
 
         try:
-            dataset_trained_path = str(Path(f"{dataset_trained.file_path}/dataset/"))
-            loaded_dataset: "DashAIDataset" = task.process_manual_input(
-                manual_input_data, dataset_trained_path
-            )
-            prepared_dataset, y_pred = _run_prediction_pipeline(
-                task=task,
-                trained_model=trained_model,
-                train_dataset=train_dataset,
-                loaded_dataset=loaded_dataset,
-                model_session=model_session,
-            )
+            build_input(ctx)
+            predict(ctx)
+            # Re-derived here rather than published by the unit: a narrowed view
+            # of the dataset is exactly the kind of derived value that must not
+            # cross a unit boundary, since anything upstream may reshape it.
+            prepared_dataset = ctx.require("dataset").select_columns(input_columns)
         except (ValueError, TypeError) as e:
             logging.exception("Manual prediction input error: %s", e)
             raise HTTPException(
@@ -209,13 +210,14 @@ def run_manual_prediction(
                 detail="Model prediction failed",
             ) from e
 
-        output_col = model_session.output_columns[0]
         return _build_preview_rows(
             prepared_dataset=prepared_dataset,
-            input_columns=list(model_session.input_columns),
-            output_col=output_col,
-            y_pred=y_pred,
+            input_columns=input_columns,
+            output_col=output_columns[0],
+            y_pred=ctx.require("y_pred"),
         )
+    finally:
+        ctx.clear_cache()
 
 
 class PredictJob(BaseJob):
