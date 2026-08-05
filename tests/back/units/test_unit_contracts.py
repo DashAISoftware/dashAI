@@ -106,6 +106,32 @@ def test_every_context_key_a_unit_reads_is_declared_in_requires(name, cls):
 
 
 @pytest.mark.parametrize(("name", "cls"), UNITS, ids=[name for name, _ in UNITS])
+def test_a_unit_does_not_require_a_key_it_never_reads(name, cls):
+    """The mirror of the test above, and just as load-bearing.
+
+    ``__call__`` demands every key in ``REQUIRES`` unconditionally, so a key
+    listed but never read is not harmless documentation: it rejects any upstream
+    that does not happen to publish it. ``PrepareExplanationDataUnit`` used to
+    require ``dataset_id`` — left over from an error message that moved to the
+    job — which would have made it impossible to compose after
+    ``BuildManualInputUnit``, whose ``PROVIDES`` is just ``("dataset",)``.
+
+    It passed every end-to-end test because the one job wiring it happened to
+    run a loader that publishes the id first. That is exactly the class of
+    mistake this file exists to catch.
+    """
+    required = _declared(cls, "REQUIRES")
+    read = _context_calls(cls, {"require", "get", "has"})
+
+    unread = required - read
+    assert not unread, (
+        f"{name} declares {sorted(unread)} in REQUIRES but never reads them. "
+        "Every declared key is demanded before the unit runs, so an unused one "
+        "only narrows what the unit can be composed after."
+    )
+
+
+@pytest.mark.parametrize(("name", "cls"), UNITS, ids=[name for name, _ in UNITS])
 def test_every_key_a_unit_promises_is_actually_written(name, cls):
     written = _context_calls(cls, {"put", "put_ref"})
     promised = _declared(cls, "PROVIDES")
