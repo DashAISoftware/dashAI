@@ -48,6 +48,118 @@ metadata = MetaData(naming_convention=naming_convention)
 Base = declarative_base(metadata=metadata)
 
 
+class User(Base):
+    __tablename__ = "user"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String, nullable=False)
+
+    created: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    user_role_projects: Mapped[List["UserRoleProject"]] = relationship(
+        "UserRoleProject",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+
+class Permission(Base):
+    __tablename__ = "permission"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    uid: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+
+    roles: Mapped[List["Role"]] = relationship(
+        "Role",
+        secondary="role_permission",
+        back_populates="permissions",
+    )
+
+
+class Role(Base):
+    __tablename__ = "role"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    uid: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+
+    permissions: Mapped[List["Permission"]] = relationship(
+        "Permission",
+        secondary="role_permission",
+        back_populates="roles",
+    )
+
+    user_role_projects: Mapped[List["UserRoleProject"]] = relationship(
+        "UserRoleProject",
+        back_populates="role",
+        cascade="all, delete-orphan",
+    )
+
+
+class RolePermission(Base):
+    __tablename__ = "role_permission"
+
+    role_id: Mapped[int] = mapped_column(
+        ForeignKey("role.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+    permission_id: Mapped[int] = mapped_column(
+        ForeignKey("permission.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+
+class UserRoleProject(Base):
+    __tablename__ = "user_role_project"
+
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("user.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+    role_id: Mapped[int] = mapped_column(
+        ForeignKey("role.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+
+    project_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("project.id", ondelete="CASCADE"),
+        primary_key=True,
+        nullable=True,  # NULL = global scope
+    )
+
+    user: Mapped["User"] = relationship(
+        "User",
+        back_populates="user_role_projects",
+    )
+
+    role: Mapped["Role"] = relationship(
+        "Role",
+        back_populates="user_role_projects",
+    )
+
+    project: Mapped["Project"] = relationship("Project")
+
+
+class Project(Base):
+    __tablename__ = "project"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+
 class Dataset(Base):
     __tablename__ = "dataset"
     id: Mapped[int] = mapped_column(primary_key=True)
