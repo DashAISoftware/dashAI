@@ -1,21 +1,12 @@
 import React, { useMemo } from "react";
-import {
-  Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
-import { useTheme, alpha } from "@mui/material/styles";
+import { Box, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import Plot from "react-plotly.js";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 
 import { applyThemeToLayout } from "../../utils/plotlyTheme";
+import TableArtifact from "./TableArtifact";
 
 /**
  * Renders a single typed artifact ({type, payload, title}) returned by the
@@ -23,8 +14,10 @@ import { applyThemeToLayout } from "../../utils/plotlyTheme";
  * (payload: plotly JSON string), "table" (payload: {columns, rows,
  * highlight}), "image" (payload: {data, mime}) and "text" (payload: string).
  * Unknown types fall back to preformatted text so nothing is silently lost.
+ * The optional height sets the plot height and caps image/table height; it
+ * lets callers render larger (for example a fullscreen view).
  */
-export default function ArtifactRenderer({ artifact }) {
+export default function ArtifactRenderer({ artifact, height = 380 }) {
   const theme = useTheme();
   const { t } = useTranslation(["common"]);
 
@@ -42,8 +35,15 @@ export default function ArtifactRenderer({ artifact }) {
 
   const themedLayout = useMemo(() => {
     if (!parsedFigure) return {};
+    // User-edited (overridden) figures are rendered verbatim so their saved
+    // colors/background survive; only strip fixed sizing. Non-overridden
+    // figures follow the app light/dark theme.
+    if (artifact.overridden) {
+      const { width: _w, height: _h, ...rest } = parsedFigure.layout ?? {};
+      return rest;
+    }
     return applyThemeToLayout(parsedFigure.layout, theme);
-  }, [parsedFigure, theme]);
+  }, [parsedFigure, theme, artifact.overridden]);
 
   const highlightedCells = useMemo(() => {
     if (artifact.type !== "table") return new Set();
@@ -58,7 +58,7 @@ export default function ArtifactRenderer({ artifact }) {
         return (
           <Plot
             data={parsedFigure.data}
-            layout={{ ...themedLayout, height: 380, autosize: true }}
+            layout={{ ...themedLayout, height, autosize: true }}
             config={{ displayModeBar: false }}
             useResizeHandler
             style={{ width: "100%" }}
@@ -67,41 +67,12 @@ export default function ArtifactRenderer({ artifact }) {
       case "table": {
         const { columns = [], rows = [] } = artifact.payload ?? {};
         return (
-          <TableContainer component={Paper} sx={{ maxHeight: 380 }}>
-            <Table size="small" stickyHeader>
-              <TableHead>
-                <TableRow>
-                  {columns.map((column) => (
-                    <TableCell key={column}>{column}</TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {rows.map((row, rowIndex) => (
-                  <TableRow key={rowIndex}>
-                    {row.map((value, columnIndex) => (
-                      <TableCell
-                        key={columnIndex}
-                        sx={
-                          highlightedCells.has(`${rowIndex}-${columnIndex}`)
-                            ? {
-                                bgcolor: alpha(
-                                  theme.palette.warning.main,
-                                  0.25,
-                                ),
-                                fontWeight: "bold",
-                              }
-                            : undefined
-                        }
-                      >
-                        {value === null ? "-" : String(value)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <TableArtifact
+            columns={columns}
+            rows={rows}
+            highlightedCells={highlightedCells}
+            height={height}
+          />
         );
       }
       case "image": {
@@ -111,7 +82,7 @@ export default function ArtifactRenderer({ artifact }) {
             component="img"
             src={`data:${mime};base64,${data}`}
             alt={artifact.title || t("common:image")}
-            sx={{ maxWidth: "100%", maxHeight: 380, objectFit: "contain" }}
+            sx={{ maxWidth: "100%", maxHeight: height, objectFit: "contain" }}
           />
         );
       }
@@ -144,5 +115,7 @@ ArtifactRenderer.propTypes = {
     type: PropTypes.string.isRequired,
     payload: PropTypes.any,
     title: PropTypes.string,
+    overridden: PropTypes.bool,
   }).isRequired,
+  height: PropTypes.number,
 };

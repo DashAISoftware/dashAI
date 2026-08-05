@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
 import Plot from "react-plotly.js";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Box, IconButton, Tooltip, Menu, MenuItem } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import ZoomOutIcon from "@mui/icons-material/ZoomOut";
@@ -15,9 +15,15 @@ const MIN_WIDTH = 300;
 const MIN_HEIGHT_MINIMALIST = 200;
 const MIN_HEIGHT_NORMAL = 500;
 
-function PlotlyJsonVisualizer({ data, minimalist = false }) {
+function PlotlyJsonVisualizer({
+  data,
+  minimalist = false,
+  fillHeight = false,
+}) {
   const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
+  // Which plot ref + anchor the download format menu (PNG/SVG) applies to.
+  const [downloadMenu, setDownloadMenu] = useState(null);
   const plotRef = useRef(null);
   const fullscreenPlotRef = useRef(null);
 
@@ -40,10 +46,12 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
           title: "",
         },
       }
-    : {
-        ...parsedData,
-        layout: { ...parsedData.layout, height: MIN_HEIGHT_NORMAL },
-      };
+    : fillHeight
+      ? { ...parsedData, layout: { ...parsedData.layout } }
+      : {
+          ...parsedData,
+          layout: { ...parsedData.layout, height: MIN_HEIGHT_NORMAL },
+        };
 
   const getPlotly = (ref) => {
     const el = ref?.current?.el;
@@ -103,12 +111,12 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
     });
   };
 
-  const handleDownload = (ref) => {
+  const handleDownload = (ref, format = "svg") => {
     const el = ref?.current?.el;
     const Plotly = getPlotly(ref);
     if (el && Plotly) {
       Plotly.downloadImage(el, {
-        format: "svg",
+        format,
         filename: "dashai-plot",
         height: 800,
         width: 1200,
@@ -246,10 +254,16 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
           </IconButton>
         </Tooltip>
       )}
-      <Tooltip title="Download as SVG" arrow>
+      <Tooltip title="Download" arrow>
         <IconButton
           size="small"
-          onClick={() => handleDownload(plotRefProp)}
+          onClick={(e) =>
+            setDownloadMenu({
+              mouseX: e.clientX,
+              mouseY: e.clientY,
+              ref: plotRefProp,
+            })
+          }
           sx={downloadBtnSx}
         >
           <FileDownloadOutlinedIcon sx={{ fontSize: 18 }} />
@@ -265,8 +279,12 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
           position: "relative",
           width: "100%",
           minWidth: MIN_WIDTH,
-          minHeight: minimalist ? MIN_HEIGHT_MINIMALIST : MIN_HEIGHT_NORMAL,
-          height: minimalist ? "100%" : "auto",
+          minHeight: fillHeight
+            ? 0
+            : minimalist
+              ? MIN_HEIGHT_MINIMALIST
+              : MIN_HEIGHT_NORMAL,
+          height: minimalist || fillHeight ? "100%" : "auto",
           overflow: "hidden",
           display: "flex",
           justifyContent: "center",
@@ -283,8 +301,12 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
             revision={revisionRef.current}
             style={{
               width: "100%",
-              minHeight: minimalist ? MIN_HEIGHT_MINIMALIST : MIN_HEIGHT_NORMAL,
-              height: minimalist ? "100%" : MIN_HEIGHT_NORMAL,
+              minHeight: fillHeight
+                ? 0
+                : minimalist
+                  ? MIN_HEIGHT_MINIMALIST
+                  : MIN_HEIGHT_NORMAL,
+              height: minimalist || fillHeight ? "100%" : MIN_HEIGHT_NORMAL,
             }}
             config={plotConfig}
             useResizeHandler={true}
@@ -340,6 +362,34 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
           </Dialog>
         )}
       </Box>
+
+      <Menu
+        open={Boolean(downloadMenu)}
+        onClose={() => setDownloadMenu(null)}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          downloadMenu
+            ? { top: downloadMenu.mouseY, left: downloadMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem
+          onClick={() => {
+            handleDownload(downloadMenu.ref, "png");
+            setDownloadMenu(null);
+          }}
+        >
+          PNG
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleDownload(downloadMenu.ref, "svg");
+            setDownloadMenu(null);
+          }}
+        >
+          SVG
+        </MenuItem>
+      </Menu>
     </React.Fragment>
   );
 }
@@ -347,6 +397,7 @@ function PlotlyJsonVisualizer({ data, minimalist = false }) {
 PlotlyJsonVisualizer.propTypes = {
   data: PropTypes.oneOfType([PropTypes.object, PropTypes.string]).isRequired,
   minimalist: PropTypes.bool,
+  fillHeight: PropTypes.bool,
 };
 
 export default PlotlyJsonVisualizer;

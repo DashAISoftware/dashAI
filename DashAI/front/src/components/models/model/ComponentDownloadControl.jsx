@@ -146,6 +146,22 @@ export const useComponentDownloadState = (component) => {
   return { downloaded, downloading };
 };
 
+// A download-required model must be downloaded before it can be trained —
+// otherwise clicking Train silently re-triggers a download for a model the
+// user just deleted. Shared by every place a run's train/retrain action is
+// gated on its model's download state (RunCard, ModelCardCompact,
+// ModelDetailView).
+export const useModelDownloadGate = (model, runModelName) => {
+  const { downloaded, downloading } = useComponentDownloadState(
+    model || { name: runModelName },
+  );
+  const modelNotDownloaded =
+    Boolean(model?.metadata?.requires_download) &&
+    !(downloaded && !downloading);
+
+  return { modelNotDownloaded };
+};
+
 // Delete a component's download and broadcast the new state to every control.
 export const deleteComponent = async ({
   component,

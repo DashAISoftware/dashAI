@@ -25,13 +25,11 @@ export const getExplainerPlot = async (
 };
 
 export const createGlobalExplainer = async (
-  name: string,
   runId: number,
   explainerName: string,
   parameters: object,
 ): Promise<IExplainer> => {
   const data = {
-    name,
     run_id: runId,
     explainer_name: explainerName,
     parameters,
@@ -42,7 +40,6 @@ export const createGlobalExplainer = async (
 };
 
 export const createLocalExplainer = async (
-  name: string,
   runId: number,
   explainerName: string,
   datasetId: string,
@@ -51,7 +48,6 @@ export const createLocalExplainer = async (
   scope: object,
 ): Promise<IExplainer> => {
   const data = {
-    name,
     run_id: runId,
     dataset_id: datasetId,
     explainer_name: explainerName,
@@ -78,10 +74,42 @@ export const validateDataset = async (
   return response.data;
 };
 
+export const getValidDatasets = async (runId: number): Promise<number[]> => {
+  const response = await api.post<{ valid_dataset_ids: number[] }>(
+    "/v1/explainer/local/valid-datasets",
+    { run_id: runId },
+  );
+  return response.data.valid_dataset_ids;
+};
+
 export const deleteExplainer = async (
   scope: string,
   id: string,
 ): Promise<object> => {
   const response = await api.delete(`/v1/explainer/${scope}/${id}`);
+  return response.data;
+};
+
+export const saveExplainerPlotOverride = async (
+  scope: string,
+  explainerId: number,
+  index: number,
+  figure: unknown,
+): Promise<object> => {
+  const response = await api.put(
+    `/v1/explainer/${scope}/plot/${explainerId}/override`,
+    { index, figure },
+  );
+  return response.data;
+};
+
+export const resetExplainerPlotOverride = async (
+  scope: string,
+  explainerId: number,
+  index: number,
+): Promise<object> => {
+  const response = await api.delete(
+    `/v1/explainer/${scope}/plot/${explainerId}/override/${index}`,
+  );
   return response.data;
 };
