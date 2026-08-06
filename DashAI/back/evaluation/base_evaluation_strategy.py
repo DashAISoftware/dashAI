@@ -1,7 +1,7 @@
 import os
 import pickle
 from abc import ABCMeta, abstractmethod
-from typing import Final, List
+from typing import Callable, Final, List, Optional
 
 from kink import di
 
@@ -49,6 +49,23 @@ class BaseEvaluationStrategy(metaclass=ABCMeta):
         self.optimizer: BaseOptimizer = optimizer
         self.run_optimizable_parameters = run_optimizable_parameters
         self.goal_metric = goal_metric
+        self._progress_reporter: Optional[
+            Callable[[Optional[float], Optional[str]], None]
+        ] = None
+
+    def set_progress_reporter(
+        self,
+        progress_reporter: Optional[Callable[[Optional[float], Optional[str]], None]],
+    ) -> None:
+        """Register a callback that will receive progress updates."""
+        self._progress_reporter = progress_reporter
+
+    def _report_progress(
+        self, fraction: Optional[float], message: Optional[str] = None
+    ):
+        """Emit progress updates when a reporter has been registered."""
+        if self._progress_reporter is not None:
+            self._progress_reporter(fraction, message)
 
     @abstractmethod
     def execute(self, x, y, factory: ModelFactory, run: Run, db):

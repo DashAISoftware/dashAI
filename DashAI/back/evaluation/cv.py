@@ -99,18 +99,26 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                     ) from e
 
                 # Execute nested cross-validation for HPO
+                self._report_progress(0.1, "Nested cross-validation")
                 self._nested_cv(run.id, self.model, x, y)
 
             # Perform hyperparameter optimization and update run.parameters
+            self._report_progress(0.25, "Hyperparameter optimization")
             self._do_hpo(x, y, factory, run, db)
 
             # Generate and serialize HPO visualization plots
             plot_paths = self._generate_hpo_plots(run)
 
+        total_folds = len(x) - 1
+
         # STEP 2: Main k-fold Cross-Validation Loop
         # Note: Last fold (index len(x)-1) is reserved for final training,
         # not CV evaluation
-        for i in range(len(x) - 1):
+        for i in range(total_folds):
+            self._report_progress(
+                0.4 + ((i + 1) / total_folds) * 0.4,
+                f"Evaluating fold {i + 1}/{total_folds}",
+            )
             x_fold = x[i]
             y_fold = y[i]
 
@@ -137,6 +145,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
         # STEP 4: Final model training on complete dataset
         # Train on all available data (the last fold contains the full dataset)
+        self._report_progress(0.85, "Training final model")
         self.model.train(x[-1]["train"], y[-1]["train"])
 
         return self.model, plot_paths

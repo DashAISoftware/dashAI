@@ -75,13 +75,16 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
 
         # Execute HPO if optimizer and there are parameters to optimize
         if self.optimizer and self.run_optimizable_parameters:
+            self._report_progress(0.2, "Hyperparameter optimization")
             self._do_hpo(x, y, factory, run, db)
             plot_paths = self._generate_hpo_plots(run)
 
         # Train the model with the provided data and return it
+        self._report_progress(0.5, "Training")
         self.model.train(x["train"], y["train"], x["validation"], y["validation"])
 
         # Calculate metrics at the end of training if not done already
+        self._report_progress(0.85, "Computing metrics")
         last_train_metric = (
             db.query(Metric)
             .filter_by(run_id=run.id, split="TRAIN", level="LAST")

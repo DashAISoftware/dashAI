@@ -158,6 +158,7 @@ class ModelJob(BaseJob):
                     ]
                     factory: ModelFactory = preparation_results["factory"]
 
+                    evaluation_estrategy.set_progress_reporter(self.report_progress)
                     model, plot_paths = evaluation_estrategy.execute(
                         x=x,
                         y=y,
