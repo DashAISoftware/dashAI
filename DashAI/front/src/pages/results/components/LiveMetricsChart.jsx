@@ -53,14 +53,12 @@ export function LiveMetricsChart({ run }) {
         // Convert old format to new format if needed
         const formattedTestMetrics = {};
         for (const metricName in run.test_metrics) {
-          const metricData = run.test_metrics[metricName];
+          const value = run.test_metrics[metricName];
           // Check if it's already in new format (array of objects)
-          if (Array.isArray(metricData)) {
-            formattedTestMetrics[metricName] = metricData;
+          if (Array.isArray(value)) {
+            formattedTestMetrics[metricName] = value;
           } else {
-            // Handle new format (object with value and std_value) or old format (single value)
-            const value = metricData?.value ?? metricData;
-            // Convert to new format
+            // Convert old format (single value) to new format
             formattedTestMetrics[metricName] = [
               { step: 1, value: value, timestamp: new Date().toISOString() },
             ];
@@ -126,14 +124,12 @@ export function LiveMetricsChart({ run }) {
           // Convert old format to new format if needed
           const formattedTestMetrics = {};
           for (const metricName in run.test_metrics) {
-            const metricData = run.test_metrics[metricName];
+            const value = run.test_metrics[metricName];
             // Check if it's already in new format (array of objects)
-            if (Array.isArray(metricData)) {
-              formattedTestMetrics[metricName] = metricData;
+            if (Array.isArray(value)) {
+              formattedTestMetrics[metricName] = value;
             } else {
-              // Handle new format (object with value and std_value) or old format (single value)
-              const value = metricData?.value ?? metricData;
-              // Convert to new format
+              // Convert old format (single value) to new format
               formattedTestMetrics[metricName] = [
                 { step: 1, value: value, timestamp: new Date().toISOString() },
               ];

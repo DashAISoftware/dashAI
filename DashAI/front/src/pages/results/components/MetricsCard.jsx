@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Divider, Paper, Typography, Tooltip } from "@mui/material";
+import { Box, Divider, Paper, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 export default function MetricsCard({ title, metrics }) {

@@ -27,31 +27,9 @@ export const extractColumns = (
         // Not Started, Delivered, Started
         return "-";
 
-      const metricData = row.original.test_metrics?.[metric.name];
-      if (metricData === undefined) return "-";
-
-      // Handle both old format (direct number) and new format (object with value and std_value)
-      const value = metricData?.value ?? metricData;
-      const stdValue = metricData?.std_value;
-
-      const formattedValue = Number(value).toFixed(2);
-      const formattedStd =
-        stdValue !== null && stdValue !== undefined
-          ? `±${Number(stdValue).toFixed(2)}`
-          : "";
-
-      return (
-        <div
-          title={
-            formattedStd ? `${formattedValue} ${formattedStd}` : formattedValue
-          }
-        >
-          {formattedValue}
-          {formattedStd && (
-            <div style={{ fontSize: "0.8em" }}>{formattedStd}</div>
-          )}
-        </div>
-      );
+      return row.original.test_metrics?.[metric.name] !== undefined
+        ? Number(row.original.test_metrics[metric.name]).toFixed(2)
+        : "-";
     },
   }));
 

@@ -27,7 +27,12 @@
     "splitsMustSumToOne": "各划分比例之和必须等于 1",
     "taskRequirementsNotFound": "未找到 {{taskName}} 的任务需求",
     "trainSplitMustBeGreaterThanZero": "训练集比例必须大于零",
-    "trainSplitMustHaveAtLeastOneRow": "训练集至少需要一行数据"
+    "trainSplitMustHaveAtLeastOneRow": "训练集至少需要一行数据",
+    "foldsMustBeGreaterThanOne": "折数必须大于 1",
+    "foldsMustBeLessThanDatasetSize": "折数必须小于或等于数据集中的样本数（{{datasetSize}}）",
+    "foldsMustBeAnInteger": "折数必须为整数",
+    "repeatsMustBeGreaterThanOne": "重复次数必须大于 1",
+    "groupColumnMustBeSelected": "必须选择一个用于分组的列"
   },
   "label": {
     "addModelsToExperiment": "向实验中添加模型",
@@ -74,6 +79,15 @@
     "selectDatasetTitle": "为所选任务选择数据集",
     "splitType": "划分类型",
     "selectHowToDivideDataset": "选择如何将数据集划分为训练集、验证集和测试集。",
+    "selectEvaluationStrategy": "评估策略",
+    "holdout": "留出法",
+    "crossValidation": "交叉验证",
+    "cvType": "交叉验证类型",
+    "numFolds": "折数（k）",
+    "numFoldsDescription": "交叉验证的折数。折数越多可以提高评估的稳定性，但会增加处理时间。必须为大于 1 的整数。",
+    "numRepeats": "重复次数",
+    "numRepeatsDescription": "交叉验证过程重复的次数。数值越高结果越精确，但需要更多训练时间。必须为大于 1 的整数。",
+    "groupColumn": "分组列",
     "selectInputOutputColumnsDescription": "从列表中选择列名。",
     "selectMetrics": "选择指标",
     "selectModelFirst": "请先选择模型",
@@ -87,7 +101,9 @@
     "useManualSplittingBySpecifyingRowIndexes": "通过指定每个子集的行索引进行手动划分",
     "usePredefinedSplitsFromDataset": "使用数据集中的预定义划分",
     "usePredefinedSplitsFromDatasetNotAvailable": "使用数据集中的预定义划分（不可用）",
-    "useRandomRowsBySpecifyingPortion": "通过指定每个子集使用数据集的比例进行随机行划分"
+    "useRandomRowsBySpecifyingPortion": "通过指定每个子集使用数据集的比例进行随机行划分",
+    "selectAColumn": "选择一列",
+    "groupColumnDescription": "用于分组的列。属于同一组的样本将保持在同一折中，避免同一组同时出现在训练集和测试集中。"
   },
   "message": {
     "confirmDeleteRun": "确定要删除此运行吗？此操作无法撤销。",
