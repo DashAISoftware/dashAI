@@ -17,7 +17,6 @@ from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.job.explainer_job import ExplainerJob
-from DashAI.back.job.explainer_story_job import ExplainerStoryJob
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.tasks.base_task import BaseTask
 
@@ -97,7 +96,8 @@ class StoryableGlobalExplainer(BaseGlobalExplainer):
         return {}
 
     def explain(self, dataset):
-        return {"headline": "feature X matters most"}
+        self.explanation = {"headline": "feature X matters most"}
+        return self.explanation
 
     def plot(self, explanation):
         return [TextArtifact(payload="a plot summary")]
@@ -125,6 +125,32 @@ class StorylessGlobalExplainer(BaseGlobalExplainer):
 
     def plot(self, explanation):
         return [TextArtifact(payload="a plot summary")]
+
+
+class BrokenStoryGlobalExplainer(BaseGlobalExplainer):
+    """Global explainer whose story() always raises.
+
+    Used to prove a story bug never fails the explanation itself.
+    """
+
+    COMPATIBLE_COMPONENTS = ["DummyTask"]
+
+    def __init__(self, model: BaseModel) -> None:
+        self.model = model
+        self.explanation = None
+
+    @classmethod
+    def get_schema(cls):
+        return {}
+
+    def explain(self, dataset):
+        return {"headline": "irrelevant"}
+
+    def plot(self, explanation):
+        return [TextArtifact(payload="a plot summary")]
+
+    def story(self, explainer_output):
+        raise RuntimeError("boom")
 
 
 class StoryableLocalExplainer(BaseLocalExplainer):
@@ -186,6 +212,45 @@ class StorylessLocalExplainer(BaseLocalExplainer):
         return [TextArtifact(payload="a plot summary")]
 
 
+class BrokenStoryLocalExplainer(BaseLocalExplainer):
+    """Local explainer whose story() always raises for every instance.
+
+    Used to prove a story bug never fails the explanation itself, and does
+    not block other instances (there are none left to block here, but the
+    explanation must still finish successfully with stories left empty).
+    """
+
+    COMPATIBLE_COMPONENTS = ["DummyTask"]
+
+    def __init__(self, model: BaseModel) -> None:
+        self.model = model
+        self.explanation = None
+
+    @classmethod
+    def get_schema(cls):
+        return {}
+
+    def fit(self, dataset, **kwargs):
+        return self
+
+    def explain_instance(self, instances):
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
+        return {"n_instances": to_dashai_dataset(instances).num_rows}
+
+    def plot(self, explanation):
+        groups = [
+            ArtifactGroup(
+                title=f"Instance {i}", artifacts=[TextArtifact(payload=f"plot {i}")]
+            )
+            for i in range(explanation["n_instances"])
+        ]
+        return [GroupedArtifacts(groups=groups)]
+
+    def story(self, explainer_output, prediction_context):
+        raise RuntimeError("boom")
+
+
 @pytest.fixture(autouse=True, name="test_registry")
 def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
     container = client.app.container
@@ -196,10 +261,11 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             DummyModel,
             StoryableGlobalExplainer,
             StorylessGlobalExplainer,
+            BrokenStoryGlobalExplainer,
             StoryableLocalExplainer,
             StorylessLocalExplainer,
+            BrokenStoryLocalExplainer,
             ExplainerJob,
-            ExplainerStoryJob,
         ]
     )
 
@@ -271,27 +337,96 @@ def create_run_id(client: TestClient, model_session_id: int):
         db.close()
 
 
-@pytest.fixture(scope="module", name="global_explainer_id")
-def create_global_explainer(client: TestClient, run_id: int):
+def _run_explainer_job(client: TestClient, explainer_id: int, scope: str):
+    response = client.post(
+        "/api/v1/job/",
+        data={
+            "job_type": "ExplainerJob",
+            "kwargs": json.dumps(
+                {"explainer_id": explainer_id, "explainer_scope": scope}
+            ),
+        },
+    )
+    assert response.status_code == 201, response.text
+
+
+def test_global_explainer_job_generates_story_automatically(
+    client: TestClient, run_id: int
+):
+    # The story is generated as part of the normal explainer job - there is
+    # no separate job, endpoint or button to request it.
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
-        global_explainer = GlobalExplainer(
-            name="test_story_global",
+        explainer = GlobalExplainer(
             run_id=run_id,
             explainer_name="StoryableGlobalExplainer",
             parameters={},
         )
-        db.add(global_explainer)
+        db.add(explainer)
         db.commit()
-        db.refresh(global_explainer)
+        db.refresh(explainer)
+        explainer_id = explainer.id
 
-        yield global_explainer.id
+    _run_explainer_job(client, explainer_id, "global")
 
-        db.delete(global_explainer)
+    with session_factory() as db:
+        explainer = db.get(GlobalExplainer, explainer_id)
+        assert explainer.plot_path, explainer
+        assert explainer.story == (
+            "Story based on 'a plot summary': feature X matters most"
+        )
+
+
+def test_global_explainer_job_leaves_story_none_when_unsupported(
+    client: TestClient, run_id: int
+):
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        explainer = GlobalExplainer(
+            run_id=run_id,
+            explainer_name="StorylessGlobalExplainer",
+            parameters={},
+        )
+        db.add(explainer)
         db.commit()
-        db.close()
+        db.refresh(explainer)
+        explainer_id = explainer.id
+
+    _run_explainer_job(client, explainer_id, "global")
+
+    with session_factory() as db:
+        explainer = db.get(GlobalExplainer, explainer_id)
+        assert explainer.plot_path, explainer
+        assert explainer.story is None
+
+
+def test_global_explainer_job_survives_a_broken_story(client: TestClient, run_id: int):
+    # A bug in story() must never fail the explanation itself.
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        explainer = GlobalExplainer(
+            run_id=run_id,
+            explainer_name="BrokenStoryGlobalExplainer",
+            parameters={},
+        )
+        db.add(explainer)
+        db.commit()
+        db.refresh(explainer)
+        explainer_id = explainer.id
+
+    _run_explainer_job(client, explainer_id, "global")
+
+    with session_factory() as db:
+        explainer = db.get(GlobalExplainer, explainer_id)
+        assert explainer.plot_path, explainer
+        assert explainer.story is None
+        assert explainer.status.name == "FINISHED"
 
 
 @pytest.fixture(scope="module", name="local_explainer_id")
@@ -320,192 +455,35 @@ def create_local_explainer(client: TestClient, run_id: int, dataset_id: int):
         db.close()
 
 
-def test_global_story_job(client: TestClient, global_explainer_id: int):
-    # First compute the explanation itself, same as any other explainer job.
-    response = client.post(
-        "/api/v1/job/",
-        data={
-            "job_type": "ExplainerJob",
-            "kwargs": json.dumps(
-                {
-                    "explainer_id": global_explainer_id,
-                    "explainer_scope": "global",
-                }
-            ),
-        },
-    )
-    assert response.status_code == 201, response.text
-
-    response = client.get(f"/api/v1/explainer/global/?run_id={global_explainer_id}")
-    # Sanity: the explanation finished (plot_path set) before generating a story.
-    explainers = response.json()
-    assert explainers[0]["plot_path"], explainers
-
-    # Now request the story for the already-computed explanation, through the
-    # dedicated endpoint (not the generic /job/ POST).
-    response = client.post(
-        f"/api/v1/explainer/global/{global_explainer_id}/story",
-    )
-    assert response.status_code == 201, response.text
-    story_job_id = response.json()["id"]
-
-    response = client.get(f"/api/v1/job/status/{story_job_id}")
-    assert response.status_code == 200, response.text
-    job_status = response.json()
-    assert job_status["status"] == "finished", job_status
-
-    container = client.app.container
-    session_factory = container["session_factory"]
-    with session_factory() as db:
-        explainer = db.get(GlobalExplainer, global_explainer_id)
-        assert explainer.story_huey_id == story_job_id
-        assert explainer.story == (
-            "Story based on 'a plot summary': feature X matters most"
-        )
-
-
-def test_global_story_endpoint_requires_finished_explanation(
-    client: TestClient, run_id: int
+def test_local_explainer_job_generates_stories_automatically(
+    client: TestClient, local_explainer_id: int
 ):
-    # A fresh explainer that was never run still has status NOT_STARTED.
-    container = client.app.container
-    session_factory = container["session_factory"]
-    with session_factory() as db:
-        unstarted_explainer = GlobalExplainer(
-            run_id=run_id,
-            explainer_name="StoryableGlobalExplainer",
-            parameters={},
-        )
-        db.add(unstarted_explainer)
-        db.commit()
-        db.refresh(unstarted_explainer)
-        unstarted_id = unstarted_explainer.id
-
-    response = client.post(f"/api/v1/explainer/global/{unstarted_id}/story")
-    assert response.status_code == 404, response.text
-
-
-def test_global_story_endpoint_requires_existing_explainer(client: TestClient):
-    response = client.post("/api/v1/explainer/global/999999/story")
-    assert response.status_code == 404, response.text
-
-
-def test_global_story_endpoint_rejects_explainer_without_story(
-    client: TestClient, run_id: int
-):
-    container = client.app.container
-    session_factory = container["session_factory"]
-
-    with session_factory() as db:
-        storyless_explainer = GlobalExplainer(
-            run_id=run_id,
-            explainer_name="StorylessGlobalExplainer",
-            parameters={},
-        )
-        db.add(storyless_explainer)
-        db.commit()
-        db.refresh(storyless_explainer)
-        storyless_id = storyless_explainer.id
-
-    response = client.post(
-        "/api/v1/job/",
-        data={
-            "job_type": "ExplainerJob",
-            "kwargs": json.dumps(
-                {
-                    "explainer_id": storyless_id,
-                    "explainer_scope": "global",
-                }
-            ),
-        },
-    )
-    assert response.status_code == 201, response.text
-
-    response = client.post(f"/api/v1/explainer/global/{storyless_id}/story")
-    assert response.status_code == 400, response.text
-
-
-def test_local_story_job(client: TestClient, local_explainer_id: int):
-    # Compute the local explanation first, same as any other local explainer.
-    response = client.post(
-        "/api/v1/job/",
-        data={
-            "job_type": "ExplainerJob",
-            "kwargs": json.dumps(
-                {
-                    "explainer_id": local_explainer_id,
-                    "explainer_scope": "local",
-                }
-            ),
-        },
-    )
-    assert response.status_code == 201, response.text
+    # One story per explained instance, all generated automatically as part
+    # of the normal explainer job - no separate job/endpoint/button.
+    _run_explainer_job(client, local_explainer_id, "local")
 
     container = client.app.container
     session_factory = container["session_factory"]
     with session_factory() as db:
         explainer = db.get(LocalExplainer, local_explainer_id)
         assert explainer.plots_path, explainer
-        assert explainer.stories is None
-
-    # Now request the story for instance 0 through the dedicated endpoint.
-    response = client.post(
-        f"/api/v1/explainer/local/{local_explainer_id}/story",
-        json={"group_index": 0},
-    )
-    assert response.status_code == 201, response.text
-    story_job_id = response.json()["id"]
-
-    response = client.get(f"/api/v1/job/status/{story_job_id}")
-    assert response.status_code == 200, response.text
-    assert response.json()["status"] == "finished", response.json()
-
-    with session_factory() as db:
-        explainer = db.get(LocalExplainer, local_explainer_id)
-        assert explainer.stories == {"0": "Local story for 'plot 0', context rows=1"}
+        # The "test" split has 4 rows (indexes 5-8) at 100%.
+        assert explainer.stories == {
+            "0": "Local story for 'plot 0', context rows=1",
+            "1": "Local story for 'plot 1', context rows=1",
+            "2": "Local story for 'plot 2', context rows=1",
+            "3": "Local story for 'plot 3', context rows=1",
+        }
 
 
-def test_local_story_endpoint_requires_finished_explanation(
-    client: TestClient, run_id: int, dataset_id: int
-):
-    container = client.app.container
-    session_factory = container["session_factory"]
-    with session_factory() as db:
-        unstarted_explainer = LocalExplainer(
-            run_id=run_id,
-            explainer_name="StoryableLocalExplainer",
-            dataset_id=dataset_id,
-            scope={"split": "test", "percentage": 100},
-            parameters={},
-            fit_parameters={},
-        )
-        db.add(unstarted_explainer)
-        db.commit()
-        db.refresh(unstarted_explainer)
-        unstarted_id = unstarted_explainer.id
-
-    response = client.post(
-        f"/api/v1/explainer/local/{unstarted_id}/story",
-        json={"group_index": 0},
-    )
-    assert response.status_code == 404, response.text
-
-
-def test_local_story_endpoint_requires_existing_explainer(client: TestClient):
-    response = client.post(
-        "/api/v1/explainer/local/999999/story", json={"group_index": 0}
-    )
-    assert response.status_code == 404, response.text
-
-
-def test_local_story_endpoint_rejects_explainer_without_story(
+def test_local_explainer_job_leaves_stories_none_when_unsupported(
     client: TestClient, run_id: int, dataset_id: int
 ):
     container = client.app.container
     session_factory = container["session_factory"]
 
     with session_factory() as db:
-        storyless_explainer = LocalExplainer(
+        explainer = LocalExplainer(
             run_id=run_id,
             explainer_name="StorylessLocalExplainer",
             dataset_id=dataset_id,
@@ -513,27 +491,44 @@ def test_local_story_endpoint_rejects_explainer_without_story(
             parameters={},
             fit_parameters={},
         )
-        db.add(storyless_explainer)
+        db.add(explainer)
         db.commit()
-        db.refresh(storyless_explainer)
-        storyless_id = storyless_explainer.id
+        db.refresh(explainer)
+        explainer_id = explainer.id
 
-    response = client.post(
-        "/api/v1/job/",
-        data={
-            "job_type": "ExplainerJob",
-            "kwargs": json.dumps(
-                {
-                    "explainer_id": storyless_id,
-                    "explainer_scope": "local",
-                }
-            ),
-        },
-    )
-    assert response.status_code == 201, response.text
+    _run_explainer_job(client, explainer_id, "local")
 
-    response = client.post(
-        f"/api/v1/explainer/local/{storyless_id}/story",
-        json={"group_index": 0},
-    )
-    assert response.status_code == 400, response.text
+    with session_factory() as db:
+        explainer = db.get(LocalExplainer, explainer_id)
+        assert explainer.plots_path, explainer
+        assert explainer.stories is None
+
+
+def test_local_explainer_job_survives_a_broken_story(
+    client: TestClient, run_id: int, dataset_id: int
+):
+    # A bug in one instance's story() must never fail the explanation.
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        explainer = LocalExplainer(
+            run_id=run_id,
+            explainer_name="BrokenStoryLocalExplainer",
+            dataset_id=dataset_id,
+            scope={"split": "test", "percentage": 100},
+            parameters={},
+            fit_parameters={},
+        )
+        db.add(explainer)
+        db.commit()
+        db.refresh(explainer)
+        explainer_id = explainer.id
+
+    _run_explainer_job(client, explainer_id, "local")
+
+    with session_factory() as db:
+        explainer = db.get(LocalExplainer, explainer_id)
+        assert explainer.plots_path, explainer
+        assert explainer.stories is None
+        assert explainer.status.name == "FINISHED"

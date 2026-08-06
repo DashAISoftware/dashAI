@@ -135,12 +135,24 @@ class ExplainerJob(BaseJob):
         with session_factory() as db:
             try:
                 explanation = explainer.explain(dataset)
-                plot = normalize_artifacts(explainer.plot(explanation))
+                raw_plot = explainer.plot(explanation)
+                plot = normalize_artifacts(raw_plot)
             except Exception as e:
                 log.exception(e)
                 raise JobError(
                     "Failed to generate the explanation",
                 ) from e
+
+            # Deterministic stories are cheap (they only read the explanation
+            # already computed above) so they are generated unconditionally,
+            # not on demand. A story bug must never fail the explanation
+            # itself, so it is only logged, never re-raised.
+            story = None
+            if hasattr(explainer, "story") and raw_plot:
+                try:
+                    story = explainer.story(raw_plot[0])
+                except Exception as e:
+                    log.exception(e)
             try:
                 explanation_filename = f"global_explanation_{explainer_id}.pickle"
                 explanation_path = os.path.join(
@@ -163,6 +175,7 @@ class ExplainerJob(BaseJob):
                 self.explainer_db.explanation_path = explanation_path
                 self.explainer_db.plot_path = plot_path
                 self.explainer_db.plot_overrides = None
+                self.explainer_db.story = story
                 db.commit()
             except Exception as e:
                 log.exception(e)
@@ -186,7 +199,7 @@ class ExplainerJob(BaseJob):
         from datasets import DatasetDict
         from kink import di
 
-        from DashAI.back.core.artifacts import normalize_artifacts
+        from DashAI.back.core.artifacts import GroupedArtifacts, normalize_artifacts
         from DashAI.back.dataloaders.classes.dashai_dataset import (
             load_dataset,
             prepare_for_model_session,
@@ -335,14 +348,32 @@ class ExplainerJob(BaseJob):
                 ) from e
             try:
                 explanation = explainer.explain_instance(X)
-                plots = normalize_artifacts(
-                    explainer.plot(explanation), create_grouped=True
-                )
+                raw_plots = explainer.plot(explanation)
+                plots = normalize_artifacts(raw_plots, create_grouped=True)
             except Exception as e:
                 log.exception(e)
                 raise JobError(
                     "Failed to generate the explanation",
                 ) from e
+
+            # Deterministic stories are cheap (they only read the explanation
+            # already computed above) so they are generated unconditionally,
+            # not on demand, one per explained instance. A story bug for one
+            # instance must never fail the explanation itself, nor block the
+            # other instances' stories.
+            stories = None
+            if hasattr(explainer, "story") and raw_plots:
+                stories = {}
+                for i, group in enumerate(raw_plots[0].groups):
+                    try:
+                        single_group = GroupedArtifacts(groups=[group])
+                        prediction_context = input_source.select([i])
+                        stories[str(i)] = explainer.story(
+                            single_group, prediction_context
+                        )
+                    except Exception as e:
+                        log.exception(e)
+                stories = stories or None
             try:
                 explanation_filename = f"local_explanation_{explainer_id}.pickle"
                 explanation_path = os.path.join(
@@ -366,6 +397,7 @@ class ExplainerJob(BaseJob):
                 self.explainer_db.plots_path = plots_path
                 self.explainer_db.input_dataset_path = input_dataset_path
                 self.explainer_db.plot_overrides = None
+                self.explainer_db.stories = stories
                 db.commit()
             except Exception as e:
                 log.exception(e)

@@ -29,8 +29,7 @@
     "nameTooShort": "O nome do explicador deve ter pelo menos 4 caracteres alfanuméricos.",
     "validateDataset": "Erro ao tentar validar o conjunto de dados selecionado.",
     "noData": "Sem dados disponíveis",
-    "nameAlreadyExists": "O nome já existe",
-    "storyGenerationFailed": "Falha ao gerar a história."
+    "nameAlreadyExists": "O nome já existe"
   },
   "label": {
     "configureExplainer": "Configure seu Explicador",
@@ -78,10 +77,7 @@
     "rowModePercentage": "Controle deslizante de porcentagem",
     "rowModeManual": "Seleção manual",
     "shuffleRows": "Embaralhar linhas selecionadas (amostra aleatória)",
-    "rowsSelectedManually": "Linhas selecionadas manualmente: {{selected}} / {{total}}",
-    "generateStory": "Gerar história",
-    "regenerateStory": "Regenerar história",
-    "generatingStory": "Gerando história..."
+    "rowsSelectedManually": "Linhas selecionadas manualmente: {{selected}} / {{total}}"
   },
   "message": {
     "explainerJobCompleted": "Explicador {{name}} concluído com sucesso",

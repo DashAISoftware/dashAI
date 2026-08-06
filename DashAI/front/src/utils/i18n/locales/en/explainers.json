@@ -29,8 +29,7 @@
     "nameTooShort": "The explainer name must have at least 4 alphanumeric characters.",
     "validateDataset": "Error while trying to validate the selected dataset.",
     "noData": "No data available",
-    "nameAlreadyExists": "Name already exists",
-    "storyGenerationFailed": "Failed to generate the story."
+    "nameAlreadyExists": "Name already exists"
   },
   "label": {
     "configureExplainer": "Configure your Explainer",
@@ -78,10 +77,7 @@
     "rowModePercentage": "Percentage slider",
     "rowModeManual": "Manual selection",
     "shuffleRows": "Shuffle selected rows (random sample)",
-    "rowsSelectedManually": "Rows selected manually: {{selected}} / {{total}}",
-    "generateStory": "Generate story",
-    "regenerateStory": "Regenerate story",
-    "generatingStory": "Generating story..."
+    "rowsSelectedManually": "Rows selected manually: {{selected}} / {{total}}"
   },
   "message": {
     "explainerJobCompleted": "Explainer {{name}} completed successfully",

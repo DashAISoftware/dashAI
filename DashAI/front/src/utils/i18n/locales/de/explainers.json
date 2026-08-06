@@ -29,8 +29,7 @@
     "nameTooShort": "Der Name des Erklärungsmodells muss mindestens 4 alphanumerische Zeichen enthalten.",
     "validateDataset": "Fehler beim Validieren des ausgewählten Datensatzes.",
     "noData": "Keine Daten verfügbar",
-    "nameAlreadyExists": "Name existiert bereits",
-    "storyGenerationFailed": "Die Story konnte nicht erstellt werden."
+    "nameAlreadyExists": "Name existiert bereits"
   },
   "label": {
     "configureExplainer": "Erklärungsmodell konfigurieren",
@@ -78,10 +77,7 @@
     "rowModePercentage": "Prozent-Schieberegler",
     "rowModeManual": "Manuelle Auswahl",
     "shuffleRows": "Ausgewählte Zeilen mischen (Zufallsstichprobe)",
-    "rowsSelectedManually": "Manuell ausgewählte Zeilen: {{selected}} / {{total}}",
-    "generateStory": "Story generieren",
-    "regenerateStory": "Story neu generieren",
-    "generatingStory": "Story wird generiert..."
+    "rowsSelectedManually": "Manuell ausgewählte Zeilen: {{selected}} / {{total}}"
   },
   "message": {
     "explainerJobCompleted": "Erklärungsmodell {{name}} erfolgreich abgeschlossen",

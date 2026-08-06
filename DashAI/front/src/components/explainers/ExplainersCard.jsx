@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Grid,
   Typography,
   IconButton,
   Paper,
   Box,
-  Button,
   CircularProgress,
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
@@ -21,10 +20,7 @@ import {
   deleteExplainer,
   saveExplainerPlotOverride,
   resetExplainerPlotOverride,
-  createGlobalExplainerStory,
-  getExplainers,
 } from "../../api/explainer";
-import { startJobPolling } from "../../utils/jobPoller";
 import { useTranslation } from "react-i18next";
 
 const RUNNING_STATUSES = [1, 2]; // Delivered or Started
@@ -53,43 +49,6 @@ export default function ExplainersCard({
     : localOverriddenIndexes;
   const { t } = useTranslation(["explainers"]);
   const isRunning = RUNNING_STATUSES.includes(explainer.status);
-
-  // Story generation is a separate, on-demand job: kept as local state so a
-  // page that doesn't refetch the explainer list still reflects the result.
-  const [storyState, setStoryState] = useState({
-    story: explainer.story || null,
-    status: "idle", // idle | loading | error
-  });
-
-  useEffect(() => {
-    setStoryState((prev) =>
-      prev.status === "loading"
-        ? prev
-        : { ...prev, story: explainer.story || null },
-    );
-  }, [explainer.story]);
-
-  const handleGenerateStory = async () => {
-    setStoryState({ story: null, status: "loading" });
-    try {
-      const { id: jobId } = await createGlobalExplainerStory(explainer.id);
-      startJobPolling(
-        jobId,
-        async () => {
-          try {
-            const refreshed = await getExplainers(explainer.run_id, "global");
-            const updated = refreshed.find((e) => e.id === explainer.id);
-            setStoryState({ story: updated?.story || null, status: "idle" });
-          } catch {
-            setStoryState({ story: null, status: "error" });
-          }
-        },
-        () => setStoryState({ story: null, status: "error" }),
-      );
-    } catch {
-      setStoryState({ story: null, status: "error" });
-    }
-  };
 
   function plotName(name) {
     return name.match(/[A-Z][a-z]+|[0-9]+/g).join(" ");
@@ -213,52 +172,12 @@ export default function ExplainersCard({
                   cacheEntry={cacheEntry}
                   onCacheUpdate={onCacheUpdate}
                 />
-                {scope === "global" && supportsStory && (
-                  <>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        mt: 1,
-                        mb: 1,
-                      }}
-                    >
-                      {storyState.status === "loading" ? (
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <CircularProgress size={16} />
-                          <Typography variant="caption" color="text.secondary">
-                            {t("explainers:label.generatingStory")}
-                          </Typography>
-                        </Box>
-                      ) : (
-                        <Button
-                          size="small"
-                          variant="text"
-                          onClick={handleGenerateStory}
-                        >
-                          {storyState.story
-                            ? t("explainers:label.regenerateStory")
-                            : t("explainers:label.generateStory")}
-                        </Button>
-                      )}
-                    </Box>
-                    {storyState.story && (
-                      <ArtifactViewer
-                        artifact={{ type: "text", payload: storyState.story }}
-                      />
-                    )}
-                    {storyState.status === "error" && (
-                      <Typography
-                        variant="caption"
-                        color="error"
-                        sx={{ display: "block", mt: 1 }}
-                      >
-                        {t("explainers:error.storyGenerationFailed")}
-                      </Typography>
-                    )}
-                  </>
+                {scope === "global" && supportsStory && explainer.story && (
+                  <Box sx={{ mt: 1 }}>
+                    <ArtifactViewer
+                      artifact={{ type: "text", payload: explainer.story }}
+                    />
+                  </Box>
                 )}
               </Grid>
             )}

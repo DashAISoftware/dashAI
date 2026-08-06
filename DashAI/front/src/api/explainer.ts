@@ -39,26 +39,6 @@ export const createGlobalExplainer = async (
   return response.data;
 };
 
-export const createGlobalExplainerStory = async (
-  explainerId: number,
-): Promise<{ id: string }> => {
-  const response = await api.post<{ id: string }>(
-    `/v1/explainer/global/${explainerId}/story`,
-  );
-  return response.data;
-};
-
-export const createLocalExplainerStory = async (
-  explainerId: number,
-  groupIndex: number,
-): Promise<{ id: string }> => {
-  const response = await api.post<{ id: string }>(
-    `/v1/explainer/local/${explainerId}/story`,
-    { group_index: groupIndex },
-  );
-  return response.data;
-};
-
 export const createLocalExplainer = async (
   runId: number,
   explainerName: string,

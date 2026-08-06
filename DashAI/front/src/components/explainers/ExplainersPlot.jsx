@@ -1,14 +1,9 @@
 import { React, useEffect, useState } from "react";
-import { CircularProgress, Box, Button, Typography } from "@mui/material";
+import { CircularProgress, Box } from "@mui/material";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
-import {
-  getExplainerPlot as getExplainerPlotRequest,
-  createLocalExplainerStory,
-  getExplainers,
-} from "../../api/explainer";
-import { startJobPolling } from "../../utils/jobPoller";
+import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
 import ArtifactViewer from "../shared/ArtifactViewer";
 import ExplainerInstanceTable from "./ExplainerInstanceTable";
@@ -112,56 +107,21 @@ ArtifactBatch.propTypes = {
 };
 
 /**
- * Story trigger + result for one explained instance (local explainers only).
- * `groupIndex` identifies the instance within the explainer's `stories` map.
+ * Story for one explained instance (local explainers only). Generated
+ * automatically as part of the explainer job - this only displays it, the
+ * same box used for every other text artifact.
  */
-function InstanceStoryBox({ groupIndex, story, status, onGenerate }) {
-  const { t } = useTranslation(["explainers"]);
-
+function InstanceStoryBox({ story }) {
+  if (!story) return null;
   return (
     <Box sx={{ width: "100%" }}>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1 }}>
-        {status === "loading" ? (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CircularProgress size={16} />
-            <Typography variant="caption" color="text.secondary">
-              {t("explainers:label.generatingStory")}
-            </Typography>
-          </Box>
-        ) : (
-          <Button
-            size="small"
-            variant="text"
-            onClick={() => onGenerate(groupIndex)}
-          >
-            {story
-              ? t("explainers:label.regenerateStory")
-              : t("explainers:label.generateStory")}
-          </Button>
-        )}
-      </Box>
-      {/* Same box used for every other text artifact (ArtifactViewer over a
-          "text" artifact), so a generated story looks identical to the
-          caption explainers used to render automatically in plot(). */}
-      {story && <ArtifactViewer artifact={{ type: "text", payload: story }} />}
-      {status === "error" && (
-        <Typography
-          variant="caption"
-          color="error"
-          sx={{ display: "block", mb: 1 }}
-        >
-          {t("explainers:error.storyGenerationFailed")}
-        </Typography>
-      )}
+      <ArtifactViewer artifact={{ type: "text", payload: story }} />
     </Box>
   );
 }
 
 InstanceStoryBox.propTypes = {
-  groupIndex: PropTypes.number.isRequired,
   story: PropTypes.string,
-  status: PropTypes.string,
-  onGenerate: PropTypes.func.isRequired,
 };
 
 /**
@@ -174,9 +134,8 @@ InstanceStoryBox.propTypes = {
  * values (the row index selects the group); global explainers omit it and get
  * a plain title list.
  *
- * `story` (optional) wires up the per-instance "generate story" action for
- * the selected group: only passed for local explainers whose explainer type
- * supports it.
+ * `story` (optional) looks up the per-instance story text: only passed for
+ * local explainers whose explainer type supports it.
  */
 function GroupedArtifactsView({
   grouped,
@@ -245,14 +204,7 @@ function GroupedArtifactsView({
         leadingFlex={wide ? "0 0 46%" : "0 0 25%"}
         leadingMinWidth={wide ? 320 : 220}
       />
-      {story && (
-        <InstanceStoryBox
-          groupIndex={selected}
-          story={story.getStory(selected)}
-          status={story.getStatus(selected)}
-          onGenerate={story.onGenerate}
-        />
-      )}
+      {story && <InstanceStoryBox story={story.getStory(selected)} />}
     </Box>
   );
 }
@@ -265,8 +217,6 @@ GroupedArtifactsView.propTypes = {
   onSelect: PropTypes.func,
   story: PropTypes.shape({
     getStory: PropTypes.func.isRequired,
-    getStatus: PropTypes.func.isRequired,
-    onGenerate: PropTypes.func.isRequired,
   }),
 };
 
@@ -316,58 +266,11 @@ export default function ExplainersPlot({
   const isLocal = scope === "local";
   const datasetPath = isLocal ? explainer.input_dataset_path : null;
 
-  // Per-instance story text/status, keyed by group index (as a string, to
-  // match how `stories` is keyed on the explainer). Overrides
-  // explainer.stories once (re)generated, since the parent list may not
-  // refetch immediately.
-  const [localStories, setLocalStories] = useState({});
-  const [storyStatus, setStoryStatus] = useState({});
-
-  const handleGenerateStory = async (groupIndex) => {
-    const key = String(groupIndex);
-    setStoryStatus((prev) => ({ ...prev, [key]: "loading" }));
-    try {
-      const { id: jobId } = await createLocalExplainerStory(
-        explainer.id,
-        groupIndex,
-      );
-      startJobPolling(
-        jobId,
-        async () => {
-          try {
-            const refreshed = await getExplainers(explainer.run_id, "local");
-            const updated = refreshed.find((e) => e.id === explainer.id);
-            setLocalStories((prev) => ({
-              ...prev,
-              [key]: updated?.stories?.[key] ?? null,
-            }));
-            setStoryStatus((prev) => {
-              const next = { ...prev };
-              delete next[key];
-              return next;
-            });
-          } catch {
-            setStoryStatus((prev) => ({ ...prev, [key]: "error" }));
-          }
-        },
-        () => setStoryStatus((prev) => ({ ...prev, [key]: "error" })),
-      );
-    } catch {
-      setStoryStatus((prev) => ({ ...prev, [key]: "error" }));
-    }
-  };
-
   const storyProps =
     isLocal && supportsStory
       ? {
-          getStory: (groupIndex) => {
-            const key = String(groupIndex);
-            return key in localStories
-              ? localStories[key]
-              : (explainer.stories?.[key] ?? null);
-          },
-          getStatus: (groupIndex) => storyStatus[String(groupIndex)],
-          onGenerate: handleGenerateStory,
+          getStory: (groupIndex) =>
+            explainer.stories?.[String(groupIndex)] ?? null,
         }
       : null;
 
