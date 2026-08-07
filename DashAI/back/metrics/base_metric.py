@@ -1,6 +1,6 @@
 """Base Metric abstract class."""
 
-from typing import TYPE_CHECKING, Any, Dict, Final, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Final, Tuple, Union
 
 if TYPE_CHECKING:
     from numpy import ndarray
@@ -30,7 +30,6 @@ class BaseMetric:
 
     TYPE: Final[str] = "Metric"
     MAXIMIZE: Final[bool] = False
-    NORMALIZE_REF: Optional[float] = None
     metadata: Dict[str, Any] = {}
 
     @classmethod
@@ -45,7 +44,6 @@ class BaseMetric:
         """
         meta: Dict[str, Any] = dict(getattr(cls, "metadata", {}) or {})
         meta["maximize"] = cls.MAXIMIZE
-        meta["normalize_ref"] = cls.NORMALIZE_REF
 
         return meta
 

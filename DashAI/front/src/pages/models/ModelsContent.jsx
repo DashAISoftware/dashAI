@@ -33,6 +33,7 @@ export default function ModelsContent() {
     selectDataset,
     setRuns,
     fetchRuns,
+    setActiveRunId,
   } = useModels();
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function ModelsContent() {
       selectDataset(id);
       setSelectedSessionId(null);
       setSelectedTask(null);
+      setActiveRunId(null);
       setStep(2);
       return;
     }
@@ -56,6 +58,7 @@ export default function ModelsContent() {
       if (task) {
         setSelectedTask(task);
         setSelectedSessionId(null);
+        setActiveRunId(null);
         setStep(1);
       }
       return;
@@ -64,6 +67,7 @@ export default function ModelsContent() {
     if (path.startsWith("/app/models/sessions/") && params.id) {
       const id = Number(params.id);
       setSelectedSessionId(id);
+      setActiveRunId(params.runId ? Number(params.runId) : null);
       selectDataset(null);
       return;
     }
@@ -71,6 +75,7 @@ export default function ModelsContent() {
     if (path === "/app/models" || path === "/app/models/") {
       setSelectedSessionId(null);
       setSelectedTask(null);
+      setActiveRunId(null);
       const preserved = location.state?.preselectedDatasetId;
       if (preserved != null) {
         selectDataset(preserved);
@@ -84,6 +89,7 @@ export default function ModelsContent() {
     location.state?.preselectedDatasetId,
     params.id,
     params.taskName,
+    params.runId,
     tasks,
   ]);
 

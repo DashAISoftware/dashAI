@@ -1,7 +1,7 @@
 import logging
-from typing import TYPE_CHECKING, Literal, Optional, Union
+from typing import TYPE_CHECKING, Union
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
@@ -17,12 +17,11 @@ from DashAI.back.dependencies.database.models import (
     Run,
     RunStatus,
 )
-from DashAI.back.services.scoring_service import ScoringService
+from DashAI.back.dependencies.downloads.nested import missing_downloads
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
-    from DashAI.back.dependencies.registry import ComponentRegistry
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -77,40 +76,25 @@ def get_metrics_for_run(db, run_id: int):
 @inject
 async def get_runs(
     model_session_id: Union[int, None] = None,
-    include_scores: bool = Query(False),
-    profile_id: Optional[str] = Query(None),
-    metric_split: Literal["train", "validation", "test"] = Query("test"),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
-    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Retrieve a list of the stored model session runs in the database.
 
     The runs can be filtered by model_session_id if the parameter is passed.
-    Optionally includes computed scores for each run.
 
     Parameters
     ----------
     model_session_id: Union[int, None], optional
         If specified, the function will return all the runs associated with
         the model session, by default None.
-    include_scores: bool, optional
-        If True, compute and include scores for each run, by default False.
-    profile_id: Optional[str], optional
-        Scoring profile ID (e.g., "balanced"). Only used if include_scores=True.
-        If not provided, defaults to first available profile for the session task.
-    metric_split: str, optional
-        Which metrics to use: "train", "validation", or "test", by default "test".
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
-    component_registry : ComponentRegistry
-        Registry for metric metadata (injected).
 
     Returns
     -------
     List[dict]
-        A list with all selected runs. If include_scores=True, each run includes
-        a "score" dict with "value" (0-100) and "breakdown" (list of metrics).
+        A list with all selected runs.
 
     Raises
     ------
@@ -119,7 +103,6 @@ async def get_runs(
     """
     with session_factory() as db:
         try:
-            model_session = None
             if model_session_id is not None:
                 model_session = db.get(ModelSession, model_session_id)
                 if not model_session:
@@ -144,40 +127,6 @@ async def get_runs(
                 run.train_metrics = metrics["train_metrics"]
                 run.validation_metrics = metrics["validation_metrics"]
                 run.test_metrics = metrics["test_metrics"]
-
-            # Compute scores if requested
-            if include_scores and runs:
-                scoring_service = ScoringService()
-
-                # Determine profile to use
-                task_name = model_session.task_name if model_session else None
-                available_profiles = scoring_service.get_available_profiles(task_name)
-
-                if not profile_id and available_profiles:
-                    profile_id = available_profiles[0]["id"]
-
-                # Only compute if a profile is available
-                if profile_id:
-                    # Determine which metrics dict to use based on split
-                    metrics_key = f"{metric_split}_metrics"
-
-                    # Prepare runs data for scoring
-                    runs_metrics = [
-                        {
-                            "run_id": run.id,
-                            "metrics": getattr(run, metrics_key, {}) or {},
-                        }
-                        for run in runs
-                    ]
-
-                    # Compute all scores
-                    scores = scoring_service.compute_scores_for_comparison(
-                        runs_metrics, profile_id
-                    )
-
-                    # Attach scores to runs
-                    for run in runs:
-                        run.score = scores.get(run.id)
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -281,7 +230,12 @@ async def get_hyperparameter_optimization_plot(
                 detail="Internal database error",
             ) from e
 
-    return plot
+    from DashAI.back.core.artifacts import normalize_artifacts
+
+    # Re-normalized on every read (not just on save) so plots pickled before
+    # this endpoint returned typed artifacts (plain plotly JSON strings)
+    # still come back in the same {type, payload, title} shape.
+    return normalize_artifacts(plot)[0]
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -289,17 +243,21 @@ async def get_hyperparameter_optimization_plot(
 async def upload_run(
     params: RunParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry=Depends(lambda: di["component_registry"]),
 ):
     """Create a new run.
 
     Parameters
     ----------
-    params : int
+    params : RunParams
         The parameters of the new run, which includes the model session, model name, run
         name and description, among others.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        The application component registry, used to check whether the requested
+        model has been downloaded.
 
     Returns
     -------
@@ -310,6 +268,8 @@ async def upload_run(
     ------
     HTTPException
         If the model session with id model_session_id is not registered in the DB.
+    HTTPException
+        If the model requires a download but has not been downloaded yet (HTTP 409).
     """
     with session_factory() as db:
         try:
@@ -318,6 +278,35 @@ async def upload_run(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Model session not found",
+                )
+            # REQUIRES_DOWNLOAD is the static contract; the download state is
+            # reconciled against the filesystem so a model downloaded after
+            # startup (in the worker process) is recognised without a restart.
+            if params.model_name not in component_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Unknown model '{params.model_name}'",
+                )
+            entry = component_registry[params.model_name]
+            if getattr(
+                entry["class"], "REQUIRES_DOWNLOAD", False
+            ) and not component_registry.refresh_download_status(params.model_name):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"Model {params.model_name} must be downloaded before use."
+                    ),
+                )
+            # A parameter may select another component (e.g. a classifier) that
+            # itself needs downloading; block until every nested one is present.
+            nested_missing = missing_downloads(params.parameters, component_registry)
+            if nested_missing:
+                names = ", ".join(m["name"] for m in nested_missing)
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"These components must be downloaded before use: {names}."
+                    ),
                 )
             run = Run(
                 model_session_id=params.model_session_id,

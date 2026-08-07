@@ -3,6 +3,7 @@
   "selectAnItemToShowInfo": "Seleccione un elemento para ver la descripción.",
   "selectInferenceMethods": "Seleccione los métodos de inferencia que desea aplicar",
   "search": "Buscar",
+  "modelSize": "Tamaño: {{size}}",
   "noItemsFound": "No se encontraron componentes",
   "tryAdjustingSearch": "Intenta ajustar tu búsqueda o filtros",
   "componentsAvailable_one": "{{count}} componente disponible",

@@ -122,6 +122,55 @@ class DummyLocalExplainer(BaseLocalExplainer):
         return
 
 
+class MangleModel(DummyModel):
+    """Model whose preparation renames the input columns.
+
+    Mirrors bag-of-words style text models, whose ``prepare_dataset``
+    replaces the raw input column with the vectorized feature columns.
+    """
+
+    COMPATIBLE_COMPONENTS = ["DummyTask"]
+
+    @staticmethod
+    def load(filename):
+        return MangleModel()
+
+    def prepare_dataset(self, dataset, is_fit=False):
+        return dataset.rename_columns(
+            {column: f"{column}_prepared" for column in dataset.column_names}
+        )
+
+
+RAW_INPUT_COLUMNS = []
+
+
+class RawInputLocalExplainer(BaseLocalExplainer):
+    """Local explainer that records the columns the job hands it."""
+
+    COMPATIBLE_COMPONENTS = ["DummyTask"]
+
+    def __init__(self, model: BaseModel) -> None:
+        self.model = model
+        self.explanation = None
+
+    @classmethod
+    def get_schema(cls):
+        return {}
+
+    def fit(self, dataset, **kwargs):
+        return self
+
+    def explain_instance(self, instances):
+        columns = instances.column_names
+        if isinstance(columns, dict):
+            columns = [column for split in columns.values() for column in split]
+        RAW_INPUT_COLUMNS.extend(columns)
+        return {}
+
+    def plot(self, explanation):
+        return
+
+
 @pytest.fixture(autouse=True, name="test_registry")
 def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
     """Setup a test registry with test task and explainers components."""
@@ -131,8 +180,10 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
         initial_components=[
             DummyTask,
             DummyModel,
+            MangleModel,
             DummyGlobalExplainer,
             DummyLocalExplainer,
+            RawInputLocalExplainer,
             ExplainerJob,
         ]
     )
@@ -403,6 +454,80 @@ def test_execute_jobs(
     response = client.get(f"/api/v1/job/status/{local_job_id}")
     assert response.json()["status"] == "finished", (
         f"Local job should be finished, got {response.json()['status']}"
+    )
+
+
+def test_local_explainer_receives_unprepared_model_input(
+    client: TestClient, model_session_id: int, dataset_id: int
+):
+    """The job hands over the instances without the model preparation.
+
+    Explainers query ``model.predict``, which prepares its input itself, so
+    preparing beforehand would break models that replace the input column
+    with derived features (bag-of-words counts, for instance). Explainers
+    needing the model feature space ask for it with ``prepare_model_input``.
+    """
+    container = client.app.container
+    session_factory = container["session_factory"]
+    RAW_INPUT_COLUMNS.clear()
+
+    with session_factory() as db:
+        run = Run(
+            model_session_id=model_session_id,
+            optimizer_name="OptunaOptimizer",
+            optimizer_parameters={
+                "n_trials": 1,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            model_name="MangleModel",
+            parameters={},
+            goal_metric="Accuracy",
+            name="RawInputRun",
+            split_indexes="""{
+                "train_indexes": [0, 1, 2, 3, 4],
+                "test_indexes": [5, 6, 7, 8],
+                "val_indexes": [9, 10, 11, 12]
+            }""",
+        )
+        db.add(run)
+        db.commit()
+        db.refresh(run)
+
+        explainer = LocalExplainer(
+            name="test_raw_local",
+            run_id=run.id,
+            explainer_name="RawInputLocalExplainer",
+            dataset_id=dataset_id,
+            scope={"split": "test", "percentage": 100},
+            parameters={},
+            fit_parameters={},
+        )
+        db.add(explainer)
+        db.commit()
+        db.refresh(explainer)
+        explainer_id = explainer.id
+
+    response = client.post(
+        "/api/v1/job/",
+        data={
+            "job_type": "ExplainerJob",
+            "kwargs": json.dumps(
+                {"explainer_id": explainer_id, "explainer_scope": "local"}
+            ),
+        },
+    )
+    assert response.status_code == 201, response.text
+    job_id = response.json()["id"]
+
+    job_status = client.get(f"/api/v1/job/status/{job_id}").json()
+    assert job_status["status"] == "finished", (
+        f"Job should be finished, got {job_status['status']}"
+    )
+
+    assert RAW_INPUT_COLUMNS, "The explainer never received any instance"
+    assert set(RAW_INPUT_COLUMNS) == set(input_columns), (
+        f"Explainer got prepared columns {sorted(set(RAW_INPUT_COLUMNS))}"
     )
 
 

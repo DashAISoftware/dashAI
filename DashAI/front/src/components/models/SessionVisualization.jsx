@@ -1,31 +1,19 @@
 import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  Stack,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Divider,
-  Button,
-  ButtonGroup,
-  ToggleButtonGroup,
-  ToggleButton,
-  Tooltip,
-} from "@mui/material";
+import { Box, Typography, Divider, Button, ToggleButton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import {
-  PlayArrow,
-  TableChart,
-  BarChart,
-  ExpandMore,
-} from "@mui/icons-material";
+import { useParams, useNavigate } from "react-router-dom";
+import { PlayArrow } from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
-import RunCard from "./RunCard";
+import ModelDetailView from "./ModelDetailView";
+import ModelCardCompact from "./ModelCardCompact";
 import { getComponents } from "../../api/component";
+import { getComponentDownloadState } from "./model/ComponentDownloadControl";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
+import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
+import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
 
 import { useModels } from "./ModelsContext";
 import { useTourContext } from "../tour/TourProvider";
@@ -34,19 +22,17 @@ export default function SessionVisualization() {
   const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [highlightedRunId, setHighlightedRunId] = useState(null);
-  const [tableHeight, setTableHeight] = useState(280);
-  const [showTable, setShowTable] = useState(true);
-  const [previousTableHeight, setPreviousTableHeight] = useState(280);
-  const [metricSplit, setMetricSplit] = useState("test");
-  const [tableCollapsed, setTableCollapsed] = useState(false);
-  const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
-  const isResizing = React.useRef(false);
+  const [metricSplit, setMetricSplit] = useState("train");
   const { t } = useTranslation(["models", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
   const sessionTourContext = useTourContext();
+  const params = useParams();
+  const navigate = useNavigate();
 
   const {
     selectedSession: session,
     runs,
+    datasets,
     onTrainRun: onTrain,
     onDeleteRun,
     fetchRuns,
@@ -58,15 +44,30 @@ export default function SessionVisualization() {
     lastAddedRunId,
     clearLastAddedRunId,
     selectModel,
+    openExplainerCreator,
+    explainerRefreshTrigger,
+    triggerExplainerRefresh,
   } = useModels();
 
   const theme = useTheme();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
+  // This component stays mounted across session navigations (same route,
+  // different :sessionId), so metricSplit would otherwise carry over from
+  // whatever split was last viewed in a previous session. Reset to the
+  // default landing split every time the session actually changes.
+  useEffect(() => {
+    setMetricSplit("train");
+  }, [session?.id]);
+
   useEffect(() => {
     const onStart = (e) => {
-      if (e.dataTransfer.types.includes("application/x-dashai-model")) {
+      const types = e.dataTransfer.types;
+      if (
+        types.includes("application/x-dashai-model") ||
+        types.includes("application/x-dashai-explainer")
+      ) {
         setIsDragging(true);
       }
     };
@@ -82,22 +83,6 @@ export default function SessionVisualization() {
     };
   }, []);
 
-  // Auto-expand when switching to graphs
-  const handleToggleView = React.useCallback(
-    (isTable) => {
-      if (!isTable && showTable) {
-        // Switching from Table to Graphs
-        setPreviousTableHeight(tableHeight);
-        setTableHeight(Math.max(tableHeight, 600));
-      } else if (isTable && !showTable) {
-        // Switching from Graphs to Table
-        setTableHeight(previousTableHeight);
-      }
-      setShowTable(isTable);
-    },
-    [showTable, tableHeight, previousTableHeight],
-  );
-
   const fetchModels = React.useCallback(async () => {
     try {
       const response = await getComponents({ selectTypes: ["Model"] });
@@ -111,22 +96,6 @@ export default function SessionVisualization() {
     fetchModels();
   }, [fetchModels]);
 
-  useEffect(() => {
-    const handleGraphsButtonClick = (e) => {
-      const graphsButton = e.target.closest('[data-tour="graphs-button"]');
-      if (graphsButton && sessionTourContext?.stepIndex === 7) {
-        setTimeout(() => {
-          sessionTourContext.nextStep();
-        }, 500);
-      }
-    };
-
-    document.addEventListener("click", handleGraphsButtonClick, true);
-    return () => {
-      document.removeEventListener("click", handleGraphsButtonClick, true);
-    };
-  }, [sessionTourContext]);
-
   // Check if tour should start from previous tutorial
   useEffect(() => {
     const shouldStartTour = sessionStorage.getItem("startModelsSessionTour");
@@ -138,7 +107,7 @@ export default function SessionVisualization() {
     }
   }, [sessionTourContext]);
 
-  // Scroll to and highlight a newly added run card
+  // Scroll to a newly added run card and mark it to be highlighted
   useEffect(() => {
     if (!lastAddedRunId) return;
     const scrollTimer = setTimeout(() => {
@@ -149,12 +118,17 @@ export default function SessionVisualization() {
       setHighlightedRunId(lastAddedRunId);
       clearLastAddedRunId();
     }, 100);
-    const clearTimer = setTimeout(() => setHighlightedRunId(null), 4100);
-    return () => {
-      clearTimeout(scrollTimer);
-      clearTimeout(clearTimer);
-    };
+    return () => clearTimeout(scrollTimer);
   }, [lastAddedRunId]);
+
+  // Clear the highlight a few seconds after it was set. Kept in its own
+  // effect (keyed on highlightedRunId, not lastAddedRunId) so it isn't
+  // cancelled by clearLastAddedRunId() re-triggering the effect above.
+  useEffect(() => {
+    if (!highlightedRunId) return;
+    const clearTimer = setTimeout(() => setHighlightedRunId(null), 1000);
+    return () => clearTimeout(clearTimer);
+  }, [highlightedRunId]);
 
   const handleRowClick = React.useCallback((runId) => {
     setSelectedRunId(runId);
@@ -162,33 +136,54 @@ export default function SessionVisualization() {
     if (element) {
       element.scrollIntoView({ behavior: "smooth", block: "center" });
     }
+    setTimeout(() => setSelectedRunId(null), 2000);
   }, []);
 
-  const handleViewDetails = React.useCallback((run) => {
-    if (!run?.id) return;
-    setSelectedRunId(run.id);
-    const element = document.getElementById(`run-card-${run.id}`);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, []);
+  const handleViewDetails = React.useCallback(
+    (run) => {
+      if (!run?.id) return;
+      navigate(`/app/models/sessions/${session.id}/model/${run.id}`);
+    },
+    [navigate, session?.id],
+  );
 
   const sortedRuns = React.useMemo(
     () => [...runs].sort((a, b) => new Date(a.created) - new Date(b.created)),
     [runs],
   );
 
-  // Check which metrics are available
-  const hasTrainMetrics = runs.some(
-    (run) => run.train_metrics && Object.keys(run.train_metrics).length > 0,
+  const activeRun = React.useMemo(
+    () =>
+      params.runId ? runs.find((r) => String(r.id) === params.runId) : null,
+    [runs, params.runId],
   );
-  const hasValidationMetrics = runs.some(
-    (run) =>
-      run.validation_metrics && Object.keys(run.validation_metrics).length > 0,
+
+  const datasetName = React.useMemo(
+    () => datasets.find((d) => d.id === session?.dataset_id)?.name,
+    [datasets, session?.dataset_id],
   );
-  const hasTestMetrics = runs.some(
-    (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
-  );
+
+  // Check which metrics are available. This re-scan only needs to happen
+  // when `runs` itself changes, not on every render (e.g. drag state, tour
+  // steps, or the highlight timer toggling elsewhere in this component).
+  const { hasTrainMetrics, hasValidationMetrics, hasTestMetrics } =
+    React.useMemo(
+      () => ({
+        hasTrainMetrics: runs.some(
+          (run) =>
+            run.train_metrics && Object.keys(run.train_metrics).length > 0,
+        ),
+        hasValidationMetrics: runs.some(
+          (run) =>
+            run.validation_metrics &&
+            Object.keys(run.validation_metrics).length > 0,
+        ),
+        hasTestMetrics: runs.some(
+          (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
+        ),
+      }),
+      [runs],
+    );
 
   const handleTrainWithTour = (run) => {
     if (onTrain) onTrain(run);
@@ -199,37 +194,43 @@ export default function SessionVisualization() {
     }
   };
 
-  const handleMouseMove = React.useCallback((e) => {
-    if (isResizing.current) {
-      const details = document.querySelector("[data-accordion-details]");
-      if (details) {
-        const detailsRect = details.getBoundingClientRect();
-        const newHeight = e.clientY - detailsRect.top;
-        const minHeight = 150;
-        const maxHeight = window.innerHeight * 0.7;
-        const clampedHeight = Math.max(
-          minHeight,
-          Math.min(maxHeight, newHeight),
-        );
-        setTableHeight(clampedHeight);
-      }
+  // If the run being deleted is the one currently open in the detail view,
+  // navigate back to the session overview instead of leaving the user on a
+  // "run not found" screen for a run that no longer exists.
+  const handleDeleteRun = async (run) => {
+    await onDeleteRun(run);
+    if (params.runId && String(run.id) === params.runId) {
+      navigate(`/app/models/sessions/${session.id}`);
     }
-  }, []);
+  };
 
-  const handleMouseUp = React.useCallback(() => {
-    isResizing.current = false;
-    document.body.style.cursor = "default";
-    document.body.style.userSelect = "auto";
-  }, []);
+  // True when a run's model is ready to train: it either needs no download or
+  // its download is present and not in progress (live state overrides the
+  // possibly stale fetched flag).
+  const isRunModelReady = React.useCallback(
+    (run) => {
+      const model = models.find((m) => m.name === run.model_name);
+      if (!model?.metadata?.requires_download) return true;
+      const cached = getComponentDownloadState(run.model_name);
+      const downloaded = cached?.downloaded ?? Boolean(model.downloaded);
+      const downloading = Boolean(cached?.downloading);
+      return downloaded && !downloading;
+    },
+    [models],
+  );
 
-  React.useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [handleMouseMove, handleMouseUp]);
+  // Train every not-started run whose model is downloaded, skipping (and warning
+  // about) any whose model still needs downloading.
+  const handleRunAll = () => {
+    const notStarted = runs.filter((r) => r.status === 0);
+    const ready = notStarted.filter(isRunModelReady);
+    ready.forEach((run) => onTrain(run));
+    if (ready.length < notStarted.length) {
+      enqueueSnackbar(t("models:message.skippedUndownloadedRuns"), {
+        variant: "warning",
+      });
+    }
+  };
 
   if (!session) {
     return (
@@ -261,14 +262,20 @@ export default function SessionVisualization() {
         data-session-viz
         onDragOver={(e) => {
           if (e.dataTransfer.types.includes("Files")) e.preventDefault();
-          if (!e.dataTransfer.types.includes("application/x-dashai-model"))
+          if (
+            !e.dataTransfer.types.includes("application/x-dashai-model") &&
+            !e.dataTransfer.types.includes("application/x-dashai-explainer")
+          )
             return;
           e.preventDefault();
           e.dataTransfer.dropEffect = "copy";
         }}
         onDragEnter={(e) => {
           if (e.dataTransfer.types.includes("Files")) e.preventDefault();
-          if (!e.dataTransfer.types.includes("application/x-dashai-model"))
+          if (
+            !e.dataTransfer.types.includes("application/x-dashai-model") &&
+            !e.dataTransfer.types.includes("application/x-dashai-explainer")
+          )
             return;
           e.preventDefault();
           setIsDragOver(true);
@@ -280,13 +287,24 @@ export default function SessionVisualization() {
           }
         }}
         onDrop={(e) => {
+          const types = e.dataTransfer.types;
+          const isModel = types.includes("application/x-dashai-model");
+          const isExplainer = types.includes("application/x-dashai-explainer");
+          if (!isModel && !isExplainer) return;
           e.preventDefault();
           setIsDragOver(false);
           try {
-            const model = JSON.parse(
-              e.dataTransfer.getData("application/x-dashai-model"),
-            );
-            if (model?.name) selectModel(model);
+            if (isExplainer) {
+              const explainer = JSON.parse(
+                e.dataTransfer.getData("application/x-dashai-explainer"),
+              );
+              if (explainer?.name) openExplainerCreator(explainer);
+            } else {
+              const model = JSON.parse(
+                e.dataTransfer.getData("application/x-dashai-model"),
+              );
+              if (model?.name) selectModel(model);
+            }
           } catch {
             // ignore invalid drops
           }
@@ -295,7 +313,7 @@ export default function SessionVisualization() {
           display: "flex",
           flexDirection: "column",
           height: "100%",
-          overflow: "hidden",
+          overflow: "auto",
           position: "relative",
           outline: isDragOver
             ? `2px dashed ${theme.palette.primary.main}`
@@ -336,259 +354,249 @@ export default function SessionVisualization() {
             </Typography>
           </Box>
         )}
-        {/* Sticky Comparison Table */}
-        <Accordion
-          data-tour="model-comparison-panel"
-          expanded={!tableCollapsed}
-          onChange={() => setTableCollapsed((v) => !v)}
-          disableGutters
-          elevation={1}
-          sx={{
-            flexShrink: 0,
-            borderBottom: "1px solid",
-            borderColor: "divider",
-            borderRadius: "4px",
-            "&:before": { display: "none" },
-          }}
-        >
-          <AccordionSummary
-            expandIcon={
-              <Tooltip
-                title={
-                  tableCollapsed ? t("common:expand") : t("common:collapse")
-                }
-              >
-                <ExpandMore />
-              </Tooltip>
-            }
-            sx={{
-              alignItems: "flex-start",
-              "& .MuiAccordionSummary-content": { my: "8px", mr: 1 },
-              "& .MuiAccordionSummary-expandIconWrapper": { mt: "10px" },
-            }}
-          >
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                width: "100%",
-                flexWrap: "wrap",
-                gap: 1,
-              }}
-            >
-              <Typography variant="h6" color="text.primary">
-                {t("models:label.modelComparison")}
-              </Typography>
+        {/* Model detail: full-screen view for a single run */}
+        {params.runId ? (
+          activeRun ? (
+            <ModelDetailView
+              run={activeRun}
+              models={models}
+              session={session}
+              onTrain={handleTrainWithTour}
+              onDelete={handleDeleteRun}
+              explainerRefreshTrigger={explainerRefreshTrigger}
+              onOperationsRefresh={triggerExplainerRefresh}
+              existingRuns={runs}
+              onRefresh={fetchRuns}
+            />
+          ) : (
+            <Box sx={{ px: 4, pt: 4 }}>
+              <ModelsBreadcrumbs />
               <Box
                 sx={{
                   display: "flex",
-                  gap: 4,
                   alignItems: "center",
-                  flexWrap: "wrap",
+                  justifyContent: "center",
+                  py: 8,
                 }}
-                onClick={(e) => e.stopPropagation()}
               >
-                {/* Metric Split Selector — controls both table and graph views */}
-                {(hasTrainMetrics ||
-                  hasValidationMetrics ||
-                  hasTestMetrics) && (
-                  <ToggleButtonGroup
-                    value={metricSplit}
-                    exclusive
-                    onChange={(e, newValue) => {
-                      if (newValue !== null) setMetricSplit(newValue);
-                    }}
-                    size="small"
-                  >
-                    {hasTrainMetrics && (
-                      <ToggleButton value="train">
-                        {t("common:train")}
-                      </ToggleButton>
-                    )}
-                    {hasValidationMetrics && (
-                      <ToggleButton value="validation">
-                        {t("common:validation")}
-                      </ToggleButton>
-                    )}
-                    {hasTestMetrics && (
-                      <ToggleButton value="test">
-                        {t("common:test")}
-                      </ToggleButton>
-                    )}
-                  </ToggleButtonGroup>
-                )}
+                <Typography variant="body1" color="text.secondary">
+                  {t("models:label.runNotFound")}
+                </Typography>
+              </Box>
+            </Box>
+          )
+        ) : (
+          <>
+            {/* Session header: breadcrumb, title, quick stats */}
+            <Box sx={{ px: 4, pt: 4 }}>
+              <ModelsBreadcrumbs />
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-end",
+                  flexWrap: "wrap",
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+                    {session.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("models:label.modelCount", {
+                      count: sortedRuns.length,
+                    })}
+                    {datasetName && ` | ${t("common:dataset")} ${datasetName}`}
+                  </Typography>
+                </Box>
 
-                {/* Toggle between Table and Graphs */}
-                <ButtonGroup size="small" variant="outlined">
-                  <Button
-                    variant={showTable ? "contained" : "outlined"}
-                    onClick={() => handleToggleView(true)}
-                    startIcon={<TableChart />}
-                  >
-                    {t("common:table")}
-                  </Button>
-                  <Button
-                    data-tour="graphs-button"
-                    variant={!showTable ? "contained" : "outlined"}
-                    onClick={() => handleToggleView(false)}
-                    startIcon={<BarChart />}
-                  >
-                    {t("common:graphs")}
-                  </Button>
-                </ButtonGroup>
-
-                {/* Run All Button */}
-                {runs.length > 0 && runs.some((r) => r.status === 0) && (
+                {runs.length > 0 && (
                   <Button
                     variant="contained"
                     size="small"
                     startIcon={<PlayArrow />}
-                    onClick={() => {
-                      const notStartedRuns = runs.filter((r) => r.status === 0);
-                      notStartedRuns.forEach((run) => onTrain(run));
-                    }}
+                    disabled={!runs.some((r) => r.status === 0)}
+                    onClick={handleRunAll}
                   >
                     {t("models:button.runAll")}
                   </Button>
                 )}
               </Box>
             </Box>
-          </AccordionSummary>
 
-          <AccordionDetails
-            data-accordion-details
-            sx={{
-              p: 2,
-              pt: 0,
-              height: `${tableHeight}px`,
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            {runs.length === 0 ? (
+            {/* Compact model cards: quick access to each model */}
+            <Box
+              data-tour="run-cards-section"
+              sx={{
+                p: 4,
+              }}
+            >
+              {runs.length === 0 ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "50vh",
+                  }}
+                >
+                  <Typography variant="body1" color="text.secondary">
+                    {t("models:label.noRunsYet")}
+                  </Typography>
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    display: "grid",
+                    gap: 3,
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(340px, 1fr))",
+                  }}
+                >
+                  {sortedRuns.map((run, index) => (
+                    <Box
+                      key={run.id}
+                      id={`run-card-${run.id}`}
+                      data-tour={
+                        index === sortedRuns.length - 1
+                          ? "first-run-card"
+                          : undefined
+                      }
+                      sx={{
+                        scrollMarginTop: "20px",
+                        scrollMarginBottom: "20px",
+                        transition: "transform 0.3s ease",
+                        ...(selectedRunId === run.id && {
+                          transform: "scale(1.02)",
+                          boxShadow: 3,
+                        }),
+                      }}
+                    >
+                      <ModelCardCompact
+                        run={run}
+                        models={models}
+                        session={session}
+                        existingRuns={runs}
+                        onTrain={handleTrainWithTour}
+                        onDelete={handleDeleteRun}
+                        onRefresh={fetchRuns}
+                        onOpen={() =>
+                          navigate(
+                            `/app/models/sessions/${session.id}/model/${run.id}`,
+                          )
+                        }
+                        isHighlighted={highlightedRunId === run.id}
+                      />
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            {/* Comparison analysis area: table/graphs across all models */}
+            <Box
+              data-tour="model-comparison-panel"
+              sx={{
+                flexShrink: 0,
+                p: 4,
+              }}
+            >
               <Box
                 sx={{
                   display: "flex",
+                  justifyContent: "space-between",
                   alignItems: "center",
-                  justifyContent: "center",
-                  height: "100%",
+                  width: "100%",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  mb: 2,
                 }}
               >
-                <Typography variant="body2" color="text.secondary">
-                  {t("models:label.noRunsYet")}
+                <Typography variant="h6" color="text.primary">
+                  {t("models:label.modelComparison")}
                 </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    gap: 4,
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  {/* Metric Split Selector: controls both table and graph views */}
+                  {(hasTrainMetrics ||
+                    hasValidationMetrics ||
+                    hasTestMetrics) && (
+                    <PillToggleButtonGroup
+                      value={metricSplit}
+                      onChange={(e, newValue) => {
+                        if (newValue !== null) setMetricSplit(newValue);
+                      }}
+                    >
+                      {hasTrainMetrics && (
+                        <ToggleButton value="train">
+                          {t("common:train")}
+                        </ToggleButton>
+                      )}
+                      {hasValidationMetrics && (
+                        <ToggleButton value="validation">
+                          {t("common:validation")}
+                        </ToggleButton>
+                      )}
+                      {hasTestMetrics && (
+                        <ToggleButton value="test">
+                          {t("common:test")}
+                        </ToggleButton>
+                      )}
+                    </PillToggleButtonGroup>
+                  )}
+                </Box>
               </Box>
-            ) : (
-              <Box sx={{ height: "100%", overflow: "auto" }}>
-                {showTable ? (
+
+              {runs.length === 0 ? (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: "40vh",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    {t("models:label.noRunsYet")}
+                  </Typography>
+                </Box>
+              ) : (
+                <>
                   <ModelComparisonTable
                     runs={runs}
-                    session={session}
                     onTrain={onTrain}
                     onViewDetails={handleViewDetails}
                     onDelete={onDeleteRun}
                     onRowClick={handleRowClick}
                     metricSplit={metricSplit}
                   />
-                ) : (
+
+                  <Typography
+                    variant="h6"
+                    color="text.primary"
+                    sx={{ mt: 6, mb: 2 }}
+                  >
+                    {t("common:graphs")}
+                  </Typography>
                   <ResultsGraphs
                     runs={runs}
                     selectedSplit={metricSplit}
                     onSplitChange={setMetricSplit}
                   />
-                )}
-              </Box>
-            )}
-
-            {/* Resize Handle */}
-            <Box
-              onMouseDown={() => {
-                isResizing.current = true;
-                document.body.style.cursor = "row-resize";
-                document.body.style.userSelect = "none";
-              }}
-              sx={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: "5px",
-                cursor: "row-resize",
-                bgcolor: "transparent",
-                transition: "background-color 0.2s ease",
-                "&:hover": { bgcolor: "primary.main" },
-                zIndex: 10,
-              }}
-            />
-          </AccordionDetails>
-        </Accordion>
-
-        <Divider sx={{ my: 2, mt: 2 }} />
-
-        {/* Scrollable Run Cards */}
-        <Box
-          data-tour="run-cards-section"
-          sx={{
-            flex: 1,
-            overflow: "auto",
-            p: 4,
-          }}
-        >
-          {runs.length === 0 ? (
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-              }}
-            >
-              <Typography variant="body1" color="text.secondary">
-                {t("models:label.noRunsYet")}
-              </Typography>
+                </>
+              )}
             </Box>
-          ) : (
-            <Stack spacing={4}>
-              {sortedRuns.map((run, index) => (
-                <Box
-                  key={run.id}
-                  id={`run-card-${run.id}`}
-                  data-tour={
-                    index === sortedRuns.length - 1
-                      ? "first-run-card"
-                      : undefined
-                  }
-                  sx={{
-                    scrollMarginTop: "20px",
-                    scrollMarginBottom: "20px",
-                    transition: "transform 0.3s ease",
-                    ...(selectedRunId === run.id && {
-                      transform: "scale(1.02)",
-                      boxShadow: 3,
-                    }),
-                  }}
-                >
-                  <RunCard
-                    run={run}
-                    models={models}
-                    session={session}
-                    onTrain={handleTrainWithTour}
-                    onDelete={onDeleteRun}
-                    explainerRefreshTrigger={explainerRefreshTrigger}
-                    onOperationsRefresh={() =>
-                      setExplainerRefreshTrigger((prev) => prev + 1)
-                    }
-                    isLastRun={index === sortedRuns.length - 1}
-                    existingRuns={runs}
-                    onRefresh={fetchRuns}
-                    isHighlighted={highlightedRunId === run.id}
-                  />
-                </Box>
-              ))}
-            </Stack>
-          )}
-        </Box>
+          </>
+        )}
       </Box>
 
       <RetrainConfirmDialog

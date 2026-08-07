@@ -13,6 +13,7 @@
   "availableItems": "Itens Disponíveis",
   "back": "Voltar",
   "cancel": "Cancelar",
+  "clear": "Limpar",
   "close": "Fechar",
   "columns": "Colunas",
   "configureSubmodel": "Configurar submodelo",
@@ -112,6 +113,8 @@
   "selectTask": "Selecionar tarefa",
   "send": "Enviar",
   "sending": "Enviando...",
+  "runInformation": "Informações da Execução",
+  "session": "Sessão",
   "sessionInformation": "Informações da Sessão",
   "sessions": "Sessões",
   "skipTour": "Pular tutorial",
@@ -141,6 +144,8 @@
   "type": "Tipo",
   "unknown": "Desconhecido",
   "unknownError": "Erro desconhecido",
+  "yes": "Sim",
+  "no": "Não",
   "update": "Atualizar",
   "upload": "Enviar",
   "user": "Usuário",
@@ -160,6 +165,18 @@
   "columnNameInvalidCharacters": "O nome da coluna só pode conter letras, números e underscores",
   "columnNameAlreadyExists": "Já existe uma coluna com este nome",
   "errorRenamingColumn": "Erro ao renomear a coluna",
+  "componentDownload": {
+    "download": "Baixar ({{size}})",
+    "delete": "Remover download",
+    "deleteWithSize": "Remover download ({{size}})",
+    "downloading": "Baixando...",
+    "done": "Componente baixado",
+    "deleted": "Download removido",
+    "failed": "Falha ao baixar o componente",
+    "mustDownload": "Este modelo precisa ser baixado antes de usar",
+    "mustDownloadNested": "Estes componentes precisam ser baixados primeiro: {{names}}",
+    "confirmDelete": "Excluir os arquivos baixados de {{name}}? Você poderá baixá-lo novamente mais tarde."
+  },
   "jobQueue": {
     "title": "Fila de trabalhos",
     "refresh": "Atualizar",
@@ -188,6 +205,7 @@
       "jobType": "Tipo de trabalho",
       "lastUpdated": "Última atualização",
       "errorMessage": "Mensagem de erro",
+      "progress": "Progresso",
       "unnamedJob": "Trabalho sem nome"
     },
     "status": {
