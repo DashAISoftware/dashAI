@@ -639,7 +639,7 @@ export default function SessionVisualization() {
                       onSplitChange={setMetricSplit}
                     />
                   ) : (
-                    <StatisticalTestTable runs={runs} />
+                    <StatisticalTestTable session={session} />
                   )}
                 </>
               )}
