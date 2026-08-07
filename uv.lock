@@ -1401,7 +1401,7 @@ wheels = [
 
 [[package]]
 name = "dashai"
-version = "0.9.6"
+version = "0.9.7"
 source = { editable = "." }
 dependencies = [
     { name = "accelerate" },
@@ -1425,7 +1425,6 @@ dependencies = [
     { name = "imblearn" },
     { name = "joblib" },
     { name = "kink" },
-    { name = "lightgbm" },
     { name = "lime" },
     { name = "llvmlite" },
     { name = "numba" },
@@ -1469,8 +1468,6 @@ dependencies = [
     { name = "transformers" },
     { name = "typer" },
     { name = "wordcloud" },
-    { name = "xgboost", version = "3.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
-    { name = "xgboost", version = "3.3.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12' or (extra == 'extra-6-dashai-cpu' and extra == 'extra-6-dashai-cuda')" },
     { name = "xlrd" },
 ]
 
@@ -1525,7 +1522,6 @@ requires-dist = [
     { name = "imblearn" },
     { name = "joblib" },
     { name = "kink" },
-    { name = "lightgbm" },
     { name = "lime", specifier = ">=0.2.0.1" },
     { name = "llama-cpp-python", marker = "extra == 'cpu'", index = "https://abetlen.github.io/llama-cpp-python/whl/cpu", conflict = { package = "dashai", extra = "cpu" } },
     { name = "llama-cpp-python", marker = "extra == 'cuda'" },
@@ -1566,7 +1562,6 @@ requires-dist = [
     { name = "transformers" },
     { name = "typer" },
     { name = "wordcloud" },
-    { name = "xgboost" },
     { name = "xlrd" },
 ]
 provides-extras = ["cpu", "cuda"]
