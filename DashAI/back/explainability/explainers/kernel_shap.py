@@ -438,7 +438,6 @@ class KernelShap(BaseLocalExplainer):
         data,
         base_value: float,
         y_pred_pbb: float,
-        y_pred_name: str,
         title: Optional[str] = None,
     ):
         """Helper method to create the explanation plot using plotly.
@@ -451,8 +450,6 @@ class KernelShap(BaseLocalExplainer):
             value to set where the bar base is drawn.
         y_pred_pbb: float
             predicted probability.
-        y_pred_name
-            name of the predicted class.
         title: Optional[str]
             title of the resulting artifact.
 
@@ -507,24 +504,6 @@ class KernelShap(BaseLocalExplainer):
             showgrid=True,
         )
 
-        plot_note = (
-            f"The predicted class was {y_pred_name} with probability f(x)={y_pred_pbb}."
-        )
-
-        fig.add_annotation(
-            align="center",
-            arrowsize=0.3,
-            arrowwidth=0.1,
-            font={"size": 12},
-            showarrow=False,
-            text=plot_note,
-            xanchor="center",
-            yanchor="bottom",
-            xref="paper",
-            yref="paper",
-            y=-0.27,
-        )
-
         return PlotlyArtifact(payload=fig, title=title)
 
     def plot(self, explanation: dict) -> List[GroupedArtifacts]:
@@ -548,7 +527,6 @@ class KernelShap(BaseLocalExplainer):
         metadata = exp.pop("metadata")
         base_values = exp.pop("base_values")
         feature_names = metadata["feature_names"]
-        target_names = metadata["target_names"]
 
         # Normaliza feature_names a 1D
         # Lazy import heavy libs
@@ -562,7 +540,6 @@ class KernelShap(BaseLocalExplainer):
             instance_values = exp[i]["instance_values"]
             model_prediction = exp[i]["model_prediction"]
             y_pred_class = int(np.argmax(model_prediction))
-            y_pred_name = target_names[y_pred_class]
             y_pred_pbb = float(np.round(model_prediction[y_pred_class], 2))
 
             # --- Normaliza valores de la instancia a 1D
@@ -662,7 +639,6 @@ class KernelShap(BaseLocalExplainer):
                 data,
                 base_value,
                 y_pred_pbb,
-                y_pred_name,
             )
             groups.append(
                 ArtifactGroup(title=f"Instance {instance_number}", artifacts=[plot])

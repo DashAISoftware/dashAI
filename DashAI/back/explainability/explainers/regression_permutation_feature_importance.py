@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Optional, Union
 
-from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
+from DashAI.back.core.artifacts import Artifact, ArtifactGroup, PlotlyArtifact
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -10,6 +10,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
+from DashAI.back.explainability.story import concat_stories, format_story
 from DashAI.back.models.base_model import BaseModel
 
 
@@ -314,3 +315,113 @@ class RegressionPermutationFeatureImportance(BaseGlobalExplainer):
         )
 
         return [PlotlyArtifact(payload=fig, title="Permutation Feature Importance")]
+
+    def story(
+        self, explanation: dict, explainer_output: Union[Artifact, ArtifactGroup]
+    ) -> Optional[MultilingualString]:
+        """Describe, in words, the ranked feature importances.
+
+        Ranks the features by their mean importance (the same values
+        plotted by :meth:`plot`) and names the top-3, calling out when the
+        least important of them showed no measurable effect (mean
+        importance at or below zero).
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain`.
+        explainer_output : Union[Artifact, ArtifactGroup]
+            The artifact previously returned by :meth:`plot`.
+
+        Returns
+        -------
+        Optional[MultilingualString]
+            The narrative in every supported language, or ``None`` if
+            ``explainer_output`` is not the importance bar chart.
+        """
+        if isinstance(explainer_output, ArtifactGroup):
+            return None
+
+        features = explanation["features"]
+        means = explanation["importances_mean"]
+
+        ranking = sorted(
+            zip(features, means, strict=True), key=lambda pair: pair[1], reverse=True
+        )
+        top = ranking[:3]
+        feature_list = ", ".join(f"{name} ({mean:.3f})" for name, mean in top)
+        least_name, least_mean = ranking[-1]
+
+        story = format_story(
+            {
+                "en": (
+                    "Ranked by the drop in {scoring} caused by shuffling "
+                    "each feature, the model relies most on: "
+                    "{feature_list}."
+                ),
+                "es": (
+                    "Ordenadas según la caída en {scoring} al barajar cada "
+                    "característica, el modelo depende principalmente de: "
+                    "{feature_list}."
+                ),
+                "pt": (
+                    "Classificadas pela queda em {scoring} causada ao "
+                    "embaralhar cada característica, o modelo depende "
+                    "principalmente de: {feature_list}."
+                ),
+                "de": (
+                    "Geordnet nach dem Rückgang von {scoring} durch das "
+                    "Permutieren jedes Merkmals, verlässt sich das Modell "
+                    "hauptsächlich auf: {feature_list}."
+                ),
+                "zh": (
+                    "根据打乱各特征后{scoring}的下降程度排序，"
+                    "模型主要依赖：{feature_list}。"
+                ),
+            },
+            scoring=self.scoring_name,
+            feature_list=feature_list,
+        )
+
+        if least_mean <= 0:
+            story = concat_stories(
+                story,
+                format_story(
+                    {
+                        "en": (
+                            " {least_name} showed no measurable importance "
+                            "(permuting it did not decrease {scoring}, or "
+                            "even improved it), suggesting the model does "
+                            "not rely on it."
+                        ),
+                        "es": (
+                            " {least_name} no mostró una importancia medible "
+                            "(permutarla no redujo {scoring}, o incluso la "
+                            "mejoró), lo que sugiere que el modelo no "
+                            "depende de ella."
+                        ),
+                        "pt": (
+                            " {least_name} não mostrou importância "
+                            "mensurável (permutá-la não reduziu {scoring}, "
+                            "ou até a melhorou), sugerindo que o modelo não "
+                            "depende dela."
+                        ),
+                        "de": (
+                            " {least_name} zeigte keine messbare "
+                            "Wichtigkeit (die Permutation verringerte "
+                            "{scoring} nicht oder verbesserte es sogar), was "
+                            "darauf hindeutet, dass sich das Modell nicht "
+                            "darauf verlässt."
+                        ),
+                        "zh": (
+                            "{least_name}没有表现出可测量的重要性"
+                            "（对其进行打乱并未降低{scoring}，甚至有所提升），"
+                            "这表明模型并不依赖该特征。"
+                        ),
+                    },
+                    least_name=least_name,
+                    scoring=self.scoring_name,
+                ),
+            )
+
+        return story

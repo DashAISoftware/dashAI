@@ -14,7 +14,7 @@ from DashAI.back.api.api_v1.schemas.explainers_params import (
     ValidateDatasetParams,
     ValidDatasetsParams,
 )
-from DashAI.back.core.artifacts import GroupedArtifacts
+from DashAI.back.core.artifacts import Artifact, ArtifactGroup, GroupedArtifacts
 from DashAI.back.core.enums.status import ExplainerStatus
 from DashAI.back.dependencies.database.models import (
     Dataset,
@@ -121,6 +121,60 @@ def _resolve_story_explainer(
         return None
 
 
+def _as_group_target(value) -> ArtifactGroup:
+    """Coerce a raw group into a real (unvalidated) ``ArtifactGroup``.
+
+    ``explainer_job.py`` always runs ``plot()``'s output through
+    ``normalize_artifacts`` *before* pickling it, so ``value`` is normally
+    a wire-format dict (``{"title": ..., "artifacts": [...]}``), not the
+    live ``ArtifactGroup`` ``plot()`` returned. Global explainers'
+    ``story()`` implementations tell a group from a lone top-level artifact
+    via ``isinstance(x, ArtifactGroup)``, so a generic ``.title``-only shim
+    would silently fail that check — ``model_construct`` builds a real
+    instance (skipping validation, since we only need ``.title`` and the
+    dict's artifacts may carry stray keys like ``"index"`` anyway).
+
+    Parameters
+    ----------
+    value : ArtifactGroup or dict
+        The raw group, as loaded straight from the pickle.
+
+    Returns
+    -------
+    ArtifactGroup
+        ``value`` unchanged if already one, otherwise a group exposing the
+        dict's ``"title"``.
+    """
+    if isinstance(value, ArtifactGroup):
+        return value
+    title = value.get("title") if isinstance(value, dict) else None
+    return ArtifactGroup.model_construct(title=title, artifacts=[])
+
+
+def _as_artifact_target(value) -> Artifact:
+    """Coerce a raw top-level (ungrouped) item into a real ``Artifact``.
+
+    Mirrors :func:`_as_group_target` for the lone-artifact case (e.g. the
+    single bar chart a regression permutation-importance explainer
+    returns, with no "Top N" selector around it).
+
+    Parameters
+    ----------
+    value : Artifact or dict
+        The raw artifact, as loaded straight from the pickle.
+
+    Returns
+    -------
+    Artifact
+        ``value`` unchanged if already one, otherwise an artifact exposing
+        the dict's ``"title"``.
+    """
+    if isinstance(value, Artifact):
+        return value
+    title = value.get("title") if isinstance(value, dict) else None
+    return Artifact.model_construct(title=title)
+
+
 def _attach_one_story(
     explainer, explanation: dict, raw_output, wire_item: dict
 ) -> None:
@@ -133,7 +187,8 @@ def _attach_one_story(
     explanation : dict
         The explanation dictionary passed through to ``story()``.
     raw_output : Artifact or ArtifactGroup
-        The pickled artifact/group identifying what to narrate.
+        The artifact/group identifying what to narrate — already coerced
+        by :func:`_as_group_target`/:func:`_as_artifact_target`.
     wire_item : dict
         The corresponding wire-format dict; mutated in place with a
         ``"story"`` key holding ``{"en": ..., "es": ..., ...}`` or ``None``.
@@ -146,6 +201,28 @@ def _attach_one_story(
     wire_item["story"] = asdict(story) if story is not None else None
 
 
+def _is_grouped_raw(value) -> bool:
+    """Match ``normalize_artifacts``' own notion of "already grouped".
+
+    True for a live ``GroupedArtifacts`` instance, but also — the normal
+    case, since ``explainer_job.py`` always normalizes before pickling —
+    for a wire-format dict (``{"type": "grouped", ...}``).
+
+    Parameters
+    ----------
+    value : Any
+        A raw item from a pickled ``plot()``/``explain*`` result.
+
+    Returns
+    -------
+    bool
+        Whether ``normalize_artifacts`` would treat this as a grouped item.
+    """
+    return isinstance(value, GroupedArtifacts) or (
+        isinstance(value, dict) and value.get("type") == "grouped"
+    )
+
+
 def _attach_stories(
     normalized: list,
     raw: list,
@@ -155,11 +232,14 @@ def _attach_stories(
 ) -> None:
     """Attach a per-language ``"story"`` dict to every matching wire artifact.
 
-    Walks ``raw`` (the pickled ``Artifact``/``GroupedArtifacts`` objects
-    returned by ``plot()``) and ``normalized`` (their wire-format
-    counterparts, in the same order) in lockstep, so each can be passed to
-    ``explainer.story()`` alongside the artifact it actually describes.
-    A no-op if ``explainer`` is ``None`` (it couldn't be built).
+    Walks ``raw`` (the pickled artifacts/groups returned by ``plot()``,
+    normally already wire-format dicts — see :func:`_as_story_target`) and
+    ``normalized`` (their wire-format counterparts, in the same order) in
+    lockstep, so each can be passed to ``explainer.story()`` alongside the
+    artifact it actually describes. A no-op if ``explainer`` is ``None`` (it
+    couldn't be built). Never raises: a group whose raw shape does not match
+    what ``story()`` expects just gets no story, handled inside
+    :func:`_attach_one_story`.
 
     Parameters
     ----------
@@ -179,20 +259,30 @@ def _attach_stories(
     if explainer is None:
         return
 
-    if create_grouped and raw and not isinstance(raw[0], GroupedArtifacts):
+    if create_grouped and raw and not _is_grouped_raw(raw[0]):
         wire_groups = normalized[0].get("groups", []) if normalized else []
         for raw_leaf, wire_group in zip(raw, wire_groups, strict=True):
-            _attach_one_story(explainer, explanation, raw_leaf, wire_group)
+            _attach_one_story(
+                explainer, explanation, _as_artifact_target(raw_leaf), wire_group
+            )
         return
 
     for raw_item, wire_item in zip(raw, normalized, strict=True):
-        if isinstance(raw_item, GroupedArtifacts):
-            for raw_group, wire_group in zip(
-                raw_item.groups, wire_item.get("groups", []), strict=True
-            ):
-                _attach_one_story(explainer, explanation, raw_group, wire_group)
+        if _is_grouped_raw(raw_item):
+            raw_groups = (
+                raw_item.groups
+                if isinstance(raw_item, GroupedArtifacts)
+                else raw_item.get("groups", [])
+            )
+            wire_groups = wire_item.get("groups", [])
+            for raw_group, wire_group in zip(raw_groups, wire_groups, strict=True):
+                _attach_one_story(
+                    explainer, explanation, _as_group_target(raw_group), wire_group
+                )
         else:
-            _attach_one_story(explainer, explanation, raw_item, wire_item)
+            _attach_one_story(
+                explainer, explanation, _as_artifact_target(raw_item), wire_item
+            )
 
 
 class PlotOverrideBody(BaseModel):

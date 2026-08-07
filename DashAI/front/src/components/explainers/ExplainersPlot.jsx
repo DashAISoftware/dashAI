@@ -7,6 +7,7 @@ import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer
 import { useTranslation } from "react-i18next";
 import ArtifactViewer from "../shared/ArtifactViewer";
 import ExplainerInstanceTable from "./ExplainerInstanceTable";
+import StoryBox from "./StoryBox";
 
 /** Wrap legacy plotly JSON strings as plotly artifacts; pass typed dicts through. */
 function parseExplanationArtifacts(items) {
@@ -158,15 +159,18 @@ function GroupedArtifactsView({
   );
 
   return (
-    <ArtifactBatch
-      artifacts={group.artifacts}
-      siblings={allArtifacts}
-      siblingOffset={offset}
-      ctx={ctx}
-      leading={selector}
-      leadingFlex={wide ? "0 0 46%" : "0 0 25%"}
-      leadingMinWidth={wide ? 320 : 220}
-    />
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <ArtifactBatch
+        artifacts={group.artifacts}
+        siblings={allArtifacts}
+        siblingOffset={offset}
+        ctx={ctx}
+        leading={selector}
+        leadingFlex={wide ? "0 0 46%" : "0 0 25%"}
+        leadingMinWidth={wide ? 320 : 220}
+      />
+      <StoryBox story={group.story} groupTitle={group.title} />
+    </Box>
   );
 }
 
@@ -196,7 +200,12 @@ function renderItem(item, ctx, datasetPath = null, selection = null) {
       />
     );
   }
-  return <ArtifactViewer artifact={item} {...leafProps(item, ctx)} />;
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <ArtifactViewer artifact={item} {...leafProps(item, ctx)} />
+      <StoryBox story={item.story} groupTitle={item.title} />
+    </Box>
+  );
 }
 
 export default function ExplainersPlot({
