@@ -386,7 +386,9 @@ class PartialDependence(BaseGlobalExplainer):
         grid_values = curve["grid_values"]
 
         diffs = [values[i + 1] - values[i] for i in range(len(values) - 1)]
-        if all(d >= -1e-9 for d in diffs):
+        if max(values) - min(values) <= 1e-9:
+            trend = "flat"
+        elif all(d >= -1e-9 for d in diffs):
             trend = "increases"
         elif all(d <= 1e-9 for d in diffs):
             trend = "decreases"
@@ -394,6 +396,43 @@ class PartialDependence(BaseGlobalExplainer):
             trend = "non_monotonic"
 
         start_value, end_value = grid_values[0], grid_values[-1]
+
+        if trend == "flat":
+            return format_story(
+                {
+                    "en": (
+                        "Changing {feature} from {start_value} to {end_value} "
+                        "does not noticeably affect the predicted probability "
+                        "of {target}, which stays at {start_pred}."
+                    ),
+                    "es": (
+                        "Cambiar {feature} de {start_value} a {end_value} no "
+                        "afecta de forma apreciable la probabilidad predicha "
+                        "de {target}, que se mantiene en {start_pred}."
+                    ),
+                    "pt": (
+                        "Alterar {feature} de {start_value} para {end_value} "
+                        "não afeta de forma perceptível a probabilidade "
+                        "prevista de {target}, que permanece em {start_pred}."
+                    ),
+                    "de": (
+                        "Eine Änderung von {feature} von {start_value} auf "
+                        "{end_value} wirkt sich nicht merklich auf die "
+                        "vorhergesagte Wahrscheinlichkeit von {target} aus, "
+                        "die bei {start_pred} bleibt."
+                    ),
+                    "zh": (
+                        "将{feature}从{start_value}变化到{end_value}对"
+                        "{target}的预测概率没有明显影响，其保持在"
+                        "{start_pred}。"
+                    ),
+                },
+                feature=feature,
+                target=target,
+                start_value=start_value,
+                end_value=end_value,
+                start_pred=values[0],
+            )
 
         if trend == "increases":
             return format_story(

@@ -291,7 +291,9 @@ class RegressionPartialDependence(BaseGlobalExplainer):
         grid_values = curve["grid_values"]
 
         diffs = [values[i + 1] - values[i] for i in range(len(values) - 1)]
-        if all(d >= -1e-9 for d in diffs):
+        if max(values) - min(values) <= 1e-9:
+            trend = "flat"
+        elif all(d >= -1e-9 for d in diffs):
             trend = "increases"
         elif all(d <= 1e-9 for d in diffs):
             trend = "decreases"
@@ -299,6 +301,43 @@ class RegressionPartialDependence(BaseGlobalExplainer):
             trend = "non_monotonic"
 
         start_value, end_value = grid_values[0], grid_values[-1]
+
+        if trend == "flat":
+            return format_story(
+                {
+                    "en": (
+                        "Changing {feature} from {start_value} to {end_value} "
+                        "does not noticeably affect the predicted "
+                        "{output_column}, which stays at {start_pred}."
+                    ),
+                    "es": (
+                        "Cambiar {feature} de {start_value} a {end_value} no "
+                        "afecta de forma apreciable el {output_column} "
+                        "predicho, que se mantiene en {start_pred}."
+                    ),
+                    "pt": (
+                        "Alterar {feature} de {start_value} para {end_value} "
+                        "não afeta de forma perceptível o {output_column} "
+                        "previsto, que permanece em {start_pred}."
+                    ),
+                    "de": (
+                        "Eine Änderung von {feature} von {start_value} auf "
+                        "{end_value} wirkt sich nicht merklich auf den "
+                        "vorhergesagten {output_column} aus, der bei "
+                        "{start_pred} bleibt."
+                    ),
+                    "zh": (
+                        "将{feature}从{start_value}变化到{end_value}对"
+                        "预测的{output_column}没有明显影响，其保持在"
+                        "{start_pred}。"
+                    ),
+                },
+                feature=feature,
+                output_column=output_column,
+                start_value=start_value,
+                end_value=end_value,
+                start_pred=values[0],
+            )
 
         if trend == "increases":
             return format_story(
