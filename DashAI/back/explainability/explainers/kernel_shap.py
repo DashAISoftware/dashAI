@@ -1,3 +1,4 @@
+import re
 from typing import List, Optional
 
 from DashAI.back.core.artifacts import (
@@ -14,6 +15,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
+from DashAI.back.explainability.story import format_story
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.types.categorical import Categorical
 
@@ -667,3 +669,98 @@ class KernelShap(BaseLocalExplainer):
             )
 
         return [GroupedArtifacts(groups=groups)]
+
+    def story(
+        self, explanation: dict, explainer_output: ArtifactGroup
+    ) -> Optional[MultilingualString]:
+        """Describe, in words, the prediction and top SHAP contributors.
+
+        Names the predicted class, its probability, and the top-3 features
+        by absolute SHAP value for the predicted class (the same values
+        plotted by :meth:`plot`).
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain_instance`.
+        explainer_output : ArtifactGroup
+            The group previously returned by :meth:`plot`, titled
+            ``"Instance {n}"``.
+
+        Returns
+        -------
+        Optional[MultilingualString]
+            The narrative in every supported language, or ``None`` if
+            ``explainer_output`` is not a recognised "Instance N" group.
+        """
+        match = re.match(r"Instance (\d+)", explainer_output.title or "")
+        if match is None:
+            return None
+        index = int(match.group(1)) - 1
+        if index not in explanation:
+            return None
+
+        # Lazy import
+        import numpy as np
+
+        feature_names = explanation["metadata"]["feature_names"]
+        target_names = explanation["metadata"]["target_names"]
+        instance = explanation[index]
+
+        model_prediction = np.asarray(instance["model_prediction"])
+        predicted_class = int(np.argmax(model_prediction))
+        predicted_name = target_names[predicted_class]
+        predicted_prob = float(model_prediction[predicted_class])
+
+        class_shap_values = np.asarray(instance["shap_values"])[predicted_class]
+        ranking = sorted(
+            zip(feature_names, class_shap_values, strict=True),
+            key=lambda pair: abs(pair[1]),
+            reverse=True,
+        )
+        top = ranking[:3]
+        feature_list = ", ".join(f"{name} ({value:+.3f})" for name, value in top)
+
+        return format_story(
+            {
+                "en": (
+                    "The model predicted '{predicted_name}' with probability "
+                    "{predicted_prob:.2f}. The features that contributed most "
+                    "to this prediction (SHAP values) were: {feature_list}; "
+                    "positive values push the prediction toward "
+                    "'{predicted_name}', negative values push it away."
+                ),
+                "es": (
+                    "El modelo predijo '{predicted_name}' con probabilidad "
+                    "{predicted_prob:.2f}. Las características que más "
+                    "contribuyeron a esta predicción (valores SHAP) fueron: "
+                    "{feature_list}; los valores positivos empujan la "
+                    "predicción hacia '{predicted_name}', los negativos la "
+                    "alejan."
+                ),
+                "pt": (
+                    "O modelo previu '{predicted_name}' com probabilidade "
+                    "{predicted_prob:.2f}. As características que mais "
+                    "contribuíram para essa previsão (valores SHAP) foram: "
+                    "{feature_list}; valores positivos empurram a previsão "
+                    "em direção a '{predicted_name}', valores negativos a "
+                    "afastam."
+                ),
+                "de": (
+                    "Das Modell sagte '{predicted_name}' mit einer "
+                    "Wahrscheinlichkeit von {predicted_prob:.2f} voraus. Die "
+                    "Merkmale, die am meisten zu dieser Vorhersage "
+                    "beigetragen haben (SHAP-Werte), waren: {feature_list}; "
+                    "positive Werte verstärken die Vorhersage in Richtung "
+                    "'{predicted_name}', negative Werte schwächen sie ab."
+                ),
+                "zh": (
+                    "模型预测为'{predicted_name}'，概率为{predicted_prob:.2f}。"
+                    "对该预测贡献最大的特征（SHAP值）是：{feature_list}；"
+                    "正值表示推动预测趋向'{predicted_name}'，负值表示相反。"
+                ),
+            },
+            predicted_name=predicted_name,
+            predicted_prob=predicted_prob,
+            feature_list=feature_list,
+        )
