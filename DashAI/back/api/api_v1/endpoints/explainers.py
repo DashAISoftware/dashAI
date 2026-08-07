@@ -1,4 +1,5 @@
 import logging
+from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 from fastapi import APIRouter, Depends, status
@@ -13,6 +14,7 @@ from DashAI.back.api.api_v1.schemas.explainers_params import (
     ValidateDatasetParams,
     ValidDatasetsParams,
 )
+from DashAI.back.core.artifacts import GroupedArtifacts
 from DashAI.back.core.enums.status import ExplainerStatus
 from DashAI.back.dependencies.database.models import (
     Dataset,
@@ -24,6 +26,8 @@ from DashAI.back.dependencies.database.models import (
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -81,6 +85,114 @@ def _apply_overrides(artifacts: list, overrides: dict | None) -> list:
             # edited colors/background).
             leaf["overridden"] = True
     return artifacts
+
+
+def _resolve_story_explainer(
+    explainer_name: str,
+    parameters: dict | None,
+    component_registry: "ComponentRegistry",
+):
+    """Instantiate an explainer to compute stories, without its trained model.
+
+    ``story()`` only needs the explanation dict already computed by the job
+    and the explainer's own configuration parameters, never the trained
+    model, so this avoids reloading it just to narrate an existing plot.
+
+    Parameters
+    ----------
+    explainer_name : str
+        Registered component name of the explainer (e.g. ``"KernelShap"``).
+    parameters : dict or None
+        The explainer's configuration parameters, as stored in the database.
+    component_registry : ComponentRegistry
+        Registry used to resolve ``explainer_name`` to its class.
+
+    Returns
+    -------
+    BaseGlobalExplainer or BaseLocalExplainer or None
+        The explainer instance, or ``None`` if it could not be built (logged,
+        never raised: a story is a nice-to-have, not required to see a plot).
+    """
+    try:
+        explainer_class = component_registry[explainer_name]["class"]
+        return explainer_class(model=None, **(parameters or {}))
+    except Exception as e:
+        log.warning("Could not build '%s' to compute its story: %s", explainer_name, e)
+        return None
+
+
+def _attach_one_story(
+    explainer, explanation: dict, raw_output, wire_item: dict
+) -> None:
+    """Call ``explainer.story()`` for one artifact and embed it in its wire dict.
+
+    Parameters
+    ----------
+    explainer : BaseGlobalExplainer or BaseLocalExplainer
+        The explainer instance to narrate with.
+    explanation : dict
+        The explanation dictionary passed through to ``story()``.
+    raw_output : Artifact or ArtifactGroup
+        The pickled artifact/group identifying what to narrate.
+    wire_item : dict
+        The corresponding wire-format dict; mutated in place with a
+        ``"story"`` key holding ``{"en": ..., "es": ..., ...}`` or ``None``.
+    """
+    try:
+        story = explainer.story(explanation, raw_output)
+    except Exception as e:
+        log.warning("Story generation failed: %s", e)
+        story = None
+    wire_item["story"] = asdict(story) if story is not None else None
+
+
+def _attach_stories(
+    normalized: list,
+    raw: list,
+    explanation: dict,
+    explainer,
+    create_grouped: bool = False,
+) -> None:
+    """Attach a per-language ``"story"`` dict to every matching wire artifact.
+
+    Walks ``raw`` (the pickled ``Artifact``/``GroupedArtifacts`` objects
+    returned by ``plot()``) and ``normalized`` (their wire-format
+    counterparts, in the same order) in lockstep, so each can be passed to
+    ``explainer.story()`` alongside the artifact it actually describes.
+    A no-op if ``explainer`` is ``None`` (it couldn't be built).
+
+    Parameters
+    ----------
+    normalized : list
+        Wire-format dicts from ``normalize_artifacts``; mutated in place.
+    raw : list
+        The pickled artifacts/groups ``normalized`` was built from.
+    explanation : dict
+        The explanation dictionary passed through to ``story()``.
+    explainer : BaseGlobalExplainer or BaseLocalExplainer or None
+        The explainer instance to narrate with.
+    create_grouped : bool
+        Must match the flag passed to ``normalize_artifacts``: when ``True``
+        and ``raw`` is a flat list of leaf artifacts, ``normalized`` was
+        collapsed into a single synthetic grouped item (one group per leaf).
+    """
+    if explainer is None:
+        return
+
+    if create_grouped and raw and not isinstance(raw[0], GroupedArtifacts):
+        wire_groups = normalized[0].get("groups", []) if normalized else []
+        for raw_leaf, wire_group in zip(raw, wire_groups, strict=True):
+            _attach_one_story(explainer, explanation, raw_leaf, wire_group)
+        return
+
+    for raw_item, wire_item in zip(raw, normalized, strict=True):
+        if isinstance(raw_item, GroupedArtifacts):
+            for raw_group, wire_group in zip(
+                raw_item.groups, wire_item.get("groups", []), strict=True
+            ):
+                _attach_one_story(explainer, explanation, raw_group, wire_group)
+        else:
+            _attach_one_story(explainer, explanation, raw_item, wire_item)
 
 
 class PlotOverrideBody(BaseModel):
@@ -213,6 +325,7 @@ async def get_global_explanation(
 async def get_global_explanation_plot(
     explainer_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Returns the global explanation plot associated with id explainer_id.
 
@@ -223,12 +336,17 @@ async def get_global_explanation_plot(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry used to resolve the explainer's class, needed to compute a
+        story for explainers that implement one.
 
     Returns
     -------
     List[dict]
         A list of artifact dicts (``{"type", "payload", "title"}``) with the
-        explanation plots.
+        explanation plots. Explainers that implement ``story()`` also carry a
+        ``"story"`` key (``{"en": ..., "es": ..., ...}`` or ``None``),
+        computed fresh on every call rather than persisted.
 
     Raises
     ------
@@ -260,9 +378,14 @@ async def get_global_explanation_plot(
 
             plot_path = global_explainer[0].plot_path
             plot_overrides = global_explainer[0].plot_overrides
+            explanation_path = global_explainer[0].explanation_path
+            explainer_name = global_explainer[0].explainer_name
+            parameters = global_explainer[0].parameters
 
             with open(plot_path, "rb") as file:
                 plot = pickle.load(file)
+            with open(explanation_path, "rb") as file:
+                explanation = pickle.load(file)
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -271,7 +394,12 @@ async def get_global_explanation_plot(
                 detail="Internal database error",
             ) from e
 
-    return _apply_overrides(normalize_artifacts(plot), plot_overrides)
+    artifacts = _apply_overrides(normalize_artifacts(plot), plot_overrides)
+    story_explainer = _resolve_story_explainer(
+        explainer_name, parameters, component_registry
+    )
+    _attach_stories(artifacts, plot, explanation, story_explainer)
+    return artifacts
 
 
 @router.post("/global", status_code=status.HTTP_201_CREATED)
@@ -497,6 +625,7 @@ async def get_local_explanation(
 async def get_local_explanation_plot(
     explainer_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Returns the local explanation plot associated with id explainer_id.
 
@@ -507,12 +636,18 @@ async def get_local_explanation_plot(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry used to resolve the explainer's class, needed to compute a
+        story for explainers that implement one.
 
     Returns
     -------
     List[dict]
         A list of artifact dicts (``{"type", "payload", "title"}``) with the
-        explanation plots, typically one per explained instance.
+        explanation plots, typically one per explained instance. Explainers
+        that implement ``story()`` also carry a ``"story"`` key (``{"en":
+        ..., "es": ..., ...}`` or ``None``), computed fresh on every call
+        rather than persisted.
 
     Raises
     ------
@@ -544,9 +679,14 @@ async def get_local_explanation_plot(
 
             plots_path = local_explainer[0].plots_path
             plot_overrides = local_explainer[0].plot_overrides
+            explanation_path = local_explainer[0].explanation_path
+            explainer_name = local_explainer[0].explainer_name
+            parameters = local_explainer[0].parameters
 
             with open(plots_path, "rb") as file:
                 plots = pickle.load(file)
+            with open(explanation_path, "rb") as file:
+                explanation = pickle.load(file)
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -555,9 +695,14 @@ async def get_local_explanation_plot(
                 detail="Internal database error",
             ) from e
 
-    return _apply_overrides(
+    artifacts = _apply_overrides(
         normalize_artifacts(plots, create_grouped=True), plot_overrides
     )
+    story_explainer = _resolve_story_explainer(
+        explainer_name, parameters, component_registry
+    )
+    _attach_stories(artifacts, plots, explanation, story_explainer, create_grouped=True)
+    return artifacts
 
 
 @router.put("/{scope}/plot/{explainer_id}/override")
