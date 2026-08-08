@@ -34,6 +34,8 @@ class GroupKFoldSplitter(FoldSplitter):
         en="Group K-Fold",
         es="K-Fold por Grupos",
         pt="K-Fold por Grupos",
+        de="Gruppen-K-Fold",
+        zh="分组 K 折交叉验证",
     )
     FOLDS: bool = True
     GROUPS: bool = True

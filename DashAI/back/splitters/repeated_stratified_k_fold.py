@@ -28,6 +28,8 @@ class RepeatedStratifiedKFoldSplitter(FoldSplitter):
         en="Repeated Stratified K-Fold",
         es="K-Fold Estratificado Repetido",
         pt="K-Fold Estratificado Repetido",
+        de="Wiederholtes stratifiziertes K-Fold",
+        zh="重复分层 K 折交叉验证",
     )
     FOLDS: bool = True
     REPEATS: bool = True

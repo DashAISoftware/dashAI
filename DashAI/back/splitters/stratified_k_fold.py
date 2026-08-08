@@ -31,6 +31,8 @@ class StratifiedKFoldSplitter(FoldSplitter):
         en="Stratified K-Fold",
         es="K-Fold Estratificado",
         pt="K-Fold Estratificado",
+        de="Stratifiziertes K-Fold",
+        zh="分层 K 折交叉验证",
     )
     FOLDS: bool = True
     SHUFFLE: bool = True

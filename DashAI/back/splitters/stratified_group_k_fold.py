@@ -29,6 +29,8 @@ class StratifiedGroupKFoldSplitter(FoldSplitter):
         en="Stratified Group K-Fold",
         es="K-Fold Estratificado por Grupos",
         pt="K-Fold Estratificado por Grupos",
+        de="Stratifiziertes Gruppen-K-Fold",
+        zh="分层分组 K 折交叉验证",
     )
     FOLDS: bool = True
     GROUPS: bool = True

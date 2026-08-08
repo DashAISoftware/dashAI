@@ -30,6 +30,8 @@ class LeaveOneOutSplitter(FoldSplitter):
         en="Leave-One-Out",
         es="Dejar Uno Fuera",
         pt="Deixar Um Fora",
+        de="Leave-One-Out",
+        zh="留一法",
     )
     SHUFFLE: bool = True
     COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]

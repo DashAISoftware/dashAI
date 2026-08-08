@@ -34,6 +34,8 @@ class KFoldSplitter(FoldSplitter):
         en="K-Fold",
         es="K-Fold",
         pt="K-Fold",
+        de="K-Fold",
+        zh="K 折交叉验证",
     )
     FOLDS: bool = True
     SHUFFLE: bool = True

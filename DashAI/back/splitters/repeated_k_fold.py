@@ -30,6 +30,8 @@ class RepeatedKFoldSplitter(FoldSplitter):
         en="Repeated K-Fold",
         es="K-Fold Repetido",
         pt="K-Fold Repetido",
+        de="Wiederholtes K-Fold",
+        zh="重复 K 折交叉验证",
     )
     FOLDS: bool = True
     REPEATS: bool = True
