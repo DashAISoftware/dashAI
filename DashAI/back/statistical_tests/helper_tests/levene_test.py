@@ -23,6 +23,8 @@ class LeveneTest(BaseStatisticalTest):
         en="Levene's Test",
         es="Prueba de Levene",
         pt="Teste de Levene",
+        de="Levene-Test",
+        zh="Levene 检验",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -37,6 +39,11 @@ class LeveneTest(BaseStatisticalTest):
             "Teste de homogeneidade de variâncias entre grupos (homocedasticidade), "
             "robusto contra desvios da normalidade."
         ),
+        de=(
+            "Test auf Varianzhomogenität zwischen Gruppen (Homoskedastizität), ",
+            "robust gegenüber Abweichungen von der Normalverteilung.",
+        ),
+        zh=("用于检验组间方差齐性（同方差性）的检验，对偏离正态性的情况具有鲁棒性。",),
     )
     ICON: str = "Balance"
     COLOR: str = "#4CAF50"
@@ -81,6 +88,25 @@ class LeveneTest(BaseStatisticalTest):
                     "not_significant": (
                         "Há homogeneidade de variâncias. "
                         "As amostras têm variâncias similares (homocedasticidade)."
+                    ),
+                },
+                de={
+                    "significant": (
+                        "Es wurde keine Varianzhomogenität festgestellt. "
+                        "Die Stichproben haben unterschiedliche Varianzen"
+                        " (Heteroskedastizität)."
+                    ),
+                    "not_significant": (
+                        "Die Varianzhomogenität ist gegeben. "
+                        "Die Stichproben haben ähnliche Varianzen (Homoskedastizität)."
+                    ),
+                },
+                zh={
+                    "significant": (
+                        "未检测到方差齐性。样本具有不同的方差（异方差性）。"
+                    ),
+                    "not_significant": (
+                        "方差齐性成立。样本具有相似的方差（同方差性）。"
                     ),
                 },
             ),

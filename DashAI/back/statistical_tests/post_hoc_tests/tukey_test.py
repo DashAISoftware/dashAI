@@ -25,6 +25,8 @@ class TukeyHSDTest(BaseStatisticalTest):
         en="Tukey HSD Test",
         es="Prueba de Tukey HSD",
         pt="Teste de Tukey HSD",
+        de="Tukey-HSD-Test",
+        zh="Tukey HSD 检验",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -36,6 +38,15 @@ class TukeyHSDTest(BaseStatisticalTest):
             "Prueba post-hoc paramétrica para comparaciones por pares entre grupos. ",
             "Requiere normalidad y homocedasticidad. Suele aplicarse después de un ",
             "ANOVA significativo.",
+        ),
+        de=(
+            "Parametrischer Post-hoc-Test für paarweise Vergleiche zwischen Gruppen. ",
+            "Erfordert Normalverteilung und Varianzhomogenität. Wird üblicherweise ",
+            "nach einer signifikanten ANOVA angewendet.",
+        ),
+        zh=(
+            "用于组间两两比较的参数事后检验。",
+            "要求正态性和方差齐性。通常在显著的 ANOVA 之后使用。",
         ),
         pt=(
             "Teste post-hoc paramétrico para comparações pareadas de modelos. ",
@@ -87,6 +98,26 @@ class TukeyHSDTest(BaseStatisticalTest):
                         "Este é um teste post-hoc executado automaticamente "
                         "após ANOVA. Os resultados aparecem apenas quando ANOVA "
                         "é significativo."
+                    ),
+                },
+                de={
+                    "significant": (
+                        "Paarvergleiche werden in der Tabelle angezeigt. "
+                        "Pfade mit p < α weisen auf signifikante Unterschiede hin."
+                    ),
+                    "not_significant": (
+                        "Dies ist ein Post-hoc-Test, der automatisch nach der ANOVA "
+                        "ausgeführt wird. Ergebnisse erscheinen nur, wenn die ANOVA "
+                        "signifikant ist."
+                    ),
+                },
+                zh={
+                    "significant": (
+                        "两两比较会显示在表格中。p < α 的配对表示存在显著差异。"
+                    ),
+                    "not_significant": (
+                        "这是一个在 ANOVA 之后自动执行的事后检验。只有当 ANOVA "
+                        "显著时才会显示结果。"
                     ),
                 },
             ),

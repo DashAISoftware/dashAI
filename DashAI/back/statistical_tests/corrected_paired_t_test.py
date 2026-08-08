@@ -30,6 +30,8 @@ class CorrectedPairedTTest(BaseStatisticalTest):
         en="Corrected paired t-test",
         es="Prueba t pareada corregida",
         pt="Teste t pareado corrigido",
+        de="Korrigierter gepaarter t-Test",
+        zh="校正配对 t 检验",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -46,6 +48,16 @@ class CorrectedPairedTTest(BaseStatisticalTest):
             "Teste t pareado com correção para dependências de validação cruzada. ",
             "Requer normalidade nas diferenças entre pares e corrige a dependência ",
             "entre observações gerada pela validação cruzada.",
+        ),
+        de=(
+            "Parametrischer Test zum Vergleich zweier verbundener Gruppen. ",
+            "Erfordert Normalverteilung der paarweisen Differenzen und korrigiert ",
+            "die durch Kreuzvalidierung entstehende Abhängigkeit zwischen ",
+            "Beobachtungen.",
+        ),
+        zh=(
+            "用于比较两个相关组的参数检验。要求配对差值服从正态分布，",
+            "并对交叉验证引入的观测间依赖进行校正。",
         ),
     )
     ICON: str = "Tune"
@@ -94,6 +106,21 @@ class CorrectedPairedTTest(BaseStatisticalTest):
                         "Não há diferença significativa entre os dois modelos. "
                         "Eles têm desempenho similar."
                     ),
+                },
+                de={
+                    "significant": (
+                        "Zwischen den beiden Modellen besteht ein signifikanter "
+                        "Unterschied. Die Ergebnisse unterscheiden sich statistisch"
+                        " signifikant."
+                    ),
+                    "not_significant": (
+                        "Zwischen den beiden Modellen besteht kein signifikanter"
+                        " Unterschied. Sie schneiden ähnlich ab."
+                    ),
+                },
+                zh={
+                    "significant": ("两个模型之间存在显著差异。结果在统计上显著不同。"),
+                    "not_significant": ("两个模型之间没有显著差异。它们的表现相似。"),
                 },
             ),
         }

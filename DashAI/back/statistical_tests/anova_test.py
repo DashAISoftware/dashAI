@@ -21,6 +21,8 @@ class AnovaTest(BaseStatisticalTest):
         en="ANOVA",
         es="ANOVA",
         pt="ANOVA",
+        de="ANOVA",
+        zh="方差分析（ANOVA）",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -34,6 +36,14 @@ class AnovaTest(BaseStatisticalTest):
         pt=(
             "Teste paramétrico para comparar as médias de três ou mais grupos. ",
             "Requer normalidade e homocedasticidade.",
+        ),
+        de=(
+            "Parametrischer Test zum Vergleich der Mittelwerte von drei oder mehr ",
+            "Gruppen. Erfordert Normalverteilung und Varianzhomogenität.",
+        ),
+        zh=(
+            "用于比较三个或更多组均值的参数检验。",
+            "要求正态性和方差齐性。",
         ),
     )
     ICON: str = "BarChart"
@@ -84,6 +94,24 @@ class AnovaTest(BaseStatisticalTest):
                         "Não há diferenças significativas entre os modelos. "
                         "Eles têm desempenho similar."
                     ),
+                },
+                de={
+                    "significant": (
+                        "Zwischen den Modellen bestehen signifikante Unterschiede. "
+                        "Post-hoc-Paarvergleiche (Tukey HSD) zeigen, welche "
+                        "Paare sich unterscheiden."
+                    ),
+                    "not_significant": (
+                        "Zwischen den Modellen bestehen keine signifikanten "
+                        "Unterschiede. Sie schneiden ähnlich ab."
+                    ),
+                },
+                zh={
+                    "significant": (
+                        "模型之间存在显著差异。事后两两比较（Tukey HSD）"
+                        "可识别哪些配对不同。"
+                    ),
+                    "not_significant": ("模型之间没有显著差异。它们的表现相似。"),
                 },
             ),
         }

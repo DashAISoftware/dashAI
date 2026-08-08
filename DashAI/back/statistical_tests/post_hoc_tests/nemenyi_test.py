@@ -25,6 +25,8 @@ class NemenyiTest(BaseStatisticalTest):
         en="Nemenyi Test",
         es="Prueba de Nemenyi",
         pt="Teste de Nemenyi",
+        de="Nemenyi-Test",
+        zh="Nemenyi 检验",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -38,6 +40,15 @@ class NemenyiTest(BaseStatisticalTest):
         pt=(
             "Teste post-hoc não-paramétrico para comparações por pares entre grupos. ",
             "Não assume normalidade e geralmente é aplicado após o teste de Friedman.",
+        ),
+        de=(
+            "Nichtparametrischer Post-hoc-Test für paarweise Vergleiche zwischen ",
+            "Gruppen. Setzt keine Normalverteilung voraus und wird üblicherweise ",
+            "nach dem Friedman-Test angewendet.",
+        ),
+        zh=(
+            "用于组间两两比较的非参数事后检验。",
+            "不要求正态性，通常在 Friedman 检验之后使用。",
         ),
     )
     ICON: str = "CompareArrows"
@@ -84,6 +95,26 @@ class NemenyiTest(BaseStatisticalTest):
                         "Este é um teste post-hoc executado automaticamente após "
                         "o teste de Friedman. Os resultados aparecem apenas "
                         "quando Friedman é significativo."
+                    ),
+                },
+                de={
+                    "significant": (
+                        "Paarweise Vergleiche werden in der Tabelle angezeigt. "
+                        "Paare mit p < α zeigen signifikante Unterschiede an."
+                    ),
+                    "not_significant": (
+                        "Dies ist ein Post-hoc-Test, der automatisch nach dem "
+                        "Friedman-Test durchgeführt wird. Ergebnisse erscheinen "
+                        "nur, wenn Friedman signifikant ist."
+                    ),
+                },
+                zh={
+                    "significant": (
+                        "两两比较显示在表格中。p < α 的配对表示存在显著差异。"
+                    ),
+                    "not_significant": (
+                        "这是一个在 Friedman 检验后自动运行的事后检验。"
+                        "仅当 Friedman 显著时才会显示结果。"
                     ),
                 },
             ),

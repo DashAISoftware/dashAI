@@ -25,6 +25,8 @@ class PairedTTest(BaseStatisticalTest):
         en="Paired t-test",
         es="Prueba t pareada",
         pt="Teste t pareado",
+        de="Gepaarter t-Test",
+        zh="配对 t 检验",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -41,6 +43,15 @@ class PairedTTest(BaseStatisticalTest):
             "Teste paramétrico para comparar dois grupos relacionados. Requer ",
             "normalidade das diferenças entre pares e independência entre ",
             "observações.",
+        ),
+        de=(
+            "Parametrischer Test zum Vergleich zweier verbundener Gruppen. ",
+            "Erfordert Normalverteilung der paarweisen Differenzen und Unabhängigkeit ",
+            "zwischen den Beobachtungen.",
+        ),
+        zh=(
+            "用于比较两个相关组的参数检验。要求配对差值服从正态分布，",
+            "并且观测值之间相互独立。",
         ),
     )
     ICON: str = "CompareArrows"
@@ -89,6 +100,21 @@ class PairedTTest(BaseStatisticalTest):
                         "Não há diferença significativa entre os dois modelos. "
                         "Eles têm desempenho similar."
                     ),
+                },
+                de={
+                    "significant": (
+                        "Zwischen den beiden Modellen besteht ein signifikanter "
+                        "Unterschied. Die Ergebnisse unterscheiden sich "
+                        "statistisch signifikant."
+                    ),
+                    "not_significant": (
+                        "Zwischen den beiden Modellen besteht kein signifikanter "
+                        "Unterschied. Sie schneiden ähnlich ab."
+                    ),
+                },
+                zh={
+                    "significant": ("两个模型之间存在显著差异。结果在统计上显著不同。"),
+                    "not_significant": ("两个模型之间没有显著差异。它们的表现相似。"),
                 },
             ),
         }

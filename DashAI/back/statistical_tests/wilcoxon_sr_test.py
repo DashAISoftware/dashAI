@@ -26,6 +26,8 @@ class WilcoxonSRTest(BaseStatisticalTest):
         en="Wilcoxon Signed-Rank Test",
         es="Prueba de Rangos con signo de Wilcoxon",
         pt="Teste de Rangos com sinal de Wilcoxon",
+        de="Wilcoxon-Vorzeichen-Rang-Test",
+        zh="Wilcoxon 符号秩检验",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -40,6 +42,11 @@ class WilcoxonSRTest(BaseStatisticalTest):
             "Alternativa não-paramétrica ao teste t pareado para dois modelos. "
             "Requer observações emparejadas e não assume normalidade."
         ),
+        de=(
+            "Nichtparametrische Alternative zum gepaarten t-Test für zwei Modelle. ",
+            "Erfordert gepaarte Beobachtungen und setzt keine Normalverteilung voraus.",
+        ),
+        zh=("用于比较两个相关组的非参数检验。要求配对观测值，且不假设正态性。",),
     )
     ICON: str = "CompareArrows"
     COLOR: str = "#FFD54F"
@@ -87,6 +94,21 @@ class WilcoxonSRTest(BaseStatisticalTest):
                         "Não há diferença significativa entre os dois modelos. "
                         "Eles têm desempenho similar."
                     ),
+                },
+                de={
+                    "significant": (
+                        "Zwischen den beiden Modellen besteht ein signifikanter "
+                        "Unterschied. Die Ergebnisse unterscheiden sich statistisch "
+                        "signifikant."
+                    ),
+                    "not_significant": (
+                        "Zwischen den beiden Modellen besteht kein signifikanter "
+                        "Unterschied. Sie schneiden ähnlich ab."
+                    ),
+                },
+                zh={
+                    "significant": ("两个模型之间存在显著差异。结果在统计上显著不同。"),
+                    "not_significant": ("两个模型之间没有显著差异。它们的表现相似。"),
                 },
             ),
         }

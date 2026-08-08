@@ -23,6 +23,8 @@ class FriedmanTest(BaseStatisticalTest):
         en="Friedman Test",
         es="Prueba de Friedman",
         pt="Teste de Friedman",
+        de="Friedman-Test",
+        zh="Friedman 检验",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -36,6 +38,14 @@ class FriedmanTest(BaseStatisticalTest):
         pt=(
             "Teste não-paramétrico para comparar múltiplos modelos sobre ",
             "as mesmas folds. Não assume normalidade.",
+        ),
+        de=(
+            "Nichtparametrischer Test zum Vergleich mehrerer Modelle auf denselben",
+            " Folds. Setzt keine Normalverteilung voraus.",
+        ),
+        zh=(
+            "用于比较多个模型在相同折上的非参数检验。",
+            "不要求正态性。",
         ),
     )
     ICON: str = "Leaderboard"
@@ -86,6 +96,23 @@ class FriedmanTest(BaseStatisticalTest):
                         "Não há diferenças significativas entre os modelos. "
                         "Eles têm desempenho similar."
                     ),
+                },
+                de={
+                    "significant": (
+                        "Zwischen den Modellen bestehen signifikante Unterschiede. "
+                        "Post-hoc-Vergleiche (Nemenyi) zeigen, welche Paare sich"
+                        " unterscheiden."
+                    ),
+                    "not_significant": (
+                        "Zwischen den Modellen bestehen keine signifikanten"
+                        " Unterschiede. Sie schneiden ähnlich ab."
+                    ),
+                },
+                zh={
+                    "significant": (
+                        "模型之间存在显著差异。事后比较（Nemenyi）可识别哪些配对不同。"
+                    ),
+                    "not_significant": ("模型之间没有显著差异。它们的表现相似。"),
                 },
             ),
         }

@@ -20,6 +20,8 @@ class ShapiroTest(BaseStatisticalTest):
         en="Shapiro-Wilk Test",
         es="Prueba de Shapiro-Wilk",
         pt="Teste de Shapiro-Wilk",
+        de="Shapiro-Wilk-Test",
+        zh="Shapiro-Wilk 检验",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -34,6 +36,11 @@ class ShapiroTest(BaseStatisticalTest):
             "Teste de normalidade que avalia se os dados vêm de uma",
             "distribuição normal.",
         ),
+        de=(
+            "Normalitätstest, der prüft, ob die Daten aus einer ",
+            "Normalverteilung stammen.",
+        ),
+        zh=("用于评估数据是否来自正态分布的正态性检验。",),
     )
     ICON: str = "ShowChart"
     COLOR: str = "#4CAF50"
@@ -80,6 +87,20 @@ class ShapiroTest(BaseStatisticalTest):
                         "Os dados parecem seguir uma distribuição normal. "
                         "A suposição de normalidade é satisfeita."
                     ),
+                },
+                de={
+                    "significant": (
+                        "Die Daten folgen keiner Normalverteilung. "
+                        "Die Normalitätsannahme ist verletzt."
+                    ),
+                    "not_significant": (
+                        "Die Daten scheinen einer Normalverteilung zu folgen. "
+                        "Die Normalitätsannahme ist erfüllt."
+                    ),
+                },
+                zh={
+                    "significant": ("数据不服从正态分布。正态性假设被违反。"),
+                    "not_significant": ("数据看起来服从正态分布。正态性假设成立。"),
                 },
             ),
         }

@@ -23,6 +23,8 @@ class BartlettTest(BaseStatisticalTest):
         en="Bartlett's Test",
         es="Prueba de Bartlett",
         pt="Teste de Bartlett",
+        de="Bartlett-Test",
+        zh="Bartlett 检验",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -37,6 +39,11 @@ class BartlettTest(BaseStatisticalTest):
             "Teste de homogeneidade de variâncias entre grupos (homocedasticidade), "
             "adequado quando os dados seguem uma distribuição normal."
         ),
+        de=(
+            "Test auf Varianzhomogenität zwischen Gruppen (Homoskedastizität), ",
+            "geeignet, wenn die Daten einer Normalverteilung folgen.",
+        ),
+        zh=("用于检验组间方差齐性（同方差性）的检验，适用于数据服从正态分布的情况。",),
     )
     ICON: str = "Balance"
     COLOR: str = "#4CAF50"
@@ -81,6 +88,25 @@ class BartlettTest(BaseStatisticalTest):
                     "not_significant": (
                         "Há homogeneidade de variâncias. "
                         "As amostras têm variâncias similares (homocedasticidade)."
+                    ),
+                },
+                de={
+                    "significant": (
+                        "Es wurde keine Varianzhomogenität festgestellt. "
+                        "Die Stichproben haben unterschiedliche Varianzen"
+                        " (Heteroskedastizität)."
+                    ),
+                    "not_significant": (
+                        "Die Varianzhomogenität ist gegeben. "
+                        "Die Stichproben haben ähnliche Varianzen (Homoskedastizität)."
+                    ),
+                },
+                zh={
+                    "significant": (
+                        "未检测到方差齐性。样本具有不同的方差（异方差性）。"
+                    ),
+                    "not_significant": (
+                        "方差齐性成立。样本具有相似的方差（同方差性）。"
                     ),
                 },
             ),
