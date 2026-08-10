@@ -84,6 +84,10 @@ class BaseConverter(ConfigObject, ABC):
         if not meta.get("allowed_dtypes") or meta["allowed_dtypes"] == ["*"]:
             meta["allowed_dtypes"] = []
 
+        # Ensure non_allowed_dtypes is always present for the frontend
+        if "non_allowed_dtypes" not in meta:
+            meta["non_allowed_dtypes"] = []
+
         # Drop restricted_dtypes (no converter uses it; it is always [])
         meta.pop("restricted_dtypes", None)
 
