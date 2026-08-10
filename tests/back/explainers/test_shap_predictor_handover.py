@@ -12,6 +12,9 @@ explanation dies before it starts:
     AttributeError: property 'feature_names_in_' of 'LGBMClassifier' object has
     no setter
 
+(on Python 3.10 the same failure reads ``can't set attribute
+'feature_names_in_'``).
+
 ``as_shap_predictor`` hands over a plain closure instead, which has no
 ``__self__``, so SHAP skips the step. These tests pin both halves: that the
 wrappers really are read-only (otherwise the fix guards nothing), and that the
@@ -53,7 +56,8 @@ def test_these_models_really_do_expose_feature_names_read_only(model_class, fram
     model.fit(x, y)
 
     assert hasattr(model, "feature_names_in_")
-    with pytest.raises(AttributeError, match="no setter"):
+    # CPython worded this differently before 3.11 ("can't set attribute").
+    with pytest.raises(AttributeError, match="no setter|can't set attribute"):
         model.feature_names_in_ = None
 
 
