@@ -106,10 +106,14 @@ class Dataset(Base):
     def set_status_as_started(self) -> None:
         """
         Update the status of the dataset to started and set created to now.
+
+        Unlike ``Run`` or ``Explorer``, this table has no ``start_time`` /
+        ``end_time`` columns, so there is nothing to stamp beyond the timestamps
+        it does declare. Assigning them anyway only set an attribute on the
+        instance that was dropped at commit and read back as missing.
         """
         self.status = DatasetStatus.STARTED
         self.created = datetime.now()
-        self.start_time = datetime.now()
 
     def set_status_as_finished(self) -> None:
         """
@@ -117,7 +121,6 @@ class Dataset(Base):
         """
         self.status = DatasetStatus.FINISHED
         self.last_modified = datetime.now()
-        self.end_time = datetime.now()
 
     def set_status_as_error(self) -> None:
         """

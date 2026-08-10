@@ -27,6 +27,12 @@ EXPECTED_UNITS = {
     "PrepareExplanationDataUnit",
     "GenerateGlobalExplanationUnit",
     "GenerateLocalExplanationUnit",
+    "LoadUploadedDatasetUnit",
+    "LoadDatafileDatasetUnit",
+    "InferDatasetTypesUnit",
+    "ApplyDatasetSchemaUnit",
+    "ComputeDatasetMetadataUnit",
+    "SaveDatasetToPathUnit",
 }
 
 
@@ -108,6 +114,30 @@ def test_unit_schemas_describe_their_configuration(units):
     assert set(units["GenerateGlobalExplanationUnit"]["schema"]["properties"]) == {
         "explainer_id"
     }
+    assert set(units["LoadUploadedDatasetUnit"]["schema"]["properties"]) == {
+        "dataloader",
+        "source",
+        "temp_path",
+        "n_sample",
+    }
+    assert set(units["LoadDatafileDatasetUnit"]["schema"]["properties"]) == {
+        "dataloader",
+        "datafile_id",
+        "selected_file",
+    }
+    assert set(units["InferDatasetTypesUnit"]["schema"]["properties"]) == {"method"}
+    # The type declaration arrives through the context, not the configuration,
+    # so the only thing to configure here is the renaming.
+    assert set(units["ApplyDatasetSchemaUnit"]["schema"]["properties"]) == {
+        "column_renames"
+    }
+    assert set(units["ComputeDatasetMetadataUnit"]["schema"]["properties"]) == {
+        "compute_metadata",
+        "trust_inherited_metadata",
+    }
+    # The sibling of SaveDatasetUnit: that one saves where the load said, this
+    # one is told where to save.
+    assert set(units["SaveDatasetToPathUnit"]["schema"]["properties"]) == {"path"}
 
 
 def test_component_fields_tell_the_front_which_components_to_offer(units):
@@ -122,10 +152,17 @@ def test_component_fields_tell_the_front_which_components_to_offer(units):
     converter = units["ApplyConverterUnit"]["schema"]["properties"]["converter"]
     explorer = units["RunExplorationUnit"]["schema"]["properties"]["explorer"]
 
+    uploaded = units["LoadUploadedDatasetUnit"]["schema"]["properties"]["dataloader"]
+    datafile = units["LoadDatafileDatasetUnit"]["schema"]["properties"]["dataloader"]
+
     assert model["parent"] == "BaseModel"
     assert optimizer["parent"] == "BaseOptimizer"
     assert converter["parent"] == "BaseConverter"
     assert explorer["parent"] == "BaseExplorer"
+    # Both loading units offer the same readers; what differs is how each one
+    # finds the bytes to hand them.
+    assert uploaded["parent"] == "BaseDataLoader"
+    assert datafile["parent"] == "BaseDataLoader"
 
     # Global and local explainers are separate registries with separate base
     # classes, and a component field carries a single parent hint. Hence two
