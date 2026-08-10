@@ -249,27 +249,20 @@ export default function ModelsLeftBar({ onToggle }) {
     const success = await deleteDatasetsByIds(ids);
     if (!success) return false;
 
-    if (idSet.has(selectedDatasetId)) {
-      navigate("/app/models");
-    }
-
-    setSessions((prevSessions) => {
-      const filteredSessions = prevSessions.filter(
-        (session) => !idSet.has(session.dataset_id),
+    const sessionAffected =
+      selectedSessionId != null &&
+      sessions.some(
+        (session) =>
+          session.id === selectedSessionId && idSet.has(session.dataset_id),
       );
 
-      if (
-        selectedSessionId &&
-        prevSessions.find(
-          (session) =>
-            session.id === selectedSessionId && idSet.has(session.dataset_id),
-        )
-      ) {
-        navigate("/app/models");
-      }
+    setSessions((prevSessions) =>
+      prevSessions.filter((session) => !idSet.has(session.dataset_id)),
+    );
 
-      return filteredSessions;
-    });
+    if (idSet.has(selectedDatasetId) || sessionAffected) {
+      navigate("/app/models");
+    }
 
     return true;
   };
