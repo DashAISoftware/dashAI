@@ -32,11 +32,11 @@ def as_shap_predictor(model: Any) -> Callable:
     object through ``__self__``, so it only does this when handed a *bound
     method*, and it assumes the attribute is writable.
 
-    That assumption does not hold for every model DashAI ships: the LightGBM
-    and XGBoost wrappers inherit ``feature_names_in_`` from their upstream
-    estimator as a read-only ``property``, so the assignment raises
-    ``AttributeError: property 'feature_names_in_' ... has no setter`` and the
-    explanation fails before it starts.
+    That assumption does not hold for estimators that expose
+    ``feature_names_in_`` as a read-only ``property`` — a common shape among
+    third party wrappers — where the assignment raises ``AttributeError:
+    property 'feature_names_in_' ... has no setter`` and the explanation fails
+    before it starts.
 
     Handing over a plain closure instead leaves ``__self__`` absent, so SHAP
     skips that step entirely — a function is SHAP's primary documented
