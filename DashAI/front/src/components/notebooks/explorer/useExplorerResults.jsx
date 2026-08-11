@@ -5,12 +5,15 @@ import { artifactToVisualizerData } from "../../../utils/artifactVisualizerData"
 /**
  * Hook to manage explorer results data
  * @param {Number} id The id of the exploration
- * @returns {Object} { loading, data, dataType, error, fetchExplorerResults }
+ * @returns {Object} { loading, data, dataType, artifact, error, fetchExplorerResults }
  */
 export function useExplorerResults(explorer) {
   const [loading, setLoading] = useState(false);
   const [dataType, setDataType] = useState(null);
   const [data, setData] = useState(null);
+  // The raw artifact is kept alongside the derived visualizer pair: the pair
+  // drops `index` and `overridden`, which the artifact stack needs.
+  const [artifact, setArtifact] = useState(null);
   const [error, setError] = useState(null);
   // Invalidates in-flight requests when the explorer changes or unmounts
   const requestIdRef = useRef(0);
@@ -31,12 +34,13 @@ export function useExplorerResults(explorer) {
       const artifacts = await getExplorerResults(explorer.id);
       if (isStale()) return;
 
-      const [artifact] = artifacts ?? [];
-      if (!artifact?.type) {
+      const [firstArtifact] = artifacts ?? [];
+      if (!firstArtifact?.type) {
         throw new Error("No artifacts in the response");
       }
 
-      const visualizerData = artifactToVisualizerData(artifact);
+      const visualizerData = artifactToVisualizerData(firstArtifact);
+      setArtifact(firstArtifact);
       setDataType(visualizerData.dataType);
       setData(visualizerData.data);
     } catch (err) {
@@ -47,6 +51,7 @@ export function useExplorerResults(explorer) {
       console.error("Error fetching explorer results:", err);
       setDataType(null);
       setData(null);
+      setArtifact(null);
       setError(err);
     } finally {
       if (!isStale()) {
@@ -68,6 +73,7 @@ export function useExplorerResults(explorer) {
     data,
     setData,
     dataType,
+    artifact,
     error,
     fetchExplorerResults,
   };
