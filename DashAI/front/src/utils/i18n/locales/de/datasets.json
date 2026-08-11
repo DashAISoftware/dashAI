@@ -304,6 +304,7 @@
     "position": "Position",
     "possibleIDColumns": "Mögliche ID-Spalten",
     "presetScale": "Voreingestellte Skala",
+    "processingTitle": "Ihr Dataset wird verarbeitet...",
     "processingMessage": "Dies kann je nach Größe Ihrer Daten einige Momente dauern.",
     "proportion": "Anteil",
     "q1": "Q1",
