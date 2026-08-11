@@ -273,15 +273,25 @@ class BaseExplorer(ConfigObject, ABC):
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
     ) -> List[Artifact]:
-        """Load a previously saved exploration result and return it for the frontend.
+        """Load a previously saved exploration result and turn it into artifacts.
+
+        This runs once, when the exploration is created: the explorer job (or
+        the pipeline exploration node) calls it right after `save_notebook`,
+        normalizes the returned artifacts and stores them on disk. Read
+        requests serve those stored artifacts, so this method is never called
+        again for an existing exploration and the results keep rendering after
+        the explorer is removed from the registry. Explorations created before
+        artifacts were stored are upgraded by the artifact backfill, which
+        calls this method one last time.
 
         Parameters
         ----------
         exploration_path : str
             Path to the file saved by `save_notebook`.
         options : Dict[str, Any]
-            Optional rendering or filtering options
-            passed from the frontend.
+            Optional rendering or filtering options. Kept for backwards
+            compatibility; artifacts are built once, so no per request option
+            reaches this method.
 
         Returns
         -------
@@ -290,6 +300,6 @@ class BaseExplorer(ConfigObject, ABC):
             :class:`TableArtifact`, :class:`TextArtifact` or
             :class:`ImageArtifact`) describing the exploration result.
             Legacy explorers returning the old ``{"data", "type", "config"}``
-            dict are upgraded by ``normalize_artifacts`` at the API layer.
+            dict are upgraded by ``normalize_artifacts`` before storage.
         """
         raise NotImplementedError
