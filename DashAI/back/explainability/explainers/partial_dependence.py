@@ -98,6 +98,80 @@ class PartialDependenceSchema(BaseSchema):
     )  # type: ignore
 
 
+def _partial_dependence_curve_facts(
+    explanation: dict, explainer_output: Union[Artifact, ArtifactGroup]
+) -> Optional[dict]:
+    """Parse one feature/class curve into its raw trend facts.
+
+    Shared by :meth:`PartialDependence.story` (which phrases these facts as
+    a deterministic narrative) and :meth:`PartialDependence.insight_facts`
+    (which hands them, unphrased, to an AI insight analyzer) so the curve
+    parsing and trend classification only live in one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`PartialDependence.explain`.
+    explainer_output : Union[Artifact, ArtifactGroup]
+        One of the groups previously returned by :meth:`PartialDependence.plot`,
+        titled ``"Feature: {feature} - Class: {target}"``.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"feature", "target", "trend", "start_value", "end_value",
+        "start_pred", "end_pred", "min_pred", "max_pred"}``, or ``None`` if
+        ``explainer_output`` is not a recognised curve group.
+    """
+    if not isinstance(explainer_output, ArtifactGroup):
+        return None
+    match = re.match(r"Feature: (.+) - Class: (.+)", explainer_output.title or "")
+    if match is None:
+        return None
+    feature, target = match.group(1), match.group(2)
+    if feature not in explanation:
+        return None
+
+    target_names = explanation["metadata"]["target_names"]
+    if len(target_names) == 2:
+        if target != target_names[1]:
+            return None
+        row_index = 0
+    else:
+        if target not in target_names:
+            return None
+        row_index = target_names.index(target)
+
+    curve = explanation[feature]
+    average = curve["average"]
+    if row_index >= len(average):
+        return None
+    values = average[row_index]
+    grid_values = curve["grid_values"]
+
+    diffs = [values[i + 1] - values[i] for i in range(len(values) - 1)]
+    if max(values) - min(values) <= 1e-9:
+        trend = "flat"
+    elif all(d >= -1e-9 for d in diffs):
+        trend = "increases"
+    elif all(d <= 1e-9 for d in diffs):
+        trend = "decreases"
+    else:
+        trend = "non_monotonic"
+
+    return {
+        "feature": feature,
+        "target": target,
+        "trend": trend,
+        "start_value": grid_values[0],
+        "end_value": grid_values[-1],
+        "start_pred": values[0],
+        "end_pred": values[-1],
+        "min_pred": min(values),
+        "max_pred": max(values),
+    }
+
+
 class PartialDependence(BaseGlobalExplainer):
     """Global explainer that shows how the model's average prediction
     changes with each feature.
@@ -359,45 +433,11 @@ class PartialDependence(BaseGlobalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not a recognised curve group.
         """
-        if not isinstance(explainer_output, ArtifactGroup):
-            return None
-        match = re.match(r"Feature: (.+) - Class: (.+)", explainer_output.title or "")
-        if match is None:
-            return None
-        feature, target = match.group(1), match.group(2)
-        if feature not in explanation:
+        facts = _partial_dependence_curve_facts(explanation, explainer_output)
+        if facts is None:
             return None
 
-        target_names = explanation["metadata"]["target_names"]
-        if len(target_names) == 2:
-            if target != target_names[1]:
-                return None
-            row_index = 0
-        else:
-            if target not in target_names:
-                return None
-            row_index = target_names.index(target)
-
-        curve = explanation[feature]
-        average = curve["average"]
-        if row_index >= len(average):
-            return None
-        values = average[row_index]
-        grid_values = curve["grid_values"]
-
-        diffs = [values[i + 1] - values[i] for i in range(len(values) - 1)]
-        if max(values) - min(values) <= 1e-9:
-            trend = "flat"
-        elif all(d >= -1e-9 for d in diffs):
-            trend = "increases"
-        elif all(d <= 1e-9 for d in diffs):
-            trend = "decreases"
-        else:
-            trend = "non_monotonic"
-
-        start_value, end_value = grid_values[0], grid_values[-1]
-
-        if trend == "flat":
+        if facts["trend"] == "flat":
             return format_story(
                 {
                     "en": (
@@ -427,14 +467,10 @@ class PartialDependence(BaseGlobalExplainer):
                         "{start_pred}。"
                     ),
                 },
-                feature=feature,
-                target=target,
-                start_value=start_value,
-                end_value=end_value,
-                start_pred=values[0],
+                **facts,
             )
 
-        if trend == "increases":
+        if facts["trend"] == "increases":
             return format_story(
                 {
                     "en": (
@@ -462,15 +498,10 @@ class PartialDependence(BaseGlobalExplainer):
                         "{target}的预测概率从{start_pred}上升到{end_pred}。"
                     ),
                 },
-                feature=feature,
-                target=target,
-                start_value=start_value,
-                end_value=end_value,
-                start_pred=values[0],
-                end_pred=values[-1],
+                **facts,
             )
 
-        if trend == "decreases":
+        if facts["trend"] == "decreases":
             return format_story(
                 {
                     "en": (
@@ -498,12 +529,7 @@ class PartialDependence(BaseGlobalExplainer):
                         "{target}的预测概率从{start_pred}下降到{end_pred}。"
                     ),
                 },
-                feature=feature,
-                target=target,
-                start_value=start_value,
-                end_value=end_value,
-                start_pred=values[0],
-                end_pred=values[-1],
+                **facts,
             )
 
         return format_story(
@@ -538,10 +564,32 @@ class PartialDependence(BaseGlobalExplainer):
                     "{max_pred}之间波动。"
                 ),
             },
-            feature=feature,
-            target=target,
-            start_value=start_value,
-            end_value=end_value,
-            min_pred=min(values),
-            max_pred=max(values),
+            **facts,
         )
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: Union[Artifact, ArtifactGroup]
+    ) -> Optional[dict]:
+        """Raw facts behind one feature/class partial dependence curve.
+
+        Same underlying data as :meth:`story`, but returned as plain values
+        (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain`.
+        explainer_output : Union[Artifact, ArtifactGroup]
+            One of the groups previously returned by :meth:`plot`, titled
+            ``"Feature: {feature} - Class: {target}"``.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"feature", "target", "trend", "start_value", "end_value",
+            "start_pred", "end_pred", "min_pred", "max_pred"}``, or ``None``
+            if ``explainer_output`` is not a recognised curve group.
+        """
+        return _partial_dependence_curve_facts(explanation, explainer_output)

@@ -116,6 +116,33 @@ class BaseLocalExplainer(ConfigObject, ABC):
         """
         return None
 
+    def insight_facts(
+        self, explanation: dict, explainer_output: ArtifactGroup
+    ) -> Optional[dict]:
+        """Return the raw facts behind one explained instance, for an AI insight.
+
+        Optional hook, sibling of :meth:`story`: instead of an
+        already-phrased narrative, returns the structured data that an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` turns into a
+        prompt for a generative model. The default implementation reports
+        that this explainer has no AI insight support yet.
+
+        Parameters
+        ----------
+        explanation : dict
+            The explanation dictionary produced by :meth:`explain_instance`.
+        explainer_output : ArtifactGroup
+            The group previously returned by :meth:`plot` for the instance
+            the facts describe.
+
+        Returns
+        -------
+        Optional[dict]
+            The raw facts behind ``explainer_output``, or ``None`` if this
+            explainer does not implement this hook.
+        """
+        return None
+
     @abstractmethod
     def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Generate renderable artifacts from a previously computed explanation.
