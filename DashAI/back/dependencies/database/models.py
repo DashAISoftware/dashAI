@@ -28,6 +28,7 @@ from DashAI.back.core.enums.status import (
     DatasetStatus,
     ExplainerStatus,
     ExplorerStatus,
+    InsightStatus,
     PluginStatus,
     PredictionStatus,
     RunStatus,
@@ -425,6 +426,65 @@ class LocalExplainer(Base):
     def set_status_as_error(self) -> None:
         """Update the status of the local explainer to error."""
         self.status = ExplainerStatus.ERROR
+
+
+class InsightResult(Base):
+    __tablename__ = "insight_result"
+    """
+    Table to store the result of one AI-generated insight request.
+
+    ``consumer_type``/``consumer_id``/``consumer_ref`` identify what the
+    insight is about (e.g. ``consumer_type="global_explainer"``,
+    ``consumer_id`` the explainer's id, ``consumer_ref`` the artifact index)
+    as a polymorphic reference rather than a foreign key, so a future
+    consumer (run comparison, task suggestion, ...) never requires a schema
+    migration to be supported. Append-only: regenerating an insight creates
+    a new row instead of overwriting the previous one.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    consumer_type: Mapped[str] = mapped_column(String, nullable=False)
+    consumer_id: Mapped[int] = mapped_column(nullable=False)
+    consumer_ref: Mapped[str] = mapped_column(String, nullable=True)
+
+    context_data: Mapped[JSON] = mapped_column(JSON, nullable=False)
+    context_metadata: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    analyzer_path: Mapped[str] = mapped_column(String, nullable=False)
+
+    provider_kind: Mapped[str] = mapped_column(String, nullable=False)
+    provider_params: Mapped[JSON] = mapped_column(JSON, nullable=True)
+
+    prompt: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    result_text: Mapped[str] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str] = mapped_column(String, nullable=True)
+
+    huey_id: Mapped[str] = mapped_column(String, nullable=True)
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    status: Mapped[Enum] = mapped_column(
+        Enum(InsightStatus), nullable=False, default=InsightStatus.NOT_STARTED
+    )
+
+    def set_status_as_delivered(self) -> None:
+        """Update the status to delivered and set delivery_time to now."""
+        self.status = InsightStatus.DELIVERED
+        self.delivery_time = datetime.now()
+
+    def set_status_as_started(self) -> None:
+        """Update the status to started and set start_time to now."""
+        self.status = InsightStatus.STARTED
+        self.start_time = datetime.now()
+
+    def set_status_as_finished(self) -> None:
+        """Update the status to finished and set end_time to now."""
+        self.status = InsightStatus.FINISHED
+        self.end_time = datetime.now()
+
+    def set_status_as_error(self) -> None:
+        """Update the status to error."""
+        self.status = InsightStatus.ERROR
 
 
 class GenerativeProcess(Base):
