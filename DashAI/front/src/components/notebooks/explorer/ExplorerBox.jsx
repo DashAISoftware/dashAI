@@ -1,21 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
-  Card,
-  CardContent,
+  Paper,
   Box,
   Typography,
-  Chip,
+  Tooltip,
   IconButton,
   CircularProgress,
-  Button,
 } from "@mui/material";
 import { useTheme, alpha } from "@mui/material/styles";
 import { Analytics, Info, Delete } from "@mui/icons-material";
-import { TabResults } from "./tabs";
+import { useSnackbar } from "notistack";
+import RunStatusDot from "../../shared/RunStatusDot";
+import ArtifactViewer from "../../shared/ArtifactViewer";
 import { getExplorerStatus } from "../../../utils/explorerStatus";
 import { getComponentById } from "../../../api/component";
-import { getExplorerById } from "../../../api/explorer";
-import ExplorerDetailsModal from "../explorer/ExplorerDetailsModal";
+import {
+  getExplorerById,
+  resetExplorerResults,
+  updateExplorerResults,
+} from "../../../api/explorer";
+import ExplorerInfoModal from "./ExplorerInfoModal";
 import { useExplorerResults } from "./useExplorerResults";
 import { useTranslation } from "react-i18next";
 
@@ -26,10 +30,11 @@ export default function ExplorerBox({
   isHighlighted = false,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const [explorerComponent, setExplorerComponent] = useState({});
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
-  const { loading, data, dataType, artifact, error, fetchExplorerResults } =
+  const { loading, artifact, error, fetchExplorerResults } =
     useExplorerResults(explorer);
 
   const statusLabel = explorer.status;
@@ -37,6 +42,47 @@ export default function ExplorerBox({
   const handleExplorerDetailsClick = () => {
     setOpenExplorerDetails(true);
   };
+
+  const handleSaveEdit = useCallback(
+    async (figure) => {
+      try {
+        await updateExplorerResults(explorer.id, artifact.index, figure);
+        // Pull the artifact back with its `overridden` flag set, so the reset
+        // button shows up straight away instead of only after a reopen.
+        await fetchExplorerResults();
+        enqueueSnackbar(
+          t("datasets:message.explorerResultsUpdatedSuccessfully"),
+          { variant: "success" },
+        );
+      } catch (err) {
+        console.error("Failed to update explorer results:", err);
+        enqueueSnackbar(t("datasets:error.failedToUpdateExplorerResults"), {
+          variant: "error",
+        });
+        // Rethrow so ArtifactViewer does not treat the edit as saved.
+        throw err;
+      }
+    },
+    [explorer.id, artifact, fetchExplorerResults, enqueueSnackbar, t],
+  );
+
+  const handleResetEdit = useCallback(async () => {
+    try {
+      await resetExplorerResults(explorer.id, artifact.index);
+      // The stored artifact changed on the server, so pull the computed
+      // figure back in rather than guessing it client side.
+      await fetchExplorerResults();
+      enqueueSnackbar(
+        t("datasets:message.explorerResultsRestoredSuccessfully"),
+        { variant: "success" },
+      );
+    } catch (err) {
+      console.error("Failed to reset explorer results:", err);
+      enqueueSnackbar(t("datasets:error.failedToResetExplorerResults"), {
+        variant: "error",
+      });
+    }
+  }, [explorer.id, artifact, fetchExplorerResults, enqueueSnackbar, t]);
 
   useEffect(() => {
     const fetchConverterComponent = async () => {
@@ -84,11 +130,15 @@ export default function ExplorerBox({
   }, [explorer.id, explorer.status, onStatusChange]);
 
   return (
-    <Card
+    <Paper
       key={explorer.id}
+      variant="outlined"
+      className="explorer-box"
       sx={{
-        bgcolor: theme.palette.background.box,
-        borderRadius: 2,
+        p: 4,
+        bgcolor: "background.paper",
+        borderColor: theme.palette.ui.border,
+        borderRadius: 1,
         height: "100%",
         position: "relative",
         zIndex: isHighlighted ? 1 : 0,
@@ -106,9 +156,8 @@ export default function ExplorerBox({
           ? "newItemHighlight 4s ease-in-out forwards"
           : "none",
       }}
-      className="explorer-box"
     >
-      <CardContent
+      <Box
         sx={{
           display: "flex",
           flexDirection: "column",
@@ -133,74 +182,60 @@ export default function ExplorerBox({
                 explorer.exploration_type ??
                 t("datasets:unknownComponent")}
             </Typography>
+            <Tooltip title={getExplorerStatus(statusLabel, t)}>
+              <span>
+                <RunStatusDot status={statusLabel} />
+              </span>
+            </Tooltip>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Chip
-              label={getExplorerStatus(statusLabel, t)}
-              color={
-                statusLabel === 3
-                  ? "success"
-                  : statusLabel === 4
-                    ? "error"
-                    : "default"
-              }
-              size="small"
-            />
-            <>
-              {statusLabel === 3 && ( // Finished
-                <Chip
-                  label={
-                    dataType === "plotly_json"
-                      ? t("common:infoEdit")
-                      : t("common:info")
-                  }
-                  onClick={() => handleExplorerDetailsClick(explorer)}
-                  size="small"
-                  color="primary"
-                  icon={<Info />}
-                  sx={{
-                    "&:hover": { bgcolor: "secondary.main" },
-                  }}
-                />
-              )}
-              {(statusLabel === 4 || statusLabel === 3) && ( // Error or Finished
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {statusLabel === 3 && ( // Finished
+              <Tooltip title={t("common:info")}>
                 <IconButton
                   size="small"
-                  onClick={() => handleExplorerDeleteClick(explorer)}
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    bgcolor: "error.main",
-                    "&:hover": { bgcolor: "error.dark" },
-                  }}
+                  aria-label="info"
+                  onClick={handleExplorerDetailsClick}
                 >
-                  <Delete sx={{ fontSize: 16, color: "white" }} />
+                  <Info fontSize="small" />
                 </IconButton>
-              )}
-            </>
+              </Tooltip>
+            )}
+            {(statusLabel === 4 || statusLabel === 3) && ( // Error or Finished
+              <IconButton
+                size="small"
+                aria-label="delete"
+                color="error"
+                onClick={() => handleExplorerDeleteClick(explorer)}
+              >
+                <Delete fontSize="small" />
+              </IconButton>
+            )}
           </Box>
         </Box>
 
         {statusLabel === 3 ? ( // Finished
-          <Box
-            sx={{
-              flexGrow: 1,
-              bgcolor: theme.palette.background.default,
-              borderRadius: 1,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }}
-          >
-            <TabResults
-              id={explorer.id}
-              minimalist
-              height={300}
-              data={data}
-              loading={loading}
-              dataType={dataType}
-              error={error}
-            />
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            {loading && (
+              <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
+                <CircularProgress size={24} />
+              </Box>
+            )}
+            {!loading && error && (
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", textAlign: "center", p: 2 }}
+              >
+                {t("datasets:error.explorerResultsUnavailable")}
+              </Typography>
+            )}
+            {!loading && !error && artifact && (
+              <ArtifactViewer
+                artifact={artifact}
+                onSaveEdit={handleSaveEdit}
+                onResetEdit={handleResetEdit}
+                canReset={Boolean(artifact.overridden)}
+              />
+            )}
           </Box>
         ) : statusLabel === 4 ? ( // Error
           <Box
@@ -237,19 +272,16 @@ export default function ExplorerBox({
           </Box>
         )}
         {openExplorerDetails && (
-          <ExplorerDetailsModal
+          <ExplorerInfoModal
             open={openExplorerDetails}
             onClose={() => {
               setOpenExplorerDetails(false);
             }}
             explorer={explorer}
             explorerComponent={explorerComponent}
-            artifact={artifact}
-            error={error}
-            onRefetch={fetchExplorerResults}
           />
         )}
-      </CardContent>
-    </Card>
+      </Box>
+    </Paper>
   );
 }
