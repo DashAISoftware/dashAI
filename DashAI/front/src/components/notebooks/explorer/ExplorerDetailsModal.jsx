@@ -2,7 +2,6 @@ import React, {
   useState,
   useEffect,
   useCallback,
-  useRef,
   startTransition,
 } from "react";
 import {
@@ -24,9 +23,12 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 
-import { TabColumns, TabResults, TabParameters } from "./tabs";
-import PlotLayoutForm from "./plotLayout/PlotLayoutForm";
-import { updateExplorerResults } from "../../../api/explorer";
+import { TabColumns, TabParameters } from "./tabs";
+import ArtifactViewer from "../../shared/ArtifactViewer";
+import {
+  resetExplorerResults,
+  updateExplorerResults,
+} from "../../../api/explorer";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../../utils";
@@ -36,34 +38,21 @@ export default function ExplorerDetailsModal({
   onClose = () => {},
   explorer,
   explorerComponent,
-  data,
-  setData,
-  dataType,
-  loading,
+  artifact = null,
   error = null,
+  onRefetch = () => {},
 }) {
   const [currentTab, setCurrentTab] = useState(0);
-  const [localData, setLocalData] = useState(data);
   const [formReady, setFormReady] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["datasets", "common"]);
-
-  const localDataRef = useRef(localData);
-  localDataRef.current = localData;
-
-  // Sync data prop → localData when data arrives after mount (explorer results load async)
-  useEffect(() => {
-    if (data && !localData) {
-      setLocalData(data);
-    }
-  }, [data, localData]);
 
   useEffect(() => {
     startTransition(() => setFormReady(true));
   }, []);
 
   if (!explorer) return null;
-  if (!data) return null;
+  if (!artifact) return null;
 
   const tabs = [
     { label: t("common:results"), value: 0, icon: <AnalyticsOutlined /> },
@@ -74,30 +63,46 @@ export default function ExplorerDetailsModal({
     startTransition(() => setCurrentTab(newValue));
   };
 
-  const handleSaveChangesLayout = useCallback(async () => {
-    const current = localDataRef.current;
+  const handleSaveEdit = useCallback(
+    async (figure) => {
+      try {
+        await updateExplorerResults(explorer.id, artifact.index, figure);
+        // Pull the artifact back with its `overridden` flag set, so the reset
+        // button shows up straight away instead of only after a reopen.
+        await onRefetch();
+        enqueueSnackbar(
+          t("datasets:message.explorerResultsUpdatedSuccessfully"),
+          { variant: "success" },
+        );
+      } catch (err) {
+        console.error("Failed to update explorer results:", err);
+        enqueueSnackbar(t("datasets:error.failedToUpdateExplorerResults"), {
+          variant: "error",
+        });
+        // Rethrow so ArtifactViewer does not treat the edit as saved.
+        throw err;
+      }
+    },
+    [explorer.id, artifact, onRefetch, enqueueSnackbar, t],
+  );
+
+  const handleResetEdit = useCallback(async () => {
     try {
-      await updateExplorerResults(explorer.id, current);
-      setData(current);
+      await resetExplorerResults(explorer.id, artifact.index);
+      // The stored artifact changed on the server, so pull the computed
+      // figure back in rather than guessing it client side.
+      await onRefetch();
       enqueueSnackbar(
-        t("datasets:message.explorerResultsUpdatedSuccessfully"),
+        t("datasets:message.explorerResultsRestoredSuccessfully"),
         { variant: "success" },
       );
-    } catch (error) {
-      console.error("Failed to update explorer results:", error);
-      enqueueSnackbar(t("datasets:error.failedToUpdateExplorerResults"), {
+    } catch (err) {
+      console.error("Failed to reset explorer results:", err);
+      enqueueSnackbar(t("datasets:error.failedToResetExplorerResults"), {
         variant: "error",
       });
     }
-  }, [explorer.id, setData, enqueueSnackbar, t]);
-
-  const handleSetData = useCallback((newData) => {
-    setLocalData((prev) => ({ ...prev, data: newData }));
-  }, []);
-
-  const handleSetLayout = useCallback((newLayout) => {
-    setLocalData((prev) => ({ ...prev, layout: newLayout }));
-  }, []);
+  }, [explorer.id, artifact, onRefetch, enqueueSnackbar, t]);
 
   return (
     <Dialog
@@ -226,9 +231,10 @@ export default function ExplorerDetailsModal({
           <Box
             sx={{
               display: currentTab === 0 ? "flex" : "none",
-              flexDirection: { xs: "column", xl: "row" },
+              flexDirection: "column",
               height: "100%",
               overflow: "auto",
+              p: 4,
             }}
           >
             {!formReady && (
@@ -241,47 +247,21 @@ export default function ExplorerDetailsModal({
                 }}
               />
             )}
-            {formReady && (
-              <>
-                <Box
-                  sx={{
-                    flex: { xs: "0 0 auto", xl: 1 },
-                    minWidth: 0,
-                    minHeight: { xs: "auto", xl: 0 },
-                    justifyContent: "center",
-                    alignItems: "center",
-                    overflow: { xs: "visible", xl: "auto" },
-                    p: 4,
-                  }}
-                >
-                  <TabResults
-                    id={explorer.id}
-                    data={localData}
-                    dataType={dataType}
-                    loading={loading}
-                    error={error}
-                  />
-                </Box>
-
-                {dataType === "plotly_json" && (
-                  <Box
-                    sx={{
-                      width: { xs: "100%", xl: "50%" },
-                      flexShrink: 0,
-                      overflowY: { xs: "visible", xl: "auto" },
-                      mt: { xs: 4, xl: 0 },
-                    }}
-                  >
-                    <PlotLayoutForm
-                      data={localData.data}
-                      setData={handleSetData}
-                      layout={localData.layout}
-                      setLayout={handleSetLayout}
-                      onSave={handleSaveChangesLayout}
-                    />
-                  </Box>
-                )}
-              </>
+            {formReady && !error && (
+              <ArtifactViewer
+                artifact={artifact}
+                onSaveEdit={handleSaveEdit}
+                onResetEdit={handleResetEdit}
+                canReset={Boolean(artifact.overridden)}
+              />
+            )}
+            {formReady && error && (
+              <Typography
+                variant="body2"
+                sx={{ color: "text.secondary", textAlign: "center", p: 2 }}
+              >
+                {t("datasets:error.explorerResultsUnavailable")}
+              </Typography>
             )}
           </Box>
         </Box>

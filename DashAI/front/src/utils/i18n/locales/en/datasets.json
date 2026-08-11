@@ -75,6 +75,7 @@
     "failedToLoadDatasetInfo": "Failed to fetch dataset info",
     "failedToUpdateDataset": "Failed to update dataset",
     "failedToUpdateExplorerResults": "Failed to update explorer results",
+    "failedToResetExplorerResults": "Failed to restore the original plot",
     "failedToUpdateNotebook": "Failed to update notebook",
     "fetchingDataloaders": "Error while trying to obtain compatible dataloaders.",
     "fetchingDatasetColumns": "Error while trying to obtain the dataset columns.",
@@ -414,6 +415,7 @@
     "folderDeleteSuccess": "Folder deleted successfully",
     "explorerProcessedSuccessfully": "Explorer {{name}} processed successfully",
     "explorerResultsUpdatedSuccessfully": "Explorer results updated successfully",
+    "explorerResultsRestoredSuccessfully": "Original plot restored",
     "noChangesMade": "No changes were made",
     "notebookCreated": "Notebook created successfully",
     "notebookUpdateSuccess": "Notebook updated successfully"

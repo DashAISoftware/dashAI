@@ -29,15 +29,8 @@ export default function ExplorerBox({
   const theme = useTheme();
   const [explorerComponent, setExplorerComponent] = useState({});
   const [openExplorerDetails, setOpenExplorerDetails] = useState(false);
-  const {
-    loading,
-    data,
-    dataType,
-    setData,
-    artifact,
-    error,
-    fetchExplorerResults,
-  } = useExplorerResults(explorer);
+  const { loading, data, dataType, artifact, error, fetchExplorerResults } =
+    useExplorerResults(explorer);
 
   const statusLabel = explorer.status;
 
@@ -251,11 +244,7 @@ export default function ExplorerBox({
             }}
             explorer={explorer}
             explorerComponent={explorerComponent}
-            data={data}
-            dataType={dataType}
             artifact={artifact}
-            loading={loading}
-            setData={setData}
             error={error}
             onRefetch={fetchExplorerResults}
           />

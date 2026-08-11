@@ -78,6 +78,7 @@
     "failedToLoadDatasetInfo": "Fallo al obtener información del dataset",
     "failedToUpdateDataset": "Fallo al actualizar dataset",
     "failedToUpdateExplorerResults": "Fallo al actualizar resultados del explorador",
+    "failedToResetExplorerResults": "Fallo al restaurar el gráfico original",
     "failedToUpdateNotebook": "Fallo al actualizar cuaderno",
     "fetchingDataloaders": "Error al intentar obtener dataloaders compatibles.",
     "fetchingDatasetColumns": "Error al intentar obtener las columnas del dataset.",
@@ -426,6 +427,7 @@
     "folderDeleteSuccess": "Carpeta eliminada exitosamente",
     "explorerProcessedSuccessfully": "Explorador {{name}} procesado exitosamente",
     "explorerResultsUpdatedSuccessfully": "Resultados del explorador actualizados exitosamente",
+    "explorerResultsRestoredSuccessfully": "Gráfico original restaurado",
     "noChangesMade": "No se realizaron cambios",
     "notebookCreated": "Cuaderno creado exitosamente",
     "notebookUpdateSuccess": "Cuaderno actualizado exitosamente"
