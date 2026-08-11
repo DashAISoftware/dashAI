@@ -74,3 +74,29 @@ class LocalModelInsightProvider(InsightProvider):
         except ImportError:
             pass
         gc.collect()
+
+
+def build_provider(
+    kind: str,
+    params: Optional[Dict[str, Any]],
+    component_registry: "ComponentRegistry",
+) -> InsightProvider:
+    """Resolve an ``InsightProvider`` from a stored ``provider_kind``/``params``.
+
+    The only place in this layer with a closed ``if``/``elif`` on provider
+    kind — acceptable because ``InsightProvider`` has exactly two known
+    families (local model, remote API), unlike consumers, which are
+    open-ended and never need a branch here.
+    """
+    params = params or {}
+    if kind == "local":
+        return LocalModelInsightProvider(
+            model_name=params["model_name"],
+            generation_params=params.get("generation_params"),
+            component_registry=component_registry,
+        )
+    if kind == "remote":
+        raise InsightProviderError(
+            "Remote AI insight providers are not implemented yet."
+        )
+    raise InsightProviderError(f"Unknown insight provider kind: '{kind}'.")

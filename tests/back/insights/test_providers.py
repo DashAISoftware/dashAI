@@ -3,6 +3,7 @@ import pytest
 from DashAI.back.insights.providers import (
     InsightProviderError,
     LocalModelInsightProvider,
+    build_provider,
 )
 
 
@@ -92,3 +93,35 @@ def test_complete_raises_when_model_requires_download_and_is_missing():
 
     with pytest.raises(InsightProviderError):
         provider.complete([{"role": "user", "content": "hi"}])
+
+
+def test_build_provider_returns_a_local_model_insight_provider():
+    provider = build_provider(
+        "local", {"model_name": "DummyGenerativeModel"}, FAKE_REGISTRY
+    )
+
+    assert isinstance(provider, LocalModelInsightProvider)
+    assert provider.complete([{"role": "user", "content": "hi"}]) == "a local insight"
+
+
+def test_build_provider_forwards_generation_params():
+    build_provider(
+        "local",
+        {
+            "model_name": "DummyGenerativeModel",
+            "generation_params": {"temperature": 0.9},
+        },
+        FAKE_REGISTRY,
+    ).complete([{"role": "user", "content": "hi"}])
+
+    assert _DummyGenerativeModel.last_kwargs == {"temperature": 0.9}
+
+
+def test_build_provider_raises_for_remote_kind_not_implemented_yet():
+    with pytest.raises(InsightProviderError, match="not implemented"):
+        build_provider("remote", {}, FAKE_REGISTRY)
+
+
+def test_build_provider_raises_for_an_unknown_kind():
+    with pytest.raises(InsightProviderError, match="Unknown"):
+        build_provider("carrier-pigeon", {}, FAKE_REGISTRY)
