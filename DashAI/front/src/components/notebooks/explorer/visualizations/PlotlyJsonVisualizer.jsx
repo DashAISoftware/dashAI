@@ -125,6 +125,13 @@ function PlotlyJsonVisualizer({
     }
   };
 
+  // Fall back to the app theme when the figure does not pin its own colors,
+  // so a computed plot tracks light/dark while a user edited one keeps the
+  // colors it was saved with.
+  const themeBg = theme.palette.background.paper;
+  const themeText = theme.palette.text.primary;
+  const themeGrid = theme.palette.divider;
+
   const plotConfig = {
     responsive: true,
     displaylogo: false,
@@ -133,8 +140,8 @@ function PlotlyJsonVisualizer({
 
   const plotLayout = {
     ...plotData.layout,
-    paper_bgcolor: plotData.layout?.paper_bgcolor || "white",
-    plot_bgcolor: plotData.layout?.plot_bgcolor || "white",
+    paper_bgcolor: plotData.layout?.paper_bgcolor || themeBg,
+    plot_bgcolor: plotData.layout?.plot_bgcolor || themeBg,
     margin: minimalist
       ? {
           l: 40,
@@ -153,12 +160,24 @@ function PlotlyJsonVisualizer({
     autosize: true,
     font: {
       size: minimalist ? 10 : 12,
+      color: themeText,
       ...plotData.layout?.font,
+    },
+    xaxis: {
+      gridcolor: themeGrid,
+      zerolinecolor: themeGrid,
+      ...plotData.layout?.xaxis,
+    },
+    yaxis: {
+      gridcolor: themeGrid,
+      zerolinecolor: themeGrid,
+      ...plotData.layout?.yaxis,
     },
     title: {
       ...plotData.layout?.title,
       font: {
         size: minimalist ? 12 : 16,
+        color: themeText,
         ...plotData.layout?.title?.font,
       },
     },
@@ -318,7 +337,7 @@ function PlotlyJsonVisualizer({
             onClose={() => setExpanded(false)}
             slotProps={{
               paper: {
-                sx: { bgcolor: "white" },
+                sx: { bgcolor: "background.default" },
               },
             }}
           >
@@ -332,8 +351,8 @@ function PlotlyJsonVisualizer({
                 data={plotData.data}
                 layout={{
                   ...plotData.layout,
-                  paper_bgcolor: plotData.layout?.paper_bgcolor || "white",
-                  plot_bgcolor: plotData.layout?.plot_bgcolor || "white",
+                  paper_bgcolor: plotData.layout?.paper_bgcolor || themeBg,
+                  plot_bgcolor: plotData.layout?.plot_bgcolor || themeBg,
                   autosize: true,
                   margin: {
                     l: 80,
@@ -344,12 +363,14 @@ function PlotlyJsonVisualizer({
                   },
                   font: {
                     size: 14,
+                    color: themeText,
                     ...plotData.layout?.font,
                   },
                   title: {
                     ...plotData.layout?.title,
                     font: {
                       size: 18,
+                      color: themeText,
                       ...plotData.layout?.title?.font,
                     },
                   },
