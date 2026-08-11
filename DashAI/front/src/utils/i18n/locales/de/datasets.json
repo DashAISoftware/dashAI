@@ -62,6 +62,7 @@
     "errorCreatingNotebook": "Fehler beim Erstellen des Notizbuchs",
     "errorProcessingExplorer": "Fehler beim Verarbeiten des Explorers: {{error}}",
     "explorerFailed": "Beim Verarbeiten des Explorers ist ein Fehler aufgetreten.",
+    "explorerResultsUnavailable": "Die Ergebnisse dieses Explorers sind nicht mehr verfuegbar.",
     "failedToCreateDataset": "Der Datensatz konnte nicht erstellt werden. Bitte pruefe deine Datei und Konfiguration und versuche es erneut.",
     "failedToCreateDatasetFromNotebook": "Datensatz konnte nicht aus Notizbuch erstellt werden",
     "failedToCreateExplorer": "Explorer konnte nicht erstellt werden",
@@ -481,5 +482,6 @@
     "translation": "Übersetzung",
     "regression": "Regression",
     "eda": "EDA"
-  }
+  },
+  "unknownComponent": "Unbekannte Komponente"
 }

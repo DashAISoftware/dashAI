@@ -40,6 +40,7 @@ export default function ExplorerDetailsModal({
   setData,
   dataType,
   loading,
+  error = null,
 }) {
   const [currentTab, setCurrentTab] = useState(0);
   const [localData, setLocalData] = useState(data);
@@ -258,6 +259,7 @@ export default function ExplorerDetailsModal({
                     data={localData}
                     dataType={dataType}
                     loading={loading}
+                    error={error}
                   />
                 </Box>
 

@@ -63,6 +63,7 @@
     "errorCreatingNotebook": "Erro ao criar caderno",
     "errorProcessingExplorer": "Erro ao processar explorador: {{error}}",
     "explorerFailed": "Ocorreu um erro durante o processamento do explorador.",
+    "explorerResultsUnavailable": "Os resultados deste explorador nao estao mais disponiveis.",
     "failedToCreateDataset": "Nao foi possivel criar o conjunto de dados. Verifique seu arquivo e a configuracao e tente novamente.",
     "failedToCreateDatasetFromNotebook": "Falha ao criar conjunto de dados a partir do caderno",
     "failedToCreateExplorer": "Falha ao criar explorador",
@@ -491,5 +492,6 @@
     "translation": "Tradução",
     "regression": "Regressão",
     "eda": "EDA"
-  }
+  },
+  "unknownComponent": "Componente desconhecido"
 }
