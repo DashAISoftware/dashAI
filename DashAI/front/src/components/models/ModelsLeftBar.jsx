@@ -30,6 +30,7 @@ export default function ModelsLeftBar({ onToggle }) {
     selectedSessionId,
     setSessions,
     deleteDataset,
+    deleteDatasetsByIds,
     editDataset,
     editSession,
     folders,
@@ -243,6 +244,29 @@ export default function ModelsLeftBar({ onToggle }) {
     deleteDataset(id);
   };
 
+  const onBulkDatasetDelete = async (ids) => {
+    const idSet = new Set(ids);
+    const success = await deleteDatasetsByIds(ids);
+    if (!success) return false;
+
+    const sessionAffected =
+      selectedSessionId != null &&
+      sessions.some(
+        (session) =>
+          session.id === selectedSessionId && idSet.has(session.dataset_id),
+      );
+
+    setSessions((prevSessions) =>
+      prevSessions.filter((session) => !idSet.has(session.dataset_id)),
+    );
+
+    if (idSet.has(selectedDatasetId) || sessionAffected) {
+      navigate("/app/models");
+    }
+
+    return true;
+  };
+
   const onSessionClick = (sessionId) => {
     navigate(`/app/models/sessions/${sessionId}`);
   };
@@ -292,6 +316,7 @@ export default function ModelsLeftBar({ onToggle }) {
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
           onItemEdit={editDataset}
+          onBulkDelete={onBulkDatasetDelete}
           title={t("datasets:label.availableDatasets")}
           getItemDescription={getDatasetDescription}
           getDeleteConfirmationContent={getDatasetDeleteConfirmationContent}

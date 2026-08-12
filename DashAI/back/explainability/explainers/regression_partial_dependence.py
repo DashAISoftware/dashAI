@@ -175,8 +175,8 @@ class RegressionPartialDependence(BaseGlobalExplainer):
         from DashAI.back.explainability.model_input import prepare_model_input
 
         x, y = dataset
-        # The grid frames are passed straight to the model, bypassing the
-        # model preparation.
+        # The grid frames are already in the model feature space, so the model
+        # is queried through predict_prepared to skip a second preparation.
         x_test = prepare_model_input(self.model, x["test"]).to_pandas()
 
         # Cap rows to bound the number of model evaluations.
@@ -200,7 +200,7 @@ class RegressionPartialDependence(BaseGlobalExplainer):
             frame = x_test.copy()
             for grid_value in grid:
                 frame[column] = grid_value
-                predictions = np.asarray(self.model.predict(frame)).ravel()
+                predictions = np.asarray(self.model.predict_prepared(frame)).ravel()
                 averages.append(float(np.round(np.mean(predictions), 4)))
 
             explanation[column] = {

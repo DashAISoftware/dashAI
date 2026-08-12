@@ -20,6 +20,7 @@ from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.datasets_params import Dataset as DatasetSchema
 from DashAI.back.api.api_v1.schemas.datasets_params import (
+    DatasetBulkDeleteParams,
     DatasetColumnEncoderParams,
     DatasetCreateParams,
     DatasetRenameColumnParams,
@@ -1004,6 +1005,57 @@ async def copy_dataset(
 
     logger.debug(f"Dataset copied successfully to '{new_name}'.")
     return new_dataset
+
+
+@router.delete("/")
+@inject
+async def delete_datasets(
+    params: DatasetBulkDeleteParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Delete multiple datasets, in a single transaction.
+
+    Parameters
+    ----------
+    params : DatasetBulkDeleteParams
+        The IDs of the datasets to delete. IDs that do not match an existing
+        dataset are silently skipped rather than failing the whole request.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    Response with code 204 NO_CONTENT
+    """
+    logger.debug("Deleting datasets with ids %s", params.ids)
+    file_paths = []
+    with session_factory() as db:
+        try:
+            for dataset_id in params.ids:
+                dataset = db.get(Dataset, dataset_id)
+                if not dataset:
+                    continue
+                file_paths.append(dataset.file_path)
+                db.delete(dataset)
+
+            db.commit()
+
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    _filtered_table_cache.invalidate()
+
+    import shutil
+
+    for file_path in file_paths:
+        shutil.rmtree(file_path, ignore_errors=True)
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete("/{dataset_id}")

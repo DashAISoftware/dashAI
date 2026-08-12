@@ -338,7 +338,8 @@ class KernelShap(BaseLocalExplainer):
         x, y = background_dataset
 
         # SHAP perturbs the background frame and calls the model with it, so
-        # the background must already be in the model's feature space.
+        # the background must already be in the model's feature space and the
+        # model must be queried through predict_prepared.
         x_train = prepare_model_input(self.model, x["train"])
         y_train = y["train"]
 
@@ -360,12 +361,11 @@ class KernelShap(BaseLocalExplainer):
                 categorical_features,
             )
 
-        # TODO: consider the case where the predictor is not a Sklearn model
         # Lazy import of shap
         import shap
 
         self.explainer = shap.KernelExplainer(
-            model=self.model.predict,
+            model=self.model.predict_prepared,
             data=background_data,
             feature_names=feature_names,
             link=self.link,

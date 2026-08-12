@@ -127,7 +127,9 @@ class _SklearnProbaShim:
 
     DashAI classifiers override ``predict`` to return probabilities; DiCE
     expects ``predict`` to return class labels and ``predict_proba`` to
-    return probabilities.
+    return probabilities. DiCE queries with frames that are already in the
+    model feature space, so the model is reached through its prepared-matrix
+    hook.
     """
 
     def __init__(self, model):
@@ -135,13 +137,13 @@ class _SklearnProbaShim:
 
     def predict_proba(self, x):
         """Return the class-probability matrix for ``x``."""
-        return self._model.predict_proba(x)
+        return self._model.predict_proba_prepared(x)
 
     def predict(self, x):
         """Return hard class labels derived from the probabilities."""
         import numpy as np
 
-        return np.argmax(self._model.predict_proba(x), axis=1)
+        return np.argmax(self.predict_proba(x), axis=1)
 
 
 class DiceCounterfactual(BaseLocalExplainer):
