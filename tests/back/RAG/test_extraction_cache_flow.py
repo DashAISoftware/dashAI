@@ -13,7 +13,7 @@ import pytest
 from DashAI.back.dependencies.database.models import Document, RAGExtractor
 
 _EXTRACTOR_BY_FILE_TYPE = {
-    "pdf": "TextractExtractor",
+    "pdf": "PyMuPDFExtractor",
     "txt": "PlainTextExtractor",
     "md": "PlainTextExtractor",
 }
@@ -248,17 +248,6 @@ class TestExtractionCacheFlowPdf:
         )
         assert resp.status_code == 200
         assert resp.json()["cached"] is True
-
-    # ── TextractExtractor ──
-
-    def test_textract_attempt(self, client):
-        """TextractExtractor: attempt extraction (may fail if pdftotext missing)."""
-        resp = client.post(
-            f"/api/v1/document/{self.doc_id}/extract",
-            json={"extractor": {"component": "TextractExtractor", "params": {}}},
-        )
-        # 200 if textract works, 400 if pdftotext not installed
-        assert resp.status_code in (200, 400)
 
     # ── Cross-extractor: different extractors produce different signatures ──
 

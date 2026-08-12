@@ -45,7 +45,7 @@ class DocumentService:
     """Service layer for document CRUD, file storage, and hydration."""
 
     _DEFAULT_EXTRACTORS: dict[str, str] = {
-        "pdf": "TextractExtractor",
+        "pdf": "PyMuPDFExtractor",
         "txt": "PlainTextExtractor",
         "md": "PlainTextExtractor",
         "rst": "PlainTextExtractor",

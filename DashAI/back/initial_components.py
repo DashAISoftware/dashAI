@@ -290,7 +290,6 @@ from DashAI.back.models.RAG.extractors import (
     PlainTextExtractor,
     PyMuPDFExtractor,
     PypdfExtractor,
-    TextractExtractor,
 )
 from DashAI.back.models.RAG.prompts import (
     CustomAugmentationPrompt,
@@ -652,7 +651,6 @@ def get_initial_components():
         TokenChunkModel,
         # Extractors
         EasyOCRExtractor,
-        TextractExtractor,
         PypdfExtractor,
         PyMuPDFExtractor,
         PlainTextExtractor,

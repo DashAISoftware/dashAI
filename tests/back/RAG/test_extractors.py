@@ -7,7 +7,6 @@ from DashAI.back.models.RAG.extractors.base_extractor import BaseExtractor
 from DashAI.back.models.RAG.extractors.plain_text_extractor import PlainTextExtractor
 from DashAI.back.models.RAG.extractors.pymupdf_extractor import PyMuPDFExtractor
 from DashAI.back.models.RAG.extractors.pypdf2_extractor import PypdfExtractor
-from DashAI.back.models.RAG.extractors.textract_extractor import TextractExtractor
 
 
 class TestBaseExtractor:
@@ -72,15 +71,6 @@ class TestPyMuPDFExtractor:
 
     def test_get_metadata(self):
         metadata = PyMuPDFExtractor.get_metadata()
-        assert metadata["supported_file_types"] == ["pdf"]
-
-
-class TestTextractExtractor:
-    def test_supported_file_types(self):
-        assert TextractExtractor.SUPPORTED_FILE_TYPES == ["pdf"]
-
-    def test_get_metadata(self):
-        metadata = TextractExtractor.get_metadata()
         assert metadata["supported_file_types"] == ["pdf"]
 
 
@@ -161,7 +151,6 @@ class TestExtractorSchemaRegistration:
         components = resp.json()
         names = {c["name"] for c in components}
         expected = {
-            "TextractExtractor",
             "PypdfExtractor",
             "PyMuPDFExtractor",
             "PlainTextExtractor",
@@ -217,35 +206,6 @@ class TestPlainTextExtractorParams:
 
         schema = PlainTextExtractor.get_schema()
         assert "encoding" in schema["properties"]
-
-
-class TestTextractExtractorParams:
-    def test_defaults(self):
-        from DashAI.back.models.RAG.extractors.textract_extractor import (
-            TextractExtractor,
-        )
-
-        ext = TextractExtractor()
-        assert ext.language is None
-        assert ext.method is None
-
-    def test_custom_params(self):
-        from DashAI.back.models.RAG.extractors.textract_extractor import (
-            TextractExtractor,
-        )
-
-        ext = TextractExtractor(language="spa", method="tesseract")
-        assert ext.language == "spa"
-        assert ext.method == "tesseract"
-
-    def test_schema_has_params(self):
-        from DashAI.back.models.RAG.extractors.textract_extractor import (
-            TextractExtractor,
-        )
-
-        schema = TextractExtractor.get_schema()
-        assert "language" in schema["properties"]
-        assert "method" in schema["properties"]
 
 
 class TestPypdfExtractorParams:
