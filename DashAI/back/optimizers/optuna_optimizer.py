@@ -197,13 +197,20 @@ class OptunaOptimizer(BaseOptimizer):
 
         study.optimize(objective, n_trials=self.n_trials)
 
+        # Write the best values back onto the objects that actually declare them.
+        # `self.parameters` holds (owner, key, bounds, dtype) tuples built by
+        # ModelFactory, where `owner` may be a nested sub-component rather than the
+        # top-level model. Assigning to the wrapper instead leaves the sub-component
+        # holding whatever the last trial set, so the model that gets retrained and
+        # serialized is the last one tried, not the best one. This mirrors what
+        # `objective` already does above.
         best_params = study.best_params
-        best_model = self.model
-        for hyperparameter, value in best_params.items():
-            setattr(best_model, hyperparameter, value)
+        for obj, key, _bounds, _dtype in self.parameters:
+            if key in best_params:
+                setattr(obj, key, best_params[key])
 
-        self.model = best_model
         self.study = study
+        best_model = self.model
 
         return best_model, best_params
 

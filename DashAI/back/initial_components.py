@@ -125,7 +125,6 @@ from DashAI.back.exploration.explorers.parallel_categories import (
 from DashAI.back.exploration.explorers.parallel_cordinates import (
     ParallelCordinatesExplorer,
 )
-from DashAI.back.exploration.explorers.row_explorer import RowExplorer
 from DashAI.back.exploration.explorers.scatter_matrix import ScatterMatrixExplorer
 from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
@@ -561,7 +560,6 @@ def get_initial_components():
         DescribeExplorer,
         ScatterPlotExplorer,
         WordcloudExplorer,
-        RowExplorer,
         BoxPlotExplorer,
         MultiColumnBoxPlotExplorer,
         CorrelationMatrixExplorer,

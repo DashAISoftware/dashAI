@@ -60,6 +60,7 @@
     "errorCreatingNotebook": "Error creating notebook",
     "errorProcessingExplorer": "Error processing explorer: {{error}}",
     "explorerFailed": "An error occurred during processing the explorer.",
+    "explorerResultsUnavailable": "The results of this explorer are no longer available.",
     "failedToCreateDataset": "Could not create the dataset. Please check your file and configuration, then try again.",
     "failedToCreateDatasetFromNotebook": "Failed to create dataset from notebook",
     "failedToCreateExplorer": "Failed to create explorer",
@@ -303,6 +304,7 @@
     "position": "Position",
     "possibleIDColumns": "Possible ID Columns",
     "presetScale": "Preset Scale",
+    "processingTitle": "Processing your dataset...",
     "processingMessage": "This may take a few moments depending on the size of your data.",
     "proportion": "Proportion",
     "q1": "Q1",
@@ -475,5 +477,6 @@
     "translation": "Translation",
     "regression": "Regression",
     "eda": "EDA"
-  }
+  },
+  "unknownComponent": "Unknown component"
 }

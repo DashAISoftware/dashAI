@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Final, List
 
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -16,6 +16,11 @@ from DashAI.back.types.value_types import (
     Time,
     Timestamp,
 )
+
+# Dtypes that cannot be treated as numeric. Shared default for components
+# (explorers, converters) that accept the Categorical semantic type but only
+# when it is numerically encoded (an empty dtype means the dtype is unknown).
+NON_NUMERIC_DTYPES: Final[List[str]] = ["string", "bool", ""]
 
 
 def _get_dtype_arrow_map() -> Dict[str, Any]:
