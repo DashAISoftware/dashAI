@@ -20,6 +20,76 @@ from DashAI.back.models.base_model import BaseModel
 from DashAI.back.types.categorical import Categorical
 
 
+def _kernel_shap_facts(
+    explanation: dict, explainer_output: ArtifactGroup
+) -> Optional[dict]:
+    """Parse one explained instance into its raw prediction/SHAP facts.
+
+    Shared by :meth:`KernelShap.story` (which phrases these facts as a
+    deterministic narrative) and :meth:`KernelShap.insight_facts` (which
+    hands them, unphrased, to an AI insight analyzer) so the instance
+    parsing and SHAP ranking only live in one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`KernelShap.explain_instance`.
+    explainer_output : ArtifactGroup
+        The group previously returned by :meth:`KernelShap.plot`, titled
+        ``"Instance {n}"``.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"predicted_name", "predicted_prob", "top_features",
+        "feature_list"}``, where ``top_features`` is a list of
+        ``{"feature", "shap_value"}`` dicts (the top-3 features by absolute
+        SHAP value for the predicted class) and ``feature_list`` is the
+        same ranking pre-formatted as ``"name (+0.123)"`` entries. Returns
+        ``None`` if ``explainer_output`` is not a recognised "Instance N"
+        group.
+    """
+    if not isinstance(explainer_output, ArtifactGroup):
+        return None
+    match = re.match(r"Instance (\d+)", explainer_output.title or "")
+    if match is None:
+        return None
+    index = int(match.group(1)) - 1
+    if index not in explanation:
+        return None
+
+    # Lazy import
+    import numpy as np
+
+    feature_names = explanation["metadata"]["feature_names"]
+    target_names = explanation["metadata"]["target_names"]
+    instance = explanation[index]
+
+    model_prediction = np.asarray(instance["model_prediction"])
+    predicted_class = int(np.argmax(model_prediction))
+    predicted_name = target_names[predicted_class]
+    predicted_prob = float(model_prediction[predicted_class])
+
+    class_shap_values = np.asarray(instance["shap_values"])[predicted_class]
+    ranking = sorted(
+        zip(feature_names, class_shap_values, strict=True),
+        key=lambda pair: abs(pair[1]),
+        reverse=True,
+    )
+    top = ranking[:3]
+    feature_list = ", ".join(f"{name} ({value:+.3f})" for name, value in top)
+    top_features = [
+        {"feature": name, "shap_value": float(value)} for name, value in top
+    ]
+
+    return {
+        "predicted_name": predicted_name,
+        "predicted_prob": predicted_prob,
+        "top_features": top_features,
+        "feature_list": feature_list,
+    }
+
+
 class KernelShapSchema(BaseSchema):
     """Schema for KernelShap explainer hyperparameters.
 
@@ -669,33 +739,13 @@ class KernelShap(BaseLocalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not a recognised "Instance N" group.
         """
-        match = re.match(r"Instance (\d+)", explainer_output.title or "")
-        if match is None:
-            return None
-        index = int(match.group(1)) - 1
-        if index not in explanation:
+        facts = _kernel_shap_facts(explanation, explainer_output)
+        if facts is None:
             return None
 
-        # Lazy import
-        import numpy as np
-
-        feature_names = explanation["metadata"]["feature_names"]
-        target_names = explanation["metadata"]["target_names"]
-        instance = explanation[index]
-
-        model_prediction = np.asarray(instance["model_prediction"])
-        predicted_class = int(np.argmax(model_prediction))
-        predicted_name = target_names[predicted_class]
-        predicted_prob = float(model_prediction[predicted_class])
-
-        class_shap_values = np.asarray(instance["shap_values"])[predicted_class]
-        ranking = sorted(
-            zip(feature_names, class_shap_values, strict=True),
-            key=lambda pair: abs(pair[1]),
-            reverse=True,
-        )
-        top = ranking[:3]
-        feature_list = ", ".join(f"{name} ({value:+.3f})" for name, value in top)
+        predicted_name = facts["predicted_name"]
+        predicted_prob = facts["predicted_prob"]
+        feature_list = facts["feature_list"]
 
         return format_story(
             {
@@ -740,3 +790,30 @@ class KernelShap(BaseLocalExplainer):
             predicted_prob=predicted_prob,
             feature_list=feature_list,
         )
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: ArtifactGroup
+    ) -> Optional[dict]:
+        """Raw facts behind one explained instance's SHAP attributions.
+
+        Same underlying data as :meth:`story`, but returned as plain values
+        (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain_instance`.
+        explainer_output : ArtifactGroup
+            The group previously returned by :meth:`plot`, titled
+            ``"Instance {n}"``.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"predicted_name", "predicted_prob", "top_features",
+            "feature_list"}``, or ``None`` if ``explainer_output`` is not a
+            recognised "Instance N" group.
+        """
+        return _kernel_shap_facts(explanation, explainer_output)

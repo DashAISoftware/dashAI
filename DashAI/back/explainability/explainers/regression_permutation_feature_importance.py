@@ -134,6 +134,68 @@ class RegressionPermutationFeatureImportanceSchema(BaseSchema):
     )  # type: ignore
 
 
+def _regression_permutation_feature_importance_facts(
+    explanation: dict,
+    explainer_output: Union[Artifact, ArtifactGroup],
+    scoring_name: str,
+) -> Optional[dict]:
+    """Parse the top-3 ranked feature importances into raw ranking facts.
+
+    Shared by :meth:`RegressionPermutationFeatureImportance.story` (which
+    phrases these facts as a deterministic narrative) and
+    :meth:`RegressionPermutationFeatureImportance.insight_facts` (which
+    hands them, unphrased, to an AI insight analyzer) so the ranking parsing
+    only lives in one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`RegressionPermutationFeatureImportance.explain`.
+    explainer_output : Union[Artifact, ArtifactGroup]
+        The artifact previously returned by
+        :meth:`RegressionPermutationFeatureImportance.plot`.
+    scoring_name : str
+        Name of the regression scoring metric used to compute the
+        importances (e.g. ``"r2"``), so consumers can describe what a drop
+        in it means without needing the explainer instance.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"scoring", "top_features", "positive_features",
+        "non_positive_features"}``, where each ``"*_features"`` value is a
+        list of ``{"feature", "importance_mean"}`` dicts ranked by
+        importance (descending), among the top 3. Returns ``None`` if
+        ``explainer_output`` is a grouped artifact (this explainer only
+        produces a single bar chart, unlike the classification variant).
+    """
+    if isinstance(explainer_output, ArtifactGroup):
+        return None
+
+    features = explanation["features"]
+    means = explanation["importances_mean"]
+
+    ranking = sorted(
+        zip(features, means, strict=True), key=lambda pair: pair[1], reverse=True
+    )
+    top = ranking[:3]
+
+    top_features = [{"feature": name, "importance_mean": mean} for name, mean in top]
+    positive_features = [
+        {"feature": name, "importance_mean": mean} for name, mean in top if mean > 0
+    ]
+    non_positive_features = [
+        {"feature": name, "importance_mean": mean} for name, mean in top if mean <= 0
+    ]
+
+    return {
+        "scoring": scoring_name,
+        "top_features": top_features,
+        "positive_features": positive_features,
+        "non_positive_features": non_positive_features,
+    }
+
+
 class RegressionPermutationFeatureImportance(BaseGlobalExplainer):
     """Global permutation feature importance for regression models.
 
@@ -339,18 +401,23 @@ class RegressionPermutationFeatureImportance(BaseGlobalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not the importance bar chart.
         """
-        if isinstance(explainer_output, ArtifactGroup):
+        facts = _regression_permutation_feature_importance_facts(
+            explanation, explainer_output, self.scoring_name
+        )
+        if facts is None:
             return None
 
-        features = explanation["features"]
-        means = explanation["importances_mean"]
-
-        ranking = sorted(
-            zip(features, means, strict=True), key=lambda pair: pair[1], reverse=True
-        )
-        top = ranking[:3]
-        positive = [(name, mean) for name, mean in top if mean > 0]
-        non_positive = [(name, mean) for name, mean in top if mean <= 0]
+        top = [
+            (item["feature"], item["importance_mean"]) for item in facts["top_features"]
+        ]
+        positive = [
+            (item["feature"], item["importance_mean"])
+            for item in facts["positive_features"]
+        ]
+        non_positive = [
+            (item["feature"], item["importance_mean"])
+            for item in facts["non_positive_features"]
+        ]
 
         # All top-3 features actually decreased the score when shuffled:
         # "relies most on" the whole ranked list is accurate as-is.
@@ -494,4 +561,32 @@ class RegressionPermutationFeatureImportance(BaseGlobalExplainer):
                 non_positive_list=non_positive_list,
                 scoring=self.scoring_name,
             ),
+        )
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: Union[Artifact, ArtifactGroup]
+    ) -> Optional[dict]:
+        """Raw facts behind the ranked feature importances.
+
+        Same underlying data as :meth:`story`, but returned as plain values
+        (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain`.
+        explainer_output : Union[Artifact, ArtifactGroup]
+            The artifact previously returned by :meth:`plot`.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"scoring", "top_features", "positive_features",
+            "non_positive_features"}``, or ``None`` if ``explainer_output``
+            is not the importance bar chart.
+        """
+        return _regression_permutation_feature_importance_facts(
+            explanation, explainer_output, self.scoring_name
         )

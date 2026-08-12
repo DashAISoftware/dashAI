@@ -123,6 +123,61 @@ class DiceCounterfactualSchema(BaseSchema):
     )  # type: ignore
 
 
+def _dice_counterfactual_facts(
+    explanation: dict, explainer_output: ArtifactGroup
+) -> Optional[dict]:
+    """Parse one explained instance into its raw counterfactual facts.
+
+    Shared by :meth:`DiceCounterfactual.story` (which phrases these facts as
+    a deterministic narrative) and :meth:`DiceCounterfactual.insight_facts`
+    (which hands them, unphrased, to an AI insight analyzer) so the
+    instance/counterfactual lookup only lives in one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`DiceCounterfactual.explain_instance`.
+    explainer_output : ArtifactGroup
+        One of the groups previously returned by
+        :meth:`DiceCounterfactual.plot`, titled ``"Instance {n}"``.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"predicted_name", "predicted_prob", "counterfactuals"}``, where
+        ``"counterfactuals"`` is a list of ``{"cf_name", "changed_features"}``
+        (possibly empty, if DiCE could not generate any), or ``None`` if
+        ``explainer_output`` is not a recognised "Instance N" group.
+    """
+    match = re.match(r"Instance (\d+)", explainer_output.title or "")
+    if match is None:
+        return None
+    index = int(match.group(1)) - 1
+    if index not in explanation:
+        return None
+
+    metadata = explanation["metadata"]
+    target_names = metadata["target_names"]
+    instance = explanation[index]
+
+    predicted_class = instance["predicted_class"]
+    predicted_name = target_names[predicted_class]
+    predicted_prob = round(instance["model_prediction"][predicted_class], 3)
+    counterfactuals = instance["counterfactuals"]
+
+    return {
+        "predicted_name": predicted_name,
+        "predicted_prob": predicted_prob,
+        "counterfactuals": [
+            {
+                "cf_name": target_names[counterfactual["predicted_class"]],
+                "changed_features": counterfactual["changed_features"],
+            }
+            for counterfactual in counterfactuals
+        ],
+    }
+
+
 class _SklearnProbaShim:
     """Adapter exposing the sklearn-native interface DiCE expects.
 
@@ -454,21 +509,13 @@ class DiceCounterfactual(BaseLocalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not a recognised "Instance N" group.
         """
-        match = re.match(r"Instance (\d+)", explainer_output.title or "")
-        if match is None:
-            return None
-        index = int(match.group(1)) - 1
-        if index not in explanation:
+        facts = _dice_counterfactual_facts(explanation, explainer_output)
+        if facts is None:
             return None
 
-        metadata = explanation["metadata"]
-        target_names = metadata["target_names"]
-        instance = explanation[index]
-
-        predicted_class = instance["predicted_class"]
-        predicted_name = target_names[predicted_class]
-        predicted_prob = round(instance["model_prediction"][predicted_class], 3)
-        counterfactuals = instance["counterfactuals"]
+        predicted_name = facts["predicted_name"]
+        predicted_prob = facts["predicted_prob"]
+        counterfactuals = facts["counterfactuals"]
 
         if not counterfactuals:
             return format_story(
@@ -515,7 +562,7 @@ class DiceCounterfactual(BaseLocalExplainer):
         )
 
         for cf_idx, counterfactual in enumerate(counterfactuals):
-            cf_name = target_names[counterfactual["predicted_class"]]
+            cf_name = counterfactual["cf_name"]
             changed_features = counterfactual["changed_features"]
             if changed_features:
                 changed = ", ".join(changed_features)
@@ -564,3 +611,30 @@ class DiceCounterfactual(BaseLocalExplainer):
             story = concat_stories(story, line, separator="\n")
 
         return story
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: ArtifactGroup
+    ) -> Optional[dict]:
+        """Raw facts behind one explained instance's counterfactuals.
+
+        Same underlying data as :meth:`story`, but returned as plain values
+        (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain_instance`.
+        explainer_output : ArtifactGroup
+            The group previously returned by :meth:`plot`, titled
+            ``"Instance {n}"``.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"predicted_name", "predicted_prob", "counterfactuals"}``, or
+            ``None`` if ``explainer_output`` is not a recognised
+            "Instance N" group.
+        """
+        return _dice_counterfactual_facts(explanation, explainer_output)

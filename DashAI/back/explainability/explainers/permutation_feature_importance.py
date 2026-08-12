@@ -143,6 +143,77 @@ class PermutationFeatureImportanceSchema(BaseSchema):
     )  # type: ignore
 
 
+def _permutation_feature_importance_facts(
+    explanation: dict,
+    explainer_output: Union[Artifact, ArtifactGroup],
+    scoring_name: str,
+) -> Optional[dict]:
+    """Parse one "Top N features" group into its raw ranking facts.
+
+    Shared by :meth:`PermutationFeatureImportance.story` (which phrases
+    these facts as a deterministic narrative) and
+    :meth:`PermutationFeatureImportance.insight_facts` (which hands them,
+    unphrased, to an AI insight analyzer) so the ranking parsing only lives
+    in one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`PermutationFeatureImportance.explain`.
+    explainer_output : Union[Artifact, ArtifactGroup]
+        One of the groups previously returned by
+        :meth:`PermutationFeatureImportance.plot`, titled
+        ``"Top {count} features"``.
+    scoring_name : str
+        Human readable name of the scoring metric used to compute the
+        importances (e.g. ``"accuracy"``), so consumers can describe what a
+        drop in it means without needing the explainer instance.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"count", "scoring", "top_features", "positive_features",
+        "non_positive_features"}``, where each ``"*_features"`` value is a
+        list of ``{"feature", "importance_mean"}`` dicts ranked by
+        importance (descending). Returns ``None`` if ``explainer_output`` is
+        not a recognised "Top N features" group, or the requested top-N is
+        empty.
+    """
+    if not isinstance(explainer_output, ArtifactGroup):
+        return None
+
+    match = re.match(r"Top (\d+) features", explainer_output.title or "")
+    if match is None:
+        return None
+    count = int(match.group(1))
+
+    features = explanation["features"]
+    means = explanation["importances_mean"]
+
+    ranking = sorted(
+        zip(features, means, strict=True), key=lambda pair: pair[1], reverse=True
+    )
+    top = ranking[:count]
+    if not top:
+        return None
+
+    top_features = [{"feature": name, "importance_mean": mean} for name, mean in top]
+    positive_features = [
+        {"feature": name, "importance_mean": mean} for name, mean in top if mean > 0
+    ]
+    non_positive_features = [
+        {"feature": name, "importance_mean": mean} for name, mean in top if mean <= 0
+    ]
+
+    return {
+        "count": count,
+        "scoring": scoring_name,
+        "top_features": top_features,
+        "positive_features": positive_features,
+        "non_positive_features": non_positive_features,
+    }
+
+
 class PermutationFeatureImportance(BaseGlobalExplainer):
     """Global explainer that ranks features by the drop
     in model performance when permuted.
@@ -617,27 +688,26 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not a recognised "Top N features" group.
         """
-        if not isinstance(explainer_output, ArtifactGroup):
-            return None
-
-        match = re.match(r"Top (\d+) features", explainer_output.title or "")
-        if match is None:
-            return None
-        count = int(match.group(1))
-
-        features = explanation["features"]
-        means = explanation["importances_mean"]
-
-        ranking = sorted(
-            zip(features, means, strict=True), key=lambda pair: pair[1], reverse=True
-        )
-        top = ranking[:count]
-        if not top:
-            return None
-
         scoring_name = self.scoring.__name__.replace("_score", "").replace("_", " ")
-        positive = [(name, mean) for name, mean in top if mean > 0]
-        non_positive = [(name, mean) for name, mean in top if mean <= 0]
+        facts = _permutation_feature_importance_facts(
+            explanation, explainer_output, scoring_name
+        )
+        if facts is None:
+            return None
+
+        count = facts["count"]
+        scoring_name = facts["scoring"]
+        top = [
+            (item["feature"], item["importance_mean"]) for item in facts["top_features"]
+        ]
+        positive = [
+            (item["feature"], item["importance_mean"])
+            for item in facts["positive_features"]
+        ]
+        non_positive = [
+            (item["feature"], item["importance_mean"])
+            for item in facts["non_positive_features"]
+        ]
 
         # All shown features actually decreased the score when shuffled:
         # "relies most on" the whole ranked list is accurate as-is.
@@ -783,4 +853,34 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 non_positive_list=non_positive_list,
                 scoring=scoring_name,
             ),
+        )
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: Union[Artifact, ArtifactGroup]
+    ) -> Optional[dict]:
+        """Raw facts behind one "Top N features" permutation importance group.
+
+        Same underlying data as :meth:`story`, but returned as plain values
+        (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain`.
+        explainer_output : Union[Artifact, ArtifactGroup]
+            One of the groups previously returned by :meth:`plot`, titled
+            ``"Top {count} features"``.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"count", "scoring", "top_features", "positive_features",
+            "non_positive_features"}``, or ``None`` if ``explainer_output``
+            is not a recognised "Top N features" group.
+        """
+        scoring_name = self.scoring.__name__.replace("_score", "").replace("_", " ")
+        return _permutation_feature_importance_facts(
+            explanation, explainer_output, scoring_name
         )

@@ -18,6 +18,82 @@ from DashAI.back.explainability.story import format_story
 from DashAI.back.models.base_model import BaseModel
 
 
+def _regression_kernel_shap_facts(
+    explanation: dict, explainer_output: ArtifactGroup
+) -> Optional[dict]:
+    """Parse one explained instance into its raw prediction/SHAP facts.
+
+    Shared by :meth:`RegressionKernelShap.story` (which phrases these facts
+    as a deterministic narrative) and :meth:`RegressionKernelShap.insight_facts`
+    (which hands them, unphrased, to an AI insight analyzer) so the instance
+    parsing and SHAP ranking only live in one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`RegressionKernelShap.explain_instance`.
+    explainer_output : ArtifactGroup
+        The group previously returned by :meth:`RegressionKernelShap.plot`,
+        titled ``"Instance {n}"``.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"output_column", "prediction", "base_value", "delta",
+        "top_features", "top_features_str"}``, where ``top_features`` is a
+        list of ``{"feature", "value", "shap_value"}`` dicts (the top-3
+        features by absolute SHAP value) and ``top_features_str`` is the
+        same ranking pre-formatted as ``"name=value (+0.123)"`` entries.
+        Returns ``None`` if ``explainer_output`` is not a recognised
+        "Instance N" group.
+    """
+    if not isinstance(explainer_output, ArtifactGroup):
+        return None
+    match = re.match(r"Instance (\d+)", explainer_output.title or "")
+    if match is None:
+        return None
+    index = int(match.group(1)) - 1
+    if index not in explanation:
+        return None
+
+    metadata = explanation["metadata"]
+    feature_names = metadata["feature_names"]
+    output_column = metadata["output_column"]
+    base_value = explanation["base_value"]
+    instance = explanation[index]
+
+    prediction = instance["model_prediction"]
+    delta = round(prediction - base_value, 3)
+
+    ranking = sorted(
+        zip(
+            feature_names,
+            instance["instance_values"],
+            instance["shap_values"],
+            strict=True,
+        ),
+        key=lambda row: abs(row[2]),
+        reverse=True,
+    )
+    top = ranking[:3]
+    top_features_str = ", ".join(
+        f"{name}={value} ({shap:+})" for name, value, shap in top
+    )
+    top_features = [
+        {"feature": name, "value": value, "shap_value": shap}
+        for name, value, shap in top
+    ]
+
+    return {
+        "output_column": output_column,
+        "prediction": prediction,
+        "base_value": base_value,
+        "delta": delta,
+        "top_features": top_features,
+        "top_features_str": top_features_str,
+    }
+
+
 class RegressionKernelShapSchema(BaseSchema):
     """Schema for the regression Kernel SHAP explainer hyperparameters.
 
@@ -353,36 +429,15 @@ class RegressionKernelShap(BaseLocalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not a recognised "Instance N" group.
         """
-        match = re.match(r"Instance (\d+)", explainer_output.title or "")
-        if match is None:
-            return None
-        index = int(match.group(1)) - 1
-        if index not in explanation:
+        facts = _regression_kernel_shap_facts(explanation, explainer_output)
+        if facts is None:
             return None
 
-        metadata = explanation["metadata"]
-        feature_names = metadata["feature_names"]
-        output_column = metadata["output_column"]
-        base_value = explanation["base_value"]
-        instance = explanation[index]
-
-        prediction = instance["model_prediction"]
-        delta = round(prediction - base_value, 3)
-
-        ranking = sorted(
-            zip(
-                feature_names,
-                instance["instance_values"],
-                instance["shap_values"],
-                strict=True,
-            ),
-            key=lambda row: abs(row[2]),
-            reverse=True,
-        )
-        top = ranking[:3]
-        top_features = ", ".join(
-            f"{name}={value} ({shap:+})" for name, value, shap in top
-        )
+        output_column = facts["output_column"]
+        prediction = facts["prediction"]
+        delta = facts["delta"]
+        base_value = facts["base_value"]
+        top_features = facts["top_features_str"]
 
         return format_story(
             {
@@ -418,3 +473,30 @@ class RegressionKernelShap(BaseLocalExplainer):
             base_value=base_value,
             top_features=top_features,
         )
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: ArtifactGroup
+    ) -> Optional[dict]:
+        """Raw facts behind one explained instance's SHAP attributions.
+
+        Same underlying data as :meth:`story`, but returned as plain values
+        (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain_instance`.
+        explainer_output : ArtifactGroup
+            The group previously returned by :meth:`plot`, titled
+            ``"Instance {n}"``.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"output_column", "prediction", "base_value", "delta",
+            "top_features", "top_features_str"}``, or ``None`` if
+            ``explainer_output`` is not a recognised "Instance N" group.
+        """
+        return _regression_kernel_shap_facts(explanation, explainer_output)

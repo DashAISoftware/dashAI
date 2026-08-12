@@ -18,6 +18,67 @@ from DashAI.back.explainability.story import format_story
 from DashAI.back.models.base_model import BaseModel
 
 
+def _token_ablation_facts(
+    explanation: dict, explainer_output: ArtifactGroup
+) -> Optional[dict]:
+    """Parse one explained instance into its raw token-ablation facts.
+
+    Shared by :meth:`TokenAblation.story` (which phrases these facts as a
+    deterministic narrative) and :meth:`TokenAblation.insight_facts` (which
+    hands them, unphrased, to an AI insight analyzer) so the instance lookup
+    and top-token ranking only live in one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`TokenAblation.explain_instance`.
+    explainer_output : ArtifactGroup
+        The group previously returned by :meth:`TokenAblation.plot`, titled
+        ``"Instance {n}"``.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"index", "text", "predicted_name", "predicted_prob",
+        "top_tokens"}``, where ``top_tokens`` is the list of up to 3
+        ``[labeled_token, importance]`` pairs with the largest absolute
+        probability drop (in descending order of influence; each
+        ``labeled_token`` is ``"{token} ({position})"``), or ``None`` if
+        ``explainer_output`` is not a recognised "Instance N" group.
+    """
+    match = re.match(r"Instance (\d+)", explainer_output.title or "")
+    if match is None:
+        return None
+    index = int(match.group(1)) - 1
+    if index not in explanation:
+        return None
+
+    target_names = explanation["metadata"]["target_names"]
+    instance = explanation[index]
+
+    predicted_class = instance["predicted_class"]
+    predicted_name = target_names[predicted_class]
+    predicted_prob = round(instance["model_prediction"][predicted_class], 3)
+
+    labeled_tokens = [
+        f"{token} ({position})" for position, token in enumerate(instance["tokens"])
+    ]
+    ranking = sorted(
+        zip(labeled_tokens, instance["token_importances"], strict=True),
+        key=lambda pair: abs(pair[1]),
+        reverse=True,
+    )
+    top_tokens = [list(pair) for pair in ranking[:3]]
+
+    return {
+        "index": index,
+        "text": instance["text"],
+        "predicted_name": predicted_name,
+        "predicted_prob": predicted_prob,
+        "top_tokens": top_tokens,
+    }
+
+
 class TokenAblationSchema(BaseSchema):
     """Schema for the Token Ablation explainer hyperparameters.
 
@@ -374,31 +435,12 @@ class TokenAblation(BaseLocalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not a recognised "Instance N" group.
         """
-        match = re.match(r"Instance (\d+)", explainer_output.title or "")
-        if match is None:
-            return None
-        index = int(match.group(1)) - 1
-        if index not in explanation:
+        facts = _token_ablation_facts(explanation, explainer_output)
+        if facts is None:
             return None
 
-        target_names = explanation["metadata"]["target_names"]
-        instance = explanation[index]
-
-        predicted_class = instance["predicted_class"]
-        predicted_name = target_names[predicted_class]
-        predicted_prob = round(instance["model_prediction"][predicted_class], 3)
-
-        labeled_tokens = [
-            f"{token} ({position})" for position, token in enumerate(instance["tokens"])
-        ]
-        ranking = sorted(
-            zip(labeled_tokens, instance["token_importances"], strict=True),
-            key=lambda pair: abs(pair[1]),
-            reverse=True,
-        )
-        top = ranking[:3]
         top_tokens = ", ".join(
-            f"'{token}' ({importance:+})" for token, importance in top
+            f"'{token}' ({importance:+})" for token, importance in facts["top_tokens"]
         )
 
         return format_story(
@@ -428,7 +470,34 @@ class TokenAblation(BaseLocalExplainer):
                     "最具影响力的token：{top_tokens}。"
                 ),
             },
-            predicted_name=predicted_name,
-            predicted_prob=predicted_prob,
+            predicted_name=facts["predicted_name"],
+            predicted_prob=facts["predicted_prob"],
             top_tokens=top_tokens,
         )
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: ArtifactGroup
+    ) -> Optional[dict]:
+        """Raw facts behind one explained instance's token ablation results.
+
+        Same underlying data as :meth:`story`, but returned as plain values
+        (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain_instance`.
+        explainer_output : ArtifactGroup
+            The group previously returned by :meth:`plot`, titled
+            ``"Instance {n}"``.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"index", "text", "predicted_name", "predicted_prob",
+            "top_tokens"}``, or ``None`` if ``explainer_output`` is not a
+            recognised "Instance N" group.
+        """
+        return _token_ablation_facts(explanation, explainer_output)

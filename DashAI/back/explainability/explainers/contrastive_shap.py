@@ -19,6 +19,79 @@ from DashAI.back.explainability.story import format_story
 from DashAI.back.models.base_model import BaseModel
 
 
+def _contrastive_shap_facts(
+    explanation: dict, explainer_output: ArtifactGroup
+) -> Optional[dict]:
+    """Parse one instance's contrastive SHAP explanation into raw facts.
+
+    Shared by :meth:`ContrastiveShap.story` (which phrases these facts as a
+    deterministic narrative) and :meth:`ContrastiveShap.insight_facts`
+    (which hands them, unphrased, to an AI insight analyzer) so the ranking
+    of features by ``|fact - foil|`` attribution only lives in one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`ContrastiveShap.explain_instance`.
+    explainer_output : ArtifactGroup
+        The group previously returned by :meth:`ContrastiveShap.plot`,
+        titled ``"Instance {n}"``.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"fact_name", "fact_prob", "foil_name", "foil_prob",
+        "top_features"}``, where ``top_features`` is a list of up to 3
+        ``{"feature", "value", "delta"}`` dicts sorted by ``|delta|``
+        descending, or ``None`` if ``explainer_output`` is not a recognised
+        "Instance N" group.
+    """
+    if not isinstance(explainer_output, ArtifactGroup):
+        return None
+    match = re.match(r"Instance (\d+)", explainer_output.title or "")
+    if match is None:
+        return None
+    index = int(match.group(1)) - 1
+    if index not in explanation:
+        return None
+
+    metadata = explanation["metadata"]
+    feature_names = metadata["feature_names"]
+    target_names = metadata["target_names"]
+    instance = explanation[index]
+
+    fact_class = instance["fact_class"]
+    foil_class = instance["foil_class"]
+    fact_name = target_names[fact_class]
+    foil_name = target_names[foil_class]
+    prediction = instance["model_prediction"]
+    fact_prob = round(prediction[fact_class], 3)
+    foil_prob = round(prediction[foil_class], 3)
+
+    ranking = sorted(
+        zip(
+            feature_names,
+            instance["instance_values"],
+            instance["delta_values"],
+            strict=True,
+        ),
+        key=lambda row: abs(row[2]),
+        reverse=True,
+    )
+    top_features = [
+        {"feature": name, "value": value, "delta": delta}
+        for name, value, delta in ranking[:3]
+    ]
+
+    return {
+        "fact_name": fact_name,
+        "fact_prob": fact_prob,
+        "foil_name": foil_name,
+        "foil_prob": foil_prob,
+        "top_features": top_features,
+    }
+
+
 class ContrastiveShapSchema(BaseSchema):
     """Schema for ContrastiveShap explainer hyperparameters.
 
@@ -477,38 +550,13 @@ class ContrastiveShap(BaseLocalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not a recognised "Instance N" group.
         """
-        match = re.match(r"Instance (\d+)", explainer_output.title or "")
-        if match is None:
-            return None
-        index = int(match.group(1)) - 1
-        if index not in explanation:
+        facts = _contrastive_shap_facts(explanation, explainer_output)
+        if facts is None:
             return None
 
-        metadata = explanation["metadata"]
-        feature_names = metadata["feature_names"]
-        target_names = metadata["target_names"]
-        instance = explanation[index]
-
-        fact_class = instance["fact_class"]
-        foil_class = instance["foil_class"]
-        fact_name = target_names[fact_class]
-        foil_name = target_names[foil_class]
-        prediction = instance["model_prediction"]
-        fact_prob = round(prediction[fact_class], 3)
-        foil_prob = round(prediction[foil_class], 3)
-
-        ranking = sorted(
-            zip(
-                feature_names,
-                instance["instance_values"],
-                instance["delta_values"],
-                strict=True,
-            ),
-            key=lambda row: abs(row[2]),
-            reverse=True,
+        top_features = ", ".join(
+            f"{item['feature']}={item['value']}" for item in facts["top_features"]
         )
-        top = ranking[:3]
-        top_features = ", ".join(f"{name}={value}" for name, value, _ in top)
 
         return format_story(
             {
@@ -537,9 +585,36 @@ class ContrastiveShap(BaseLocalExplainer):
                     "（p={foil_prob}），主要原因是：{top_features}。"
                 ),
             },
-            fact_name=fact_name,
-            fact_prob=fact_prob,
-            foil_name=foil_name,
-            foil_prob=foil_prob,
+            fact_name=facts["fact_name"],
+            fact_prob=facts["fact_prob"],
+            foil_name=facts["foil_name"],
+            foil_prob=facts["foil_prob"],
             top_features=top_features,
         )
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: ArtifactGroup
+    ) -> Optional[dict]:
+        """Raw facts behind one instance's contrastive SHAP explanation.
+
+        Same underlying data as :meth:`story`, but returned as plain values
+        (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain_instance`.
+        explainer_output : ArtifactGroup
+            The group previously returned by :meth:`plot`, titled
+            ``"Instance {n}"``.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"fact_name", "fact_prob", "foil_name", "foil_prob",
+            "top_features"}``, or ``None`` if ``explainer_output`` is not a
+            recognised "Instance N" group.
+        """
+        return _contrastive_shap_facts(explanation, explainer_output)

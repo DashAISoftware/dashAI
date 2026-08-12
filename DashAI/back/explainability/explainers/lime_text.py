@@ -17,6 +17,60 @@ from DashAI.back.explainability.story import format_story
 from DashAI.back.models.base_model import BaseModel
 
 
+def _lime_text_facts(
+    explanation: dict, explainer_output: ArtifactGroup
+) -> Optional[dict]:
+    """Parse one explained instance into its raw LIME word-attribution facts.
+
+    Shared by :meth:`LimeText.story` (which phrases these facts as a
+    deterministic narrative) and :meth:`LimeText.insight_facts` (which hands
+    them, unphrased, to an AI insight analyzer) so the instance lookup and
+    top-word ranking only live in one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`LimeText.explain_instance`.
+    explainer_output : ArtifactGroup
+        The group previously returned by :meth:`LimeText.plot`, titled
+        ``"Instance {n}"``.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"index", "text", "predicted_name", "predicted_prob",
+        "top_words"}``, where ``top_words`` is the list of up to 3
+        ``[word, weight]`` pairs with the largest absolute weight (in
+        descending order of influence), or ``None`` if ``explainer_output``
+        is not a recognised "Instance N" group.
+    """
+    match = re.match(r"Instance (\d+)", explainer_output.title or "")
+    if match is None:
+        return None
+    index = int(match.group(1)) - 1
+    if index not in explanation:
+        return None
+
+    target_names = explanation["metadata"]["target_names"]
+    instance = explanation[index]
+
+    predicted_class = instance["predicted_class"]
+    predicted_name = target_names[predicted_class]
+    predicted_prob = round(instance["model_prediction"][predicted_class], 3)
+
+    top_words = sorted(
+        instance["word_weights"], key=lambda pair: abs(pair[1]), reverse=True
+    )[:3]
+
+    return {
+        "index": index,
+        "text": instance["text"],
+        "predicted_name": predicted_name,
+        "predicted_prob": predicted_prob,
+        "top_words": top_words,
+    }
+
+
 class LimeTextSchema(BaseSchema):
     """Schema for the LIME text explainer hyperparameters.
 
@@ -335,24 +389,13 @@ class LimeText(BaseLocalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not a recognised "Instance N" group.
         """
-        match = re.match(r"Instance (\d+)", explainer_output.title or "")
-        if match is None:
-            return None
-        index = int(match.group(1)) - 1
-        if index not in explanation:
+        facts = _lime_text_facts(explanation, explainer_output)
+        if facts is None:
             return None
 
-        target_names = explanation["metadata"]["target_names"]
-        instance = explanation[index]
-
-        predicted_class = instance["predicted_class"]
-        predicted_name = target_names[predicted_class]
-        predicted_prob = round(instance["model_prediction"][predicted_class], 3)
-
-        top = sorted(
-            instance["word_weights"], key=lambda pair: abs(pair[1]), reverse=True
-        )[:3]
-        top_words = ", ".join(f"'{word}' ({weight:+})" for word, weight in top)
+        top_words = ", ".join(
+            f"'{word}' ({weight:+})" for word, weight in facts["top_words"]
+        )
 
         return format_story(
             {
@@ -381,7 +424,34 @@ class LimeText(BaseLocalExplainer):
                     "最具影响力的词：{top_words}。"
                 ),
             },
-            predicted_name=predicted_name,
-            predicted_prob=predicted_prob,
+            predicted_name=facts["predicted_name"],
+            predicted_prob=facts["predicted_prob"],
             top_words=top_words,
         )
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: ArtifactGroup
+    ) -> Optional[dict]:
+        """Raw facts behind one explained instance's LIME word attributions.
+
+        Same underlying data as :meth:`story`, but returned as plain values
+        (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain_instance`.
+        explainer_output : ArtifactGroup
+            The group previously returned by :meth:`plot`, titled
+            ``"Instance {n}"``.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"index", "text", "predicted_name", "predicted_prob",
+            "top_words"}``, or ``None`` if ``explainer_output`` is not a
+            recognised "Instance N" group.
+        """
+        return _lime_text_facts(explanation, explainer_output)

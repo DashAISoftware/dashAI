@@ -68,6 +68,92 @@ class GradCamSchema(BaseSchema):
     )  # type: ignore
 
 
+def _heatmap_hotspot(heatmap: List[List[float]]) -> tuple:
+    """Summarise a 2D heatmap as a coarse region plus its coverage.
+
+    Reduces a per-pixel heatmap to two facts an LLM can use without ever
+    seeing raw pixel coordinates: which quadrant of the image contains the
+    single most active pixel, and what fraction of the image is close to
+    that same peak activation (a proxy for whether the influential area is
+    a small, localised spot or spread across the image).
+
+    Parameters
+    ----------
+    heatmap : List[List[float]]
+        2D heatmap, normalised to ``[0, 1]``.
+
+    Returns
+    -------
+    tuple
+        ``(dominant_region, coverage_ratio)`` where ``dominant_region`` is
+        one of ``"top-left"``, ``"top-right"``, ``"bottom-left"`` or
+        ``"bottom-right"``, and ``coverage_ratio`` is the fraction of pixels
+        with a value of at least half the peak activation.
+    """
+    import numpy as np
+
+    array = np.asarray(heatmap, dtype=float)
+    height, width = array.shape
+    row, col = divmod(int(np.argmax(array)), width)
+
+    vertical = "top" if row < height / 2 else "bottom"
+    horizontal = "left" if col < width / 2 else "right"
+    dominant_region = f"{vertical}-{horizontal}"
+
+    peak = float(array.max())
+    coverage_ratio = round(float(np.mean(array >= peak / 2)), 3) if peak > 0 else 0.0
+
+    return dominant_region, coverage_ratio
+
+
+def _grad_cam_facts(
+    explanation: dict, explainer_output: ArtifactGroup
+) -> Optional[dict]:
+    """Parse one Grad-CAM image explanation into its raw facts.
+
+    Shared by :meth:`GradCam.story` (which phrases these facts as a
+    deterministic narrative) and :meth:`GradCam.insight_facts` (which hands
+    them, unphrased, to an AI insight analyzer) so the parsing only lives in
+    one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`GradCam.explain_instance`.
+    explainer_output : ArtifactGroup
+        One of the groups previously returned by :meth:`GradCam.plot`,
+        titled ``"Image {n}"``.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"index", "predicted_name", "predicted_prob", "dominant_region",
+        "coverage_ratio"}``, or ``None`` if ``explainer_output`` is not a
+        recognised "Image N" group.
+    """
+    match = re.match(r"Image (\d+)", explainer_output.title or "")
+    if match is None:
+        return None
+    index = int(match.group(1)) - 1
+    if index not in explanation:
+        return None
+
+    target_names = explanation["metadata"]["target_names"]
+    instance = explanation[index]
+    predicted_class = instance["predicted_class"]
+    predicted_name = target_names[predicted_class]
+    predicted_prob = round(instance["model_prediction"][predicted_class], 3)
+    dominant_region, coverage_ratio = _heatmap_hotspot(instance["heatmap"])
+
+    return {
+        "index": index,
+        "predicted_name": predicted_name,
+        "predicted_prob": predicted_prob,
+        "dominant_region": dominant_region,
+        "coverage_ratio": coverage_ratio,
+    }
+
+
 class GradCam(BaseLocalExplainer):
     """Gradient-based class activation maps for image classifiers.
 
@@ -307,18 +393,9 @@ class GradCam(BaseLocalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not a recognised "Image N" group.
         """
-        match = re.match(r"Image (\d+)", explainer_output.title or "")
-        if match is None:
+        facts = _grad_cam_facts(explanation, explainer_output)
+        if facts is None:
             return None
-        index = int(match.group(1)) - 1
-        if index not in explanation:
-            return None
-
-        target_names = explanation["metadata"]["target_names"]
-        instance = explanation[index]
-        predicted_class = instance["predicted_class"]
-        predicted_name = target_names[predicted_class]
-        predicted_prob = round(instance["model_prediction"][predicted_class], 3)
 
         return format_story(
             {
@@ -348,6 +425,34 @@ class GradCam(BaseLocalExplainer):
                     "高亮区域是激活值最支持该类别的区域。"
                 ),
             },
-            predicted_name=predicted_name,
-            predicted_prob=predicted_prob,
+            predicted_name=facts["predicted_name"],
+            predicted_prob=facts["predicted_prob"],
         )
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: ArtifactGroup
+    ) -> Optional[dict]:
+        """Raw facts behind one Grad-CAM image explanation.
+
+        Same underlying data as :meth:`story`, plus a coarse description of
+        the heatmap's hotspot (quadrant and coverage), returned as plain
+        values (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain_instance`.
+        explainer_output : ArtifactGroup
+            The group previously returned by :meth:`plot`, titled
+            ``"Image {n}"``.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"index", "predicted_name", "predicted_prob",
+            "dominant_region", "coverage_ratio"}``, or ``None`` if
+            ``explainer_output`` is not a recognised "Image N" group.
+        """
+        return _grad_cam_facts(explanation, explainer_output)

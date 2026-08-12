@@ -18,6 +18,67 @@ from DashAI.back.explainability.story import format_story
 from DashAI.back.models.base_model import BaseModel
 
 
+def _regression_partial_dependence_curve_facts(
+    explanation: dict, explainer_output: Union[Artifact, ArtifactGroup]
+) -> Optional[dict]:
+    """Parse one feature's dependence curve into its raw trend facts.
+
+    Shared by :meth:`RegressionPartialDependence.story` (which phrases these
+    facts as a deterministic narrative) and
+    :meth:`RegressionPartialDependence.insight_facts` (which hands them,
+    unphrased, to an AI insight analyzer) so the curve parsing and trend
+    classification only live in one place.
+
+    Parameters
+    ----------
+    explanation : dict
+        Output of :meth:`RegressionPartialDependence.explain`.
+    explainer_output : Union[Artifact, ArtifactGroup]
+        One of the groups previously returned by
+        :meth:`RegressionPartialDependence.plot`, titled with the feature
+        name.
+
+    Returns
+    -------
+    Optional[dict]
+        ``{"feature", "output_column", "trend", "start_value", "end_value",
+        "start_pred", "end_pred", "min_pred", "max_pred"}``, or ``None`` if
+        ``explainer_output`` is not a recognised feature group.
+    """
+    if not isinstance(explainer_output, ArtifactGroup):
+        return None
+    feature = explainer_output.title
+    if feature is None or feature not in explanation:
+        return None
+
+    output_column = explanation["metadata"]["output_column"]
+    curve = explanation[feature]
+    values = curve["average"]
+    grid_values = curve["grid_values"]
+
+    diffs = [values[i + 1] - values[i] for i in range(len(values) - 1)]
+    if max(values) - min(values) <= 1e-9:
+        trend = "flat"
+    elif all(d >= -1e-9 for d in diffs):
+        trend = "increases"
+    elif all(d <= 1e-9 for d in diffs):
+        trend = "decreases"
+    else:
+        trend = "non_monotonic"
+
+    return {
+        "feature": feature,
+        "output_column": output_column,
+        "trend": trend,
+        "start_value": grid_values[0],
+        "end_value": grid_values[-1],
+        "start_pred": values[0],
+        "end_pred": values[-1],
+        "min_pred": min(values),
+        "max_pred": max(values),
+    }
+
+
 class RegressionPartialDependenceSchema(BaseSchema):
     """Schema for the regression Partial Dependence explainer.
 
@@ -279,30 +340,13 @@ class RegressionPartialDependence(BaseGlobalExplainer):
             The narrative in every supported language, or ``None`` if
             ``explainer_output`` is not a recognised feature group.
         """
-        if not isinstance(explainer_output, ArtifactGroup):
+        facts = _regression_partial_dependence_curve_facts(
+            explanation, explainer_output
+        )
+        if facts is None:
             return None
-        feature = explainer_output.title
-        if feature is None or feature not in explanation:
-            return None
 
-        output_column = explanation["metadata"]["output_column"]
-        curve = explanation[feature]
-        values = curve["average"]
-        grid_values = curve["grid_values"]
-
-        diffs = [values[i + 1] - values[i] for i in range(len(values) - 1)]
-        if max(values) - min(values) <= 1e-9:
-            trend = "flat"
-        elif all(d >= -1e-9 for d in diffs):
-            trend = "increases"
-        elif all(d <= 1e-9 for d in diffs):
-            trend = "decreases"
-        else:
-            trend = "non_monotonic"
-
-        start_value, end_value = grid_values[0], grid_values[-1]
-
-        if trend == "flat":
+        if facts["trend"] == "flat":
             return format_story(
                 {
                     "en": (
@@ -332,14 +376,10 @@ class RegressionPartialDependence(BaseGlobalExplainer):
                         "{start_pred}。"
                     ),
                 },
-                feature=feature,
-                output_column=output_column,
-                start_value=start_value,
-                end_value=end_value,
-                start_pred=values[0],
+                **facts,
             )
 
-        if trend == "increases":
+        if facts["trend"] == "increases":
             return format_story(
                 {
                     "en": (
@@ -368,15 +408,10 @@ class RegressionPartialDependence(BaseGlobalExplainer):
                         "{end_pred}。"
                     ),
                 },
-                feature=feature,
-                output_column=output_column,
-                start_value=start_value,
-                end_value=end_value,
-                start_pred=values[0],
-                end_pred=values[-1],
+                **facts,
             )
 
-        if trend == "decreases":
+        if facts["trend"] == "decreases":
             return format_story(
                 {
                     "en": (
@@ -405,12 +440,7 @@ class RegressionPartialDependence(BaseGlobalExplainer):
                         "{end_pred}。"
                     ),
                 },
-                feature=feature,
-                output_column=output_column,
-                start_value=start_value,
-                end_value=end_value,
-                start_pred=values[0],
-                end_pred=values[-1],
+                **facts,
             )
 
         return format_story(
@@ -445,10 +475,33 @@ class RegressionPartialDependence(BaseGlobalExplainer):
                     "{max_pred}之间波动。"
                 ),
             },
-            feature=feature,
-            output_column=output_column,
-            start_value=start_value,
-            end_value=end_value,
-            min_pred=min(values),
-            max_pred=max(values),
+            **facts,
         )
+
+    def insight_facts(
+        self, explanation: dict, explainer_output: Union[Artifact, ArtifactGroup]
+    ) -> Optional[dict]:
+        """Raw facts behind one feature's partial dependence curve.
+
+        Same underlying data as :meth:`story`, but returned as plain values
+        (not an already-phrased narrative) for an
+        ``DashAI.back.insights.base.BaseInsightAnalyzer`` to build its own
+        prompt from.
+
+        Parameters
+        ----------
+        explanation : dict
+            Output of :meth:`explain`.
+        explainer_output : Union[Artifact, ArtifactGroup]
+            One of the groups previously returned by :meth:`plot`, titled
+            with the feature name.
+
+        Returns
+        -------
+        Optional[dict]
+            ``{"feature", "output_column", "trend", "start_value",
+            "end_value", "start_pred", "end_pred", "min_pred", "max_pred"}``,
+            or ``None`` if ``explainer_output`` is not a recognised feature
+            group.
+        """
+        return _regression_partial_dependence_curve_facts(explanation, explainer_output)
