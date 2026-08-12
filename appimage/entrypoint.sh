@@ -21,15 +21,19 @@ if [ ! -t 1 ] && [ -z "${DASHAI_IN_TERMINAL}" ]; then
     fi
 fi
 
-# The bundled PyTorch requires AVX2, so on a pre-2013 x86 CPU the app dies with
-# "Illegal instruction" once torch is imported, with no hint about why. Warn,
-# but never block: some VMs mask the CPUID bit even when AVX2 works.
+# Several bundled native libraries assume AVX2, so on an old x86 CPU the app
+# dies with "Illegal instruction" as soon as one of them is imported, with no
+# hint about why. Which library blows up first depends on the CPU generation:
+# llama-cpp-python (libggml-cpu) has been seen crashing on a Nehalem i7 where
+# PyTorch still ran fine. Warn, but never block: some VMs mask the CPUID bit
+# even when AVX2 works.
 if [ "$(uname -m)" = "x86_64" ] && [ -r /proc/cpuinfo ] &&
    ! grep -q '\bavx2\b' /proc/cpuinfo; then
     echo "WARNING: this CPU does not report AVX2 support (Intel Haswell 2013+," >&2
-    echo "AMD Excavator / Zen+ have it). The bundled PyTorch needs AVX2, so" >&2
-    echo "dashAI will probably crash with 'Illegal instruction'. If it does," >&2
-    echo "install from source instead: uv sync --extra cpu" >&2
+    echo "AMD Excavator / Zen+ have it). A bundled native dependency (PyTorch" >&2
+    echo "and/or llama-cpp-python) needs AVX2, so dashAI will probably crash" >&2
+    echo "with 'Illegal instruction'. If it does, install from source instead:" >&2
+    echo "uv sync --extra cpu" >&2
     echo "Some virtual machines hide the flag even when AVX2 works, so this" >&2
     echo "warning may be a false alarm." >&2
 fi

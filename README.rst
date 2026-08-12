@@ -78,9 +78,11 @@ and opens the browser as usual.
 pip installation below.
 
 **Note:** the installers need a CPU with AVX2 (Intel 2013+, AMD Excavator /
-Zen+). On older hardware they crash with ``Illegal instruction``; clone the
-repository and install from source to get a possible AVX or SSE2 build.
-(it may still crash if the CPU is too old, but it is worth trying).
+Zen+). The bundled native libraries, PyTorch and the ``libggml`` shipped inside
+``llama-cpp-python``, are built for it, and on older hardware whichever one is
+imported first kills the process with ``Illegal instruction``. Clone the
+repository and install from source instead, which pulls wheels that run on
+older CPUs (it may still fail if the CPU is very old, but it is worth trying).
 
 
 Installation (PyPI)
