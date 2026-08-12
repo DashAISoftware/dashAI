@@ -11,6 +11,7 @@ import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import { buildAxisResetUpdate } from "../../../../utils/plotlyAxes";
+import { buildPlotMargin } from "../../../../utils/plotlyMargin";
 
 const MIN_WIDTH = 300;
 const MIN_HEIGHT_MINIMALIST = 200;
@@ -146,21 +147,10 @@ function PlotlyJsonVisualizer({
     ...plotData.layout,
     paper_bgcolor: plotData.layout?.paper_bgcolor || themeBg,
     plot_bgcolor: plotData.layout?.plot_bgcolor || themeBg,
-    margin: minimalist
-      ? {
-          l: 40,
-          r: 20,
-          t: 30,
-          b: 40,
-          ...plotData.layout?.margin,
-        }
-      : {
-          l: 60,
-          r: 30,
-          t: 50,
-          b: 60,
-          ...plotData.layout?.margin,
-        },
+    margin: {
+      ...buildPlotMargin(plotData, minimalist),
+      ...plotData.layout?.margin,
+    },
     autosize: true,
     font: {
       size: minimalist ? 10 : 12,
