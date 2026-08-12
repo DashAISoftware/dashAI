@@ -2,6 +2,14 @@
 
 Shares the same client fixture as the api/ tests so that generative
 session / prompt endpoints are available.
+
+Note on ``DocumentService(db)``: the constructor accepts an optional
+``registry`` (defaults to ``None``).  Extractors can only be resolved when a
+registry is supplied, so existing callers that construct
+``DocumentService(db)`` without a registry keep working unchanged (their
+hydrated documents simply have no extractor).  Use
+``DocumentService(db, client.app.container["component_registry"])`` whenever
+extractor resolution is required.
 """
 
 import os
@@ -14,7 +22,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from DashAI.back.app import create_app
-from DashAI.back.dependencies.database.models import Document
+from DashAI.back.dependencies.database.models import Document, RAGExtractor
 from DashAI.back.dependencies.job_queues.huey_job_queue import HueyJobQueue
 
 
@@ -25,11 +33,15 @@ def _create_test_document(client: TestClient, suffix: str = "") -> int:
     """
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
+        extractor = RAGExtractor(component_name="PlainTextExtractor", params={})
+        db.add(extractor)
+        db.flush()
         doc = Document(
             file_name=f"test_doc{suffix}.txt",
             file_type="txt",
             file_path=os.path.join(tempfile.gettempdir(), f"test_doc{suffix}.txt"),
             file_hash=f"test_hash_123_{suffix}" if suffix else "test_hash_123",
+            extractor_id=extractor.id,
         )
         db.add(doc)
         db.commit()

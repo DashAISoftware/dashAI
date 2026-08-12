@@ -54,7 +54,14 @@ def _base_session_params(test_doc_id: int) -> dict:
                 "params": {
                     "BM25Vectorizer": {
                         "component": "BM25VectorizerModel",
-                        "params": {},
+                        "params": {
+                            "strip_accents": None,
+                            "lowercase": True,
+                            "stop_words": None,
+                            "max_df": 1.0,
+                            "min_df": 0.0,
+                            "max_features": None,
+                        },
                     },
                     "k1": 1.5,
                     "b": 0.75,
@@ -67,6 +74,7 @@ def _base_session_params(test_doc_id: int) -> dict:
                 "component": "LlamaModel",
                 "params": {
                     "model_name": LLAMA_1B,
+                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": 0.7,
                     "frequency_penalty": 0.1,
@@ -447,6 +455,7 @@ class TestUpdateRAGSessionParams:
             "component": "LlamaModel",
             "params": {
                 "model_name": LLAMA_1B,
+                "quantization": "Q4_K_M",
                 "max_tokens": 200,
                 "temperature": 0.9,
                 "frequency_penalty": 0.2,
@@ -486,14 +495,31 @@ class TestUpdateRAGSessionParams:
             "documents": [test_doc_id],
             "chunking_model": {
                 "component": "RecursiveCharacterChunkModel",
-                "params": {"chunk_size": 500, "chunk_overlap": 50},
+                "params": {
+                    "chunk_size": 500,
+                    "chunk_overlap": 50,
+                    "separators": ["\n\n", "\n", ".", " ", ""],
+                },
             },
             "retriever_model": {
                 "component": "TFIDFRetriever",
                 "params": {
                     "TFIDFVectorizer": {
                         "component": "TFIDFVectorizerModel",
-                        "params": {},
+                        "params": {
+                            "strip_accents": "None",
+                            "lowercase": True,
+                            "analyzer": "word",
+                            "stop_words": [],
+                            "ngram_range": [1, 1],
+                            "max_df": 1.0,
+                            "min_df": 0.0,
+                            "max_features": 1000,
+                            "norm": "l2",
+                            "use_idf": True,
+                            "smooth_idf": True,
+                            "sublinear_tf": False,
+                        },
                     },
                     "similarity_function": "cosine",
                     "top_k": 10,
@@ -504,6 +530,7 @@ class TestUpdateRAGSessionParams:
                 "component": "LlamaModel",
                 "params": {
                     "model_name": LLAMA_1B,
+                    "quantization": "Q4_K_M",
                     "max_tokens": 50,
                     "temperature": 0.5,
                     "frequency_penalty": 0.0,
@@ -847,7 +874,7 @@ class TestPromptValidation:
             # valid: QA prompt with language and templates
             (
                 "DefaultQARAGGenerationPrompt",
-                {"language": "en", "templates": {"en": "Q: {input}\nC: {chunks}"}},
+                {"language": "en", "templates": {"en": "QA: {input}\nC: {chunks}"}},
                 201,
             ),
             # invalid: registered class but missing required placeholders
@@ -956,6 +983,236 @@ class TestPromptValidation:
         assert resp.status_code == 400, (
             f"Expected 400 for missing template/templates key, "
             f"got {resp.status_code}: {resp.text}"
+        )
+
+
+# ===================================================================
+# Regression: Retriever configuration bugs
+# ===================================================================
+
+
+class TestRetrieverConfigRegression:
+    """Verify fixes for retriever configuration bugs."""
+
+    # ------------------------------------------------------------------
+    # Bug 3: DenseEmbeddingRetriever preserves its component name
+    # ------------------------------------------------------------------
+
+    def test_dense_embedding_retriever_preserves_component_name(
+        self, client: TestClient, test_doc_id: int
+    ):
+        """Regression: creating a session with DenseEmbeddingRetriever
+        must store ``component: "DenseEmbeddingRetriever"`` — NOT the
+        embedding model name."""
+        params = _base_session_params(test_doc_id)
+        params["name"] = "test_dense_component_preserved"
+
+        # Replace retriever with DenseEmbeddingRetriever + SentenceTransformer
+        params["parameters"]["retriever_model"] = {
+            "component": "DenseEmbeddingRetriever",
+            "params": {
+                "embedding_model": {
+                    "component": "SentenceTransformerEmbedding",
+                    "params": {
+                        "model_name": (
+                            "sentence-transformers/"
+                            "paraphrase-multilingual-MiniLM-L12-v2"
+                        ),
+                        "overflow_strategy": "truncate",
+                        "normalize": True,
+                        "device": "cpu",
+                    },
+                },
+                "similarity_metric": "cosine",
+                "top_k": 10,
+            },
+        }
+
+        resp = client.post("/api/v1/generative-session/", json=params)
+        assert resp.status_code == 201, (
+            f"Expected 201, got {resp.status_code}: {resp.text}"
+        )
+
+        data = resp.json()
+        stored = data["parameters"]["retriever_model"]
+        assert stored["component"] == "DenseEmbeddingRetriever", (
+            f"Component must be 'DenseEmbeddingRetriever', "
+            f"got '{stored['component']}'. "
+            f"The embedding model name must not leak to the top level."
+        )
+
+    # ------------------------------------------------------------------
+    # Bug 2: Empty-component children rejected
+    # ------------------------------------------------------------------
+
+    def test_composite_retriever_rejects_empty_child_component(
+        self, client: TestClient, test_doc_id: int
+    ):
+        """Regression: a composite retriever with an empty-component child
+        must be rejected with a clear validation error."""
+        params = _base_session_params(test_doc_id)
+        params["name"] = "test_composite_empty_child"
+
+        # Build a ParallelRetriever with one valid child (BM25) and one
+        # child whose component name is an empty string.
+        params["parameters"]["retriever_model"] = {
+            "component": "ParallelRetriever",
+            "params": {
+                "merge_strategy": "round_robin",
+                "children": [
+                    {
+                        "component": "BM25Retriever",
+                        "params": {
+                            "BM25Vectorizer": {
+                                "component": "BM25VectorizerModel",
+                                "params": {
+                                    "strip_accents": None,
+                                    "lowercase": True,
+                                    "stop_words": None,
+                                    "max_df": 1.0,
+                                    "min_df": 0.0,
+                                    "max_features": None,
+                                },
+                            },
+                            "k1": 1.5,
+                            "b": 0.75,
+                            "delta": 0.0,
+                            "similarity_function": "cosine",
+                            "top_k": 5,
+                        },
+                    },
+                    {
+                        "component": "",  # ← empty — this is the bug
+                        "params": {},
+                    },
+                ],
+            },
+        }
+
+        resp = client.post("/api/v1/generative-session/", json=params)
+        assert resp.status_code == 400, (
+            f"Empty child component should be rejected with 400, "
+            f"got {resp.status_code}: {resp.text}"
+        )
+
+        detail = resp.json()["detail"]
+        assert "not registered" in detail.lower(), (
+            f"Error must mention unregistered component, got: {detail}"
+        )
+
+    # ------------------------------------------------------------------
+    # Bug 2B: Bare embedding model as composite child rejected
+    # ------------------------------------------------------------------
+
+    def test_bare_embedding_as_child_accepts_but_fails_at_runtime(
+        self, client: TestClient, test_doc_id: int
+    ):
+        """Regression: a SentenceTransformerEmbedding used directly as a
+        child of a composite retriever IS accepted during session creation
+        (the component exists in the registry), but the runtime RAG job
+        will fail with ``Unsupported retriever type``.
+
+        The frontend fix prevents this scenario by filtering embedding
+        models out of the composite child selector in RetrieverNodeConfig.
+        """
+        params = _base_session_params(test_doc_id)
+        params["name"] = "test_bare_embedding_as_child"
+
+        params["parameters"]["retriever_model"] = {
+            "component": "ParallelRetriever",
+            "params": {
+                "merge_strategy": "round_robin",
+                "children": [
+                    {
+                        "component": "BM25Retriever",
+                        "params": {
+                            "BM25Vectorizer": {
+                                "component": "BM25VectorizerModel",
+                                "params": {
+                                    "strip_accents": None,
+                                    "lowercase": True,
+                                    "stop_words": None,
+                                    "max_df": 1.0,
+                                    "min_df": 0.0,
+                                    "max_features": None,
+                                },
+                            },
+                            "k1": 1.5,
+                            "b": 0.75,
+                            "delta": 0.0,
+                            "similarity_function": "cosine",
+                            "top_k": 5,
+                        },
+                    },
+                    {
+                        # Bare embedding model — registered in the component
+                        # registry, so session creation passes.  The runtime
+                        # would fail with "Unsupported retriever type".
+                        # The frontend prevents this by not offering bare
+                        # embeddings as child options.
+                        "component": "SentenceTransformerEmbedding",
+                        "params": {
+                            "model_name": (
+                                "sentence-transformers/"
+                                "paraphrase-multilingual-MiniLM-L12-v2"
+                            ),
+                            "overflow_strategy": "truncate",
+                            "normalize": True,
+                            "device": "cpu",
+                        },
+                    },
+                ],
+            },
+        }
+
+        resp = client.post("/api/v1/generative-session/", json=params)
+        # Session creation succeeds because the component is registered;
+        # the frontend fix prevents this scenario from occurring in the UI.
+        assert resp.status_code == 201, (
+            f"Expected 201 (component exists in registry), "
+            f"got {resp.status_code}: {resp.text}"
+        )
+
+    # ------------------------------------------------------------------
+    # Auto-save partial-data regression
+    # ------------------------------------------------------------------
+
+    def test_auto_save_partial_data_preserves_component(
+        self, client: TestClient, test_doc_id: int
+    ):
+        """When auto-save fires with only ``embedding_model`` (simulating
+        the frontend bug where store formValues is empty), the missing
+        ``similarity_metric``/``top_k`` fields fall back to their schema
+        defaults and the ``DenseEmbeddingRetriever`` component is preserved."""
+        params = _base_session_params(test_doc_id)
+        params["name"] = "test_autosave_partial"
+        params["parameters"]["retriever_model"] = {
+            "component": "DenseEmbeddingRetriever",
+            "params": {
+                "embedding_model": {
+                    "component": "SentenceTransformerEmbedding",
+                    "params": {
+                        "model_name": (
+                            "sentence-transformers/"
+                            "paraphrase-multilingual-MiniLM-L12-v2"
+                        ),
+                        "overflow_strategy": "truncate",
+                        "normalize": True,
+                        "device": "cpu",
+                    },
+                },
+                # NOTE: similarity_metric and top_k missing (auto-save bug)
+            },
+        }
+        resp = client.post("/api/v1/generative-session/", json=params)
+        # Missing fields fall back to schema defaults; component is preserved
+        assert resp.status_code == 201, (
+            f"Expected 201 for partial params (defaults apply), "
+            f"got {resp.status_code}: {resp.text}"
+        )
+        stored = resp.json()["parameters"]["retriever_model"]
+        assert stored["component"] == "DenseEmbeddingRetriever", (
+            f"Component must be 'DenseEmbeddingRetriever', got '{stored['component']}'."
         )
 
 

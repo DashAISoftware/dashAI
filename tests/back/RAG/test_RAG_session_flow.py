@@ -57,7 +57,14 @@ def _base_session_params(test_doc_id: int) -> dict:
                 "params": {
                     "BM25Vectorizer": {
                         "component": "BM25VectorizerModel",
-                        "params": {},
+                        "params": {
+                            "strip_accents": None,
+                            "lowercase": True,
+                            "stop_words": None,
+                            "max_df": 1.0,
+                            "min_df": 0.0,
+                            "max_features": None,
+                        },
                     },
                     "k1": 1.5,
                     "b": 0.75,
@@ -70,6 +77,7 @@ def _base_session_params(test_doc_id: int) -> dict:
                 "component": "LlamaModel",
                 "params": {
                     "model_name": LLAMA_1B,
+                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": 0.7,
                     "frequency_penalty": 0.1,
@@ -131,6 +139,7 @@ class TestParameterStateTransitions:
             "component": "LlamaModel",
             "params": {
                 "model_name": LLAMA_1B,
+                "quantization": "Q4_K_M",
                 "max_tokens": 200,
                 "temperature": 0.9,
                 "frequency_penalty": 0.2,
@@ -178,7 +187,20 @@ class TestParameterStateTransitions:
             "params": {
                 "TFIDFVectorizer": {
                     "component": "TFIDFVectorizerModel",
-                    "params": {},
+                    "params": {
+                        "strip_accents": "None",
+                        "lowercase": True,
+                        "analyzer": "word",
+                        "stop_words": [],
+                        "ngram_range": [1, 1],
+                        "max_df": 1.0,
+                        "min_df": 0.0,
+                        "max_features": 1000,
+                        "norm": "l2",
+                        "use_idf": True,
+                        "smooth_idf": True,
+                        "sublinear_tf": False,
+                    },
                 },
                 "similarity_function": "cosine",
                 "top_k": 10,
@@ -203,16 +225,17 @@ class TestParameterStateTransitions:
 
         .. note::
 
-           The RAGPipelineSchema validates only the ``{component, params}``
-           structure — sub-component field values (e.g. ``temperature`` type)
-           are validated at pipeline runtime, not during PUT.
+           The strict recursive validation contract requires every
+           ``{component, params}`` dict to carry both keys — sub-component
+           field values (e.g. ``temperature`` type) are validated against
+           their own schema during PUT as well.
         """
         session = _create_session(client, test_doc_id, "flow_rollback")
         session_id = session["id"]
         original_gen = dict(session["parameters"]["generation_model"])
 
-        # Missing ``params`` key — RAGPipelineSchema structure validation
-        # requires both ``component`` and ``params`` → 400.
+        # Missing ``params`` key — structure validation requires both
+        # ``component`` and ``params`` → 400.
         bad_gen = {
             "component": "LlamaModel",
             # missing "params"
@@ -264,6 +287,7 @@ class TestParameterStateTransitions:
             "component": "LlamaModel",
             "params": {
                 "model_name": LLAMA_1B,
+                "quantization": "Q4_K_M",
                 "max_tokens": 150,
                 "temperature": 0.5,
                 "frequency_penalty": 0.0,
@@ -455,6 +479,7 @@ class TestSessionLifecycle:
             "component": "LlamaModel",
             "params": {
                 "model_name": LLAMA_1B,
+                "quantization": "Q4_K_M",
                 "max_tokens": 50,
                 "temperature": 0.3,
                 "frequency_penalty": 0.0,
@@ -474,6 +499,7 @@ class TestSessionLifecycle:
             "params": {
                 "chunk_size": 500,
                 "chunk_overlap": 50,
+                "separators": ["\n\n", "\n", ".", " ", ""],
             },
         }
         resp_b = client.put(
@@ -520,12 +546,12 @@ class TestCrossComponentValidation:
 
     .. important::
 
-       The ``RAGPipelineSchema`` validates **only** the top-level
-       ``{component, params}`` structure, **not** sub-component field types
-       or ranges.  Sub-component schemas (e.g. ``LlamaSchema``,
-       ``CharacterChunkModelSchema``) are validated only at pipeline runtime.
-       Invalid sub-component field values are therefore **accepted** (201)
-       during session creation and only fail when the pipeline runs.
+       Since the strict recursive validation contract, every ``{component,
+       params}`` (including nested sub-components such as
+       ``BM25VectorizerModel`` inside ``BM25Retriever``) is validated against
+       its own schema **at creation time**.  Invalid sub-component field
+       types or ranges are therefore **rejected** (400) during session
+       creation, instead of being deferred to pipeline runtime.
     """
 
     # ------------------------------------------------------------------
@@ -586,108 +612,87 @@ class TestCrossComponentValidation:
         )
 
     # ------------------------------------------------------------------
-    # Sub-component validation is DEFERRED to runtime
+    # Sub-component validation is STRICT at creation time
     # ------------------------------------------------------------------
 
-    def test_subcomponent_temperature_string_accepted(
+    def test_subcomponent_temperature_string_rejected(
         self,
         client: TestClient,
         test_doc_id: int,
     ):
-        """``temperature: "not-a-number"`` is ACCEPTED (201) at session
-        creation — ``RAGPipelineSchema`` does not validate sub-component
-        field types.
-
-        Validation of ``LlamaSchema.temperature``
-        (``float_field(ge=0.0, le=1.0)``) happens only when the pipeline
-        is executed, not during create/update.
+        """``temperature: "not-a-number"`` is REJECTED (400) at session
+        creation — sub-component field types are validated recursively
+        against ``LlamaSchema.temperature`` (``float_field(ge=0.0, le=1.0)``)
+        at create/update time, not deferred to pipeline runtime.
         """
         params = _base_session_params(test_doc_id)
-        params["name"] = "flow_temp_string_accepted"
+        params["name"] = "flow_temp_string_rejected"
         params["parameters"]["generation_model"]["params"]["temperature"] = (
             "not-a-number"
         )
 
         resp = client.post("/api/v1/generative-session/", json=params)
-        assert resp.status_code == 201, (
-            f"String temperature should be accepted (deferred validation), "
+        assert resp.status_code == 400, (
+            f"String temperature should be rejected (strict validation), "
             f"got {resp.status_code}: {resp.text}"
         )
-        # Verify the raw string value was stored
-        stored_temp = resp.json()["parameters"]["generation_model"]["params"][
-            "temperature"
-        ]
-        assert stored_temp == "not-a-number"
 
-    def test_subcomponent_negative_chunk_size_accepted(
+    def test_subcomponent_negative_chunk_size_rejected(
         self,
         client: TestClient,
         test_doc_id: int,
     ):
-        """``chunk_size: -1`` is ACCEPTED (201) at session creation.
-
-        ``CharacterChunkModelSchema.chunk_size`` uses
-        ``int_field(gt=1)`` but ``RAGPipelineSchema`` does not
-        propagate validation into sub-component schemas.
+        """``chunk_size: -1`` is REJECTED (400) at session creation —
+        ``CharacterChunkModelSchema.chunk_size`` uses ``int_field(gt=1)``
+        and sub-component validation now propagates into nested schemas.
         """
         params = _base_session_params(test_doc_id)
-        params["name"] = "flow_neg_chunk_accepted"
+        params["name"] = "flow_neg_chunk_rejected"
         params["parameters"]["chunking_model"]["params"]["chunk_size"] = -1
 
         resp = client.post("/api/v1/generative-session/", json=params)
-        assert resp.status_code == 201, (
-            f"Negative chunk_size should be accepted (deferred validation), "
+        assert resp.status_code == 400, (
+            f"Negative chunk_size should be rejected (strict validation), "
             f"got {resp.status_code}: {resp.text}"
         )
-        assert resp.json()["parameters"]["chunking_model"]["params"]["chunk_size"] == -1
 
-    def test_subcomponent_overlap_equals_size_accepted(
+    def test_subcomponent_overlap_equals_size_rejected(
         self,
         client: TestClient,
         test_doc_id: int,
     ):
-        """``chunk_overlap == chunk_size`` is ACCEPTED (201) at session
+        """``chunk_overlap == chunk_size`` is REJECTED (400) at session
         creation — the cross-field validator in
-        ``CharacterChunkModelSchema`` runs only at pipeline runtime,
-        not during session create/update.
+        ``CharacterChunkModelSchema`` now runs at create/update time.
         """
         params = _base_session_params(test_doc_id)
-        params["name"] = "flow_overlap_eq_accepted"
+        params["name"] = "flow_overlap_eq_rejected"
         params["parameters"]["chunking_model"]["params"]["chunk_size"] = 100
         params["parameters"]["chunking_model"]["params"]["chunk_overlap"] = 100
 
         resp = client.post("/api/v1/generative-session/", json=params)
-        assert resp.status_code == 201, (
-            f"chunk_overlap == chunk_size should be accepted "
-            f"(deferred validation), got {resp.status_code}: {resp.text}"
-        )
-        assert (
-            resp.json()["parameters"]["chunking_model"]["params"]["chunk_overlap"]
-            == 100
+        assert resp.status_code == 400, (
+            f"chunk_overlap == chunk_size should be rejected "
+            f"(strict validation), got {resp.status_code}: {resp.text}"
         )
 
-    def test_subcomponent_temperature_out_of_range_accepted(
+    def test_subcomponent_temperature_out_of_range_rejected(
         self,
         client: TestClient,
         test_doc_id: int,
     ):
-        """``temperature=2.5`` is ACCEPTED (201) at session creation.
-
-        ``LlamaSchema.temperature`` has ``float_field(ge=0.0, le=1.0)``
-        but this constraint is not checked until pipeline runtime.
+        """``temperature=2.5`` is REJECTED (400) at session creation —
+        ``LlamaSchema.temperature`` has ``float_field(ge=0.0, le=1.0)`` and
+        this constraint is now enforced at create/update time.
         """
         params = _base_session_params(test_doc_id)
-        params["name"] = "flow_temp_range_accepted"
+        params["name"] = "flow_temp_range_rejected"
         params["parameters"]["generation_model"]["params"]["temperature"] = 2.5
 
         resp = client.post("/api/v1/generative-session/", json=params)
-        assert resp.status_code == 201, (
-            f"temperature=2.5 should be accepted (deferred validation), "
+        assert resp.status_code == 400, (
+            f"temperature=2.5 should be rejected (strict validation), "
             f"got {resp.status_code}: {resp.text}"
-        )
-        assert (
-            resp.json()["parameters"]["generation_model"]["params"]["temperature"]
-            == 2.5
         )
 
 
@@ -715,6 +720,7 @@ class TestHistoryTracking:
             "component": "LlamaModel",
             "params": {
                 "model_name": LLAMA_1B,
+                "quantization": "Q4_K_M",
                 "max_tokens": 75,
                 "temperature": 0.5,
                 "frequency_penalty": 0.0,
@@ -787,6 +793,7 @@ class TestHistoryTracking:
                 "component": "LlamaModel",
                 "params": {
                     "model_name": LLAMA_1B,
+                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": temp,
                     "frequency_penalty": 0.0,

@@ -42,7 +42,11 @@ def test_publication_1_medical_fitness(client: TestClient, test_doc_id: int):
             "documents": [test_doc_id],
             "chunking_model": {
                 "component": "RecursiveCharacterChunkModel",
-                "params": {"chunk_size": 1000, "chunk_overlap": 100},
+                "params": {
+                    "chunk_size": 1000,
+                    "chunk_overlap": 100,
+                    "separators": ["\n\n", "\n", ".", " ", ""],
+                },
             },
             "retriever_model": {
                 "component": "DenseEmbeddingRetriever",
@@ -62,6 +66,7 @@ def test_publication_1_medical_fitness(client: TestClient, test_doc_id: int):
                 "component": "LlamaModel",
                 "params": {
                     "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+                    "quantization": "Q4_K_M",
                     "max_tokens": 1024,
                     "temperature": 0.1,
                     "frequency_penalty": 0.0,
@@ -125,7 +130,6 @@ def test_publication_2_ehr_summarization(client: TestClient, test_doc_id: int):
                 "component": "MMRRerankerRetriever",
                 "params": {
                     "mmr_lambda": 0.5,
-                    "retrieval_factor": 3,
                     "top_k": 20,
                     "children": [
                         {
@@ -135,6 +139,7 @@ def test_publication_2_ehr_summarization(client: TestClient, test_doc_id: int):
                                     "component": "SentenceTransformerEmbedding",
                                     "params": {
                                         "model_name": mname,
+                                        "overflow_strategy": "truncate",
                                         "normalize": True,
                                         "device": "cpu",
                                     },
@@ -150,6 +155,7 @@ def test_publication_2_ehr_summarization(client: TestClient, test_doc_id: int):
                 "component": "LlamaModel",
                 "params": {
                     "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+                    "quantization": "Q4_K_M",
                     "max_tokens": 1024,
                     "temperature": 0.1,
                     "frequency_penalty": 0.0,
@@ -216,7 +222,11 @@ def test_publication_3_case_study(client: TestClient, test_doc_id: int):
             "documents": [test_doc_id],
             "chunking_model": {
                 "component": "RecursiveCharacterChunkModel",
-                "params": {"chunk_size": 1000, "chunk_overlap": 100},
+                "params": {
+                    "chunk_size": 1000,
+                    "chunk_overlap": 100,
+                    "separators": ["\n\n", "\n", ".", " ", ""],
+                },
             },
             "retriever_model": {
                 "component": "DenseEmbeddingRetriever",
@@ -236,6 +246,7 @@ def test_publication_3_case_study(client: TestClient, test_doc_id: int):
                 "component": "LlamaModel",
                 "params": {
                     "model_name": "bartowski/Llama-3.2-1B-Instruct-GGUF",
+                    "quantization": "Q4_K_M",
                     "max_tokens": 1024,
                     "temperature": 0.1,
                     "frequency_penalty": 0.0,
@@ -306,6 +317,7 @@ def test_publication_4a_ragchecker_dense(client: TestClient, test_doc_id: int):
                         "component": "E5Embedding",
                         "params": {
                             "model_name": "intfloat/e5-mistral-7b-instruct",
+                            "overflow_strategy": "truncate",
                             "device": "cpu",
                         },
                     },
@@ -317,6 +329,7 @@ def test_publication_4a_ragchecker_dense(client: TestClient, test_doc_id: int):
                 "component": "LlamaModel",
                 "params": {
                     "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+                    "quantization": "Q4_K_M",
                     "max_tokens": 1024,
                     "temperature": 0.1,
                     "frequency_penalty": 0.0,
@@ -385,7 +398,14 @@ def test_publication_4b_ragchecker_sparse(client: TestClient, test_doc_id: int):
                 "params": {
                     "BM25Vectorizer": {
                         "component": "BM25VectorizerModel",
-                        "params": {},
+                        "params": {
+                            "strip_accents": None,
+                            "lowercase": True,
+                            "stop_words": None,
+                            "max_df": 1.0,
+                            "min_df": 0.0,
+                            "max_features": None,
+                        },
                     },
                     "similarity_function": "cosine",
                     "top_k": 20,
@@ -398,6 +418,7 @@ def test_publication_4b_ragchecker_sparse(client: TestClient, test_doc_id: int):
                 "component": "LlamaModel",
                 "params": {
                     "model_name": "bartowski/Llama-3.2-3B-Instruct-GGUF",
+                    "quantization": "Q4_K_M",
                     "max_tokens": 1024,
                     "temperature": 0.1,
                     "frequency_penalty": 0.0,

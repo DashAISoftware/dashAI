@@ -167,7 +167,7 @@ def test_get_all_sessions(
 
 def test_update_generative_session_params_merges_and_logs_history(client: TestClient):
     """Test updating RAG parameters through the dedicated endpoint."""
-    from DashAI.back.dependencies.database.models import Document
+    from DashAI.back.dependencies.database.models import Document, RAGExtractor
 
     session_factory = client.app.container["session_factory"]
 
@@ -175,11 +175,15 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
     with session_factory() as db:
         doc_ids = []
         for i in range(2):
+            extractor = RAGExtractor(component_name="PlainTextExtractor", params={})
+            db.add(extractor)
+            db.flush()
             d = Document(
                 file_name=f"test_doc_{i}.txt",
                 file_type="txt",
                 file_path=f"/tmp/test_doc_{i}.txt",
                 file_hash=f"hash_doc_{i}_update",
+                extractor_id=extractor.id,
             )
             db.add(d)
             db.commit()
@@ -208,12 +212,42 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
             "documents": doc_ids,
             "chunking_model": {
                 "component": "CharacterChunkModel",
-                "params": {"size": 256},
+                "params": {"chunk_size": 256, "chunk_overlap": 40},
             },
-            "retriever_model": {"component": "TFIDFRetriever", "params": {"top_k": 5}},
+            "retriever_model": {
+                "component": "TFIDFRetriever",
+                "params": {
+                    "TFIDFVectorizer": {
+                        "component": "TFIDFVectorizerModel",
+                        "params": {
+                            "strip_accents": "None",
+                            "lowercase": True,
+                            "analyzer": "word",
+                            "stop_words": [],
+                            "ngram_range": [1, 1],
+                            "max_df": 1.0,
+                            "min_df": 0.0,
+                            "max_features": 1000,
+                            "norm": "l2",
+                            "use_idf": True,
+                            "smooth_idf": True,
+                            "sublinear_tf": False,
+                        },
+                    },
+                    "similarity_function": "cosine",
+                    "top_k": 5,
+                },
+            },
             "generation_model": {
                 "component": "QwenModel",
-                "params": {"temperature": 0.7, "max_tokens": 128},
+                "params": {
+                    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+                    "max_tokens": 128,
+                    "temperature": 0.7,
+                    "frequency_penalty": 0.1,
+                    "context_window": 512,
+                    "device": "CPU",
+                },
             },
             "prompt_id": prompt_id,
         },
@@ -224,7 +258,14 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
 
     generation_update = {
         "component": "QwenModel",
-        "params": {"temperature": 0.2, "max_tokens": 256},
+        "params": {
+            "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+            "max_tokens": 256,
+            "temperature": 0.2,
+            "frequency_penalty": 0.1,
+            "context_window": 512,
+            "device": "CPU",
+        },
     }
     response = client.put(
         f"/api/v1/generative-session/{session_id}/parameters",
@@ -239,7 +280,7 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
     assert data["parameters"]["documents"] == [1, 2]
     assert data["parameters"]["chunking_model"] == {
         "component": "CharacterChunkModel",
-        "params": {"size": 256},
+        "params": {"chunk_size": 256, "chunk_overlap": 40},
     }
     assert data["parameters"]["generation_model"] == generation_update
     # prompt_id was resolved on CREATE → prompt present, prompt_id gone

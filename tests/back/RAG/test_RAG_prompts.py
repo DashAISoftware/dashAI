@@ -10,7 +10,8 @@ Covers:
 import pytest
 from fastapi.testclient import TestClient
 
-from DashAI.back.dependencies.database.models import Document
+from DashAI.back.dependencies.database.models import Document, RAGExtractor, RAGPrompt
+from DashAI.back.services.RAG.prompt_service import PromptService
 
 # ---------------------------------------------------------------------------
 # helpers — matching test_rag_component_api_configs.py patterns
@@ -23,11 +24,15 @@ def _create_test_document(client: TestClient, suffix: str = "") -> int:
     """Create a minimal test document in the DB and return its ID."""
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
+        extractor = RAGExtractor(component_name="PlainTextExtractor", params={})
+        db.add(extractor)
+        db.flush()
         doc = Document(
             file_name=f"test_doc{suffix}.txt",
             file_type="txt",
             file_path=f"/tmp/test_doc{suffix}.txt",
             file_hash=f"test_hash_123_{suffix}" if suffix else "test_hash_123",
+            extractor_id=extractor.id,
         )
         db.add(doc)
         db.commit()
@@ -57,7 +62,14 @@ def _base_session_params(test_doc_id: int) -> dict:
                 "params": {
                     "BM25Vectorizer": {
                         "component": "BM25VectorizerModel",
-                        "params": {},
+                        "params": {
+                            "strip_accents": None,
+                            "lowercase": True,
+                            "stop_words": None,
+                            "max_df": 1.0,
+                            "min_df": 0.0,
+                            "max_features": None,
+                        },
                     },
                     "k1": 1.5,
                     "b": 0.75,
@@ -70,6 +82,7 @@ def _base_session_params(test_doc_id: int) -> dict:
                 "component": "LlamaModel",
                 "params": {
                     "model_name": LLAMA_1B,
+                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": 0.7,
                     "frequency_penalty": 0.1,
@@ -259,6 +272,40 @@ class TestPromptCRUD:
             f"Expected 400 for invalid class_name, got"
             f" {response.status_code}: {response.text}"
         )
+
+    def test_service_get_or_create_reuses_existing(self, client: TestClient):
+        """get_or_create reuses an existing prompt with the same class+params."""
+        session_factory = client.app.container["session_factory"]
+        registry = client.app.container["component_registry"]
+        with session_factory() as db:
+            service = PromptService(db, registry)
+            params = {"language": "en"}
+            first = service.get_or_create(
+                "DefaultRAGGenerationPrompt", "pipeline_1_X", params
+            )
+            second = service.get_or_create(
+                "DefaultRAGGenerationPrompt", "pipeline_2_X", params
+            )
+            assert second.id == first.id
+            assert first.class_name == "DefaultRAGGenerationPrompt"
+
+            # Different parameters produce a distinct record.
+            third = service.get_or_create(
+                "DefaultRAGGenerationPrompt", "pipeline_3_X", {"language": "es"}
+            )
+            assert third.id != first.id
+
+            rows = (
+                db.query(RAGPrompt)
+                .filter(
+                    RAGPrompt.class_name == "DefaultRAGGenerationPrompt",
+                    RAGPrompt.name.in_(
+                        ["pipeline_1_X", "pipeline_2_X", "pipeline_3_X"]
+                    ),
+                )
+                .all()
+            )
+            assert len(rows) == 2
 
 
 # ===================================================================

@@ -51,7 +51,14 @@ def _base_params(test_doc_id: int) -> dict:
                 "params": {
                     "BM25Vectorizer": {
                         "component": "BM25VectorizerModel",
-                        "params": {},
+                        "params": {
+                            "strip_accents": None,
+                            "lowercase": True,
+                            "stop_words": None,
+                            "max_df": 1.0,
+                            "min_df": 0.0,
+                            "max_features": None,
+                        },
                     },
                     "k1": 1.5,
                     "b": 0.75,
@@ -64,6 +71,7 @@ def _base_params(test_doc_id: int) -> dict:
                 "component": "LlamaModel",
                 "params": {
                     "model_name": LLAMA_1B,
+                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": 0.7,
                     "frequency_penalty": 0.1,
@@ -94,8 +102,9 @@ def _dense_st_retriever(
                 "component": "SentenceTransformerEmbedding",
                 "params": {
                     "model_name": model_name,
+                    "overflow_strategy": "truncate",
                     "normalize": True,
-                    "device": "CPU",
+                    "device": "cpu",
                 },
             },
             "similarity_metric": similarity_metric,
@@ -177,7 +186,14 @@ class TestEncodingModels:
             "params": {
                 "BM25Vectorizer": {
                     "component": "BM25VectorizerModel",
-                    "params": {},
+                    "params": {
+                        "strip_accents": None,
+                        "lowercase": True,
+                        "stop_words": None,
+                        "max_df": 1.0,
+                        "min_df": 0.0,
+                        "max_features": None,
+                    },
                 },
                 "k1": 2.0,
                 "b": 0.5,
@@ -204,7 +220,20 @@ class TestEncodingModels:
             "params": {
                 "TFIDFVectorizer": {
                     "component": "TFIDFVectorizerModel",
-                    "params": {},
+                    "params": {
+                        "strip_accents": "None",
+                        "lowercase": True,
+                        "analyzer": "word",
+                        "stop_words": [],
+                        "ngram_range": [1, 1],
+                        "max_df": 1.0,
+                        "min_df": 0.0,
+                        "max_features": 1000,
+                        "norm": "l2",
+                        "use_idf": True,
+                        "smooth_idf": True,
+                        "sublinear_tf": False,
+                    },
                 },
                 "similarity_function": "cosine",
                 "top_k": 5,
@@ -225,7 +254,20 @@ class TestEncodingModels:
             "params": {
                 "TFIDFVectorizer": {
                     "component": "TFIDFVectorizerModel",
-                    "params": {},
+                    "params": {
+                        "strip_accents": "None",
+                        "lowercase": True,
+                        "analyzer": "word",
+                        "stop_words": [],
+                        "ngram_range": [1, 1],
+                        "max_df": 1.0,
+                        "min_df": 0.0,
+                        "max_features": 1000,
+                        "norm": "l2",
+                        "use_idf": True,
+                        "smooth_idf": True,
+                        "sublinear_tf": False,
+                    },
                 },
                 "similarity_function": "manhattan",
                 "top_k": 15,
@@ -251,7 +293,7 @@ class TestEncodingModels:
         assert embed["component"] == "SentenceTransformerEmbedding"
         assert embed["params"]["model_name"] == ST_MINI_LM
         assert embed["params"]["normalize"] is True
-        assert embed["params"]["device"] == "CPU"
+        assert embed["params"]["device"] == "cpu"
         assert ret["params"]["similarity_metric"] == "cosine"
         assert ret["params"]["top_k"] == 10
 
@@ -318,15 +360,17 @@ class TestRankingFunctions:
         assert ret["params"]["top_k"] == 10
 
     def test_ranking_mmr_reranker(self, client: TestClient, test_doc_id: int):
-        """MMRRerankerRetriever (lambda=0.7, factor=4)
-        wrapping DenseEmbeddingRetriever."""
+        """MMRRerankerRetriever (lambda=0.7) wrapping DenseEmbeddingRetriever.
+
+        The child's own ``top_k`` (40) defines the candidate set and the
+        reranker selects ``top_k`` (10) of them.
+        """
         params = _base_params(test_doc_id)
         params["name"] = "Rank MMR"
         params["parameters"]["retriever_model"] = {
             "component": "MMRRerankerRetriever",
             "params": {
                 "mmr_lambda": 0.7,
-                "retrieval_factor": 4,
                 "top_k": 10,
                 "children": [_dense_st_retriever(similarity_metric="cosine", top_k=40)],
             },
@@ -335,7 +379,6 @@ class TestRankingFunctions:
         ret = stored["parameters"]["retriever_model"]
         assert ret["component"] == "MMRRerankerRetriever"
         assert ret["params"]["mmr_lambda"] == 0.7
-        assert ret["params"]["retrieval_factor"] == 4
         assert ret["params"]["top_k"] == 10
         children = ret["params"]["children"]
         assert len(children) == 1
@@ -372,7 +415,20 @@ class TestTopK:
             "params": {
                 "TFIDFVectorizer": {
                     "component": "TFIDFVectorizerModel",
-                    "params": {},
+                    "params": {
+                        "strip_accents": "None",
+                        "lowercase": True,
+                        "analyzer": "word",
+                        "stop_words": [],
+                        "ngram_range": [1, 1],
+                        "max_df": 1.0,
+                        "min_df": 0.0,
+                        "max_features": 1000,
+                        "norm": "l2",
+                        "use_idf": True,
+                        "smooth_idf": True,
+                        "sublinear_tf": False,
+                    },
                 },
                 "similarity_function": "cosine",
                 "top_k": 5,
@@ -406,14 +462,14 @@ class TestTopK:
         assert stored["parameters"]["retriever_model"]["params"]["top_k"] == 20
 
     def test_topk_mmr_12(self, client: TestClient, test_doc_id: int):
-        """MMRRerankerRetriever with top_k=12 (child retrieves 36)."""
+        """MMRRerankerRetriever with top_k=12; the child retrieves 36 via its
+        own top_k and the reranker selects 12."""
         params = _base_params(test_doc_id)
         params["name"] = "TopK MMR 12"
         params["parameters"]["retriever_model"] = {
             "component": "MMRRerankerRetriever",
             "params": {
                 "mmr_lambda": 0.5,
-                "retrieval_factor": 3,
                 "top_k": 12,
                 "children": [_dense_st_retriever(similarity_metric="cosine", top_k=36)],
             },
@@ -625,6 +681,7 @@ class TestGeneratorModels:
             "component": "LlamaModel",
             "params": {
                 "model_name": LLAMA_3B,
+                "quantization": "Q4_K_M",
                 "max_tokens": 512,
                 "temperature": 0.5,
                 "frequency_penalty": 0.0,
@@ -750,6 +807,7 @@ class TestGeneratorModels:
             "component": "Phi4MiniInstructModel",
             "params": {
                 "model_name": "unsloth/Phi-4-mini-instruct-GGUF",
+                "quantization": "Phi-4-mini-instruct-Q4_K_M.gguf",
                 "max_tokens": 100,
                 "temperature": 0.7,
                 "frequency_penalty": 0.1,
