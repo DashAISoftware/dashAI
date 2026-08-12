@@ -10,6 +10,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import { buildAxisResetUpdate } from "../../../../utils/plotlyAxes";
 
 const MIN_WIDTH = 300;
 const MIN_HEIGHT_MINIMALIST = 200;
@@ -105,10 +106,13 @@ function PlotlyJsonVisualizer({
   };
 
   const handleReset = (ref) => {
-    relayout(ref, {
-      "xaxis.autorange": true,
-      "yaxis.autorange": true,
-    });
+    const el = ref?.current?.el;
+    if (!el) return;
+    // Mirrors the zoom handlers above, which already bail when the figure has
+    // no cartesian axes. Parallel coordinates, pie and polar figures have
+    // none, and autoranging an axis that does not exist throws inside Plotly.
+    const update = buildAxisResetUpdate(el._fullLayout);
+    if (update) relayout(ref, update);
   };
 
   const handleDownload = (ref, format = "svg") => {
