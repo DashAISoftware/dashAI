@@ -17,7 +17,8 @@
     "nameRequired": "É necessário um nome",
     "processError": "O processo falhou. Excluindo... {{error}}",
     "sessionNameEmpty": "O nome da sessão não pode estar vazio",
-    "sessionNameExists": "Já existe uma sessão com este nome"
+    "sessionNameExists": "Já existe uma sessão com este nome",
+    "modelSwitchFailed": "Falha ao alterar o modelo da sessão"
   },
   "label": {
     "confirmDeleteSession": "Tem certeza de que deseja excluir a sessão \"{{name}}\"? Esta ação não pode ser desfeita.",
@@ -38,6 +39,8 @@
     "startBySelectingATask": "Comece selecionando uma tarefa generativa.",
     "noSessionsFound": "Nenhuma sessão encontrada",
     "parameterChangeEvent": "Parâmetros atualizados: <1></1>",
+    "modelChangeEvent": "Modelo alterado: <1></1>",
+    "modelNotDownloaded": "O modelo desta sessão ainda não foi baixado. Baixe-o para continuar.",
     "parameterChangeHistory": "Histórico de alterações de parâmetros para a sessão atual",
     "searchSessions": "Buscar Sessões",
     "selectGenerativeTask": "Selecione uma tarefa generativa para começar uma nova sessão",
@@ -59,7 +62,9 @@
     "noInputAvailable": "Não há entrada disponível para esta tarefa",
     "selectModelCrumb": "Selecionar Modelo",
     "ragTask": "RAG - Geração Aumentada por Recuperação",
-    "ragTaskDescription": "Faça upload de documentos e converse com eles usando geração aumentada por recuperação."
+    "ragTaskDescription": "Faça upload de documentos e converse com eles usando geração aumentada por recuperação.",
+    "sessionModel": "Modelo",
+    "downloadRequired": "download necessário"
   },
   "message": {
     "sessionCreatedSuccess": "Sessão criada com sucesso.",

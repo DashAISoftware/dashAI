@@ -31,7 +31,7 @@ import {
   getPredictions,
   deletePrediction,
 } from "../../api/predict";
-import { getDatasetInfo, exportDatasetCsvByPath } from "../../api/datasets";
+import { getDatasets, exportDatasetCsvByPath } from "../../api/datasets";
 import { enqueuePredictionJob } from "../../api/job";
 import { getModelSessionById } from "../../api/modelSession";
 import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
@@ -80,16 +80,14 @@ export default function PredictionModal({ isOpen, onClose, run }) {
     const fetchDatasets = async () => {
       if (run) {
         try {
-          const availableDatasets = await filterDatasets({ run_id: run.id });
-          const availableDatasetsWithInfo = await Promise.all(
-            availableDatasets.map(async (dataset) => {
-              // Fetch additional info about the datasets
-              const datasetInfo = await getDatasetInfo(dataset.id);
-              return { ...dataset, ...datasetInfo };
-            }),
+          const [allDatasets, validIds] = await Promise.all([
+            getDatasets(),
+            filterDatasets({ run_id: run.id }),
+          ]);
+          const validIdSet = new Set(validIds.map(String));
+          setDatasets(
+            allDatasets.filter((ds) => validIdSet.has(String(ds.id))),
           );
-
-          setDatasets(availableDatasetsWithInfo);
         } catch (error) {
           console.error("Error fetching datasets:", error);
           enqueueSnackbar(t("prediction:error.fetchingDatasets"), {

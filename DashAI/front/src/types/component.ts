@@ -11,4 +11,5 @@ export interface IComponent {
   display_name?: string;
   flags?: string[];
   color?: string;
+  downloaded?: boolean;
 }

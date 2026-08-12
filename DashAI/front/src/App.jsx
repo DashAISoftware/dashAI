@@ -72,6 +72,10 @@ function App() {
             path="/app/models/sessions/new/:taskName"
             element={<ModelsPage />}
           />
+          <Route
+            path="/app/models/sessions/:id/model/:runId"
+            element={<ModelsPage />}
+          />
           <Route path="/app/generative" element={<Generative />} />
           <Route
             path="/app/generative/RAG"

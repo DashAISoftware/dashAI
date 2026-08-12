@@ -3,6 +3,7 @@ from sklearn.ensemble import ExtraTreesClassifier as _ExtraTreesClassifier
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
+    enum_field,
     none_type,
     optimizer_int_field,
     schema_field,
@@ -196,6 +197,54 @@ class ExtraTreesClassifierSchema(BaseSchema):
             pt="Estado aleatório",
             de="Zufallszustand",
             zh="随机状态",
+        ),
+    )  # type: ignore
+    class_weight: schema_field(
+        none_type(enum_field(enum=["balanced", "balanced_subsample"])),
+        placeholder=None,
+        description=MultilingualString(
+            en=(
+                "Weights associated with classes, used to correct for class "
+                "imbalance. 'balanced' adjusts weights inversely proportional to "
+                "class frequencies in the whole dataset; 'balanced_subsample' does "
+                "the same but per bootstrap sample of each tree. Use None for no "
+                "weighting."
+            ),
+            es=(
+                "Pesos asociados a las clases, usados para corregir el desbalance "
+                "de clases. 'balanced' ajusta los pesos de forma inversamente "
+                "proporcional a la frecuencia de cada clase en todo el conjunto de "
+                "datos; 'balanced_subsample' hace lo mismo pero por cada muestra "
+                "bootstrap de cada árbol. Use None para no aplicar ponderación."
+            ),
+            pt=(
+                "Pesos associados às classes, usados para corrigir o "
+                "desbalanceamento de classes. 'balanced' ajusta os pesos de forma "
+                "inversamente proporcional à frequência de cada classe em todo o "
+                "conjunto de dados; 'balanced_subsample' faz o mesmo, mas por "
+                "amostra bootstrap de cada árvore. Use None para não aplicar "
+                "ponderação."
+            ),
+            de=(
+                "Gewichte, die den Klassen zugeordnet sind, um "
+                "Klassenungleichgewichte auszugleichen. 'balanced' passt die "
+                "Gewichte umgekehrt proportional zur Klassenhäufigkeit im "
+                "gesamten Datensatz an; 'balanced_subsample' tut dasselbe, jedoch "
+                "pro Bootstrap-Stichprobe jedes Baums. Verwenden Sie None für "
+                "keine Gewichtung."
+            ),
+            zh=(
+                "与类别关联的权重，用于纠正类别不平衡。'balanced'根据整个数据集中"
+                "各类别频率的反比调整权重；'balanced_subsample'则对每棵树的自举"
+                "采样分别执行相同操作。使用None表示不加权。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Class weight",
+            es="Peso de clase",
+            pt="Peso da classe",
+            de="Klassengewicht",
+            zh="类别权重",
         ),
     )  # type: ignore
 

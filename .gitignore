@@ -11,6 +11,8 @@ build/
 develop-eggs/
 dist/
 downloads/
+!DashAI/back/dependencies/downloads/
+!tests/back/downloads/
 eggs/
 .eggs/
 lib/
@@ -216,3 +218,8 @@ tests/back/dataloaders/json/**
 tests/back/models/json/**
 tests/back/tasks/json/**
 None/json/**
+
+# HuggingFace datasets cache generada al correr los tests
+tests/**/csv/default-*/
+tests/**/json/default-*/
+tests/**/tests_back_models_*.lock

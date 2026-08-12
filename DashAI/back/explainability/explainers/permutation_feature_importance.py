@@ -1,5 +1,10 @@
 from typing import Dict, List, Union
 
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotlyArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -437,9 +442,13 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         from sklearn.metrics import make_scorer
         from sklearn.preprocessing import LabelEncoder
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = dataset
 
-        x_test = x["test"]
+        # permutation_importance permutes the frame and calls the model with
+        # it, bypassing the model preparation.
+        x_test = prepare_model_input(self.model, x["test"])
         y_test = y["test"]
 
         X_df = x_test.to_pandas()
@@ -516,77 +525,49 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 "importances_std": np.round(pfi["importances_std"], 3).tolist(),
             }
 
-    def _create_plot(self, data, n_features: int):
-        """Build a Plotly horizontal bar chart of feature importances.
+    def _create_plot(self, data) -> List[GroupedArtifacts]:
+        """Build one selector over feature counts.
+
+        Each count (from all features down to one) is a selectable group
+        holding the horizontal bar chart of the top ``count`` most important
+        features, so the frontend lists the counts in a selector instead of a
+        dropdown embedded in a single figure.
 
         Parameters
         ----------
         data : pandas.DataFrame
             DataFrame with columns ``"features"``, ``"importances_mean"``, and
             ``"importances_std"``, sorted ascending by importance.
-        n_features : int
-            Number of top features (last rows of ``data``) to display in the
-            default view. A dropdown menu lets users cycle through all counts.
 
         Returns
         -------
-        list of str
-            A single-element list containing the Plotly figure serialised to
-            JSON via ``plotly.io.to_json``.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group (a bar chart) per feature
+            count, most features first.
         """
         # Lazy imports
-        import plotly
         import plotly.express as px
 
-        fig = px.bar(
-            data.iloc[-n_features:],
-            x=data.iloc[-n_features:]["importances_mean"],
-            y=data.iloc[-n_features:]["features"],
-            error_x=data.iloc[-n_features:]["importances_std"],
-        )
+        groups = []
+        for count in range(len(data), 0, -1):
+            subset = data.iloc[-count:]
+            fig = px.bar(
+                subset,
+                x=subset["importances_mean"],
+                y=subset["features"],
+                error_x=subset["importances_std"],
+            )
+            fig.update_layout(xaxis_title="Importance", yaxis_title=None)
+            groups.append(
+                ArtifactGroup(
+                    title=f"Top {count} features",
+                    artifacts=[PlotlyArtifact(payload=fig)],
+                )
+            )
 
-        fig.update_layout(
-            xaxis_title="Importance",
-            yaxis_title=None,
-            annotations=[
-                {
-                    "text": "",
-                    "showarrow": False,
-                    "x": 0,
-                    "y": 1.15,
-                    "xanchor": "left",
-                    "xref": "paper",
-                    "yref": "paper",
-                    "yanchor": "top",
-                }
-            ],
-            updatemenus=[
-                {
-                    "x": 0,
-                    "xanchor": "left",
-                    "y": 1.2,
-                    "yanchor": "top",
-                    "buttons": [
-                        {
-                            "label": f"N° features: {len(data.iloc[-c:,])}",
-                            "method": "restyle",
-                            "args": [
-                                {
-                                    "x": [data.iloc[-c:]["importances_mean"]],
-                                    "y": [data.iloc[-c:]["features"]],
-                                    "error_x": [data.iloc[-c:]["importances_std"]],
-                                },
-                            ],
-                        }
-                        for c in range(len(data))
-                    ],
-                }
-            ],
-        )
+        return [GroupedArtifacts(groups=groups)]
 
-        return [plotly.io.to_json(fig)]
-
-    def plot(self, explanation: dict) -> List[dict]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Create a Plotly bar chart from a feature importance explanation dict.
 
         Parameters
@@ -597,18 +578,14 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
         Returns
         -------
-        list of str
-            A single-element list containing the Plotly figure serialised to
-            JSON (passed through :meth:`_create_plot`).
+        List[GroupedArtifacts]
+            A single selector over the feature counts (built by
+            :meth:`_create_plot`).
         """
-        n_features = 10
         # Lazy import
         import pandas as pd
 
         data = pd.DataFrame.from_dict(explanation)
         data = data.sort_values(by=["importances_mean"], ascending=True)
 
-        if n_features > len(data):
-            n_features = len(data)
-
-        return self._create_plot(data, n_features)
+        return self._create_plot(data)

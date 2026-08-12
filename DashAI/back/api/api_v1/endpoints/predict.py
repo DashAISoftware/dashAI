@@ -133,7 +133,12 @@ async def filter_datasets_endpoint(
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """
-    Filter datasets that match the column specifications of the train dataset.
+    Return the ids of every dataset that has all the run model's input columns.
+
+    The run, model session, and every dataset's schema are checked in a single
+    request (reading only the Arrow schema metadata for each dataset, never its
+    rows) and only the matching ids are returned, so the frontend does not have
+    to validate datasets one at a time or fetch full dataset info up front.
 
     Parameters
     ----------
@@ -145,11 +150,9 @@ async def filter_datasets_endpoint(
 
     Returns
     -------
-    List[Dataset]
-        List of datasets that match the column specifications of the train dataset.
+    dict
+        ``{"valid_dataset_ids": [...]}`` with the ids of the matching datasets.
     """
-    from pathlib import Path
-
     from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
 
     try:
@@ -169,16 +172,18 @@ async def filter_datasets_endpoint(
             input_columns = list(model_session.input_columns)
 
             datasets = db.query(Dataset).all()
-            datasets_filtered = []
+            valid_dataset_ids = []
             for dataset in datasets:
-                dataset_path = Path(f"{dataset.file_path}/dataset/")
-                if dataset_path.exists():
-                    columns_spec = get_columns_spec(str(dataset_path))
-                    if all(col in columns_spec for col in input_columns):
-                        datasets_filtered.append(dataset)
-                else:
-                    logger.warning("Dataset path does not exist: %s", dataset_path)
-            return datasets_filtered
+                try:
+                    columns_spec = get_columns_spec(f"{dataset.file_path}/dataset")
+                except Exception as e:
+                    logger.warning(
+                        "Could not read dataset %s schema: %s", dataset.id, e
+                    )
+                    continue
+                if all(col in columns_spec for col in input_columns):
+                    valid_dataset_ids.append(dataset.id)
+            return {"valid_dataset_ids": valid_dataset_ids}
     except HTTPException:
         # Re-raise HTTPExceptions as-is
         raise

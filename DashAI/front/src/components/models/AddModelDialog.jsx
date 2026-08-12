@@ -12,6 +12,7 @@ import {
   TextField,
   Box,
   IconButton,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
@@ -23,6 +24,8 @@ import ModelsTableSelectMetric from "./modelSession/ModelsTableSelectMetric";
 import useSchema from "../../hooks/useSchema";
 import { generateSequentialName } from "../../utils/nameGenerator";
 import { createRun } from "../../api/run";
+import { getRequiredDownloads } from "../../api/component";
+import { subscribeAnyDownloadState } from "./model/ComponentDownloadControl";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
@@ -37,6 +40,7 @@ function AddModelDialog({
   onClose,
   session,
   preselectedModel,
+  preselectedModelObject,
   existingRuns = [],
   onRunCreated,
 }) {
@@ -51,16 +55,22 @@ function AddModelDialog({
   const [hasUserTouchedName, setHasUserTouchedName] = useState(false);
   const [goalMetric, setGoalMetric] = useState("");
   const [hasLoadedInitialParams, setHasLoadedInitialParams] = useState(false);
+  const [modelDownloaded, setModelDownloaded] = useState(true);
+  const [missingNested, setMissingNested] = useState([]);
   const { t } = useTranslation(["models", "common"]);
 
   const { defaultValues: defaultModelParams } = useSchema({
     modelName: open ? selectedModel : null,
   });
+  // Fetched as soon as the dialog opens (not gated on activeStep === 1) so it
+  // has the whole step-1 dwell time to resolve before the user reaches step 2
+  // — otherwise the "Parámetros del Optimizador" section briefly renders
+  // empty right after clicking "Siguiente", shrinking the dialog for a beat.
   const {
     defaultValues: defaultOptimizerParams,
     loading: optimizerSchemaLoading,
   } = useSchema({
-    modelName: open && activeStep === 1 ? selectedOptimizer : null,
+    modelName: open ? selectedOptimizer : null,
   });
 
   const tourContext = useTourContext();
@@ -95,6 +105,44 @@ function AddModelDialog({
       setHasLoadedInitialParams(false);
     }
   }, [preselectedModel, selectedModel]);
+
+  useEffect(() => {
+    const comp = preselectedModelObject;
+    const requiresDownload = Boolean(comp?.metadata?.requires_download);
+    const isDownloaded = Boolean(comp?.downloaded);
+    setModelDownloaded(!requiresDownload || isDownloaded);
+  }, [preselectedModelObject]);
+
+  // Block advancing while any component selected inside the model parameters
+  // still needs downloading. The check walks the nested parameters server-side
+  // and re-runs after an inline download/delete finishes anywhere.
+  useEffect(() => {
+    if (
+      !open ||
+      activeStep !== 0 ||
+      !modelParameters ||
+      Object.keys(modelParameters).length === 0
+    ) {
+      setMissingNested([]);
+      return;
+    }
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const missing = await getRequiredDownloads(modelParameters);
+        if (!cancelled) setMissingNested(missing);
+      } catch {
+        if (!cancelled) setMissingNested([]);
+      }
+    };
+    const timer = setTimeout(check, 300);
+    const unsubscribe = subscribeAnyDownloadState(() => check());
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      unsubscribe();
+    };
+  }, [open, activeStep, JSON.stringify(modelParameters)]);
 
   useEffect(() => {
     if (
@@ -332,6 +380,7 @@ function AddModelDialog({
                 metricName={goalMetric}
                 handleSelectedMetric={setGoalMetric}
                 required
+                autoSelectDefault
               />
             </Box>
 
@@ -371,20 +420,44 @@ function AddModelDialog({
             {t("common:back")}
           </Button>
         )}
-        <Button
-          data-tour="add-model-button"
-          onClick={handleNext}
-          variant="contained"
-          disabled={
-            loading ||
-            (activeStep === 0 && !isStep1Valid) ||
-            (activeStep === 1 && !isStep2Valid)
+        <Tooltip
+          title={
+            activeStep === 0 &&
+            preselectedModelObject?.metadata?.requires_download &&
+            !modelDownloaded
+              ? t("common:componentDownload.mustDownload")
+              : activeStep === 0 && missingNested.length > 0
+                ? t("common:componentDownload.mustDownloadNested", {
+                    names: missingNested
+                      .map((m) => m.display_name || m.name)
+                      .join(", "),
+                  })
+                : ""
           }
         >
-          {activeStep === steps.length - 1
-            ? t("common:addModel")
-            : t("common:next")}
-        </Button>
+          <span>
+            <Button
+              data-tour="add-model-button"
+              onClick={handleNext}
+              variant="contained"
+              disabled={
+                loading ||
+                (activeStep === 0 && !isStep1Valid) ||
+                (activeStep === 1 && !isStep2Valid) ||
+                (activeStep === 0 &&
+                  Boolean(
+                    preselectedModelObject?.metadata?.requires_download,
+                  ) &&
+                  !modelDownloaded) ||
+                (activeStep === 0 && missingNested.length > 0)
+              }
+            >
+              {activeStep === steps.length - 1
+                ? t("common:addModel")
+                : t("common:next")}
+            </Button>
+          </span>
+        </Tooltip>
       </DialogActions>
     </Dialog>
   );
@@ -399,6 +472,11 @@ AddModelDialog.propTypes = {
     task_name: PropTypes.string,
   }),
   preselectedModel: PropTypes.string,
+  preselectedModelObject: PropTypes.shape({
+    name: PropTypes.string,
+    downloaded: PropTypes.bool,
+    metadata: PropTypes.object,
+  }),
   existingRuns: PropTypes.array,
   onRunCreated: PropTypes.func,
 };

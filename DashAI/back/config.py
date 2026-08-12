@@ -25,3 +25,4 @@ class DefaultSettings(BaseSettings):
     RAG_PATH: str = "RAG"
     NOTEBOOK_PATH: str = "notebook"
     DATAFILE_PATH: str = "datafiles"
+    COMPONENT_PATH: str = "components"

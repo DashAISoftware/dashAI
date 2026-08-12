@@ -13,7 +13,16 @@ import { postProcess } from "../../api/process";
 import { enqueueGenerativeProcessJob } from "../../api/job";
 import { startJobQueue } from "../../api/job";
 import { getHistoryBySessionId, getSessionById } from "../../api/session";
+import {
+  getComponentById,
+  getComponentDownloadStatus,
+} from "../../api/component";
+import { getRelatedComponents } from "../../api/generativeTask";
 import InfoSessionModal from "./InfoSessionModal";
+import ModelSwitcher from "./ModelSwitcher";
+import ComponentDownloadControl, {
+  useComponentDownloadState,
+} from "../models/model/ComponentDownloadControl";
 import { useSnackbar } from "notistack";
 import { MediaInput } from "./MediaInput";
 import JobQueueWidget from "../jobs/JobQueueWidget";
@@ -34,6 +43,8 @@ export default function GenerativeChat() {
     selectedTaskName: taskName,
     tasks,
     paramsVersion,
+    setParamsVersion,
+    fetchSessions,
   } = useGenerative();
 
   const inputsCardinality = useMemo(() => {
@@ -53,6 +64,8 @@ export default function GenerativeChat() {
   const [referenceModalOpen, setReferenceModalOpen] = useState(false);
   const [selectedReferenceText, setSelectedReferenceText] = useState("");
   const [referenceModalTitle, setReferenceModalTitle] = useState("");
+  const [modelComponent, setModelComponent] = useState(null);
+  const [modelsByName, setModelsByName] = useState({});
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative"]);
   const tourContext = useTourContext();
@@ -99,6 +112,54 @@ export default function GenerativeChat() {
       setSessionInfo(response);
     });
   };
+
+  // Resolve the session model's metadata plus a reconciled download status, so
+  // the chat can block input and offer a download when the weights are missing
+  // (e.g. after switching to a not downloaded model or deleting its download).
+  const modelName = sessionInfo?.model_name;
+  const refreshModelStatus = () => {
+    if (!modelName) {
+      setModelComponent(null);
+      return;
+    }
+    Promise.all([
+      getComponentById(modelName),
+      getComponentDownloadStatus(modelName),
+    ])
+      .then(([component, status]) => {
+        setModelComponent({ ...component, downloaded: status.downloaded });
+      })
+      .catch(() => setModelComponent(null));
+  };
+
+  useEffect(() => {
+    refreshModelStatus();
+  }, [modelName, paramsVersion]);
+
+  // Map component name -> display name for the task's models, used to render
+  // model change history events with friendly names instead of class names.
+  useEffect(() => {
+    const currentTaskName = sessionInfo?.task_name;
+    if (!currentTaskName) return;
+    getRelatedComponents(currentTaskName)
+      .then((components) => {
+        const map = {};
+        (components || []).forEach((c) => {
+          map[c.name] = c.display_name || c.name;
+        });
+        setModelsByName(map);
+      })
+      .catch(() => setModelsByName({}));
+  }, [sessionInfo?.task_name]);
+
+  // Use the live download state so an in-progress download keeps the input
+  // blocked even when the backend already reports the (partial) files as
+  // present, and unblocks the moment the download actually finishes.
+  const { downloaded: liveDownloaded, downloading: liveDownloading } =
+    useComponentDownloadState(modelComponent || { name: modelName || "" });
+  const modelBlocked =
+    Boolean(modelComponent?.metadata?.requires_download) &&
+    !(liveDownloaded && !liveDownloading);
 
   const getMessages = () => {
     getProcessesBySessionId(sessionId).then((response) => {
@@ -303,24 +364,37 @@ export default function GenerativeChat() {
     });
 
     let historyObject = history.map((entry) => {
+      const isModelChange = entry.changes.some((c) => c.parameter === "model");
       return {
         type: "history",
         timestamp: entry.timestamp,
         id: entry.id,
-        changedMessage: entry.changes.map((change) => (
-          <span
-            key={change.parameter}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {change.parameter}: {formatHistoryValue(change.oldValue)}{" "}
-            <ArrowRightAltIcon fontSize="small" />{" "}
-            {formatHistoryValue(change.newValue)}{" "}
-          </span>
-        )),
+        isModelChange,
+        changedMessage: entry.changes.map((change) => {
+          const isModel = change.parameter === "model";
+          const label = isModel
+            ? t("generative:label.sessionModel")
+            : change.parameter;
+          const oldValue = isModel
+            ? modelsByName[change.oldValue] || change.oldValue
+            : change.oldValue;
+          const newValue = isModel
+            ? modelsByName[change.newValue] || change.newValue
+            : change.newValue;
+          return (
+            <span
+              key={change.parameter}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {label}: {oldValue} <ArrowRightAltIcon fontSize="small" />{" "}
+              {newValue}{" "}
+            </span>
+          );
+        }),
       };
     });
 
@@ -394,17 +468,17 @@ export default function GenerativeChat() {
           {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
         </Typography>
 
-        <Box>
-          <IconButton onClick={() => setSessionInfoVisible(true)}>
-            <InfoIcon
-              sx={{
-                color: "text.secondary",
-                "&:hover": {
-                  color: "text.primary",
-                },
-              }}
-            />
-          </IconButton>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <ModelSwitcher
+            sessionId={sessionId}
+            taskName={sessionInfo?.task_name}
+            currentModelName={sessionInfo?.model_name}
+            onChanged={() => {
+              getSessionInfo();
+              fetchSessions();
+              setParamsVersion((v) => v + 1);
+            }}
+          />
         </Box>
       </Box>
 
@@ -450,8 +524,17 @@ export default function GenerativeChat() {
               >
                 {message.type === "history" ? (
                   <Typography variant="body1" sx={{ opacity: 0.8 }}>
-                    <Trans i18nKey="generative:label.parameterChangeEvent">
-                      Parameters updated: <span>{message.changedMessage}</span>
+                    <Trans
+                      i18nKey={
+                        message.isModelChange
+                          ? "generative:label.modelChangeEvent"
+                          : "generative:label.parameterChangeEvent"
+                      }
+                    >
+                      {message.isModelChange
+                        ? "Model changed: "
+                        : "Parameters updated: "}
+                      <span>{message.changedMessage}</span>
                     </Trans>
                   </Typography>
                 ) : (
@@ -541,15 +624,40 @@ export default function GenerativeChat() {
         )}
       </Box>
 
-      {/* Chat input */}
-      <MediaInput
-        key={sessionId}
-        onSendMessage={(input) => {
-          handleSendMessage(input);
-        }}
-        isLoading={isLoadingMessage}
-        inputsCardinality={inputsCardinality}
-      />
+      {/* Chat input, or a download prompt when the model is not available */}
+      {modelBlocked ? (
+        <Box
+          sx={{
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 1,
+            p: 3,
+            borderRadius: 1,
+            border: 1,
+            borderColor: "divider",
+            bgcolor: "action.hover",
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            {t("generative:label.modelNotDownloaded")}
+          </Typography>
+          <ComponentDownloadControl
+            component={modelComponent}
+            onStatusChange={() => refreshModelStatus()}
+          />
+        </Box>
+      ) : (
+        <MediaInput
+          key={sessionId}
+          onSendMessage={(input) => {
+            handleSendMessage(input);
+          }}
+          isLoading={isLoadingMessage}
+          inputsCardinality={inputsCardinality}
+        />
+      )}
 
       {/* Session Info Modal */}
       {sessionInfo && (

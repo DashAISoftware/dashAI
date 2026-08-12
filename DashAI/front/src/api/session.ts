@@ -31,7 +31,7 @@ export const updateGenerativeSession = async ({
   formData,
 }: {
   id: string;
-  formData: { name?: string; task_name?: string; description?: string };
+  formData: { name?: string; task_name?: string; description?: string; model_name?: string };
 }): Promise<object> => {
   const response = await api.patch(`/v1/generative-session/${id}`, null, {
     params: formData,

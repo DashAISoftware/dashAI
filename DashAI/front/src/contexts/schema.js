@@ -178,17 +178,17 @@ export const useFormSchemaStore = () => {
         : null;
     }
 
+    // Walk down the property chain, unwrapping each subform into its params
+    // map. This must unwrap the last property too: the current view's params
+    // map is what holds the field being rendered. Without unwrapping the last
+    // hop, a component field nested inside another component (depth >= 2) reads
+    // undefined and its select never reflects a selection.
     let params = null;
     for (const prop of properties) {
-      if (params === null) {
-        params = formValues[prop.key];
-        if (!params) return null;
-        continue;
-      }
-
-      const propParams = getParamsFromSubform(params);
-      if (!propParams || !propParams[prop.key]) return null;
-      params = propParams[prop.key];
+      params =
+        params === null
+          ? getParamsFromSubform(formValues[prop.key])
+          : getParamsFromSubform(params[prop.key]);
     }
 
     return params && params[property]

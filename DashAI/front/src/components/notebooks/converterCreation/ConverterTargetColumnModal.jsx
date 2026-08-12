@@ -155,7 +155,6 @@ const ConverterTargetColumnModal = ({
         variant="outlined"
         size="small"
         sx={{
-          mr: 2,
           color: classColumnInitialValue === null ? "error.main" : "inherit",
           borderColor:
             classColumnInitialValue === null ? "error.main" : "inherit",

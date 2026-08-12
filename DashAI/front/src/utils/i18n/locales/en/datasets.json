@@ -91,7 +91,8 @@
     "requiresExactColumns_other": "Requires exactly {{required}} valid columns, but {{available}} available.",
     "requiresMinColumns_one": "Requires at least {{required}} valid column, but only {{available}} available.",
     "requiresMinColumns_other": "Requires at least {{required}} valid columns, but only {{available}} available.",
-    "zipContentsNotCompatible": "ZIP does not contain files compatible with the selected dataloader"
+    "zipContentsNotCompatible": "ZIP does not contain files compatible with the selected dataloader",
+    "cannotSaveEmptyDataset": "Cannot save dataset: all columns have been removed."
   },
   "label": {
     "task": "Task",
@@ -254,6 +255,11 @@
     "margins": "Margins",
     "marginTop": "Margin Top",
     "markerColor": "Marker Color",
+    "lineColor": "Line Color",
+    "increasingColor": "Increasing Color",
+    "decreasingColor": "Decreasing Color",
+    "totalsColor": "Totals Color",
+    "transparent": "Transparent",
     "max": "Max",
     "maxLength": "Max Length",
     "mean": "Mean",
@@ -433,7 +439,11 @@
     "showAll": "Show all",
     "hideAll": "Hide all",
     "noRows": "No rows",
+    "loadingMore": "Loading more…",
+    "rowsLoaded_one": "{{count}} of {{total}} row loaded",
+    "rowsLoaded_other": "{{count}} of {{total}} rows loaded",
     "doubleClickToRename": "Double-click to rename",
+    "predictedColumn": "Prediction",
     "sortedAsc": "Sorted ascending - click for descending",
     "sortedDesc": "Sorted descending - click to clear",
     "clickToSort": "Click to sort ascending",

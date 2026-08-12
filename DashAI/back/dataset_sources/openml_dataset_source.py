@@ -197,7 +197,7 @@ class OpenMLDatasetSource(BaseDatasetSource):
                 metas = list(pool.map(_meta, ids))
 
             entries = []
-            for row, did, meta in zip(rows, ids, metas, strict=True):
+            for row, did, meta in zip(rows, ids, metas, strict=False):
                 description = ""
                 dataset_tags: list[str] = []
                 if meta is not None:
