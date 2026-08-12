@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Paper,
   Box,
@@ -23,6 +23,10 @@ import ExplorerInfoModal from "./ExplorerInfoModal";
 import { useExplorerResults } from "./useExplorerResults";
 import { useTranslation } from "react-i18next";
 
+// Floor for the measured plot height, so a short card degrades to a scrollable
+// plot rather than a squashed, unreadable one.
+const MIN_PLOT_HEIGHT = 160;
+
 export default function ExplorerBox({
   explorer,
   handleExplorerDeleteClick,
@@ -38,6 +42,26 @@ export default function ExplorerBox({
     useExplorerResults(explorer);
 
   const statusLabel = explorer.status;
+
+  // The card sits in a fixed height grid cell, so the figure cannot use the
+  // renderer's default height without overflowing. Measure the space the body
+  // actually gets and hand that down, minus the padded, bordered block
+  // ArtifactViewer draws around the plot.
+  const bodyRef = useRef(null);
+  const [plotHeight, setPlotHeight] = useState(null);
+
+  useEffect(() => {
+    const element = bodyRef.current;
+    if (!element || typeof ResizeObserver === "undefined") return undefined;
+
+    const chrome = parseFloat(theme.spacing(3)) * 2 + 2;
+    const observer = new ResizeObserver(([entry]) => {
+      const available = entry.contentRect.height - chrome;
+      setPlotHeight(Math.max(MIN_PLOT_HEIGHT, Math.round(available)));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [theme, statusLabel]);
 
   const handleExplorerDetailsClick = () => {
     setOpenExplorerDetails(true);
@@ -170,6 +194,7 @@ export default function ExplorerBox({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            flexShrink: 0,
             mb: 4,
           }}
         >
@@ -214,7 +239,18 @@ export default function ExplorerBox({
         </Box>
 
         {statusLabel === 3 ? ( // Finished
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Box
+            ref={bodyRef}
+            sx={{
+              flexGrow: 1,
+              minWidth: 0,
+              // minHeight 0 + hidden overflow keep this box sized by the
+              // card's leftover space rather than by the plot inside it, so
+              // the measurement above cannot feed back into itself.
+              minHeight: 0,
+              overflow: "hidden",
+            }}
+          >
             {loading && (
               <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
                 <CircularProgress size={24} />
@@ -228,12 +264,13 @@ export default function ExplorerBox({
                 {t("datasets:error.explorerResultsUnavailable")}
               </Typography>
             )}
-            {!loading && !error && artifact && (
+            {!loading && !error && artifact && plotHeight != null && (
               <ArtifactViewer
                 artifact={artifact}
                 onSaveEdit={handleSaveEdit}
                 onResetEdit={handleResetEdit}
                 canReset={Boolean(artifact.overridden)}
+                height={plotHeight}
               />
             )}
           </Box>
