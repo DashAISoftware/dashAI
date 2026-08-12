@@ -56,10 +56,14 @@ class Prompt(BaseModel):
         """Retrieve class metadata.
 
         Returns:
-            Dictionary of metadata attributes if defined, otherwise an empty
-            dict.
+            Dictionary of metadata attributes including download requirements
+            from BaseModel, plus any prompt-specific metadata if defined.
         """
-        metadata = cls.metadata if hasattr(cls, "metadata") else {}
+        # Start with BaseModel metadata (includes requires_download)
+        metadata = super().get_metadata()
+        # Add prompt-specific metadata if defined
+        if hasattr(cls, "metadata"):
+            metadata.update(cls.metadata)
         return metadata
 
     @classmethod
