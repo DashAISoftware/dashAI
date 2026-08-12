@@ -23,3 +23,7 @@ Retrieval, and Generation.
 - **[06-future-work.md](./06-future-work.md)** — Planned improvements:
   retrieval paradigms, query transformation, PDF parsing, tree-based
   retrieval, message-level document filtering, and multi-modal support.
+- **[07-document-processing-plan.md](./07-document-processing-plan.md)** —
+  Per-document extractor selection plan: architecture, extractors as
+  ComponentRegistry components, API design, invalidation semantics,
+  frontend UX, and tradeoff analysis.
