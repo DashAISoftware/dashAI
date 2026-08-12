@@ -325,7 +325,7 @@ class SentenceTransformerEmbeddingSchema(BaseSchema):
 
     model_name: schema_field(
         enum_field(ST_MODEL_NAMES),
-        placeholder="microsoft/harrier-oss-v1-0.6b",
+        placeholder="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
         description=MultilingualString(
             en="Sentence Transformer model for embedding generation.",
             es="Modelo Sentence Transformer para generación de embeddings.",
