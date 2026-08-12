@@ -5,6 +5,7 @@
 ### 1. Session Configuration
 
 The user fills the `RAGSessionSetup` form:
+
 - Selects documents from the repository.
 - Configures the chunking model (type, chunk size, overlap).
 - Chooses a retriever (preset or custom composite).
@@ -36,6 +37,7 @@ payload. The endpoint delegates to `RAGSessionValidationService`:
    that it contains the required placeholders (`{input}`, `{chunks}`).
 
 On success, a `GenerativeSession` record is persisted with:
+
 - `task_name` — Set to `"RAGTask"` for RAG sessions.
 - `model_name` — Set to `"RAGPipeline"`.
 - `parameters` — The validated configuration dict.

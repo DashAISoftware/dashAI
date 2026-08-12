@@ -232,6 +232,7 @@
         "actions": "操作",
         "preview": "预览",
         "delete": "删除",
+        "configureExtractor": "配置提取器",
         "addDocument": "添加文档",
         "currentDocuments": "当前文档",
         "noDocumentsAvailable": "没有可用的文档。",

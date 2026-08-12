@@ -356,6 +356,7 @@
         "actions": "Ações",
         "preview": "Visualizar",
         "delete": "Excluir",
+        "configureExtractor": "Configurar extrator",
         "addDocument": "Adicionar documento",
         "currentDocuments": "Documentos atuais",
         "noDocumentsAvailable": "Nenhum documento disponível.",

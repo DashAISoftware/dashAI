@@ -2,10 +2,10 @@
 
 ## Routes
 
-| Path                              | Component              | Purpose                           |
-|-----------------------------------|------------------------|-----------------------------------|
-| `/app/generative`                 | `SessionRouter`        | Routes to RAG or non-RAG view     |
-| `/app/generative/sessions/:id`    | `RAGSessionPage`       | RAG session detail + chat         |
+| Path                           | Component        | Purpose                       |
+| ------------------------------ | ---------------- | ----------------------------- |
+| `/app/generative`              | `SessionRouter`  | Routes to RAG or non-RAG view |
+| `/app/generative/sessions/:id` | `RAGSessionPage` | RAG session detail + chat     |
 
 ## Main RAG Page Flow
 
@@ -27,6 +27,7 @@ All files under `pages/generative/RAGSession/`:
 ### Per-Stage Config Sections
 
 Each pipeline stage has a section component in `sections/`:
+
 - `ChunkingSection.jsx`
 - `RetrieverSection.jsx`
 - `GeneratorSection.jsx`
@@ -37,6 +38,7 @@ Each section renders inside a `SectionCard` layout wrapper using `RAGSectionColu
 ### Page-Level Shared Components
 
 In `pages/generative/RAGSession/components/`:
+
 - `RAGCard.jsx` — Accordion-based card with expand/collapse and step indicators
 - `SectionCard.jsx` — Flexbox layout wrapper for section content
 - `RAGSectionColumn.jsx` — Vertical column layout for stacked sections
@@ -48,6 +50,7 @@ In `pages/generative/RAGSession/components/`:
 ### Advanced Configuration Modals
 
 In `advanced/` (9 files):
+
 - `CompositeRetrieverBuilder.jsx` — Visual builder for composite retriever trees
 - `RetrieverConfigurationStep.jsx` — Step within composite builder
 - `RetrieverAdvancedModal.jsx` — Advanced retriever settings dialog
@@ -61,6 +64,7 @@ In `advanced/` (9 files):
 ### Supporting Components
 
 In `components/generative/RAG/`:
+
 - **Session & summary:** `RAGSessionSummary.jsx`, `RAGBreadcrumbs.jsx`
 - **Info & params:** `RAGInfoBar.jsx`, `RAGParamsPanel.jsx`
 - **Documents:** `DocumentSelector.jsx`, `DocumentList.jsx`, `DocumentListItem.jsx`,
@@ -105,14 +109,14 @@ subdirectories, reserved for a future setup-component refactor.
 
 All RAG API calls use standard DashAI endpoints:
 
-| Endpoint                                    | Purpose               |
-|---------------------------------------------|-----------------------|
-| `/api/v1/generative-session/`               | Session CRUD          |
-| `/api/v1/generative-process/`               | Process CRUD          |
-| `/api/v1/job/`                              | Job dispatch          |
-| `/api/v1/document/`                         | Document management   |
-| `/api/v1/document/{id}/view`                | Document preview (inline) |
-| `/api/v1/document/{id}/extract`             | On-demand extraction  |
-| `/api/v1/document/{id}/extractor`           | Update extractor assignment |
-| `/api/v1/prompt/`                           | Prompt management     |
+| Endpoint                                                | Purpose                     |
+| ------------------------------------------------------- | --------------------------- |
+| `/api/v1/generative-session/`                           | Session CRUD                |
+| `/api/v1/generative-process/`                           | Process CRUD                |
+| `/api/v1/job/`                                          | Job dispatch                |
+| `/api/v1/document/`                                     | Document management         |
+| `/api/v1/document/{id}/view`                            | Document preview (inline)   |
+| `/api/v1/document/{id}/extract`                         | On-demand extraction        |
+| `/api/v1/document/{id}/extractor`                       | Update extractor assignment |
+| `/api/v1/prompt/`                                       | Prompt management           |
 | `/api/v1/component/{name}/children/?include_flags=true` | Child components with flags |

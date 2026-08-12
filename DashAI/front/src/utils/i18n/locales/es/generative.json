@@ -235,11 +235,23 @@
         "actions": "Acciones",
         "preview": "Vista previa",
         "delete": "Eliminar",
+        "configureExtractor": "Configurar extractor",
         "addDocument": "Añadir documento",
         "currentDocuments": "Documentos actuales",
         "noDocumentsAvailable": "No hay documentos disponibles.",
         "emptyUploadText": "Sube tu(s) documento(s)",
         "unknownType": "Desconocido"
+      },
+      "extractorModal": {
+        "title": "Configurar extractor",
+        "explanation": "Existen distintas formas de procesar el texto de un PDF. Cada extractor puede producir resultados diferentes según la estructura del documento — prueba distintas opciones y compara el resultado. Importante: RAG solo utiliza texto. Si tu PDF contiene imágenes con texto (documentos escaneados, diagramas), debes usar un extractor con capacidad OCR como EasyOCR para convertir esas imágenes en texto que RAG pueda utilizar. Sin OCR, las imágenes son ignoradas.",
+        "extractorLabel": "Extractor",
+        "saveExtractor": "Guardar extractor",
+        "extracting": "Extrayendo texto...",
+        "noContent": "Selecciona un extractor y el texto aparecerá aquí.",
+        "rawContentLabel": "Archivo original",
+        "extractedContentLabel": "Texto extraído",
+        "close": "Cerrar"
       }
     },
     "summary": {

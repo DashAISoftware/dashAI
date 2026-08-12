@@ -169,9 +169,8 @@ export default function CompositeRetrieverBuilder({
       // Build a display-name map for DenseEmbedding components (e.g.
       // SentenceTransformerEmbedding -> "SentenceTransformer Embedding").
       try {
-        const embeddingComponents = await getRetrieverComponents(
-          "DenseEmbedding",
-        );
+        const embeddingComponents =
+          await getRetrieverComponents("DenseEmbedding");
         const nameMap = {};
         for (const comp of embeddingComponents || []) {
           nameMap[comp.name] =
@@ -528,8 +527,8 @@ function getOperationSummary(node, t) {
           params.merge_strategy === "round_robin"
             ? t("generative:rag.composite.mergeStrategyRoundRobin")
             : params.merge_strategy === "interleave"
-            ? t("generative:rag.composite.mergeStrategyInterleave")
-            : params.merge_strategy || null,
+              ? t("generative:rag.composite.mergeStrategyInterleave")
+              : params.merge_strategy || null,
       };
     case "SequentialRetriever":
       return { label, icon: "fusion", value: null };

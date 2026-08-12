@@ -100,8 +100,9 @@ File type mapping uses `DocumentFileType` enum from
 ### ChunkingService
 
 Chunk set identity via SHA-256 signature (migrated from `chunk_set_utils.py`)
-+ lookup-or-create chunking model + chunk persistence (migrated DB logic from
-`ChunkingModelFactory`).
+
+- lookup-or-create chunking model + chunk persistence (migrated DB logic from
+  `ChunkingModelFactory`).
 
 ### PromptService
 
@@ -266,6 +267,7 @@ No DB access, no factory calls, no wiring — purely assigns attributes.
 ### Generation Flow (unchanged)
 
 `generate(input_data)`:
+
 1. Extract query + history from the last entry in the input tuple.
 2. `single_interaction(query)` → delegates to `retriever.retrieve(query)` → top-k chunks.
 3. `_build_chunk_references(chunks)` → format chunks into text + dict.
@@ -374,6 +376,7 @@ Composite child links are stored in `rag_retriever_child`.
 
 `ChunkingService.get_or_create_chunk_set()` computes a deterministic SHA-256
 hash of:
+
 - Sorted document IDs
 - Sorted chunking configuration (e.g., chunking model component + params)
 
@@ -389,13 +392,13 @@ Documents can be assigned an extractor at upload time via
 `DocumentService.upload()`. Extractors are ConfigObject components with
 schema-driven parameters exposed to the frontend:
 
-| Extractor | Default for | Description |
-|-----------|------------|-------------|
-| `PlainTextExtractor` | txt, md, rst, tex, csv | Reads file as UTF-8 plain text |
-| `PypdfExtractor` | — | PyPDF2-based PDF extraction (`strict` mode) |
-| `PyMuPDFExtractor` | — | fitz/pymupdf-based PDF extraction |
-| `TextractExtractor` | pdf | textract-based extraction (default PDF parser) |
-| `EasyOCRExtractor` | — | OCR-based extraction (requires easyocr) |
+| Extractor            | Default for            | Description                                    |
+| -------------------- | ---------------------- | ---------------------------------------------- |
+| `PlainTextExtractor` | txt, md, rst, tex, csv | Reads file as UTF-8 plain text                 |
+| `PypdfExtractor`     | —                      | PyPDF2-based PDF extraction (`strict` mode)    |
+| `PyMuPDFExtractor`   | —                      | fitz/pymupdf-based PDF extraction              |
+| `TextractExtractor`  | pdf                    | textract-based extraction (default PDF parser) |
+| `EasyOCRExtractor`   | —                      | OCR-based extraction (requires easyocr)        |
 
 Each extractor exposes its parameters via `schema_field()` with `description`
 and `default` for UI form auto-generation. The `extractor_id` column on
@@ -404,6 +407,7 @@ ambiguous. `PdfDocument._extract_text()` uses the assigned extractor with
 a `_default_extract()` fallback.
 
 Endpoints:
+
 - `POST /api/v1/document/{id}/extract` — on-demand extraction (does not persist)
 - `PUT /api/v1/document/{id}/extractor` — commit extractor choice (with
   force option to invalidate linked pipeline artifacts)
@@ -435,6 +439,7 @@ JSON comparison (pending migration).
 ## Task Layer (`RAG_task.py`)
 
 `RAGTask` extends `BaseGenerativeTask` and:
+
 - Prepares input by folding chat history into the message list.
 - Processes output by serializing the response and chunk references into
   DB-suitable format.
@@ -444,12 +449,12 @@ JSON comparison (pending migration).
 
 The pipeline uses typed dataclasses instead of raw dicts or lists:
 
-| Dataclass                | Purpose                                      |
-|--------------------------|----------------------------------------------|
-| `RAGPipelineConfig`      | Validated pipeline parameters                |
-| `ModelRef`               | Parsed `{component, params}` reference       |
-| `ChunkReference`         | A single retrieved chunk with document info  |
-| `RAGGenerationOutput`    | Typed pipeline output (message + chunks)     |
-| `*FactoryResult`         | Each factory returns a typed result          |
-| `SparsePersistence`      | On-disk reference for sparse retrievers      |
-| `DensePersistence`       | Embedding matrix references for dense retrievers |
+| Dataclass             | Purpose                                          |
+| --------------------- | ------------------------------------------------ |
+| `RAGPipelineConfig`   | Validated pipeline parameters                    |
+| `ModelRef`            | Parsed `{component, params}` reference           |
+| `ChunkReference`      | A single retrieved chunk with document info      |
+| `RAGGenerationOutput` | Typed pipeline output (message + chunks)         |
+| `*FactoryResult`      | Each factory returns a typed result              |
+| `SparsePersistence`   | On-disk reference for sparse retrievers          |
+| `DensePersistence`    | Embedding matrix references for dense retrievers |

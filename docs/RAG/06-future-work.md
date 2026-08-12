@@ -1,4 +1,5 @@
 @ -1,69 +0,0 @@
+
 # Future Work
 
 This document outlines planned improvements and known gaps in the current RAG implementation. These are not limitations per se, but rather opportunities for expansion.
