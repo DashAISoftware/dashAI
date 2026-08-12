@@ -5,15 +5,15 @@ from DashAI.back.models.hugging_face.distilbert_transformer import DistilBertTra
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformer,
 )
-from DashAI.back.models.hugging_face.qwen_model import QwenModel
+from DashAI.back.models.hugging_face.qwen_model import Qwen25_05BInstruct, Qwen25_15BInstruct
 from DashAI.back.models.hugging_face.stable_diffusion_v1_depth_controlnet import (
     StableDiffusionXLV1ControlNet,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v2_model import (
-    StableDiffusionV2Model,
+    StableDiffusion2,
 )
 from DashAI.back.models.hugging_face.stable_diffusion_v3_model import (
-    StableDiffusionV3Model,
+    StableDiffusion3Medium,
 )
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,

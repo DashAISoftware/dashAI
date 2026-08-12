@@ -1,7 +1,5 @@
 from typing import List
 
-from llama_cpp import Llama
-
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     float_field,
@@ -56,6 +54,14 @@ class DeepSeekModel(TextToTextGenerationTaskModel):
     SCHEMA = DeepSeekSchema
 
     def __init__(self, **kwargs):
+        try:
+            from llama_cpp import Llama
+        except ImportError as e:
+            raise RuntimeError(
+                "llama-cpp-python is not installed. "
+                "Please install it to use DeepSeekModel."
+            ) from e
+
         kwargs = self.validate_and_transform(kwargs)
         self.max_tokens = kwargs.pop("max_tokens", 100)
         self.temperature = kwargs.pop("temperature", 0.7)
