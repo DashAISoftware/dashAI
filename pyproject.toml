@@ -48,6 +48,7 @@ dependencies = [
     "torch",
     "torchvision",
     "transformers",
+    "sentence-transformers",
     "controlnet_aux",
     "sacrebleu",
     "sentencepiece",

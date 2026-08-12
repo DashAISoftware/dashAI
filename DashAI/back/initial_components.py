@@ -280,10 +280,8 @@ from DashAI.back.models.RAG.embeddings.dense import (
     BERTEmbedding,
     DistilBERTEmbedding,
     E5Embedding,
-    GemmaEmbedding,
     InstructorEmbedding,
     LaBSEmbedding,
-    OpenAIEmbedding,
     RoBERTaEmbedding,
     SentenceTransformerEmbedding,
 )
@@ -323,12 +321,6 @@ from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import (
 from DashAI.back.models.RAG.retrievers.sparse.tfidf_retriever import (
     TFIDFRetriever,
     TFIDFVectorizerModel,
-)
-from DashAI.back.models.remote_models.deepseek_text_to_text_generation_model import (
-    DeepSeekTextToTextGenerationModel,
-)
-from DashAI.back.models.remote_models.openai_text_to_text_generation_model import (
-    OpenAITextToTextGenerationModel,
 )
 from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
@@ -518,8 +510,6 @@ def get_initial_components():
         StableDiffusionXL,
         RealVisXLV4,
         StableDiffusionXLV1ControlNet,
-        OpenAITextToTextGenerationModel,
-        DeepSeekTextToTextGenerationModel,
         Phi4MiniInstructModel,
         SVC,
         SVR,
@@ -667,13 +657,11 @@ def get_initial_components():
         PyMuPDFExtractor,
         PlainTextExtractor,
         # Encodings
-        OpenAIEmbedding,
         SentenceTransformerEmbedding,
         BERTEmbedding,
         DistilBERTEmbedding,
         RoBERTaEmbedding,
         E5Embedding,
-        GemmaEmbedding,
         InstructorEmbedding,
         LaBSEmbedding,
         # Prompts

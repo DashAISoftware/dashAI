@@ -1,25 +1,20 @@
 from typing import List
 
 import numpy as np
-
-try:
-    from InstructorEmbedding import INSTRUCTOR
-except ImportError as err:
-    raise ImportError(
-        "InstructorEmbedding package is not installed. "
-        "Install it with: pip install InstructorEmbedding"
-    ) from err
+from sentence_transformers import SentenceTransformer
 
 from DashAI.back.models.RAG.embeddings.dense.huggingface_embedding import (
     HuggingFaceEmbedding,
 )
+from DashAI.back.models.RAG.exceptions import RAGEmbeddingError
 
 
 class _InstructorEmbedding(HuggingFaceEmbedding):
-    """Internal wrapper around the ``InstructorEmbedding`` package.
+    """Internal wrapper around INSTRUCTOR models via ``SentenceTransformer``.
 
     Prepends a fixed instruction string to every input text and delegates
-    encoding to the ``INSTRUCTOR`` model (which handles its own pooling).
+    encoding to the ``SentenceTransformer`` API (which handles INSTRUCTOR's
+    prompt-based pooling).
     """
 
     def __init__(
@@ -32,7 +27,7 @@ class _InstructorEmbedding(HuggingFaceEmbedding):
 
         Args:
             model_name: HuggingFace model identifier for the INSTRUCTOR model.
-            device: Target device (ignored — INSTRUCTOR manages its own device).
+            device: Target device (``"cpu"`` or ``"cuda"``).
             instruction: Instruction text prepended to every query / document.
         """
         super().__init__(model_name=model_name, device=device)
@@ -42,13 +37,12 @@ class _InstructorEmbedding(HuggingFaceEmbedding):
     def _pool(self, model_output, attention_mask):
         """Not implemented — INSTRUCTOR uses its own encoding API."""
         raise NotImplementedError(
-            "INSTRUCTOR uses custom encoding API, _pool is unused."
+            "INSTRUCTOR uses SentenceTransformer API, _pool is unused."
         )
 
     def load(self):
-        """Instantiate the ``INSTRUCTOR`` model from the ``InstructorEmbedding`` package."""  # noqa: E501
-        self.model = INSTRUCTOR(self.model_name)
-        self.model._text_length = self.model._input_length
+        """Instantiate the INSTRUCTOR model via ``SentenceTransformer``."""
+        self.model = SentenceTransformer(self.model_name, device=self.device)
 
     def batch_encode(self, texts: List[str]) -> np.ndarray:
         """Encode a batch of texts with the fixed instruction prefix.
@@ -58,9 +52,20 @@ class _InstructorEmbedding(HuggingFaceEmbedding):
 
         Returns:
             A ``(batch, embedding_dim)`` float32 NumPy array.
+
+        Raises:
+            RAGEmbeddingError: If the model has not been loaded yet.
         """
-        pairs = [[self.instruction, text] for text in texts]
-        return self.model.encode(pairs, show_progress_bar=False)
+        if self.model is None:
+            raise RAGEmbeddingError(
+                "Model not loaded. Call load() before batch_encode()."
+            )
+        return self.model.encode(
+            texts,
+            prompt=self.instruction,
+            normalize_embeddings=True,
+            show_progress_bar=False,
+        )
 
     def encode(self, text: str) -> np.ndarray:
         """Encode a single text with the fixed instruction prefix.
@@ -70,6 +75,16 @@ class _InstructorEmbedding(HuggingFaceEmbedding):
 
         Returns:
             A 1-D float32 NumPy array of shape ``(embedding_dim,)``.
+
+        Raises:
+            RAGEmbeddingError: If the model has not been loaded yet.
         """
-        result = self.model.encode([[self.instruction, text]], show_progress_bar=False)
+        if self.model is None:
+            raise RAGEmbeddingError("Model not loaded. Call load() before encode().")
+        result = self.model.encode(
+            [text],
+            prompt=self.instruction,
+            normalize_embeddings=True,
+            show_progress_bar=False,
+        )
         return result.squeeze()

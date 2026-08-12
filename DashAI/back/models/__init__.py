@@ -48,5 +48,4 @@ from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRe
 from DashAI.back.models.scikit_learn.svc import SVC
 
 from DashAI.back.models.RAG import RAGPipeline
-from DashAI.back.models.remote_models import OpenAITextToTextGenerationModel
 from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import Phi4MiniInstructModel
