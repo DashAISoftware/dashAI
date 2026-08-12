@@ -74,6 +74,11 @@ export function useNotebooks({ t }) {
     }
   };
 
+  const addNotebookOptimistically = (notebook) => {
+    setNotebooks((prev) => [...prev, notebook]);
+    setSelectedNotebookId(notebook.id);
+  };
+
   const removeNotebooksByDatasetId = (datasetId) => {
     setNotebooks((prev) => prev.filter((n) => n.dataset_id !== datasetId));
 
@@ -97,6 +102,7 @@ export function useNotebooks({ t }) {
     deleteNotebookById,
     editNotebook,
 
+    addNotebookOptimistically,
     removeNotebooksByDatasetId,
   };
 }

@@ -59,6 +59,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     clearSelectedNotebook,
     deleteNotebookById,
     editNotebook,
+    addNotebookOptimistically,
     removeNotebooksByDatasetId,
   } = useNotebooks({ t });
 
@@ -108,6 +109,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     clearSelectedNotebook,
     deleteNotebookById,
     editNotebook,
+    addNotebookOptimistically,
     removeNotebooksByDatasetId,
     selectedOption,
     setSelectedOption,
