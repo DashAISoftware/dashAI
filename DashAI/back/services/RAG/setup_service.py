@@ -1,10 +1,8 @@
 import logging
-from typing import Any, Dict
+from typing import Dict
 
 from sqlalchemy.orm import Session
 
-from DashAI.back.core.component_validation import validate_component_refs
-from DashAI.back.core.schema_fields.utils import normalize_payload
 from DashAI.back.dependencies.database.models import RAGPipeline as PipelineDBModel
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
@@ -12,7 +10,6 @@ from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
 )
 from DashAI.back.models.RAG.documents import BaseDocument, Chunk
 from DashAI.back.models.RAG.prompts.prompt import Prompt
-from DashAI.back.models.RAG.RAG_constants import RAG_MODEL_KEYS as _RAG_MODEL_KEYS
 from DashAI.back.models.RAG.RAG_models_factory import RAGModelsFactory
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline, RAGPipelineConfig
 from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
@@ -28,12 +25,15 @@ from DashAI.back.services.RAG.retriever_setup_service import RetrieverSetupServi
 log = logging.getLogger(__name__)
 
 
-class RAGSetupService:
+class SetupService:
     """Assembles RAG pipeline components into a ready-to-use RAGPipeline instance.
 
     Does NOT execute ``generate()`` — only assembly.  Each sub-component
     is built via the corresponding service class so that DB persistence
     and model instantiation are handled consistently.
+
+    This service receives **pre-validated** configuration (use
+    :class:`RAGSessionValidationService` for parameter validation).
     """
 
     def __init__(
@@ -42,7 +42,7 @@ class RAGSetupService:
         registry: ComponentRegistry,
         RAG_path: str,  # noqa: N803
     ):
-        """Initialize the RAG setup service with DB and registry.
+        """Initialize the setup service with DB and registry.
 
         Args:
             db: SQLAlchemy session.
@@ -53,7 +53,7 @@ class RAGSetupService:
         self._registry = registry
         self._RAG_path = RAG_path
 
-        self._documents = DocumentService(db)
+        self._documents = DocumentService(db, registry)
         self._chunking = ChunkingService(db, registry)
         self._prompts = PromptService(db, registry)
         self._llm = LLMService(db, registry)
@@ -67,7 +67,7 @@ class RAGSetupService:
         2. Load documents from the database
         3. Get or create the chunk set (identity via SHA-256 signature)
         4. Create the chunking model and persist chunks
-        5. Setup the retriever (embedding / sparse / composite)
+        5. Setup the retriever (dense embedding / sparse / composite)
         6. Get or create the LLM record
         7. Resolve the prompt component and persist it
         8. Update the pipeline DB record with FK component IDs
@@ -135,7 +135,7 @@ class RAGSetupService:
             config.prompt.params,
         )
         prompt_model = prompt_result.model
-        prompt_response = self._prompts.create(
+        prompt_response = self._prompts.get_or_create(
             class_name=config.prompt.component,
             name=f"pipeline_{config.session_id}_{config.prompt.component}",
             parameters=config.prompt.params,
@@ -275,77 +275,3 @@ class RAGSetupService:
             retriever=retriever,
             llm_model=llm_model,
         )
-
-    # ------------------------------------------------------------------
-    # Parameter update validation
-    # ------------------------------------------------------------------
-
-    def validate_update_payload(
-        self,
-        new_params: dict[str, Any],
-    ) -> dict[str, Any]:
-        """Validate a RAG parameter update payload.
-
-        Uses the already-injected ``self._db`` and ``self._registry``
-        from the instance, so callers do not need to pass them again.
-
-        Normalizes the payload, validates structure of each component ref,
-        checks components exist in the registry, validates documents and
-        prompts, and resolves ``prompt_id`` to a ``prompt`` component ref
-        when present.
-
-        Parameters
-        ----------
-        new_params : dict
-            Raw update payload from the request body.
-
-        Returns
-        -------
-        dict
-            Normalized and validated params dict, with ``prompt_id``
-            resolved to ``prompt`` if applicable.
-
-        Raises
-        ------
-        ValueError
-            If any validation check fails.
-        """
-        # 1. Normalize
-        normalized = normalize_payload(dict(new_params))
-
-        # 2. Validate structure of each component ref sent
-        for key in _RAG_MODEL_KEYS:
-            if key not in normalized:
-                continue
-            ref = normalized[key]
-            if not isinstance(ref, dict):
-                raise ValueError(f"'{key}' must be a dict, got {type(ref).__name__}.")
-            if "component" not in ref:
-                raise ValueError(f"Missing 'component' in '{key}'.")
-            if "params" not in ref:
-                raise ValueError(f"Missing 'params' in '{key}'.")
-
-        # 3. Validate components exist in registry
-        component_errors = validate_component_refs(normalized, self._registry)
-        if component_errors:
-            raise ValueError("; ".join(component_errors))
-
-        # 4. Validate documents if provided
-        if "documents" in normalized:
-            docs = normalized["documents"]
-            if not docs:
-                raise ValueError("Documents list must not be empty.")
-            DocumentService(self._db).validate_exist(docs)
-
-        # 5. Validate and resolve prompt if provided
-        prompt_service = PromptService(self._db, self._registry)
-        if "prompt_id" in normalized:
-            prompt_service.validate_prompt_exists(normalized["prompt_id"])
-            normalized["prompt"] = prompt_service.resolve_prompt_id_to_component(
-                normalized["prompt_id"]
-            )
-            del normalized["prompt_id"]
-        elif "prompt" in normalized:
-            prompt_service.validate_component_ref(normalized["prompt"])
-
-        return normalized

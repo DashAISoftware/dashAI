@@ -11,11 +11,11 @@ class PromptSchema(BaseSchema):
         template: The prompt template string with placeholders.
     """
 
-    template: str = schema_field(
+    template: schema_field(
         string_field(),
         placeholder="",
         description="The prompt template with placeholders.",
-    )
+    )  # type: ignore
 
 
 class Prompt(BaseModel):

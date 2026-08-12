@@ -10,6 +10,30 @@ from DashAI.back.core.schema_fields.string_field import string_field
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
+# OpenAI caps the number of inputs per embeddings request (2048 for the
+# text-embedding-ada-002 / text-embedding-3-* models).
+OPENAI_MAX_INPUTS_PER_REQUEST = 2048
+
+
+def _sanitize_input(text: str) -> str:
+    """Return a valid embedding input for ``text``.
+
+    OpenAI rejects empty/whitespace-only strings. A single space is a
+    valid, semantically neutral stand-in that preserves the row count
+    when encoding batches of chunks.
+
+    Parameters
+    ----------
+    text : str
+        The input string to sanitize.
+
+    Returns
+    -------
+    str
+        ``text`` when it is non-blank, otherwise a single space.
+    """
+    return text if text and text.strip() else " "
+
 
 class OpenAIEmbeddingSchema(BaseSchema):
     """Configuration schema for :class:`OpenAIEmbedding`.
@@ -102,12 +126,19 @@ class OpenAIEmbedding(DenseEmbedding):
         """
         response = self.client.embeddings.create(
             model=self.model_name,
-            input=text,
+            input=_sanitize_input(text),
         )
         return np.array(response.data[0].embedding)
 
     def batch_encode(self, texts: List[str]) -> np.ndarray:
         """Encode a batch of texts via the OpenAI API.
+
+        OpenAI limits the number of inputs per embeddings request, so
+        large chunk sets are split into slices of at most
+        ``OPENAI_MAX_INPUTS_PER_REQUEST`` and the results concatenated.
+        OpenAI also rejects empty/whitespace-only inputs, so those are
+        sanitized to a single space (the row count stays aligned with
+        ``texts``).
 
         Args:
             texts: List of input strings.
@@ -115,8 +146,15 @@ class OpenAIEmbedding(DenseEmbedding):
         Returns:
             A ``(batch, embedding_dim)`` float32 NumPy array.
         """
-        response = self.client.embeddings.create(
-            model=self.model_name,
-            input=texts,
-        )
-        return np.array([d.embedding for d in response.data])
+        if not texts:
+            return np.empty((0, 0))
+        embeddings: List[np.ndarray] = []
+        for start in range(0, len(texts), OPENAI_MAX_INPUTS_PER_REQUEST):
+            slice_texts = texts[start : start + OPENAI_MAX_INPUTS_PER_REQUEST]
+            sanitized = [_sanitize_input(t) for t in slice_texts]
+            response = self.client.embeddings.create(
+                model=self.model_name,
+                input=sanitized,
+            )
+            embeddings.append(np.array([d.embedding for d in response.data]))
+        return np.vstack(embeddings)

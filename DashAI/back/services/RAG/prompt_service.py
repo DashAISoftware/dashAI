@@ -23,6 +23,10 @@ from DashAI.back.services.RAG.exceptions import (
     RAGDatabaseError,
     RAGPromptValidationError,
 )
+from DashAI.back.services.RAG.utils import (
+    build_parameters_hash,
+    normalize_params,
+)
 
 log = logging.getLogger(__name__)
 
@@ -85,11 +89,15 @@ class PromptService:
                 "Prompt parameters must include 'template' or 'templates'."
             )
 
+        parameters = normalize_params(parameters)
+        params_hash = build_parameters_hash(parameters)
+
         try:
             prompt = RAGPrompt(
                 class_name=class_name,
                 name=name,
                 parameters=parameters,
+                parameters_hash=params_hash,
             )
             self.db.add(prompt)
             self.db.commit()
@@ -99,6 +107,88 @@ class PromptService:
             self.db.rollback()
             log.exception(e)
             raise RAGDatabaseError("Error creating prompt in database.") from e
+
+    def get_or_create(
+        self, class_name: str, name: str, parameters: dict[str, Any]
+    ) -> PromptResponse:
+        """Lookup-or-create a RAGPrompt record.
+
+        Searches for an existing prompt with the same class name and
+        parameters and reuses it when found; otherwise inserts a new record.
+        Unlike :meth:`create`, this does not enforce template presence so
+        repeated pipeline builds can share a single prompt record.
+
+        The lookup checks both the raw parameters and the sorted variant
+        because rows created via :meth:`create` may store keys in a
+        non-deterministic order (the UNIQUE constraint compares the
+        serialized JSON text). Inserts always use the sorted variant so
+        subsequent lookups are deterministic.
+
+        Args:
+            class_name: Registered prompt component name.
+            name: Human-readable name for the prompt.
+            parameters: Prompt configuration including ``template`` or
+                ``templates``.
+
+        Returns:
+            The existing or newly created prompt response.
+
+        Raises:
+            RAGDatabaseError: If a database error occurs.
+        """
+        normalized = normalize_params(parameters)
+
+        existing = self._find_by_hash(parameters)
+        if existing is None and normalized != parameters:
+            existing = self._find_by_hash(normalized)
+
+        if existing is not None:
+            return self._serialize_prompt(existing)
+
+        params_hash = build_parameters_hash(normalized)
+        try:
+            prompt = RAGPrompt(
+                class_name=class_name,
+                name=name,
+                parameters=normalized,
+                parameters_hash=params_hash,
+            )
+            self.db.add(prompt)
+            self.db.commit()
+            self.db.refresh(prompt)
+            return self._serialize_prompt(prompt)
+        except exc.IntegrityError:
+            self.db.rollback()
+            existing = self._find_by_hash(parameters)
+            if existing is None and normalized != parameters:
+                existing = self._find_by_hash(normalized)
+            if existing is not None:
+                return self._serialize_prompt(existing)
+            raise
+        except exc.SQLAlchemyError as e:
+            self.db.rollback()
+            log.exception(e)
+            raise RAGDatabaseError("Error creating prompt in database.") from e
+
+    def _find_by_hash(self, params: dict[str, Any]) -> RAGPrompt | None:
+        """Look up a prompt by its normalized parameters hash.
+
+        Args:
+            params: Parameters to compute hash from.
+
+        Returns:
+            Matching ``RAGPrompt`` or ``None``.
+
+        Raises:
+            RAGDatabaseError: On database error.
+        """
+        try:
+            h = build_parameters_hash(params)
+            return self.db.query(RAGPrompt).filter_by(parameters_hash=h).first()
+        except exc.SQLAlchemyError as e:
+            self.db.rollback()
+            log.exception(e)
+            raise RAGDatabaseError("Error looking up prompt by hash.") from e
 
     def update(
         self,
@@ -167,6 +257,7 @@ class PromptService:
                     "Prompt parameters must include 'template' or 'templates'."
                 )
             prompt.parameters = parameters
+            prompt.parameters_hash = build_parameters_hash(parameters)
             changed = True
 
         if not changed:
@@ -197,21 +288,25 @@ class PromptService:
             prompts = self.db.query(RAGPrompt).all()
 
             if len(prompts) == 0:
+                gen_params = {
+                    "templates": DefaultRAGGenerationPrompt.metadata["templates"],
+                    "language": "en",
+                }
+                qa_params = {
+                    "templates": DefaultQARAGGenerationPrompt.metadata["templates"],
+                    "language": "en",
+                }
                 default_generation_prompt = RAGPrompt(
                     class_name=DefaultRAGGenerationPrompt.__name__,
                     name="Default RAG Generation Prompt",
-                    parameters={
-                        "templates": DefaultRAGGenerationPrompt.metadata["templates"],
-                        "language": "en",
-                    },
+                    parameters=gen_params,
+                    parameters_hash=build_parameters_hash(gen_params),
                 )
                 default_qa_prompt = RAGPrompt(
                     class_name=DefaultQARAGGenerationPrompt.__name__,
                     name="Default QA RAG Generation Prompt",
-                    parameters={
-                        "templates": DefaultQARAGGenerationPrompt.metadata["templates"],
-                        "language": "en",
-                    },
+                    parameters=qa_params,
+                    parameters_hash=build_parameters_hash(qa_params),
                 )
                 self.db.add(default_generation_prompt)
                 self.db.add(default_qa_prompt)
@@ -295,10 +390,12 @@ class PromptService:
         new_name = self._build_session_prompt_name(base_name, session_id)
 
         try:
+            params_hash = build_parameters_hash(new_parameters)
             new_prompt = RAGPrompt(
                 class_name=existing_prompt.class_name,
                 name=new_name,
                 parameters=new_parameters,
+                parameters_hash=params_hash,
             )
             self.db.add(new_prompt)
             self.db.commit()

@@ -18,7 +18,7 @@ from DashAI.back.models.RAG.RAG_pipeline import (
     RAGPipeline,
     RAGPipelineConfig,
 )
-from DashAI.back.services.RAG.RAG_setup_service import RAGSetupService
+from DashAI.back.services.RAG.setup_service import SetupService
 from DashAI.back.tasks.RAG_task import RAGTask
 
 if TYPE_CHECKING:
@@ -176,7 +176,7 @@ class RAGJob(BaseJob):
                     env_RAG_path=config["RAG_PATH"],
                     **clean_params,
                 )
-                setup_service = RAGSetupService(
+                setup_service = SetupService(
                     db,
                     component_registry,
                     config["RAG_PATH"],
@@ -192,6 +192,7 @@ class RAGJob(BaseJob):
                         GenerativeProcess.session_id == generative_session.id,
                         GenerativeProcess.status == RunStatus.FINISHED,
                     )
+                    .order_by(GenerativeProcess.id)
                     .all()
                 )
                 history = [

@@ -20,6 +20,10 @@ from DashAI.back.models.RAG.RAG_models_factory import RAGModelsFactory
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
+from DashAI.back.services.RAG.utils import (
+    build_parameters_hash,
+    normalize_params,
+)
 
 log = logging.getLogger(__name__)
 
@@ -65,12 +69,13 @@ class LLMService:
             RAGGenerationModelError: If the registered component is not a
                 TextToTextGenerationTaskModel subclass.
         """
-        sorted_params = dict(sorted(params.items()))
+        sorted_params = normalize_params(params)
+        params_hash = build_parameters_hash(sorted_params)
 
         try:
             existing = (
                 self._db.query(GenerationDBModel)
-                .filter_by(class_name=component_name, parameters=sorted_params)
+                .filter_by(parameters_hash=params_hash)
                 .first()
             )
         except exc.SQLAlchemyError as e:
@@ -96,6 +101,7 @@ class LLMService:
             db_record = GenerationDBModel(
                 class_name=component_name,
                 parameters=sorted_params,
+                parameters_hash=params_hash,
             )
             self._db.add(db_record)
         except exc.SQLAlchemyError as e:

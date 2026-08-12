@@ -137,22 +137,10 @@ class DefaultQARAGGenerationPrompt(RAGGenerationPrompt):
 
         Args:
             language: Language code (one of "en", "es", "pt").
-            template: Optional override template string. Falls back to the
-                default template for the selected language if not provided.
-
-        Raises:
-            RAGPromptTemplateError: If no template is available for the
-                selected language.
+            template: The prompt template string.
         """
         self.language = kwargs.pop("language")
-        if "template" in kwargs:
-            self.template = kwargs.pop("template")
-        else:
-            self.template = TEMPLATES.get(self.language, "")
-        if not self.template:
-            raise RAGPromptTemplateError(
-                f"No template available for language: {self.language}"
-            )
+        self.template = kwargs.pop("template")
 
     def format(self, input: str, chunks: str, **kwargs: Any) -> str:
         """Render the QA prompt by replacing placeholders with actual values.

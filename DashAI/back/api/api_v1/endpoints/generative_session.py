@@ -9,8 +9,6 @@ from sqlalchemy import exc, select
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionParams,
 )
-from DashAI.back.core.component_validation import validate_component_refs
-from DashAI.back.core.schema_fields.utils import normalize_payload
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
@@ -20,9 +18,9 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
 from DashAI.back.services.RAG.cleanup_service import CleanupService
-from DashAI.back.services.RAG.document_service import DocumentService
-from DashAI.back.services.RAG.prompt_service import PromptService
-from DashAI.back.services.RAG.RAG_setup_service import RAGSetupService
+from DashAI.back.services.RAG.session_validation_service import (
+    SessionValidationService,
+)
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 from DashAI.back.tasks.RAG_task import RAGTask
 
@@ -47,13 +45,12 @@ async def upload_generative_session(
     with session_factory() as db:
         try:
             # Check if the model is registered
-            try:
-                model_class = component_registry[params.model_name]["class"]
-            except KeyError as e:
+            if params.model_name not in component_registry:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Model {params.model_name} is not registered.",
-                ) from e
+                )
+            model_class = component_registry[params.model_name]["class"]
 
             # Check if the model is a subclass of GenerativeModel
             if not issubclass(model_class, BaseGenerativeModel):
@@ -64,57 +61,26 @@ async def upload_generative_session(
                 )
 
             # Check if the task is registered
-            try:
-                task_class = component_registry[params.task_name]["class"]
-            except KeyError as e:
+            if params.task_name not in component_registry:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Task {params.task_name} is not registered.",
-                ) from e
+                )
+            task_class = component_registry[params.task_name]["class"]
 
-            # RAG Task specific handling
-            # Frontend will send the ids of the documents to be used in the
-            # RAG session but RAG pipeline expects the documents paths of the
-            # backend-stored documents
+            # RAG: validate and normalise RAG-specific parameters
             if task_class == RAGTask:
-                docs = params.parameters.get("documents", [])
-                if not docs:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="'documents' must be a non-empty list.",
-                    )
-                if not all(isinstance(d, int) for d in docs):
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="'documents' must be a list of integers.",
-                    )
                 try:
-                    DocumentService(db).validate_exist(docs)
-                except ValueError as e:
+                    params.parameters = SessionValidationService(
+                        db, component_registry
+                    ).prepare_RAG_params(params.parameters)
+                except (ValueError, RAGWorkflowError) as e:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=str(e),
                     ) from e
 
-            # Normalise frontend properties wrapper
-
-            params.parameters = normalize_payload(params.parameters)
-
-            # RAG: resolve prompt_id BEFORE schema validation
-            if task_class == RAGTask:
-                prompt_service = PromptService(db, component_registry)
-                if "prompt_id" in params.parameters:
-                    prompt_service.validate_prompt_exists(
-                        params.parameters["prompt_id"]
-                    )
-                    params.parameters["prompt"] = (
-                        prompt_service.resolve_prompt_id_to_component(
-                            params.parameters["prompt_id"]
-                        )
-                    )
-                    del params.parameters["prompt_id"]
-
-            # Validate schema (now with prompt resolved if applicable)
+            # Validate schema
             try:
                 model_class.SCHEMA.model_validate(params.parameters)
             except ValueError as e:
@@ -122,24 +88,6 @@ async def upload_generative_session(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Invalid parameters for model {params.model_name}: {e}",
                 ) from e
-
-            # RAG: validate component refs and prompt template
-            if task_class == RAGTask:
-                component_errors = validate_component_refs(
-                    params.parameters, component_registry
-                )
-                if component_errors:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="; ".join(component_errors),
-                    )
-
-                # Validate inline prompt template if present
-                prompt_ref = params.parameters.get("prompt", {})
-                if prompt_ref and isinstance(prompt_ref, dict):
-                    PromptService(db, component_registry).validate_component_ref(
-                        prompt_ref
-                    )
 
             # Check if the task is a subclass of BaseGenerativeTask
             if not issubclass(task_class, BaseGenerativeTask):
@@ -507,9 +455,8 @@ async def update_generative_session_params(
             # ── RAG-specific validation of new_params ──
             if task_class is not None and task_class == RAGTask:
                 try:
-                    config = di["config"]
-                    normalized = RAGSetupService(
-                        db, component_registry, config["RAG_PATH"]
+                    normalized = SessionValidationService(
+                        db, component_registry
                     ).validate_update_payload(new_params)
                 except (ValueError, RAGWorkflowError) as e:
                     raise HTTPException(
@@ -520,7 +467,6 @@ async def update_generative_session_params(
                 updated_parameters = {**old_parameters, **normalized}
 
                 # Cleanup orphaned RAG resources
-
                 CleanupService(db).cleanup_orphaned_resources(
                     session_id, old_parameters, updated_parameters
                 )

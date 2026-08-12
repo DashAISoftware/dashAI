@@ -456,6 +456,7 @@ class GenerativeProcess(Base):
             "ProcessData.is_input == True)"
         ),
         lazy="selectin",
+        order_by="ProcessData.id",
         overlaps="output,process",
     )
     output = relationship(
@@ -466,6 +467,7 @@ class GenerativeProcess(Base):
             "ProcessData.is_input == False)"
         ),
         lazy="selectin",
+        order_by="ProcessData.id",
         overlaps="input,process",
     )
 
@@ -756,6 +758,53 @@ RAG tables
 """
 
 
+class RAGExtractor(Base):
+    __tablename__ = "rag_extractor"
+    """
+    Canonical extractor configuration shared across documents.
+
+    Stores a component_name + params pair. Multiple documents can reference
+    the same extractor config via extractor_id FK.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    component_name: Mapped[str] = mapped_column(String, nullable=False)
+    params: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
+
+    # Relationship back to documents using this extractor
+    documents: Mapped[List["Document"]] = relationship(
+        "Document", back_populates="extractor_record"
+    )
+
+
+class ProcessedDocumentContent(Base):
+    __tablename__ = "processed_document_content"
+    """
+    Cache of extracted document text keyed by (document_id, signature).
+
+    The signature captures the file content hash and the extractor
+    configuration used, so re-extraction only happens when either changes.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    document_id: Mapped[int] = mapped_column(
+        ForeignKey("document.id", ondelete="CASCADE"), nullable=False
+    )
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    signature: Mapped[str] = mapped_column(String, nullable=False)
+    char_count: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    document: Mapped["Document"] = relationship(
+        "Document", back_populates="processed_contents"
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "document_id",
+            "signature",
+            name="uix_processed_document_content_signature",
+        ),
+    )
+
+
 class Document(Base):
     __tablename__ = "document"
     """
@@ -767,6 +816,9 @@ class Document(Base):
     file_path: Mapped[str] = mapped_column(String, nullable=False)
     file_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     optional_metadata: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
+    extractor_id: Mapped[int] = mapped_column(
+        ForeignKey("rag_extractor.id", ondelete="RESTRICT"), nullable=False
+    )
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -789,6 +841,16 @@ class Document(Base):
 
     embedding_matrices: Mapped[List["RAGEmbeddingMatrix"]] = relationship(
         "RAGEmbeddingMatrix", back_populates="document", cascade="all, delete-orphan"
+    )
+
+    extractor_record: Mapped[Optional["RAGExtractor"]] = relationship(
+        "RAGExtractor", back_populates="documents"
+    )
+
+    processed_contents: Mapped[List["ProcessedDocumentContent"]] = relationship(
+        "ProcessedDocumentContent",
+        back_populates="document",
+        cascade="all, delete-orphan",
     )
 
     @property
@@ -938,6 +1000,7 @@ class RAGPrompt(Base):
     class_name: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    parameters_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -950,14 +1013,6 @@ class RAGPrompt(Base):
         "RAGPipeline", back_populates="prompt", cascade="all, delete-orphan"
     )
 
-    __table_args__ = (
-        UniqueConstraint(
-            "class_name",
-            "parameters",
-            name="uix_RAG_prompt_class_params",
-        ),
-    )
-
 
 class RAGGenerationModel(Base):
     __tablename__ = "RAG_generation_model"
@@ -967,18 +1022,11 @@ class RAGGenerationModel(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     class_name: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    parameters_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
 
     # Relationships
     pipelines: Mapped[List["RAGPipeline"]] = relationship(
         back_populates="generation_model"
-    )
-
-    __table_args__ = (
-        UniqueConstraint(
-            "class_name",
-            "parameters",
-            name="uix_RAG_gen_model_class_params",
-        ),
     )
 
 
