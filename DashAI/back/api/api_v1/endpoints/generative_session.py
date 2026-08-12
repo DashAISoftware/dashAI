@@ -15,6 +15,7 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSessionParameterHistory,
     ProcessData,
 )
+from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
 from DashAI.back.services.RAG.cleanup_service import CleanupService
@@ -23,7 +24,6 @@ from DashAI.back.services.RAG.session_validation_service import (
 )
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 from DashAI.back.tasks.RAG_task import RAGTask
-from DashAI.back.dependencies.downloads.nested import missing_downloads
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker

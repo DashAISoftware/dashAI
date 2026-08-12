@@ -317,7 +317,7 @@ export default function DocumentSelector({
                 <Delete fontSize="small" />
               </IconButton>
             </Tooltip>
-            </Box>
+          </Box>
         ),
       },
     ],

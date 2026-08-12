@@ -210,11 +210,11 @@ from DashAI.back.models.hugging_face.opus_mt_es_en_transformer import (
 from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
     OpusMtFrEnTransformer,
 )
-from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import (
-    Phi4MiniInstructModel,
-)
 from DashAI.back.models.hugging_face.opus_mt_roa_en_transformer import (
     OpusMtRoaEnTransformer,
+)
+from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import (
+    Phi4MiniInstructModel,
 )
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigma
 from DashAI.back.models.hugging_face.qwen_model import (
@@ -269,6 +269,7 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
 from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
+from DashAI.back.models.pymc.bart_regression import BARTRegression
 from DashAI.back.models.RAG import RAGPipeline
 from DashAI.back.models.RAG.chunking_models import (
     CharacterChunkModel,
@@ -329,7 +330,6 @@ from DashAI.back.models.remote_models.deepseek_text_to_text_generation_model imp
 from DashAI.back.models.remote_models.openai_text_to_text_generation_model import (
     OpenAITextToTextGenerationModel,
 )
-from DashAI.back.models.pymc.bart_regression import BARTRegression
 from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
@@ -464,7 +464,6 @@ def get_initial_components():
         HistGradientBoostingClassifier,
         HistGradientBoostingRegression,
         KNeighborsClassifier,
-        QwenModel,
         RAGPipeline,
         KNeighborsRegression,
         LassoRegression,
