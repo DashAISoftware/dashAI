@@ -1,70 +1,76 @@
 {
   "button": {
-    "backToTaskSelection": "Back to Task Selection",
     "createSession": "Create a session",
     "generativeHub": "Generative Hub"
+  },
+  "documentReferences": {
+    "chunkLabel": "Chunk {{position}}",
+    "chunksCount_one": "This document provided {{count}} chunk for this response:",
+    "chunksCount_other": "This document provided {{count}} chunks for this response:",
+    "close": "Close",
+    "fallbackTitle": "Document {{id}}"
+  },
+  "documentsBar": {
+    "addDocuments": "Add documents",
+    "available": " available",
+    "detailedView": "See detailed view",
+    "documentCount_one": "{{count}} document",
+    "documentCount_other": "{{count}} documents",
+    "failedFetch": "Failed to fetch documents",
+    "failedUpload": "Failed to upload document(s)",
+    "inCurrentSession": " in current session",
+    "noDocumentsAvailable": "No documents available",
+    "noDocumentsFound": "No documents found",
+    "noDocumentsInSession": "No documents in this session",
+    "searchPlaceholder": "Search documents",
+    "successUpload_one": "Successfully uploaded {{count}} document",
+    "successUpload_other": "Successfully uploaded {{count}} documents",
+    "title": "Documents",
+    "uploadDocuments": "Upload your document(s)"
   },
   "error": {
     "failedToCreateSession": "Failed to create session",
     "failedToDeleteSession": "Failed to delete session",
-    "failedToFetchHistory": "Failed to fetch parameter history",
-    "failedToFetchMessages": "Failed to fetch messages",
     "failedToFetchSessionInfo": "Failed to fetch session information",
     "failedToFetchSessions": "Failed to fetch sessions",
     "failedToFetchTasks": "Failed to fetch generative tasks",
     "failedToLoadModels": "Failed to load models",
     "failedToUpdateSession": "Failed to update session",
+    "modelSwitchFailed": "Failed to change the session model",
     "nameRequired": "Name is required",
     "processError": "The process has failed. Deleting it... {{error}}",
     "sessionNameEmpty": "Session name cannot be empty",
-    "sessionNameExists": "A session with this name already exists",
-    "modelSwitchFailed": "Failed to change the session model"
+    "sessionNameExists": "A session with this name already exists"
   },
   "label": {
+    "attachMediaToContinue": "Attach media to continue",
+    "configureSession": "Configure session",
     "confirmDeleteSession": "Are you sure you want to delete the session \"{{name}}\"? This action cannot be undone.",
-    "deleteSessionConfirmation": "Are you sure you want to delete this session? This action cannot be undone.",
-    "noDescriptionAvailable": "No description available",
-    "showLess": "Show less",
-    "readMore": "Read more",
-    "generativeModule": "Generative Module",
     "createNewSession": "Create a new session",
     "createNewSessionDescription": "Pick a model, configure its parameters, and start chatting.",
-    "configureSession": "Configure session",
+    "deleteSessionConfirmation": "Are you sure you want to delete this session? This action cannot be undone.",
+    "downloadRequired": "download required",
+    "generativeModule": "Generative Module",
+    "modelChangeEvent": "Model changed: <1></1>",
     "modelHasNoParameters": "This model has no configurable parameters.",
+    "modelNotDownloaded": "This session's model is not downloaded yet. Download it to continue.",
     "nameAndDescribeYourSession": "Name your session. Tweak parameters on the right. You can change them at any time during the session.",
-    "nameYourSession": "Name your session",
-    "newSession": "New Session",
+    "noInputAvailable": "No input available for this task",
+    "parameterChangeEvent": "Parameters updated: <1></1>",
+    "parameterChangeHistory": "Parameter change history for the current session",
     "pickAModelGroupedByTask": "Pick a model. Models are grouped by task.",
     "searchModels": "Search models...",
-    "startBySelectingATask": "Start by selecting a generative task.",
-    "noSessionsFound": "No sessions found",
-    "parameterChangeEvent": "Parameters updated: <1></1>",
-    "modelChangeEvent": "Model changed: <1></1>",
-    "modelNotDownloaded": "This session's model is not downloaded yet. Download it to continue.",
-    "parameterChangeHistory": "Parameter change history for the current session",
     "searchSessions": "Search sessions",
-    "selectGenerativeTask": "Select a generative task to start a new session",
     "selectModel": "Select a model",
-    "selectModelAndConfigureParameters": "Select a model and configure its parameters.",
+    "selectModelCrumb": "Select Model",
     "selectSessionToViewParameters": "Select a session to view and edit its parameters.",
     "sessionDescription": "Session Description",
     "sessionInformation": "Session Information",
+    "sessionModel": "Model",
     "sessionName": "Session Name",
-    "sessions": "Sessions",
     "tourDisabledMessage": "Return to home to start the tour",
     "typeYourMessage": "Type a message",
-    "untitledSession": "Untitled Session",
-    "attachImage": "Attach image",
-    "attachAudio": "Attach audio",
-    "attachVideo": "Attach video",
-    "attachMedia": "Attach media",
-    "attachMediaToContinue": "Attach media to continue",
-    "noInputAvailable": "No input available for this task",
-    "selectModelCrumb": "Select Model",
-    "ragTask": "RAG - Retrieval Augmented Generation",
-    "ragTaskDescription": "Upload documents and chat with them using retrieval-augmented generation.",
-    "sessionModel": "Model",
-    "downloadRequired": "download required"
+    "untitledSession": "Untitled Session"
   },
   "message": {
     "sessionCreatedSuccess": "Session successfully created.",
@@ -72,418 +78,360 @@
     "sessionUpdated": "Session updated successfully"
   },
   "rag": {
-    "setup": {
-      "title": "Create RAG session",
-      "subtitle": "Provide basic information, select documents, and configure the components for your RAG session.",
-      "sessionDetails": "Session Details",
-      "sessionName": "Session Name *",
-      "sessionNamePlaceholder": "e.g., Product Documentation RAG",
-      "sessionNameDuplicate": "This session name already exists",
-      "sessionNameDuplicateAlert": "A session with this name already exists. Please use a different name.",
-      "description": "Description (Optional)",
-      "descriptionPlaceholder": "Describe the purpose of this RAG session...",
-      "selectDocuments": "Select documents",
-      "selectDocumentsDescription": "Upload new documents or select from existing ones to be used for RAG.",
-      "chunkingStrategy": "Chunking strategy",
-      "retrieverModel": "Retriever Model",
-      "promptTemplate": "Prompt Template",
-      "languageModel": "Language Model (LLM)",
-      "cancel": "Cancel",
-      "saveSession": "Save session",
-      "openDocumentsLibrary": "Open documents library"
+    "advanced": {
+      "chunkingTitle": "Advanced chunking configuration",
+      "close": "Close",
+      "done": "Done",
+      "generatorTitle": "Advanced generator configuration",
+      "retrieverTitle": "Advanced retriever configuration"
     },
-    "validation": {
-      "nameRequired": "Session name is required",
-      "nameUnique": "Session name must be unique",
-      "documentsRequired": "At least one document must be selected",
-      "chunkingRequired": "Chunking model must be configured",
-      "retrieverRequired": "Retriever model must be configured",
-      "generatorRequired": "Generator model must be configured",
-      "generatorInvalid": "Generator configuration is invalid (check context window)",
-      "promptRequired": "Prompt template must be selected",
-      "modelComponentMissing": "A model component has no name selected.",
-      "modelParamsIncomplete": "\"{{model}}\" parameters are incomplete. Please reconfigure it in the advanced settings.",
-      "modelParamsLoadFailed": "Failed to load default parameters for \"{{model}}\". Please try again."
-    },
-    "messages": {
-      "success": "RAG Session created successfully"
+    "breadcrumbs": {
+      "documents": "Documents",
+      "generative": "Generative",
+      "goBack": "Go back",
+      "prompts": "Prompts",
+      "rag": "RAG",
+      "sessionSuffix": "session"
     },
     "chunking": {
+      "advancedButton": "Open advanced configuration",
       "description": "Select how your documents will be split into chunks for retrieval.",
       "presets": {
-        "small": {
-          "label": "Small chunks"
-        },
-        "paragraph": {
-          "label": "Paragraph length"
+        "chunkSizeFormat": "{{chars}} characters ≈ {{tokens}} tokens",
+        "large": {
+          "label": "Large sections"
         },
         "page": {
           "label": "Page chunk"
         },
-        "large": {
-          "label": "Large sections"
+        "paragraph": {
+          "label": "Paragraph length"
         },
-        "chunkSizeFormat": "{{chars}} characters ≈ {{tokens}} tokens",
-        "custom": {
-          "label": "Custom chunking model",
-          "description": "Advanced configuration applied"
+        "small": {
+          "label": "Small chunks"
         }
-      },
-      "advancedButton": "Open advanced configuration"
-    },
-    "retriever": {
-      "description": "Select your retrieval paradigm. The retriever will search through your documents and return the most relevant chunks.",
-      "paradigmLabel": "Retrieval paradigm",
-      "keywordLabel": "Keyword",
-      "semanticLabel": "Semantic",
-      "hybridLabel": "Hybrid",
-      "hybridDescription": "BM25 + paraphrase-multilingual-MiniLM-L12-v2",
-      "advancedApplied": "Advanced configuration applied",
-      "topKLabel": "Number of chunks (Top K)",
-      "topKCardDescription": "Chunks",
-      "advancedTopK": "Advanced Top K: {{topK}}",
-      "advancedButton": "Open advanced configuration",
-      "modifyFromAdvanced": "Top K must be modified from the advanced configuration view",
-      "explanations": {
-        "SparseRetriever": "Best for specific keyword and ID search. Useful for finding exact matches in documents.",
-        "DenseRetriever": "Contextual search that understands meaning. Great for finding semantically similar content but may miss specific keywords or IDs.",
-        "HybridRetriever": "Combines keyword and contextual search for balanced performance across different query types."
       }
+    },
+    "chunkingConfig": {
+      "configureTitle": "Configure Chunking Model",
+      "modelLabel": "Chunking Model"
+    },
+    "common": {
+      "loading": "Loading..."
     },
     "composite": {
       "addChild": "Add retriever node",
-      "removeNode": "Remove node",
-      "configureNode": "Configure node",
-      "selectModel": "Select retriever model",
-      "parameters": "Parameters",
-      "simpleGroup": "Simple retrievers",
-      "keywordGroup": "Keyword retrievers",
-      "denseGroup": "Dense retrievers",
-      "embeddingGroup": "Embedding retrievers",
-      "hybridGroup": "Hybrid",
-      "hybridDescription": "BM25 + HuggingFace multilingual embeddings",
-      "compositeGroup": "Composite retrievers",
-      "nestedCompositeNote": "This is a composite retriever. Its children can be configured in the tree below.",
       "allChunks": "All chunks",
-      "selectedChunks": "Selected chunks",
-      "retrieverDescription": "Choose a retriever to configure its parameters. Keyword retrievers (BM25, TF-IDF) find documents by term frequency. Embedding retrievers capture semantic meaning with dense vectors. Composite retrievers chain multiple retrievers together, sequentially or in parallel.",
-      "compositeInstructions": "Click the + button to add a child retriever to this composite. Click on a retriever card to edit its parameters or choose another model.",
-      "reranking": "Reranking",
       "chunkFusion": "Chunk fusion",
+      "compositeGroup": "Composite retrievers",
+      "compositeInstructions": "Click the + button to add a child retriever to this composite. Click on a retriever card to edit its parameters or choose another model.",
+      "configureNode": "Configure node",
+      "denseGroup": "Dense retrievers",
+      "keywordGroup": "Keyword retrievers",
+      "mergeStrategyInterleave": "Interleave",
       "mergeStrategyRoundRobin": "Round robin",
-      "mergeStrategyInterleave": "Interleave"
+      "nestedCompositeNote": "This is a composite retriever. Its children can be configured in the tree below.",
+      "parameters": "Parameters",
+      "removeNode": "Remove node",
+      "reranking": "Reranking",
+      "retrieverDescription": "Choose a retriever to configure its parameters. Keyword retrievers (BM25, TF-IDF) find documents by term frequency. Embedding retrievers capture semantic meaning with dense vectors. Composite retrievers chain multiple retrievers together, sequentially or in parallel.",
+      "selectedChunks": "Selected chunks",
+      "selectModel": "Select retriever model",
+      "simpleGroup": "Simple retrievers"
+    },
+    "documentPreview": {
+      "noPreview": "No preview available for this file type.",
+      "pdfPreview": "generative:rag.documentPreview.pdfPreview",
+      "title": "Preview Document"
+    },
+    "documents": {
+      "emptyUploadText": "Upload your document(s)",
+      "extractorModal": {
+        "close": "Close",
+        "explanation": "There are different ways to process text from a PDF. Each extractor may produce different results depending on the document structure — try different options and compare the output. Important: RAG only uses text. If your PDF contains images with text (scanned documents, diagrams), you must use an OCR-capable extractor like EasyOCR to convert those images into text that RAG can use. Without OCR, images are ignored.",
+        "extractedContentLabel": "Extracted text",
+        "extracting": "Extracting text...",
+        "extractorLabel": "Extractor",
+        "extractText": "Extract text",
+        "noContent": "Select an extractor and the text will appear here.",
+        "rawContentLabel": "Original file",
+        "saveExtractor": "Save extractor",
+        "upToDate": "Up to date"
+      },
+      "table": {
+        "actions": "Actions",
+        "addDocument": "Add new document",
+        "configureExtractor": "Configure extractor",
+        "created": "Created",
+        "currentDocuments": "Current documents",
+        "delete": "Delete",
+        "emptyUploadText": "Upload your document(s)",
+        "extractor": "Extractor",
+        "id": "ID",
+        "lastModified": "Last Modified",
+        "name": "Name",
+        "noDocumentsAvailable": "No documents available.",
+        "preview": "Preview",
+        "type": "Type",
+        "unknownType": "Unknown"
+      },
+      "uploadButton": "Upload documents"
     },
     "generator": {
-      "description": "Select the language model that will generate responses based on the retrieved context and your prompts.",
-      "modelLabel": "Generator model",
       "advancedApplied": "Advanced configuration applied",
-      "selectModel": "Select language model",
-      "selectModelPlaceholder": "e.g., GPT-4, Claude, Llama",
+      "advancedButton": "Open advanced configuration",
+      "description": "Select the language model that will generate responses based on the retrieved context and your prompts.",
       "modelInfo": "Model:",
-      "advancedButton": "Open advanced configuration"
+      "modelLabel": "Generator model",
+      "selectModel": "Select language model",
+      "selectModelPlaceholder": "e.g., GPT-4, Claude, Llama"
+    },
+    "generatorConfig": {
+      "configureTitle": "Configure Generator Model (LLM)",
+      "modelLabel": "Generator Model"
+    },
+    "messages": {
+      "success": "RAG Session created successfully"
+    },
+    "newPrompt": {
+      "cancel": "Cancel",
+      "description": "Prompt template defines how the chunks (pieces of documents) and chat messages are integrated to generate responses. Customize the prompt to tailor the behavior of your RAG sessions.",
+      "error": "Failed to create prompt",
+      "languageLabel": "Language (optional)",
+      "nameLabel": "Prompt Name",
+      "nameRequired": "Prompt name is required",
+      "placeholdersInfo": "Use {chunks} to represent where the retrieved document chunks will be inserted, and {input} for the user message.",
+      "promptLabel": "Prompt",
+      "promptPlaceholder": "Here you can modify the prompt, for example:\nEach user message is added as {input}\nThe sources are added as {chunks}",
+      "save": "Save",
+      "success": "Prompt created successfully!",
+      "title": "Create a new prompt",
+      "unsavedChanges": "You have unsaved changes. Are you sure you want to cancel?"
+    },
+    "paramsPanel": {
+      "failedToLoad": "Failed to load RAG session",
+      "failedToUpdate": "Failed to update RAG parameters",
+      "save": "Save",
+      "title": "RAG Parameters",
+      "updated": "RAG parameters updated"
+    },
+    "placeholders": {
+      "insert": "Insert {{placeholder}}",
+      "title": "Required Placeholders"
     },
     "prompt": {
-      "description": "Select a prompt template that defines how the retrieved context and chat messages are combined to generate responses.",
-      "availablePrompts": "Available prompts",
-      "openPrompts": "Open prompt library",
-      "promptLabel": "Prompt",
-      "selectTemplate": "Select prompt template",
-      "selectTemplatePlaceholder": "e.g., Default Prompt, Custom Instruction",
-      "selectedTemplate": "Selected prompt template:",
-      "newPromptButton": "New prompt",
+      "collapse": "Collapse",
+      "createNewPrompt": "Create new prompt",
       "defaultGenerationPrompt": "Default Generation Prompt",
       "defaultQAGenerationPrompt": "Default Q&A Generation Prompt",
-      "createNewPrompt": "Create new prompt",
-      "language": "Language",
-      "collapse": "Collapse",
-      "expand": "Expand",
+      "description": "Select a prompt template that defines how the retrieved context and chat messages are combined to generate responses.",
       "descriptionToggle": "Description",
+      "expand": "Expand",
+      "language": "Language",
       "languages": {
         "en": "English",
         "es": "Español",
         "pt": "Português"
-      }
+      },
+      "newPromptButton": "New prompt",
+      "openPrompts": "Open prompt library",
+      "promptLabel": "Prompt",
+      "selectedTemplate": "Selected prompt template:",
+      "selectTemplate": "Select prompt template",
+      "selectTemplatePlaceholder": "e.g., Default Prompt, Custom Instruction"
     },
     "promptView": {
-      "type": "Type",
+      "close": "Close",
       "language": "Language",
-      "languageNotAvailable": "Language not available",
       "languageNone": "No language",
+      "languageNotAvailable": "Language not available",
       "noContent": "No template content",
-      "close": "Close",
-      "templateContent": "Template content",
-      "untitledPrompt": "Prompt",
       "table": {
-        "id": "ID",
-        "name": "Name",
-        "type": "Type",
-        "language": "Language",
-        "created": "Created",
-        "edited": "Edited",
         "actions": "Actions",
-        "viewPrompt": "View prompt",
-        "currentPrompts": "Current prompts",
         "choosePrompt": "Choose or customize your prompt to define the model's behavior.",
-        "newPrompt": "New Prompt"
-      }
-    },
-    "documents": {
-      "uploadButton": "Upload documents",
-      "emptyUploadText": "Upload your document(s)",
-      "table": {
-        "id": "ID",
-        "name": "Name",
-        "type": "Type",
-        "extractor": "Extractor",
         "created": "Created",
-        "lastModified": "Last Modified",
-        "actions": "Actions",
-        "preview": "Preview",
-        "delete": "Delete",
-        "configureExtractor": "Configure extractor",
-        "addDocument": "Add new document",
-        "currentDocuments": "Current documents",
-        "noDocumentsAvailable": "No documents available.",
-        "emptyUploadText": "Upload your document(s)",
-        "unknownType": "Unknown"
+        "currentPrompts": "Current prompts",
+        "edited": "Edited",
+        "id": "ID",
+        "language": "Language",
+        "name": "Name",
+        "newPrompt": "New Prompt",
+        "type": "Type",
+        "viewPrompt": "View prompt"
       },
-      "extractorModal": {
-        "title": "Configure Extractor",
-        "explanation": "There are different ways to process text from a PDF. Each extractor may produce different results depending on the document structure — try different options and compare the output. Important: RAG only uses text. If your PDF contains images with text (scanned documents, diagrams), you must use an OCR-capable extractor like EasyOCR to convert those images into text that RAG can use. Without OCR, images are ignored.",
-        "extractorLabel": "Extractor",
-        "saveExtractor": "Save extractor",
-        "extracting": "Extracting text...",
-        "noContent": "Select an extractor and the text will appear here.",
-        "rawContentLabel": "Original file",
-        "extractedContentLabel": "Extracted text",
-        "extractText": "Extract text",
-        "upToDate": "Up to date",
-        "close": "Close"
-      }
+      "templateContent": "Template content",
+      "type": "Type",
+      "untitledPrompt": "Prompt"
     },
-    "summary": {
-      "title": "RAG session",
-      "descriptionPlaceholder": "No description available",
-      "createdLabel": "Created",
-      "openChatButton": "Open RAG session chat",
-      "detailedConfig": "Detailed configuration",
-      "chunkingModel": "Chunking model",
-      "retrieverModel": "Retriever Model",
-      "generationModel": "Generation model",
-      "promptSelected": "Prompt selected",
-      "promptName": "Name:",
-      "promptTemplate": "Template:",
-      "noPrompt": "No prompt configured",
-      "sessionNotFound": "Session not found",
-      "loading": "Loading session data...",
-      "apiKeyCopied": "API key copied to clipboard",
-      "failedToCopyApiKey": "Failed to copy API key",
-      "noParameters": "No parameters",
-      "viewDetails": "View details",
-      "parameterDetails": "Parameter details",
-      "completeConfig": "Complete parameter configuration:",
-      "close": "Close",
-      "sessionName": "Session Name",
-      "sessionDescription": "Session Description",
-      "parameterDetailTitle": "{{component}} - {{param}}",
-      "edit": "Edit",
-      "save": "Save",
-      "cancel": "Cancel",
-      "sessionUpdated": "Session updated successfully",
-      "failedToUpdateSession": "Failed to update session"
+    "retriever": {
+      "advancedApplied": "Advanced configuration applied",
+      "advancedButton": "Open advanced configuration",
+      "advancedTopK": "Advanced Top K: {{topK}}",
+      "description": "Select your retrieval paradigm. The retriever will search through your documents and return the most relevant chunks.",
+      "hybridDescription": "BM25 + paraphrase-multilingual-MiniLM-L12-v2",
+      "hybridLabel": "Hybrid",
+      "keywordLabel": "Keyword",
+      "paradigmLabel": "Retrieval paradigm",
+      "semanticLabel": "Semantic",
+      "topKLabel": "Number of chunks (Top K)"
     },
-    "newPrompt": {
-      "title": "Create a new prompt",
-      "description": "Prompt template defines how the chunks (pieces of documents) and chat messages are integrated to generate responses. Customize the prompt to tailor the behavior of your RAG sessions.",
-      "placeholdersInfo": "Use {chunks} to represent where the retrieved document chunks will be inserted, and {input} for the user message.",
-      "nameLabel": "Prompt Name",
-      "nameRequired": "Prompt name is required",
-      "promptLabel": "Prompt",
-      "promptPlaceholder": "Here you can modify the prompt, for example:\nEach user message is added as {input}\nThe sources are added as {chunks}",
-      "cancel": "Cancel",
-      "save": "Save",
-      "unsavedChanges": "You have unsaved changes. Are you sure you want to cancel?",
-      "success": "Prompt created successfully!",
-      "error": "Failed to create prompt",
-      "languageLabel": "Language (optional)"
-    },
-    "advanced": {
-      "chunkingTitle": "Advanced chunking configuration",
-      "retrieverTitle": "Advanced retriever configuration",
-      "generatorTitle": "Advanced generator configuration",
-      "promptTitle": "Advanced prompt configuration",
-      "close": "Close",
-      "done": "Done",
-      "noDescription": "No description available",
-      "promptTemplate": "Prompt Template",
-      "promptInfo": "Advanced configuration for prompts is typically managed through the prompt templates interface. You can create custom prompts or modify existing ones there."
+    "retrieverConfig": {
+      "modelLabel": "Retriever model"
     },
     "rightPanel": {
-      "title": "RAG basics",
-      "subtitle": "Retrieval-Augmented Generation (RAG) helps the model answer using your documents.",
-      "howItWorksTitle": "How it works",
       "howItWorks": {
         "step1": "Select the documents you want the assistant to use.",
         "step2": "Documents are split into smaller chunks (chunking) to make retrieval efficient.",
         "step3": "A retriever finds the most relevant chunks for your question.",
         "step4": "The LLM generates an answer using those chunks and the selected prompt template."
       },
-      "settingsTitle": "What each setting does",
+      "howItWorksTitle": "How it works",
       "settings": {
-        "documents": {
-          "title": "Documents",
-          "point1": "Your documents are the knowledge base: the assistant can only use what it can retrieve from them.",
-          "point2": "Upload clear, well-structured files (PDF, TXT, etc.) for best results.",
-          "point3": "Currently, only text-based documents are supported. Images, audio, and video are not yet supported."
-        },
         "chunking": {
-          "title": "Chunking",
           "point1": "Chunking splits documents into smaller pieces that can be searched.",
           "point2": "Too small chunks: retrieval can miss context and answers may feel fragmented.",
           "point3": "Too large chunks: retrieval can bring extra noise and answers may be slower (more tokens).",
-          "point4": "Overlap helps keep context between chunks, but increases repetition."
+          "point4": "Overlap helps keep context between chunks, but increases repetition.",
+          "title": "Chunking"
+        },
+        "documents": {
+          "point1": "Your documents are the knowledge base: the assistant can only use what it can retrieve from them.",
+          "point2": "Upload clear, well-structured files (PDF, TXT, etc.) for best results.",
+          "point3": "Currently, only text-based documents are supported. Images, audio, and video are not yet supported.",
+          "title": "Documents"
+        },
+        "llm": {
+          "point1": "The LLM writes the final answer using the retrieved chunks.",
+          "point2": "Larger models usually answer better, but can be slower and costlier.",
+          "point3": "If you need speed, start with a smaller model and iterate.",
+          "title": "Language Model (LLM)"
+        },
+        "prompt": {
+          "point1": "Prompts control the tone, format, and what the model should focus on.",
+          "point2": "If answers are too long/short or lack structure, try another template or refine the prompt.",
+          "title": "Prompt template"
         },
         "retriever": {
-          "title": "Retriever (Sparse vs Dense)",
           "point1": "The retriever decides which chunks are sent to the LLM.",
           "point2": "Sparse (keyword-based): great for exact terms like IDs, product names, or code; usually fast.",
           "point3": "Sparse limitation: struggles with synonyms and heavily paraphrased questions.",
           "point4": "Dense (semantic): better for natural language and paraphrases; searches by meaning.",
-          "point5": "Dense limitation: can return ‘similar’ but not exact matches, and may be slower."
-        },
-        "llm": {
-          "title": "Language Model (LLM)",
-          "point1": "The LLM writes the final answer using the retrieved chunks.",
-          "point2": "Larger models usually answer better, but can be slower and costlier.",
-          "point3": "If you need speed, start with a smaller model and iterate."
-        },
-        "prompt": {
-          "title": "Prompt template",
-          "point1": "Prompts control the tone, format, and what the model should focus on.",
-          "point2": "If answers are too long/short or lack structure, try another template or refine the prompt."
+          "point5": "Dense limitation: can return ‘similar’ but not exact matches, and may be slower.",
+          "title": "Retriever (Sparse vs Dense)"
         }
       },
-      "tipsTitle": "Practical tips",
+      "settingsTitle": "What each setting does",
+      "subtitle": "Retrieval-Augmented Generation (RAG) helps the model answer using your documents.",
       "tips": {
         "tip1": "If answers miss context, try larger chunks or more overlap.",
         "tip2": "If answers feel too generic, try smaller chunks or adjust the retriever model.",
         "tip3": "Choose a prompt template that matches your domain and tone."
-      }
+      },
+      "tipsTitle": "Practical tips",
+      "title": "RAG basics"
     },
-    "common": {
-      "loading": "Loading..."
+    "setup": {
+      "cancel": "Cancel",
+      "chunkingStrategy": "Chunking strategy",
+      "description": "Description (Optional)",
+      "descriptionPlaceholder": "Describe the purpose of this RAG session...",
+      "languageModel": "Language Model (LLM)",
+      "openDocumentsLibrary": "Open documents library",
+      "promptTemplate": "Prompt Template",
+      "retrieverModel": "Retriever Model",
+      "saveSession": "Save session",
+      "selectDocuments": "Select documents",
+      "selectDocumentsDescription": "Upload new documents or select from existing ones to be used for RAG.",
+      "sessionDetails": "Session Details",
+      "sessionName": "Session Name *",
+      "sessionNameDuplicate": "This session name already exists",
+      "sessionNameDuplicateAlert": "A session with this name already exists. Please use a different name.",
+      "sessionNamePlaceholder": "e.g., Product Documentation RAG",
+      "subtitle": "Provide basic information, select documents, and configure the components for your RAG session.",
+      "title": "Create RAG session"
     },
-    "chunkingConfig": {
-      "configureTitle": "Configure Chunking Model",
-      "modelLabel": "Chunking Model"
-    },
-    "generatorConfig": {
-      "configureTitle": "Configure Generator Model (LLM)",
-      "modelLabel": "Generator Model"
-    },
-    "retrieverConfig": {
-      "modelLabel": "Retriever model"
-    },
-    "breadcrumbs": {
-      "generative": "Generative",
-      "rag": "RAG",
-      "documents": "Documents",
-      "prompts": "Prompts",
-      "goBack": "Go back",
-      "sessionSuffix": "session"
-    },
-    "placeholders": {
-      "title": "Required Placeholders",
-      "insert": "Insert {{placeholder}}"
-    },
-    "documentPreview": {
-      "title": "Preview Document",
-      "noPreview": "No preview available for this file type.",
-      "loading": "Loading PDF...",
-      "error": "Unable to render this PDF.",
-      "retry": "Retry",
-      "openInNewTab": "Open in new tab",
-      "previousPage": "Previous page",
-      "nextPage": "Next page",
-      "pageOf": "Page {{current}} of {{total}}"
-    },
-    "paramsPanel": {
-      "title": "RAG Parameters",
+    "summary": {
+      "apiKeyCopied": "API key copied to clipboard",
+      "cancel": "Cancel",
+      "chunkingModel": "Chunking model",
+      "close": "Close",
+      "completeConfig": "Complete parameter configuration:",
+      "createdLabel": "Created",
+      "descriptionPlaceholder": "No description available",
+      "detailedConfig": "Detailed configuration",
+      "edit": "Edit",
+      "failedToCopyApiKey": "Failed to copy API key",
+      "failedToUpdateSession": "Failed to update session",
+      "generationModel": "Generation model",
+      "loading": "Loading session data...",
+      "noParameters": "No parameters",
+      "openChatButton": "Open RAG session chat",
+      "parameterDetails": "Parameter details",
+      "parameterDetailTitle": "{{component}} - {{param}}",
+      "retrieverModel": "Retriever Model",
       "save": "Save",
-      "failedToLoad": "Failed to load RAG session",
-      "updated": "RAG parameters updated",
-      "failedToUpdate": "Failed to update RAG parameters"
+      "sessionDescription": "Session Description",
+      "sessionName": "Session Name",
+      "sessionNotFound": "Session not found",
+      "sessionUpdated": "Session updated successfully",
+      "title": "RAG session",
+      "viewDetails": "View details"
+    },
+    "validation": {
+      "chunkingRequired": "Chunking model must be configured",
+      "documentsRequired": "At least one document must be selected",
+      "generatorInvalid": "Generator configuration is invalid (check context window)",
+      "generatorRequired": "Generator model must be configured",
+      "modelComponentMissing": "A model component has no name selected.",
+      "modelParamsIncomplete": "\"{{model}}\" parameters are incomplete. Please reconfigure it in the advanced settings.",
+      "modelParamsLoadFailed": "Failed to load default parameters for \"{{model}}\". Please try again.",
+      "nameRequired": "Session name is required",
+      "nameUnique": "Session name must be unique",
+      "promptRequired": "Prompt template must be selected",
+      "retrieverRequired": "Retriever model must be configured"
     }
-  },
-  "validation": {
-    "contextSpace": "With your current configuration you have space for your sources (chunks) and {{availableChars}} characters for your message.",
-    "insufficientContextTitle": "Insufficient context window",
-    "insufficientContextDescription": "The selected model doesn't have enough context to handle the current Chunk Size and Top K settings. Please reduce the Chunk Size, the number of results (Top K), or select a model with a larger context window.",
-    "apiKeyMissingTitle": "API key required",
-    "apiKeyMissingDescription": "This model requires an API key to function. Open Advanced Configuration to add your API key."
-  },
-  "documentReferences": {
-    "modalTitle": "Document references",
-    "fallbackTitle": "Document {{id}}",
-    "chunksCount_one": "This document provided {{count}} chunk for this response:",
-    "chunksCount_other": "This document provided {{count}} chunks for this response:",
-    "chunkLabel": "Chunk {{position}}",
-    "close": "Close"
-  },
-  "sourcesDisplay": {
-    "viewSources": "View message sources",
-    "provided": "provided",
-    "chunk_one": "chunk",
-    "chunk_other": "chunks",
-    "viewChunks": "View chunks"
-  },
-  "documentsBar": {
-    "title": "Documents",
-    "documentCount_one": "{{count}} document",
-    "documentCount_other": "{{count}} documents",
-    "inCurrentSession": " in current session",
-    "available": " available",
-    "addDocuments": "Add documents",
-    "searchPlaceholder": "Search documents",
-    "detailedView": "See detailed view",
-    "noDocumentsFound": "No documents found",
-    "noDocumentsInSession": "No documents in this session",
-    "noDocumentsAvailable": "No documents available",
-    "uploadDocuments": "Upload your document(s)",
-    "failedFetch": "Failed to fetch documents",
-    "successUpload_one": "Successfully uploaded {{count}} document",
-    "successUpload_other": "Successfully uploaded {{count}} documents",
-    "failedUpload": "Failed to upload document(s)"
-  },
-  "ragPromptsPage": {
-    "title": "RAG prompts",
-    "description": "Manage prompts for your RAG sessions: view all available prompts and create new ones to improve your AI interactions."
   },
   "ragDocumentsPage": {
-    "title": "RAG documents",
-    "description": "Manage documents for your RAG sessions. Remember that RAG only uses text: evaluate the available extractors and choose the most suitable one for each document type (e.g., use OCR-capable extractors for scanned documents).",
     "contentPanel": {
-      "noDocumentSelected": "Select a document to view its processed content",
       "loadingContent": "Loading content...",
-      "extractionError": "Error extracting content",
-      "noContent": "No content extracted"
+      "noContent": "No content extracted",
+      "noDocumentSelected": "Select a document to view its processed content"
     },
+    "description": "Manage documents for your RAG sessions. Remember that RAG only uses text: evaluate the available extractors and choose the most suitable one for each document type (e.g., use OCR-capable extractors for scanned documents).",
     "detailPanel": {
-      "noDocumentSelected": "Select a document to view details",
+      "changeExtractorConfirmBody_one": "ragDocumentsPage.detailPanel.changeExtractorConfirmBody",
+      "changeExtractorConfirmBody_other": "ragDocumentsPage.detailPanel.changeExtractorConfirmBody",
+      "changeExtractorConfirmTitle": "Change extractor",
+      "contentPreview": "Content Preview",
       "documentInfo": "Document Info",
-      "name": "Name",
-      "type": "Type",
-      "size": "Size",
-      "created": "Created",
+      "extracting": "Extracting text...",
       "extractor": "Extractor",
-      "extractorDefault": "Default",
+      "name": "Name",
+      "noContent": "No content extracted yet. Click \"Process document\" to extract text.",
+      "noDocumentSelected": "Select a document to view details",
       "processAndShowContent": "Process document and show content",
       "saveExtractor": "Save extractor",
-      "extracting": "Extracting text...",
-      "contentPreview": "Content Preview",
-      "noContent": "No content extracted yet. Click \"Process document\" to extract text.",
-      "changeExtractorConfirmTitle": "Change extractor",
-      "changeExtractorConfirmBody": "This change will affect {{count}} RAG pipeline(s). Existing chunks and retrievers will be deleted and recomputed on the next run. Continue?"
-    }
+      "type": "Type"
+    },
+    "title": "RAG documents"
+  },
+  "ragPromptsPage": {
+    "description": "Manage prompts for your RAG sessions: view all available prompts and create new ones to improve your AI interactions.",
+    "title": "RAG prompts"
+  },
+  "sourcesDisplay": {
+    "chunk_one": "chunk",
+    "chunk_other": "chunks",
+    "fallbackTitle": "sourcesDisplay.fallbackTitle",
+    "provided": "provided",
+    "viewChunks": "View chunks",
+    "viewSources": "View message sources"
+  },
+  "validation": {
+    "apiKeyMissingDescription": "This model requires an API key to function. Open Advanced Configuration to add your API key.",
+    "apiKeyMissingTitle": "API key required",
+    "contextSpace": "With your current configuration you have space for your sources (chunks) and {{availableChars}} characters for your message.",
+    "insufficientContextDescription": "The selected model doesn't have enough context to handle the current Chunk Size and Top K settings. Please reduce the Chunk Size, the number of results (Top K), or select a model with a larger context window.",
+    "insufficientContextTitle": "Insufficient context window"
   }
 }
