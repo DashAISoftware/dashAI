@@ -64,7 +64,7 @@ export default function DocumentSelector({
     () =>
       documents.map((doc) => ({
         ...doc,
-        preview: doc.file_url,
+        preview: doc.preview_url,
         file_type: doc.file_name.split(".").pop().toLowerCase(),
       })),
     [documents],

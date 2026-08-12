@@ -28,6 +28,7 @@ import { useTranslation } from "react-i18next";
  * @param {Array}    props.documents - Array of document objects.
  * @param {function} props.onRemove - Callback invoked with document ID when deleting.
  * @param {function} [props.onAddDocument] - Callback invoked with the saved document after upload.
+ * @param {function} [props.onSelectDocument] - Callback invoked with the selected row when a row is clicked.
  * @param {boolean}  [props.isLoading=false] - Whether the data is still loading.
  * @param {string}   [props.tableTitle=null] - Custom table title (shown when showTableTitle is true).
  * @param {boolean}  [props.showTableTitle=false] - Whether to show the table title header.
@@ -37,6 +38,7 @@ export default function DocumentTable({
   documents,
   onRemove,
   onAddDocument,
+  onSelectDocument = null,
   isLoading = false,
   tableTitle = null,
   showTableTitle = false,
@@ -131,6 +133,13 @@ export default function DocumentTable({
       },
     },
     {
+      field: "extractor",
+      headerName: t("generative:rag.documents.table.extractor"),
+      flex: 0.3,
+      editable: false,
+      valueGetter: (value, row) => row?.extractor?.component,
+    },
+    {
       field: "actions",
       type: "actions",
       headerName: t("generative:rag.documents.table.actions"),
@@ -213,6 +222,11 @@ export default function DocumentTable({
           }}
           pageSizeOptions={[5, 10]}
           disableRowSelectionOnClick
+          onRowClick={(params) => {
+            if (onSelectDocument) {
+              onSelectDocument(params.row);
+            }
+          }}
           autoHeight
           loading={isLoading}
           slots={{
@@ -257,6 +271,7 @@ DocumentTable.propTypes = {
     }),
   ).isRequired,
   onRemove: PropTypes.func.isRequired,
+  onSelectDocument: PropTypes.func,
   isLoading: PropTypes.bool,
   tableTitle: PropTypes.string,
   showTableTitle: PropTypes.bool,

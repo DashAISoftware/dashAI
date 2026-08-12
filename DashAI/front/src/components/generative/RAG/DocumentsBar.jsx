@@ -67,7 +67,7 @@ export default function DocumentsBar({
           uploadedAt: doc.created,
           file_name: doc.file_name,
           file_type: doc.file_type,
-          preview: doc.file_url,
+          preview: doc.preview_url,
           created: doc.created,
           optional_metadata: doc.optional_metadata,
         }));
@@ -127,7 +127,7 @@ export default function DocumentsBar({
           uploadedAt: savedDoc.created,
           file_name: savedDoc.file_name,
           file_type: savedDoc.file_type,
-          preview: savedDoc.file_url,
+          preview: savedDoc.preview_url,
           created: savedDoc.created,
           optional_metadata: savedDoc.optional_metadata,
         };
@@ -267,8 +267,8 @@ export default function DocumentsBar({
               {searchQuery
                 ? t("documentsBar.noDocumentsFound")
                 : selectedSessionId
-                  ? t("documentsBar.noDocumentsInSession")
-                  : t("documentsBar.noDocumentsAvailable")}
+                ? t("documentsBar.noDocumentsInSession")
+                : t("documentsBar.noDocumentsAvailable")}
             </Typography>
           </Box>
         )}

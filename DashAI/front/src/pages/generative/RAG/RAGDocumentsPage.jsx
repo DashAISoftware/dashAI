@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Box, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
@@ -9,6 +9,7 @@ import RightPanel from "../../../components/threeSectionLayout/panels/RightPanel
 import SessionBar from "../../../components/generative/SessionBar";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import DocumentTable from "../../../components/generative/RAG/DocumentTable";
+import DocumentDetailPanel from "../../../components/generative/RAG/DocumentDetailPanel";
 import { loadDocuments, deleteDocument } from "../../../api/rag";
 import { getSessions, removeSession } from "../../../api/session";
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
@@ -28,6 +29,7 @@ function RAGDocumentsPage() {
   const [allDocuments, setAllDocuments] = useState([]);
   const [documentsLoading, setDocumentsLoading] = useState(true);
   const [sessions, setSessions] = useState([]);
+  const [selectedDocument, setSelectedDocument] = useState(null);
 
   /**
    * Fetch all sessions from the API.
@@ -150,31 +152,24 @@ function RAGDocumentsPage() {
                   id: String(doc.id),
                   name: doc.file_name,
                   createdAt: doc.created || doc.createdAt || "",
-                  preview: doc.file_url,
+                  preview: doc.preview_url,
                   file_type: doc.file_name
                     ? doc.file_name.split(".").pop().toLowerCase()
                     : "",
                 }))}
               onRemove={handleRemoveDocumentFromTable}
               onAddDocument={handleAddDocument}
+              onSelectDocument={setSelectedDocument}
               isLoading={documentsLoading}
               showTableTitle={false}
             />
           </CenterPanel>
 
           <RightPanel toggleButtonTop="50%" data-tour="documents-right-panel">
-            <Box
-              width="100%"
-              height="100%"
-              sx={{
-                backgroundColor: "background.box",
-                borderRadius: 2,
-                minWidth: 0,
-                maxWidth: "100%",
-                overflow: "auto",
-                p: 2,
-              }}
-            ></Box>
+            <DocumentDetailPanel
+              selectedDocument={selectedDocument}
+              onExtractorChanged={fetchAllDocuments}
+            />
           </RightPanel>
         </ModuleContainer>
       </ThreePanelLayoutContext.Provider>
