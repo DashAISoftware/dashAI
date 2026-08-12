@@ -65,8 +65,11 @@ function FormSchemaRenderFields({
     (name, subName) => (value) => {
       const fieldPath = subName ? `${name}.${subName}` : name;
       formik.setFieldValue(fieldPath, value, true);
+      // Always pass complete formik.values so handleUpdateSchema receives
+      // ALL fields regardless of whether the context store has been
+      // initialised yet (prevents race-condition with useEffect init).
       handleUpdateSchema(
-        { [fieldPath]: value },
+        { ...formik.values, [fieldPath]: value },
         autoSave ? onFormSubmit : null,
       );
     },

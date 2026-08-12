@@ -95,7 +95,10 @@
       "retrieverRequired": "O modelo de recuperação deve ser configurado",
       "generatorRequired": "O modelo de geração deve ser configurado",
       "generatorInvalid": "A configuração do gerador é inválida (verifique a janela de contexto)",
-      "promptRequired": "Um modelo de prompt deve ser selecionado"
+      "promptRequired": "Um modelo de prompt deve ser selecionado",
+      "modelComponentMissing": "Um componente do modelo não tem nome selecionado.",
+      "modelParamsIncomplete": "Os parâmetros de \"{{model}}\" estão incompletos. Reconfigure-o nas configurações avançadas.",
+      "modelParamsLoadFailed": "Falha ao carregar os parâmetros padrão para \"{{model}}\". Tente novamente."
     },
     "messages": {
       "success": "Sessão RAG criada com sucesso"
@@ -128,7 +131,7 @@
       "keywordLabel": "Palavra-chave",
       "semanticLabel": "Semântico",
       "hybridLabel": "Híbrido",
-      "hybridDescription": "BM25 + Harrier 0.6B",
+      "hybridDescription": "BM25 + paraphrase-multilingual-MiniLM-L12-v2",
       "advancedApplied": "Configuração avançada aplicada",
       "topKLabel": "Número de fragmentos (Top K)",
       "topKCardDescription": "Fragmentos",
@@ -158,7 +161,11 @@
       "allChunks": "Todos os fragmentos",
       "selectedChunks": "Fragmentos selecionados",
       "retrieverDescription": "Escolha um recuperador para configurar seus parâmetros. Os recuperadores por palavras-chave (BM25, TF-IDF) encontram documentos por frequência de termos. Os recuperadores por embeddings capturam o significado semântico com vetores densos. Os recuperadores compostos encadeiam vários recuperadores, de forma sequencial ou em paralelo.",
-      "compositeInstructions": "Clique no botão + para adicionar um recuperador filho a este composto. Clique em um cartão para editar seus parâmetros ou escolher outro modelo."
+      "compositeInstructions": "Clique no botão + para adicionar um recuperador filho a este composto. Clique em um cartão para editar seus parâmetros ou escolher outro modelo.",
+      "reranking": "Reordenação",
+      "chunkFusion": "Fusão de chunks",
+      "mergeStrategyRoundRobin": "Round robin",
+      "mergeStrategyInterleave": "Intercalar"
     },
     "generator": {
       "description": "Selecione o modelo de linguagem que gerará respostas com base no contexto recuperado e seus prompts.",
@@ -321,7 +328,13 @@
     "documentPreview": {
       "title": "Visualização do documento",
       "noPreview": "Não há visualização disponível para este tipo de arquivo.",
-      "pdfPreview": "Visualização de PDF"
+      "loading": "Carregando PDF...",
+      "error": "Não foi possível renderizar este PDF.",
+      "retry": "Tentar novamente",
+      "openInNewTab": "Abrir em uma nova aba",
+      "previousPage": "Página anterior",
+      "nextPage": "Próxima página",
+      "pageOf": "Página {{current}} de {{total}}"
     },
     "paramsPanel": {
       "title": "Parâmetros RAG",
@@ -337,6 +350,7 @@
         "id": "ID",
         "name": "Nome",
         "type": "Tipo",
+        "extractor": "Extrator",
         "created": "Criado",
         "lastModified": "Última modificação",
         "actions": "Ações",
@@ -427,6 +441,23 @@
   },
   "ragDocumentsPage": {
     "title": "Documentos RAG",
-    "description": "Gerencie os documentos para suas sessões RAG: veja os documentos existentes e faça upload de novos para melhorar sua base de conhecimento de IA."
+    "description": "Gerencie documentos para suas sessões RAG: visualize documentos existentes e faça upload de novos para enriquecer sua base de conhecimento.",
+    "detailPanel": {
+      "noDocumentSelected": "Selecione um documento para ver detalhes",
+      "documentInfo": "Informações do documento",
+      "name": "Nome",
+      "type": "Tipo",
+      "size": "Tamanho",
+      "created": "Criado",
+      "extractor": "Extrator",
+      "extractorDefault": "Padrão",
+      "processAndShowContent": "Processar documento e mostrar conteúdo",
+      "saveExtractor": "Salvar extrator",
+      "extracting": "Extraindo texto...",
+      "contentPreview": "Pré-visualização do conteúdo",
+      "noContent": "Nenhum conteúdo extraído ainda. Clique em \"Processar documento\" para extrair texto.",
+      "changeExtractorConfirmTitle": "Alterar extrator",
+      "changeExtractorConfirmBody": "Esta alteração afetará {{count}} pipeline(s) RAG. Os chunks e retrievers existentes serão excluídos e recalculados na próxima execução. Continuar?"
+    }
   }
 }

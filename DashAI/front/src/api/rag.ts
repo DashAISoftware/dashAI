@@ -121,7 +121,7 @@ export const updateGenerativeSessionParams = async (
 
 /** Fetches all available retriever paradigms (children of RetrieverModel). @returns List of retriever paradigm components. */
 export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
-  const response = await getChildComponents("RetrieverModel", true);
+  const response = await getChildComponents("RetrieverModel", true, true);
   if (!response) {
     throw new Error(`Failed to fetch retrieval options`);
   }
@@ -132,7 +132,7 @@ export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
 export const getRetrieverComponents = async (
   retrievalParadigm: string,
 ): Promise<IComponent[]> => {
-  const response = await getChildComponents(retrievalParadigm, true);
+  const response = await getChildComponents(retrievalParadigm, true, true);
 
   if (!response) {
     throw new Error(`Failed to fetch retriever components`);
@@ -294,4 +294,60 @@ export const getCustomPrompts = async (
     allChildren.push(...filtered);
   }
   return allChildren;
+};
+
+/** Fetches all available extractor components (children of BaseExtractor). @returns List of extractor components. */
+export const getExtractorOptions = async (): Promise<IComponent[]> => {
+  const response = await getChildComponents("BaseExtractor", false);
+  if (!response) {
+    throw new Error(`Failed to fetch extractor options`);
+  }
+  return response;
+};
+
+/**
+ * Extracts text from a document using a specified extractor (on-demand, no persistence).
+ * @param docId - The document ID.
+ * @param extractorRef - Optional {component, params} for the extractor to use.
+ * @returns Extracted text with metadata.
+ */
+export const extractDocumentText = async (
+  docId: number,
+  extractorRef?: { component: string; params?: Record<string, any> },
+): Promise<{
+  text: string;
+  extractor: { component: string; params: Record<string, any> };
+  char_count: number;
+}> => {
+  const response = await api.post(`/v1/document/${docId}/extract`, {
+    extractor: extractorRef,
+  });
+  if (response.status !== 200) {
+    throw new Error(`Failed to extract document text: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/**
+ * Persists an extractor choice for a document and optionally invalidates RAG artifacts.
+ * @param docId - The document ID.
+ * @param extractorRef - The {component, params} for the extractor.
+ * @param force - If true, bypass confirmation and invalidate artifacts.
+ * @returns The updated document response.
+ */
+export const updateDocumentExtractor = async (
+  docId: number,
+  extractorRef: { component: string; params?: Record<string, any> },
+  force: boolean = false,
+): Promise<IDocumentResponse> => {
+  const response = await api.put(`/v1/document/${docId}/extractor`, {
+    extractor: extractorRef,
+    force,
+  });
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to update document extractor: ${response.statusText}`,
+    );
+  }
+  return response.data;
 };

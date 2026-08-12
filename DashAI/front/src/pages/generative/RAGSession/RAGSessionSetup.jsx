@@ -21,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { createRAGSession } from "../../../api/rag";
 import { getSessions } from "../../../api/session";
 import { generateSequentialName } from "../../../utils/nameGenerator";
+import { validateModelConfig } from "../../../utils/ragValidation";
 import RAGSectionColumn from "./components/RAGSectionColumn";
 
 const defaultSessionData = {
@@ -329,6 +330,51 @@ export default function RAGSessionSetup({
       });
       return false;
     }
+
+    const chunkingValidation = validateModelConfig(
+      sessionData.parameters.chunking_model,
+      t,
+    );
+    if (!chunkingValidation.valid) {
+      chunkingValidation.errors.forEach((err) =>
+        enqueueSnackbar(err, { variant: "warning" }),
+      );
+      return false;
+    }
+
+    const retrieverValidation = validateModelConfig(
+      sessionData.parameters.retriever_model,
+      t,
+    );
+    if (!retrieverValidation.valid) {
+      retrieverValidation.errors.forEach((err) =>
+        enqueueSnackbar(err, { variant: "warning" }),
+      );
+      return false;
+    }
+
+    const generatorValidation = validateModelConfig(
+      sessionData.parameters.generation_model,
+      t,
+    );
+    if (!generatorValidation.valid) {
+      generatorValidation.errors.forEach((err) =>
+        enqueueSnackbar(err, { variant: "warning" }),
+      );
+      return false;
+    }
+
+    const promptValidation = validateModelConfig(
+      sessionData.parameters.prompt,
+      t,
+    );
+    if (!promptValidation.valid) {
+      promptValidation.errors.forEach((err) =>
+        enqueueSnackbar(err, { variant: "warning" }),
+      );
+      return false;
+    }
+
     return true;
   };
 

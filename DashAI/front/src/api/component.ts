@@ -53,11 +53,12 @@ export const getComponents = async ({
 export const getChildComponents = async (
   componentName: string,
   recursive: boolean,
+  includeFlags = false,
 ): Promise<IComponent[]> => {
   const response = await api.get<IComponent[]>(
     `/v1/component/${componentName}/children`,
     {
-      params: { recursive },
+      params: { recursive, include_flags: includeFlags },
     },
   );
   return response.data;

@@ -343,6 +343,7 @@ async def update_component() -> None:
 async def get_child_components(
     component_name: str,
     recursive: bool = False,
+    include_flags: bool = Query(default=False),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Get child components of a specific component.
@@ -350,6 +351,8 @@ async def get_child_components(
     Args:
         component_name (str): The name of the component to get children for.
         recursive (bool): Whether to get child components recursively.
+        include_flags (bool): Whether to include the FLAGS of each child
+            component, by default False.
 
     Returns:
         List[Dict[str, Any]]: A list of child component dictionaries.
@@ -358,7 +361,10 @@ async def get_child_components(
         component_name, recursive=recursive
     )
     # Remove "class" key from each child component
-    cleaned_children = [_delete_class(child) for child in children_list]
+    cleaned_children = [
+        _delete_class(_enrich_with_flags(child, include_flags))
+        for child in children_list
+    ]
 
     return cleaned_children
 

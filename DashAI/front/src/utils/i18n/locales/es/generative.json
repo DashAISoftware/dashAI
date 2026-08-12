@@ -95,7 +95,10 @@
       "retrieverRequired": "Se debe configurar el modelo de recuperación",
       "generatorRequired": "Se debe configurar el modelo de generación",
       "generatorInvalid": "La configuración del generador es inválida (revisa la ventana de contexto)",
-      "promptRequired": "Se debe seleccionar una plantilla de prompt"
+      "promptRequired": "Se debe seleccionar una plantilla de prompt",
+      "modelComponentMissing": "Un componente del modelo no tiene nombre seleccionado.",
+      "modelParamsIncomplete": "Los parámetros de \"{{model}}\" están incompletos. Reconfigúralo en la configuración avanzada.",
+      "modelParamsLoadFailed": "Error al cargar los parámetros por defecto para \"{{model}}\". Inténtalo de nuevo."
     },
     "messages": {
       "success": "Sesión RAG creada exitosamente"
@@ -104,13 +107,13 @@
       "description": "Selecciona cómo se dividirán tus documentos en fragmentos para la recuperación.",
       "presets": {
         "small": {
-          "label": "Fragmentos pequeños"
+          "label": "Largo de varias oraciones"
         },
         "paragraph": {
-          "label": "Longitud de párrafo"
+          "label": "Largo de un párrafo"
         },
         "page": {
-          "label": "Fragmento de página"
+          "label": "Largo de una página"
         },
         "large": {
           "label": "Secciones grandes"
@@ -129,7 +132,7 @@
       "keywordLabel": "Palabras clave",
       "semanticLabel": "Semántico",
       "hybridLabel": "Híbrido",
-      "hybridDescription": "BM25 + Harrier 0.6B",
+      "hybridDescription": "BM25 + paraphrase-multilingual-MiniLM-L12-v2",
       "advancedApplied": "Configuración avanzada aplicada",
       "topKLabel": "Número de fragmentos (Top K)",
       "topKCardDescription": "Fragmentos",
@@ -158,8 +161,12 @@
       "nestedCompositeNote": "Este es un recuperador compuesto. Sus hijos pueden configurarse en el árbol inferior.",
       "allChunks": "Todos los fragmentos",
       "selectedChunks": "Fragmentos seleccionados",
-      "retrieverDescription": "Elige un recuperador para configurar sus parámetros. Los recuperadores por palabras clave (BM25, TF-IDF) encuentran documentos por frecuencia de términos. Los recuperadores por embeddings capturan el significado semántico con vectores densos. Los recuperadores compuestos encadenan varios recuperadores, de forma secuencial o en paralelo.",
-      "compositeInstructions": "Haz clic en el botón + para añadir un recuperador hijo a este compuesto. Haz clic sobre una tarjeta para editar sus parámetros o elegir otro modelo."
+      "retrieverDescription": "Elige un recuperador para configurar sus parámetros. Los recuperadores por palabras clave (BM25, TF-IDF) encuentran documentos por frecuencia de términos, los recuperadores densos capturan el significado semántico con vectores densos llamados embeddings y los recuperadores compuestos encadenan varios recuperadores, de forma secuencial o en paralelo.",
+      "compositeInstructions": "Haz clic en el botón + para añadir un recuperador hijo a este compuesto. Haz clic sobre una tarjeta para editar sus parámetros o elegir otro modelo.",
+      "reranking": "Reordenamiento",
+      "chunkFusion": "Fusión de chunks",
+      "mergeStrategyRoundRobin": "Round robin",
+      "mergeStrategyInterleave": "Intercalar"
     },
     "generator": {
       "description": "Selecciona el modelo de lenguaje que generará las respuestas basadas en el contexto recuperado y tus prompts.",
@@ -222,6 +229,7 @@
         "id": "ID",
         "name": "Nombre",
         "type": "Tipo",
+        "extractor": "Extractor",
         "created": "Creado",
         "lastModified": "Última modificación",
         "actions": "Acciones",
@@ -372,7 +380,13 @@
     "documentPreview": {
       "title": "Vista previa del documento",
       "noPreview": "No hay vista previa disponible para este tipo de archivo.",
-      "pdfPreview": "Vista previa de PDF"
+      "loading": "Cargando PDF...",
+      "error": "No se pudo renderizar este PDF.",
+      "retry": "Reintentar",
+      "openInNewTab": "Abrir en una pestaña nueva",
+      "previousPage": "Página anterior",
+      "nextPage": "Página siguiente",
+      "pageOf": "Página {{current}} de {{total}}"
     },
     "paramsPanel": {
       "title": "Parámetros RAG",
@@ -428,6 +442,23 @@
   },
   "ragDocumentsPage": {
     "title": "Documentos RAG",
-    "description": "Gestiona los documentos para tus sesiones RAG: ve los documentos existentes y sube nuevos para mejorar tu base de conocimiento de IA."
+    "description": "Administra documentos para tus sesiones RAG: visualiza documentos existentes y sube nuevos para enriquecer tu base de conocimiento.",
+    "detailPanel": {
+      "noDocumentSelected": "Selecciona un documento para ver sus detalles",
+      "documentInfo": "Información del documento",
+      "name": "Nombre",
+      "type": "Tipo",
+      "size": "Tamaño",
+      "created": "Creado",
+      "extractor": "Extractor",
+      "extractorDefault": "Por defecto",
+      "processAndShowContent": "Procesar documento y mostrar contenido",
+      "saveExtractor": "Guardar extractor",
+      "extracting": "Extrayendo texto...",
+      "contentPreview": "Vista previa del contenido",
+      "noContent": "Sin contenido extraído aún. Haz clic en \"Procesar documento\" para extraer texto.",
+      "changeExtractorConfirmTitle": "Cambiar extractor",
+      "changeExtractorConfirmBody": "Este cambio afectará a {{count}} pipeline(s) RAG. Los chunks y retrievers existentes se eliminarán y se recomputarán en la próxima ejecución. ¿Continuar?"
+    }
   }
 }

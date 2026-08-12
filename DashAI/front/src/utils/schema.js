@@ -1,7 +1,10 @@
 import * as Yup from "yup";
 import { getComponents } from "../api/component";
 
-export async function resolveDefaults(modelName) {
+export async function resolveDefaults(
+  modelName,
+  { throwOnError = false } = {},
+) {
   try {
     const result = await getComponents({ model: modelName });
     const info = Array.isArray(result) ? result[0] : result;
@@ -11,6 +14,7 @@ export async function resolveDefaults(modelName) {
     return initialValues;
   } catch (e) {
     console.warn(`[resolveDefaults] Failed for ${modelName}:`, e);
+    if (throwOnError) throw e;
     return {};
   }
 }

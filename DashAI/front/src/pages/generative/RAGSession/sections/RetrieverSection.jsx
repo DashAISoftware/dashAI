@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
 import { getRetrieverComponents } from "../../../../api/rag";
 import { resolveDefaults } from "../../../../utils/schema";
 import RetrieverAdvancedModal from "../advanced/RetrieverAdvancedModal";
@@ -95,7 +96,8 @@ function buildSemanticModel(embeddingDefaults, retrieverDefaults, topK) {
         component: "SentenceTransformerEmbedding",
         params: {
           ...embeddingDefaults,
-          model_name: "microsoft/harrier-oss-v1-0.6b",
+          model_name:
+            "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
         },
       },
       similarity_metric: retrieverDefaults.similarity_metric || "cosine",
@@ -136,7 +138,8 @@ function buildHybridModel(
               component: "SentenceTransformerEmbedding",
               params: {
                 ...embeddingDefaults,
-                model_name: "microsoft/harrier-oss-v1-0.6b",
+                model_name:
+                  "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
               },
             },
             similarity_metric: retrieverDefaults.similarity_metric || "cosine",
@@ -164,6 +167,7 @@ export default function RetrieverSection({
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["generative"]);
+  const { enqueueSnackbar } = useSnackbar();
 
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [topK, setTopK] = useState(10);
@@ -173,6 +177,7 @@ export default function RetrieverSection({
   const [bm25Defaults, setBm25Defaults] = useState({});
   const [embeddingDefaults, setEmbeddingDefaults] = useState({});
   const [denseRetrieverDefaults, setDenseRetrieverDefaults] = useState({});
+  const [loadError, setLoadError] = useState(null);
 
   const effectiveTopK = getEffectiveTopK(retrieverModel);
 
@@ -304,17 +309,43 @@ export default function RetrieverSection({
         );
         setConcreteRetrievers(retrievers);
 
-        const [bm25, embeddingDefaultsRes, denseRetriever] = await Promise.all([
-          resolveDefaults("BM25Retriever").catch(() => ({})),
-          resolveDefaults("SentenceTransformerEmbedding").catch(() => ({})),
-          resolveDefaults("DenseEmbeddingRetriever").catch(() => ({})),
-        ]);
+        let bm25 = {};
+        let embeddingDefaultsRes = {};
+        let denseRetriever = {};
+        try {
+          [bm25, embeddingDefaultsRes, denseRetriever] = await Promise.all([
+            resolveDefaults("BM25Retriever", { throwOnError: true }),
+            resolveDefaults("SentenceTransformerEmbedding", {
+              throwOnError: true,
+            }),
+            resolveDefaults("DenseEmbeddingRetriever", { throwOnError: true }),
+          ]);
+        } catch (error) {
+          console.error("Error loading retriever defaults:", error);
+          setLoadError(
+            t("generative:rag.validation.modelParamsLoadFailed", {
+              model: t("generative:rag.retriever.paradigmLabel"),
+            }),
+          );
+          enqueueSnackbar(
+            t("generative:rag.validation.modelParamsLoadFailed", {
+              model: t("generative:rag.retriever.paradigmLabel"),
+            }),
+            { variant: "error" },
+          );
+        }
 
         setBm25Defaults(bm25);
         setEmbeddingDefaults(embeddingDefaultsRes);
         setDenseRetrieverDefaults(denseRetriever);
       } catch (error) {
         console.error("Error loading retrievers:", error);
+        enqueueSnackbar(
+          t("generative:rag.validation.modelParamsLoadFailed", {
+            model: t("generative:rag.setup.retrieverModel"),
+          }),
+          { variant: "error" },
+        );
       } finally {
         setLoading(false);
       }
@@ -331,6 +362,11 @@ export default function RetrieverSection({
     (groupKey) => {
       const alreadySelected = !isAdvanced && selectedGroup === groupKey;
       if (alreadySelected) {
+        setShowAdvanced(true);
+        return;
+      }
+
+      if (isAdvanced) {
         setShowAdvanced(true);
         return;
       }
@@ -393,6 +429,19 @@ export default function RetrieverSection({
     ],
   );
 
+  if (loadError) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        sx={{ minHeight: 120 }}
+      >
+        <Typography color="error">{loadError}</Typography>
+      </Box>
+    );
+  }
+
   if (loading) {
     return (
       <Box
@@ -433,7 +482,7 @@ export default function RetrieverSection({
           selected={!isAdvanced && selectedGroup === "semantic"}
           onClick={() => selectPreset("semantic")}
           label={t("generative:rag.retriever.semanticLabel")}
-          description="Harrier OSS v1 0.6B"
+          description="paraphrase-multilingual-MiniLM-L12-v2"
           sx={{ minWidth: 180 }}
         />
         <PresetCard

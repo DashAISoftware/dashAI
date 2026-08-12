@@ -26,6 +26,7 @@ const COMPOSITE_NAMES = [
   "SequentialRetriever",
   "ParallelRetriever",
   "MMRRerankerRetriever",
+  "SentenceTransformerCrossEncoderRetriever",
 ];
 
 /**
@@ -197,14 +198,17 @@ const RetrieverConfigurationStep = forwardRef(
         if (retrieverModel?.component) {
           let found = null;
           if (retrieverModel.component === "DenseEmbeddingRetriever") {
-            const embName = retrieverModel.params?.embedding_model?.component;
-            if (embName) {
-              found = merged.find((c) => c.name === embName);
-            }
+            // Always set selectedRetriever to the DenseEmbeddingRetriever paradigm,
+            // never to the embedding model. The embedding model is stored in params
+            // and handled by the sub-form, not the top-level selector.
+            found =
+              retrievers.find((c) => c.name === "DenseEmbeddingRetriever") ||
+              null;
             if (!found) {
               found =
-                retrievers.find((c) => c.name === "DenseEmbeddingRetriever") ||
-                null;
+                allParadigms?.find(
+                  (c) => c.name === "DenseEmbeddingRetriever",
+                ) || null;
             }
           } else {
             found = merged.find((c) => c.name === retrieverModel.component);

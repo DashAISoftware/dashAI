@@ -129,7 +129,7 @@
       "keywordLabel": "关键词",
       "semanticLabel": "语义",
       "hybridLabel": "混合",
-      "hybridDescription": "BM25 + Harrier 0.6B",
+      "hybridDescription": "BM25 + paraphrase-multilingual-MiniLM-L12-v2",
       "advancedApplied": "已应用高级配置",
       "topKLabel": "块数量 (Top K)",
       "topKCardDescription": "块",
@@ -159,7 +159,11 @@
       "allChunks": "所有块",
       "selectedChunks": "已选块",
       "retrieverDescription": "选择一个检索器来配置其参数。关键词检索器（BM25、TF-IDF）通过词频查找文档。嵌入检索器通过稠密向量捕获语义含义。组合检索器按顺序或并行地链接多个检索器。",
-      "compositeInstructions": "点击 + 按钮向此组合添加子检索器。点击检索器卡片以编辑其参数或选择其他模型。"
+      "compositeInstructions": "点击 + 按钮向此组合添加子检索器。点击检索器卡片以编辑其参数或选择其他模型。",
+      "reranking": "重新排序",
+      "chunkFusion": "分块融合",
+      "mergeStrategyRoundRobin": "轮询",
+      "mergeStrategyInterleave": "交错合并"
     },
     "generator": {
       "description": "选择将根据检索到的上下文和您的提示词生成回复的语言模型。",
@@ -222,6 +226,7 @@
         "id": "ID",
         "name": "名称",
         "type": "类型",
+        "extractor": "提取器",
         "created": "创建时间",
         "lastModified": "最后修改",
         "actions": "操作",
@@ -372,7 +377,13 @@
     "documentPreview": {
       "title": "文档预览",
       "noPreview": "此文件类型没有可用的预览。",
-      "pdfPreview": "PDF 预览"
+      "loading": "正在加载 PDF...",
+      "error": "无法渲染此 PDF。",
+      "retry": "重试",
+      "openInNewTab": "在新标签页中打开",
+      "previousPage": "上一页",
+      "nextPage": "下一页",
+      "pageOf": "第 {{current}} 页，共 {{total}} 页"
     },
     "paramsPanel": {
       "title": "RAG 参数",
@@ -428,6 +439,23 @@
   },
   "ragDocumentsPage": {
     "title": "RAG 文档",
-    "description": "管理 RAG 会话的文档：查看现有文档并上传新的，以增强您的 AI 知识库。"
+    "description": "管理 RAG 会话的文档：查看现有文档并上传新文档以增强您的 AI 知识库。",
+    "detailPanel": {
+      "noDocumentSelected": "选择一个文档以查看详情",
+      "documentInfo": "文档信息",
+      "name": "名称",
+      "type": "类型",
+      "size": "大小",
+      "created": "创建时间",
+      "extractor": "提取器",
+      "extractorDefault": "默认",
+      "processAndShowContent": "处理文档并显示内容",
+      "saveExtractor": "保存提取器",
+      "extracting": "正在提取文本...",
+      "contentPreview": "内容预览",
+      "noContent": "尚未提取内容。请点击\"处理文档\"以提取文本。",
+      "changeExtractorConfirmTitle": "更改提取器",
+      "changeExtractorConfirmBody": "此更改将影响 {{count}} 个 RAG 管道。现有的块和检索器将被删除，并在下次运行时重新计算。是否继续？"
+    }
   }
 }

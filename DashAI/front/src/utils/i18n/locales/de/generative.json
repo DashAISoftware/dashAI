@@ -129,7 +129,7 @@
       "keywordLabel": "Stichwort",
       "semanticLabel": "Semantisch",
       "hybridLabel": "Hybrid",
-      "hybridDescription": "BM25 + Harrier 0.6B",
+      "hybridDescription": "BM25 + paraphrase-multilingual-MiniLM-L12-v2",
       "advancedApplied": "Erweiterte Konfiguration angewendet",
       "topKLabel": "Anzahl der Chunks (Top K)",
       "topKCardDescription": "Chunks",
@@ -159,7 +159,11 @@
       "allChunks": "Alle Chunks",
       "selectedChunks": "Ausgewählte Chunks",
       "retrieverDescription": "Wählen Sie einen Retriever, um seine Parameter zu konfigurieren. Stichwort-Retriever (BM25, TF-IDF) finden Dokumente nach Termhäufigkeit. Embedding-Retriever erfassen semantische Bedeutung mit dichten Vektoren. Zusammengesetzte Retriever verketten mehrere Retriever, sequenziell oder parallel.",
-      "compositeInstructions": "Klicken Sie auf die +-Schaltfläche, um diesem Composite einen Kind-Retriever hinzuzufügen. Klicken Sie auf eine Retriever-Karte, um dessen Parameter zu bearbeiten oder ein anderes Modell zu wählen."
+      "compositeInstructions": "Klicken Sie auf die +-Schaltfläche, um diesem Composite einen Kind-Retriever hinzuzufügen. Klicken Sie auf eine Retriever-Karte, um dessen Parameter zu bearbeiten oder ein anderes Modell zu wählen.",
+      "reranking": "Reranking",
+      "chunkFusion": "Chunk-Fusion",
+      "mergeStrategyRoundRobin": "Round robin",
+      "mergeStrategyInterleave": "Verketten"
     },
     "generator": {
       "description": "Wählen Sie das Sprachmodell, das Antworten basierend auf dem abgerufenen Kontext und Ihren Prompts generiert.",
@@ -222,6 +226,7 @@
         "id": "ID",
         "name": "Name",
         "type": "Typ",
+        "extractor": "Extraktor",
         "created": "Erstellt",
         "lastModified": "Zuletzt geändert",
         "actions": "Aktionen",
@@ -372,7 +377,13 @@
     "documentPreview": {
       "title": "Dokumentvorschau",
       "noPreview": "Keine Vorschau für diesen Dateityp verfügbar.",
-      "pdfPreview": "PDF-Vorschau"
+      "loading": "PDF wird geladen...",
+      "error": "Dieses PDF konnte nicht gerendert werden.",
+      "retry": "Erneut versuchen",
+      "openInNewTab": "In neuem Tab öffnen",
+      "previousPage": "Vorherige Seite",
+      "nextPage": "Nächste Seite",
+      "pageOf": "Seite {{current}} von {{total}}"
     },
     "paramsPanel": {
       "title": "RAG Parameter",
@@ -428,6 +439,23 @@
   },
   "ragDocumentsPage": {
     "title": "RAG-Dokumente",
-    "description": "Verwalten Sie Dokumente für Ihre RAG-Sitzungen: Zeigen Sie vorhandene Dokumente an und laden Sie neue hoch, um Ihre KI-Wissensdatenbank zu erweitern."
+    "description": "Verwalten Sie Dokumente für Ihre RAG-Sitzungen: Zeigen Sie bestehende Dokumente an und laden Sie neue hoch, um Ihre KI-Wissensbasis zu erweitern.",
+    "detailPanel": {
+      "noDocumentSelected": "Wählen Sie ein Dokument aus, um Details anzuzeigen",
+      "documentInfo": "Dokumentinformationen",
+      "name": "Name",
+      "type": "Typ",
+      "size": "Größe",
+      "created": "Erstellt",
+      "extractor": "Extraktor",
+      "extractorDefault": "Standard",
+      "processAndShowContent": "Dokument verarbeiten und Inhalt anzeigen",
+      "saveExtractor": "Extraktor speichern",
+      "extracting": "Text wird extrahiert...",
+      "contentPreview": "Inhaltsvorschau",
+      "noContent": "Noch kein Inhalt extrahiert. Klicken Sie auf \"Dokument verarbeiten\", um Text zu extrahieren.",
+      "changeExtractorConfirmTitle": "Extraktor ändern",
+      "changeExtractorConfirmBody": "Diese Änderung betrifft {{count}} RAG-Pipeline(s). Bestehende Chunks und Retriever werden gelöscht und beim nächsten Durchlauf neu berechnet. Fortfahren?"
+    }
   }
 }

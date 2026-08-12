@@ -23,6 +23,7 @@ const COMPOSITE_TYPES = [
   "SequentialRetriever",
   "ParallelRetriever",
   "MMRRerankerRetriever",
+  "SentenceTransformerCrossEncoderRetriever",
 ];
 
 /**
@@ -52,8 +53,11 @@ export default function RetrieverNodeConfig({
 
   const allOptions = useMemo(() => {
     const list = [...allComponents];
+    const EMBEDDING_PARENT_KEYS = ["DenseEmbedding", "DenseEmbeddingRetriever"];
     for (const key of Object.keys(leafRegistry)) {
-      list.push(...(leafRegistry[key] || []));
+      if (!EMBEDDING_PARENT_KEYS.includes(key)) {
+        list.push(...(leafRegistry[key] || []));
+      }
     }
     return list.filter((c) => c.configurable_object !== false);
   }, [allComponents, leafRegistry]);

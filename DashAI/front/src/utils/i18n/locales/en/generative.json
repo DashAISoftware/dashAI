@@ -95,7 +95,10 @@
       "retrieverRequired": "Retriever model must be configured",
       "generatorRequired": "Generator model must be configured",
       "generatorInvalid": "Generator configuration is invalid (check context window)",
-      "promptRequired": "Prompt template must be selected"
+      "promptRequired": "Prompt template must be selected",
+      "modelComponentMissing": "A model component has no name selected.",
+      "modelParamsIncomplete": "\"{{model}}\" parameters are incomplete. Please reconfigure it in the advanced settings.",
+      "modelParamsLoadFailed": "Failed to load default parameters for \"{{model}}\". Please try again."
     },
     "messages": {
       "success": "RAG Session created successfully"
@@ -129,7 +132,7 @@
       "keywordLabel": "Keyword",
       "semanticLabel": "Semantic",
       "hybridLabel": "Hybrid",
-      "hybridDescription": "BM25 + Harrier 0.6B",
+      "hybridDescription": "BM25 + paraphrase-multilingual-MiniLM-L12-v2",
       "advancedApplied": "Advanced configuration applied",
       "topKLabel": "Number of chunks (Top K)",
       "topKCardDescription": "Chunks",
@@ -159,7 +162,11 @@
       "allChunks": "All chunks",
       "selectedChunks": "Selected chunks",
       "retrieverDescription": "Choose a retriever to configure its parameters. Keyword retrievers (BM25, TF-IDF) find documents by term frequency. Embedding retrievers capture semantic meaning with dense vectors. Composite retrievers chain multiple retrievers together, sequentially or in parallel.",
-      "compositeInstructions": "Click the + button to add a child retriever to this composite. Click on a retriever card to edit its parameters or choose another model."
+      "compositeInstructions": "Click the + button to add a child retriever to this composite. Click on a retriever card to edit its parameters or choose another model.",
+      "reranking": "Reranking",
+      "chunkFusion": "Chunk fusion",
+      "mergeStrategyRoundRobin": "Round robin",
+      "mergeStrategyInterleave": "Interleave"
     },
     "generator": {
       "description": "Select the language model that will generate responses based on the retrieved context and your prompts.",
@@ -222,6 +229,7 @@
         "id": "ID",
         "name": "Name",
         "type": "Type",
+        "extractor": "Extractor",
         "created": "Created",
         "lastModified": "Last Modified",
         "actions": "Actions",
@@ -372,7 +380,13 @@
     "documentPreview": {
       "title": "Preview Document",
       "noPreview": "No preview available for this file type.",
-      "pdfPreview": "PDF Preview"
+      "loading": "Loading PDF...",
+      "error": "Unable to render this PDF.",
+      "retry": "Retry",
+      "openInNewTab": "Open in new tab",
+      "previousPage": "Previous page",
+      "nextPage": "Next page",
+      "pageOf": "Page {{current}} of {{total}}"
     },
     "paramsPanel": {
       "title": "RAG Parameters",
@@ -428,6 +442,23 @@
   },
   "ragDocumentsPage": {
     "title": "RAG documents",
-    "description": "Manage documents for your RAG sessions: view existing documents and upload new ones to enhance your AI knowledge base."
+    "description": "Manage documents for your RAG sessions: view existing documents and upload new ones to enhance your AI knowledge base.",
+    "detailPanel": {
+      "noDocumentSelected": "Select a document to view details",
+      "documentInfo": "Document Info",
+      "name": "Name",
+      "type": "Type",
+      "size": "Size",
+      "created": "Created",
+      "extractor": "Extractor",
+      "extractorDefault": "Default",
+      "processAndShowContent": "Process document and show content",
+      "saveExtractor": "Save extractor",
+      "extracting": "Extracting text...",
+      "contentPreview": "Content Preview",
+      "noContent": "No content extracted yet. Click \"Process document\" to extract text.",
+      "changeExtractorConfirmTitle": "Change extractor",
+      "changeExtractorConfirmBody": "This change will affect {{count}} RAG pipeline(s). Existing chunks and retrievers will be deleted and recomputed on the next run. Continue?"
+    }
   }
 }

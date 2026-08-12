@@ -38,7 +38,7 @@ export default function ChunkingSection({ chunkingModel, setChunkingModel }) {
       {
         value: "small",
         label: t("generative:rag.chunking.presets.small.label"),
-        config: { chunk_size: 256, chunk_overlap: 25 },
+        config: { chunk_size: 250, chunk_overlap: 25 },
       },
       {
         value: "paragraph",

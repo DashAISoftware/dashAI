@@ -1,26 +1,83 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Box, Typography, IconButton, Tooltip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
-import PsychologyIcon from "@mui/icons-material/Psychology";
+import SchemaIcon from "@mui/icons-material/Schema";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import MergeIcon from "@mui/icons-material/Merge";
+import SortIcon from "@mui/icons-material/Sort";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import {
   getRetrieverComponents,
   getRetrievalParadigm,
 } from "../../../../api/rag";
+import { resolveDefaults } from "../../../../utils/schema";
 import RetrieverNodeConfig from "./RetrieverNodeConfig";
 
 const COMPOSITE_TYPES = [
   "SequentialRetriever",
   "ParallelRetriever",
   "MMRRerankerRetriever",
+  "SentenceTransformerCrossEncoderRetriever",
 ];
+
+// Base horizontal unit (px) for the tree indentation. A card at depth d is
+// indented d*INDENT px, and the vertical spine that connects a level is drawn
+// INDENT/2 px to the left of the card at that level, so consecutive spine
+// columns are always exactly INDENT px apart. All geometry is expressed as
+// explicit px strings so the theme spacing multiplier does not apply.
+const INDENT = 40;
+
 let _nodeIdCounter = 0;
 function nextId() {
   return `n_${++_nodeIdCounter}`;
+}
+
+/**
+ * Resolves a display string from a value that may be a plain string, a
+ * multilingual object, or something else.
+ * @param {*} val - The value to resolve.
+ * @returns {string|null} The resolved string, or null.
+ */
+function getString(val) {
+  if (!val) return null;
+  if (typeof val === "string") return val;
+  if (val.en) return val.en;
+  return String(val);
+}
+
+/**
+ * Builds a subtitle for a DenseEmbeddingRetriever node showing the wrapped
+ * embedding model and its model name, e.g.
+ * "SentenceTransformer Embedding - microsoft/harrier-oss-v1-0.6b".
+ *
+ * The embedding_model param is stored as a subform structure:
+ *   { properties: { component: parent, params: { comp: { component, params } } } }
+ * It may also appear in the simpler { component, params } form.
+ *
+ * @param {object} node - The tree node to inspect.
+ * @param {object} [denseDefaults] - Cached default params for DenseEmbeddingRetriever.
+ * @param {object} embNameMap - Map of embedding component name -> display name.
+ * @returns {object|null} `{ embName, modelName }` or null.
+ */
+function getDenseEmbeddingInfo(node, denseDefaults, embNameMap) {
+  if (node.component !== "DenseEmbeddingRetriever") return null;
+  let emb = node.params?.embedding_model;
+  if (!emb && denseDefaults?.embedding_model) {
+    emb = denseDefaults.embedding_model;
+  }
+  if (!emb) return null;
+
+  // Parse subform structure: { properties: { component, params: { comp: { component, params } } } }
+  let compName = emb.properties?.params?.comp?.component || emb.component;
+  let modelParams = emb.properties?.params?.comp?.params || emb.params;
+  if (!compName) return null;
+
+  const embName = embNameMap?.[compName] || compName;
+  const modelName = modelParams?.model_name;
+  return { embName, modelName: modelName || null };
 }
 
 /**
@@ -46,6 +103,54 @@ export default function CompositeRetrieverBuilder({
   const [tree, setTree] = useState(null);
 
   const [ready, setReady] = useState(false);
+  const [embNameMap, setEmbNameMap] = useState({});
+  const [editingParentId, setEditingParentId] = useState(null);
+  const denseDefaultsRef = useRef(null);
+  const treeBoxRef = useRef(null);
+
+  useEffect(() => {
+    if (!tree) return;
+    const container = treeBoxRef.current;
+    if (!container) return;
+    const cr = container.getBoundingClientRect();
+    const fmt = (el, label) => {
+      const r = el.getBoundingClientRect();
+      const cs = getComputedStyle(el);
+      const x = (r.left - cr.left).toFixed(1);
+      const y = (r.top - cr.top).toFixed(1);
+      const w = r.width.toFixed(1);
+      const h = r.height.toFixed(1);
+      return (
+        `${label.padEnd(10)} ${el.getAttribute("data-node")?.padEnd(30)}` +
+        ` x=${x.padStart(6)} y=${y.padStart(6)} w=${w.padStart(
+          6,
+        )} h=${h.padStart(6)}` +
+        ` | pos=${cs.position} L=${cs.left} T=${cs.top} W=${cs.width} B=${cs.boxSizing}`
+      );
+    };
+    const lines = ["[CompositeRetrieverBuilder DOM layout]"];
+    container.querySelectorAll("[data-card]").forEach((el) => {
+      lines.push(fmt(el, "card"));
+    });
+    container.querySelectorAll("[data-conn]").forEach((el) => {
+      lines.push(fmt(el, "connector"));
+    });
+    container.querySelectorAll("[data-op]").forEach((el) => {
+      lines.push(fmt(el, "opcard"));
+    });
+    container.querySelectorAll("[data-spine]").forEach((el) => {
+      lines.push(fmt(el, "spine"));
+    });
+    console.log(lines.join("\n"));
+  }, [tree]);
+
+  useEffect(() => {
+    resolveDefaults("DenseEmbeddingRetriever")
+      .then((d) => {
+        denseDefaultsRef.current = d;
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -60,6 +165,23 @@ export default function CompositeRetrieverBuilder({
       }
       setAllComponents(paradigms);
       setLeafRegistry(leafMap);
+
+      // Build a display-name map for DenseEmbedding components (e.g.
+      // SentenceTransformerEmbedding -> "SentenceTransformer Embedding").
+      try {
+        const embeddingComponents = await getRetrieverComponents(
+          "DenseEmbedding",
+        );
+        const nameMap = {};
+        for (const comp of embeddingComponents || []) {
+          nameMap[comp.name] =
+            getString(comp.display_name) || getString(comp.name) || comp.name;
+        }
+        setEmbNameMap(nameMap);
+      } catch {
+        // ignore — fall back to raw component names
+      }
+
       setReady(true);
     })();
   }, []);
@@ -67,32 +189,37 @@ export default function CompositeRetrieverBuilder({
   useEffect(() => {
     if (!ready) return;
 
-    _nodeIdCounter = 0;
-    const fromParams = rootParams?.children || [];
+    (async () => {
+      _nodeIdCounter = 0;
+      const fromParams = rootParams?.children || [];
 
-    const buildFromParams = (child) => {
-      const id = nextId();
-      const comp = findComponent(child.component);
-      const node = {
-        nodeId: id,
-        component: child.component,
-        params: child.params || {},
-        children: [],
+      const buildFromParams = (child) => {
+        const id = nextId();
+        const comp = findComponent(child.component);
+        const node = {
+          nodeId: id,
+          component: child.component,
+          params: child.params || {},
+          children: [],
+        };
+        if (
+          COMPOSITE_TYPES.includes(child.component) &&
+          child.children?.length
+        ) {
+          node.children = child.children.map(buildFromParams).filter(Boolean);
+        }
+        return comp ? node : null;
       };
-      if (COMPOSITE_TYPES.includes(child.component) && child.children?.length) {
-        node.children = child.children.map(buildFromParams).filter(Boolean);
-      }
-      return comp ? node : null;
-    };
 
-    const existingChildren = fromParams.map(buildFromParams).filter(Boolean);
+      const existingChildren = fromParams.map(buildFromParams).filter(Boolean);
 
-    setTree({
-      nodeId: nextId(),
-      component: rootComponent,
-      params: rootParams || {},
-      children: existingChildren,
-    });
+      setTree({
+        nodeId: nextId(),
+        component: rootComponent,
+        params: rootParams || {},
+        children: existingChildren,
+      });
+    })();
   }, [ready, rootComponent]);
 
   /**
@@ -119,13 +246,16 @@ export default function CompositeRetrieverBuilder({
       const ser = (n) => {
         const s = { component: n.component, params: n.params || {} };
         if (COMPOSITE_TYPES.includes(n.component) && n.children.length > 0) {
-          s.children = n.children.map(ser);
+          s.children = n.children.map(ser).filter((child) => child.component);
         }
         return s;
       };
       onChange({
         component: t.component,
-        params: { ...t.params, children: t.children.map(ser) },
+        params: {
+          ...t.params,
+          children: t.children.map(ser).filter((child) => child.component),
+        },
       });
     },
     [onChange],
@@ -166,22 +296,26 @@ export default function CompositeRetrieverBuilder({
       return updated;
     });
     setEditing(null);
+    setEditingParentId(null);
   };
 
   /**
    * Adds an empty child node under the specified parent.
+   * Cleans up any previously-added children that were never configured.
    * @param {string} parentId - The parent node ID to add a child under.
    */
   const handleAddChild = (parentId) => {
     const id = nextId();
+    setEditingParentId(parentId);
     setTree((prev) => {
       const updated = updateAt(prev, parentId, (n) => ({
         ...n,
         children: [
-          ...n.children,
+          ...(n.children || []).filter((c) => c.component !== ""),
           { nodeId: id, component: "", params: {}, children: [] },
         ],
       }));
+      emit(updated);
       return updated;
     });
     setEditing(id);
@@ -196,7 +330,7 @@ export default function CompositeRetrieverBuilder({
     setTree((prev) => {
       const updated = updateAt(prev, parentId, (n) => ({
         ...n,
-        children: n.children.filter((c) => c.nodeId !== childId),
+        children: (n.children || []).filter((c) => c.nodeId !== childId),
       }));
       emit(updated);
       return updated;
@@ -295,13 +429,15 @@ export default function CompositeRetrieverBuilder({
         </Typography>
       </Box>
 
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Box ref={treeBoxRef} sx={{ flex: 1, minWidth: 0 }}>
         <TreeNodeView
           node={tree}
           depth={0}
           isRoot
           parentId={null}
           findComponent={findComponent}
+          embNameMap={embNameMap}
+          denseDefaults={denseDefaultsRef.current}
           onEdit={(id) => setEditing(id)}
           onAddChild={handleAddChild}
           onRemoveChild={handleRemoveChild}
@@ -318,7 +454,15 @@ export default function CompositeRetrieverBuilder({
           allComponents={allComponents}
           leafRegistry={leafRegistry}
           onSave={handleSaveNode}
-          onClose={() => setEditing(null)}
+          onClose={() => {
+            // Clean up placeholder child if dialog was closed without saving
+            const node = findNodeData(tree, editing);
+            if (node && !node.component && editingParentId) {
+              handleRemoveChild(editingParentId, editing);
+            }
+            setEditing(null);
+            setEditingParentId(null);
+          }}
         />
       )}
     </Box>
@@ -349,6 +493,52 @@ function findNodeData(tree, nodeId) {
 }
 
 /**
+ * Builds the summary for a composite retriever's own operation (reranking or
+ * chunk fusion) rendered as the final node of the tree.
+ * @param {object} node - The tree node to summarise.
+ * @param {function} t - i18n translate function.
+ * @returns {object|null} `{ label, value, icon }` or null for non-composite nodes.
+ */
+function getOperationSummary(node, t) {
+  if (!node?.component) return null;
+  const params = node.params || {};
+  const label = t("generative:rag.composite.chunkFusion");
+  const rerankLabel = t("generative:rag.composite.reranking");
+
+  switch (node.component) {
+    case "MMRRerankerRetriever":
+      return {
+        label: rerankLabel,
+        icon: "rerank",
+        value: `Lambda=${params.mmr_lambda ?? "—"}, Top K=${
+          params.top_k ?? "—"
+        }`,
+      };
+    case "SentenceTransformerCrossEncoderRetriever":
+      return {
+        label: rerankLabel,
+        icon: "rerank",
+        value: params.model_name || null,
+      };
+    case "ParallelRetriever":
+      return {
+        label,
+        icon: "fusion",
+        value:
+          params.merge_strategy === "round_robin"
+            ? t("generative:rag.composite.mergeStrategyRoundRobin")
+            : params.merge_strategy === "interleave"
+            ? t("generative:rag.composite.mergeStrategyInterleave")
+            : params.merge_strategy || null,
+      };
+    case "SequentialRetriever":
+      return { label, icon: "fusion", value: null };
+    default:
+      return null;
+  }
+}
+
+/**
  * Renders a single node in the composite retriever tree, including its
  * icon, name, add/remove controls, and recursively renders children.
  *
@@ -358,6 +548,8 @@ function findNodeData(tree, nodeId) {
  * @param {boolean} props.isRoot - Whether this is the root node.
  * @param {string|null} props.parentId - The parent node ID (null for root).
  * @param {function} props.findComponent - Lookup function for component definitions.
+ * @param {object} props.embNameMap - Map of embedding component name -> display name.
+ * @param {object} props.denseDefaults - Cached default params for DenseEmbeddingRetriever.
  * @param {function} props.onEdit - Callback to open the config dialog for a node.
  * @param {function} props.onAddChild - Callback to add a child node.
  * @param {function} props.onRemoveChild - Callback to remove a child node.
@@ -371,29 +563,26 @@ function TreeNodeView({
   isRoot,
   parentId,
   findComponent,
+  embNameMap,
+  denseDefaults,
   onEdit,
   onAddChild,
   onRemoveChild,
   theme,
   t,
-  children,
 }) {
   if (!node || !node.component) return null;
 
   const info = findComponent(node.component);
-  const getString = (val) => {
-    if (!val) return null;
-    if (typeof val === "string") return val;
-    if (val.en) return val.en;
-    return String(val);
-  };
   const name =
     getString(info?.display_name) ||
     getString(info?.name) ||
     node.component ||
     t("generative:rag.composite.configureNode");
   const isComposite = COMPOSITE_TYPES.includes(node.component);
-  const Indent = depth * 3;
+  const cardX = depth * INDENT;
+  const operation = isComposite ? getOperationSummary(node, t) : null;
+  const denseInfo = getDenseEmbeddingInfo(node, denseDefaults, embNameMap);
 
   return (
     <Box>
@@ -402,24 +591,27 @@ function TreeNodeView({
           display: "flex",
           alignItems: "center",
           gap: 1,
-          ml: Indent,
+          ml: `${cardX}px`,
           position: "relative",
         }}
       >
         {depth > 0 && (
           <Box
+            data-conn
+            data-node={`${node.component}@${depth}`}
             sx={{
               position: "absolute",
-              left: -Indent + (depth - 1) * 3 + 20,
+              left: `${-INDENT / 2}px`,
               top: "50%",
-              width: Indent - (depth - 1) * 3 - 20,
+              width: `${INDENT / 2}px`,
               borderTop: "1px solid",
               borderColor: "divider",
             }}
           />
         )}
-
         <Box
+          data-card
+          data-node={`${node.component}@${depth}`}
           onClick={() => onEdit(node.nodeId)}
           sx={{
             display: "flex",
@@ -428,7 +620,9 @@ function TreeNodeView({
             px: 1.5,
             py: 1,
             border: "1px solid",
-            borderColor: isComposite ? "secondary.main" : "primary.main",
+            borderColor: isComposite
+              ? "accent.purpleBorder"
+              : "accent.amberBorder",
             borderRadius: 1,
             cursor: "pointer",
             backgroundColor: "background.paper",
@@ -436,11 +630,33 @@ function TreeNodeView({
           }}
         >
           {isComposite ? (
-            <AccountTreeIcon sx={{ fontSize: 18, color: "secondary.main" }} />
+            <AccountTreeIcon sx={{ fontSize: 18, color: "accent.purple" }} />
           ) : (
-            <PsychologyIcon sx={{ fontSize: 18, color: "primary.main" }} />
+            <SchemaIcon sx={{ fontSize: 18, color: "accent.amber" }} />
           )}
-          <Typography variant="body2">{name}</Typography>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              minWidth: "fit-content",
+              maxWidth: 480,
+            }}
+          >
+            <Typography variant="body2">{name}</Typography>
+            {denseInfo && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{
+                  maxWidth: 420,
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {denseInfo.embName}
+                {denseInfo.modelName ? ` - ${denseInfo.modelName}` : ""}
+              </Typography>
+            )}
+          </Box>
         </Box>
 
         {isComposite && (
@@ -479,12 +695,14 @@ function TreeNodeView({
           {node.children.filter(Boolean).map((child) => (
             <Box key={child.nodeId} sx={{ position: "relative" }}>
               <Box
+                data-spine
+                data-node={`${node.component}@${depth}`}
                 sx={{
                   position: "absolute",
-                  left: Indent + 12,
+                  left: `${cardX + INDENT / 2}px`,
                   top: 0,
                   bottom: 0,
-                  width: 1,
+                  width: "1px",
                   borderLeft: "1px solid",
                   borderColor: "divider",
                 }}
@@ -495,6 +713,8 @@ function TreeNodeView({
                 isRoot={false}
                 parentId={node.nodeId}
                 findComponent={findComponent}
+                embNameMap={embNameMap}
+                denseDefaults={denseDefaults}
                 onEdit={onEdit}
                 onAddChild={onAddChild}
                 onRemoveChild={onRemoveChild}
@@ -503,6 +723,78 @@ function TreeNodeView({
               />
             </Box>
           ))}
+        </Box>
+      )}
+
+      {operation && (
+        <Box sx={{ position: "relative" }}>
+          {depth > 0 && (
+            <Box
+              data-op
+              data-node={`${node.component}@${depth}::conn`}
+              sx={{
+                position: "absolute",
+                left: `${cardX - INDENT / 2}px`,
+                top: "50%",
+                width: `${INDENT / 2}px`,
+                borderTop: "1px solid",
+                borderColor: "divider",
+              }}
+            />
+          )}
+          <Box
+            data-op
+            data-node={`${node.component}@${depth}::card`}
+            onClick={() => onEdit(node.nodeId)}
+            title={t("generative:rag.composite.configureNode")}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              ml: `${cardX}px`,
+              my: 0.5,
+              px: 1.25,
+              py: 0.5,
+              width: "fit-content",
+              maxWidth: "100%",
+              border: "1px dashed",
+              borderColor: "accent.purpleBorder",
+              borderRadius: 1,
+              cursor: "pointer",
+              backgroundColor: "background.paper",
+              "&:hover": { backgroundColor: "action.hover" },
+            }}
+          >
+            {operation.icon === "fusion" ? (
+              <MergeIcon sx={{ fontSize: 16, color: "accent.purple" }} />
+            ) : (
+              <SortIcon sx={{ fontSize: 16, color: "accent.purple" }} />
+            )}
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 600,
+                color: "text.secondary",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {operation.label}
+            </Typography>
+            {operation.value && (
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.primary",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  maxWidth: 280,
+                }}
+              >
+                {operation.value}
+              </Typography>
+            )}
+          </Box>
         </Box>
       )}
     </Box>
@@ -515,6 +807,8 @@ TreeNodeView.propTypes = {
   isRoot: PropTypes.bool.isRequired,
   parentId: PropTypes.string,
   findComponent: PropTypes.func.isRequired,
+  embNameMap: PropTypes.object,
+  denseDefaults: PropTypes.object,
   onEdit: PropTypes.func.isRequired,
   onAddChild: PropTypes.func.isRequired,
   onRemoveChild: PropTypes.func.isRequired,

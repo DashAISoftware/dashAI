@@ -104,6 +104,15 @@ function FormSchemaFieldWithParent({
   // Handle saving the sub-model configuration
   const handleSubModelSave = (values) => {
     if (formValues && formValues[name]) {
+      const model = getModelFromCurrentProperty(name);
+      const parent = formValues[name]?.properties?.component ?? parentComponent;
+      // Build the updated component-ref value and fire onChange so the
+      // parent form's auto-save propagates the change to savedParamsRef.
+      const updated = formattedSubform(
+        parent && model
+          ? { parent, model, params: values }
+          : { parent: parentComponent, model: model, params: values },
+      );
       setFormValues((prevFormValues) => {
         const updatedFormValues = { ...prevFormValues };
         if (!updatedFormValues[name]) {
@@ -124,6 +133,8 @@ function FormSchemaFieldWithParent({
         };
         return updatedFormValues;
       });
+      // Trigger the parent form's onChange to propagate auto-save
+      field.onChange(updated);
     }
     setOpenSubModal(false);
   };
