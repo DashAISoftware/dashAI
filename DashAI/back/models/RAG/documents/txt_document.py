@@ -18,6 +18,7 @@ class TxtDocument(BaseDocument):
         file_hash: str,
         created: Optional[str] = None,
         optional_metadata: Optional[Dict[str, Any]] = None,
+        extractor: Optional[Any] = None,
     ):
         """Initialize a TxtDocument instance.
 
@@ -28,6 +29,7 @@ class TxtDocument(BaseDocument):
             file_hash: A hash of the file content (computed upstream).
             created: The creation date of the document.
             optional_metadata: Additional metadata for the document.
+            extractor: Optional extractor instance for text extraction.
         """
         super().__init__(
             id=id,
@@ -36,22 +38,17 @@ class TxtDocument(BaseDocument):
             file_hash=file_hash,
             created=created,
             optional_metadata=optional_metadata,
+            extractor=extractor,
         )
 
     def get_text(self) -> str:
-        """Read and return the text content of the document.
+        return self._extract_text(self._default_extract)
 
-        Returns:
-            str: The text content of the document with leading/trailing
-                whitespace removed.
-
-        Raises:
-            RAGDocumentParsingError: If the file is not found, cannot be
-                read, or contains invalid UTF-8 encoding.
-        """
+    def _default_extract(self) -> str:
+        """Fallback extraction: read as UTF-8 plain text."""
         try:
             with open(self.file_path, "r", encoding="utf-8") as file:
-                text = file.read()
+                return file.read().strip()
         except FileNotFoundError as e:
             raise RAGDocumentParsingError(f"File not found: {self.file_path}") from e
         except IOError as e:
@@ -62,13 +59,8 @@ class TxtDocument(BaseDocument):
             raise RAGDocumentParsingError(
                 f"Encoding error reading file {self.file_path}: {str(e)}"
             ) from e
-        return text.strip()
 
     def get_metadata(self) -> Dict[str, Any]:
-        """Get the optional metadata associated with the document.
-
-        Returns:
-            Dict[str, Any]: The metadata dictionary, or an empty dict
-                if no metadata was provided.
-        """
-        return self.optional_metadata if self.optional_metadata else {}
+        base = self.optional_metadata if self.optional_metadata else {}
+        base["extractor"] = self.get_extractor_name()
+        return base

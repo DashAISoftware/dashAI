@@ -29,6 +29,74 @@ log = logging.getLogger(__name__)
 
 base_url = "/api/v1/document"
 
+DISPOSITION_ATTACHMENT = "attachment"
+DISPOSITION_INLINE = "inline"
+
+
+def _file_response(
+    content: bytes, media_type: str, filename: str, disposition: str
+) -> Response:
+    """Build a ``Response`` serving ``content`` with a Content-Disposition header.
+
+    Parameters
+    ----------
+    content : bytes
+        Raw file bytes.
+    media_type : str
+        MIME type of the file.
+    filename : str
+        Original file name, encoded into the disposition header.
+    disposition : str
+        Either ``"attachment"`` or ``"inline"``.
+
+    Returns
+    -------
+    Response
+        FastAPI response with the given content and disposition.
+    """
+    encoded_name = quote(filename, safe="")
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": (f"{disposition}; filename*=UTF-8''{encoded_name}")
+        },
+    )
+
+
+def _serve_document(
+    document_id: int, disposition: str, session_factory: sessionmaker
+) -> Response:
+    """Load a document from disk and serve it with the given disposition.
+
+    Parameters
+    ----------
+    document_id : int
+        Database ID of the document to serve.
+    disposition : str
+        Either ``"attachment"`` or ``"inline"``.
+    session_factory : sessionmaker
+        Database session factory from the DI container.
+
+    Returns
+    -------
+    Response
+        FastAPI response with the document content.
+
+    Raises
+    ------
+    HTTPException
+        If the document or its physical file is not found.
+    """
+    with session_factory() as db:
+        try:
+            content, media_type, filename = DocumentService(db).download(document_id)
+            return _file_response(content, media_type, filename, disposition)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+            ) from e
+
 
 @router.get("/", response_model=List[DocumentResponse])
 async def get_all_documents(
@@ -61,26 +129,18 @@ async def get_document(
 async def download_document(
     document_id: int,
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
-):
+) -> Response:
     """Download the actual file content of a document."""
+    return _serve_document(document_id, DISPOSITION_ATTACHMENT, session_factory)
 
-    with session_factory() as db:
-        try:
-            content, media_type, filename = DocumentService(db).download(document_id)
-            encoded_name = quote(filename, safe="")
-            return Response(
-                content=content,
-                media_type=media_type,
-                headers={
-                    "Content-Disposition": (
-                        f"attachment; filename*=UTF-8''{encoded_name}"
-                    )
-                },
-            )
-        except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
-            ) from e
+
+@router.get("/{document_id}/view")
+async def view_document(
+    document_id: int,
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+) -> Response:
+    """Return file content for inline viewing (e.g. in an iframe preview)."""
+    return _serve_document(document_id, DISPOSITION_INLINE, session_factory)
 
 
 @router.post("/", response_model=DocumentResponse, status_code=status.HTTP_201_CREATED)
@@ -212,4 +272,135 @@ async def update_document_metadata(
         except RAGDocumentFileTypeError as e:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            ) from e
+
+
+@router.post("/{document_id}/extract")
+async def extract_document_text(
+    document_id: int,
+    request: Request,
+    config: Dict[str, Any] = Depends(lambda: di["config"]),
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Extract text from a document on demand. Does NOT persist anything.
+
+    Request body (optional):
+        {"extractor": {"component": "PyMuPDFExtractor", "params": {}}}
+
+    If extractor is not provided, uses the document's stored extractor
+    or file-type default.
+
+    Returns:
+        dict with text, extractor ref, and char_count.
+    """
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+
+    registry: ComponentRegistry = di["component_registry"]
+
+    try:
+        body = await request.json() if request.headers.get("content-length") else {}
+    except Exception:
+        body = {}
+
+    extractor_ref = body.get("extractor")
+
+    with session_factory() as db:
+        try:
+            result = DocumentService(db, registry).extract_text(
+                document_id,
+                extractor_ref=extractor_ref,
+            )
+            return result
+        except ValueError as e:
+            msg = str(e)
+            if "does not support" in msg:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail=msg
+                ) from e
+            if "not found in registry" in msg:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail=msg
+                ) from e
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=msg
+            ) from e
+
+
+@router.put("/{document_id}/extractor")
+async def update_document_extractor(
+    document_id: int,
+    request: Request,
+    config: Dict[str, Any] = Depends(lambda: di["config"]),
+    session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
+):
+    """Commit an extractor choice for a document.
+
+    Request body:
+        {"extractor": {"component": "PyMuPDFExtractor", "params": {}}, "force": false}
+
+    If the document is linked to RAG pipelines and force=false, returns 409
+    Conflict with affected session info. With force=true, artifacts are
+    invalidated.
+    """
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+
+    registry: ComponentRegistry = di["component_registry"]
+
+    try:
+        body = await request.json()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid JSON body",
+        ) from e
+
+    extractor_ref = body.get("extractor")
+    force = body.get("force", False)
+
+    if not extractor_ref or not isinstance(extractor_ref, dict):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing or invalid 'extractor' in request body. "
+            "Expected {component: str, params: dict}.",
+        )
+
+    with session_factory() as db:
+        try:
+            result = DocumentService(db, registry).update_extractor(
+                document_id,
+                extractor_ref=extractor_ref,
+                force=force,
+            )
+            return result
+        except ValueError as e:
+            msg = str(e)
+            if "linked to" in msg and "RAG pipeline" in msg:
+                linked_ids = DocumentService(db).get_related_sessions(document_id)
+                from DashAI.back.dependencies.database.models import GenerativeSession
+
+                affected_sessions = []
+                if linked_ids:
+                    sessions = (
+                        db.query(GenerativeSession)
+                        .filter(GenerativeSession.id.in_(linked_ids))
+                        .all()
+                    )
+                    affected_sessions = [{"id": s.id, "name": s.name} for s in sessions]
+                raise HTTPException(
+                    status_code=409,
+                    detail={
+                        "detail": msg,
+                        "affected_sessions": affected_sessions,
+                    },
+                ) from e
+            if "does not support" in msg:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail=msg
+                ) from e
+            if "not found in registry" in msg:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST, detail=msg
+                ) from e
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=msg
             ) from e

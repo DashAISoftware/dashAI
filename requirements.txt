@@ -50,7 +50,9 @@ xlrd
 
 
 fasttext-wheel
-pypdf2
+pypdf
+pymupdf
+easyocr
 textract
 openai
 sentence-transformers

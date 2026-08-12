@@ -12,5 +12,8 @@ class DocumentResponse(BaseModel):
     created: datetime
     last_modified: datetime
     optional_metadata: Optional[Dict[str, Any]]
+    extractor: Optional[Dict[str, Any]] = None
+    default_extractor: Optional[Dict[str, Any]] = None
     related_sessions: List[int] | None
     file_url: str
+    preview_url: str

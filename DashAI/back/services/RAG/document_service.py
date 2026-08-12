@@ -1,8 +1,9 @@
+import json
 import logging
 import mimetypes
 import os
 from datetime import datetime
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from sqlalchemy import exc
 from sqlalchemy.orm import Session
@@ -13,6 +14,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.dependencies.database.models import (
     GenerativeSession,
+    RAGExtractor,
 )
 from DashAI.back.models.RAG.documents import (
     BaseDocument,
@@ -21,6 +23,7 @@ from DashAI.back.models.RAG.documents import (
     TxtDocument,
 )
 from DashAI.back.models.RAG.exceptions import RAGDocumentFileTypeError
+from DashAI.back.models.RAG.extractors.base_extractor import BaseExtractor
 from DashAI.back.models.RAG.utils import hash_function
 
 log = logging.getLogger(__name__)
@@ -41,8 +44,41 @@ _DOCUMENT_CLASSES: dict[DocumentFileType, type[BaseDocument]] = {
 class DocumentService:
     """Service layer for document CRUD, file storage, and hydration."""
 
-    def __init__(self, db: Session):
+    _DEFAULT_EXTRACTORS: dict[str, str] = {
+        "pdf": "TextractExtractor",
+        "txt": "PlainTextExtractor",
+        "md": "PlainTextExtractor",
+        "rst": "PlainTextExtractor",
+        "tex": "PlainTextExtractor",
+        "csv": "PlainTextExtractor",
+    }
+
+    def __init__(self, db: Session, registry=None):
         self.db = db
+        self._registry = registry
+
+    def _resolve_extractor(self, db_doc) -> "Optional[BaseExtractor]":
+        """Resolve the extractor for a document from its extractor_record."""
+        extractor_record = db_doc.extractor_record  # RAGExtractor or None
+
+        if extractor_record is not None:
+            component_name = extractor_record.component_name
+            params = extractor_record.params or {}
+        else:
+            # Default by file type
+            component_name = self._DEFAULT_EXTRACTORS.get(db_doc.file_type)
+            if component_name is None:
+                return None
+            params = {}
+
+        if self._registry is None:
+            return None
+
+        try:
+            extractor_cls = self._registry[component_name]["class"]
+            return extractor_cls(**params)
+        except KeyError:
+            return None
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -51,6 +87,37 @@ class DocumentService:
     def _to_response(
         self, doc: DocumentDBModel, base_url: str = ""
     ) -> DocumentResponse:
+        """Build a ``DocumentResponse`` from a DB row.
+
+        Parameters
+        ----------
+        doc : DocumentDBModel
+            Database document row.
+        base_url : str
+            URL prefix used to build absolute ``file_url`` and ``preview_url``.
+
+        Returns
+        -------
+        DocumentResponse
+            API representation of the document.
+        """
+        extractor_dict = None
+        if doc.extractor_record is not None:
+            extractor_dict = {
+                "component": doc.extractor_record.component_name,
+                "params": doc.extractor_record.params or {},
+            }
+        else:
+            default_name = self._DEFAULT_EXTRACTORS.get(doc.file_type)
+            if default_name:
+                extractor_dict = {"component": default_name, "params": {}}
+
+        default_extractor_dict = None
+        if doc.extractor_record is None:
+            default_name = self._DEFAULT_EXTRACTORS.get(doc.file_type)
+            if default_name:
+                default_extractor_dict = {"component": default_name, "params": {}}
+
         return DocumentResponse(
             id=doc.id,
             file_name=doc.file_name,
@@ -59,10 +126,13 @@ class DocumentService:
             created=doc.created,
             last_modified=doc.last_modified,
             optional_metadata=doc.optional_metadata,
+            extractor=extractor_dict,
+            default_extractor=default_extractor_dict,
             related_sessions=[s.id for s in doc.get_related_sessions]
             if doc.get_related_sessions
             else None,
             file_url=f"{base_url}/api/v1/document/{doc.id}/download",
+            preview_url=f"{base_url}/api/v1/document/{doc.id}/view",
         )
 
     def _get_document_or_raise(self, document_id: int) -> DocumentDBModel:
@@ -129,11 +199,31 @@ class DocumentService:
                 existing.file_name = file_name
                 existing.file_path = file_path
                 existing.optional_metadata = optional_metadata
+                if existing.extractor_id is None:
+                    default_component = self._DEFAULT_EXTRACTORS.get(file_type)
+                    if default_component:
+                        extractor_record = RAGExtractor(
+                            component_name=default_component,
+                            params={},
+                        )
+                        self.db.add(extractor_record)
+                        self.db.flush()
+                        existing.extractor_id = extractor_record.id
                 self.db.commit()
                 return self._to_response(existing)
 
             with open(file_path, "wb") as f:
                 f.write(file_content)
+
+            default_component = self._DEFAULT_EXTRACTORS.get(file_type)
+            extractor_record = None
+            if default_component:
+                extractor_record = RAGExtractor(
+                    component_name=default_component,
+                    params={},
+                )
+                self.db.add(extractor_record)
+                self.db.flush()
 
             doc = DocumentDBModel(
                 file_name=file_name,
@@ -141,10 +231,12 @@ class DocumentService:
                 file_path=file_path,
                 file_hash=file_content_hash,
                 optional_metadata=optional_metadata or None,
+                extractor_id=extractor_record.id if extractor_record else None,
             )
             self.db.add(doc)
             self.db.commit()
             self.db.refresh(doc)
+
             return self._to_response(doc)
 
         except exc.SQLAlchemyError as e:
@@ -380,6 +472,8 @@ class DocumentService:
                     f"Unsupported file type '{db_doc.file_type}'. "
                     f"Supported types: {supported}."
                 ) from err
+
+            extractor = self._resolve_extractor(db_doc)
             documents[doc_id] = doc_class(
                 id=db_doc.id,
                 file_name=db_doc.file_name,
@@ -387,8 +481,179 @@ class DocumentService:
                 file_hash=db_doc.file_hash,
                 created=db_doc.created,
                 optional_metadata=db_doc.optional_metadata,
+                extractor=extractor,
             )
         return documents
+
+    def _build_text_signature(
+        self, file_hash: str, component_name: str, params: dict
+    ) -> str:
+        """Build a cache signature for extracted text.
+
+        The signature captures the file content hash and the exact extractor
+        configuration, so re-extraction only happens when either changes.
+        """
+        payload = f"{file_hash}:{component_name}:{json.dumps(params, sort_keys=True)}"
+        return hash_function(payload)
+
+    def extract_text(
+        self, document_id: int, extractor_ref: Optional[dict] = None
+    ) -> dict:
+        """Extract text from a document on demand, with caching.
+
+        Checks processed_document_content for a cached result matching the file hash
+        and extractor config. Extracts only on cache miss and stores the result.
+
+        Args:
+            document_id: Document ID.
+            extractor_ref: Optional {component, params} dict. If None, uses
+                stored/default.
+
+        Returns:
+            dict with keys: text, extractor, char_count, cached (bool)
+
+        Raises:
+            ValueError if document not found or extractor incompatible.
+        """
+        from DashAI.back.dependencies.database.models import ProcessedDocumentContent
+
+        doc = self._get_document_or_raise(document_id)
+
+        # Resolve which extractor to use
+        if extractor_ref is not None:
+            component_name = extractor_ref.get("component")
+            params = extractor_ref.get("params", {})
+            if component_name is None:
+                raise ValueError("extractor_ref must include 'component' key")
+            if self._registry is None:
+                raise ValueError("No registry available to resolve extractor")
+            try:
+                extractor_cls = self._registry[component_name]["class"]
+            except KeyError as err:
+                raise ValueError(
+                    f"Extractor '{component_name}' not found in registry"
+                ) from err
+            extractor = extractor_cls(**params)
+        else:
+            extractor = self._resolve_extractor(doc)
+            if extractor is None:
+                raise ValueError(f"No extractor available for document {document_id}")
+            component_name = extractor.__class__.__name__
+            params = {}
+
+        # Check compatibility
+        supported = getattr(extractor, "SUPPORTED_FILE_TYPES", [])
+        if supported and doc.file_type not in supported:
+            raise ValueError(
+                f"Extractor '{component_name}' does not support file type "
+                f"'{doc.file_type}'. Supported types: {supported}"
+            )
+
+        # Build signature and check cache
+        signature = self._build_text_signature(doc.file_hash, component_name, params)
+        cached = (
+            self.db.query(ProcessedDocumentContent)
+            .filter_by(document_id=document_id, signature=signature)
+            .first()
+        )
+        if cached is not None:
+            return {
+                "text": cached.content,
+                "extractor": {"component": component_name, "params": params},
+                "char_count": cached.char_count,
+                "cached": True,
+            }
+
+        # Cache miss — extract and store
+        text = extractor.extract(doc.file_path)
+        char_count = len(text)
+
+        cache_entry = ProcessedDocumentContent(
+            document_id=document_id,
+            content=text,
+            signature=signature,
+            char_count=char_count,
+        )
+        self.db.add(cache_entry)
+        self.db.commit()
+
+        return {
+            "text": text,
+            "extractor": {"component": component_name, "params": params},
+            "char_count": char_count,
+            "cached": False,
+        }
+
+    def update_extractor(
+        self, document_id: int, extractor_ref: dict, force: bool = False
+    ) -> "DocumentResponse":
+        """Persist an extractor choice via rag_extractor table.
+
+        Args:
+            document_id: Document ID.
+            extractor_ref: {component, params} dict.
+            force: If True, skip confirmation and invalidate artifacts.
+
+        Returns:
+            DocumentResponse with updated extractor.
+
+        Raises:
+            ValueError if document not found or extractor invalid.
+        """
+        from DashAI.back.dependencies.database.models import RAGExtractor
+
+        doc = self._get_document_or_raise(document_id)
+
+        component_name = extractor_ref.get("component")
+        params = extractor_ref.get("params", {})
+
+        if not component_name:
+            raise ValueError("extractor_ref must include 'component' key")
+
+        # Validate extractor exists and is compatible
+        if self._registry is not None:
+            try:
+                extractor_cls = self._registry[component_name]["class"]
+            except KeyError as err:
+                raise ValueError(
+                    f"Extractor '{component_name}' not found in registry"
+                ) from err
+
+            supported = getattr(extractor_cls, "SUPPORTED_FILE_TYPES", [])
+            if supported and doc.file_type not in supported:
+                raise ValueError(
+                    f"Extractor '{component_name}' does not support file type "
+                    f"'{doc.file_type}'. Supported types: {supported}"
+                )
+
+        if not force:
+            linked_session_ids = self.get_related_sessions(document_id)
+            if linked_session_ids:
+                raise ValueError(
+                    f"Document is linked to {len(linked_session_ids)} RAG "
+                    f"pipeline(s). Changing the extractor will delete existing "
+                    f"chunks and retrievers. Use force=true to proceed."
+                )
+
+        # Create a new RAGExtractor record (no dedup for now — simple approach)
+        extractor_record = RAGExtractor(
+            component_name=component_name,
+            params=params if params else None,
+        )
+        self.db.add(extractor_record)
+        self.db.flush()  # Get the ID
+        doc.extractor_id = extractor_record.id
+        doc.last_modified = datetime.now()
+
+        if force:
+            from DashAI.back.services.RAG.cleanup_service import CleanupService
+
+            cleanup = CleanupService(self.db)
+            cleanup.invalidate_document_artifacts(document_id)
+
+        self.db.commit()
+        self.db.refresh(doc)
+        return self._to_response(doc)
 
     def validate_exist(self, document_ids: List[int]) -> None:
         """Raise ``ValueError`` if any document ID does not exist in the DB.

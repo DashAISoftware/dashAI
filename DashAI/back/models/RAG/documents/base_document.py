@@ -25,6 +25,7 @@ class BaseDocument(ABC):
         file_hash: str,
         created: Optional[str] = None,
         optional_metadata: Optional[Dict[str, Any]] = None,
+        extractor: Optional[Any] = None,
     ):
         """Initialize a BaseDocument instance.
 
@@ -35,6 +36,7 @@ class BaseDocument(ABC):
             file_hash: A hash of the file content.
             created: The creation date of the document.
             optional_metadata: Additional metadata for the document.
+            extractor: Optional extractor instance for text extraction.
         """
         self.id = id
         self.file_name = file_name
@@ -44,6 +46,7 @@ class BaseDocument(ABC):
         self.optional_metadata = (
             optional_metadata if optional_metadata is not None else {}
         )
+        self.extractor = extractor
 
     @abstractmethod
     def get_text(self) -> str:
@@ -53,6 +56,18 @@ class BaseDocument(ABC):
         Returns:
             str: The text content of the document.
         """
+
+    def _extract_text(self, fallback: callable) -> str:
+        """Extract text using the assigned extractor, or fallback callable."""
+        if self.extractor is not None:
+            return self.extractor.extract(self.file_path)
+        return fallback()
+
+    def get_extractor_name(self) -> Optional[str]:
+        """Get the extractor component name, or None."""
+        if self.extractor is not None:
+            return self.extractor.__class__.__name__
+        return None
 
     def get_text_length(self) -> int:
         """
