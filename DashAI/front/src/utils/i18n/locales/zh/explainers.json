@@ -10,10 +10,14 @@
     "editPlot": "编辑图表",
     "resetPlot": "重置编辑",
     "fullscreen": "全屏",
-    "close": "关闭"
+    "close": "关闭",
+    "generateInsight": "生成 AI 分析"
   },
   "error": {
     "explainerFailed": "解释器生成失败。",
+    "insightJobEnqueueError": "创建 AI 分析时出错。",
+    "insightJobFailed": "AI 分析生成失败：{{error}}",
+    "noGenerativeModels": "没有可用的生成式模型",
     "fetchDataError": "获取 ID 为 {{explainerId}} 的解释器数据时出错",
     "fetchDatasets": "获取数据集时出错。",
     "fetchExplainers": "获取解释器列表时出错。",
@@ -78,11 +82,13 @@
     "rowModeManual": "手动选择",
     "shuffleRows": "打乱选中的行（随机抽样）",
     "rowsSelectedManually": "手动选择的行数：{{selected}} / {{total}}",
-    "storyTitle": "叙述性摘要"
+    "storyTitle": "叙述性摘要",
+    "insightTitle": "AI 分析"
   },
   "message": {
     "explainerJobCompleted": "解释器 {{name}} 成功完成",
     "globalExplainerJobCreated": "全局解释器任务创建成功。",
-    "localExplainerJobCreated": "局部解释器任务创建成功。"
+    "localExplainerJobCreated": "局部解释器任务创建成功。",
+    "insightJobCompleted": "AI 分析生成成功。"
   }
 }

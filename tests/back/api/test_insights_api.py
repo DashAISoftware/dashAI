@@ -348,3 +348,83 @@ def test_create_explainer_insight_400s_for_an_invalid_scope(
 def test_get_insight_404s_for_a_missing_id(client: TestClient):
     response = client.get("/api/v1/insight/31415")
     assert response.status_code == 404
+
+
+def test_get_latest_explainer_insight_returns_nulls_when_none_exists(
+    client: TestClient, explainer_with_insights_id: int
+):
+    response = client.get(
+        f"/api/v1/insight/explainer/global/{explainer_with_insights_id}/latest",
+        params={"artifact_title": "Dummy Curve"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body == {
+        "insight_result_id": None,
+        "status": None,
+        "result_text": None,
+        "error_message": None,
+        "huey_id": None,
+    }
+
+
+def test_get_latest_explainer_insight_returns_the_generated_text(
+    client: TestClient, explainer_with_insights_id: int
+):
+    create_response = client.post(
+        f"/api/v1/insight/explainer/global/{explainer_with_insights_id}",
+        json={
+            "artifact_title": "Dummy Curve",
+            "provider_kind": "local",
+            "provider_params": {"model_name": "DummyGenerativeModel"},
+        },
+    )
+    assert create_response.status_code == 201, create_response.text
+
+    response = client.get(
+        f"/api/v1/insight/explainer/global/{explainer_with_insights_id}/latest",
+        params={"artifact_title": "Dummy Curve"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "FINISHED"
+    assert body["result_text"] == "a generated insight"
+    assert body["insight_result_id"] == create_response.json()["insight_result_id"]
+
+
+def test_get_latest_explainer_insight_returns_the_most_recent_of_several(
+    client: TestClient, explainer_with_insights_id: int
+):
+    first = client.post(
+        f"/api/v1/insight/explainer/global/{explainer_with_insights_id}",
+        json={
+            "artifact_title": "Dummy Curve",
+            "provider_kind": "local",
+            "provider_params": {"model_name": "DummyGenerativeModel"},
+        },
+    ).json()
+    second = client.post(
+        f"/api/v1/insight/explainer/global/{explainer_with_insights_id}",
+        json={
+            "artifact_title": "Dummy Curve",
+            "provider_kind": "local",
+            "provider_params": {"model_name": "DummyGenerativeModel"},
+        },
+    ).json()
+    assert first["insight_result_id"] != second["insight_result_id"]
+
+    response = client.get(
+        f"/api/v1/insight/explainer/global/{explainer_with_insights_id}/latest",
+        params={"artifact_title": "Dummy Curve"},
+    )
+    assert response.json()["insight_result_id"] == second["insight_result_id"]
+
+
+def test_get_latest_explainer_insight_400s_for_an_invalid_scope(
+    client: TestClient, explainer_with_insights_id: int
+):
+    response = client.get(
+        f"/api/v1/insight/explainer/bogus/{explainer_with_insights_id}/latest",
+        params={"artifact_title": "Dummy Curve"},
+    )
+    assert response.status_code == 400

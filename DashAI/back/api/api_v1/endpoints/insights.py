@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
-from sqlalchemy import exc
+from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.endpoints.explainers import (
     _as_artifact_target,
@@ -184,6 +184,76 @@ async def create_explainer_insight(
     job.set_status_as_delivered()
     job_id = job_queue.put(job).id
     return {"id": job_id, "insight_result_id": insight_result_id}
+
+
+@router.get("/explainer/{scope}/{explainer_id}/latest")
+@inject
+async def get_latest_explainer_insight(
+    scope: str,
+    explainer_id: int,
+    artifact_title: str,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the most recent AI insight already generated for one artifact.
+
+    Lets the frontend show a previously generated insight again (after
+    leaving and returning, or switching between artifacts/instances and
+    back) instead of only ever showing what was just generated during the
+    current component's lifetime.
+
+    Parameters
+    ----------
+    scope : str
+        Either ``"global"`` or ``"local"``.
+    explainer_id : int
+        Id of the explainer the artifact belongs to.
+    artifact_title : str
+        Title of the artifact/group, as in ``InsightGenerationParams``.
+
+    Returns
+    -------
+    dict
+        ``{"insight_result_id", "status", "result_text", "error_message",
+        "huey_id"}``, all ``None`` if no insight has been requested yet for
+        this artifact.
+
+    Raises
+    ------
+    HTTPException
+        400 for an invalid scope.
+    """
+    if scope not in ("global", "local"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid scope"
+        )
+
+    with session_factory() as db:
+        result = db.scalars(
+            select(InsightResult)
+            .where(
+                InsightResult.consumer_type == f"{scope}_explainer",
+                InsightResult.consumer_id == explainer_id,
+                InsightResult.consumer_ref == artifact_title,
+            )
+            .order_by(InsightResult.created.desc())
+            .limit(1)
+        ).first()
+
+        if result is None:
+            return {
+                "insight_result_id": None,
+                "status": None,
+                "result_text": None,
+                "error_message": None,
+                "huey_id": None,
+            }
+        return {
+            "insight_result_id": result.id,
+            "status": result.status.name,
+            "result_text": result.result_text,
+            "error_message": result.error_message,
+            "huey_id": result.huey_id,
+        }
 
 
 @router.get("/{insight_result_id}")

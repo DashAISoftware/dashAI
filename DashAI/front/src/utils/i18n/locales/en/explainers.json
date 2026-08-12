@@ -10,10 +10,14 @@
     "editPlot": "Edit plot",
     "resetPlot": "Reset edits",
     "fullscreen": "Fullscreen",
-    "close": "Close"
+    "close": "Close",
+    "generateInsight": "Generate AI insight"
   },
   "error": {
     "explainerFailed": "Explainer failed to generate.",
+    "insightJobEnqueueError": "Error while trying to create the AI insight.",
+    "insightJobFailed": "AI insight generation failed: {{error}}",
+    "noGenerativeModels": "No generative models available",
     "fetchDataError": "Error while trying to obtain data of the explainer with id: {{explainerId}}",
     "fetchDatasets": "Error while trying to obtain the datasets.",
     "fetchExplainers": "Error while trying to obtain the explainers.",
@@ -78,11 +82,13 @@
     "rowModeManual": "Manual selection",
     "shuffleRows": "Shuffle selected rows (random sample)",
     "rowsSelectedManually": "Rows selected manually: {{selected}} / {{total}}",
-    "storyTitle": "Narrative summary"
+    "storyTitle": "Narrative summary",
+    "insightTitle": "AI insight"
   },
   "message": {
     "explainerJobCompleted": "Explainer {{name}} completed successfully",
     "globalExplainerJobCreated": "Global explainer job successfully created.",
-    "localExplainerJobCreated": "Local explainer job successfully created."
+    "localExplainerJobCreated": "Local explainer job successfully created.",
+    "insightJobCompleted": "AI insight generated successfully."
   }
 }

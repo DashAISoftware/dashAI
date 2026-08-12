@@ -7,6 +7,7 @@ import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer
 import { useTranslation } from "react-i18next";
 import ArtifactViewer from "../shared/ArtifactViewer";
 import ExplainerInstanceTable from "./ExplainerInstanceTable";
+import InsightBox from "./InsightBox";
 import StoryBox from "./StoryBox";
 
 /** Wrap legacy plotly JSON strings as plotly artifacts; pass typed dicts through. */
@@ -170,6 +171,11 @@ function GroupedArtifactsView({
         leadingMinWidth={wide ? 320 : 220}
       />
       <StoryBox story={group.story} groupTitle={group.title} />
+      <InsightBox
+        explainerId={ctx.explainerId}
+        scope={ctx.scope}
+        artifactTitle={group.title}
+      />
     </Box>
   );
 }
@@ -204,6 +210,11 @@ function renderItem(item, ctx, datasetPath = null, selection = null) {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <ArtifactViewer artifact={item} {...leafProps(item, ctx)} />
       <StoryBox story={item.story} groupTitle={item.title} />
+      <InsightBox
+        explainerId={ctx.explainerId}
+        scope={ctx.scope}
+        artifactTitle={item.title}
+      />
     </Box>
   );
 }
@@ -277,7 +288,13 @@ export default function ExplainersPlot({
     return <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>;
   }
 
-  const ctx = { onSaveOverride, onResetOverride, overriddenIndexes };
+  const ctx = {
+    onSaveOverride,
+    onResetOverride,
+    overriddenIndexes,
+    explainerId: explainer.id,
+    scope,
+  };
 
   // Every top level item renders continuously: a plain artifact at full width,
   // a "grouped" item as its own self contained selector. Local explainers pass

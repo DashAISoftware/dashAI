@@ -10,10 +10,14 @@
     "editPlot": "Diagramm bearbeiten",
     "resetPlot": "Bearbeitungen zuruecksetzen",
     "fullscreen": "Vollbild",
-    "close": "Schließen"
+    "close": "Schließen",
+    "generateInsight": "KI-Analyse generieren"
   },
   "error": {
     "explainerFailed": "Erklärungsmodell konnte nicht generiert werden.",
+    "insightJobEnqueueError": "Fehler beim Erstellen der KI-Analyse.",
+    "insightJobFailed": "KI-Analyse fehlgeschlagen: {{error}}",
+    "noGenerativeModels": "Keine generativen Modelle verfügbar",
     "fetchDataError": "Fehler beim Abrufen der Daten des Erklärungsmodells mit ID: {{explainerId}}",
     "fetchDatasets": "Fehler beim Abrufen der Datensätze.",
     "fetchExplainers": "Fehler beim Abrufen der Erklärungsmodelle.",
@@ -78,11 +82,13 @@
     "rowModeManual": "Manuelle Auswahl",
     "shuffleRows": "Ausgewählte Zeilen mischen (Zufallsstichprobe)",
     "rowsSelectedManually": "Manuell ausgewählte Zeilen: {{selected}} / {{total}}",
-    "storyTitle": "Zusammenfassung als Text"
+    "storyTitle": "Zusammenfassung als Text",
+    "insightTitle": "KI-Analyse"
   },
   "message": {
     "explainerJobCompleted": "Erklärungsmodell {{name}} erfolgreich abgeschlossen",
     "globalExplainerJobCreated": "Globaler Erklärungsmodell-Job erfolgreich erstellt.",
-    "localExplainerJobCreated": "Lokaler Erklärungsmodell-Job erfolgreich erstellt."
+    "localExplainerJobCreated": "Lokaler Erklärungsmodell-Job erfolgreich erstellt.",
+    "insightJobCompleted": "KI-Analyse erfolgreich generiert."
   }
 }

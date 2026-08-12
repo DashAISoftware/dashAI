@@ -10,10 +10,14 @@
     "editPlot": "Editar gráfico",
     "resetPlot": "Redefinir edições",
     "fullscreen": "Tela cheia",
-    "close": "Fechar"
+    "close": "Fechar",
+    "generateInsight": "Gerar análise com IA"
   },
   "error": {
     "explainerFailed": "Erro ao gerar o explicador.",
+    "insightJobEnqueueError": "Erro ao tentar criar a análise com IA.",
+    "insightJobFailed": "Falha ao gerar a análise com IA: {{error}}",
+    "noGenerativeModels": "Nenhum modelo generativo disponível",
     "fetchDataError": "Erro ao tentar obter dados do explicador com id: {{explainerId}}",
     "fetchDatasets": "Erro ao tentar obter os conjuntos de dados.",
     "fetchExplainers": "Erro ao tentar obter os explicadores.",
@@ -78,11 +82,13 @@
     "rowModeManual": "Seleção manual",
     "shuffleRows": "Embaralhar linhas selecionadas (amostra aleatória)",
     "rowsSelectedManually": "Linhas selecionadas manualmente: {{selected}} / {{total}}",
-    "storyTitle": "Resumo narrativo"
+    "storyTitle": "Resumo narrativo",
+    "insightTitle": "Análise com IA"
   },
   "message": {
     "explainerJobCompleted": "Explicador {{name}} concluído com sucesso",
     "globalExplainerJobCreated": "Trabalho do explicador global criado com sucesso.",
-    "localExplainerJobCreated": "Trabalho do explicador local criado com sucesso."
+    "localExplainerJobCreated": "Trabalho do explicador local criado com sucesso.",
+    "insightJobCompleted": "Análise com IA gerada com sucesso."
   }
 }

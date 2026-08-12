@@ -12,4 +12,7 @@ from DashAI.back.core.schema_fields.optimizer_int_field import optimizer_int_fie
 from DashAI.back.core.schema_fields.schema_field import schema_field
 from DashAI.back.core.schema_fields.string_field import string_field
 from DashAI.back.core.schema_fields.union_type import union_type
-from DashAI.back.core.schema_fields.utils import fill_objects
+from DashAI.back.core.schema_fields.utils import (
+    default_parameters_from_schema,
+    fill_objects,
+)

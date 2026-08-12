@@ -1,10 +1,37 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Type
 
 from kink import inject
 
 if TYPE_CHECKING:
     from DashAI.back.core.schema_fields.base_schema import BaseSchema
     from DashAI.back.dependencies.registry import ComponentRegistry
+
+
+def default_parameters_from_schema(schema_cls: Type["BaseSchema"]) -> Dict[str, Any]:
+    """Extract each field's ``placeholder`` (set by ``schema_field()``) into a dict.
+
+    Lets a caller build a component with no configuration at all and get the
+    same values the auto-generated frontend form would have pre-filled,
+    instead of hitting Pydantic's "field required" validation error for
+    schemas whose fields have no ``default=`` of their own (``placeholder``
+    is a display hint for the form, not a Pydantic default).
+
+    Parameters
+    ----------
+    schema_cls : Type[BaseSchema]
+        A component's ``SCHEMA`` class.
+
+    Returns
+    -------
+    Dict[str, Any]
+        ``{field_name: placeholder}`` for every field that declared one.
+    """
+    defaults = {}
+    for name, field in schema_cls.model_fields.items():
+        extra = field.json_schema_extra
+        if isinstance(extra, dict) and "placeholder" in extra:
+            defaults[name] = extra["placeholder"]
+    return defaults
 
 
 @inject

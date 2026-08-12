@@ -2,6 +2,8 @@ import gc
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
+from DashAI.back.core.schema_fields import default_parameters_from_schema
+
 if TYPE_CHECKING:
     from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
@@ -61,7 +63,12 @@ class LocalModelInsightProvider(InsightProvider):
                 f"Model '{self._model_name}' is not downloaded. "
                 "Download it before requesting an AI insight."
             )
-        self._model = model_class(**self._generation_params)
+        params = {}
+        schema_cls = getattr(model_class, "SCHEMA", None)
+        if schema_cls is not None:
+            params.update(default_parameters_from_schema(schema_cls))
+        params.update(self._generation_params)
+        self._model = model_class(**params)
         return self._model
 
     def close(self) -> None:

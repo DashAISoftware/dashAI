@@ -1,5 +1,11 @@
 import pytest
 
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    float_field,
+    int_field,
+    schema_field,
+)
 from DashAI.back.insights.providers import (
     InsightProviderError,
     LocalModelInsightProvider,
@@ -36,9 +42,34 @@ class _NotDownloadedModel:
         return False
 
 
+class _SchemaBackedModelSchema(BaseSchema):
+    max_tokens: schema_field(int_field(ge=1), placeholder=100, description="Max tokens")  # type: ignore
+    temperature: schema_field(
+        float_field(ge=0.0, le=1.0), placeholder=0.7, description="Temperature"
+    )  # type: ignore
+
+
+class _SchemaBackedModel:
+    """Mirrors GGUFTextGenerationModel: required fields, no Pydantic defaults
+    (only display placeholders), so building it with no params fails unless
+    those placeholders are filled in first."""
+
+    REQUIRES_DOWNLOAD = False
+    SCHEMA = _SchemaBackedModelSchema
+    last_kwargs = None
+
+    def __init__(self, **kwargs):
+        self.SCHEMA.model_validate(kwargs)
+        _SchemaBackedModel.last_kwargs = kwargs
+
+    def generate(self, messages):
+        return ["a local insight"]
+
+
 FAKE_REGISTRY = {
     "DummyGenerativeModel": {"class": _DummyGenerativeModel},
     "NotDownloadedModel": {"class": _NotDownloadedModel},
+    "SchemaBackedModel": {"class": _SchemaBackedModel},
 }
 
 
@@ -125,3 +156,22 @@ def test_build_provider_raises_for_remote_kind_not_implemented_yet():
 def test_build_provider_raises_for_an_unknown_kind():
     with pytest.raises(InsightProviderError, match="Unknown"):
         build_provider("carrier-pigeon", {}, FAKE_REGISTRY)
+
+
+def test_ensure_model_fills_missing_params_from_schema_placeholders():
+    provider = LocalModelInsightProvider("SchemaBackedModel", {}, FAKE_REGISTRY)
+
+    result = provider.complete([{"role": "user", "content": "hi"}])
+
+    assert result == "a local insight"
+    assert _SchemaBackedModel.last_kwargs == {"max_tokens": 100, "temperature": 0.7}
+
+
+def test_ensure_model_lets_generation_params_override_schema_placeholders():
+    provider = LocalModelInsightProvider(
+        "SchemaBackedModel", {"temperature": 0.1}, FAKE_REGISTRY
+    )
+
+    provider.complete([{"role": "user", "content": "hi"}])
+
+    assert _SchemaBackedModel.last_kwargs == {"max_tokens": 100, "temperature": 0.1}
