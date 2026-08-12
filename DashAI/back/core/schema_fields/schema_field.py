@@ -36,7 +36,6 @@ def schema_field(
 
     field_params = {
         "description": description,
-        "default": placeholder,
         "json_schema_extra": {"placeholder": placeholder, "display_name": alias},
     }
     return Annotated[
