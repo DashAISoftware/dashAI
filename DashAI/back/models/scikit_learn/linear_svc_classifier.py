@@ -295,6 +295,40 @@ class LinearSVCClassifier(
     def __sklearn_is_fitted__(self) -> bool:
         return self._calibrated is not None
 
+    @property
+    def classes_(self):
+        """Expose the calibrated model's classes for sklearn compatibility.
+
+        sklearn utilities (e.g. permutation_importance, partial_dependence)
+        read ``estimator.classes_`` directly on any object tagged as a
+        classifier, regardless of which prediction method they end up
+        calling. Since this wrapper fits ``self._calibrated`` instead of
+        ``self``, that attribute must be proxied explicitly.
+        """
+        from sklearn.exceptions import NotFittedError
+
+        if self._calibrated is None:
+            raise NotFittedError(
+                f"This {self.__class__.__name__} instance is not fitted yet. "
+                "Call 'train' with appropriate arguments before using this estimator."
+            )
+        return self._calibrated.classes_
+
+    def predict_proba(self, x_pred) -> "ndarray":  # noqa: F821
+        """Return class-probability matrix using the calibrated model.
+
+        Parameters
+        ----------
+        x_pred : DashAIDataset or pd.DataFrame
+            Input data.
+
+        Returns
+        -------
+        np.ndarray
+            Class probability matrix.
+        """
+        return self.predict(x_pred)
+
     def train(self, x_train, y_train, x_validation=None, y_validation=None):
         """Train using CalibratedClassifierCV to expose predict_proba.
 

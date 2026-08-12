@@ -21,6 +21,8 @@ from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,
 )
+from DashAI.back.models.scikit_learn.linear_svc_classifier import LinearSVCClassifier
+from DashAI.back.models.scikit_learn.sgd_classifier import SGDClassifier
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.utils import save_types_in_arrow_metadata
 from DashAI.back.types.value_types import Float
@@ -112,6 +114,56 @@ def trained_model(dataset):
     model.train(x["train"], y["train"])
 
     return model
+
+
+@pytest.fixture(scope="module", params=[LinearSVCClassifier, SGDClassifier])
+def trained_calibrated_model(request, dataset):
+    """Models that internally calibrate via CalibratedClassifierCV.
+
+    Regression coverage for the bug where these wrappers didn't proxy
+    ``classes_``/``predict_proba`` onto themselves, breaking any explainer
+    that relies on sklearn's classifier introspection (e.g. PFI, PDP).
+    """
+    x, y = dataset
+    model = request.param()
+    model.train(x["train"], y["train"])
+    return model
+
+
+def test_permutation_feature_importance_calibrated_model(
+    trained_calibrated_model: BaseModel, dataset: DatasetDict
+):
+    explainer = PermutationFeatureImportance(
+        trained_calibrated_model,
+        scoring="accuracy",
+        n_repeats=5,
+        random_state=None,
+        max_samples_fraction=1.0,
+    )
+    explanation = explainer.explain(copy.deepcopy(dataset))
+
+    assert all(
+        key in explanation
+        for key in ["features", "importances_mean", "importances_std"]
+    )
+    for values in explanation.values():
+        assert len(values) == len(INPUT_COLUMNS)
+
+
+def test_partial_dependence_calibrated_model(
+    trained_calibrated_model: BaseModel, dataset
+):
+    explainer = PartialDependence(
+        trained_calibrated_model,
+        grid_resolution=50,
+        lower_percentile=0.01,
+        upper_percentile=0.99,
+    )
+    explanation = explainer.explain(copy.deepcopy(dataset))
+
+    metadata = explanation.pop("metadata")
+    assert set(metadata["target_names"]) == set(TARGETS)
+    assert len(explanation) == len(INPUT_COLUMNS)
 
 
 def test_partial_dependence(trained_model: BaseModel, dataset):
