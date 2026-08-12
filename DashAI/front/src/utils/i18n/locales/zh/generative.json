@@ -238,6 +238,19 @@
         "noDocumentsAvailable": "没有可用的文档。",
         "emptyUploadText": "上传您的文档",
         "unknownType": "未知"
+      },
+      "extractorModal": {
+        "title": "配置提取器",
+        "explanation": "处理PDF文本有多种方式。每个提取器可能根据文档结构产生不同的结果——尝试不同选项并比较输出结果。重要提示：RAG仅使用文本。如果您的PDF包含带有文字的图像（扫描文档、图表），您必须使用支持OCR的提取器（如EasyOCR）将这些图像转换为RAG可以使用的文本。没有OCR，图像将被忽略。",
+        "extractorLabel": "提取器",
+        "saveExtractor": "保存提取器",
+        "extracting": "正在提取文本...",
+        "noContent": "选择一个提取器，文本将显示在此处。",
+        "rawContentLabel": "原始文件",
+        "extractedContentLabel": "提取的文本",
+        "extractText": "提取文本",
+        "upToDate": "已就绪",
+        "close": "关闭"
       }
     },
     "summary": {
@@ -440,7 +453,13 @@
   },
   "ragDocumentsPage": {
     "title": "RAG 文档",
-    "description": "管理 RAG 会话的文档：查看现有文档并上传新文档以增强您的 AI 知识库。",
+    "description": "管理 RAG 会话的文档。请注意，RAG 仅使用文本：评估可用的提取器并为每种文档类型选择最合适的提取器（例如，对扫描文档使用支持 OCR 的提取器）。",
+    "contentPanel": {
+      "noDocumentSelected": "选择一个文档以查看其处理后的内容",
+      "loadingContent": "正在加载内容...",
+      "extractionError": "提取内容时出错",
+      "noContent": "未提取到内容"
+    },
     "detailPanel": {
       "noDocumentSelected": "选择一个文档以查看详情",
       "documentInfo": "文档信息",

@@ -251,6 +251,8 @@
         "noContent": "Selecciona un extractor y el texto aparecerá aquí.",
         "rawContentLabel": "Archivo original",
         "extractedContentLabel": "Texto extraído",
+        "extractText": "Extraer texto",
+        "upToDate": "Listo",
         "close": "Cerrar"
       }
     },
@@ -454,7 +456,13 @@
   },
   "ragDocumentsPage": {
     "title": "Documentos RAG",
-    "description": "Administra documentos para tus sesiones RAG: visualiza documentos existentes y sube nuevos para enriquecer tu base de conocimiento.",
+    "description": "Administra documentos para tus sesiones RAG. Recuerda que RAG solo utiliza texto: evalúa los extractores disponibles y elige el más apropiado según el tipo de documento (por ejemplo, usa extractores con OCR para documentos escaneados).",
+    "contentPanel": {
+      "noDocumentSelected": "Selecciona un documento para ver su contenido procesado",
+      "loadingContent": "Cargando contenido...",
+      "extractionError": "Error al extraer el contenido",
+      "noContent": "Sin contenido extraído"
+    },
     "detailPanel": {
       "noDocumentSelected": "Selecciona un documento para ver sus detalles",
       "documentInfo": "Información del documento",

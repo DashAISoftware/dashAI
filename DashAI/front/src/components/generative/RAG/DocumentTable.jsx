@@ -15,9 +15,11 @@ import {
 import PropTypes from "prop-types";
 import { DataGrid } from "@mui/x-data-grid";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { formatDate } from "../../../utils";
 import DeleteItemModal from "../../custom/DeleteItemModal";
 import DocumentPreviewModal from "./DocumentPreviewModal";
+import DocumentExtractorModal from "./DocumentExtractorModal";
 import { normalizeUrl } from "../../../utils/urlUtils";
 import { useTranslation } from "react-i18next";
 
@@ -39,6 +41,7 @@ export default function DocumentTable({
   onRemove,
   onAddDocument,
   onSelectDocument = null,
+  onExtractorChanged = null,
   isLoading = false,
   tableTitle = null,
   showTableTitle = false,
@@ -48,6 +51,8 @@ export default function DocumentTable({
   const [previewDoc, setPreviewDoc] = useState(null);
   const [txtContent, setTxtContent] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [extractorModalOpen, setExtractorModalOpen] = useState(false);
+  const [extractorDoc, setExtractorDoc] = useState(null);
 
   /**
    * Opens the document preview modal, fetching TXT content if applicable.
@@ -145,6 +150,20 @@ export default function DocumentTable({
       headerName: t("generative:rag.documents.table.actions"),
       flex: 0.3,
       getActions: (params) => [
+        <Tooltip
+          title={t("generative:rag.documents.table.configureExtractor")}
+          key="extractor"
+        >
+          <IconButton
+            size="small"
+            onClick={() => {
+              setExtractorDoc(params.row);
+              setExtractorModalOpen(true);
+            }}
+          >
+            <SettingsIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>,
         <Tooltip
           title={t("generative:rag.documents.table.preview")}
           key="preview"
@@ -245,6 +264,21 @@ export default function DocumentTable({
         document={previewDoc}
         txtContent={txtContent}
       />
+      {extractorDoc && (
+        <DocumentExtractorModal
+          open={extractorModalOpen}
+          onClose={() => {
+            setExtractorModalOpen(false);
+            setExtractorDoc(null);
+          }}
+          document={extractorDoc}
+          onExtractorChanged={(updatedDoc) => {
+            if (onExtractorChanged) onExtractorChanged();
+            setExtractorModalOpen(false);
+            setExtractorDoc(null);
+          }}
+        />
+      )}
       <Dialog
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
@@ -272,6 +306,7 @@ DocumentTable.propTypes = {
   ).isRequired,
   onRemove: PropTypes.func.isRequired,
   onSelectDocument: PropTypes.func,
+  onExtractorChanged: PropTypes.func,
   isLoading: PropTypes.bool,
   tableTitle: PropTypes.string,
   showTableTitle: PropTypes.bool,

@@ -151,6 +151,9 @@ async def upload_document(
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
     """Upload a new document to the RAG system with file content and metadata."""
+    from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+
+    registry: ComponentRegistry = di["component_registry"]
     docs_folder_path = config["DOCUMENTS_PATH"]
     if not docs_folder_path.exists():
         raise HTTPException(
@@ -188,12 +191,13 @@ async def upload_document(
             detail=f"Unsupported file type: {ext}",
         ) from None
     with session_factory() as db:
-        return DocumentService(db).upload(
+        return DocumentService(db, registry).upload(
             content_bytes,
             file_name,
             file_type,
             str(docs_folder_path),
             optional_metadata,
+            registry=registry,
         )
 
 

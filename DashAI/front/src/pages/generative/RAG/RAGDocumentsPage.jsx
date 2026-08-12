@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Typography } from "@mui/material";
+import { Typography, Box, Paper, CircularProgress, Alert } from "@mui/material";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
@@ -9,8 +9,11 @@ import RightPanel from "../../../components/threeSectionLayout/panels/RightPanel
 import SessionBar from "../../../components/generative/SessionBar";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import DocumentTable from "../../../components/generative/RAG/DocumentTable";
-import DocumentDetailPanel from "../../../components/generative/RAG/DocumentDetailPanel";
-import { loadDocuments, deleteDocument } from "../../../api/rag";
+import {
+  loadDocuments,
+  deleteDocument,
+  extractDocumentText,
+} from "../../../api/rag";
 import { getSessions, removeSession } from "../../../api/session";
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
@@ -30,6 +33,9 @@ function RAGDocumentsPage() {
   const [documentsLoading, setDocumentsLoading] = useState(true);
   const [sessions, setSessions] = useState([]);
   const [selectedDocument, setSelectedDocument] = useState(null);
+  const [selectedContent, setSelectedContent] = useState("");
+  const [contentLoading, setContentLoading] = useState(false);
+  const [contentError, setContentError] = useState("");
 
   /**
    * Fetch all sessions from the API.
@@ -62,6 +68,46 @@ function RAGDocumentsPage() {
     loadSessions();
     fetchAllDocuments();
   }, [loadSessions, fetchAllDocuments]);
+
+  /**
+   * Fetch extracted content when a document is selected.
+   * Uses the document's stored extractor configuration.
+   */
+  useEffect(() => {
+    if (!selectedDocument) {
+      setSelectedContent("");
+      setContentError("");
+      return;
+    }
+    const extractorRef = selectedDocument.extractor?.component
+      ? {
+          component: selectedDocument.extractor.component,
+          params: selectedDocument.extractor.params || {},
+        }
+      : null;
+    if (!extractorRef) {
+      setSelectedContent("");
+      setContentError("");
+      return;
+    }
+    let cancelled = false;
+    setContentLoading(true);
+    setContentError("");
+    setSelectedContent("");
+    extractDocumentText(Number(selectedDocument.id), extractorRef)
+      .then((result) => {
+        if (!cancelled) setSelectedContent(result.text);
+      })
+      .catch((e) => {
+        if (!cancelled) setContentError(e.message || "Extraction failed");
+      })
+      .finally(() => {
+        if (!cancelled) setContentLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDocument]);
 
   /**
    * Delete a document via the API and refresh the list.
@@ -160,16 +206,58 @@ function RAGDocumentsPage() {
               onRemove={handleRemoveDocumentFromTable}
               onAddDocument={handleAddDocument}
               onSelectDocument={setSelectedDocument}
+              onExtractorChanged={fetchAllDocuments}
               isLoading={documentsLoading}
               showTableTitle={false}
             />
           </CenterPanel>
 
           <RightPanel toggleButtonTop="50%" data-tour="documents-right-panel">
-            <DocumentDetailPanel
-              selectedDocument={selectedDocument}
-              onExtractorChanged={fetchAllDocuments}
-            />
+            <Box
+              sx={{
+                p: 2,
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {!selectedDocument ? (
+                <Box
+                  sx={{ p: 3, textAlign: "center", color: "text.secondary" }}
+                >
+                  <Typography variant="body1">
+                    {t(
+                      "generative:ragDocumentsPage.contentPanel.noDocumentSelected",
+                    )}
+                  </Typography>
+                </Box>
+              ) : contentLoading ? (
+                <Box sx={{ textAlign: "center", py: 4 }}>
+                  <CircularProgress />
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {t(
+                      "generative:ragDocumentsPage.contentPanel.loadingContent",
+                    )}
+                  </Typography>
+                </Box>
+              ) : contentError ? (
+                <Alert severity="error">{contentError}</Alert>
+              ) : (
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    p: 2,
+                    flex: 1,
+                    overflow: "auto",
+                    whiteSpace: "pre-wrap",
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {selectedContent ||
+                    t("generative:ragDocumentsPage.contentPanel.noContent")}
+                </Paper>
+              )}
+            </Box>
           </RightPanel>
         </ModuleContainer>
       </ThreePanelLayoutContext.Provider>

@@ -152,10 +152,16 @@ class DocumentService:
         file_type: str | DocumentFileType,
         docs_path: str,
         optional_metadata: dict = None,
+        registry=None,
     ) -> DocumentResponse:
         """Upload a document.
 
         Handles hash deduplication, file storage, and DB record creation.
+
+        After the record is committed, extraction is run immediately (when a
+        component registry is available) to populate the extraction cache so a
+        subsequent ``extract_text`` call returns ``cached=True``. Extraction is
+        best-effort: failures are logged but never fail the upload.
 
         Parameters
         ----------
@@ -169,6 +175,9 @@ class DocumentService:
             Directory on disk where the file will be written.
         optional_metadata : dict, optional
             Arbitrary metadata attached to the document.
+        registry : ComponentRegistry, optional
+            Component registry used to resolve extractors. When provided,
+            default extraction runs on upload to warm the cache.
 
         Returns
         -------
@@ -236,6 +245,13 @@ class DocumentService:
             self.db.add(doc)
             self.db.commit()
             self.db.refresh(doc)
+
+            if registry is not None:
+                self._registry = registry
+                try:
+                    self.extract_text(doc.id)
+                except Exception:
+                    log.exception("Failed to pre-extract text during upload")
 
             return self._to_response(doc)
 

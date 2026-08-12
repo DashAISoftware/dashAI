@@ -251,6 +251,8 @@
         "noContent": "Select an extractor and the text will appear here.",
         "rawContentLabel": "Original file",
         "extractedContentLabel": "Extracted text",
+        "extractText": "Extract text",
+        "upToDate": "Up to date",
         "close": "Close"
       }
     },
@@ -454,7 +456,13 @@
   },
   "ragDocumentsPage": {
     "title": "RAG documents",
-    "description": "Manage documents for your RAG sessions: view existing documents and upload new ones to enhance your AI knowledge base.",
+    "description": "Manage documents for your RAG sessions. Remember that RAG only uses text: evaluate the available extractors and choose the most suitable one for each document type (e.g., use OCR-capable extractors for scanned documents).",
+    "contentPanel": {
+      "noDocumentSelected": "Select a document to view its processed content",
+      "loadingContent": "Loading content...",
+      "extractionError": "Error extracting content",
+      "noContent": "No content extracted"
+    },
     "detailPanel": {
       "noDocumentSelected": "Select a document to view details",
       "documentInfo": "Document Info",

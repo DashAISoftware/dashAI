@@ -1,5 +1,6 @@
 """Tests for the document extractor API endpoints."""
 
+import json
 import os
 import tempfile
 
@@ -90,6 +91,52 @@ class TestExtractEndpoint:
     def test_extract_document_not_found(self, client):
         resp = client.post("/api/v1/document/99999/extract", json={})
         assert resp.status_code == 404
+
+
+class TestUploadWarmsExtractionCache:
+    """Uploading a document warms the extraction cache (best-effort)."""
+
+    def _upload(self, client, file_name: str, content: bytes):
+        """POST a document via the upload endpoint."""
+        metadata = json.dumps(
+            {
+                "file_name": file_name,
+                "optional_metadata": {"name": file_name, "source": "test"},
+            }
+        )
+        return client.post(
+            "/api/v1/document/",
+            files={"file": (file_name, content, "text/plain")},
+            data={"metadata": metadata},
+        )
+
+    def test_upload_txt_warms_cache(self, client):
+        """Uploading a txt file makes the default extractor cache warm."""
+        resp = self._upload(client, "warm_cache.txt", b"Cache warming text.")
+        assert resp.status_code == 201
+        doc_id = resp.json()["id"]
+
+        # Immediate extract with no body should hit the cache warmed at upload.
+        extract_resp = client.post(f"/api/v1/document/{doc_id}/extract", json={})
+        assert extract_resp.status_code == 200
+        data = extract_resp.json()
+        assert data["cached"] is True
+        assert data["text"] == "Cache warming text."
+        assert data["extractor"]["component"] == "PlainTextExtractor"
+
+    def test_upload_dedup_does_not_fail(self, client):
+        """Re-uploading the same file (hash dedup) still succeeds."""
+        resp1 = self._upload(client, "dup_file.txt", b"Duplicate file content.")
+        assert resp1.status_code == 201
+        resp2 = self._upload(client, "dup_file_renamed.txt", b"Duplicate file content.")
+        assert resp2.status_code == 201
+        assert resp2.json()["file_name"] == "dup_file_renamed.txt"
+
+    def test_upload_unsupported_type_rejected(self, client):
+        """Uploading an unsupported extension returns 400 before extraction."""
+        resp = self._upload(client, "notes.exe", b"not a supported type")
+        assert resp.status_code == 400
+        assert "Unsupported file type" in resp.json()["detail"]
 
 
 class TestUpdateExtractorEndpoint:

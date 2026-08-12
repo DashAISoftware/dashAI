@@ -238,6 +238,19 @@
         "noDocumentsAvailable": "Keine Dokumente verfügbar.",
         "emptyUploadText": "Dokument(e) hochladen",
         "unknownType": "Unbekannt"
+      },
+      "extractorModal": {
+        "title": "Extraktor konfigurieren",
+        "explanation": "Es gibt verschiedene Möglichkeiten, Text aus einer PDF zu extrahieren. Jeder Extraktor kann je nach Dokumentstruktur unterschiedliche Ergebnisse liefern — probieren Sie verschiedene Optionen aus und vergleichen Sie die Ausgabe. Wichtig: RAG verwendet nur Text. Wenn Ihre PDF Bilder mit Text enthalten (gescannte Dokumente, Diagramme), müssen Sie einen OCR-fähigen Extraktor wie EasyOCR verwenden, um diese Bilder in Text umzuwandeln, den RAG nutzen kann. Ohne OCR werden Bilder ignoriert.",
+        "extractorLabel": "Extraktor",
+        "saveExtractor": "Extraktor speichern",
+        "extracting": "Extrahiere Text...",
+        "noContent": "Wählen Sie einen Extraktor und der Text erscheint hier.",
+        "rawContentLabel": "Originaldatei",
+        "extractedContentLabel": "Extrahierter Text",
+        "extractText": "Text extrahieren",
+        "upToDate": "Bereit",
+        "close": "Schließen"
       }
     },
     "summary": {
@@ -440,7 +453,13 @@
   },
   "ragDocumentsPage": {
     "title": "RAG-Dokumente",
-    "description": "Verwalten Sie Dokumente für Ihre RAG-Sitzungen: Zeigen Sie bestehende Dokumente an und laden Sie neue hoch, um Ihre KI-Wissensbasis zu erweitern.",
+    "description": "Verwalten Sie Dokumente für Ihre RAG-Sitzungen. Denken Sie daran, dass RAG nur Text verwendet: Bewerten Sie die verfügbaren Extraktoren und wählen Sie den am besten geeigneten für jeden Dokumenttyp (z. B. OCR-fähige Extraktoren für gescannte Dokumente).",
+    "contentPanel": {
+      "noDocumentSelected": "Wählen Sie ein Dokument aus, um seinen verarbeiteten Inhalt anzuzeigen",
+      "loadingContent": "Inhalt wird geladen...",
+      "extractionError": "Fehler beim Extrahieren des Inhalts",
+      "noContent": "Kein Inhalt extrahiert"
+    },
     "detailPanel": {
       "noDocumentSelected": "Wählen Sie ein Dokument aus, um Details anzuzeigen",
       "documentInfo": "Dokumentinformationen",

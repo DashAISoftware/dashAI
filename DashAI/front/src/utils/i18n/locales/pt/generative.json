@@ -362,6 +362,19 @@
         "noDocumentsAvailable": "Nenhum documento disponível.",
         "emptyUploadText": "Envie seu(s) documento(s)",
         "unknownType": "Desconhecido"
+      },
+      "extractorModal": {
+        "title": "Configurar Extrator",
+        "explanation": "Existem diferentes formas de processar texto de um PDF. Cada extrator pode produzir resultados diferentes dependendo da estrutura do documento — experimente diferentes opções e compare o resultado. Importante: RAG usa apenas texto. Se o seu PDF contém imagens com texto (documentos digitalizados, diagramas), você deve usar um extrator com capacidade OCR como EasyOCR para converter essas imagens em texto que o RAG possa usar. Sem OCR, as imagens são ignoradas.",
+        "extractorLabel": "Extrator",
+        "saveExtractor": "Salvar extrator",
+        "extracting": "Extraindo texto...",
+        "noContent": "Selecione um extrator e o texto aparecerá aqui.",
+        "rawContentLabel": "Arquivo original",
+        "extractedContentLabel": "Texto extraído",
+        "extractText": "Extrair texto",
+        "upToDate": "Pronto",
+        "close": "Fechar"
       }
     },
     "summary": {
@@ -442,7 +455,13 @@
   },
   "ragDocumentsPage": {
     "title": "Documentos RAG",
-    "description": "Gerencie documentos para suas sessões RAG: visualize documentos existentes e faça upload de novos para enriquecer sua base de conhecimento.",
+    "description": "Gerencie documentos para suas sessões RAG. Lembre-se de que o RAG usa apenas texto: avalie os extratores disponíveis e escolha o mais adequado para cada tipo de documento (por exemplo, use extratores com OCR para documentos digitalizados).",
+    "contentPanel": {
+      "noDocumentSelected": "Selecione um documento para ver seu conteúdo processado",
+      "loadingContent": "Carregando conteúdo...",
+      "extractionError": "Erro ao extrair o conteúdo",
+      "noContent": "Nenhum conteúdo extraído"
+    },
     "detailPanel": {
       "noDocumentSelected": "Selecione um documento para ver detalhes",
       "documentInfo": "Informações do documento",

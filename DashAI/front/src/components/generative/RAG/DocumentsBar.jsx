@@ -267,8 +267,8 @@ export default function DocumentsBar({
               {searchQuery
                 ? t("documentsBar.noDocumentsFound")
                 : selectedSessionId
-                ? t("documentsBar.noDocumentsInSession")
-                : t("documentsBar.noDocumentsAvailable")}
+                  ? t("documentsBar.noDocumentsInSession")
+                  : t("documentsBar.noDocumentsAvailable")}
             </Typography>
           </Box>
         )}

@@ -9,7 +9,7 @@ import {
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import PropTypes from "prop-types";
 import AddIcon from "@mui/icons-material/AddCircleOutline";
-import { Visibility, Delete } from "@mui/icons-material";
+import { Visibility, Delete, Settings } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@mui/material/styles";
 import {
@@ -24,6 +24,7 @@ import { loadDocuments, addDocument, deleteDocument } from "../../../api/rag";
 import { formatDate } from "../../../utils";
 import { normalizeUrl } from "../../../utils/urlUtils";
 import DocumentPreviewModal from "./DocumentPreviewModal";
+import DocumentExtractorModal from "./DocumentExtractorModal";
 import RAGSectionColumn from "../../../pages/generative/RAGSession/components/RAGSectionColumn";
 
 /**
@@ -51,6 +52,9 @@ export default function DocumentSelector({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [txtContent, setTxtContent] = useState("");
+
+  const [extractorModalOpen, setExtractorModalOpen] = useState(false);
+  const [extractorDoc, setExtractorDoc] = useState(null);
 
   const previousSelectedIdsRef = useRef(
     JSON.stringify([...initialSelectedIds].map(String).sort()),
@@ -147,6 +151,22 @@ export default function DocumentSelector({
     setPreviewDoc(null);
     setTxtContent("");
   };
+
+  /**
+   * Merge an updated document (e.g. after extractor change) into the local
+   * documents state so the table reflects the saved extractor.
+   * @param {object} updatedDoc - The document returned by the update API.
+   */
+  const handleExtractorChanged = useCallback((updatedDoc) => {
+    if (!updatedDoc) return;
+    setDocuments((prev) =>
+      prev.map((doc) =>
+        String(doc.id) === String(updatedDoc.id)
+          ? { ...doc, ...updatedDoc }
+          : doc,
+      ),
+    );
+  }, []);
 
   const handleSelectAll = useCallback(() => {
     setSelectedIds(documents.map((doc) => doc.id));
@@ -259,8 +279,27 @@ export default function DocumentSelector({
         size: 100,
         enableSorting: false,
         enableColumnFilter: false,
+        muiTableHeadCellProps: {
+          align: "center",
+        },
+        muiTableBodyCellProps: {
+          align: "center",
+        },
         Cell: ({ row }) => (
           <Box sx={{ display: "flex", gap: 0.5, justifyContent: "center" }}>
+            <Tooltip
+              title={t("generative:rag.documents.table.configureExtractor")}
+            >
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setExtractorDoc(row.original);
+                  setExtractorModalOpen(true);
+                }}
+              >
+                <Settings fontSize="small" />
+              </IconButton>
+            </Tooltip>
             <Tooltip title={t("generative:rag.documents.table.preview")}>
               <IconButton
                 size="small"
@@ -278,7 +317,7 @@ export default function DocumentSelector({
                 <Delete fontSize="small" />
               </IconButton>
             </Tooltip>
-          </Box>
+            </Box>
         ),
       },
     ],
@@ -435,6 +474,15 @@ export default function DocumentSelector({
         onClose={handleClosePreview}
         document={previewDoc}
         txtContent={txtContent}
+      />
+      <DocumentExtractorModal
+        open={extractorModalOpen}
+        onClose={() => {
+          setExtractorModalOpen(false);
+          setExtractorDoc(null);
+        }}
+        document={extractorDoc}
+        onExtractorChanged={handleExtractorChanged}
       />
     </RAGSectionColumn>
   );
