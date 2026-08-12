@@ -230,6 +230,13 @@ from DashAI.back.models.RAG.embeddings.dense import (
     RoBERTaEmbedding,
     SentenceTransformerEmbedding,
 )
+from DashAI.back.models.RAG.extractors import (
+    EasyOCRExtractor,
+    PlainTextExtractor,
+    PyMuPDFExtractor,
+    PypdfExtractor,
+    TextractExtractor,
+)
 from DashAI.back.models.RAG.prompts import (
     CustomAugmentationPrompt,
     CustomRAGGenerationPrompt,
@@ -245,6 +252,9 @@ from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
 )
 from DashAI.back.models.RAG.retrievers.composite.sequential_retriever import (
     SequentialRetriever,
+)
+from DashAI.back.models.RAG.retrievers.cross_encoder import (
+    SentenceTransformerCrossEncoderRetriever,
 )
 from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
     DenseEmbeddingRetriever,
@@ -560,6 +570,12 @@ def get_initial_components():
         CharacterChunkModel,
         RecursiveCharacterChunkModel,
         TokenChunkModel,
+        # Extractors
+        EasyOCRExtractor,
+        TextractExtractor,
+        PypdfExtractor,
+        PyMuPDFExtractor,
+        PlainTextExtractor,
         # Encodings
         OpenAIEmbedding,
         SentenceTransformerEmbedding,
@@ -582,6 +598,7 @@ def get_initial_components():
         TFIDFRetriever,
         TFIDFVectorizerModel,
         DenseEmbeddingRetriever,
+        SentenceTransformerCrossEncoderRetriever,
         MMRRerankerRetriever,
         SequentialRetriever,
         ParallelRetriever,

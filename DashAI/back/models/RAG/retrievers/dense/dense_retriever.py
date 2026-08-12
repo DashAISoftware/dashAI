@@ -123,12 +123,19 @@ class DenseRetriever(UnitRetriever):
         """Load all persisted embedding matrices into a single similarity matrix.
 
         Builds ``similarity_matrix`` (a vertical stack of all per-document
-        embedding arrays), ``matrix_row_to_chunk_id``, and
-        ``chunk_id_to_doc_id`` lookup mappings.
+        embedding arrays), ``matrix_row_to_chunk_id`` (row -> chunk DB id),
+        ``chunk_id_to_doc_id`` (chunk DB id -> document id), and
+        ``_chunk_key_by_id`` (chunk DB id -> ``(document id, dict key)``)
+        lookup mappings.
+
+        Chunks are keyed by their persistent DB id (``Chunk.id``), which is
+        what composite retrievers (MMR reranker, sequential, parallel,
+        cross-encoder) pass to ``score_chunks`` / ``get_chunk_vectors``.
         """
         self.similarity_matrix = None
         self.matrix_row_to_chunk_id = {}
         self.chunk_id_to_doc_id = {}
+        self._chunk_key_by_id: Dict[int, Tuple[int, int]] = {}
 
         all_embeddings = []
         row_index = 0
@@ -139,9 +146,11 @@ class DenseRetriever(UnitRetriever):
             matrix_path = os.path.join(matrix_dir, "embeddings.npy")
             if not os.path.exists(matrix_path):
                 continue
-            for chunk_id in chunks:
+            for chunk_key, chunk in chunks.items():
+                chunk_id = chunk.id
                 self.matrix_row_to_chunk_id[row_index] = chunk_id
                 self.chunk_id_to_doc_id[chunk_id] = doc_id
+                self._chunk_key_by_id[chunk_id] = (doc_id, chunk_key)
                 row_index += 1
             all_embeddings.append(np.load(matrix_path))
 
@@ -186,8 +195,8 @@ class DenseRetriever(UnitRetriever):
         results = []
         for idx in top_indices:
             chunk_id = self.matrix_row_to_chunk_id[idx]
-            doc_id = self.chunk_id_to_doc_id[chunk_id]
-            results.append(self.chunks[doc_id][chunk_id])
+            doc_id, chunk_key = self._chunk_key_by_id[chunk_id]
+            results.append(self.chunks[doc_id][chunk_key])
         return results
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:

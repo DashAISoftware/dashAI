@@ -1,5 +1,6 @@
 """Canonical RAG pipeline parameter keys.
 Single source of truth shared across models, services, and API layers.
+Also covers composite retriever names.
 """
 
 RAG_PARAM_DOCUMENTS = "documents"
@@ -34,3 +35,12 @@ RAG_INFRA_KEYS = frozenset({"session_id", "db", "component_registry", ENV_RAG_PA
 
 # All known pipeline keys combined (for the "unknown keys" guard)
 RAG_PARAM_KEYS_ALL = frozenset(RAG_INFRA_KEYS | RAG_PARAM_KEYS | set(RAG_MODEL_KEYS))
+
+COMPOSITE_RETRIEVER_NAMES = frozenset(
+    {
+        "SequentialRetriever",
+        "ParallelRetriever",
+        "MMRRerankerRetriever",
+        "SentenceTransformerCrossEncoderRetriever",
+    }
+)

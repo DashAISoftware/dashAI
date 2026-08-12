@@ -1,6 +1,8 @@
+import json
 import logging
 import shutil
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -13,11 +15,10 @@ from DashAI.back.dependencies.database.models import (
     RAGRetriever,
     RAGRetrieverChild,
 )
+from DashAI.back.models.RAG.RAG_constants import COMPOSITE_RETRIEVER_NAMES
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
 
 log = logging.getLogger(__name__)
-
-COMPOSITE_RETRIEVER_NAMES = frozenset({"SequentialRetriever", "ParallelRetriever"})
 
 
 class CleanupService:
@@ -143,7 +144,7 @@ class CleanupService:
     def _other_sessions_with_same_config(
         self,
         session_id: int,
-        expected_parameters: dict,
+        expected_parameters: dict[str, Any],
         *,
         keys: tuple[str, ...],
     ) -> bool:
@@ -161,13 +162,45 @@ class CleanupService:
             True if at least one other session shares the same config values
             for all specified keys.
         """
+
+        def _sort_params(params: dict[str, Any]) -> dict[str, Any]:
+            """Return a recursively canonicalized copy for deterministic comparison.
+
+            Sorts dict keys, recursively sorts list elements (by canonical JSON),
+            and normalizes dicts inside lists so configs equal regardless of
+            key or list ordering.
+            """
+
+            def _canonical(value: Any) -> Any:
+                if isinstance(value, dict):
+                    return {
+                        key: _canonical(item)
+                        for key, item in sorted(
+                            value.items(), key=lambda kv: str(kv[0])
+                        )
+                    }
+                if isinstance(value, list):
+                    return sorted(
+                        (_canonical(item) for item in value),
+                        key=lambda item: json.dumps(item, sort_keys=True, default=str),
+                    )
+                return value
+
+            return {key: _canonical(item) for key, item in params.items()}
+
+        expected_parameters = _sort_params(expected_parameters)
         other_sessions = (
             self.db.query(GenerativeSession)
-            .filter(GenerativeSession.id != session_id)
+            .filter(
+                GenerativeSession.id != session_id,
+                GenerativeSession.task_name == "RAGTask",
+            )
             .all()
         )
+
         for other_session in other_sessions:
             other_params = other_session.parameters or {}
+            other_params = _sort_params(other_params)
             if all(other_params.get(k) == expected_parameters.get(k) for k in keys):
                 return True
         return False
@@ -332,3 +365,127 @@ class CleanupService:
         sparse_retriever = bridge.sparse_detail
         self._delete_path(sparse_retriever.storage_folder)
         self.db.delete(sparse_retriever)
+
+    def invalidate_document_artifacts(self, document_id: int) -> None:
+        """Delete all RAG artifacts associated with a document.
+
+        When a document's extractor changes, all chunk sets, retrievers,
+        embedding matrices, and on-disk artifacts that depend on it are
+        deleted. The next pipeline run will recompute them automatically.
+
+        Also closes the orphaned-artifacts gap on document deletion.
+
+        Args:
+            document_id: Document ID whose artifacts should be removed.
+        """
+        from DashAI.back.dependencies.database.models import (
+            RAGChunkSet,
+            RAGChunkSetDocument,
+            RAGDenseRetriever,
+            RAGEmbeddingMatrix,
+            RAGEmbeddingModel,
+            RAGRetriever,
+            RAGRetrieverChild,
+            RAGSparseRetriever,
+        )
+
+        chunk_set_links = (
+            self.db.query(RAGChunkSetDocument).filter_by(document_id=document_id).all()
+        )
+        chunk_set_ids = list({link.chunk_set_id for link in chunk_set_links})
+
+        if not chunk_set_ids:
+            return
+
+        for chunk_set_id in chunk_set_ids:
+            docs_in_chunk_set = (
+                self.db.query(RAGChunkSetDocument)
+                .filter_by(chunk_set_id=chunk_set_id)
+                .all()
+            )
+            doc_ids_in_set = [d.document_id for d in docs_in_chunk_set]
+
+            # 2. Sparse retrievers
+            sparse_detail_links = (
+                self.db.query(RAGSparseRetriever, RAGRetriever)
+                .join(RAGRetriever, RAGSparseRetriever.bridge_id == RAGRetriever.id)
+                .filter(RAGSparseRetriever.chunk_set_id == chunk_set_id)
+                .all()
+            )
+            for sparse_detail, bridge in sparse_detail_links:
+                self._delete_path(sparse_detail.storage_folder)
+                self.db.delete(bridge)
+                self.db.delete(sparse_detail)
+
+            # 3. Dense retrievers
+            dense_detail_links = (
+                self.db.query(RAGDenseRetriever, RAGRetriever)
+                .join(RAGRetriever, RAGDenseRetriever.bridge_id == RAGRetriever.id)
+                .filter(RAGDenseRetriever.chunk_set_id == chunk_set_id)
+                .all()
+            )
+            for dense_detail, bridge in dense_detail_links:
+                embedding_model_id = dense_detail.embedding_model_id
+
+                for doc_id in doc_ids_in_set:
+                    matrices = (
+                        self.db.query(RAGEmbeddingMatrix)
+                        .filter(
+                            RAGEmbeddingMatrix.chunk_set_id == chunk_set_id,
+                            RAGEmbeddingMatrix.embedding_model_id == embedding_model_id,
+                            RAGEmbeddingMatrix.document_id == doc_id,
+                        )
+                        .all()
+                    )
+                    for matrix in matrices:
+                        self._delete_path(matrix.storage_folder)
+                        self.db.delete(matrix)
+
+                remaining = (
+                    self.db.query(RAGDenseRetriever)
+                    .filter(
+                        RAGDenseRetriever.embedding_model_id == embedding_model_id,
+                        RAGDenseRetriever.id != dense_detail.id,
+                    )
+                    .first()
+                )
+                if remaining is None:
+                    emb_model = self.db.query(RAGEmbeddingModel).get(embedding_model_id)
+                    if emb_model is not None:
+                        self.db.delete(emb_model)
+
+                self.db.delete(bridge)
+                self.db.delete(dense_detail)
+
+            # 4. Composite retrievers — find parents whose children
+            # reference this chunk set via sparse/dense detail
+            sparse_child_ids = (
+                self.db.query(RAGSparseRetriever.bridge_id)
+                .filter(RAGSparseRetriever.chunk_set_id == chunk_set_id)
+                .all()
+            )
+            dense_child_ids = (
+                self.db.query(RAGDenseRetriever.bridge_id)
+                .filter(RAGDenseRetriever.chunk_set_id == chunk_set_id)
+                .all()
+            )
+            child_bridge_ids = {row[0] for row in sparse_child_ids + dense_child_ids}
+            if child_bridge_ids:
+                orphaned_children = (
+                    self.db.query(RAGRetrieverChild)
+                    .filter(RAGRetrieverChild.child_id.in_(child_bridge_ids))
+                    .all()
+                )
+                for child_link in orphaned_children:
+                    parent_bridge = self.db.query(RAGRetriever).get(
+                        child_link.parent_id
+                    )
+                    if parent_bridge is not None:
+                        self.db.delete(parent_bridge)
+
+            # 5. Delete chunk set
+            chunk_set = self.db.query(RAGChunkSet).get(chunk_set_id)
+            if chunk_set is not None:
+                self.db.delete(chunk_set)
+
+        self.db.commit()

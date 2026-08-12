@@ -14,6 +14,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
@@ -26,8 +27,9 @@ class MMRRerankerRetrieverSchema(BaseSchema):
 
     Attributes:
         mmr_lambda: Trade-off between relevance and diversity.
-        retrieval_factor: Multiplier for initial retrieval size.
-        top_k: Final number of chunks to select.
+        top_k: Final number of chunks to select. The candidate set size is
+            determined by the child retriever's own ``top_k``; the reranker
+            only selects ``top_k`` of them.
         children: Exactly one child retriever whose results are re-ranked.
     """
 
@@ -40,21 +42,14 @@ class MMRRerankerRetrieverSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    retrieval_factor: schema_field(
-        int_field(gt=1),
-        placeholder=3,
-        description=MultilingualString(
-            en="Multiplier for initial retrieval size.",
-            es="Multiplicador para el tamaño de recuperación inicial.",
-        ),
-    )  # type: ignore
-
     top_k: schema_field(
         int_field(gt=0),
         placeholder=5,
         description=MultilingualString(
-            en="Final number of chunks to select.",
-            es="Número final de fragmentos a seleccionar.",
+            en="Final number of chunks to select. The candidate set size "
+            "is determined by the child retriever's own top_k.",
+            es="Número final de fragmentos a seleccionar. El tamaño del "
+            "conjunto candidato lo define el top_k propio del recuperador hijo.",
         ),
     )  # type: ignore
 
@@ -71,9 +66,9 @@ class MMRRerankerRetrieverSchema(BaseSchema):
 class MMRRerankerRetriever(CompositeRetriever):
     """Re-ranks retrieval results using Maximum Marginal Relevance for diversity.
 
-    Retrieves an expanded candidate set from the child, then selects a
-    diverse subset by balancing relevance and similarity among selected
-    chunks.
+    The child retriever (the ranker) determines the candidate set via its
+    own configuration; this reranker selects ``top_k`` chunks for
+    diversity by balancing relevance and similarity among them.
     """
 
     FLAGS: list[str] = ["FAMILY:mmr", "composite", "reranker"]
@@ -92,12 +87,11 @@ class MMRRerankerRetriever(CompositeRetriever):
         """Initialize the MMR reranker.
 
         Args:
-            **kwargs: Must contain ``mmr_lambda``, ``retrieval_factor``,
-                ``top_k``, and ``children`` (exactly one child).
+            **kwargs: Must contain ``mmr_lambda``, ``top_k``, and
+                ``children`` (exactly one child).
         """
         super().__init__(**kwargs)
         self.mmr_lambda = self.params.pop("mmr_lambda")
-        self.retrieval_factor = self.params.pop("retrieval_factor")
         self._top_k = self.params.pop("top_k")
 
     @property
@@ -112,9 +106,10 @@ class MMRRerankerRetriever(CompositeRetriever):
     def retrieve(self, query: str, **kwargs) -> List[Chunk]:
         """Retrieve and re-rank chunks using MMR diversity.
 
-        Fetches an expanded candidate set from the child, computes
-        pairwise cosine similarity among the candidates, then selects
-        a diverse subset via the MMR algorithm.
+        Fetches the candidate set from the child retriever (whose own
+        configuration determines the candidate count), computes pairwise
+        cosine similarity among the candidates, then selects a diverse
+        subset via the MMR algorithm.
 
         Args:
             query: The search query string.
@@ -123,10 +118,13 @@ class MMRRerankerRetriever(CompositeRetriever):
         Returns:
             A list of :class:`Chunk` instances selected for relevance
             and diversity.
+
+        Raises:
+            RAGRetrieverError: If the child retriever raises while scoring
+                the candidate chunks.
         """
         child = self._children[0]
-        expanded_k = self._top_k * self.retrieval_factor
-        candidates = child.retrieve(query, top_k=expanded_k)
+        candidates = child.retrieve(query)
         if len(candidates) <= self._top_k:
             return candidates
 
@@ -134,7 +132,10 @@ class MMRRerankerRetriever(CompositeRetriever):
         scored: List[Tuple[int, float]] = child.score_chunks(chunk_ids, query)
         id_to_dist = dict(scored)
 
-        ordered = [c for c in candidates if c.id in id_to_dist]
+        ordered = []
+        for c in candidates:
+            if c.id in id_to_dist:
+                ordered.append(c)
         if len(ordered) <= self._top_k:
             return ordered[: self._top_k]
 
@@ -142,7 +143,7 @@ class MMRRerankerRetriever(CompositeRetriever):
         ordered_ids: List[int] = [c.id for c in ordered]
         try:
             vectors = child.get_chunk_vectors(ordered_ids)
-        except ValueError:
+        except (ValueError, RAGRetrieverError):
             return ordered[: self._top_k]
 
         if len(vectors) != len(ordered):
@@ -158,7 +159,7 @@ class MMRRerankerRetriever(CompositeRetriever):
         selected = self._mmr_select(relevance, pairwise)
         return [ordered[i] for i in selected]
 
-    def score_chunks(self, chunk_ids, query):
+    def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Score chunks by delegating to the child retriever.
 
         Args:

@@ -6,6 +6,10 @@ from DashAI.back.models.RAG.retrievers.composite import (
     ParallelRetriever,
     SequentialRetriever,
 )
+from DashAI.back.models.RAG.retrievers.cross_encoder import (
+    CrossEncoderRetriever,
+    SentenceTransformerCrossEncoderRetriever,
+)
 from DashAI.back.models.RAG.retrievers.dense import (
     DenseEmbeddingRetriever,
     DenseRetriever,
@@ -30,3 +34,28 @@ from DashAI.back.models.RAG.retrievers.sparse import (
     TFIDFVectorizerModel,
 )
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
+
+__all__ = [
+    "BM25Retriever",
+    "BM25VectorizerModel",
+    "CompositeRetriever",
+    "CompositeValidationError",
+    "CrossEncoderRetriever",
+    "DenseEmbeddingRetriever",
+    "DenseRetriever",
+    "HuggingFaceDenseRetriever",
+    "MergeStrategy",
+    "MissingParameterError",
+    "MMRRerankerRetriever",
+    "ParallelRetriever",
+    "RetrieverError",
+    "RetrieverFactory",
+    "RetrieverFactoryResult",
+    "RetrieverModel",
+    "SentenceTransformerCrossEncoderRetriever",
+    "SequentialRetriever",
+    "SparseRetriever",
+    "TFIDFRetriever",
+    "TFIDFVectorizerModel",
+    "UnitRetriever",
+]
