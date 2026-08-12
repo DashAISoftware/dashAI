@@ -65,11 +65,11 @@ In `components/generative/RAG/`:
 - **Info & params:** `RAGInfoBar.jsx`, `RAGParamsPanel.jsx`
 - **Documents:** `DocumentSelector.jsx`, `DocumentList.jsx`, `DocumentListItem.jsx`,
   `DocumentPreviewModal.jsx`, `DocumentsBar.jsx`, `DocumentTable.jsx`,
-  `RAGDocumentsPanel.jsx`
+  `RAGDocumentsPanel.jsx`, `DocumentDetailPanel.jsx`
 - **Generator:** `GeneratorParamsCard.jsx`
 - **Prompts:** `PromptParamsCard.jsx`, `PromptSelectionTable.jsx`,
   `PromptViewModal.jsx`, `PlaceholdersList.jsx`
-- **Utilities:** `HighlightedTextarea.jsx`
+- **Utilities:** `HighlightedTextarea.jsx`, `ragValidation.js`
 
 A `setup/` directory exists with empty `sections/`, `components/`, and `advanced/`
 subdirectories, reserved for a future setup-component refactor.
@@ -78,11 +78,24 @@ subdirectories, reserved for a future setup-component refactor.
 
 - **Retriever Presets** — 3-card system: Keyword (BM25), Semantic (Dense),
   Hybrid (Sequential BM25 + Dense).
+- **Retriever tree view** — `CompositeRetrieverBuilder` renders a tree with
+  vertical spine + horizontal connectors per child. Operation cards (reranking,
+  chunk fusion) appear as final clickable nodes with per-type summaries
+  (MMR: lambda + top_k, CrossEncoder: model_name, Parallel: merge strategy).
+  All nodes and operation cards are clickable to open `RetrieverNodeConfig`.
 - **Document Selection UI** — Full document table with search, selection,
-  preview modal, and multi-select capabilities.
+  preview modal, multi-select, and collapsible `DocumentDetailPanel` with
+  extractor selector and schema-driven form.
+- **Pre-save validation** — `RAGSessionSetup.validateConfiguration()` recursively
+  checks all `{component, params}` refs for completeness before saving the
+  session, showing snackbar warnings and blocking the save.
+- **Error propagation** — `resolveDefaults` throwOnError option propagates API
+  failures instead of silently returning `{}`; `RetrieverSection` shows an
+  error state instead of building presets with incomplete configs.
 - **Context Window Validation** — Validates that
   `chunk_size * top_k + prompt_tokens <= context_window`.
-- **Multi-Language Prompts** — Templates in en/es/pt, selected via dropdown.
+- **Multi-Language Prompts** — Templates in en/es/pt/de/zh, selected via
+  dropdown.
 - **Template Highlighting** — `renderTemplateWithHighlights()` renders
   `{placeholders}` with colored backgrounds for visual clarity.
 - **Translation Keys** — All RAG translations use the `generative:rag.*`
@@ -92,10 +105,14 @@ subdirectories, reserved for a future setup-component refactor.
 
 All RAG API calls use standard DashAI endpoints:
 
-| Endpoint                          | Purpose           |
-|-----------------------------------|-------------------|
-| `/api/v1/generative-session/`     | Session CRUD      |
-| `/api/v1/generative-process/`     | Process CRUD      |
-| `/api/v1/job/`                    | Job dispatch      |
-| `/api/v1/document/`               | Document management |
-| `/api/v1/prompt/`                 | Prompt management |
+| Endpoint                                    | Purpose               |
+|---------------------------------------------|-----------------------|
+| `/api/v1/generative-session/`               | Session CRUD          |
+| `/api/v1/generative-process/`               | Process CRUD          |
+| `/api/v1/job/`                              | Job dispatch          |
+| `/api/v1/document/`                         | Document management   |
+| `/api/v1/document/{id}/view`                | Document preview (inline) |
+| `/api/v1/document/{id}/extract`             | On-demand extraction  |
+| `/api/v1/document/{id}/extractor`           | Update extractor assignment |
+| `/api/v1/prompt/`                           | Prompt management     |
+| `/api/v1/component/{name}/children/?include_flags=true` | Child components with flags |

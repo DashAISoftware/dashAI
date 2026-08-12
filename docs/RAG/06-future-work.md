@@ -22,12 +22,14 @@ The pipeline currently passes the user's raw query directly to the retriever. No
 
 ## PDF Parsing
 
-The current `PDFDocument` class supports two backends: **textract** (default) and **PyPDF2** (via the `parser` parameter). Future improvements include:
+The extractor system is now partially implemented — 5 extractors exist
+(PlainText, PyPDF2, PyMuPDF, Textract, EasyOCR) with schema-driven config
+and per-document assignment at upload time. Remaining work:
 
-- Implementing OCR for PDFs.
-- Making the PDF parser configurable per-session or per-document.
-- Adding support for more parsers such as pdfplumber or marker (for complex layouts).
-- Implementing an LLM-based preprocessing stage for structured extraction from PDFs (tables, headers, figures).
+- OCR for scanned PDFs (EasyOCRExtractor exists but needs heavy dependencies).
+- Table extraction and layout-aware parsing.
+- LLM-based preprocessing for structured extraction (tables, headers, figures).
+- Extractor recommendation based on document characteristics.
 
 ## Documents library
 
@@ -40,7 +42,11 @@ Currently, the `Documents` library is a simple table of documents, with a column
 
 ## Tree-Based Retrieval
 
-Only flat (sparse + dense) and composite (sequential / parallel / MMR) retrievers are implemented. There is no tree-based indexing or retrieval.
+Only flat (sparse + dense) and composite (sequential / parallel / MMR /
+cross-encoder) retrievers are implemented. Cross-encoder re-rankers
+(`SentenceTransformerCrossEncoderRetriever` with 17 SBERT models) act as
+second-stage re-rankers over a child ranker. There is no tree-based indexing
+or hierarchical retrieval.
 
 ## Document Subset Filtering at Message Level
 

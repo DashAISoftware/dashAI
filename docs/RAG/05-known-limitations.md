@@ -12,6 +12,10 @@
 - **No FAISS or HNSW indexing.** Dense retrieval performs O(n*dim) brute-force
   similarity search per query. Large document collections will be slow.
 
+- **Cross-encoder retrievers** perform O(n) pair scoring per query over
+  candidate chunks from the child retriever. With large candidate sets
+  (controlled by the child's own `top_k`), this can be slow on CPU.
+
 - **DB session held open during LLM inference.** The same database transaction
   remains open while the LLM generates a response, which risks connection
   timeout on slow LLM calls.
@@ -78,3 +82,22 @@
 
 - The old `notebooks/`, `images/`, `explanations/` directories listed in the
   runtime data layout are no longer actively used by the RAG module.
+
+## Extractors
+
+- **PypdfExtractor** default `strict=True` rejects malformed PDFs (xref
+  errors). Use `strict=False` for broken PDFs.
+- **TextractExtractor** collapses whitespace, producing many small chunks
+  with `RecursiveCharacterChunkModel` (separators based on `\n` don't
+  work).
+- **EasyOCRExtractor** requires the `easyocr` dependency (heavy, downloads
+  models on first use).
+
+## Validation
+
+- **Strict validation** requires ALL sub-component params to be complete at
+  session creation. The frontend must send full configs; the backend never
+  fills defaults (except prompt templates for default prompts).
+- **Parameters hash** only covers `rag_prompt` and `rag_generation_model`.
+  `rag_chunking_model`, `rag_embedding_model`, and retriever tables still
+  compare JSON columns directly — fragile to key ordering in SQLite.
