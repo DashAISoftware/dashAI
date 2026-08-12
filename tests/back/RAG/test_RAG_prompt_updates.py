@@ -43,9 +43,8 @@ def _create_rag_session(session_factory, prompt_id: int, name: str):
             },
         },
         "generation_model": {
-            "component": "QwenModel",
+            "component": "Qwen25_15BInstruct",
             "params": {
-                "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
                 "max_tokens": 32,
                 "temperature": 0.2,
                 "frequency_penalty": 0.0,

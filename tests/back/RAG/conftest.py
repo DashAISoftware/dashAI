@@ -49,6 +49,36 @@ def _create_test_document(client: TestClient, suffix: str = "") -> int:
         return doc.id
 
 
+def _mark_download_required_components_present(app) -> None:
+    """Create each download-required component's repo folder so the download
+    gate (reconciled against the filesystem) treats it as available without
+    fetching weights.
+
+    Every GGUF text-generation checkpoint (Llama32_1BInstruct, Qwen25_15BInstruct,
+    etc.) requires a download, so session creation would otherwise be rejected
+    with HTTP 409. Following the pattern in ``tests/back/api/conftest.py``, an
+    empty file inside ``<COMPONENT_PATH>/<ClassName>/<repo-leaf>`` is enough for
+    ``HFDownloadableMixin.is_downloaded`` to report the component as present.
+    """
+    registry = app.container["component_registry"]
+    components_root = Path(app.container["config"]["COMPONENT_PATH"])
+
+    for component_dict in registry.get_components_by_types():
+        component_class = component_dict["class"]
+        if not getattr(component_class, "REQUIRES_DOWNLOAD", False):
+            continue
+        try:
+            repos = component_class.hf_repos()
+        except Exception:
+            continue
+        for repo_id, *_ in repos:
+            repo_dir = (
+                components_root / component_class.__name__ / repo_id.split("/")[-1]
+            )
+            repo_dir.mkdir(parents=True, exist_ok=True)
+            (repo_dir / "config.json").write_text("{}", encoding="utf-8")
+
+
 def remove_dir_with_retry(directory, max_attempts=5, sleep_seconds=1):
     for attempt in range(max_attempts):
         try:
@@ -71,6 +101,8 @@ def client(test_path: Path):
     job_queue = app.container._services.get("job_queue")
     if job_queue and isinstance(job_queue, HueyJobQueue):
         job_queue.set_test_mode(True)
+
+    _mark_download_required_components_present(app)
 
     test_client = TestClient(app)
     yield test_client

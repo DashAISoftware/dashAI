@@ -26,11 +26,6 @@ from fastapi.testclient import TestClient
 from tests.back.RAG.conftest import _create_test_document
 
 # ---------------------------------------------------------------------------
-# constants
-# ---------------------------------------------------------------------------
-LLAMA_1B = "bartowski/Llama-3.2-1B-Instruct-GGUF"
-
-# ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
 
@@ -74,10 +69,8 @@ def _base_session_params(test_doc_id: int) -> dict:
                 },
             },
             "generation_model": {
-                "component": "LlamaModel",
+                "component": "Llama32_1BInstruct",
                 "params": {
-                    "model_name": LLAMA_1B,
-                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": 0.7,
                     "frequency_penalty": 0.1,
@@ -136,10 +129,8 @@ class TestParameterStateTransitions:
         session_id = session["id"]
 
         new_gen = {
-            "component": "LlamaModel",
+            "component": "Llama32_1BInstruct",
             "params": {
-                "model_name": LLAMA_1B,
-                "quantization": "Q4_K_M",
                 "max_tokens": 200,
                 "temperature": 0.9,
                 "frequency_penalty": 0.2,
@@ -237,7 +228,7 @@ class TestParameterStateTransitions:
         # Missing ``params`` key — structure validation requires both
         # ``component`` and ``params`` → 400.
         bad_gen = {
-            "component": "LlamaModel",
+            "component": "Llama32_1BInstruct",
             # missing "params"
         }
         resp = client.put(
@@ -284,10 +275,8 @@ class TestParameterStateTransitions:
 
         # ---- valid PUT: change generation_model ----
         new_gen = {
-            "component": "LlamaModel",
+            "component": "Llama32_1BInstruct",
             "params": {
-                "model_name": LLAMA_1B,
-                "quantization": "Q4_K_M",
                 "max_tokens": 150,
                 "temperature": 0.5,
                 "frequency_penalty": 0.0,
@@ -476,10 +465,8 @@ class TestSessionLifecycle:
 
         # ---- PUT A: change generation_model ----
         gen_a = {
-            "component": "LlamaModel",
+            "component": "Llama32_1BInstruct",
             "params": {
-                "model_name": LLAMA_1B,
-                "quantization": "Q4_K_M",
                 "max_tokens": 50,
                 "temperature": 0.3,
                 "frequency_penalty": 0.0,
@@ -568,7 +555,7 @@ class TestCrossComponentValidation:
         params = _base_session_params(test_doc_id)
         params["name"] = "flow_missing_params"
         params["parameters"]["generation_model"] = {
-            "component": "LlamaModel",
+            "component": "Llama32_1BInstruct",
             # missing "params"
         }
         resp = client.post("/api/v1/generative-session/", json=params)
@@ -717,10 +704,8 @@ class TestHistoryTracking:
 
         # PUT a change
         new_gen = {
-            "component": "LlamaModel",
+            "component": "Llama32_1BInstruct",
             "params": {
-                "model_name": LLAMA_1B,
-                "quantization": "Q4_K_M",
                 "max_tokens": 75,
                 "temperature": 0.5,
                 "frequency_penalty": 0.0,
@@ -790,10 +775,8 @@ class TestHistoryTracking:
         # Three updates with different temperatures
         for temp in [0.1, 0.5, 0.9]:
             new_gen = {
-                "component": "LlamaModel",
+                "component": "Llama32_1BInstruct",
                 "params": {
-                    "model_name": LLAMA_1B,
-                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": temp,
                     "frequency_penalty": 0.0,

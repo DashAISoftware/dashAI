@@ -23,11 +23,6 @@ from fastapi.testclient import TestClient
 from tests.back.RAG.conftest import _create_test_document
 
 # ---------------------------------------------------------------------------
-# constants
-# ---------------------------------------------------------------------------
-LLAMA_1B = "bartowski/Llama-3.2-1B-Instruct-GGUF"
-
-# ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
 
@@ -71,10 +66,8 @@ def _base_session_params(test_doc_id: int) -> dict:
                 },
             },
             "generation_model": {
-                "component": "LlamaModel",
+                "component": "Llama32_1BInstruct",
                 "params": {
-                    "model_name": LLAMA_1B,
-                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": 0.7,
                     "frequency_penalty": 0.1,
@@ -135,7 +128,7 @@ class TestCreateRAGSession:
         assert params_data["prompt"]["component"] == "DefaultRAGGenerationPrompt"
         assert params_data["chunking_model"]["component"] == "CharacterChunkModel"
         assert params_data["retriever_model"]["component"] == "BM25Retriever"
-        assert params_data["generation_model"]["component"] == "LlamaModel"
+        assert params_data["generation_model"]["component"] == "Llama32_1BInstruct"
 
     def test_create_rag_session_with_custom_description(
         self, client: TestClient, test_doc_id: int
@@ -452,10 +445,8 @@ class TestUpdateRAGSessionParams:
         session_id = session["id"]
 
         new_gen = {
-            "component": "LlamaModel",
+            "component": "Llama32_1BInstruct",
             "params": {
-                "model_name": LLAMA_1B,
-                "quantization": "Q4_K_M",
                 "max_tokens": 200,
                 "temperature": 0.9,
                 "frequency_penalty": 0.2,
@@ -474,7 +465,7 @@ class TestUpdateRAGSessionParams:
         data = resp.json()
         assert data["id"] == session_id
         gen = data["parameters"]["generation_model"]
-        assert gen["component"] == "LlamaModel"
+        assert gen["component"] == "Llama32_1BInstruct"
         assert gen["params"]["temperature"] == 0.9
         assert gen["params"]["max_tokens"] == 200
 
@@ -527,10 +518,8 @@ class TestUpdateRAGSessionParams:
                 },
             },
             "generation_model": {
-                "component": "LlamaModel",
+                "component": "Llama32_1BInstruct",
                 "params": {
-                    "model_name": LLAMA_1B,
-                    "quantization": "Q4_K_M",
                     "max_tokens": 50,
                     "temperature": 0.5,
                     "frequency_penalty": 0.0,
@@ -555,7 +544,7 @@ class TestUpdateRAGSessionParams:
         assert p["chunking_model"]["component"] == "RecursiveCharacterChunkModel"
         assert p["retriever_model"]["component"] == "TFIDFRetriever"
         assert p["retriever_model"]["params"]["top_k"] == 10
-        assert p["generation_model"]["component"] == "LlamaModel"
+        assert p["generation_model"]["component"] == "Llama32_1BInstruct"
 
     def test_update_rag_session_prompt_only(self, client: TestClient, test_doc_id: int):
         """Updates only the prompt component → 200, prompt changed, others preserved."""
@@ -805,7 +794,12 @@ class TestUpdateRAGSessionParams:
         """PUT on a session that does not exist → 404."""
         resp = client.put(
             "/api/v1/generative-session/99999/parameters",
-            json={"generation_model": {"component": "LlamaModel", "params": {}}},
+            json={
+                "generation_model": {
+                    "component": "Llama32_1BInstruct",
+                    "params": {},
+                }
+            },
         )
         assert resp.status_code == 404, (
             f"Expected 404, got {resp.status_code}: {resp.text}"
@@ -1177,13 +1171,12 @@ class TestRetrieverConfigRegression:
     # Auto-save partial-data regression
     # ------------------------------------------------------------------
 
-    def test_auto_save_partial_data_preserves_component(
+    def test_auto_save_partial_data_rejected(
         self, client: TestClient, test_doc_id: int
     ):
         """When auto-save fires with only ``embedding_model`` (simulating
         the frontend bug where store formValues is empty), the missing
-        ``similarity_metric``/``top_k`` fields fall back to their schema
-        defaults and the ``DenseEmbeddingRetriever`` component is preserved."""
+        ``similarity_metric``/``top_k`` fields cause validation to fail."""
         params = _base_session_params(test_doc_id)
         params["name"] = "test_autosave_partial"
         params["parameters"]["retriever_model"] = {
@@ -1205,14 +1198,9 @@ class TestRetrieverConfigRegression:
             },
         }
         resp = client.post("/api/v1/generative-session/", json=params)
-        # Missing fields fall back to schema defaults; component is preserved
-        assert resp.status_code == 201, (
-            f"Expected 201 for partial params (defaults apply), "
-            f"got {resp.status_code}: {resp.text}"
-        )
-        stored = resp.json()["parameters"]["retriever_model"]
-        assert stored["component"] == "DenseEmbeddingRetriever", (
-            f"Component must be 'DenseEmbeddingRetriever', got '{stored['component']}'."
+        # Incomplete params must be rejected
+        assert resp.status_code == 400, (
+            f"Expected 400 for incomplete params, got {resp.status_code}: {resp.text}"
         )
 
 
@@ -1232,7 +1220,6 @@ def _dummy_params_for(component_key: str) -> dict:
         "chunking_model": {"chunk_size": 128, "chunk_overlap": 12},
         "retriever_model": {"top_k": 3},
         "generation_model": {
-            "model_name": LLAMA_1B,
             "max_tokens": 64,
             "temperature": 0.5,
             "frequency_penalty": 0.0,

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -5,6 +7,42 @@ from DashAI.back.dependencies.database.models import (
     GenerativeSession,
     GenerativeSessionParameterHistory,
 )
+
+
+def _mark_download_required_components_present(app) -> None:
+    """Create each download-required component's repo folder so the download
+    gate (reconciled against the filesystem) treats it as available without
+    fetching weights.
+
+    Every GGUF text-generation checkpoint (Llama32_1BInstruct, Qwen25_15BInstruct,
+    etc.) requires a download, so session creation would otherwise be rejected
+    with HTTP 409. Following the pattern in ``tests/back/api/conftest.py``, an
+    empty file inside ``<COMPONENT_PATH>/<ClassName>/<repo-leaf>`` is enough for
+    ``HFDownloadableMixin.is_downloaded`` to report the component as present.
+    """
+    registry = app.container["component_registry"]
+    components_root = Path(app.container["config"]["COMPONENT_PATH"])
+
+    for component_dict in registry.get_components_by_types():
+        component_class = component_dict["class"]
+        if not getattr(component_class, "REQUIRES_DOWNLOAD", False):
+            continue
+        try:
+            repos = component_class.hf_repos()
+        except Exception:
+            continue
+        for repo_id, *_ in repos:
+            repo_dir = (
+                components_root / component_class.__name__ / repo_id.split("/")[-1]
+            )
+            repo_dir.mkdir(parents=True, exist_ok=True)
+            (repo_dir / "config.json").write_text("{}", encoding="utf-8")
+
+
+@pytest.fixture(scope="module", autouse=True)
+def mark_downloads_present(client: TestClient) -> None:
+    """Mark all download-required components as present before tests run."""
+    _mark_download_required_components_present(client.app)
 
 
 @pytest.fixture(scope="module", name="response_1")
@@ -245,9 +283,8 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
                 },
             },
             "generation_model": {
-                "component": "QwenModel",
+                "component": "Qwen25_15BInstruct",
                 "params": {
-                    "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
                     "max_tokens": 128,
                     "temperature": 0.7,
                     "frequency_penalty": 0.1,
@@ -263,9 +300,8 @@ def test_update_generative_session_params_merges_and_logs_history(client: TestCl
     session_id = create_resp.json()["id"]
 
     generation_update = {
-        "component": "QwenModel",
+        "component": "Qwen25_15BInstruct",
         "params": {
-            "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
             "max_tokens": 256,
             "temperature": 0.2,
             "frequency_penalty": 0.1,

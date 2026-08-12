@@ -23,11 +23,6 @@ from fastapi.testclient import TestClient
 
 from tests.back.RAG.conftest import _create_test_document
 
-# ---------------------------------------------------------------------------
-# constants
-# ---------------------------------------------------------------------------
-LLAMA_1B = "bartowski/Llama-3.2-1B-Instruct-GGUF"
-
 COMPLETE_BM25_VECTORIZER_PARAMS = {
     "strip_accents": None,
     "lowercase": True,
@@ -71,10 +66,8 @@ def _complete_params(doc_id, name="strict_valid"):
                 },
             },
             "generation_model": {
-                "component": "LlamaModel",
+                "component": "Llama32_1BInstruct",
                 "params": {
-                    "model_name": LLAMA_1B,
-                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": 0.7,
                     "frequency_penalty": 0.1,
@@ -119,30 +112,30 @@ def test_doc_id(client: TestClient) -> int:
 # ===================================================================
 
 
-def test_create_session_with_empty_vectorizer_params_accepted(
+def test_create_session_with_empty_vectorizer_params_rejected(
     client: TestClient, test_doc_id: int
 ) -> None:
-    """Empty vectorizer ``params`` are accepted and filled with schema defaults."""
+    """Empty vectorizer ``params`` are rejected — backend must not fill gaps."""
     params = _complete_params(test_doc_id, name="strict_incomplete_vectorizer")
     params["parameters"]["retriever_model"]["params"]["BM25Vectorizer"]["params"] = {}
 
     response = client.post("/api/v1/generative-session/", json=params)
-    assert response.status_code == 201, (
-        "An empty BM25 vectorizer params dict should fall back to defaults, "
+    assert response.status_code == 400, (
+        "An empty BM25 vectorizer params dict must be rejected, "
         f"got {response.status_code}: {response.text}"
     )
 
 
-def test_create_session_with_empty_generation_model_params_accepted(
+def test_create_session_with_empty_generation_model_params_rejected(
     client: TestClient, test_doc_id: int
 ) -> None:
-    """Empty ``LlamaModel`` params are accepted and filled with schema defaults."""
+    """Empty ``Llama32_1BInstruct`` params are rejected — backend must not fill gaps."""
     params = _complete_params(test_doc_id, name="strict_incomplete_llama")
     params["parameters"]["generation_model"]["params"] = {}
 
     response = client.post("/api/v1/generative-session/", json=params)
-    assert response.status_code == 201, (
-        "An empty LlamaModel params dict should fall back to defaults, "
+    assert response.status_code == 400, (
+        "An empty Llama32_1BInstruct params dict must be rejected, "
         f"got {response.status_code}: {response.text}"
     )
 
@@ -168,10 +161,11 @@ def test_create_session_with_default_prompt_accepts_language_only(
     assert "{chunks}" in template
 
 
-def test_create_session_with_custom_prompt_no_template_uses_default(
+def test_create_session_with_custom_prompt_no_template_rejected(
     client: TestClient, test_doc_id: int
 ) -> None:
-    """A custom prompt without an explicit template uses the schema default."""
+    """A custom prompt without an explicit template is rejected — backend must not
+    fill gaps."""
     params = _complete_params(test_doc_id, name="strict_custom_prompt_no_template")
     params["parameters"]["prompt"] = {
         "component": "CustomRAGGenerationPrompt",
@@ -179,8 +173,8 @@ def test_create_session_with_custom_prompt_no_template_uses_default(
     }
 
     response = client.post("/api/v1/generative-session/", json=params)
-    assert response.status_code == 201, (
-        "A custom prompt without a template should use the schema default, "
+    assert response.status_code == 400, (
+        "A custom prompt without a template must be rejected, "
         f"got {response.status_code}: {response.text}"
     )
 
@@ -279,10 +273,11 @@ def test_create_session_with_custom_prompt_missing_placeholders_rejected(
     )
 
 
-def test_create_session_with_default_prompt_missing_language_uses_default(
+def test_create_session_with_default_prompt_missing_language_rejected(
     client: TestClient, test_doc_id: int
 ) -> None:
-    """A default prompt without ``language`` uses the schema default language."""
+    """A default prompt without ``language`` is rejected — backend needs language to
+    inject template."""
     params = _complete_params(test_doc_id, name="strict_default_prompt_no_language")
     params["parameters"]["prompt"] = {
         "component": "DefaultRAGGenerationPrompt",
@@ -290,8 +285,8 @@ def test_create_session_with_default_prompt_missing_language_uses_default(
     }
 
     response = client.post("/api/v1/generative-session/", json=params)
-    assert response.status_code == 201, (
-        "A default prompt without language should use the default, "
+    assert response.status_code == 400, (
+        "A default prompt without language must be rejected, "
         f"got {response.status_code}: {response.text}"
     )
 
@@ -314,10 +309,11 @@ class TestUpdateStrictValidation:
         )
         return response.json()
 
-    def test_update_parameters_accepts_incomplete_vectorizer(
+    def test_update_parameters_rejects_incomplete_vectorizer(
         self, client: TestClient, test_doc_id: int
     ) -> None:
-        """PUT with an empty vectorizer params dict is accepted (defaults apply)."""
+        """PUT with an empty vectorizer params dict is rejected — backend must not
+        fill gaps."""
         session = self._create_session(
             client, test_doc_id, "strict_update_incomplete_vectorizer"
         )
@@ -326,9 +322,9 @@ class TestUpdateStrictValidation:
             f"/api/v1/generative-session/{session['id']}/parameters",
             json={"retriever_model": _bm25_retriever_ref({})},
         )
-        assert response.status_code == 200, (
-            "An empty BM25 vectorizer params dict should fall back to defaults "
-            f"on update, got {response.status_code}: {response.text}"
+        assert response.status_code == 400, (
+            "An empty BM25 vectorizer params dict must be rejected on update, "
+            f"got {response.status_code}: {response.text}"
         )
 
     def test_update_parameters_accepts_complete_vectorizer(

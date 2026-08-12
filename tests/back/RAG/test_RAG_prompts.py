@@ -17,8 +17,6 @@ from DashAI.back.services.RAG.prompt_service import PromptService
 # helpers — matching test_rag_component_api_configs.py patterns
 # ---------------------------------------------------------------------------
 
-LLAMA_1B = "bartowski/Llama-3.2-1B-Instruct-GGUF"
-
 
 def _create_test_document(client: TestClient, suffix: str = "") -> int:
     """Create a minimal test document in the DB and return its ID."""
@@ -79,10 +77,8 @@ def _base_session_params(test_doc_id: int) -> dict:
                 },
             },
             "generation_model": {
-                "component": "LlamaModel",
+                "component": "Llama32_1BInstruct",
                 "params": {
-                    "model_name": LLAMA_1B,
-                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": 0.7,
                     "frequency_penalty": 0.1,

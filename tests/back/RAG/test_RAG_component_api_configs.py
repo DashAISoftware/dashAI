@@ -31,8 +31,6 @@ def test_doc_id(client: TestClient) -> int:
 # ---------------------------------------------------------------------------
 
 ST_MINI_LM = "sentence-transformers/all-MiniLM-L6-v2"
-LLAMA_1B = "bartowski/Llama-3.2-1B-Instruct-GGUF"
-LLAMA_3B = "bartowski/Llama-3.2-3B-Instruct-GGUF"
 
 
 def _base_params(test_doc_id: int) -> dict:
@@ -68,10 +66,8 @@ def _base_params(test_doc_id: int) -> dict:
                 },
             },
             "generation_model": {
-                "component": "LlamaModel",
+                "component": "Llama32_1BInstruct",
                 "params": {
-                    "model_name": LLAMA_1B,
-                    "quantization": "Q4_K_M",
                     "max_tokens": 100,
                     "temperature": 0.7,
                     "frequency_penalty": 0.1,
@@ -113,16 +109,18 @@ def _dense_st_retriever(
     }
 
 
-def _dense_openai_retriever(top_k: int = 10) -> dict:
-    """Build a DenseEmbeddingRetriever + OpenAIEmbedding config."""
+def _dense_st_alt_retriever(top_k: int = 10) -> dict:
+    """Build a DenseEmbeddingRetriever + SentenceTransformerEmbedding config."""
     return {
         "component": "DenseEmbeddingRetriever",
         "params": {
             "embedding_model": {
-                "component": "OpenAIEmbedding",
+                "component": "SentenceTransformerEmbedding",
                 "params": {
-                    "model_name": "text-embedding-3-small",
-                    "api_key": "test-key",
+                    "model_name": ST_MINI_LM,
+                    "overflow_strategy": "truncate",
+                    "normalize": True,
+                    "device": "cpu",
                 },
             },
             "similarity_metric": "cosine",
@@ -297,18 +295,19 @@ class TestEncodingModels:
         assert ret["params"]["similarity_metric"] == "cosine"
         assert ret["params"]["top_k"] == 10
 
-    def test_encoding_dense_openai(self, client: TestClient, test_doc_id: int):
-        """DenseEmbeddingRetriever + OpenAIEmbedding (text-embedding-3-small)."""
+    def test_encoding_dense_st_alt(self, client: TestClient, test_doc_id: int):
+        """DenseEmbeddingRetriever + SentenceTransformerEmbedding (all-MiniLM-L6-v2)."""
         params = _base_params(test_doc_id)
-        params["name"] = "Enc Dense OpenAI"
-        params["parameters"]["retriever_model"] = _dense_openai_retriever(top_k=10)
+        params["name"] = "Enc Dense ST Alt"
+        params["parameters"]["retriever_model"] = _dense_st_alt_retriever(top_k=10)
         stored = _post_and_get(client, params)
         ret = stored["parameters"]["retriever_model"]
         assert ret["component"] == "DenseEmbeddingRetriever"
         embed = ret["params"]["embedding_model"]
-        assert embed["component"] == "OpenAIEmbedding"
-        assert embed["params"]["model_name"] == "text-embedding-3-small"
-        assert embed["params"]["api_key"] == "test-key"
+        assert embed["component"] == "SentenceTransformerEmbedding"
+        assert embed["params"]["model_name"] == ST_MINI_LM
+        assert embed["params"]["normalize"] is True
+        assert embed["params"]["device"] == "cpu"
         assert ret["params"]["similarity_metric"] == "cosine"
         assert ret["params"]["top_k"] == 10
 
@@ -445,11 +444,11 @@ class TestTopK:
         stored = _post_and_get(client, params)
         assert stored["parameters"]["retriever_model"]["params"]["top_k"] == 10
 
-    def test_topk_dense_openai_15(self, client: TestClient, test_doc_id: int):
-        """DenseEmbeddingRetriever + OpenAI with top_k=15."""
+    def test_topk_dense_st_15(self, client: TestClient, test_doc_id: int):
+        """DenseEmbeddingRetriever + SentenceTransformerEmbedding with top_k=15."""
         params = _base_params(test_doc_id)
-        params["name"] = "TopK Dense OpenAI 15"
-        params["parameters"]["retriever_model"] = _dense_openai_retriever(top_k=15)
+        params["name"] = "TopK Dense ST 15"
+        params["parameters"]["retriever_model"] = _dense_st_alt_retriever(top_k=15)
         stored = _post_and_get(client, params)
         assert stored["parameters"]["retriever_model"]["params"]["top_k"] == 15
 
@@ -660,13 +659,12 @@ class TestGeneratorModels:
     and hyperparameters (≤8B)."""
 
     def test_generator_llama_1b_default(self, client: TestClient, test_doc_id: int):
-        """LlamaModel 3.2-1B with default hyperparams."""
+        """Llama 3.2-1B with default hyperparams."""
         params = _base_params(test_doc_id)
         params["name"] = "Gen Llama 1B Default"
         stored = _post_and_get(client, params)
         gen = stored["parameters"]["generation_model"]
-        assert gen["component"] == "LlamaModel"
-        assert gen["params"]["model_name"] == LLAMA_1B
+        assert gen["component"] == "Llama32_1BInstruct"
         assert gen["params"]["max_tokens"] == 100
         assert gen["params"]["temperature"] == 0.7
         assert gen["params"]["frequency_penalty"] == 0.1
@@ -674,14 +672,12 @@ class TestGeneratorModels:
         assert gen["params"]["device"] == "CPU"
 
     def test_generator_llama_3b_custom(self, client: TestClient, test_doc_id: int):
-        """LlamaModel 3.2-3B with custom hyperparams."""
+        """Llama 3.2-3B with custom hyperparams."""
         params = _base_params(test_doc_id)
         params["name"] = "Gen Llama 3B Custom"
         params["parameters"]["generation_model"] = {
-            "component": "LlamaModel",
+            "component": "Llama32_3BInstruct",
             "params": {
-                "model_name": LLAMA_3B,
-                "quantization": "Q4_K_M",
                 "max_tokens": 512,
                 "temperature": 0.5,
                 "frequency_penalty": 0.0,
@@ -691,8 +687,7 @@ class TestGeneratorModels:
         }
         stored = _post_and_get(client, params)
         gen = stored["parameters"]["generation_model"]
-        assert gen["component"] == "LlamaModel"
-        assert gen["params"]["model_name"] == LLAMA_3B
+        assert gen["component"] == "Llama32_3BInstruct"
         assert gen["params"]["max_tokens"] == 512
         assert gen["params"]["temperature"] == 0.5
         assert gen["params"]["frequency_penalty"] == 0.0
@@ -700,13 +695,12 @@ class TestGeneratorModels:
         assert gen["params"]["device"] == "CPU"
 
     def test_generator_mistral_7b_default(self, client: TestClient, test_doc_id: int):
-        """MistralModel 7B with default hyperparams."""
+        """Mistral 7B v0.3 with default hyperparams."""
         params = _base_params(test_doc_id)
         params["name"] = "Gen Mistral 7B Default"
         params["parameters"]["generation_model"] = {
-            "component": "MistralModel",
+            "component": "Mistral7BInstructV03",
             "params": {
-                "model_name": "bartowski/Mistral-7B-Instruct-v0.3-GGUF",
                 "max_tokens": 100,
                 "temperature": 0.7,
                 "frequency_penalty": 0.1,
@@ -716,8 +710,7 @@ class TestGeneratorModels:
         }
         stored = _post_and_get(client, params)
         gen = stored["parameters"]["generation_model"]
-        assert gen["component"] == "MistralModel"
-        assert gen["params"]["model_name"] == "bartowski/Mistral-7B-Instruct-v0.3-GGUF"
+        assert gen["component"] == "Mistral7BInstructV03"
         assert gen["params"]["max_tokens"] == 100
         assert gen["params"]["temperature"] == 0.7
         assert gen["params"]["frequency_penalty"] == 0.1
@@ -725,13 +718,12 @@ class TestGeneratorModels:
         assert gen["params"]["device"] == "CPU"
 
     def test_generator_qwen_0_5b_default(self, client: TestClient, test_doc_id: int):
-        """QwenModel 0.5B with default hyperparams."""
+        """Qwen 2.5-0.5B with default hyperparams."""
         params = _base_params(test_doc_id)
         params["name"] = "Gen Qwen 0.5B Default"
         params["parameters"]["generation_model"] = {
-            "component": "QwenModel",
+            "component": "Qwen25_05BInstruct",
             "params": {
-                "model_name": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
                 "max_tokens": 100,
                 "temperature": 0.7,
                 "frequency_penalty": 0.1,
@@ -741,8 +733,7 @@ class TestGeneratorModels:
         }
         stored = _post_and_get(client, params)
         gen = stored["parameters"]["generation_model"]
-        assert gen["component"] == "QwenModel"
-        assert gen["params"]["model_name"] == "Qwen/Qwen2.5-0.5B-Instruct-GGUF"
+        assert gen["component"] == "Qwen25_05BInstruct"
         assert gen["params"]["max_tokens"] == 100
         assert gen["params"]["temperature"] == 0.7
         assert gen["params"]["frequency_penalty"] == 0.1
@@ -750,13 +741,12 @@ class TestGeneratorModels:
         assert gen["params"]["device"] == "CPU"
 
     def test_generator_qwen_1_5b_custom(self, client: TestClient, test_doc_id: int):
-        """QwenModel 1.5B with custom hyperparams."""
+        """Qwen 2.5-1.5B with custom hyperparams."""
         params = _base_params(test_doc_id)
         params["name"] = "Gen Qwen 1.5B Custom"
         params["parameters"]["generation_model"] = {
-            "component": "QwenModel",
+            "component": "Qwen25_15BInstruct",
             "params": {
-                "model_name": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
                 "max_tokens": 256,
                 "temperature": 0.3,
                 "frequency_penalty": 0.5,
@@ -766,8 +756,7 @@ class TestGeneratorModels:
         }
         stored = _post_and_get(client, params)
         gen = stored["parameters"]["generation_model"]
-        assert gen["component"] == "QwenModel"
-        assert gen["params"]["model_name"] == "Qwen/Qwen2.5-1.5B-Instruct-GGUF"
+        assert gen["component"] == "Qwen25_15BInstruct"
         assert gen["params"]["max_tokens"] == 256
         assert gen["params"]["temperature"] == 0.3
         assert gen["params"]["frequency_penalty"] == 0.5
@@ -775,13 +764,12 @@ class TestGeneratorModels:
         assert gen["params"]["device"] == "CPU"
 
     def test_generator_smol_1_7b_default(self, client: TestClient, test_doc_id: int):
-        """SmolLMModel 1.7B with default hyperparams."""
+        """SmolLM2 1.7B with default hyperparams."""
         params = _base_params(test_doc_id)
         params["name"] = "Gen SmolLM 1.7B Default"
         params["parameters"]["generation_model"] = {
-            "component": "SmolLMModel",
+            "component": "SmolLM2_17BInstruct",
             "params": {
-                "model_name": "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF",
                 "max_tokens": 100,
                 "temperature": 0.7,
                 "frequency_penalty": 0.1,
@@ -791,8 +779,7 @@ class TestGeneratorModels:
         }
         stored = _post_and_get(client, params)
         gen = stored["parameters"]["generation_model"]
-        assert gen["component"] == "SmolLMModel"
-        assert gen["params"]["model_name"] == "HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF"
+        assert gen["component"] == "SmolLM2_17BInstruct"
         assert gen["params"]["max_tokens"] == 100
         assert gen["params"]["temperature"] == 0.7
         assert gen["params"]["frequency_penalty"] == 0.1
@@ -824,27 +811,3 @@ class TestGeneratorModels:
         assert gen["params"]["frequency_penalty"] == 0.1
         assert gen["params"]["context_window"] == 512
         assert gen["params"]["device"] == "CPU"
-
-    def test_generator_openai_gpt4o_mini_custom(
-        self, client: TestClient, test_doc_id: int
-    ):
-        """OpenAITextToTextGenerationModel with
-        gpt-4o-mini, temp=0.3, max_tokens=512."""
-        params = _base_params(test_doc_id)
-        params["name"] = "Gen OpenAI GPT4o Mini"
-        params["parameters"]["generation_model"] = {
-            "component": "OpenAITextToTextGenerationModel",
-            "params": {
-                "model_name": "gpt-4o-mini",
-                "API_key": "test-key",
-                "temperature": 0.3,
-                "max_completions_tokens": 512,
-            },
-        }
-        stored = _post_and_get(client, params)
-        gen = stored["parameters"]["generation_model"]
-        assert gen["component"] == "OpenAITextToTextGenerationModel"
-        assert gen["params"]["model_name"] == "gpt-4o-mini"
-        assert gen["params"]["API_key"] == "test-key"
-        assert gen["params"]["temperature"] == 0.3
-        assert gen["params"]["max_completions_tokens"] == 512
