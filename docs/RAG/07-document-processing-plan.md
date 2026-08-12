@@ -373,10 +373,10 @@ New translation keys in `generative.json` (en, es, pt, zh, de) under:
 
 ```python
 # Extractors
-TextractExtractor,
-PyPDF2Extractor,
-PyMuPDFExtractor,
-PlainTextExtractor,
+(TextractExtractor,)
+(PyPDF2Extractor,)
+(PyMuPDFExtractor,)
+(PlainTextExtractor,)
 ```
 
 They appear in the registry under `TYPE="Extractor"` and the frontend discovers them via

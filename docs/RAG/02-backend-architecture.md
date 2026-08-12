@@ -297,7 +297,7 @@ keys from `RAG_constants.py` (`RAG_PARAM_KEYS`, `RAG_MODEL_KEYS`,
 class DocumentFileType(str, Enum):
     TXT = "txt"
     PDF = "pdf"
-    MD  = "md"
+    MD = "md"
     RST = "rst"
     TEX = "tex"
     CSV = "csv"
