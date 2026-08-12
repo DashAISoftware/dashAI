@@ -1,8 +1,8 @@
-"""merge explainer and parameter history heads
+"""Merge RAG and explainer heads
 
-Revision ID: e0f00f71ba44
-Revises: a7d2c9e4f1b0, d1c2b3a4f5e6
-Create Date: 2026-07-22 11:13:21.127590
+Revision ID: i2j3k4l5m6n7
+Revises: h1i2j3k4l5m6, c4e8a1d20f3b
+Create Date: 2026-08-12 00:00:00.000000
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e0f00f71ba44'
-down_revision: Union[str, None] = ('a7d2c9e4f1b0', 'd1c2b3a4f5e6')
+revision: str = 'i2j3k4l5m6n7'
+down_revision: Union[str, None] = ('h1i2j3k4l5m6', 'c4e8a1d20f3b')
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
