@@ -206,13 +206,17 @@ class PartialDependence(BaseGlobalExplainer):
         import numpy as np
         from sklearn.inspection import partial_dependence
 
-        from DashAI.back.explainability.model_input import prepare_model_input
+        from DashAI.back.explainability.model_input import (
+            as_sklearn_estimator,
+            prepare_model_input,
+        )
 
         x, y = dataset
 
-        # scikit-learn's partial_dependence calls the model with plain frames,
-        # bypassing the model preparation, so both splits are moved into the
-        # model feature space here.
+        # scikit-learn's partial_dependence calls the estimator with plain
+        # frames, bypassing the model preparation, so both splits are moved
+        # into the model feature space here and the model is reached through
+        # an adapter over its prepared-matrix hooks.
         x_test_dataset = prepare_model_input(self.model, x["test"])
         x_test = x_test_dataset.to_pandas()
 
@@ -235,9 +239,12 @@ class PartialDependence(BaseGlobalExplainer):
 
         explanation = {"metadata": {"target_names": target_names}}
 
+        # Convert model to a sklearn estimator for compatibility
+        estimator = as_sklearn_estimator(self.model, classes=target_names)
+
         for idx in range(len(features_names)):
             pd = partial_dependence(
-                estimator=self.model,
+                estimator=estimator,
                 X=x_test,
                 features=idx,
                 categorical_features=categorical_features,

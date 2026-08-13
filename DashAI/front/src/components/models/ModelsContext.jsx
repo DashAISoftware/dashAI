@@ -32,6 +32,7 @@ export function ModelsProvider({ children }) {
     clearSelectedDataset,
     deleteDataset,
     deleteDatasetById,
+    deleteDatasetsByIds,
     editDataset,
     addDatasetOptimistically,
     replaceDatasets,
@@ -44,8 +45,22 @@ export function ModelsProvider({ children }) {
     fetchFolders,
     createFolder,
     renameFolder,
-    deleteFolderById,
+    deleteFolderById: deleteFolderByIdRaw,
   } = useFolders({ t });
+
+  // Deleting a folder moves its datasets to "no folder" server-side
+  // (folder_id set to null via the FK's ON DELETE SET NULL), but the local
+  // `datasets` state still holds the old folder_id until this clears it —
+  // otherwise those datasets vanish from the list until a full refetch.
+  const deleteFolderById = async (id) => {
+    const success = await deleteFolderByIdRaw(id);
+    if (success) {
+      replaceDatasets((prev) =>
+        prev.map((d) => (d.folder_id === id ? { ...d, folder_id: null } : d)),
+      );
+    }
+    return success;
+  };
 
   const {
     tasks,
@@ -161,6 +176,7 @@ export function ModelsProvider({ children }) {
       clearSelectedDataset,
       deleteDataset,
       deleteDatasetById,
+      deleteDatasetsByIds,
       editDataset,
       addDatasetOptimistically,
       replaceDatasets,
@@ -238,6 +254,7 @@ export function ModelsProvider({ children }) {
       clearSelectedDataset,
       deleteDataset,
       deleteDatasetById,
+      deleteDatasetsByIds,
       editDataset,
       addDatasetOptimistically,
       replaceDatasets,

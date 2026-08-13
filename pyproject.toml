@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dashAI"
-version = "0.9.7.post1"
+version = "0.9.7.post2"
 description = "dashAI: a graphical toolbox for training, evaluating and deploying state-of-the-art AI models."
 readme = "README.rst"
 license = "MIT"
