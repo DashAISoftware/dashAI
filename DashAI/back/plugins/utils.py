@@ -91,7 +91,7 @@ def _get_all_plugins() -> List[str]:
     headers = {"Accept": "application/vnd.pypi.simple.v1+json"}
 
     # Send a GET request to the API
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=_REQUEST_TIMEOUT_SECONDS)
 
     # Check for a successful response
     if response.status_code == 200:
@@ -126,7 +126,8 @@ def get_plugin_by_name_from_pypi(plugin_name: str) -> dict:
         When the plugin is not found or the response is invalid
     """
     response: requests.Response = requests.get(
-        f"https://pypi.org/pypi/{plugin_name}/json"
+        f"https://pypi.org/pypi/{plugin_name}/json",
+        timeout=_REQUEST_TIMEOUT_SECONDS,
     )
 
     response_data = response.json()
@@ -189,7 +190,7 @@ def get_plugins_from_pypi() -> List[dict]:
 
             plugin_info = get_plugin_by_name_from_pypi(plugin_name)
             plugins.append(plugin_info)
-        except ValueError as e:
+        except (ValueError, requests.RequestException) as e:
             print(f"Error al obtener información del plugin {plugin_name}: {str(e)}")
             continue
 
