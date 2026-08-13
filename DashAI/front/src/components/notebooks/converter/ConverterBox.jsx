@@ -175,7 +175,12 @@ export default function ConverterBox({
             </Typography>
             <Tooltip title={getConverterStatus(statusLabel, t)}>
               <span>
-                <RunStatusDot status={statusLabel} />
+                <RunStatusDot
+                  status={statusLabel}
+                  colorKey={
+                    statusLabel !== 3 && statusLabel !== 4 ? "info" : undefined
+                  }
+                />
               </span>
             </Tooltip>
           </Box>

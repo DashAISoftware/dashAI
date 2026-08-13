@@ -209,7 +209,12 @@ export default function ExplorerBox({
             </Typography>
             <Tooltip title={getExplorerStatus(statusLabel, t)}>
               <span>
-                <RunStatusDot status={statusLabel} />
+                <RunStatusDot
+                  status={statusLabel}
+                  colorKey={
+                    statusLabel !== 3 && statusLabel !== 4 ? "info" : undefined
+                  }
+                />
               </span>
             </Tooltip>
           </Box>
