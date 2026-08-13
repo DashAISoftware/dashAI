@@ -133,11 +133,15 @@ class LoadDatafileDatasetUnit(BaseUnit):
 
         source = _resolve_source_file(work_dir, selected_file)
 
+        # Looked up among the readers specifically, not with the registry's
+        # global ``registry[name]``: that one walks every component type, so a
+        # metric or a model whose name happened to be passed here would be
+        # instantiated as if it could read a file instead of being rejected.
         dataloader_name = dataloader_config["component"]
-        registry = component_registry.registry.get("DataLoader", {})
-        if dataloader_name not in registry:
+        readers = component_registry.registry.get("DataLoader", {})
+        if dataloader_name not in readers:
             raise JobError(f"DataLoader '{dataloader_name}' not found in registry.")
-        dataloader = registry[dataloader_name]["class"]()
+        dataloader = readers[dataloader_name]["class"]()
 
         log.debug("Loading hub dataset from %s using %s", source, dataloader_name)
         ctx.put(

@@ -503,8 +503,11 @@ def test_a_model_that_cannot_be_loaded_names_the_path(client, run_id):
 def test_an_unknown_explainer_name_is_reported_with_the_multiline_message(
     client, run_id
 ):
-    """The message is a triple-quoted f-string, so its newline and indentation
-    are literally part of the text the user sees. Pinned as-is."""
+    """One line, so it stays readable wherever it surfaces.
+
+    It used to be a triple-quoted f-string, which put a newline and the source
+    file's indentation literally inside the text the user reads.
+    """
     explainer_id = _create_global_explainer(
         client, run_id, explainer_name="NoSuchExplainer"
     )
@@ -513,8 +516,7 @@ def test_an_unknown_explainer_name_is_reported_with_the_multiline_message(
         ExplainerJob(explainer_id=explainer_id, explainer_scope="global").run()
 
     assert str(excinfo.value) == (
-        "Unable to find the global explainer with name\n"
-        "                            NoSuchExplainer in registry."
+        "Unable to find the global explainer with name NoSuchExplainer in registry."
     )
 
 
