@@ -6,6 +6,7 @@
     "createPrediction": "Crear Predicción",
     "createSession": "Crear Sesión",
     "addNewPrediction": "Agregar Nueva Predicción",
+    "uploadNewDataset": "Subir nuevo dataset",
     "deleteAndRetrain": "Eliminar y Re-entrenar",
     "deleteRun": "Eliminar Ejecución",
     "hideOperations": "Ocultar Operaciones",

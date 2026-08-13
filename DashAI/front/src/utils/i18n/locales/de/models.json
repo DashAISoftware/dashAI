@@ -6,6 +6,7 @@
     "createPrediction": "Vorhersage erstellen",
     "createSession": "Sitzung erstellen",
     "addNewPrediction": "Neue Vorhersage hinzufügen",
+    "uploadNewDataset": "Neuen Datensatz hochladen",
     "deleteAndRetrain": "Löschen und neu trainieren",
     "deleteRun": "Durchlauf löschen",
     "hideOperations": "Operationen ausblenden",

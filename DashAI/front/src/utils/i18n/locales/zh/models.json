@@ -6,6 +6,7 @@
     "createPrediction": "创建预测",
     "createSession": "创建会话",
     "addNewPrediction": "添加新预测",
+    "uploadNewDataset": "上传新数据集",
     "deleteAndRetrain": "删除并重新训练",
     "deleteRun": "删除运行",
     "hideOperations": "隐藏操作",
