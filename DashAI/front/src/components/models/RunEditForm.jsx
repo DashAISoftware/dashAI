@@ -53,11 +53,16 @@ export default function RunEditForm({
           />
         </Box>
 
-        <OptimizationTableSelectOptimizer
-          taskName={taskName}
-          optimizerName={editedOptimizer}
-          handleSelectedOptimizer={handleOptimizerSelected}
-        />
+        <Box>
+          <Typography variant="body2" sx={{ mb: 1 }}>
+            {t("models:label.optimizer")} *
+          </Typography>
+          <OptimizationTableSelectOptimizer
+            taskName={taskName}
+            optimizerName={editedOptimizer}
+            handleSelectedOptimizer={handleOptimizerSelected}
+          />
+        </Box>
 
         {editedOptimizer && (
           <Box>

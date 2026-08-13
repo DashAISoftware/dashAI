@@ -49,6 +49,7 @@ export default function SessionVisualization() {
     openExplainerCreator,
     explainerRefreshTrigger,
     triggerExplainerRefresh,
+    openStatisticalTest,
   } = useModels();
 
   const theme = useTheme();
@@ -274,7 +275,10 @@ export default function SessionVisualization() {
           if (e.dataTransfer.types.includes("Files")) e.preventDefault();
           if (
             !e.dataTransfer.types.includes("application/x-dashai-model") &&
-            !e.dataTransfer.types.includes("application/x-dashai-explainer")
+            !e.dataTransfer.types.includes("application/x-dashai-explainer") &&
+            !e.dataTransfer.types.includes(
+              "application/x-dashai-statistical-test",
+            )
           )
             return;
           e.preventDefault();
@@ -284,7 +288,10 @@ export default function SessionVisualization() {
           if (e.dataTransfer.types.includes("Files")) e.preventDefault();
           if (
             !e.dataTransfer.types.includes("application/x-dashai-model") &&
-            !e.dataTransfer.types.includes("application/x-dashai-explainer")
+            !e.dataTransfer.types.includes("application/x-dashai-explainer") &&
+            !e.dataTransfer.types.includes(
+              "application/x-dashai-statistical-test",
+            )
           )
             return;
           e.preventDefault();
@@ -300,7 +307,10 @@ export default function SessionVisualization() {
           const types = e.dataTransfer.types;
           const isModel = types.includes("application/x-dashai-model");
           const isExplainer = types.includes("application/x-dashai-explainer");
-          if (!isModel && !isExplainer) return;
+          const isStatisticalTest = types.includes(
+            "application/x-dashai-statistical-test",
+          );
+          if (!isModel && !isExplainer && !isStatisticalTest) return;
           e.preventDefault();
           setIsDragOver(false);
           try {
@@ -309,6 +319,13 @@ export default function SessionVisualization() {
                 e.dataTransfer.getData("application/x-dashai-explainer"),
               );
               if (explainer?.name) openExplainerCreator(explainer);
+            } else if (isStatisticalTest) {
+              const test = JSON.parse(
+                e.dataTransfer.getData("application/x-dashai-statistical-test"),
+              );
+              if (test?.name) {
+                openStatisticalTest(test);
+              }
             } else {
               const model = JSON.parse(
                 e.dataTransfer.getData("application/x-dashai-model"),

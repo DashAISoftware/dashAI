@@ -90,14 +90,14 @@ export default function StatisticalTestsList({ onTestSelect }) {
     list.length > 0 && (
       <Box sx={{ mb: 3 }}>
         <Typography
-          variant="subtitle2"
+          variant="caption"
+          color="text.secondary"
           sx={{
-            fontWeight: 700,
-            color: colorKey,
-            mb: 1,
             textTransform: "uppercase",
-            fontSize: "0.75rem",
             letterSpacing: 0.5,
+            fontWeight: 600,
+            display: "block",
+            mb: 2,
           }}
         >
           {t(titleKey)}
@@ -107,6 +107,9 @@ export default function StatisticalTestsList({ onTestSelect }) {
             <ModelListItem
               key={test.name}
               model={test}
+              draggable
+              dragType="application/x-dashai-statistical-test"
+              dragPayload={test}
               onClick={() => onTestSelect(test)}
             />
           ))}

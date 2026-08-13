@@ -82,9 +82,6 @@ export default function ModelsRightBar({ onToggle }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models", "common"]);
   const [activeTab, setActiveTab] = useState("models");
-  const [showStatisticalTestsModal, setShowStatisticalTestsModal] =
-    useState(false);
-  const [activeTest, setActiveTest] = useState(null);
 
   const {
     selectedSession: session,
@@ -101,6 +98,10 @@ export default function ModelsRightBar({ onToggle }) {
     triggerExplainerRefresh,
     datasets,
     tasks,
+    openStatisticalTest,
+    closeStatisticalTest,
+    selectedStatisticalTest,
+    statisticalTestsModalOpen,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -167,6 +168,17 @@ export default function ModelsRightBar({ onToggle }) {
   }, [searchQuery, models]);
 
   const tourContext = useTourContext();
+
+  // Determine if statistical tests should be shown (only for nested CV sessions)
+  const isCv =
+    session?.evaluation_strategy === "CrossValidationEvaluationStrategy";
+
+  useEffect(() => {
+    if (!isCv) {
+      setActiveTab("models");
+      closeStatisticalTest();
+    }
+  }, [isCv, closeStatisticalTest]);
 
   const handleUseModel = (model) => {
     if (!session) {
@@ -258,10 +270,6 @@ export default function ModelsRightBar({ onToggle }) {
     );
   }
 
-  // Determine if statistical tests should be shown (only for nested CV sessions)
-  const isCv =
-    session?.evaluation_strategy === "CrossValidationEvaluationStrategy";
-
   return (
     <SideBar>
       <Box
@@ -295,28 +303,28 @@ export default function ModelsRightBar({ onToggle }) {
                 : t("models:label.statisticalTests")}
             </Typography>
           </Box>
-          <Tabs
-            value={activeTab}
-            onChange={(e, newValue) => setActiveTab(newValue)}
-            sx={{
-              px: 2,
-              borderTop: `1px solid ${theme.palette.ui.border}`,
-            }}
-            variant="fullWidth"
-          >
-            <Tab
-              label={t("models:label.availableModels")}
-              value="models"
-              sx={{ textTransform: "none", fontSize: "0.9rem" }}
-            />
-            {isCv && (
+          {isCv && (
+            <Tabs
+              value={activeTab}
+              onChange={(e, newValue) => setActiveTab(newValue)}
+              sx={{
+                px: 2,
+                borderTop: `1px solid ${theme.palette.ui.border}`,
+              }}
+              variant="fullWidth"
+            >
+              <Tab
+                label={t("models:label.availableModels")}
+                value="models"
+                sx={{ textTransform: "none", fontSize: "0.9rem" }}
+              />
               <Tab
                 label={t("models:label.statisticalTests")}
                 value="tests"
                 sx={{ textTransform: "none", fontSize: "0.9rem" }}
               />
-            )}
-          </Tabs>
+            </Tabs>
+          )}
         </Box>
 
         {/* Content */}
@@ -432,12 +440,7 @@ export default function ModelsRightBar({ onToggle }) {
           </>
         ) : (
           /* Statistical Tests Tab */
-          <StatisticalTestsList
-            onTestSelect={(test) => {
-              setActiveTest(test);
-              setShowStatisticalTestsModal(true);
-            }}
-          />
+          <StatisticalTestsList onTestSelect={openStatisticalTest} />
         )}
       </Box>
 
@@ -453,14 +456,11 @@ export default function ModelsRightBar({ onToggle }) {
       />
 
       <StatisticalTestsModal
-        test={activeTest}
+        test={selectedStatisticalTest}
         runs={existingRuns}
         session={session}
-        open={showStatisticalTestsModal && isCv}
-        onClose={() => {
-          setShowStatisticalTestsModal(false);
-          setActiveTest(null);
-        }}
+        open={statisticalTestsModalOpen && isCv}
+        onClose={closeStatisticalTest}
       />
     </SideBar>
   );

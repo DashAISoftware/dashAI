@@ -125,12 +125,16 @@ function ModelComparisonTable({
       color: theme.palette.accent.teal,
       label: "HPO",
     },
-    nestedCv: {
-      bg: "#585370",
-      border: "#585370",
-      color: "#585370",
-      label: "CV anidado",
-    },
+    ...(isCrossValidation
+      ? {
+          nestedCv: {
+            bg: "#585370",
+            border: "#585370",
+            color: "#585370",
+            label: "CV anidado",
+          },
+        }
+      : {}),
   };
 
   const runTypeLegend = Object.entries(runTypeStyles).map(([key, value]) => ({

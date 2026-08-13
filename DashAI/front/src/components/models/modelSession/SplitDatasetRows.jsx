@@ -18,7 +18,9 @@ import {
   InputLabel,
 } from "@mui/material";
 import BooleanInput from "../../configurableObject/Inputs/BooleanInput";
-import FormSchemaFieldCard from "../../shared/FormSchemaFieldCard";
+import FormSchemaFieldCard, {
+  DescriptionBlock,
+} from "../../shared/FormSchemaFieldCard";
 import { useTranslation } from "react-i18next";
 import { SplitscreenOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
@@ -58,20 +60,10 @@ function SplitsCard({ label, description, errorMessage, children, warning }) {
       </Box>
       {(description || errorMessage || warning) && (
         <Box sx={{ px: 8, pb: 2 }}>
-          <Typography
-            component="span"
-            variant="caption"
-            color={
-              errorMessage
-                ? "error.main"
-                : warning
-                  ? "warning.main"
-                  : "text.disabled"
-            }
-            sx={{ display: "block", lineHeight: 1.5 }}
-          >
-            {errorMessage ?? description}
-          </Typography>
+          <DescriptionBlock
+            text={errorMessage ?? description}
+            isError={Boolean(errorMessage)}
+          />
         </Box>
       )}
     </Paper>
@@ -445,8 +437,8 @@ function SplitDatasetRows({
           >
             <Box
               sx={{
-                px: 2,
-                py: 0.75,
+                px: 8,
+                py: 3,
                 borderBottom: "1px solid",
                 borderColor: "divider",
               }}
@@ -455,7 +447,7 @@ function SplitDatasetRows({
                 {t("experiments:label.splitType")}
               </Typography>
             </Box>
-            <Box sx={{ px: 2, pt: 0.5, pb: 1 }}>
+            <Box sx={{ px: 8, pt: 2, pb: 4 }}>
               <ToggleButtonGroup
                 value={splitType}
                 exclusive
