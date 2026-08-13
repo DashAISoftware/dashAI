@@ -55,8 +55,8 @@ def build_explainer(scope: str, selected: dict, trained_model: Any) -> Any:
     except Exception as e:
         log.exception(e)
         raise JobError(
-            f"""Unable to find the {scope} explainer with name
-                            {explainer_name} in registry.""",
+            f"Unable to find the {scope} explainer with name "
+            f"{explainer_name} in registry.",
         ) from e
 
     try:

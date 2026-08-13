@@ -489,3 +489,34 @@ def test_datafile_unit_has_its_own_wording_for_an_unknown_reader(
         )(ExecutionContext())
 
     assert str(excinfo.value) == "DataLoader 'NoSuchLoader' not found in registry."
+
+
+def test_datafile_unit_rejects_a_component_that_is_not_a_reader(
+    datafile_rows, csv_file, tmp_path
+):
+    """A registered component of some other kind is still not a reader.
+
+    The registry's ``registry[name]`` indexer searches every type at once, so
+    looking the name up that way would find, say, a metric and call it as if it
+    could parse a file. The lookup is deliberately scoped to the readers.
+    """
+    from DashAI.back.core.enums.status import DatafileStatus
+    from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
+    from DashAI.back.dependencies.registry import ComponentRegistry
+    from DashAI.back.metrics.classification.accuracy import Accuracy
+
+    di["component_registry"] = ComponentRegistry(
+        initial_components=[CSVDataLoader, Accuracy]
+    )
+    datafile_rows[7] = _DatafileRow(str(tmp_path), DatafileStatus.READY)
+    try:
+        with pytest.raises(JobError) as excinfo:
+            LoadDatafileDatasetUnit(
+                dataloader={"component": "Accuracy", "params": {}},
+                datafile_id=7,
+                selected_file="data.csv",
+            )(ExecutionContext())
+    finally:
+        del di["component_registry"]
+
+    assert str(excinfo.value) == "DataLoader 'Accuracy' not found in registry."
