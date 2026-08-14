@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import {
   Box,
+  Button,
+  Checkbox,
   Typography,
   Collapse,
   IconButton,
@@ -13,6 +15,7 @@ import {
   TextField,
   styled,
 } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
 import { useTheme } from "@mui/material/styles";
 import FolderIcon from "@mui/icons-material/Folder";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
@@ -23,6 +26,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import StorageIcon from "@mui/icons-material/Storage";
+import { DisabledByDefaultOutlined as SelectItemsIcon } from "@mui/icons-material";
 import {
   DndContext,
   DragOverlay,
@@ -98,6 +102,9 @@ function FolderSection({
   getDeleteConfirmationWarning,
   onRenameFolder,
   onDeleteFolder,
+  selectionMode,
+  selectedIds,
+  onToggleSelect,
 }) {
   const theme = useTheme();
   const [open, setOpen] = useState(defaultOpen ?? true);
@@ -282,8 +289,8 @@ function FolderSection({
         <Collapse in={open} timeout="auto">
           <Box pl={6}>
             {items?.length ? (
-              items.map((item) => (
-                <DraggableDataset key={item.id} dataset={item}>
+              items.map((item) => {
+                const itemBox = (
                   <ItemBox
                     isSelected={item.id === selectedItemId}
                     name={item.name}
@@ -309,9 +316,19 @@ function FolderSection({
                         ? getDeleteConfirmationWarning(item)
                         : undefined
                     }
+                    selectable={selectionMode}
+                    checked={selectedIds?.has(item.id)}
+                    onToggleSelect={onToggleSelect}
                   />
-                </DraggableDataset>
-              ))
+                );
+                return selectionMode ? (
+                  <Box key={item.id}>{itemBox}</Box>
+                ) : (
+                  <DraggableDataset key={item.id} dataset={item}>
+                    {itemBox}
+                  </DraggableDataset>
+                );
+              })
             ) : (
               <Typography
                 variant="body2"
@@ -358,6 +375,7 @@ export default function DatasetFolderList({
   onCreateFolder,
   onRenameFolder,
   onDeleteFolder,
+  onBulkDelete,
   getItemDescription,
   getDeleteConfirmationContent,
   getDeleteConfirmationWarning,
@@ -369,6 +387,10 @@ export default function DatasetFolderList({
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const newFolderInputRef = useRef(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   useEffect(() => {
     if (isCreatingFolder && newFolderInputRef.current) {
@@ -435,6 +457,47 @@ export default function DatasetFolderList({
   const noFolderDatasets = datasets.filter((d) => !d.folder_id);
   const totalCount = datasets.length;
 
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const allSelected =
+    totalCount > 0 && datasets.every((d) => selectedIds.has(d.id));
+
+  const handleToggleSelectAll = () => {
+    setSelectedIds(
+      allSelected ? new Set() : new Set(datasets.map((d) => d.id)),
+    );
+  };
+
+  const handleExitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkDeleteConfirm = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) {
+      setBulkDeleteOpen(false);
+      return;
+    }
+    setBulkDeleting(true);
+    try {
+      const success = await onBulkDelete(ids);
+      setBulkDeleteOpen(false);
+      if (success !== false) {
+        handleExitSelectionMode();
+      }
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   return (
     <Box
       display="flex"
@@ -451,47 +514,114 @@ export default function DatasetFolderList({
         mb={2}
         sx={{ borderRadius: 1 }}
       >
-        <StorageIcon
-          sx={{ color: theme.palette.primary.main, mr: 2, fontSize: 20 }}
-        />
-        <Typography
-          sx={{
-            ...theme.typography.h5,
-            flex: 1,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-          color="text.primary"
-        >
-          {title || t("common:availableItems", "Available Items")}
-        </Typography>
-        <Typography
-          variant="body2"
-          component="div"
-          sx={{
-            bgcolor: "primary.main",
-            color: "primary.contrastText",
-            borderRadius: "50%",
-            width: 20,
-            height: 20,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mr: 2,
-          }}
-        >
-          {totalCount}
-        </Typography>
-        <Tooltip title={t("datasets:label.newFolder", "New folder")}>
-          <IconButton size="small" onClick={() => setIsCreatingFolder(true)}>
-            <CreateNewFolderIcon sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Tooltip>
+        {selectionMode ? (
+          <>
+            <Checkbox
+              size="small"
+              checked={allSelected}
+              indeterminate={!allSelected && selectedIds.size > 0}
+              onChange={handleToggleSelectAll}
+              sx={{ p: 0.5, mr: 1 }}
+            />
+            <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+              {t("common:selected", "Selected")} ({selectedIds.size})
+            </Typography>
+            <Tooltip
+              title={t("datasets:button.deleteSelectedDatasets", {
+                defaultValue: "Delete Selected ({{count}})",
+                count: selectedIds.size,
+              })}
+            >
+              <span>
+                <LoadingButton
+                  size="small"
+                  variant="contained"
+                  color="error"
+                  startIcon={<DeleteIcon fontSize="small" />}
+                  disabled={selectedIds.size === 0}
+                  loading={bulkDeleting}
+                  onClick={() => setBulkDeleteOpen(true)}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 500,
+                    mr: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  ({selectedIds.size})
+                </LoadingButton>
+              </span>
+            </Tooltip>
+            <Button size="small" onClick={handleExitSelectionMode}>
+              {t("common:cancel")}
+            </Button>
+          </>
+        ) : (
+          <>
+            <StorageIcon
+              sx={{ color: theme.palette.primary.main, mr: 2, fontSize: 20 }}
+            />
+            <Typography
+              sx={{
+                ...theme.typography.h5,
+                flex: 1,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+              color="text.primary"
+            >
+              {title || t("common:availableItems", "Available Items")}
+            </Typography>
+            <Typography
+              variant="body2"
+              component="div"
+              sx={{
+                bgcolor: "primary.main",
+                color: "primary.contrastText",
+                borderRadius: "50%",
+                width: 20,
+                height: 20,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                mr: 2,
+              }}
+            >
+              {totalCount}
+            </Typography>
+            <Tooltip title={t("datasets:label.newFolder", "New folder")}>
+              <IconButton
+                size="small"
+                onClick={() => setIsCreatingFolder(true)}
+              >
+                <CreateNewFolderIcon sx={{ fontSize: 18 }} />
+              </IconButton>
+            </Tooltip>
+            {onBulkDelete && (
+              <Tooltip
+                title={t(
+                  "datasets:label.selectDatasetsToDelete",
+                  "Select datasets to delete",
+                )}
+              >
+                <span>
+                  <IconButton
+                    size="small"
+                    disabled={totalCount === 0}
+                    onClick={() => setSelectionMode(true)}
+                  >
+                    <SelectItemsIcon sx={{ fontSize: 18 }} />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+          </>
+        )}
       </Box>
 
       {/* New folder input */}
-      {isCreatingFolder && (
+      {!selectionMode && isCreatingFolder && (
         <Box display="flex" alignItems="center" px={4} pb={2} gap={1}>
           <FolderIcon
             sx={{ fontSize: 18, color: theme.palette.primary.main }}
@@ -558,14 +688,17 @@ export default function DatasetFolderList({
                 getDeleteConfirmationWarning={getDeleteConfirmationWarning}
                 onRenameFolder={onRenameFolder}
                 onDeleteFolder={onDeleteFolder}
+                selectionMode={selectionMode}
+                selectedIds={selectedIds}
+                onToggleSelect={handleToggleSelect}
               />
             );
           })}
 
           {/* Loose datasets — no folder */}
           <DroppableFolder id={NO_FOLDER_ID} isOver={overId === NO_FOLDER_ID}>
-            {noFolderDatasets.map((item) => (
-              <DraggableDataset key={item.id} dataset={item}>
+            {noFolderDatasets.map((item) => {
+              const itemBox = (
                 <ItemBox
                   isSelected={item.id === selectedItemId}
                   name={item.name}
@@ -589,9 +722,19 @@ export default function DatasetFolderList({
                       ? getDeleteConfirmationWarning(item)
                       : undefined
                   }
+                  selectable={selectionMode}
+                  checked={selectedIds.has(item.id)}
+                  onToggleSelect={handleToggleSelect}
                 />
-              </DraggableDataset>
-            ))}
+              );
+              return selectionMode ? (
+                <Box key={item.id}>{itemBox}</Box>
+              ) : (
+                <DraggableDataset key={item.id} dataset={item}>
+                  {itemBox}
+                </DraggableDataset>
+              );
+            })}
           </DroppableFolder>
 
           {/* Drag overlay — ghost item while dragging */}
@@ -616,6 +759,21 @@ export default function DatasetFolderList({
           </DragOverlay>
         </DndContext>
       </Box>
+
+      <DeleteConfirmationModal
+        open={bulkDeleteOpen}
+        onClose={() => setBulkDeleteOpen(false)}
+        onConfirm={handleBulkDeleteConfirm}
+        content={t(
+          "datasets:label.confirmBulkDeleteDatasets",
+          "Are you sure you want to delete the {{count}} selected datasets? This action cannot be undone.",
+          { count: selectedIds.size },
+        )}
+        warning={t(
+          "datasets:label.confirmDeleteDatasetLinkedWarning",
+          "All notebooks and sessions linked to this dataset will also be deleted.",
+        )}
+      />
     </Box>
   );
 }

@@ -338,16 +338,14 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         y_array = y_sample.to_numpy().ravel()
         column_names = list(x_sample.columns)
 
-        # Access the underlying sklearn model
-        sklearn_model = self.model
-
         def get_predictions(data):
             """Obtain predicted class probabilities for the given data.
 
             Parameters
             ----------
             data : pandas.DataFrame
-                Input features as a DataFrame with the original column names.
+                Input features as a DataFrame with the original column names,
+                already in the model feature space.
 
             Returns
             -------
@@ -356,7 +354,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 probabilities for each class.
             """
             # Keep as DataFrame to preserve column names
-            return sklearn_model.predict_proba(data)
+            return self.model.predict_proba_prepared(data)
 
         def calc_score(y_true, y_pred_probas):
             """Compute the scoring metric from probability predictions.
@@ -442,12 +440,15 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         from sklearn.metrics import make_scorer
         from sklearn.preprocessing import LabelEncoder
 
-        from DashAI.back.explainability.model_input import prepare_model_input
+        from DashAI.back.explainability.model_input import (
+            as_sklearn_estimator,
+            prepare_model_input,
+        )
 
         x, y = dataset
 
-        # permutation_importance permutes the frame and calls the model with
-        # it, bypassing the model preparation.
+        # permutation_importance permutes the frame and calls the estimator
+        # with it, bypassing the model preparation.
         x_test = prepare_model_input(self.model, x["test"])
         y_test = y["test"]
 
@@ -510,7 +511,9 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 return self.scoring(y_true, np.argmax(y_pred_probas, axis=1))
 
             pfi = permutation_importance(
-                estimator=self.model,
+                estimator=as_sklearn_estimator(
+                    self.model, classes=np.unique(y_df.to_numpy().ravel())
+                ),
                 X=X_df,
                 y=y_df,
                 scoring=make_scorer(patched_metric),

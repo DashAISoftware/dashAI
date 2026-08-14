@@ -12,7 +12,10 @@ from DashAI.back.api.api_v1.api import api_router_v1
 from DashAI.back.api.front_api import router as app_router
 from DashAI.back.container import build_container
 from DashAI.back.dependencies.config_builder import build_config_dict
-from DashAI.back.dependencies.database.backfill import backfill_dataset_counts
+from DashAI.back.dependencies.database.backfill import (
+    backfill_dataset_counts,
+    backfill_explorer_artifacts,
+)
 from DashAI.back.dependencies.database.migrate import migrate_on_startup
 from DashAI.back.seeds import seed_datasets_if_first_run
 
@@ -93,6 +96,11 @@ def create_app(
 
     logger.debug("4b. Backfilling dataset row/column counts.")
     backfill_dataset_counts(di["session_factory"])
+
+    # Runs after the container so the explorer classes are registered: old
+    # explorations can only be upgraded while their explorer is installed.
+    logger.debug("4b-bis. Backfilling explorer render artifacts.")
+    backfill_explorer_artifacts(di["session_factory"])
 
     if enable_seeding:
         logger.debug("4c. Seeding initial datasets if first run.")
