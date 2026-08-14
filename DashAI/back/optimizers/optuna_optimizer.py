@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -7,6 +9,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
+
+if TYPE_CHECKING:
+    import optuna
 
 
 class OptunaSchema(BaseSchema):
@@ -116,6 +121,55 @@ class OptunaSchema(BaseSchema):
     )  # type: ignore
 
 
+def _build_pruner(name: "str | None") -> "optuna.pruners.BasePruner":
+    """Resolve a pruner name from the schema into an Optuna pruner instance.
+
+    ``create_study`` accepts any object for ``pruner`` without validating it, so
+    passing the raw schema string silently produces a study whose pruner is a
+    ``str``. The failure only surfaces later, as
+    ``AttributeError: 'str' object has no attribute 'prune'``.
+
+    ``"None"`` (the string the schema sends when pruning is disabled) maps to
+    ``NopPruner``, Optuna's explicit no-op.
+
+    Only pruners that Optuna can build with default arguments are supported.
+    ``PatientPruner``, ``PercentilePruner`` and ``ThresholdPruner`` need
+    configuration (a wrapped pruner, a percentile, a threshold), so exposing them
+    means adding those fields to the schema first.
+    """
+    import optuna
+
+    if name in (None, "", "None"):
+        return optuna.pruners.NopPruner()
+
+    pruner_class = getattr(optuna.pruners, name, None)
+    if pruner_class is None:
+        raise ValueError(f"Unknown pruner '{name}'. Available: {_no_arg_pruners()}")
+    try:
+        return pruner_class()
+    except TypeError as exc:
+        raise ValueError(
+            f"Pruner '{name}' requires configuration and cannot be built from its "
+            f"name alone. Available: {_no_arg_pruners()}"
+        ) from exc
+
+
+def _no_arg_pruners() -> "list[str]":
+    """Pruner names Optuna can instantiate with no arguments."""
+    import optuna
+
+    names = []
+    for name in dir(optuna.pruners):
+        if not name.endswith("Pruner") or name == "BasePruner":
+            continue
+        try:
+            getattr(optuna.pruners, name)()
+        except TypeError:
+            continue
+        names.append(name)
+    return sorted(names)
+
+
 class OptunaOptimizer(BaseOptimizer):
     DISPLAY_NAME: str = MultilingualString(
         en="Optuna Optimizer",
@@ -163,6 +217,7 @@ class OptunaOptimizer(BaseOptimizer):
         import optuna
 
         sampler = getattr(optuna.samplers, self.sampler)
+        pruner = _build_pruner(self.pruner)
 
         self.model = model
         self.input_dataset = input_dataset
@@ -170,7 +225,7 @@ class OptunaOptimizer(BaseOptimizer):
         self.parameters = parameters
         direction = "maximize" if metric["metadata"]["maximize"] else "minimize"
         study = optuna.create_study(
-            direction=direction, sampler=sampler(), pruner=self.pruner
+            direction=direction, sampler=sampler(), pruner=pruner
         )
 
         self.metric = metric["class"]
