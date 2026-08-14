@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 def as_shap_predictor(model: Any) -> Callable:
-    """Wrap ``model.predict`` so SHAP receives a plain function, not a method.
+    """Wrap the model's prepared-matrix prediction so SHAP gets a plain function.
 
     SHAP suppresses scikit-learn's "X does not have valid feature names"
     warning by blanking ``feature_names_in_`` on whatever object the callable
@@ -43,6 +43,13 @@ def as_shap_predictor(model: Any) -> Callable:
     interface for ``model``. The only thing lost is the suppression of a
     cosmetic scikit-learn warning.
 
+    It routes to ``predict_prepared``, not to ``predict``. Callers hand SHAP a
+    background already moved into the model's feature space with
+    ``prepare_model_input``, and SHAP then queries the model with perturbed
+    copies of *that* matrix. Going through ``predict`` would run the model's
+    input preparation a second time over an already prepared matrix — and SHAP
+    passes plain arrays, which the preparation cannot consume at all.
+
     Parameters
     ----------
     model : Any
@@ -51,12 +58,12 @@ def as_shap_predictor(model: Any) -> Callable:
     Returns
     -------
     Callable
-        A one-argument function calling ``model.predict`` positionally, the
-        same way SHAP calls it today.
+        A one-argument function calling ``model.predict_prepared``
+        positionally, the same way SHAP calls it.
     """
 
     def predict(x):
-        return model.predict(x)
+        return model.predict_prepared(x)
 
     return predict
 
