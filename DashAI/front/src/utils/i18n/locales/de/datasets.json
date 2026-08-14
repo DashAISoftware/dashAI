@@ -125,6 +125,7 @@
     "confirmBulkDeleteDatasets_other": "Sind Sie sicher, dass Sie die {{count}} ausgewählten Datensätze löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "selectDatasetsToDelete": "Datensätze zum Löschen auswählen",
     "confirmDeleteNotebook": "Sind Sie sicher, dass Sie das Notizbuch \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmBulkDeleteNotebooks": "Sind Sie sicher, dass Sie die {{count}} ausgewählten Notizbücher löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "confirmBulkDeleteNotebooks_one": "Sind Sie sicher, dass Sie das ausgewählte Notizbuch löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "confirmBulkDeleteNotebooks_other": "Sind Sie sicher, dass Sie die {{count}} ausgewählten Notizbücher löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "selectNotebooksToDelete": "Notizbücher zum Löschen auswählen",

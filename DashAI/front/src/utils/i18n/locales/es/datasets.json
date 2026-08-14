@@ -130,6 +130,7 @@
     "confirmBulkDeleteDatasets_other": "¿Seguro que quieres eliminar los {{count}} datasets seleccionados? Esta acción no se puede deshacer.",
     "selectDatasetsToDelete": "Seleccionar datasets para eliminar",
     "confirmDeleteNotebook": "¿Seguro que quieres eliminar el notebook \"{{name}}\"? Esta acción no se puede deshacer.",
+    "confirmBulkDeleteNotebooks": "¿Seguro que quieres eliminar los {{count}} notebooks seleccionados? Esta acción no se puede deshacer.",
     "confirmBulkDeleteNotebooks_one": "¿Seguro que quieres eliminar el notebook seleccionado? Esta acción no se puede deshacer.",
     "confirmBulkDeleteNotebooks_many": "¿Seguro que quieres eliminar los {{count}} notebooks seleccionados? Esta acción no se puede deshacer.",
     "confirmBulkDeleteNotebooks_other": "¿Seguro que quieres eliminar los {{count}} notebooks seleccionados? Esta acción no se puede deshacer.",
