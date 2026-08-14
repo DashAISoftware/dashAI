@@ -120,6 +120,10 @@ function FolderSection({
     }
   }, [isRenaming]);
 
+  useEffect(() => {
+    if (selectionMode) setOpen(true);
+  }, [selectionMode]);
+
   const handleRenameKeyDown = async (e) => {
     if (e.key === "Enter") {
       if (renameValue.trim() && renameValue.trim() !== folderName) {

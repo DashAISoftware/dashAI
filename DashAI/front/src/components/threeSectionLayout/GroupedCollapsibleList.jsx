@@ -254,7 +254,16 @@ export default function GroupedCollapsibleList({
                 <IconButton
                   size="small"
                   disabled={totalCount === 0}
-                  onClick={() => setSelectionMode(true)}
+                  onClick={() => {
+                    setSelectionMode(true);
+                    setOpenGroups((prev) => {
+                      const next = { ...prev };
+                      Object.keys(groups).forEach((groupName) => {
+                        next[groupName] = true;
+                      });
+                      return next;
+                    });
+                  }}
                 >
                   <SelectItemsIcon sx={{ fontSize: 18 }} />
                 </IconButton>
