@@ -38,6 +38,8 @@ export function ModelsProvider({ children }) {
     replaceDatasets,
     startDatasetPolling,
     moveDatasetToFolder,
+    datasetRowCount,
+    setDatasetRowCount,
   } = useDatasets({ t });
 
   const {
@@ -225,6 +227,8 @@ export function ModelsProvider({ children }) {
       clearLastAddedRunId,
       datasetInfo,
       setDatasetInfo,
+      datasetRowCount,
+      setDatasetRowCount,
       datasetTab,
       setDatasetTab,
       sessionRightContent,
@@ -292,6 +296,7 @@ export function ModelsProvider({ children }) {
       lastAddedRunId,
       clearLastAddedRunId,
       datasetInfo,
+      datasetRowCount,
       datasetTab,
       sessionRightContent,
       runDetailTab,

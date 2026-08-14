@@ -31,6 +31,7 @@ import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
 import { getDatasetInfo } from "../../api/datasets";
+import { useModels } from "./ModelsContext";
 
 const DEFAULT_INNER_CONFIG = {
   splitterType: null, // null means: derive from outer splitter on mount
@@ -67,6 +68,7 @@ function AddModelDialog({
   const [totalRows, setTotalRows] = useState(null);
   const [modelDownloaded, setModelDownloaded] = useState(true);
   const [missingNested, setMissingNested] = useState([]);
+  const { datasetRowCount } = useModels();
   const { t } = useTranslation(["models", "common"]);
 
   const { defaultValues: defaultModelParams } = useSchema({
@@ -88,23 +90,6 @@ function AddModelDialog({
   const outerSplit = useMemo(() => {
     return session?.splits ? JSON.parse(session.splits) : null;
   }, [session?.splits]);
-
-  useEffect(() => {
-    const load = async () => {
-      if (!open || !session?.dataset_id) return;
-      const info = await getDatasetInfo(Number(session.dataset_id));
-      setTotalRows(info.total_rows);
-    };
-    load();
-  }, [open, session?.dataset_id]);
-
-  // Derive outer splitter type from session to set a smart default for inner splitter
-  useEffect(() => {
-    if (open && outerSplit && innerConfig.splitterType === null) {
-      const outerType = outerSplit.splitter_name;
-      setInnerConfig((prev) => ({ ...prev, splitterType: outerType }));
-    }
-  }, [open, innerConfig.splitterType]);
 
   useEffect(() => {
     if (open && selectedModel) {
@@ -338,11 +323,7 @@ function AddModelDialog({
     setSelectedOptimizer(optimizerName);
   };
 
-  const maxInnerFolds = useMemo(() => {
-    if (!useNestedCV || !outerSplit) return null;
-    const k = outerSplit.n_splits;
-    return Math.floor(totalRows / k);
-  }, [useNestedCV, outerSplit, totalRows]);
+  const maxInnerFolds = Math.floor(datasetRowCount / outerSplit?.n_splits);
 
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
   const isStep2Valid = Boolean(

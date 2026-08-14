@@ -16,8 +16,6 @@ import { useTranslation } from "react-i18next";
 import { getComponentById, getComponents } from "../../../api/component";
 import { useSnackbar } from "notistack";
 
-const DEFAULT_INNER_FOLDS = 2;
-
 /**
  * Component for selecting nested cross-validation option with informational messages.
  * When nested CV is enabled, allows configuring the inner loop splitter and folds.
@@ -27,7 +25,6 @@ const DEFAULT_INNER_FOLDS = 2;
  * @param {object} innerConfig - Inner loop configuration { splitterType, nSplits }
  * @param {function} onInnerConfigChange - Callback when inner config changes
  * @param {object} outerSplit - session.splits object from the parent session
- * @param {boolean} [disabled] - Whether to disable the checkbox
  * @param {number} maxInnerFolds - The maximum number of inner folds allowed
  */
 function NestedCVSelector({
@@ -36,15 +33,12 @@ function NestedCVSelector({
   innerConfig,
   onInnerConfigChange,
   outerSplit,
-  disabled = false,
   maxInnerFolds,
 }) {
   const { t } = useTranslation(["models", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const [outerSplitterComponent, setOuterSplitterComponent] = useState(null);
   const [innerSplitterOptions, setInnerSplitterOptions] = useState([]);
-
-  const outerNSplits = outerSplit?.n_splits || 2;
 
   useEffect(() => {
     const getInnerSplitters = async () => {
@@ -73,6 +67,11 @@ function NestedCVSelector({
     getInnerSplitters();
   }, [outerSplit, enqueueSnackbar, t]);
 
+  console.log("outerSplit:", outerSplit);
+  console.log("innerConfig:", innerConfig);
+  console.log("splitterType:", innerConfig?.splitterType);
+  console.log("useNestedCV:", useNestedCV);
+
   const learnMoreLink = (
     <Link
       href="https://scikit-learn.org/stable/auto_examples/model_selection/plot_nested_cross_validation_iris.html"
@@ -96,7 +95,7 @@ function NestedCVSelector({
     });
   };
 
-  const foldsValue = innerConfig?.nSplits ?? DEFAULT_INNER_FOLDS;
+  const foldsValue = innerConfig?.nSplits;
   const currentFolds = Number(foldsValue);
   const showFoldsWarning =
     foldsValue === "" ||
@@ -111,7 +110,6 @@ function NestedCVSelector({
           <Checkbox
             checked={useNestedCV}
             onChange={(e) => onChange(e.target.checked)}
-            disabled={disabled}
           />
         }
         label={t("models:label.nestedCrossValidation")}
@@ -161,21 +159,37 @@ function NestedCVSelector({
 
           {/* Outer loop — read only for reference */}
           <Box sx={{ display: "flex", gap: 2 }}>
-            <TextField
-              label={t("models:label.outerSplitter")}
-              value={outerSplitterComponent?.display_name}
-              size="small"
-              disabled
-              fullWidth
-              helperText={t("models:label.outerSplitterInherited")}
-            />
-            <TextField
-              label={t("models:label.outerFolds")}
-              value={outerNSplits}
-              size="small"
-              disabled
-              sx={{ maxWidth: 120 }}
-            />
+            <Box sx={{ flex: 1 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 0.5, display: "block" }}
+              >
+                {t("models:label.outerSplitter")}
+              </Typography>
+              <TextField
+                value={outerSplitterComponent?.display_name || "-"}
+                size="small"
+                disabled
+                fullWidth
+                helperText={t("models:label.outerSplitterInherited")}
+              />
+            </Box>
+            <Box sx={{ width: 120 }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ mb: 0.5, display: "block" }}
+              >
+                {t("models:label.outerFolds")}
+              </Typography>
+              <TextField
+                value={outerSplit?.n_splits ?? "-"}
+                size="small"
+                disabled
+                fullWidth
+              />
+            </Box>
           </Box>
 
           <Divider />
@@ -185,7 +199,7 @@ function NestedCVSelector({
             <TextField
               select
               label={t("models:label.innerSplitter")}
-              value={innerConfig?.splitterType || innerSplitterOptions[0].name}
+              value={innerConfig?.splitterType}
               onChange={handleInnerSplitterChange}
               size="small"
               fullWidth
