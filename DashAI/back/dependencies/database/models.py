@@ -342,12 +342,13 @@ class GlobalExplainer(Base):
     Table to store all the information about a global explainer.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=True)
     run_id: Mapped[int] = mapped_column(nullable=False)
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     explainer_name: Mapped[str] = mapped_column(String, nullable=False)
     explanation_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_path: Mapped[str] = mapped_column(String, nullable=True)
+    plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     status: Mapped[Enum] = mapped_column(
@@ -383,13 +384,15 @@ class LocalExplainer(Base):
     Table to store all the information about a local explainer.
     """
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=True)
     run_id: Mapped[int] = mapped_column(nullable=False)
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     explainer_name: Mapped[str] = mapped_column(String, nullable=False)
     dataset_id: Mapped[int] = mapped_column(nullable=False)
     explanation_path: Mapped[str] = mapped_column(String, nullable=True)
     plots_path: Mapped[str] = mapped_column(String, nullable=True)
+    plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    input_dataset_path: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON)
     fit_parameters: Mapped[JSON] = mapped_column(JSON)
     scope: Mapped[JSON] = mapped_column(JSON)
@@ -696,6 +699,9 @@ class Explorer(Base):
     exploration_type: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
     exploration_path: Mapped[str] = mapped_column(String, nullable=True)
+    # Render artifacts built once, when the exploration is created, so results
+    # keep rendering after the explorer class is removed from the registry.
+    artifacts_path: Mapped[str] = mapped_column(String, nullable=True)
     # Metadata
     name: Mapped[str] = mapped_column(String, nullable=True)
 
@@ -729,6 +735,11 @@ class Explorer(Base):
 
     def delete_result(self) -> None:
         """Delete the result of the explorer."""
+        from DashAI.back.exploration.artifact_store import delete_artifacts
+
+        delete_artifacts(self.artifacts_path)
+        self.artifacts_path = None
+
         if self.exploration_path is not None:
             path = pathlib.Path(self.exploration_path)
             if path.exists():

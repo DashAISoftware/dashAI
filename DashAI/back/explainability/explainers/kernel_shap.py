@@ -1,6 +1,10 @@
 from typing import List, Optional
 
-from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotlyArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
@@ -329,9 +333,14 @@ class KernelShap(BaseLocalExplainer):
         """
         sample_background_data = bool(sample_background_data)
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = background_dataset
 
-        x_train = x["train"]
+        # SHAP perturbs the background frame and calls the model with it, so
+        # the background must already be in the model's feature space and the
+        # model must be queried through predict_prepared.
+        x_train = prepare_model_input(self.model, x["train"])
         y_train = y["train"]
 
         background_data = x_train.to_pandas()
@@ -352,12 +361,11 @@ class KernelShap(BaseLocalExplainer):
                 categorical_features,
             )
 
-        # TODO: consider the case where the predictor is not a Sklearn model
         # Lazy import of shap
         import shap
 
         self.explainer = shap.KernelExplainer(
-            model=self.model.predict,
+            model=self.model.predict_prepared,
             data=background_data,
             feature_names=feature_names,
             link=self.link,
@@ -388,13 +396,10 @@ class KernelShap(BaseLocalExplainer):
             dictionary with the shap values for each instance.
         """
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.explainability.model_input import prepare_model_input
 
         dataset_dashai = to_dashai_dataset(instances)
-
-        if hasattr(self.model, "prepare_dataset"):
-            dataset_prepared = self.model.prepare_dataset(dataset_dashai, is_fit=False)
-        else:
-            dataset_prepared = dataset_dashai
+        dataset_prepared = prepare_model_input(self.model, dataset_dashai)
 
         X = dataset_prepared.to_pandas()
 
@@ -520,7 +525,7 @@ class KernelShap(BaseLocalExplainer):
 
         return PlotlyArtifact(payload=fig, title=title)
 
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Method to create the explanation plots using plotly.
 
         Parameters
@@ -530,9 +535,9 @@ class KernelShap(BaseLocalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A list with one plotly artifact per explained instance; the
-            artifact titles ("Instance 1", ...) identify each instance.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group ("Instance 1", ...) per
+            explained instance, each holding that instance's plotly plot.
         """
 
         exp = explanation.copy()
@@ -550,7 +555,7 @@ class KernelShap(BaseLocalExplainer):
 
         feats = np.asarray(feature_names, dtype=str).reshape(-1)
 
-        plots = []
+        groups = []
         for instance_number, i in enumerate(exp, start=1):
             instance_values = exp[i]["instance_values"]
             model_prediction = exp[i]["model_prediction"]
@@ -656,8 +661,9 @@ class KernelShap(BaseLocalExplainer):
                 base_value,
                 y_pred_pbb,
                 y_pred_name,
-                title=f"Instance {instance_number}",
             )
-            plots.append(plot)
+            groups.append(
+                ArtifactGroup(title=f"Instance {instance_number}", artifacts=[plot])
+            )
 
-        return plots
+        return [GroupedArtifacts(groups=groups)]

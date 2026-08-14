@@ -1,6 +1,10 @@
 from typing import Dict, List, Union
 
-from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
+from DashAI.back.core.artifacts import (
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotlyArtifact,
+)
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -334,16 +338,14 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         y_array = y_sample.to_numpy().ravel()
         column_names = list(x_sample.columns)
 
-        # Access the underlying sklearn model
-        sklearn_model = self.model
-
         def get_predictions(data):
             """Obtain predicted class probabilities for the given data.
 
             Parameters
             ----------
             data : pandas.DataFrame
-                Input features as a DataFrame with the original column names.
+                Input features as a DataFrame with the original column names,
+                already in the model feature space.
 
             Returns
             -------
@@ -352,7 +354,7 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 probabilities for each class.
             """
             # Keep as DataFrame to preserve column names
-            return sklearn_model.predict_proba(data)
+            return self.model.predict_proba_prepared(data)
 
         def calc_score(y_true, y_pred_probas):
             """Compute the scoring metric from probability predictions.
@@ -438,9 +440,16 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
         from sklearn.metrics import make_scorer
         from sklearn.preprocessing import LabelEncoder
 
+        from DashAI.back.explainability.model_input import (
+            as_sklearn_estimator,
+            prepare_model_input,
+        )
+
         x, y = dataset
 
-        x_test = x["test"]
+        # permutation_importance permutes the frame and calls the estimator
+        # with it, bypassing the model preparation.
+        x_test = prepare_model_input(self.model, x["test"])
         y_test = y["test"]
 
         X_df = x_test.to_pandas()
@@ -502,7 +511,9 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 return self.scoring(y_true, np.argmax(y_pred_probas, axis=1))
 
             pfi = permutation_importance(
-                estimator=self.model,
+                estimator=as_sklearn_estimator(
+                    self.model, classes=np.unique(y_df.to_numpy().ravel())
+                ),
                 X=X_df,
                 y=y_df,
                 scoring=make_scorer(patched_metric),
@@ -517,76 +528,49 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
                 "importances_std": np.round(pfi["importances_std"], 3).tolist(),
             }
 
-    def _create_plot(self, data, n_features: int):
-        """Build a Plotly horizontal bar chart of feature importances.
+    def _create_plot(self, data) -> List[GroupedArtifacts]:
+        """Build one selector over feature counts.
+
+        Each count (from all features down to one) is a selectable group
+        holding the horizontal bar chart of the top ``count`` most important
+        features, so the frontend lists the counts in a selector instead of a
+        dropdown embedded in a single figure.
 
         Parameters
         ----------
         data : pandas.DataFrame
             DataFrame with columns ``"features"``, ``"importances_mean"``, and
             ``"importances_std"``, sorted ascending by importance.
-        n_features : int
-            Number of top features (last rows of ``data``) to display in the
-            default view. A dropdown menu lets users cycle through all counts.
 
         Returns
         -------
-        List[Artifact]
-            A single-element list with the plotly artifact of the
-            explanation plot.
+        List[GroupedArtifacts]
+            A single grouped artifact with one group (a bar chart) per feature
+            count, most features first.
         """
         # Lazy imports
         import plotly.express as px
 
-        fig = px.bar(
-            data.iloc[-n_features:],
-            x=data.iloc[-n_features:]["importances_mean"],
-            y=data.iloc[-n_features:]["features"],
-            error_x=data.iloc[-n_features:]["importances_std"],
-        )
+        groups = []
+        for count in range(len(data), 0, -1):
+            subset = data.iloc[-count:]
+            fig = px.bar(
+                subset,
+                x=subset["importances_mean"],
+                y=subset["features"],
+                error_x=subset["importances_std"],
+            )
+            fig.update_layout(xaxis_title="Importance", yaxis_title=None)
+            groups.append(
+                ArtifactGroup(
+                    title=f"Top {count} features",
+                    artifacts=[PlotlyArtifact(payload=fig)],
+                )
+            )
 
-        fig.update_layout(
-            xaxis_title="Importance",
-            yaxis_title=None,
-            annotations=[
-                {
-                    "text": "",
-                    "showarrow": False,
-                    "x": 0,
-                    "y": 1.15,
-                    "xanchor": "left",
-                    "xref": "paper",
-                    "yref": "paper",
-                    "yanchor": "top",
-                }
-            ],
-            updatemenus=[
-                {
-                    "x": 0,
-                    "xanchor": "left",
-                    "y": 1.2,
-                    "yanchor": "top",
-                    "buttons": [
-                        {
-                            "label": f"N° features: {len(data.iloc[-c:,])}",
-                            "method": "restyle",
-                            "args": [
-                                {
-                                    "x": [data.iloc[-c:]["importances_mean"]],
-                                    "y": [data.iloc[-c:]["features"]],
-                                    "error_x": [data.iloc[-c:]["importances_std"]],
-                                },
-                            ],
-                        }
-                        for c in range(len(data))
-                    ],
-                }
-            ],
-        )
+        return [GroupedArtifacts(groups=groups)]
 
-        return [PlotlyArtifact(payload=fig, title="Permutation Feature Importance")]
-
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[GroupedArtifacts]:
         """Create a Plotly bar chart from a feature importance explanation dict.
 
         Parameters
@@ -597,18 +581,14 @@ class PermutationFeatureImportance(BaseGlobalExplainer):
 
         Returns
         -------
-        List[Artifact]
-            A single-element list with the plotly artifact of the
-            explanation plot (built by :meth:`_create_plot`).
+        List[GroupedArtifacts]
+            A single selector over the feature counts (built by
+            :meth:`_create_plot`).
         """
-        n_features = 10
         # Lazy import
         import pandas as pd
 
         data = pd.DataFrame.from_dict(explanation)
         data = data.sort_values(by=["importances_mean"], ascending=True)
 
-        if n_features > len(data):
-            n_features = len(data)
-
-        return self._create_plot(data, n_features)
+        return self._create_plot(data)

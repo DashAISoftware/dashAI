@@ -5,6 +5,7 @@ import pytest
 from datasets import Dataset
 
 from DashAI.back.metrics.classification.accuracy import Accuracy
+from DashAI.back.metrics.classification.balanced_accuracy import BalancedAccuracy
 from DashAI.back.metrics.classification.f1 import F1
 from DashAI.back.metrics.classification.matthews_corrcoef import MatthewsCorrCoef
 from DashAI.back.metrics.classification.precision import Precision
@@ -26,6 +27,32 @@ def test_accuracy(metric_input: Dict[str, List[int]]):
     assert isinstance(score, float)
     assert score >= 0.0
     assert score <= 1.0
+
+
+def test_balanced_accuracy(metric_input: Dict[str, List[int]]):
+    score = BalancedAccuracy.score(
+        metric_input["true_labels"], metric_input["pred_labels"]
+    )
+
+    assert isinstance(score, float)
+    assert score >= 0.0
+    assert score <= 1.0
+
+
+def test_balanced_accuracy_matches_sklearn_reference(
+    metric_input: Dict[str, List[int]],
+):
+    from sklearn.metrics import balanced_accuracy_score
+
+    true = np.array(metric_input["true_labels"]["foo"])
+    pred = np.argmax(metric_input["pred_labels"], axis=1)
+    expected = balanced_accuracy_score(true, pred)
+
+    score = BalancedAccuracy.score(
+        metric_input["true_labels"], metric_input["pred_labels"]
+    )
+
+    assert score == pytest.approx(expected)
 
 
 def test_precision(metric_input: Dict[str, List[int]]):
@@ -89,6 +116,14 @@ def test_metrics_different_input_sizes(metric_input: Dict[str, List[int]]):
         match=error_pattern,
     ):
         Accuracy.score(metric_input["true_labels"], metric_input["wrong_size_labels"])
+
+    with pytest.raises(
+        ValueError,
+        match=error_pattern,
+    ):
+        BalancedAccuracy.score(
+            metric_input["true_labels"], metric_input["wrong_size_labels"]
+        )
 
     with pytest.raises(
         ValueError,

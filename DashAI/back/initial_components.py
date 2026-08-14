@@ -58,8 +58,12 @@ from DashAI.back.converters.scikit_learn.variance_threshold import VarianceThres
 from DashAI.back.converters.simple_converters.character_replacer import (
     CharacterReplacer,
 )
+from DashAI.back.converters.simple_converters.column_arithmetic import ColumnArithmetic
+from DashAI.back.converters.simple_converters.column_concat import ColumnConcat
 from DashAI.back.converters.simple_converters.column_remover import ColumnRemover
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
+from DashAI.back.converters.simple_converters.numeric_expansion import NumericExpansion
+from DashAI.back.converters.simple_converters.type_cast import TypeCast
 
 # Credentials
 from DashAI.back.credentials.huggingface_credential import HuggingFaceCredential
@@ -80,11 +84,31 @@ from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSourc
 from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSource
 
 # Explainers
+from DashAI.back.explainability.explainers.contrastive_shap import ContrastiveShap
+from DashAI.back.explainability.explainers.dice_counterfactual import (
+    DiceCounterfactual,
+)
+from DashAI.back.explainability.explainers.grad_cam import GradCam
 from DashAI.back.explainability.explainers.kernel_shap import KernelShap
+from DashAI.back.explainability.explainers.lime_text import LimeText
+from DashAI.back.explainability.explainers.nearest_counterfactual import (
+    NearestCounterfactual,
+)
+from DashAI.back.explainability.explainers.occlusion_saliency import OcclusionSaliency
 from DashAI.back.explainability.explainers.partial_dependence import PartialDependence
 from DashAI.back.explainability.explainers.permutation_feature_importance import (
     PermutationFeatureImportance,
 )
+from DashAI.back.explainability.explainers.regression_kernel_shap import (
+    RegressionKernelShap,
+)
+from DashAI.back.explainability.explainers.regression_partial_dependence import (
+    RegressionPartialDependence,
+)
+from DashAI.back.explainability.explainers.regression_permutation_feature_importance import (  # noqa: E501
+    RegressionPermutationFeatureImportance,
+)
+from DashAI.back.explainability.explainers.token_ablation import TokenAblation
 
 # Explorers
 from DashAI.back.exploration.explorers.box_plot import BoxPlotExplorer
@@ -101,7 +125,6 @@ from DashAI.back.exploration.explorers.parallel_categories import (
 from DashAI.back.exploration.explorers.parallel_cordinates import (
     ParallelCordinatesExplorer,
 )
-from DashAI.back.exploration.explorers.row_explorer import RowExplorer
 from DashAI.back.exploration.explorers.scatter_matrix import ScatterMatrixExplorer
 from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
@@ -120,6 +143,7 @@ from DashAI.back.job.predict_job import PredictJob
 
 # Metrics
 from DashAI.back.metrics.classification.accuracy import Accuracy
+from DashAI.back.metrics.classification.balanced_accuracy import BalancedAccuracy
 from DashAI.back.metrics.classification.cohen_kappa import CohenKappa
 from DashAI.back.metrics.classification.f1 import F1
 from DashAI.back.metrics.classification.hamming_distance import HammingDistance
@@ -460,6 +484,7 @@ def get_initial_components():
         # Metrics
         F1,
         Accuracy,
+        BalancedAccuracy,
         Precision,
         Recall,
         Bleu,
@@ -491,14 +516,23 @@ def get_initial_components():
         GenerativeJob,
         PipelineJob,
         # Explainers
+        ContrastiveShap,
+        DiceCounterfactual,
+        GradCam,
         KernelShap,
+        LimeText,
+        NearestCounterfactual,
+        OcclusionSaliency,
         PartialDependence,
         PermutationFeatureImportance,
+        RegressionKernelShap,
+        RegressionPartialDependence,
+        RegressionPermutationFeatureImportance,
+        TokenAblation,
         # Explorers
         DescribeExplorer,
         ScatterPlotExplorer,
         WordcloudExplorer,
-        RowExplorer,
         BoxPlotExplorer,
         MultiColumnBoxPlotExplorer,
         CorrelationMatrixExplorer,
@@ -513,6 +547,10 @@ def get_initial_components():
         ColumnRemover,
         NanRemover,
         CharacterReplacer,
+        ColumnArithmetic,
+        ColumnConcat,
+        NumericExpansion,
+        TypeCast,
         FastICA,
         IncrementalPCA,
         PCA,

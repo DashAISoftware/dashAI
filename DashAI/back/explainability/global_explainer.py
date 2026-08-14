@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Final, List, Tuple
+from typing import TYPE_CHECKING, Final, List, Tuple, Union
 
 from DashAI.back.config_object import ConfigObject
-from DashAI.back.core.artifacts import Artifact
+from DashAI.back.core.artifacts import Artifact, GroupedArtifacts
 from DashAI.back.models.base_model import BaseModel
 
 if TYPE_CHECKING:
@@ -65,7 +65,7 @@ class BaseGlobalExplainer(ConfigObject, ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def plot(self, explanation: dict) -> List[Artifact]:
+    def plot(self, explanation: dict) -> List[Union[Artifact, GroupedArtifacts]]:
         """Generate renderable artifacts from a previously computed explanation.
 
         Concrete implementations must convert the explanation dictionary
@@ -79,10 +79,12 @@ class BaseGlobalExplainer(ConfigObject, ABC):
 
         Returns
         -------
-        List[Artifact]
+        List[Union[Artifact, GroupedArtifacts]]
             A list of artifacts (:class:`PlotlyArtifact`,
             :class:`TableArtifact`, :class:`TextArtifact` or
-            :class:`ImageArtifact`) describing the explanation.
+            :class:`ImageArtifact`) and/or :class:`GroupedArtifacts` batches
+            (e.g. a summary table next to its plot for one curve/count) that
+            the frontend should render together, describing the explanation.
 
         Raises
         ------

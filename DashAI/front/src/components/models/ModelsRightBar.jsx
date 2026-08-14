@@ -14,6 +14,7 @@ import {
   VpnKeyOutlined as KeyIcon,
 } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
+import { useParams } from "react-router-dom";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
@@ -103,9 +104,15 @@ import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
 import AddModelDialog from "./AddModelDialog";
 import ColumnInsights from "../notebooks/dataset/ColumnInsights";
+import RunInfoSidebar from "./RunInfoSidebar";
+import ExplainersSidebar from "../explainers/ExplainersSidebar";
+
+const EXPLAINERS_TAB = 1;
 
 export default function ModelsRightBar({ onToggle }) {
   const theme = useTheme();
+  const params = useParams();
+  const isInModelDetail = Boolean(params.runId);
   const [models, setModels] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -125,6 +132,10 @@ export default function ModelsRightBar({ onToggle }) {
     datasetInfo,
     setDatasetTab,
     sessionRightContent,
+    runDetailTab,
+    triggerExplainerRefresh,
+    datasets,
+    tasks,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
@@ -212,6 +223,38 @@ export default function ModelsRightBar({ onToggle }) {
       setTimeout(waitForElement, 300);
     }
   };
+
+  const activeRun = isInModelDetail
+    ? existingRuns.find((r) => String(r.id) === params.runId)
+    : null;
+
+  if (isInModelDetail && activeRun) {
+    // On the explainers tab of a finished run, offer the compatible
+    // explainers to add, mirroring how the session view offers models.
+    if (runDetailTab === EXPLAINERS_TAB && activeRun.status === 3) {
+      return (
+        <ExplainersSidebar
+          run={activeRun}
+          session={session}
+          onCreated={triggerExplainerRefresh}
+        />
+      );
+    }
+    const activeModel = models.find((m) => m.name === activeRun.model_name);
+    const datasetName = datasets.find(
+      (d) => d.id === session?.dataset_id,
+    )?.name;
+    return (
+      <RunInfoSidebar
+        run={activeRun}
+        model={activeModel}
+        datasetName={datasetName}
+        session={session}
+        datasets={datasets}
+        tasks={tasks}
+      />
+    );
+  }
 
   const handleDownloadModel = (model) => {
     if (!session) {
@@ -306,6 +349,23 @@ export default function ModelsRightBar({ onToggle }) {
               </Typography>
             </Box>
           )
+        ) : isInModelDetail ? (
+          <Box
+            sx={{
+              flex: 1,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              p: 2,
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{ color: "text.secondary", textAlign: "center" }}
+            >
+              {t("models:label.exitModelDetailToAddModels")}
+            </Typography>
+          </Box>
         ) : (
           <>
             {/* Search Box */}
