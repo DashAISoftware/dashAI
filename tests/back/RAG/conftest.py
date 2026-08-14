@@ -25,6 +25,44 @@ from DashAI.back.app import create_app
 from DashAI.back.dependencies.database.models import Document, RAGExtractor
 from DashAI.back.dependencies.job_queues.huey_job_queue import HueyJobQueue
 
+# Shared constants for RAG E2E tests
+RAG_E2E_DOC_TEXT = (
+    "DashAI is a graphical toolbox for training, evaluating and deploying "
+    "machine learning models. It provides a complete graphical interface "
+    "that allows users to compare and use different machine learning "
+    "algorithms without writing code. " * 50
+)
+
+
+def bm25_retriever_params() -> dict:
+    """Return standard BM25 retriever parameters for tests."""
+    return {
+        "BM25Vectorizer": {
+            "component": "BM25VectorizerModel",
+            "params": {
+                "strip_accents": None,
+                "lowercase": True,
+                "stop_words": None,
+                "max_df": 1.0,
+                "min_df": 0.0,
+                "max_features": None,
+            },
+        },
+        "k1": 1.5,
+        "b": 0.75,
+        "delta": 0.0,
+        "similarity_function": "cosine",
+        "top_k": 5,
+    }
+
+
+def write_test_doc_file(suffix: str, text: str) -> str:
+    """Write test text to a temp file and return its path."""
+    path = os.path.join(tempfile.gettempdir(), f"test_doc{suffix}.txt")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    return path
+
 
 def _create_test_document(client: TestClient, suffix: str = "") -> int:
     """Create a minimal test document in the DB and return its ID.
