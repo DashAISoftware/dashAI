@@ -13,15 +13,12 @@ import {
   getRetrieverComponents,
   getRetrievalParadigm,
 } from "../../../../api/rag";
+import {
+  loadRetrieverKinds,
+  isComposite as isCompositeKind,
+} from "../retrieverKinds";
 import { resolveDefaults } from "../../../../utils/schema";
 import RetrieverNodeConfig from "./RetrieverNodeConfig";
-
-const COMPOSITE_TYPES = [
-  "SequentialRetriever",
-  "ParallelRetriever",
-  "MMRRerankerRetriever",
-  "SentenceTransformerCrossEncoderRetriever",
-];
 
 // Base horizontal unit (px) for the tree indentation. A card at depth d is
 // indented d*INDENT px, and the vertical spine that connects a level is drawn
@@ -154,8 +151,9 @@ export default function CompositeRetrieverBuilder({
 
   useEffect(() => {
     (async () => {
+      await loadRetrieverKinds();
       const paradigms = await getRetrievalParadigm();
-      const leaves = paradigms.filter((p) => !COMPOSITE_TYPES.includes(p.name));
+      const leaves = paradigms.filter((p) => !isCompositeKind(p.name));
       const leafMap = {};
       for (const leaf of leaves) {
         const children = await getRetrieverComponents(leaf.name);
@@ -201,10 +199,7 @@ export default function CompositeRetrieverBuilder({
           params: child.params || {},
           children: [],
         };
-        if (
-          COMPOSITE_TYPES.includes(child.component) &&
-          child.children?.length
-        ) {
+        if (isCompositeKind(child.component) && child.children?.length) {
           node.children = child.children.map(buildFromParams).filter(Boolean);
         }
         return comp ? node : null;
@@ -244,7 +239,7 @@ export default function CompositeRetrieverBuilder({
     (t) => {
       const ser = (n) => {
         const s = { component: n.component, params: n.params || {} };
-        if (COMPOSITE_TYPES.includes(n.component) && n.children.length > 0) {
+        if (isCompositeKind(n.component) && n.children.length > 0) {
           s.children = n.children.map(ser).filter((child) => child.component);
         }
         return s;
@@ -283,7 +278,7 @@ export default function CompositeRetrieverBuilder({
    * @param {object} params - The component parameters.
    */
   const handleSaveNode = (nodeId, component, params) => {
-    const isComposite = COMPOSITE_TYPES.includes(component);
+    const isComposite = isCompositeKind(component);
     setTree((prev) => {
       const updated = updateAt(prev, nodeId, (n) => ({
         ...n,
@@ -493,48 +488,37 @@ function findNodeData(tree, nodeId) {
 
 /**
  * Builds the summary for a composite retriever's own operation (reranking or
- * chunk fusion) rendered as the final node of the tree.
+ * chunk fusion) rendered as the final node of the tree. The operation
+ * description is declarative and comes from the component metadata
+ * (``operation_summary``), so the frontend never hardcodes component names.
  * @param {object} node - The tree node to summarise.
+ * @param {object} info - The component definition for the node.
  * @param {function} t - i18n translate function.
  * @returns {object|null} `{ label, value, icon }` or null for non-composite nodes.
  */
-function getOperationSummary(node, t) {
-  if (!node?.component) return null;
-  const params = node.params || {};
-  const label = t("generative:rag.composite.chunkFusion");
-  const rerankLabel = t("generative:rag.composite.reranking");
+function getOperationSummary(node, info, t) {
+  const summary = info?.metadata?.operation_summary;
+  if (!summary?.kind) return null;
 
-  switch (node.component) {
-    case "MMRRerankerRetriever":
-      return {
-        label: rerankLabel,
-        icon: "rerank",
-        value: `Lambda=${params.mmr_lambda ?? "—"}, Top K=${
-          params.top_k ?? "—"
-        }`,
-      };
-    case "SentenceTransformerCrossEncoderRetriever":
-      return {
-        label: rerankLabel,
-        icon: "rerank",
-        value: params.model_name || null,
-      };
-    case "ParallelRetriever":
-      return {
-        label,
-        icon: "fusion",
-        value:
-          params.merge_strategy === "round_robin"
-            ? t("generative:rag.composite.mergeStrategyRoundRobin")
-            : params.merge_strategy === "interleave"
-              ? t("generative:rag.composite.mergeStrategyInterleave")
-              : params.merge_strategy || null,
-      };
-    case "SequentialRetriever":
-      return { label, icon: "fusion", value: null };
-    default:
-      return null;
-  }
+  const isRerank = summary.kind === "rerank";
+  const label = isRerank
+    ? t("generative:rag.composite.reranking")
+    : t("generative:rag.composite.chunkFusion");
+  const icon = isRerank ? "rerank" : "fusion";
+
+  const params = node.params || {};
+  const fields = summary.fields || [];
+  const parts = fields.map((field) => {
+    const value = params[field.param];
+    const rendered = value == null ? "—" : String(value);
+    return field.label ? `${field.label}=${rendered}` : rendered;
+  });
+
+  return {
+    label,
+    icon,
+    value: parts.length > 0 ? parts.join(", ") : null,
+  };
 }
 
 /**
@@ -578,9 +562,9 @@ function TreeNodeView({
     getString(info?.name) ||
     node.component ||
     t("generative:rag.composite.configureNode");
-  const isComposite = COMPOSITE_TYPES.includes(node.component);
+  const isComposite = isCompositeKind(node.component);
   const cardX = depth * INDENT;
-  const operation = isComposite ? getOperationSummary(node, t) : null;
+  const operation = isComposite ? getOperationSummary(node, info, t) : null;
   const denseInfo = getDenseEmbeddingInfo(node, denseDefaults, embNameMap);
 
   return (

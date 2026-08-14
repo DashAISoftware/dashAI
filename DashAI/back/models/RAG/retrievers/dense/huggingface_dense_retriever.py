@@ -17,7 +17,6 @@ class HuggingFaceDenseRetriever(DenseRetriever):
     configuration.
     """
 
-    FLAGS: list[str] = ["abstract", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
         en="HuggingFace Embedding Retriever",
         es="Recuperador por Embeddings HuggingFace",

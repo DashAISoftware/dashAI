@@ -14,13 +14,7 @@ class HuggingFaceEmbedding(DenseEmbedding):
     Handles tokenisation, device placement and inference dispatch; subclasses
     only need to implement :meth:`_pool` to convert model outputs into a single
     vector per text.
-
-    FLAGS:
-        abstract: Marker indicating this class is not meant for direct use.
-        huggingface: Marks the model family as HuggingFace-based.
     """
-
-    FLAGS: list[str] = ["abstract", "huggingface"]
 
     def __init__(self, model_name: str, device: str):
         """Initialise the HuggingFace embedding wrapper.

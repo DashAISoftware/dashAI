@@ -55,7 +55,6 @@ class DenseEmbeddingRetriever(DenseRetriever):
     by the factory via ``fill_objects``.
     """
 
-    FLAGS: list[str] = ["dense", "dense_embedding"]
     SCHEMA = DenseEmbeddingRetrieverSchema
 
     DISPLAY_NAME: str = MultilingualString(

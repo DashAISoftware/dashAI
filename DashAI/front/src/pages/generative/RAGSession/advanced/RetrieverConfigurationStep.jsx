@@ -14,6 +14,10 @@ import {
   getRetrievalParadigm,
   getRetrieverComponents,
 } from "../../../../api/rag";
+import {
+  loadRetrieverKinds,
+  isComposite as isCompositeKind,
+} from "../retrieverKinds";
 import FormSchema from "../../../../components/shared/FormSchema";
 import CompositeRetrieverBuilder from "./CompositeRetrieverBuilder";
 import { FormSchemaProvider } from "../../../../contexts/schema";
@@ -22,12 +26,8 @@ import { resolveDefaults } from "../../../../utils/schema";
 /** Parent class name for all dense embedding components in the backend ComponentRegistry. */
 const DENSE_EMBEDDING_PARENT = "DenseEmbedding";
 
-const COMPOSITE_NAMES = [
-  "SequentialRetriever",
-  "ParallelRetriever",
-  "MMRRerankerRetriever",
-  "SentenceTransformerCrossEncoderRetriever",
-];
+const SPARSE_RETRIEVER_PARENT = "SparseRetriever";
+const COMPOSITE_RETRIEVER_PARENT = "CompositeRetriever";
 
 /**
  * Resolves a component's display name from its display_name field (string or multilingual).
@@ -162,32 +162,42 @@ const RetrieverConfigurationStep = forwardRef(
 
     useEffect(() => {
       const load = async () => {
+        await loadRetrieverKinds();
         let retrievers = [];
         let concreteEmbeddings = [];
+        let keywordRetrievers = [];
+        let compositeRetrievers = [];
         try {
           const results = await Promise.all([
             getRetrievalParadigm(),
             getRetrieverComponents(DENSE_EMBEDDING_PARENT),
+            getRetrieverComponents(SPARSE_RETRIEVER_PARENT),
+            getRetrieverComponents(COMPOSITE_RETRIEVER_PARENT),
           ]);
           retrievers = results[0] || [];
-          concreteEmbeddings = (results[1] || []).filter(
-            (c) => !(c.flags || []).includes("abstract"),
-          );
+          concreteEmbeddings = results[1] || [];
+          keywordRetrievers = results[2] || [];
+          compositeRetrievers = results[3] || [];
         } catch (e) {
           retrievers = await getRetrievalParadigm();
         }
         retrieversRef.current = retrievers;
 
-        const keywordOptions = retrievers
-          .filter((c) => (c.flags || []).includes("keyword"))
-          .map((c) => ({ ...c, _type: "retriever" }));
+        const keywordOptions = keywordRetrievers.map((c) => ({
+          ...c,
+          _type: "retriever",
+          _group: "keyword",
+        }));
         const denseOptions = concreteEmbeddings.map((c) => ({
           ...c,
           _type: "embedding",
+          _group: "embedding",
         }));
-        const compositeOptions = retrievers
-          .filter((c) => (c.flags || []).includes("composite"))
-          .map((c) => ({ ...c, _type: "retriever" }));
+        const compositeOptions = compositeRetrievers.map((c) => ({
+          ...c,
+          _type: "retriever",
+          _group: "composite",
+        }));
         const merged = [
           ...keywordOptions,
           ...denseOptions,
@@ -322,7 +332,7 @@ const RetrieverConfigurationStep = forwardRef(
     );
 
     const isComposite =
-      selectedRetriever && COMPOSITE_NAMES.includes(selectedRetriever.name);
+      selectedRetriever && isCompositeKind(selectedRetriever.name);
 
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: 2 }}>
@@ -336,12 +346,11 @@ const RetrieverConfigurationStep = forwardRef(
           options={allOptions}
           getOptionLabel={(opt) => getDisplayName(opt)}
           groupBy={(opt) => {
-            if (opt._type === "embedding")
+            if (opt._group === "embedding")
               return t("generative:rag.composite.denseGroup");
-            const flags = opt.flags || [];
-            if (flags.includes("composite"))
+            if (opt._group === "composite")
               return t("generative:rag.composite.compositeGroup");
-            if (flags.includes("keyword"))
+            if (opt._group === "keyword")
               return t("generative:rag.composite.keywordGroup");
             return t("generative:rag.composite.simpleGroup");
           }}

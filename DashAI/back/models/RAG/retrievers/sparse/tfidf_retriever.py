@@ -256,7 +256,6 @@ class TFIDFRetriever(SparseRetriever):
     the injected chunks and retrieves via pairwise distance.
     """
 
-    FLAGS: list[str] = ["keyword", "sparse"]
     DISPLAY_NAME: str = MultilingualString(
         en="TF-IDF Retriever",
         es="Recuperador TF-IDF",

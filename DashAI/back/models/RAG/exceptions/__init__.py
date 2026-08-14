@@ -11,7 +11,8 @@ Exception tree (simplified)::
     ├── RAGDocumentError
     │   ├── RAGDocumentParsingError
     │   ├── RAGDocumentNotFoundError
-    │   └── RAGDocumentFileTypeError
+    │   ├── RAGDocumentFileTypeError
+    │   └── RAGDocumentExtractionError
     ├── RAGChunkingError
     │   └── RAGChunkingOverlapError
     ├── RAGRetrieverError
@@ -39,37 +40,30 @@ Exception tree (simplified)::
 """
 
 from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
-
-from DashAI.back.models.RAG.exceptions.document import (
-    RAGDocumentError,
-    RAGDocumentFileTypeError,
-    RAGDocumentNotFoundError,
-    RAGDocumentParsingError,
-)
-
 from DashAI.back.models.RAG.exceptions.chunking import (
     RAGChunkingError,
     RAGChunkingOverlapError,
 )
-
-from DashAI.back.models.RAG.exceptions.retriever import (
-    RAGRetrieverCompositeValidationError,
-    RAGRetrieverEmptyChildrenError,
-    RAGRetrieverError,
-    RAGRetrieverMissingParameterError,
+from DashAI.back.models.RAG.exceptions.document import (
+    RAGDocumentError,
+    RAGDocumentExtractionError,
+    RAGDocumentFileTypeError,
+    RAGDocumentNotFoundError,
+    RAGDocumentParsingError,
 )
-
-from DashAI.back.models.RAG.exceptions.prompt import (
-    RAGPromptError,
-    RAGPromptTemplateError,
-    RAGPromptValidationError,
+from DashAI.back.models.RAG.exceptions.embedding import (
+    RAGEmbeddingEmptyInputError,
+    RAGEmbeddingError,
+    RAGEmbeddingLoadError,
 )
-
+from DashAI.back.models.RAG.exceptions.factory import (
+    RAGComponentNotFoundError,
+    RAGFactoryError,
+)
 from DashAI.back.models.RAG.exceptions.generation import (
     RAGGenerationError,
     RAGGenerationModelError,
 )
-
 from DashAI.back.models.RAG.exceptions.pipeline import (
     RAGDatabaseError,
     RAGPipelineConfigError,
@@ -78,18 +72,17 @@ from DashAI.back.models.RAG.exceptions.pipeline import (
     RAGPipelineInputError,
     RAGPipelineRuntimeError,
 )
-
-from DashAI.back.models.RAG.exceptions.embedding import (
-    RAGEmbeddingEmptyInputError,
-    RAGEmbeddingError,
-    RAGEmbeddingLoadError,
+from DashAI.back.models.RAG.exceptions.prompt import (
+    RAGPromptError,
+    RAGPromptTemplateError,
+    RAGPromptValidationError,
 )
-
-from DashAI.back.models.RAG.exceptions.factory import (
-    RAGComponentNotFoundError,
-    RAGFactoryError,
+from DashAI.back.models.RAG.exceptions.retriever import (
+    RAGRetrieverCompositeValidationError,
+    RAGRetrieverEmptyChildrenError,
+    RAGRetrieverError,
+    RAGRetrieverMissingParameterError,
 )
-
 from DashAI.back.models.RAG.exceptions.task import (
     RAGTaskError,
     RAGTaskInputError,
@@ -103,6 +96,7 @@ __all__ = [
     "RAGDocumentParsingError",
     "RAGDocumentNotFoundError",
     "RAGDocumentFileTypeError",
+    "RAGDocumentExtractionError",
     # Chunking
     "RAGChunkingError",
     "RAGChunkingOverlapError",

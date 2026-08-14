@@ -226,7 +226,7 @@ export default function RAGSessionSetup({
    * Replace the retriever model configuration.
    * @param {object} model - { component, params } for the retriever.
    */
-  const updateRetrieverModel = (model) => {
+  const updateRetrieverModel = useCallback((model) => {
     setSessionData((prev) => ({
       ...prev,
       parameters: {
@@ -234,7 +234,7 @@ export default function RAGSessionSetup({
         retriever_model: { ...model },
       },
     }));
-  };
+  }, []);
 
   /**
    * Replace the generation model configuration.

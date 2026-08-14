@@ -38,12 +38,8 @@ class FastTextEmbedding(DenseEmbedding):
 
     Downloads the model binary from the HuggingFace Hub and aggregates
     word-level vectors into a single sentence-level embedding.
-
-    FLAGS:
-        FAMILY:fasttext: Groups this model under the FastText family.
     """
 
-    FLAGS: list[str] = ["FAMILY:fasttext"]
     SCHEMA = FastTextEmbeddingSchema
     DISPLAY_NAME = MultilingualString(
         en="FastText Embedding",

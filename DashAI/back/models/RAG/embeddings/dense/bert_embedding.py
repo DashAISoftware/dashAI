@@ -197,14 +197,9 @@ class BERTEmbedding(DenseEmbedding):
     a configurable schema (:class:`BERTEmbeddingSchema`).
 
     Supports CLS, mean, max and concat-layer pooling strategies.
-
-    FLAGS:
-        FAMILY:bert: Groups this model under the BERT family.
-        huggingface: Marks the model family as HuggingFace-based.
     """
 
     SCHEMA = BERTEmbeddingSchema
-    FLAGS: list[str] = ["FAMILY:bert", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
         en="BERT Embedding",
         es="Embedding BERT",

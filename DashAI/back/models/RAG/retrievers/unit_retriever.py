@@ -18,7 +18,6 @@ class UnitRetriever(RetrieverModel, ABC):
     """
 
     TYPE: Final[str] = "RetrieverModel"
-    FLAGS: list[str] = ["abstract"]
 
     def __init__(self, **kwargs):
         """Initialize the unit retriever.

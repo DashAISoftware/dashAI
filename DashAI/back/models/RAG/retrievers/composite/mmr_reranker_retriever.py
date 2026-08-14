@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -71,7 +71,6 @@ class MMRRerankerRetriever(CompositeRetriever):
     diversity by balancing relevance and similarity among them.
     """
 
-    FLAGS: list[str] = ["FAMILY:mmr", "composite", "reranker"]
     SCHEMA = MMRRerankerRetrieverSchema
     DISPLAY_NAME: str = MultilingualString(
         en="MMR Reranker",
@@ -82,6 +81,20 @@ class MMRRerankerRetriever(CompositeRetriever):
         es="Reordena resultados de recuperación usando Maximum Marginal Relevance "
         "para diversidad.",
     )
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """Return UI metadata including the declarative operation summary."""
+        return {
+            **super().get_metadata(),
+            "operation_summary": {
+                "kind": "rerank",
+                "fields": [
+                    {"param": "mmr_lambda", "label": "Lambda"},
+                    {"param": "top_k", "label": "Top K"},
+                ],
+            },
+        }
 
     def __init__(self, **kwargs):
         """Initialize the MMR reranker.

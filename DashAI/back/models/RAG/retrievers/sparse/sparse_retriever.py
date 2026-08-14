@@ -9,7 +9,6 @@ class SparseRetriever(UnitRetriever):
     document retrieval.
     """
 
-    FLAGS: list[str] = ["abstract"]
     DISPLAY_NAME: str = MultilingualString(
         en="Keyword Retriever",
         es="Recuperador por Palabras Clave",

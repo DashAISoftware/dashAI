@@ -9,7 +9,6 @@ export interface IComponent {
   metadata: ITaskMetadataParameters;
   description: string;
   display_name?: string;
-  flags?: string[];
   color?: string;
   downloaded?: boolean;
 }

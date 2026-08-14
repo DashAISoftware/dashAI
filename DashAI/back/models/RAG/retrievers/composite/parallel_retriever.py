@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -59,7 +59,6 @@ class ParallelRetriever(CompositeRetriever):
     Results are deduplicated by ``(document_id, document_position)``.
     """
 
-    FLAGS: list[str] = ["composite", "parallel"]
     SCHEMA = ParallelRetrieverSchema
     DISPLAY_NAME: str = MultilingualString(
         en="Parallel Retriever",
@@ -69,6 +68,17 @@ class ParallelRetriever(CompositeRetriever):
         en="Queries multiple retrievers in parallel and merges their results.",
         es="Consulta múltiples recuperadores en paralelo y fusiona sus resultados.",
     )
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """Return UI metadata including the declarative operation summary."""
+        return {
+            **super().get_metadata(),
+            "operation_summary": {
+                "kind": "fusion",
+                "fields": [{"param": "merge_strategy", "label": ""}],
+            },
+        }
 
     def __init__(self, **kwargs):
         """Initialize the parallel retriever with a merge strategy.

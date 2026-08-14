@@ -143,14 +143,9 @@ class DistilBERTEmbedding(DenseEmbedding):
     Wraps :class:`_BERTEmbedding` (reusing BERT pooling logic) and exposes
     it as a DashAI component with a configurable schema
     (:class:`DistilBERTEmbeddingSchema`).
-
-    FLAGS:
-        FAMILY:distilbert: Groups this model under the DistilBERT family.
-        huggingface: Marks the model family as HuggingFace-based.
     """
 
     SCHEMA = DistilBERTEmbeddingSchema
-    FLAGS: list[str] = ["FAMILY:distilbert", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
         en="DistilBERT Embedding",
         es="Embedding DistilBERT",

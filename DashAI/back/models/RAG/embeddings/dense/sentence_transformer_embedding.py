@@ -369,15 +369,9 @@ class SentenceTransformerEmbedding(DenseEmbedding):
 
     Supports mean / last-token pooling, L2 normalisation, and overflow
     strategies (truncate / aggregate).
-
-    FLAGS:
-        FAMILY:sentence_transformer: Groups this model under the
-            sentence-transformer family.
-        huggingface: Marks the model family as HuggingFace-based.
     """
 
     SCHEMA = SentenceTransformerEmbeddingSchema
-    FLAGS: list[str] = ["FAMILY:sentence_transformer", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
         en="Sentence Transformer Embedding",
         es="Embedding Sentence Transformer",

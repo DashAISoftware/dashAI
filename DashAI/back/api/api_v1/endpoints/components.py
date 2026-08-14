@@ -83,21 +83,6 @@ def _delete_class(component_dict: Dict[str, Any]) -> Dict[str, Any]:
     return {key: value for key, value in component_dict.items() if key != "class"}
 
 
-def _enrich_with_flags(
-    component_dict: Dict[str, Any], include_flags: bool
-) -> Dict[str, Any]:
-    """Append FLAGS from the component class when include_flags is True."""
-    if not include_flags:
-        return component_dict
-    cls = component_dict.get("class")
-    if cls is None:
-        return component_dict
-    flags = getattr(cls, "FLAGS", [])
-    if not flags:
-        return component_dict
-    return {**component_dict, "flags": flags}
-
-
 @router.get("/")
 @inject
 async def get_components(
@@ -107,7 +92,6 @@ async def get_components(
     related_component: Union[str, None] = None,
     component_parent: Union[str, None] = None,
     has_related_of_type: Union[str, None] = None,
-    include_flags: bool = Query(default=False),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> List[Dict[str, Any]]:
     """Retrieve components from the register according to the provided parameters.
@@ -255,13 +239,10 @@ async def get_components(
         if getattr(component_dict.get("class"), "REQUIRES_DOWNLOAD", False):
             component_registry.refresh_download_status(comp_name)
 
-    result = []
-    for component_dict in selected_components.values():
-        enriched = _enrich_with_flags(component_dict, include_flags)
-        cleaned = _delete_class(enriched)
-        localized = _filter_by_language(cleaned, accept_language)
-        result.append(localized)
-    return result
+    return [
+        _filter_by_language(_delete_class(component_dict), accept_language)
+        for component_dict in selected_components.values()
+    ]
 
 
 @router.get("/{name}/download")
@@ -448,7 +429,6 @@ async def get_required_downloads(
 def get_component_by_id(
     id: str,
     accept_language: str | None = Header(default=None),
-    include_flags: bool = Query(default=False),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ) -> Dict[str, Any]:
     """Return a specific component using its id (the id is the component class name).
@@ -480,9 +460,7 @@ def get_component_by_id(
             detail=f"Component {id} not found in the registry.",
         )
     raw = component_registry[id]
-    enriched = _enrich_with_flags(raw, include_flags)
-    cleaned = _delete_class(enriched)
-    return _filter_by_language(cleaned, accept_language)
+    return _filter_by_language(_delete_class(raw), accept_language)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -531,7 +509,6 @@ async def update_component() -> None:
 async def get_child_components(
     component_name: str,
     recursive: bool = False,
-    include_flags: bool = Query(default=False),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Get child components of a specific component.
@@ -539,8 +516,6 @@ async def get_child_components(
     Args:
         component_name (str): The name of the component to get children for.
         recursive (bool): Whether to get child components recursively.
-        include_flags (bool): Whether to include the FLAGS of each child
-            component, by default False.
 
     Returns:
         List[Dict[str, Any]]: A list of child component dictionaries.
@@ -548,13 +523,7 @@ async def get_child_components(
     children_list = component_registry.get_child_components(
         component_name, recursive=recursive
     )
-    # Remove "class" key from each child component
-    cleaned_children = [
-        _delete_class(_enrich_with_flags(child, include_flags))
-        for child in children_list
-    ]
-
-    return cleaned_children
+    return [_delete_class(child) for child in children_list]
 
 
 @router.get("/image/{component_name}/", status_code=status.HTTP_200_OK)

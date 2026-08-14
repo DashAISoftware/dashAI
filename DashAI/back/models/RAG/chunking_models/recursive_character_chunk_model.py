@@ -91,8 +91,6 @@ class RecursiveCharacterChunkModel(BaseChunkingModel):
         es="Modelo de Fragmentación Recursiva por Caracteres",
     )
 
-    FLAGS: list[str] = []
-
     def __init__(self, **kwargs):
         """Initialize the recursive character chunking model.
 

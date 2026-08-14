@@ -18,13 +18,11 @@ import { useTranslation } from "react-i18next";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import { resolveDefaults } from "../../../../utils/schema";
-
-const COMPOSITE_TYPES = [
-  "SequentialRetriever",
-  "ParallelRetriever",
-  "MMRRerankerRetriever",
-  "SentenceTransformerCrossEncoderRetriever",
-];
+import {
+  loadRetrieverKinds,
+  isComposite as isCompositeKind,
+  isEmbedding as isEmbeddingKind,
+} from "../retrieverKinds";
 
 /**
  * Dialog for configuring a single node in the composite retriever tree.
@@ -50,21 +48,32 @@ export default function RetrieverNodeConfig({
   onClose,
 }) {
   const { t } = useTranslation(["generative"]);
+  const [kindsLoaded, setKindsLoaded] = useState(false);
 
   const allOptions = useMemo(() => {
     const list = [...allComponents];
-    const EMBEDDING_PARENT_KEYS = ["DenseEmbedding", "DenseEmbeddingRetriever"];
     for (const key of Object.keys(leafRegistry)) {
-      if (!EMBEDDING_PARENT_KEYS.includes(key)) {
+      if (!isEmbeddingKind(key)) {
         list.push(...(leafRegistry[key] || []));
       }
     }
-    return list.filter((c) => c.configurable_object !== false);
-  }, [allComponents, leafRegistry]);
+    const seen = new Set();
+    return list
+      .filter((c) => c.configurable_object !== false)
+      .filter((c) => {
+        if (seen.has(c.name)) return false;
+        seen.add(c.name);
+        return true;
+      });
+  }, [allComponents, leafRegistry, kindsLoaded]);
 
   const [selectedModel, setSelectedModel] = useState(null);
   const [params, setParams] = useState({});
   const [initialParams, setInitialParams] = useState({});
+
+  useEffect(() => {
+    loadRetrieverKinds().then(() => setKindsLoaded(true));
+  }, []);
 
   useEffect(() => {
     if (!nodeData || !allOptions.length) return;
@@ -75,8 +84,7 @@ export default function RetrieverNodeConfig({
     setInitialParams(p);
   }, [nodeData, allOptions]);
 
-  const isComposite =
-    selectedModel && COMPOSITE_TYPES.includes(selectedModel.name);
+  const isComposite = selectedModel && isCompositeKind(selectedModel.name);
 
   /**
    * Resolves the display name from a component's display_name (string or multilingual object).
@@ -150,7 +158,7 @@ export default function RetrieverNodeConfig({
             getOptionLabel={(opt) => getDisplay(opt)}
             isOptionEqualToValue={(a, b) => a.name === b.name}
             groupBy={(opt) => {
-              if (COMPOSITE_TYPES.includes(opt.name))
+              if (isCompositeKind(opt.name))
                 return t("generative:rag.composite.compositeGroup");
               return t("generative:rag.composite.simpleGroup");
             }}

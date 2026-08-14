@@ -72,14 +72,9 @@ class InstructorEmbedding(DenseEmbedding):
     with a configurable schema (:class:`InstructorEmbeddingSchema`).
 
     Prepends a user-defined instruction string to every input text.
-
-    FLAGS:
-        FAMILY:instructor: Groups this model under the INSTRUCTOR family.
-        huggingface: Marks the model family as HuggingFace-based.
     """
 
     SCHEMA = InstructorEmbeddingSchema
-    FLAGS: list[str] = ["FAMILY:instructor", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
         en="INSTRUCTOR Embedding",
         es="Embedding INSTRUCTOR",

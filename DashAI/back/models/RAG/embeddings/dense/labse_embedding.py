@@ -118,14 +118,9 @@ class LaBSEmbedding(DenseEmbedding):
     Wraps :class:`_SentenceTransformerEmbedding` (mean pooling, L2
     normalisation forced on) and exposes it as a DashAI component with
     a configurable schema (:class:`LaBSEmbeddingSchema`).
-
-    FLAGS:
-        FAMILY:labse: Groups this model under the LaBSE family.
-        huggingface: Marks the model family as HuggingFace-based.
     """
 
     SCHEMA = LaBSEmbeddingSchema
-    FLAGS: list[str] = ["FAMILY:labse", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
         en="LaBSE Embedding",
         es="Embedding LaBSE",

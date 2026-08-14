@@ -190,14 +190,9 @@ class RoBERTaEmbedding(DenseEmbedding):
 
     Only mean and max pooling are exposed because the RoBERTa CLS token is
     not trained for similarity tasks.
-
-    FLAGS:
-        FAMILY:roberta: Groups this model under the RoBERTa family.
-        huggingface: Marks the model family as HuggingFace-based.
     """
 
     SCHEMA = RoBERTaEmbeddingSchema
-    FLAGS: list[str] = ["FAMILY:roberta", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
         en="RoBERTa Embedding",
         es="Embedding RoBERTa",

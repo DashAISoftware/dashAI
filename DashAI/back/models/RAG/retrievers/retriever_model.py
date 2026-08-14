@@ -16,7 +16,6 @@ class RetrieverModel(BaseModel, ABC):
     """
 
     TYPE: Final[str] = "RetrieverModel"
-    FLAGS: list[str] = ["abstract"]
     DISPLAY_NAME: str = MultilingualString(
         en="Retriever",
         es="Recuperador",

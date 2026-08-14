@@ -227,12 +227,6 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
         }
     """
 
-    FLAGS: list[str] = [
-        "composite",
-        "cross_encoder",
-        "sentence_transformer",
-        "reranker",
-    ]
     SCHEMA = SentenceTransformerCrossEncoderRetrieverSchema
 
     DISPLAY_NAME: str = MultilingualString(
@@ -247,6 +241,17 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
     )
     COLOR: str = "#FF5722"
     ICON: str = "Shuffle"
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """Return UI metadata including the declarative operation summary."""
+        return {
+            **super().get_metadata(),
+            "operation_summary": {
+                "kind": "rerank",
+                "fields": [{"param": "model_name", "label": ""}],
+            },
+        }
 
     def __init__(self, **kwargs):
         """Initialize the SentenceTransformer cross-encoder retriever.

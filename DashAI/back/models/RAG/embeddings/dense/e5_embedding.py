@@ -223,14 +223,9 @@ class E5Embedding(DenseEmbedding):
 
     Wraps :class:`_E5Embedding` and exposes it as a DashAI component with
     a configurable schema (:class:`E5EmbeddingSchema`).
-
-    FLAGS:
-        FAMILY:e5: Groups this model under the E5 family.
-        huggingface: Marks the model family as HuggingFace-based.
     """
 
     SCHEMA = E5EmbeddingSchema
-    FLAGS: list[str] = ["FAMILY:e5", "huggingface"]
     DISPLAY_NAME: str = MultilingualString(
         en="E5 Embedding",
         es="Embedding E5",

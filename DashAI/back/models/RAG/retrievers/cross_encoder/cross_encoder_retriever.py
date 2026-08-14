@@ -36,7 +36,6 @@ class CrossEncoderRetriever(CompositeRetriever, ABC):
     relevance.
     """
 
-    FLAGS: list[str] = ["abstract", "cross_encoder", "reranker"]
     DISPLAY_NAME: str = "Cross-Encoder Retriever"
     DESCRIPTION: str = (
         "Abstract re-ranker that uses a cross-encoder model to re-score "

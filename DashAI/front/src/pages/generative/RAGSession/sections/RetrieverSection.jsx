@@ -4,19 +4,37 @@ import {
   Typography,
   Button,
   CircularProgress,
+  Slider,
   useTheme,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
-import { getRetrieverComponents } from "../../../../api/rag";
-import { resolveDefaults } from "../../../../utils/schema";
+import {
+  getRetrieverComponents,
+  getRetrieverPresets,
+} from "../../../../api/rag";
+import {
+  loadRetrieverKinds,
+  isComposite as isCompositeKind,
+} from "../retrieverKinds";
 import RetrieverAdvancedModal from "../advanced/RetrieverAdvancedModal";
 import AdvancedConfigCard from "../components/AdvancedConfigCard";
 import PresetCard from "../components/PresetCard";
 import RAGSectionColumn from "../components/RAGSectionColumn";
 
-const TOP_K_OPTIONS = [3, 5, 10, 15, 20];
+const TOP_K_MIN = 1;
+// Default upper bound of the top-K slider. It grows only when the user has
+// manually configured a larger top-K elsewhere (e.g. advanced configuration).
+const TOP_K_MAX_DEFAULT = 15;
+
+// Labels are localized in the frontend via i18n; the backend only supplies the
+// resolved component/params and a language-neutral description per preset key.
+const PRESET_LABEL_KEYS = {
+  keyword: "generative:rag.retriever.keywordLabel",
+  semantic: "generative:rag.retriever.semanticLabel",
+  hybrid: "generative:rag.retriever.hybridLabel",
+};
 
 /**
  * Deep equality comparison for objects, arrays, and primitives.
@@ -36,11 +54,21 @@ function deepEqual(a, b) {
 }
 
 /**
- * Omits `top_k` key from an object for purpose of comparing
- * retriever configurations while ignoring the top-K value.
+ * Recursively strips `top_k` keys from a retriever params object (including
+ * nested children of composite retrievers), so preset matching ignores the
+ * selected top-K value at every level.
  */
-const omitTopK = (obj) =>
-  Object.fromEntries(Object.entries(obj || {}).filter(([k]) => k !== "top_k"));
+function stripTopKDeep(value) {
+  if (Array.isArray(value)) return value.map(stripTopKDeep);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([k]) => k !== "top_k")
+        .map(([k, v]) => [k, stripTopKDeep(v)]),
+    );
+  }
+  return value;
+}
 
 /**
  * Compute the effective top-K value for a retriever model,
@@ -69,92 +97,9 @@ function getEffectiveTopK(model) {
 }
 
 /**
- * Build a BM25 keyword retriever configuration.
- * @param {object} bm25Defaults - Default BM25 params.
- * @param {number} topK         - Number of top results.
- * @returns {object} Model config { component, params }.
- */
-function buildKeywordModel(bm25Defaults, topK) {
-  return {
-    component: "BM25Retriever",
-    params: { ...bm25Defaults, top_k: topK },
-  };
-}
-
-/**
- * Build a DenseEmbedding (semantic) retriever configuration using SentenceTransformer.
- * @param {object} embeddingDefaults  - Default embedding model params.
- * @param {object} retrieverDefaults  - Default dense retriever params.
- * @param {number} topK               - Number of top results.
- * @returns {object} Model config { component, params }.
- */
-function buildSemanticModel(embeddingDefaults, retrieverDefaults, topK) {
-  return {
-    component: "DenseEmbeddingRetriever",
-    params: {
-      embedding_model: {
-        component: "SentenceTransformerEmbedding",
-        params: {
-          ...embeddingDefaults,
-          model_name:
-            "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-        },
-      },
-      similarity_metric: retrieverDefaults.similarity_metric || "cosine",
-      top_k: topK,
-    },
-  };
-}
-
-/**
- * Build a hybrid (Parallel) retriever configuration with BM25 + DenseEmbedding.
- * @param {object} bm25Defaults       - Default BM25 params.
- * @param {object} embeddingDefaults  - Default embedding model params.
- * @param {object} retrieverDefaults  - Default dense retriever params.
- * @param {number} topK               - Total top-K split across sub-retrievers.
- * @returns {object} Model config { component, params }.
- */
-function buildHybridModel(
-  bm25Defaults,
-  embeddingDefaults,
-  retrieverDefaults,
-  topK,
-) {
-  const kwTopK = Math.ceil(topK / 2);
-  const seTopK = Math.floor(topK / 2);
-  return {
-    component: "ParallelRetriever",
-    params: {
-      merge_strategy: "round_robin",
-      children: [
-        {
-          component: "BM25Retriever",
-          params: { ...bm25Defaults, top_k: kwTopK },
-        },
-        {
-          component: "DenseEmbeddingRetriever",
-          params: {
-            embedding_model: {
-              component: "SentenceTransformerEmbedding",
-              params: {
-                ...embeddingDefaults,
-                model_name:
-                  "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
-              },
-            },
-            similarity_metric: retrieverDefaults.similarity_metric || "cosine",
-            top_k: seTopK,
-          },
-        },
-      ],
-    },
-  };
-}
-
-/**
  * Retriever model selection section.
- * Provides keyword / semantic / hybrid presets, top-K picker,
- * and an advanced configuration modal for custom retrievers.
+ * Provides keyword / semantic / hybrid presets (fetched from the backend),
+ * a top-K picker, and an advanced configuration modal for custom retrievers.
  *
  * @param {object}   props
  * @param {object}   props.retrieverModel    - Current { component, params } for the retriever.
@@ -174,172 +119,90 @@ export default function RetrieverSection({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(true);
   const [concreteRetrievers, setConcreteRetrievers] = useState([]);
-  const [bm25Defaults, setBm25Defaults] = useState({});
-  const [embeddingDefaults, setEmbeddingDefaults] = useState({});
-  const [denseRetrieverDefaults, setDenseRetrieverDefaults] = useState({});
+  const [presets, setPresets] = useState([]);
   const [loadError, setLoadError] = useState(null);
 
   const effectiveTopK = getEffectiveTopK(retrieverModel);
 
-  const keywordModel = useMemo(
-    () => buildKeywordModel(bm25Defaults, effectiveTopK || topK),
-    [bm25Defaults, effectiveTopK, topK],
-  );
+  const presetByKey = useMemo(() => {
+    const map = {};
+    for (const preset of presets) {
+      map[preset.key] = preset;
+    }
+    return map;
+  }, [presets]);
 
-  const semanticModel = useMemo(
-    () =>
-      buildSemanticModel(
-        embeddingDefaults,
-        denseRetrieverDefaults,
-        effectiveTopK || topK,
-      ),
-    [embeddingDefaults, denseRetrieverDefaults, effectiveTopK, topK],
-  );
-
-  const hybridModel = useMemo(
-    () =>
-      buildHybridModel(
-        bm25Defaults,
-        embeddingDefaults,
-        denseRetrieverDefaults,
-        effectiveTopK || topK,
-      ),
-    [
-      bm25Defaults,
-      embeddingDefaults,
-      denseRetrieverDefaults,
-      effectiveTopK,
-      topK,
-    ],
+  /**
+   * Return the preset recipe matching a retriever model, ignoring top-K at
+   * every level, or null if the model is a custom/advanced configuration.
+   * @param {object} model - Retriever model config.
+   * @returns {object|null} The matching preset or null.
+   */
+  const presetOf = useCallback(
+    (model) => {
+      if (!model?.component || !model?.params) return null;
+      return (
+        presets.find(
+          (preset) =>
+            preset.component === model.component &&
+            deepEqual(
+              stripTopKDeep(model.params),
+              stripTopKDeep(preset.params),
+            ),
+        ) || null
+      );
+    },
+    [presets],
   );
 
   const isAdvanced = useMemo(() => {
     if (!retrieverModel?.component || !retrieverModel?.params) return false;
+    return presetOf(retrieverModel) === null;
+  }, [retrieverModel, presetOf]);
 
-    const modelNoTopK = {
-      component: retrieverModel.component,
-      params: omitTopK(retrieverModel.params),
-    };
-
-    const kwNoTopK = {
-      component: keywordModel.component,
-      params: omitTopK(keywordModel.params),
-    };
-
-    const seNoTopK = {
-      component: semanticModel.component,
-      params: omitTopK(semanticModel.params),
-    };
-
-    const hyNoTopK = {
-      component: hybridModel.component,
-      params: omitTopK(hybridModel.params),
-    };
-
-    return (
-      !deepEqual(modelNoTopK, kwNoTopK) &&
-      !deepEqual(modelNoTopK, seNoTopK) &&
-      !deepEqual(modelNoTopK, hyNoTopK)
-    );
-  }, [retrieverModel, keywordModel, semanticModel, hybridModel]);
-
-  /**
-   * Determine which preset group (keyword / semantic / hybrid / null) the
-   * current model configuration matches, ignoring the top-K value.
-   * @param {object} model - Retriever model config.
-   * @returns {string|null} Group key or null for custom configs.
-   */
   const detectSelectedGroup = useCallback(
     (model) => {
-      if (!model?.component) return null;
-
-      const modelNoTopK = {
-        component: model.component,
-        params: omitTopK(model.params),
-      };
-
-      if (
-        deepEqual(modelNoTopK, {
-          component: keywordModel.component,
-          params: omitTopK(keywordModel.params),
-        })
-      ) {
-        return "keyword";
-      }
-      if (
-        deepEqual(modelNoTopK, {
-          component: semanticModel.component,
-          params: omitTopK(semanticModel.params),
-        })
-      ) {
-        return "semantic";
-      }
-      if (
-        deepEqual(modelNoTopK, {
-          component: hybridModel.component,
-          params: omitTopK(hybridModel.params),
-        })
-      ) {
-        return "hybrid";
-      }
-      return null;
+      const preset = presetOf(model);
+      return preset ? preset.key : null;
     },
-    [keywordModel, semanticModel, hybridModel],
+    [presetOf],
   );
+
+  // A "leaf" retriever is a simple (non-composite) retriever such as BM25,
+  // TF-IDF or DenseEmbeddingRetriever. Composite retrievers (sequential,
+  // parallel, MMR reranker, cross-encoder) do not expose a top-K slider,
+  // except the default Hybrid preset (a ParallelRetriever) which does.
+  const isLeafRetriever = Boolean(
+    retrieverModel?.component && !isCompositeKind(retrieverModel.component),
+  );
+  const sliderMax = Math.max(TOP_K_MAX_DEFAULT, topK);
+  const showSlider = isLeafRetriever || selectedGroup === "hybrid";
 
   useEffect(() => {
     const tk = getEffectiveTopK(retrieverModel);
     if (tk != null) {
-      setTopK(tk);
+      setTopK(Math.max(TOP_K_MIN, tk));
     }
   }, [retrieverModel]);
 
   useEffect(() => {
     if (loading) return;
-    const group = detectSelectedGroup(retrieverModel);
-    setSelectedGroup(group);
+    setSelectedGroup(detectSelectedGroup(retrieverModel));
   }, [retrieverModel, loading, detectSelectedGroup]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const allRetrieversRaw = await getRetrieverComponents("RetrieverModel");
-        const retrievers = allRetrieversRaw.filter(
-          (c) => !(c.flags || []).includes("abstract"),
-        );
+        await loadRetrieverKinds();
+        const retrievers = await getRetrieverComponents("RetrieverModel");
         setConcreteRetrievers(retrievers);
-
-        let bm25 = {};
-        let embeddingDefaultsRes = {};
-        let denseRetriever = {};
-        try {
-          [bm25, embeddingDefaultsRes, denseRetriever] = await Promise.all([
-            resolveDefaults("BM25Retriever", { throwOnError: true }),
-            resolveDefaults("SentenceTransformerEmbedding", {
-              throwOnError: true,
-            }),
-            resolveDefaults("DenseEmbeddingRetriever", { throwOnError: true }),
-          ]);
-        } catch (error) {
-          console.error("Error loading retriever defaults:", error);
-          setLoadError(
-            t("generative:rag.validation.modelParamsLoadFailed", {
-              model: t("generative:rag.retriever.paradigmLabel"),
-            }),
-          );
-          enqueueSnackbar(
-            t("generative:rag.validation.modelParamsLoadFailed", {
-              model: t("generative:rag.retriever.paradigmLabel"),
-            }),
-            { variant: "error" },
-          );
-        }
-
-        setBm25Defaults(bm25);
-        setEmbeddingDefaults(embeddingDefaultsRes);
-        setDenseRetrieverDefaults(denseRetriever);
       } catch (error) {
         console.error("Error loading retrievers:", error);
+        setLoadError(
+          t("generative:rag.validation.modelParamsLoadFailed", {
+            model: t("generative:rag.setup.retrieverModel"),
+          }),
+        );
         enqueueSnackbar(
           t("generative:rag.validation.modelParamsLoadFailed", {
             model: t("generative:rag.setup.retrieverModel"),
@@ -353,6 +216,46 @@ export default function RetrieverSection({
     load();
   }, []);
 
+  // Fetch resolved preset recipes; re-fetch whenever the top-K changes.
+  useEffect(() => {
+    let cancelled = false;
+    getRetrieverPresets(topK)
+      .then((data) => {
+        if (!cancelled) setPresets(Array.isArray(data) ? data : []);
+      })
+      .catch((error) => {
+        console.error("Error loading retriever presets:", error);
+        if (!cancelled) setPresets([]);
+        enqueueSnackbar(
+          t("generative:rag.validation.modelParamsLoadFailed", {
+            model: t("generative:rag.retriever.paradigmLabel"),
+          }),
+          { variant: "error" },
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [topK]);
+
+  // Re-apply the selected preset when recipes refresh (e.g. new top-K).
+  useEffect(() => {
+    if (loading || isAdvanced || !selectedGroup) return;
+    const preset = presetByKey[selectedGroup];
+    if (!preset) return;
+    const target = { component: preset.component, params: preset.params };
+    if (deepEqual(retrieverModel, target)) return;
+    setRetrieverModel(target);
+  }, [
+    presets,
+    selectedGroup,
+    loading,
+    isAdvanced,
+    presetByKey,
+    retrieverModel,
+    setRetrieverModel,
+  ]);
+
   /**
    * Select a retriever preset. If the same preset is already active and not
    * customised, open the advanced modal instead.
@@ -365,68 +268,42 @@ export default function RetrieverSection({
         setShowAdvanced(true);
         return;
       }
-
       if (isAdvanced) {
         setShowAdvanced(true);
         return;
       }
-
+      const preset = presetByKey[groupKey];
+      if (!preset) return;
       setShowAdvanced(false);
       setSelectedGroup(groupKey);
-
-      if (groupKey === "keyword") {
-        setRetrieverModel(keywordModel);
-      } else if (groupKey === "semantic") {
-        setRetrieverModel(semanticModel);
-      } else if (groupKey === "hybrid") {
-        setRetrieverModel(hybridModel);
-      }
+      setRetrieverModel({ component: preset.component, params: preset.params });
     },
-    [
-      isAdvanced,
-      selectedGroup,
-      keywordModel,
-      semanticModel,
-      hybridModel,
-      setRetrieverModel,
-    ],
+    [isAdvanced, selectedGroup, presetByKey, setRetrieverModel],
   );
 
   /**
-   * Handle the top-K value change and rebuild the selected preset with the new value.
-   * @param {string} newValue - The new top-K value as a string.
+   * Handle the top-K value change from the slider. The preset recipes are
+   * re-fetched with the new value and the selected preset is re-applied by
+   * the effects above.
+   * @param {object} _event - The slider change event (unused).
+   * @param {number} newValue - The new top-K value.
    */
   const handleTopKChange = useCallback(
-    (newValue) => {
-      const value = parseInt(newValue);
-      if (isNaN(value) || value <= 0 || isAdvanced) return;
+    (_event, newValue) => {
+      const value = Math.max(TOP_K_MIN, newValue);
       setTopK(value);
-
-      if (selectedGroup === "keyword") {
-        setRetrieverModel(buildKeywordModel(bm25Defaults, value));
-      } else if (selectedGroup === "semantic") {
-        setRetrieverModel(
-          buildSemanticModel(embeddingDefaults, denseRetrieverDefaults, value),
-        );
-      } else if (selectedGroup === "hybrid") {
-        setRetrieverModel(
-          buildHybridModel(
-            bm25Defaults,
-            embeddingDefaults,
-            denseRetrieverDefaults,
-            value,
-          ),
-        );
+      // For an advanced (custom) leaf retriever the re-apply effect below is
+      // disabled, so update its single top-level top_k directly. Preset leaf
+      // retrievers and the Hybrid preset are handled by the preset re-fetch +
+      // re-apply flow instead.
+      if (isLeafRetriever && isAdvanced && retrieverModel?.component) {
+        setRetrieverModel({
+          component: retrieverModel.component,
+          params: { ...retrieverModel.params, top_k: value },
+        });
       }
     },
-    [
-      isAdvanced,
-      selectedGroup,
-      bm25Defaults,
-      embeddingDefaults,
-      denseRetrieverDefaults,
-      setRetrieverModel,
-    ],
+    [isLeafRetriever, isAdvanced, retrieverModel, setRetrieverModel],
   );
 
   if (loadError) {
@@ -469,30 +346,16 @@ export default function RetrieverSection({
           flexWrap: "wrap",
         }}
       >
-        <PresetCard
-          key="keyword"
-          selected={!isAdvanced && selectedGroup === "keyword"}
-          onClick={() => selectPreset("keyword")}
-          label={t("generative:rag.retriever.keywordLabel")}
-          description="BM25"
-          sx={{ minWidth: 180 }}
-        />
-        <PresetCard
-          key="semantic"
-          selected={!isAdvanced && selectedGroup === "semantic"}
-          onClick={() => selectPreset("semantic")}
-          label={t("generative:rag.retriever.semanticLabel")}
-          description="paraphrase-multilingual-MiniLM-L12-v2"
-          sx={{ minWidth: 180 }}
-        />
-        <PresetCard
-          key="hybrid"
-          selected={!isAdvanced && selectedGroup === "hybrid"}
-          onClick={() => selectPreset("hybrid")}
-          label={t("generative:rag.retriever.hybridLabel")}
-          description={t("generative:rag.retriever.hybridDescription")}
-          sx={{ minWidth: 180 }}
-        />
+        {presets.map((preset) => (
+          <PresetCard
+            key={preset.key}
+            selected={!isAdvanced && selectedGroup === preset.key}
+            onClick={() => selectPreset(preset.key)}
+            label={t(PRESET_LABEL_KEYS[preset.key])}
+            description={preset.description}
+            sx={{ minWidth: 180 }}
+          />
+        ))}
         {isAdvanced && retrieverModel?.component && (
           <Box
             sx={{
@@ -507,7 +370,7 @@ export default function RetrieverSection({
               modelName={retrieverModel.component}
               onClick={() => setShowAdvanced(true)}
             />
-            {effectiveTopK != null && (
+            {effectiveTopK != null && !isLeafRetriever && (
               <Box
                 sx={{
                   border: "1px solid",
@@ -535,40 +398,28 @@ export default function RetrieverSection({
         )}
       </Box>
 
-      {selectedGroup && (
+      {showSlider && (
         <Box>
-          {!isAdvanced && (
-            <>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                {t("generative:rag.retriever.topKLabel")}
-              </Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  alignItems: "stretch",
-                  flexWrap: "wrap",
-                  width: "100%",
-                }}
-              >
-                {TOP_K_OPTIONS.map((k) => (
-                  <PresetCard
-                    key={k}
-                    selected={topK === k}
-                    onClick={() => handleTopKChange(String(k))}
-                    label={String(k)}
-                    description={""}
-                    sx={{
-                      flex: "1 1 0",
-                      minWidth: 0,
-                      justifyContent: "center",
-                      alignItems: "center",
-                    }}
-                  />
-                ))}
-              </Box>
-            </>
-          )}
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            {t("generative:rag.retriever.topKLabel")}
+          </Typography>
+          <Box sx={{ width: "100%", px: 1 }}>
+            <Slider
+              value={topK}
+              onChange={handleTopKChange}
+              min={TOP_K_MIN}
+              max={sliderMax}
+              step={1}
+              marks={[
+                { value: 1, label: "1" },
+                { value: 5, label: "5" },
+                { value: 10, label: "10" },
+                { value: 15, label: "15" },
+              ]}
+              valueLabelDisplay="auto"
+              aria-label={t("generative:rag.retriever.topKLabel")}
+            />
+          </Box>
         </Box>
       )}
 

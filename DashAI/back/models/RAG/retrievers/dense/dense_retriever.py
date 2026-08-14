@@ -55,7 +55,6 @@ class DenseRetriever(UnitRetriever):
     on-disk ``.npy`` files and retrieves via pairwise distance.
     """
 
-    FLAGS: list[str] = ["abstract"]
     DISPLAY_NAME: str = MultilingualString(
         en="Embedding Retriever",
         es="Recuperador por Embeddings",

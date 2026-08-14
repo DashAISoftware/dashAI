@@ -115,7 +115,6 @@ class TestModel2(BaseModel):
 
 
 class TestParentComponent(BaseModel):
-    FLAGS = ["abstract"]
     COMPATIBLE_COMPONENTS = ["TestTask1"]
 
     @classmethod
@@ -124,8 +123,6 @@ class TestParentComponent(BaseModel):
 
 
 class TestConcreteComponent(TestParentComponent):
-    FLAGS = ["keyword", "sparse"]
-
     @classmethod
     def get_schema(cls) -> dict:
         return {}
@@ -892,31 +889,3 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "downloaded": True,
         },
     ]
-
-
-def test_get_child_components_exclude_flags(client: TestClient):
-    """Children endpoint does not include FLAGS by default."""
-    response = client.get(
-        "/api/v1/component/TestParentComponent/children",
-        params={"recursive": True},
-    )
-    assert response.status_code == 200
-    concrete = [
-        child for child in response.json() if child["name"] == "TestConcreteComponent"
-    ]
-    assert len(concrete) == 1
-    assert "flags" not in concrete[0]
-
-
-def test_get_child_components_include_flags(client: TestClient):
-    """Children endpoint includes FLAGS when include_flags is True."""
-    response = client.get(
-        "/api/v1/component/TestParentComponent/children",
-        params={"recursive": True, "include_flags": True},
-    )
-    assert response.status_code == 200
-    concrete = [
-        child for child in response.json() if child["name"] == "TestConcreteComponent"
-    ]
-    assert len(concrete) == 1
-    assert concrete[0]["flags"] == ["keyword", "sparse"]

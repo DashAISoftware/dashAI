@@ -216,7 +216,6 @@ class BM25Retriever(SparseRetriever):
     pairwise distance.
     """
 
-    FLAGS: list[str] = ["keyword", "sparse"]
     DISPLAY_NAME: str = MultilingualString(
         en="BM25 Retriever",
         es="Recuperador BM25",

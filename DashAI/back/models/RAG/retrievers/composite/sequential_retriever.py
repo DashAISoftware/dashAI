@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -43,7 +43,6 @@ class SequentialRetriever(CompositeRetriever):
     ``top_k`` values.  The last child is the authoritative scorer.
     """
 
-    FLAGS: list[str] = ["composite", "sequential"]
     SCHEMA = SequentialRetrieverSchema
     DISPLAY_NAME: str = MultilingualString(
         en="Sequential Retriever",
@@ -53,6 +52,14 @@ class SequentialRetriever(CompositeRetriever):
         en="Queries multiple retrievers in sequence, re-ranking at each step.",
         es="Consulta múltiples recuperadores en secuencia, reordenando en cada paso.",
     )
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """Return UI metadata including the declarative operation summary."""
+        return {
+            **super().get_metadata(),
+            "operation_summary": {"kind": "fusion", "fields": []},
+        }
 
     def __init__(self, **kwargs):
         """Initialize and validate the sequential cascade.
