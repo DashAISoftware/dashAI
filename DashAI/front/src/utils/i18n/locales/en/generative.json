@@ -7,6 +7,7 @@
   "error": {
     "failedToCreateSession": "Failed to create session",
     "failedToDeleteSession": "Failed to delete session",
+    "failedToDeleteSessions": "Failed to delete the selected sessions",
     "failedToFetchHistory": "Failed to fetch parameter history",
     "failedToFetchMessages": "Failed to fetch messages",
     "failedToFetchSessionInfo": "Failed to fetch session information",
@@ -22,6 +23,9 @@
   },
   "label": {
     "confirmDeleteSession": "Are you sure you want to delete the session \"{{name}}\"? This action cannot be undone.",
+    "confirmBulkDeleteSessions_one": "Are you sure you want to delete the {{count}} selected session? This action cannot be undone.",
+    "confirmBulkDeleteSessions_other": "Are you sure you want to delete the {{count}} selected sessions? This action cannot be undone.",
+    "selectSessionsToDelete": "Select sessions to delete",
     "deleteSessionConfirmation": "Are you sure you want to delete this session? This action cannot be undone.",
     "noDescriptionAvailable": "No description available",
     "showLess": "Show less",

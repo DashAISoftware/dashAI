@@ -7,6 +7,7 @@
   "error": {
     "failedToCreateSession": "Erro ao criar a sessão",
     "failedToDeleteSession": "Erro ao excluir sessão",
+    "failedToDeleteSessions": "Erro ao excluir as sessões selecionadas",
     "failedToFetchHistory": "Erro ao obter histórico de parâmetros",
     "failedToFetchMessages": "Erro ao obter mensagens",
     "failedToFetchSessionInfo": "Erro ao obter informações da sessão",
@@ -22,6 +23,10 @@
   },
   "label": {
     "confirmDeleteSession": "Tem certeza de que deseja excluir a sessão \"{{name}}\"? Esta ação não pode ser desfeita.",
+    "confirmBulkDeleteSessions_one": "Tem certeza de que deseja excluir a sessão selecionada? Esta ação não pode ser desfeita.",
+    "confirmBulkDeleteSessions_many": "Tem certeza de que deseja excluir as {{count}} sessões selecionadas? Esta ação não pode ser desfeita.",
+    "confirmBulkDeleteSessions_other": "Tem certeza de que deseja excluir as {{count}} sessões selecionadas? Esta ação não pode ser desfeita.",
+    "selectSessionsToDelete": "Selecionar sessões para excluir",
     "deleteSessionConfirmation": "Tem certeza de que deseja excluir esta sessão? Esta ação não pode ser desfeita.",
     "noDescriptionAvailable": "Não há descrição disponível",
     "showLess": "Mostrar menos",
