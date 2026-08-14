@@ -94,6 +94,7 @@ class DatasetJob(BaseJob):
         import json
         import os
         import shutil
+        import tempfile
         import uuid
         from pathlib import Path
 
@@ -114,6 +115,11 @@ class DatasetJob(BaseJob):
         n_sample = self.kwargs.get("n_sample", None)
         file_path = self.kwargs.get("file_path")
         temp_dir = self.kwargs.get("temp_dir")
+        if not temp_dir:
+            # The dataloaders forward this path to HuggingFace as ``cache_dir``.
+            # Passing it along unset would stringify to "None" and create a
+            # directory literally named "None" in the working directory.
+            temp_dir = tempfile.mkdtemp(prefix="dashai-dataset-")
         url = self.kwargs.get("url", "")
 
         try:

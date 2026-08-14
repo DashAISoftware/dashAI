@@ -12,6 +12,16 @@ const groupLabelSx = {
   pt: 1,
 };
 
+// Matches the MUI small Chip's height, so tabs with a count chip don't grow
+// taller than plain-text tabs and push their label off-center.
+const TAB_LABEL_HEIGHT = 24;
+const tabLabelRowSx = {
+  display: "flex",
+  alignItems: "center",
+  gap: 2,
+  height: TAB_LABEL_HEIGHT,
+};
+
 /**
  * The two grouped pill tab bars (Metrics: Live/Hyperparameters, Operations:
  * Explainability/Predictions) shown above a run's results, with a vertical
@@ -49,14 +59,19 @@ export default function ResultsTabsHeader({
           onChange={(e, newValue) => onTabChange(newValue)}
           aria-label="Result characteristics tabs"
         >
-          <Tab value={0} label={t("models:label.liveMetrics")} />
+          <Tab
+            value={0}
+            label={
+              <Box sx={tabLabelRowSx}>{t("models:label.liveMetrics")}</Box>
+            }
+          />
           <Tab
             value={3}
             label={
               <Tooltip title={hyperparametersTooltip}>
-                <span style={{ pointerEvents: "auto" }}>
+                <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
                   {t("models:label.hyperparameters")}
-                </span>
+                </Box>
               </Tooltip>
             }
             disabled={!isFinished || optimizables === 0}
@@ -94,14 +109,7 @@ export default function ResultsTabsHeader({
             value={1}
             label={
               <Tooltip title={notFinishedTooltip}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    pointerEvents: "auto",
-                  }}
-                >
+                <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
                   <span>{t("models:label.explainability")}</span>
                   {isFinished && (
                     <Chip label={explainerCount} size="small" color="primary" />
@@ -115,14 +123,7 @@ export default function ResultsTabsHeader({
             value={2}
             label={
               <Tooltip title={notFinishedTooltip}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                    pointerEvents: "auto",
-                  }}
-                >
+                <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
                   <span>{t("models:label.predictions")}</span>
                   {isFinished && (
                     <Chip

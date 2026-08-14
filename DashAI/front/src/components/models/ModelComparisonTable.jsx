@@ -14,6 +14,10 @@ import {
   getComponentDownloadState,
   subscribeAnyDownloadState,
 } from "./model/ComponentDownloadControl";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
 import { canTrainRun, isRunActive } from "../../utils/runStatus";
 import { useModels } from "./ModelsContext";
 
@@ -42,6 +46,11 @@ function ModelComparisonTable({
     [],
   );
 
+  // Live credential statuses so the train button re-enables the instant a
+  // required credential is verified.
+  const { statuses: credentialStatuses, loaded: credentialsLoaded } =
+    useCredentialStatuses();
+
   // A run is trainable only if its model needs no download or the download is
   // present and not in progress (live state overrides a stale fetched flag).
   const isModelReady = (modelName) => {
@@ -53,7 +62,17 @@ function ModelComparisonTable({
     return downloaded && !downloading;
   };
 
-  const { t } = useTranslation(["models", "common"]);
+  // Whether a run's model still needs its required credentials authenticated.
+  const isModelLocked = (modelName) => {
+    const model = models.find((m) => m.name === modelName);
+    return getComponentCredentialState(
+      model || {},
+      credentialStatuses,
+      credentialsLoaded,
+    ).locked;
+  };
+
+  const { t } = useTranslation(["models", "common", "credentials"]);
   const theme = useTheme();
   const localization = useTableLocalization();
 
@@ -245,14 +264,25 @@ function ModelComparisonTable({
           const canTrain = canTrainRun(row.original.status);
           const isRunning = isRunActive(row.original.status);
           const modelReady = isModelReady(row.original.model_name);
+          const modelLocked = isModelLocked(row.original.model_name);
 
           return (
             <Box sx={{ display: "flex", gap: 1 }}>
               <Tooltip
                 title={
-                  modelReady
-                    ? t("common:train")
-                    : t("common:componentDownload.mustDownload")
+                  modelLocked
+                    ? t("credentials:requiredTooltip", {
+                        platform: getComponentCredentialState(
+                          models.find(
+                            (m) => m.name === row.original.model_name,
+                          ) || {},
+                          credentialStatuses,
+                          credentialsLoaded,
+                        ).requiredPlatforms,
+                      })
+                    : modelReady
+                      ? t("common:train")
+                      : t("common:componentDownload.mustDownload")
                 }
               >
                 <span>
@@ -262,7 +292,7 @@ function ModelComparisonTable({
                       e.stopPropagation();
                       onTrain(runs.find((r) => r.id === row.original.id));
                     }}
-                    disabled={!canTrain || !modelReady}
+                    disabled={!canTrain || !modelReady || modelLocked}
                     color="primary"
                   >
                     <PlayArrow fontSize="small" />
@@ -305,7 +335,18 @@ function ModelComparisonTable({
         },
       },
     ];
-  }, [models, metrics, runs, metricSplit, t, onTrain, onViewDetails, onDelete]);
+  }, [
+    models,
+    metrics,
+    runs,
+    metricSplit,
+    t,
+    onTrain,
+    onViewDetails,
+    onDelete,
+    credentialStatuses,
+    credentialsLoaded,
+  ]);
 
   const columnOrder = useMemo(
     () => columns.map((col) => col.id ?? col.accessorKey).filter(Boolean),

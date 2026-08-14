@@ -333,9 +333,14 @@ class KernelShap(BaseLocalExplainer):
         """
         sample_background_data = bool(sample_background_data)
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = background_dataset
 
-        x_train = x["train"]
+        # SHAP perturbs the background frame and calls the model with it, so
+        # the background must already be in the model's feature space and the
+        # model must be queried through predict_prepared.
+        x_train = prepare_model_input(self.model, x["train"])
         y_train = y["train"]
 
         background_data = x_train.to_pandas()
@@ -356,12 +361,11 @@ class KernelShap(BaseLocalExplainer):
                 categorical_features,
             )
 
-        # TODO: consider the case where the predictor is not a Sklearn model
         # Lazy import of shap
         import shap
 
         self.explainer = shap.KernelExplainer(
-            model=self.model.predict,
+            model=self.model.predict_prepared,
             data=background_data,
             feature_names=feature_names,
             link=self.link,
@@ -392,13 +396,10 @@ class KernelShap(BaseLocalExplainer):
             dictionary with the shap values for each instance.
         """
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.explainability.model_input import prepare_model_input
 
         dataset_dashai = to_dashai_dataset(instances)
-
-        if hasattr(self.model, "prepare_dataset"):
-            dataset_prepared = self.model.prepare_dataset(dataset_dashai, is_fit=False)
-        else:
-            dataset_prepared = dataset_dashai
+        dataset_prepared = prepare_model_input(self.model, dataset_dashai)
 
         X = dataset_prepared.to_pandas()
 

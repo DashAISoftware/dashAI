@@ -94,8 +94,19 @@ class SklearnLikeModel(CategoricalEncoderMixin, BaseModel):
         np.ndarray
             Predicted values.
         """
-        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+        return self.predict_prepared(self.prepare_dataset(x, is_fit=False).to_pandas())
 
-        if isinstance(x, DashAIDataset):
-            x = self.prepare_dataset(x, is_fit=False).to_pandas()
-        return super().predict(x)
+    def predict_prepared(self, features):
+        """Predict from a feature matrix already in the model's feature space.
+
+        Parameters
+        ----------
+        features : pandas.DataFrame or numpy.ndarray
+            Feature matrix as produced by ``prepare_dataset``.
+
+        Returns
+        -------
+        np.ndarray
+            Predicted values.
+        """
+        return super().predict(features)

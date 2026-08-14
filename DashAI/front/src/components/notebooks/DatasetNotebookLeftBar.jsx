@@ -25,6 +25,7 @@ export default function DatasetsNotebooksLeftBar({
     selectedDatasetId,
     selectedNotebookId,
     deleteDatasetById,
+    deleteDatasetsByIds,
     removeNotebooksByDatasetId,
     editDataset,
     moveDatasetToFolder,
@@ -173,6 +174,16 @@ export default function DatasetsNotebooksLeftBar({
     removeNotebooksByDatasetId(id);
   };
 
+  const onBulkDatasetDelete = async (ids) => {
+    const success = await deleteDatasetsByIds(ids);
+    if (!success) return false;
+    if (ids.includes(selectedDatasetId)) {
+      navigate("/app/data");
+    }
+    ids.forEach((id) => removeNotebooksByDatasetId(id));
+    return true;
+  };
+
   const onNotebookDelete = async (id) => {
     const success = await deleteNotebookById(id);
     if (!success) return;
@@ -228,6 +239,7 @@ export default function DatasetsNotebooksLeftBar({
           onCreateFolder={createFolder}
           onRenameFolder={renameFolder}
           onDeleteFolder={deleteFolderById}
+          onBulkDelete={onBulkDatasetDelete}
           title={t("datasets:label.availableDatasets")}
           getItemDescription={getDatasetDescription}
           getDeleteConfirmationContent={getDatasetDeleteConfirmationContent}

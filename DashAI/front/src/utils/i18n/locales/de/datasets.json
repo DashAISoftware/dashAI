@@ -39,6 +39,8 @@
     "createConverter": "Konverter erstellen",
     "createExplorer": "Explorer erstellen",
     "createNotebook": "Notizbuch erstellen",
+    "deleteSelectedDatasets_one": "Ausgewählte löschen ({{count}})",
+    "deleteSelectedDatasets_other": "Ausgewählte löschen ({{count}})",
     "goToDatasets": "Zu Datensätzen",
     "datasetHub": "Datensatz-Zentrale",
     "newDatasetNotebook": "Neuer Datensatz/Notizbuch",
@@ -62,10 +64,12 @@
     "errorCreatingNotebook": "Fehler beim Erstellen des Notizbuchs",
     "errorProcessingExplorer": "Fehler beim Verarbeiten des Explorers: {{error}}",
     "explorerFailed": "Beim Verarbeiten des Explorers ist ein Fehler aufgetreten.",
+    "explorerResultsUnavailable": "Die Ergebnisse dieses Explorers sind nicht mehr verfuegbar.",
     "failedToCreateDataset": "Der Datensatz konnte nicht erstellt werden. Bitte pruefe deine Datei und Konfiguration und versuche es erneut.",
     "failedToCreateDatasetFromNotebook": "Datensatz konnte nicht aus Notizbuch erstellt werden",
     "failedToCreateExplorer": "Explorer konnte nicht erstellt werden",
     "failedToDeleteDataset": "Datensatz konnte nicht gelöscht werden",
+    "failedToDeleteDatasets": "Die ausgewählten Datensätze konnten nicht gelöscht werden",
     "failedToCreateFolder": "Ordner konnte nicht erstellt werden",
     "failedToUpdateFolder": "Ordner konnte nicht aktualisiert werden",
     "failedToDeleteFolder": "Ordner konnte nicht gelöscht werden",
@@ -116,6 +120,9 @@
     "folderName": "Ordnername",
     "confirmDeleteDataset": "Sind Sie sicher, dass Sie den Datensatz \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "confirmDeleteDatasetLinkedWarning": "Alle mit diesem Datensatz verknüpften Notizbücher und Sitzungen werden ebenfalls gelöscht.",
+    "confirmBulkDeleteDatasets_one": "Sind Sie sicher, dass Sie den ausgewählten Datensatz löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmBulkDeleteDatasets_other": "Sind Sie sicher, dass Sie die {{count}} ausgewählten Datensätze löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "selectDatasetsToDelete": "Datensätze zum Löschen auswählen",
     "confirmDeleteNotebook": "Sind Sie sicher, dass Sie das Notizbuch \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "avg": "Durchschn.",
     "avgLength": "Durchschnittliche Länge",
@@ -303,6 +310,7 @@
     "position": "Position",
     "possibleIDColumns": "Mögliche ID-Spalten",
     "presetScale": "Voreingestellte Skala",
+    "processingTitle": "Ihr Dataset wird verarbeitet...",
     "processingMessage": "Dies kann je nach Größe Ihrer Daten einige Momente dauern.",
     "proportion": "Anteil",
     "q1": "Q1",
@@ -481,5 +489,6 @@
     "translation": "Übersetzung",
     "regression": "Regression",
     "eda": "EDA"
-  }
+  },
+  "unknownComponent": "Unbekannte Komponente"
 }

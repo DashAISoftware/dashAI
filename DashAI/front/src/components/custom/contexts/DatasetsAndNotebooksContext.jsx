@@ -28,6 +28,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     clearSelectedDataset,
     deleteDataset,
     deleteDatasetById,
+    deleteDatasetsByIds,
     editDataset,
     moveDatasetToFolder,
     addDatasetOptimistically,
@@ -40,8 +41,22 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     fetchFolders,
     createFolder,
     renameFolder,
-    deleteFolderById,
+    deleteFolderById: deleteFolderByIdRaw,
   } = useFolders({ t });
+
+  // Deleting a folder moves its datasets to "no folder" server-side
+  // (folder_id set to null via the FK's ON DELETE SET NULL), but the local
+  // `datasets` state still holds the old folder_id until this clears it —
+  // otherwise those datasets vanish from the list until a full refetch.
+  const deleteFolderById = async (id) => {
+    const success = await deleteFolderByIdRaw(id);
+    if (success) {
+      replaceDatasets((prev) =>
+        prev.map((d) => (d.folder_id === id ? { ...d, folder_id: null } : d)),
+      );
+    }
+    return success;
+  };
 
   const {
     downloads,
@@ -59,6 +74,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     clearSelectedNotebook,
     deleteNotebookById,
     editNotebook,
+    addNotebookOptimistically,
     removeNotebooksByDatasetId,
   } = useNotebooks({ t });
 
@@ -91,6 +107,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     clearSelectedDataset,
     deleteDataset,
     deleteDatasetById,
+    deleteDatasetsByIds,
     editDataset,
     moveDatasetToFolder,
     addDatasetOptimistically,
@@ -108,6 +125,7 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     clearSelectedNotebook,
     deleteNotebookById,
     editNotebook,
+    addNotebookOptimistically,
     removeNotebooksByDatasetId,
     selectedOption,
     setSelectedOption,

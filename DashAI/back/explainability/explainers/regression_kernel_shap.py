@@ -179,8 +179,13 @@ class RegressionKernelShap(BaseLocalExplainer):
         """
         import shap
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = background_dataset
-        x_train = x["train"]
+        # SHAP calls the model with perturbed matrices, so the background must
+        # be in the model feature space and the model must be queried through
+        # predict_prepared.
+        x_train = prepare_model_input(self.model, x["train"])
         y_train = y["train"]
 
         background_data = x_train.to_pandas()
@@ -191,7 +196,7 @@ class RegressionKernelShap(BaseLocalExplainer):
             background_data = shap.sample(background_data, n_samples)
 
         self.explainer = shap.KernelExplainer(
-            model=self.model.predict,
+            model=self.model.predict_prepared,
             data=background_data,
             feature_names=feature_names,
         )
@@ -220,9 +225,10 @@ class RegressionKernelShap(BaseLocalExplainer):
         import numpy as np
 
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.explainability.model_input import prepare_model_input
 
         dataset = to_dashai_dataset(instances)
-        X = dataset.to_pandas()
+        X = prepare_model_input(self.model, dataset).to_pandas()
 
         predictions = np.asarray(self.model.predict(dataset)).ravel()
 

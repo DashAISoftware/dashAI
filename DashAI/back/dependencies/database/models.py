@@ -699,6 +699,9 @@ class Explorer(Base):
     exploration_type: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=False)
     exploration_path: Mapped[str] = mapped_column(String, nullable=True)
+    # Render artifacts built once, when the exploration is created, so results
+    # keep rendering after the explorer class is removed from the registry.
+    artifacts_path: Mapped[str] = mapped_column(String, nullable=True)
     # Metadata
     name: Mapped[str] = mapped_column(String, nullable=True)
 
@@ -732,6 +735,11 @@ class Explorer(Base):
 
     def delete_result(self) -> None:
         """Delete the result of the explorer."""
+        from DashAI.back.exploration.artifact_store import delete_artifacts
+
+        delete_artifacts(self.artifacts_path)
+        self.artifacts_path = None
+
         if self.exploration_path is not None:
             path = pathlib.Path(self.exploration_path)
             if path.exists():
@@ -784,4 +792,23 @@ class Datafile(Base):
             "dataset_id",
             name="uq_datafile_source_dataset",
         ),
+    )
+
+
+class Credential(Base):
+    __tablename__ = "credential"
+    """
+    Table to store encrypted credentials for external platforms.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    encrypted_key: Mapped[str] = mapped_column(Text, nullable=False)
+    verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
     )

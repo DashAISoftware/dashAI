@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from DashAI.back.api.api_v1.endpoints.components import router as components
 from DashAI.back.api.api_v1.endpoints.converters import router as converters
+from DashAI.back.api.api_v1.endpoints.credentials import router as credentials
 from DashAI.back.api.api_v1.endpoints.datafile import router as datafile_router
 from DashAI.back.api.api_v1.endpoints.dataset_source import router as dataset_source
 from DashAI.back.api.api_v1.endpoints.datasets import router as datasets
@@ -44,3 +45,4 @@ api_router_v1.include_router(hardware, prefix="/hardware")
 api_router_v1.include_router(dataset_source, prefix="/dataset-source")
 api_router_v1.include_router(datafile_router, prefix="/datafile")
 api_router_v1.include_router(folders, prefix="/folder")
+api_router_v1.include_router(credentials, prefix="/credential")

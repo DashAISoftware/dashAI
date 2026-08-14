@@ -245,8 +245,13 @@ class RegressionPermutationFeatureImportance(BaseGlobalExplainer):
         """
         import numpy as np
 
+        from DashAI.back.explainability.model_input import prepare_model_input
+
         x, y = dataset
-        x_test = x["test"].to_pandas()
+        # The permuted frames are already in the model feature space, so the
+        # model is queried through predict_prepared to skip a second
+        # preparation.
+        x_test = prepare_model_input(self.model, x["test"]).to_pandas()
         y_test = y["test"].to_pandas().to_numpy().ravel()
 
         rng = np.random.RandomState(self.random_state)
@@ -256,7 +261,7 @@ class RegressionPermutationFeatureImportance(BaseGlobalExplainer):
         y_sample = y_test[sample_indexes]
 
         baseline_score = self.scoring(
-            y_sample, np.asarray(self.model.predict(x_sample)).ravel()
+            y_sample, np.asarray(self.model.predict_prepared(x_sample)).ravel()
         )
 
         results = {"features": [], "importances_mean": [], "importances_std": []}
@@ -268,7 +273,8 @@ class RegressionPermutationFeatureImportance(BaseGlobalExplainer):
                     rng.permutation(n_samples)
                 ]
                 permuted_score = self.scoring(
-                    y_sample, np.asarray(self.model.predict(x_permuted)).ravel()
+                    y_sample,
+                    np.asarray(self.model.predict_prepared(x_permuted)).ravel(),
                 )
                 importances.append(baseline_score - permuted_score)
 

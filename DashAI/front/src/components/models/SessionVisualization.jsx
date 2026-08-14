@@ -7,6 +7,10 @@ import ModelComparisonTable from "./ModelComparisonTable";
 import ModelDetailView from "./ModelDetailView";
 import ModelCardCompact from "./ModelCardCompact";
 import { getComponentDownloadState } from "./model/ComponentDownloadControl";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
 import ResultsGraphs from "../../pages/results/components/ResultsGraphs";
 import RetrainConfirmDialog from "./RetrainConfirmDialog";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
@@ -206,14 +210,32 @@ export default function SessionVisualization() {
     [models],
   );
 
-  // Train every not-started run whose model is downloaded, skipping (and warning
-  // about) any whose model still needs downloading.
+  // Live credential statuses so run-all skips models whose required
+  // credentials are still unmet.
+  const { statuses: credentialStatuses, loaded: credentialsLoaded } =
+    useCredentialStatuses();
+  const isRunModelLocked = React.useCallback(
+    (run) => {
+      const model = models.find((m) => m.name === run.model_name);
+      return getComponentCredentialState(
+        model || {},
+        credentialStatuses,
+        credentialsLoaded,
+      ).locked;
+    },
+    [models, credentialStatuses, credentialsLoaded],
+  );
+
+  // Train every not-started run whose model is usable, skipping (and warning
+  // about) any whose model still needs a download or its credentials.
   const handleRunAll = () => {
     const notStarted = runs.filter((r) => r.status === 0);
-    const ready = notStarted.filter(isRunModelReady);
+    const ready = notStarted.filter(
+      (r) => isRunModelReady(r) && !isRunModelLocked(r),
+    );
     ready.forEach((run) => onTrain(run));
     if (ready.length < notStarted.length) {
-      enqueueSnackbar(t("models:message.skippedUndownloadedRuns"), {
+      enqueueSnackbar(t("models:message.skippedUnavailableRuns"), {
         variant: "warning",
       });
     }
