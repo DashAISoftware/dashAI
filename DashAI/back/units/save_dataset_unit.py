@@ -16,6 +16,12 @@ class SaveDatasetUnit(BaseUnit):
     whichever unit loaded the dataset, so a save can never land somewhere the
     load did not come from. Declares no outputs — its result is on disk, not in
     the context.
+
+    The error message keeps the original exception's text. A failure here is an
+    infrastructure failure (out of space, permissions, a path the filesystem
+    rejects), and only the message of the outermost error reaches the user: the
+    job queue stores ``str(exc)``, never the ``__cause__`` chain. Swallowing it
+    would drop the diagnosis exactly when it is needed.
     """
 
     REQUIRES = ("dataset", "dataset_path")
@@ -31,4 +37,4 @@ class SaveDatasetUnit(BaseUnit):
             save_dataset(dataset, dataset_path)
         except Exception as e:
             log.exception(e)
-            raise JobError(f"Can not save dataset to path {dataset_path}") from e
+            raise JobError(f"Can not save dataset to path {dataset_path}: {e}") from e
