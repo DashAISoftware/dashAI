@@ -34,7 +34,10 @@ class SyncComponentsJob(BaseJob):
 
         component_registry = di["component_registry"]
 
-        basic_components = set(get_initial_components())
+        # This job reconciles the plugins, so they must stay out of the basic
+        # set. Counting them as basic empties `registered_plugins`, and then
+        # nothing ever gets removed.
+        basic_components = set(get_initial_components(include_plugins=False))
         available_plugins = set(get_available_plugins())
 
         all_registered = {

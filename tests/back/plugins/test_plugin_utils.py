@@ -1,4 +1,5 @@
 import subprocess
+import sys
 from abc import ABCMeta
 from typing import Final
 from unittest.mock import Mock, patch
@@ -12,8 +13,11 @@ from DashAI.back.plugins.utils import (
     _get_all_plugins,
     _is_verified_author,
     execute_pip_command,
+    get_available_plugins,
     get_plugin_by_name_from_pypi,
     get_plugins_from_pypi,
+    install_plugin,
+    register_plugin_components,
     uninstall_plugin,
     unregister_plugin_components,
 )
@@ -201,15 +205,33 @@ def test_is_verified_author(author, author_email, expected):
     assert _is_verified_author(author, author_email) is expected
 
 
+def _pip_is_available(available: bool):
+    """Patch the probe that decides whether pip can be reached"""
+    return patch(
+        "DashAI.back.plugins.utils.importlib.util.find_spec",
+        return_value=object() if available else None,
+    )
+
+
 def test_execute_pip_install_command():
     subprocess_mock = Mock()
     subprocess_mock.returncode = 0
-    with patch("subprocess.run", return_value=subprocess_mock) as mock_run:
+    with (
+        patch("subprocess.run", return_value=subprocess_mock) as mock_run,
+        _pip_is_available(True),
+    ):
         result = execute_pip_command("dashai-tabular-classification-package", "install")
 
     assert result == 0
     mock_run.assert_called_once_with(
-        ["pip", "install", "--no-cache-dir", "dashai-tabular-classification-package"],
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--no-cache-dir",
+            "dashai-tabular-classification-package",
+        ],
         stderr=subprocess.PIPE,
         text=True,
     )
@@ -218,17 +240,85 @@ def test_execute_pip_install_command():
 def test_execute_pip_uninstall_command():
     subprocess_mock = Mock()
     subprocess_mock.returncode = 0
-    with patch("subprocess.run", return_value=subprocess_mock) as mock_run:
+    with (
+        patch("subprocess.run", return_value=subprocess_mock) as mock_run,
+        _pip_is_available(True),
+    ):
         result = execute_pip_command(
             "dashai-tabular-classification-package", "uninstall"
         )
 
     assert result == 0
     mock_run.assert_called_once_with(
-        ["pip", "uninstall", "-y", "dashai-tabular-classification-package"],
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "uninstall",
+            "-y",
+            "dashai-tabular-classification-package",
+        ],
         stderr=subprocess.PIPE,
         text=True,
     )
+
+
+def test_execute_pip_command_falls_back_to_pip_when_frozen():
+    """'-m pip' needs a Python interpreter, and a bundled launcher is not one."""
+    subprocess_mock = Mock()
+    subprocess_mock.returncode = 0
+    with (
+        patch("subprocess.run", return_value=subprocess_mock) as mock_run,
+        patch.object(sys, "frozen", True, create=True),
+    ):
+        execute_pip_command("dashai-tabular-classification-package", "install")
+
+    assert mock_run.call_args.args[0][:2] == ["pip", "install"]
+
+
+def test_execute_pip_command_falls_back_to_uv_when_pip_is_missing():
+    """Environments made by uv carry no pip, and a bare 'pip' would install
+    into whichever interpreter happens to sit first on PATH."""
+    subprocess_mock = Mock()
+    subprocess_mock.returncode = 0
+    with (
+        patch("subprocess.run", return_value=subprocess_mock) as mock_run,
+        _pip_is_available(False),
+        patch("shutil.which", return_value="/usr/bin/uv"),
+    ):
+        execute_pip_command("dashai-tabular-classification-package", "install")
+
+    assert mock_run.call_args.args[0] == [
+        "/usr/bin/uv",
+        "pip",
+        "install",
+        "--python",
+        sys.executable,
+        "--no-cache",
+        "dashai-tabular-classification-package",
+    ]
+
+
+def test_execute_pip_command_raises_when_no_installer_is_available():
+    with (
+        _pip_is_available(False),
+        patch("shutil.which", return_value=None),
+        pytest.raises(RuntimeError, match="Neither pip nor uv"),
+    ):
+        execute_pip_command("dashai-tabular-classification-package", "install")
+
+
+def test_error_execute_pip_command_reports_stderr_without_error_markers():
+    subprocess_mock = Mock()
+    subprocess_mock.returncode = 1
+    subprocess_mock.stderr = "python.exe: No module named pip"
+
+    with (
+        patch("subprocess.run", return_value=subprocess_mock),
+        _pip_is_available(True),
+        pytest.raises(RuntimeError, match="No module named pip"),
+    ):
+        execute_pip_command("dashai-tabular-classification-package", "install")
 
 
 def test_error_execute_pip_command():
@@ -289,6 +379,102 @@ def test_unregister_plugin_components():
     assert len(registry_components) == 1
     assert "DummyComponent1" not in registry_components
     assert "DummyComponent2" in registry_components
+
+
+def _entry_point_mock(name, load):
+    entry_point = Mock()
+    entry_point.name = name
+    entry_point.value = f"dummy_plugin:{name}"
+    entry_point.load = load
+    return entry_point
+
+
+def test_get_available_plugins_skips_an_entry_point_that_fails_to_load():
+    """Every other installed plugin stays visible when one of them breaks"""
+
+    def _broken():
+        raise ImportError("No module named 'missing_dependency'")
+
+    entry_points_mock = Mock(
+        return_value=[
+            _entry_point_mock("Broken", _broken),
+            _entry_point_mock("Working", lambda: DummyComponent1),
+        ]
+    )
+
+    with patch("DashAI.back.plugins.utils.entry_points", entry_points_mock):
+        plugins = get_available_plugins()
+
+    assert plugins == [DummyComponent1]
+
+
+def test_get_available_plugins_skips_entry_points_that_are_not_classes():
+    entry_points_mock = Mock(
+        return_value=[
+            _entry_point_mock("NotAClass", lambda: "definitely not a class"),
+            _entry_point_mock("Working", lambda: DummyComponent1),
+        ]
+    )
+
+    with patch("DashAI.back.plugins.utils.entry_points", entry_points_mock):
+        plugins = get_available_plugins()
+
+    assert plugins == [DummyComponent1]
+
+
+def test_get_available_plugins_invalidates_the_import_caches():
+    """Without dropping the caches, a distribution installed in this process
+    never shows up."""
+    entry_points_mock = Mock(return_value=[])
+
+    with (
+        patch("DashAI.back.plugins.utils.entry_points", entry_points_mock),
+        patch("importlib.invalidate_caches") as invalidate_caches_mock,
+    ):
+        get_available_plugins()
+
+    invalidate_caches_mock.assert_called_once()
+
+
+def test_register_plugin_components_registers_the_rest_when_one_fails():
+    class NotAComponent:
+        """Extends no DashAI base class, which makes the registry raise"""
+
+    component_registry = ComponentRegistry(initial_components=[])
+
+    register_plugin_components([NotAComponent, DummyComponent1], component_registry)
+
+    assert "DummyComponent1" in component_registry
+
+
+def test_install_plugin_returns_the_components_of_the_installed_distribution():
+    distribution_entry_points_mock = Mock(return_value=[DummyComponent1])
+
+    with (
+        patch("DashAI.back.plugins.utils.execute_pip_command", Mock(return_value=0)),
+        patch(
+            "DashAI.back.plugins.utils._get_distribution_plugins",
+            distribution_entry_points_mock,
+        ),
+    ):
+        installed_plugins = install_plugin("dashai-test-package")
+
+    assert installed_plugins == [DummyComponent1]
+    distribution_entry_points_mock.assert_called_once_with("dashai-test-package")
+
+
+def test_install_plugin_raises_when_no_component_is_discovered():
+    """Silence is wrong when the install lands in another interpreter"""
+    with (
+        patch("DashAI.back.plugins.utils.execute_pip_command", Mock(return_value=0)),
+        patch(
+            "DashAI.back.plugins.utils._get_distribution_plugins",
+            Mock(return_value=[]),
+        ),
+        patch("DashAI.back.plugins.utils.get_available_plugins", Mock(return_value=[])),
+        pytest.raises(RuntimeError, match="dashai-test-package"),
+    ):
+        install_plugin("dashai-test-package")
 
 
 def test_get_all_plugins_sets_a_request_timeout():

@@ -260,7 +260,14 @@ async def update_plugin(
                     detail="Plugin not found",
                 )
             if params.new_status == PluginStatus.INSTALLED:
-                installed_components = install_plugin(plugin_name)
+                try:
+                    installed_components = install_plugin(plugin_name)
+                except RuntimeError as e:
+                    logger.exception(e)
+                    raise HTTPException(
+                        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                        detail=str(e),
+                    ) from e
                 # If some component contained in the installed components
                 # is in the component registry the installation should be aborted
                 class_names_installed_components = [
@@ -351,7 +358,14 @@ async def upgrade_plugin(
             plugin_info = get_plugin_by_name_from_pypi(plugin_name)
             new_plugin_params = PluginParams.model_validate(plugin_info)
 
-            installed_components = install_plugin(plugin_name)
+            try:
+                installed_components = install_plugin(plugin_name)
+            except RuntimeError as e:
+                logger.exception(e)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=str(e),
+                ) from e
             register_plugin_components(installed_components, component_registry)
             job_queue.put(SyncComponentsJob())
             plugin = upgrade_plugin_info_in_db(new_plugin_params)

@@ -1,7 +1,11 @@
 import subprocess
+from abc import ABCMeta
+from typing import Final
 from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
+
+from DashAI.back.config_object import ConfigObject
 
 
 def test_post_plugin(client: TestClient):
@@ -198,8 +202,24 @@ def test_get_unexistant_plugin(client: TestClient):
     assert response.status_code == 404, response.text
 
 
+class PluginDummyBaseComponent(ConfigObject, metaclass=ABCMeta):
+    """Dummy base class representing a component"""
+
+    TYPE: Final[str] = "Component"
+
+
+class PluginDummyComponent(PluginDummyBaseComponent):
+    """Stands in for a component that the installed plugin brings in"""
+
+
 def test_patch_plugin(client: TestClient):
-    with patch("subprocess.run") as mock_run:
+    with (
+        patch("subprocess.run") as mock_run,
+        patch(
+            "DashAI.back.plugins.utils._get_distribution_plugins",
+            return_value=[PluginDummyComponent],
+        ),
+    ):
         mock_run.return_value = subprocess.CompletedProcess(
             args=["pip", "install", "plugin_name"], returncode=0, stderr=""
         )
@@ -211,6 +231,33 @@ def test_patch_plugin(client: TestClient):
 
         plugin = response.json()
         assert plugin["status"] == 2
+
+
+def test_patch_plugin_fails_when_nothing_was_actually_installed(client: TestClient):
+    """An install that lands in another interpreter still exits 0, and the
+    plugin used to end up marked as installed with no component registered."""
+    with (
+        patch("subprocess.run") as mock_run,
+        patch(
+            "DashAI.back.plugins.utils._get_distribution_plugins",
+            return_value=[],
+        ),
+        patch(
+            "DashAI.back.plugins.utils.get_available_plugins",
+            return_value=[],
+        ),
+    ):
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=["pip", "install", "plugin_name"], returncode=0, stderr=""
+        )
+        response = client.patch("/api/v1/plugin/2", json={"new_status": 2})
+
+    assert response.status_code == 500, response.text
+    assert "no dashAI component could be loaded" in response.json()["detail"]
+
+    # Nothing was installed, so the status must not say otherwise.
+    plugin = client.get("/api/v1/plugin/2").json()
+    assert plugin["status"] != 2
 
 
 def test_get_filtered_plugins(client: TestClient):

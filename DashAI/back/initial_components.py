@@ -350,10 +350,18 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
-def get_initial_components():
+def get_initial_components(include_plugins: bool = True):
     """
     Obtiene todos los componentes iniciales, incluyendo los básicos
     y los plugins instalados.
+
+    Parameters
+    ----------
+    include_plugins : bool
+        Con True, el valor por defecto, se suman los componentes de los plugins
+        instalados. Con False solo se devuelven los componentes básicos, de modo
+        que los plugins registrados quedan distinguibles de los componentes
+        propios.
 
     Returns
     -------
@@ -584,6 +592,9 @@ def get_initial_components():
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
     ]
+
+    if not include_plugins:
+        return basic_components
 
     # Obtener plugins instalados
     try:
