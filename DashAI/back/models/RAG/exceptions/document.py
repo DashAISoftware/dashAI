@@ -17,3 +17,7 @@ class RAGDocumentNotFoundError(RAGDocumentError):
 
 class RAGDocumentFileTypeError(RAGDocumentError):
     """Unsupported or unrecognized document file type."""
+
+
+class RAGDocumentExtractionError(RAGDocumentError):
+    """Error while extracting text from a document (e.g. during upload)."""

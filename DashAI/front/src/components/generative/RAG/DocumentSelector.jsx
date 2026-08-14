@@ -21,6 +21,7 @@ import { MRT_Localization_ES } from "material-react-table/locales/es";
 import { MRT_Localization_EN } from "material-react-table/locales/en";
 import Upload from "../../shared/Upload";
 import { loadDocuments, addDocument, deleteDocument } from "../../../api/rag";
+import DuplicateDocumentDialog from "./DuplicateDocumentDialog";
 import { formatDate } from "../../../utils";
 import { normalizeUrl } from "../../../utils/urlUtils";
 import DocumentPreviewModal from "./DocumentPreviewModal";
@@ -55,6 +56,8 @@ export default function DocumentSelector({
 
   const [extractorModalOpen, setExtractorModalOpen] = useState(false);
   const [extractorDoc, setExtractorDoc] = useState(null);
+
+  const [duplicatePending, setDuplicatePending] = useState(null);
 
   const previousSelectedIdsRef = useRef(
     JSON.stringify([...initialSelectedIds].map(String).sort()),
@@ -178,12 +181,33 @@ export default function DocumentSelector({
 
   const handleAddDocument = useCallback(async (newDoc) => {
     try {
-      const savedDoc = await addDocument(newDoc);
-      return savedDoc;
+      return await addDocument(newDoc);
     } catch (error) {
       console.error("Failed to add document:", error);
-      return null;
+      // Re-throw the error so the caller can handle it appropriately
+      // Only 409 (duplicate) should be handled by the upload flow
+      throw error;
     }
+  }, []);
+
+  /**
+   * Merges uploaded documents into local state and selects them.
+   * @param {object[]} docs - Documents returned by the upload API.
+   */
+  const applyUploadedDocuments = useCallback((docs) => {
+    if (docs.length === 0) return;
+    setDocuments((prev) => {
+      const nextDocs = [...docs, ...prev];
+      return nextDocs.filter(
+        (doc, index, array) =>
+          index === array.findIndex((candidate) => candidate.id === doc.id),
+      );
+    });
+    setSelectedIds((prev) => {
+      const nextSelected = new Set(prev.map(String));
+      docs.forEach((doc) => nextSelected.add(String(doc.id)));
+      return Array.from(nextSelected);
+    });
   }, []);
 
   /**
@@ -202,6 +226,7 @@ export default function DocumentSelector({
 
   /**
    * Handles multi-file upload, saving each document and updating local state.
+   * If a file already exists (409), pauses and asks the user for confirmation.
    * @param {File|File[]} files - File(s) to upload.
    * @param {string} [url] - Optional source URL.
    */
@@ -209,44 +234,61 @@ export default function DocumentSelector({
     async (files, url) => {
       if (!files) return;
 
-      console.log("Files to upload at handleFileUpload:", files);
-
       const fileList = Array.isArray(files) ? files : [files];
       const uploadedDocuments = [];
 
       for (const file of fileList) {
-        const docToAdd = {
-          file,
-          optional_metadata: {
-            name: file.name,
-            source: url || "local_upload",
-          },
-        };
-        const savedDoc = await handleAddDocument(docToAdd);
-        if (savedDoc) {
-          uploadedDocuments.push(savedDoc);
+        try {
+          const result = await handleAddDocument({
+            file,
+            optional_metadata: {
+              name: file.name,
+              source: url || "local_upload",
+            },
+          });
+          if (result.duplicate) {
+            applyUploadedDocuments(uploadedDocuments);
+            setDuplicatePending({
+              file,
+              url: url || "local_upload",
+              affectedSessions: result.affectedSessions || [],
+            });
+            return;
+          }
+          if (result.document) {
+            uploadedDocuments.push(result.document);
+          }
+        } catch (error) {
+          // Non-duplicate error (500, network error, etc.) - show to user
+          console.error("Upload failed:", error);
+          // TODO: Show error to user via snackbar/alert
+          // For now, just log and continue with next file
         }
       }
 
-      if (uploadedDocuments.length > 0) {
-        setDocuments((prev) => {
-          const nextDocs = [...uploadedDocuments, ...prev];
-          return nextDocs.filter(
-            (doc, index, array) =>
-              index === array.findIndex((candidate) => candidate.id === doc.id),
-          );
-        });
-        setSelectedIds((prev) => {
-          const nextSelected = new Set(prev.map(String));
-          uploadedDocuments.forEach((doc) => nextSelected.add(String(doc.id)));
-          return Array.from(nextSelected);
-        });
-      }
-
+      applyUploadedDocuments(uploadedDocuments);
       setUploadOpen(false);
     },
-    [handleAddDocument],
+    [handleAddDocument, applyUploadedDocuments],
   );
+
+  /**
+   * Re-uploads the pending duplicate file with force=true after user confirmation.
+   */
+  const handleConfirmDuplicate = useCallback(async () => {
+    if (!duplicatePending) return;
+    const { file, url } = duplicatePending;
+    setDuplicatePending(null);
+    const result = await addDocument({
+      file,
+      optional_metadata: { name: file.name, source: url },
+      force: true,
+    });
+    if (!result.duplicate && result.document) {
+      applyUploadedDocuments([result.document]);
+    }
+    setUploadOpen(false);
+  }, [duplicatePending, applyUploadedDocuments]);
 
   const selectedIdSet = useMemo(
     () => new Set(selectedIds.map((id) => String(id))),
@@ -469,6 +511,12 @@ export default function DocumentSelector({
           emptyUploadText={t("generative:rag.documents.emptyUploadText")}
         />
       </Dialog>
+      <DuplicateDocumentDialog
+        open={duplicatePending !== null}
+        affectedSessions={duplicatePending?.affectedSessions || []}
+        onCancel={() => setDuplicatePending(null)}
+        onConfirm={handleConfirmDuplicate}
+      />
       <DocumentPreviewModal
         open={previewOpen}
         onClose={handleClosePreview}

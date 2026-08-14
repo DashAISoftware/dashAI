@@ -174,6 +174,7 @@ export default function DocumentDetailPanel({
       const result = await extractDocumentText(
         Number(selectedDocument.id),
         ref,
+        false, // Preview mode
       );
       setContent(result.text);
       setPreviewOpen(true);

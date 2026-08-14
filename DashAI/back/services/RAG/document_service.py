@@ -2,6 +2,7 @@ import json
 import logging
 import mimetypes
 import os
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
@@ -22,7 +23,10 @@ from DashAI.back.models.RAG.documents import (
     PDFDocument,
     TxtDocument,
 )
-from DashAI.back.models.RAG.exceptions import RAGDocumentFileTypeError
+from DashAI.back.models.RAG.exceptions import (
+    RAGDocumentExtractionError,
+    RAGDocumentFileTypeError,
+)
 from DashAI.back.models.RAG.extractors.base_extractor import BaseExtractor
 from DashAI.back.models.RAG.utils import hash_function
 
@@ -39,6 +43,23 @@ _DOCUMENT_CLASSES: dict[DocumentFileType, type[BaseDocument]] = {
     # A future improvement would add a dedicated CsvDocument parser.
     DocumentFileType.CSV: TxtDocument,
 }
+
+
+@dataclass
+class DocumentUploadResult:
+    """Outcome of a document upload attempt.
+
+    ``duplicate`` is set when the same file (by content hash) already exists
+    and ``force=False``: in that case the caller should surface a conflict and
+    let the user decide whether to overwrite. ``created`` / ``updated`` are set
+    for the success paths.
+    """
+
+    document: DocumentResponse
+    created: bool = False
+    updated: bool = False
+    duplicate: bool = False
+    affected_sessions: List[dict] = field(default_factory=list)
 
 
 class DocumentService:
@@ -153,15 +174,22 @@ class DocumentService:
         docs_path: str,
         optional_metadata: dict = None,
         registry=None,
-    ) -> DocumentResponse:
-        """Upload a document.
+        force: bool = False,
+    ) -> DocumentUploadResult:
+        """Upload a document, deduplicating by content hash.
 
         Handles hash deduplication, file storage, and DB record creation.
 
-        After the record is committed, extraction is run immediately (when a
+        If a document with the same file hash already exists and ``force`` is
+        ``False``, nothing is modified and the result reports the existing
+        document together with its related sessions so the caller can ask the
+        user whether to overwrite. With ``force=True`` the file is rewritten
+        and RAG artifacts are invalidated.
+
+        After the record is committed, extraction runs immediately (when a
         component registry is available) to populate the extraction cache so a
-        subsequent ``extract_text`` call returns ``cached=True``. Extraction is
-        best-effort: failures are logged but never fail the upload.
+        subsequent ``extract_text`` call returns ``cached=True``. Extraction
+        failures are raised as ``RAGDocumentExtractionError``.
 
         Parameters
         ----------
@@ -178,16 +206,21 @@ class DocumentService:
         registry : ComponentRegistry, optional
             Component registry used to resolve extractors. When provided,
             default extraction runs on upload to warm the cache.
+        force : bool
+            If ``True`` and the file already exists, overwrite it instead of
+            reporting a duplicate.
 
         Returns
         -------
-        DocumentResponse
-            The created or updated document representation.
+        DocumentUploadResult
+            Result describing the created/updated document or the duplicate.
 
         Raises
         ------
         ValueError
             If ``docs_path`` does not exist or a database error occurs.
+        RAGDocumentExtractionError
+            If pre-extraction fails during upload.
         """
         if isinstance(file_type, DocumentFileType):
             file_type = file_type.value
@@ -204,22 +237,26 @@ class DocumentService:
                 .filter_by(file_hash=file_content_hash)
                 .first()
             )
-            if existing:
-                existing.file_name = file_name
-                existing.file_path = file_path
-                existing.optional_metadata = optional_metadata
-                if existing.extractor_id is None:
-                    default_component = self._DEFAULT_EXTRACTORS.get(file_type)
-                    if default_component:
-                        extractor_record = RAGExtractor(
-                            component_name=default_component,
-                            params={},
-                        )
-                        self.db.add(extractor_record)
-                        self.db.flush()
-                        existing.extractor_id = extractor_record.id
-                self.db.commit()
-                return self._to_response(existing)
+
+            if existing is not None and not force:
+                affected_sessions = [
+                    {"id": s.id, "name": s.name} for s in existing.get_related_sessions
+                ]
+                return DocumentUploadResult(
+                    document=self._to_response(existing),
+                    duplicate=True,
+                    affected_sessions=affected_sessions,
+                )
+
+            if existing is not None:
+                return self._overwrite_existing(
+                    existing,
+                    file_content,
+                    file_path,
+                    file_name,
+                    optional_metadata,
+                    registry,
+                )
 
             with open(file_path, "wb") as f:
                 f.write(file_content)
@@ -248,16 +285,92 @@ class DocumentService:
 
             if registry is not None:
                 self._registry = registry
-                try:
-                    self.extract_text(doc.id)
-                except Exception:
-                    log.exception("Failed to pre-extract text during upload")
+                self._pre_extract_or_raise(doc.id, file_name)
 
-            return self._to_response(doc)
+            return DocumentUploadResult(document=self._to_response(doc), created=True)
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise ValueError("Database error during document upload.") from e
+
+    def _overwrite_existing(
+        self,
+        existing: DocumentDBModel,
+        file_content: bytes,
+        file_path: str,
+        file_name: str,
+        optional_metadata: dict,
+        registry,
+    ) -> DocumentUploadResult:
+        """Overwrite an existing document's file and metadata on force re-upload.
+
+        Re-extracts text and invalidates any RAG artifacts tied to the
+        document so downstream fitted models are recomputed on the next run.
+
+        Parameters
+        ----------
+        existing : DocumentDBModel
+            The existing document row matched by content hash.
+        file_content : bytes
+            Raw file bytes to write to disk.
+        file_path : str
+            Absolute path of the uploaded file.
+        file_name : str
+            Original file name.
+        optional_metadata : dict
+            Metadata to attach to the document.
+        registry : ComponentRegistry, optional
+            Registry used to resolve extractors for re-extraction.
+
+        Returns
+        -------
+        DocumentUploadResult
+            Result marking the document as updated.
+        """
+        from DashAI.back.services.RAG.cleanup_service import CleanupService
+
+        with open(file_path, "wb") as f:
+            f.write(file_content)
+
+        existing.file_name = file_name
+        existing.file_path = file_path
+        existing.optional_metadata = optional_metadata
+        existing.last_modified = datetime.now()
+        self.db.commit()
+        self.db.refresh(existing)
+
+        CleanupService(self.db).invalidate_document_artifacts(existing.id)
+
+        if registry is not None:
+            self._registry = registry
+            self._pre_extract_or_raise(existing.id, file_name)
+
+        return DocumentUploadResult(document=self._to_response(existing), updated=True)
+
+    def _pre_extract_or_raise(self, document_id: int, file_name: str) -> None:
+        """Extract text after upload, raising a typed error on failure.
+
+        Parameters
+        ----------
+        document_id : int
+            Document whose text should be pre-extracted.
+        file_name : str
+            Original file name, used in the error message.
+
+        Raises
+        ------
+        RAGDocumentExtractionError
+            If extraction fails for any reason.
+        """
+        try:
+            self.extract_text(document_id)
+        except RAGDocumentExtractionError:
+            raise
+        except Exception as e:
+            log.exception("Failed to pre-extract text during upload")
+            raise RAGDocumentExtractionError(
+                f"Failed to extract text from '{file_name}': {e}"
+            ) from e
 
     def get(self, document_id: int) -> DocumentResponse:
         """Get document metadata by ID.
@@ -513,25 +626,36 @@ class DocumentService:
         return hash_function(payload)
 
     def extract_text(
-        self, document_id: int, extractor_ref: Optional[dict] = None
+        self,
+        document_id: int,
+        extractor_ref: Optional[dict] = None,
+        persist: bool = True,
     ) -> dict:
-        """Extract text from a document on demand, with caching.
+        """Extract text from a document on demand, with 1:1 caching.
 
-        Checks processed_document_content for a cached result matching the file hash
-        and extractor config. Extracts only on cache miss and stores the result.
+        Each document has exactly one ``processed_document_content`` row. On a
+        cache miss the existing row (if any) is updated in place rather than
+        creating a second record. When the content changes because a different
+        extractor or set of parameters produced a new signature, RAG artifacts
+        (chunks, retrievers, embeddings) of the related sessions are
+        invalidated via ``CleanupService.invalidate_document_artifacts``.
 
         Args:
             document_id: Document ID.
             extractor_ref: Optional {component, params} dict. If None, uses
                 stored/default.
+            persist: If False, extract text without persisting to cache or
+                invalidating artifacts (preview mode). Defaults to True.
 
         Returns:
-            dict with keys: text, extractor, char_count, cached (bool)
+            dict with keys: text, extractor, char_count, cached (bool),
+            created (bool), updated (bool).
 
         Raises:
             ValueError if document not found or extractor incompatible.
         """
         from DashAI.back.dependencies.database.models import ProcessedDocumentContent
+        from DashAI.back.services.RAG.cleanup_service import CleanupService
 
         doc = self._get_document_or_raise(document_id)
 
@@ -565,32 +689,56 @@ class DocumentService:
                 f"'{doc.file_type}'. Supported types: {supported}"
             )
 
-        # Build signature and check cache
+        # Build signature and check the single cached row
         signature = self._build_text_signature(doc.file_hash, component_name, params)
-        cached = (
-            self.db.query(ProcessedDocumentContent)
-            .filter_by(document_id=document_id, signature=signature)
-            .first()
-        )
-        if cached is not None:
+
+        if not persist:
+            # Preview mode: extract without persisting or invalidating
+            text = extractor.extract(doc.file_path)
+            char_count = len(text)
             return {
-                "text": cached.content,
+                "text": text,
                 "extractor": {"component": component_name, "params": params},
-                "char_count": cached.char_count,
-                "cached": True,
+                "char_count": char_count,
+                "cached": False,
+                "created": False,
+                "updated": False,
             }
 
-        # Cache miss — extract and store
+        existing = (
+            self.db.query(ProcessedDocumentContent)
+            .filter_by(document_id=document_id)
+            .first()
+        )
+        if existing is not None and existing.signature == signature:
+            return {
+                "text": existing.content,
+                "extractor": {"component": component_name, "params": params},
+                "char_count": existing.char_count,
+                "cached": True,
+                "created": False,
+                "updated": False,
+            }
+
+        # Cache miss — extract and store (updating the single row if present)
         text = extractor.extract(doc.file_path)
         char_count = len(text)
 
-        cache_entry = ProcessedDocumentContent(
-            document_id=document_id,
-            content=text,
-            signature=signature,
-            char_count=char_count,
-        )
-        self.db.add(cache_entry)
+        if existing is not None:
+            CleanupService(self.db).invalidate_document_artifacts(document_id)
+            existing.content = text
+            existing.signature = signature
+            existing.char_count = char_count
+            created, updated = False, True
+        else:
+            cache_entry = ProcessedDocumentContent(
+                document_id=document_id,
+                content=text,
+                signature=signature,
+                char_count=char_count,
+            )
+            self.db.add(cache_entry)
+            created, updated = True, False
         self.db.commit()
 
         return {
@@ -598,12 +746,19 @@ class DocumentService:
             "extractor": {"component": component_name, "params": params},
             "char_count": char_count,
             "cached": False,
+            "created": created,
+            "updated": updated,
         }
 
     def update_extractor(
         self, document_id: int, extractor_ref: dict, force: bool = False
     ) -> "DocumentResponse":
         """Persist an extractor choice via rag_extractor table.
+
+        When the extractor changes, the single ``processed_document_content``
+        row is re-extracted with the new extractor. With ``force=True`` (or
+        when the document has no linked sessions) RAG artifacts are
+        invalidated via ``CleanupService.invalidate_document_artifacts``.
 
         Args:
             document_id: Document ID.
@@ -617,6 +772,7 @@ class DocumentService:
             ValueError if document not found or extractor invalid.
         """
         from DashAI.back.dependencies.database.models import RAGExtractor
+        from DashAI.back.services.RAG.cleanup_service import CleanupService
 
         doc = self._get_document_or_raise(document_id)
 
@@ -662,13 +818,17 @@ class DocumentService:
         doc.last_modified = datetime.now()
 
         if force:
-            from DashAI.back.services.RAG.cleanup_service import CleanupService
-
-            cleanup = CleanupService(self.db)
-            cleanup.invalidate_document_artifacts(document_id)
+            CleanupService(self.db).invalidate_document_artifacts(document_id)
 
         self.db.commit()
         self.db.refresh(doc)
+
+        # Re-extract with the new extractor so the single processed content row
+        # reflects the new extractor config (keeps the 1:1 invariant).
+        if self._registry is not None:
+            self.extract_text(document_id, extractor_ref=extractor_ref)
+            self.db.refresh(doc)
+
         return self._to_response(doc)
 
     def validate_exist(self, document_ids: List[int]) -> None:

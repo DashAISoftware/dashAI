@@ -786,17 +786,18 @@ class RAGExtractor(Base):
 class ProcessedDocumentContent(Base):
     __tablename__ = "processed_document_content"
     """
-    Cache of extracted document text keyed by (document_id, signature).
+    Cache of extracted document text, one row per document (1:1).
 
     The signature captures the file content hash and the extractor
-    configuration used, so re-extraction only happens when either changes.
+    configuration used. It is kept for tracking purposes but no longer
+    participates in uniqueness: re-extraction overwrites the single row.
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     document_id: Mapped[int] = mapped_column(
         ForeignKey("document.id", ondelete="CASCADE"), nullable=False
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    signature: Mapped[str] = mapped_column(String, nullable=False)
+    signature: Mapped[Optional[str]] = mapped_column(String, nullable=True)
     char_count: Mapped[int] = mapped_column(Integer, nullable=False)
 
     document: Mapped["Document"] = relationship(
@@ -804,11 +805,7 @@ class ProcessedDocumentContent(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "document_id",
-            "signature",
-            name="uix_processed_document_content_signature",
-        ),
+        UniqueConstraint("document_id", name="uq_processed_document_content_document"),
     )
 
 

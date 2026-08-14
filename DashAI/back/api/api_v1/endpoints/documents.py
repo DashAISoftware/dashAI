@@ -20,7 +20,10 @@ from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.api.api_v1.schemas import DocumentResponse
 from DashAI.back.models.RAG.documents import DocumentFileType
-from DashAI.back.models.RAG.exceptions import RAGDocumentFileTypeError
+from DashAI.back.models.RAG.exceptions import (
+    RAGDocumentExtractionError,
+    RAGDocumentFileTypeError,
+)
 from DashAI.back.services.RAG.document_service import DocumentService
 
 router = APIRouter()
@@ -147,10 +150,19 @@ async def view_document(
 async def upload_document(
     file: UploadFile = File(...),
     metadata: str = Form(...),
+    force: bool = False,
+    response: Response = None,
     config: Dict[str, Any] = Depends(lambda: di["config"]),
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Upload a new document to the RAG system with file content and metadata."""
+    """Upload a new document to the RAG system with file content and metadata.
+
+    If a document with the same content hash already exists and ``force`` is
+    ``False``, returns ``409 Conflict`` with the existing document and the
+    affected sessions so the client can ask for confirmation. With
+    ``force=True`` the existing document is overwritten and its RAG artifacts
+    are invalidated. Extraction failures are surfaced as ``500``.
+    """
     from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
     registry: ComponentRegistry = di["component_registry"]
@@ -191,14 +203,38 @@ async def upload_document(
             detail=f"Unsupported file type: {ext}",
         ) from None
     with session_factory() as db:
-        return DocumentService(db, registry).upload(
-            content_bytes,
-            file_name,
-            file_type,
-            str(docs_folder_path),
-            optional_metadata,
-            registry=registry,
-        )
+        try:
+            result = DocumentService(db, registry).upload(
+                content_bytes,
+                file_name,
+                file_type,
+                str(docs_folder_path),
+                optional_metadata,
+                registry=registry,
+                force=force,
+            )
+        except RAGDocumentExtractionError as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+            ) from e
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            ) from e
+
+        if result.duplicate:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "detail": "Document already exists",
+                    "existing_document": result.document.model_dump(mode="json"),
+                    "affected_sessions": result.affected_sessions,
+                },
+            )
+
+        if result.updated and response is not None:
+            response.status_code = status.HTTP_200_OK
+        return result.document
 
 
 @router.get("/session/{session_id}", response_model=List[DocumentResponse])
@@ -286,16 +322,19 @@ async def extract_document_text(
     config: Dict[str, Any] = Depends(lambda: di["config"]),
     session_factory: sessionmaker = Depends(lambda: di["session_factory"]),
 ):
-    """Extract text from a document on demand. Does NOT persist anything.
+    """Extract text from a document on demand.
 
     Request body (optional):
-        {"extractor": {"component": "PyMuPDFExtractor", "params": {}}}
+        {
+            "extractor": {"component": "PyMuPDFExtractor", "params": {}},
+            "persist": true  // false for preview mode
+        }
 
     If extractor is not provided, uses the document's stored extractor
     or file-type default.
 
     Returns:
-        dict with text, extractor ref, and char_count.
+        dict with text, extractor ref, char_count, cached, created, updated.
     """
     from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 
@@ -307,12 +346,14 @@ async def extract_document_text(
         body = {}
 
     extractor_ref = body.get("extractor")
+    persist = body.get("persist", True)  # Default to True for backward compatibility
 
     with session_factory() as db:
         try:
             result = DocumentService(db, registry).extract_text(
                 document_id,
                 extractor_ref=extractor_ref,
+                persist=persist,
             )
             return result
         except ValueError as e:

@@ -94,7 +94,7 @@ function RAGDocumentsPage() {
     setContentLoading(true);
     setContentError("");
     setSelectedContent("");
-    extractDocumentText(Number(selectedDocument.id), extractorRef)
+    extractDocumentText(Number(selectedDocument.id), extractorRef, false) // Preview mode
       .then((result) => {
         if (!cancelled) setSelectedContent(result.text);
       })

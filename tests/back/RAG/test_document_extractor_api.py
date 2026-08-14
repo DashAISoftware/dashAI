@@ -124,13 +124,39 @@ class TestUploadWarmsExtractionCache:
         assert data["text"] == "Cache warming text."
         assert data["extractor"]["component"] == "PlainTextExtractor"
 
-    def test_upload_dedup_does_not_fail(self, client):
-        """Re-uploading the same file (hash dedup) still succeeds."""
+    def test_upload_dedup_returns_409_without_force(self, client):
+        """Re-uploading the same file (hash dedup) returns 409 + existing doc."""
         resp1 = self._upload(client, "dup_file.txt", b"Duplicate file content.")
         assert resp1.status_code == 201
         resp2 = self._upload(client, "dup_file_renamed.txt", b"Duplicate file content.")
-        assert resp2.status_code == 201
-        assert resp2.json()["file_name"] == "dup_file_renamed.txt"
+        assert resp2.status_code == 409
+        detail = resp2.json()["detail"]
+        assert detail["detail"] == "Document already exists"
+        assert detail["existing_document"]["file_hash"] == resp1.json()["file_hash"]
+
+    def test_upload_dedup_with_force_updates(self, client):
+        """Re-uploading the same file with force=true overwrites the existing doc."""
+        resp1 = self._upload(client, "force_file.txt", b"Force overwrite content.")
+        assert resp1.status_code == 201
+        resp2 = client.post(
+            "/api/v1/document/",
+            files={
+                "file": (
+                    "force_file_renamed.txt",
+                    b"Force overwrite content.",
+                    "text/plain",
+                )
+            },  # noqa: E501
+            data={
+                "metadata": json.dumps(
+                    {"file_name": "force_file_renamed.txt", "optional_metadata": {}}
+                )
+            },
+            params={"force": "true"},
+        )
+        assert resp2.status_code == 200
+        assert resp2.json()["id"] == resp1.json()["id"]
+        assert resp2.json()["file_name"] == "force_file_renamed.txt"
 
     def test_upload_unsupported_type_rejected(self, client):
         """Uploading an unsupported extension returns 400 before extraction."""

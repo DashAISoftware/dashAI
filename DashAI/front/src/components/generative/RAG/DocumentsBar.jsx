@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import SearchBar from "../../threeSectionLayout/SearchBar";
 import DocumentList from "./DocumentList";
 import Upload from "../../shared/Upload";
+import DuplicateDocumentDialog from "./DuplicateDocumentDialog";
 import { useSnackbar } from "notistack";
 import {
   getSessionDocuments,
@@ -43,6 +44,7 @@ export default function DocumentsBar({
   const [documents, setDocuments] = useState([]);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [duplicatePending, setDuplicatePending] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
 
@@ -99,6 +101,7 @@ export default function DocumentsBar({
 
   /**
    * Handles file upload, saving each file and updating local document state immediately.
+   * If a file already exists (409), pauses and asks the user for confirmation.
    * @param {File|File[]} files - File(s) to upload.
    * @param {string} [url] - Optional source URL.
    */
@@ -106,18 +109,28 @@ export default function DocumentsBar({
     if (!files) return;
 
     const fileList = Array.isArray(files) ? files : [files];
+    let uploadedCount = 0;
 
-    try {
-      for (const file of fileList) {
-        const docToAdd = {
+    for (const file of fileList) {
+      try {
+        const result = await addDocument({
           file,
           optional_metadata: {
             name: file.name,
             source: url || "local_upload",
           },
-        };
+        });
 
-        const savedDoc = await addDocument(docToAdd);
+        if (result.duplicate) {
+          setDuplicatePending({
+            file,
+            url: url || "local_upload",
+            affectedSessions: result.affectedSessions || [],
+          });
+          return;
+        }
+
+        const savedDoc = result.document;
 
         // Add to local state immediately for UI feedback
         const transformedDoc = {
@@ -133,15 +146,59 @@ export default function DocumentsBar({
         };
 
         setDocuments((prevDocs) => [transformedDoc, ...prevDocs]);
+        uploadedCount += 1;
+      } catch (error) {
+        // Non-duplicate error (500, network error, etc.) - log and continue
+        console.error("Upload failed:", error);
+        // TODO: Show error to user via snackbar/alert
       }
+    }
 
+    if (uploadedCount > 0) {
       enqueueSnackbar(
-        t("documentsBar.successUpload", { count: fileList.length }),
+        t("documentsBar.successUpload", { count: uploadedCount }),
         { variant: "success" },
       );
-
       if (onDocumentChange) {
         onDocumentChange();
+      }
+    }
+    setUploadOpen(false);
+  };
+
+  /**
+   * Re-uploads the pending duplicate file with force=true after user confirmation.
+   */
+  const handleConfirmDuplicate = async () => {
+    if (!duplicatePending) return;
+    const { file, url } = duplicatePending;
+    setDuplicatePending(null);
+    try {
+      const result = await addDocument({
+        file,
+        optional_metadata: { name: file.name, source: url },
+        force: true,
+      });
+      if (!result.duplicate) {
+        const savedDoc = result.document;
+        const transformedDoc = {
+          id: savedDoc.id,
+          name: savedDoc.file_name,
+          type: savedDoc.file_type,
+          uploadedAt: savedDoc.created,
+          file_name: savedDoc.file_name,
+          file_type: savedDoc.file_type,
+          preview: savedDoc.preview_url,
+          created: savedDoc.created,
+          optional_metadata: savedDoc.optional_metadata,
+        };
+        setDocuments((prevDocs) => [transformedDoc, ...prevDocs]);
+        enqueueSnackbar(t("documentsBar.successUpload", { count: 1 }), {
+          variant: "success",
+        });
+        if (onDocumentChange) {
+          onDocumentChange();
+        }
       }
     } catch (error) {
       enqueueSnackbar(t("documentsBar.failedUpload"), {
@@ -304,6 +361,12 @@ export default function DocumentsBar({
           />
         </Box>
       </Dialog>
+      <DuplicateDocumentDialog
+        open={duplicatePending !== null}
+        affectedSessions={duplicatePending?.affectedSessions || []}
+        onCancel={() => setDuplicatePending(null)}
+        onConfirm={handleConfirmDuplicate}
+      />
     </Box>
   );
 }

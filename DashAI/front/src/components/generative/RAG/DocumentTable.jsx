@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Dialog from "@mui/material/Dialog";
 import Upload from "../../shared/Upload";
 import { addDocument } from "../../../api/rag";
+import DuplicateDocumentDialog from "./DuplicateDocumentDialog";
 import AddIcon from "@mui/icons-material/AddCircleOutline";
 import {
   Paper,
@@ -53,6 +54,7 @@ export default function DocumentTable({
   const [uploadOpen, setUploadOpen] = useState(false);
   const [extractorModalOpen, setExtractorModalOpen] = useState(false);
   const [extractorDoc, setExtractorDoc] = useState(null);
+  const [duplicatePending, setDuplicatePending] = useState(null);
 
   /**
    * Opens the document preview modal, fetching TXT content if applicable.
@@ -78,6 +80,7 @@ export default function DocumentTable({
 
   /**
    * Handles file upload from the Upload component, saving each file via the API.
+   * If a file already exists (409), pauses and asks the user for confirmation.
    * @param {File|File[]} files - File(s) to upload.
    * @param {string} [url] - Optional source URL.
    */
@@ -93,9 +96,39 @@ export default function DocumentTable({
         },
       };
       try {
-        const savedDoc = await addDocument(docToAdd);
-        if (onAddDocument) onAddDocument(savedDoc);
-      } catch (error) {}
+        const result = await addDocument(docToAdd);
+        if (result.duplicate) {
+          setDuplicatePending({
+            file,
+            url: url || "local_upload",
+            affectedSessions: result.affectedSessions || [],
+          });
+          return;
+        }
+        if (onAddDocument) onAddDocument(result.document);
+      } catch (error) {
+        // Non-duplicate error (500, network error, etc.) - log and continue
+        console.error("Upload failed:", error);
+        // TODO: Show error to user via snackbar/alert
+      }
+    }
+    setUploadOpen(false);
+  };
+
+  /**
+   * Re-uploads the pending duplicate file with force=true after user confirmation.
+   */
+  const handleConfirmDuplicate = async () => {
+    if (!duplicatePending) return;
+    const { file, url } = duplicatePending;
+    setDuplicatePending(null);
+    const result = await addDocument({
+      file,
+      optional_metadata: { name: file.name, source: url },
+      force: true,
+    });
+    if (!result.duplicate && onAddDocument) {
+      onAddDocument(result.document);
     }
     setUploadOpen(false);
   };
@@ -291,6 +324,12 @@ export default function DocumentTable({
           emptyUploadText={t("generative:rag.documents.table.emptyUploadText")}
         />
       </Dialog>
+      <DuplicateDocumentDialog
+        open={duplicatePending !== null}
+        affectedSessions={duplicatePending?.affectedSessions || []}
+        onCancel={() => setDuplicatePending(null)}
+        onConfirm={handleConfirmDuplicate}
+      />
     </Paper>
   );
 }

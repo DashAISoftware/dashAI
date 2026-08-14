@@ -85,7 +85,7 @@ export default function DocumentExtractorModal({
     setContent("");
     setError("");
     try {
-      const result = await extractDocumentText(Number(docId), ref);
+      const result = await extractDocumentText(Number(docId), ref, false); // Preview mode
       setContent(result.text);
     } catch (e) {
       setError(e.message || "Extraction failed");

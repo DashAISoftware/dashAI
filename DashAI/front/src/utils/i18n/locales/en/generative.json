@@ -175,7 +175,16 @@
         "type": "Type",
         "unknownType": "Unknown"
       },
-      "uploadButton": "Upload documents"
+      "uploadButton": "Upload documents",
+      "duplicate": {
+        "affectedSessions": "Affected sessions:",
+        "cancel": "Cancel",
+        "confirm": "Update",
+        "message": "This file has already been uploaded. Do you want to update it?",
+        "noAffectedSessions": "No sessions are currently using this document.",
+        "title": "File already exists",
+        "warning": "This will delete the fitted models (embeddings, retrievers) of these sessions."
+      }
     },
     "generator": {
       "advancedApplied": "Advanced configuration applied",

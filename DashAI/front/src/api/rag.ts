@@ -4,6 +4,7 @@ import { IGenerativeTask } from "../types/generativeTask";
 import { IDocumentResponse } from "../types/documentResponse";
 import { IComponent } from "../types/component";
 import { IRAGPrompt } from "../types/ragPrompt";
+import { RetrieverPresetRecipe } from "../types/retrieverPreset";
 import { getChildComponents } from "./component";
 
 /**
@@ -121,7 +122,7 @@ export const updateGenerativeSessionParams = async (
 
 /** Fetches all available retriever paradigms (children of RetrieverModel). @returns List of retriever paradigm components. */
 export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
-  const response = await getChildComponents("RetrieverModel", true, true);
+  const response = await getChildComponents("RetrieverModel", true);
   if (!response) {
     throw new Error(`Failed to fetch retrieval options`);
   }
@@ -132,13 +133,32 @@ export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
 export const getRetrieverComponents = async (
   retrievalParadigm: string,
 ): Promise<IComponent[]> => {
-  const response = await getChildComponents(retrievalParadigm, true, true);
+  const response = await getChildComponents(retrievalParadigm, true);
 
   if (!response) {
     throw new Error(`Failed to fetch retriever components`);
   }
 
   return response;
+};
+
+/**
+ * Fetches resolved retriever preset recipes for a given top-K.
+ * @param topK - Number of chunks to configure.
+ * @returns List of preset recipes ({ key, description, component, params }).
+ */
+export const getRetrieverPresets = async (
+  topK: number,
+): Promise<RetrieverPresetRecipe[]> => {
+  const response = await api.get("/v1/rag/retriever-presets", {
+    params: { top_k: topK },
+  });
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch retriever presets: ${response.statusText}`,
+    );
+  }
+  return response.data;
 };
 
 /** Fetches generator components related to TextToTextGenerationTask. @returns List of generator components. */
@@ -196,18 +216,41 @@ export const deleteDocument = async (documentId: number): Promise<void> => {
 };
 
 /**
+ * Result of a document upload attempt.
+ *
+ * When the uploaded file already exists (same content hash) and `force` was
+ * not used, the backend answers `409 Conflict`; the result is flagged as
+ * `duplicate` and carries the existing document plus the affected sessions so
+ * the UI can ask for confirmation before forcing the update.
+ */
+export type AddDocumentResult =
+  | {
+      duplicate: false;
+      document: IDocumentResponse;
+    }
+  | {
+      duplicate: true;
+      existingDocument: IDocumentResponse;
+      affectedSessions: { id: number; name: string }[];
+    };
+
+/**
  * Uploads a document file with optional metadata via multipart/form-data.
  * @param file - The File object to upload.
  * @param optional_metadata - Optional metadata (name, source, etc.).
- * @returns The saved document response.
+ * @param force - If true, overwrite the existing document when a duplicate
+ *   (same content hash) is detected.
+ * @returns The upload result (created document or duplicate info).
  */
 export const addDocument = async ({
   file,
   optional_metadata,
+  force = false,
 }: {
   file: File;
   optional_metadata?: Record<string, any>;
-}): Promise<IDocumentResponse> => {
+  force?: boolean;
+}): Promise<AddDocumentResult> => {
   if (optional_metadata) {
     optional_metadata.last_modified = file.lastModified;
   }
@@ -221,19 +264,42 @@ export const addDocument = async ({
   formData.append("file", file);
   formData.append("metadata", JSON.stringify(metadata));
 
-  const response = await api.post<IDocumentResponse>(
-    "/v1/document/",
-    formData,
-    {
-      headers: { "Content-Type": "multipart/form-data" },
-    },
-  );
+  try {
+    const response = await api.post<IDocumentResponse>(
+      "/v1/document/",
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+        params: force ? { force: "true" } : undefined,
+      },
+    );
 
-  if (response.status !== 201) {
-    throw new Error(`Failed to upload document: ${response.statusText}`);
+    if (response.status !== 201 && response.status !== 200) {
+      throw new Error(`Failed to upload document: ${response.statusText}`);
+    }
+
+    return { duplicate: false, document: response.data };
+  } catch (error: unknown) {
+    // Check if this is an axios error with a 409 response
+    if (
+      error &&
+      typeof error === "object" &&
+      "response" in error &&
+      error.response &&
+      typeof error.response === "object" &&
+      "status" in error.response &&
+      error.response.status === 409 &&
+      "data" in error.response
+    ) {
+      const detail = (error.response.data as any)?.detail;
+      return {
+        duplicate: true,
+        existingDocument: detail?.existing_document,
+        affectedSessions: detail?.affected_sessions ?? [],
+      };
+    }
+    throw error;
   }
-
-  return response.data;
 };
 
 /** Class name prefix that identifies non-generation prompt types. */
@@ -306,21 +372,27 @@ export const getExtractorOptions = async (): Promise<IComponent[]> => {
 };
 
 /**
- * Extracts text from a document using a specified extractor (on-demand, no persistence).
+ * Extracts text from a document using a specified extractor.
  * @param docId - The document ID.
  * @param extractorRef - Optional {component, params} for the extractor to use.
+ * @param persist - If false, preview mode (no persistence/invalidation). Defaults to true.
  * @returns Extracted text with metadata.
  */
 export const extractDocumentText = async (
   docId: number,
   extractorRef?: { component: string; params?: Record<string, any> },
+  persist: boolean = true,
 ): Promise<{
   text: string;
   extractor: { component: string; params: Record<string, any> };
   char_count: number;
+  cached?: boolean;
+  created?: boolean;
+  updated?: boolean;
 }> => {
   const response = await api.post(`/v1/document/${docId}/extract`, {
     extractor: extractorRef,
+    persist,
   });
   if (response.status !== 200) {
     throw new Error(`Failed to extract document text: ${response.statusText}`);
