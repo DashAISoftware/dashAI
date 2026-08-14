@@ -182,6 +182,7 @@
   },
   "message": {
     "skippedUndownloadedRuns": "已跳过模型未下载的运行。请先下载模型。",
+    "skippedUnavailableRuns": "已跳过模型仍需下载或验证的运行。请先解决这些问题。",
     "allRunsCompleted": "{{experiment}} 已完成所有运行。",
     "tabAvailableAfterFinish": "运行训练完成后即可使用。",
     "noOptimizableParamsForHpo": "没有参数被标记为优化——请编辑运行的配置以启用此功能。",

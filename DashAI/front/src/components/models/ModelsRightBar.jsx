@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Box, Typography, TextField, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Typography,
+  TextField,
+  CircularProgress,
+  Tooltip,
+  Stack,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { Search as SearchIcon } from "@mui/icons-material";
+import {
+  Search as SearchIcon,
+  VpnKeyOutlined as KeyIcon,
+} from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useParams } from "react-router-dom";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
@@ -14,6 +24,11 @@ import {
   useComponentDownloadState,
 } from "./model/ComponentDownloadControl";
 import ModelDownloadStatusIcon from "./model/ModelDownloadStatusIcon";
+import CredentialsDialog from "../credentials/CredentialsDialog";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
 
 /**
  * A single model row whose disabled state and download icon both derive from
@@ -21,16 +36,49 @@ import ModelDownloadStatusIcon from "./model/ModelDownloadStatusIcon";
  * in progress the row stays disabled even if the backend already reports the
  * (partially written) files as present.
  */
-function ModelRow({ model, onUse, onDownload, dataTour }) {
+function ModelRow({ model, onUse, onDownload, onNeedsCredentials, dataTour }) {
+  const { t } = useTranslation(["credentials"]);
   const requiresDownload = Boolean(model.metadata?.requires_download);
   const { downloaded, downloading } = useComponentDownloadState(model);
-  const ready = !requiresDownload || (downloaded && !downloading);
+  const { statuses, loaded } = useCredentialStatuses();
+  const { locked, requiredPlatforms } = getComponentCredentialState(
+    model,
+    statuses,
+    loaded,
+  );
+  // Usable only when credentials are satisfied AND (if needed) downloaded.
+  const ready = !locked && (!requiresDownload || (downloaded && !downloading));
 
   const handleClick = () => {
     if (downloading) return;
+    // Credentials gate first: block the download until they are authenticated.
+    if (locked) {
+      onNeedsCredentials(model);
+      return;
+    }
     if (ready) onUse(model);
     else onDownload(model);
   };
+
+  // A locked row shows a key; when it also needs a download, the download
+  // icon sits beside the key so both requirements are visible at a glance.
+  const action =
+    locked || requiresDownload ? (
+      <Stack direction="row" spacing={0.5} alignItems="center">
+        {locked && (
+          <Tooltip
+            title={t("credentials:requiredTooltip", {
+              platform: requiredPlatforms,
+            })}
+          >
+            <KeyIcon fontSize="small" color="warning" />
+          </Tooltip>
+        )}
+        {requiresDownload && (
+          <ModelDownloadStatusIcon model={model} disabled={locked} />
+        )}
+      </Stack>
+    ) : null;
 
   return (
     <ModelListItem
@@ -39,9 +87,7 @@ function ModelRow({ model, onUse, onDownload, dataTour }) {
       onClick={handleClick}
       onDisabledClick={handleClick}
       data-tour={dataTour}
-      action={
-        requiresDownload ? <ModelDownloadStatusIcon model={model} /> : null
-      }
+      action={action}
     />
   );
 }
@@ -50,6 +96,7 @@ ModelRow.propTypes = {
   model: PropTypes.object.isRequired,
   onUse: PropTypes.func.isRequired,
   onDownload: PropTypes.func.isRequired,
+  onNeedsCredentials: PropTypes.func.isRequired,
   dataTour: PropTypes.string,
 };
 import { useTranslation } from "react-i18next";
@@ -70,6 +117,7 @@ export default function ModelsRightBar({ onToggle }) {
   const [filteredModels, setFilteredModels] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models", "common"]);
 
@@ -377,6 +425,7 @@ export default function ModelsRightBar({ onToggle }) {
                       model={model}
                       onUse={handleUseModel}
                       onDownload={handleDownloadModel}
+                      onNeedsCredentials={() => setCredentialsDialogOpen(true)}
                       dataTour={index === 0 ? "first-model" : undefined}
                     />
                   ))}
@@ -395,6 +444,10 @@ export default function ModelsRightBar({ onToggle }) {
         session={session}
         existingRuns={existingRuns}
         onRunCreated={onRunCreated}
+      />
+      <CredentialsDialog
+        open={credentialsDialogOpen}
+        onClose={() => setCredentialsDialogOpen(false)}
       />
     </SideBar>
   );
