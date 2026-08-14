@@ -51,6 +51,8 @@ def test_two_build_model_units_in_one_context_resolve_independently(fake_registr
     ctx.put("x", {"train": None, "validation": None})
     ctx.put("y", {"train": None, "validation": None})
     ctx.put("n_labels", None)
+    ctx.put_ref("run_id", 1)
+    ctx.put_ref("task_name", "ATask")
 
     a = _build_unit("ModelA")
     a(ctx)
