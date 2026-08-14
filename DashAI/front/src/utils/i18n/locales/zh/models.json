@@ -38,6 +38,7 @@
     "errorProcesingExperimentResults": "处理实验结果时出错。",
     "failedToDeleteRun": "删除运行 {{runName}} 时出错",
     "failedToDeleteSession": "删除会话失败",
+    "failedToDeleteSessions": "删除所选会话失败",
     "failedToFetchRuns": "获取运行列表失败",
     "failedToFetchSessions": "获取会话列表失败",
     "failedToFetchTasks": "获取任务列表失败",
@@ -62,6 +63,9 @@
   "label": {
     "addModelToSession": "将模型添加到会话",
     "confirmDeleteSession": "确定要删除会话 \"{{name}}\" 吗？此操作无法撤销。",
+    "confirmBulkDeleteSessions_one": "确定要删除所选的会话吗？此操作无法撤销。",
+    "confirmBulkDeleteSessions_other": "确定要删除所选的 {{count}} 个会话吗？此操作无法撤销。",
+    "selectSessionsToDelete": "选择要删除的会话",
     "availableExplainers": "可用解释器",
     "availableModels": "可用模型",
     "modelCount_one": "{{count}} 个模型",

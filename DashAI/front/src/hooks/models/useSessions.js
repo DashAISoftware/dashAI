@@ -4,6 +4,7 @@ import {
   getModelSessions,
   updateModelSession,
   deleteModelSession,
+  deleteModelSessions,
 } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
 import {
@@ -109,6 +110,21 @@ export function useSessions({ t }) {
         variant: "error",
       });
       console.error("Error deleting session:", error);
+    }
+    return false;
+  };
+
+  const deleteSessionsByIds = async (ids) => {
+    try {
+      await deleteModelSessions(ids);
+      const idSet = new Set(ids);
+      setSessions((prev) => prev.filter((s) => !idSet.has(s.id)));
+      return true;
+    } catch (error) {
+      enqueueSnackbar(t("models:error.failedToDeleteSessions"), {
+        variant: "error",
+      });
+      console.error("Error deleting sessions:", error);
     }
     return false;
   };
@@ -296,6 +312,7 @@ export function useSessions({ t }) {
     fetchTasks,
     editSession,
     deleteSessionById,
+    deleteSessionsByIds,
     runs,
     setRuns,
     retrainDialogOpen,

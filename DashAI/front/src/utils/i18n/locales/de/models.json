@@ -38,6 +38,7 @@
     "errorProcesingExperimentResults": "Fehler beim Verarbeiten der Experimentergebnisse.",
     "failedToDeleteRun": "Fehler beim Löschen des Durchlaufs {{runName}}",
     "failedToDeleteSession": "Sitzung konnte nicht gelöscht werden",
+    "failedToDeleteSessions": "Die ausgewählten Sitzungen konnten nicht gelöscht werden",
     "failedToFetchRuns": "Durchläufe konnten nicht abgerufen werden",
     "failedToFetchSessions": "Sitzungen konnten nicht abgerufen werden",
     "failedToFetchTasks": "Aufgaben konnten nicht abgerufen werden",
@@ -62,6 +63,9 @@
   "label": {
     "addModelToSession": "Modell zur Sitzung hinzufügen",
     "confirmDeleteSession": "Sind Sie sicher, dass Sie die Sitzung \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmBulkDeleteSessions_one": "Sind Sie sicher, dass Sie die ausgewählte Sitzung löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmBulkDeleteSessions_other": "Sind Sie sicher, dass Sie die {{count}} ausgewählten Sitzungen löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "selectSessionsToDelete": "Sitzungen zum Löschen auswählen",
     "availableExplainers": "Verfügbare Erklärungsmodelle",
     "availableModels": "Verfügbare Modelle",
     "modelCount_one": "{{count}} Modell",
