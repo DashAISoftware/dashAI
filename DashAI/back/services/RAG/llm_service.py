@@ -70,12 +70,17 @@ class LLMService:
                 TextToTextGenerationTaskModel subclass.
         """
         sorted_params = normalize_params(params)
-        params_hash = build_parameters_hash(sorted_params)
+        # Include class_name in the hash so different LLM components with
+        # identical parameters produce distinct hashes (the DB column has a
+        # UNIQUE constraint on parameters_hash).
+        params_hash = build_parameters_hash(
+            {"__class__": component_name, **sorted_params}
+        )
 
         try:
             existing = (
                 self._db.query(GenerationDBModel)
-                .filter_by(parameters_hash=params_hash)
+                .filter_by(class_name=component_name, parameters_hash=params_hash)
                 .first()
             )
         except exc.SQLAlchemyError as e:
