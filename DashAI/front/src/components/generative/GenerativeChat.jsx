@@ -377,10 +377,10 @@ export default function GenerativeChat() {
             : change.parameter;
           const oldValue = isModel
             ? modelsByName[change.oldValue] || change.oldValue
-            : change.oldValue;
+            : formatHistoryValue(change.oldValue);
           const newValue = isModel
             ? modelsByName[change.newValue] || change.newValue
-            : change.newValue;
+            : formatHistoryValue(change.newValue);
           return (
             <span
               key={change.parameter}
@@ -468,18 +468,20 @@ export default function GenerativeChat() {
           {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
         </Typography>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <ModelSwitcher
-            sessionId={sessionId}
-            taskName={sessionInfo?.task_name}
-            currentModelName={sessionInfo?.model_name}
-            onChanged={() => {
-              getSessionInfo();
-              fetchSessions();
-              setParamsVersion((v) => v + 1);
-            }}
-          />
-        </Box>
+        {taskName !== "RAGTask" && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <ModelSwitcher
+              sessionId={sessionId}
+              taskName={sessionInfo?.task_name}
+              currentModelName={sessionInfo?.model_name}
+              onChanged={() => {
+                getSessionInfo();
+                fetchSessions();
+                setParamsVersion((v) => v + 1);
+              }}
+            />
+          </Box>
+        )}
       </Box>
 
       <Divider sx={{ width: "100%", bgcolor: "divider" }} />
