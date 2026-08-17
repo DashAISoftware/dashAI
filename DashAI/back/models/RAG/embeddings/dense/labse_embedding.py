@@ -90,6 +90,9 @@ class LaBSEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="LaBSE model for multilingual embedding generation (109 languages).",
             es="Modelo LaBSE para generación de embeddings multilingües (109 idiomas).",
+            pt="Modelo LaBSE para geração de embeddings multilíngues (109 idiomas).",
+            de="LaBSE-Modell zur Erzeugung mehrsprachiger Embeddings (109 Sprachen).",
+            zh="用于多语言嵌入生成的 LaBSE 模型（109 种语言）。",
         ),
     )  # type: ignore
 
@@ -99,6 +102,15 @@ class LaBSEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Strategy for chunks exceeding model max sequence length.",
             es="Estrategia para fragmentos que exceden la longitud máxima del modelo.",
+            pt=(
+                "Estratégia para fragmentos que excedem o comprimento máximo"
+                " de sequência do modelo."
+            ),
+            de=(
+                "Strategie für Chunks, die die maximale Sequenzlänge des"
+                " Modells überschreiten."
+            ),
+            zh="对于超过模型最大序列长度的块的策略。",
         ),
     )  # type: ignore
 
@@ -108,6 +120,9 @@ class LaBSEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Device to run the model on.",
             es="Dispositivo para ejecutar el modelo.",
+            pt="Dispositivo para executar o modelo.",
+            de="Gerät, auf dem das Modell ausgeführt wird.",
+            zh="运行模型的设备。",
         ),
     )  # type: ignore
 
@@ -124,10 +139,16 @@ class LaBSEmbedding(DenseEmbedding):
     DISPLAY_NAME: str = MultilingualString(
         en="LaBSE Embedding",
         es="Embedding LaBSE",
+        pt="Embedding LaBSE",
+        de="LaBSE-Embedding",
+        zh="LaBSE 嵌入",
     )
     DESCRIPTION: str = MultilingualString(
         en="Dense embeddings using LaBSE multilingual model (109 languages).",
         es="Embeddings densos usando el modelo multilingüe LaBSE (109 idiomas).",
+        pt="Embeddings densos usando o modelo multilíngue LaBSE (109 idiomas).",
+        de="Dichte Embeddings mit dem mehrsprachigen LaBSE-Modell (109 Sprachen).",
+        zh="使用 LaBSE 多语言模型生成稠密嵌入（109 种语言）。",
     )
 
     def __init__(self, **kwargs):

@@ -39,6 +39,9 @@ class MMRRerankerRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="Trade-off between relevance (1.0) and diversity (0.0).",
             es="Compromiso entre relevancia (1.0) y diversidad (0.0).",
+            pt="Compromisso entre relevância (1.0) e diversidade (0.0).",
+            de="Abwägung zwischen Relevanz (1.0) und Diversität (0.0).",
+            zh="相关性与多样性之间的权衡（1.0 相关性，0.0 多样性）。",
         ),
     )  # type: ignore
 
@@ -50,6 +53,12 @@ class MMRRerankerRetrieverSchema(BaseSchema):
             "is determined by the child retriever's own top_k.",
             es="Número final de fragmentos a seleccionar. El tamaño del "
             "conjunto candidato lo define el top_k propio del recuperador hijo.",
+            pt="Número final de fragmentos a selecionar. O tamanho do "
+            "conjunto candidato é definido pelo top_k do próprio recuperador filho.",
+            de="Endgültige Anzahl der auszuwählenden Chunks. Die Größe des "
+            "Kandidatensatzes wird durch den eigenen top_k des Kind-Retrievers "
+            "bestimmt.",
+            zh="最终要选择的块数量。候选集大小由子检索器自身的 top_k 决定。",
         ),
     )  # type: ignore
 
@@ -59,6 +68,9 @@ class MMRRerankerRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="The child retriever whose results will be re-ranked.",
             es="El recuperador hijo cuyos resultados serán reordenados.",
+            pt="O recuperador filho cujos resultados serão reordenados.",
+            de="Der Kind-Retriever, dessen Ergebnisse neu bewertet werden.",
+            zh="其结果将被重新排序的子检索器。",
         ),
     )  # type: ignore
 
@@ -75,11 +87,19 @@ class MMRRerankerRetriever(CompositeRetriever):
     DISPLAY_NAME: str = MultilingualString(
         en="MMR Reranker",
         es="Reordenador MMR",
+        pt="Reordenador MMR",
+        de="MMR-Reranker",
+        zh="MMR 重排序器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Re-ranks retrieval results using Maximum Marginal Relevance for diversity.",
         es="Reordena resultados de recuperación usando Maximum Marginal Relevance "
         "para diversidad.",
+        pt="Reordena resultados de recuperação usando Maximum Marginal Relevance "
+        "para diversidade.",
+        de="Bewertet Abrufergebnisse mithilfe von Maximum Marginal Relevance "
+        "für Diversität neu.",
+        zh="使用最大边际相关性（MMR）对检索结果重新排序以提升多样性。",
     )
 
     @classmethod

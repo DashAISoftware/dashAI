@@ -106,6 +106,9 @@ class DistilBERTEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="DistilBERT model for embedding generation.",
             es="Modelo DistilBERT para generación de embeddings.",
+            pt="Modelo DistilBERT para geração de embeddings.",
+            de="DistilBERT-Modell zur Erzeugung von Embeddings.",
+            zh="用于生成嵌入的 DistilBERT 模型。",
         ),
     )  # type: ignore
 
@@ -115,6 +118,15 @@ class DistilBERTEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Strategy for chunks exceeding model max sequence length.",
             es="Estrategia para fragmentos que exceden la longitud máxima del modelo.",
+            pt=(
+                "Estratégia para fragmentos que excedem o comprimento máximo"
+                " de sequência do modelo."
+            ),
+            de=(
+                "Strategie für Chunks, die die maximale Sequenzlänge des"
+                " Modells überschreiten."
+            ),
+            zh="对于超过模型最大序列长度的块的策略。",
         ),
     )  # type: ignore
 
@@ -124,6 +136,9 @@ class DistilBERTEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Device to run the model on.",
             es="Dispositivo para ejecutar el modelo.",
+            pt="Dispositivo para executar o modelo.",
+            de="Gerät, auf dem das Modell ausgeführt wird.",
+            zh="运行模型的设备。",
         ),
     )  # type: ignore
 
@@ -133,6 +148,9 @@ class DistilBERTEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Pooling strategy to aggregate token embeddings.",
             es="Estrategia de pooling para agregar embeddings de tokens.",
+            pt="Estratégia de pooling para agregar embeddings de tokens.",
+            de="Pooling-Strategie zur Aggregation von Token-Embeddings.",
+            zh="聚合 token 嵌入的池化策略。",
         ),
     )  # type: ignore
 
@@ -149,10 +167,16 @@ class DistilBERTEmbedding(DenseEmbedding):
     DISPLAY_NAME: str = MultilingualString(
         en="DistilBERT Embedding",
         es="Embedding DistilBERT",
+        pt="Embedding DistilBERT",
+        de="DistilBERT-Embedding",
+        zh="DistilBERT 嵌入",
     )
     DESCRIPTION: str = MultilingualString(
         en="Dense embeddings using DistilBERT models with configurable pooling.",
         es="Embeddings densos usando modelos DistilBERT con pooling configurable.",
+        pt="Embeddings densos usando modelos DistilBERT com pooling configurável.",
+        de="Dichte Embeddings mit DistilBERT-Modellen und konfigurierbarem Pooling.",
+        zh="使用 DistilBERT 模型生成稠密嵌入，支持可配置的池化。",
     )
 
     def __init__(self, **kwargs):

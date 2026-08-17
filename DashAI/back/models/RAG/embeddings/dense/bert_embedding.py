@@ -159,6 +159,9 @@ class BERTEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="BERT model for embedding generation.",
             es="Modelo BERT para generación de embeddings.",
+            pt="Modelo BERT para geração de embeddings.",
+            de="BERT-Modell zur Erzeugung von Embeddings.",
+            zh="用于生成嵌入的 BERT 模型。",
         ),
     )  # type: ignore
 
@@ -168,6 +171,15 @@ class BERTEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Strategy for chunks exceeding model max sequence length.",
             es="Estrategia para fragmentos que exceden la longitud máxima del modelo.",
+            pt=(
+                "Estratégia para fragmentos que excedem o comprimento máximo"
+                " de sequência do modelo."
+            ),
+            de=(
+                "Strategie für Chunks, die die maximale Sequenzlänge des"
+                " Modells überschreiten."
+            ),
+            zh="对于超过模型最大序列长度的块的策略。",
         ),
     )  # type: ignore
 
@@ -177,6 +189,9 @@ class BERTEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Device to run the model on.",
             es="Dispositivo para ejecutar el modelo.",
+            pt="Dispositivo para executar o modelo.",
+            de="Gerät, auf dem das Modell ausgeführt wird.",
+            zh="运行模型的设备。",
         ),
     )  # type: ignore
 
@@ -186,6 +201,9 @@ class BERTEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Pooling strategy to aggregate token embeddings.",
             es="Estrategia de pooling para agregar embeddings de tokens.",
+            pt="Estratégia de pooling para agregar embeddings de tokens.",
+            de="Pooling-Strategie zur Aggregation von Token-Embeddings.",
+            zh="聚合 token 嵌入的池化策略。",
         ),
     )  # type: ignore
 
@@ -203,12 +221,21 @@ class BERTEmbedding(DenseEmbedding):
     DISPLAY_NAME: str = MultilingualString(
         en="BERT Embedding",
         es="Embedding BERT",
+        pt="Embedding BERT",
+        de="BERT-Embedding",
+        zh="BERT 嵌入",
     )
     DESCRIPTION: str = MultilingualString(
         en="Dense embeddings using BERT models with configurable pooling"
         " (CLS, mean, max, concat layers).",
         es="Embeddings densos usando modelos BERT con pooling configurable"
         " (CLS, mean, max, concat layers).",
+        pt="Embeddings densos usando modelos BERT com pooling configurável"
+        " (CLS, mean, max, camadas concat).",
+        de="Dichte Embeddings mit BERT-Modellen und konfigurierbarem Pooling"
+        " (CLS, mean, max, concat-Schichten).",
+        zh="使用 BERT 模型生成稠密嵌入，支持可配置的池化"
+        "（CLS、mean、max、concat 层）。",
     )
 
     def __init__(self, **kwargs):

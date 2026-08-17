@@ -86,6 +86,8 @@ class DefaultQARAGGenerationPromptSchema(BaseSchema):
             en="Language for the generated response.",
             es="Idioma de la respuesta generada.",
             pt="Idioma da resposta gerada.",
+            de="Sprache der generierten Antwort.",
+            zh="生成回复的语言。",
         ),
     )
     template: schema_field(
@@ -111,11 +113,16 @@ class DefaultQARAGGenerationPrompt(RAGGenerationPrompt):
         " respuestas.",
         pt="Modelo de prompt padrão usado na etapa de geração de linguagem"
         " do RAG para tarefas de perguntas e respostas.",
+        de="Standard-Prompt-Vorlage, die im Sprachgenerierungsschritt von"
+        " RAG für Frage-Antwort-Aufgaben verwendet wird.",
+        zh="用于问答任务的 RAG 语言生成步骤中的默认提示词模板。",
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Default QA RAG Generation Prompt",
         es="Prompt de Generación RAG de Preguntas y Respuestas Predeterminado",
         pt="Prompt de Geração RAG de Perguntas e Respostas Padrão",
+        de="Standard-QA-RAG-Generierungs-Prompt",
+        zh="默认 QA RAG 生成提示词",
     )
 
     metadata = {

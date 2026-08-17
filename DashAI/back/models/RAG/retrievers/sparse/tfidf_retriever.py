@@ -42,6 +42,9 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Whether to strip accents from the text.",
             es="Si se deben eliminar los acentos del texto.",
+            pt="Se devem ser removidos os acentos do texto.",
+            de="Ob Akzente aus dem Text entfernt werden sollen.",
+            zh="是否从文本中移除重音符号。",
         ),
     )  # type: ignore
 
@@ -51,6 +54,9 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Whether to convert all characters to lowercase.",
             es="Si se deben convertir todos los caracteres a minúsculas.",
+            pt="Se todos os caracteres devem ser convertidos para minúsculas.",
+            de="Ob alle Zeichen in Kleinbuchstaben umgewandelt werden sollen.",
+            zh="是否将所有字符转换为小写。",
         ),
     )  # type: ignore
 
@@ -60,6 +66,10 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Whether the feature should be made of word or character n-grams.",
             es="Si las características deben ser n-gramas de palabras o caracteres.",
+            pt="Se as características devem ser compostas de n-gramas de"
+            " palavras ou caracteres.",
+            de="Ob das Merkmal aus Wort- oder Zeichen-n-Grammen bestehen soll.",
+            zh="特征是否应由词或字符 n-gram 构成。",
         ),
     )  # type: ignore
 
@@ -69,6 +79,10 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="List of stop words. Leave empty to use none.",
             es="Lista de palabras vacías. Dejar vacío para no usar ninguna.",
+            pt="Lista de palavras de parada (stop words). Deixe vazio para"
+            " não usar nenhuma.",
+            de="Liste der Stoppwörter. Leer lassen, um keine zu verwenden.",
+            zh="停用词列表。留空则不使用。",
         ),
     )  # type: ignore
 
@@ -78,6 +92,9 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Lower and upper boundary of the n-gram range.",
             es="Límite inferior y superior del rango de n-gramas.",
+            pt="Limite inferior e superior do intervalo de n-gramas.",
+            de="Untere und obere Grenze des n-Gramm-Bereichs.",
+            zh="n-gram 范围的下限和上限。",
         ),
     )  # type: ignore
 
@@ -87,6 +104,10 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Ignore terms with document frequency above this threshold.",
             es="Ignorar términos con frecuencia de documento superior a este umbral.",
+            pt="Ignorar termos com frequência de documento acima deste limite.",
+            de="Begriffe mit einer Dokumentfrequenz über diesem Schwellenwert"
+            " ignorieren.",
+            zh="忽略文档频率高于此阈值的词项。",
         ),
     )  # type: ignore
 
@@ -96,6 +117,10 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Ignore terms with document frequency below this threshold.",
             es="Ignorar términos con frecuencia de documento inferior a este umbral.",
+            pt="Ignorar termos com frequência de documento abaixo deste limite.",
+            de="Begriffe mit einer Dokumentfrequenz unter diesem Schwellenwert"
+            " ignorieren.",
+            zh="忽略文档频率低于此阈值的词项。",
         ),
     )  # type: ignore
 
@@ -105,6 +130,9 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum number of features. 0 means no limit.",
             es="Número máximo de características. 0 significa sin límite.",
+            pt="Número máximo de características. 0 significa sem limite.",
+            de="Maximale Anzahl von Merkmalen. 0 bedeutet kein Limit.",
+            zh="最大特征数量。0 表示无限制。",
         ),
     )  # type: ignore
 
@@ -114,6 +142,9 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Norm used to normalize term vectors.",
             es="Norma utilizada para normalizar los vectores de términos.",
+            pt="Norma usada para normalizar os vetores de termos.",
+            de="Norm zum Normalisieren der Termvektoren.",
+            zh="用于归一化词向量的范数。",
         ),
     )  # type: ignore
 
@@ -123,6 +154,9 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Enable inverse-document-frequency reweighting.",
             es="Activar reponderación por frecuencia inversa de documento.",
+            pt="Ativar reponderação por frequência inversa de documento.",
+            de="Neugewichtung über die inverse Dokumentfrequenz aktivieren.",
+            zh="启用逆文档频率加权。",
         ),
     )  # type: ignore
 
@@ -132,6 +166,9 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Smooth IDF weights to prevent zero divisions.",
             es="Suavizar pesos IDF para prevenir divisiones por cero.",
+            pt="Suavizar pesos IDF para evitar divisões por zero.",
+            de="IDF-Gewichte glätten, um Divisionen durch Null zu vermeiden.",
+            zh="平滑 IDF 权重以防止除零。",
         ),
     )  # type: ignore
 
@@ -141,6 +178,9 @@ class TFIDFVectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Apply sublinear TF scaling (1 + log(tf)).",
             es="Aplicar escalado sublineal de TF (1 + log(tf)).",
+            pt="Aplicar escalonamento sublinear de TF (1 + log(tf)).",
+            de="Sublineare TF-Skalierung anwenden (1 + log(tf)).",
+            zh="应用亚线性 TF 缩放（1 + log(tf)）。",
         ),
     )  # type: ignore
 
@@ -156,10 +196,16 @@ class TFIDFVectorizerModel(BaseModel):
     DISPLAY_NAME: str = MultilingualString(
         en="TF-IDF Vectorizer Model",
         es="Modelo de Vectorización TF-IDF",
+        pt="Modelo de Vectorização TF-IDF",
+        de="TF-IDF-Vectorizer-Modell",
+        zh="TF-IDF 向量化器模型",
     )
     DESCRIPTION: str = MultilingualString(
         en="Model component that encapsulates a TF-IDF vectorizer.",
         es="Componente del modelo que encapsula un vectorizador TF-IDF.",
+        pt="Componente do modelo que encapsula um vectorizador TF-IDF.",
+        de="Modellkomponente, die einen TF-IDF-Vectorizer kapselt.",
+        zh="封装 TF-IDF 向量化器的模型组件。",
     )
 
     def __init__(self, **kwargs) -> None:
@@ -227,6 +273,9 @@ class TFIDFRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="TF-IDF Vectorizer parameters.",
             es="Parámetros del vectorizador TF-IDF.",
+            pt="Parâmetros do vectorizador TF-IDF.",
+            de="TF-IDF-Vectorizer-Parameter.",
+            zh="TF-IDF 向量化器参数。",
         ),
     )  # type: ignore
 
@@ -236,6 +285,9 @@ class TFIDFRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="Distance metric for comparing TF-IDF vectors.",
             es="Métrica de distancia para comparar vectores TF-IDF.",
+            pt="Métrica de distância para comparar vetores TF-IDF.",
+            de="Distanzmetrik zum Vergleichen von TF-IDF-Vektoren.",
+            zh="用于比较 TF-IDF 向量的距离度量。",
         ),
     )  # type: ignore
 
@@ -245,6 +297,9 @@ class TFIDFRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="Number of chunks to select.",
             es="Número de fragmentos a seleccionar.",
+            pt="Número de fragmentos a selecionar.",
+            de="Anzahl der auszuwählenden Chunks.",
+            zh="要选择的块数量。",
         ),
     )  # type: ignore
 
@@ -259,11 +314,18 @@ class TFIDFRetriever(SparseRetriever):
     DISPLAY_NAME: str = MultilingualString(
         en="TF-IDF Retriever",
         es="Recuperador TF-IDF",
+        pt="Recuperador TF-IDF",
+        de="TF-IDF-Retriever",
+        zh="TF-IDF 检索器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Sparse retriever using TF-IDF vectorization for document retrieval.",
         es="Recuperador disperso que usa vectorización TF-IDF para"
         " recuperar documentos.",
+        pt="Recuperador disperso que usa vetorização TF-IDF para recuperar documentos.",
+        de="Sparser Retriever, der die TF-IDF-Vektorisierung zur"
+        " Dokumentabfrage verwendet.",
+        zh="使用 TF-IDF 向量化进行文档检索的稀疏检索器。",
     )
 
     SCHEMA = TFIDFRetrieverSchema

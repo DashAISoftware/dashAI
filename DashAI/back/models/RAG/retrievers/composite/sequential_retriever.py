@@ -32,6 +32,14 @@ class SequentialRetrieverSchema(BaseSchema):
             es="Lista ordenada de recuperadores hijos. El primero recupera"
             " ampliamente; cada hijo subsiguiente reordena y ajusta los"
             " resultados.",
+            pt="Lista ordenada de recuperadores filhos. O primeiro recupera"
+            " amplamente; cada filho subsequente reordena e ajusta os"
+            " resultados.",
+            de="Geordnete Liste der Kind-Retriever. Der erste ruft breit ab;"
+            " jedes nachfolgende Kind bewertet neu und verengt die"
+            " Ergebnisse.",
+            zh="子检索器的有序列表。第一个检索器广泛检索；"
+            "每个后续子检索器重新排序并收窄结果。",
         ),
     )  # type: ignore
 
@@ -47,10 +55,17 @@ class SequentialRetriever(CompositeRetriever):
     DISPLAY_NAME: str = MultilingualString(
         en="Sequential Retriever",
         es="Recuperador Secuencial",
+        pt="Recuperador Sequencial",
+        de="Sequentieller Retriever",
+        zh="顺序检索器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Queries multiple retrievers in sequence, re-ranking at each step.",
         es="Consulta múltiples recuperadores en secuencia, reordenando en cada paso.",
+        pt="Consulta vários recuperadores em sequência, reordenando em cada etapa.",
+        de="Fragt mehrere Retriever nacheinander ab und bewertet bei jedem"
+        " Schritt neu.",
+        zh="按顺序查询多个检索器，并在每一步重新排序。",
     )
 
     @classmethod

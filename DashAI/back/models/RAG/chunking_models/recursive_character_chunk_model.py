@@ -25,6 +25,9 @@ class RecursiveCharacterChunkModelSchema(BaseSchema):
         description=MultilingualString(
             en="Size of each chunk in characters.",
             es="Tamaño de cada fragmento en caracteres.",
+            pt="Tamanho de cada fragmento em caracteres.",
+            de="Größe jedes Chunks in Zeichen.",
+            zh="每个块的大小（以字符为单位）。",
         ),
     )  # type: ignore
 
@@ -40,6 +43,15 @@ class RecursiveCharacterChunkModelSchema(BaseSchema):
                 "Número de caracteres a solapar entre fragmentos. "
                 "Debe ser menor que chunk_size."
             ),
+            pt=(
+                "Número de caracteres a sobrepor entre fragmentos. "
+                "Deve ser menor que chunk_size."
+            ),
+            de=(
+                "Anzahl der Zeichen, die sich zwischen den Chunks überlappen. "
+                "Muss kleiner als chunk_size sein."
+            ),
+            zh=("块之间重叠的字符数。必须小于 chunk_size。"),
         ),
     )  # type: ignore
 
@@ -49,6 +61,9 @@ class RecursiveCharacterChunkModelSchema(BaseSchema):
         description=MultilingualString(
             en="Ordered list of separators to use for splitting.",
             es="Lista ordenada de separadores a usar para dividir.",
+            pt="Lista ordenada de separadores a usar para dividir.",
+            de="Geordnete Liste der Trennzeichen, die zum Aufteilen verwendet werden.",
+            zh="用于拆分的分隔符的有序列表。",
         ),
     )  # type: ignore
 
@@ -89,6 +104,9 @@ class RecursiveCharacterChunkModel(BaseChunkingModel):
     DISPLAY_NAME: str = MultilingualString(
         en="Recursive Character Chunk Model",
         es="Modelo de Fragmentación Recursiva por Caracteres",
+        pt="Modelo de Fragmentação Recursiva por Caracteres",
+        de="Rekursives Zeichen-Chunking-Modell",
+        zh="递归字符分块模型",
     )
 
     def __init__(self, **kwargs):

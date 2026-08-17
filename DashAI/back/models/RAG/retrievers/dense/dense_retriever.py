@@ -35,6 +35,9 @@ class DenseRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="Distance metric for comparing dense vectors.",
             es="Métrica de distancia para comparar vectores densos.",
+            pt="Métrica de distância para comparar vetores densos.",
+            de="Distanzmetrik zum Vergleichen dichter Vektoren.",
+            zh="用于比较稠密向量的距离度量。",
         ),
     )  # type: ignore
 
@@ -44,6 +47,9 @@ class DenseRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="Number of chunks to select.",
             es="Número de fragmentos a seleccionar.",
+            pt="Número de fragmentos a selecionar.",
+            de="Anzahl der auszuwählenden Chunks.",
+            zh="要选择的块数量。",
         ),
     )  # type: ignore
 
@@ -58,11 +64,19 @@ class DenseRetriever(UnitRetriever):
     DISPLAY_NAME: str = MultilingualString(
         en="Embedding Retriever",
         es="Recuperador por Embeddings",
+        pt="Recuperador por Embeddings",
+        de="Embedding-Retriever",
+        zh="嵌入检索器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Embedding retriever using vector embeddings for similarity search.",
         es="Recuperador por embeddings que usa representaciones"
         " vectoriales para búsqueda por similitud.",
+        pt="Recuperador por embeddings que usa representações vetoriais"
+        " para busca por similaridade.",
+        de="Embedding-Retriever, der Vektor-Embeddings für die"
+        " Ähnlichkeitssuche verwendet.",
+        zh="使用向量嵌入进行相似性搜索的嵌入检索器。",
     )
 
     SCHEMA = DenseRetrieverSchema

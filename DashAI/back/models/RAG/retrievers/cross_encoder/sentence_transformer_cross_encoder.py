@@ -170,6 +170,10 @@ class SentenceTransformerCrossEncoderRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="Pre-trained SentenceTransformer cross-encoder model to use.",
             es="Modelo cross-encoder pre-entrenado de SentenceTransformer a usar.",
+            pt="Modelo cross-encoder pré-treinado de SentenceTransformer a usar.",
+            de="Vorab trainiertes SentenceTransformer-Cross-Encoder-Modell,"
+            " das verwendet werden soll.",
+            zh="要使用的预训练 SentenceTransformer 交叉编码器模型。",
         ),
     )  # type: ignore
 
@@ -183,6 +187,13 @@ class SentenceTransformerCrossEncoderRetrieverSchema(BaseSchema):
             es="Número final de fragmentos a devolver tras el reordenamiento. "
             "El tamaño del conjunto candidato lo define el top_k propio "
             "del recuperador hijo.",
+            pt="Número final de fragmentos a devolver após o reordenamento. "
+            "O tamanho do conjunto candidato é definido pelo top_k do "
+            "próprio recuperador filho.",
+            de="Endgültige Anzahl der nach der Neubewertung zurückzugebenden"
+            " Chunks. Die Größe des Kandidatensatzes wird durch den eigenen"
+            " top_k des Kind-Retrievers bestimmt.",
+            zh="重新排序后最终要返回的块数量。候选集大小由子检索器自身的 top_k 决定。",
         ),
     )  # type: ignore
 
@@ -192,6 +203,9 @@ class SentenceTransformerCrossEncoderRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="The child retriever whose candidates will be re-ranked.",
             es="El recuperador hijo cuyos candidatos serán reordenados.",
+            pt="O recuperador filho cujos candidatos serão reordenados.",
+            de="Der Kind-Retriever, dessen Kandidaten neu bewertet werden.",
+            zh="其候选将被重新排序的子检索器。",
         ),
     )  # type: ignore
 
@@ -232,12 +246,22 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
     DISPLAY_NAME: str = MultilingualString(
         en="SentenceTransformer Cross-Encoder",
         es="Cross-Encoder de SentenceTransformer",
+        pt="Cross-Encoder de SentenceTransformer",
+        de="SentenceTransformer-Cross-Encoder",
+        zh="SentenceTransformer 交叉编码器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Cross-encoder re-ranker using SentenceTransformer models. "
         "Re-scores candidates from a child retriever for improved accuracy.",
         es="Reordenador cross-encoder usando modelos de SentenceTransformer. "
         "Reevalúa candidatos de un recuperador hijo para mejorar la precisión.",
+        pt="Reordenador cross-encoder usando modelos de SentenceTransformer. "
+        "Reavalia candidatos de um recuperador filho para melhorar a precisão.",
+        de="Cross-Encoder-Reranker mit SentenceTransformer-Modellen. "
+        "Bewertet Kandidaten eines Kind-Retrievers neu, um die Genauigkeit "
+        "zu verbessern.",
+        zh="使用 SentenceTransformer 模型的交叉编码器重排序器。"
+        "对子检索器的候选重新评分以提高准确性。",
     )
     COLOR: str = "#FF5722"
     ICON: str = "Shuffle"

@@ -22,6 +22,9 @@ class RAGTask(BaseGenerativeTask):
     DISPLAY_NAME: str = MultilingualString(
         en="Retrieval-Augmented Generation",
         es="Generación Aumentada por Recuperación (RAG)",
+        pt="Geração Aumentada por Recuperação (RAG)",
+        de="Retrieval-Augmented Generation (RAG)",
+        zh="检索增强生成（RAG）",
     )
     DESCRIPTION: str = MultilingualString(
         en="""
@@ -31,6 +34,17 @@ class RAGTask(BaseGenerativeTask):
         es="""
         Esta tarea genera una respuesta de texto con un modelo LLM basado
         en los documentos proporcionados.
+        """,
+        pt="""
+        Esta tarefa gera uma resposta de texto com um modelo LLM com base
+        nos documentos fornecidos.
+        """,
+        de="""
+        Diese Aufgabe generiert eine Textantwort mit einem LLM-Modell anhand
+        der bereitgestellten Dokumente.
+        """,
+        zh="""
+        此任务基于提供的文档，使用 LLM 模型生成文本响应。
         """,
     )
 

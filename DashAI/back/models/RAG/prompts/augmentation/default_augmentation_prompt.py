@@ -82,6 +82,8 @@ class DefaultAugmentationPromptSchema(BaseSchema):
             en="Language for the generated response.",
             es="Idioma de la respuesta generada.",
             pt="Idioma da resposta gerada.",
+            de="Sprache der generierten Antwort.",
+            zh="生成回复的语言。",
         ),
     )
     template: schema_field(
@@ -100,11 +102,15 @@ class DefaultAugmentationPrompt(AugmentationPrompt):
         es="Plantilla de prompt predeterminada para generar consultas de "
         "recuperación aumentadas.",
         pt="Modelo de prompt padrão para gerar consultas de recuperação aumentadas.",
+        de="Standard-Prompt-Vorlage zum Erzeugen erweiterter Abruf-Abfragen.",
+        zh="用于生成增强检索查询的默认提示词模板。",
     )
     DISPLAY_NAME: str = MultilingualString(
         en="Default Augmentation Prompt",
         es="Prompt de Aumento Predeterminado",
         pt="Prompt de Aumento Padrão",
+        de="Standard-Augmentierungs-Prompt",
+        zh="默认增强提示词",
     )
 
     required_placeholders = ["{input}", "{n_search_terms}"]

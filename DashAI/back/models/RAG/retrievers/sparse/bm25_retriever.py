@@ -46,6 +46,9 @@ class BM25VectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Remove accents during preprocessing.",
             es="Eliminar acentos durante el preprocesamiento.",
+            pt="Remover acentos durante o pré-processamento.",
+            de="Akzente während der Vorverarbeitung entfernen.",
+            zh="在预处理期间移除重音符号。",
         ),
     )  # type: ignore
 
@@ -55,6 +58,9 @@ class BM25VectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Convert all characters to lowercase.",
             es="Convertir todos los caracteres a minúsculas.",
+            pt="Converter todos os caracteres para minúsculas.",
+            de="Alle Zeichen in Kleinbuchstaben umwandeln.",
+            zh="将所有字符转换为小写。",
         ),
     )  # type: ignore
 
@@ -64,6 +70,9 @@ class BM25VectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="List of stop words.",
             es="Lista de palabras vacías.",
+            pt="Lista de palavras de parada (stop words).",
+            de="Liste der Stoppwörter.",
+            zh="停用词列表。",
         ),
     )  # type: ignore
 
@@ -73,6 +82,10 @@ class BM25VectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Ignore terms with document frequency above this threshold.",
             es="Ignorar términos con frecuencia de documento superior a este umbral.",
+            pt="Ignorar termos com frequência de documento acima deste limite.",
+            de="Begriffe mit einer Dokumentfrequenz über diesem Schwellenwert"
+            " ignorieren.",
+            zh="忽略文档频率高于此阈值的词项。",
         ),
     )  # type: ignore
 
@@ -82,6 +95,10 @@ class BM25VectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Ignore terms with document frequency below this threshold.",
             es="Ignorar términos con frecuencia de documento inferior a este umbral.",
+            pt="Ignorar termos com frequência de documento abaixo deste limite.",
+            de="Begriffe mit einer Dokumentfrequenz unter diesem Schwellenwert"
+            " ignorieren.",
+            zh="忽略文档频率低于此阈值的词项。",
         ),
     )  # type: ignore
 
@@ -91,6 +108,9 @@ class BM25VectorizerSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum number of features.",
             es="Número máximo de características.",
+            pt="Número máximo de características.",
+            de="Maximale Anzahl von Merkmalen.",
+            zh="最大特征数量。",
         ),
     )  # type: ignore
 
@@ -105,12 +125,20 @@ class BM25VectorizerModel(BaseModel):
     DISPLAY_NAME: str = MultilingualString(
         en="BM25 Vectorizer",
         es="Vectorizador BM25",
+        pt="Vectorizador BM25",
+        de="BM25-Vectorizer",
+        zh="BM25 向量化器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Vectorizer for BM25Retriever using CountVectorizer with"
         " BM25-specific parameters.",
         es="Vectorizador para BM25Retriever usando CountVectorizer con"
         " parámetros específicos de BM25.",
+        pt="Vectorizador para BM25Retriever usando CountVectorizer com"
+        " parâmetros específicos de BM25.",
+        de="Vectorizer für BM25Retriever mit CountVectorizer und"
+        " BM25-spezifischen Parametern.",
+        zh="用于 BM25Retriever 的向量化器，使用 CountVectorizer 和 BM25 专用参数。",
     )
 
     SCHEMA = BM25VectorizerSchema
@@ -160,6 +188,9 @@ class BM25RetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="BM25 Vectorizer parameters.",
             es="Parámetros del vectorizador BM25.",
+            pt="Parâmetros do vectorizador BM25.",
+            de="BM25-Vectorizer-Parameter.",
+            zh="BM25 向量化器参数。",
         ),
     )  # type: ignore
 
@@ -169,6 +200,9 @@ class BM25RetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="BM25 k1 parameter: term frequency saturation.",
             es="Parámetro k1 de BM25: saturación de frecuencia de término.",
+            pt="Parâmetro k1 do BM25: saturação de frequência de termo.",
+            de="BM25-k1-Parameter: Sättigung der Termhäufigkeit.",
+            zh="BM25 k1 参数：词频饱和度。",
         ),
     )  # type: ignore
 
@@ -178,6 +212,9 @@ class BM25RetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="BM25 b parameter: length normalization.",
             es="Parámetro b de BM25: normalización de longitud.",
+            pt="Parâmetro b do BM25: normalização de comprimento.",
+            de="BM25-b-Parameter: Längennormalisierung.",
+            zh="BM25 b 参数：长度归一化。",
         ),
     )  # type: ignore
 
@@ -187,6 +224,9 @@ class BM25RetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="BM25 delta parameter for IDF smoothing.",
             es="Parámetro delta de BM25 para suavizado de IDF.",
+            pt="Parâmetro delta do BM25 para suavização de IDF.",
+            de="BM25-delta-Parameter zur IDF-Glättung.",
+            zh="用于 IDF 平滑的 BM25 delta 参数。",
         ),
     )  # type: ignore
 
@@ -196,6 +236,9 @@ class BM25RetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="Distance metric for comparing BM25-weighted vectors.",
             es="Métrica de distancia para comparar vectores ponderados BM25.",
+            pt="Métrica de distância para comparar vetores ponderados por BM25.",
+            de="Distanzmetrik zum Vergleichen BM25-gewichteter Vektoren.",
+            zh="用于比较 BM25 加权向量的距离度量。",
         ),
     )  # type: ignore
 
@@ -205,6 +248,9 @@ class BM25RetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="Number of chunks to select.",
             es="Número de fragmentos a seleccionar.",
+            pt="Número de fragmentos a selecionar.",
+            de="Anzahl der auszuwählenden Chunks.",
+            zh="要选择的块数量。",
         ),
     )  # type: ignore
 
@@ -219,11 +265,19 @@ class BM25Retriever(SparseRetriever):
     DISPLAY_NAME: str = MultilingualString(
         en="BM25 Retriever",
         es="Recuperador BM25",
+        pt="Recuperador BM25",
+        de="BM25-Retriever",
+        zh="BM25 检索器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Sparse retriever using BM25 (Okapi) ranking for document retrieval.",
         es="Recuperador disperso que usa ranking BM25 (Okapi) para"
         " recuperar documentos.",
+        pt="Recuperador disperso que usa ranqueamento BM25 (Okapi) para"
+        " recuperar documentos.",
+        de="Sparser Retriever, der das BM25-Ranking (Okapi) zur"
+        " Dokumentabfrage verwendet.",
+        zh="使用 BM25（Okapi）排序进行文档检索的稀疏检索器。",
     )
 
     SCHEMA = BM25RetrieverSchema

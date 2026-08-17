@@ -193,6 +193,12 @@ class E5EmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="E5 model for embedding generation (uses query/passage prefixes).",
             es="Modelo E5 para generación de embeddings (usa prefijos query/passage).",
+            pt="Modelo E5 para geração de embeddings (usa prefixos query/passage).",
+            de=(
+                "E5-Modell zur Erzeugung von Embeddings (verwendet"
+                " query/passage-Präfixe)."
+            ),
+            zh="用于生成嵌入的 E5 模型（使用 query/passage 前缀）。",
         ),
     )  # type: ignore
 
@@ -202,6 +208,15 @@ class E5EmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Strategy for chunks exceeding model max sequence length.",
             es="Estrategia para fragmentos que exceden la longitud máxima del modelo.",
+            pt=(
+                "Estratégia para fragmentos que excedem o comprimento máximo"
+                " de sequência do modelo."
+            ),
+            de=(
+                "Strategie für Chunks, die die maximale Sequenzlänge des"
+                " Modells überschreiten."
+            ),
+            zh="对于超过模型最大序列长度的块的策略。",
         ),
     )  # type: ignore
 
@@ -211,6 +226,9 @@ class E5EmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Device to run the model on.",
             es="Dispositivo para ejecutar el modelo.",
+            pt="Dispositivo para executar o modelo.",
+            de="Gerät, auf dem das Modell ausgeführt wird.",
+            zh="运行模型的设备。",
         ),
     )  # type: ignore
 
@@ -229,12 +247,20 @@ class E5Embedding(DenseEmbedding):
     DISPLAY_NAME: str = MultilingualString(
         en="E5 Embedding",
         es="Embedding E5",
+        pt="Embedding E5",
+        de="E5-Embedding",
+        zh="E5 嵌入",
     )
     DESCRIPTION: str = MultilingualString(
         en="Dense embeddings using E5 models with average pooling + L2"
         " normalization + query/passage prefixes.",
         es="Embeddings densos usando modelos E5 con average pooling +"
         " normalización L2 + prefijos query/passage.",
+        pt="Embeddings densos usando modelos E5 com average pooling +"
+        " normalização L2 + prefixos query/passage.",
+        de="Dichte Embeddings mit E5-Modellen, Average Pooling +"
+        " L2-Normalisierung + query/passage-Präfixen.",
+        zh="使用 E5 模型生成稠密嵌入，结合平均池化 + L2 归一化 + query/passage 前缀。",
     )
 
     def __init__(self, **kwargs):

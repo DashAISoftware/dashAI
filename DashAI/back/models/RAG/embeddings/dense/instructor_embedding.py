@@ -43,6 +43,9 @@ class InstructorEmbeddingSchema(BaseSchema):
             en="INSTRUCTOR model for instruction-tuned embedding generation.",
             es="Modelo INSTRUCTOR para generación de embeddings ajustados"
             " por instrucción.",
+            pt="Modelo INSTRUCTOR para geração de embeddings ajustados por instrução.",
+            de="INSTRUCTOR-Modell zur Erzeugung instruktionsabgestimmter Embeddings.",
+            zh="用于按指令调整嵌入生成的 INSTRUCTOR 模型。",
         ),
     )  # type: ignore
 
@@ -52,6 +55,9 @@ class InstructorEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Instruction text that guides the embedding model.",
             es="Texto de instrucción que guía al modelo de embedding.",
+            pt="Texto de instrução que orienta o modelo de embedding.",
+            de="Instruktionstext, der das Embedding-Modell leitet.",
+            zh="指导嵌入模型的指令文本。",
         ),
     )  # type: ignore
 
@@ -61,6 +67,9 @@ class InstructorEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Device to run the model on.",
             es="Dispositivo para ejecutar el modelo.",
+            pt="Dispositivo para executar o modelo.",
+            de="Gerät, auf dem das Modell ausgeführt wird.",
+            zh="运行模型的设备。",
         ),
     )  # type: ignore
 
@@ -78,10 +87,16 @@ class InstructorEmbedding(DenseEmbedding):
     DISPLAY_NAME: str = MultilingualString(
         en="INSTRUCTOR Embedding",
         es="Embedding INSTRUCTOR",
+        pt="Embedding INSTRUCTOR",
+        de="INSTRUCTOR-Embedding",
+        zh="INSTRUCTOR 嵌入",
     )
     DESCRIPTION: str = MultilingualString(
         en="Dense embeddings using INSTRUCTOR instruction-tuned models.",
         es="Embeddings densos usando modelos INSTRUCTOR ajustados por instrucción.",
+        pt="Embeddings densos usando modelos INSTRUCTOR ajustados por instrução.",
+        de="Dichte Embeddings mit instruktionsabgestimmten INSTRUCTOR-Modellen.",
+        zh="使用按指令调整的 INSTRUCTOR 模型生成稠密嵌入。",
     )
 
     def __init__(self, **kwargs):

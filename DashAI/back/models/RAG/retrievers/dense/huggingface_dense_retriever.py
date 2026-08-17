@@ -20,11 +20,19 @@ class HuggingFaceDenseRetriever(DenseRetriever):
     DISPLAY_NAME: str = MultilingualString(
         en="HuggingFace Embedding Retriever",
         es="Recuperador por Embeddings HuggingFace",
+        pt="Recuperador por Embeddings HuggingFace",
+        de="HuggingFace-Embedding-Retriever",
+        zh="HuggingFace 嵌入检索器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Dense retriever using HuggingFace embeddings for similarity search.",
         es="Recuperador denso que usa embeddings HuggingFace para"
         " búsqueda por similitud.",
+        pt="Recuperador denso que usa embeddings HuggingFace para"
+        " busca por similaridade.",
+        de="Dichter Retriever, der HuggingFace-Embeddings für die"
+        " Ähnlichkeitssuche verwendet.",
+        zh="使用 HuggingFace 嵌入进行相似性搜索的稠密检索器。",
     )
 
     def __init__(self, **kwargs):

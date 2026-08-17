@@ -194,6 +194,9 @@ class RAGPipelineSchema(BaseSchema):
         description=MultilingualString(
             en="List of document IDs to use in the RAG pipeline.",
             es="Lista de IDs de documentos a usar en el pipeline RAG.",
+            pt="Lista de IDs de documentos a usar no pipeline RAG.",
+            de="Liste der Dokument-IDs, die im RAG-Pipeline verwendet werden sollen.",
+            zh="要在 RAG 流水线中使用的文档 ID 列表。",
         ),
     )  # type: ignore
 
@@ -203,6 +206,9 @@ class RAGPipelineSchema(BaseSchema):
         description=MultilingualString(
             en="Prompt template used in the RAG pipeline.",
             es="Plantilla de prompt usada en el pipeline RAG.",
+            pt="Modelo de prompt usado no pipeline RAG.",
+            de="Prompt-Vorlage, die im RAG-Pipeline verwendet wird.",
+            zh="用于 RAG 流水线的提示词模板。",
         ),
     )  # type: ignore
 
@@ -211,6 +217,12 @@ class RAGPipelineSchema(BaseSchema):
         description=MultilingualString(
             en="Chunking model used to split documents into smaller pieces.",
             es="Modelo de fragmentación para dividir documentos en piezas.",
+            pt=(
+                "Modelo de fragmentação usado para dividir documentos em"
+                " fragmentos menores."
+            ),
+            de="Chunking-Modell zum Aufteilen von Dokumenten in kleinere Stücke.",
+            zh="用于将文档拆分为更小块的切分模型。",
         ),
         placeholder={"component": "CharacterChunkModel", "params": {}},
     )  # type: ignore
@@ -221,6 +233,9 @@ class RAGPipelineSchema(BaseSchema):
         description=MultilingualString(
             en="Retriever component used in the RAG pipeline.",
             es="Componente recuperador usado en el pipeline RAG.",
+            pt="Componente recuperador usado no pipeline RAG.",
+            de="Retriever-Komponente, die im RAG-Pipeline verwendet wird.",
+            zh="用于 RAG 流水线的检索器组件。",
         ),
     )  # type: ignore
 
@@ -230,6 +245,9 @@ class RAGPipelineSchema(BaseSchema):
         description=MultilingualString(
             en="Text generation model used in the RAG pipeline.",
             es="Modelo de generación de texto usado en el pipeline RAG.",
+            pt="Modelo de geração de texto usado no pipeline RAG.",
+            de="Textgenerierungsmodell, das im RAG-Pipeline verwendet wird.",
+            zh="用于 RAG 流水线的文本生成模型。",
         ),
     )  # type: ignore
 
@@ -263,6 +281,8 @@ class RAGPipeline(BaseGenerativeModel):
         en="RAG Pipeline",
         es="Flujo de RAG",
         pt="Pipeline RAG",
+        de="RAG-Pipeline",
+        zh="RAG 流水线",
     )
     DESCRIPTION: str = MultilingualString(
         en=(
@@ -280,6 +300,15 @@ class RAGPipeline(BaseGenerativeModel):
             "Pipeline para tarefas de Geração Aumentada por Recuperação"
             " (RAG), orquestrando carregamento de documentos, chunking,"
             " recuperação, formatação de prompts e geração com LLM."
+        ),
+        de=(
+            "Pipeline für Aufgaben der Retrieval-Augmented Generation (RAG),"
+            " die das Laden von Dokumenten, Chunking, Abruf,"
+            " Prompt-Formatierung und LLM-Generierung orchestriert."
+        ),
+        zh=(
+            "面向检索增强生成（RAG）任务的流水线，负责编排文档加载、分块、"
+            "检索、提示词格式化和 LLM 生成。"
         ),
     )
     COLOR: str = "#e12885"

@@ -329,6 +329,9 @@ class SentenceTransformerEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Sentence Transformer model for embedding generation.",
             es="Modelo Sentence Transformer para generación de embeddings.",
+            pt="Modelo Sentence Transformer para geração de embeddings.",
+            de="Sentence-Transformer-Modell zur Erzeugung von Embeddings.",
+            zh="用于生成嵌入的 Sentence Transformer 模型。",
         ),
     )  # type: ignore
 
@@ -338,6 +341,15 @@ class SentenceTransformerEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Strategy for chunks exceeding model max sequence length.",
             es="Estrategia para fragmentos que exceden la longitud máxima del modelo.",
+            pt=(
+                "Estratégia para fragmentos que excedem o comprimento máximo"
+                " de sequência do modelo."
+            ),
+            de=(
+                "Strategie für Chunks, die die maximale Sequenzlänge des"
+                " Modells überschreiten."
+            ),
+            zh="对于超过模型最大序列长度的块的策略。",
         ),
     )  # type: ignore
 
@@ -347,6 +359,9 @@ class SentenceTransformerEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Whether to L2-normalize the output embeddings.",
             es="Si normalizar con L2 los embeddings de salida.",
+            pt="Se deve normalizar com L2 os embeddings de saída.",
+            de="Ob die Ausgabe-Embeddings L2-normalisiert werden sollen.",
+            zh="是否对输出的嵌入进行 L2 归一化。",
         ),
     )  # type: ignore
 
@@ -356,6 +371,9 @@ class SentenceTransformerEmbeddingSchema(BaseSchema):
         description=MultilingualString(
             en="Device to run the model on.",
             es="Dispositivo para ejecutar el modelo.",
+            pt="Dispositivo para executar o modelo.",
+            de="Gerät, auf dem das Modell ausgeführt wird.",
+            zh="运行模型的设备。",
         ),
     )  # type: ignore
 
@@ -375,12 +393,20 @@ class SentenceTransformerEmbedding(DenseEmbedding):
     DISPLAY_NAME: str = MultilingualString(
         en="Sentence Transformer Embedding",
         es="Embedding Sentence Transformer",
+        pt="Embedding Sentence Transformer",
+        de="Sentence-Transformer-Embedding",
+        zh="Sentence Transformer 嵌入",
     )
     DESCRIPTION: str = MultilingualString(
         en="Dense embeddings using Sentence Transformer models with mean"
         " pooling and L2 normalization.",
         es="Embeddings densos usando modelos Sentence Transformer con mean"
         " pooling y normalización L2.",
+        pt="Embeddings densos usando modelos Sentence Transformer com mean"
+        " pooling e normalização L2.",
+        de="Dichte Embeddings mit Sentence-Transformer-Modellen mit"
+        " Mean-Pooling und L2-Normalisierung.",
+        zh="使用 Sentence Transformer 模型生成稠密嵌入，结合 mean 池化和 L2 归一化。",
     )
 
     def __init__(self, **kwargs):

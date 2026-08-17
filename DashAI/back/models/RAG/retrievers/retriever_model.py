@@ -19,10 +19,16 @@ class RetrieverModel(BaseModel, ABC):
     DISPLAY_NAME: str = MultilingualString(
         en="Retriever",
         es="Recuperador",
+        pt="Recuperador",
+        de="Retriever",
+        zh="检索器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Document retrieval component.",
         es="Componente de recuperación de documentos.",
+        pt="Componente de recuperação de documentos.",
+        de="Komponente zur Dokumentabfrage.",
+        zh="文档检索组件。",
     )
     COLOR: str = "#9C27B0"
     ICON: str = "Search"

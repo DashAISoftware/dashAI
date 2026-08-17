@@ -44,10 +44,16 @@ class FastTextEmbedding(DenseEmbedding):
     DISPLAY_NAME = MultilingualString(
         en="FastText Embedding",
         es="Embedding FastText",
+        pt="Embedding FastText",
+        de="FastText-Embedding",
+        zh="FastText 嵌入",
     )
     DESCRIPTION = MultilingualString(
         en="Convert text to embeddings using FastText.",
         es="Convierte texto a embeddings usando FastText.",
+        pt="Converte texto em embeddings usando FastText.",
+        de="Konvertiert Text mit FastText in Embeddings.",
+        zh="使用 FastText 将文本转换为嵌入。",
     )
 
     def __init__(self, **kwargs):

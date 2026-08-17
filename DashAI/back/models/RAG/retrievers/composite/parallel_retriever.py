@@ -30,6 +30,9 @@ class ParallelRetrieverSchema(BaseSchema):
         description=MultilingualString(
             en="List of child retrievers queried in parallel.",
             es="Lista de recuperadores hijos consultados en paralelo.",
+            pt="Lista de recuperadores filhos consultados em paralelo.",
+            de="Liste der parallel abgefragten Kind-Retriever.",
+            zh="并行查询的子检索器列表。",
         ),
     )  # type: ignore
 
@@ -63,10 +66,16 @@ class ParallelRetriever(CompositeRetriever):
     DISPLAY_NAME: str = MultilingualString(
         en="Parallel Retriever",
         es="Recuperador Paralelo",
+        pt="Recuperador Paralelo",
+        de="Paralleler Retriever",
+        zh="并行检索器",
     )
     DESCRIPTION: str = MultilingualString(
         en="Queries multiple retrievers in parallel and merges their results.",
         es="Consulta múltiples recuperadores en paralelo y fusiona sus resultados.",
+        pt="Consulta vários recuperadores em paralelo e mescla seus resultados.",
+        de="Fragt mehrere Retriever parallel ab und führt ihre Ergebnisse zusammen.",
+        zh="并行查询多个检索器并合并其结果。",
     )
 
     @classmethod
