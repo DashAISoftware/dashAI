@@ -178,7 +178,16 @@
         "type": "Tipo",
         "unknownType": "Desconhecido"
       },
-      "uploadButton": "Upload de documentos"
+      "uploadButton": "Upload de documentos",
+      "duplicate": {
+        "affectedSessions": "Sessões afetadas:",
+        "cancel": "Cancelar",
+        "confirm": "Atualizar",
+        "message": "Este arquivo já foi enviado. Deseja atualizá-lo?",
+        "noAffectedSessions": "Nenhuma sessão está usando este documento no momento.",
+        "title": "O arquivo já existe",
+        "warning": "Isso excluirá os modelos ajustados (embeddings, retrievers) dessas sessões."
+      }
     },
     "generator": {
       "advancedApplied": "Configuração avançada aplicada",

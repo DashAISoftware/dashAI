@@ -175,7 +175,16 @@
         "type": "Typ",
         "unknownType": "Unbekannt"
       },
-      "uploadButton": "Dokumente hochladen"
+      "uploadButton": "Dokumente hochladen",
+      "duplicate": {
+        "affectedSessions": "Betroffene Sitzungen:",
+        "cancel": "Abbrechen",
+        "confirm": "Aktualisieren",
+        "message": "Diese Datei wurde bereits hochgeladen. Möchten Sie sie aktualisieren?",
+        "noAffectedSessions": "Derzeit verwendet keine Sitzung dieses Dokument.",
+        "title": "Datei existiert bereits",
+        "warning": "Dadurch werden die angepassten Modelle (Embeddings, Retriever) dieser Sitzungen gelöscht."
+      }
     },
     "generator": {
       "advancedApplied": "Erweiterte Konfiguration angewendet",

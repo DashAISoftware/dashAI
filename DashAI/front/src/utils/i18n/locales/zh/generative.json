@@ -175,7 +175,16 @@
         "type": "类型",
         "unknownType": "未知"
       },
-      "uploadButton": "上传文档"
+      "uploadButton": "上传文档",
+      "duplicate": {
+        "affectedSessions": "受影响的会话：",
+        "cancel": "取消",
+        "confirm": "更新",
+        "message": "此文件已上传。是否要更新它？",
+        "noAffectedSessions": "当前没有会话使用此文档。",
+        "title": "文件已存在",
+        "warning": "这将删除这些会话的已拟合模型（嵌入、检索器）。"
+      }
     },
     "generator": {
       "advancedApplied": "已应用高级配置",
