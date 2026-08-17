@@ -39,8 +39,8 @@ Models (models/RAG/) — pure domain definitions
   │     ├── RetrieverFactory     — resolve registry → validate → inject infra → init
   │     └── LLMFactory           — resolve registry → instantiate
   ├── RAGPipeline                — inference orchestration
-  ├── extractors/                — 5 extractor types (PlainText, PyPDF2, PyMuPDF,
-  │                                 Textract, EasyOCR) with schema-driven params
+  ├── extractors/                — 4 extractor types (PlainText, Pypdf, PyMuPDF,
+  │                                 EasyOCR) with schema-driven params
   └── documents/, chunking_models/, retrievers/, prompts/ — pure domain models
 
 Core (core/)
@@ -395,9 +395,8 @@ schema-driven parameters exposed to the frontend:
 | Extractor            | Default for            | Description                                    |
 | -------------------- | ---------------------- | ---------------------------------------------- |
 | `PlainTextExtractor` | txt, md, rst, tex, csv | Reads file as UTF-8 plain text                 |
-| `PypdfExtractor`     | —                      | PyPDF2-based PDF extraction (`strict` mode)    |
-| `PyMuPDFExtractor`   | —                      | fitz/pymupdf-based PDF extraction              |
-| `TextractExtractor`  | pdf                    | textract-based extraction (default PDF parser) |
+| `PypdfExtractor`     | —                      | `pypdf`-based PDF extraction (`strict` mode)   |
+| `PyMuPDFExtractor`   | pdf                    | fitz/pymupdf-based extraction (default PDF parser) |
 | `EasyOCRExtractor`   | —                      | OCR-based extraction (requires easyocr)        |
 
 Each extractor exposes its parameters via `schema_field()` with `description`

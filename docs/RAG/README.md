@@ -1,5 +1,3 @@
-@ -1,24 +0,0 @@
-
 # RAG Module Documentation
 
 DashAI includes a **Retrieval-Augmented Generation (RAG)** module for chatting
@@ -21,10 +19,10 @@ Retrieval, and Generation.
 - **[05-known-limitations.md](./05-known-limitations.md)** — Current
   constraints, performance notes, concurrency caveats, and maintenance
   guidance.
-- **[06-future-work.md](./06-future-work.md)** — Planned improvements:
+- **[06-document-processing.md](./06-document-processing.md)** — How documents
+  are processed: supported file types, the extractor system, storage,
+  extraction caching, invalidation, API endpoints, and the frontend document
+  manager.
+- **[07-future-work.md](./07-future-work.md)** — Planned improvements:
   retrieval paradigms, query transformation, PDF parsing, tree-based
   retrieval, message-level document filtering, and multi-modal support.
-- **[07-document-processing-plan.md](./07-document-processing-plan.md)** —
-  Per-document extractor selection plan: architecture, extractors as
-  ComponentRegistry components, API design, invalidation semantics,
-  frontend UX, and tradeoff analysis.

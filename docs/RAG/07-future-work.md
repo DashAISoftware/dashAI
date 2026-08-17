@@ -1,8 +1,8 @@
-@ -1,69 +0,0 @@
-
 # Future Work
 
-This document outlines planned improvements and known gaps in the current RAG implementation. These are not limitations per se, but rather opportunities for expansion.
+This document outlines planned improvements and known gaps in the current RAG
+implementation. These are not limitations per se, but rather opportunities for
+expansion.
 
 ## Retrieval Paradigms
 
@@ -23,23 +23,24 @@ The pipeline currently passes the user's raw query directly to the retriever. No
 
 ## PDF Parsing
 
-The extractor system is now partially implemented — 5 extractors exist
-(PlainText, PyPDF2, PyMuPDF, Textract, EasyOCR) with schema-driven config
-and per-document assignment at upload time. Remaining work:
+The extractor system is implemented and documented in
+[`06-document-processing.md`](./06-document-processing.md). Remaining parsing
+work:
 
-- OCR for scanned PDFs (EasyOCRExtractor exists but needs heavy dependencies).
+- OCR for scanned PDFs (`EasyOCRExtractor` exists but needs heavy dependencies).
 - Table extraction and layout-aware parsing.
 - LLM-based preprocessing for structured extraction (tables, headers, figures).
 - Extractor recommendation based on document characteristics.
 
 ## Documents library
 
-Currently, the `Documents` library is a simple table of documents, with a column for metadata that is not used, future work could include:
+Currently, the `Documents` library is a simple table of documents, with a column
+for metadata that is not used. Future work could include:
 
 - Metadata-based filtering: allowing users to filter documents by metadata fields (e.g., author, date, tags).
 - Document versioning: supporting multiple versions of the same document and allowing retrieval from a specific version.
 - Document similarity search: enabling users to find documents similar to a given document based on content or metadata.
-- Import/export functionality: allowing users to import/export documents and their metadata in various formats (e.g., JSON, CSV, XML), including support for bibtex and Mendely references.
+- Import/export functionality: allowing users to import/export documents and their metadata in various formats (e.g., JSON, CSV, XML), including support for BibTeX and Mendeley references.
 
 ## Tree-Based Retrieval
 
@@ -75,4 +76,3 @@ Currently only text-based documents are supported (txt, pdf, md, rst, tex, csv).
 - **Datasets** — structured tabular data as found in the rest of DashAI (e.g., CSV datasets used for ML training).
 - **Images** — both extracting text from images (OCR) and, more ambitiously, retrieving chunks based on visual similarity.
 - **Audio / video** — transcription and retrieval from spoken content.
--

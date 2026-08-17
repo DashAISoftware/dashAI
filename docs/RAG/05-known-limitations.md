@@ -87,9 +87,6 @@
 
 - **PypdfExtractor** default `strict=True` rejects malformed PDFs (xref
   errors). Use `strict=False` for broken PDFs.
-- **TextractExtractor** collapses whitespace, producing many small chunks
-  with `RecursiveCharacterChunkModel` (separators based on `\n` don't
-  work).
 - **EasyOCRExtractor** requires the `easyocr` dependency (heavy, downloads
   models on first use).
 
