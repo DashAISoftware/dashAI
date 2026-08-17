@@ -61,25 +61,25 @@ The frontend polls `/api/v1/jobs/{job_id}` for long-running task status.
 
 ## Key files
 
-| Path | Purpose |
-|------|---------|
-| `DashAI/__main__.py` | CLI entry point (typer). Starts uvicorn + Huey consumer subprocess |
-| `DashAI/back/app.py` | FastAPI `create_app` factory |
-| `DashAI/back/container.py` | DI container (`kink`) — config, DB engine, ComponentRegistry, job queue |
-| `DashAI/back/initial_components.py` | **Registers all components on startup.** Add new ML components here in `get_initial_components()` |
-| `DashAI/back/dependencies/config_builder.py` | Builds config dict (paths, logging, calls `get_initial_components()`) |
-| `DashAI/back/dependencies/registry/component_registry.py` | `ComponentRegistry` — resolves components by name string |
-| `DashAI/back/api/api_v1/endpoints/` | REST endpoints — each file is a FastAPI router |
-| `DashAI/back/api/api_v1/api.py` | Mounts all endpoint routers on `api_router_v1` |
-| `DashAI/back/core/schema_fields/` | Type system driving dynamic frontend forms |
-| `DashAI/back/pipeline/` | DAG pipeline nodes |
-| `DashAI/back/plugins/` | Plugin system (PyPI packages with `dashai.plugins` entry point) |
-| `DashAI/front/src/components/configurableObject/` | Auto-generates forms from backend component schemas |
-| `DashAI/front/src/pages/generative/SessionRouter.jsx` | Routes `/app/generative/sessions/:id` to RAG or non-RAG view based on session `task_name` |
-| `DashAI/front/src/pages/generative/RAGSession/` | RAG session setup wizard (RAGSessionSetup) + collapsible section components per pipeline stage |
-| `DashAI/front/src/pages/generative/RAGSession/sections/` | Per-stage components: ChunkingSection, RetrieverSection, GeneratorSection, PromptSection |
-| `DashAI/front/src/pages/generative/RAGSession/advanced/` | Advanced configuration modals: CompositeRetrieverBuilder, ChunkingConfigurationStep, RetrieverConfigurationStep, etc. |
-| `DashAI/front/src/pages/generative/RAGSession/components/` | Reusable bodies: GeneratorBody, PromptBody, PresetCard, AdvancedConfigCard |
+| Path                                                       | Purpose                                                                                                               |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `DashAI/__main__.py`                                       | CLI entry point (typer). Starts uvicorn + Huey consumer subprocess                                                    |
+| `DashAI/back/app.py`                                       | FastAPI `create_app` factory                                                                                          |
+| `DashAI/back/container.py`                                 | DI container (`kink`) — config, DB engine, ComponentRegistry, job queue                                               |
+| `DashAI/back/initial_components.py`                        | **Registers all components on startup.** Add new ML components here in `get_initial_components()`                     |
+| `DashAI/back/dependencies/config_builder.py`               | Builds config dict (paths, logging, calls `get_initial_components()`)                                                 |
+| `DashAI/back/dependencies/registry/component_registry.py`  | `ComponentRegistry` — resolves components by name string                                                              |
+| `DashAI/back/api/api_v1/endpoints/`                        | REST endpoints — each file is a FastAPI router                                                                        |
+| `DashAI/back/api/api_v1/api.py`                            | Mounts all endpoint routers on `api_router_v1`                                                                        |
+| `DashAI/back/core/schema_fields/`                          | Type system driving dynamic frontend forms                                                                            |
+| `DashAI/back/pipeline/`                                    | DAG pipeline nodes                                                                                                    |
+| `DashAI/back/plugins/`                                     | Plugin system (PyPI packages with `dashai.plugins` entry point)                                                       |
+| `DashAI/front/src/components/configurableObject/`          | Auto-generates forms from backend component schemas                                                                   |
+| `DashAI/front/src/pages/generative/SessionRouter.jsx`      | Routes `/app/generative/sessions/:id` to RAG or non-RAG view based on session `task_name`                             |
+| `DashAI/front/src/pages/generative/RAGSession/`            | RAG session setup wizard (RAGSessionSetup) + collapsible section components per pipeline stage                        |
+| `DashAI/front/src/pages/generative/RAGSession/sections/`   | Per-stage components: ChunkingSection, RetrieverSection, GeneratorSection, PromptSection                              |
+| `DashAI/front/src/pages/generative/RAGSession/advanced/`   | Advanced configuration modals: CompositeRetrieverBuilder, ChunkingConfigurationStep, RetrieverConfigurationStep, etc. |
+| `DashAI/front/src/pages/generative/RAGSession/components/` | Reusable bodies: GeneratorBody, PromptBody, PresetCard, AdvancedConfigCard                                            |
 
 ## Key patterns
 

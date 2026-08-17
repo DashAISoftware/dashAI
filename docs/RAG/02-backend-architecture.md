@@ -392,12 +392,12 @@ Documents can be assigned an extractor at upload time via
 `DocumentService.upload()`. Extractors are ConfigObject components with
 schema-driven parameters exposed to the frontend:
 
-| Extractor            | Default for            | Description                                    |
-| -------------------- | ---------------------- | ---------------------------------------------- |
-| `PlainTextExtractor` | txt, md, rst, tex, csv | Reads file as UTF-8 plain text                 |
-| `PypdfExtractor`     | —                      | `pypdf`-based PDF extraction (`strict` mode)   |
+| Extractor            | Default for            | Description                                        |
+| -------------------- | ---------------------- | -------------------------------------------------- |
+| `PlainTextExtractor` | txt, md, rst, tex, csv | Reads file as UTF-8 plain text                     |
+| `PypdfExtractor`     | —                      | `pypdf`-based PDF extraction (`strict` mode)       |
 | `PyMuPDFExtractor`   | pdf                    | fitz/pymupdf-based extraction (default PDF parser) |
-| `EasyOCRExtractor`   | —                      | OCR-based extraction (requires easyocr)        |
+| `EasyOCRExtractor`   | —                      | OCR-based extraction (requires easyocr)            |
 
 Each extractor exposes its parameters via `schema_field()` with `description`
 and `default` for UI form auto-generation. The `extractor_id` column on

@@ -1,7 +1,7 @@
 # Document Processing
 
 This document describes how documents are uploaded, stored, and converted to
-text in the RAG module — the *Document Loading* stage of the pipeline. It covers
+text in the RAG module — the _Document Loading_ stage of the pipeline. It covers
 supported file types, the extractor system, the storage model, extraction
 caching, invalidation, the REST API, and the frontend document manager.
 
@@ -36,12 +36,12 @@ Extractors are `ConfigObject` components that subclass `BaseExtractor`
 
 Four concrete extractors are registered in `get_initial_components()`:
 
-| Extractor            | File types            | Library            | Parameters                            |
-| -------------------- | --------------------- | ------------------ | ------------------------------------- |
-| `PlainTextExtractor` | txt, md, rst, tex, csv | stdlib (`open`)    | `encoding` (default `utf-8`)          |
-| `PypdfExtractor`     | pdf                   | `pypdf`            | `strict` (default `True`)             |
-| `PyMuPDFExtractor`   | pdf                   | `fitz` (pymupdf)   | `password` (default `""`)             |
-| `EasyOCRExtractor`   | pdf                   | `easyocr` + `fitz` | `languages` (`["en"]`), `gpu` (`True`) |
+| Extractor            | File types             | Library            | Parameters                             |
+| -------------------- | ---------------------- | ------------------ | -------------------------------------- |
+| `PlainTextExtractor` | txt, md, rst, tex, csv | stdlib (`open`)    | `encoding` (default `utf-8`)           |
+| `PypdfExtractor`     | pdf                    | `pypdf`            | `strict` (default `True`)              |
+| `PyMuPDFExtractor`   | pdf                    | `fitz` (pymupdf)   | `password` (default `""`)              |
+| `EasyOCRExtractor`   | pdf                    | `easyocr` + `fitz` | `languages` (`["en"]`), `gpu` (`True`) |
 
 `BaseExtractor.get_metadata()` exposes `supported_file_types`, which the
 frontend uses to filter the extractor selector per document type.
@@ -50,9 +50,9 @@ frontend uses to filter the extractor selector per document type.
 
 `DocumentService._DEFAULT_EXTRACTORS` maps a file type to a default extractor:
 
-| File type             | Default extractor      |
-| --------------------- | ---------------------- |
-| `pdf`                 | `PyMuPDFExtractor`     |
+| File type                | Default extractor    |
+| ------------------------ | -------------------- |
+| `pdf`                    | `PyMuPDFExtractor`   |
 | `txt, md, rst, tex, csv` | `PlainTextExtractor` |
 
 The default is used when a document has no explicit extractor record. On upload
@@ -128,19 +128,19 @@ re-chunks and rebuilds retrieval automatically.
 All endpoints live in `DashAI/back/api/api_v1/endpoints/documents.py` under the
 `/api/v1/document` prefix:
 
-| Method | Path                                      | Purpose                                |
-| ------ | ----------------------------------------- | -------------------------------------- |
-| GET    | `/api/v1/document/`                       | List all documents                     |
-| POST   | `/api/v1/document/`                       | Upload (multipart file + metadata JSON) |
-| GET    | `/api/v1/document/{id}`                   | Document metadata                      |
-| GET    | `/api/v1/document/{id}/download`          | Download the file                      |
-| GET    | `/api/v1/document/{id}/view`              | Inline preview                         |
-| GET    | `/api/v1/document/session/{session_id}`   | Documents of a RAG session             |
-| GET    | `/api/v1/document/related-sessions/{id}`  | Session IDs linked to a document       |
-| DELETE | `/api/v1/document/{id}`                   | Delete document + file                 |
-| PUT    | `/api/v1/document/{id}`                   | Update metadata                        |
-| POST   | `/api/v1/document/{id}/extract`           | On-demand extraction (`extractor`, `persist`) |
-| PUT    | `/api/v1/document/{id}/extractor`         | Commit extractor choice (`extractor`, `force`) |
+| Method | Path                                     | Purpose                                        |
+| ------ | ---------------------------------------- | ---------------------------------------------- |
+| GET    | `/api/v1/document/`                      | List all documents                             |
+| POST   | `/api/v1/document/`                      | Upload (multipart file + metadata JSON)        |
+| GET    | `/api/v1/document/{id}`                  | Document metadata                              |
+| GET    | `/api/v1/document/{id}/download`         | Download the file                              |
+| GET    | `/api/v1/document/{id}/view`             | Inline preview                                 |
+| GET    | `/api/v1/document/session/{session_id}`  | Documents of a RAG session                     |
+| GET    | `/api/v1/document/related-sessions/{id}` | Session IDs linked to a document               |
+| DELETE | `/api/v1/document/{id}`                  | Delete document + file                         |
+| PUT    | `/api/v1/document/{id}`                  | Update metadata                                |
+| POST   | `/api/v1/document/{id}/extract`          | On-demand extraction (`extractor`, `persist`)  |
+| PUT    | `/api/v1/document/{id}/extractor`        | Commit extractor choice (`extractor`, `force`) |
 
 ## Frontend
 
