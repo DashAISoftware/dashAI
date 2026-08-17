@@ -7,8 +7,7 @@ import {
   useMemo,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { useDatasets } from "../../hooks/datasets/useDatasets";
-import { useFolders } from "../../hooks/datasets/useFolders";
+import { useSharedDatasets } from "../../contexts/DatasetsContext";
 import { useSessions } from "../../hooks/models/useSessions";
 const ModelsContext = createContext(null);
 
@@ -38,29 +37,14 @@ export function ModelsProvider({ children }) {
     replaceDatasets,
     startDatasetPolling,
     moveDatasetToFolder,
-  } = useDatasets({ t });
-
-  const {
     folders,
     fetchFolders,
     createFolder,
     renameFolder,
-    deleteFolderById: deleteFolderByIdRaw,
-  } = useFolders({ t });
-
-  // Deleting a folder moves its datasets to "no folder" server-side
-  // (folder_id set to null via the FK's ON DELETE SET NULL), but the local
-  // `datasets` state still holds the old folder_id until this clears it —
-  // otherwise those datasets vanish from the list until a full refetch.
-  const deleteFolderById = async (id) => {
-    const success = await deleteFolderByIdRaw(id);
-    if (success) {
-      replaceDatasets((prev) =>
-        prev.map((d) => (d.folder_id === id ? { ...d, folder_id: null } : d)),
-      );
-    }
-    return success;
-  };
+    deleteFolderById,
+    openFolderIds,
+    setOpenFolderIds,
+  } = useSharedDatasets();
 
   const {
     tasks,
@@ -109,6 +93,7 @@ export function ModelsProvider({ children }) {
   const [runDetailTab, setRunDetailTab] = useState(null);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const [explainerToCreate, setExplainerToCreate] = useState(null);
+  const [openSections, setOpenSections] = useState({});
 
   const triggerExplainerRefresh = useCallback(() => {
     setExplainerRefreshTrigger((prev) => prev + 1);
@@ -136,7 +121,8 @@ export function ModelsProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    fetchDatasets();
+    // Datasets are fetched by the shared DatasetsProvider on its own mount;
+    // fetching them here too would duplicate GET /datasets on every app boot.
     fetchSessions();
   }, []);
 
@@ -225,6 +211,10 @@ export function ModelsProvider({ children }) {
       explainerToCreate,
       openExplainerCreator,
       closeExplainerCreator,
+      openSections,
+      setOpenSections,
+      openFolderIds,
+      setOpenFolderIds,
     }),
     [
       selectedModel,
@@ -286,6 +276,8 @@ export function ModelsProvider({ children }) {
       explainerToCreate,
       openExplainerCreator,
       closeExplainerCreator,
+      openSections,
+      openFolderIds,
     ],
   );
 

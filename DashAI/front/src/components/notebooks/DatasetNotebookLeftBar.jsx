@@ -38,6 +38,8 @@ export default function DatasetsNotebooksLeftBar({
     createFolder,
     renameFolder,
     deleteFolderById,
+    openFolderIds,
+    setOpenFolderIds,
   } = useDatasetsAndNotebooks();
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -248,6 +250,8 @@ export default function DatasetsNotebooksLeftBar({
         <DatasetFolderList
           datasets={filteredDatasets}
           folders={folders}
+          openFolderIds={openFolderIds}
+          setOpenFolderIds={setOpenFolderIds}
           selectedItemId={selectedDatasetId}
           onItemClick={onDatasetClick}
           onItemDelete={onDatasetDelete}
