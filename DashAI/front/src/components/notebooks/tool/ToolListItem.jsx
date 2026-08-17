@@ -29,7 +29,7 @@ export default function ToolListItem({
     gate.resolve({ onUse, onDownload, onNeedsCredentials });
 
   const handleMouseEnter = (event, tool) => {
-    if (!gate.blocked) {
+    if (!disabled) {
       setAnchorEl(event.currentTarget);
       setHoveredTool(tool);
     }
@@ -72,9 +72,9 @@ export default function ToolListItem({
     ) : null;
 
   return (
-    <>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 6 }}>
       <Tooltip
-        title={gate.blocked && tool.tooltip ? tool.tooltip : tool.description}
+        title={disabled && tool.tooltip ? tool.tooltip : tool.description}
         arrow
         placement="top"
         slotProps={{
@@ -82,7 +82,7 @@ export default function ToolListItem({
             sx: {
               bgcolor: theme.palette.background.paper,
               color: theme.palette.text.primary,
-              display: gate.blocked ? "block" : "none",
+              display: disabled ? "block" : "none",
               border: `1px solid ${theme.palette.divider}`,
               fontSize: "0.75rem",
               maxWidth: 300,
@@ -121,6 +121,8 @@ export default function ToolListItem({
             alignItems: "center",
             gap: 6,
             p: 6,
+            flex: 1,
+            minWidth: 0,
             bgcolor: gate.blocked
               ? theme.palette.ui.disabled
               : theme.palette.ui.box,
@@ -132,17 +134,15 @@ export default function ToolListItem({
                 : "not-allowed"
               : "grab",
             transition: "all 0.2s",
-            opacity: gate.blocked ? 0.5 : 1,
-            filter: gate.blocked ? "grayscale(0.6)" : "none",
             position: "relative",
             "&:hover": {
-              bgcolor: gate.blocked
+              bgcolor: disabled
                 ? theme.palette.ui.disabled
                 : theme.palette.action.hover,
-              borderColor: gate.blocked
+              borderColor: disabled
                 ? theme.palette.ui.border
                 : tool.metadata.color,
-              transform: gate.blocked ? "none" : "translateX(4px)",
+              transform: disabled ? "none" : "translateX(4px)",
             },
             "&::after": gate.blocked
               ? {
@@ -157,90 +157,108 @@ export default function ToolListItem({
               : {},
           }}
         >
-          {/* Icon */}
+          {/* Content (tool icon, text) dimmed when the card is blocked; the
+              download/credential icons below stay outside it so they keep full
+              color. */}
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              width: 36,
-              height: 36,
-              borderRadius: 1,
-              bgcolor: gate.blocked
-                ? theme.palette.ui.disabled
-                : theme.palette.ui.border,
-              color: gate.blocked
-                ? theme.palette.text.disabled
-                : theme.palette.text.primary,
-              flexShrink: 0,
+              gap: 6,
+              flex: 1,
+              minWidth: 0,
+              opacity: gate.blocked ? 0.5 : 1,
+              filter: gate.blocked ? "grayscale(0.6)" : "none",
             }}
           >
-            <CategoryIcon
-              icon={tool.metadata.icon}
-              color={
-                gate.blocked ? theme.palette.text.disabled : tool.metadata.color
-              }
-            />
-          </Box>
-
-          {/* Content */}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+            {/* Icon */}
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 4,
-                mb: 2,
+                justifyContent: "center",
+                width: 36,
+                height: 36,
+                borderRadius: 1,
+                bgcolor: gate.blocked
+                  ? theme.palette.ui.disabled
+                  : theme.palette.ui.border,
+                color: gate.blocked
+                  ? theme.palette.text.disabled
+                  : theme.palette.text.primary,
+                flexShrink: 0,
               }}
             >
-              <Typography
-                variant="body2"
-                sx={{
-                  color: gate.blocked
-                    ? theme.palette.text.disabled
-                    : theme.palette.text.primary,
-                  fontWeight: 500,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  width: 0,
-                  flexGrow: 1,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {tool.display_name || tool.name}
-              </Typography>
+              <CategoryIcon
+                icon={tool.metadata.icon}
+                color={tool.metadata.color}
+              />
             </Box>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 4,
-                mb: 2,
-              }}
-            >
-              <Typography
-                variant="caption"
+
+            {/* Content */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box
                 sx={{
-                  color: gate.blocked
-                    ? theme.palette.text.disabled
-                    : theme.palette.text.secondary,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  width: 0,
-                  flexGrow: 1,
-                  whiteSpace: "nowrap",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  mb: 2,
                 }}
               >
-                {tool.metadata.category ?? t("common:other")}
-              </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: gate.blocked
+                      ? theme.palette.text.disabled
+                      : theme.palette.text.primary,
+                    fontWeight: 500,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    width: 0,
+                    flexGrow: 1,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {tool.display_name || tool.name}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: gate.blocked
+                      ? theme.palette.text.disabled
+                      : theme.palette.text.secondary,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    width: 0,
+                    flexGrow: 1,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {tool.metadata.category ?? t("common:other")}
+                </Typography>
+              </Box>
             </Box>
           </Box>
 
-          {/* Download/credential status (e.g. a locked key or download icon) */}
+          {/* Download/credential status — left of the thumbnail, full color */}
           {action && (
             <Box
               draggable={false}
-              sx={{ flexShrink: 0, display: "flex", alignItems: "center" }}
+              sx={{
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                zIndex: 1,
+              }}
             >
               {action}
             </Box>
@@ -278,13 +296,14 @@ export default function ToolListItem({
           </Box>
         </Box>
       </Tooltip>
-      {!gate.blocked && (
+
+      {!disabled && (
         <HoverToolInfo
           anchorEl={anchorEl}
           hoveredTool={hoveredTool}
           handleMouseLeave={handleMouseLeave}
         />
       )}
-    </>
+    </Box>
   );
 }

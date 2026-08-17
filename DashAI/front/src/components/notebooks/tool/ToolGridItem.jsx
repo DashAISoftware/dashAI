@@ -28,7 +28,7 @@ export default function ToolGridItem({
     gate.resolve({ onUse, onDownload, onNeedsCredentials });
 
   const handleMouseEnter = (event, tool) => {
-    if (!gate.blocked) {
+    if (!disabled) {
       setAnchorEl(event.currentTarget);
       setHoveredTool(tool);
     }
@@ -60,7 +60,7 @@ export default function ToolGridItem({
   return (
     <>
       <Tooltip
-        title={gate.blocked && tool.tooltip ? tool.tooltip : tool.description}
+        title={disabled && tool.tooltip ? tool.tooltip : tool.description}
         arrow
         placement="top"
         slotProps={{
@@ -68,7 +68,7 @@ export default function ToolGridItem({
             sx: {
               bgcolor: theme.palette.background.paper,
               color: theme.palette.text.primary,
-              display: gate.blocked ? "block" : "none",
+              display: disabled ? "block" : "none",
               border: `1px solid ${theme.palette.divider}`,
               fontSize: "0.75rem",
               maxWidth: 300,
@@ -114,19 +114,15 @@ export default function ToolGridItem({
                 : "not-allowed"
               : "grab",
             transition: "all 0.2s",
-            opacity: gate.blocked ? 0.5 : 1,
-            filter: gate.blocked ? "grayscale(0.6)" : "none",
             "&:hover": {
-              bgcolor: gate.blocked
+              bgcolor: disabled
                 ? theme.palette.ui.disabled
                 : theme.palette.action.hover,
-              borderColor: gate.blocked
+              borderColor: disabled
                 ? theme.palette.ui.border
                 : tool.metadata.color,
-              transform: gate.blocked ? "none" : "translateY(-4px)",
-              boxShadow: gate.blocked
-                ? "none"
-                : `0 8px 16px rgba(0, 0, 0, 0.2)`,
+              transform: disabled ? "none" : "translateY(-4px)",
+              boxShadow: disabled ? "none" : `0 8px 16px rgba(0, 0, 0, 0.2)`,
             },
             "&::after": gate.blocked
               ? {
@@ -142,7 +138,9 @@ export default function ToolGridItem({
               : {},
           }}
         >
-          {/* Preview Image */}
+          {/* Preview Image — dimmed when blocked; the download/credential icons
+              below are kept out of every dimmed subtree so they keep full
+              color. */}
           <Box
             sx={{
               width: "100%",
@@ -155,6 +153,8 @@ export default function ToolGridItem({
                   ? theme.palette.ui.disabled
                   : theme.palette.ui.border
               }`,
+              opacity: gate.blocked ? 0.5 : 1,
+              filter: gate.blocked ? "grayscale(0.6)" : "none",
             }}
           >
             <img
@@ -189,6 +189,8 @@ export default function ToolGridItem({
                     ? theme.palette.text.disabled
                     : theme.palette.text.primary,
                   flexShrink: 0,
+                  opacity: gate.blocked ? 0.5 : 1,
+                  filter: gate.blocked ? "grayscale(0.6)" : "none",
                 }}
               >
                 <CategoryIcon
@@ -203,11 +205,13 @@ export default function ToolGridItem({
 
               {action && (
                 <Box
+                  draggable={false}
                   sx={{
                     ml: "auto",
                     display: "flex",
                     alignItems: "center",
                     flexShrink: 0,
+                    zIndex: 3,
                   }}
                 >
                   {action}
@@ -224,6 +228,7 @@ export default function ToolGridItem({
                   : theme.palette.text.primary,
                 fontWeight: 500,
                 mb: 1,
+                opacity: gate.blocked ? 0.5 : 1,
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 display: "-webkit-box",
@@ -243,6 +248,7 @@ export default function ToolGridItem({
                 color: gate.blocked
                   ? theme.palette.text.disabled
                   : theme.palette.text.primary,
+                opacity: gate.blocked ? 0.5 : 1,
               }}
             >
               {tool.metadata.category ?? t("common:other")}
@@ -250,7 +256,7 @@ export default function ToolGridItem({
           </Box>
         </Box>
       </Tooltip>
-      {!gate.blocked && (
+      {!disabled && (
         <HoverToolInfo
           anchorEl={anchorEl}
           hoveredTool={hoveredTool}
