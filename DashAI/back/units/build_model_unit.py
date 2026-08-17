@@ -120,11 +120,7 @@ class BuildModelUnit(BaseUnit):
 
     SCHEMA = BuildModelSchema
 
-    # run_id and task_name only appear in the ModelFactory call and in error
-    # messages, but they are declared all the same: a key read without being
-    # declared is invisible to any caller — and to any future DAG validator —
-    # that inspects REQUIRES instead of running the unit.
-    REQUIRES = ("x", "y", "n_labels", "run_id", "task_name")
+    REQUIRES = ("x", "y", "n_labels")
     PROVIDES = ("model", "factory", "optimizable_parameters", "model_parameters")
 
     def __init__(self, **config) -> None:
@@ -199,8 +195,6 @@ class BuildModelUnit(BaseUnit):
         component_registry = di["component_registry"]
 
         parameters = self.model_parameters
-        run_id = ctx.require("run_id")
-        task_name = ctx.require("task_name")
 
         model_class = self._resolve_model_class()
 
@@ -218,14 +212,15 @@ class BuildModelUnit(BaseUnit):
         except Exception as e:
             log.exception(e)
             raise JobError(
-                f"Unable to find metrics associated with Task {task_name} in registry",
+                "Unable to find metrics associated with"
+                f"Task {ctx.get('task_name')} in registry",
             ) from e
 
         try:
             factory = ModelFactory(
                 model_class,
                 parameters,
-                run_id,
+                ctx.get("run_id"),
                 ctx.require("x"),
                 ctx.require("y"),
                 train_metrics,
@@ -237,7 +232,7 @@ class BuildModelUnit(BaseUnit):
         except Exception as e:
             log.exception(e)
             raise JobError(
-                f"Unable to instantiate model using run {run_id}",
+                f"Unable to instantiate model using run {ctx.get('run_id')}",
             ) from e
 
         # The original tree is what the search unit rewrites with the best
