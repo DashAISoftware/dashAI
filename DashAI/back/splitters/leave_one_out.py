@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING, List, Tuple
+
 import numpy as np
 from sklearn.model_selection import LeaveOneOut
 
 from DashAI.back.core.utils import MultilingualString
 
 from .fold_splitter import FoldSplitter
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class LeaveOneOutSplitter(FoldSplitter):
@@ -36,26 +41,18 @@ class LeaveOneOutSplitter(FoldSplitter):
     SHUFFLE: bool = True
     COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
 
-    def __init__(self, splits_data):
-        """Initialize the leave-one-out splitter with the provided configuration."""
-        super().__init__(splits_data)
-
-    def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
+    def split_indexes(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> List[Tuple[List, List]]:
         """Generate train/test index pairs following the leave-one-out scheme.
 
         Parameters
         ----------
-        x : object
+        x : DashAIDataset
             Input dataset whose length determines the number of available samples.
-        y : object
+        y : DashAIDataset
             Target values associated with ``x``. This argument is accepted for
             interface consistency but is not used directly by the splitter.
-        n_splits : int
-            Unused parameter retained for interface compatibility.
-        shuffle : bool
-            Unused parameter retained for interface compatibility.
-        random_state : int, optional
-            Unused parameter retained for interface compatibility.
 
         Returns
         -------

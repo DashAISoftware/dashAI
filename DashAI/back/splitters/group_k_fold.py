@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING, List, Tuple
+
 import numpy as np
 from sklearn.model_selection import GroupKFold
 
 from DashAI.back.core.utils import MultilingualString
 
 from .fold_splitter import FoldSplitter
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class GroupKFoldSplitter(FoldSplitter):
@@ -54,23 +59,18 @@ class GroupKFoldSplitter(FoldSplitter):
         super().__init__(splits_data)
         self.group_column = splits_data.get("group_column", None)
 
-    def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
+    def split_indexes(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> List[Tuple[List, List]]:
         """Generate train/test index pairs while keeping groups together.
 
         Parameters
         ----------
-        x : object
+        x : DashAIDataset
             Input dataset that can be converted to a pandas DataFrame.
-        y : object
+        y : DashAIDataset
             Target values associated with ``x``. This argument is accepted for
             interface consistency but is not used directly by the splitter.
-        n_splits : int
-            Number of folds to create.
-        shuffle : bool
-            Whether samples should be shuffled before folding.
-        random_state : int, optional
-            Seed used for reproducible shuffling; retained for interface
-            compatibility.
 
         Returns
         -------
@@ -90,7 +90,7 @@ class GroupKFoldSplitter(FoldSplitter):
 
             dataset_df_groups = dataset_df[self.group_column]
 
-            gkf = GroupKFold(n_splits=n_splits)
+            gkf = GroupKFold(n_splits=self.n_splits)
             folds = list(gkf.split(indexes, groups=dataset_df_groups))
         except ValueError as e:
             raise ValueError(f"Error in GroupKFold splitting: {e}") from e

@@ -1,8 +1,13 @@
-from typing import Any, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset
 
 from .base_splitter import BaseSplitter
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class HoldoutSplitter(BaseSplitter):
@@ -39,15 +44,17 @@ class HoldoutSplitter(BaseSplitter):
         self.splitted_indexes = splits_data.get("splitted_indexes", {})
         self.stratify = splits_data.get("stratify", False)
 
-    def split(self, x, y) -> Tuple[object, object, Dict[str, Any]]:
+    def split(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> Tuple[DatasetDict, DatasetDict, Dict[str, Any]]:
         """Split the input data into holdout partitions and return the
         resulting datasets.
 
         Parameters
         ----------
-        x : object
+        x : DashAIDataset
             Input dataset to partition.
-        y : object
+        y : DashAIDataset
             Target values associated with ``x``.
 
         Returns
@@ -64,22 +71,7 @@ class HoldoutSplitter(BaseSplitter):
             indices = self.splitted_indexes
 
         else:
-            total_rows = len(x)
-
-            labels = None
-            if self.stratify:
-                labels = self.prepare_y(y)
-
-            train_indices, test_indices, val_indices = self.split_indexes(
-                total_rows=total_rows,
-                train_size=self.train_size,
-                test_size=self.test_size,
-                val_size=self.val_size,
-                shuffle=self.shuffle,
-                stratify=self.stratify,
-                labels=labels,
-                seed=self.random_state,
-            )
+            train_indices, test_indices, val_indices = self.split_indexes(x, y)
 
             indices = {
                 "train_indexes": train_indices,
@@ -94,14 +86,8 @@ class HoldoutSplitter(BaseSplitter):
 
     def split_indexes(
         self,
-        total_rows: int,
-        train_size: float,
-        test_size: float,
-        val_size: float,
-        seed: Union[int, None] = None,
-        shuffle: bool = True,
-        stratify: bool = False,
-        labels: Union[List, None] = None,
+        x: DashAIDataset,
+        y: DashAIDataset,
     ) -> Tuple[List, List, List]:
         """Generate lists with train, test and validation indexes.
 
@@ -124,80 +110,66 @@ class HoldoutSplitter(BaseSplitter):
 
         Parameters
         ----------
-        total_rows : int
-            Size of the Dataset.
-        train_size : float
-            Proportion of the dataset for train split (in 0-1).
-        test_size : float
-            Proportion of the dataset for test split (in 0-1).
-        val_size : float
-            Proportion of the dataset for validation split (in 0-1).
-        seed : Union[int, None], optional
-            Set seed to control to enable replicability, by default None
-        shuffle : bool, optional
-            If True, the data will be shuffled when splitting the dataset,
-            by default True.
-        stratify : bool, optional
-            Whether the split should preserve class proportions, by default False.
-        labels : List or None, optional
-            Labels used for stratified splitting when requested.
+        x: DashAIDataset
+            Input dataset to partition.
+        y: DashAIDataset
+        Target values associated with ``x``.
 
         Returns
         -------
         tuple[List, List, List]
             Lists of indices for the training, test, and validation partitions.
         """
-        if seed is None:
-            seed = 42
         import numpy as np
         from sklearn.model_selection import train_test_split
 
+        total_rows = len(x)
         indexes = np.arange(total_rows)
-        stratify_labels = np.array(labels) if stratify else None
+        stratify_labels = np.array(self.prepare_y(y)) if self.stratify else None
 
-        if test_size == 0 and val_size == 0:
+        if self.test_size == 0 and self.val_size == 0:
             return indexes.tolist(), [], []
 
-        if test_size == 0:
+        if self.test_size == 0:
             train_indexes, val_indexes = train_test_split(
                 indexes,
-                train_size=train_size,
-                random_state=seed,
-                shuffle=shuffle,
+                train_size=self.train_size,
+                random_state=self.random_state,
+                shuffle=self.shuffle,
                 stratify=stratify_labels,
             )
             return train_indexes.tolist(), [], val_indexes.tolist()
 
-        if val_size == 0:
+        if self.val_size == 0:
             train_indexes, test_indexes = train_test_split(
                 indexes,
-                train_size=train_size,
-                random_state=seed,
-                shuffle=shuffle,
+                train_size=self.train_size,
+                random_state=self.random_state,
+                shuffle=self.shuffle,
                 stratify=stratify_labels,
             )
             return train_indexes.tolist(), test_indexes.tolist(), []
 
-        test_val = test_size + val_size
-        val_proportion = test_size / test_val
+        test_val = self.test_size + self.val_size
+        val_proportion = self.test_size / test_val
 
         train_indexes, test_val_indexes = train_test_split(
             indexes,
-            train_size=train_size,
-            random_state=seed,
-            shuffle=shuffle,
+            train_size=self.train_size,
+            random_state=self.random_state,
+            shuffle=self.shuffle,
             stratify=stratify_labels,
         )
 
         stratify_labels_test_val = (
-            stratify_labels[test_val_indexes] if stratify else None
+            stratify_labels[test_val_indexes] if self.stratify else None
         )
 
         test_indexes, val_indexes = train_test_split(
             test_val_indexes,
             train_size=val_proportion,
-            random_state=seed,
-            shuffle=shuffle,
+            random_state=self.random_state,
+            shuffle=self.shuffle,
             stratify=stratify_labels_test_val,
         )
         return train_indexes.tolist(), test_indexes.tolist(), val_indexes.tolist()

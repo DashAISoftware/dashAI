@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING, List, Tuple
+
 import numpy as np
 from sklearn.model_selection import RepeatedStratifiedKFold
 
 from DashAI.back.core.utils import MultilingualString
 
 from .fold_splitter import FoldSplitter
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class RepeatedStratifiedKFoldSplitter(FoldSplitter):
@@ -46,21 +51,17 @@ class RepeatedStratifiedKFoldSplitter(FoldSplitter):
         super().__init__(splits_data)
         self.n_repeats = splits_data.get("n_repeats", 2)
 
-    def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
+    def split_indexes(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> List[Tuple[List, List]]:
         """Generate train/test index pairs preserving class proportions.
 
         Parameters
         ----------
-        x : object
+        x : DashAIDataset
             Input dataset whose length determines the number of available samples.
-        y : object
+        y : DashAIDataset
             Target values used to preserve class distribution across folds.
-        n_splits : int
-            Number of folds to create in each repetition.
-        shuffle : bool
-            Whether samples should be shuffled before folding.
-        random_state : int, optional
-            Seed used for reproducible shuffling, by default 42.
 
         Returns
         -------
@@ -73,7 +74,9 @@ class RepeatedStratifiedKFoldSplitter(FoldSplitter):
             y_labels = self.prepare_y(y)
 
             rskf = RepeatedStratifiedKFold(
-                n_splits=n_splits, n_repeats=self.n_repeats, random_state=random_state
+                n_splits=self.n_splits,
+                n_repeats=self.n_repeats,
+                random_state=self.random_state,
             )
             folds = list(rskf.split(indexes, y=y_labels))
         except ValueError as e:

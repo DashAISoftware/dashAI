@@ -1,9 +1,14 @@
 from abc import abstractmethod
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset_cv
 
 from .base_splitter import BaseSplitter
+
+if TYPE_CHECKING:
+    from datasets import DatasetDict
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class FoldSplitter(BaseSplitter):
@@ -40,21 +45,17 @@ class FoldSplitter(BaseSplitter):
         return metadata
 
     @abstractmethod
-    def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
+    def split_indexes(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> List[Tuple[List, List]]:
         """Generate train/test index pairs for each fold.
 
         Parameters
         ----------
-        x : object
+        x : DashAIDataset
             Input dataset to be partitioned.
-        y : object
+        y : DashAIDataset
             Target values associated with ``x``.
-        n_splits : int
-            Number of folds to generate.
-        shuffle : bool
-            Whether the samples should be shuffled before splitting.
-        random_state : int, optional
-            Seed used to make shuffling reproducible, by default 42.
 
         Returns
         -------
@@ -65,14 +66,16 @@ class FoldSplitter(BaseSplitter):
             "The split indexes method must be implemented by subclasses."
         )
 
-    def split(self, x, y) -> Tuple[List[object], List[object], Dict[str, Any]]:
+    def split(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> Tuple[List[DatasetDict], List[DatasetDict], Dict[str, Any]]:
         """Create folds and return both the partitioned datasets and the indices.
 
         Parameters
         ----------
-        x : object
+        x : DashAIDataset
             Input dataset to split.
-        y : object
+        y : DashAIDataset
             Target values associated with ``x``.
 
         Returns
@@ -93,13 +96,7 @@ class FoldSplitter(BaseSplitter):
                 greater than the number of samples ({len(x)})."""
             )
 
-        folds = self.split_indexes(
-            x=x,
-            y=y,
-            n_splits=self.n_splits,
-            shuffle=self.shuffle,
-            random_state=self.random_state,
-        )
+        folds = self.split_indexes(x, y)
 
         indices = {}
         x_prepared, y_prepared = [], []

@@ -1,8 +1,10 @@
 from abc import ABCMeta, abstractmethod
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
-from beartype.typing import Dict, List, Tuple, Union
 from sklearn.preprocessing import LabelEncoder
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class BaseSplitter(metaclass=ABCMeta):
@@ -29,16 +31,14 @@ class BaseSplitter(metaclass=ABCMeta):
         self.shuffle = splits_data.get("shuffle", True)
 
     @abstractmethod
-    def split(
-        self, x, y
-    ) -> Tuple[Union[object, List[object]], Union[object, List[object]], Dict]:
+    def split(self, x: DashAIDataset, y: DashAIDataset):
         """Split the provided dataset into training and testing subsets.
 
         Parameters
         ----------
-        x : object
+        x : DashAIDataset
             Input dataset or collection of samples to be partitioned.
-        y : object
+        y : DashAIDataset
             Target labels or output data associated with ``x``.
 
         Returns
@@ -48,6 +48,28 @@ class BaseSplitter(metaclass=ABCMeta):
             indices used to build each split.
         """
         raise NotImplementedError("The split method must be implemented by subclasses.")
+
+    @abstractmethod
+    def split_indexes(self, x: DashAIDataset, y: DashAIDataset):
+        """Generate train/test and/or validation index pairs.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset to be partitioned.
+        y : DashAIDataset
+            Target values associated with ``x``.
+
+        Returns
+        -------
+        tuple | list[tuple]
+            A tuple for holdout splitters containing train/test/validation indices,
+            or a list of tuples for fold-based splitters containing train/test index
+            pairs for each fold.
+        """
+        raise NotImplementedError(
+            "The split indexes method must be implemented by subclasses."
+        )
 
     def prepare_y(self, y):
         """Encode the target variable for stratified splitting.

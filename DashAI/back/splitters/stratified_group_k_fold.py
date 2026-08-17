@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING, List, Tuple
+
 import numpy as np
 from sklearn.model_selection import StratifiedGroupKFold
 
 from DashAI.back.core.utils import MultilingualString
 
 from .fold_splitter import FoldSplitter
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class StratifiedGroupKFoldSplitter(FoldSplitter):
@@ -49,21 +54,17 @@ class StratifiedGroupKFoldSplitter(FoldSplitter):
         super().__init__(splits_data)
         self.group_column = splits_data.get("group_column", None)
 
-    def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
+    def split_indexes(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> List[Tuple[List, List]]:
         """Generate train/test index pairs preserving both labels and groups.
 
         Parameters
         ----------
-        x : object
+        x : DashAIDataset
             Input dataset that can be converted to a pandas DataFrame.
-        y : object
+        y : DashAIDataset
             Target values used to preserve class balance across folds.
-        n_splits : int
-            Number of folds to create.
-        shuffle : bool
-            Whether samples should be shuffled before folding.
-        random_state : int, optional
-            Seed used for reproducible shuffling, by default 42.
 
         Returns
         -------
@@ -92,7 +93,9 @@ class StratifiedGroupKFoldSplitter(FoldSplitter):
             dataset_df_groups = dataset_df[self.group_column]
 
             sgkf = StratifiedGroupKFold(
-                n_splits=n_splits, shuffle=shuffle, random_state=random_state
+                n_splits=self.n_splits,
+                shuffle=self.shuffle,
+                random_state=self.random_state,
             )
             folds = list(sgkf.split(indexes, y=y_labels, groups=dataset_df_groups))
         except ValueError as e:

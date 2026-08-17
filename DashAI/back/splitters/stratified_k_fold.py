@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING, List, Tuple
+
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 
 from DashAI.back.core.utils import MultilingualString
 
 from .fold_splitter import FoldSplitter
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class StratifiedKFoldSplitter(FoldSplitter):
@@ -38,25 +43,17 @@ class StratifiedKFoldSplitter(FoldSplitter):
     SHUFFLE: bool = True
     COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
 
-    def __init__(self, splits_data):
-        """Initialize the stratified K-fold splitter with the provided configuration."""
-        super().__init__(splits_data)
-
-    def split_indexes(self, x, y, n_splits, shuffle, random_state=42):
+    def split_indexes(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> List[Tuple[List, List]]:
         """Generate train/test index pairs while preserving class proportions.
 
         Parameters
         ----------
-        x : object
+        x : DashAIDataset
             Input dataset whose length determines the number of available samples.
-        y : object
+        y : DashAIDataset
             Target values used to preserve the class distribution across folds.
-        n_splits : int
-            Number of folds to create.
-        shuffle : bool
-            Whether samples should be shuffled before folding.
-        random_state : int, optional
-            Seed used for reproducible shuffling, by default 42.
 
         Returns
         -------
@@ -69,7 +66,9 @@ class StratifiedKFoldSplitter(FoldSplitter):
             y_labels = self.prepare_y(y)
 
             kf = StratifiedKFold(
-                n_splits=n_splits, shuffle=shuffle, random_state=random_state
+                n_splits=self.n_splits,
+                shuffle=self.shuffle,
+                random_state=self.random_state,
             )
             folds = list(kf.split(indexes, y=y_labels))
         except ValueError as e:
