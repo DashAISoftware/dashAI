@@ -16,7 +16,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 _DEFAULT_EXTRACTORS = {
-    "pdf": "TextractExtractor",
+    "pdf": "PyMuPDFExtractor",
     "txt": "PlainTextExtractor",
     "md": "PlainTextExtractor",
     "rst": "PlainTextExtractor",
