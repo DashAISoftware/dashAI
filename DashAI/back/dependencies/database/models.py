@@ -894,7 +894,7 @@ class Chunk(Base):
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     chunk_set_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_chunk_set.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False
     )
     document_id: Mapped[int] = mapped_column(
         ForeignKey("document.id", ondelete="CASCADE"), nullable=False
@@ -921,7 +921,7 @@ class Chunk(Base):
 
 
 class RAGChunkSet(Base):
-    __tablename__ = "RAG_chunk_set"
+    __tablename__ = "rag_chunk_set"
     """
     Canonical identity for a set of chunks produced by a processing pipeline.
     Two sessions with the same documents + same pipeline config share the same
@@ -953,11 +953,11 @@ class RAGChunkSet(Base):
 
 
 class RAGChunkSetDocument(Base):
-    __tablename__ = "RAG_chunk_set_document"
+    __tablename__ = "rag_chunk_set_document"
     """Which documents belong to a chunk set."""
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     chunk_set_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_chunk_set.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False
     )
     document_id: Mapped[int] = mapped_column(
         ForeignKey("document.id", ondelete="CASCADE"), nullable=False
@@ -979,14 +979,14 @@ class RAGChunkSetDocument(Base):
 
 
 class RAGRetrieverChunkSet(Base):
-    __tablename__ = "RAG_retriever_chunk_set"
+    __tablename__ = "rag_retriever_chunk_set"
     """Links a retriever to the chunk set it operates on."""
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     retriever_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_retriever.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("rag_retriever.id", ondelete="CASCADE"), nullable=False
     )
     chunk_set_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_chunk_set.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False
     )
 
     chunk_set: Mapped["RAGChunkSet"] = relationship(
@@ -1004,7 +1004,7 @@ class RAGRetrieverChunkSet(Base):
 
 
 class RAGPrompt(Base):
-    __tablename__ = "RAG_prompt"
+    __tablename__ = "rag_prompt"
     """
     Table to store all the information about a RAG prompt.
     """
@@ -1012,7 +1012,7 @@ class RAGPrompt(Base):
     class_name: Mapped[str] = mapped_column(String, nullable=False)
     name: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
-    parameters_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    parameters_hash: Mapped[str] = mapped_column(String, nullable=False)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,
@@ -1025,25 +1025,33 @@ class RAGPrompt(Base):
         "RAGPipeline", back_populates="prompt", cascade="all, delete-orphan"
     )
 
+    __table_args__ = (
+        UniqueConstraint("parameters_hash", name="uq_rag_prompt_params_hash"),
+    )
+
 
 class RAGGenerationModel(Base):
-    __tablename__ = "RAG_generation_model"
+    __tablename__ = "rag_generation_model"
     """
     Table to store all the information about a generation model.
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     class_name: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
-    parameters_hash: Mapped[str] = mapped_column(String, nullable=False, unique=True)
+    parameters_hash: Mapped[str] = mapped_column(String, nullable=False)
 
     # Relationships
     pipelines: Mapped[List["RAGPipeline"]] = relationship(
         back_populates="generation_model"
     )
 
+    __table_args__ = (
+        UniqueConstraint("parameters_hash", name="uq_rag_gen_model_params_hash"),
+    )
+
 
 class RAGPipeline(Base):
-    __tablename__ = "RAG_pipeline"
+    __tablename__ = "rag_pipeline"
     """
     Table to store all the information about a RAG pipeline.
     """
@@ -1056,13 +1064,13 @@ class RAGPipeline(Base):
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
 
     chunking_model_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("RAG_chunking_model.id", ondelete="CASCADE"), nullable=True
+        ForeignKey("rag_chunking_model.id", ondelete="CASCADE"), nullable=True
     )
     prompt_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("RAG_prompt.id", ondelete="CASCADE"), nullable=True
+        ForeignKey("rag_prompt.id", ondelete="CASCADE"), nullable=True
     )
     generation_model_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("RAG_generation_model.id", ondelete="CASCADE"), nullable=True
+        ForeignKey("rag_generation_model.id", ondelete="CASCADE"), nullable=True
     )
 
     # Relationships
@@ -1084,7 +1092,7 @@ class RAGPipeline(Base):
 
 
 class RAGChunkingModel(Base):
-    __tablename__ = "RAG_chunking_model"
+    __tablename__ = "rag_chunking_model"
     """
     Table to store all the information about a chunking model.
     """
@@ -1100,23 +1108,23 @@ class RAGChunkingModel(Base):
         UniqueConstraint(
             "class_name",
             "parameters",
-            name="uix_RAG_chunking_model_class_params",
+            name="uix_rag_chunking_model_class_params",
         ),
     )
 
 
 class RAGRetriever(Base):
-    __tablename__ = "RAG_retriever"
+    __tablename__ = "rag_retriever"
     """
     Canonical identity row for every retriever — unit (sparse/dense) or composite.
 
     Sub-tables (RAGSparseRetriever, RAGDenseRetriever) reference this row
-    via bridge_id. Composite children are stored in RAG_retriever_child.
+    via bridge_id. Composite children are stored in rag_retriever_child.
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     class_name: Mapped[str] = mapped_column(String, nullable=False)
     pipeline_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_pipeline.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("rag_pipeline.id", ondelete="CASCADE"), nullable=False
     )
 
     pipeline: Mapped["RAGPipeline"] = relationship(back_populates="retriever")
@@ -1139,18 +1147,18 @@ class RAGRetriever(Base):
 
 
 class RAGRetrieverChild(Base):
-    __tablename__ = "RAG_retriever_child"
+    __tablename__ = "rag_retriever_child"
     """
     Link table for composite retrievers: maps a parent composite to its
-    ordered child retrievers. Both parent and child reference RAG_retriever.id.
+    ordered child retrievers. Both parent and child reference rag_retriever.id.
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     parent_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_retriever.id", ondelete="CASCADE"),
+        ForeignKey("rag_retriever.id", ondelete="CASCADE"),
         nullable=False,
     )
     child_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_retriever.id", ondelete="CASCADE"),
+        ForeignKey("rag_retriever.id", ondelete="CASCADE"),
         nullable=False,
     )
     child_order: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -1171,17 +1179,17 @@ class RAGRetrieverChild(Base):
 
 
 class RAGSparseRetriever(Base):
-    __tablename__ = "RAG_sparse_retriever"
+    __tablename__ = "rag_sparse_retriever"
     """
     Table to store all the information about a sparse retriever.
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     bridge_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_retriever.id", ondelete="CASCADE"),
+        ForeignKey("rag_retriever.id", ondelete="CASCADE"),
         nullable=False,
     )
     chunk_set_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_chunk_set.id", ondelete="CASCADE"),
+        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"),
         nullable=False,
     )
     class_name: Mapped[str] = mapped_column(String, nullable=False)
@@ -1199,29 +1207,29 @@ class RAGSparseRetriever(Base):
             "class_name",
             "parameters",
             "chunk_set_id",
-            name="uix_RAG_sparse_retriever",
+            name="uix_rag_sparse_retriever",
         ),
     )
 
 
 class RAGDenseRetriever(Base):
-    __tablename__ = "RAG_dense_retriever"
+    __tablename__ = "rag_dense_retriever"
     """
     Table to store all the information about a dense retriever.
     """
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     bridge_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_retriever.id", ondelete="CASCADE"),
+        ForeignKey("rag_retriever.id", ondelete="CASCADE"),
         nullable=False,
     )
     chunk_set_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_chunk_set.id", ondelete="CASCADE"),
+        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"),
         nullable=False,
     )
     class_name: Mapped[str] = mapped_column(String, nullable=False)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
     embedding_model_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_embedding_model.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("rag_embedding_model.id", ondelete="CASCADE"), nullable=False
     )
     bridge: Mapped["RAGRetriever"] = relationship(
         "RAGRetriever",
@@ -1238,13 +1246,13 @@ class RAGDenseRetriever(Base):
             "parameters",
             "chunk_set_id",
             "embedding_model_id",
-            name="uix_RAG_dense_retriever",
+            name="uix_rag_dense_retriever",
         ),
     )
 
 
 class RAGEmbeddingModel(Base):
-    __tablename__ = "RAG_embedding_model"
+    __tablename__ = "rag_embedding_model"
     """
     Table to store embedding model configurations.
     """
@@ -1264,13 +1272,13 @@ class RAGEmbeddingModel(Base):
         UniqueConstraint(
             "class_name",
             "parameters",
-            name="uix_RAG_embedding_model_class_params",
+            name="uix_rag_embedding_model_class_params",
         ),
     )
 
 
 class RAGEmbeddingMatrix(Base):
-    __tablename__ = "RAG_embedding_matrix"
+    __tablename__ = "rag_embedding_matrix"
     """
     Table to store embedding matrices for each unique combination of
     document, chunk set, and embedding model.
@@ -1280,10 +1288,10 @@ class RAGEmbeddingMatrix(Base):
         ForeignKey("document.id", ondelete="CASCADE"), nullable=False
     )
     chunk_set_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_chunk_set.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False
     )
     embedding_model_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_embedding_model.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("rag_embedding_model.id", ondelete="CASCADE"), nullable=False
     )
     storage_folder: Mapped[str] = mapped_column(String, nullable=False)
     matrix_shape: Mapped[List[int]] = mapped_column(JSON, nullable=False)
@@ -1345,7 +1353,7 @@ RAG relationship tables
 
 
 class RAGDocumentPipelineSessionLink(Base):
-    __tablename__ = "RAG_document_pipeline_session_link"
+    __tablename__ = "rag_document_pipeline_session_link"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     document_id: Mapped[int] = mapped_column(
@@ -1355,7 +1363,7 @@ class RAGDocumentPipelineSessionLink(Base):
         ForeignKey("generative_session.id", ondelete="CASCADE"), nullable=False
     )
     pipeline_id: Mapped[int] = mapped_column(
-        ForeignKey("RAG_pipeline.id", ondelete="CASCADE"), nullable=False
+        ForeignKey("rag_pipeline.id", ondelete="CASCADE"), nullable=False
     )
 
     # Relationships

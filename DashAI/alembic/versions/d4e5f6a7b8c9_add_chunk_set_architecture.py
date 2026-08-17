@@ -119,7 +119,10 @@ def upgrade() -> None:
             'fk_rag_embedding_matrix_chunking_model_id_rag_chunking_model',
             type_='foreignkey',
         )
-        batch_op.alter_column('chunking_model_id', new_column_name='chunk_set_id')
+        batch_op.drop_column('chunking_model_id')
+        batch_op.add_column(
+            sa.Column('chunk_set_id', sa.Integer(), nullable=False)
+        )
         batch_op.create_foreign_key(
             'fk_rag_embedding_matrix_chunk_set_id',
             'rag_chunk_set', ['chunk_set_id'], ['id'], ondelete='CASCADE',
@@ -158,7 +161,10 @@ def downgrade() -> None:
         batch_op.drop_constraint(
             'fk_rag_embedding_matrix_chunk_set_id', type_='foreignkey',
         )
-        batch_op.alter_column('chunk_set_id', new_column_name='chunking_model_id')
+        batch_op.drop_column('chunk_set_id')
+        batch_op.add_column(
+            sa.Column('chunking_model_id', sa.Integer(), nullable=False)
+        )
         batch_op.create_foreign_key(
             'fk_rag_embedding_matrix_chunking_model_id_rag_chunking_model',
             'rag_chunking_model', ['chunking_model_id'], ['id'], ondelete='CASCADE',
