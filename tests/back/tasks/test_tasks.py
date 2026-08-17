@@ -20,7 +20,6 @@ from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
 from DashAI.back.tasks.text_to_text_generation_task import TextToTextGenerationTask
 from DashAI.back.tasks.translation_task import TranslationTask
-from tests.back.scratch import scratch_dir
 
 
 def load_csv_into_datasetdict_iris(file_name):
@@ -29,7 +28,7 @@ def load_csv_into_datasetdict_iris(file_name):
 
     datasetdict = csv_dataloader.load_data(
         filepath_or_buffer=test_dataset_path,
-        temp_path=scratch_dir("tasks"),
+        temp_path="tests/back/tasks",
         params={"separator": ","},
     )
     schema = {
@@ -49,7 +48,7 @@ def load_csv_into_datasetdict_iris_extra(file_name):
 
     datasetdict = csv_dataloader.load_data(
         filepath_or_buffer=test_dataset_path,
-        temp_path=scratch_dir("tasks"),
+        temp_path="tests/back/tasks",
         params={"separator": ","},
     )
     schema = {
@@ -149,7 +148,7 @@ def text_classification_dataset_fixture():
 
     dataset = json_dataloader.load_data(
         filepath_or_buffer=test_dataset_path,
-        temp_path=scratch_dir("tasks"),
+        temp_path="tests/back/tasks",
         params={
             "data_key": "data",
         },
@@ -210,7 +209,7 @@ def translation_dataset_fixture():
 
     dataset = json_dataloader.load_data(
         filepath_or_buffer=test_dataset_path,
-        temp_path=scratch_dir("tasks"),
+        temp_path="tests/back/tasks",
         params={"data_key": "data"},
     )
 
@@ -272,7 +271,8 @@ def sample_image_fixture():
 
 @pytest.fixture(scope="module", name="temp_path")
 def temp_path_fixture():
-    temp_path = pathlib.Path(scratch_dir("tasks", "temp"))
+    temp_path = pathlib.Path("tests") / "back" / "tasks" / "temp"
+    os.makedirs(temp_path, exist_ok=True)
     yield temp_path
     # Cleanup after all tests in the module using this fixture have finished
     if temp_path.exists() and temp_path.is_dir():

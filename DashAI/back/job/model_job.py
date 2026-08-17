@@ -1,22 +1,24 @@
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from kink import inject
 from sqlalchemy import exc
 from sqlalchemy.orm.attributes import flag_modified
 
-from DashAI.back.dependencies.database.models import ModelSession, Run
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
+from DashAI.back.dependencies.database.models import Dataset, Metric, ModelSession, Run
+from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.units.build_model_unit import BuildModelUnit
-from DashAI.back.units.context import ExecutionContext
-from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
-from DashAI.back.units.fit_model_unit import FitModelUnit
-from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
-from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
-from DashAI.back.units.save_model_unit import SaveModelUnit
+from DashAI.back.metrics.base_metric import BaseMetric
+from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.model_factory import ModelFactory
+from DashAI.back.optimizers.base_optimizer import BaseOptimizer
+from DashAI.back.tasks.base_task import BaseTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -91,60 +93,192 @@ class ModelJob(BaseJob):
     ) -> None:
         import gc
         import json
+        import os
+        import pickle
 
         from kink import di
 
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            prepare_for_model_session,
+            select_columns,
+            split_dataset,
+        )
+
+        component_registry = di["component_registry"]
         session_factory = di["session_factory"]
+        config = di["config"]
 
         # Get the necessary parameters
         run_id: int = self.kwargs["run_id"]
-        ctx = ExecutionContext(refs={"run_id": run_id})
 
         with session_factory() as db:
             run: Run = db.get(Run, run_id)
-            if not run:
-                raise JobError(f"Run {run_id} does not exist in DB.")
             run.huey_id = self.kwargs.get("huey_id", None)
             db.commit()
             self.report_progress(0.05, "Preparing data")
             try:
-                # The model session holds the configuration every unit reads.
+                # Get the model session, dataset, task, metrics and splits
                 model_session: ModelSession = db.get(ModelSession, run.model_session_id)
                 if not model_session:
                     raise JobError(
                         f"Model session {run.model_session_id} does not exist in DB."
                     )
-                LoadDatasetUnit(dataset_id=model_session.dataset_id)(ctx)
+                dataset: Dataset = db.get(Dataset, model_session.dataset_id)
+                if not dataset:
+                    raise JobError(
+                        f"Dataset {model_session.dataset_id} does not exist in DB."
+                    )
 
-                PrepareAndSplitUnit(
-                    task_name=model_session.task_name,
-                    input_columns=model_session.input_columns,
-                    output_columns=model_session.output_columns,
-                    splits=json.loads(model_session.splits),
-                )(ctx)
+                try:
+                    loaded_dataset: "DashAIDataset" = load_dataset(
+                        f"{dataset.file_path}/dataset"
+                    )
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Can not load dataset from path {dataset.file_path}",
+                    ) from e
 
-                run.split_indexes = json.dumps(ctx.require("split_indexes"))
+                try:
+                    task: BaseTask = component_registry[model_session.task_name][
+                        "class"
+                    ]()
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        (
+                            f"Unable to find Task with name {model_session.task_name} "
+                            "in registry"
+                        ),
+                    ) from e
 
-                # __call__ runs validate() (the download gate) before execute()
-                # for every unit, so no separate pre-check is needed here.
-                BuildModelUnit(
-                    model={"component": run.model_name, "params": run.parameters},
-                    train_metrics=model_session.train_metrics,
-                    validation_metrics=model_session.validation_metrics,
-                    test_metrics=model_session.test_metrics,
-                )(ctx)
+                try:
+                    # Get metrics from model session
+                    train_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.train_metrics
+                    ]
+                    validation_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.validation_metrics
+                    ]
+                    test_metrics: List[BaseMetric] = [
+                        component_registry[m]["class"]
+                        for m in model_session.test_metrics
+                    ]
 
-                # Resolving the optimizer before the status changes keeps an
-                # invalid configuration from ever reporting that training began.
-                fit_model = FitModelUnit(
-                    optimizer={
-                        "component": run.optimizer_name,
-                        "params": run.optimizer_parameters,
-                    },
-                    goal_metric=run.goal_metric,
-                )
-                fit_model.validate(ctx)
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        "Unable to find metrics associated with"
+                        f"Task {model_session.task_name} in registry",
+                    ) from e
 
+                try:
+                    prepared_dataset = task.prepare_for_task(
+                        dataset=loaded_dataset,
+                        input_columns=model_session.input_columns,
+                        output_columns=model_session.output_columns,
+                    )
+                    n_labels = task.num_labels(
+                        prepared_dataset, model_session.output_columns[0]
+                    )
+
+                    splits = json.loads(model_session.splits)
+                    prepared_dataset, splits = prepare_for_model_session(
+                        dataset=prepared_dataset,
+                        splits=splits,
+                        output_columns=model_session.output_columns,
+                    )
+
+                    run.split_indexes = json.dumps(
+                        {
+                            "train_indexes": splits["train_indexes"],
+                            "test_indexes": splits["test_indexes"],
+                            "val_indexes": splits["val_indexes"],
+                        }
+                    )
+
+                    x, y = select_columns(
+                        prepared_dataset,
+                        model_session.input_columns,
+                        model_session.output_columns,
+                    )
+
+                    x = split_dataset(x)
+                    y = split_dataset(y)
+
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"""Can not prepare Dataset {dataset.id}
+                        for Task {model_session.task_name}""",
+                    ) from e
+
+                try:
+                    run_model_class = component_registry[run.model_name]["class"]
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Unable to find Model with name {run.model_name} in registry.",
+                    ) from e
+                if getattr(run_model_class, "REQUIRES_DOWNLOAD", False) and not (
+                    run_model_class.is_downloaded()
+                ):
+                    raise JobError(
+                        f"Model {run.model_name} is not downloaded. "
+                        "Download it before training."
+                    )
+                nested_missing = missing_downloads(run.parameters, component_registry)
+                if nested_missing:
+                    names = ", ".join(m["name"] for m in nested_missing)
+                    raise JobError(
+                        "These components are not downloaded. "
+                        f"Download them before training: {names}."
+                    )
+                try:
+                    factory = ModelFactory(
+                        run_model_class,
+                        run.parameters,
+                        run_id,
+                        x,
+                        y,
+                        train_metrics,
+                        validation_metrics,
+                        test_metrics,
+                        n_labels=n_labels,
+                    )
+                    model: BaseModel = factory.model
+                    run_optimizable_parameters = factory.optimizable_parameters
+
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Unable to instantiate model using run {run_id}",
+                    ) from e
+                try:
+                    if run_optimizable_parameters:
+                        goal_metric = component_registry[run.goal_metric]
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Metric is not compatible with the Task. {e}",
+                    ) from e
+                try:
+                    # Optimizer configuration
+                    if run_optimizable_parameters:
+                        run_optimizer_class = component_registry[run.optimizer_name][
+                            "class"
+                        ]
+                        optimizer: BaseOptimizer = run_optimizer_class(
+                            **run.optimizer_parameters
+                        )
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Error instantiating optimizer {run.optimizer_name}, {e}",
+                    ) from e
                 try:
                     run.set_status_as_started()
                     db.commit()
@@ -154,16 +288,57 @@ class ModelJob(BaseJob):
                         "Connection with the database failed",
                     ) from e
                 self.report_progress(0.2, "Training")
+                try:
+                    # Hyperparameter Tunning
+                    plot_paths = []
+                    if not run_optimizable_parameters:
+                        model.train(
+                            x["train"], y["train"], x["validation"], y["validation"]
+                        )
+                    else:
+                        optimizer.optimize(
+                            model,
+                            x,
+                            y,
+                            run_optimizable_parameters,
+                            goal_metric,
+                            task,
+                        )
+                        model = optimizer.get_model()
+                        best_params = optimizer.get_best_params()
 
-                fit_model(ctx)
+                        old_parameters = run.parameters.copy()
+                        updated_parameters = factory.update_parameters(
+                            old_parameters, best_params
+                        )
 
-                plot_paths = ctx.require("plot_paths")
+                        run.parameters = updated_parameters
+                        flag_modified(run, "parameters")
+                        db.commit()
 
-                if ctx.has("best_parameters"):
-                    run.parameters = ctx.get("best_parameters")
-                    flag_modified(run, "parameters")
-                    db.commit()
+                        # Generate hyperparameter plot
+                        from DashAI.back.core.artifacts import normalize_artifacts
 
+                        trials = optimizer.get_trials_values()
+                        plot_filenames, plots = optimizer.create_plots(
+                            trials,
+                            run_id,
+                            n_params=len(run_optimizable_parameters),
+                            goal_metric=goal_metric,
+                        )
+                        normalized_plots = normalize_artifacts(plots)
+                        for filename, plot in zip(
+                            plot_filenames, normalized_plots, strict=False
+                        ):
+                            plot_path = os.path.join(config["RUNS_PATH"], filename)
+                            with open(plot_path, "wb") as file:
+                                pickle.dump(plot, file)
+                                plot_paths.append(plot_path)
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Model training failed {e}",
+                    ) from e
                 try:
                     paths = plot_paths + [None] * (4 - len(plot_paths))
                     (
@@ -180,16 +355,61 @@ class ModelJob(BaseJob):
                     ) from e
 
                 self.report_progress(0.85, "Computing metrics")
-                EvaluateModelUnit()(ctx)
+                # Calculate metrics at the end of training if not done already
+                try:
+                    last_train_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="TRAIN", level="LAST")
+                        .first()
+                    )
+                    if not last_train_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.TRAIN,
+                            level=LevelEnum.LAST,
+                        )
+                    last_val_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="VALIDATION", level="LAST")
+                        .first()
+                    )
+                    if not last_val_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.VALIDATION,
+                            level=LevelEnum.LAST,
+                        )
+                    last_test_metric = (
+                        db.query(Metric)
+                        .filter_by(run_id=run.id, split="TEST", level="LAST")
+                        .first()
+                    )
+                    if not last_test_metric:
+                        model.calculate_metrics(
+                            split=SplitEnum.TEST,
+                            level=LevelEnum.LAST,
+                        )
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Metric calculation failed {e}",
+                    ) from e
 
                 self.report_progress(0.95, "Saving model")
-                SaveModelUnit()(ctx)
+                try:
+                    run_path = os.path.join(config["RUNS_PATH"], str(run.id))
+                    model.save(run_path)
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        "Model saving failed",
+                    ) from e
 
                 try:
-                    run.run_path = ctx.require("model_path")
+                    run.run_path = run_path
                     db.commit()
                 except exc.SQLAlchemyError as e:
                     log.exception(e)
+                    run.set_status_as_error()
+                    db.commit()
                     raise JobError(
                         "Connection with the database failed",
                     ) from e
@@ -206,5 +426,4 @@ class ModelJob(BaseJob):
                 db.commit()
                 raise e
             finally:
-                ctx.clear_cache()
                 gc.collect()
