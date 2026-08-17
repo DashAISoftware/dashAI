@@ -843,3 +843,22 @@ class StatisticalTest(Base):
     posthoc: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
 
     created: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
+class Credential(Base):
+    __tablename__ = "credential"
+    """
+    Table to store encrypted credentials for external platforms.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    encrypted_key: Mapped[str] = mapped_column(Text, nullable=False)
+    verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )

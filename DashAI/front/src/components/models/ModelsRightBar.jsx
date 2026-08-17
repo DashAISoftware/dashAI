@@ -7,9 +7,14 @@ import {
   CircularProgress,
   Tabs,
   Tab,
+  Tooltip,
+  Stack,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { Search as SearchIcon } from "@mui/icons-material";
+import {
+  Search as SearchIcon,
+  VpnKeyOutlined as KeyIcon,
+} from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useParams } from "react-router-dom";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
@@ -21,6 +26,81 @@ import {
   useComponentDownloadState,
 } from "./model/ComponentDownloadControl";
 import ModelDownloadStatusIcon from "./model/ModelDownloadStatusIcon";
+import CredentialsDialog from "../credentials/CredentialsDialog";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
+
+/**
+ * A single model row whose disabled state and download icon both derive from
+ * the shared live download state, so they never disagree. While a download is
+ * in progress the row stays disabled even if the backend already reports the
+ * (partially written) files as present.
+ */
+function ModelRow({ model, onUse, onDownload, onNeedsCredentials, dataTour }) {
+  const { t } = useTranslation(["credentials"]);
+  const requiresDownload = Boolean(model.metadata?.requires_download);
+  const { downloaded, downloading } = useComponentDownloadState(model);
+  const { statuses, loaded } = useCredentialStatuses();
+  const { locked, requiredPlatforms } = getComponentCredentialState(
+    model,
+    statuses,
+    loaded,
+  );
+  // Usable only when credentials are satisfied AND (if needed) downloaded.
+  const ready = !locked && (!requiresDownload || (downloaded && !downloading));
+
+  const handleClick = () => {
+    if (downloading) return;
+    // Credentials gate first: block the download until they are authenticated.
+    if (locked) {
+      onNeedsCredentials(model);
+      return;
+    }
+    if (ready) onUse(model);
+    else onDownload(model);
+  };
+
+  // A locked row shows a key; when it also needs a download, the download
+  // icon sits beside the key so both requirements are visible at a glance.
+  const action =
+    locked || requiresDownload ? (
+      <Stack direction="row" spacing={0.5} alignItems="center">
+        {locked && (
+          <Tooltip
+            title={t("credentials:requiredTooltip", {
+              platform: requiredPlatforms,
+            })}
+          >
+            <KeyIcon fontSize="small" color="warning" />
+          </Tooltip>
+        )}
+        {requiresDownload && (
+          <ModelDownloadStatusIcon model={model} disabled={locked} />
+        )}
+      </Stack>
+    ) : null;
+
+  return (
+    <ModelListItem
+      model={model}
+      disabled={!ready}
+      onClick={handleClick}
+      onDisabledClick={handleClick}
+      data-tour={dataTour}
+      action={action}
+    />
+  );
+}
+
+ModelRow.propTypes = {
+  model: PropTypes.object.isRequired,
+  onUse: PropTypes.func.isRequired,
+  onDownload: PropTypes.func.isRequired,
+  onNeedsCredentials: PropTypes.func.isRequired,
+  dataTour: PropTypes.string,
+};
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { useModels } from "./ModelsContext";
@@ -33,44 +113,6 @@ import StatisticalTestsModal from "./StatisticalTestsModal";
 
 const EXPLAINERS_TAB = 1;
 
-/**
- * A single model row whose disabled state and download icon both derive from
- * the shared live download state, so they never disagree. While a download is
- * in progress the row stays disabled even if the backend already reports the
- * (partially written) files as present.
- */
-function ModelRow({ model, onUse, onDownload, dataTour }) {
-  const requiresDownload = Boolean(model.metadata?.requires_download);
-  const { downloaded, downloading } = useComponentDownloadState(model);
-  const ready = !requiresDownload || (downloaded && !downloading);
-
-  const handleClick = () => {
-    if (downloading) return;
-    if (ready) onUse(model);
-    else onDownload(model);
-  };
-
-  return (
-    <ModelListItem
-      model={model}
-      disabled={!ready}
-      onClick={handleClick}
-      onDisabledClick={handleClick}
-      data-tour={dataTour}
-      action={
-        requiresDownload ? <ModelDownloadStatusIcon model={model} /> : null
-      }
-    />
-  );
-}
-
-ModelRow.propTypes = {
-  model: PropTypes.object.isRequired,
-  onUse: PropTypes.func.isRequired,
-  onDownload: PropTypes.func.isRequired,
-  dataTour: PropTypes.string,
-};
-
 export default function ModelsRightBar({ onToggle }) {
   const theme = useTheme();
   const params = useParams();
@@ -79,6 +121,7 @@ export default function ModelsRightBar({ onToggle }) {
   const [filteredModels, setFilteredModels] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models", "common"]);
   const [activeTab, setActiveTab] = useState("models");
@@ -431,6 +474,7 @@ export default function ModelsRightBar({ onToggle }) {
                       model={model}
                       onUse={handleUseModel}
                       onDownload={handleDownloadModel}
+                      onNeedsCredentials={() => setCredentialsDialogOpen(true)}
                       dataTour={index === 0 ? "first-model" : undefined}
                     />
                   ))}
@@ -454,13 +498,16 @@ export default function ModelsRightBar({ onToggle }) {
         existingRuns={existingRuns}
         onRunCreated={onRunCreated}
       />
-
       <StatisticalTestsModal
         test={selectedStatisticalTest}
         runs={existingRuns}
         session={session}
         open={statisticalTestsModalOpen && isCv}
         onClose={closeStatisticalTest}
+      />
+      <CredentialsDialog
+        open={credentialsDialogOpen}
+        onClose={() => setCredentialsDialogOpen(false)}
       />
     </SideBar>
   );

@@ -282,6 +282,7 @@
   },
   "message": {
     "skippedUndownloadedRuns": "Execuções cujo modelo não está baixado foram ignoradas. Baixe o modelo primeiro.",
+    "skippedUnavailableRuns": "Execuções cujo modelo ainda precisa de download ou credenciais foram ignoradas. Resolva isso primeiro.",
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",
     "tabAvailableAfterFinish": "Estará disponível quando a execução terminar o treinamento.",
     "noOptimizableParamsForHpo": "Nenhum parâmetro está marcado para otimização — edite a configuração da execução para habilitar isso.",

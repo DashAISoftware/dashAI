@@ -275,6 +275,7 @@
   },
   "message": {
     "skippedUndownloadedRuns": "Skipped runs whose model is not downloaded. Download the model first.",
+    "skippedUnavailableRuns": "Skipped runs whose model still needs a download or credentials. Resolve those first.",
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
     "tabAvailableAfterFinish": "Available once the run finishes training.",
     "noOptimizableParamsForHpo": "No parameters are marked for optimization — edit the run's configuration to enable this.",

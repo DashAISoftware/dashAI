@@ -243,6 +243,7 @@ async def update_plugin(
     Plugin
         The updated plugin.
     """
+    from DashAI.back.credentials.sync import sync_credentials_status
     from DashAI.back.plugins.utils import (
         install_plugin,
         register_plugin_components,
@@ -278,6 +279,7 @@ async def update_plugin(
                 # else the new components should be registered
                 else:
                     register_plugin_components(installed_components, component_registry)
+                    sync_credentials_status()
                     job_queue.put(SyncComponentsJob())
             elif (
                 plugin.status == PluginStatus.INSTALLED

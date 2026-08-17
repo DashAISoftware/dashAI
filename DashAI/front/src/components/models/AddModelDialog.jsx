@@ -27,6 +27,10 @@ import { generateSequentialName } from "../../utils/nameGenerator";
 import { createRun } from "../../api/run";
 import { getRequiredDownloads } from "../../api/component";
 import { subscribeAnyDownloadState } from "./model/ComponentDownloadControl";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
 import { useTranslation } from "react-i18next";
 import { useTourContext } from "../tour/TourProvider";
 import { checkIfHaveOptimazers } from "../../utils/schema";
@@ -69,7 +73,14 @@ function AddModelDialog({
   const [modelDownloaded, setModelDownloaded] = useState(true);
   const [missingNested, setMissingNested] = useState([]);
   const { datasetRowCount } = useModels();
-  const { t } = useTranslation(["models", "common"]);
+  const { t } = useTranslation(["models", "common", "credentials"]);
+
+  // The model can only be trained once its required credentials are
+  // authenticated. Derived from the live credential store so it reacts the
+  // moment a credential is verified in the dialog.
+  const { statuses, loaded } = useCredentialStatuses();
+  const { locked: credentialsLocked, requiredPlatforms } =
+    getComponentCredentialState(preselectedModelObject || {}, statuses, loaded);
 
   const { defaultValues: defaultModelParams } = useSchema({
     modelName: open ? selectedModel : null,
@@ -483,17 +494,21 @@ function AddModelDialog({
         )}
         <Tooltip
           title={
-            activeStep === 0 &&
-            preselectedModelObject?.metadata?.requires_download &&
-            !modelDownloaded
-              ? t("common:componentDownload.mustDownload")
-              : activeStep === 0 && missingNested.length > 0
-                ? t("common:componentDownload.mustDownloadNested", {
-                    names: missingNested
-                      .map((m) => m.display_name || m.name)
-                      .join(", "),
-                  })
-                : ""
+            activeStep === 0 && credentialsLocked
+              ? t("credentials:requiredTooltip", {
+                  platform: requiredPlatforms,
+                })
+              : activeStep === 0 &&
+                  preselectedModelObject?.metadata?.requires_download &&
+                  !modelDownloaded
+                ? t("common:componentDownload.mustDownload")
+                : activeStep === 0 && missingNested.length > 0
+                  ? t("common:componentDownload.mustDownloadNested", {
+                      names: missingNested
+                        .map((m) => m.display_name || m.name)
+                        .join(", "),
+                    })
+                  : ""
           }
         >
           <span>
@@ -505,6 +520,7 @@ function AddModelDialog({
                 loading ||
                 (activeStep === 0 && !isStep1Valid) ||
                 (activeStep === 1 && !isStep2Valid) ||
+                (activeStep === 0 && credentialsLocked) ||
                 (activeStep === 0 &&
                   Boolean(
                     preselectedModelObject?.metadata?.requires_download,
