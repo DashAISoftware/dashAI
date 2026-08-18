@@ -77,7 +77,8 @@
     "rowModePercentage": "Prozent-Schieberegler",
     "rowModeManual": "Manuelle Auswahl",
     "shuffleRows": "Ausgewählte Zeilen mischen (Zufallsstichprobe)",
-    "rowsSelectedManually": "Manuell ausgewählte Zeilen: {{selected}} / {{total}}"
+    "rowsSelectedManually": "Manuell ausgewählte Zeilen: {{selected}} / {{total}}",
+    "storyTitle": "Zusammenfassung als Text"
   },
   "message": {
     "explainerJobCompleted": "Erklärungsmodell {{name}} erfolgreich abgeschlossen",
