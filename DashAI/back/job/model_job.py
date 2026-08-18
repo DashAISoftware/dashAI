@@ -5,6 +5,7 @@ from kink import inject
 from sqlalchemy import exc
 from sqlalchemy.orm.attributes import flag_modified
 
+from DashAI.back.api.utils import remove_path
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Dataset, Metric, ModelSession, Run
 from DashAI.back.dependencies.downloads.nested import missing_downloads
@@ -396,6 +397,8 @@ class ModelJob(BaseJob):
                 self.report_progress(0.95, "Saving model")
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))
+                    if os.path.exists(run_path):
+                        remove_path(run_path)
                     model.save(run_path)
                 except Exception as e:
                     log.exception(e)

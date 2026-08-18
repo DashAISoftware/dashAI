@@ -7,6 +7,7 @@ from kink import di, inject
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
+from DashAI.back.api.utils import remove_path
 from DashAI.back.core.enums.metrics import LevelEnum
 from DashAI.back.dependencies.database.models import (
     GlobalExplainer,
@@ -371,8 +372,12 @@ async def delete_run(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
             db.delete(run)
-            if run.status == RunStatus.FINISHED:
-                os.remove(run.run_path)
+            if (
+                run.status == RunStatus.FINISHED
+                and run.run_path
+                and os.path.exists(run.run_path)
+            ):
+                remove_path(run.run_path)
             db.commit()
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
@@ -381,7 +386,7 @@ async def delete_run(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
-        except OSError as e:
+        except (OSError, ValueError) as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -718,27 +723,3 @@ def reset_run(run):
     if run.plot_importance_path and os.path.exists(run.plot_importance_path):
         remove_path(run.plot_importance_path)
         setattr(run, "plot_importance_path", None)
-
-
-def remove_path(path):
-    """Removes a file or directory
-
-    Parameters
-    ----------
-    path : str
-        The path to the file or directory to remove.
-
-    Raises
-    ------
-    ValueError
-        Raised if the path is not a file, directory, or symbolic link.
-    """
-    import os
-    import shutil
-
-    if os.path.isfile(path) or os.path.islink(path):
-        os.remove(path)
-    elif os.path.isdir(path):
-        shutil.rmtree(path)
-    else:
-        raise ValueError("file {} is not a file or dir.".format(path))

@@ -3,7 +3,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from DashAI.back.dependencies.database.models import Dataset
+from DashAI.back.dependencies.database.models import Dataset, Run, RunStatus
 
 
 @pytest.fixture(scope="module", name="dataset_id")
@@ -194,6 +194,39 @@ def test_modify_run_model(client: TestClient):
         json={},
     )
     assert response.status_code == 304
+
+
+def test_delete_run_with_directory_run_path(
+    client: TestClient, model_session_id: int, tmp_path
+):
+    """A FINISHED run whose run_path is a directory (Hugging Face-style
+    models) must be deletable, not raise IsADirectoryError/PermissionError."""
+    run_dir = tmp_path / "hf_style_run_dir"
+    run_dir.mkdir()
+    (run_dir / "config.json").write_text("{}")
+
+    container = client.app.container
+    session_factory = container["session_factory"]
+    with session_factory() as db:
+        run = Run(
+            model_session_id=model_session_id,
+            model_name="SomeHFModel",
+            parameters={},
+            optimizer_name="",
+            optimizer_parameters={},
+            goal_metric="",
+            name="DirRun",
+            status=RunStatus.FINISHED,
+            run_path=str(run_dir),
+        )
+        db.add(run)
+        db.commit()
+        db.refresh(run)
+        run_id = run.id
+
+    response = client.delete(f"/api/v1/run/{run_id}")
+    assert response.status_code == 204, response.text
+    assert not run_dir.exists()
 
 
 @pytest.mark.order(-1)
