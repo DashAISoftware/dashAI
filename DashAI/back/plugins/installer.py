@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 LEDGER_FILENAME = ".dashai-plugins.json"
 LEDGER_VERSION = 1
 _PIP_TIMEOUT_SECONDS = 60 * 60
+_PIP_ERROR_CONTEXT_LINES = 40
 
 
 class PluginInstallError(RuntimeError):
@@ -125,8 +126,8 @@ def _pip_environment(directory: pathlib.Path) -> Dict[str, str]:
     return environment
 
 
-def _format_pip_error(result: subprocess.CompletedProcess) -> str:
-    """Extract a readable error message from a failed pip run.
+def _pip_output(result: subprocess.CompletedProcess) -> str:
+    """Join everything a pip run wrote.
 
     Parameters
     ----------
@@ -136,15 +137,39 @@ def _format_pip_error(result: subprocess.CompletedProcess) -> str:
     Returns
     -------
     str
-        The ``ERROR`` lines pip printed, or the tail of its output when pip
-        failed without printing any.
+        The captured stdout and stderr.
     """
-    output = f"{result.stdout or ''}\n{result.stderr or ''}"
-    errors = [line for line in output.splitlines() if "ERROR" in line]
-    if errors:
-        return "\n".join(errors)
-    tail = "\n".join(output.splitlines()[-10:]).strip()
-    return tail or f"pip exited with code {result.returncode}"
+    return "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
+
+
+def _format_pip_error(result: subprocess.CompletedProcess) -> str:
+    """Extract a readable error message from a failed pip run.
+
+    pip reports an unhandled crash as an ``ERROR: Exception:`` line followed by
+    the traceback that explains it, so everything from the first error line
+    onwards is kept. Keeping only the lines that contain ``ERROR`` would throw
+    away the one part worth reading.
+
+    Parameters
+    ----------
+    result : subprocess.CompletedProcess
+        The finished pip process.
+
+    Returns
+    -------
+    str
+        pip's output from its first error line onwards, or the tail of the
+        output when pip failed without reporting an error at all.
+    """
+    output = _pip_output(result)
+    if not output:
+        return f"pip exited with code {result.returncode}"
+
+    lines = output.splitlines()
+    start = next((index for index, line in enumerate(lines) if "ERROR" in line), None)
+    if start is None:
+        start = max(0, len(lines) - _PIP_ERROR_CONTEXT_LINES)
+    return "\n".join(lines[start : start + _PIP_ERROR_CONTEXT_LINES]).strip()
 
 
 def _run_pip(
@@ -181,6 +206,11 @@ def _run_pip(
         check=False,
     )
     if result.returncode != 0:
+        logger.error(
+            "pip failed with exit code %s. Full output:\n%s",
+            result.returncode,
+            _pip_output(result),
+        )
         raise PluginInstallError(_format_pip_error(result))
     return result
 

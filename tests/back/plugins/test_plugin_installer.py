@@ -134,6 +134,55 @@ def test_run_pip_raises_with_the_error_lines(plugins_dir):
             installer._run_pip(["install", "nope"], plugins_dir)
 
 
+PIP_CRASH_STDERR = "\n".join(
+    [
+        "ERROR: Exception:",
+        "Traceback (most recent call last):",
+        '  File "pip/_vendor/distlib/resources.py", line 346, in finder',
+        "    raise DistlibException(...)",
+        "DistlibException: Unable to locate finder for 'pip._vendor.distlib'",
+    ]
+)
+
+
+def test_run_pip_keeps_the_traceback_after_an_error_line(plugins_dir):
+    """pip reports a crash as an ERROR line plus the traceback explaining it."""
+    failure = _completed(
+        returncode=2,
+        stdout="Collecting dashai-plugin",
+        stderr=PIP_CRASH_STDERR,
+    )
+
+    with patch("subprocess.run", return_value=failure):  # noqa: SIM117
+        with pytest.raises(PluginInstallError) as error_info:
+            installer._run_pip(["install", "dashai-plugin"], plugins_dir)
+
+    message = str(error_info.value)
+    assert message.startswith("ERROR: Exception:")
+    assert "Unable to locate finder" in message
+    assert "Traceback (most recent call last):" in message
+
+
+def test_run_pip_caps_the_reported_output(plugins_dir):
+    noise = "\n".join(f"line {index}" for index in range(200))
+    failure = _completed(returncode=2, stderr=f"ERROR: boom\n{noise}")
+
+    with patch("subprocess.run", return_value=failure):  # noqa: SIM117
+        with pytest.raises(PluginInstallError) as error_info:
+            installer._run_pip(["install", "dashai-plugin"], plugins_dir)
+
+    reported = str(error_info.value).splitlines()
+    assert len(reported) == installer._PIP_ERROR_CONTEXT_LINES
+
+
+def test_run_pip_reports_a_silent_failure(plugins_dir):
+    with (
+        patch("subprocess.run", return_value=_completed(returncode=9)),
+        pytest.raises(PluginInstallError, match="pip exited with code 9"),
+    ):
+        installer._run_pip(["install", "dashai-plugin"], plugins_dir)
+
+
 def test_run_pip_falls_back_to_the_output_tail(plugins_dir):
     failure = _completed(returncode=2, stderr="something went wrong")
 
