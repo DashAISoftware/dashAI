@@ -1,7 +1,8 @@
+import json
 import logging
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Literal, Union
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
@@ -29,7 +30,7 @@ log = logging.getLogger(__name__)
 router = APIRouter()
 
 
-def get_metrics_for_run(db, run_id: int):
+def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
     """Retrieve metrics associated with a specific run.
 
     Parameters
@@ -46,7 +47,7 @@ def get_metrics_for_run(db, run_id: int):
     """
     metrics = (
         db.query(Metric)
-        .filter(Metric.run_id == run_id, Metric.level == LevelEnum.LAST)
+        .filter(Metric.run_id == run_id, Metric.level == level_enum)
         .all()
     )
 
@@ -55,6 +56,8 @@ def get_metrics_for_run(db, run_id: int):
         "train_metrics": None,
         "validation_metrics": None,
         "test_metrics": None,
+        "train_metrics_std": None,
+        "test_metrics_std": None,
     }
 
     # Group metrics by split
@@ -68,6 +71,13 @@ def get_metrics_for_run(db, run_id: int):
         # In the new schema, we store 'value'.
         # For 'LAST' level, we just want the latest name: value pair.
         response[split_key][metric.name] = metric.value
+
+        # Add std metrics calculating the std of fold metrics if they exist
+        if metric.std_value is not None:
+            std_key = f"{metric.split.name.lower()}_metrics_std"
+            if response[std_key] is None:
+                response[std_key] = {}
+            response[std_key][metric.name] = metric.std_value
 
     return response
 
@@ -122,6 +132,8 @@ async def get_runs(
                 run.train_metrics = metrics["train_metrics"]
                 run.validation_metrics = metrics["validation_metrics"]
                 run.test_metrics = metrics["test_metrics"]
+                run.train_metrics_std = metrics["train_metrics_std"]
+                run.test_metrics_std = metrics["test_metrics_std"]
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -171,6 +183,8 @@ async def get_run_by_id(
             run.train_metrics = metrics["train_metrics"]
             run.validation_metrics = metrics["validation_metrics"]
             run.test_metrics = metrics["test_metrics"]
+            run.train_metrics_std = metrics["train_metrics_std"]
+            run.test_metrics_std = metrics["test_metrics_std"]
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -316,6 +330,7 @@ async def upload_run(
                 goal_metric=params.goal_metric,
                 name=params.name,
                 description=params.description,
+                nested=params.nested,
             )
             db.add(run)
             db.commit()
@@ -409,6 +424,8 @@ async def update_run(
         The new optimizer parameters of the run, by default None.
     goal_metric: Union[str, None], optional
         The new goal metric of the run, by default None.
+    nested: Union[dict, None], optional
+        The new nested cross-validation configuration of the run, by default None.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -447,6 +464,8 @@ async def update_run(
                 reset_run(run)
             if params.goal_metric is not None:
                 run.goal_metric = params.goal_metric
+            if params.nested is not None:
+                run.nested = params.nested
 
             if any(
                 [
@@ -456,6 +475,7 @@ async def update_run(
                     params.optimizer,
                     params.optimizer_parameters,
                     params.goal_metric,
+                    params.nested,
                 ]
             ):
                 db.commit()
@@ -737,3 +757,161 @@ def remove_path(path):
         shutil.rmtree(path)
     else:
         raise ValueError("file {} is not a file or dir.".format(path))
+
+
+# ─── Fold metrics ─────────────────────────────────────────────
+
+
+def _group_fold_metrics(db, run_id: int, level, split_enum):
+    """Fetch fold-level metrics for a run and group them for charting.
+
+    Returns either {metric_name: [values...]} for single-repetition runs, or
+    {rep_N: {metric_name: [values...]}} when the run used repeated CV.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist or has no metrics at the given level/split.
+    """
+    run = db.get(Run, run_id)
+    if not run:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Run not found",
+        )
+
+    fold_metrics = (
+        db.query(Metric)
+        .filter(
+            Metric.run_id == run_id,
+            Metric.level == level,
+            Metric.split == split_enum,
+        )
+        .order_by(Metric.name, Metric.fold_index)
+        .all()
+    )
+    if not fold_metrics:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No fold metrics found for this run",
+        )
+
+    splits_data = json.loads(run.model_session.splits)
+    repetitions = splits_data.get("n_repeats", 1)
+
+    if repetitions > 1:
+        folds = splits_data.get("n_splits", None)
+        metrics_by_name = {}
+        for metric in fold_metrics:
+            repetition = metric.fold_index // folds if folds else 0
+            rep_str = f"rep_{repetition}"
+            metrics_by_name.setdefault(rep_str, {}).setdefault(metric.name, []).append(
+                metric.value
+            )
+        return metrics_by_name
+
+    metrics_by_name = {}
+    for metric in fold_metrics:
+        metrics_by_name.setdefault(metric.name, []).append(metric.value)
+    return metrics_by_name
+
+
+@router.get("/{run_id}/fold-metrics")
+@inject
+async def get_fold_metrics(
+    run_id: int,
+    metric_split: Literal["train", "test"] = Query("test"),
+    scope: Literal["default", "outer"] = Query("default"),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Retrieve fold-level metrics for cross-validation visualization.
+
+    Parameters
+    ----------
+    run_id : int
+        ID of the run to retrieve fold metrics for.
+    metric_split : str, optional
+        Which metrics to use: "train", "validation", or "test", by default "test".
+    scope : Literal["default", "outer"], optional
+        "default" returns the standard per-fold metrics (LevelEnum.FOLD).
+        "outer" returns the outer-loop metrics of a nested CV run
+        (LevelEnum.OUTER_FOLD); only available for runs that used nested CV.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+
+    Returns
+    -------
+    dict
+        {metric_name: [fold_value, ...]} for single-repetition runs, or
+        {rep_N: {metric_name: [fold_value, ...]}} when the run used repeated CV.
+
+    Raises
+    ------
+    HTTPException
+        If the run is not found or has no fold metrics for the given scope.
+    """
+    from DashAI.back.core.enums.metrics import SplitEnum
+
+    split_map = {
+        "train": SplitEnum.TRAIN,
+        "test": SplitEnum.TEST,
+    }
+    level_map = {
+        "default": LevelEnum.FOLD,
+        "outer": LevelEnum.OUTER_FOLD,
+    }
+
+    split_enum = split_map.get(metric_split, SplitEnum.TEST)
+    level_enum = level_map.get(scope, LevelEnum.FOLD)
+
+    with session_factory() as db:
+        try:
+            return _group_fold_metrics(db, run_id, level_enum, split_enum)
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.get("/{run_id}/outer-averaged-metrics")
+@inject
+async def get_outer_averaged_metrics(
+    run_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Retrieve averaged metrics across outer folds for a nested CV run."""
+
+    with session_factory() as db:
+        try:
+            run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Run not found",
+                )
+
+            if not run.nested:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Run is not nested CV",
+                )
+
+            outer_averaged_metrics = get_metrics_for_run(
+                db, run_id, level_enum=LevelEnum.LAST_OUTER
+            )
+
+            return {
+                "train_metrics": outer_averaged_metrics["train_metrics"],
+                "test_metrics": outer_averaged_metrics["test_metrics"],
+                "train_metrics_std": outer_averaged_metrics["train_metrics_std"],
+                "test_metrics_std": outer_averaged_metrics["test_metrics_std"],
+            }
+
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e

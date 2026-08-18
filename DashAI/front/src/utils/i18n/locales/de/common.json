@@ -1,6 +1,6 @@
 {
-  "hub": "Hub",
   "actions": "Aktionen",
+  "hub": "Hub",
   "add": "Hinzufügen",
   "addModel": "Modell hinzufügen",
   "addRow": "Zeile hinzufügen",
@@ -24,6 +24,7 @@
   "count": "Anzahl",
   "created": "Erstellt",
   "createdAt": "Erstellt am",
+  "date": "Datum",
   "dashboard": "Dashboard",
   "dataset": "Datensatz",
   "datasetNotFound": "Datensatz nicht gefunden",
@@ -64,6 +65,7 @@
   "itemsToBeDeleted": "Die folgenden Elemente werden gelöscht:",
   "json": "JSON",
   "lastModified": "Zuletzt geändert",
+  "learnMore": "Mehr erfahren",
   "list": "Liste",
   "loading": "Wird geladen...",
   "loadingColumns": "Spalten werden geladen...",
@@ -96,6 +98,7 @@
   "plugins": "Plugins",
   "processing": "Wird verarbeitet...",
   "remove": "Entfernen",
+  "refresh": "Aktualisieren",
   "required": "Erforderlich",
   "results": "Ergebnisse",
   "rows": "Zeilen",
@@ -131,6 +134,7 @@
   "table": "Tabelle",
   "task": "Aufgabe",
   "test": "Test",
+  "tests": "Tests",
   "timeTaken": "Zeit",
   "to": "Bis",
   "todo": "TODO...",
@@ -257,5 +261,9 @@
   "viewMore": "Mehr anzeigen",
   "viewLess": "Weniger anzeigen",
   "switchToDarkMode": "Zum Dunkelmodus wechseln",
-  "switchToLightMode": "Zum Hellmodus wechseln"
+  "switchToLightMode": "Zum Hellmodus wechseln",
+  "metric": "Metrik",
+  "split": "Aufteilung",
+  "execute": "Ausführen",
+  "executing": "Wird ausgeführt..."
 }

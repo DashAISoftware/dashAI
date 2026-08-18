@@ -5,6 +5,8 @@ import {
   Typography,
   TextField,
   CircularProgress,
+  Tabs,
+  Tab,
   Tooltip,
   Stack,
 } from "@mui/material";
@@ -105,6 +107,8 @@ import AddModelDialog from "./AddModelDialog";
 import ColumnInsights from "../notebooks/dataset/ColumnInsights";
 import RunInfoSidebar from "./RunInfoSidebar";
 import ExplainersSidebar from "../explainers/ExplainersSidebar";
+import StatisticalTestsList from "./StatisticalTestsList";
+import StatisticalTestsModal from "./StatisticalTestsModal";
 
 const EXPLAINERS_TAB = 1;
 
@@ -119,6 +123,7 @@ export default function ModelsRightBar({ onToggle }) {
   const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["models", "common"]);
+  const [activeTab, setActiveTab] = useState("models");
 
   const {
     selectedSession: session,
@@ -135,6 +140,10 @@ export default function ModelsRightBar({ onToggle }) {
     triggerExplainerRefresh,
     datasets,
     tasks,
+    openStatisticalTest,
+    closeStatisticalTest,
+    selectedStatisticalTest,
+    statisticalTestsModalOpen,
     getModelsForTask,
   } = useModels();
 
@@ -200,6 +209,17 @@ export default function ModelsRightBar({ onToggle }) {
 
   const tourContext = useTourContext();
 
+  // Determine if statistical tests should be shown (only for nested CV sessions)
+  const isCv =
+    session?.evaluation_strategy === "CrossValidationEvaluationStrategy";
+
+  useEffect(() => {
+    if (!isCv) {
+      setActiveTab("models");
+      closeStatisticalTest();
+    }
+  }, [isCv, closeStatisticalTest]);
+
   const handleUseModel = (model) => {
     if (!session) {
       enqueueSnackbar(t("models:error.selectSessionFirst"), {
@@ -219,6 +239,19 @@ export default function ModelsRightBar({ onToggle }) {
       };
       setTimeout(waitForElement, 300);
     }
+  };
+
+  const handleDownloadModel = (model) => {
+    if (!session) {
+      enqueueSnackbar(t("models:error.selectSessionFirst"), {
+        variant: "warning",
+      });
+      return;
+    }
+    // Completion is reflected by the shared download-state subscription above,
+    // which updates the model's flag in place without a scroll-resetting
+    // refetch.
+    startComponentDownload({ component: model, enqueueSnackbar, t });
   };
 
   const activeRun = isInModelDetail
@@ -252,19 +285,6 @@ export default function ModelsRightBar({ onToggle }) {
       />
     );
   }
-
-  const handleDownloadModel = (model) => {
-    if (!session) {
-      enqueueSnackbar(t("models:error.selectSessionFirst"), {
-        variant: "warning",
-      });
-      return;
-    }
-    // Completion is reflected by the shared download-state subscription above,
-    // which updates the model's flag in place without a scroll-resetting
-    // refetch.
-    startComponentDownload({ component: model, enqueueSnackbar, t });
-  };
 
   if (sessionRightContent) {
     return (
@@ -301,21 +321,50 @@ export default function ModelsRightBar({ onToggle }) {
           width: "100%",
         }}
       >
-        {/* Header */}
+        {/* Header with tabs */}
         <Box
           sx={{
-            p: 2,
             borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
-            height: 64,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-start",
           }}
         >
-          <Typography variant="h6" color="text.primary">
-            {t("models:label.availableModels")}
-          </Typography>
+          <Box
+            sx={{
+              p: 2,
+              height: 64,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-start",
+            }}
+          >
+            <Typography variant="h6" color="text.primary">
+              {activeTab === "models"
+                ? t("models:label.availableModels")
+                : t("models:label.statisticalTests")}
+            </Typography>
+          </Box>
+          {isCv && (
+            <Tabs
+              value={activeTab}
+              onChange={(e, newValue) => setActiveTab(newValue)}
+              sx={{
+                px: 2,
+                borderTop: `1px solid ${theme.palette.ui.border}`,
+              }}
+              variant="fullWidth"
+            >
+              <Tab
+                label={t("models:label.availableModels")}
+                value="models"
+                sx={{ textTransform: "none", fontSize: "0.9rem" }}
+              />
+              <Tab
+                label={t("models:label.statisticalTests")}
+                value="tests"
+                sx={{ textTransform: "none", fontSize: "0.9rem" }}
+              />
+            </Tabs>
+          )}
         </Box>
 
         {/* Content */}
@@ -363,7 +412,7 @@ export default function ModelsRightBar({ onToggle }) {
               {t("models:label.exitModelDetailToAddModels")}
             </Typography>
           </Box>
-        ) : (
+        ) : activeTab === "models" ? (
           <>
             {/* Search Box */}
             <Box sx={{ p: 4, flexShrink: 0 }}>
@@ -430,9 +479,13 @@ export default function ModelsRightBar({ onToggle }) {
               )}
             </Box>
           </>
+        ) : (
+          /* Statistical Tests Tab */
+          <StatisticalTestsList onTestSelect={openStatisticalTest} />
         )}
       </Box>
-      {/* Modal de modelo */}
+
+      {/* Modals */}
       <AddModelDialog
         open={configOpen}
         onClose={closeConfig}
@@ -441,6 +494,13 @@ export default function ModelsRightBar({ onToggle }) {
         session={session}
         existingRuns={existingRuns}
         onRunCreated={onRunCreated}
+      />
+      <StatisticalTestsModal
+        test={selectedStatisticalTest}
+        runs={existingRuns}
+        session={session}
+        open={statisticalTestsModalOpen && isCv}
+        onClose={closeStatisticalTest}
       />
       <CredentialsDialog
         open={credentialsDialogOpen}

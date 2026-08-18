@@ -24,6 +24,7 @@
   "count": "Conteo",
   "created": "Creado",
   "createdAt": "Creado El",
+  "date": "Fecha",
   "dashboard": "Panel de Control",
   "dataset": "Dataset",
   "datasetNotFound": "Dataset no encontrado",
@@ -64,6 +65,7 @@
   "itemsToBeDeleted": "Los siguientes elementos serán eliminados:",
   "json": "JSON",
   "lastModified": "Última Modificación",
+  "learnMore": "Aprender más",
   "list": "Lista",
   "loading": "Cargando...",
   "loadingColumns": "Cargando columnas...",
@@ -96,6 +98,7 @@
   "plugins": "Plugins",
   "processing": "Procesando...",
   "remove": "Eliminar",
+  "refresh": "Actualizar",
   "required": "Requerido",
   "results": "Resultados",
   "rows": "Filas",
@@ -131,6 +134,7 @@
   "table": "Tabla",
   "task": "Tarea",
   "test": "Prueba",
+  "tests": "Pruebas",
   "timeTaken": "Tiempo",
   "to": "Hasta",
   "todo": "TODO...",
@@ -267,5 +271,9 @@
   "viewMore": "Ver más",
   "viewLess": "Ver menos",
   "switchToDarkMode": "Cambiar a modo oscuro",
-  "switchToLightMode": "Cambiar a modo claro"
+  "switchToLightMode": "Cambiar a modo claro",
+  "metric": "Métrica",
+  "split": "Partición",
+  "execute": "Ejecutar",
+  "executing": "Ejecutando..."
 }

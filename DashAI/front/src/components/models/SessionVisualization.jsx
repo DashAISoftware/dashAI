@@ -4,6 +4,7 @@ import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
 import { PlayArrow } from "@mui/icons-material";
 import ModelComparisonTable from "./ModelComparisonTable";
+import StatisticalTestTable from "./StatisticalTestTable";
 import ModelDetailView from "./ModelDetailView";
 import ModelCardCompact from "./ModelCardCompact";
 import { getComponentDownloadState } from "./model/ComponentDownloadControl";
@@ -25,6 +26,7 @@ export default function SessionVisualization() {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [highlightedRunId, setHighlightedRunId] = useState(null);
   const [metricSplit, setMetricSplit] = useState("train");
+  const [view, setView] = useState("graphs");
   const { t } = useTranslation(["models", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const sessionTourContext = useTourContext();
@@ -51,11 +53,14 @@ export default function SessionVisualization() {
     openExplainerCreator,
     explainerRefreshTrigger,
     triggerExplainerRefresh,
+    openStatisticalTest,
   } = useModels();
 
   const theme = useTheme();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const isCrossValidation =
+    session?.evaluation_strategy === "CrossValidationEvaluationStrategy";
 
   // This component stays mounted across session navigations (same route,
   // different :sessionId), so metricSplit would otherwise carry over from
@@ -97,6 +102,12 @@ export default function SessionVisualization() {
       }, 1000);
     }
   }, [sessionTourContext]);
+
+  useEffect(() => {
+    if (!isCrossValidation) {
+      setView("graphs");
+    }
+  }, [isCrossValidation, session?.id]);
 
   // Scroll to a newly added run card and mark it to be highlighted
   useEffect(() => {
@@ -273,7 +284,10 @@ export default function SessionVisualization() {
           if (e.dataTransfer.types.includes("Files")) e.preventDefault();
           if (
             !e.dataTransfer.types.includes("application/x-dashai-model") &&
-            !e.dataTransfer.types.includes("application/x-dashai-explainer")
+            !e.dataTransfer.types.includes("application/x-dashai-explainer") &&
+            !e.dataTransfer.types.includes(
+              "application/x-dashai-statistical-test",
+            )
           )
             return;
           e.preventDefault();
@@ -283,7 +297,10 @@ export default function SessionVisualization() {
           if (e.dataTransfer.types.includes("Files")) e.preventDefault();
           if (
             !e.dataTransfer.types.includes("application/x-dashai-model") &&
-            !e.dataTransfer.types.includes("application/x-dashai-explainer")
+            !e.dataTransfer.types.includes("application/x-dashai-explainer") &&
+            !e.dataTransfer.types.includes(
+              "application/x-dashai-statistical-test",
+            )
           )
             return;
           e.preventDefault();
@@ -299,7 +316,10 @@ export default function SessionVisualization() {
           const types = e.dataTransfer.types;
           const isModel = types.includes("application/x-dashai-model");
           const isExplainer = types.includes("application/x-dashai-explainer");
-          if (!isModel && !isExplainer) return;
+          const isStatisticalTest = types.includes(
+            "application/x-dashai-statistical-test",
+          );
+          if (!isModel && !isExplainer && !isStatisticalTest) return;
           e.preventDefault();
           setIsDragOver(false);
           try {
@@ -308,6 +328,13 @@ export default function SessionVisualization() {
                 e.dataTransfer.getData("application/x-dashai-explainer"),
               );
               if (explainer?.name) openExplainerCreator(explainer);
+            } else if (isStatisticalTest) {
+              const test = JSON.parse(
+                e.dataTransfer.getData("application/x-dashai-statistical-test"),
+              );
+              if (test?.name) {
+                openStatisticalTest(test);
+              }
             } else {
               const model = JSON.parse(
                 e.dataTransfer.getData("application/x-dashai-model"),
@@ -589,19 +616,58 @@ export default function SessionVisualization() {
                     metricSplit={metricSplit}
                   />
 
-                  <Typography
-                    variant="h6"
-                    color="text.primary"
-                    sx={{ mt: 6, mb: 2 }}
-                  >
-                    {t("common:graphs")}
-                  </Typography>
-                  <ResultsGraphs
-                    runs={runs}
-                    selectedSplit={metricSplit}
-                    onSplitChange={setMetricSplit}
-                    metrics={allMetrics}
-                  />
+                  {/* Graphs and statistical tests button toggle just when cross validation is being used */}
+                  {isCrossValidation ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-start",
+                        alignItems: "center",
+                        gap: 2,
+                        mt: 6,
+                        mb: 2,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <PillToggleButtonGroup
+                        value={view}
+                        onChange={(e, newValue) => {
+                          if (newValue !== null) setView(newValue);
+                        }}
+                      >
+                        <ToggleButton value="graphs" sx={{ px: 1.5 }}>
+                          <Typography variant="h6" color="text.primary">
+                            {t("common:graphs")}
+                          </Typography>
+                        </ToggleButton>
+                        <ToggleButton value="tests" sx={{ px: 1.5 }}>
+                          <Typography variant="h6" color="text.primary">
+                            {t("models:label.savedTests")}
+                          </Typography>
+                        </ToggleButton>
+                      </PillToggleButtonGroup>
+                    </Box>
+                  ) : (
+                    <Typography
+                      variant="h6"
+                      color="text.primary"
+                      sx={{ mt: 6, mb: 2 }}
+                    >
+                      {t("common:graphs")}
+                    </Typography>
+                  )}
+
+                  {/* Graphs or statistical tests table, depending on the selected view */}
+                  {view === "graphs" ? (
+                    <ResultsGraphs
+                      runs={runs}
+                      selectedSplit={metricSplit}
+                      onSplitChange={setMetricSplit}
+                      metrics={allMetrics}
+                    />
+                  ) : (
+                    <StatisticalTestTable session={session} />
+                  )}
                 </>
               )}
             </Box>

@@ -5,7 +5,7 @@ import {
   useMaterialReactTable,
 } from "material-react-table";
 import { useTheme } from "@mui/material/styles";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import { useTableLocalization } from "../../utils/useTableLocalization";
@@ -40,6 +40,8 @@ function ModelComparisonTable({
   const [runToDelete, setRunToDelete] = useState(null);
   // Bump to re-render when a download finishes so the train button enables.
   const [, setDownloadVersion] = useState(0);
+  // Get the selected session from context to determine if cross-validation is used.
+  const { selectedSession } = useModels();
 
   useEffect(
     () => subscribeAnyDownloadState(() => setDownloadVersion((v) => v + 1)),
@@ -87,6 +89,47 @@ function ModelComparisonTable({
   // ────────────────────────────────────────────────────────────────────────
   // Build columns
   // ────────────────────────────────────────────────────────────────────────
+
+  const isCrossValidation =
+    selectedSession?.evaluation_strategy ===
+    "CrossValidationEvaluationStrategy";
+
+  // Run type color using existing theme.palette.accent tokens
+  const getRunType = (run) => {
+    if (run.nested) return "nestedCv";
+    if (run.optimizer_name) return "withHpo";
+    return "withoutHpo";
+  };
+
+  const runTypeStyles = {
+    withoutHpo: {
+      bg: theme.palette.dataType.default,
+      border: theme.palette.dataType.default,
+      color: theme.palette.dataType.default,
+      label: "Sin HPO",
+    },
+    withHpo: {
+      bg: theme.palette.accent.tealDim,
+      border: theme.palette.accent.tealBorder,
+      color: theme.palette.accent.teal,
+      label: "HPO",
+    },
+    ...(isCrossValidation
+      ? {
+          nestedCv: {
+            bg: "#585370",
+            border: "#585370",
+            color: "#585370",
+            label: "CV anidado",
+          },
+        }
+      : {}),
+  };
+
+  const runTypeLegend = Object.entries(runTypeStyles).map(([key, value]) => ({
+    key,
+    ...value,
+  }));
 
   const getMetricColumns = () => {
     const metricsSet = new Set();
@@ -187,19 +230,40 @@ function ModelComparisonTable({
           const isBest =
             bestVal !== undefined && Math.abs(value - bestVal) < 1e-9;
 
+          // Get standard deviation for CV sessions
+          let stdValue = null;
+          if (isCrossValidation) {
+            const stdMetricsKey = `${metricSplit}_metrics_std`;
+            stdValue = row.original[stdMetricsKey]?.[metricName];
+          }
+
           return (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {isBest && (
-                <Tooltip title={t("models:label.bestModel")} placement="top">
-                  <Box
-                    component="span"
-                    sx={{ color: "warning.main", lineHeight: 1 }}
-                  >
-                    ★
-                  </Box>
-                </Tooltip>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: 0.25,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {isBest && (
+                  <Tooltip title={t("models:label.bestModel")} placement="top">
+                    <Box
+                      component="span"
+                      sx={{ color: "warning.main", lineHeight: 1 }}
+                    >
+                      ★
+                    </Box>
+                  </Tooltip>
+                )}
+                <Box>{formatted}</Box>
+              </Box>
+              {isCrossValidation && stdValue !== null && (
+                <Box sx={{ fontSize: "0.9em", color: "text.secondary" }}>
+                  ±{Number(stdValue).toFixed(4)}
+                </Box>
               )}
-              {formatted}
             </Box>
           );
         },
@@ -376,14 +440,21 @@ function ModelComparisonTable({
     muiTableBodyCellProps: { sx: { py: 1, whiteSpace: "pre" } },
     muiTableHeadCellProps: { sx: { py: 1 } },
     state: { columnOrder },
-    muiTableBodyRowProps: ({ row }) => ({
-      onClick: () => {
-        if (onRowClick) {
-          onRowClick(row.original.id);
-        }
-      },
-      sx: { cursor: onRowClick ? "pointer" : "default" },
-    }),
+    muiTableBodyRowProps: ({ row }) => {
+      const runType = getRunType(row.original);
+      const { bg, border } = runTypeStyles[runType];
+      return {
+        onClick: () => {
+          if (onRowClick) onRowClick(row.original.id);
+        },
+        sx: {
+          cursor: onRowClick ? "pointer" : "default",
+          backgroundColor: bg,
+          borderLeft: `3px solid ${border}`,
+          "&:hover td": { backgroundColor: "transparent" },
+        },
+      };
+    },
   });
 
   return (
@@ -398,6 +469,33 @@ function ModelComparisonTable({
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <MaterialReactTable table={table} />
       </Box>
+
+      {/* Legend for run types (default, hpo, nestedCv) */}
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{ mt: 1, flexWrap: "wrap", alignItems: "center" }}
+      >
+        {runTypeLegend.map((item) => (
+          <Box
+            key={item.key}
+            sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+          >
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                backgroundColor: item.bg,
+                border: `1px solid ${item.border}`,
+              }}
+            />
+            <Typography variant="body2" color="text.secondary">
+              {t(`models:label.${item.key}`)}
+            </Typography>
+          </Box>
+        ))}
+      </Stack>
 
       <DeleteConfirmationModal
         open={Boolean(runToDelete)}

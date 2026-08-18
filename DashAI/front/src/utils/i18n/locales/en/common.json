@@ -24,6 +24,7 @@
   "count": "Count",
   "created": "Created",
   "createdAt": "Created At",
+  "date": "Date",
   "dashboard": "Dashboard",
   "dataset": "Dataset",
   "datasetNotFound": "Dataset not found",
@@ -64,6 +65,7 @@
   "itemsToBeDeleted": "The following items will be deleted:",
   "json": "JSON",
   "lastModified": "Last Modified",
+  "learnMore": "Learn more",
   "list": "List",
   "loading": "Loading...",
   "loadingColumns": "Loading columns...",
@@ -96,6 +98,7 @@
   "plugins": "Plugins",
   "processing": "Processing...",
   "remove": "Remove",
+  "refresh": "Refresh",
   "required": "Required",
   "results": "Results",
   "rows": "Rows",
@@ -131,6 +134,7 @@
   "table": "Table",
   "task": "Task",
   "test": "Test",
+  "tests": "Tests",
   "timeTaken": "Time",
   "to": "To",
   "todo": "TODO...",
@@ -241,5 +245,9 @@
   "viewMore": "View more",
   "viewLess": "View less",
   "switchToDarkMode": "Switch to dark mode",
-  "switchToLightMode": "Switch to light mode"
+  "switchToLightMode": "Switch to light mode",
+  "metric": "Metric",
+  "split": "Split",
+  "execute": "Execute",
+  "executing": "Executing..."
 }

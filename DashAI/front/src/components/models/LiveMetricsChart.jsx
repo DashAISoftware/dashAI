@@ -307,6 +307,13 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
     setLevel(newLevel);
   };
 
+  // Save the evaluation strategy from the session
+  const isCV = useMemo(() => {
+    if (!run.model_session_id) return false;
+    const session = getModelSessionById(run.model_session_id.toString());
+    return session.evaluation_strategy === "CrossValidationEvaluationStrategy";
+  }, [run.model_session_id]);
+
   return (
     <Box
       sx={{
@@ -354,9 +361,11 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
           <ToggleButton value="TRAIN" sx={{ px: 1.5 }}>
             {t("models:label.train")}
           </ToggleButton>
-          <ToggleButton value="VALIDATION" sx={{ px: 1.5 }}>
-            {t("models:label.validation")}
-          </ToggleButton>
+          {isCV && (
+            <ToggleButton value="VALIDATION" sx={{ px: 1.5 }}>
+              {t("models:label.validation")}
+            </ToggleButton>
+          )}
           <ToggleButton value="TEST" sx={{ px: 1.5 }}>
             {t("models:label.test")}
           </ToggleButton>
