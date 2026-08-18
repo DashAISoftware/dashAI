@@ -73,9 +73,9 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
   const socketRef = useRef(null);
 
   // When a new training starts, clear all previous metrics. Kept separate
-  // from the WebSocket effect below so a run's status changing (e.g.
-  // running -> finished) doesn't tear down and reopen the live connection —
-  // the socket only needs to change when the run itself changes.
+  // from the WebSocket effect below purely for readability — the socket
+  // itself still needs to reopen on every status change (see that effect's
+  // comment) so this doesn't dedupe or skip re-running.
   useEffect(() => {
     const isStarting = run.status === 1 || run.status === 2;
     if (isStarting) {
@@ -150,7 +150,7 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
         console.log("WebSocket already closed");
       }
     };
-  }, [run.id]);
+  }, [run.id, run.status]);
 
   // The session detail (with train/validation/test metric names) is fetched
   // once by the parent (useRunResultsData) and passed down, instead of this
