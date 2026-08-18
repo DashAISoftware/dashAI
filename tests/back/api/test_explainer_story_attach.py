@@ -71,6 +71,55 @@ def test_attach_stories_local_dict_shaped_matches_job_output():
     assert "yes" in group["story"]["en"]
 
 
+def test_attach_stories_global_legacy_bare_string_raw_does_not_crash():
+    """Explanations persisted before explainer_job.py normalized prior to
+    pickling (58c6262dc, 2026-07-10) still have `raw` on disk as a bare
+    plotly-JSON string, not wrapped in a list. Regression test for the 500
+    this used to cause (`ValueError: zip() argument 2 is shorter than
+    argument 1`, since zip() iterates the string's characters): it must
+    degrade to no story instead.
+    """
+    explanation = {
+        "features": ["age", "income"],
+        "importances_mean": [0.084, 0.061],
+        "importances_std": [0.01, 0.01],
+    }
+    explainer = PermutationFeatureImportance(model=MagicMock(), scoring="accuracy")
+    normalized = normalize_artifacts(explainer.plot(explanation))
+
+    legacy_raw = '{"data": [], "layout": {}}'
+
+    _attach_stories(normalized, legacy_raw, explanation, explainer)
+
+    assert normalized[0].get("story") is None
+
+
+def test_attach_stories_local_legacy_bare_dict_raw_does_not_crash():
+    """Local explanations persisted before 58c6262dc still have `raw` on
+    disk as a bare dict (plot()'s return value itself), not wrapped in a
+    list. Regression test for the 500 this used to cause (`KeyError: 0` from
+    `_is_grouped_raw(raw[0])` indexing a dict): it must degrade to no story
+    instead.
+    """
+    explanation = {
+        "metadata": {"feature_names": ["age", "income"], "target_names": ["no", "yes"]},
+        "base_values": [0.4, 0.6],
+        0: {
+            "instance_values": [35, 50000],
+            "model_prediction": [0.2, 0.8],
+            "shap_values": [[-0.1, -0.05], [0.1, 0.05]],
+        },
+    }
+    explainer = KernelShap(model=MagicMock())
+    normalized = normalize_artifacts(explainer.plot(explanation), create_grouped=True)
+
+    legacy_raw = {"title": "legacy plot"}
+
+    _attach_stories(normalized, legacy_raw, explanation, explainer, create_grouped=True)
+
+    assert normalized[0]["groups"][0].get("story") is None
+
+
 def test_attach_stories_is_a_noop_without_a_story_explainer():
     """No explainer (couldn't be built) means no story, not a crash."""
     explanation = {

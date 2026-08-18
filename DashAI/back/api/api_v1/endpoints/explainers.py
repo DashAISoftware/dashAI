@@ -259,6 +259,12 @@ def _attach_stories(
     if explainer is None:
         return
 
+    # Mirror normalize_artifacts' own wrapping: explanations persisted before
+    # explainer_job.py started normalizing prior to pickling (58c6262dc) still
+    # have `raw` in this bare, unwrapped shape on disk.
+    if isinstance(raw, (str, dict, Artifact, GroupedArtifacts)):
+        raw = [raw]
+
     if create_grouped and raw and not _is_grouped_raw(raw[0]):
         wire_groups = normalized[0].get("groups", []) if normalized else []
         for raw_leaf, wire_group in zip(raw, wire_groups, strict=True):
@@ -488,7 +494,10 @@ async def get_global_explanation_plot(
     story_explainer = _resolve_story_explainer(
         explainer_name, parameters, component_registry
     )
-    _attach_stories(artifacts, plot, explanation, story_explainer)
+    try:
+        _attach_stories(artifacts, plot, explanation, story_explainer)
+    except Exception as e:
+        log.warning("Skipping stories, raw/normalized shapes didn't match: %s", e)
     return artifacts
 
 
@@ -791,7 +800,12 @@ async def get_local_explanation_plot(
     story_explainer = _resolve_story_explainer(
         explainer_name, parameters, component_registry
     )
-    _attach_stories(artifacts, plots, explanation, story_explainer, create_grouped=True)
+    try:
+        _attach_stories(
+            artifacts, plots, explanation, story_explainer, create_grouped=True
+        )
+    except Exception as e:
+        log.warning("Skipping stories, raw/normalized shapes didn't match: %s", e)
     return artifacts
 
 
