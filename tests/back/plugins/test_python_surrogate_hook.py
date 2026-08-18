@@ -78,3 +78,37 @@ def test_hook_ignores_a_bare_dash_m(monkeypatch):
     _run_hook()
 
     assert sys.argv == ["dashAI", "-m"]
+
+
+def test_hook_registers_distlib_by_loader_instance(monkeypatch):
+    """distlib's register_finder applies type() itself, so it needs the instance.
+
+    Passing the loader class instead registers ``type`` and leaves the real
+    loader unmapped, which is what made every install inside the bundle fail
+    with "Unable to locate finder for 'pip._vendor.distlib'".
+    """
+    import pip._vendor.distlib as distlib
+    from pip._vendor.distlib import resources
+
+    class FakeFrozenLoader:
+        pass
+
+    monkeypatch.setattr(sys, "argv", ["dashAI"])
+    namespace = runpy.run_path(str(HOOK_PATH), run_name="dashai_surrogate_hook")
+
+    monkeypatch.setattr(distlib, "__loader__", FakeFrozenLoader(), raising=False)
+    monkeypatch.setitem(resources._finder_registry, FakeFrozenLoader, None)
+
+    namespace["_register_distlib_finder"]()
+
+    assert resources._finder_registry[FakeFrozenLoader] is resources.ResourceFinder
+
+
+def test_hook_survives_a_missing_distlib(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["dashAI"])
+    namespace = runpy.run_path(str(HOOK_PATH), run_name="dashai_surrogate_hook")
+    monkeypatch.setitem(sys.modules, "pip._vendor.distlib", None)
+
+    namespace["_register_distlib_finder"]()
+
+    assert "could not register the distlib resource finder" in capsys.readouterr().err

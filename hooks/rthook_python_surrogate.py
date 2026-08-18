@@ -15,10 +15,38 @@ import runpy
 import sys
 
 
+def _register_distlib_finder():
+    """Teach distlib to read its own resources through PyInstaller's loader.
+
+    pip imports pip._vendor.distlib.scripts before it installs a wheel, and
+    that module builds its script wrapper table at import time by calling
+    distlib.resources.finder(). finder() dispatches on the type of the
+    package's loader against a registry that only holds the stdlib loaders and
+    zipimporter, so inside a bundle it raises "Unable to locate finder for
+    'pip._vendor.distlib'" and every install dies before it starts. Resolution
+    is unaffected, since pip imports the module only when it will really
+    install something.
+    """
+    try:
+        import pip._vendor.distlib as distlib
+        from pip._vendor.distlib.resources import ResourceFinder, register_finder
+
+        # register_finder applies type() to its first argument, so it takes the
+        # loader instance and not the loader class.
+        register_finder(distlib.__loader__, ResourceFinder)
+    except Exception as error:
+        print(
+            f"dashAI: could not register the distlib resource finder: {error}",
+            file=sys.stderr,
+        )
+
+
 def _run_as_interpreter():
     arguments = sys.argv[1:]
     if not arguments:
         return
+
+    _register_distlib_finder()
 
     if arguments[0] == "-m" and len(arguments) > 1:
         module = arguments[1]
