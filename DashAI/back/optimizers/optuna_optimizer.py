@@ -170,6 +170,33 @@ def _no_arg_pruners() -> "list[str]":
     return sorted(names)
 
 
+def _report_epoch(trial, metric):
+    """Build the per-epoch callback handed to the model during a trial.
+
+    Optuna prunes by being told how a trial is doing while it still runs:
+    `trial.report(value, step)` feeds the pruner, `trial.should_prune()` asks it
+    for a verdict, and raising `TrialPruned` is how a trial is abandoned.
+
+    Nothing between here and `study.optimize` catches that exception, so it
+    reaches Optuna and the trial is recorded as pruned rather than failed.
+
+    A missing metric is not an error: `calculate_metrics` skips any metric that
+    returns a non-finite value, so a given epoch may legitimately have nothing to
+    report. The trial simply continues unpruned.
+    """
+    import optuna
+
+    def report(results, step):
+        value = results.get(metric.__name__)
+        if value is None:
+            return
+        trial.report(value, step)
+        if trial.should_prune():
+            raise optuna.TrialPruned()
+
+    return report
+
+
 class OptunaOptimizer(BaseOptimizer):
     DISPLAY_NAME: str = MultilingualString(
         en="Optuna Optimizer",
@@ -242,7 +269,27 @@ class OptunaOptimizer(BaseOptimizer):
                     raise ValueError(f"Unsupported parameter type for {key} : {dtype}")
                 setattr(obj, key, value)
 
-            self.model.train(self.input_dataset["train"], self.output_dataset["train"])
+            # Validation data is passed on purpose. Without it the epoch loops
+            # skip `calculate_metrics(split=VALIDATION, level=EPOCH)` entirely —
+            # they guard it behind `if x_validation is not None` — so during
+            # optimization the per-epoch validation score was never computed.
+            #
+            # That is the deeper reason pruning could not work here: the number a
+            # pruner needs to decide did not exist, independently of whether the
+            # pruner itself was an instance or a string.
+            self.model._epoch_reporter = _report_epoch(trial, self.metric)
+            try:
+                self.model.train(
+                    self.input_dataset["train"],
+                    self.output_dataset["train"],
+                    self.input_dataset["validation"],
+                    self.output_dataset["validation"],
+                )
+            finally:
+                # Cleared even when the trial is pruned: the model instance is
+                # reused across trials and by the final refit below.
+                self.model._epoch_reporter = None
+
             y_pred = self.model.predict(input_dataset["validation"])
 
             # Calculate metric for train and validation data each trial
