@@ -8,7 +8,6 @@ last trial's value, so the model that is retrained and serialized is not the one
 the study selected.
 """
 
-from accelerate import optimizer
 import pytest
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum

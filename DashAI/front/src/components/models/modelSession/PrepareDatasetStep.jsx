@@ -24,7 +24,7 @@ import { Trans } from "react-i18next";
 import { useModels } from "../ModelsContext";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
- * and the splits for training, validation and testing
+ * and the splits for training, validation and testing.
  * @param {object} newExp object that contains the Experiment Modal state
  * @param {function} setNewExp updates the Eperimento Modal state (newExp)
  * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal
@@ -288,7 +288,9 @@ function PrepareDatasetStep({
         seed: seed === "" || seed == null ? 42 : Number(seed),
         ...(cvSchemaProperties.n_splits ? { n_splits: numFolds } : {}),
         ...(cvSchemaProperties.n_repeats ? { n_repeats: numRepeats } : {}),
-        ...(cvSchemaProperties.group_column ? { group_column: groupColumn } : {}),
+        ...(cvSchemaProperties.group_column
+          ? { group_column: groupColumn }
+          : {}),
         ...(cvSchemaProperties.shuffle ? { shuffle: shuffle } : {}),
       };
     }
