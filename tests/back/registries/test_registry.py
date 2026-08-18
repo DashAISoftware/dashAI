@@ -96,7 +96,6 @@ COMPONENT1_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
-    "compatible_inner_splitters": [],
     "downloaded": True,
 }
 COMPONENT2_DICT = {
@@ -112,7 +111,6 @@ COMPONENT2_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
-    "compatible_inner_splitters": [],
     "downloaded": True,
 }
 SUBCOMPONENT1_DICT = {
@@ -128,7 +126,6 @@ SUBCOMPONENT1_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
-    "compatible_inner_splitters": [],
     "downloaded": True,
 }
 COMPONENT3_DICT = {
@@ -144,7 +141,6 @@ COMPONENT3_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
-    "compatible_inner_splitters": [],
     "downloaded": True,
 }
 COMPONENT3_DICT_MS = COMPONENT3_DICT.copy()
@@ -163,7 +159,6 @@ RELATED_COMPONENT1_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
-    "compatible_inner_splitters": [],
     "downloaded": True,
 }
 RELATED_COMPONENT2_DICT = {
@@ -179,7 +174,6 @@ RELATED_COMPONENT2_DICT = {
     "required_credentials": [],
     "optional_credentials": [],
     "credentials_satisfied": True,
-    "compatible_inner_splitters": [],
     "downloaded": True,
 }
 

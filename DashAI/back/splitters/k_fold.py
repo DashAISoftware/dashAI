@@ -20,13 +20,6 @@ if TYPE_CHECKING:
 
 
 class KFoldSplitterSchema(BaseSchema):
-    """Schema that configures the K-Fold splitter.
-
-    K-Fold splits the dataset into ``n_splits`` folds, using each one in turn as
-    the test set while the rest are used for training. The underlying
-    implementation is ``sklearn.model_selection.KFold``.
-    """
-
     n_splits: schema_field(
         int_field(ge=2),
         placeholder=5,

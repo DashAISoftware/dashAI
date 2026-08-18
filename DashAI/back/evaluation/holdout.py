@@ -1,7 +1,6 @@
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Metric, Run
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
-from DashAI.back.models.model_factory import ModelFactory
 
 
 class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
@@ -17,27 +16,7 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
     - LAST level: Final metrics computed on all three partitions after training
     """
 
-    def __init__(
-        self, model, optimizer, run_optimizable_parameters, goal_metric, **kwargs
-    ):
-        """Initialize the holdout evaluation strategy.
-
-        Parameters
-        ----------
-        model : BaseModel
-            The machine learning model to be trained and evaluated.
-        optimizer : BaseOptimizer
-            Hyperparameter optimizer (None if no HPO is needed).
-        run_optimizable_parameters : dict or list
-            Parameters to optimize during HPO.
-        goal_metric : dict (obtained from Metric component registry)
-            The metric to optimize in HPO trials.
-        **kwargs
-            Additional keyword arguments (ignored).
-        """
-        super().__init__(model, optimizer, run_optimizable_parameters, goal_metric)
-
-    def execute(self, x, y, factory: ModelFactory, run: Run, db):
+    def execute(self, x, y, run: Run, db):
         """Execute holdout validation: train on training set, optimize with validation,
         evaluate on test.
 
@@ -53,8 +32,6 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
         y : DatasetDict
             DatasetDict with label partitions:
             {"train": y_train, "validation": y_val, "test": y_test}
-        factory : ModelFactory
-            Factory for creating and updating model instances with new hyperparameters.
         run : Run
             Database run instance for storing results and configuration.
         db : Session
@@ -68,55 +45,50 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
             - plot_paths : list[str] - Paths to HPO visualization plot files
         """
         plot_paths = []
+        model = self.model
 
         # set the data used for model training and evaluation
-        self.model.x_data = x
-        self.model.y_data = y
+        model.x_data = x
+        model.y_data = y
 
         # Execute HPO if optimizer and there are parameters to optimize
         if self.optimizer and self.run_optimizable_parameters:
             self._report_progress(0.2, "Hyperparameter optimization")
-            self._do_hpo(x, y, factory, run, db)
+            model = self._do_hpo(model, x, y, run, db)
             plot_paths = self._generate_hpo_plots(run)
 
         # Train the model with the provided data and return it
         self._report_progress(0.5, "Training")
-        self.model.train(x["train"], y["train"], x["validation"], y["validation"])
+        model.train(x["train"], y["train"], x["validation"], y["validation"])
 
         # Calculate metrics at the end of training if not done already
         self._report_progress(0.85, "Computing metrics")
-        last_train_metric = (
-            db.query(Metric)
-            .filter_by(run_id=run.id, split="TRAIN", level="LAST")
-            .first()
-        )
-        if not last_train_metric:
-            self.model.calculate_metrics(
-                split=SplitEnum.TRAIN,
-                level=LevelEnum.LAST,
-            )
-        last_val_metric = (
-            db.query(Metric)
-            .filter_by(run_id=run.id, split="VALIDATION", level="LAST")
-            .first()
-        )
-        if not last_val_metric:
-            self.model.calculate_metrics(
-                split=SplitEnum.VALIDATION,
-                level=LevelEnum.LAST,
-            )
-        last_test_metric = (
-            db.query(Metric)
-            .filter_by(run_id=run.id, split="TEST", level="LAST")
-            .first()
-        )
-        if not last_test_metric:
-            self.model.calculate_metrics(
-                split=SplitEnum.TEST,
-                level=LevelEnum.LAST,
-            )
+        for split in (SplitEnum.TRAIN, SplitEnum.VALIDATION, SplitEnum.TEST):
+            self._calculate_metrics_if_missing(model, run, db, split)
 
-        return self.model, plot_paths
+        return model, plot_paths
+
+    def _calculate_metrics_if_missing(self, model, run: Run, db, split: SplitEnum):
+        """Compute and persist LAST-level metrics for a split, unless already saved.
+
+        Parameters
+        ----------
+        model : BaseModel
+            The trained model to compute metrics on.
+        run : Run
+            Database run instance the metrics belong to.
+        db : Session
+            SQLAlchemy database session used to check for existing metrics.
+        split : SplitEnum
+            The data split to compute metrics for.
+        """
+        existing_metric = (
+            db.query(Metric)
+            .filter_by(run_id=run.id, split=split, level=LevelEnum.LAST)
+            .first()
+        )
+        if not existing_metric:
+            model.calculate_metrics(split=split, level=LevelEnum.LAST)
 
     def evaluate(self, model, input_dataset, output_dataset, metric):
         """Evaluate model on validation set during HPO trials.

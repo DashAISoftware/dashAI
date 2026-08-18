@@ -22,15 +22,6 @@ if TYPE_CHECKING:
 
 
 class StratifiedGroupKFoldSplitterSchema(BaseSchema):
-    """Schema that configures the Stratified Group K-Fold splitter.
-
-    Stratified Group K-Fold splits the dataset into ``n_splits`` folds while
-    keeping samples that share the same ``group_column`` value together and
-    preserving, as closely as possible, the percentage of samples of each
-    class in every fold. The underlying implementation is
-    ``sklearn.model_selection.StratifiedGroupKFold``.
-    """
-
     n_splits: schema_field(
         int_field(ge=2),
         placeholder=5,

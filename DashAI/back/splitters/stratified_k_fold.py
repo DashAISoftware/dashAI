@@ -20,13 +20,6 @@ if TYPE_CHECKING:
 
 
 class StratifiedKFoldSplitterSchema(BaseSchema):
-    """Schema that configures the Stratified K-Fold splitter.
-
-    Stratified K-Fold splits the dataset into ``n_splits`` folds while
-    preserving the percentage of samples of each class in every fold. The
-    underlying implementation is ``sklearn.model_selection.StratifiedKFold``.
-    """
-
     n_splits: schema_field(
         int_field(ge=2),
         placeholder=5,

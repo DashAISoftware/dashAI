@@ -15,16 +15,6 @@ if TYPE_CHECKING:
 
 
 class RepeatedKFoldSplitterSchema(BaseSchema):
-    """Schema that configures the Repeated K-Fold splitter.
-
-    Repeated K-Fold runs the K-Fold procedure ``n_repeats`` times with
-    different randomization in each repetition, producing ``n_splits *
-    n_repeats`` folds in total. It does not accept a separate ``shuffle``
-    parameter, because ``sklearn.model_selection.RepeatedKFold`` always
-    reshuffles the data on every repetition. The underlying implementation is
-    ``sklearn.model_selection.RepeatedKFold``.
-    """
-
     n_splits: schema_field(
         int_field(ge=2),
         placeholder=5,

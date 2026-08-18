@@ -8,6 +8,7 @@ last trial's value, so the model that is retrained and serialized is not the one
 the study selected.
 """
 
+from accelerate import optimizer
 import pytest
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
@@ -74,7 +75,7 @@ def _optimize(model, parameters, dataset, n_trials=12):
         score = metric.score(output_dataset_transformed, y_pred)
         return score
 
-    _, _ = optimizer.optimize(
+    optimizer.optimize(
         model,
         dataset,
         dataset,

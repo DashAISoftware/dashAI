@@ -282,13 +282,14 @@ function PrepareDatasetStep({
         };
       }
     } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
+      const cvSchemaProperties = cvType.schema?.properties || {};
       updatedExpData.splits = {
         splitter_name: cvType.name,
         seed: seed === "" || seed == null ? 42 : Number(seed),
-        ...(cvType.metadata?.hasFolds ? { n_splits: numFolds } : {}),
-        ...(cvType.metadata?.hasRepeats ? { n_repeats: numRepeats } : {}),
-        ...(cvType.metadata?.hasGroups ? { group_column: groupColumn } : {}),
-        ...(cvType.metadata?.hasShuffle ? { shuffle: shuffle } : {}),
+        ...(cvSchemaProperties.n_splits ? { n_splits: numFolds } : {}),
+        ...(cvSchemaProperties.n_repeats ? { n_repeats: numRepeats } : {}),
+        ...(cvSchemaProperties.group_column ? { group_column: groupColumn } : {}),
+        ...(cvSchemaProperties.shuffle ? { shuffle: shuffle } : {}),
       };
     }
 

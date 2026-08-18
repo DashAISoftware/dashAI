@@ -33,6 +33,13 @@ class FoldSplitter(BaseSplitter):
         super().__init__(splits_data)
         self.n_splits = splits_data.get("n_splits", 5)
 
+    @classmethod
+    def get_metadata(cls) -> dict:
+        """Return metadata describing the splitter's compatibility."""
+        return {
+            "compatibleInnerSplitters": getattr(cls, "COMPATIBLE_INNER_SPLITTERS", []),
+        }
+
     @abstractmethod
     def split_indexes(
         self, x: DashAIDataset, y: DashAIDataset

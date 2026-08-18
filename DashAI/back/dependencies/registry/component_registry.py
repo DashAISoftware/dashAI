@@ -31,7 +31,6 @@ class ComponentRegistry:
         "display_name": "...",  # A readable label.
         "color": "...",  # A color associated to the component.
         "downloaded": True,  # False until a download-required component is fetched.
-        "compatible_inner_splitters": [],  # Splitter names usable for nested CV.
     }
     ```
 
@@ -246,9 +245,6 @@ class ComponentRegistry:
         optional_credentials = list(
             getattr(new_component, "OPTIONAL_CREDENTIALS", []) or []
         )
-        compatible_inner_splitters = list(
-            getattr(new_component, "COMPATIBLE_INNER_SPLITTERS", []) or []
-        )
 
         new_register_component = {
             "name": new_component.__name__,
@@ -263,7 +259,6 @@ class ComponentRegistry:
             "required_credentials": required_credentials,
             "optional_credentials": optional_credentials,
             "credentials_satisfied": len(required_credentials) == 0,
-            "compatible_inner_splitters": compatible_inner_splitters,
         }
 
         if base_type not in self._registry:

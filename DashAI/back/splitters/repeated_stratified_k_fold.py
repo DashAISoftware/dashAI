@@ -15,16 +15,6 @@ if TYPE_CHECKING:
 
 
 class RepeatedStratifiedKFoldSplitterSchema(BaseSchema):
-    """Schema that configures the Repeated Stratified K-Fold splitter.
-
-    Repeated Stratified K-Fold runs the Stratified K-Fold procedure
-    ``n_repeats`` times with different randomization in each repetition,
-    preserving class proportions in every fold. It does not accept a separate
-    ``shuffle`` parameter, because
-    ``sklearn.model_selection.RepeatedStratifiedKFold`` always reshuffles the
-    data on every repetition.
-    """
-
     n_splits: schema_field(
         int_field(ge=2),
         placeholder=5,

@@ -24,9 +24,8 @@ class BaseEvaluationStrategy(metaclass=ABCMeta):
 
     def __init__(
         self,
-        model: BaseModel,
+        factory: ModelFactory,
         optimizer: BaseOptimizer,
-        run_optimizable_parameters,
         goal_metric,
         **kwargs,
     ):
@@ -34,20 +33,20 @@ class BaseEvaluationStrategy(metaclass=ABCMeta):
 
         Parameters
         ----------
-        model : BaseModel
-            The machine learning model to be trained and evaluated.
+        factory : ModelFactory
+            Factory owning the model to be trained/evaluated and the
+            hyperparameters that are eligible for optimization.
         optimizer : BaseOptimizer
             The hyperparameter optimizer instance. Can be None if no HPO is needed.
-        run_optimizable_parameters : dict or list
-            The hyperparameters that should be optimized.
         goal_metric : dict (obtained from Metric component registry)
             The target metric to optimize during hyperparameter search.
         **kwargs
             Additional keyword arguments passed from subclasses (ignored).
         """
-        self.model: BaseModel = model
+        self.factory: ModelFactory = factory
+        self.model: BaseModel = factory.model
+        self.run_optimizable_parameters = factory.optimizable_parameters
         self.optimizer: BaseOptimizer = optimizer
-        self.run_optimizable_parameters = run_optimizable_parameters
         self.goal_metric = goal_metric
         self._progress_reporter: Optional[
             Callable[[Optional[float], Optional[str]], None]
@@ -68,7 +67,7 @@ class BaseEvaluationStrategy(metaclass=ABCMeta):
             self._progress_reporter(fraction, message)
 
     @abstractmethod
-    def execute(self, x, y, factory: ModelFactory, run: Run, db):
+    def execute(self, x, y, run: Run, db):
         """Execute the evaluation strategy on the provided data.
 
         This is the main entry point for the evaluation process. Subclasses implement
@@ -85,8 +84,6 @@ class BaseEvaluationStrategy(metaclass=ABCMeta):
             - For CV: List of DatasetDicts, one per fold with train/test splits
         y : dict or list
             Target labels. Same structure as x.
-        factory : ModelFactory
-            Factory for creating and updating model instances.
         run : Run
             Database model representing the current experiment run.
         db : Session
@@ -128,7 +125,7 @@ class BaseEvaluationStrategy(metaclass=ABCMeta):
         """
         raise NotImplementedError("Subclasses must implement this method")
 
-    def _do_hpo(self, x, y, factory: ModelFactory, run: Run, db):
+    def _do_hpo(self, model: BaseModel, x, y, run: Run, db):
         """Execute hyperparameter optimization using the configured optimizer.
 
         The optimizer uses the self.evaluate method as the objective function,
@@ -136,38 +133,46 @@ class BaseEvaluationStrategy(metaclass=ABCMeta):
 
         Parameters
         ----------
+        model : BaseModel
+            The model instance to optimize.
         x : DatasetDict or list of DatasetDict
             Training input features (structure varies by strategy).
         y : DatasetDict or list of DatasetDict
             Training target labels (structure varies by strategy).
-        factory : ModelFactory
-            Factory instance for updating model parameters.
         run : Run
             Database run instance to update with optimized parameters.
         db : Session
             SQLAlchemy database session for transactions.
 
+        Returns
+        -------
+        BaseModel
+            The model with the best hyperparameters found during optimization.
         """
         from sqlalchemy.orm.attributes import flag_modified
 
         # Execute hyperparameter optimization and get best model with parameters
-        self.model, best_params = self.optimizer.optimize(
-            self.model,
+        self.optimizer.optimize(
+            model,
             x,
             y,
             self.run_optimizable_parameters,
             self.goal_metric,
             strategy=self.evaluate,
         )
+        model = self.optimizer.get_model()
+        best_params = self.optimizer.get_best_params()
 
         # Update the run's parameters with the optimized hyperparameters
         old_parameters = run.parameters.copy()
-        updated_parameters = factory.update_parameters(old_parameters, best_params)
+        updated_parameters = self.factory.update_parameters(old_parameters, best_params)
 
         # Persist the updated parameters to the database
         run.parameters = updated_parameters
         flag_modified(run, "parameters")
         db.commit()
+
+        return model
 
     def _generate_hpo_plots(self, run: Run) -> List[str]:
         """Generate and pickle the hyperparameter optimization plots to disk.

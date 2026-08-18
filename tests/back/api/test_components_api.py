@@ -167,7 +167,6 @@ def test_get_component_by_id(client: TestClient):
         "required_credentials": [],
         "optional_credentials": [],
         "credentials_satisfied": True,
-        "compatible_inner_splitters": [],
         "downloaded": True,
     }
 
@@ -190,7 +189,6 @@ def test_get_component_by_id(client: TestClient):
         "required_credentials": [],
         "optional_credentials": [],
         "credentials_satisfied": True,
-        "compatible_inner_splitters": [],
         "downloaded": True,
     }
 
@@ -212,7 +210,6 @@ def test_get_component_by_id(client: TestClient):
         "required_credentials": [],
         "optional_credentials": [],
         "credentials_satisfied": True,
-        "compatible_inner_splitters": [],
         "downloaded": True,
     }
 
@@ -310,7 +307,6 @@ def test_get_components_select_only_tasks(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -330,7 +326,6 @@ def test_get_components_select_only_tasks(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
     ]
@@ -358,7 +353,6 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -377,7 +371,6 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -396,7 +389,6 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
     ]
@@ -481,7 +473,6 @@ def test_get_components_ignore_models(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -501,7 +492,6 @@ def test_get_components_ignore_models(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -520,7 +510,6 @@ def test_get_components_ignore_models(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -539,7 +528,6 @@ def test_get_components_ignore_models(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -558,7 +546,6 @@ def test_get_components_ignore_models(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
     ]
@@ -585,7 +572,6 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -604,7 +590,6 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -623,7 +608,6 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
     ]
@@ -691,7 +675,6 @@ def test_get_components_related_inverse_relation(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         }
     ]
@@ -741,7 +724,6 @@ def test_get_components_dataloader_component_parent(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -760,7 +742,6 @@ def test_get_components_dataloader_component_parent(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
     ]
@@ -804,7 +785,6 @@ def test_get_components_by_type_and_task(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -823,7 +803,6 @@ def test_get_components_by_type_and_task(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
     ]
@@ -866,7 +845,6 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -885,7 +863,6 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -904,7 +881,6 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
     ]
@@ -934,7 +910,6 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
         {
@@ -953,7 +928,6 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "required_credentials": [],
             "optional_credentials": [],
             "credentials_satisfied": True,
-            "compatible_inner_splitters": [],
             "downloaded": True,
         },
     ]

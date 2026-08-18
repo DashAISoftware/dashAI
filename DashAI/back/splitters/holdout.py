@@ -22,14 +22,6 @@ if TYPE_CHECKING:
 
 
 class HoldoutSplitterSchema(BaseSchema):
-    """Schema that configures the Holdout splitter.
-
-    Holdout creates a single train/test/validation partition. The three
-    proportions are optional because a dataset with predefined splits can be
-    used instead, in which case the resolved indices are supplied separately
-    and these proportions are ignored.
-    """
-
     train: schema_field(
         none_type(float_field(ge=0, le=1)),
         placeholder=0.6,

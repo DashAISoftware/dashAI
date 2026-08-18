@@ -9,7 +9,6 @@ from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
-from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 from DashAI.back.splitters.base_splitter import BaseSplitter
@@ -156,13 +155,11 @@ class ModelJob(BaseJob):
                     evaluation_estrategy: BaseEvaluationStrategy = preparation_results[
                         "evaluation_strategy"
                     ]
-                    factory: ModelFactory = preparation_results["factory"]
 
                     evaluation_estrategy.set_progress_reporter(self.report_progress)
                     model, plot_paths = evaluation_estrategy.execute(
                         x=x,
                         y=y,
-                        factory=factory,
                         run=run,
                         db=db,
                     )
@@ -249,8 +246,7 @@ class ModelJob(BaseJob):
         -------
         dict
             A dictionary containing the prepared input and output datasets, the
-            parsed split configuration, the instantiated splitter, the model
-            factory, and the evaluation strategy.
+            instantiated splitter, and the evaluation strategy.
 
         Raises
         ------
@@ -430,9 +426,6 @@ class ModelJob(BaseJob):
                 test_metrics=test_metrics,
                 n_labels=n_labels,
             )
-
-            model: BaseModel = factory.model
-            run_optimizable_parameters = factory.optimizable_parameters
         except Exception as e:
             log.exception(e)
             raise JobError(
@@ -444,9 +437,8 @@ class ModelJob(BaseJob):
             evaluation_strategy: BaseEvaluationStrategy = component_registry[
                 model_session.evaluation_strategy
             ]["class"](
-                model=model,
+                factory=factory,
                 optimizer=optimizer,
-                run_optimizable_parameters=run_optimizable_parameters,
                 goal_metric=goal_metric,
             )
         except Exception as e:
@@ -460,8 +452,6 @@ class ModelJob(BaseJob):
         return {
             "X": X,
             "Y": Y,
-            "splits_data": splits_data,
-            "factory": factory,
             "splitter": splitter,
             "evaluation_strategy": evaluation_strategy,
         }

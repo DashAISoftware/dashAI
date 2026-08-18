@@ -22,16 +22,6 @@ if TYPE_CHECKING:
 
 
 class GroupKFoldSplitterSchema(BaseSchema):
-    """Schema that configures the Group K-Fold splitter.
-
-    Group K-Fold splits the dataset into ``n_splits`` folds while keeping all
-    samples that share the same ``group_column`` value together in the same
-    fold. ``shuffle`` controls whether the groups (not the samples within a
-    group) are shuffled before being assigned to folds; ``random_state`` only
-    has an effect when ``shuffle`` is enabled. The underlying implementation
-    is ``sklearn.model_selection.GroupKFold``.
-    """
-
     n_splits: schema_field(
         int_field(ge=2),
         placeholder=5,

@@ -6,7 +6,6 @@ from kink import di
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Metric, Run
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
-from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.splitters.base_splitter import BaseSplitter
 
 
@@ -21,35 +20,9 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
     - FOLD level: Individual metrics from each fold
     - TRIAL level: Metrics during HPO trials
     - LAST/LAST_OUTER: Aggregated metrics (mean and std) for simple/nested CV
-
-    Attributes
-    ----------
-    inner_splitter : BaseSplitter
-        The data splitter used for creating inner folds in nested CV.
-        Initialized when nested CV is enabled.
     """
 
-    def __init__(
-        self, model, optimizer, run_optimizable_parameters, goal_metric, **kwargs
-    ):
-        """Initialize the cross-validation evaluation strategy.
-
-        Parameters
-        ----------
-        model : BaseModel
-            The machine learning model to be cross-validated.
-        optimizer : BaseOptimizer
-            Hyperparameter optimizer (None if no HPO is needed).
-        run_optimizable_parameters : dict or list
-            Parameters to optimize during HPO.
-        goal_metric : dict (obtained from Metric component registry)
-            The metric to optimize in HPO trials.
-        **kwargs
-            Additional keyword arguments (ignored).
-        """
-        super().__init__(model, optimizer, run_optimizable_parameters, goal_metric)
-
-    def execute(self, x, y, factory: ModelFactory, run: Run, db):
+    def execute(self, x, y, run: Run, db):
         """Execute k-fold cross-validation with optional nested CV and HPO.
 
         Trains and evaluates a model using k-fold cross-validation. Optionally performs
@@ -64,8 +37,6 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             The last element is the complete dataset for final training.
         y : list of DatasetDict
             List of fold label DatasetDicts with same structure as x.
-        factory : ModelFactory
-            Factory for creating and updating model instances with new hyperparameters.
         run : Run
             Database run instance containing configuration (nested CV settings, etc.).
         db : Session
@@ -79,6 +50,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             - plot_paths : list[str] - Paths to HPO visualization plot files
         """
         plot_paths = []
+        model = self.model
 
         # STEP 1: Hyperparameter Optimization (if enabled)
         if self.optimizer and self.run_optimizable_parameters:
@@ -100,11 +72,11 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
                 # Execute nested cross-validation for HPO
                 self._report_progress(0.1, "Nested cross-validation")
-                self._nested_cv(run.id, self.model, x, y)
+                self._nested_cv(run.id, model, x, y, db)
 
             # Perform hyperparameter optimization and update run.parameters
             self._report_progress(0.25, "Hyperparameter optimization")
-            self._do_hpo(x, y, factory, run, db)
+            model = self._do_hpo(model, x, y, run, db)
 
             # Generate and serialize HPO visualization plots
             plot_paths = self._generate_hpo_plots(run)
@@ -123,32 +95,35 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             y_fold = y[i]
 
             # Set model's internal references to current fold data
-            self.model.x_data = x_fold
-            self.model.y_data = y_fold
+            model.x_data = x_fold
+            model.y_data = y_fold
 
             # Train model on fold's training partition
-            self.model.train(x_fold["train"], y_fold["train"])
+            model.train(x_fold["train"], y_fold["train"])
 
             # Compute and store metrics for this fold
-            self.model.calculate_metrics(
+            model.calculate_metrics(
                 split=SplitEnum.TRAIN, level=LevelEnum.FOLD, fold_index=i
             )
-            self.model.calculate_metrics(
+            model.calculate_metrics(
                 split=SplitEnum.TEST, level=LevelEnum.FOLD, fold_index=i
             )
 
         # STEP 3: Aggregate metrics across all folds
         # Compute mean and std of fold metrics and store as LAST level metrics
         self._aggregate_fold_metrics(
-            run_id=run.id, level_to_agg=LevelEnum.FOLD, level_to_save=LevelEnum.LAST
+            run_id=run.id,
+            db=db,
+            level_to_agg=LevelEnum.FOLD,
+            level_to_save=LevelEnum.LAST,
         )
 
         # STEP 4: Final model training on complete dataset
         # Train on all available data (the last fold contains the full dataset)
         self._report_progress(0.85, "Training final model")
-        self.model.train(x[-1]["train"], y[-1]["train"])
+        model.train(x[-1]["train"], y[-1]["train"])
 
-        return self.model, plot_paths
+        return model, plot_paths
 
     def evaluate(self, model, input_dataset, output_dataset, metric, **kwargs):
         """Evaluate model using k-fold cross-validation (used as HPO objective
@@ -203,8 +178,8 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             y_fold = output_dataset[i]
 
             # Set model's internal data references for this fold
-            self.model.x_data = x_fold
-            self.model.y_data = y_fold
+            model.x_data = x_fold
+            model.y_data = y_fold
 
             # Train model on this fold's training partition
             model.train(x_fold["train"], y_fold["train"])
@@ -253,11 +228,11 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
         # This is the objective value used by the optimizer
         return np.mean(folds_results)
 
-    def _nested_cv(self, run_id, model, input_dataset, output_dataset):
+    def _nested_cv(self, run_id, model, input_dataset, output_dataset, db):
         """Execute nested cross-validation with inner HPO loop.
 
         Nested CV implements a two-level validation scheme to prevent overfitting during
-        hyperparameter optimization:
+        hyperparameter optimization and give an unbiased estimate of model performance.
         - Outer loop: Standard k-fold CV for unbiased final performance estimation
         - Inner loop: Separate CV fold within each outer fold for HPO
 
@@ -274,6 +249,8 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             List of outer fold data {"train": X_train, "test": X_test}.
         output_dataset : list of DatasetDict
             List of outer fold labels {"train": y_train, "test": y_test}.
+        db : Session
+            SQLAlchemy database session for persisting aggregated metrics.
         """
         # Nested CV Outer Loop
         # For each outer fold, optimize hyperparameters on inner folds
@@ -297,7 +274,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             # - Train models on inner fold combinations
             # - Evaluate using inner CV (calls strategy_with_context)
             # - Select hyperparameters with best inner CV performance
-            self.model, _ = self.optimizer.optimize(
+            self.optimizer.optimize(
                 model,
                 inner_x,
                 inner_y,
@@ -305,19 +282,20 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                 self.goal_metric,
                 strategy=strategy_with_context,
             )
+            outer_model = self.optimizer.get_model()
 
             # Set model's data references for outer fold evaluation
-            self.model.x_data = x_outer
-            self.model.y_data = y_outer
+            outer_model.x_data = x_outer
+            outer_model.y_data = y_outer
 
             # Train model on outer fold's training data with optimized hyperparameters
-            self.model.train(x_outer["train"], y_outer["train"])
+            outer_model.train(x_outer["train"], y_outer["train"])
 
             # Evaluate on outer fold's test data (this is OUTER_FOLD level metric)
-            self.model.calculate_metrics(
+            outer_model.calculate_metrics(
                 split=SplitEnum.TEST, level=LevelEnum.OUTER_FOLD, fold_index=i
             )
-            self.model.calculate_metrics(
+            outer_model.calculate_metrics(
                 split=SplitEnum.TRAIN, level=LevelEnum.OUTER_FOLD, fold_index=i
             )
 
@@ -325,12 +303,17 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
         # Compute mean and std of OUTER_FOLD metrics and store as LAST_OUTER level
         self._aggregate_fold_metrics(
             run_id=run_id,
+            db=db,
             level_to_agg=LevelEnum.OUTER_FOLD,
             level_to_save=LevelEnum.LAST_OUTER,
         )
 
     def _aggregate_fold_metrics(
-        self, run_id: int, level_to_agg=LevelEnum.FOLD, level_to_save=LevelEnum.LAST
+        self,
+        run_id: int,
+        db,
+        level_to_agg=LevelEnum.FOLD,
+        level_to_save=LevelEnum.LAST,
     ):
         """Aggregate and average fold metrics across cross-validation folds.
 
@@ -346,63 +329,62 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
         ----------
         run_id : int
             The database run ID to aggregate metrics for.
+        db : Session
+            SQLAlchemy database session for querying and persisting metrics.
         level_to_agg : LevelEnum, optional
             The source metric level to aggregate. Default: FOLD.
         level_to_save : LevelEnum, optional
             The destination level for aggregated metrics. Default: LAST.
         """
-        with di["session_factory"]() as db:
-            # Query all metrics with level=level_to_agg for this run
-            fold_metrics = (
+        # Query all metrics with level=level_to_agg for this run
+        fold_metrics = (
+            db.query(Metric)
+            .filter(Metric.run_id == run_id, Metric.level == level_to_agg)
+            .all()
+        )
+
+        # If no metrics found, nothing to aggregate
+        if not fold_metrics:
+            return
+
+        # Group metrics by (split, name) for aggregation
+        metrics_by_split_name = {}
+        for metric in fold_metrics:
+            key = (metric.split, metric.name)
+            if key not in metrics_by_split_name:
+                metrics_by_split_name[key] = []
+            metrics_by_split_name[key].append(metric.value)
+
+        # Aggregate and persist metrics
+        for (split, name), values in metrics_by_split_name.items():
+            # Compute aggregation statistics
+            avg_value = np.mean(values)
+            std_value = np.std(values) if len(values) > 1 else 0.0
+
+            # Check if aggregated metric already exists for this split/name/run
+            existing = (
                 db.query(Metric)
-                .filter(Metric.run_id == run_id, Metric.level == level_to_agg)
-                .all()
+                .filter_by(run_id=run_id, split=split, level=level_to_save, name=name)
+                .first()
             )
 
-            # If no metrics found, nothing to aggregate
-            if not fold_metrics:
-                return
-
-            # Group metrics by (split, name) for aggregation
-            metrics_by_split_name = {}
-            for metric in fold_metrics:
-                key = (metric.split, metric.name)
-                if key not in metrics_by_split_name:
-                    metrics_by_split_name[key] = []
-                metrics_by_split_name[key].append(metric.value)
-
-            # Aggregate and persist metrics
-            for (split, name), values in metrics_by_split_name.items():
-                # Compute aggregation statistics
-                avg_value = np.mean(values)
-                std_value = np.std(values) if len(values) > 1 else 0.0
-
-                # Check if aggregated metric already exists for this split/name/run
-                existing = (
-                    db.query(Metric)
-                    .filter_by(
-                        run_id=run_id, split=split, level=level_to_save, name=name
+            if existing:
+                # Update existing metric with aggregated values
+                existing.value = avg_value
+                existing.std_value = std_value
+            else:
+                # Create new aggregated metric
+                db.add(
+                    Metric(
+                        run_id=run_id,
+                        split=split,
+                        level=level_to_save,
+                        name=name,
+                        value=avg_value,
+                        std_value=std_value,
+                        step=0,
                     )
-                    .first()
                 )
 
-                if existing:
-                    # Update existing metric with aggregated values
-                    existing.value = avg_value
-                    existing.std_value = std_value
-                else:
-                    # Create new aggregated metric
-                    db.add(
-                        Metric(
-                            run_id=run_id,
-                            split=split,
-                            level=level_to_save,
-                            name=name,
-                            value=avg_value,
-                            std_value=std_value,
-                            step=0,
-                        )
-                    )
-
-            # Persist aggregated metrics to database
-            db.commit()
+        # Persist aggregated metrics to database
+        db.commit()
