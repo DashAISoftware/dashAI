@@ -14,4 +14,5 @@ export interface IComponent {
   optional_credentials?: string[];
   credentials_satisfied?: boolean;
   downloaded?: boolean;
+  compatible_inner_splitters?: string[];
 }

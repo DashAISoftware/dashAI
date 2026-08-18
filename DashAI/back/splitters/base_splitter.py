@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from typing import TYPE_CHECKING, Final
 
 from sklearn.preprocessing import LabelEncoder
 
+from DashAI.back.config_object import ConfigObject
+
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class BaseSplitter(metaclass=ABCMeta):
+class BaseSplitter(ConfigObject, metaclass=ABCMeta):
     """Abstract interface for all dataset splitters implemented in DashAI.
 
     This base class defines the common contract shared by every splitting

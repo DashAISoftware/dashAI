@@ -1,14 +1,28 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, List, Tuple
 
 import numpy as np
 from sklearn.model_selection import LeaveOneOut
 
+from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 
 from .fold_splitter import FoldSplitter
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class LeaveOneOutSplitterSchema(BaseSchema):
+    """Schema that configures the Leave-One-Out splitter.
+
+    Leave-One-Out creates one fold per sample, using it as the test set while
+    every other sample is used for training. It has no configurable
+    parameters: the number of folds is always the dataset size, and
+    ``sklearn.model_selection.LeaveOneOut`` is deterministic, so it does not
+    accept ``n_splits``, ``shuffle``, or ``random_state``.
+    """
 
 
 class LeaveOneOutSplitter(FoldSplitter):
@@ -38,8 +52,8 @@ class LeaveOneOutSplitter(FoldSplitter):
         de="Leave-One-Out",
         zh="留一法",
     )
-    SHUFFLE: bool = True
     COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
+    SCHEMA = LeaveOneOutSplitterSchema
 
     def split_indexes(
         self, x: DashAIDataset, y: DashAIDataset

@@ -377,7 +377,7 @@ function SplitDatasetRows({
 
   // Validate group column when grouping CV type is selected
   useEffect(() => {
-    const isGrouping = cvType?.metadata?.hasGroups || false;
+    const isGrouping = Boolean(cvType?.schema?.properties?.group_column);
     if (isGrouping && !groupColumn) {
       setGroupColumnError(true);
     } else {
@@ -636,7 +636,7 @@ function SplitDatasetRows({
           </SplitsCard>
 
           {/* Number of Folds */}
-          {cvType?.metadata?.hasFolds && (
+          {Boolean(cvType?.schema?.properties?.n_splits) && (
             <SplitsCard
               label={t("experiments:label.numFolds")}
               description={t("experiments:label.numFoldsDescription")}
@@ -656,7 +656,7 @@ function SplitDatasetRows({
           )}
 
           {/* Number of Repeats */}
-          {cvType?.metadata?.hasRepeats && (
+          {Boolean(cvType?.schema?.properties?.n_repeats) && (
             <SplitsCard
               label={t("experiments:label.numRepeats")}
               description={t("experiments:label.numRepeatsDescription")}
@@ -676,7 +676,7 @@ function SplitDatasetRows({
           )}
 
           {/* Group Column */}
-          {cvType?.metadata?.hasGroups && (
+          {Boolean(cvType?.schema?.properties?.group_column) && (
             <SplitsCard
               label={t("experiments:label.groupColumn")}
               description={t("experiments:label.groupColumnDescription")}
@@ -703,7 +703,7 @@ function SplitDatasetRows({
           )}
 
           {/* Shuffle */}
-          {cvType?.metadata?.hasShuffle && (
+          {Boolean(cvType?.schema?.properties?.shuffle) && (
             <FormSchemaFieldCard
               label={t("experiments:label.shuffle")}
               description={t("experiments:label.shuffleDescription")}

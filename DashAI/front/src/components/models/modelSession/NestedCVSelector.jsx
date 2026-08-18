@@ -49,7 +49,7 @@ function NestedCVSelector({
         setOuterSplitterComponent(outerSplitterComponent);
 
         const innerSplittersArray =
-          outerSplitterComponent?.metadata?.compatibleInnerSplitters || [];
+          outerSplitterComponent?.compatible_inner_splitters || [];
 
         const innerSplitterComponents = await Promise.all(
           innerSplittersArray.map((element) => getComponentById(element)),

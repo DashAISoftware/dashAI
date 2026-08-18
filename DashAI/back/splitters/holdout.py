@@ -1,5 +1,16 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    bool_field,
+    float_field,
+    int_field,
+    none_type,
+    schema_field,
+)
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset
 
 from .base_splitter import BaseSplitter
@@ -8,6 +19,122 @@ if TYPE_CHECKING:
     from datasets import DatasetDict
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class HoldoutSplitterSchema(BaseSchema):
+    """Schema that configures the Holdout splitter.
+
+    Holdout creates a single train/test/validation partition. The three
+    proportions are optional because a dataset with predefined splits can be
+    used instead, in which case the resolved indices are supplied separately
+    and these proportions are ignored.
+    """
+
+    train: schema_field(
+        none_type(float_field(ge=0, le=1)),
+        placeholder=0.6,
+        description=MultilingualString(
+            en="Proportion of the dataset assigned to the training partition.",
+            es="Proporción del dataset asignada a la partición de entrenamiento.",
+            pt="Proporção do dataset atribuída à partição de treinamento.",
+            de="Anteil des Datensatzes für die Trainingspartition.",
+            zh="分配给训练集的数据集比例。",
+        ),
+        alias=MultilingualString(
+            en="Train", es="Entrenamiento", pt="Treinamento", de="Training", zh="训练集"
+        ),
+    )  # type: ignore
+    test: schema_field(
+        none_type(float_field(ge=0, le=1)),
+        placeholder=0.2,
+        description=MultilingualString(
+            en="Proportion of the dataset assigned to the test partition.",
+            es="Proporción del dataset asignada a la partición de prueba.",
+            pt="Proporção do dataset atribuída à partição de teste.",
+            de="Anteil des Datensatzes für die Testpartition.",
+            zh="分配给测试集的数据集比例。",
+        ),
+        alias=MultilingualString(
+            en="Test", es="Prueba", pt="Teste", de="Test", zh="测试集"
+        ),
+    )  # type: ignore
+    validation: schema_field(
+        none_type(float_field(ge=0, le=1)),
+        placeholder=0.2,
+        description=MultilingualString(
+            en="Proportion of the dataset assigned to the validation partition.",
+            es="Proporción del dataset asignada a la partición de validación.",
+            pt="Proporção do dataset atribuída à partição de validação.",
+            de="Anteil des Datensatzes für die Validierungspartition.",
+            zh="分配给验证集的数据集比例。",
+        ),
+        alias=MultilingualString(
+            en="Validation",
+            es="Validación",
+            pt="Validação",
+            de="Validierung",
+            zh="验证集",
+        ),
+    )  # type: ignore
+    stratify: schema_field(
+        bool_field(),
+        placeholder=False,
+        description=MultilingualString(
+            en="Whether to preserve the class distribution across the splits.",
+            es="Si se debe preservar la distribución de clases entre las particiones.",
+            pt="Se a distribuição de classes deve ser preservada entre as partições.",
+            de="Ob die Klassenverteilung über die Partitionen erhalten bleiben soll.",
+            zh="是否在各分区之间保持类别分布。",
+        ),
+        alias=MultilingualString(
+            en="Stratify",
+            es="Estratificar",
+            pt="Estratificar",
+            de="Stratifizieren",
+            zh="分层",
+        ),
+    )  # type: ignore
+    shuffle: schema_field(
+        bool_field(),
+        placeholder=True,
+        description=MultilingualString(
+            en="Whether to shuffle the data before splitting it.",
+            es="Si se deben mezclar los datos antes de dividirlos.",
+            pt="Se os dados devem ser embaralhados antes de dividi-los.",
+            de="Ob die Daten vor der Aufteilung gemischt werden sollen.",
+            zh="划分前是否打乱数据。",
+        ),
+        alias=MultilingualString(
+            en="Shuffle", es="Mezclar", pt="Embaralhar", de="Mischen", zh="打乱"
+        ),
+    )  # type: ignore
+    random_state: schema_field(
+        int_field(ge=0),
+        placeholder=42,
+        description=MultilingualString(
+            en="Seed used to make the split reproducible when shuffle is enabled.",
+            es=(
+                "Semilla utilizada para que la división sea reproducible cuando "
+                "se activa la mezcla."
+            ),
+            pt=(
+                "Semente usada para tornar a divisão reproduzível quando o "
+                "embaralhamento está ativado."
+            ),
+            de=(
+                "Seed, um die Aufteilung reproduzierbar zu machen, wenn Mischen "
+                "aktiviert ist."
+            ),
+            zh="启用打乱时，用于使划分可复现的随机种子。",
+        ),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
+    )  # type: ignore
 
 
 class HoldoutSplitter(BaseSplitter):
@@ -26,6 +153,8 @@ class HoldoutSplitter(BaseSplitter):
     ----------
     - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html
     """
+
+    SCHEMA = HoldoutSplitterSchema
 
     def __init__(self, splits_data):
         """Initialize the holdout splitter with the requested proportions.

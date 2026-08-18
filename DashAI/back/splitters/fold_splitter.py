@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
@@ -30,19 +32,6 @@ class FoldSplitter(BaseSplitter):
         """
         super().__init__(splits_data)
         self.n_splits = splits_data.get("n_splits", 5)
-
-    @classmethod
-    def get_metadata(cls) -> dict:
-        """Return metadata describing the feature capabilities of the splitter."""
-        metadata = {
-            "hasFolds": getattr(cls, "FOLDS", False),
-            "hasRepeats": getattr(cls, "REPEATS", False),
-            "hasShuffle": getattr(cls, "SHUFFLE", False),
-            "hasGroups": getattr(cls, "GROUPS", False),
-            "compatibleInnerSplitters": getattr(cls, "COMPATIBLE_INNER_SPLITTERS", []),
-        }
-
-        return metadata
 
     @abstractmethod
     def split_indexes(
