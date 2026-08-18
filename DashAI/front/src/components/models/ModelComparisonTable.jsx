@@ -7,7 +7,6 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { Box, IconButton, Tooltip } from "@mui/material";
 import { PlayArrow, Delete, Visibility } from "@mui/icons-material";
-import { getComponents } from "../../api/component";
 import { useTranslation } from "react-i18next";
 import { useTableLocalization } from "../../utils/useTableLocalization";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
@@ -20,6 +19,7 @@ import {
   getComponentCredentialState,
 } from "../credentials/credentialStatus";
 import { canTrainRun, isRunActive } from "../../utils/runStatus";
+import { useModels } from "./ModelsContext";
 
 /**
  * Compact comparison table showing all runs in a session.
@@ -35,8 +35,7 @@ function ModelComparisonTable({
   onRowClick,
   metricSplit = "test",
 }) {
-  const [models, setModels] = useState([]);
-  const [metrics, setMetrics] = useState([]);
+  const { allModels: models, allMetrics: metrics } = useModels();
   const [runs, setRuns] = useState(initialRuns);
   const [runToDelete, setRunToDelete] = useState(null);
   // Bump to re-render when a download finishes so the train button enables.
@@ -73,7 +72,7 @@ function ModelComparisonTable({
     ).locked;
   };
 
-  const { t, i18n } = useTranslation(["models", "common", "credentials"]);
+  const { t } = useTranslation(["models", "common", "credentials"]);
   const theme = useTheme();
   const localization = useTableLocalization();
 
@@ -84,34 +83,6 @@ function ModelComparisonTable({
   useEffect(() => {
     setRuns(initialRuns);
   }, [initialRuns]);
-
-  // ────────────────────────────────────────────────────────────────────────
-  // Fetch models and metrics
-  // ────────────────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const response = await getComponents({ selectTypes: ["Model"] });
-        setModels(response);
-      } catch (error) {
-        console.error("Error fetching models:", error);
-      }
-    };
-    fetchModels();
-  }, [i18n.language]);
-
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      try {
-        const response = await getComponents({ selectTypes: ["Metric"] });
-        setMetrics(response);
-      } catch (error) {
-        console.error("Error fetching metrics:", error);
-      }
-    };
-    fetchMetrics();
-  }, [i18n.language]);
 
   // ────────────────────────────────────────────────────────────────────────
   // Build columns

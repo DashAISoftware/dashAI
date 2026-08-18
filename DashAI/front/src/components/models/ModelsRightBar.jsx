@@ -16,7 +16,6 @@ import {
 import { useSnackbar } from "notistack";
 import { useParams } from "react-router-dom";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
-import { getComponents } from "../../api/component";
 import ModelListItem from "./model/ModelListItem";
 import {
   startComponentDownload,
@@ -136,15 +135,13 @@ export default function ModelsRightBar({ onToggle }) {
     triggerExplainerRefresh,
     datasets,
     tasks,
+    getModelsForTask,
   } = useModels();
 
   const fetchModels = React.useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getComponents({
-        selectTypes: ["Model"],
-        relatedComponent: session.task_name,
-      });
+      const response = await getModelsForTask(session.task_name);
       setModels(response);
       setFilteredModels(response);
     } catch (error) {
@@ -155,7 +152,7 @@ export default function ModelsRightBar({ onToggle }) {
     } finally {
       setLoading(false);
     }
-  }, [session?.task_name, enqueueSnackbar, t]);
+  }, [session?.task_name, getModelsForTask, enqueueSnackbar, t]);
 
   useEffect(() => {
     if (session) {
