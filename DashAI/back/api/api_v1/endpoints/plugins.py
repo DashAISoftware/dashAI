@@ -245,6 +245,7 @@ async def update_plugin(
     """
     from DashAI.back.credentials.sync import sync_credentials_status
     from DashAI.back.plugins.utils import (
+        PluginInstallError,
         install_plugin,
         register_plugin_components,
         uninstall_plugin,
@@ -293,6 +294,12 @@ async def update_plugin(
             db.commit()
             db.refresh(plugin)
             return plugin
+        except PluginInstallError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Could not install the plugin: {e}",
+            ) from e
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -329,6 +336,7 @@ async def upgrade_plugin(
     """
     from DashAI.back.dependencies.database.utils import upgrade_plugin_info_in_db
     from DashAI.back.plugins.utils import (
+        PluginInstallError,
         get_plugin_by_name_from_pypi,
         install_plugin,
         register_plugin_components,
@@ -365,6 +373,12 @@ async def upgrade_plugin(
                 )
 
             return plugin
+        except PluginInstallError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Could not upgrade the plugin: {e}",
+            ) from e
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
