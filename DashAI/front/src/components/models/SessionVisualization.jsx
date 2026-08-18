@@ -7,7 +7,6 @@ import ModelComparisonTable from "./ModelComparisonTable";
 import StatisticalTestTable from "./StatisticalTestTable";
 import ModelDetailView from "./ModelDetailView";
 import ModelCardCompact from "./ModelCardCompact";
-import { getComponents } from "../../api/component";
 import { getComponentDownloadState } from "./model/ComponentDownloadControl";
 import {
   useCredentialStatuses,
@@ -24,7 +23,6 @@ import { useModels } from "./ModelsContext";
 import { useTourContext } from "../tour/TourProvider";
 
 export default function SessionVisualization() {
-  const [models, setModels] = useState([]);
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [highlightedRunId, setHighlightedRunId] = useState(null);
   const [metricSplit, setMetricSplit] = useState("train");
@@ -37,6 +35,8 @@ export default function SessionVisualization() {
 
   const {
     selectedSession: session,
+    allModels: models,
+    allMetrics,
     runs,
     datasets,
     onTrainRun: onTrain,
@@ -91,19 +91,6 @@ export default function SessionVisualization() {
       window.removeEventListener("dragend", onEnd);
     };
   }, []);
-
-  const fetchModels = React.useCallback(async () => {
-    try {
-      const response = await getComponents({ selectTypes: ["Model"] });
-      setModels(response);
-    } catch (error) {
-      console.error("Error fetching models:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
 
   // Check if tour should start from previous tutorial
   useEffect(() => {
@@ -676,6 +663,7 @@ export default function SessionVisualization() {
                       runs={runs}
                       selectedSplit={metricSplit}
                       onSplitChange={setMetricSplit}
+                      metrics={allMetrics}
                     />
                   ) : (
                     <StatisticalTestTable session={session} />

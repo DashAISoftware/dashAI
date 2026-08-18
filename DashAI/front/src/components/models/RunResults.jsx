@@ -52,6 +52,7 @@ export default function RunResults({
     updateCacheEntry,
     predictionDisplayNumbers,
     outputColumn,
+    modelSessionDetail,
     trainingDatasetSample,
     fetchOperations,
     handlePredictionCreated,
@@ -138,7 +139,7 @@ export default function RunResults({
     <>
       {activeTab === 0 && (
         <Box sx={{ pb: 4 }}>
-          <LiveMetricsChart run={run} />
+          <LiveMetricsChart run={run} modelSessionDetail={modelSessionDetail} />
         </Box>
       )}
 

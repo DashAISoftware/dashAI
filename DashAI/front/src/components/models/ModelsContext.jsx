@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../hooks/datasets/useDatasets";
 import { useFolders } from "../../hooks/datasets/useFolders";
 import { useSessions } from "../../hooks/models/useSessions";
+import { useModelComponents } from "../../hooks/models/useModelComponents";
 const ModelsContext = createContext(null);
 
 export const useModels = () => useContext(ModelsContext);
@@ -98,6 +99,10 @@ export function ModelsProvider({ children }) {
     lastAddedRunId,
     clearLastAddedRunId,
   } = useSessions({ t });
+
+  const { allModels, allMetrics, getModelsForTask } = useModelComponents({
+    language: i18n.language,
+  });
 
   const [selectedModel, setSelectedModel] = useState(null);
   const [configOpen, setConfigOpen] = useState(false);
@@ -203,6 +208,9 @@ export function ModelsProvider({ children }) {
       setSelectedTask,
       setSelectedSessionId,
       setSelectedSession,
+      allModels,
+      allMetrics,
+      getModelsForTask,
       step,
       setStep,
       activeRunId,
@@ -279,6 +287,9 @@ export function ModelsProvider({ children }) {
       fetchTasks,
       editSession,
       deleteSessionById,
+      allModels,
+      allMetrics,
+      getModelsForTask,
       step,
       activeRunId,
       runs,

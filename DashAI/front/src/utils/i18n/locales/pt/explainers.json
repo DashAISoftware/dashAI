@@ -77,7 +77,8 @@
     "rowModePercentage": "Controle deslizante de porcentagem",
     "rowModeManual": "Seleção manual",
     "shuffleRows": "Embaralhar linhas selecionadas (amostra aleatória)",
-    "rowsSelectedManually": "Linhas selecionadas manualmente: {{selected}} / {{total}}"
+    "rowsSelectedManually": "Linhas selecionadas manualmente: {{selected}} / {{total}}",
+    "storyTitle": "Resumo narrativo"
   },
   "message": {
     "explainerJobCompleted": "Explicador {{name}} concluído com sucesso",

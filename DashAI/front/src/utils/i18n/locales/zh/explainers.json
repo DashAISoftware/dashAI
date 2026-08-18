@@ -77,7 +77,8 @@
     "rowModePercentage": "百分比滑块",
     "rowModeManual": "手动选择",
     "shuffleRows": "打乱选中的行（随机抽样）",
-    "rowsSelectedManually": "手动选择的行数：{{selected}} / {{total}}"
+    "rowsSelectedManually": "手动选择的行数：{{selected}} / {{total}}",
+    "storyTitle": "叙述性摘要"
   },
   "message": {
     "explainerJobCompleted": "解释器 {{name}} 成功完成",

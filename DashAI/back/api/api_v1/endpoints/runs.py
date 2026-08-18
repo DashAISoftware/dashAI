@@ -123,11 +123,6 @@ async def get_runs(
                 runs = db.scalars(
                     select(Run).where(Run.model_session_id == model_session_id)
                 ).all()
-                if not runs:
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail="Runs associated with Model Session not found",
-                    )
             else:
                 runs = db.query(Run).all()
 
