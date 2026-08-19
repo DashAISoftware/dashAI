@@ -1,9 +1,11 @@
 """Install and remove plugin distributions in the dashAI plugins directory.
 
-Everything here drives pip through ``sys.executable -m pip`` instead of a bare
+Everything here drives pip through ``<interpreter> -m pip`` instead of a bare
 ``pip`` executable: a uv managed ``.venv`` has no ``pip`` script at all, and in
 a frozen build a ``pip`` found on ``PATH`` belongs to some unrelated
 interpreter, so the plugin would be installed where dashAI can never import it.
+The interpreter is resolved and verified rather than assumed to be
+``sys.executable``, which inside a bundled launcher is dashAI itself.
 
 pip's ``--target`` mode always forces ``--ignore-installed``, so installing a
 plugin directly into the plugins directory would re-download its whole
@@ -20,6 +22,7 @@ the ``RECORD`` file of every distribution the plugin brought in and that no
 other installed plugin still needs.
 """
 
+import functools
 import importlib
 import importlib.util
 import json
@@ -44,6 +47,8 @@ LEDGER_FILENAME = ".dashai-plugins.json"
 LEDGER_VERSION = 1
 _PIP_TIMEOUT_SECONDS = 60 * 60
 _PIP_ERROR_CONTEXT_LINES = 40
+_PYTHON_PROBE_TIMEOUT_SECONDS = 60
+_PYTHON_PROBE_MARKER = "dashai-interpreter-probe"
 
 
 class PluginInstallError(RuntimeError):
@@ -66,21 +71,113 @@ def canonical_name(name: str) -> str:
     return re.sub(r"[-_.]+", "-", name).strip().lower()
 
 
-def pip_command() -> List[str]:
-    """Build the argv prefix that runs pip for the interpreter hosting dashAI.
+def _looks_like_python(candidate: str) -> bool:
+    """Check that a path is really an interpreter and not the dashAI launcher.
+
+    Parameters
+    ----------
+    candidate : str
+        Path to test.
+
+    Returns
+    -------
+    bool
+        True when running the path with ``-c`` executes Python code.
+    """
+    try:
+        result = subprocess.run(
+            [candidate, "-c", f"print('{_PYTHON_PROBE_MARKER}')"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=_PYTHON_PROBE_TIMEOUT_SECONDS,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return result.returncode == 0 and _PYTHON_PROBE_MARKER in (result.stdout or "")
+
+
+def _interpreter_candidates() -> List[str]:
+    """List the interpreters that could belong to the environment dashAI runs in.
+
+    ``sys.executable`` is right in every ordinary case, including a virtual
+    environment, so it comes first. Inside an AppImage it is the launcher rather
+    than a bare interpreter, and running it would re-enter dashAI, so there the
+    interpreter that sits next to ``sys.prefix`` is tried first instead.
 
     Returns
     -------
     List[str]
-        The ``[sys.executable, "-m", "pip"]`` prefix. In a frozen build
-        ``sys.executable`` is the dashAI launcher, which the bundled runtime
-        hook makes behave like ``python -m ...``.
+        Candidate paths, best first, without duplicates. Interpreters found on
+        PATH are deliberately excluded: they belong to some other environment.
+    """
+    version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    prefixed = []
+    for prefix in (sys.prefix, sys.base_prefix):
+        if os.name == "nt":
+            prefixed.append(os.path.join(prefix, "python.exe"))
+            prefixed.append(os.path.join(prefix, "Scripts", "python.exe"))
+        else:
+            prefixed.append(os.path.join(prefix, "bin", f"python{version}"))
+            prefixed.append(os.path.join(prefix, "bin", "python3"))
+
+    in_appimage = bool(os.environ.get("APPIMAGE") or os.environ.get("APPDIR"))
+    ordered = (
+        [*prefixed, sys.executable] if in_appimage else [sys.executable, *prefixed]
+    )
+    ordered.append(getattr(sys, "_base_executable", "") or "")
+
+    candidates = []
+    for candidate in ordered:
+        if candidate and candidate not in candidates:
+            candidates.append(candidate)
+    return candidates
+
+
+@functools.lru_cache(maxsize=1)
+def python_executable() -> str:
+    """Resolve an interpreter that can run pip for the dashAI environment.
+
+    Returns
+    -------
+    str
+        Path to the interpreter. In a PyInstaller bundle there is none, so the
+        launcher itself is returned: its runtime hook answers ``-m pip``.
 
     Raises
     ------
     PluginInstallError
-        If pip is not importable from the current interpreter, in which case
-        there is no way to reach the environment dashAI itself runs from.
+        If no candidate turned out to be a working interpreter.
+    """
+    if getattr(sys, "frozen", False):
+        return sys.executable
+
+    for candidate in _interpreter_candidates():
+        if _looks_like_python(candidate):
+            logger.debug("Using %s to run pip", candidate)
+            return candidate
+
+    raise PluginInstallError(
+        "Could not find the Python interpreter of the environment running "
+        f"dashAI, so plugins cannot be installed. Candidates tried: "
+        f"{', '.join(_interpreter_candidates())}."
+    )
+
+
+def pip_command() -> List[str]:
+    """Build the argv prefix that runs pip for the environment hosting dashAI.
+
+    Returns
+    -------
+    List[str]
+        A ``[<interpreter>, "-m", "pip"]`` prefix.
+
+    Raises
+    ------
+    PluginInstallError
+        If pip is not importable, or no interpreter could be resolved, in
+        which case there is no way to reach the environment dashAI runs from.
     """
     if importlib.util.find_spec("pip") is None:
         raise PluginInstallError(
@@ -88,7 +185,7 @@ def pip_command() -> List[str]:
             "cannot be installed. Install it with 'uv pip install pip' (or "
             "'python -m ensurepip') and try again."
         )
-    return [sys.executable, "-m", "pip"]
+    return [python_executable(), "-m", "pip"]
 
 
 def _pip_environment(directory: pathlib.Path) -> Dict[str, str]:
@@ -142,7 +239,9 @@ def _pip_output(result: subprocess.CompletedProcess) -> str:
     return "\n".join(part for part in (result.stdout, result.stderr) if part).strip()
 
 
-def _format_pip_error(result: subprocess.CompletedProcess) -> str:
+def _format_pip_error(
+    result: subprocess.CompletedProcess, command: Optional[List[str]] = None
+) -> str:
     """Extract a readable error message from a failed pip run.
 
     pip reports an unhandled crash as an ``ERROR: Exception:`` line followed by
@@ -154,6 +253,10 @@ def _format_pip_error(result: subprocess.CompletedProcess) -> str:
     ----------
     result : subprocess.CompletedProcess
         The finished pip process.
+    command : Optional[List[str]]
+        The argv that was run. It is named in the message when the process
+        wrote nothing at all, since silence means the command was probably not
+        pip to begin with.
 
     Returns
     -------
@@ -163,7 +266,10 @@ def _format_pip_error(result: subprocess.CompletedProcess) -> str:
     """
     output = _pip_output(result)
     if not output:
-        return f"pip exited with code {result.returncode}"
+        message = f"pip exited with code {result.returncode} without any output"
+        if command:
+            message += f" (command: {' '.join(command)})"
+        return message
 
     lines = output.splitlines()
     start = next((index for index, line in enumerate(lines) if "ERROR" in line), None)
@@ -207,11 +313,12 @@ def _run_pip(
     )
     if result.returncode != 0:
         logger.error(
-            "pip failed with exit code %s. Full output:\n%s",
+            "pip failed with exit code %s. Command: %s. Full output:\n%s",
             result.returncode,
+            " ".join(command),
             _pip_output(result),
         )
-        raise PluginInstallError(_format_pip_error(result))
+        raise PluginInstallError(_format_pip_error(result, command))
     return result
 
 
