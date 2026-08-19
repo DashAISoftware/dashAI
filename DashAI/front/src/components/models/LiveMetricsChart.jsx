@@ -309,10 +309,11 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
 
   // Save the evaluation strategy from the session
   const isCV = useMemo(() => {
-    if (!run.model_session_id) return false;
-    const session = getModelSessionById(run.model_session_id.toString());
-    return session.evaluation_strategy === "CrossValidationEvaluationStrategy";
-  }, [run.model_session_id]);
+    return (
+      modelSessionDetail?.evaluation_strategy ===
+      "CrossValidationEvaluationStrategy"
+    );
+  }, [modelSessionDetail]);
 
   return (
     <Box
