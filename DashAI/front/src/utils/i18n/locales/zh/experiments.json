@@ -28,10 +28,7 @@
     "taskRequirementsNotFound": "未找到 {{taskName}} 的任务需求",
     "trainSplitMustBeGreaterThanZero": "训练集比例必须大于零",
     "trainSplitMustHaveAtLeastOneRow": "训练集至少需要一行数据",
-    "foldsMustBeGreaterThanOne": "折数必须大于 1",
     "foldsMustBeLessThanDatasetSize": "折数必须小于或等于数据集中的样本数（{{datasetSize}}）",
-    "foldsMustBeAnInteger": "折数必须为整数",
-    "repeatsMustBeGreaterThanOne": "重复次数必须大于 1",
     "groupColumnMustBeSelected": "必须选择一个用于分组的列"
   },
   "label": {
@@ -48,7 +45,6 @@
     "datasetOutputColumnRequirements": "<0>输出列的类型必须为</0><1></1><2>，且基数应为</2><3>{{cardinality}}。</3>",
     "duration": "时长",
     "endTime": "结束时间",
-    "enterSeedValue": "输入随机种子值（默认值：42）",
     "experimentName": "实验名称",
     "experimentsModuleTitle": "实验模块",
     "metricToOptimize": "待优化指标",

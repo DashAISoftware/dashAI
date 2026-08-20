@@ -16,6 +16,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useModels } from "./ModelsContext";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
+import { hasPartition } from "../../utils/splitsPayload";
 
 function CreateSessionSteps({
   backHome,
@@ -164,15 +165,9 @@ function CreateSessionSteps({
         console.warn("Could not fetch metrics:", error);
       }
 
-      const hasTrain =
-        (newExp.splits.train !== undefined && newExp.splits.train !== 0) ||
-        evaluationStrategy === "CrossValidationEvaluationStrategy";
-      const hasValidation =
-        newExp.splits.validation !== undefined &&
-        newExp.splits.validation !== 0;
-      const hasTest =
-        (newExp.splits.test !== undefined && newExp.splits.test !== 0) ||
-        evaluationStrategy === "CrossValidationEvaluationStrategy";
+      const hasTrain = hasPartition(newExp.splits, "train");
+      const hasValidation = hasPartition(newExp.splits, "validation");
+      const hasTest = hasPartition(newExp.splits, "test");
 
       let effectiveName = sessionName;
       let response;

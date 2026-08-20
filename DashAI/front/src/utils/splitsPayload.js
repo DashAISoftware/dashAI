@@ -5,12 +5,21 @@ export const SPLIT_TYPES = {
   CV: "cv",
 };
 
+export const HOLDOUT_STRATEGY = "HoldoutEvaluationStrategy";
+export const CV_STRATEGY = "CrossValidationEvaluationStrategy";
+
 // Proportions describe a random split only. Manual and predefined splits carry
 // the row indexes instead, and the backend splitter picks its index branch when
 // no proportion is present, so sending both would be ambiguous.
 const PROPORTION_KEYS = ["train", "test", "validation"];
 
 const INDEX_MODES = [SPLIT_TYPES.MANUAL, SPLIT_TYPES.PREDEFINED];
+
+const PARTITION_INDEX_KEYS = {
+  train: "train_indexes",
+  validation: "val_indexes",
+  test: "test_indexes",
+};
 
 /**
  * Build the splits payload stored on a model session.
@@ -51,4 +60,45 @@ export const buildSplitsPayload = ({
   }
 
   return payload;
+};
+
+/**
+ * Resolve the registry name of the splitter a session configuration uses.
+ *
+ * Holdout has a single splitter; cross-validation picks one from the registry.
+ *
+ * @param {string} evaluationStrategy the selected evaluation strategy
+ * @param {object} cvType the splitter component selected for cross-validation
+ * @returns {string|null} the splitter name, or null when none is resolved yet
+ */
+export const resolveSplitterName = (evaluationStrategy, cvType) => {
+  if (evaluationStrategy === HOLDOUT_STRATEGY) return "HoldoutSplitter";
+  if (evaluationStrategy === CV_STRATEGY) return cvType?.name ?? null;
+  return null;
+};
+
+/**
+ * Report whether a splits payload gives a partition any rows.
+ *
+ * Cross-validation folds every row into train and test, and never builds a
+ * validation partition. Index modes carry row indexes, random splits carry
+ * proportions, and payloads written before the splits followed the splitter
+ * schema carry the indexes under the partition names.
+ *
+ * @param {object} splits a splits payload
+ * @param {string} partition one of "train", "validation", "test"
+ * @returns {boolean} true when the partition receives rows
+ */
+export const hasPartition = (splits, partition) => {
+  if (!splits) return false;
+  if (splits.splitType === SPLIT_TYPES.CV) return partition !== "validation";
+
+  const indexes = splits.splitted_indexes;
+  if (indexes) {
+    return (indexes[PARTITION_INDEX_KEYS[partition]] ?? []).length > 0;
+  }
+
+  const value = splits[partition];
+  if (Array.isArray(value)) return value.length > 0;
+  return typeof value === "number" && value !== 0;
 };

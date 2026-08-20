@@ -28,10 +28,7 @@
     "taskRequirementsNotFound": "No se encontraron requisitos de tarea para {{taskName}}",
     "trainSplitMustBeGreaterThanZero": "La división de entrenamiento debe ser mayor que cero",
     "trainSplitMustHaveAtLeastOneRow": "La división de entrenamiento debe tener al menos una fila",
-    "foldsMustBeGreaterThanOne": "El número de pliegues debe ser mayor que 1",
     "foldsMustBeLessThanDatasetSize": "El número de pliegues debe ser menor o igual al número de muestras en el dataset ({{datasetSize}})",
-    "foldsMustBeAnInteger": "El número de pliegues debe ser un entero",
-    "repeatsMustBeGreaterThanOne": "El número de repeticiones debe ser mayor que 1",
     "groupColumnMustBeSelected": "Debe seleccionarse una columna para agrupar"
   },
   "label": {
@@ -48,7 +45,6 @@
     "datasetOutputColumnRequirements": "<0>Las columnas de salida deben ser de los tipos</0><1></1><2>, y deben tener una cardinalidad de </2><3>{{cardinality}}.</3>",
     "duration": "Duración",
     "endTime": "Hora de Finalización",
-    "enterSeedValue": "Ingrese un valor de semilla (predeterminado: 42)",
     "experimentName": "Nombre del Experimento",
     "experimentsModuleTitle": "Módulo de Experimentos",
     "metricToOptimize": "Métrica a Optimizar",
