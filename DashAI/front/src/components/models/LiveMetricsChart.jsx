@@ -362,7 +362,9 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
           <ToggleButton value="TRAIN" sx={{ px: 1.5 }}>
             {t("models:label.train")}
           </ToggleButton>
-          {isCV && (
+          {/* Cross-validation folds every row into train and test, so those
+              runs have no validation partition to plot. */}
+          {!isCV && (
             <ToggleButton value="VALIDATION" sx={{ px: 1.5 }}>
               {t("models:label.validation")}
             </ToggleButton>
