@@ -15,7 +15,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 
-from .fold_splitter import FoldSplitter
+from .fold_splitter import FoldSplitter, sklearn_random_state
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -197,7 +197,7 @@ class GroupKFoldSplitter(FoldSplitter):
             gkf = GroupKFold(
                 n_splits=self.n_splits,
                 shuffle=self.shuffle,
-                random_state=self.random_state if self.shuffle else None,
+                random_state=sklearn_random_state(self.shuffle, self.random_state),
             )
             folds = list(gkf.split(indexes, groups=dataset_df_groups))
         except ValueError as e:
