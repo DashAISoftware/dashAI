@@ -4,6 +4,7 @@ from typing import Final
 from unittest.mock import Mock, patch
 
 import pytest
+import requests
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
@@ -288,3 +289,55 @@ def test_unregister_plugin_components():
     assert len(registry_components) == 1
     assert "DummyComponent1" not in registry_components
     assert "DummyComponent2" in registry_components
+
+
+def test_get_all_plugins_sets_a_request_timeout():
+    response_mock = Mock()
+    response_mock.status_code = 200
+    response_mock.json.return_value = {"projects": []}
+
+    with patch("requests.get", return_value=response_mock) as get_mock:
+        _get_all_plugins()
+
+    assert get_mock.call_args.kwargs.get("timeout") is not None
+
+
+def test_get_plugin_by_name_from_pypi_sets_a_request_timeout():
+    response_mock = Mock()
+    response_mock.json.return_value = {
+        "info": {
+            "author": "DashAI Team",
+            "version": "0.1.0",
+            "keywords": "",
+            "name": "dashai-test-package",
+        },
+    }
+
+    with patch("requests.get", return_value=response_mock) as get_mock:
+        get_plugin_by_name_from_pypi("dashai-test-package")
+
+    assert get_mock.call_args.kwargs.get("timeout") is not None
+
+
+def test_get_plugins_from_pypi_skips_a_plugin_when_pypi_does_not_answer():
+    """A network failure on one plugin must not abort the whole listing."""
+    with (
+        patch(
+            "DashAI.back.plugins.utils._get_all_plugins",
+            return_value=["dashai-first", "dashai-second"],
+        ),
+        patch(
+            "DashAI.back.plugins.utils._get_pypi_project_status",
+            return_value="active",
+        ),
+        patch(
+            "DashAI.back.plugins.utils.get_plugin_by_name_from_pypi",
+            side_effect=[
+                requests.exceptions.ReadTimeout("pypi did not answer"),
+                {"name": "dashai-second"},
+            ],
+        ),
+    ):
+        plugins = get_plugins_from_pypi()
+
+    assert plugins == [{"name": "dashai-second"}]

@@ -111,6 +111,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         level: LevelEnum,
         results: Dict[str, float],
         log_index: int = None,
+        fold_index: int = None,
+        inner_fold_index: int = None,
     ):
         """Persist computed metric values to the database.
 
@@ -216,6 +218,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                         name=name,
                         value=score,
                         step=log_index,
+                        fold_index=fold_index,
+                        inner_fold_index=inner_fold_index,
                     )
                     for name, score in results.items()
                 ]
@@ -231,6 +235,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         log_index: int = None,
         x_data: "DashAIDataset" = None,
         y_data: "DashAIDataset" = None,
+        fold_index: int = None,
+        inner_fold_index: int = None,
     ):
         """Calculate and save metrics for a given data split and level.
 
@@ -295,8 +301,73 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
 
         # Save to database
         self._save_metrics(
-            split=split, level=level, results=results, log_index=log_index
+            split=split,
+            level=level,
+            results=results,
+            log_index=log_index,
+            fold_index=fold_index,
+            inner_fold_index=inner_fold_index,
         )
+
+    # Create a function similar to calculate_metrics that returns the scores
+    # instead of saving them to the database, to be used in the CV evaluation loop
+    def compute_metrics(
+        self,
+        split: SplitEnum = SplitEnum.TEST,
+        x_data: "DashAIDataset" = None,
+        y_data: "DashAIDataset" = None,
+    ) -> Dict[str, float]:
+        """Calculate and return metric scores for a given data split.
+
+        Parameters
+        ----------
+        split : SplitEnum
+            The data split to evaluate (TRAIN, VALIDATION,
+            or TEST). Defaults to SplitEnum.VALIDATION.
+        x_data : DashAIDataset, optional
+            Input features. If None, the
+            dataset stored in the model for the given split is used.
+            Defaults to None.
+        y_data : DashAIDataset, optional
+            Target labels. If None, the
+            labels stored in the model for the given split are used.
+            Defaults to None.
+
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary mapping metric names to their computed scores.
+        """
+        # Get the appropriate metrics based on split
+        metrics_attr = f"{split.value}_metrics"
+        metrics = getattr(self, metrics_attr, None)
+
+        # If no metrics, return empty dict
+        if not metrics:
+            return {}
+
+        # Load data if not provided
+        if x_data is None or y_data is None:
+            if self.x_data is None or self.y_data is None:
+                return {}
+            x_data = self.x_data[split.value]
+            y_data = self.y_data[split.value]
+
+        # If data is empty after retrieval, return empty dict
+        if x_data is None or y_data is None:
+            return {}
+
+        # Make predictions and transform outputs
+        y_pred = self.predict(x_data)
+        y_transformed = self.prepare_output(y_data, is_fit=False)
+
+        # Calculate metric scores
+        results = {}
+        for metric in metrics:
+            score = metric.score(y_transformed, y_pred)
+            results[metric.__name__] = score
+
+        return results
 
     def prepare_dataset(
         self, dataset: "DashAIDataset", is_fit: bool = False

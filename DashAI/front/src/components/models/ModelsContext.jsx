@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { useDatasets } from "../../hooks/datasets/useDatasets";
 import { useFolders } from "../../hooks/datasets/useFolders";
 import { useSessions } from "../../hooks/models/useSessions";
+import { useModelComponents } from "../../hooks/models/useModelComponents";
 const ModelsContext = createContext(null);
 
 export const useModels = () => useContext(ModelsContext);
@@ -38,6 +39,8 @@ export function ModelsProvider({ children }) {
     replaceDatasets,
     startDatasetPolling,
     moveDatasetToFolder,
+    datasetRowCount,
+    setDatasetRowCount,
   } = useDatasets({ t });
 
   const {
@@ -98,6 +101,10 @@ export function ModelsProvider({ children }) {
     clearLastAddedRunId,
   } = useSessions({ t });
 
+  const { allModels, allMetrics, getModelsForTask } = useModelComponents({
+    language: i18n.language,
+  });
+
   const [selectedModel, setSelectedModel] = useState(null);
   const [configOpen, setConfigOpen] = useState(false);
   const [step, setStep] = useState(0);
@@ -109,6 +116,9 @@ export function ModelsProvider({ children }) {
   const [runDetailTab, setRunDetailTab] = useState(null);
   const [explainerRefreshTrigger, setExplainerRefreshTrigger] = useState(0);
   const [explainerToCreate, setExplainerToCreate] = useState(null);
+  const [selectedStatisticalTest, setSelectedStatisticalTest] = useState(null);
+  const [statisticalTestsModalOpen, setStatisticalTestsModalOpen] =
+    useState(false);
 
   const triggerExplainerRefresh = useCallback(() => {
     setExplainerRefreshTrigger((prev) => prev + 1);
@@ -133,6 +143,16 @@ export function ModelsProvider({ children }) {
   const closeConfig = useCallback(() => {
     setConfigOpen(false);
     setSelectedModel(null);
+  }, []);
+
+  const openStatisticalTest = useCallback((test) => {
+    setSelectedStatisticalTest(test);
+    setStatisticalTestsModalOpen(true);
+  }, []);
+
+  const closeStatisticalTest = useCallback(() => {
+    setSelectedStatisticalTest(null);
+    setStatisticalTestsModalOpen(false);
   }, []);
 
   useEffect(() => {
@@ -190,6 +210,9 @@ export function ModelsProvider({ children }) {
       setSelectedTask,
       setSelectedSessionId,
       setSelectedSession,
+      allModels,
+      allMetrics,
+      getModelsForTask,
       step,
       setStep,
       activeRunId,
@@ -214,6 +237,8 @@ export function ModelsProvider({ children }) {
       clearLastAddedRunId,
       datasetInfo,
       setDatasetInfo,
+      datasetRowCount,
+      setDatasetRowCount,
       datasetTab,
       setDatasetTab,
       sessionRightContent,
@@ -225,6 +250,10 @@ export function ModelsProvider({ children }) {
       explainerToCreate,
       openExplainerCreator,
       closeExplainerCreator,
+      selectedStatisticalTest,
+      statisticalTestsModalOpen,
+      openStatisticalTest,
+      closeStatisticalTest,
     }),
     [
       selectedModel,
@@ -261,6 +290,9 @@ export function ModelsProvider({ children }) {
       editSession,
       deleteSessionById,
       deleteSessionsByIds,
+      allModels,
+      allMetrics,
+      getModelsForTask,
       step,
       activeRunId,
       runs,
@@ -278,6 +310,7 @@ export function ModelsProvider({ children }) {
       lastAddedRunId,
       clearLastAddedRunId,
       datasetInfo,
+      datasetRowCount,
       datasetTab,
       sessionRightContent,
       runDetailTab,
@@ -286,6 +319,10 @@ export function ModelsProvider({ children }) {
       explainerToCreate,
       openExplainerCreator,
       closeExplainerCreator,
+      selectedStatisticalTest,
+      statisticalTestsModalOpen,
+      openStatisticalTest,
+      closeStatisticalTest,
     ],
   );
 

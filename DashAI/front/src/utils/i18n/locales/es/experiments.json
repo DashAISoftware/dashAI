@@ -27,7 +27,12 @@
     "splitsMustSumToOne": "Las divisiones deben sumar 1",
     "taskRequirementsNotFound": "No se encontraron requisitos de tarea para {{taskName}}",
     "trainSplitMustBeGreaterThanZero": "La división de entrenamiento debe ser mayor que cero",
-    "trainSplitMustHaveAtLeastOneRow": "La división de entrenamiento debe tener al menos una fila"
+    "trainSplitMustHaveAtLeastOneRow": "La división de entrenamiento debe tener al menos una fila",
+    "foldsMustBeGreaterThanOne": "El número de pliegues debe ser mayor que 1",
+    "foldsMustBeLessThanDatasetSize": "El número de pliegues debe ser menor o igual al número de muestras en el dataset ({{datasetSize}})",
+    "foldsMustBeAnInteger": "El número de pliegues debe ser un entero",
+    "repeatsMustBeGreaterThanOne": "El número de repeticiones debe ser mayor que 1",
+    "groupColumnMustBeSelected": "Debe seleccionarse una columna para agrupar"
   },
   "label": {
     "addModelsToExperiment": "Agregar Modelos a su Experimento",
@@ -74,6 +79,15 @@
     "selectDatasetTitle": "Seleccione un dataset para la tarea seleccionada",
     "splitType": "Tipo de partición",
     "selectHowToDivideDataset": "Seleccione cómo dividir el dataset en subconjuntos de entrenamiento, validación y prueba.",
+    "selectEvaluationStrategy": "Estrategia de evaluación",
+    "holdout": "Holdout",
+    "crossValidation": "Validación Cruzada",
+    "cvType": "Tipo de Validación Cruzada",
+    "numFolds": "Número de Pliegues (k)",
+    "numFoldsDescription": "Número de pliegues de validación cruzada. Más pliegues pueden mejorar la estabilidad de la evaluación, pero incrementan el tiempo de procesamiento. Debe ser un entero mayor que 1.",
+    "numRepeats": "Número de Repeticiones",
+    "numRepeatsDescription": "Número de veces que se repetirá el proceso de validación cruzada. Un valor más alto obtiene valores más precisos, pero requiere más tiempo de entrenamiento. Debe ser un entero mayor que 1.",
+    "groupColumn": "Columna para Agrupar",
     "selectInputOutputColumnsDescription": "Seleccione nombres de columnas de las listas.",
     "selectMetrics": "Seleccionar métricas",
     "selectModelFirst": "Seleccione un Modelo Primero",
@@ -87,7 +101,9 @@
     "useManualSplittingBySpecifyingRowIndexes": "Usar división manual especificando los índices de fila de cada subconjunto",
     "usePredefinedSplitsFromDataset": "Usar divisiones predefinidas del dataset",
     "usePredefinedSplitsFromDatasetNotAvailable": "Usar divisiones predefinidas del dataset (no disponible)",
-    "useRandomRowsBySpecifyingPortion": "Usar filas aleatorias especificando qué porción del dataset desea usar para cada subconjunto"
+    "useRandomRowsBySpecifyingPortion": "Usar filas aleatorias especificando qué porción del dataset desea usar para cada subconjunto",
+    "selectAColumn": "Seleccione una columna",
+    "groupColumnDescription": "Columna a utilizar para el agrupamiento. Las muestras pertenecientes al mismo grupo se mantendrán juntas en el mismo pliegue, evitando que un grupo aparezca simultáneamente en entrenamiento y prueba."
   },
   "message": {
     "confirmDeleteRun": "¿Está seguro de que desea eliminar esta ejecución? Esta acción no se puede deshacer.",

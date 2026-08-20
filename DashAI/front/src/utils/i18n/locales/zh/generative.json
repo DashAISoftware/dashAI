@@ -45,6 +45,7 @@
     "parameterChangeEvent": "参数已更新：<1></1>",
     "modelChangeEvent": "模型已更改：<1></1>",
     "modelNotDownloaded": "该会话的模型尚未下载。请先下载后再继续。",
+    "modelRequiresCredentials": "使用此模型前需要先验证 {{platform}}。",
     "parameterChangeHistory": "当前会话的参数变更历史",
     "searchSessions": "搜索会话",
     "selectGenerativeTask": "选择生成式任务以开始新会话",

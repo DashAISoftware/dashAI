@@ -1,4 +1,3 @@
-from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -146,19 +145,27 @@ class OptunaOptimizer(BaseOptimizer):
         self.sampler = sampler
         self.pruner = pruner
 
-    def optimize(self, model, input_dataset, output_dataset, parameters, metric, task):
+    def optimize(
+        self, model, input_dataset, output_dataset, parameters, metric, strategy
+    ):
         """
-        Optimization process
+        Run hyperparameter optimization.
 
-        Args:
-            model (class): class for the model from the current experiment
-            dataset (dict): dict with the data to train and validation
-            parameters (dict): dict with the information to create the search space
-            metric (class): class for the metric to optimize
-
-        Returns
-        -------
-            None
+        Parameters
+        ----------
+        model : object
+            Model instance to optimize.
+        input_dataset : dict
+            Dataset splits keyed by "train" and "validation".
+        output_dataset : dict
+            Label splits keyed by "train" and "validation".
+        parameters : list
+            Tuples of (obj, key, bounds, dtype) for each hyperparameter.
+        metric : dict
+            Dict with keys "class" (metric instance) and "metadata".
+        strategy : callable
+            Function that trains the model and returns a score based on the metric.
+            Depends on the specific evaluation strategy used.
         """
         import optuna
 
@@ -187,19 +194,10 @@ class OptunaOptimizer(BaseOptimizer):
                     raise ValueError(f"Unsupported parameter type for {key} : {dtype}")
                 setattr(obj, key, value)
 
-            self.model.train(self.input_dataset["train"], self.output_dataset["train"])
-            y_pred = self.model.predict(input_dataset["validation"])
-
-            # Calculate metric for train and validation data each trial
-            self.model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
-            self.model.calculate_metrics(
-                split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL
+            # Train the model and get the score from the strategy
+            score = strategy(
+                self.model, self.input_dataset, self.output_dataset, self.metric
             )
-
-            output_dataset_transformed = self.model.prepare_output(
-                output_dataset["validation"], is_fit=False
-            )
-            score = self.metric.score(output_dataset_transformed, y_pred)
 
             return score
 
@@ -216,7 +214,7 @@ class OptunaOptimizer(BaseOptimizer):
         for obj, key, _bounds, _dtype in self.parameters:
             if key in best_params:
                 setattr(obj, key, best_params[key])
-        self.model.train(self.input_dataset["train"], self.output_dataset["train"])
+
         self.study = study
 
     def get_model(self):

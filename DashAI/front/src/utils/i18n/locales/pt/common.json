@@ -1,6 +1,6 @@
 {
-  "hub": "Hub",
   "actions": "Ações",
+  "hub": "Hub",
   "add": "Adicionar",
   "addModel": "Adicionar Modelo",
   "addRow": "Adicionar Linha",
@@ -27,6 +27,7 @@
   "count": "Contagem",
   "created": "Criado",
   "createdAt": "Criado Em",
+  "date": "Data",
   "dashboard": "Painel de Controle",
   "dataset": "Conjunto de dados",
   "datasetNotFound": "Conjunto de dados não encontrado",
@@ -70,6 +71,7 @@
   "itemsToBeDeleted": "Os seguintes itens serão excluídos:",
   "json": "JSON",
   "lastModified": "Última Modificação",
+  "learnMore": "Saiba mais",
   "list": "Lista",
   "loading": "Carregando...",
   "loadingColumns": "Carregando colunas...",
@@ -102,6 +104,7 @@
   "plugins": "Plugins",
   "processing": "Processando...",
   "remove": "Excluir",
+  "refresh": "Atualizar",
   "required": "Obrigatório",
   "results": "Resultados",
   "rows": "Linhas",
@@ -138,6 +141,7 @@
   "table": "Tabela",
   "task": "Tarefa",
   "test": "Teste",
+  "tests": "Testes",
   "timeTaken": "Tempo",
   "to": "Até",
   "todo": "TODO...",
@@ -274,5 +278,9 @@
   "viewMore": "Ver mais",
   "viewLess": "Ver menos",
   "switchToDarkMode": "Mudar para modo escuro",
-  "switchToLightMode": "Mudar para modo claro"
+  "switchToLightMode": "Mudar para modo claro",
+  "metric": "Métrica",
+  "split": "Partição",
+  "execute": "Executar",
+  "executing": "Executando..."
 }

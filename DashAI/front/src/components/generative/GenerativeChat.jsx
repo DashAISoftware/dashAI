@@ -1,4 +1,4 @@
-import { Box, Divider, IconButton, Typography } from "@mui/material";
+import { Box, Button, Divider, IconButton, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import InfoIcon from "@mui/icons-material/Info";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
@@ -24,6 +24,12 @@ import ModelSwitcher from "./ModelSwitcher";
 import ComponentDownloadControl, {
   useComponentDownloadState,
 } from "../models/model/ComponentDownloadControl";
+import CredentialsDialog from "../credentials/CredentialsDialog";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
+import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import { useSnackbar } from "notistack";
 import { MediaInput } from "./MediaInput";
 import { Trans, useTranslation } from "react-i18next";
@@ -58,8 +64,9 @@ export default function GenerativeChat() {
   const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
   const [modelComponent, setModelComponent] = useState(null);
   const [modelsByName, setModelsByName] = useState({});
+  const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["generative"]);
+  const { t } = useTranslation(["generative", "credentials"]);
   const tourContext = useTourContext();
 
   const scrollToBottom = (force = false) => {
@@ -134,9 +141,22 @@ export default function GenerativeChat() {
   // present, and unblocks the moment the download actually finishes.
   const { downloaded: liveDownloaded, downloading: liveDownloading } =
     useComponentDownloadState(modelComponent || { name: modelName || "" });
-  const modelBlocked =
+  // A model is usable only when its required credentials are authenticated AND
+  // its weights are present. Credentials gate first: the download itself is
+  // blocked until they are satisfied (see ComponentDownloadControl).
+  const { statuses: credentialStatuses, loaded: credentialsLoaded } =
+    useCredentialStatuses();
+  const { locked: credentialsLocked, requiredPlatforms } =
+    getComponentCredentialState(
+      modelComponent || {},
+      credentialStatuses,
+      credentialsLoaded,
+    );
+  const downloadNeeded =
     Boolean(modelComponent?.metadata?.requires_download) &&
     !(liveDownloaded && !liveDownloading);
+  const modelBlocked =
+    Boolean(modelComponent) && (credentialsLocked || downloadNeeded);
 
   const getMessages = () => {
     getProcessesBySessionId(sessionId).then((response) => {
@@ -462,12 +482,27 @@ export default function GenerativeChat() {
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            {t("generative:label.modelNotDownloaded")}
+            {credentialsLocked
+              ? t("generative:label.modelRequiresCredentials", {
+                  platform: requiredPlatforms,
+                })
+              : t("generative:label.modelNotDownloaded")}
           </Typography>
-          <ComponentDownloadControl
-            component={modelComponent}
-            onStatusChange={() => refreshModelStatus()}
-          />
+          {credentialsLocked ? (
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<VpnKeyOutlinedIcon />}
+              onClick={() => setCredentialsDialogOpen(true)}
+            >
+              {t("credentials:manage")}
+            </Button>
+          ) : (
+            <ComponentDownloadControl
+              component={modelComponent}
+              onStatusChange={() => refreshModelStatus()}
+            />
+          )}
         </Box>
       ) : (
         <MediaInput
@@ -488,6 +523,11 @@ export default function GenerativeChat() {
           onClose={() => setSessionInfoVisible(false)}
         />
       )}
+
+      <CredentialsDialog
+        open={credentialsDialogOpen}
+        onClose={() => setCredentialsDialogOpen(false)}
+      />
     </Box>
   );
 }
