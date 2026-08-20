@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import {
@@ -11,18 +11,15 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
-  Button,
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
 } from "@mui/material";
 import { DescriptionBlock } from "../../shared/FormSchemaFieldCard";
 import FormSchema from "../../shared/FormSchema";
 import FormSchemaLayout from "../../shared/FormSchemaLayout";
 import { resolveSplitterName } from "../../../utils/splitsPayload";
 import { useTranslation } from "react-i18next";
-import { SplitscreenOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { getComponents } from "../../../api/component";
 import useSchema from "../../../hooks/useSchema";
@@ -134,9 +131,14 @@ function SplitDatasetRows({
     typeof folds === "number" && folds > (datasetInfo.total_rows ?? 0);
   // group_column is rendered by hand because its options are the dataset's own
   // columns, so the generated form never validates it.
-  const omittedFields = isIndexMode
-    ? ["group_column", "train", "test", "validation"]
-    : ["group_column"];
+  // Memoized because the generated form memoizes its field list on this array.
+  const omittedFields = useMemo(
+    () =>
+      isIndexMode
+        ? ["group_column", "train", "test", "validation"]
+        : ["group_column"],
+    [isIndexMode],
+  );
 
   const { defaultValues: splitterDefaults } = useSchema({
     modelName: splitterName,
