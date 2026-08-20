@@ -208,6 +208,203 @@ def test_create_run_with_cross_validation_strategy(client: TestClient, dataset_i
     assert delete_session_response.status_code == 204, delete_session_response.text
 
 
+def test_create_model_session_persists_converters(client: TestClient, dataset_id: int):
+    """`converters` set on a session must round-trip through create/get."""
+    converters = [
+        {
+            "converter": "StandardScaler",
+            "params": {"with_mean": True},
+            "columns": ["SepalLengthCm"],
+        }
+    ]
+    response = client.post(
+        "/api/v1/model-session/",
+        json={
+            "dataset_id": dataset_id,
+            "task_name": "TabularClassificationTask",
+            "name": "Converter Persistence Session",
+            "input_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
+            "splits": json.dumps(
+                {
+                    "train": 0.6,
+                    "test": 0.2,
+                    "validation": 0.2,
+                    "is_random": True,
+                    "has_changed": True,
+                    "seed": 42,
+                    "shuffle": True,
+                    "stratify": False,
+                    "splitType": "random",
+                    "splitter_name": "HoldoutSplitter",
+                }
+            ),
+            "converters": converters,
+        },
+    )
+    assert response.status_code == 201, response.text
+    session = response.json()
+    assert session["converters"] == converters
+
+    get_response = client.get(f"/api/v1/model-session/{session['id']}")
+    assert get_response.status_code == 200, get_response.text
+    assert get_response.json()["converters"] == converters
+
+    delete_response = client.delete(f"/api/v1/model-session/{session['id']}")
+    assert delete_response.status_code == 204, delete_response.text
+
+
+def _create_and_run_session_with_converter(
+    client: TestClient,
+    dataset_id: int,
+    evaluation_strategy: str,
+    splits: dict,
+    name: str,
+):
+    """Shared helper: create a session with a fit-dependent converter
+    (StandardScaler), run it, and return (session, run_id, job_status)."""
+    create_session_response = client.post(
+        "/api/v1/model-session/",
+        json={
+            "dataset_id": dataset_id,
+            "task_name": "TabularClassificationTask",
+            "name": name,
+            "input_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": evaluation_strategy,
+            "splits": json.dumps(splits),
+            "converters": [
+                {"converter": "StandardScaler", "params": {}, "columns": []}
+            ],
+        },
+    )
+    assert create_session_response.status_code == 201, create_session_response.text
+    session = create_session_response.json()
+
+    create_run_response = client.post(
+        "/api/v1/run/",
+        json={
+            "model_session_id": session["id"],
+            "model_name": "KNeighborsClassifier",
+            "name": f"{name} Run",
+            "parameters": {
+                "n_neighbors": 5,
+                "weights": "uniform",
+                "algorithm": "auto",
+            },
+            "optimizer_name": "",
+            "optimizer_parameters": {
+                "n_trials": 10,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            "goal_metric": "",
+            "description": f"{name} run",
+            "plot_history_path": "path/to/history.png",
+            "plot_slice_path": "path/to/slice.png",
+            "plot_contour_path": "path/to/contour.png",
+            "plot_importance_path": "path/to/importance.png",
+        },
+    )
+    assert create_run_response.status_code == 201, create_run_response.text
+    run_id = create_run_response.json()["id"]
+
+    job_response = client.post(
+        "/api/v1/job/",
+        data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
+    )
+    assert job_response.status_code == 201, job_response.text
+    job_id = job_response.json()["id"]
+
+    status_response = client.get(f"/api/v1/job/status/{job_id}")
+    assert status_response.status_code == 200, status_response.text
+
+    return session, run_id, status_response.json()
+
+
+def test_run_with_session_converter_holdout_finishes(
+    client: TestClient, dataset_id: int
+):
+    """A holdout session with a fit-dependent converter should train and
+    finish, confirming the fit-on-train mechanism is wired into ModelJob."""
+    session, run_id, job_status = _create_and_run_session_with_converter(
+        client,
+        dataset_id,
+        evaluation_strategy="HoldoutEvaluationStrategy",
+        splits={
+            "train": 0.6,
+            "test": 0.2,
+            "validation": 0.2,
+            "is_random": True,
+            "has_changed": True,
+            "seed": 42,
+            "shuffle": True,
+            "stratify": False,
+            "splitType": "random",
+            "splitter_name": "HoldoutSplitter",
+        },
+        name="Converter Holdout Session",
+    )
+    assert job_status["status"] == "finished", job_status
+
+    run_response = client.get(f"/api/v1/run/{run_id}")
+    assert run_response.status_code == 200, run_response.text
+    assert run_response.json()["status"] == 3
+
+    client.delete(f"/api/v1/model-session/{session['id']}")
+
+
+def test_run_with_session_converter_cross_validation_finishes(
+    client: TestClient, dataset_id: int
+):
+    """A cross-validation session with a fit-dependent converter should
+    train and finish: each fold (and the final full_dataset fold) fits its
+    own converter independently, with no error along the way."""
+    session, run_id, job_status = _create_and_run_session_with_converter(
+        client,
+        dataset_id,
+        evaluation_strategy="CrossValidationEvaluationStrategy",
+        splits={
+            "train": 0.5,
+            "test": 0.2,
+            "validation": 0.3,
+            "is_random": True,
+            "has_changed": True,
+            "seed": 42,
+            "shuffle": False,
+            "stratify": False,
+            "splitType": "random",
+            "splitter_name": "KFoldSplitter",
+            "n_splits": 3,
+        },
+        name="Converter CV Session",
+    )
+    assert job_status["status"] == "finished", job_status
+
+    run_response = client.get(f"/api/v1/run/{run_id}")
+    assert run_response.status_code == 200, run_response.text
+    assert run_response.json()["status"] == 3
+
+    client.delete(f"/api/v1/model-session/{session['id']}")
+
+
 def test_get_run(client: TestClient):
     response = client.get("/api/v1/run/1")
     assert response.status_code == 200

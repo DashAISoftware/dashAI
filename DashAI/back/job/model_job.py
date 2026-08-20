@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, List
 from kink import inject
 from sqlalchemy import exc
 
+from DashAI.back.converters.execution import apply_session_converters
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
@@ -136,6 +137,23 @@ class ModelJob(BaseJob):
                     log.exception(e)
                     raise JobError(
                         f"Error splitting the dataset for run {run_id}: {e}",
+                    ) from e
+
+                try:
+                    # Apply session-level converters: each converter is fit
+                    # only on the train partition of each split/fold (never
+                    # on validation/test), so no fold or split partition
+                    # leaks into the parameters a converter learns.
+                    model_session: ModelSession = preparation_results["model_session"]
+                    if model_session.converters:
+                        self.report_progress(0.15, "Applying converters")
+                        x, y = apply_session_converters(
+                            x, y, model_session.converters, component_registry
+                        )
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Error applying converters for run {run_id}: {e}",
                     ) from e
 
                 try:
@@ -454,4 +472,5 @@ class ModelJob(BaseJob):
             "Y": Y,
             "splitter": splitter,
             "evaluation_strategy": evaluation_strategy,
+            "model_session": model_session,
         }
