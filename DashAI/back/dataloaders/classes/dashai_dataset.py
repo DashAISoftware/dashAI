@@ -1601,10 +1601,13 @@ def prepare_for_model_session(
         The unified dataset to split and preprocess.
     splits : dict
         Split configuration with at least a ``"splitType"`` key
-        (``"manual"``, ``"predefined"``, or ``"random"``). For manual/
-        predefined splits the dict must also contain ``"train"``, ``"test"``,
-        and ``"validation"`` index lists; for random splits it must contain
-        float proportions summing to 1.0.
+        (``"manual"``, ``"predefined"``, or ``"random"``). Manual and
+        predefined splits carry their row indexes in ``"splitted_indexes"``
+        (``"train_indexes"``, ``"test_indexes"``, ``"val_indexes"``), or, for
+        sessions created before the splits payload followed the splitter
+        schema, in ``"train"``, ``"test"`` and ``"validation"`` index lists.
+        Random splits carry float proportions summing to 1.0 and an optional
+        ``"random_state"`` (``"seed"`` in older sessions).
     output_columns : list of str
         Names of the columns to use as model targets.
 
@@ -1617,16 +1620,24 @@ def prepare_for_model_session(
 
     splitType = splits.get("splitType")
     if splitType == "manual" or splitType == "predefined":
-        splits_index = splits
+        # The indexes travel under "splitted_indexes"; sessions created before
+        # the splits payload followed the splitter schema stored them under the
+        # partition names instead.
+        splitted_indexes = splits.get("splitted_indexes") or {}
+        if splitted_indexes:
+            train_indexes = splitted_indexes.get("train_indexes", [])
+            test_indexes = splitted_indexes.get("test_indexes", [])
+            val_indexes = splitted_indexes.get("val_indexes", [])
+        else:
+            train_indexes = splits["train"]
+            test_indexes = splits["test"]
+            val_indexes = splits["validation"]
         prepared_dataset = split_dataset(
             dataset,
-            train_indexes=splits_index["train"],
-            test_indexes=splits_index["test"],
-            val_indexes=splits_index["validation"],
+            train_indexes=train_indexes,
+            test_indexes=test_indexes,
+            val_indexes=val_indexes,
         )
-        train_indexes = splits_index["train"]
-        test_indexes = splits_index["test"]
-        val_indexes = splits_index["validation"]
     else:
         n = len(dataset)
         labels = None
@@ -1658,7 +1669,7 @@ def prepare_for_model_session(
             float(splits["test"]),
             float(splits["validation"]),
             shuffle=splits.get("shuffle", False),
-            seed=splits.get("seed"),
+            seed=splits.get("random_state", splits.get("seed")),
             stratify=splits.get("stratify", False),
             labels=labels,
         )
