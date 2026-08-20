@@ -87,6 +87,38 @@ def test_accepts_a_manual_split_without_proportions(
     assert response.status_code == 201, response.text
 
 
+def test_accepts_a_cross_validation_payload(client: TestClient, dataset_1: Dataset):
+    splits = {
+        "splitter_name": "RepeatedKFoldSplitter",
+        "splitType": "cv",
+        "n_splits": 4,
+        "n_repeats": 3,
+        "random_state": 7,
+    }
+    body = _session_body(splits, dataset_1, "repeated cv session")
+    body["evaluation_strategy"] = "CrossValidationEvaluationStrategy"
+
+    response = client.post("/api/v1/model-session/", json=body)
+    assert response.status_code == 201, response.text
+
+
+def test_rejects_more_folds_than_the_schema_allows(
+    client: TestClient, dataset_1: Dataset
+):
+    splits = {
+        "splitter_name": "KFoldSplitter",
+        "splitType": "cv",
+        "n_splits": 50,
+        "shuffle": True,
+        "random_state": 42,
+    }
+    body = _session_body(splits, dataset_1, "too many folds")
+    body["evaluation_strategy"] = "CrossValidationEvaluationStrategy"
+
+    response = client.post("/api/v1/model-session/", json=body)
+    assert response.status_code == 422, response.text
+
+
 def test_accepts_a_legacy_seed_payload(client: TestClient, dataset_1: Dataset):
     splits = {
         "splitter_name": "HoldoutSplitter",
