@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
+from pydantic import model_validator
+
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
     float_field,
     int_field,
-    none_type,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 class HoldoutSplitterSchema(BaseSchema):
     train: schema_field(
-        none_type(float_field(ge=0, le=1)),
+        float_field(ge=0, le=1),
         placeholder=0.6,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the training partition.",
@@ -37,7 +38,7 @@ class HoldoutSplitterSchema(BaseSchema):
         ),
     )  # type: ignore
     test: schema_field(
-        none_type(float_field(ge=0, le=1)),
+        float_field(ge=0, le=1),
         placeholder=0.2,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the test partition.",
@@ -51,7 +52,7 @@ class HoldoutSplitterSchema(BaseSchema):
         ),
     )  # type: ignore
     validation: schema_field(
-        none_type(float_field(ge=0, le=1)),
+        float_field(ge=0, le=1),
         placeholder=0.2,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the validation partition.",
@@ -127,6 +128,30 @@ class HoldoutSplitterSchema(BaseSchema):
             zh="随机状态",
         ),
     )  # type: ignore
+
+    @model_validator(mode="after")
+    def check_partitions(self):
+        """Validate that the three partitions describe the whole dataset.
+
+        Returns
+        -------
+        HoldoutSplitterSchema
+            The validated schema instance.
+
+        Raises
+        ------
+        ValueError
+            If the proportions do not sum to one, or if the training partition
+            is empty.
+        """
+        total = self.train + self.test + self.validation
+        if abs(total - 1) > 1e-6:
+            raise ValueError(
+                f"train, test and validation proportions must sum to 1, got {total}."
+            )
+        if self.train <= 0:
+            raise ValueError("The train proportion must be greater than 0.")
+        return self
 
 
 class HoldoutSplitter(BaseSplitter):
