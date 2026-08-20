@@ -16,14 +16,14 @@ if TYPE_CHECKING:
 
 class RepeatedStratifiedKFoldSplitterSchema(BaseSchema):
     n_splits: schema_field(
-        int_field(ge=2),
+        int_field(ge=2, le=20),
         placeholder=5,
         description=MultilingualString(
-            en="Number of folds. Must be an integer greater than or equal to 2.",
-            es="Número de particiones. Debe ser un entero mayor o igual a 2.",
-            pt="Número de partições. Deve ser um inteiro maior ou igual a 2.",
-            de="Anzahl der Folds. Muss eine ganze Zahl größer oder gleich 2 sein.",
-            zh="折数，必须为大于或等于2的整数。",
+            en="Number of folds. Must be an integer between 2 and 20.",
+            es="Número de particiones. Debe ser un entero entre 2 y 20.",
+            pt="Número de partições. Deve ser um inteiro entre 2 e 20.",
+            de="Anzahl der Folds. Muss eine ganze Zahl zwischen 2 und 20 sein.",
+            zh="折数，必须为2到20之间的整数。",
         ),
         alias=MultilingualString(
             en="Number of folds",
@@ -34,26 +34,26 @@ class RepeatedStratifiedKFoldSplitterSchema(BaseSchema):
         ),
     )  # type: ignore
     n_repeats: schema_field(
-        int_field(ge=2),
+        int_field(ge=2, le=10),
         placeholder=2,
         description=MultilingualString(
             en=(
                 "Number of times the Stratified K-Fold procedure is repeated. "
-                "Must be an integer greater than or equal to 2."
+                "Must be an integer between 2 and 10."
             ),
             es=(
                 "Número de veces que se repite el procedimiento K-Fold "
-                "estratificado. Debe ser un entero mayor o igual a 2."
+                "estratificado. Debe ser un entero entre 2 y 10."
             ),
             pt=(
                 "Número de vezes que o procedimento K-Fold estratificado é "
-                "repetido. Deve ser um inteiro maior ou igual a 2."
+                "repetido. Deve ser um inteiro entre 2 e 10."
             ),
             de=(
                 "Anzahl der Wiederholungen des stratifizierten K-Fold-"
-                "Verfahrens. Muss eine ganze Zahl größer oder gleich 2 sein."
+                "Verfahrens. Muss eine ganze Zahl zwischen 2 und 10 sein."
             ),
-            zh="分层K折过程重复的次数，必须为大于或等于2的整数。",
+            zh="分层K折过程重复的次数，必须为2到10之间的整数。",
         ),
         alias=MultilingualString(
             en="Number of repeats",

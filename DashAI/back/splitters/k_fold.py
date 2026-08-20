@@ -21,14 +21,14 @@ if TYPE_CHECKING:
 
 class KFoldSplitterSchema(BaseSchema):
     n_splits: schema_field(
-        int_field(ge=2),
+        int_field(ge=2, le=20),
         placeholder=5,
         description=MultilingualString(
-            en="Number of folds. Must be an integer greater than or equal to 2.",
-            es="Número de particiones. Debe ser un entero mayor o igual a 2.",
-            pt="Número de partições. Deve ser um inteiro maior ou igual a 2.",
-            de="Anzahl der Folds. Muss eine ganze Zahl größer oder gleich 2 sein.",
-            zh="折数，必须为大于或等于2的整数。",
+            en="Number of folds. Must be an integer between 2 and 20.",
+            es="Número de particiones. Debe ser un entero entre 2 y 20.",
+            pt="Número de partições. Deve ser um inteiro entre 2 e 20.",
+            de="Anzahl der Folds. Muss eine ganze Zahl zwischen 2 und 20 sein.",
+            zh="折数，必须为2到20之间的整数。",
         ),
         alias=MultilingualString(
             en="Number of folds",
