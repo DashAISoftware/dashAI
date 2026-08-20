@@ -1,10 +1,6 @@
 """HuggingFace embedding converter with lazy-loaded dependencies."""
 
-from typing import TYPE_CHECKING, List
-
-import numpy as np
-import torch
-from transformers import AutoModel, AutoTokenizer
+from typing import TYPE_CHECKING
 
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
@@ -182,40 +178,11 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
     def _load_model(self):
         """Load the embedding model and tokenizer."""
+        from transformers import AutoModel, AutoTokenizer
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModel.from_pretrained(self.model_name).to(self.device)
         self.model.eval()
-
-    def _encode_texts(self, texts: List[str]) -> List[np.ndarray]:
-        """Encode a list of texts into embeddings."""
-        # Tokenize
-        encoded = self.tokenizer(
-            texts,
-            padding=True,
-            truncation=True,
-            max_length=self.max_length,
-            return_tensors="pt",
-        )
-
-        # Move to device
-        encoded = {k: v.to(self.device) for k, v in encoded.items()}
-
-        # Get embeddings
-        with torch.no_grad():
-            outputs = self.model(**encoded)
-            hidden_states = outputs.last_hidden_state
-
-            # Apply pooling strategy
-            if self.pooling_strategy == "mean":
-                embeddings = torch.mean(hidden_states, dim=1)
-            elif self.pooling_strategy == "cls":
-                embeddings = hidden_states[:, 0]
-            else:  # max pooling
-                embeddings = torch.max(hidden_states, dim=1)[0]
-
-        embeddings_np = embeddings.cpu().numpy()
-        return embeddings_np
 
     def _process_batch(self, batch: "DashAIDataset") -> "DashAIDataset":
         """Encode a batch of text columns into dense embedding vectors.
@@ -236,6 +203,7 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             dense embedding vector column(s).
         """
         import pyarrow as pa
+        import torch
 
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
@@ -245,7 +213,32 @@ class Embedding(AdvancedPreprocessingConverter, HuggingFaceWrapper):
             # Get text data from dataset
             texts = [row[column] if row[column] is not None else "" for row in batch]
 
-            embeddings_np = self._encode_texts(texts)
+            # Tokenize
+            encoded = self.tokenizer(
+                texts,
+                padding=True,
+                truncation=True,
+                max_length=self.max_length,
+                return_tensors="pt",
+            )
+
+            # Move to device
+            encoded = {k: v.to(self.device) for k, v in encoded.items()}
+
+            # Get embeddings
+            with torch.no_grad():
+                outputs = self.model(**encoded)
+                hidden_states = outputs.last_hidden_state
+
+                # Apply pooling strategy
+                if self.pooling_strategy == "mean":
+                    embeddings = torch.mean(hidden_states, dim=1)
+                elif self.pooling_strategy == "cls":
+                    embeddings = hidden_states[:, 0]
+                else:  # max pooling
+                    embeddings = torch.max(hidden_states, dim=1)[0]
+
+            embeddings_np = embeddings.cpu().numpy()
 
             # Append one column per embedding dimension
             for i in range(embeddings_np.shape[1]):

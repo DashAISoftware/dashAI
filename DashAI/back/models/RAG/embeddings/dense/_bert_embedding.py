@@ -1,8 +1,5 @@
 from typing import Dict
 
-import torch
-from transformers import AutoModel, AutoTokenizer
-
 from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
     OverflowHandler,
 )
@@ -62,6 +59,8 @@ class _BERTEmbedding(OverflowHandler):
 
     def load(self):
         """Download tokenizer and model, enabling hidden states for concat strategies."""  # noqa: E501
+        from transformers import AutoModel, AutoTokenizer
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModel.from_pretrained(
             self.model_name,
@@ -82,6 +81,8 @@ class _BERTEmbedding(OverflowHandler):
         Raises:
             ValueError: If the pooling strategy is unknown.
         """
+        import torch
+
         if self.pooling_strategy == CLS:
             return model_output[0][:, 0]
         if self.pooling_strategy == MAX:

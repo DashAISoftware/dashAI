@@ -2,7 +2,6 @@ import gc
 import logging
 from typing import TYPE_CHECKING, Any
 
-import torch
 from kink import di, inject
 from sqlalchemy import exc
 
@@ -265,6 +264,8 @@ class RAGJob(BaseJob):
             raise JobError("Error processing and saving RAG generation output.") from e
 
         finally:
+            import torch
+
             if model:
                 del model
             if torch.cuda.is_available():

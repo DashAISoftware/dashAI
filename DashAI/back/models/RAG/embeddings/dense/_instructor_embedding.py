@@ -1,7 +1,6 @@
 from typing import List
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
 
 from DashAI.back.models.RAG.embeddings.dense.huggingface_embedding import (
     HuggingFaceEmbedding,
@@ -42,6 +41,8 @@ class _InstructorEmbedding(HuggingFaceEmbedding):
 
     def load(self):
         """Instantiate the INSTRUCTOR model via ``SentenceTransformer``."""
+        from sentence_transformers import SentenceTransformer
+
         self.model = SentenceTransformer(self.model_name, device=self.device)
 
     def batch_encode(self, texts: List[str]) -> np.ndarray:

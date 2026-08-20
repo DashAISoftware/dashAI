@@ -1,7 +1,6 @@
 from typing import List
 
 import numpy as np
-import torch.nn.functional as functional
 
 from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
     OverflowHandler,
@@ -50,6 +49,8 @@ class _E5Embedding(OverflowHandler):
         Returns:
             Pooled and normalised tensor of shape ``(batch, embedding_dim)``.
         """
+        import torch.nn.functional as functional
+
         last_hidden = model_output[0]
         mask = attention_mask[..., None].bool()
         last_hidden = last_hidden.masked_fill(~mask, 0.0)

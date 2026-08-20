@@ -24,12 +24,21 @@ import { Trans } from "react-i18next";
 import { useModels } from "../ModelsContext";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
- * and the splits for training, validation and testing
+ * and the splits for training, validation and testing.
  * @param {object} newExp object that contains the Experiment Modal state
  * @param {function} setNewExp updates the Eperimento Modal state (newExp)
  * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal
+ * @param {string} evaluationStrategy the evaluation strategy selected for the experiment, either holdout or cross-validation
+ * @param {function} setEvaluationStrategy function to update the evaluation strategy in the parent component (CreateSessionSteps)
  */
-function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
+function PrepareDatasetStep({
+  newExp,
+  setNewExp,
+  setNextEnabled,
+  dataset,
+  evaluationStrategy,
+  setEvaluationStrategy,
+}) {
   const { setSessionRightContent } = useModels();
   const [datasetInfo, setDatasetInfo] = useState({});
   const [datasetTypes, setDatasetTypes] = useState({});
@@ -60,6 +69,12 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
   const [shuffle, setShuffle] = useState(true);
   const [stratify, setStratify] = useState(false);
   const [seed, setSeed] = useState(42);
+
+  // Cross-Validation configuration states
+  const [cvType, setCvType] = useState(null);
+  const [numFolds, setNumFolds] = useState(5);
+  const [numRepeats, setNumRepeats] = useState(2);
+  const [groupColumn, setGroupColumn] = useState("");
 
   const defaultParitionsIndex = {
     train: [],
@@ -240,27 +255,46 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
       ...newExp,
       input_columns: inputColumnNames,
       output_columns: outputColumnNames,
+      evaluation_strategy: evaluationStrategy,
     };
 
-    if (splitType === SPLIT_TYPES.MANUAL) {
+    if (evaluationStrategy === "HoldoutEvaluationStrategy") {
+      if (splitType === SPLIT_TYPES.MANUAL) {
+        updatedExpData.splits = {
+          ...rowsPartitionsIndex,
+          splitter_name: "HoldoutSplitter",
+          splitType: splitType,
+        };
+      } else if (splitType === SPLIT_TYPES.RANDOM) {
+        updatedExpData.splits = {
+          ...rowsPartitionsPercentage,
+          shuffle: shuffle,
+          stratify: stratify,
+          seed: seed === "" || seed == null ? 42 : Number(seed),
+          splitter_name: "HoldoutSplitter",
+          splitType: splitType,
+        };
+      } else if (splitType === SPLIT_TYPES.PREDEFINED) {
+        updatedExpData.splits = {
+          ...datasetPartitionsIndex,
+          splitter_name: "HoldoutSplitter",
+          splitType: splitType,
+        };
+      }
+    } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
+      const cvSchemaProperties = cvType.schema?.properties || {};
       updatedExpData.splits = {
-        ...rowsPartitionsIndex,
-        splitType: splitType,
-      };
-    } else if (splitType === SPLIT_TYPES.RANDOM) {
-      updatedExpData.splits = {
-        ...rowsPartitionsPercentage,
-        shuffle: shuffle,
-        stratify: stratify,
+        splitter_name: cvType.name,
         seed: seed === "" || seed == null ? 42 : Number(seed),
-        splitType: splitType,
-      };
-    } else if (splitType === SPLIT_TYPES.PREDEFINED) {
-      updatedExpData.splits = {
-        ...datasetPartitionsIndex,
-        splitType: splitType,
+        ...(cvSchemaProperties.n_splits ? { n_splits: numFolds } : {}),
+        ...(cvSchemaProperties.n_repeats ? { n_repeats: numRepeats } : {}),
+        ...(cvSchemaProperties.group_column
+          ? { group_column: groupColumn }
+          : {}),
+        ...(cvSchemaProperties.shuffle ? { shuffle: shuffle } : {}),
       };
     }
+
     setNewExp(updatedExpData);
   };
 
@@ -311,6 +345,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
     seed,
     inputColumnNames,
     outputColumnNames,
+    cvType,
+    numFolds,
+    numRepeats,
+    groupColumn,
+    evaluationStrategy,
   ]);
 
   useEffect(() => {
@@ -355,6 +394,18 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
         setStratify={setStratify}
         seed={seed}
         setSeed={setSeed}
+        evaluationStrategy={evaluationStrategy}
+        setEvaluationStrategy={setEvaluationStrategy}
+        cvType={cvType}
+        setCvType={setCvType}
+        numFolds={numFolds}
+        setNumFolds={setNumFolds}
+        numRepeats={numRepeats}
+        setNumRepeats={setNumRepeats}
+        groupColumn={groupColumn}
+        setGroupColumn={setGroupColumn}
+        inputColumnNames={inputColumnNames}
+        taskName={newExp.task_name}
       />,
     );
     return () => setSessionRightContent(null);
@@ -367,6 +418,12 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
     shuffle,
     stratify,
     seed,
+    evaluationStrategy,
+    cvType,
+    numFolds,
+    numRepeats,
+    groupColumn,
+    inputColumnNames,
   ]);
 
   const renderTypesAsChips = (typesList) => {

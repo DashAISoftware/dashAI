@@ -64,7 +64,7 @@ def add_plugin_to_db(
                     author=raw_plugin.author,
                     verified=raw_plugin.verified,
                     installed_version=raw_plugin.installed_version,
-                    latest_version=raw_plugin.lastest_version,
+                    lastest_version=raw_plugin.lastest_version,
                     summary=raw_plugin.summary,
                     description=raw_plugin.description,
                     description_content_type=raw_plugin.description_content_type,

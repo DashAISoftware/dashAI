@@ -18,6 +18,7 @@ function ResultsTabMetrics({ runData }) {
       <ResultsTabMetricsToggle
         displaySet={displaySet}
         setDisplaySet={setDisplaySet}
+        evaluationStrategy={runData.evaluation_strategy}
       />
 
       {/* metrics */}
@@ -32,6 +33,7 @@ ResultsTabMetrics.propTypes = {
     train_metrics: PropTypes.object,
     test_metrics: PropTypes.object,
     validation_metrics: PropTypes.object,
+    evaluation_strategy: PropTypes.string,
   }),
   setUpdateDataFlag: PropTypes.func.isRequired,
 };

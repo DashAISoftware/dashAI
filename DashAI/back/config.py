@@ -25,4 +25,5 @@ class DefaultSettings(BaseSettings):
     RAG_PATH: str = "RAG"
     NOTEBOOK_PATH: str = "notebook"
     DATAFILE_PATH: str = "datafiles"
+    CREDENTIALS_KEY_PATH: str = ".credentials_key"
     COMPONENT_PATH: str = "components"

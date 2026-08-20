@@ -1,8 +1,6 @@
 from typing import List
 
-import fasttext
 import numpy as np
-from huggingface_hub import hf_hub_download
 
 from DashAI.back.core.schema_fields import enum_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -71,6 +69,9 @@ class FastTextEmbedding(DenseEmbedding):
 
     def load(self):
         """Download and load the FastText binary model from the HuggingFace Hub."""
+        import fasttext
+        from huggingface_hub import hf_hub_download
+
         if self.model is not None:
             return
         model_path = hf_hub_download(repo_id=self.model_name, filename="model.bin")

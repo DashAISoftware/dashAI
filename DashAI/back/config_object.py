@@ -1,3 +1,5 @@
+from kink import di
+
 from DashAI.back.core.schema_fields.base_schema import (
     BaseSchema,
     replace_defs_in_schema,
@@ -56,3 +58,24 @@ class ConfigObject:
             print(e.json())
             raise e
         return fill_objects(schema_instance)
+
+    def get_credential(self, name: str):
+        """Resolve a registered credential component by name.
+
+        The returned instance exposes ``get_key``, ``is_authenticated`` and
+        ``apply``. When nothing is stored, ``get_key`` returns None and
+        ``apply`` is a no-op, so optional credentials degrade gracefully.
+
+        Parameters
+        ----------
+        name : str
+            Credential component class name (e.g. "HuggingFaceCredential").
+
+        Returns
+        -------
+        BaseCredential
+            An instance of the requested credential component.
+        """
+        registry = di["component_registry"]
+        credential_class = registry[name]["class"]
+        return credential_class()

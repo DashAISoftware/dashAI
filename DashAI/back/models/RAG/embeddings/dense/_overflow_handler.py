@@ -2,7 +2,6 @@ from abc import abstractmethod
 from typing import List
 
 import numpy as np
-import torch
 
 from DashAI.back.models.RAG.embeddings.dense.huggingface_embedding import (
     HuggingFaceEmbedding,
@@ -66,6 +65,8 @@ class OverflowHandler(HuggingFaceEmbedding):
         Raises:
             ValueError: If ``overflow_strategy`` is not supported.
         """
+        import torch
+
         if self.overflow_strategy not in [TRUNCATE, AGGREGATE]:
             raise ValueError(
                 f"Invalid overflow strategy: {self.overflow_strategy}. "

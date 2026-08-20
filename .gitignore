@@ -164,6 +164,10 @@ cython_debug/
 
 # Temp test files
 tmp/
+None/
+csv
+json
+iris
 
 # Vscode config files
 .vscode
@@ -222,4 +226,4 @@ None/json/**
 # HuggingFace datasets cache generada al correr los tests
 tests/**/csv/default-*/
 tests/**/json/default-*/
-tests/**/tests_back_models_*.lock
+tests/**/tests_back_*.lock

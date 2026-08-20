@@ -2,8 +2,6 @@ from abc import abstractmethod
 from typing import List
 
 import numpy as np
-import torch
-from transformers import AutoModel, AutoTokenizer
 
 from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
@@ -53,6 +51,8 @@ class HuggingFaceEmbedding(DenseEmbedding):
 
     def load(self):
         """Download the tokenizer and model from HuggingFace Hub and move to device."""
+        from transformers import AutoModel, AutoTokenizer
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = AutoModel.from_pretrained(self.model_name).to(self.device)
 
@@ -65,6 +65,8 @@ class HuggingFaceEmbedding(DenseEmbedding):
         Returns:
             A ``(batch, embedding_dim)`` float32 NumPy array.
         """
+        import torch
+
         encoded = self.tokenizer(
             texts,
             padding=True,

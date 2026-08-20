@@ -1,6 +1,3 @@
-import torch
-import torch.nn.functional as functional
-
 from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
     OverflowHandler,
 )
@@ -56,6 +53,9 @@ class _SentenceTransformerEmbedding(OverflowHandler):
         Returns:
             Pooled embedding tensor of shape ``(batch, embedding_dim)``.
         """
+        import torch
+        import torch.nn.functional as functional
+
         if self.pooling == "last_token":
             return self._last_token_pool(model_output, attention_mask)
         token_embeddings = model_output[0]
@@ -81,6 +81,9 @@ class _SentenceTransformerEmbedding(OverflowHandler):
         Returns:
             Pooled embedding tensor of shape ``(batch, embedding_dim)``.
         """
+        import torch
+        import torch.nn.functional as functional
+
         last_hidden_states = model_output[0]
         left_padding = attention_mask[:, -1].sum() == attention_mask.shape[0]
         if left_padding:

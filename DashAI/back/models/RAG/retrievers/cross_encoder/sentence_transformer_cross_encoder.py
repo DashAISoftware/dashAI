@@ -1,9 +1,7 @@
 import logging
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import numpy as np
-from sentence_transformers import CrossEncoder
-from torch import nn
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -19,6 +17,9 @@ from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.retrievers.cross_encoder.cross_encoder_retriever import (
     CrossEncoderRetriever,
 )
+
+if TYPE_CHECKING:
+    from sentence_transformers import CrossEncoder
 
 log = logging.getLogger(__name__)
 
@@ -290,7 +291,7 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
         self.model_name: str = kwargs.pop("model_name")
         super().__init__(**kwargs)
         self.params["model_name"] = self.model_name
-        self._ce_model: CrossEncoder | None = None
+        self._ce_model: "CrossEncoder | None" = None
 
     def load(self, filename: str = "") -> None:
         """Download and load the cross-encoder model from HuggingFace Hub.
@@ -311,6 +312,10 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
                 f"Unknown cross-encoder model '{self.model_name}'. "
                 "Choose one from CROSS_ENCODER_MODELS."
             )
+
+        from sentence_transformers import CrossEncoder
+        from torch import nn
+
         model_config = CROSS_ENCODER_MODELS.get(self.model_name, {})
         max_length = model_config.get("max_length", 512)
         try:
