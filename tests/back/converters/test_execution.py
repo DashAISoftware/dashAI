@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import pytest
 from sklearn.preprocessing import StandardScaler as SkStandardScaler
@@ -5,6 +7,10 @@ from sklearn.preprocessing import StandardScaler as SkStandardScaler
 from DashAI.back.converters.execution import (
     apply_session_converters,
     fit_transform_on_partition,
+    fitted_converters_path,
+    load_fitted_converters,
+    save_fitted_converters,
+    transform_for_prediction,
 )
 from DashAI.back.converters.imbalanced_learn.random_under_sampler_converter import (
     RandomUnderSamplerConverter,
@@ -40,7 +46,7 @@ def test_fit_uses_only_train_rows_not_test():
     registry = _registry(StandardScaler)
     config = [_converter_config("StandardScaler")]
 
-    new_x_train, new_y_train, x_others = fit_transform_on_partition(
+    new_x_train, new_y_train, x_others, fitted = fit_transform_on_partition(
         config, registry, x_train, y_train, x_others={"test": x_test}
     )
 
@@ -55,6 +61,14 @@ def test_fit_uses_only_train_rows_not_test():
     )
     # y is untouched by a non-sampler converter.
     assert new_y_train.to_pandas()["target"].tolist() == [0, 1, 0, 1]
+    # the fitted StandardScaler instance is captured for prediction-time reuse.
+    assert len(fitted) == 1
+    assert fitted[0]["columns"] == ["a"]
+    assert fitted[0]["instance"].transform(
+        _dataset(pd.DataFrame({"a": [100.0, 200.0]}))
+    ).to_pandas()["a"].tolist() == pytest.approx(
+        expected.transform(pd.DataFrame({"a": [100.0, 200.0]})).ravel().tolist()
+    )
 
 
 def test_partial_column_scope_leaves_other_columns_untouched():
@@ -65,7 +79,7 @@ def test_partial_column_scope_leaves_other_columns_untouched():
     registry = _registry(StandardScaler)
     config = [_converter_config("StandardScaler", columns=["a"])]
 
-    new_x_train, _, x_others = fit_transform_on_partition(
+    new_x_train, _, x_others, _ = fit_transform_on_partition(
         config, registry, x_train, y_train, x_others={"test": x_test}
     )
 
@@ -92,7 +106,7 @@ def test_sampler_only_changes_train_not_test_or_validation():
         )
     ]
 
-    new_x_train, new_y_train, x_others = fit_transform_on_partition(
+    new_x_train, new_y_train, x_others, fitted = fit_transform_on_partition(
         config,
         registry,
         x_train,
@@ -106,6 +120,8 @@ def test_sampler_only_changes_train_not_test_or_validation():
     # validation/test are completely unaffected by the resampling.
     assert x_others["validation"].to_pandas()["a"].tolist() == [999.0]
     assert x_others["test"].to_pandas()["a"].tolist() == [888.0]
+    # samplers are never captured for prediction-time replay.
+    assert fitted == []
 
 
 def test_empty_other_partition_is_skipped():
@@ -118,7 +134,7 @@ def test_empty_other_partition_is_skipped():
     registry = _registry(StandardScaler)
     config = [_converter_config("StandardScaler")]
 
-    _, _, x_others = fit_transform_on_partition(
+    _, _, x_others, _ = fit_transform_on_partition(
         config, registry, x_train, y_train, x_others={"test": empty_x}
     )
     assert len(x_others["test"]) == 0
@@ -153,12 +169,14 @@ def test_apply_session_converters_holdout_shape():
     registry = _registry(StandardScaler)
     config = [_converter_config("StandardScaler")]
 
-    new_x, new_y = apply_session_converters(x, y, config, registry)
+    new_x, new_y, fitted = apply_session_converters(x, y, config, registry)
 
     assert set(new_x.keys()) == {"train", "validation", "test"}
     assert len(new_x["train"]) == 4
     assert len(new_x["validation"]) == 1
     assert len(new_y["validation"]) == 1
+    # holdout has a single train partition, so its fit is "the" final fit.
+    assert len(fitted) == 1
 
 
 def test_apply_session_converters_cv_each_fold_fits_independently():
@@ -196,7 +214,7 @@ def test_apply_session_converters_cv_each_fold_fits_independently():
     registry = _registry(StandardScaler)
     config = [_converter_config("StandardScaler")]
 
-    new_x, _ = apply_session_converters(x, y, config, registry)
+    new_x, _, fitted = apply_session_converters(x, y, config, registry)
 
     fold_0_expected = SkStandardScaler().fit(pd.DataFrame({"a": [1.0, 2.0, 3.0]}))
     fold_1_expected = SkStandardScaler().fit(pd.DataFrame({"a": [100.0, 200.0, 300.0]}))
@@ -226,11 +244,72 @@ def test_apply_session_converters_cv_each_fold_fits_independently():
         .ravel()
         .tolist()
     )
+    # the fitted converters returned are the full_dataset fold's, not an
+    # intermediate evaluation fold's — matches full_expected, not fold_0/1.
+    assert len(fitted) == 1
+    assert fitted[0]["instance"].transform(
+        _dataset(pd.DataFrame({"a": [1.0, 2.0, 3.0, 100.0, 200.0, 300.0]}))
+    ).to_pandas()["a"].tolist() == pytest.approx(
+        full_expected.transform(
+            pd.DataFrame({"a": [1.0, 2.0, 3.0, 100.0, 200.0, 300.0]})
+        )
+        .ravel()
+        .tolist()
+    )
 
 
 def test_apply_session_converters_noop_without_config():
     x = {"train": _dataset(pd.DataFrame({"a": [1.0]}))}
     y = {"train": _dataset(pd.DataFrame({"target": [0]}))}
-    new_x, new_y = apply_session_converters(x, y, [], {})
+    new_x, new_y, fitted = apply_session_converters(x, y, [], {})
     assert new_x is x
     assert new_y is y
+    assert fitted == []
+
+
+def test_save_load_and_transform_for_prediction_round_trip(tmp_path):
+    """The full prediction-time story: fit on train, save to disk next to a
+    (fake) model path, load it back, and replay it on brand-new data."""
+    x_train = _dataset(pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0]}))
+    y_train = _dataset(pd.DataFrame({"target": [0, 1, 0, 1]}))
+
+    registry = _registry(StandardScaler)
+    config = [_converter_config("StandardScaler")]
+
+    _, _, _, fitted = fit_transform_on_partition(config, registry, x_train, y_train)
+
+    run_path = str(tmp_path / "42")  # sklearn-style: a plain file path, no dir.
+    saved_path = save_fitted_converters(run_path, fitted)
+    assert saved_path == f"{run_path}_converters.pkl"
+    assert os.path.exists(saved_path)
+
+    loaded = load_fitted_converters(run_path)
+    assert len(loaded) == 1
+
+    new_input = _dataset(pd.DataFrame({"a": [100.0, 200.0]}))
+    transformed = transform_for_prediction(new_input, loaded)
+
+    expected = SkStandardScaler().fit(pd.DataFrame({"a": [1.0, 2.0, 3.0, 4.0]}))
+    assert transformed.to_pandas()["a"].tolist() == pytest.approx(
+        expected.transform(pd.DataFrame({"a": [100.0, 200.0]})).ravel().tolist()
+    )
+
+
+def test_save_fitted_converters_noop_when_empty(tmp_path):
+    run_path = str(tmp_path / "42")
+    assert save_fitted_converters(run_path, []) is None
+    assert not os.path.exists(fitted_converters_path(run_path))
+
+
+def test_load_fitted_converters_missing_file_returns_empty(tmp_path):
+    run_path = str(tmp_path / "does-not-exist")
+    assert load_fitted_converters(run_path) == []
+
+
+def test_transform_for_prediction_skips_samplers_by_construction():
+    """Samplers never end up in `fitted_converters` (see
+    test_sampler_only_changes_train_not_test_or_validation), so replaying an
+    empty list on new prediction input is simply a no-op."""
+    new_input = _dataset(pd.DataFrame({"a": [1.0, 2.0]}))
+    result = transform_for_prediction(new_input, [])
+    assert result.to_pandas()["a"].tolist() == [1.0, 2.0]

@@ -160,7 +160,9 @@ def fit_transform_on_partition(
     y_train: "DashAIDataset",
     x_others: Optional[Dict[str, "DashAIDataset"]] = None,
     partition_label: str = "train",
-) -> Tuple["DashAIDataset", "DashAIDataset", Dict[str, "DashAIDataset"]]:
+) -> Tuple[
+    "DashAIDataset", "DashAIDataset", Dict[str, "DashAIDataset"], List[Dict[str, Any]]
+]:
     """Fit a chain of converters only on `x_train`/`y_train`, then apply each
     already-fitted converter (never re-fit) to `x_train` and to every dataset in
     `x_others` (e.g. `validation`/`test`).
@@ -195,16 +197,23 @@ def fit_transform_on_partition(
     Returns
     -------
     tuple
-        `(x_train, y_train, x_others)`, all transformed in place by the fitted
-        converter chain. `y_train` only changes when a sampler resamples it;
-        the `y` counterparts of `x_others` are never touched, since no converter
-        in DashAI transforms output columns.
+        `(x_train, y_train, x_others, fitted_converters)`. `x_train`/`y_train`/
+        `x_others` are transformed in place by the fitted converter chain;
+        `y_train` only changes when a sampler resamples it, and the `y`
+        counterparts of `x_others` are never touched, since no converter in
+        DashAI transforms output columns. `fitted_converters` is an ordered
+        list of `{"instance": BaseConverter, "columns": list[str]}` for every
+        *non-sampler* converter that was fit here — this is what must be
+        replayed (via `transform_for_prediction`) on brand-new data at
+        prediction time; samplers are excluded since resampling a single new
+        prediction instance has no meaning.
     """
     from DashAI.back.dataloaders.classes.dashai_dataset import (
         select_columns as split_x_y,
     )
 
     x_others = dict(x_others or {})
+    fitted_converters: List[Dict[str, Any]] = []
 
     for entry in converters_config:
         converter_name = entry["converter"]
@@ -261,6 +270,7 @@ def fit_transform_on_partition(
             columns,
             [x_train.column_names.index(c) for c in columns],
         )
+        fitted_converters.append({"instance": converter_instance, "columns": columns})
 
         for split_name, x_other in list(x_others.items()):
             if x_other is None or len(x_other) == 0:
@@ -281,7 +291,7 @@ def fit_transform_on_partition(
                 [x_other.column_names.index(c) for c in columns],
             )
 
-    return x_train, y_train, x_others
+    return x_train, y_train, x_others, fitted_converters
 
 
 def apply_session_converters(
@@ -289,7 +299,7 @@ def apply_session_converters(
     y: Any,
     converters_config: Optional[List[Dict[str, Any]]],
     component_registry: "ComponentRegistry",
-) -> Tuple[Any, Any]:
+) -> Tuple[Any, Any, List[Dict[str, Any]]]:
     """Apply session-level converters to the output of a `BaseSplitter.split()` call.
 
     `x`/`y` are either a single `DatasetDict` with keys `train`/`validation`/`test`
@@ -315,21 +325,28 @@ def apply_session_converters(
     Returns
     -------
     tuple
-        `(x, y)` with the same shape as the input, with converters applied.
+        `(x, y, fitted_converters)`: `x`/`y` have the same shape as the input,
+        with converters applied. `fitted_converters` is the list (see
+        `fit_transform_on_partition`) belonging to the partition that trains
+        the model actually persisted afterwards — the single `train` fit for
+        holdout, or the final `full_dataset` fold's fit for cross-validation
+        (the per-fold fits in between are only used to *evaluate* the model
+        and are not kept).
     """
     from datasets import DatasetDict
 
     if not converters_config:
-        return x, y
+        return x, y, []
 
     if isinstance(x, list):
         new_x, new_y = [], []
         last_index = len(x) - 1
+        fitted_converters: List[Dict[str, Any]] = []
         for i, (x_fold, y_fold) in enumerate(zip(x, y, strict=True)):
             x_others = {k: v for k, v in x_fold.items() if k != "train"}
             y_others = {k: v for k, v in y_fold.items() if k != "train"}
             label = "full_dataset" if i == last_index else f"fold_{i}"
-            x_train, y_train, x_rest = fit_transform_on_partition(
+            x_train, y_train, x_rest, fold_fitted = fit_transform_on_partition(
                 converters_config,
                 component_registry,
                 x_fold["train"],
@@ -339,11 +356,13 @@ def apply_session_converters(
             )
             new_x.append(DatasetDict({"train": x_train, **x_rest}))
             new_y.append(DatasetDict({"train": y_train, **y_others}))
-        return new_x, new_y
+            if i == last_index:
+                fitted_converters = fold_fitted
+        return new_x, new_y, fitted_converters
 
     x_others = {k: v for k, v in x.items() if k != "train"}
     y_others = {k: v for k, v in y.items() if k != "train"}
-    x_train, y_train, x_rest = fit_transform_on_partition(
+    x_train, y_train, x_rest, fitted_converters = fit_transform_on_partition(
         converters_config,
         component_registry,
         x["train"],
@@ -354,4 +373,93 @@ def apply_session_converters(
     return (
         DatasetDict({"train": x_train, **x_rest}),
         DatasetDict({"train": y_train, **y_others}),
+        fitted_converters,
     )
+
+
+def fitted_converters_path(run_path: str) -> str:
+    """Path where a run's fitted session converters are stored.
+
+    A sibling path next to `run_path` rather than something inside it,
+    since `run_path` is a plain file for scikit-learn-style models (saved
+    via `joblib.dump`) but a directory for HuggingFace-style models (saved
+    via `save_pretrained`) — a sibling path is safe either way.
+    """
+    return f"{run_path}_converters.pkl"
+
+
+def save_fitted_converters(
+    run_path: str, fitted_converters: List[Dict[str, Any]]
+) -> Optional[str]:
+    """Persist the converters fitted for a run's final model, so they can be
+    replayed (via `transform_for_prediction`) on new data at prediction time.
+
+    Does nothing (returns None) when there are no session converters, so runs
+    without them don't grow an empty file.
+    """
+    if not fitted_converters:
+        return None
+
+    import joblib
+
+    path = fitted_converters_path(run_path)
+    try:
+        joblib.dump(fitted_converters, path)
+    except Exception as e:
+        log.exception(e)
+        raise JobError(
+            f"Error saving fitted converters for run at {run_path}: {e}"
+        ) from e
+    return path
+
+
+def load_fitted_converters(run_path: str) -> List[Dict[str, Any]]:
+    """Load the converters saved by `save_fitted_converters`, or `[]` if this
+    run has none (e.g. it predates this feature, or the session had no
+    converters configured)."""
+    import os
+
+    path = fitted_converters_path(run_path)
+    if not os.path.exists(path):
+        return []
+
+    import joblib
+
+    try:
+        return joblib.load(path)
+    except Exception as e:
+        log.exception(e)
+        raise JobError(f"Error loading fitted converters from {path}: {e}") from e
+
+
+def transform_for_prediction(
+    dataset: "DashAIDataset", fitted_converters: List[Dict[str, Any]]
+) -> "DashAIDataset":
+    """Apply already-fitted session converters (transform only, never fit) to
+    new prediction input, replaying the exact transformation used when
+    training the model these converters were saved alongside — the same
+    `FilteredClassifier` principle used during training: the fitted filter is
+    applied as-is, never re-fit on the data it's applied to.
+
+    Converters that change row counts (samplers) are never part of
+    `fitted_converters` in the first place (see `fit_transform_on_partition`),
+    since resampling a single new prediction instance has no meaning.
+    """
+    for entry in fitted_converters:
+        converter_instance = entry["instance"]
+        columns = entry["columns"]
+        try:
+            transformed = converter_instance.transform(dataset.select_columns(columns))
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Error applying converter '{type(converter_instance).__name__}' "
+                f"to prediction input: {e}"
+            ) from e
+        dataset = rebuild_dataset_with_transformed_columns(
+            dataset,
+            transformed,
+            columns,
+            [dataset.column_names.index(c) for c in columns],
+        )
+    return dataset

@@ -4,7 +4,10 @@ from typing import TYPE_CHECKING, Any, Dict, List
 from kink import inject
 from sqlalchemy import exc
 
-from DashAI.back.converters.execution import apply_session_converters
+from DashAI.back.converters.execution import (
+    apply_session_converters,
+    save_fitted_converters,
+)
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
@@ -139,6 +142,7 @@ class ModelJob(BaseJob):
                         f"Error splitting the dataset for run {run_id}: {e}",
                     ) from e
 
+                fitted_converters = []
                 try:
                     # Apply session-level converters: each converter is fit
                     # only on the train partition of each split/fold (never
@@ -147,7 +151,7 @@ class ModelJob(BaseJob):
                     model_session: ModelSession = preparation_results["model_session"]
                     if model_session.converters:
                         self.report_progress(0.15, "Applying converters")
-                        x, y = apply_session_converters(
+                        x, y, fitted_converters = apply_session_converters(
                             x, y, model_session.converters, component_registry
                         )
                 except Exception as e:
@@ -206,6 +210,10 @@ class ModelJob(BaseJob):
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))
                     model.save(run_path)
+                    # Persist the converters fitted for this final model
+                    # (train for holdout, full_dataset for CV) so predictions
+                    # on new data later can replay the same transformation.
+                    save_fitted_converters(run_path, fitted_converters)
                 except Exception as e:
                     log.exception(e)
                     raise JobError(

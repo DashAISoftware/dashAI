@@ -368,6 +368,31 @@ def test_run_with_session_converter_holdout_finishes(
     assert run_response.status_code == 200, run_response.text
     assert run_response.json()["status"] == 3
 
+    # Predicting on brand-new (raw, unscaled) input must still work: the
+    # StandardScaler fitted at training time is replayed on this input
+    # before it reaches the model (see execution.transform_for_prediction).
+    predict_response = client.post(
+        "/api/v1/predict/preview",
+        data={
+            "run_id": str(run_id),
+            "manual_input_data": json.dumps(
+                [
+                    {
+                        "SepalLengthCm": 5.1,
+                        "SepalWidthCm": 3.5,
+                        "PetalLengthCm": 1.4,
+                        "PetalWidthCm": 0.2,
+                    }
+                ]
+            ),
+        },
+    )
+    assert predict_response.status_code == 200, predict_response.text
+    preview = predict_response.json()
+    assert preview["columns"][-1] == "Species"
+    assert len(preview["rows"]) == 1
+    assert preview["rows"][0][:4] == [5.1, 3.5, 1.4, 0.2]  # preview shows raw input
+
     client.delete(f"/api/v1/model-session/{session['id']}")
 
 
