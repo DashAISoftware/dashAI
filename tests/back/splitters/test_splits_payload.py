@@ -55,6 +55,16 @@ def test_new_payload_is_unchanged_and_idempotent():
     assert normalize_splits_payload(once) == payload
 
 
+def test_missing_splitter_name_defaults_to_holdout():
+    payload = {"train": 0.6, "test": 0.2, "validation": 0.2, "seed": 42}
+    assert normalize_splits_payload(payload)["splitter_name"] == "HoldoutSplitter"
+
+
+def test_null_splitter_name_defaults_to_holdout():
+    payload = {"splitter_name": None, "train": 0.6}
+    assert normalize_splits_payload(payload)["splitter_name"] == "HoldoutSplitter"
+
+
 def test_normalize_does_not_mutate_input():
     payload = {"seed": 7}
     normalize_splits_payload(payload)

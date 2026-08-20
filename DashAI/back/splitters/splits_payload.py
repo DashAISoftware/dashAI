@@ -9,6 +9,10 @@ different set of keys, so every reader normalizes the payload first.
 
 from typing import Any, Dict, Type
 
+# Before fold splitters existed the payload named no splitter at all: every
+# split was a holdout split.
+DEFAULT_SPLITTER_NAME = "HoldoutSplitter"
+
 INDEX_KEY_BY_SPLIT = {
     "train": "train_indexes",
     "test": "test_indexes",
@@ -21,8 +25,9 @@ META_KEYS = ("splitter_name", "splitType", "splitted_indexes", "seed")
 def normalize_splits_payload(splits_data: Dict[str, Any]) -> Dict[str, Any]:
     """Translate a legacy splits payload into the current contract.
 
-    Two legacy shapes are handled:
+    Three legacy shapes are handled:
 
+    - No ``splitter_name``, from before fold splitters existed.
     - ``seed`` instead of the schema's ``random_state``.
     - ``train`` / ``test`` / ``validation`` holding index lists instead of
       proportions, which is how manual and predefined holdout splits used to
@@ -40,6 +45,9 @@ def normalize_splits_payload(splits_data: Dict[str, Any]) -> Dict[str, Any]:
         untouched.
     """
     normalized = dict(splits_data)
+
+    if not isinstance(normalized.get("splitter_name"), str):
+        normalized["splitter_name"] = DEFAULT_SPLITTER_NAME
 
     if "random_state" not in normalized and "seed" in normalized:
         normalized["random_state"] = normalized["seed"]
