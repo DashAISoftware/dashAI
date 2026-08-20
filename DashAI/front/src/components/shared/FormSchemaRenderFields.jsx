@@ -57,6 +57,7 @@ function FormSchemaRenderFields({
   setError,
   errorsMessage,
   spacing = 2,
+  omitFields = [],
 }) {
   if (!modelSchema) return null;
 
@@ -76,6 +77,10 @@ function FormSchemaRenderFields({
     const fields = [];
 
     for (const key in modelSchema) {
+      // Fields the caller renders by hand: a schema field whose input needs
+      // context the schema cannot carry, such as a dataset's column names.
+      if (omitFields.includes(key)) continue;
+
       const fieldSchema = modelSchema[key];
       const objName = key;
       const value = formik?.values?.[objName];
@@ -178,6 +183,7 @@ function FormSchemaRenderFields({
     handleChange,
     setError,
     errorsMessage,
+    omitFields,
   ]);
 
   return <Stack spacing={spacing}>{renderFields()}</Stack>;
@@ -192,6 +198,7 @@ FormSchemaRenderFields.propTypes = {
   setError: PropTypes.func,
   errorsMessage: PropTypes.object,
   spacing: PropTypes.number,
+  omitFields: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default FormSchemaRenderFields;
