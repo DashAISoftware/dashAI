@@ -317,3 +317,77 @@ def test_job_with_wrong_run(client: TestClient):
     )
     assert response.status_code == 500, response.text
     assert response.status_code == 500, response.text
+
+
+def test_legacy_manual_splits_still_train(client: TestClient, model_session_id: int):
+    """A session stored before the splits payload followed the splitter schema.
+
+    Manual and predefined holdout splits used to be stored with the partition
+    indexes under the ``train`` / ``test`` / ``validation`` keys, which the
+    splitter reads as proportions.
+    """
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        model_session = db.get(ModelSession, model_session_id)
+        original_splits = model_session.splits
+        model_session.splits = json.dumps(
+            {
+                "splitter_name": "HoldoutSplitter",
+                "splitType": "manual",
+                "train": [0, 1, 2, 3, 4, 5],
+                "test": [6, 7],
+                "validation": [8, 9],
+            }
+        )
+        db.commit()
+
+    response = client.post(
+        "/api/v1/run/",
+        json={
+            "model_session_id": model_session_id,
+            "model_name": "DummyModel",
+            "name": "LegacyManualSplitRun",
+            "parameters": {},
+            "optimizer_name": "",
+            "optimizer_parameters": {
+                "n_trials": 10,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            "goal_metric": "",
+            "description": "Run over a legacy manual split payload",
+            "plot_history_path": "path/to/history.png",
+            "plot_slice_path": "path/to/slice.png",
+            "plot_contour_path": "path/to/contour.png",
+            "plot_importance_path": "path/to/importance.png",
+        },
+    )
+    assert response.status_code == 201, response.text
+    run_id = response.json()["id"]
+
+    try:
+        response = client.post(
+            "/api/v1/job/",
+            data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
+        )
+        assert response.status_code == 201, response.text
+        job_id = response.json()["id"]
+
+        response = client.get(f"/api/v1/job/status/{job_id}")
+        assert response.status_code == 200, response.text
+        assert response.json()["status"] == "finished"
+
+        with session_factory() as db:
+            run = db.get(Run, run_id)
+            assert json.loads(run.split_indexes) == {
+                "train_indexes": [0, 1, 2, 3, 4, 5],
+                "test_indexes": [6, 7],
+                "val_indexes": [8, 9],
+            }
+    finally:
+        with session_factory() as db:
+            db.get(ModelSession, model_session_id).splits = original_splits
+            db.commit()
+        client.delete(f"/api/v1/run/{run_id}")
