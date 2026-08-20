@@ -1,6 +1,12 @@
-from typing import List
+from typing import Any, Dict, List
 
 from pydantic import BaseModel
+
+
+class SessionConverterParams(BaseModel):
+    converter: str
+    params: Dict[str, Any] = {}
+    columns: List[str] = []
 
 
 class ModelSessionParams(BaseModel):
@@ -14,6 +20,7 @@ class ModelSessionParams(BaseModel):
     test_metrics: List[str]
     evaluation_strategy: str
     splits: str
+    converters: List[SessionConverterParams] = []
 
 
 class ColumnsValidationParams(BaseModel):

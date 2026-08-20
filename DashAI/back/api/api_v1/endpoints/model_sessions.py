@@ -232,6 +232,7 @@ async def create_model_session(
                 test_metrics=params.test_metrics,
                 evaluation_strategy=params.evaluation_strategy,
                 splits=params.splits,
+                converters=[c.model_dump() for c in params.converters],
             )
             db.add(model_session)
             db.commit()
