@@ -42,11 +42,26 @@ class StratifiedKFoldSplitterSchema(BaseSchema):
         bool_field(),
         placeholder=True,
         description=MultilingualString(
-            en="Whether to shuffle the data before splitting it into folds.",
-            es="Si se deben mezclar los datos antes de dividirlos en particiones.",
-            pt="Se os dados devem ser embaralhados antes de dividi-los em partições.",
-            de="Ob die Daten vor der Aufteilung in Folds gemischt werden sollen.",
-            zh="划分为折之前是否打乱数据。",
+            en=(
+                "Whether to shuffle the data before splitting it into folds. When "
+                "shuffling is disabled, the random state has no effect."
+            ),
+            es=(
+                "Si se deben mezclar los datos antes de dividirlos en particiones. "
+                "Cuando la mezcla está desactivada, el estado aleatorio no tiene "
+                "efecto."
+            ),
+            pt=(
+                "Se os dados devem ser embaralhados antes de dividi-los em partições. "
+                "Quando o embaralhamento está desativado, o estado aleatório não tem "
+                "efeito."
+            ),
+            de=(
+                "Ob die Daten vor der Aufteilung in Folds gemischt werden sollen. "
+                "Wenn das Mischen deaktiviert ist, hat der Zufallszustand keine "
+                "Wirkung."
+            ),
+            zh="划分为折之前是否打乱数据。关闭打乱时，随机状态不起作用。",
         ),
         alias=MultilingualString(
             en="Shuffle", es="Mezclar", pt="Embaralhar", de="Mischen", zh="打乱"
@@ -56,20 +71,24 @@ class StratifiedKFoldSplitterSchema(BaseSchema):
         int_field(ge=0),
         placeholder=42,
         description=MultilingualString(
-            en="Seed used to make the split reproducible when shuffle is enabled.",
+            en=(
+                "Seed used to make the split reproducible when shuffle is enabled. It "
+                "is ignored when shuffling is disabled."
+            ),
             es=(
-                "Semilla utilizada para que la división sea reproducible cuando "
-                "se activa la mezcla."
+                "Semilla utilizada para que la división sea reproducible cuando se "
+                "activa la mezcla. Se ignora cuando la mezcla está desactivada."
             ),
             pt=(
                 "Semente usada para tornar a divisão reproduzível quando o "
-                "embaralhamento está ativado."
+                "embaralhamento está ativado. É ignorada quando o embaralhamento está "
+                "desativado."
             ),
             de=(
                 "Seed, um die Aufteilung reproduzierbar zu machen, wenn Mischen "
-                "aktiviert ist."
+                "aktiviert ist. Wird ignoriert, wenn das Mischen deaktiviert ist."
             ),
-            zh="启用打乱时，用于使划分可复现的随机种子。",
+            zh="启用打乱时，用于使划分可复现的随机种子。关闭打乱时将被忽略。",
         ),
         alias=MultilingualString(
             en="Random state",
