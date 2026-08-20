@@ -283,10 +283,13 @@ function PrepareDatasetStep({
     }
   }, [inputColumnNames, outputColumnNames]);
 
+  // Column validity depends on the columns, the dataset and the task, never on
+  // the split configuration. Gating it on the splits being ready made every
+  // split change re-check the columns over HTTP and blank the requirements
+  // banner in the meantime.
   useEffect(() => {
     if (
       columnsReady &&
-      splitsReady &&
       datasetInfo &&
       datasetInfo.column_names &&
       datasetInfo.column_names.length > 0
@@ -297,13 +300,7 @@ function PrepareDatasetStep({
       setColumnsAreValid(false);
       setValidationPending(true);
     }
-  }, [
-    columnsReady,
-    splitsReady,
-    inputColumnNames,
-    outputColumnNames,
-    datasetInfo,
-  ]);
+  }, [columnsReady, inputColumnNames, outputColumnNames, datasetInfo]);
 
   useEffect(() => {
     if (columnsAreValid && splitsReady && columnsReady) {

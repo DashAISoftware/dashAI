@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import {
@@ -22,7 +22,6 @@ import { resolveSplitterName } from "../../../utils/splitsPayload";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import { getComponents } from "../../../api/component";
-import useSchema from "../../../hooks/useSchema";
 
 /**
  * Splits card shell — same Paper/header visual as FormSchemaFieldCard but WITHOUT
@@ -91,11 +90,6 @@ function SplitDatasetRows({
 }) {
   const { t } = useTranslation(["experiments", "common"]);
   const { enqueueSnackbar } = useSnackbar();
-  // The generated form reports its values only when the user edits a field, so
-  // the schema placeholders are pushed up once per splitter. Without this a
-  // session created without touching the form would carry no parameters.
-  const seededSplitter = useRef(null);
-
   const totalRows = datasetInfo.total_rows;
   const trainDatasetPercentage = (datasetInfo.train_size / totalRows).toFixed(
     2,
@@ -140,16 +134,42 @@ function SplitDatasetRows({
     [isIndexMode],
   );
 
-  const { defaultValues: splitterDefaults } = useSchema({
-    modelName: splitterName,
-  });
-
+  // The generated form reports its values only once the user edits a field, so
+  // the schema placeholders are pushed up here: without them a session created
+  // without touching the form would carry no splitter parameters at all.
+  //
+  // The schema is fetched by name rather than read from the shared schema hook
+  // on purpose. That hook keeps the previous splitter's schema for one render
+  // after the name changes, and seeding from it left the parameters of the
+  // splitter that was selected a moment ago in place.
   useEffect(() => {
-    if (!splitterName || seededSplitter.current === splitterName) return;
-    if (!splitterDefaults || Object.keys(splitterDefaults).length === 0) return;
-    seededSplitter.current = splitterName;
-    setSplitterParams(splitterDefaults);
-  }, [splitterName, splitterDefaults]);
+    if (!splitterName) return undefined;
+    let cancelled = false;
+
+    const seedSplitterParams = async () => {
+      try {
+        const component = await getComponents({ model: splitterName });
+        if (cancelled) return;
+        const properties = component?.schema?.properties ?? {};
+        const defaults = Object.fromEntries(
+          Object.entries(properties)
+            .filter(([, property]) => "placeholder" in property)
+            .map(([key, property]) => [key, property.placeholder]),
+        );
+        if (Object.keys(defaults).length > 0) {
+          setSplitterParams(defaults);
+        }
+      } catch (error) {
+        console.error(`Error fetching the ${splitterName} schema`, error);
+      }
+    };
+
+    seedSplitterParams();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [splitterName]);
 
   // Rules that span several fields, which a per field schema cannot express.
   let splitsMessage = "";
