@@ -197,6 +197,13 @@ export default function SelectDatasetStep({
     loadManualSchema();
   }, [source, trainingDatasetId]);
 
+  // The session's split only describes the dataset it was trained on. Pointing
+  // it at another dataset would apply partition boundaries that mean nothing
+  // there, so any other dataset is explained as a whole.
+  const isSessionDataset =
+    selectedDataset != null && selectedDataset.id === trainingDatasetId;
+  const effectiveSplit = isSessionDataset ? split : "all";
+
   // ----- write the scope / dataset_id / manual_input into newExpl ------
 
   useEffect(() => {
@@ -216,7 +223,12 @@ export default function SelectDatasetStep({
             mode: "rows",
             row_indexes: [...selectedRowIndices].sort((a, b) => a - b),
           }
-        : { mode: "split", split, percentage, shuffle };
+        : {
+            mode: "split",
+            split: effectiveSplit,
+            percentage,
+            shuffle,
+          };
 
     setNewExpl((prev) => ({
       ...prev,
@@ -234,6 +246,7 @@ export default function SelectDatasetStep({
     selectedDataset,
     manualRows,
     trainingDatasetId,
+    effectiveSplit,
     setNewExpl,
   ]);
 
@@ -261,7 +274,7 @@ export default function SelectDatasetStep({
     return Number.isFinite(fraction) ? fraction : 0;
   };
 
-  const rowsInSplit = Math.round(totalRows * fractionFor(split));
+  const rowsInSplit = Math.round(totalRows * fractionFor(effectiveSplit));
   const rowsSelectedByPercentage =
     percentage > 0
       ? Math.max(1, Math.round((percentage / 100) * rowsInSplit))
@@ -351,33 +364,37 @@ export default function SelectDatasetStep({
 
               {rowMode === "percentage" ? (
                 <Box sx={{ mt: 4 }}>
-                  <FormControl
-                    component="fieldset"
-                    sx={{ width: "100%", mb: 4 }}
-                  >
-                    <Typography gutterBottom>
-                      {t("explainers:label.datasetSplit")}
-                    </Typography>
-                    <RadioGroup
-                      row
-                      value={split}
-                      onChange={(e) => setSplit(e.target.value)}
-                      sx={{ mt: 2 }}
+                  {isSessionDataset && (
+                    <FormControl
+                      component="fieldset"
+                      sx={{ width: "100%", mb: 4 }}
                     >
-                      {SPLIT_VALUES.filter(
-                        (value) => !(isCrossValidated && value === "val"),
-                      ).map((value) => (
-                        <FormControlLabel
-                          key={value}
-                          value={value}
-                          control={<Radio />}
-                          label={t(
-                            `common:${value === "val" ? "validation" : value}`,
-                          )}
-                        />
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
+                      <Typography gutterBottom>
+                        {t("explainers:label.datasetSplit")}
+                      </Typography>
+                      <RadioGroup
+                        row
+                        value={split}
+                        onChange={(e) => setSplit(e.target.value)}
+                        sx={{ mt: 2 }}
+                      >
+                        {SPLIT_VALUES.filter(
+                          (value) => !(isCrossValidated && value === "val"),
+                        ).map((value) => (
+                          <FormControlLabel
+                            key={value}
+                            value={value}
+                            control={<Radio />}
+                            label={t(
+                              `common:${
+                                value === "val" ? "validation" : value
+                              }`,
+                            )}
+                          />
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                  )}
                   <Typography gutterBottom>
                     {t("explainers:label.percentageOfSplitToUse")}
                   </Typography>
