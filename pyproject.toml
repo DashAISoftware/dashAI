@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dashAI"
-version = "0.9.7.post1"
+version = "0.9.7.post2"
 description = "dashAI: a graphical toolbox for training, evaluating and deploying state-of-the-art AI models."
 readme = "README.rst"
 license = "MIT"
@@ -48,6 +48,7 @@ dependencies = [
     "torch",
     "torchvision",
     "transformers",
+    "sentence-transformers",
     "controlnet_aux",
     "sacrebleu",
     "sentencepiece",
@@ -72,9 +73,14 @@ dependencies = [
     "pywebview",
     "openml",
     "oslo.concurrency",
+    "cryptography>=49.0.0",
+    "kaggle>=1.7.4.5",
     "grad-cam>=1.5.5",
     "dice-ml>=0.12",
     "lime>=0.2.0.1",
+    "statsmodels>=0.14.6",
+    "pypdf",
+    "pymupdf",
 ]
 
 [project.optional-dependencies]

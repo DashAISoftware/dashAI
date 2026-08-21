@@ -120,14 +120,10 @@ export function useSessions({ t }) {
 
       setRuns(data);
     } catch (error) {
-      if (error.response?.status !== 404) {
-        enqueueSnackbar(t("models:error.failedToFetchRuns"), {
-          variant: "error",
-        });
-        console.error("Failed to fetch runs:", error);
-      } else {
-        setRuns([]);
-      }
+      enqueueSnackbar(t("models:error.failedToFetchRuns"), {
+        variant: "error",
+      });
+      console.error("Failed to fetch runs:", error);
     }
   }, [selectedSessionId, enqueueSnackbar]);
 
