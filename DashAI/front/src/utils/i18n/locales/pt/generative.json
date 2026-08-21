@@ -7,7 +7,7 @@
   "documentReferences": {
     "chunkLabel": "Fragmento {{position}}",
     "chunksCount_one": "Este documento forneceu {{count}} fragmento para esta resposta:",
-    "chunksCount_many": "",
+    "chunksCount_many": "Este documento forneceu {{count}} fragmentos para esta resposta:",
     "chunksCount_other": "Este documento forneceu {{count}} fragmentos para esta resposta:",
     "close": "Fechar",
     "fallbackTitle": "Documento {{id}}"
@@ -17,7 +17,7 @@
     "available": " disponíveis",
     "detailedView": "Ver visualização detalhada",
     "documentCount_one": "{{count}} documento",
-    "documentCount_many": "",
+    "documentCount_many": "{{count}} documentos",
     "documentCount_other": "{{count}} documentos",
     "failedFetch": "Falha ao carregar documentos",
     "failedUpload": "Falha ao enviar documento(s)",
@@ -27,7 +27,7 @@
     "noDocumentsInSession": "Nenhum documento nesta sessão",
     "searchPlaceholder": "Pesquisar documentos",
     "successUpload_one": "{{count}} documento enviado com sucesso",
-    "successUpload_many": "",
+    "successUpload_many": "{{count}} documentos enviados com sucesso",
     "successUpload_other": "{{count}} documentos enviados com sucesso",
     "title": "Documentos",
     "uploadDocuments": "Faça upload do(s) seu(s) documento(s)"
@@ -430,7 +430,7 @@
     "description": "Gerencie documentos para suas sessões RAG. Lembre-se de que o RAG usa apenas texto: avalie os extratores disponíveis e escolha o mais adequado para cada tipo de documento (por exemplo, use extratores com OCR para documentos digitalizados).",
     "detailPanel": {
       "changeExtractorConfirmBody_one": "Este documento já tem um extrator configurado. Deseja alterá-lo?",
-      "changeExtractorConfirmBody_many": "",
+      "changeExtractorConfirmBody_many": "Este documento já tem um extrator configurado. Deseja alterá-lo?",
       "changeExtractorConfirmBody_other": "Este documento já tem um extrator configurado. Deseja alterá-lo?",
       "changeExtractorConfirmTitle": "Alterar extrator",
       "contentPreview": "Pré-visualização do conteúdo",
@@ -452,7 +452,7 @@
   },
   "sourcesDisplay": {
     "chunk_one": "fragmento",
-    "chunk_many": "",
+    "chunk_many": "fragmentos",
     "chunk_other": "fragmentos",
     "fallbackTitle": "Fonte {{id}}",
     "provided": "forneceu",
