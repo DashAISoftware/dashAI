@@ -4,15 +4,13 @@ from typing import TYPE_CHECKING, Any, Dict, List
 from kink import inject
 from sqlalchemy import exc
 
-from DashAI.back.converters.execution import (
-    apply_session_converters,
-    save_fitted_converters,
-)
+from DashAI.back.core.enums.status import SessionPreprocessingStatus
 from DashAI.back.dependencies.database.models import ModelSession, Run
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.job.dataset_split_utils import load_dataset_and_splitter
+from DashAI.back.job.session_preprocessing_job import load_preprocessed_session_data
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
@@ -140,22 +138,34 @@ class ModelJob(BaseJob):
                         f"Error splitting the dataset for run {run_id}: {e}",
                     ) from e
 
-                fitted_converters = []
                 try:
-                    # Apply session-level converters: each converter is fit
-                    # only on the train partition of each split/fold (never
-                    # on validation/test), so no fold or split partition
-                    # leaks into the parameters a converter learns.
+                    # When the session has converters, its dataset was
+                    # already fit/transformed once by SessionPreprocessingJob
+                    # (see session_preprocessing_job.py) — the split computed
+                    # above on the raw dataset is only kept for
+                    # run.split_indexes (explainer_job.py needs it later);
+                    # the actual training data comes from disk instead.
                     model_session: ModelSession = preparation_results["model_session"]
                     if model_session.converters:
-                        self.report_progress(0.15, "Applying converters")
-                        x, y, fitted_converters = apply_session_converters(
-                            x, y, model_session.converters, component_registry
-                        )
+                        if (
+                            model_session.preprocessing_status
+                            != SessionPreprocessingStatus.FINISHED
+                        ):
+                            raise JobError(
+                                f"Model session {model_session.id} preprocessing "
+                                f"is not finished (status="
+                                f"{model_session.preprocessing_status}); cannot "
+                                "train a Run until preprocessing finishes."
+                            )
+                        self.report_progress(0.15, "Loading preprocessed data")
+                        x, y = load_preprocessed_session_data(model_session)
+                except JobError:
+                    raise
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
-                        f"Error applying converters for run {run_id}: {e}",
+                        f"Error loading preprocessed session data for run "
+                        f"{run_id}: {e}",
                     ) from e
 
                 try:
@@ -208,10 +218,6 @@ class ModelJob(BaseJob):
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))
                     model.save(run_path)
-                    # Persist the converters fitted for this final model
-                    # (train for holdout, full_dataset for CV) so predictions
-                    # on new data later can replay the same transformation.
-                    save_fitted_converters(run_path, fitted_converters)
                 except Exception as e:
                     log.exception(e)
                     raise JobError(

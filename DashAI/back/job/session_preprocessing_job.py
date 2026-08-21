@@ -1,12 +1,14 @@
 import logging
 import os
-from typing import TYPE_CHECKING
+import shutil
+from typing import TYPE_CHECKING, Any, Tuple
 
 from kink import inject
 from sqlalchemy import exc
 
 from DashAI.back.converters.execution import (
     apply_session_converters,
+    fitted_converters_path,
     save_fitted_converters,
 )
 from DashAI.back.dependencies.database.models import ModelSession
@@ -35,6 +37,71 @@ def _merge_input_output_columns(
         {col: y_partition.arrow_table[col] for col in y_partition.column_names},
         types={col: y_partition.types[col] for col in y_partition.column_names},
     )
+
+
+def load_preprocessed_session_data(model_session: ModelSession) -> Tuple[Any, Any]:
+    """Load the partitions written by `SessionPreprocessingJob.run()` back
+    into the `(x, y)` shape `BaseEvaluationStrategy.execute()` expects — a
+    single `DatasetDict` for holdout, or a list of `DatasetDict` (one per
+    fold, plus a final `full_dataset` entry) for cross-validation.
+
+    Lives alongside the code that writes this layout so both stay in sync.
+
+    Parameters
+    ----------
+    model_session : ModelSession
+        Must have a non-empty `preprocessed_path` (i.e. preprocessing has
+        already finished for this session).
+
+    Raises
+    ------
+    JobError
+        If `preprocessed_path` is unset, or a partition can't be loaded.
+    """
+    from datasets import DatasetDict
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import (
+        load_dataset,
+        select_columns,
+    )
+
+    session_dir = model_session.preprocessed_path
+    if not session_dir:
+        raise JobError(
+            f"Model session {model_session.id} has no preprocessed_path; "
+            "preprocessing may not have run yet."
+        )
+
+    def _load_partition(path: str):
+        combined = load_dataset(path)
+        return select_columns(
+            combined, model_session.input_columns, model_session.output_columns
+        )
+
+    if os.path.isdir(os.path.join(session_dir, "train")):
+        x, y = {}, {}
+        for split_name in ("train", "validation", "test"):
+            part_path = os.path.join(session_dir, split_name)
+            if os.path.isdir(part_path):
+                x[split_name], y[split_name] = _load_partition(part_path)
+        return DatasetDict(x), DatasetDict(y)
+
+    fold_names = sorted(
+        (d for d in os.listdir(session_dir) if d.startswith("fold_")),
+        key=lambda d: int(d.split("_")[1]),
+    )
+
+    x_list, y_list = [], []
+    for fold_name in [*fold_names, "full_dataset"]:
+        x_fold, y_fold = {}, {}
+        for split_name in ("train", "test"):
+            part_path = os.path.join(session_dir, fold_name, split_name)
+            if os.path.isdir(part_path):
+                x_fold[split_name], y_fold[split_name] = _load_partition(part_path)
+        x_list.append(DatasetDict(x_fold))
+        y_list.append(DatasetDict(y_fold))
+
+    return x_list, y_list
 
 
 class SessionPreprocessingJob(BaseJob):
@@ -151,6 +218,15 @@ class SessionPreprocessingJob(BaseJob):
                 session_dir = os.path.join(
                     str(config["MODEL_SESSIONS_PATH"]), str(model_session.id)
                 )
+                # Clear any stale content first (e.g. a re-run, or a reused
+                # session id after a previous session was deleted) so old
+                # partitions from a different split shape never linger
+                # alongside the new ones.
+                if os.path.isdir(session_dir):
+                    shutil.rmtree(session_dir)
+                stale_converters_path = fitted_converters_path(session_dir)
+                if os.path.exists(stale_converters_path):
+                    os.remove(stale_converters_path)
 
                 if isinstance(x, list):
                     last_index = len(x) - 1
