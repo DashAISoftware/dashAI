@@ -56,8 +56,8 @@ function FormSchemaRenderFields({
   onFormSubmit,
   setError,
   errorsMessage,
-  spacing = 2,
-  omitFields = [],
+  spacing = 1,
+  excludeFields = [],
 }) {
   if (!modelSchema) return null;
 
@@ -65,8 +65,11 @@ function FormSchemaRenderFields({
     (name, subName) => (value) => {
       const fieldPath = subName ? `${name}.${subName}` : name;
       formik.setFieldValue(fieldPath, value, true);
+      // Always pass complete formik.values so handleUpdateSchema receives
+      // ALL fields regardless of whether the context store has been
+      // initialised yet (prevents race-condition with useEffect init).
       handleUpdateSchema(
-        { [fieldPath]: value },
+        { ...formik.values, [fieldPath]: value },
         autoSave ? onFormSubmit : null,
       );
     },
@@ -79,7 +82,7 @@ function FormSchemaRenderFields({
     for (const key in modelSchema) {
       // Fields the caller renders by hand: a schema field whose input needs
       // context the schema cannot carry, such as a dataset's column names.
-      if (omitFields.includes(key)) continue;
+      if (excludeFields.includes(key)) continue;
 
       const fieldSchema = modelSchema[key];
       const objName = key;
@@ -183,7 +186,7 @@ function FormSchemaRenderFields({
     handleChange,
     setError,
     errorsMessage,
-    omitFields,
+    excludeFields,
   ]);
 
   return <Stack spacing={spacing}>{renderFields()}</Stack>;
@@ -198,7 +201,7 @@ FormSchemaRenderFields.propTypes = {
   setError: PropTypes.func,
   errorsMessage: PropTypes.object,
   spacing: PropTypes.number,
-  omitFields: PropTypes.arrayOf(PropTypes.string),
+  excludeFields: PropTypes.arrayOf(PropTypes.string),
 };
 
 export default FormSchemaRenderFields;

@@ -126,7 +126,7 @@ function SplitDatasetRows({
   // group_column is rendered by hand because its options are the dataset's own
   // columns, so the generated form never validates it.
   // Memoized because the generated form memoizes its field list on this array.
-  const omittedFields = useMemo(
+  const excludedFields = useMemo(
     () =>
       isIndexMode
         ? ["group_column", "train", "test", "validation"]
@@ -559,7 +559,7 @@ function SplitDatasetRows({
               model={splitterName}
               onFormSubmit={setSplitterParams}
               setError={setParamsError}
-              omitFields={omittedFields}
+              excludeFields={excludedFields}
             />
           </FormSchemaLayout>
           {splitsMessage && (
