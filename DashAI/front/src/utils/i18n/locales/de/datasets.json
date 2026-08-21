@@ -81,6 +81,7 @@
     "failedToLoadDatasetInfo": "Datensatzinformationen konnten nicht abgerufen werden",
     "failedToUpdateDataset": "Datensatz konnte nicht aktualisiert werden",
     "failedToUpdateExplorerResults": "Explorer-Ergebnisse konnten nicht aktualisiert werden",
+    "failedToResetExplorerResults": "Ursprüngliches Diagramm konnte nicht wiederhergestellt werden",
     "failedToUpdateNotebook": "Notizbuch konnte nicht aktualisiert werden",
     "fetchingDataloaders": "Fehler beim Abrufen kompatibler Datenlader.",
     "fetchingDatasetColumns": "Fehler beim Abrufen der Datensatzspalten.",
@@ -429,6 +430,7 @@
     "folderDeleteSuccess": "Ordner erfolgreich gelöscht",
     "explorerProcessedSuccessfully": "Explorer {{name}} erfolgreich verarbeitet",
     "explorerResultsUpdatedSuccessfully": "Explorer-Ergebnisse erfolgreich aktualisiert",
+    "explorerResultsRestoredSuccessfully": "Ursprüngliches Diagramm wiederhergestellt",
     "noChangesMade": "Es wurden keine Änderungen vorgenommen",
     "notebookCreated": "Notizbuch erfolgreich erstellt",
     "notebookUpdateSuccess": "Notizbuch erfolgreich aktualisiert"

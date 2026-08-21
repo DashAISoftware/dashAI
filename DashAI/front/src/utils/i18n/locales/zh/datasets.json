@@ -80,6 +80,7 @@
     "failedToLoadDatasetInfo": "获取数据集信息失败",
     "failedToUpdateDataset": "更新数据集失败",
     "failedToUpdateExplorerResults": "更新探索器结果失败",
+    "failedToResetExplorerResults": "恢复原始图表失败",
     "failedToUpdateNotebook": "更新笔记本失败",
     "fetchingDataloaders": "获取兼容数据加载器时出错。",
     "fetchingDatasetColumns": "获取数据集列时出错。",
@@ -478,6 +479,7 @@
     "folderDeleteSuccess": "文件夹删除成功",
     "explorerProcessedSuccessfully": "探索器 {{name}} 处理成功",
     "explorerResultsUpdatedSuccessfully": "探索器结果更新成功",
+    "explorerResultsRestoredSuccessfully": "已恢复原始图表",
     "noChangesMade": "未做任何更改",
     "notebookCreated": "笔记本创建成功",
     "notebookUpdateSuccess": "笔记本更新成功"

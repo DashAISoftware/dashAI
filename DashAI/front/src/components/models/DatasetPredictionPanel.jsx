@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { Box, CircularProgress } from "@mui/material";
+import { Box, Button, CircularProgress } from "@mui/material";
+import { ArrowForward } from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import DatasetSelector from "../predictions/DatasetSelector";
@@ -32,7 +34,13 @@ export default function DatasetPredictionPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["prediction", "common"]);
+  const { t } = useTranslation(["prediction", "common", "models"]);
+  const navigate = useNavigate();
+
+  const handleUploadNewDataset = () => {
+    onClose();
+    navigate("/app/data/datasets/new");
+  };
 
   const handleRunRef = useRef(null);
   useEffect(() => {
@@ -182,6 +190,16 @@ export default function DatasetPredictionPanel({
         datasets={datasets}
         selectedDataset={selectedDataset}
         setSelectedDataset={setSelectedDataset}
+        actionSlot={
+          <Button
+            variant="outlined"
+            endIcon={<ArrowForward />}
+            onClick={handleUploadNewDataset}
+            sx={{ textTransform: "none", fontWeight: 500, flexShrink: 0 }}
+          >
+            {t("models:button.uploadNewDataset")}
+          </Button>
+        }
       />
     </Box>
   );

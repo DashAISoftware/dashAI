@@ -29,7 +29,17 @@ def upgrade() -> None:
                existing_nullable=False)
 
     with op.batch_alter_table('model_session', schema=None) as batch_op:
-        batch_op.add_column(sa.Column('evaluation_strategy', sa.String(), nullable=False))
+        batch_op.add_column(
+            sa.Column(
+                'evaluation_strategy',
+                sa.String(),
+                nullable=False,
+                # Sessions created before evaluation strategies existed were
+                # all holdout; without a server default SQLite rejects the
+                # ADD COLUMN outright on any non-empty database.
+                server_default='HoldoutEvaluationStrategy',
+            )
+        )
 
     # ### end Alembic commands ###
 

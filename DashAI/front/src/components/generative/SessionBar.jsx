@@ -13,19 +13,30 @@ import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
 
-export default function SessionBar({ onToggle }) {
+export default function SessionBar({
+  onToggle,
+  sessions: sessionsProp,
+  selectedSessionId: selectedSessionIdProp,
+  handleSessionClick: handleSessionClickProp,
+  handleNewSessionButton: handleNewSessionButtonProp,
+  handleSessionDelete: handleSessionDeleteProp,
+  showSearch = true,
+}) {
   const theme = useTheme();
   const navigate = useNavigate();
   const {
     tasks,
-    sessions,
-    selectedSessionId,
+    sessions: sessionsCtx,
+    selectedSessionId: selectedSessionIdCtx,
     deleteSessionById,
     deleteSessionsByIds,
     editSession,
     openSections,
     setOpenSections,
   } = useGenerative();
+
+  const sessions = sessionsProp ?? sessionsCtx ?? [];
+  const selectedSessionId = selectedSessionIdProp ?? selectedSessionIdCtx;
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
@@ -68,7 +79,7 @@ export default function SessionBar({ onToggle }) {
       });
       return merged;
     });
-  }, [sessions, tasks]);
+  }, [sessions, tasks, taskDisplayNameMap, t]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -94,14 +105,32 @@ export default function SessionBar({ onToggle }) {
   };
 
   const handleNewSessionButton = () => {
+    if (handleNewSessionButtonProp) {
+      handleNewSessionButtonProp();
+      return;
+    }
     navigate("/app/generative");
   };
 
   const handleSessionClick = (sessionId) => {
+    const session = sessions.find((s) => s.id === sessionId);
+    if (!session) return;
+
+    if (handleSessionClickProp) {
+      const displayName =
+        taskDisplayNameMap[session.task_name] || t("common:other");
+      handleSessionClickProp(sessionId, session.task_name, displayName);
+      return;
+    }
+
     navigate(`/app/generative/sessions/${sessionId}`);
   };
 
   const handleSessionDelete = async (id) => {
+    if (handleSessionDeleteProp) {
+      await handleSessionDeleteProp(id);
+      return;
+    }
     const wasSelected = id === selectedSessionId;
     const ok = await deleteSessionById(id);
     if (ok && wasSelected) {
@@ -188,8 +217,8 @@ export default function SessionBar({ onToggle }) {
         </Box>
 
         {/* Search Bar */}
-        {sessions.length > SEARCH_THRESHOLD && (
-          <Box px={4} pb={4} flex={"0 0 auto"}>
+        {showSearch && sessions.length > SEARCH_THRESHOLD && (
+          <Box px={2} pb={2} flex={"0 0 auto"}>
             <SearchBar
               placeholder={t("generative:label.searchSessions")}
               value={searchQuery}

@@ -49,7 +49,14 @@ class ConfigObject:
         ValidationError
             If the given data does not follow the schema associated with the model.
         """
-        schema_instance = self.SCHEMA.model_validate(raw_data)
+        try:
+            from pydantic import ValidationError
+
+            schema_instance = self.SCHEMA.model_validate(raw_data)
+        except ValidationError as e:
+            # print full error message
+            print(e.json())
+            raise e
         return fill_objects(schema_instance)
 
     def get_credential(self, name: str):
