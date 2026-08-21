@@ -31,6 +31,8 @@ export default function GroupedCollapsibleList({
   getDeleteConfirmationContent,
   getDeleteConfirmationWarning,
   initialOpenGroups = {},
+  openGroups: controlledOpenGroups,
+  onOpenGroupsChange,
   onBulkDelete,
   selectItemsTooltip = t(
     "common:selectItemsToDelete",
@@ -45,7 +47,30 @@ export default function GroupedCollapsibleList({
   bulkDeleteConfirmationWarning,
 }) {
   const theme = useTheme();
-  const [openGroups, setOpenGroups] = useState(initialOpenGroups);
+  const isControlled = controlledOpenGroups !== undefined;
+  const [internalOpenGroups, setInternalOpenGroups] =
+    useState(initialOpenGroups);
+  const openGroups = isControlled ? controlledOpenGroups : internalOpenGroups;
+  const setOpenGroups = (updater) => {
+    const next = typeof updater === "function" ? updater(openGroups) : updater;
+    // Bail out on no-op updates. These are flat {groupName: boolean} maps, so a
+    // shallow key/value comparison is enough. Without this, a "set group X open"
+    // call for an already-open group would still notify the controlled parent,
+    // which re-renders the caller, which rebuilds `groups`, which re-triggers
+    // the auto-open effect below -> infinite render loop.
+    const isSame =
+      next === openGroups ||
+      (!!next &&
+        !!openGroups &&
+        Object.keys(next).length === Object.keys(openGroups).length &&
+        Object.keys(next).every((key) => next[key] === openGroups[key]));
+    if (isSame) return;
+    if (isControlled) {
+      onOpenGroupsChange?.(next);
+    } else {
+      setInternalOpenGroups(next);
+    }
+  };
   const selectedItemRef = useRef(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState(() => new Set());

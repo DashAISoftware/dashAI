@@ -1,8 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
 import { useTranslation } from "react-i18next";
-import { useDatasets } from "../../../hooks/datasets/useDatasets";
-import { useFolders } from "../../../hooks/datasets/useFolders";
+import { useSharedDatasets } from "../../../contexts/DatasetsContext";
 import { useNotebooks } from "../../../hooks/datasets/useNotebooks";
 import { useDownloads } from "../../../hooks/datasets/useDownloads";
 
@@ -34,29 +33,14 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     addDatasetOptimistically,
     replaceDatasets,
     startDatasetPolling,
-  } = useDatasets({ t });
-
-  const {
     folders,
     fetchFolders,
     createFolder,
     renameFolder,
-    deleteFolderById: deleteFolderByIdRaw,
-  } = useFolders({ t });
-
-  // Deleting a folder moves its datasets to "no folder" server-side
-  // (folder_id set to null via the FK's ON DELETE SET NULL), but the local
-  // `datasets` state still holds the old folder_id until this clears it —
-  // otherwise those datasets vanish from the list until a full refetch.
-  const deleteFolderById = async (id) => {
-    const success = await deleteFolderByIdRaw(id);
-    if (success) {
-      replaceDatasets((prev) =>
-        prev.map((d) => (d.folder_id === id ? { ...d, folder_id: null } : d)),
-      );
-    }
-    return success;
-  };
+    deleteFolderById,
+    openFolderIds,
+    setOpenFolderIds,
+  } = useSharedDatasets();
 
   const {
     downloads,
@@ -158,6 +142,8 @@ export const DatasetsAndNotebooksProvider = ({ children }) => {
     setScrollToColumn,
     uploadDataloader,
     setUploadDataloader,
+    openFolderIds,
+    setOpenFolderIds,
   };
 
   return (
