@@ -21,6 +21,7 @@ class DefaultSettings(BaseSettings):
     RUNS_PATH: str = "runs"
     EXPLANATIONS_PATH: str = "explanations"
     NOTEBOOK_PATH: str = "notebook"
+    MODEL_SESSIONS_PATH: str = "model_sessions"
     DATAFILE_PATH: str = "datafiles"
     CREDENTIALS_KEY_PATH: str = ".credentials_key"
     COMPONENT_PATH: str = "components"

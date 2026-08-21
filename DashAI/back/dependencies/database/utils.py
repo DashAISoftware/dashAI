@@ -205,6 +205,7 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
         Explorer,
         GlobalExplainer,
         LocalExplainer,
+        ModelSession,
         Run,
     )
 
@@ -276,6 +277,21 @@ def find_entity_by_huey_id(huey_id: str) -> dict:
                 "entity_name": converter.name,
                 "created_at": converter.created,
                 "last_modified": converter.last_modified,
+            }
+
+        model_session = (
+            db.query(ModelSession)
+            .filter(ModelSession.preprocessing_huey_id == huey_id)
+            .first()
+        )
+        if model_session:
+            return {
+                "entity_type": "session_preprocessing",
+                "entity_id": model_session.id,
+                "entity_name": model_session.name,
+                "created_at": model_session.created,
+                "last_modified": model_session.last_modified,
+                "status": model_session.preprocessing_status,
             }
 
         return None

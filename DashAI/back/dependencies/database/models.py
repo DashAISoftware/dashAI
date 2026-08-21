@@ -31,6 +31,7 @@ from DashAI.back.core.enums.status import (
     PluginStatus,
     PredictionStatus,
     RunStatus,
+    SessionPreprocessingStatus,
 )
 
 logger = logging.getLogger(__name__)
@@ -152,10 +153,45 @@ class ModelSession(Base):
         default=datetime.now,
         onupdate=datetime.now,
     )
+
+    # Async preprocessing of session converters (fit/transform once, saved to
+    # disk under preprocessed_path). Only relevant when `converters` is set.
+    preprocessing_status: Mapped[Enum] = mapped_column(
+        Enum(SessionPreprocessingStatus),
+        nullable=False,
+        default=SessionPreprocessingStatus.NOT_STARTED,
+    )
+    preprocessing_huey_id: Mapped[str] = mapped_column(String, nullable=True)
+    preprocessing_delivery_time: Mapped[DateTime] = mapped_column(
+        DateTime, nullable=True
+    )
+    preprocessing_start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    preprocessing_end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    preprocessed_path: Mapped[str] = mapped_column(String, nullable=True)
+
     runs: Mapped[List["Run"]] = relationship(
         "Run", cascade="all, delete-orphan", back_populates="model_session"
     )
     dataset = relationship("Dataset", back_populates="model_sessions")
+
+    def set_preprocessing_status_as_delivered(self) -> None:
+        """Mark session preprocessing as delivered and set delivery time."""
+        self.preprocessing_status = SessionPreprocessingStatus.DELIVERED
+        self.preprocessing_delivery_time = datetime.now()
+
+    def set_preprocessing_status_as_started(self) -> None:
+        """Mark session preprocessing as started and set start time."""
+        self.preprocessing_status = SessionPreprocessingStatus.STARTED
+        self.preprocessing_start_time = datetime.now()
+
+    def set_preprocessing_status_as_finished(self) -> None:
+        """Mark session preprocessing as finished and set end time."""
+        self.preprocessing_status = SessionPreprocessingStatus.FINISHED
+        self.preprocessing_end_time = datetime.now()
+
+    def set_preprocessing_status_as_error(self) -> None:
+        """Mark session preprocessing as failed."""
+        self.preprocessing_status = SessionPreprocessingStatus.ERROR
 
 
 class Run(Base):

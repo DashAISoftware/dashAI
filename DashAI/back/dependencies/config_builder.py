@@ -56,6 +56,7 @@ def build_config_dict(
     config["DATASETS_PATH"] = local_path / config["DATASETS_PATH"]
     config["EXPLANATIONS_PATH"] = local_path / config["EXPLANATIONS_PATH"]
     config["NOTEBOOK_PATH"] = local_path / config["NOTEBOOK_PATH"]
+    config["MODEL_SESSIONS_PATH"] = local_path / config["MODEL_SESSIONS_PATH"]
     config["RUNS_PATH"] = local_path / config["RUNS_PATH"]
     config["IMAGES_PATH"] = local_path / config["IMAGES_PATH"]
     config["DATAFILE_PATH"] = local_path / config["DATAFILE_PATH"]
