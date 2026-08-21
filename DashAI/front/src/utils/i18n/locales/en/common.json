@@ -1,5 +1,6 @@
 {
   "actions": "Actions",
+  "holdout": "Holdout",
   "hub": "Hub",
   "add": "Add",
   "addModel": "Add Model",

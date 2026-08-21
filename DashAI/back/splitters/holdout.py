@@ -189,6 +189,26 @@ class HoldoutSplitter(BaseSplitter):
 
     SCHEMA = HoldoutSplitterSchema
 
+    @classmethod
+    def explainable_partitions(cls, split_indexes):
+        """Return the train, test and validation partitions of a holdout run.
+
+        Parameters
+        ----------
+        split_indexes : dict
+            The ``Run.split_indexes`` payload, already parsed.
+
+        Returns
+        -------
+        dict
+            Row indexes for the ``train``, ``test`` and ``val`` partitions.
+        """
+        return {
+            "train": split_indexes["train_indexes"],
+            "test": split_indexes["test_indexes"],
+            "val": split_indexes.get("val_indexes", []),
+        }
+
     def __init__(self, splits_data):
         """Initialize the holdout splitter with the requested proportions.
 
