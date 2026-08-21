@@ -145,17 +145,26 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
     ) -> "DashAIDataset":
         """Drop all rows containing null or null-like values in the scoped columns.
 
+        When ``y`` is provided, the same rows are dropped from it too and the
+        result is the combined ``x``+``y`` dataset — this is required by
+        callers (e.g. `fit_transform_on_partition`) that treat row-count-
+        changing converters like samplers: they always pass the paired
+        target alongside the features and expect it back merged in, so the
+        two never fall out of sync.
+
         Parameters
         ----------
         x : DashAIDataset
             The dataset to clean.
         y : DashAIDataset, optional
-            Ignored. Defaults to None.
+            The paired target dataset, if any. Rows dropped from ``x`` are
+            dropped from ``y`` at the same positions. Defaults to None.
 
         Returns
         -------
         DashAIDataset
-            A new dataset with null-containing rows removed.
+            A new dataset with null-containing rows removed, including ``y``'s
+            column(s) (row-aligned) when ``y`` is given.
 
         Raises
         ------
@@ -163,6 +172,7 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
             If any fitted column is not present in ``x``.
         """
         import numpy as np
+        import pandas as pd
 
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
@@ -191,13 +201,18 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
 
             mask = mask & col_mask
 
-        cleaned_dataset = dataset[mask]
+        cleaned_dataset = dataset[mask].reset_index(drop=True)
 
         preserved_types = {
             col: self.column_types[col]
             for col in cleaned_dataset.columns
             if col in self.column_types
         }
+
+        if y is not None:
+            cleaned_y = y.to_pandas()[mask].reset_index(drop=True)
+            cleaned_dataset = pd.concat([cleaned_dataset, cleaned_y], axis=1)
+            preserved_types.update(y.types)
 
         return to_dashai_dataset(cleaned_dataset, types=preserved_types)
 

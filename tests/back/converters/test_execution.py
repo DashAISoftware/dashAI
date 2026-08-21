@@ -17,6 +17,7 @@ from DashAI.back.converters.imbalanced_learn.random_under_sampler_converter impo
 )
 from DashAI.back.converters.scikit_learn.pca import PCA
 from DashAI.back.converters.scikit_learn.standard_scaler import StandardScaler
+from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.job.base_job import JobError
 
@@ -121,6 +122,31 @@ def test_sampler_only_changes_train_not_test_or_validation():
     assert x_others["validation"].to_pandas()["a"].tolist() == [999.0]
     assert x_others["test"].to_pandas()["a"].tolist() == [888.0]
     # samplers are never captured for prediction-time replay.
+    assert fitted == []
+
+
+def test_nan_remover_keeps_x_and_y_aligned_and_merged():
+    """Regression test: NanRemover changes the row count (CHANGES_ROW_COUNT),
+    so `fit_transform_on_partition` feeds it x_train/y_train and expects a
+    combined dataset back to split apart again (same contract as samplers).
+    NanRemover.transform used to ignore `y` entirely, so the output column
+    was silently dropped and the follow-up split blew up with a KeyError."""
+    x_train = _dataset(pd.DataFrame({"a": [1.0, None, 3.0, 4.0]}))
+    y_train = _dataset(pd.DataFrame({"target": [0, 1, 0, 1]}))
+    x_test = _dataset(pd.DataFrame({"a": [999.0]}))
+
+    registry = _registry(NanRemover)
+    config = [_converter_config("NanRemover")]
+
+    new_x_train, new_y_train, x_others, fitted = fit_transform_on_partition(
+        config, registry, x_train, y_train, x_others={"test": x_test}
+    )
+
+    # the row with a NaN in "a" is dropped from both x and y, in sync.
+    assert new_x_train.to_pandas()["a"].tolist() == [1.0, 3.0, 4.0]
+    assert new_y_train.to_pandas()["target"].tolist() == [0, 0, 1]
+    # test is left untouched, like any other row-count-changing converter.
+    assert x_others["test"].to_pandas()["a"].tolist() == [999.0]
     assert fitted == []
 
 
