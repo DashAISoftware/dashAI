@@ -27,7 +27,12 @@
     "splitsMustSumToOne": "Aufteilungen müssen 1 ergeben",
     "taskRequirementsNotFound": "Aufgabenanforderungen für {{taskName}} nicht gefunden",
     "trainSplitMustBeGreaterThanZero": "Trainingsaufteilung muss größer als null sein",
-    "trainSplitMustHaveAtLeastOneRow": "Trainingsaufteilung muss mindestens eine Zeile haben"
+    "trainSplitMustHaveAtLeastOneRow": "Trainingsaufteilung muss mindestens eine Zeile haben",
+    "foldsMustBeGreaterThanOne": "Die Anzahl der Folds muss größer als 1 sein",
+    "foldsMustBeLessThanDatasetSize": "Die Anzahl der Folds muss kleiner oder gleich der Anzahl der Stichproben im Datensatz sein ({{datasetSize}})",
+    "foldsMustBeAnInteger": "Die Anzahl der Folds muss eine ganze Zahl sein",
+    "repeatsMustBeGreaterThanOne": "Die Anzahl der Wiederholungen muss größer als 1 sein",
+    "groupColumnMustBeSelected": "Es muss eine Spalte zum Gruppieren ausgewählt werden"
   },
   "label": {
     "addModelsToExperiment": "Modelle zum Experiment hinzufügen",
@@ -74,6 +79,15 @@
     "selectDatasetTitle": "Datensatz für die ausgewählte Aufgabe auswählen",
     "splitType": "Aufteilungstyp",
     "selectHowToDivideDataset": "Wählen Sie, wie der Datensatz in Trainings-, Validierungs- und Testmengen aufgeteilt werden soll.",
+    "selectEvaluationStrategy": "Bewertungsstrategie",
+    "holdout": "Holdout",
+    "crossValidation": "Kreuzvalidierung",
+    "cvType": "Art der Kreuzvalidierung",
+    "numFolds": "Anzahl der Folds (k)",
+    "numFoldsDescription": "Anzahl der Folds bei der Kreuzvalidierung. Mehr Folds können die Stabilität der Bewertung verbessern, erhöhen aber die Verarbeitungszeit. Muss eine ganze Zahl größer als 1 sein.",
+    "numRepeats": "Anzahl der Wiederholungen",
+    "numRepeatsDescription": "Anzahl der Wiederholungen des Kreuzvalidierungsprozesses. Ein höherer Wert liefert präzisere Werte, erfordert aber mehr Trainingszeit. Muss eine ganze Zahl größer als 1 sein.",
+    "groupColumn": "Spalte zum Gruppieren",
     "selectInputOutputColumnsDescription": "Spaltenbezeichnungen aus den Listen auswählen.",
     "selectMetrics": "Metriken auswählen",
     "selectModelFirst": "Zuerst ein Modell auswählen",
@@ -87,7 +101,9 @@
     "useManualSplittingBySpecifyingRowIndexes": "Manuelle Aufteilung durch Angabe der Zeilenindizes jeder Teilmenge",
     "usePredefinedSplitsFromDataset": "Vordefinierte Aufteilungen aus dem Datensatz verwenden",
     "usePredefinedSplitsFromDatasetNotAvailable": "Vordefinierte Aufteilungen aus dem Datensatz verwenden (nicht verfügbar)",
-    "useRandomRowsBySpecifyingPortion": "Zufällige Zeilen durch Angabe des Anteils des Datensatzes für jede Teilmenge"
+    "useRandomRowsBySpecifyingPortion": "Zufällige Zeilen durch Angabe des Anteils des Datensatzes für jede Teilmenge",
+    "selectAColumn": "Eine Spalte auswählen",
+    "groupColumnDescription": "Spalte, die zur Gruppierung verwendet wird. Stichproben derselben Gruppe bleiben im selben Fold zusammen, sodass eine Gruppe nicht gleichzeitig in Trainings- und Testmenge erscheint."
   },
   "message": {
     "confirmDeleteRun": "Sind Sie sicher, dass Sie diesen Durchlauf löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",

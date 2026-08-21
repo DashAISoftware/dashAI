@@ -3,7 +3,11 @@ import PropTypes from "prop-types";
 import { Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
-function ResultsTabMetricsToggle({ displaySet, setDisplaySet }) {
+function ResultsTabMetricsToggle({
+  displaySet,
+  setDisplaySet,
+  evaluationStrategy,
+}) {
   const { t } = useTranslation(["common"]);
 
   return (
@@ -21,9 +25,11 @@ function ResultsTabMetricsToggle({ displaySet, setDisplaySet }) {
       >
         <ToggleButton value="test_metrics">{t("common:test")}</ToggleButton>
         <ToggleButton value="train_metrics">{t("common:train")}</ToggleButton>
-        <ToggleButton value="validation_metrics">
-          {t("common:validation")}
-        </ToggleButton>
+        {evaluationStrategy !== "CrossValidationEvaluationStrategy" && (
+          <ToggleButton value="validation_metrics">
+            {t("common:validation")}
+          </ToggleButton>
+        )}
       </ToggleButtonGroup>
     </Grid>
   );
@@ -32,6 +38,7 @@ function ResultsTabMetricsToggle({ displaySet, setDisplaySet }) {
 ResultsTabMetricsToggle.propTypes = {
   displaySet: PropTypes.string.isRequired,
   setDisplaySet: PropTypes.func.isRequired,
+  evaluationStrategy: PropTypes.string.isRequired,
 };
 
 export default ResultsTabMetricsToggle;

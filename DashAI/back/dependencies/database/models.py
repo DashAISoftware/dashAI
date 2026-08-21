@@ -143,6 +143,7 @@ class ModelSession(Base):
     validation_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
     test_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
 
+    evaluation_strategy: Mapped[str] = mapped_column(String, nullable=False)
     splits: Mapped[str] = mapped_column(JSON, nullable=False)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
@@ -179,6 +180,7 @@ class Run(Base):
     # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)
+    nested: Mapped[JSON] = mapped_column(JSON, nullable=True)
     plot_history_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_slice_path: Mapped[str] = mapped_column(String, nullable=True)
     plot_contour_path: Mapped[str] = mapped_column(String, nullable=True)
@@ -285,7 +287,10 @@ class Metric(Base):
 
     name: Mapped[str] = mapped_column(String, nullable=False)
     value: Mapped[float] = mapped_column(Float, nullable=False)
+    std_value: Mapped[float] = mapped_column(Float, nullable=True)
     step: Mapped[int] = mapped_column(Integer, nullable=False)
+    fold_index: Mapped[int] = mapped_column(Integer, nullable=True)
+    inner_fold_index: Mapped[int] = mapped_column(Integer, nullable=True)
 
     timestamp: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.now, index=True
@@ -792,4 +797,68 @@ class Datafile(Base):
             "dataset_id",
             name="uq_datafile_source_dataset",
         ),
+    )
+
+
+class StatisticalTest(Base):
+    __tablename__ = "statistical_test"
+    """
+    A saved statistical test result.
+    """
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    # Shared by every row of a per-run batch (e.g. a Shapiro fan-out) so they
+    # can be listed together. its null for single row results
+    group_id: Mapped[Optional[str]] = mapped_column(String, nullable=True, index=True)
+    model_session_id: Mapped[int] = mapped_column(
+        ForeignKey("model_session.id", ondelete="CASCADE")
+    )
+
+    # optional name and description when test is saved by the user
+    name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    # What was tested
+    test_name: Mapped[str] = mapped_column(String, nullable=False)
+    metric_name: Mapped[str] = mapped_column(String, nullable=False)
+    metric_split: Mapped[str] = mapped_column(String, nullable=False)
+    alpha: Mapped[float] = mapped_column(Float, nullable=False)
+
+    # Participating runs + a name map
+    run_ids: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    run_names: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+
+    # Extra test-specific input params (e.g. {"alternative": "two-sided"})
+    params: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # Outcome. statistic / p_value nullable: not every test reports them.
+    statistic: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    p_value: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    significant: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    interpretation: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+
+    # Free-form JSON payloads keep the table test-agnostic.
+    details: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    posthoc: Mapped[Optional[list]] = mapped_column(JSON, nullable=True)
+
+    created: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
+class Credential(Base):
+    __tablename__ = "credential"
+    """
+    Table to store encrypted credentials for external platforms.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    encrypted_key: Mapped[str] = mapped_column(Text, nullable=False)
+    verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
+    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[DateTime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
     )

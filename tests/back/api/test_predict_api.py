@@ -207,6 +207,7 @@ def create_model_session(client: TestClient, dataset: Dataset):
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
+            evaluation_strategy="HoldoutEvaluationStrategy",
             splits=json.dumps(
                 {
                     "train": 0.5,
@@ -217,6 +218,7 @@ def create_model_session(client: TestClient, dataset: Dataset):
                     "seed": 42,
                     "shuffle": True,
                     "stratify": False,
+                    "splitter_name": "HoldoutSplitter",
                 }
             ),
         )

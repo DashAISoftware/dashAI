@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Box, Typography, Tab, Tooltip, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import PillTabs from "../../shared/PillTabs";
+import { useModels } from "../ModelsContext";
 
 const groupLabelSx = {
   textTransform: "uppercase",
@@ -15,11 +16,17 @@ const groupLabelSx = {
 // Matches the MUI small Chip's height, so tabs with a count chip don't grow
 // taller than plain-text tabs and push their label off-center.
 const TAB_LABEL_HEIGHT = 24;
+// Shared width for every tab (both Metrics rows and the Operations row), so
+// pills line up horizontally instead of each one hugging its own label
+// length. Sized to fit the longest label + chip ("Nested CV Results").
+const TAB_LABEL_WIDTH = 140;
 const tabLabelRowSx = {
   display: "flex",
   alignItems: "center",
+  justifyContent: "center",
   gap: 2,
   height: TAB_LABEL_HEIGHT,
+  width: TAB_LABEL_WIDTH,
 };
 
 /**
@@ -34,6 +41,7 @@ export default function ResultsTabsHeader({
   optimizables,
   explainerCount,
   predictionCount,
+  run,
 }) {
   const { t } = useTranslation(["models"]);
 
@@ -47,36 +55,79 @@ export default function ResultsTabsHeader({
     : optimizables === 0
       ? t("models:message.noOptimizableParamsForHpo")
       : "";
+  const nestedCvResultsTooltip = !isFinished
+    ? notFinishedTooltip
+    : !run?.nested
+      ? t("models:message.nestedCvResultsOnlyForNestedCv")
+      : "";
+
+  // Get session from context to check if the evaluation strategy is Cross Validation
+  const { selectedSession } = useModels();
+  const isCrossValidation =
+    selectedSession?.evaluation_strategy ===
+    "CrossValidationEvaluationStrategy";
+  const isNestedCrossValidation = !!run?.nested;
 
   return (
-    <Box sx={{ display: "flex", alignItems: "flex-end" }}>
+    <Box sx={{ display: "flex", alignItems: "flex-start" }}>
       <Box sx={{ display: "flex", flexDirection: "column" }}>
         <Typography variant="caption" color="text.secondary" sx={groupLabelSx}>
           {t("models:label.metrics")}
         </Typography>
-        <PillTabs
-          value={[0, 3].includes(activeTab) ? activeTab : false}
-          onChange={(e, newValue) => onTabChange(newValue)}
-          aria-label="Result characteristics tabs"
-        >
-          <Tab
-            value={0}
-            label={
-              <Box sx={tabLabelRowSx}>{t("models:label.liveMetrics")}</Box>
-            }
-          />
-          <Tab
-            value={3}
-            label={
-              <Tooltip title={hyperparametersTooltip}>
-                <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
-                  {t("models:label.hyperparameters")}
-                </Box>
-              </Tooltip>
-            }
-            disabled={!isFinished || optimizables === 0}
-          />
-        </PillTabs>
+        {/* Stacked rows instead of a single pill bar: each PillTabs sizes its
+            tabs to their own content, and the second row only takes up space
+            when Cross Validation adds fold/nested-CV results. */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <PillTabs
+            value={[0, 3].includes(activeTab) ? activeTab : false}
+            onChange={(e, newValue) => onTabChange(newValue)}
+            aria-label="Result characteristics tabs"
+          >
+            <Tab
+              value={0}
+              label={
+                <Box sx={tabLabelRowSx}>{t("models:label.liveMetrics")}</Box>
+              }
+            />
+            <Tab
+              value={3}
+              label={
+                <Tooltip title={hyperparametersTooltip}>
+                  <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
+                    {t("models:label.hyperparameters")}
+                  </Box>
+                </Tooltip>
+              }
+              disabled={!isFinished || optimizables === 0}
+            />
+          </PillTabs>
+          {isCrossValidation && (
+            <PillTabs
+              value={[4, 5].includes(activeTab) ? activeTab : false}
+              onChange={(e, newValue) => onTabChange(newValue)}
+              aria-label="Result cross-validation tabs"
+            >
+              <Tab
+                value={4}
+                label={
+                  <Box sx={tabLabelRowSx}>{t("models:label.foldGraphs")}</Box>
+                }
+                disabled={!isFinished}
+              />
+              <Tab
+                value={5}
+                label={
+                  <Tooltip title={nestedCvResultsTooltip}>
+                    <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
+                      {t("models:label.nestedCvResults")}
+                    </Box>
+                  </Tooltip>
+                }
+                disabled={!isFinished || !isNestedCrossValidation}
+              />
+            </PillTabs>
+          )}
+        </Box>
       </Box>
 
       {/* Empty spacer just for the horizontal gap between groups. Kept out of

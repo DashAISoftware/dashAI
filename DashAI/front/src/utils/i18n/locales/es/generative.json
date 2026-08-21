@@ -46,6 +46,7 @@
     "parameterChangeEvent": "Parámetros actualizados: <1></1>",
     "modelChangeEvent": "Modelo cambiado: <1></1>",
     "modelNotDownloaded": "El modelo de esta sesión aún no está descargado. Descárgalo para continuar.",
+    "modelRequiresCredentials": "Este modelo requiere autenticar {{platform}} antes de poder usarlo.",
     "parameterChangeHistory": "Historial de cambios de parámetros para la sesión actual",
     "searchSessions": "Buscar Sesiones",
     "selectGenerativeTask": "Seleccione una tarea generativa para comenzar una nueva sesión",

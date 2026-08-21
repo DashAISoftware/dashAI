@@ -9,10 +9,12 @@ from fastapi.testclient import TestClient
 from DashAI.back.dataloaders.classes.csv_dataloader import CSVDataLoader
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
+from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
+from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.tasks.base_task import BaseTask
 
 
@@ -100,6 +102,8 @@ def setup_test_registry(client):
             CSVDataLoader,
             ModelJob,
             OptunaOptimizer,
+            HoldoutSplitter,
+            HoldoutEvaluationStrategy,
         ]
     )
     services["component_registry"] = test_registry
@@ -131,6 +135,7 @@ def create_model_session(client: TestClient, dataset_id: int, test_registry):
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
+            evaluation_strategy="HoldoutEvaluationStrategy",
             splits=json.dumps(
                 {
                     "train": 0.5,
@@ -142,6 +147,7 @@ def create_model_session(client: TestClient, dataset_id: int, test_registry):
                     "shuffle": True,
                     "stratify": False,
                     "splitType": "random",
+                    "splitter_name": "HoldoutSplitter",
                 }
             ),
         )
