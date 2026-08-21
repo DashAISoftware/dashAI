@@ -23,7 +23,8 @@
     "saveAndRunModel": "Save and Run Model",
     "showOperations": "Show Operations",
     "showParameters": "Show Parameters",
-    "updateAndRetrain": "Update & Retrain"
+    "updateAndRetrain": "Update & Retrain",
+    "addConverter": "Add converter"
   },
   "error": {
     "completeRequiredFields": "Please complete all required fields",
@@ -64,7 +65,8 @@
     "failedToLoadTests": "Could not load saved tests.",
     "failedToDeleteTest": "Could not delete the test.",
     "failedToSaveTest": "Failed to save the test results.",
-    "fetchingInnerSplitters": "Failed to load inner splitters for nested cross validaiton"
+    "fetchingInnerSplitters": "Failed to load inner splitters for nested cross validaiton",
+    "noColumnsSelectedForConverter": "Select at least one column for the converter."
   },
   "label": {
     "addModelToSession": "Add Model to Session",
@@ -271,7 +273,14 @@
     "finalFoldFetch": "Final Folds",
     "twoSided": "Two-sided (Model 1 ≠ Model 2)",
     "greater": "Greater (Model 1 > Model 2)",
-    "less": "Less (Model 1 < Model 2)"
+    "less": "Less (Model 1 < Model 2)",
+    "sessionConverters": "Preprocessing (optional)",
+    "sessionConvertersDescription": "Selected converters are fit only on the training data and applied to the rest, to avoid data leakage.",
+    "noConvertersAdded": "No converters added yet.",
+    "converterColumns": "Columns: {{columns}}",
+    "selectConverterFirst": "Pick a converter to continue.",
+    "preprocessingInProgress": "Processing session data...",
+    "preprocessingFailed": "Session preprocessing failed. Check the converters configuration."
   },
   "message": {
     "skippedUndownloadedRuns": "Skipped runs whose model is not downloaded. Download the model first.",

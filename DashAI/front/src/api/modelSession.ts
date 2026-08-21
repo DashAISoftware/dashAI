@@ -1,5 +1,5 @@
 import api from "./api";
-import type { IModelSession } from "../types/modelSession";
+import type { IModelSession, ISessionConverter } from "../types/modelSession";
 
 const endpointURL = "/v1/model-session";
 
@@ -26,6 +26,7 @@ export const createModelSession = async (
   testMetrics: string[],
   evaluationStrategy: string,
   splitsValue: JSON,
+  converters: ISessionConverter[] = [],
 ): Promise<IModelSession> => {
   const data = {
     dataset_id: datasetId,
@@ -38,6 +39,7 @@ export const createModelSession = async (
     test_metrics: testMetrics,
     evaluation_strategy: evaluationStrategy,
     splits: splitsValue,
+    converters: converters,
   };
 
   const response = await api.post<IModelSession>("/v1/model-session/", data);

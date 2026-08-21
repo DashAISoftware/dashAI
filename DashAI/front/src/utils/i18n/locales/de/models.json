@@ -23,7 +23,8 @@
     "saveAndRunModel": "Modell speichern und ausführen",
     "showOperations": "Operationen anzeigen",
     "showParameters": "Parameter anzeigen",
-    "updateAndRetrain": "Aktualisieren und neu trainieren"
+    "updateAndRetrain": "Aktualisieren und neu trainieren",
+    "addConverter": "Converter hinzufügen"
   },
   "error": {
     "completeRequiredFields": "Bitte füllen Sie alle Pflichtfelder aus",
@@ -64,7 +65,8 @@
     "failedToLoadTests": "Die gespeicherten Tests konnten nicht geladen werden.",
     "failedToDeleteTest": "Der Test konnte nicht gelöscht werden.",
     "failedToSaveTest": "Die Testergebnisse konnten nicht gespeichert werden.",
-    "fetchingInnerSplitters": "Die inneren Splitter für die verschachtelte Kreuzvalidierung konnten nicht geladen werden"
+    "fetchingInnerSplitters": "Die inneren Splitter für die verschachtelte Kreuzvalidierung konnten nicht geladen werden",
+    "noColumnsSelectedForConverter": "Wählen Sie mindestens eine Spalte für den Converter aus."
   },
   "label": {
     "addModelToSession": "Modell zur Sitzung hinzufügen",
@@ -273,7 +275,14 @@
     "finalFoldFetch": "Finale Folds",
     "twoSided": "Beidseitig (Modell 1 ≠ Modell 2)",
     "greater": "Größer (Modell 1 > Modell 2)",
-    "less": "Kleiner (Modell 1 < Modell 2)"
+    "less": "Kleiner (Modell 1 < Modell 2)",
+    "sessionConverters": "Vorverarbeitung (optional)",
+    "sessionConvertersDescription": "Ausgewählte Converter werden nur mit den Trainingsdaten angepasst und auf den Rest angewendet, um Data Leakage zu vermeiden.",
+    "noConvertersAdded": "Noch kein Converter hinzugefügt.",
+    "converterColumns": "Spalten: {{columns}}",
+    "selectConverterFirst": "Wählen Sie einen Converter aus, um fortzufahren.",
+    "preprocessingInProgress": "Sitzungsdaten werden verarbeitet...",
+    "preprocessingFailed": "Die Vorverarbeitung der Sitzung ist fehlgeschlagen. Überprüfen Sie die Converter-Konfiguration."
   },
   "message": {
     "skippedUndownloadedRuns": "Durchläufe mit nicht heruntergeladenem Modell wurden übersprungen. Lade das Modell zuerst herunter.",

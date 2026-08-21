@@ -23,7 +23,8 @@
     "saveAndRunModel": "Guardar y Ejecutar Modelo",
     "showOperations": "Mostrar Operaciones",
     "showParameters": "Mostrar Parámetros",
-    "updateAndRetrain": "Actualizar y Re-entrenar"
+    "updateAndRetrain": "Actualizar y Re-entrenar",
+    "addConverter": "Agregar converter"
   },
   "error": {
     "completeRequiredFields": "Por favor complete todos los campos requeridos",
@@ -64,7 +65,8 @@
     "failedToLoadTests": "No se pudieron cargar los tests guardados.",
     "failedToDeleteTest": "No se pudo eliminar el test.",
     "failedToSaveTest": "No se pudieron guardar los resultados del test.",
-    "fetchingInnerSplitters": "No se pudieron cargar los splitters internos para validación cruzada anidada"
+    "fetchingInnerSplitters": "No se pudieron cargar los splitters internos para validación cruzada anidada",
+    "noColumnsSelectedForConverter": "Seleccioná al menos una columna para el converter."
   },
   "label": {
     "addModelToSession": "Agregar Modelo a la Sesión",
@@ -278,7 +280,14 @@
     "finalFoldFetch": "Pliegues Finales",
     "twoSided": "Ambos lados (Modelo 1 ≠ Modelo 2)",
     "greater": "Mayor (Modelo 1 > Modelo 2)",
-    "less": "Menor (Modelo 1 < Modelo 2)"
+    "less": "Menor (Modelo 1 < Modelo 2)",
+    "sessionConverters": "Preprocesamiento (opcional)",
+    "sessionConvertersDescription": "Los converters seleccionados se ajustan solo sobre los datos de entrenamiento y se aplican al resto, para evitar fuga de datos.",
+    "noConvertersAdded": "No se agregó ningún converter.",
+    "converterColumns": "Columnas: {{columns}}",
+    "selectConverterFirst": "Elegí un converter para continuar.",
+    "preprocessingInProgress": "Procesando los datos de la sesión...",
+    "preprocessingFailed": "El preprocesamiento de la sesión falló. Revisá la configuración de los converters."
   },
   "message": {
     "skippedUndownloadedRuns": "Se omitieron las ejecuciones cuyo modelo no está descargado. Descarga el modelo primero.",

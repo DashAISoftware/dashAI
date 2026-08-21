@@ -23,7 +23,8 @@
     "saveAndRunModel": "Salvar e Executar Modelo",
     "showOperations": "Mostrar Operações",
     "showParameters": "Mostrar Parâmetros",
-    "updateAndRetrain": "Atualizar e Retreinar"
+    "updateAndRetrain": "Atualizar e Retreinar",
+    "addConverter": "Adicionar converter"
   },
   "error": {
     "completeRequiredFields": "Por favor, preencha todos os campos obrigatórios",
@@ -64,7 +65,8 @@
     "failedToSaveTest": "Não foi possível salvar os resultados do teste.",
     "selectMetric": "Por favor, selecione uma métrica",
     "failedToExecuteTest": "Erro ao executar o teste estatístico",
-    "fetchingInnerSplitters": "Não foi possível carregar os divisores internos para a validação cruzada aninhada."
+    "fetchingInnerSplitters": "Não foi possível carregar os divisores internos para a validação cruzada aninhada.",
+    "noColumnsSelectedForConverter": "Selecione pelo menos uma coluna para o converter."
   },
   "label": {
     "addModelToSession": "Adicionar Modelo à Sessão",
@@ -278,7 +280,14 @@
     "finalFoldFetch": "Folds Finais",
     "twoSided": "Ambos os lados (Modelo 1 ≠ Modelo 2)",
     "greater": "Maior (Modelo 1 > Modelo 2)",
-    "less": "Menor (Modelo 1 < Modelo 2)"
+    "less": "Menor (Modelo 1 < Modelo 2)",
+    "sessionConverters": "Pré-processamento (opcional)",
+    "sessionConvertersDescription": "Os converters selecionados são ajustados apenas nos dados de treinamento e aplicados ao restante, para evitar vazamento de dados.",
+    "noConvertersAdded": "Nenhum converter adicionado ainda.",
+    "converterColumns": "Colunas: {{columns}}",
+    "selectConverterFirst": "Escolha um converter para continuar.",
+    "preprocessingInProgress": "Processando os dados da sessão...",
+    "preprocessingFailed": "O pré-processamento da sessão falhou. Verifique a configuração dos converters."
   },
   "message": {
     "skippedUndownloadedRuns": "Execuções cujo modelo não está baixado foram ignoradas. Baixe o modelo primeiro.",

@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import DivideDatasetColumns from "./DivideDatasetColumns";
 import SplitDatasetRows from "./SplitDatasetRows";
+import SelectConvertersStep from "./SelectConvertersStep";
 import {
   getDatasetInfo as getDatasetInfoRequest,
   getDatasetTypes as getDatasetTypesRequest,
@@ -567,19 +568,29 @@ function PrepareDatasetStep({
       )}
 
       {!infoLoading ? (
-        <Grid container spacing={2}>
-          <DivideDatasetColumns
-            allColumnNames={datasetInfo.column_names || []}
-            columnTypes={datasetTypes}
-            selectedInputColumnNames={inputColumnNames}
-            onInputColumnNamesChange={setInputColumnNames}
-            selectedOutputColumnNames={outputColumnNames}
-            onOutputColumnNamesChange={setOutputColumnNames}
-            disabled={
-              infoLoading || (datasetInfo.column_names || []).length === 0
-            }
-          />
-        </Grid>
+        <>
+          <Grid container spacing={2}>
+            <DivideDatasetColumns
+              allColumnNames={datasetInfo.column_names || []}
+              columnTypes={datasetTypes}
+              selectedInputColumnNames={inputColumnNames}
+              onInputColumnNamesChange={setInputColumnNames}
+              selectedOutputColumnNames={outputColumnNames}
+              onOutputColumnNamesChange={setOutputColumnNames}
+              disabled={
+                infoLoading || (datasetInfo.column_names || []).length === 0
+              }
+            />
+          </Grid>
+          {columnsAreValid && splitsReady && (
+            <SelectConvertersStep
+              newExp={newExp}
+              setNewExp={setNewExp}
+              inputColumnNames={inputColumnNames}
+              columnTypes={datasetTypes}
+            />
+          )}
+        </>
       ) : (
         <Box sx={{ display: "flex", justifyContent: "center" }}>
           <CircularProgress />

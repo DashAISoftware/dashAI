@@ -53,6 +53,7 @@ function CreateSessionSteps({
     test_metrics: [],
     evaluation_strategy: "",
     splits: {},
+    converters: [],
     runs: [],
   });
 
@@ -67,6 +68,7 @@ function CreateSessionSteps({
       input_columns: [],
       output_columns: [],
       splits: {},
+      converters: [],
     }));
     if (
       tourContext?.run &&
@@ -188,6 +190,7 @@ function CreateSessionSteps({
           hasTest ? allMetricNames : [],
           newExp.evaluation_strategy,
           JSON.stringify(newExp.splits),
+          newExp.converters,
         );
       } catch (createError) {
         if (createError?.response?.status === 409) {
@@ -204,6 +207,7 @@ function CreateSessionSteps({
             hasTest ? allMetricNames : [],
             newExp.evaluation_strategy,
             JSON.stringify(newExp.splits),
+            newExp.converters,
           );
         } else {
           throw createError;

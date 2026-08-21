@@ -23,7 +23,8 @@
     "saveAndRunModel": "保存并运行模型",
     "showOperations": "显示操作",
     "showParameters": "显示参数",
-    "updateAndRetrain": "更新并重新训练"
+    "updateAndRetrain": "更新并重新训练",
+    "addConverter": "添加转换器"
   },
   "error": {
     "completeRequiredFields": "请填写所有必填字段",
@@ -64,7 +65,8 @@
     "failedToLoadTests": "无法加载已保存的检验。",
     "failedToDeleteTest": "无法删除该检验。",
     "failedToSaveTest": "无法保存检验结果。",
-    "fetchingInnerSplitters": "无法加载用于嵌套交叉验证的内部划分器"
+    "fetchingInnerSplitters": "无法加载用于嵌套交叉验证的内部划分器",
+    "noColumnsSelectedForConverter": "请为转换器选择至少一列。"
   },
   "label": {
     "addModelToSession": "将模型添加到会话",
@@ -272,7 +274,14 @@
     "finalFoldFetch": "最终折",
     "twoSided": "双侧（模型 1 ≠ 模型 2）",
     "greater": "更大（模型 1 > 模型 2）",
-    "less": "更小（模型 1 < 模型 2）"
+    "less": "更小（模型 1 < 模型 2）",
+    "sessionConverters": "预处理（可选）",
+    "sessionConvertersDescription": "所选的转换器仅在训练数据上进行拟合，然后应用于其余数据，以避免数据泄露。",
+    "noConvertersAdded": "尚未添加任何转换器。",
+    "converterColumns": "列：{{columns}}",
+    "selectConverterFirst": "请选择一个转换器以继续。",
+    "preprocessingInProgress": "正在处理会话数据...",
+    "preprocessingFailed": "会话预处理失败。请检查转换器配置。"
   },
   "message": {
     "skippedUndownloadedRuns": "已跳过模型未下载的运行。请先下载模型。",

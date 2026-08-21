@@ -28,7 +28,7 @@ def upgrade() -> None:
                     name='sessionpreprocessingstatus',
                 ),
                 nullable=False,
-                server_default="'NOT_STARTED'",
+                server_default="NOT_STARTED",
             )
         )
         batch_op.add_column(sa.Column('preprocessing_huey_id', sa.String(), nullable=True))
