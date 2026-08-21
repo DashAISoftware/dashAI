@@ -74,9 +74,15 @@ def load_preprocessed_session_data(model_session: ModelSession) -> Tuple[Any, An
 
     def _load_partition(path: str):
         combined = load_dataset(path)
-        return select_columns(
-            combined, model_session.input_columns, model_session.output_columns
-        )
+        # Not `model_session.input_columns`: converters like PCA or an
+        # encoder can rename/add/drop input columns, so those names go
+        # stale. Output columns are never renamed by any converter, so
+        # they're the only safe fixed point — everything else is input.
+        output_columns = model_session.output_columns
+        input_columns = [
+            col for col in combined.column_names if col not in output_columns
+        ]
+        return select_columns(combined, input_columns, output_columns)
 
     if os.path.isdir(os.path.join(session_dir, "train")):
         x, y = {}, {}

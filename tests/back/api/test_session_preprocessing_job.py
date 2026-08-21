@@ -8,7 +8,10 @@ from DashAI.back.core.enums.status import SessionPreprocessingStatus
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import Dataset, ModelSession
 from DashAI.back.job.base_job import JobError
-from DashAI.back.job.session_preprocessing_job import SessionPreprocessingJob
+from DashAI.back.job.session_preprocessing_job import (
+    SessionPreprocessingJob,
+    load_preprocessed_session_data,
+)
 
 INPUT_COLUMNS = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 OUTPUT_COLUMNS = ["Species"]
@@ -163,6 +166,40 @@ def test_cv_preprocessing_produces_folds_and_full_dataset(
     assert not os.path.exists(os.path.join(session_dir, "full_dataset", "test"))
 
     assert os.path.exists(f"{session_dir}_converters.pkl")
+
+    _delete_session(client, model_session_id)
+
+
+def test_loading_survives_a_converter_that_renames_input_columns(
+    client: TestClient, dataset_id: int
+):
+    """Regression test: a converter that changes the input columns' names/
+    count (e.g. PCA, which replaces the 4 iris columns with N components)
+    used to break `load_preprocessed_session_data`, which re-selected the
+    *original* `model_session.input_columns` from the saved (already
+    transformed) partitions — columns that no longer existed under those
+    names. Output columns are never renamed by any converter, so they're
+    the only safe fixed point to split on."""
+    pca_config = [{"converter": "PCA", "params": {"n_components": 2}, "columns": []}]
+    model_session_id = _create_model_session(
+        client,
+        dataset_id,
+        evaluation_strategy="HoldoutEvaluationStrategy",
+        splits=HOLDOUT_SPLITS,
+        converters=pca_config,
+        name="PCA Preprocessing Session",
+    )
+
+    SessionPreprocessingJob(kwargs={"model_session_id": model_session_id}).run()
+
+    model_session = _get_session(client, model_session_id)
+    assert model_session.preprocessing_status == SessionPreprocessingStatus.FINISHED
+
+    x, y = load_preprocessed_session_data(model_session)
+    # PCA replaced the 4 original input columns with 2 components.
+    assert len(x["train"].column_names) == 2
+    assert set(y["train"].column_names) == set(OUTPUT_COLUMNS)
+    assert len(x["train"]) == len(y["train"])
 
     _delete_session(client, model_session_id)
 
