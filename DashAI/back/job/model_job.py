@@ -8,20 +8,18 @@ from DashAI.back.converters.execution import (
     apply_session_converters,
     save_fitted_converters,
 )
-from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
+from DashAI.back.dependencies.database.models import ModelSession, Run
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
 from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.job.dataset_split_utils import load_dataset_and_splitter
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 from DashAI.back.splitters.base_splitter import BaseSplitter
-from DashAI.back.tasks.base_task import BaseTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
-
-    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -283,100 +281,29 @@ class ModelJob(BaseJob):
 
         import json
 
-        from DashAI.back.dataloaders.classes.dashai_dataset import (
-            load_dataset,
-            select_columns,
-        )
-
         run: Run = db.get(Run, run_id)
 
-        # Get the model session and dataset from the database
+        # Get the model session from the database
         model_session: ModelSession = db.get(ModelSession, run.model_session_id)
         if not model_session:
             raise JobError(
                 f"Model session {run.model_session_id} does not exist in DB."
             )
 
-        dataset: Dataset = db.get(Dataset, model_session.dataset_id)
-        if not dataset:
-            raise JobError(f"Dataset {model_session.dataset_id} does not exist in DB.")
+        splitted_indexes = json.loads(run.split_indexes) if run.split_indexes else None
+        X, Y, splitter, task, prepared_dataset = load_dataset_and_splitter(
+            model_session, db, component_registry, splitted_indexes=splitted_indexes
+        )
 
         try:
-            # Load dataset from the file path
-            loaded_dataset: "DashAIDataset" = load_dataset(
-                f"{dataset.file_path}/dataset"
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Can not load dataset from path {dataset.file_path}",
-            ) from e
-
-        try:
-            # Get task from model session
-            task: BaseTask = component_registry[model_session.task_name]["class"]()
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                (
-                    f"Unable to find Task with name {model_session.task_name} "
-                    "in registry"
-                ),
-            ) from e
-
-        try:
-            # Prepare dataset for the task and get number of labels of the task
-            prepared_dataset = task.prepare_for_task(
-                dataset=loaded_dataset,
-                input_columns=model_session.input_columns,
-                output_columns=model_session.output_columns,
-            )
             n_labels = task.num_labels(
                 prepared_dataset, model_session.output_columns[0]
             )
         except Exception as e:
             log.exception(e)
             raise JobError(
-                f"""Can not prepare Dataset {dataset.id}
-                for Task {model_session.task_name}""",
-            ) from e
-
-        try:
-            # Divide the dataset into two datasets:
-            # one with the input columns and another with the output column
-            X, Y = select_columns(
-                loaded_dataset,
-                model_session.input_columns,
-                model_session.output_columns,
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Error selecting input and output columns from dataset {dataset.id}",
-            ) from e
-
-        try:
-            # Get splits data from model session
-            splits_data = json.loads(model_session.splits)
-            if run.split_indexes:
-                splits_data["splitted_indexes"] = json.loads(run.split_indexes)
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Can not load splits data from model session {model_session.id}",
-            ) from e
-
-        try:
-            # Get the splitter class from the registry and split the dataset
-            splitter_name = splits_data.get("splitter_name", None)
-            splitter: BaseSplitter = component_registry[splitter_name]["class"](
-                splits_data=splits_data,
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"""Unable to find Splitter with name
-                {splitter_name} in registry.""",
+                f"""Can not compute number of labels for
+                Task {model_session.task_name}""",
             ) from e
 
         try:

@@ -144,6 +144,7 @@ from DashAI.back.job.generative_job import GenerativeJob
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.pipeline_job import PipelineJob
 from DashAI.back.job.predict_job import PredictJob
+from DashAI.back.job.session_preprocessing_job import SessionPreprocessingJob
 
 # Metrics
 from DashAI.back.metrics.classification.accuracy import Accuracy
@@ -549,6 +550,7 @@ def get_initial_components():
         DatasetJob,
         GenerativeJob,
         PipelineJob,
+        SessionPreprocessingJob,
         # Explainers
         ContrastiveShap,
         DiceCounterfactual,
