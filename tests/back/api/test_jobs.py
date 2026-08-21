@@ -317,3 +317,116 @@ def test_job_with_wrong_run(client: TestClient):
     )
     assert response.status_code == 500, response.text
     assert response.status_code == 500, response.text
+
+
+def test_execute_job_with_stale_run_path(client: TestClient, model_session_id: int):
+    """A leftover file/dir at run_path (e.g. from a run that reused this id)
+    must not prevent training from finishing."""
+    container = client.app.container
+    session_factory = container["session_factory"]
+    config = container["config"]
+
+    with session_factory() as db:
+        run = Run(
+            model_session_id=model_session_id,
+            model_name="DummyModel",
+            parameters={},
+            optimizer_name="",
+            optimizer_parameters={
+                "n_trials": 10,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            goal_metric="",
+            name="DummyRunStalePath",
+        )
+        db.add(run)
+        db.commit()
+        db.refresh(run)
+        run_id = run.id
+
+    # Simulate a directory left behind by a previously-deleted run that
+    # happened to reuse this same id.
+    stale_run_path = os.path.join(config["RUNS_PATH"], str(run_id))
+    os.makedirs(stale_run_path, exist_ok=True)
+    with open(os.path.join(stale_run_path, "leftover.txt"), "w") as f:
+        f.write("stale")
+
+    response = client.post(
+        "/api/v1/job/",
+        data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
+    )
+    assert response.status_code == 201, response.text
+    job_id = response.json()["id"]
+
+    response = client.get(f"/api/v1/job/status/{job_id}")
+    assert response.status_code == 200, response.text
+    assert response.json()["status"] == "finished", response.json()
+
+    response = client.get(f"/api/v1/run/{run_id}")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert data["status"] == 3
+    assert os.path.isfile(data["run_path"])
+
+    client.delete(f"/api/v1/run/{run_id}")
+
+
+def test_delete_model_session_cleans_up_run_files(
+    client: TestClient, dataset_id: int, test_registry, tmp_path
+):
+    """Deleting a ModelSession cascades its Runs in the DB, but the
+    on-disk run_path/plot files must also be cleaned up, not orphaned."""
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    run_dir = tmp_path / "cleanup_run"
+    run_dir.mkdir()
+    plot_file = tmp_path / "plot.png"
+    plot_file.write_text("x")
+
+    with session_factory() as db:
+        model_session = ModelSession(
+            dataset_id=dataset_id,
+            name="CleanupSession",
+            task_name="DummyTask",
+            input_columns=["SepalLengthCm"],
+            output_columns=["Species"],
+            train_metrics=[],
+            validation_metrics=[],
+            test_metrics=[],
+            evaluation_strategy="HoldoutEvaluationStrategy",
+            splits=json.dumps(
+                {
+                    "train": 0.5,
+                    "test": 0.2,
+                    "validation": 0.3,
+                    "seed": 42,
+                    "shuffle": True,
+                    "stratify": False,
+                }
+            ),
+        )
+        db.add(model_session)
+        db.commit()
+        db.refresh(model_session)
+        ms_id = model_session.id
+
+        run = Run(
+            model_session_id=ms_id,
+            model_name="DummyModel",
+            parameters={},
+            optimizer_name="",
+            optimizer_parameters={},
+            goal_metric="",
+            name="CleanupRun",
+            run_path=str(run_dir),
+            plot_history_path=str(plot_file),
+        )
+        db.add(run)
+        db.commit()
+
+    response = client.delete(f"/api/v1/model-session/{ms_id}")
+    assert response.status_code == 204, response.text
+    assert not run_dir.exists()
+    assert not plot_file.exists()
