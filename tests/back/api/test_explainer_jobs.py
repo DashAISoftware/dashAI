@@ -86,6 +86,10 @@ class DummyModel(BaseModel):
 class DummyGlobalExplainer(BaseGlobalExplainer):
     COMPATIBLE_COMPONENTS = ["DummyTask"]
 
+    #: Records the last dataset handed to explain, so tests can assert which
+    #: rows the job resolved for the explanation.
+    last_dataset = None
+
     def __init__(self, model: BaseModel) -> None:
         self.model = model
         self.explanation = None
@@ -95,6 +99,7 @@ class DummyGlobalExplainer(BaseGlobalExplainer):
         return {}
 
     def explain(self, dataset):
+        DummyGlobalExplainer.last_dataset = dataset
         return
 
     def plot(self, explanation):
@@ -553,3 +558,107 @@ def test_job_with_wrong_explainer(client: TestClient):
     assert job_status["status"] == "error", (
         f"Job with wrong explainer should fail, got status {job_status['status']}"
     )
+
+
+def _cv_run(client: TestClient, model_session_id: int, holdout: list, name: str) -> int:
+    """Create a finished cross-validation run with the given reserved rows."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        run = Run(
+            model_session_id=model_session_id,
+            optimizer_name="OptunaOptimizer",
+            optimizer_parameters={
+                "n_trials": 10,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            model_name="DummyModel",
+            parameters={},
+            goal_metric="Accuracy",
+            name=name,
+            split_indexes=json.dumps(
+                {
+                    "fold_0": {
+                        "train_indexes": [0, 1, 2, 3],
+                        "test_indexes": [4, 5, 6],
+                    },
+                    "fold_1": {
+                        "train_indexes": [4, 5, 6],
+                        "test_indexes": [0, 1, 2, 3],
+                    },
+                    "full_dataset": {
+                        "train_indexes": [0, 1, 2, 3, 4, 5, 6],
+                        "test_indexes": holdout,
+                    },
+                }
+            ),
+        )
+        db.add(run)
+        db.commit()
+        db.refresh(run)
+        return run.id
+
+
+def _global_explainer_for(client: TestClient, run_id: int, name: str) -> int:
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        explainer = GlobalExplainer(
+            name=name,
+            run_id=run_id,
+            explainer_name="DummyGlobalExplainer",
+            parameters={},
+        )
+        db.add(explainer)
+        db.commit()
+        db.refresh(explainer)
+        return explainer.id
+
+
+def _run_explainer_job(client: TestClient, explainer_id: int) -> str:
+    response = client.post(
+        "/api/v1/job/",
+        data={
+            "job_type": "ExplainerJob",
+            "kwargs": json.dumps(
+                {"explainer_id": explainer_id, "explainer_scope": "global"}
+            ),
+        },
+    )
+    assert response.status_code == 201, response.text
+    job_id = response.json()["id"]
+
+    response = client.get(f"/api/v1/job/status/{job_id}")
+    assert response.status_code == 200, response.text
+    return response.json()["status"]
+
+
+def test_cross_validation_run_is_explained_on_its_reserved_rows(
+    client: TestClient, model_session_id: int
+):
+    """The rows kept out of cross-validation are what the explainer receives."""
+    run_id = _cv_run(client, model_session_id, [7, 8, 9], "CVWithHoldout")
+    explainer_id = _global_explainer_for(client, run_id, "cv_with_holdout")
+
+    assert _run_explainer_job(client, explainer_id) == "finished"
+
+    # The explainer must receive the reserved rows as its test split, and the
+    # rows the folds used as its train split.
+    x, _ = DummyGlobalExplainer.last_dataset
+    assert len(x["test"]) == 3
+    assert len(x["train"]) == 7
+    assert len(x["validation"]) == 0
+
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        explainer = db.get(GlobalExplainer, explainer_id)
+        assert explainer.explanation_path is not None
+
+
+def test_cross_validation_run_without_reserved_rows_is_refused(
+    client: TestClient, model_session_id: int
+):
+    """A run that cross-validated every row has nothing an explainer may use."""
+    run_id = _cv_run(client, model_session_id, [], "CVWithoutHoldout")
+    explainer_id = _global_explainer_for(client, run_id, "cv_without_holdout")
+
+    assert _run_explainer_job(client, explainer_id) == "error"
