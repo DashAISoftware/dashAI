@@ -16,6 +16,7 @@ SESSION_PARAMS = {
     "train_metrics": [],
     "validation_metrics": [],
     "test_metrics": [],
+    "evaluation_strategy": "HoldoutEvaluationStrategy",
     "splits": json.dumps(
         {
             "train": 0.5,
