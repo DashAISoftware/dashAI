@@ -1,9 +1,13 @@
 import logging
-from typing import TYPE_CHECKING, Any, Dict, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple, Union
 
 from kink import inject
 from sqlalchemy import exc
 
+from DashAI.back.converters.execution import (
+    load_fitted_converters,
+    transform_for_prediction,
+)
 from DashAI.back.dependencies.database.models import (
     Dataset,
     GlobalExplainer,
@@ -21,8 +25,34 @@ if TYPE_CHECKING:
     from datasets import DatasetDict
     from sqlalchemy.orm import sessionmaker
 
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+
+
+def _reapply_session_converters(
+    data: Union["DatasetDict", "DashAIDataset"],
+    fitted_converters: List[Dict[str, Any]],
+) -> Union["DatasetDict", "DashAIDataset"]:
+    """Replay a session's fitted converters (transform only, never re-fit) on
+    explainer input, so it matches the feature space the model was trained
+    on — the same reasoning as `predict_job.py`'s `_run_prediction_pipeline`.
+    Accepts either a single partition or a `DatasetDict` of them; a no-op
+    when `fitted_converters` is empty (session has no converters).
+    """
+    from datasets import DatasetDict
+
+    if not fitted_converters:
+        return data
+    if isinstance(data, DatasetDict):
+        return DatasetDict(
+            {
+                split_name: transform_for_prediction(part, fitted_converters)
+                for split_name, part in data.items()
+            }
+        )
+    return transform_for_prediction(data, fitted_converters)
 
 
 class ExplainerJob(BaseJob):
@@ -178,6 +208,7 @@ class ExplainerJob(BaseJob):
         splits: Dict[str, Any],
         task: BaseTask,
         same_dataset: bool,
+        fitted_converters: List[Dict[str, Any]] = None,
     ) -> None:
         import json
         import os
@@ -322,10 +353,13 @@ class ExplainerJob(BaseJob):
                     f"local_explanation_input_{explainer_id}",
                 )
                 save_dataset(input_source, os.path.join(input_dataset_path, "dataset"))
-                # The instances are handed over unprepared, the same way the
-                # prediction job calls model.predict: the model applies its own
-                # preprocessing. Explainers that need the model feature space
-                # ask for it with prepare_model_input.
+                # Session converters (if any) are replayed here — same
+                # reasoning as predict_job.py: the model was trained on
+                # transformed data, so explained instances must match that
+                # feature space too. The model's own internal preprocessing
+                # (prepare_model_input) is a separate, later step some
+                # explainers apply on top of this.
+                X = _reapply_session_converters(X, fitted_converters or [])
 
             except Exception as e:
                 log.exception(e)
@@ -522,6 +556,16 @@ class ExplainerJob(BaseJob):
                             data_y[split_name], is_fit=False
                         )
 
+                    # Replay session converters (if any) on the inputs, so
+                    # this matches the feature space the model was actually
+                    # trained on — same reasoning as predict_job.py.
+                    fitted_converters = []
+                    if model_session.converters and model_session.preprocessed_path:
+                        fitted_converters = load_fitted_converters(
+                            model_session.preprocessed_path
+                        )
+                    data_x = _reapply_session_converters(data_x, fitted_converters)
+
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -553,6 +597,7 @@ class ExplainerJob(BaseJob):
                         splits=splits,
                         task=task,
                         same_dataset=same_dataset,
+                        fitted_converters=fitted_converters,
                     )
                 else:
                     raise JobError(f"{explainer_scope} is an invalid explainer type")

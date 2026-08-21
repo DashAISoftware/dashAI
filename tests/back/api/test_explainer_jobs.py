@@ -5,6 +5,7 @@ import pytest
 from datasets import ClassLabel, Value
 from fastapi.testclient import TestClient
 
+from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.dependencies.database.models import (
     Dataset,
     GlobalExplainer,
@@ -169,6 +170,30 @@ class RawInputLocalExplainer(BaseLocalExplainer):
 
     def plot(self, explanation):
         return
+
+
+RECORDED_TRANSFORM_COLUMNS = []
+
+
+class RecordingConverter(BaseConverter):
+    """Fake fitted session converter: records the columns it's asked to
+    transform, and returns them unchanged. Used to verify that
+    `ExplainerJob` actually replays session converters (see
+    `_reapply_session_converters` in `explainer_job.py`), without needing a
+    real `SessionPreprocessingJob` run."""
+
+    COMPATIBLE_COMPONENTS = ["DummyTask"]
+    SCHEMA = None
+
+    def get_output_type(self, column_name=None):
+        return None
+
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, x, y=None):
+        RECORDED_TRANSFORM_COLUMNS.append(sorted(x.column_names))
+        return x
 
 
 @pytest.fixture(autouse=True, name="test_registry")
@@ -553,3 +578,140 @@ def test_job_with_wrong_explainer(client: TestClient):
     assert job_status["status"] == "error", (
         f"Job with wrong explainer should fail, got status {job_status['status']}"
     )
+
+
+def test_explainer_reapplies_session_converters(
+    client: TestClient, dataset_id: int, tmp_path
+):
+    """When the session has converters, ExplainerJob must replay the fitted
+    ones on both the global explanation's inputs (data_x) and the local
+    explanation's explained instances (X) — same reasoning as
+    predict_job.py's _run_prediction_pipeline. Builds the fitted-converters
+    file by hand (a `RecordingConverter`), instead of running a real
+    SessionPreprocessingJob, to test the wiring in isolation."""
+    container = client.app.container
+    session_factory = container["session_factory"]
+    RECORDED_TRANSFORM_COLUMNS.clear()
+
+    preprocessed_path = str(tmp_path / "session_dir")
+    fitted_converters = [
+        {"instance": RecordingConverter(), "columns": ["SepalLengthCm"]}
+    ]
+    joblib.dump(fitted_converters, f"{preprocessed_path}_converters.pkl")
+
+    with session_factory() as db:
+        model_session = ModelSession(
+            dataset_id=dataset_id,
+            name="ConverterExplainerSession",
+            task_name="DummyTask",
+            input_columns=input_columns,
+            output_columns=output_columns,
+            evaluation_strategy="holdout",
+            splits=splits,
+            converters=[
+                {
+                    "converter": "RecordingConverter",
+                    "params": {},
+                    "columns": ["SepalLengthCm"],
+                }
+            ],
+            preprocessed_path=preprocessed_path,
+        )
+        db.add(model_session)
+        db.commit()
+        db.refresh(model_session)
+        session_id = model_session.id
+
+        run = Run(
+            model_session_id=session_id,
+            optimizer_name="OptunaOptimizer",
+            optimizer_parameters={
+                "n_trials": 1,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            model_name="DummyModel",
+            parameters={},
+            goal_metric="Accuracy",
+            name="ConverterExplainerRun",
+            split_indexes="""{
+                "train_indexes": [0, 1, 2, 3, 4],
+                "test_indexes": [5, 6, 7, 8],
+                "val_indexes": [9, 10, 11, 12]
+            }""",
+        )
+        db.add(run)
+        db.commit()
+        db.refresh(run)
+        run_id = run.id
+
+        global_explainer = GlobalExplainer(
+            name="test_converter_global",
+            run_id=run_id,
+            explainer_name="DummyGlobalExplainer",
+            parameters={},
+        )
+        db.add(global_explainer)
+        db.commit()
+        db.refresh(global_explainer)
+        global_explainer_id = global_explainer.id
+
+        local_explainer = LocalExplainer(
+            name="test_converter_local",
+            run_id=run_id,
+            explainer_name="DummyLocalExplainer",
+            dataset_id=dataset_id,
+            scope={"split": "test", "percentage": 100},
+            parameters={},
+            fit_parameters={},
+        )
+        db.add(local_explainer)
+        db.commit()
+        db.refresh(local_explainer)
+        local_explainer_id = local_explainer.id
+
+    try:
+        response = client.post(
+            "/api/v1/job/",
+            data={
+                "job_type": "ExplainerJob",
+                "kwargs": json.dumps(
+                    {"explainer_id": global_explainer_id, "explainer_scope": "global"}
+                ),
+            },
+        )
+        assert response.status_code == 201, response.text
+        job_status = client.get(f"/api/v1/job/status/{response.json()['id']}").json()
+        assert job_status["status"] == "finished", job_status
+
+        assert RECORDED_TRANSFORM_COLUMNS, (
+            "the converter was never called for the global explanation"
+        )
+        assert all(cols == ["SepalLengthCm"] for cols in RECORDED_TRANSFORM_COLUMNS)
+
+        RECORDED_TRANSFORM_COLUMNS.clear()
+
+        response = client.post(
+            "/api/v1/job/",
+            data={
+                "job_type": "ExplainerJob",
+                "kwargs": json.dumps(
+                    {"explainer_id": local_explainer_id, "explainer_scope": "local"}
+                ),
+            },
+        )
+        assert response.status_code == 201, response.text
+        job_status = client.get(f"/api/v1/job/status/{response.json()['id']}").json()
+        assert job_status["status"] == "finished", job_status
+
+        assert RECORDED_TRANSFORM_COLUMNS, (
+            "the converter was never called for the local explanation"
+        )
+        assert all(cols == ["SepalLengthCm"] for cols in RECORDED_TRANSFORM_COLUMNS)
+    finally:
+        with session_factory() as db:
+            db.delete(db.get(LocalExplainer, local_explainer_id))
+            db.delete(db.get(GlobalExplainer, global_explainer_id))
+            db.delete(db.get(Run, run_id))
+            db.delete(db.get(ModelSession, session_id))
+            db.commit()
