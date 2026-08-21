@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from fastapi import status
 from fastapi.encoders import jsonable_encoder
@@ -32,24 +32,25 @@ def _run_prediction_pipeline(
     train_dataset: "DashAIDataset",
     loaded_dataset: "DashAIDataset",
     model_session: ModelSession,
-    run_path: Optional[str] = None,
 ) -> Tuple["DashAIDataset", Any]:
     """Run shared prediction steps from prepared input data to final predictions.
 
-    If the run has session converters saved (see `save_fitted_converters` in
-    `ModelJob`), they are replayed (transform only, never re-fit) on the model's
-    input right before prediction — the model was trained on transformed data,
-    so raw new input must go through the same transformation to match. The
-    returned `prepared_dataset` stays untransformed, since it is also used to
-    build a human-readable preview of the input alongside the prediction.
+    If the session has converters (fit/transformed once by
+    `SessionPreprocessingJob`, see `model_session.preprocessed_path`), the
+    same fitted converters are replayed (transform only, never re-fit) on the
+    model's input right before prediction — the model was trained on
+    transformed data, so raw new input must go through the same
+    transformation to match. The returned `prepared_dataset` stays
+    untransformed, since it is also used to build a human-readable preview of
+    the input alongside the prediction.
     """
     import numpy as np
 
     prepared_dataset = loaded_dataset.select_columns(model_session.input_columns)
 
     model_input = prepared_dataset
-    if run_path:
-        fitted_converters = load_fitted_converters(run_path)
+    if model_session.preprocessed_path:
+        fitted_converters = load_fitted_converters(model_session.preprocessed_path)
         if fitted_converters:
             model_input = transform_for_prediction(prepared_dataset, fitted_converters)
 
@@ -209,7 +210,6 @@ def run_manual_prediction(
                 train_dataset=train_dataset,
                 loaded_dataset=loaded_dataset,
                 model_session=model_session,
-                run_path=run.run_path,
             )
         except (ValueError, TypeError) as e:
             logging.exception("Manual prediction input error: %s", e)
@@ -452,7 +452,6 @@ class PredictJob(BaseJob):
                     train_dataset=train_dataset,
                     loaded_dataset=loaded_dataset,
                     model_session=model_session,
-                    run_path=prediction.run.run_path,
                 )
 
             except ValueError as ve:
