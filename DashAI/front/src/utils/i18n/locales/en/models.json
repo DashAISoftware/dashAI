@@ -281,6 +281,7 @@
     "editingParametersWarning": "Editing parameters will reset this run's status to 'Not Started'. All existing metrics and results will be lost.",
     "aboutToUpdateParameters": "You are about to update the parameters for run <strong>{{runName}}</strong>. This action will have the following consequences:",
     "dataWillBeDeleted": "The following data will be permanently deleted:",
+    "explainabilityNeedsHoldout": "This run cross-validated every row, so it has no data left to explain. Re-train it reserving data for explanations.",
     "metricsWillBeCleared": "All existing metrics will be cleared",
     "trainValidationTestMetrics": "Training, validation, and test metrics",
     "trainingResultsWillBeReset": "Training results will be reset",

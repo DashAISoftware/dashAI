@@ -286,6 +286,7 @@
     "editingParametersWarning": "Al editar los parámetros se restablecerá el estado de esta ejecución a 'No Iniciado'. Todas las métricas y resultados existentes se perderán.",
     "aboutToUpdateParameters": "Está a punto de actualizar los parámetros para la ejecución <strong>{{runName}}</strong>. Esta acción tendrá las siguientes consecuencias:",
     "dataWillBeDeleted": "Los siguientes datos serán eliminados permanentemente:",
+    "explainabilityNeedsHoldout": "Esta ejecución validó de forma cruzada todas las filas, por lo que no quedan datos que explicar. Vuelve a entrenarla reservando datos para explicaciones.",
     "metricsWillBeCleared": "Todas las métricas existentes serán eliminadas",
     "trainValidationTestMetrics": "Métricas de entrenamiento, validación y prueba",
     "trainingResultsWillBeReset": "Los resultados de entrenamiento serán reiniciados",

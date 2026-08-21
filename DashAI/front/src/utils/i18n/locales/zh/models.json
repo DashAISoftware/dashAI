@@ -280,6 +280,7 @@
     "editingParametersWarning": "编辑参数将把此运行的状态重置为「未开始」。所有现有指标和结果将丢失。",
     "aboutToUpdateParameters": "您即将更新运行 <strong>{{runName}}</strong> 的参数。此操作将产生以下后果：",
     "dataWillBeDeleted": "以下数据将被永久删除：",
+    "explainabilityNeedsHoldout": "该运行对所有行都做了交叉验证，因此没有可解释的数据。请在重新训练时保留用于解释的数据。",
     "metricsWillBeCleared": "所有现有指标将被清除",
     "trainValidationTestMetrics": "训练集、验证集和测试集指标",
     "trainingResultsWillBeReset": "训练结果将被重置",

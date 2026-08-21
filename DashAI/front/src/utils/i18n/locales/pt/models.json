@@ -284,6 +284,7 @@
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",
     "confirmDeleteRun": "Tem certeza de que deseja excluir esta execução? Esta ação não pode ser desfeita.",
     "editingParametersWarning": "Ao editar os parâmetros, o estado desta execução será redefinido para 'Não Iniciado'. Todas as métricas e resultados existentes serão perdidos.",
+    "explainabilityNeedsHoldout": "Esta execução validou de forma cruzada todas as linhas, portanto não há dados para explicar. Treine novamente reservando dados para explicações.",
     "hypothesis_reject": "rejeitamos",
     "hypothesis_failToReject": "falhamos em rejeitar",
     "hypothesisDecision": "Com um p-valor de {{pValue}}, {{decision}} a hipótese nula em um nível de significância de {{alpha}}.",

@@ -281,6 +281,7 @@
     "editingParametersWarning": "Das Bearbeiten von Parametern setzt den Status dieses Durchlaufs auf 'Nicht gestartet' zurück. Alle vorhandenen Metriken und Ergebnisse gehen verloren.",
     "aboutToUpdateParameters": "Sie sind dabei, die Parameter für Durchlauf <strong>{{runName}}</strong> zu aktualisieren. Diese Aktion hat folgende Konsequenzen:",
     "dataWillBeDeleted": "Die folgenden Daten werden dauerhaft gelöscht:",
+    "explainabilityNeedsHoldout": "Dieser Lauf hat alle Zeilen kreuzvalidiert, daher bleiben keine Daten zum Erklären. Trainieren Sie ihn erneut und halten Sie Daten für Erklärungen zurück.",
     "metricsWillBeCleared": "Alle vorhandenen Metriken werden gelöscht",
     "trainValidationTestMetrics": "Trainings-, Validierungs- und Testmetriken",
     "trainingResultsWillBeReset": "Trainingsergebnisse werden zurückgesetzt",
