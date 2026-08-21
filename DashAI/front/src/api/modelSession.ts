@@ -65,6 +65,13 @@ export const deleteModelSession = async (id: string): Promise<object> => {
   return response.data;
 };
 
+export const deleteModelSessions = async (ids: number[]): Promise<object> => {
+  const response = await api.delete("/v1/model-session/", {
+    data: { ids },
+  });
+  return response.data;
+};
+
 export const validateColumns = async (
   taskName: string,
   datasetId: number,

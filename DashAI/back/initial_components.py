@@ -144,6 +144,7 @@ from DashAI.back.job.generative_job import GenerativeJob
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.pipeline_job import PipelineJob
 from DashAI.back.job.predict_job import PredictJob
+from DashAI.back.job.RAG_job import RAGJob
 from DashAI.back.job.session_preprocessing_job import SessionPreprocessingJob
 
 # Metrics
@@ -220,6 +221,9 @@ from DashAI.back.models.hugging_face.opus_mt_fr_en_transformer import (
 from DashAI.back.models.hugging_face.opus_mt_roa_en_transformer import (
     OpusMtRoaEnTransformer,
 )
+from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import (
+    Phi4MiniInstructModel,
+)
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigma
 from DashAI.back.models.hugging_face.qwen_model import (
     Qwen25_05BInstruct,
@@ -274,6 +278,57 @@ from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
 from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
 from DashAI.back.models.pymc.bart_regression import BARTRegression
+from DashAI.back.models.RAG import RAGPipeline
+from DashAI.back.models.RAG.chunking_models import (
+    CharacterChunkModel,
+    RecursiveCharacterChunkModel,
+    TokenChunkModel,
+)
+from DashAI.back.models.RAG.embeddings.dense import (
+    BERTEmbedding,
+    DistilBERTEmbedding,
+    E5Embedding,
+    InstructorEmbedding,
+    LaBSEmbedding,
+    RoBERTaEmbedding,
+    SentenceTransformerEmbedding,
+)
+from DashAI.back.models.RAG.extractors import (
+    EasyOCRExtractor,
+    PlainTextExtractor,
+    PyMuPDFExtractor,
+    PypdfExtractor,
+)
+from DashAI.back.models.RAG.prompts import (
+    CustomAugmentationPrompt,
+    CustomRAGGenerationPrompt,
+    DefaultAugmentationPrompt,
+    DefaultQARAGGenerationPrompt,
+    DefaultRAGGenerationPrompt,
+)
+from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
+    MMRRerankerRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
+    ParallelRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.sequential_retriever import (
+    SequentialRetriever,
+)
+from DashAI.back.models.RAG.retrievers.cross_encoder import (
+    SentenceTransformerCrossEncoderRetriever,
+)
+from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
+    DenseEmbeddingRetriever,
+)
+from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import (
+    BM25Retriever,
+    BM25VectorizerModel,
+)
+from DashAI.back.models.RAG.retrievers.sparse.tfidf_retriever import (
+    TFIDFRetriever,
+    TFIDFVectorizerModel,
+)
 from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
@@ -374,10 +429,11 @@ from DashAI.back.statistical_tests.post_hoc_tests.tukey_test import TukeyHSDTest
 from DashAI.back.statistical_tests.wilcoxon_sr_test import (
     WilcoxonSRTest,
 )
-
-# Tasks
 from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
+
+# Tasks
+from DashAI.back.tasks.RAG_task import RAGTask
 from DashAI.back.tasks.regression_task import RegressionTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
@@ -409,6 +465,7 @@ def get_initial_components():
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
+        RAGTask,
         ImageClassificationTask,
         # Models
         AdaBoostClassifier,
@@ -436,6 +493,7 @@ def get_initial_components():
         HistGradientBoostingClassifier,
         HistGradientBoostingRegression,
         KNeighborsClassifier,
+        RAGPipeline,
         KNeighborsRegression,
         LassoRegression,
         LinearRegression,
@@ -489,6 +547,7 @@ def get_initial_components():
         StableDiffusionXL,
         RealVisXLV4,
         StableDiffusionXLV1ControlNet,
+        Phi4MiniInstructModel,
         SVC,
         SVR,
         T5SmallTransformer,
@@ -551,6 +610,7 @@ def get_initial_components():
         GenerativeJob,
         PipelineJob,
         SessionPreprocessingJob,
+        RAGJob,
         # Explainers
         ContrastiveShap,
         DiceCounterfactual,
@@ -649,6 +709,39 @@ def get_initial_components():
         ShapiroTest,
         LeveneTest,
         BartlettTest,
+        # Chunking Models
+        CharacterChunkModel,
+        RecursiveCharacterChunkModel,
+        TokenChunkModel,
+        # Extractors
+        EasyOCRExtractor,
+        PypdfExtractor,
+        PyMuPDFExtractor,
+        PlainTextExtractor,
+        # Encodings
+        SentenceTransformerEmbedding,
+        BERTEmbedding,
+        DistilBERTEmbedding,
+        RoBERTaEmbedding,
+        E5Embedding,
+        InstructorEmbedding,
+        LaBSEmbedding,
+        # Prompts
+        DefaultRAGGenerationPrompt,
+        CustomRAGGenerationPrompt,
+        DefaultQARAGGenerationPrompt,
+        DefaultAugmentationPrompt,
+        CustomAugmentationPrompt,
+        # Retrievers
+        BM25Retriever,
+        BM25VectorizerModel,
+        TFIDFRetriever,
+        TFIDFVectorizerModel,
+        DenseEmbeddingRetriever,
+        SentenceTransformerCrossEncoderRetriever,
+        MMRRerankerRetriever,
+        SequentialRetriever,
+        ParallelRetriever,
     ]
 
     # Obtener plugins instalados

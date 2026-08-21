@@ -3,6 +3,7 @@ import { useSnackbar } from "notistack";
 import {
   getSessions,
   removeSession,
+  removeSessions,
   updateGenerativeSession,
 } from "../../api/session";
 import { getComponents } from "../../api/component";
@@ -68,6 +69,27 @@ export function useSessions({ t }) {
     return false;
   };
 
+  const deleteSessionsByIds = async (ids) => {
+    try {
+      await removeSessions(ids);
+
+      const idSet = new Set(ids);
+      if (idSet.has(selectedSessionId)) {
+        setSelectedSessionId(null);
+      }
+
+      setSessions((prev) => prev.filter((s) => !idSet.has(s.id)));
+
+      return true;
+    } catch (error) {
+      enqueueSnackbar(t("generative:error.failedToDeleteSessions"), {
+        variant: "error",
+      });
+      console.error("Error deleting sessions:", error);
+    }
+    return false;
+  };
+
   const editSession = async (sessionId, newName) => {
     try {
       const result = await updateGenerativeSession({
@@ -119,6 +141,7 @@ export function useSessions({ t }) {
     fetchSessions,
     fetchTasks,
     deleteSessionById,
+    deleteSessionsByIds,
     editSession,
   };
 }

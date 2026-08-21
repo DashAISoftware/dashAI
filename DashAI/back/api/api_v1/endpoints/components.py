@@ -459,7 +459,8 @@ def get_component_by_id(
             status_code=404,
             detail=f"Component {id} not found in the registry.",
         )
-    return _filter_by_language(_delete_class(component_registry[id]), accept_language)
+    raw = component_registry[id]
+    return _filter_by_language(_delete_class(raw), accept_language)
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -502,6 +503,27 @@ async def update_component() -> None:
     raise HTTPException(
         status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Method not implemented"
     )
+
+
+@router.get("/{component_name}/children/")
+async def get_child_components(
+    component_name: str,
+    recursive: bool = False,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """Get child components of a specific component.
+
+    Args:
+        component_name (str): The name of the component to get children for.
+        recursive (bool): Whether to get child components recursively.
+
+    Returns:
+        List[Dict[str, Any]]: A list of child component dictionaries.
+    """
+    children_list = component_registry.get_child_components(
+        component_name, recursive=recursive
+    )
+    return [_delete_class(child) for child in children_list]
 
 
 @router.get("/image/{component_name}/", status_code=status.HTTP_200_OK)
