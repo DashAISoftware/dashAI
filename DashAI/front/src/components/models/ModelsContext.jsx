@@ -159,6 +159,30 @@ export function ModelsProvider({ children }) {
     fetchSessions();
   }, []);
 
+  // Poll while the selected session's converters are still being
+  // fit/transformed (see SessionPreprocessingJob) — refreshing the whole
+  // session list is enough, since ModelsContent re-derives `selectedSession`
+  // from it. No-op for sessions without converters (status never changes).
+  useEffect(() => {
+    if (!selectedSession) return;
+    const hasConverters = (selectedSession.converters || []).length > 0;
+    const isPending =
+      hasConverters &&
+      selectedSession.preprocessing_status !== 3 &&
+      selectedSession.preprocessing_status !== 4;
+    if (!isPending) return;
+
+    const interval = setInterval(() => {
+      fetchSessions();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [
+    selectedSession?.id,
+    selectedSession?.preprocessing_status,
+    selectedSession?.converters,
+    fetchSessions,
+  ]);
+
   useEffect(() => {
     fetchTasks();
   }, [i18n.language]);

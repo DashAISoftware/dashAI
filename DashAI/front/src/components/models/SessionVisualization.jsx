@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Box, Typography, Divider, Button, ToggleButton } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Divider,
+  Button,
+  ToggleButton,
+  CircularProgress,
+} from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
 import { PlayArrow } from "@mui/icons-material";
@@ -273,6 +280,51 @@ export default function SessionVisualization() {
           </Typography>
         </Box>
       </>
+    );
+  }
+
+  // Sessions with converters run a preprocessing job (fit/transform on
+  // train, save to disk) right after creation — no Run can train until it
+  // finishes. Sessions without converters skip this entirely (status stays
+  // NOT_STARTED, ignored below).
+  const hasConverters = (session.converters || []).length > 0;
+  if (hasConverters && session.preprocessing_status === 4) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+          p: 8,
+          gap: 2,
+        }}
+      >
+        <Typography variant="h6" color="error">
+          {t("models:label.preprocessingFailed")}
+        </Typography>
+      </Box>
+    );
+  }
+  if (hasConverters && session.preprocessing_status !== 3) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          justifyContent: "center",
+          alignItems: "center",
+          p: 8,
+          gap: 2,
+        }}
+      >
+        <CircularProgress />
+        <Typography variant="body1" color="text.secondary">
+          {t("models:label.preprocessingInProgress")}
+        </Typography>
+      </Box>
     );
   }
 
