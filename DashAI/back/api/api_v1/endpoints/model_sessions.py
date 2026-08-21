@@ -174,8 +174,16 @@ async def validate_columns(
 async def create_model_session(
     params: ModelSessionParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    job_queue=Depends(lambda: di["job_queue"]),
 ):
     """Create a new model session.
+
+    If `params.converters` is non-empty, a `SessionPreprocessingJob` is
+    enqueued right away to fit/transform them and persist the resulting
+    partitions to disk (see `preprocessing_status`/`preprocessed_path`).
+    Unlike most jobs, this isn't triggered by a separate frontend call:
+    there's no user decision involved — if converters are configured, they
+    always need to be preprocessed before any Run can train on this session.
 
     Parameters
     ----------
@@ -184,6 +192,8 @@ async def create_model_session(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    job_queue : BaseJobQueue
+        Injected job queue, used to enqueue the preprocessing job.
 
     Returns
     -------
@@ -237,6 +247,18 @@ async def create_model_session(
             db.add(model_session)
             db.commit()
             db.refresh(model_session)
+
+            if model_session.converters:
+                from DashAI.back.job.session_preprocessing_job import (
+                    SessionPreprocessingJob,
+                )
+
+                job = SessionPreprocessingJob(
+                    kwargs={"model_session_id": model_session.id}
+                )
+                job.set_status_as_delivered()
+                job_queue.put(job)
+
             return model_session
         except exc.IntegrityError as e:
             db.rollback()
