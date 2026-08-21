@@ -24,6 +24,7 @@
   "count": "数量",
   "created": "已创建",
   "createdAt": "创建时间",
+  "date": "日期",
   "dashboard": "仪表板",
   "dataset": "数据集",
   "datasetNotFound": "未找到数据集",
@@ -64,6 +65,7 @@
   "itemsToBeDeleted": "以下项目将被删除：",
   "json": "JSON",
   "lastModified": "最后修改",
+  "learnMore": "了解更多",
   "list": "列表",
   "loading": "加载中...",
   "loadingColumns": "加载列中...",
@@ -96,6 +98,7 @@
   "plugins": "插件",
   "processing": "处理中...",
   "remove": "移除",
+  "refresh": "刷新",
   "required": "必填",
   "results": "结果",
   "rows": "行",
@@ -131,6 +134,7 @@
   "table": "表格",
   "task": "任务",
   "test": "测试",
+  "tests": "测试",
   "timeTaken": "耗时",
   "to": "到",
   "todo": "待办...",
@@ -249,5 +253,9 @@
   "viewMore": "查看更多",
   "viewLess": "查看更少",
   "switchToDarkMode": "切换至深色模式",
-  "switchToLightMode": "切换至浅色模式"
+  "switchToLightMode": "切换至浅色模式",
+  "metric": "指标",
+  "split": "划分",
+  "execute": "执行",
+  "executing": "执行中..."
 }

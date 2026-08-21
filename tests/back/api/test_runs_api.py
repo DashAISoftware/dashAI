@@ -31,6 +31,7 @@ def create_model_session(client: TestClient, dataset_id):
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
+            "evaluation_strategy": "holdout",
             "splits": json.dumps(
                 {
                     "train": 0.5,
@@ -126,6 +127,85 @@ def test_create_run(client: TestClient, model_session_id: int):
         "weights": "uniform",
         "algorithm": "kd_tree",
     }
+
+
+def test_create_run_with_cross_validation_strategy(client: TestClient, dataset_id: int):
+    """A model session using CV should persist the CV split configuration."""
+    create_session_response = client.post(
+        "/api/v1/model-session/",
+        json={
+            "dataset_id": dataset_id,
+            "task_name": "TabularClassificationTask",
+            "name": "CV Session",
+            "input_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": "CrossValidationEvaluationStrategy",
+            "splits": json.dumps(
+                {
+                    "train": 0.5,
+                    "test": 0.2,
+                    "validation": 0.3,
+                    "is_random": True,
+                    "has_changed": True,
+                    "seed": 42,
+                    "shuffle": True,
+                    "stratify": False,
+                    "splitType": "random",
+                    "splitter_name": "KFoldSplitter",
+                    "n_splits": 3,
+                }
+            ),
+        },
+    )
+    assert create_session_response.status_code == 201, create_session_response.text
+
+    session = create_session_response.json()
+    response = client.get(f"/api/v1/model-session/{session['id']}")
+    assert response.status_code == 200, response.text
+    persisted_session = response.json()
+    assert (
+        persisted_session["evaluation_strategy"] == "CrossValidationEvaluationStrategy"
+    )
+    persisted_splits = json.loads(persisted_session["splits"])
+    assert persisted_splits["splitter_name"] == "KFoldSplitter"
+    assert persisted_splits["n_splits"] == 3
+
+    create_run_response = client.post(
+        "/api/v1/run/",
+        json={
+            "model_session_id": session["id"],
+            "model_name": "KNeighborsClassifier",
+            "name": "CV Run",
+            "parameters": {"n_neighbors": 5, "weights": "uniform", "algorithm": "auto"},
+            "optimizer_name": "OptunaOptimizer",
+            "optimizer_parameters": {
+                "n_trials": 10,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            "goal_metric": "Accuracy",
+            "description": "Cross-validation test run",
+            "plot_history_path": "path/to/history.png",
+            "plot_slice_path": "path/to/slice.png",
+            "plot_contour_path": "path/to/contour.png",
+            "plot_importance_path": "path/to/importance.png",
+        },
+    )
+    assert create_run_response.status_code == 201, create_run_response.text
+    created_run = create_run_response.json()
+    assert created_run["name"] == "CV Run"
+    assert created_run["model_session_id"] == session["id"]
+
+    delete_session_response = client.delete(f"/api/v1/model-session/{session['id']}")
+    assert delete_session_response.status_code == 204, delete_session_response.text
 
 
 def test_get_run(client: TestClient):

@@ -27,7 +27,12 @@
     "splitsMustSumToOne": "Splits must sum to 1",
     "taskRequirementsNotFound": "Task requirements for {{taskName}} not found",
     "trainSplitMustBeGreaterThanZero": "Train split must be greater than zero",
-    "trainSplitMustHaveAtLeastOneRow": "Train split must have at least one row"
+    "trainSplitMustHaveAtLeastOneRow": "Train split must have at least one row",
+    "foldsMustBeGreaterThanOne": "Number of folds must be greater than 1",
+    "foldsMustBeLessThanDatasetSize": "Number of folds must be less than or equal to the number of samples in the dataset ({{datasetSize}})",
+    "foldsMustBeAnInteger": "Number of folds must be an integer",
+    "repeatsMustBeGreaterThanOne": "Number of repeats must be greater than 1",
+    "groupColumnMustBeSelected": "A group column must be selected"
   },
   "label": {
     "addModelsToExperiment": "Add Models to your Experiment",
@@ -74,6 +79,15 @@
     "selectDatasetTitle": "Select a dataset for the selected task",
     "splitType": "Split type",
     "selectHowToDivideDataset": "Select how to divide the dataset into training, validation and test subsets.",
+    "selectEvaluationStrategy": "Evaluation strategy",
+    "holdout": "Holdout",
+    "crossValidation": "Cross-Validation",
+    "cvType": "Cross-Validation Type",
+    "numFolds": "Number of Folds (k)",
+    "numFoldsDescription": "Number of folds to use for cross-validation. A higher number of folds can improve the stability of the evaluation, but increases the processing time. Must be an integer greater than 1.",
+    "numRepeats": "Number of Repeats",
+    "numRepeatsDescription": "Number of times to repeat the cross-validation process. A higher value provides more precise results but requires more training time. Must be an integer greater than 1.",
+    "groupColumn": "Column to Group By",
     "selectInputOutputColumnsDescription": "Select column names from the lists.",
     "selectMetrics": "Select metrics",
     "selectModelFirst": "Select a Model First",
@@ -87,7 +101,9 @@
     "useManualSplittingBySpecifyingRowIndexes": "Use manual splitting by specifying the row indexes of each subset",
     "usePredefinedSplitsFromDataset": "Use predefined splits from dataset",
     "usePredefinedSplitsFromDatasetNotAvailable": "Use predefined splits from dataset (not available)",
-    "useRandomRowsBySpecifyingPortion": "Use random rows by specifying which portion of the dataset you want to use for each subset"
+    "useRandomRowsBySpecifyingPortion": "Use random rows by specifying which portion of the dataset you want to use for each subset",
+    "selectAColumn": "Select a column",
+    "groupColumnDescription": "Column to use for grouping. Samples belonging to the same group will be kept together in the same fold, avoiding having a group appear simultaneously in training and test."
   },
   "message": {
     "confirmDeleteRun": "Are you sure you want to delete this run? This action cannot be undone.",

@@ -24,6 +24,9 @@ from DashAI.back.api.api_v1.endpoints.pipelines import router as pipelines
 from DashAI.back.api.api_v1.endpoints.plugins import router as plugins
 from DashAI.back.api.api_v1.endpoints.predict import router as predict
 from DashAI.back.api.api_v1.endpoints.runs import router as runs
+from DashAI.back.api.api_v1.endpoints.statistical_tests import (
+    router as statistical_tests,
+)
 
 api_router_v1 = APIRouter()
 api_router_v1.include_router(converters, prefix="/converter")
@@ -44,5 +47,6 @@ api_router_v1.include_router(metrics, prefix="/metrics")
 api_router_v1.include_router(hardware, prefix="/hardware")
 api_router_v1.include_router(dataset_source, prefix="/dataset-source")
 api_router_v1.include_router(datafile_router, prefix="/datafile")
+api_router_v1.include_router(statistical_tests, prefix="/statistical-tests")
 api_router_v1.include_router(folders, prefix="/folder")
 api_router_v1.include_router(credentials, prefix="/credential")

@@ -83,6 +83,10 @@ from DashAI.back.dataset_sources.huggingface_dataset_source import (
 from DashAI.back.dataset_sources.openml_dataset_source import OpenMLDatasetSource
 from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSource
 
+# Evaluation Strategies
+from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
+from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
+
 # Explainers
 from DashAI.back.explainability.explainers.contrastive_shap import ContrastiveShap
 from DashAI.back.explainability.explainers.dice_counterfactual import (
@@ -339,6 +343,36 @@ from DashAI.back.pipeline.train_node import Train
 
 # Plugins
 from DashAI.back.plugins.utils import get_available_plugins
+from DashAI.back.splitters.group_k_fold import GroupKFoldSplitter
+
+# Splitters
+from DashAI.back.splitters.holdout import HoldoutSplitter
+from DashAI.back.splitters.k_fold import KFoldSplitter
+from DashAI.back.splitters.leave_one_out import LeaveOneOutSplitter
+from DashAI.back.splitters.repeated_k_fold import RepeatedKFoldSplitter
+from DashAI.back.splitters.repeated_stratified_k_fold import (
+    RepeatedStratifiedKFoldSplitter,
+)
+from DashAI.back.splitters.stratified_group_k_fold import StratifiedGroupKFoldSplitter
+from DashAI.back.splitters.stratified_k_fold import StratifiedKFoldSplitter
+from DashAI.back.statistical_tests.anova_test import AnovaTest
+from DashAI.back.statistical_tests.corrected_paired_t_test import (
+    CorrectedPairedTTest,
+)
+from DashAI.back.statistical_tests.friedman_test import (
+    FriedmanTest,
+)
+
+# Statistical tests
+from DashAI.back.statistical_tests.helper_tests.bartlett_test import BartlettTest
+from DashAI.back.statistical_tests.helper_tests.levene_test import LeveneTest
+from DashAI.back.statistical_tests.helper_tests.shapiro_test import ShapiroTest
+from DashAI.back.statistical_tests.paired_t_test import PairedTTest
+from DashAI.back.statistical_tests.post_hoc_tests.nemenyi_test import NemenyiTest
+from DashAI.back.statistical_tests.post_hoc_tests.tukey_test import TukeyHSDTest
+from DashAI.back.statistical_tests.wilcoxon_sr_test import (
+    WilcoxonSRTest,
+)
 
 # Tasks
 from DashAI.back.tasks.controlnet_task import ControlNetTask
@@ -590,6 +624,29 @@ def get_initial_components():
         SMOTEConverter,
         SMOTEENNConverter,
         RandomUnderSamplerConverter,
+        # Splitters
+        HoldoutSplitter,
+        KFoldSplitter,
+        StratifiedKFoldSplitter,
+        StratifiedGroupKFoldSplitter,
+        RepeatedStratifiedKFoldSplitter,
+        GroupKFoldSplitter,
+        LeaveOneOutSplitter,
+        RepeatedKFoldSplitter,
+        # Evaluation Strategies
+        CrossValidationEvaluationStrategy,
+        HoldoutEvaluationStrategy,
+        # Statistical tests
+        AnovaTest,
+        FriedmanTest,
+        CorrectedPairedTTest,
+        PairedTTest,
+        WilcoxonSRTest,
+        NemenyiTest,
+        TukeyHSDTest,
+        ShapiroTest,
+        LeveneTest,
+        BartlettTest,
     ]
 
     # Obtener plugins instalados

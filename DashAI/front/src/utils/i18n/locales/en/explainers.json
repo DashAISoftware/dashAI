@@ -77,7 +77,8 @@
     "rowModePercentage": "Percentage slider",
     "rowModeManual": "Manual selection",
     "shuffleRows": "Shuffle selected rows (random sample)",
-    "rowsSelectedManually": "Rows selected manually: {{selected}} / {{total}}"
+    "rowsSelectedManually": "Rows selected manually: {{selected}} / {{total}}",
+    "storyTitle": "Narrative summary"
   },
   "message": {
     "explainerJobCompleted": "Explainer {{name}} completed successfully",

@@ -1,0 +1,206 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Tuple
+
+import numpy as np
+from sklearn.model_selection import GroupKFold
+
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    bool_field,
+    int_field,
+    none_type,
+    schema_field,
+    string_field,
+)
+from DashAI.back.core.utils import MultilingualString
+
+from .fold_splitter import FoldSplitter
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class GroupKFoldSplitterSchema(BaseSchema):
+    n_splits: schema_field(
+        int_field(ge=2),
+        placeholder=5,
+        description=MultilingualString(
+            en="Number of folds. Must be an integer greater than or equal to 2.",
+            es="Número de particiones. Debe ser un entero mayor o igual a 2.",
+            pt="Número de partições. Deve ser um inteiro maior ou igual a 2.",
+            de="Anzahl der Folds. Muss eine ganze Zahl größer oder gleich 2 sein.",
+            zh="折数，必须为大于或等于2的整数。",
+        ),
+        alias=MultilingualString(
+            en="Number of folds",
+            es="Número de particiones",
+            pt="Número de partições",
+            de="Anzahl der Folds",
+            zh="折数",
+        ),
+    )  # type: ignore
+    group_column: schema_field(
+        none_type(string_field()),
+        placeholder=None,
+        description=MultilingualString(
+            en=(
+                "Name of the dataset column that identifies the group each "
+                "sample belongs to. Samples that share the same group are "
+                "always kept together in the same fold."
+            ),
+            es=(
+                "Nombre de la columna del dataset que identifica el grupo al "
+                "que pertenece cada muestra. Las muestras que comparten grupo "
+                "siempre se mantienen juntas en la misma partición."
+            ),
+            pt=(
+                "Nome da coluna do dataset que identifica o grupo ao qual "
+                "cada amostra pertence. Amostras que compartilham o mesmo "
+                "grupo permanecem sempre juntas na mesma partição."
+            ),
+            de=(
+                "Name der Datensatzspalte, die die Gruppe jeder Probe "
+                "identifiziert. Proben derselben Gruppe bleiben immer im "
+                "selben Fold."
+            ),
+            zh="标识每个样本所属分组的数据集列名。同一分组的样本始终保持在同一折中。",
+        ),
+        alias=MultilingualString(
+            en="Group column",
+            es="Columna de grupo",
+            pt="Coluna de grupo",
+            de="Gruppenspalte",
+            zh="分组列",
+        ),
+    )  # type: ignore
+    shuffle: schema_field(
+        bool_field(),
+        placeholder=False,
+        description=MultilingualString(
+            en="Whether to shuffle the groups before assigning them to folds.",
+            es="Si se deben mezclar los grupos antes de asignarlos a las particiones.",
+            pt="Se os grupos devem ser embaralhados antes de atribuí-los às partições.",
+            de="Ob die Gruppen vor der Zuweisung zu Folds gemischt werden sollen.",
+            zh="分配到各折之前是否打乱分组。",
+        ),
+        alias=MultilingualString(
+            en="Shuffle", es="Mezclar", pt="Embaralhar", de="Mischen", zh="打乱"
+        ),
+    )  # type: ignore
+    random_state: schema_field(
+        int_field(ge=0),
+        placeholder=42,
+        description=MultilingualString(
+            en="Seed used to make the split reproducible when shuffle is enabled.",
+            es=(
+                "Semilla utilizada para que la división sea reproducible cuando "
+                "se activa la mezcla."
+            ),
+            pt=(
+                "Semente usada para tornar a divisão reproduzível quando o "
+                "embaralhamento está ativado."
+            ),
+            de=(
+                "Seed, um die Aufteilung reproduzierbar zu machen, wenn Mischen "
+                "aktiviert ist."
+            ),
+            zh="启用打乱时，用于使划分可复现的随机种子。",
+        ),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
+    )  # type: ignore
+
+
+class GroupKFoldSplitter(FoldSplitter):
+    """Splitter that generates folds while preserving the group structure of the data.
+
+    This strategy is useful when samples are not independent because they share
+    a common group, such as a patient, document, image collection, or other
+    entity that should not appear in both train and test partitions. It helps
+    prevent leakage by keeping all observations from the same group within the
+    same fold.
+
+    It is commonly applied in grouped classification, regression, and
+    translation settings where group-level dependencies must be respected.
+
+    References
+    ----------
+    - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GroupKFold.html
+    """
+
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "RegressionTask",
+        "TranslationTask",
+        "ImageClassificationTask",
+    ]
+    DISPLAY_NAME: str = MultilingualString(
+        en="Group K-Fold",
+        es="K-Fold por Grupos",
+        pt="K-Fold por Grupos",
+        de="Gruppen-K-Fold",
+        zh="分组 K 折交叉验证",
+    )
+    COMPATIBLE_INNER_SPLITTERS = ["GroupKFoldSplitter", "StratifiedGroupKFoldSplitter"]
+    SCHEMA = GroupKFoldSplitterSchema
+
+    def __init__(self, splits_data):
+        """Initialize the group-based K-fold splitter.
+
+        Parameters
+        ----------
+        splits_data : dict
+            Configuration dictionary that may include the name of the group
+            column used to define the groups.
+        """
+        super().__init__(splits_data)
+        self.group_column = splits_data.get("group_column", None)
+
+    def split_indexes(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> List[Tuple[List, List]]:
+        """Generate train/test index pairs while keeping groups together.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset that can be converted to a pandas DataFrame.
+        y : DashAIDataset
+            Target values associated with ``x``. This argument is accepted for
+            interface consistency but is not used directly by the splitter.
+
+        Returns
+        -------
+        list[tuple]
+            A list of train/test index pairs preserving the group assignments.
+        """
+        indexes = np.arange(len(x))
+
+        try:
+            try:
+                dataset_df = x.to_pandas()
+            except Exception as e:
+                raise ValueError(
+                    f"""Input x must be convertible
+                    to a pandas DataFrame for GroupKFold splitting: {e}"""
+                ) from e
+
+            dataset_df_groups = dataset_df[self.group_column]
+
+            gkf = GroupKFold(
+                n_splits=self.n_splits,
+                shuffle=self.shuffle,
+                random_state=self.random_state if self.shuffle else None,
+            )
+            folds = list(gkf.split(indexes, groups=dataset_df_groups))
+        except ValueError as e:
+            raise ValueError(f"Error in GroupKFold splitting: {e}") from e
+
+        return folds
