@@ -66,6 +66,7 @@ export default function SelectDatasetStep({
   const [inputColumns, setInputColumns] = useState([]);
   const [outputColumns, setOutputColumns] = useState([]);
   const [trainingDatasetId, setTrainingDatasetId] = useState(null);
+  const [isCrossValidated, setIsCrossValidated] = useState(false);
   const [splitFractions, setSplitFractions] = useState({
     train: 0,
     test: 0,
@@ -126,11 +127,17 @@ export default function SelectDatasetStep({
         setOutputColumns(session.output_columns ?? []);
         setTrainingDatasetId(session.dataset_id);
         const sessionSplits = JSON.parse(session.splits);
+        // A cross-validated session has no proportions: every row outside the
+        // slice reserved for explanations went through the folds, and there is
+        // no validation partition at all.
+        const holdout = Number(sessionSplits.holdout);
+        const crossValidated = sessionSplits.train === undefined;
+        setIsCrossValidated(crossValidated);
         setSplitFractions((prev) => ({
           ...prev,
-          train: sessionSplits.train,
-          test: sessionSplits.test,
-          validation: sessionSplits.validation,
+          train: crossValidated ? 1 - holdout : sessionSplits.train,
+          test: crossValidated ? holdout : sessionSplits.test,
+          validation: crossValidated ? 0 : sessionSplits.validation,
         }));
       } catch (error) {
         console.error(`Error fetching run info for ${newExpl.run_id}`, error);
@@ -246,10 +253,13 @@ export default function SelectDatasetStep({
 
   // ----- handlers ------------------------------------------------------
 
-  const fractionFor = (splitValue) =>
-    splitValue === "val"
-      ? splitFractions.validation
-      : (splitFractions[splitValue] ?? 0);
+  const fractionFor = (splitValue) => {
+    const fraction =
+      splitValue === "val"
+        ? splitFractions.validation
+        : splitFractions[splitValue];
+    return Number.isFinite(fraction) ? fraction : 0;
+  };
 
   const rowsInSplit = Math.round(totalRows * fractionFor(split));
   const rowsSelectedByPercentage =
@@ -354,7 +364,9 @@ export default function SelectDatasetStep({
                       onChange={(e) => setSplit(e.target.value)}
                       sx={{ mt: 2 }}
                     >
-                      {SPLIT_VALUES.map((value) => (
+                      {SPLIT_VALUES.filter(
+                        (value) => !(isCrossValidated && value === "val"),
+                      ).map((value) => (
                         <FormControlLabel
                           key={value}
                           value={value}
