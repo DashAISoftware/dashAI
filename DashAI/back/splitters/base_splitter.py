@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Any, Dict, Final, List
 
 from sklearn.preprocessing import LabelEncoder
 
@@ -21,6 +21,83 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
     """
 
     TYPE: Final[str] = "Splitter"
+
+    # Name of the partition an explainer evaluates on, which is the data the
+    # trained model has not seen. Splitters that reserve rows under another
+    # name override this so the frontend and the metrics never disagree about
+    # what "test" means.
+    EVALUATION_PARTITION: str = "test"
+
+    @classmethod
+    def explainable_partitions(
+        cls, split_indexes: Dict[str, Any]
+    ) -> Dict[str, List[int]]:
+        """Map each partition an explainer may target to its row indexes.
+
+        Each splitter decides which partitions its runs expose and what they
+        are called, so adding a splitter with a different partitioning scheme
+        needs no change in the explainability code or in the frontend.
+
+        Parameters
+        ----------
+        split_indexes : dict
+            The ``Run.split_indexes`` payload of a run produced by this
+            splitter, already parsed.
+
+        Returns
+        -------
+        dict
+            Partition name to row indexes, in the order they should be offered.
+
+        Raises
+        ------
+        NotImplementedError
+            If the subclass does not provide an implementation.
+        """
+        raise NotImplementedError(
+            "The explainable partitions method must be implemented by subclasses."
+        )
+
+    @classmethod
+    def explainable_splits(cls, split_indexes: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Describe the partitions of a run that an explainer may target.
+
+        Built from :meth:`explainable_partitions`, dropping the partitions that
+        received no rows and appending an entry covering the whole dataset.
+
+        Parameters
+        ----------
+        split_indexes : dict
+            The ``Run.split_indexes`` payload, already parsed.
+
+        Returns
+        -------
+        list[dict]
+            One ``{"name", "rows"}`` entry per non-empty partition, followed by
+            an ``all`` entry. Empty when the run has no data to explain.
+        """
+        try:
+            partitions = cls.explainable_partitions(split_indexes)
+        except (KeyError, NotImplementedError, TypeError):
+            return []
+
+        splits = [
+            {"name": name, "rows": len(indexes)}
+            for name, indexes in partitions.items()
+            if indexes
+        ]
+        if not any(split["name"] == cls.EVALUATION_PARTITION for split in splits):
+            # Without the partition the model never saw there is nothing an
+            # explanation could be measured on.
+            return []
+
+        splits.append(
+            {
+                "name": "all",
+                "rows": sum(len(indexes) for indexes in partitions.values()),
+            }
+        )
+        return splits
 
     def __init__(self, splits_data):
         """Initialize the common splitter configuration.

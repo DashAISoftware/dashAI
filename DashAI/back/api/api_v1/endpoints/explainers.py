@@ -23,6 +23,7 @@ from DashAI.back.dependencies.database.models import (
     ModelSession,
     Run,
 )
+from DashAI.back.splitters.splits_payload import splitter_class_for
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -1131,6 +1132,77 @@ async def validate_dataset(
 
     validation_response["dataset_status"] = "valid"
     return validation_response
+
+
+@router.get("/explainable-splits/{run_id}")
+@inject
+async def get_explainable_splits(
+    run_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """Retrieve the dataset partitions of a run that an explainer may target.
+
+    The available partitions depend on how the run was evaluated, so they are
+    resolved here rather than assumed by the caller: a holdout run exposes its
+    train, test and validation partitions, while a cross-validation run exposes
+    the rows it reserved for explanations under the name ``holdout``.
+
+    Parameters
+    ----------
+    run_id : int
+        Id of the run to be explained.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+    component_registry : ComponentRegistry
+        Registry used to resolve the splitter that produced the run.
+
+    Returns
+    -------
+    dict
+        A ``splits`` list of ``{"name", "rows"}`` entries, empty when the run has
+        no data an explainer may use.
+
+    Raises
+    ------
+    HTTPException
+        If the run does not exist in the database.
+    """
+    import json
+
+    with session_factory() as db:
+        try:
+            run: Run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Run not found",
+                )
+            model_session: ModelSession = db.get(ModelSession, run.model_session_id)
+            if not model_session:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Model session not found",
+                )
+            split_indexes = json.loads(run.split_indexes) if run.split_indexes else {}
+            session_splits = model_session.splits
+            if isinstance(session_splits, str):
+                session_splits = json.loads(session_splits)
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    try:
+        splitter_class = splitter_class_for(session_splits, component_registry)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
+        ) from e
+
+    return {"splits": splitter_class.explainable_splits(split_indexes)}
 
 
 @router.post("/local/valid-datasets")
