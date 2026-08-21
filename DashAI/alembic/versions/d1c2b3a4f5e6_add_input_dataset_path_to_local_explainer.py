@@ -1,6 +1,6 @@
 """Add input_dataset_path to local_explainer
 
-Revision ID: b2c3d4e5f6a7
+Revision ID: d1c2b3a4f5e6
 Revises: 9a1b2c3d4e5f
 Create Date: 2026-07-15 00:00:00.000000
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "b2c3d4e5f6a7"
+revision: str = "d1c2b3a4f5e6"
 down_revision: Union[str, None] = "9a1b2c3d4e5f"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None

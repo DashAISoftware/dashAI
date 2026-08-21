@@ -1,0 +1,158 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Tuple
+
+import numpy as np
+from sklearn.model_selection import RepeatedKFold
+
+from DashAI.back.core.schema_fields import BaseSchema, int_field, schema_field
+from DashAI.back.core.utils import MultilingualString
+
+from .fold_splitter import FoldSplitter
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class RepeatedKFoldSplitterSchema(BaseSchema):
+    n_splits: schema_field(
+        int_field(ge=2),
+        placeholder=5,
+        description=MultilingualString(
+            en="Number of folds. Must be an integer greater than or equal to 2.",
+            es="Número de particiones. Debe ser un entero mayor o igual a 2.",
+            pt="Número de partições. Deve ser um inteiro maior ou igual a 2.",
+            de="Anzahl der Folds. Muss eine ganze Zahl größer oder gleich 2 sein.",
+            zh="折数，必须为大于或等于2的整数。",
+        ),
+        alias=MultilingualString(
+            en="Number of folds",
+            es="Número de particiones",
+            pt="Número de partições",
+            de="Anzahl der Folds",
+            zh="折数",
+        ),
+    )  # type: ignore
+    n_repeats: schema_field(
+        int_field(ge=2),
+        placeholder=2,
+        description=MultilingualString(
+            en=(
+                "Number of times the K-Fold procedure is repeated. Must be an "
+                "integer greater than or equal to 2."
+            ),
+            es=(
+                "Número de veces que se repite el procedimiento K-Fold. Debe "
+                "ser un entero mayor o igual a 2."
+            ),
+            pt=(
+                "Número de vezes que o procedimento K-Fold é repetido. Deve "
+                "ser um inteiro maior ou igual a 2."
+            ),
+            de=(
+                "Anzahl der Wiederholungen des K-Fold-Verfahrens. Muss eine "
+                "ganze Zahl größer oder gleich 2 sein."
+            ),
+            zh="K折过程重复的次数，必须为大于或等于2的整数。",
+        ),
+        alias=MultilingualString(
+            en="Number of repeats",
+            es="Número de repeticiones",
+            pt="Número de repetições",
+            de="Anzahl der Wiederholungen",
+            zh="重复次数",
+        ),
+    )  # type: ignore
+    random_state: schema_field(
+        int_field(ge=0),
+        placeholder=42,
+        description=MultilingualString(
+            en="Seed used to make the repeated split reproducible.",
+            es="Semilla utilizada para que la división repetida sea reproducible.",
+            pt="Semente usada para tornar a divisão repetida reproduzível.",
+            de="Seed, um die wiederholte Aufteilung reproduzierbar zu machen.",
+            zh="用于使重复划分可复现的随机种子。",
+        ),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
+    )  # type: ignore
+
+
+class RepeatedKFoldSplitter(FoldSplitter):
+    """Splitter that repeats the K-fold procedure multiple times.
+
+    Repeating the folds helps reduce the variance of the performance estimate by
+    averaging over several random resamplings of the same evaluation scheme. This
+    is useful when a single K-fold run is too noisy or when more stable estimates
+    are needed for model comparison.
+
+    References
+    ----------
+    - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RepeatedKFold.html
+    """
+
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "RegressionTask",
+        "TranslationTask",
+        "ImageClassificationTask",
+    ]
+    DISPLAY_NAME: str = MultilingualString(
+        en="Repeated K-Fold",
+        es="K-Fold Repetido",
+        pt="K-Fold Repetido",
+        de="Wiederholtes K-Fold",
+        zh="重复 K 折交叉验证",
+    )
+    COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
+    SCHEMA = RepeatedKFoldSplitterSchema
+
+    def __init__(self, splits_data):
+        """Initialize the repeated K-fold splitter.
+
+        Parameters
+        ----------
+        splits_data : dict
+            Configuration dictionary that may include the number of repeats.
+        """
+        super().__init__(splits_data)
+        self.n_repeats = splits_data.get("n_repeats", 2)
+
+    def split_indexes(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> List[Tuple[List, List]]:
+        """Generate train/test index pairs for each repetition of the K-fold split.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset whose length determines the number of available samples.
+        y : DashAIDataset
+            Target values associated with ``x``. This argument is accepted for
+            interface consistency but is not used directly by the splitter.
+
+        Returns
+        -------
+        list[tuple]
+            A list of train/test index pairs for all folds and repeats.
+        """
+        indexes = np.arange(len(x))
+
+        try:
+            rkf = RepeatedKFold(
+                n_splits=self.n_splits,
+                n_repeats=self.n_repeats,
+                random_state=self.random_state,
+            )
+            folds = list(rkf.split(indexes))
+
+        except ValueError as e:
+            raise ValueError(f"Error in RepeatedKFold splitting: {e}") from e
+
+        return folds
