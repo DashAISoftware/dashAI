@@ -198,6 +198,24 @@ export const enqueueGenerativeProcessJob = async (
   return response.data;
 };
 
+export const enqueueRAGProcessJob = async (
+  processId: number,
+): Promise<object> => {
+  const data = {
+    job_type: "RAGJob",
+    kwargs: { rag_process_id: processId },
+  };
+  const formData = new FormData();
+  formData.append("job_type", data.job_type);
+  formData.append("kwargs", JSON.stringify(data.kwargs));
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
 export const enqueueConverterJob = async (
   converterId: number,
 ): Promise<object> => {
