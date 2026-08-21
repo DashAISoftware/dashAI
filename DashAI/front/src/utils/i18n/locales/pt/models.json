@@ -5,6 +5,7 @@
     "createLocalExplainer": "Novo Explicador Local",
     "createPrediction": "Criar Previsão",
     "addNewPrediction": "Adicionar Nova Previsão",
+    "uploadNewDataset": "Enviar Novo Conjunto de Dados",
     "createSession": "Criar Sessão",
     "deleteAndRetrain": "Excluir e Retreinar",
     "deleteRun": "Excluir Execução",

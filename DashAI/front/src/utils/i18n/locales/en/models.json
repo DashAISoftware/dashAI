@@ -5,6 +5,7 @@
     "createLocalExplainer": "New Local Explainer",
     "createPrediction": "Create Prediction",
     "addNewPrediction": "Add New Prediction",
+    "uploadNewDataset": "Upload new dataset",
     "createSession": "Create Session",
     "deleteAndRetrain": "Delete & Re-train",
     "deleteRun": "Delete Run",

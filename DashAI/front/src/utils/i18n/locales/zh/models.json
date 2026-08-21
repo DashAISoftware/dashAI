@@ -5,6 +5,7 @@
     "createLocalExplainer": "新建局部解释器",
     "createPrediction": "创建预测",
     "addNewPrediction": "添加新预测",
+    "uploadNewDataset": "上传新数据集",
     "createSession": "创建会话",
     "deleteAndRetrain": "删除并重新训练",
     "deleteRun": "删除运行",

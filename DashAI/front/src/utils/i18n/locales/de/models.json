@@ -5,6 +5,7 @@
     "createLocalExplainer": "Neues lokales Erklärungsmodell",
     "createPrediction": "Vorhersage erstellen",
     "addNewPrediction": "Neue Vorhersage hinzufügen",
+    "uploadNewDataset": "Neuen Datensatz hochladen",
     "createSession": "Sitzung erstellen",
     "deleteAndRetrain": "Löschen und neu trainieren",
     "deleteRun": "Durchlauf löschen",
