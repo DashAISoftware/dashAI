@@ -65,7 +65,7 @@ print()
 
 
 def open_browser() -> None:
-    _wait_for_backend_server(timeout=120)
+    _wait_for_backend_server(timeout=1200)
     url = "http://localhost:8000/app/"
     webbrowser.open(url=url, new=0, autoraise=True)
 
@@ -119,10 +119,11 @@ def _wait_for_backend_server(host="127.0.0.1", port=8000, timeout=15):
     import socket
     import time
 
+    timeout = 1000
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
-            with socket.create_connection((host, port), timeout=1):
+            with socket.create_connection((host, port), timeout=timeout):
                 return True
         except (OSError, ConnectionRefusedError):
             time.sleep(0.5)

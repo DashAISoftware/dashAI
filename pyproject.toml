@@ -48,6 +48,7 @@ dependencies = [
     "torch",
     "torchvision",
     "transformers",
+    "sentence-transformers",
     "controlnet_aux",
     "sacrebleu",
     "sentencepiece",
@@ -78,6 +79,8 @@ dependencies = [
     "dice-ml>=0.12",
     "lime>=0.2.0.1",
     "statsmodels>=0.14.6",
+    "pypdf",
+    "pymupdf",
 ]
 
 [project.optional-dependencies]

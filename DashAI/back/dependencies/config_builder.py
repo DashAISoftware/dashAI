@@ -65,5 +65,7 @@ def build_config_dict(
     config["BACK_PATH"] = pathlib.Path(config["BACK_PATH"]).absolute()
     config["LOGGING_LEVEL"] = getattr(logging, logging_level)
     config["INITIAL_COMPONENTS"] = get_initial_components()
+    config["DOCUMENTS_PATH"] = local_path / config["DOCUMENTS_PATH"]
+    config["RAG_PATH"] = local_path / config["RAG_PATH"]
 
     return config
