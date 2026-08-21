@@ -7,7 +7,7 @@ before the splitter forms were generated from the component schemas used a
 different set of keys, so every reader normalizes the payload first.
 """
 
-from typing import Any, Dict, Type
+from typing import Any, Dict, List, Tuple, Type
 
 # Before fold splitters existed the payload named no splitter at all: every
 # split was a holdout split.
@@ -92,3 +92,54 @@ def schema_placeholder_defaults(splitter_cls: Type) -> Dict[str, Any]:
         for name, prop in properties.items()
         if "placeholder" in prop
     }
+
+
+def explainable_indexes(
+    split_indexes: Dict[str, Any],
+) -> Tuple[List[int], List[int], List[int]]:
+    """Resolve the rows an explainer may use, for either evaluation strategy.
+
+    A holdout run stores its partitions flat, so they are returned as they are.
+    A cross-validation run stores one entry per fold plus a ``full_dataset``
+    entry whose train partition is what the final model was fitted on and whose
+    test partition holds the rows reserved for explanations.
+
+    Parameters
+    ----------
+    split_indexes : dict
+        The ``Run.split_indexes`` payload, already parsed.
+
+    Returns
+    -------
+    tuple[list[int], list[int], list[int]]
+        Train, test and validation row indexes. Cross-validation runs have no
+        validation partition, so the third list is empty for them.
+
+    Raises
+    ------
+    ValueError
+        If a cross-validation run reserved no rows for explanations, or if the
+        payload matches neither shape.
+    """
+    if "train_indexes" in split_indexes:
+        return (
+            split_indexes["train_indexes"],
+            split_indexes["test_indexes"],
+            split_indexes.get("val_indexes", []),
+        )
+
+    full_dataset = split_indexes.get("full_dataset")
+    if full_dataset is None:
+        raise ValueError(
+            "The run's split indexes match neither a holdout nor a "
+            "cross-validation run, so there is no data to explain."
+        )
+
+    holdout = full_dataset.get("test_indexes") or []
+    if not holdout:
+        raise ValueError(
+            "This cross-validation run reserved no data for explanations. "
+            "Re-train it with a holdout above 0 to explain it."
+        )
+
+    return full_dataset["train_indexes"], holdout, []

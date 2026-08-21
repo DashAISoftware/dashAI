@@ -5,7 +5,12 @@ from typing import TYPE_CHECKING, List, Tuple
 import numpy as np
 from sklearn.model_selection import RepeatedKFold
 
-from DashAI.back.core.schema_fields import BaseSchema, int_field, schema_field
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    float_field,
+    int_field,
+    schema_field,
+)
 from DashAI.back.core.utils import MultilingualString
 
 from .fold_splitter import FoldSplitter
@@ -79,6 +84,51 @@ class RepeatedKFoldSplitterSchema(BaseSchema):
             pt="Estado aleatório",
             de="Zufallszustand",
             zh="随机状态",
+        ),
+    )  # type: ignore
+    holdout: schema_field(
+        float_field(ge=0, le=0.5),
+        placeholder=0.1,
+        description=MultilingualString(
+            en=(
+                "Proportion of the dataset kept out of cross-validation. Those rows "
+                "are never used to fit or select the model, so they are the data the "
+                "final model can be explained on. Set it to 0 to cross-validate every "
+                "row, which leaves the run without data to explain."
+            ),
+            es=(
+                "Proporción del dataset que se mantiene fuera de la validación "
+                "cruzada. Esas filas nunca se usan para ajustar ni seleccionar el "
+                "modelo, por lo que son los datos con los que se puede explicar el "
+                "modelo final. Usa 0 para validar de forma cruzada todas las filas, "
+                "lo que deja la ejecución sin datos que explicar."
+            ),
+            pt=(
+                "Proporção do dataset mantida fora da validação cruzada. Essas linhas "
+                "nunca são usadas para ajustar ou selecionar o modelo, portanto são "
+                "os dados com os quais o modelo final pode ser explicado. Use 0 para "
+                "validar de forma cruzada todas as linhas, o que deixa a execução sem "
+                "dados para explicar."
+            ),
+            de=(
+                "Anteil des Datensatzes, der von der Kreuzvalidierung ausgenommen "
+                "wird. Diese Zeilen werden nie zum Trainieren oder Auswählen des "
+                "Modells verwendet und sind daher die Daten, mit denen das endgültige "
+                "Modell erklärt werden kann. Mit 0 werden alle Zeilen "
+                "kreuzvalidiert, wodurch der Lauf keine Daten zum Erklären hat."
+            ),
+            zh=(
+                "从交叉验证中保留的数据集比例。这些行不会用于拟合或选择模型，"
+                "因此可用于解释最终模型。设为 0 时全部行都参与交叉验证，"
+                "该运行将没有可解释的数据。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Held out for explanations",
+            es="Reservado para explicaciones",
+            pt="Reservado para explicações",
+            de="Für Erklärungen zurückgehalten",
+            zh="用于解释的保留数据",
         ),
     )  # type: ignore
 
