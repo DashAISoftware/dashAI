@@ -35,6 +35,7 @@
   "error": {
     "failedToCreateSession": "Error al crear la sesión",
     "failedToDeleteSession": "Error al eliminar sesión",
+    "failedToDeleteSessions": "Error al eliminar las sesiones seleccionadas",
     "failedToFetchHistory": "Error al obtener historial de parámetros",
     "failedToFetchMessages": "Error al obtener mensajes",
     "failedToFetchSessionInfo": "Error al obtener información de la sesión",
@@ -52,6 +53,10 @@
     "attachMediaToContinue": "Adjunta medios para continuar",
     "configureSession": "Configurar sesión",
     "confirmDeleteSession": "¿Seguro que quieres eliminar la sesión \"{{name}}\"? Esta acción no se puede deshacer.",
+    "confirmBulkDeleteSessions_one": "¿Seguro que quieres eliminar la sesión seleccionada? Esta acción no se puede deshacer.",
+    "confirmBulkDeleteSessions_many": "¿Seguro que quieres eliminar las {{count}} sesiones seleccionadas? Esta acción no se puede deshacer.",
+    "confirmBulkDeleteSessions_other": "¿Seguro que quieres eliminar las {{count}} sesiones seleccionadas? Esta acción no se puede deshacer.",
+    "selectSessionsToDelete": "Seleccionar sesiones para eliminar",
     "createNewSession": "Crear una nueva sesión",
     "createNewSessionDescription": "Elige un modelo, configura sus parámetros y empieza a conversar.",
     "deleteSessionConfirmation": "¿Seguro que quieres eliminar esta sesión? Esta acción no se puede deshacer.",

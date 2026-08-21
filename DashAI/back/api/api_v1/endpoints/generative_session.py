@@ -7,6 +7,7 @@ from kink import di
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.generative_session_params import (
+    GenerativeSessionBulkDeleteParams,
     GenerativeSessionParams,
 )
 from DashAI.back.dependencies.database.models import (
@@ -270,6 +271,85 @@ async def get_all_generative_sessions(
                 }
             )
         return session_list
+
+
+@router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_generative_sessions(
+    params: GenerativeSessionBulkDeleteParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Delete multiple generative sessions, in a single transaction.
+
+    Parameters
+    ----------
+    params : GenerativeSessionBulkDeleteParams
+        The IDs of the generative sessions to delete. IDs that do not match
+        an existing session are silently skipped rather than failing the
+        whole request.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Raises
+    ------
+    HTTPException
+        If there's an internal database error.
+    """
+
+    with session_factory() as db:
+        try:
+            for session_id in params.ids:
+                session = db.get(GenerativeSession, session_id)
+                if not session:
+                    continue
+
+                # Delete all the processes associated with the session
+                processes = (
+                    db.query(GenerativeProcess)
+                    .filter(GenerativeProcess.session_id == session_id)
+                    .all()
+                )
+                # Delete all the process data associated with the processes
+                for process in processes:
+                    process_data = (
+                        db.query(ProcessData)
+                        .filter(ProcessData.process_id == process.id)
+                        .all()
+                    )
+                    for data in process_data:
+                        db.delete(data)
+                # Delete the processes
+                for process in processes:
+                    db.delete(process)
+
+                # Delete the session parameter history entries
+                parameters_history = (
+                    db.query(GenerativeSessionParameterHistory)
+                    .filter(GenerativeSessionParameterHistory.session_id == session_id)
+                    .all()
+                )
+                for entry in parameters_history:
+                    db.delete(entry)
+
+                # Finally, delete the session itself
+                db.delete(session)
+
+            db.commit()
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        except Exception as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error",
+            ) from e
+        finally:
+            db.rollback()
+            db.close()
 
 
 @router.delete("/{session_id}", status_code=status.HTTP_204_NO_CONTENT)

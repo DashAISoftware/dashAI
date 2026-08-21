@@ -21,3 +21,7 @@ class ColumnsValidationParams(BaseModel):
     dataset_id: int
     inputs_columns: List[str]
     outputs_columns: List[str]
+
+
+class ModelSessionBulkDeleteParams(BaseModel):
+    ids: List[int]

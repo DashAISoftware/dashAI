@@ -29,6 +29,7 @@ export default function SessionBar({
     sessions: sessionsCtx,
     selectedSessionId: selectedSessionIdCtx,
     deleteSessionById,
+    deleteSessionsByIds,
     editSession,
   } = useGenerative();
 
@@ -140,6 +141,23 @@ export default function SessionBar({
       { name: session.name },
     );
 
+  const getSessionBulkDeleteConfirmationContent = (count) =>
+    t("generative:label.confirmBulkDeleteSessions", {
+      count,
+      defaultValue:
+        "Are you sure you want to delete the {{count}} selected sessions? This action cannot be undone.",
+    });
+
+  const handleBulkSessionDelete = async (ids) => {
+    const idSet = new Set(ids);
+    const wasSelected = idSet.has(selectedSessionId);
+    const ok = await deleteSessionsByIds(ids);
+    if (ok && wasSelected) {
+      navigate("/app/generative");
+    }
+    return ok;
+  };
+
   // Group sessions by task display_name
   const groupedSessions = filteredSessions?.reduce((groups, session) => {
     // Get the display name from the task using the session's task_name
@@ -216,6 +234,14 @@ export default function SessionBar({
           initialOpenGroups={openSections}
           getItemDescription={(session) => session.model_name}
           getDeleteConfirmationContent={getSessionDeleteConfirmationContent}
+          onBulkDelete={handleBulkSessionDelete}
+          selectItemsTooltip={t(
+            "generative:label.selectSessionsToDelete",
+            "Select sessions to delete",
+          )}
+          getBulkDeleteConfirmationContent={
+            getSessionBulkDeleteConfirmationContent
+          }
         />
       </Box>
 

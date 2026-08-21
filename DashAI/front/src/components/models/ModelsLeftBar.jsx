@@ -17,6 +17,7 @@ import { useModels } from "./ModelsContext";
 export default function ModelsLeftBar({ onToggle }) {
   const {
     deleteSessionById,
+    deleteSessionsByIds,
     setSelectedSessionId,
     setSelectedSession,
     setSelectedTask,
@@ -137,6 +138,13 @@ export default function ModelsLeftBar({ onToggle }) {
       'Are you sure you want to delete the session "{{name}}"? This action cannot be undone.',
       { name: session.name },
     );
+
+  const getSessionBulkDeleteConfirmationContent = (count) =>
+    t("models:label.confirmBulkDeleteSessions", {
+      count,
+      defaultValue:
+        "Are you sure you want to delete the {{count}} selected sessions? This action cannot be undone.",
+    });
 
   const TASK_TRANSLATIONS = {
     tabularClassification: () => t("datasets:task.tabularClassification"),
@@ -267,6 +275,15 @@ export default function ModelsLeftBar({ onToggle }) {
     return true;
   };
 
+  const onBulkSessionDelete = async (ids) => {
+    const success = await deleteSessionsByIds(ids);
+    if (!success) return false;
+    if (ids.includes(selectedSessionId)) {
+      navigate("/app/models");
+    }
+    return true;
+  };
+
   const onSessionClick = (sessionId) => {
     navigate(`/app/models/sessions/${sessionId}`);
   };
@@ -347,6 +364,14 @@ export default function ModelsLeftBar({ onToggle }) {
           getItemDescription={getSessionDescription}
           getDeleteConfirmationContent={getSessionDeleteConfirmationContent}
           initialOpenGroups={openSections}
+          onBulkDelete={onBulkSessionDelete}
+          selectItemsTooltip={t(
+            "models:label.selectSessionsToDelete",
+            "Select sessions to delete",
+          )}
+          getBulkDeleteConfirmationContent={
+            getSessionBulkDeleteConfirmationContent
+          }
         />
       </Box>
 

@@ -8,6 +8,7 @@ from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.model_sessions_params import (
     ColumnsValidationParams,
+    ModelSessionBulkDeleteParams,
     ModelSessionParams,
 )
 from DashAI.back.dependencies.database.models import Dataset, ModelSession
@@ -243,6 +244,46 @@ async def create_model_session(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Model session with name '{params.name}' already exists.",
             ) from e
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.delete("/")
+@inject
+async def delete_model_sessions(
+    params: ModelSessionBulkDeleteParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Delete multiple model sessions, in a single transaction.
+
+    Parameters
+    ----------
+    params : ModelSessionBulkDeleteParams
+        The IDs of the model sessions to delete. IDs that do not match an
+        existing model session are silently skipped rather than failing the
+        whole request.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    Response with code 204 NO_CONTENT
+    """
+    with session_factory() as db:
+        try:
+            for model_session_id in params.ids:
+                model_session = db.get(ModelSession, model_session_id)
+                if not model_session:
+                    continue
+                db.delete(model_session)
+
+            db.commit()
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
