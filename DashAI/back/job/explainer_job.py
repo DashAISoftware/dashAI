@@ -15,7 +15,10 @@ from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
-from DashAI.back.splitters.splits_payload import explainable_indexes
+from DashAI.back.splitters.splits_payload import (
+    explainable_indexes,
+    splitter_class_for,
+)
 from DashAI.back.tasks.base_task import BaseTask
 
 if TYPE_CHECKING:
@@ -270,8 +273,20 @@ class ExplainerJob(BaseJob):
                             prepared_instance = prepared_instance.select(valid_indexes)
                     else:
                         split = self.explainer_db.scope.get("split")
-                        if split not in ["train", "test", "val", "all"]:
+                        valid_splits = [
+                            "train",
+                            "val",
+                            "all",
+                            self.evaluation_partition,
+                        ]
+                        if split not in valid_splits:
                             raise JobError(f"{split} is not a valid split")
+
+                        # A splitter may name the partition explanations are
+                        # measured on whatever fits its strategy; in the dataset
+                        # dictionary those rows always live under "test".
+                        if split == self.evaluation_partition:
+                            split = "test"
 
                         if split != "all":
                             if not same_dataset:
@@ -502,12 +517,19 @@ class ExplainerJob(BaseJob):
                         ),
                     ) from e
                 try:
-                    # Holdout runs store their partitions flat; cross-validation
-                    # runs store one entry per fold plus the rows reserved for
-                    # explanations. Both collapse to the same three lists here.
-                    train_idx, test_idx, val_idx = explainable_indexes(
-                        json.loads(run.split_indexes)
+                    # The splitter that produced the run decides which
+                    # partitions exist and what they are called, so it is asked
+                    # rather than guessing from the payload's shape.
+                    session_splits = model_session.splits
+                    if isinstance(session_splits, str):
+                        session_splits = json.loads(session_splits)
+                    splitter_class = splitter_class_for(
+                        session_splits, component_registry
                     )
+                    train_idx, test_idx, val_idx = explainable_indexes(
+                        splitter_class, json.loads(run.split_indexes)
+                    )
+                    self.evaluation_partition = splitter_class.EVALUATION_PARTITION
                     splits = {
                         "train_indexes": train_idx,
                         "test_indexes": test_idx,

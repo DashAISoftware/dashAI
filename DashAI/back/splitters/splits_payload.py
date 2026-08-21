@@ -94,52 +94,72 @@ def schema_placeholder_defaults(splitter_cls: Type) -> Dict[str, Any]:
     }
 
 
-def explainable_indexes(
-    split_indexes: Dict[str, Any],
-) -> Tuple[List[int], List[int], List[int]]:
-    """Resolve the rows an explainer may use, for either evaluation strategy.
-
-    A holdout run stores its partitions flat, so they are returned as they are.
-    A cross-validation run stores one entry per fold plus a ``full_dataset``
-    entry whose train partition is what the final model was fitted on and whose
-    test partition holds the rows reserved for explanations.
+def splitter_class_for(session_splits: Dict[str, Any], component_registry) -> Type:
+    """Resolve the splitter class that produced a run.
 
     Parameters
     ----------
+    session_splits : dict
+        The ``ModelSession.splits`` payload, already parsed.
+    component_registry : ComponentRegistry
+        Registry used to resolve the splitter by name.
+
+    Returns
+    -------
+    type
+        The splitter class named by the payload.
+
+    Raises
+    ------
+    ValueError
+        If the payload names a splitter that is not registered.
+    """
+    splitter_name = normalize_splits_payload(session_splits)["splitter_name"]
+    if splitter_name not in component_registry:
+        raise ValueError(f"Splitter {splitter_name} does not exist in the registry.")
+    return component_registry[splitter_name]["class"]
+
+
+def explainable_indexes(
+    splitter_class: Type, split_indexes: Dict[str, Any]
+) -> Tuple[List[int], List[int], List[int]]:
+    """Resolve the rows an explainer may use for a run of a given splitter.
+
+    The partitions and their names come from the splitter itself; this maps them
+    onto the three slots the explainers' dataset dictionary is built from.
+
+    Parameters
+    ----------
+    splitter_class : type
+        The splitter that produced the run.
     split_indexes : dict
         The ``Run.split_indexes`` payload, already parsed.
 
     Returns
     -------
     tuple[list[int], list[int], list[int]]
-        Train, test and validation row indexes. Cross-validation runs have no
-        validation partition, so the third list is empty for them.
+        Row indexes for the train, evaluation and validation slots. Splitters
+        without a validation partition return an empty third list.
 
     Raises
     ------
     ValueError
-        If a cross-validation run reserved no rows for explanations, or if the
-        payload matches neither shape.
+        If the run has no rows in the partition explanations are measured on.
     """
-    if "train_indexes" in split_indexes:
-        return (
-            split_indexes["train_indexes"],
-            split_indexes["test_indexes"],
-            split_indexes.get("val_indexes", []),
-        )
-
-    full_dataset = split_indexes.get("full_dataset")
-    if full_dataset is None:
+    try:
+        partitions = splitter_class.explainable_partitions(split_indexes)
+    except (KeyError, NotImplementedError, TypeError) as e:
         raise ValueError(
-            "The run's split indexes match neither a holdout nor a "
-            "cross-validation run, so there is no data to explain."
-        )
+            "The run's split indexes do not match the splitter that produced "
+            "it, so there is no data to explain."
+        ) from e
 
-    holdout = full_dataset.get("test_indexes") or []
-    if not holdout:
+    evaluation = partitions.get(splitter_class.EVALUATION_PARTITION) or []
+    if not evaluation:
         raise ValueError(
-            "This cross-validation run reserved no data for explanations. "
-            "Re-train it with a holdout above 0 to explain it."
+            "The run has no rows in its "
+            f"{splitter_class.EVALUATION_PARTITION} partition, so there is "
+            "nothing to explain."
         )
 
-    return full_dataset["train_indexes"], holdout, []
+    return partitions.get("train", []), evaluation, partitions.get("val", [])

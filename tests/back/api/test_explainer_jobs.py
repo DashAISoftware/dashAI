@@ -17,6 +17,8 @@ from DashAI.back.explainability.global_explainer import BaseGlobalExplainer
 from DashAI.back.explainability.local_explainer import BaseLocalExplainer
 from DashAI.back.job.explainer_job import ExplainerJob
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.splitters.holdout import HoldoutSplitter
+from DashAI.back.splitters.k_fold import KFoldSplitter
 from DashAI.back.tasks.base_task import BaseTask
 
 input_columns = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
@@ -190,6 +192,10 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             DummyLocalExplainer,
             RawInputLocalExplainer,
             ExplainerJob,
+            # Explaining a run asks its splitter which partitions exist, so the
+            # splitters the runs under test were created with must be resolvable.
+            HoldoutSplitter,
+            KFoldSplitter,
         ]
     )
 
@@ -560,12 +566,40 @@ def test_job_with_wrong_explainer(client: TestClient):
     )
 
 
-def _cv_run(client: TestClient, model_session_id: int, holdout: list, name: str) -> int:
+def _cv_session(client: TestClient, dataset_id: int, name: str) -> int:
+    """Create a session that cross-validates, so its runs resolve to K-Fold."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        model_session = ModelSession(
+            dataset_id=dataset_id,
+            name=f"CVExperiment_{name}",
+            task_name="DummyTask",
+            input_columns=input_columns,
+            output_columns=output_columns,
+            evaluation_strategy="CrossValidationEvaluationStrategy",
+            splits=json.dumps(
+                {
+                    "splitter_name": "KFoldSplitter",
+                    "splitType": "cv",
+                    "n_splits": 2,
+                    "shuffle": True,
+                    "random_state": 42,
+                    "holdout": 0.3,
+                }
+            ),
+        )
+        db.add(model_session)
+        db.commit()
+        db.refresh(model_session)
+        return model_session.id
+
+
+def _cv_run(client: TestClient, dataset_id: int, holdout: list, name: str) -> int:
     """Create a finished cross-validation run with the given reserved rows."""
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
         run = Run(
-            model_session_id=model_session_id,
+            model_session_id=_cv_session(client, dataset_id, name),
             optimizer_name="OptunaOptimizer",
             optimizer_parameters={
                 "n_trials": 10,
@@ -633,10 +667,10 @@ def _run_explainer_job(client: TestClient, explainer_id: int) -> str:
 
 
 def test_cross_validation_run_is_explained_on_its_reserved_rows(
-    client: TestClient, model_session_id: int
+    client: TestClient, dataset_id: int
 ):
     """The rows kept out of cross-validation are what the explainer receives."""
-    run_id = _cv_run(client, model_session_id, [7, 8, 9], "CVWithHoldout")
+    run_id = _cv_run(client, dataset_id, [7, 8, 9], "CVWithHoldout")
     explainer_id = _global_explainer_for(client, run_id, "cv_with_holdout")
 
     assert _run_explainer_job(client, explainer_id) == "finished"
@@ -655,10 +689,57 @@ def test_cross_validation_run_is_explained_on_its_reserved_rows(
 
 
 def test_cross_validation_run_without_reserved_rows_is_refused(
-    client: TestClient, model_session_id: int
+    client: TestClient, dataset_id: int
 ):
     """A run that cross-validated every row has nothing an explainer may use."""
-    run_id = _cv_run(client, model_session_id, [], "CVWithoutHoldout")
+    run_id = _cv_run(client, dataset_id, [], "CVWithoutHoldout")
     explainer_id = _global_explainer_for(client, run_id, "cv_without_holdout")
 
     assert _run_explainer_job(client, explainer_id) == "error"
+
+
+def test_explainable_splits_of_a_holdout_run(client: TestClient, run_id: int):
+    """A holdout run exposes its three partitions plus the whole dataset."""
+    response = client.get(f"/api/v1/explainer/explainable-splits/{run_id}")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["splits"] == [
+        {"name": "train", "rows": 5},
+        {"name": "test", "rows": 4},
+        {"name": "val", "rows": 4},
+        {"name": "all", "rows": 13},
+    ]
+
+
+def test_explainable_splits_of_a_cross_validation_run(
+    client: TestClient, dataset_id: int
+):
+    """A cross-validation run names its reserved rows holdout, never test."""
+    run_id = _cv_run(client, dataset_id, [7, 8, 9], "CVForSplitsEndpoint")
+
+    response = client.get(f"/api/v1/explainer/explainable-splits/{run_id}")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["splits"] == [
+        {"name": "train", "rows": 7},
+        {"name": "holdout", "rows": 3},
+        {"name": "all", "rows": 10},
+    ]
+
+
+def test_explainable_splits_of_a_run_without_reserved_rows(
+    client: TestClient, dataset_id: int
+):
+    """A run that cross-validated every row offers no partition to explain."""
+    run_id = _cv_run(client, dataset_id, [], "CVNoHoldoutForSplitsEndpoint")
+
+    response = client.get(f"/api/v1/explainer/explainable-splits/{run_id}")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["splits"] == []
+
+
+def test_explainable_splits_of_a_missing_run(client: TestClient):
+    response = client.get("/api/v1/explainer/explainable-splits/99999")
+
+    assert response.status_code == 404, response.text

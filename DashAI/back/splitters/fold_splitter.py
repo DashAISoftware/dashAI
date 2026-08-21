@@ -45,10 +45,39 @@ class FoldSplitter(BaseSplitter):
     addition of a full-data fold for training on the complete dataset.
     """
 
-    #: How the rows reserved for explanations are chosen. ``"random"`` samples
-    #: them uniformly, ``"stratified"`` preserves the target distribution, and
-    #: ``"group"`` moves whole groups so a group never spans the carve.
+    # How the rows reserved for explanations are chosen. ``"random"`` samples
+    # them uniformly, ``"stratified"`` preserves the target distribution, and
+    # ``"group"`` moves whole groups so a group never spans the carve.
     HOLDOUT_STRATEGY: str = "random"
+
+    # The rows kept out of the folds are the ones the final model never saw.
+    # They are not called "test" because a fold based run already reports test
+    # metrics, averaged over the folds.
+    EVALUATION_PARTITION: str = "holdout"
+
+    @classmethod
+    def explainable_partitions(cls, split_indexes):
+        """Return the partitions of a fold based run an explainer may target.
+
+        The folds themselves are not offered: the model that gets saved is refit
+        on everything the folds could use, so only the reserved rows are data it
+        has not seen.
+
+        Parameters
+        ----------
+        split_indexes : dict
+            The ``Run.split_indexes`` payload, already parsed.
+
+        Returns
+        -------
+        dict
+            Row indexes for the ``train`` and ``holdout`` partitions.
+        """
+        full_dataset = split_indexes["full_dataset"]
+        return {
+            "train": full_dataset["train_indexes"],
+            "holdout": full_dataset.get("test_indexes", []),
+        }
 
     def __init__(self, splits_data):
         """Initialize the fold splitter with the requested number of splits.
@@ -188,10 +217,8 @@ class FoldSplitter(BaseSplitter):
         holdout_indexes, fold_pool = self._carve_holdout(x, y)
 
         if len(fold_pool) < self.n_splits:
-            raise ValueError(
-                f"""Number of splits (n_splits={self.n_splits}) cannot be
-                greater than the number of samples ({len(fold_pool)})."""
-            )
+            raise ValueError(f"""Number of splits (n_splits={self.n_splits}) cannot be
+                greater than the number of samples ({len(fold_pool)}).""")
 
         # The folds are built over the rows left after the carve, so
         # ``split_indexes`` sees a dataset without the reserved rows and returns
