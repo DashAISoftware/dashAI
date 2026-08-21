@@ -68,6 +68,25 @@ export default function ResultsTabsHeader({
     "CrossValidationEvaluationStrategy";
   const isNestedCrossValidation = !!run?.nested;
 
+  // Cross-validation runs can only be explained when the session reserved rows
+  // for it: the final model is refit on everything else, so without a holdout
+  // there is no data the model has not already seen.
+  let sessionSplits = null;
+  try {
+    sessionSplits = selectedSession?.splits
+      ? JSON.parse(selectedSession.splits)
+      : null;
+  } catch {
+    sessionSplits = null;
+  }
+  const hasDataToExplain =
+    !isCrossValidation || Number(sessionSplits?.holdout) > 0;
+  const explainabilityTooltip = !isFinished
+    ? notFinishedTooltip
+    : !hasDataToExplain
+      ? t("models:message.explainabilityNeedsHoldout")
+      : "";
+
   return (
     <Box sx={{ display: "flex", alignItems: "flex-start" }}>
       <Box sx={{ display: "flex", flexDirection: "column" }}>
@@ -159,7 +178,7 @@ export default function ResultsTabsHeader({
           <Tab
             value={1}
             label={
-              <Tooltip title={notFinishedTooltip}>
+              <Tooltip title={explainabilityTooltip}>
                 <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
                   <span>{t("models:label.explainability")}</span>
                   {isFinished && (
@@ -168,7 +187,7 @@ export default function ResultsTabsHeader({
                 </Box>
               </Tooltip>
             }
-            disabled={!isFinished}
+            disabled={!isFinished || !hasDataToExplain}
           />
           <Tab
             value={2}
