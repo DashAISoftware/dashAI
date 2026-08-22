@@ -58,35 +58,6 @@ class ComputeDatasetMetadataSchema(BaseSchema):
             zh="计算扩展元数据",
         ),
     )  # type: ignore
-    trust_inherited_metadata: schema_field(
-        bool_field(),
-        placeholder=False,
-        description=MultilingualString(
-            en="Whether the metadata the dataset already carries can be reused "
-            "as-is. Only safe when the data has not changed since that metadata "
-            "was computed; otherwise every value is recomputed from scratch.",
-            es="Si la metadata que el conjunto de datos ya trae puede reusarse "
-            "tal cual. Solo es seguro cuando los datos no cambiaron desde que "
-            "esa metadata se calculó; si no, todo se recalcula desde cero.",
-            pt="Se a metadata que o conjunto de dados já carrega pode ser "
-            "reutilizada como está. Só é seguro quando os dados não mudaram "
-            "desde que essa metadata foi calculada; caso contrário, tudo é "
-            "recalculado do zero.",
-            de="Ob die vom Datensatz mitgeführten Metadaten unverändert "
-            "weiterverwendet werden können. Nur sicher, wenn sich die Daten "
-            "seit deren Berechnung nicht geändert haben; andernfalls wird alles "
-            "neu berechnet.",
-            zh="数据集已携带的元数据是否可以原样重用。仅当数据自该元数据计算后"
-            "未发生变化时才安全；否则将全部重新计算。",
-        ),
-        alias=MultilingualString(
-            en="Trust existing metadata",
-            es="Confiar en la metadata existente",
-            pt="Confiar na metadata existente",
-            de="Vorhandene Metadaten vertrauen",
-            zh="信任现有元数据",
-        ),
-    )  # type: ignore
 
 
 class ComputeDatasetMetadataUnit(BaseUnit):
@@ -113,6 +84,7 @@ class ComputeDatasetMetadataUnit(BaseUnit):
 
     REQUIRES = ("dataset",)
     PROVIDES = ("dataset",)
+    RUNTIME_PARAMS = ("trust_inherited_metadata",)
 
     def execute(self, ctx: ExecutionContext) -> None:
         dataset = ctx.require("dataset")

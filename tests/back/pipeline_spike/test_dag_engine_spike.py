@@ -234,25 +234,33 @@ def test_a_cycle_is_reported():
         validate(graph)
 
 
-def test_run_id_has_to_be_seeded_because_no_unit_publishes_it():
-    """``run_id`` is an orphan input: four units require it, none provides it.
+def test_run_id_is_no_longer_an_orphan_input():
+    """``run_id`` used to be a context key no unit published.
 
-    In a job it arrived through ``self.kwargs``. A graph has to inject it from
-    outside, and the validator cannot tell that injection apart from a wire the
-    user forgot to draw.
+    Four units required it and none provided it, so a graph had to inject it
+    from outside and the validator could not tell that injection apart from a
+    wire the user forgot to draw. It was never data flowing through the graph:
+    in a job it arrived through ``self.kwargs``.
+
+    It is configuration now, which is what closed that hole. Every key left in
+    ``REQUIRES`` has a unit that publishes it, so "nothing supplies this" means
+    a missing edge and nothing else. The seeds mechanism this spike used for it
+    has no remaining caller.
     """
-    save = Node("save", SaveModelUnit())
+    save = Node("save", SaveModelUnit(artifact_prefix="pipeline-1-save"))
 
-    with pytest.raises(GraphError, match="save requires 'run_id'"):
+    with pytest.raises(GraphError, match="save requires 'model'"):
         validate(Graph([save], []))
 
-    seeded = Node("save", SaveModelUnit(), seeds={"run_id": 1})
-    with pytest.raises(GraphError, match="save requires 'model'"):
-        validate(Graph([seeded], []))
+    assert "run_id" not in SaveModelUnit.REQUIRES
 
 
 def test_a_seed_for_a_key_the_unit_never_uses_is_rejected():
-    save = Node("save", SaveModelUnit(), seeds={"run_id": 1, "nonsense": 2})
+    save = Node(
+        "save",
+        SaveModelUnit(artifact_prefix="pipeline-1-save"),
+        seeds={"nonsense": 2},
+    )
 
     with pytest.raises(GraphError, match="seeded with 'nonsense'"):
         validate(Graph([save], []))

@@ -52,11 +52,33 @@ class EvaluateModelUnit(BaseUnit):
     ``BaseModel.calculate_metrics`` is ``final``. That method persists the
     rows through a session of its own, so these writes are not part of the
     transaction the calling job controls.
+
+    **This unit needs a real ``Run`` row and cannot be used without one.**
+    Everything it does is write ``Metric`` rows against a foreign key to
+    ``run.id``, so there is nothing left for it to do when there is no run.
+    ``validate`` refuses a missing run id rather than letting it through,
+    because the failure would otherwise be silent in both directions: the
+    idempotency query below would match no row whatever was already logged,
+    and ``calculate_metrics`` no-ops on a model with no run — so the unit
+    would report success having written nothing at all.
+
+    A caller that wants a model's metrics *without* a run wants a different
+    unit, one that returns them instead of persisting them.
     """
 
     SCHEMA = EvaluateModelSchema
 
-    REQUIRES = ("model", "run_id")
+    # run_id is configuration, not context: no unit publishes it.
+    REQUIRES = ("model",)
+    RUNTIME_PARAMS = ("run_id",)
+
+    def validate(self, ctx: ExecutionContext) -> None:
+        if self.config["run_id"] is None:
+            raise JobError(
+                "Metrics can only be logged against a run, and this one has no "
+                "run id. Use a unit that returns the metrics instead of writing "
+                "them if there is no run to attach them to."
+            )
 
     def execute(self, ctx: ExecutionContext) -> None:
         from kink import di
@@ -64,13 +86,10 @@ class EvaluateModelUnit(BaseUnit):
         session_factory = di["session_factory"]
 
         model = ctx.require("model")
-        # ctx.require, not ctx.get: run_id is what the idempotency query below
-        # filters on. A silently-None run_id would match no existing metric
-        # row regardless of what was actually logged, and — if the model
-        # were also somehow detached from its run — calculate_metrics would
-        # then no-op (base_model.py's ``if not metrics or not self.run_id``),
-        # so the unit would "succeed" having written nothing.
-        run_id = ctx.require("run_id")
+        # validate() already refused a None here, which is what keeps the
+        # idempotency query below from matching no row regardless of what was
+        # actually logged.
+        run_id = self.config["run_id"]
         splits = [SplitEnum[name] for name in self.config.get("splits", DEFAULT_SPLITS)]
 
         try:

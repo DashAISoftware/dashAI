@@ -84,6 +84,9 @@ class FitModelUnit(BaseUnit):
 
     SCHEMA = FitModelSchema
 
+    # run_id and artifact_prefix are configuration, not context: no unit
+    # publishes them, so nothing upstream could ever satisfy them as REQUIRES.
+    # See the artifact_prefix section of DAG_ENGINE.md.
     REQUIRES = (
         "model",
         "factory",
@@ -92,9 +95,9 @@ class FitModelUnit(BaseUnit):
         "x",
         "y",
         "task",
-        "run_id",
     )
     PROVIDES = ("model", "plot_paths")
+    RUNTIME_PARAMS = ("run_id", "artifact_prefix")
 
     def __init__(self, **config) -> None:
         super().__init__(**config)
@@ -167,7 +170,7 @@ class FitModelUnit(BaseUnit):
         model = ctx.require("model")
         x = ctx.require("x")
         y = ctx.require("y")
-        run_id = ctx.require("run_id")
+        run_id = self.config["run_id"]
         optimizable_parameters = ctx.require("optimizable_parameters")
 
         plot_paths = []
@@ -191,7 +194,7 @@ class FitModelUnit(BaseUnit):
                 model = optimizer.get_model()
                 best_params = optimizer.get_best_params()
 
-                self._assert_model_keeps_its_runtime_state(model, run_id)
+                self._assert_model_keeps_its_runtime_state(model)
 
                 # ctx.require already hands back an isolated copy of the
                 # stored parameter tree, so update_parameters is free to
@@ -211,6 +214,7 @@ class FitModelUnit(BaseUnit):
                     run_id,
                     n_params=len(optimizable_parameters),
                     goal_metric=goal_metric,
+                    artifact_prefix=self.config["artifact_prefix"],
                 )
                 normalized_plots = normalize_artifacts(plots)
                 for filename, plot in zip(
@@ -230,21 +234,25 @@ class FitModelUnit(BaseUnit):
         ctx.put_ref("plot_paths", plot_paths)
 
     @staticmethod
-    def _assert_model_keeps_its_runtime_state(model, run_id) -> None:
-        """Fail loudly if the optimizer returned a model that cannot log metrics.
+    def _assert_model_keeps_its_runtime_state(model) -> None:
+        """Fail loudly if the optimizer returned a model that cannot be scored.
 
-        ``ModelFactory`` attaches the run id, the data splits and the metric
-        classes to the model instance, and optimizers are expected to return
-        that same instance. If one ever returns a fresh object instead,
-        ``calculate_metrics`` would return early and the run would finish with
-        no metrics at all instead of failing.
+        ``ModelFactory`` attaches the data splits and the metric classes to the
+        model instance, and optimizers are expected to return that same
+        instance. If one ever returns a fresh object instead, scoring it finds
+        nothing to score and the caller ends up with no metrics rather than an
+        error.
+
+        The check is on the data, not on the run id. Keying it to ``run_id``
+        made it a no-op for every caller that has no run -- a pipeline, where
+        ``run_id`` is always None -- which is exactly the caller with no other
+        signal that anything went wrong: it would finish with an empty metrics
+        artifact. What both callers need is the same, so this asks for that
+        instead.
         """
-        if run_id is None:
-            return
-
-        if getattr(model, "run_id", None) is None:
+        if getattr(model, "x_data", None) is None:
             raise JobError(
-                "The optimizer returned a model detached from its run: metrics "
+                "The optimizer returned a model detached from its data: metrics "
                 "could not be computed for it. Optimizers must return the same "
                 "model instance they received."
             )

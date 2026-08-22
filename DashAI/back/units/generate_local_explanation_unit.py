@@ -202,32 +202,6 @@ class GenerateLocalExplanationSchema(BaseSchema):
             zh="同一数据集",
         ),
     )  # type: ignore
-    session_splits: schema_field(
-        none_type(string_field()),
-        placeholder=None,
-        description=MultilingualString(
-            en="The model session's split configuration, used only when the "
-            "instances come from a different dataset and the split has to be "
-            "recomputed over it.",
-            es="La configuración de partición de la sesión del modelo, usada "
-            "solo cuando las instancias vienen de otro conjunto de datos y hay "
-            "que recalcular la partición sobre él.",
-            pt="A configuração de divisão da sessão do modelo, usada apenas "
-            "quando as instâncias vêm de outro conjunto de dados e a divisão "
-            "tem de ser recalculada sobre ele.",
-            de="Die Split-Konfiguration der Modellsitzung, nur verwendet, wenn "
-            "die Instanzen aus einem anderen Datensatz stammen und der Split "
-            "neu berechnet werden muss.",
-            zh="模型会话的划分配置，仅在实例来自其他数据集且需要在其上重新计算划分时使用。",
-        ),
-        alias=MultilingualString(
-            en="Session splits",
-            es="Particiones de la sesión",
-            pt="Partições da sessão",
-            de="Sitzungs-Splits",
-            zh="会话划分",
-        ),
-    )  # type: ignore
 
 
 class GenerateLocalExplanationUnit(BaseUnit):
@@ -252,6 +226,7 @@ class GenerateLocalExplanationUnit(BaseUnit):
 
     REQUIRES = ("explainer", "data_x", "data_y", "task", "split_indexes")
     PROVIDES = ("explanation_path", "plots_path", "input_dataset_path")
+    RUNTIME_PARAMS = ("session_splits",)
 
     def _select_instances(self, prepared_instance, splits, instance, task):
         """Narrow the loaded dataset down to the instances to explain."""

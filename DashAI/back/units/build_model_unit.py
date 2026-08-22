@@ -120,12 +120,18 @@ class BuildModelUnit(BaseUnit):
 
     SCHEMA = BuildModelSchema
 
-    # run_id and task_name only appear in the ModelFactory call and in error
-    # messages, but they are declared all the same: a key read without being
-    # declared is invisible to any caller — and to any future DAG validator —
-    # that inspects REQUIRES instead of running the unit.
-    REQUIRES = ("x", "y", "n_labels", "run_id", "task_name")
+    # task_name only appears in the ModelFactory call and in error messages,
+    # but it is declared all the same: a key read without being declared is
+    # invisible to any caller — and to the DAG validator — that inspects
+    # REQUIRES instead of running the unit.
+    #
+    # run_id is configuration, not context: no unit publishes it, so nothing
+    # upstream could ever satisfy it. It is read without a default on purpose
+    # — a run_id nobody passed would read as "this model has no run", and a
+    # model with no run logs no metrics at all (see BaseModel).
+    REQUIRES = ("x", "y", "n_labels", "task_name")
     PROVIDES = ("model", "factory", "optimizable_parameters", "model_parameters")
+    RUNTIME_PARAMS = ("run_id",)
 
     def __init__(self, **config) -> None:
         super().__init__(**config)
@@ -199,7 +205,7 @@ class BuildModelUnit(BaseUnit):
         component_registry = di["component_registry"]
 
         parameters = self.model_parameters
-        run_id = ctx.require("run_id")
+        run_id = self.config["run_id"]
         task_name = ctx.require("task_name")
 
         model_class = self._resolve_model_class()

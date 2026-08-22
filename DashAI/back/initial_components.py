@@ -354,6 +354,9 @@ from DashAI.back.units.build_local_explainer_unit import BuildLocalExplainerUnit
 from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
 from DashAI.back.units.build_model_unit import BuildModelUnit
 from DashAI.back.units.compute_dataset_metadata_unit import ComputeDatasetMetadataUnit
+from DashAI.back.units.evaluate_model_to_artifact_unit import (
+    EvaluateModelToArtifactUnit,
+)
 from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
 from DashAI.back.units.fit_converter_unit import FitConverterUnit
 from DashAI.back.units.fit_model_unit import FitModelUnit
@@ -549,6 +552,7 @@ def get_initial_components():
         BuildModelUnit,
         FitModelUnit,
         EvaluateModelUnit,
+        EvaluateModelToArtifactUnit,
         SaveModelUnit,
         ApplyConverterUnit,
         FitConverterUnit,

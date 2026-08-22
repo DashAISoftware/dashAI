@@ -178,3 +178,42 @@ def test_cached_live_objects_are_still_returned_by_reference():
 
     assert ctx.get("model") is live_object
     assert ctx.require("model") is live_object
+
+
+def test_origin_says_which_half_a_key_is_in():
+    ctx = ExecutionContext(refs={"dataset_path": "/tmp/ds"})
+    ctx.put("dataset", object())
+
+    assert ctx.origin("dataset_path") == "ref"
+    assert ctx.origin("dataset") == "cache"
+    assert ctx.origin("nothing_here") is None
+
+
+def test_origin_prefers_the_cache_the_same_way_get_does():
+    """One key in both halves has to have one answer, not two.
+
+    ``get`` and ``require`` read the cache first, so anything deciding how to
+    move a value has to agree with them or the value would be read from one
+    half and written as if it came from the other.
+    """
+    live = object()
+    ctx = ExecutionContext(refs={"x": 1})
+    ctx.put("x", live)
+
+    assert ctx.origin("x") == "cache"
+    assert ctx.get("x") is live
+    assert ctx.require("x") is live
+
+
+def test_origin_does_not_copy_the_reference_half():
+    """The reason the method exists: asking must not cost a deep copy.
+
+    ``key in ctx.refs`` answers the same question, but ``refs`` returns a deep
+    copy of every reference the context holds, so asking once per edge of a
+    graph would copy the whole reference half once per edge.
+    """
+    ctx = ExecutionContext(refs={"nested": {"deep": [1, 2, 3]}})
+    inner = ctx._refs["nested"]
+
+    assert ctx.origin("nested") == "ref"
+    assert ctx._refs["nested"] is inner

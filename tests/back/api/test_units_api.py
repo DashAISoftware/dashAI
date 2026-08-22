@@ -9,6 +9,7 @@ EXPECTED_UNITS = {
     "BuildModelUnit",
     "FitModelUnit",
     "EvaluateModelUnit",
+    "EvaluateModelToArtifactUnit",
     "SaveModelUnit",
     "ApplyConverterUnit",
     "FitConverterUnit",
@@ -114,10 +115,11 @@ def test_unit_schemas_describe_their_configuration(units):
     assert set(units["GenerateGlobalExplanationUnit"]["schema"]["properties"]) == {
         "explainer_id"
     }
+    # temp_path is a runtime param: the endpoint makes the directory, so it
+    # never reaches the schema the front receives.
     assert set(units["LoadUploadedDatasetUnit"]["schema"]["properties"]) == {
         "dataloader",
         "source",
-        "temp_path",
         "n_sample",
     }
     assert set(units["LoadDatafileDatasetUnit"]["schema"]["properties"]) == {
@@ -133,10 +135,11 @@ def test_unit_schemas_describe_their_configuration(units):
     }
     assert set(units["ComputeDatasetMetadataUnit"]["schema"]["properties"]) == {
         "compute_metadata",
-        "trust_inherited_metadata",
     }
     # The sibling of SaveDatasetUnit: that one saves where the load said, this
-    # one is told where to save.
+    # one is told where to save. The destination stays user-facing: a job
+    # happens to compute it, but on a canvas picking where to store a dataset
+    # is a decision, and a value a user can know while filling the form in.
     assert set(units["SaveDatasetToPathUnit"]["schema"]["properties"]) == {"path"}
 
 
@@ -193,3 +196,70 @@ def test_units_do_not_leak_into_the_job_listing(client: TestClient):
     job_names = {component["name"] for component in response.json()}
     assert not (job_names & EXPECTED_UNITS)
     assert "ModelJob" in job_names
+
+
+@pytest.fixture(name="unit_classes", scope="module")
+def get_unit_classes(client: TestClient):
+    """The registered classes behind the response, from the same registry."""
+    registry = client.app.container["component_registry"]
+    return {name: registry[name]["class"] for name in EXPECTED_UNITS}
+
+
+#: Every runtime param in the palette. Configuration supplied by whatever runs
+#: the unit -- a job, the DAG engine, an endpoint -- and never by a user,
+#: because at the moment a form would be filled in the value is not knowable:
+#: a path a job has yet to choose, a foreign key to a row nobody has seen, or
+#: a name built from the id of a run that has not started.
+EXPECTED_RUNTIME_PARAMS = {
+    ("LoadUploadedDatasetUnit", "temp_path"),
+    ("LoadTrainingDatasetUnit", "train_dataset_file_path"),
+    ("BuildManualInputUnit", "train_dataset_file_path"),
+    ("GenerateLocalExplanationUnit", "session_splits"),
+    ("ComputeDatasetMetadataUnit", "trust_inherited_metadata"),
+    ("BuildModelUnit", "run_id"),
+    ("EvaluateModelUnit", "run_id"),
+    ("FitModelUnit", "run_id"),
+    ("FitModelUnit", "artifact_prefix"),
+    ("SaveModelUnit", "artifact_prefix"),
+}
+
+
+def test_the_runtime_params_are_exactly_the_declared_ones(unit_classes):
+    """Adding or removing one has to be a deliberate edit, not a side effect."""
+    declared = {
+        (name, param)
+        for name, cls in unit_classes.items()
+        for param in cls.RUNTIME_PARAMS
+    }
+
+    assert declared == EXPECTED_RUNTIME_PARAMS
+
+
+def test_no_runtime_param_reaches_the_schema_the_front_receives(units, unit_classes):
+    """The guarantee the whole arrangement exists for.
+
+    A flag inside the schema would have left these on the wire, where every
+    renderer has to remember to skip them and a new one leaks by default. Being
+    a separate declaration means there is nothing to filter: the name is simply
+    not in what the front is given.
+    """
+    for name, cls in unit_classes.items():
+        exposed = set(units[name]["schema"]["properties"])
+        leaked = exposed & set(cls.RUNTIME_PARAMS)
+
+        assert not leaked, (
+            f"{name} exposes {sorted(leaked)} in the schema the front renders, "
+            "even though it is declared as supplied by whatever runs the unit."
+        )
+
+
+def test_a_unit_can_have_no_user_configuration_at_all(units):
+    """Which is a real shape, not a degenerate one.
+
+    Three units are told everything by their caller, and SaveDatasetUnit was
+    already configuration-free before any of this. An empty schema is valid and
+    renders as nothing.
+    """
+    for name in ("SaveModelUnit", "LoadTrainingDatasetUnit", "SaveDatasetUnit"):
+        assert units[name]["schema"]["properties"] == {}, name
+        assert units[name]["configurable_object"] is True, name

@@ -63,28 +63,6 @@ class LoadUploadedDatasetSchema(BaseSchema):
             zh="来源",
         ),
     )  # type: ignore
-    temp_path: schema_field(
-        string_field(),
-        placeholder="",
-        description=MultilingualString(
-            en="Scratch directory for downloads and extracted archives. Whoever "
-            "sets it up is responsible for removing it afterwards.",
-            es="Directorio temporal para descargas y archivos extraídos. Quien "
-            "lo crea es responsable de borrarlo después.",
-            pt="Diretório temporário para descargas e ficheiros extraídos. Quem "
-            "o cria é responsável por removê-lo depois.",
-            de="Arbeitsverzeichnis für Downloads und entpackte Archive. Wer es "
-            "anlegt, ist für das Entfernen verantwortlich.",
-            zh="用于下载和解压归档的临时目录。创建者负责事后清理。",
-        ),
-        alias=MultilingualString(
-            en="Temporary path",
-            es="Ruta temporal",
-            pt="Caminho temporário",
-            de="Temporärer Pfad",
-            zh="临时路径",
-        ),
-    )  # type: ignore
     n_sample: schema_field(
         none_type(int_field(gt=0)),
         placeholder=None,
@@ -125,6 +103,7 @@ class LoadUploadedDatasetUnit(BaseUnit):
     SCHEMA = LoadUploadedDatasetSchema
 
     PROVIDES = ("dataset",)
+    RUNTIME_PARAMS = ("temp_path",)
 
     def execute(self, ctx: ExecutionContext) -> None:
         from kink import di

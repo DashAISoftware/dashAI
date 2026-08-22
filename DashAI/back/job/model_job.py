@@ -98,7 +98,9 @@ class ModelJob(BaseJob):
 
         # Get the necessary parameters
         run_id: int = self.kwargs["run_id"]
-        ctx = ExecutionContext(refs={"run_id": run_id})
+        # The run id is not context: no unit publishes it, so it travels as
+        # configuration to each unit that needs it.
+        ctx = ExecutionContext()
 
         with session_factory() as db:
             run: Run = db.get(Run, run_id)
@@ -132,6 +134,7 @@ class ModelJob(BaseJob):
                     train_metrics=model_session.train_metrics,
                     validation_metrics=model_session.validation_metrics,
                     test_metrics=model_session.test_metrics,
+                    run_id=run_id,
                 )(ctx)
 
                 # Resolving the optimizer before the status changes keeps an
@@ -142,6 +145,10 @@ class ModelJob(BaseJob):
                         "params": run.optimizer_parameters,
                     },
                     goal_metric=run.goal_metric,
+                    run_id=run_id,
+                    # The run names its own artifacts, which is what keeps the
+                    # plot filenames of two runs apart inside RUNS_PATH.
+                    artifact_prefix=str(run_id),
                 )
                 fit_model.validate(ctx)
 
@@ -180,10 +187,10 @@ class ModelJob(BaseJob):
                     ) from e
 
                 self.report_progress(0.85, "Computing metrics")
-                EvaluateModelUnit()(ctx)
+                EvaluateModelUnit(run_id=run_id)(ctx)
 
                 self.report_progress(0.95, "Saving model")
-                SaveModelUnit()(ctx)
+                SaveModelUnit(artifact_prefix=str(run_id))(ctx)
 
                 try:
                     run.run_path = ctx.require("model_path")

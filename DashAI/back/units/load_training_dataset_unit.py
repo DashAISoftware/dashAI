@@ -3,12 +3,6 @@
 import logging
 from typing import TYPE_CHECKING
 
-from DashAI.back.core.schema_fields import (
-    BaseSchema,
-    schema_field,
-    string_field,
-)
-from DashAI.back.core.utils import MultilingualString
 from DashAI.back.job.base_job import JobError
 from DashAI.back.units.base_unit import BaseUnit
 from DashAI.back.units.context import ExecutionContext
@@ -17,34 +11,6 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 log = logging.getLogger(__name__)
-
-
-class LoadTrainingDatasetSchema(BaseSchema):
-    train_dataset_file_path: schema_field(
-        string_field(),
-        placeholder="",
-        description=MultilingualString(
-            en="Folder of the dataset the model was trained on — the stored "
-            "row's own path, not the inner dataset directory.",
-            es="Carpeta del conjunto de datos con el que se entrenó el "
-            "modelo: la ruta de la propia fila almacenada, no el directorio "
-            "interno del conjunto de datos.",
-            pt="Pasta do conjunto de dados com que o modelo foi treinado — o "
-            "caminho da própria linha armazenada, não o diretório interno do "
-            "conjunto de dados.",
-            de="Ordner des Datensatzes, mit dem das Modell trainiert wurde — "
-            "der Pfad der gespeicherten Zeile selbst, nicht das innere "
-            "Datensatzverzeichnis.",
-            zh="模型训练所用数据集的文件夹——已存储行自身的路径，而非内部数据集目录。",
-        ),
-        alias=MultilingualString(
-            en="Training dataset folder",
-            es="Carpeta del conjunto de entrenamiento",
-            pt="Pasta do conjunto de treino",
-            de="Ordner des Trainingsdatensatzes",
-            zh="训练数据集文件夹",
-        ),
-    )  # type: ignore
 
 
 class LoadTrainingDatasetUnit(BaseUnit):
@@ -63,9 +29,8 @@ class LoadTrainingDatasetUnit(BaseUnit):
     from the dataset *being predicted on* crosses this boundary.
     """
 
-    SCHEMA = LoadTrainingDatasetSchema
-
     PROVIDES = ("train_dataset", "train_dataset_types")
+    RUNTIME_PARAMS = ("train_dataset_file_path",)
 
     def execute(self, ctx: ExecutionContext) -> None:
         from pathlib import Path

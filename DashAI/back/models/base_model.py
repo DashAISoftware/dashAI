@@ -224,6 +224,79 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             db.commit()
 
     @final
+    def compute_metrics(
+        self,
+        split: SplitEnum = SplitEnum.VALIDATION,
+        x_data: "DashAIDataset" = None,
+        y_data: "DashAIDataset" = None,
+    ) -> Dict[str, float]:
+        """Score a data split with this model's metrics, without persisting.
+
+        Which metrics are computed is decided by the model rather than by the
+        caller: ``ModelFactory`` attaches the metric classes and the data
+        splits to the instance, and this reads them off it.
+
+        Separate from :meth:`calculate_metrics` so a caller with no run to log
+        against can still have the numbers. A pipeline is that caller: it has
+        no ``Run`` row, so there is no foreign key for a ``Metric`` row to
+        point at, and its results are recorded as an artifact instead. Both
+        paths score through here, so the two cannot disagree.
+
+        Parameters
+        ----------
+        split : SplitEnum
+            The data split to evaluate. Defaults to ``SplitEnum.VALIDATION``.
+        x_data : DashAIDataset, optional
+            Input features. Defaults to the split stored on the model.
+        y_data : DashAIDataset, optional
+            Target labels. Defaults to the split stored on the model.
+
+        Returns
+        -------
+        Dict[str, float]
+            Metric name to score. Empty when every metric returned a
+            non-finite value. ``None`` when there is nothing to score at all:
+            no metrics configured, or no data for this split.
+        """
+        metrics_attr = f"{split.value}_metrics"
+        metrics = getattr(self, metrics_attr, None)
+
+        if not metrics:
+            return None
+
+        # Load data if not provided
+        if x_data is None or y_data is None:
+            if self.x_data is None or self.y_data is None:
+                return None
+            x_data = self.x_data[split.value]
+            y_data = self.y_data[split.value]
+
+        # If data is empty after retrieval, skip calculation
+        if x_data is None or y_data is None:
+            return None
+
+        # Make predictions and transform outputs
+        y_pred = self.predict(x_data)
+        y_transformed = self.prepare_output(y_data, is_fit=False)
+
+        # Calculate metric scores
+        results = {}
+        for metric in metrics:
+            score = metric.score(y_transformed, y_pred)
+            if not math.isfinite(score):
+                logger.warning(
+                    "Metric %s returned a non-finite value (%s) for split %s "
+                    "(e.g. only one class present in the split). Skipping.",
+                    metric.__name__,
+                    score,
+                    split,
+                )
+                continue
+            results[metric.__name__] = score
+
+        return results
+
+    @final
     def calculate_metrics(
         self,
         split: SplitEnum = SplitEnum.VALIDATION,
@@ -232,7 +305,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         x_data: "DashAIDataset" = None,
         y_data: "DashAIDataset" = None,
     ):
-        """Calculate and save metrics for a given data split and level.
+        """Calculate metrics for a data split and save them to the database.
 
         Parameters
         ----------
@@ -254,44 +327,29 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             Target labels. If None, the
             labels stored in the model for the given split are used.
             Defaults to None.
+
+        Notes
+        -----
+        A metric row is keyed by the run it belongs to, so a model with no run
+        has nowhere to write and this returns without scoring anything. That is
+        what lets a caller with no ``Run`` row -- a pipeline -- train a model
+        that logs nothing at all, during training or after it, without having
+        to intercept anything. Such a caller uses :meth:`compute_metrics` and
+        keeps the numbers itself.
         """
-        # Get the appropriate metrics based on split
-        metrics_attr = f"{split.value}_metrics"
-        metrics = getattr(self, metrics_attr, None)
-
-        # If no metrics or run_id, skip calculation
-        if not metrics or not self.run_id:
+        # No run means no foreign key for a metric row to point at.
+        #
+        # getattr rather than self.run_id: ModelFactory attaches the attribute,
+        # but a model built directly never had it, and the guard this replaced
+        # happened to never reach the attribute for such a model because it
+        # checked for metrics first. Treating "no attribute" as "no run" keeps
+        # that path working and is the same answer for any caller that has one.
+        if not getattr(self, "run_id", None):
             return
 
-        # Load data if not provided
-        if x_data is None or y_data is None:
-            if self.x_data is None or self.y_data is None:
-                return
-            x_data = self.x_data[split.value]
-            y_data = self.y_data[split.value]
-
-        # If data is empty after retrieval, skip calculation
-        if x_data is None or y_data is None:
+        results = self.compute_metrics(split=split, x_data=x_data, y_data=y_data)
+        if results is None:
             return
-
-        # Make predictions and transform outputs
-        y_pred = self.predict(x_data)
-        y_transformed = self.prepare_output(y_data, is_fit=False)
-
-        # Calculate metric scores
-        results = {}
-        for metric in metrics:
-            score = metric.score(y_transformed, y_pred)
-            if not math.isfinite(score):
-                logger.warning(
-                    "Metric %s returned a non-finite value (%s) for split %s "
-                    "(e.g. only one class present in the split). Skipping.",
-                    metric.__name__,
-                    score,
-                    split,
-                )
-                continue
-            results[metric.__name__] = score
 
         # Save to database
         self._save_metrics(

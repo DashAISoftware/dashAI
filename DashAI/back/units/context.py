@@ -153,6 +153,36 @@ class ExecutionContext:
         """Return whether a key is present in either half of the context."""
         return key in self._cache or key in self._refs
 
+    def origin(self, key: str) -> Optional[str]:
+        """Return which half holds a key, without copying anything.
+
+        ``get`` and ``has`` merge the two halves on purpose, and ``refs``
+        deep-copies the whole reference half, so neither can answer this
+        cheaply. Something that moves a value from one context to another has
+        to know: the two halves have incompatible rules, and picking the wrong
+        one fails in both directions. Handing a live dataset to ``put_ref``
+        raises, and handing ``put`` a dict that was a reference silently drops
+        the copy-on-read guarantee the reference depended on.
+
+        The cache is checked first, matching ``get`` and ``require``, so a key
+        present in both halves has one answer rather than two.
+
+        Parameters
+        ----------
+        key : str
+            Name of the value.
+
+        Returns
+        -------
+        Optional[str]
+            ``"cache"``, ``"ref"``, or ``None`` when the key is absent.
+        """
+        if key in self._cache:
+            return "cache"
+        if key in self._refs:
+            return "ref"
+        return None
+
     def clear_cache(self) -> None:
         """Drop every live object, keeping the references.
 

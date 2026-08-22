@@ -35,31 +35,6 @@ class BuildManualInputSchema(BaseSchema):
             en="Task", es="Tarea", pt="Tarefa", de="Aufgabe", zh="任务"
         ),
     )  # type: ignore
-    train_dataset_file_path: schema_field(
-        string_field(),
-        placeholder="",
-        description=MultilingualString(
-            en="Folder of the dataset the model was trained on. Its column "
-            "specification is what the typed values are validated against.",
-            es="Carpeta del conjunto de datos con el que se entrenó el modelo. "
-            "Su especificación de columnas es contra lo que se validan los "
-            "valores ingresados.",
-            pt="Pasta do conjunto de dados com que o modelo foi treinado. A sua "
-            "especificação de colunas é aquilo contra o que os valores "
-            "introduzidos são validados.",
-            de="Ordner des Datensatzes, mit dem das Modell trainiert wurde. "
-            "Gegen dessen Spaltenspezifikation werden die eingegebenen Werte "
-            "geprüft.",
-            zh="模型训练所用数据集的文件夹。输入值将依据其列规格进行校验。",
-        ),
-        alias=MultilingualString(
-            en="Training dataset folder",
-            es="Carpeta del conjunto de entrenamiento",
-            pt="Pasta do conjunto de treino",
-            de="Ordner des Trainingsdatensatzes",
-            zh="训练数据集文件夹",
-        ),
-    )  # type: ignore
     manual_input_data: schema_field(
         list,
         placeholder=[],
@@ -102,6 +77,7 @@ class BuildManualInputUnit(BaseUnit):
     SCHEMA = BuildManualInputSchema
 
     PROVIDES = ("dataset",)
+    RUNTIME_PARAMS = ("train_dataset_file_path",)
 
     def __init__(self, **config) -> None:
         super().__init__(**config)

@@ -29,12 +29,13 @@ def fake_registry():
     del di["component_registry"]
 
 
-def _build_unit(model_name):
+def _build_unit(model_name, run_id=1):
     return BuildModelUnit(
         model={"component": model_name, "params": {}},
         train_metrics=[],
         validation_metrics=[],
         test_metrics=[],
+        run_id=run_id,
     )
 
 
@@ -51,7 +52,6 @@ def test_two_build_model_units_in_one_context_resolve_independently(fake_registr
     ctx.put("x", {"train": None, "validation": None})
     ctx.put("y", {"train": None, "validation": None})
     ctx.put("n_labels", None)
-    ctx.put_ref("run_id", 1)
     ctx.put_ref("task_name", "ATask")
 
     a = _build_unit("ModelA")
@@ -74,3 +74,39 @@ def test_resolve_model_class_is_memoized_per_instance_not_shared(fake_registry):
     assert b._resolve_model_class() is _ModelB
     # Calling again must return the same, still-correct class from the cache.
     assert a._resolve_model_class() is _ModelA
+
+
+def test_a_run_id_of_none_leaves_the_model_detached_from_any_run(fake_registry):
+    """No run id means no run, and a model with no run logs no metrics.
+
+    ``ModelFactory`` hangs the run id on the model instance, and that
+    attribute is the only thing ``BaseModel.calculate_metrics`` consults
+    before deciding whether to write anything: ``if not metrics or not
+    self.run_id`` returns early. So a caller with no run -- a pipeline -- gets
+    a model that computes nothing into the ``Metric`` table, during training
+    or after it, without the caller having to intercept anything.
+
+    This is the sole reason ``run_id`` is nullable rather than required.
+    """
+    ctx = ExecutionContext()
+    ctx.put("x", {"train": None, "validation": None})
+    ctx.put("y", {"train": None, "validation": None})
+    ctx.put("n_labels", None)
+    ctx.put_ref("task_name", "ATask")
+
+    _build_unit("ModelA", run_id=None)(ctx)
+
+    assert ctx.get("model").run_id is None
+
+
+def test_a_real_run_id_is_attached_to_the_model(fake_registry):
+    """The mirror of the above: a run's model has to be able to log."""
+    ctx = ExecutionContext()
+    ctx.put("x", {"train": None, "validation": None})
+    ctx.put("y", {"train": None, "validation": None})
+    ctx.put("n_labels", None)
+    ctx.put_ref("task_name", "ATask")
+
+    _build_unit("ModelA", run_id=17)(ctx)
+
+    assert ctx.get("model").run_id == 17

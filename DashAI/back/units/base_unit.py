@@ -37,7 +37,24 @@ class BaseUnit(ConfigObject, metaclass=ABCMeta):
     #: Context keys the unit guarantees after it runs.
     PROVIDES: Tuple[str, ...] = ()
 
+    #: Configuration a user fills in. This is what the front renders.
     SCHEMA: BaseSchema = BaseSchema
+    #: Configuration names supplied by whatever runs the unit, and never by a
+    #: user. Deliberately kept out of ``SCHEMA``: a value here is not known when
+    #: a form would be filled in, so there is nothing for a user to answer.
+    #: ``artifact_prefix`` is the clearest case — it is built from the id of a
+    #: run that has not started.
+    #:
+    #: Being a separate declaration rather than a flag inside the schema is the
+    #: whole point. A flag would still travel to the front, where every renderer
+    #: would have to remember to skip it and a new one would leak by default.
+    #: These names never reach the schema the front receives, so there is
+    #: nothing to filter and nothing to forget.
+    #:
+    #: They still arrive through ``**config`` and are read as ``self.config[…]``
+    #: like any other, so declaring one here changes nothing about how a unit is
+    #: written — only about who is expected to supply it.
+    RUNTIME_PARAMS: Tuple[str, ...] = ()
 
     def __init__(self, **config) -> None:
         """Store the unit configuration.
