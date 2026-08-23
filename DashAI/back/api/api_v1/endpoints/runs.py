@@ -469,20 +469,15 @@ async def update_run(
                 reset_run(run)
             if params.goal_metric is not None:
                 run.goal_metric = params.goal_metric
-            if params.nested is not None:
+            # `nested` is nullable, so None is also how the client asks to drop
+            # the nested CV config. Check what was actually sent instead of the
+            # value, or clearing it would be indistinguishable from omitting it.
+            if "nested" in params.model_fields_set:
                 run.nested = params.nested
 
-            if any(
-                [
-                    params.run_name,
-                    params.run_description,
-                    params.parameters,
-                    params.optimizer,
-                    params.optimizer_parameters,
-                    params.goal_metric,
-                    params.nested,
-                ]
-            ):
+            # Truthiness would read a cleared optimizer ("" / {}) as "nothing
+            # changed" and skip the commit, so go by which fields were sent.
+            if params.model_fields_set:
                 db.commit()
                 db.refresh(run)
                 return run

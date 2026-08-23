@@ -104,7 +104,11 @@ export default function useRunEditForm({
       return true;
     if (editedGoalMetric !== (run.goal_metric || "")) return true;
     if (editedUseNestedCV !== !!run.nested) return true;
-    if (JSON.stringify(editedInnerConfig) !== JSON.stringify(run.nested || {}))
+    if (
+      editedUseNestedCV &&
+      JSON.stringify(editedInnerConfig) !==
+        JSON.stringify(normalizeNestedConfig(run.nested))
+    )
       return true;
     return false;
   }, [
@@ -115,6 +119,7 @@ export default function useRunEditForm({
     editedGoalMetric,
     editedUseNestedCV,
     editedInnerConfig,
+    normalizeNestedConfig,
     run,
   ]);
 
@@ -132,11 +137,14 @@ export default function useRunEditForm({
   const doSave = async () => {
     setSaveConfirmOpen(false);
     setIsSaving(true);
+
+    const optimizing = hasOptimizableParams;
+
     // If nested CV is enabled, construct the inner splitter configuration to
     // send to the backend. Otherwise, send null to clear any existing nested
     // config.
     let nestedConfig = null;
-    if (editedUseNestedCV && outerSplit) {
+    if (optimizing && editedUseNestedCV && outerSplit) {
       // Copy the outer splitter configuration and update for inner splitter
       nestedConfig = {
         ...outerSplit,
@@ -149,9 +157,11 @@ export default function useRunEditForm({
         run.id.toString(),
         editedName.trim(),
         editedParameters,
-        editedOptimizer || "",
-        { ...defaultOptimizerParams, ...editedOptimizerParams },
-        editedGoalMetric || "",
+        optimizing ? editedOptimizer || "" : "",
+        optimizing
+          ? { ...defaultOptimizerParams, ...editedOptimizerParams }
+          : {},
+        optimizing ? editedGoalMetric || "" : "",
         nestedConfig,
       );
 
