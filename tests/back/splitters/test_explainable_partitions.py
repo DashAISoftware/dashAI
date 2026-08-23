@@ -1,13 +1,16 @@
 """Each splitter decides which partitions of its runs an explainer may target.
 
-Nothing outside the splitter classes knows the names or the payload layout, so a
-splitter with a different partitioning scheme, including one shipped by a
-plugin, participates without changes elsewhere.
+Nothing outside the splitter classes knows the payload layout, so a splitter
+with a different partitioning scheme, including one shipped by a plugin,
+participates without changes elsewhere. Both families agree on the name of the
+partition the trained model never saw: a holdout run keeps its test split out
+of training, and a fold based run reserves rows that no fold and no
+hyperparameter search ever touched, which are the same rows its test metrics
+are measured on.
 """
 
 import pytest
 
-from DashAI.back.splitters.base_splitter import BaseSplitter
 from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.splitters.k_fold import KFoldSplitter
 from DashAI.back.splitters.splits_payload import explainable_indexes
@@ -29,26 +32,10 @@ CV_RUN = {
     "full_dataset": {"train_indexes": [0, 1, 2, 3, 4], "test_indexes": [5, 6]},
 }
 
-CV_RUN_WITHOUT_HOLDOUT = {
+CV_RUN_WITHOUT_RESERVED_ROWS = {
     "fold_0": {"train_indexes": [0, 1, 2], "test_indexes": [3, 4]},
     "full_dataset": {"train_indexes": [0, 1, 2, 3, 4], "test_indexes": []},
 }
-
-
-class ProbeSplitter(BaseSplitter):
-    """A splitter that names its unseen rows differently from both families."""
-
-    EVALUATION_PARTITION = "probe"
-
-    def split(self, x, y):
-        raise NotImplementedError
-
-    def split_indexes(self, x, y):
-        raise NotImplementedError
-
-    @classmethod
-    def explainable_partitions(cls, split_indexes):
-        return {"train": split_indexes["kept"], "probe": split_indexes["probe"]}
 
 
 def test_holdout_offers_its_three_partitions_and_the_whole_dataset():
@@ -60,35 +47,20 @@ def test_holdout_offers_its_three_partitions_and_the_whole_dataset():
     ]
 
 
-def test_cross_validation_names_its_reserved_rows_holdout_not_test():
-    splits = KFoldSplitter.explainable_splits(CV_RUN)
-
-    assert splits == [
+def test_cross_validation_offers_its_reserved_rows_as_the_test_partition():
+    """The folds are never offered: the saved model was refit over all of them."""
+    assert KFoldSplitter.explainable_splits(CV_RUN) == [
         {"name": "train", "rows": 5},
-        {"name": "holdout", "rows": 2},
+        {"name": "test", "rows": 2},
         {"name": "all", "rows": 7},
     ]
-    # "test" would collide with the per-fold test metrics reported for the run.
-    assert "test" not in [split["name"] for split in splits]
-
-
-def test_a_splitter_defines_its_own_partition_names():
-    payload = {"kept": [0, 1, 2], "probe": [3, 4]}
-
-    assert ProbeSplitter.explainable_splits(payload) == [
-        {"name": "train", "rows": 3},
-        {"name": "probe", "rows": 2},
-        {"name": "all", "rows": 5},
-    ]
-    assert explainable_indexes(ProbeSplitter, payload) == ([0, 1, 2], [3, 4], [])
 
 
 @pytest.mark.parametrize(
     ("splitter_class", "payload"),
     [
         (HoldoutSplitter, HOLDOUT_RUN_WITHOUT_TEST),
-        (KFoldSplitter, CV_RUN_WITHOUT_HOLDOUT),
-        (ProbeSplitter, {"kept": [0, 1], "probe": []}),
+        (KFoldSplitter, CV_RUN_WITHOUT_RESERVED_ROWS),
     ],
 )
 def test_a_run_without_unseen_rows_offers_nothing(splitter_class, payload):
@@ -96,14 +68,12 @@ def test_a_run_without_unseen_rows_offers_nothing(splitter_class, payload):
 
 
 def test_the_refusal_names_the_partition_that_came_up_empty():
-    with pytest.raises(ValueError, match="holdout partition"):
-        explainable_indexes(KFoldSplitter, CV_RUN_WITHOUT_HOLDOUT)
-
-    with pytest.raises(ValueError, match="test partition"):
-        explainable_indexes(HoldoutSplitter, HOLDOUT_RUN_WITHOUT_TEST)
-
-    with pytest.raises(ValueError, match="probe partition"):
-        explainable_indexes(ProbeSplitter, {"kept": [0, 1], "probe": []})
+    for splitter_class, payload in (
+        (KFoldSplitter, CV_RUN_WITHOUT_RESERVED_ROWS),
+        (HoldoutSplitter, HOLDOUT_RUN_WITHOUT_TEST),
+    ):
+        with pytest.raises(ValueError, match="test partition"):
+            explainable_indexes(splitter_class, payload)
 
 
 def test_indexes_of_each_family_land_in_the_right_slots():

@@ -180,7 +180,7 @@ export default function FoldMetricsChart({ run }) {
 
   const selectedMetricsRef = useRef([]);
 
-  const metricSplit = split === "TRAIN" ? "train" : "test";
+  const metricSplit = split.toLowerCase();
   const isNestedCV = !!run.nested;
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
@@ -459,8 +459,10 @@ export default function FoldMetricsChart({ run }) {
           <ToggleButton value="TRAIN" sx={{ px: 1.5 }}>
             {t("models:label.train")}
           </ToggleButton>
-          <ToggleButton value="TEST" sx={{ px: 1.5 }}>
-            {t("models:label.test")}
+          {/* A fold is scored on its validation partition; the reserved
+              rows produce a single value, with nothing to chart per fold. */}
+          <ToggleButton value="VALIDATION" sx={{ px: 1.5 }}>
+            {t("models:label.validation")}
           </ToggleButton>
         </PillToggleButtonGroup>
       </Box>

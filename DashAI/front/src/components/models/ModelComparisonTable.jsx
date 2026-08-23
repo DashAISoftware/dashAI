@@ -230,12 +230,11 @@ function ModelComparisonTable({
           const isBest =
             bestVal !== undefined && Math.abs(value - bestVal) < 1e-9;
 
-          // Get standard deviation for CV sessions
-          let stdValue = null;
-          if (isCrossValidation) {
-            const stdMetricsKey = `${metricSplit}_metrics_std`;
-            stdValue = row.original[stdMetricsKey]?.[metricName];
-          }
+          // Aggregated fold metrics carry a standard deviation; a single
+          // score such as the one on the reserved rows does not. Drive the
+          // display off the value being there rather than off the strategy.
+          const stdValue =
+            row.original[`${metricSplit}_metrics_std`]?.[metricName] ?? null;
 
           return (
             <Box
@@ -259,7 +258,7 @@ function ModelComparisonTable({
                 )}
                 <Box>{formatted}</Box>
               </Box>
-              {isCrossValidation && stdValue !== null && (
+              {stdValue !== null && (
                 <Box sx={{ fontSize: "0.9em", color: "text.secondary" }}>
                   ±{Number(stdValue).toFixed(4)}
                 </Box>

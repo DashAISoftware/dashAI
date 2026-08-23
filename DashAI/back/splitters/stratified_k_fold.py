@@ -99,49 +99,62 @@ class StratifiedKFoldSplitterSchema(BaseSchema):
             zh="随机状态",
         ),
     )  # type: ignore
-    holdout: schema_field(
+    test_size: schema_field(
         float_field(ge=0, le=0.5),
         placeholder=0.1,
         description=MultilingualString(
             en=(
-                "Proportion of the dataset kept out of cross-validation. Those rows "
-                "are never used to fit or select the model, so they are the data the "
-                "final model can be explained on. Set it to 0 to cross-validate every "
-                "row, which leaves the run without data to explain."
+                "Proportion of the dataset set aside as a test set. No fold and no "
+                "hyperparameter search ever sees those rows, so they are scored once "
+                "by the final model and are the data it can be explained on. Set it to "
+                "0 to cross-validate every row, which leaves the run without a test "
+                "metric and without data to explain, and note that the fold metrics "
+                "are validation estimates that may carry an optimistic bias if they "
+                "are used as the final evaluation of the model."
             ),
             es=(
-                "Proporción del dataset que se mantiene fuera de la validación "
-                "cruzada. Esas filas nunca se usan para ajustar ni seleccionar el "
-                "modelo, por lo que son los datos con los que se puede explicar el "
-                "modelo final. Usa 0 para validar de forma cruzada todas las filas, "
-                "lo que deja la ejecución sin datos que explicar."
+                "Proporción del dataset que se aparta como conjunto de prueba. Ningún "
+                "pliegue ni búsqueda de hiperparámetros ve esas filas, por lo que el "
+                "modelo final las evalúa una sola vez y son los datos con los que se "
+                "puede explicar. Use 0 para validar de forma cruzada todas las filas, "
+                "lo que deja la ejecución sin métrica de prueba y sin datos que "
+                "explicar, y tenga en cuenta que las métricas de los pliegues son "
+                "estimaciones de validación que pueden presentar un sesgo optimista si "
+                "se utilizan como evaluación final del modelo."
             ),
             pt=(
-                "Proporção do dataset mantida fora da validação cruzada. Essas linhas "
-                "nunca são usadas para ajustar ou selecionar o modelo, portanto são "
-                "os dados com os quais o modelo final pode ser explicado. Use 0 para "
-                "validar de forma cruzada todas as linhas, o que deixa a execução sem "
-                "dados para explicar."
+                "Proporção do dataset reservada como conjunto de teste. Nenhuma dobra "
+                "nem busca de hiperparâmetros vê essas linhas, portanto o modelo final "
+                "as avalia uma única vez e são os dados com os quais ele pode ser "
+                "explicado. Use 0 para validar de forma cruzada todas as linhas, o que "
+                "deixa a execução sem métrica de teste e sem dados para explicar, e "
+                "tenha em conta que as métricas das dobras são estimativas de "
+                "validação que podem apresentar um viés otimista se forem utilizadas "
+                "como avaliação final do modelo."
             ),
             de=(
-                "Anteil des Datensatzes, der von der Kreuzvalidierung ausgenommen "
-                "wird. Diese Zeilen werden nie zum Trainieren oder Auswählen des "
-                "Modells verwendet und sind daher die Daten, mit denen das endgültige "
-                "Modell erklärt werden kann. Mit 0 werden alle Zeilen "
-                "kreuzvalidiert, wodurch der Lauf keine Daten zum Erklären hat."
+                "Anteil des Datensatzes, der als Testmenge zurückgehalten wird. Weder "
+                "ein Fold noch die Hyperparametersuche sieht diese Zeilen; das finale "
+                "Modell bewertet sie genau einmal und kann anhand von ihnen erklärt "
+                "werden. Mit 0 werden alle Zeilen kreuzvalidiert, wodurch der Lauf "
+                "weder eine Testmetrik noch Daten zum Erklären hat. Beachten Sie "
+                "zudem, dass die Fold-Metriken Validierungsschätzungen sind und einen "
+                "optimistischen Bias aufweisen können, wenn sie als endgültige "
+                "Bewertung des Modells verwendet werden."
             ),
             zh=(
-                "从交叉验证中保留的数据集比例。这些行不会用于拟合或选择模型，"
-                "因此可用于解释最终模型。设为 0 时全部行都参与交叉验证，"
-                "该运行将没有可解释的数据。"
+                "作为测试集保留的数据集比例。任何折和超参数搜索都不会看到这些行，因此最"
+                "终模型只对它们评估一次，并可用于解释该模型。设为 0 时全部行都参与交"
+                "叉验证，该运行将没有测试指标也没有可解释的数据；另请注意各折的指标属于"
+                "验证估计，若将其用作模型的最终评估，可能存在乐观偏差。"
             ),
         ),
         alias=MultilingualString(
-            en="Held out for explanations",
-            es="Reservado para explicaciones",
-            pt="Reservado para explicações",
-            de="Für Erklärungen zurückgehalten",
-            zh="用于解释的保留数据",
+            en="Test set",
+            es="Conjunto de prueba",
+            pt="Conjunto de teste",
+            de="Testmenge",
+            zh="测试集",
         ),
     )  # type: ignore
 
@@ -162,7 +175,7 @@ class StratifiedKFoldSplitter(FoldSplitter):
     - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html
     """
 
-    HOLDOUT_STRATEGY: str = "stratified"
+    TEST_SPLIT_STRATEGY: str = "stratified"
     COMPATIBLE_COMPONENTS = [
         "TabularClassificationTask",
         "TextClassificationTask",

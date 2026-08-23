@@ -154,12 +154,10 @@ def explainable_indexes(
             "it, so there is no data to explain."
         ) from e
 
-    evaluation = partitions.get(splitter_class.EVALUATION_PARTITION) or []
+    evaluation = partitions.get("test") or []
     if not evaluation:
         raise ValueError(
-            "The run has no rows in its "
-            f"{splitter_class.EVALUATION_PARTITION} partition, so there is "
-            "nothing to explain."
+            "The run has no rows in its test partition, so there is nothing to explain."
         )
 
     return partitions.get("train", []), evaluation, partitions.get("val", [])

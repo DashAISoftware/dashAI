@@ -22,12 +22,6 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
 
     TYPE: Final[str] = "Splitter"
 
-    # Name of the partition an explainer evaluates on, which is the data the
-    # trained model has not seen. Splitters that reserve rows under another
-    # name override this so the frontend and the metrics never disagree about
-    # what "test" means.
-    EVALUATION_PARTITION: str = "test"
-
     @classmethod
     def explainable_partitions(
         cls, split_indexes: Dict[str, Any]
@@ -86,9 +80,10 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
             for name, indexes in partitions.items()
             if indexes
         ]
-        if not any(split["name"] == cls.EVALUATION_PARTITION for split in splits):
-            # Without the partition the model never saw there is nothing an
-            # explanation could be measured on.
+        if not any(split["name"] == "test" for split in splits):
+            # The test partition holds the data the trained model never saw,
+            # and without it there is nothing an explanation could be measured
+            # on.
             return []
 
         splits.append(

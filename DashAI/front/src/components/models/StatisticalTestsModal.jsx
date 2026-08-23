@@ -43,7 +43,7 @@ export default function StatisticalTestsModal({
   const { t } = useTranslation(["models", "common"]);
 
   const [selectedMetric, setSelectedMetric] = useState("");
-  const [selectedSplit, setSelectedSplit] = useState("test");
+  const [selectedSplit, setSelectedSplit] = useState("validation");
   const [selectedRuns, setSelectedRuns] = useState([]);
   const [alpha, setAlpha] = useState(0.05);
   const [alternative, setAlternative] = useState("two-sided");
@@ -115,7 +115,7 @@ export default function StatisticalTestsModal({
       setAlternative("two-sided");
       setCorrectionMethod("");
       setSelectedMetric("");
-      setSelectedSplit("test");
+      setSelectedSplit("validation");
     }
   }, [open, testIdentifier]);
 
@@ -125,7 +125,9 @@ export default function StatisticalTestsModal({
       const metricsSet = new Set();
       finishedRuns.forEach((run) => {
         const metricsObj =
-          selectedSplit === "train" ? run.train_metrics : run.test_metrics;
+          selectedSplit === "train"
+            ? run.train_metrics
+            : run.validation_metrics;
         if (metricsObj && typeof metricsObj === "object") {
           Object.keys(metricsObj).forEach((metric) => metricsSet.add(metric));
         }
@@ -405,16 +407,11 @@ export default function StatisticalTestsModal({
               onChange={(e) => setSelectedSplit(e.target.value)}
               label={t("common:split")}
             >
+              {/* A paired test needs one sample per fold, and folds only
+                  exist for train and validation: the reserved rows yield a
+                  single score. */}
               <MenuItem value="train">{t("common:train")}</MenuItem>
-              <MenuItem value="test">{t("common:test")}</MenuItem>
-              {session?.splits &&
-                typeof session.splits === "object" &&
-                (session.splits.validation_split ||
-                  session.splits.n_splits) && (
-                  <MenuItem value="validation">
-                    {t("common:validation")}
-                  </MenuItem>
-                )}
+              <MenuItem value="validation">{t("common:validation")}</MenuItem>
             </Select>
           </FormControl>
         </Box>
