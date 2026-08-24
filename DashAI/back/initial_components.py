@@ -2,6 +2,9 @@ import logging
 
 # Hugging Face module
 from DashAI.back.converters.hugging_face.embedding import Embedding
+from DashAI.back.converters.hugging_face.image_embedding import (
+    ImageEmbeddingConverter,
+)
 from DashAI.back.converters.hugging_face.tokenizer import TokenizerConverter
 
 # Imbalanced_learn
@@ -659,6 +662,7 @@ def get_initial_components():
         PolynomialFeatures,
         StandardScaler,
         Embedding,
+        ImageEmbeddingConverter,
         TFIDFConverter,
         TokenizerConverter,
         BagOfWordsConverter,
