@@ -274,6 +274,14 @@ def main(
     resolved_local = pathlib.Path(local_path).expanduser().absolute()
     os.environ["DASHAI_LOCAL_PATH"] = str(resolved_local)
     os.environ["DASHAI_LOGGING_LEVEL"] = logging_level.value
+
+    # Installed plugins live outside the app environment, so put their
+    # directory on PYTHONPATH before copying the environment for the Huey
+    # consumer: the consumer imports plugin components too.
+    from DashAI.back.plugins.environment import activate_plugins_directory
+
+    activate_plugins_directory(resolved_local)
+
     child_env = os.environ.copy()
 
     logger.info("Starting Huey consumer.")
