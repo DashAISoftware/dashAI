@@ -22,6 +22,11 @@ from DashAI.back.dependencies.downloads.downloadable import (
     HFPretrainedDownloadMixin,
     ProgressReporter,
 )
+from DashAI.back.models.utils import (
+    DEVICE_ENUM,
+    DEVICE_PLACEHOLDER,
+    DEVICE_TO_IDX,
+)
 from DashAI.back.segmenters.rendering import render_binary_mask, render_segment
 from DashAI.back.segmenters.sam3_segmenter import SAM3Segmenter
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -254,6 +259,24 @@ class SAM3SegmentConverterSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    device: schema_field(
+        enum_field(DEVICE_ENUM),
+        DEVICE_PLACEHOLDER,
+        description=MultilingualString(
+            en="Device the segmentation model runs on. SAM 3 is a large model, "
+            "so a GPU is considerably faster than the CPU.",
+            es="Dispositivo en el que se ejecuta el modelo de segmentación. "
+            "SAM 3 es un modelo grande, por lo que una GPU es "
+            "considerablemente más rápida que la CPU.",
+            pt="Dispositivo onde o modelo de segmentação é executado. O SAM 3 "
+            "é um modelo grande, portanto uma GPU é consideravelmente mais "
+            "rápida que a CPU.",
+            de="Gerät, auf dem das Segmentierungsmodell läuft. SAM 3 ist ein "
+            "großes Modell, daher ist eine GPU deutlich schneller als die CPU.",
+            zh="运行分割模型的设备。SAM 3 是大模型，GPU 比 CPU 快得多。",
+        ),
+    )  # type: ignore
+
 
 class SAM3SegmentConverter(HFPretrainedDownloadMixin, AdvancedPreprocessingConverter):
     """Detect a prompted object in every image and append ranked columns.
@@ -422,6 +445,11 @@ class SAM3SegmentConverter(HFPretrainedDownloadMixin, AdvancedPreprocessingConve
         self.background_fill = kwargs["background_fill"]
         self.keep_binary_mask = kwargs["keep_binary_mask"]
         self.on_no_detection = kwargs["on_no_detection"]
+        # DEVICE_ENUM entries are user facing labels such as "CPU" or
+        # "GPU 0: NVIDIA ...", so map through DEVICE_TO_IDX to reach a torch
+        # device string. Absent from a hand written payload means CPU.
+        device_index = DEVICE_TO_IDX.get(kwargs.get("device", DEVICE_PLACEHOLDER), -1)
+        self.device = f"cuda:{device_index}" if device_index >= 0 else "cpu"
         self.column_types: Dict[str, DashAIDataType] = {}
 
     @classmethod
@@ -502,6 +530,7 @@ class SAM3SegmentConverter(HFPretrainedDownloadMixin, AdvancedPreprocessingConve
         self._segmenter = SAM3Segmenter(
             model_source=self._pretrained_source(None),
             score_threshold=self.min_score,
+            device=self.device,
         )
         return self._segmenter
 
