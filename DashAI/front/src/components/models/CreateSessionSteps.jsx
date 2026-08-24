@@ -6,6 +6,7 @@ import { useFormik } from "formik";
 import { useTourContext } from "../tour/TourProvider";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "./modelSession/PrepareDatasetStep";
+import PreprocessingStep from "./PreprocessingStep";
 import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomplete";
 import { createModelSession } from "../../api/modelSession";
 import { getComponents } from "../../api/component";
@@ -58,6 +59,7 @@ function CreateSessionSteps({
   });
 
   const [nextEnabled, setNextEnabled] = useState(false);
+  const [wizardStep, setWizardStep] = useState(0);
 
   const handleDatasetChange = (newDataset) => {
     setSelectedDataset(newDataset);
@@ -245,52 +247,77 @@ function CreateSessionSteps({
         minHeight: 0,
       }}
     >
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" component="h1">
-          {t("models:label.prepareDataset")}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {t("models:label.selectDatasetAndPrepare")}
-        </Typography>
-      </Box>
-
+      {/* Step 0 stays mounted (hidden via CSS) rather than unmounting when
+          the wizard moves to step 1 — PrepareDatasetStep/SplitDatasetRows
+          hold a lot of local-only state (split type, shuffle, seed, CV
+          type...) that resets to defaults on every fresh mount, so a real
+          unmount here would silently drop anything the user customized
+          the moment they went "Atrás" from the preprocessing step. */}
       <Box
         sx={{
-          flex: 1,
-          minHeight: 0,
-          overflowY: "auto",
-          pt: 2,
-          display: "flex",
+          display: wizardStep === 0 ? "flex" : "none",
           flexDirection: "column",
-          gap: 4,
+          height: "100%",
+          minHeight: 0,
         }}
       >
-        <SetNameAndDatasetStep formik={formik} />
-        <DatasetAutocomplete
-          datasets={datasets}
-          selectedDataset={selectedDataset}
-          setSelectedDataset={handleDatasetChange}
-        />
-        {selectedDataset && (
-          <PrepareDatasetStep
-            key={selectedDataset.id}
-            newExp={newExp}
-            setNewExp={setNewExp}
-            setNextEnabled={setNextEnabled}
-            evaluationStrategy={evaluationStrategy}
-            setEvaluationStrategy={setEvaluationStrategy}
-            dataset={selectedDataset}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5" component="h1">
+            {t("models:label.prepareDataset")}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {t("models:label.selectDatasetAndPrepare")}
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            pt: 2,
+            display: "flex",
+            flexDirection: "column",
+            gap: 4,
+          }}
+        >
+          <SetNameAndDatasetStep formik={formik} />
+          <DatasetAutocomplete
+            datasets={datasets}
+            selectedDataset={selectedDataset}
+            setSelectedDataset={handleDatasetChange}
           />
-        )}
+          {selectedDataset && (
+            <PrepareDatasetStep
+              key={selectedDataset.id}
+              newExp={newExp}
+              setNewExp={setNewExp}
+              setNextEnabled={setNextEnabled}
+              evaluationStrategy={evaluationStrategy}
+              setEvaluationStrategy={setEvaluationStrategy}
+              dataset={selectedDataset}
+              isActive={wizardStep === 0}
+            />
+          )}
+        </Box>
+
+        <StepperNavigationFooter
+          onBack={backHome}
+          onNext={() => setWizardStep(1)}
+          nextDisabled={!isNextEnabled}
+          nextDataTour={tourContext?.run ? "models-next-button" : undefined}
+        />
       </Box>
 
-      <StepperNavigationFooter
-        onBack={backHome}
-        onNext={formik.handleSubmit}
-        nextDisabled={!isNextEnabled}
-        nextLabel={t("models:button.createSession")}
-        nextDataTour={tourContext?.run ? "models-next-button" : undefined}
-      />
+      {wizardStep === 1 && (
+        <PreprocessingStep
+          newExp={newExp}
+          setNewExp={setNewExp}
+          dataset={selectedDataset}
+          onBack={() => setWizardStep(0)}
+          onCreateSession={formik.handleSubmit}
+        />
+      )}
     </Box>
   );
 }

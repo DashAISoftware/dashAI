@@ -67,8 +67,7 @@
     "failedToLoadTests": "Die gespeicherten Tests konnten nicht geladen werden.",
     "failedToDeleteTest": "Der Test konnte nicht gelöscht werden.",
     "failedToSaveTest": "Die Testergebnisse konnten nicht gespeichert werden.",
-    "fetchingInnerSplitters": "Die inneren Splitter für die verschachtelte Kreuzvalidierung konnten nicht geladen werden",
-    "noColumnsSelectedForConverter": "Wählen Sie mindestens eine Spalte für den Converter aus."
+    "fetchingInnerSplitters": "Die inneren Splitter für die verschachtelte Kreuzvalidierung konnten nicht geladen werden"
   },
   "label": {
     "addModelToSession": "Modell zur Sitzung hinzufügen",

@@ -13,6 +13,7 @@ export default function ParameterStepConverter({
   handleSaveConverter,
   setStep,
   hideButtons = false,
+  saveButtonText,
 }) {
   const tourContext = useTourContext();
   const { t } = useTranslation(["common", "datasets"]);
@@ -101,7 +102,9 @@ export default function ParameterStepConverter({
           modelToConfigure={converter}
           initialValues={initialParams}
           onCancel={() => setStep(0)}
-          saveButtonText={t("datasets:button.createConverter")}
+          saveButtonText={
+            saveButtonText ?? t("datasets:button.createConverter")
+          }
           hideButtons={hideButtons}
           onValuesChange={(values) => {
             if (values?.n_components !== undefined) {

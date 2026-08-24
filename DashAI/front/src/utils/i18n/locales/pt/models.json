@@ -67,8 +67,7 @@
     "failedToSaveTest": "Não foi possível salvar os resultados do teste.",
     "selectMetric": "Por favor, selecione uma métrica",
     "failedToExecuteTest": "Erro ao executar o teste estatístico",
-    "fetchingInnerSplitters": "Não foi possível carregar os divisores internos para a validação cruzada aninhada.",
-    "noColumnsSelectedForConverter": "Selecione pelo menos uma coluna para o converter."
+    "fetchingInnerSplitters": "Não foi possível carregar os divisores internos para a validação cruzada aninhada."
   },
   "label": {
     "addModelToSession": "Adicionar Modelo à Sessão",

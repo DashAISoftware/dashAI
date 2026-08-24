@@ -11,7 +11,6 @@ import {
 } from "@mui/material";
 import DivideDatasetColumns from "./DivideDatasetColumns";
 import SplitDatasetRows from "./SplitDatasetRows";
-import SelectConvertersStep from "./SelectConvertersStep";
 import {
   getDatasetInfo as getDatasetInfoRequest,
   getDatasetTypes as getDatasetTypesRequest,
@@ -39,6 +38,7 @@ function PrepareDatasetStep({
   dataset,
   evaluationStrategy,
   setEvaluationStrategy,
+  isActive = true,
 }) {
   const { setSessionRightContent } = useModels();
   const [datasetInfo, setDatasetInfo] = useState({});
@@ -108,8 +108,12 @@ function PrepareDatasetStep({
   const getDatasetInfo = async () => {
     if (!dataset?.id) return;
     setInfoLoading(true);
-    setInputColumnNames([]);
-    setOutputColumnNames([]);
+    // Re-seed from `newExp` (not a blanket reset to []): this component
+    // remounts whenever the wizard returns to this step (e.g. "Atrás" from
+    // the preprocessing step), and a previously valid column selection
+    // must survive that remount, not just a dataset switch.
+    setInputColumnNames(newExp.input_columns || []);
+    setOutputColumnNames(newExp.output_columns || []);
     try {
       const [fetchedDatasetInfo, fetchedDatasetTypes] = await Promise.all([
         getDatasetInfoRequest(dataset.id),
@@ -361,8 +365,13 @@ function PrepareDatasetStep({
     getTaskRequirements();
   }, []);
 
-  // Push SplitDatasetRows (or loading spinner) into the right bar
+  // Push SplitDatasetRows (or loading spinner) into the right bar. Gated on
+  // `isActive`: this component now stays mounted (hidden via CSS, not
+  // unmounted) while the wizard's preprocessing step is showing, so it must
+  // not fight that step for the sessionRightContent slot — and must
+  // reclaim it (hence `isActive` in the deps) whenever the user comes back.
   useEffect(() => {
+    if (!isActive) return;
     if (infoLoading) {
       setSessionRightContent(
         <Box
@@ -425,6 +434,7 @@ function PrepareDatasetStep({
     numRepeats,
     groupColumn,
     inputColumnNames,
+    isActive,
   ]);
 
   const renderTypesAsChips = (typesList) => {
@@ -568,29 +578,19 @@ function PrepareDatasetStep({
       )}
 
       {!infoLoading ? (
-        <>
-          <Grid container spacing={2}>
-            <DivideDatasetColumns
-              allColumnNames={datasetInfo.column_names || []}
-              columnTypes={datasetTypes}
-              selectedInputColumnNames={inputColumnNames}
-              onInputColumnNamesChange={setInputColumnNames}
-              selectedOutputColumnNames={outputColumnNames}
-              onOutputColumnNamesChange={setOutputColumnNames}
-              disabled={
-                infoLoading || (datasetInfo.column_names || []).length === 0
-              }
-            />
-          </Grid>
-          {columnsAreValid && splitsReady && (
-            <SelectConvertersStep
-              newExp={newExp}
-              setNewExp={setNewExp}
-              inputColumnNames={inputColumnNames}
-              columnTypes={datasetTypes}
-            />
-          )}
-        </>
+        <Grid container spacing={2}>
+          <DivideDatasetColumns
+            allColumnNames={datasetInfo.column_names || []}
+            columnTypes={datasetTypes}
+            selectedInputColumnNames={inputColumnNames}
+            onInputColumnNamesChange={setInputColumnNames}
+            selectedOutputColumnNames={outputColumnNames}
+            onOutputColumnNamesChange={setOutputColumnNames}
+            disabled={
+              infoLoading || (datasetInfo.column_names || []).length === 0
+            }
+          />
+        </Grid>
       ) : (
         <Box sx={{ display: "flex", justifyContent: "center" }}>
           <CircularProgress />
@@ -617,5 +617,6 @@ PrepareDatasetStep.propTypes = {
   setNewExp: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
   dataset: PropTypes.object.isRequired,
+  isActive: PropTypes.bool,
 };
 export default PrepareDatasetStep;

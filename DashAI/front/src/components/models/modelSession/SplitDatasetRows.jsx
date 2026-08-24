@@ -386,8 +386,11 @@ function SplitDatasetRows({
   }, [cvType, groupColumn, t]);
 
   return (
-    <Stack spacing={4} data-tour="exp-dataset-splits">
-      {/* Evaluation Strategy Selector */}
+    <Stack spacing={4} sx={{ p: 4 }} data-tour="exp-dataset-splits">
+      {/* Evaluation Strategy Selector — p:4 here since the wrapper
+          (ModelsRightBar) that hosts this in the right panel is bare,
+          matching how the notebook sidebar's own content owns its padding
+          instead of relying on an ambient wrapper inset. */}
       <Paper variant="outlined" sx={{ borderRadius: 2, overflow: "hidden" }}>
         <Box
           sx={{

@@ -67,8 +67,7 @@
     "failedToLoadTests": "无法加载已保存的检验。",
     "failedToDeleteTest": "无法删除该检验。",
     "failedToSaveTest": "无法保存检验结果。",
-    "fetchingInnerSplitters": "无法加载用于嵌套交叉验证的内部划分器",
-    "noColumnsSelectedForConverter": "请为转换器选择至少一列。"
+    "fetchingInnerSplitters": "无法加载用于嵌套交叉验证的内部划分器"
   },
   "label": {
     "addModelToSession": "将模型添加到会话",

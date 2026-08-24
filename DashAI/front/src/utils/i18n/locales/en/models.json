@@ -67,8 +67,7 @@
     "failedToLoadTests": "Could not load saved tests.",
     "failedToDeleteTest": "Could not delete the test.",
     "failedToSaveTest": "Failed to save the test results.",
-    "fetchingInnerSplitters": "Failed to load inner splitters for nested cross validaiton",
-    "noColumnsSelectedForConverter": "Select at least one column for the converter."
+    "fetchingInnerSplitters": "Failed to load inner splitters for nested cross validaiton"
   },
   "label": {
     "addModelToSession": "Add Model to Session",

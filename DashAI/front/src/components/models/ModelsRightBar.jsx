@@ -287,11 +287,15 @@ export default function ModelsRightBar({ onToggle }) {
   }
 
   if (sessionRightContent) {
+    // No padding on this wrapper — same convention the "Available Models"
+    // branch below and the notebook's RightBar use: the wrapper itself is
+    // bare, and each piece of content (SplitDatasetRows, SessionConvertersRightBar)
+    // owns its own p:4 so borders/dividers actually reach the panel's edges.
     return (
       <SideBar>
         <Box
           sx={{
-            p: 2,
+            p: 4,
             borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             height: 64,
@@ -303,9 +307,7 @@ export default function ModelsRightBar({ onToggle }) {
             {t("models:label.configureSession")}
           </Typography>
         </Box>
-        <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-          {sessionRightContent}
-        </Box>
+        <Box sx={{ flex: 1, overflowY: "auto" }}>{sessionRightContent}</Box>
       </SideBar>
     );
   }
