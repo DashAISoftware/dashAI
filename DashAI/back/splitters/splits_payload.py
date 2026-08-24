@@ -154,12 +154,24 @@ def explainable_indexes(
             "it, so there is no data to explain."
         ) from e
 
-    evaluation = partitions.get(splitter_class.EVALUATION_PARTITION) or []
-    if not evaluation:
+    training = splitter_class.TRAINING_PARTITION
+    unseen = {
+        name: indexes
+        for name, indexes in partitions.items()
+        if name != training and indexes
+    }
+    if not unseen:
         raise ValueError(
-            "The run has no rows in its "
-            f"{splitter_class.EVALUATION_PARTITION} partition, so there is "
-            "nothing to explain."
+            "The run has no rows outside the data the model was fitted on "
+            f"(its {splitter_class.EVALUATION_PARTITION} partition is empty), "
+            "so there is nothing to explain."
         )
 
-    return partitions.get("train", []), evaluation, partitions.get("val", [])
+    # Explanations are measured on the splitter's preferred partition, falling
+    # back to whichever unseen partition the run actually filled: a holdout run
+    # configured without a test partition is explained on validation.
+    evaluation = unseen.get(splitter_class.EVALUATION_PARTITION) or next(
+        iter(unseen.values())
+    )
+
+    return partitions.get(training, []), evaluation, partitions.get("val", [])

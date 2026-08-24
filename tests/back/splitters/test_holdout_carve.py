@@ -105,6 +105,24 @@ def test_holdout_zero_keeps_every_row_in_cross_validation(splitter_cls):
 
 
 @pytest.mark.parametrize("splitter_cls", ALL_SPLITTERS)
+def test_a_session_from_before_the_holdout_cross_validates_every_row(splitter_cls):
+    """Sessions created before the holdout existed name no proportion.
+
+    Reserving rows for them would shrink the folds of a session whose earlier
+    runs used the whole dataset, leaving the runs of one session trained on
+    different amounts of data without saying so.
+    """
+    x, y = xy()
+    legacy = config()
+    del legacy["holdout"]
+
+    _, _, indices = splitter_cls(legacy).split(x, y)
+
+    assert indices["full_dataset"]["test_indexes"] == []
+    assert len(indices["full_dataset"]["train_indexes"]) == 100
+
+
+@pytest.mark.parametrize("splitter_cls", ALL_SPLITTERS)
 def test_fold_datasets_match_the_reported_indexes(splitter_cls):
     x, y = xy()
     x_folds, y_folds, indices = splitter_cls(config()).split(x, y)

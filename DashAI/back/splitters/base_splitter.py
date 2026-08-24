@@ -28,6 +28,11 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
     # what "test" means.
     EVALUATION_PARTITION: str = "test"
 
+    # Name of the partition the model was fitted on. Every other partition a
+    # splitter declares holds rows the model never saw, so any of them can
+    # carry an explanation when the preferred one came out empty.
+    TRAINING_PARTITION: str = "train"
+
     @classmethod
     def explainable_partitions(
         cls, split_indexes: Dict[str, Any]
@@ -86,9 +91,11 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
             for name, indexes in partitions.items()
             if indexes
         ]
-        if not any(split["name"] == cls.EVALUATION_PARTITION for split in splits):
-            # Without the partition the model never saw there is nothing an
-            # explanation could be measured on.
+        if not any(split["name"] != cls.TRAINING_PARTITION for split in splits):
+            # Every row went into fitting the model, so there is nothing an
+            # explanation could be measured on. A run that filled some other
+            # partition than the preferred one still qualifies: a holdout run
+            # configured without a test partition is explained on validation.
             return []
 
         splits.append(
