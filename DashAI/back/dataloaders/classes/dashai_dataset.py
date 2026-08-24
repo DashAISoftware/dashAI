@@ -871,37 +871,41 @@ def save_dataset(
         before saving. Default ``None``.
     """
 
-    os.makedirs(path, exist_ok=True)
-    if schema is not None:
-        dataset = transform_dataset_with_schema(dataset, schema)
-
     import json
+    from pathlib import Path as _Path
 
     import pyarrow as pa  # local import
 
+    from DashAI.back.core.atomic import atomic_directory
+
+    if schema is not None:
+        dataset = transform_dataset_with_schema(dataset, schema)
+
     table = get_arrow_table(dataset)
-    data_filepath = os.path.join(path, "data.arrow")
-    with pa.OSFile(data_filepath, "wb") as sink:
-        writer = pa.ipc.new_file(sink, table.schema)
-        writer.write_table(table)
-        writer.close()
 
-    metadata_filepath = os.path.join(path, "splits.json")
-    metadata = dataset.splits
-    metadata.update(
-        {
-            "total_rows": dataset.shape[0],
-            "column_names": dataset.column_names,
-        }
-    )
+    with atomic_directory(_Path(path)) as tmp_dir:
+        data_filepath = tmp_dir / "data.arrow"
+        with pa.OSFile(str(data_filepath), "wb") as sink:
+            writer = pa.ipc.new_file(sink, table.schema)
+            writer.write_table(table)
+            writer.close()
 
-    if "general_info" in metadata:
-        metadata["general_info"]["memory_usage_mb"] = (
-            os.path.getsize(data_filepath) / 1e6
+        metadata = dataset.splits
+        metadata.update(
+            {
+                "total_rows": dataset.shape[0],
+                "column_names": dataset.column_names,
+            }
         )
 
-    with open(metadata_filepath, "w", encoding="utf-8") as f:
-        json.dump(metadata, f, indent=2, sort_keys=True, ensure_ascii=False)
+        if "general_info" in metadata:
+            metadata["general_info"]["memory_usage_mb"] = (
+                os.path.getsize(data_filepath) / 1e6
+            )
+
+        metadata_filepath = tmp_dir / "splits.json"
+        with open(metadata_filepath, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=2, sort_keys=True, ensure_ascii=False)
 
 
 @beartype
