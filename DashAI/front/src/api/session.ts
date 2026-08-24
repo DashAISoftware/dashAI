@@ -10,6 +10,10 @@ export const removeSession = async (sessionId: string): Promise<void> => {
   await api.delete(`/v1/generative-session/${sessionId}`);
 };
 
+export const removeSessions = async (ids: number[]): Promise<void> => {
+  await api.delete("/v1/generative-session/", { data: { ids } });
+};
+
 export const getSessionById = async (sessionId: string): Promise<ISession> => {
   const response = await api.get<ISession>(
     `/v1/generative-session/${sessionId}`,
