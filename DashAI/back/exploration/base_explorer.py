@@ -95,9 +95,11 @@ class BaseExplorer(ConfigObject, ABC):
         if meta.get("input_cardinality") is None:
             meta["input_cardinality"] = {"min": 1}
 
-        # Serialize allowed_types class references → class name strings for the frontend
+        # Serialize allowed_types to the names the frontend compares against.
+        # Each type reports its own name via display_name(), which is the same
+        # string a column emits through to_string(), so the two always agree.
         raw_types = meta.get("allowed_types", [])
-        meta["allowed_types"] = [t.__name__ for t in raw_types]
+        meta["allowed_types"] = [t.display_name() for t in raw_types]
 
         # Normalize allowed_dtypes: absent or ["*"] → [] (empty means no restriction)
         if not meta.get("allowed_dtypes") or meta["allowed_dtypes"] == ["*"]:

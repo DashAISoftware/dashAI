@@ -60,16 +60,8 @@ class BaseTask:
         """
         metadata = cls.metadata
 
-        _CLASS_NAME_TO_DISPLAY = {
-            "DashAIImage": "Image",
-        }
-
-        def _type_display_name(t):
-            name = t.__name__
-            return _CLASS_NAME_TO_DISPLAY.get(name, name)
-
-        inputs_types = [_type_display_name(t) for t in metadata["inputs_types"]]
-        outputs_types = [_type_display_name(t) for t in metadata["outputs_types"]]
+        inputs_types = [t.display_name() for t in metadata["inputs_types"]]
+        outputs_types = [t.display_name() for t in metadata["outputs_types"]]
 
         parsed_metadata: dict = {
             "inputs_types": inputs_types,
