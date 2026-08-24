@@ -22,6 +22,7 @@ class ClusteringConverter(BaseConverter):
         es="Agrupamiento",
         pt="Agrupamento",
         de="Clustering",
+        zh="聚类",
     )
     ICON: Final[str] = Icon.Psychology.value
     COLOR: Final[str] = "rgb(72, 149, 239)"

@@ -43,6 +43,7 @@ class ClusteringProfileExplorer(ClusteringExplorer):
         es="Perfil de Agrupamiento",
         pt="Perfil de Agrupamento",
         de="Clustering-Profil",
+        zh="聚类概况",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -69,12 +70,17 @@ class ClusteringProfileExplorer(ClusteringExplorer):
             "Merkmalsprofile pro Cluster mit den markantesten Merkmalen, geordnet "
             "nach Abstand vom globalen Mittelwert."
         ),
+        zh=(
+            "上一次聚类运行的结构化摘要：使用的算法、内部评估指标、聚类大小，以及"
+            "按与全局均值距离排序的每个聚类的特征概况。"
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Metrics, cluster sizes, and distinctive feature profiles.",
         es="Métricas, tamaños de clúster y perfiles de características distintivas.",
         pt="Métricas, tamanhos de cluster e perfis de características distintivas.",
         de="Metriken, Clustergrößen und markante Merkmalsprofile.",
+        zh="指标、聚类大小和代表性特征概况。",
     )
     IMAGE_PREVIEW = "clustering_profile.png"
 

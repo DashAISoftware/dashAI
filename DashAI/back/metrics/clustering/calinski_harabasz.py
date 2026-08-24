@@ -35,6 +35,9 @@ class CalinskiHarabasz(ClusteringMetric):
     DESCRIPTION = MultilingualString(
         en="Higher values indicate dense and well-separated clusters.",
         es="Valores mayores indican clusters densos y bien separados.",
+        pt="Valores mais altos indicam clusters densos e bem separados.",
+        de="Höhere Werte deuten auf dichte und gut getrennte Cluster hin.",
+        zh="值越高表示聚类越密集、分离度越好。",
     )
 
     @staticmethod

@@ -36,6 +36,9 @@ class DaviesBouldin(ClusteringMetric):
     DESCRIPTION = MultilingualString(
         en="Lower values indicate clusters that are more compact and separated.",
         es="Valores menores indican clusters mas compactos y separados.",
+        pt="Valores mais baixos indicam clusters mais compactos e separados.",
+        de="Niedrigere Werte deuten auf kompaktere und besser getrennte Cluster hin.",
+        zh="值越低表示聚类越紧密、分离度越好。",
     )
 
     @staticmethod

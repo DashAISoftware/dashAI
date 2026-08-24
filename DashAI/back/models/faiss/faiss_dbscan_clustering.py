@@ -52,8 +52,17 @@ class FaissDBSCANClusteringSchema(BaseSchema):
                 "Distancia euclidiana máxima entre dos muestras para "
                 "considerarlas vecinas."
             ),
+            pt=(
+                "Distância euclidiana máxima entre duas amostras para "
+                "serem consideradas vizinhas."
+            ),
+            de=(
+                "Maximaler euklidischer Abstand zwischen zwei Stichproben, um "
+                "als Nachbarn zu gelten."
+            ),
+            zh="两个样本被视为邻居的最大欧氏距离。",
         ),
-        alias=MultilingualString(en="Eps", es="Eps"),
+        alias=MultilingualString(en="Eps", es="Eps", pt="Eps", de="Eps", zh="Eps"),
     )  # type: ignore
     min_samples: schema_field(
         int_field(ge=1),
@@ -63,8 +72,19 @@ class FaissDBSCANClusteringSchema(BaseSchema):
             "(including the point itself).",
             es="Mínimo de muestras en una vecindad para que un punto sea central "
             "(incluido el propio punto).",
+            pt="Mínimo de amostras em uma vizinhança para que um ponto seja "
+            "central (incluindo o próprio ponto).",
+            de="Mindestanzahl an Stichproben in einer Nachbarschaft, damit ein "
+            "Punkt als Kernpunkt gilt (einschließlich des Punktes selbst).",
+            zh="一个点成为核心点所需邻域内的最小样本数（含该点本身）。",
         ),
-        alias=MultilingualString(en="Min samples", es="Mínimo de muestras"),
+        alias=MultilingualString(
+            en="Min samples",
+            es="Mínimo de muestras",
+            pt="Mínimo de amostras",
+            de="Min. Stichproben",
+            zh="最小样本数",
+        ),
     )  # type: ignore
 
 
@@ -96,10 +116,19 @@ class FaissDBSCANClustering(FaissLikeClusterer):
     """
 
     SCHEMA = FaissDBSCANClusteringSchema
-    DISPLAY_NAME = MultilingualString(en="FAISS-DBSCAN", es="FAISS-DBSCAN")
+    DISPLAY_NAME = MultilingualString(
+        en="FAISS-DBSCAN",
+        es="FAISS-DBSCAN",
+        pt="FAISS-DBSCAN",
+        de="FAISS-DBSCAN",
+        zh="FAISS-DBSCAN",
+    )
     DESCRIPTION = MultilingualString(
         en="DBSCAN with FAISS-accelerated neighbourhood search for large datasets.",
         es="DBSCAN con búsqueda de vecindad acelerada por FAISS para datasets grandes.",
+        pt="DBSCAN com busca de vizinhança acelerada por FAISS para datasets grandes.",
+        de="DBSCAN mit FAISS-beschleunigter Nachbarschaftssuche für große Datensätze.",
+        zh="使用FAISS加速邻域搜索的DBSCAN，适用于大型数据集。",
     )
     COLOR = "#FFA726"
     ICON = "Bolt"

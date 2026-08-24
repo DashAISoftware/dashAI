@@ -38,6 +38,9 @@ class Silhouette(ClusteringMetric):
     DESCRIPTION = MultilingualString(
         en="Measures how well samples fit within their assigned clusters.",
         es="Mide que tan bien las muestras calzan dentro de sus clusters asignados.",
+        pt="Mede o quão bem as amostras se encaixam em seus clusters atribuídos.",
+        de="Misst, wie gut die Stichproben in ihre zugewiesenen Cluster passen.",
+        zh="衡量样本与其所分配聚类的契合程度。",
     )
 
     @staticmethod

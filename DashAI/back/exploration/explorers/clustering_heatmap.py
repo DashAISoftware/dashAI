@@ -49,12 +49,18 @@ class ClusteringHeatmapSchema(BaseExplorerSchema):
                 " immer als Zellenbeschriftung angezeigt. Wenn deaktiviert, "
                 "verwendet die Farbskala die rohen Mittelwerte."
             ),
+            zh=(
+                "启用后，单元格颜色表示z-score标准化值（每个聚类均值与全局均值相差"
+                "的标准差数），使特征尺度差异很大的聚类可以直接比较。原始均值始终以"
+                "单元格标注形式显示。禁用时，颜色刻度使用原始均值。"
+            ),
         ),
         alias=MultilingualString(
             en="Z-score normalisation",
             es="Normalización z-score",
             pt="Normalização z-score",
             de="Z-Score-Normalisierung",
+            zh="Z-score标准化",
         ),
     )  # type: ignore
 
@@ -84,6 +90,7 @@ class ClusteringHeatmapExplorer(ClusteringExplorer):
         es="Mapa de Calor de Características por Clúster",
         pt="Mapa de Calor de Características por Cluster",
         de="Cluster-Merkmals-Heatmap",
+        zh="聚类特征热力图",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -111,18 +118,24 @@ class ClusteringHeatmapExplorer(ClusteringExplorer):
             "dieses Clusters, mit optionaler z-Score-Normalisierung, damit markante"
             " Merkmale unabhängig von ihrer Skala hervorstechen."
         ),
+        zh=(
+            "热力图中行代表聚类，列代表用于聚类的数值特征。每个单元格显示该特征在"
+            "该聚类内的均值，可选z-score标准化，使具有代表性的特征不受量纲影响而"
+            "更加突出。"
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Mean feature values per cluster with optional z-score normalisation.",
         es=(
             "Valores medios de características por clúster con normalización "
-            "z-score opcional.",
+            "z-score opcional."
         ),
         pt=(
             "Valores médios de características por cluster com normalização "
-            "z-score opcional.",
+            "z-score opcional."
         ),
         de="Mittlere Merkmalswerte pro Cluster mit optionaler z-Score-Normalisierung.",
+        zh="每个聚类的平均特征值，可选z-score标准化。",
     )
     IMAGE_PREVIEW = "clustering_heatmap.png"
 

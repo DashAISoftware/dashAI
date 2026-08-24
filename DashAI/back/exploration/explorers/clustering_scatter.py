@@ -44,12 +44,17 @@ class ClusteringScatterSchema(BaseExplorerSchema):
                 "deterministisch; 'tsne' kann nicht-lineare Clusterstrukturen "
                 "besser aufdecken, ist aber langsamer."
             ),
+            zh=(
+                "用于将所选特征投影到二维平面的降维方法。'pca'速度快且结果确定；"
+                "'tsne'能更好地揭示非线性聚类结构，但速度较慢且具有随机性。"
+            ),
         ),
         alias=MultilingualString(
             en="Reduction method",
             es="Método de reducción",
             pt="Método de redução",
             de="Reduktionsmethode",
+            zh="降维方法",
         ),
     )  # type: ignore
 
@@ -78,6 +83,7 @@ class ClusteringScatterExplorer(ClusteringExplorer):
         es="Gráfico de Dispersión de Agrupamiento",
         pt="Gráfico de Dispersão de Agrupamento",
         de="Clustering-Streudiagramm",
+        zh="聚类散点图",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -103,12 +109,17 @@ class ClusteringScatterExplorer(ClusteringExplorer):
             " werden überlagert, wenn verfügbar (K-Means, GMM). Rauschpunkte werden"
             " hervorgehoben."
         ),
+        zh=(
+            "使用PCA或t-SNE将所选数值特征投影到二维平面，并按聚类分配为每个点着色。"
+            "如有可用的聚类中心（K-Means、GMM）会一并叠加显示。噪声点会被高亮标出。"
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="2D projection of features coloured by cluster label.",
         es="Proyección 2D de características coloreada por etiqueta de clúster.",
         pt="Projeção 2D de características colorida por rótulo de cluster.",
         de="2D-Projektion der Merkmale, eingefärbt nach Clusterzuordnung.",
+        zh="按聚类标签着色的特征二维投影。",
     )
     IMAGE_PREVIEW = "clustering_scatter.png"
     SCHEMA = ClusteringScatterSchema

@@ -57,12 +57,17 @@ class ClusterDistributionSchema(BaseExplorerSchema):
                 "Wahrscheinlichkeitsdichteform neben einem Boxplot; 'box' zeigt "
                 "nur Quartile, Median und Ausreißer."
             ),
+            zh=(
+                "用于显示每个聚类内特征分布的图表类型。'violin'（小提琴图）在箱线图旁"
+                "展示完整的概率密度形状；'box'（箱线图）仅展示四分位数、中位数和异常值。"
+            ),
         ),
         alias=MultilingualString(
             en="Plot type",
             es="Tipo de gráfico",
             pt="Tipo de gráfico",
             de="Diagrammtyp",
+            zh="图表类型",
         ),
     )  # type: ignore
 
@@ -89,6 +94,7 @@ class ClusterDistributionExplorer(ClusteringExplorer):
         es="Distribución de Características por Clúster",
         pt="Distribuição de Características por Cluster",
         de="Cluster-Merkmalsverteilung",
+        zh="聚类特征分布",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -116,12 +122,17 @@ class ClusterDistributionExplorer(ClusteringExplorer):
             "Streuung, Schiefe und Ausreißern auf, die in den Heatmap-Mittelwerten "
             "nicht sichtbar sind. Ein Teildiagramm pro ausgewähltem Merkmal."
         ),
+        zh=(
+            "使用小提琴图或箱线图展示所选数值特征在每个聚类内的分布。揭示热力图均值中"
+            "看不到的离散度、偏度和异常值差异。每个所选特征对应一个子图。"
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Feature distributions per cluster as violin or box plots.",
         es="Distribuciones de características por clúster como violín o caja.",
         pt="Distribuições de características por cluster como violino ou caixa.",
         de="Merkmalsverteilungen pro Cluster als Violin- oder Boxplots.",
+        zh="以小提琴图或箱线图展示每个聚类的特征分布。",
     )
     IMAGE_PREVIEW = "cluster_distribution.png"
     SCHEMA = ClusterDistributionSchema

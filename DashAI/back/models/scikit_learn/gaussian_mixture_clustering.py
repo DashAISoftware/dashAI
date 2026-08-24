@@ -30,8 +30,17 @@ class GaussianMixtureClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Number of Gaussian components (clusters) to fit.",
             es="Número de componentes gaussianas (clusters) a ajustar.",
+            pt="Número de componentes gaussianas (clusters) a ajustar.",
+            de="Anzahl der anzupassenden Gauß-Komponenten (Cluster).",
+            zh="要拟合的高斯成分（聚类）数量。",
         ),
-        alias=MultilingualString(en="Components", es="Componentes"),
+        alias=MultilingualString(
+            en="Components",
+            es="Componentes",
+            pt="Componentes",
+            de="Komponenten",
+            zh="成分数",
+        ),
     )  # type: ignore
     covariance_type: schema_field(
         enum_field(["full", "tied", "diag", "spherical"]),
@@ -45,8 +54,23 @@ class GaussianMixtureClusteringSchema(BaseSchema):
                 "Forma de las matrices de covarianza. 'full' es la más flexible; "
                 "'spherical' es la más restringida."
             ),
+            pt=(
+                "Forma das matrizes de covariância. 'full' é a mais flexível; "
+                "'spherical' é a mais restrita."
+            ),
+            de=(
+                "Form der Kovarianzmatrizen. 'full' ist am flexibelsten; "
+                "'spherical' ist am stärksten eingeschränkt."
+            ),
+            zh="协方差矩阵的形状。'full'最灵活；'spherical'限制最多。",
         ),
-        alias=MultilingualString(en="Covariance type", es="Tipo de covarianza"),
+        alias=MultilingualString(
+            en="Covariance type",
+            es="Tipo de covarianza",
+            pt="Tipo de covariância",
+            de="Kovarianztyp",
+            zh="协方差类型",
+        ),
     )  # type: ignore
     max_iter: schema_field(
         int_field(ge=1),
@@ -54,8 +78,17 @@ class GaussianMixtureClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum number of EM algorithm iterations.",
             es="Número máximo de iteraciones del algoritmo EM.",
+            pt="Número máximo de iterações do algoritmo EM.",
+            de="Maximale Anzahl an Iterationen des EM-Algorithmus.",
+            zh="EM算法的最大迭代次数。",
         ),
-        alias=MultilingualString(en="Max iterations", es="Iteraciones máximas"),
+        alias=MultilingualString(
+            en="Max iterations",
+            es="Iteraciones máximas",
+            pt="Iterações máximas",
+            de="Max. Iterationen",
+            zh="最大迭代次数",
+        ),
     )  # type: ignore
     random_state: schema_field(
         int_field(ge=0),
@@ -63,8 +96,17 @@ class GaussianMixtureClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Random seed used for initialisation.",
             es="Semilla aleatoria usada para la inicialización.",
+            pt="Semente aleatória usada para a inicialização.",
+            de="Zufallsstartwert für die Initialisierung.",
+            zh="用于初始化的随机种子。",
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
     )  # type: ignore
 
 
@@ -91,10 +133,19 @@ class GaussianMixtureClustering(SklearnLikeClusterer, _GaussianMixture):
     """
 
     SCHEMA = GaussianMixtureClusteringSchema
-    DISPLAY_NAME = MultilingualString(en="Gaussian Mixture", es="Mezcla Gaussiana")
+    DISPLAY_NAME = MultilingualString(
+        en="Gaussian Mixture",
+        es="Mezcla Gaussiana",
+        pt="Mistura Gaussiana",
+        de="Gauß-Mischmodell",
+        zh="高斯混合模型",
+    )
     DESCRIPTION = MultilingualString(
         en="Probabilistic clustering using mixtures of Gaussian distributions.",
         es="Clustering probabilístico usando mezclas de distribuciones gaussianas.",
+        pt="Clustering probabilístico usando misturas de distribuições gaussianas.",
+        de="Probabilistisches Clustering mittels Mischungen von Gauß-Verteilungen.",
+        zh="使用高斯分布混合的概率聚类方法。",
     )
     COLOR = "#FF7043"
     ICON = "BubbleChart"

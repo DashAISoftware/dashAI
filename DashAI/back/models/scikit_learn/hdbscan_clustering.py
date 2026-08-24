@@ -29,8 +29,18 @@ class HDBSCANClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Minimum number of samples required to form a cluster.",
             es="Mínimo de muestras requeridas para formar un cluster.",
+            pt="Número mínimo de amostras necessárias para formar um cluster.",
+            de="Mindestanzahl an Stichproben, die zur Bildung eines Clusters "
+            "erforderlich sind.",
+            zh="形成一个聚类所需的最小样本数。",
         ),
-        alias=MultilingualString(en="Min cluster size", es="Tamaño mínimo de cluster"),
+        alias=MultilingualString(
+            en="Min cluster size",
+            es="Tamaño mínimo de cluster",
+            pt="Tamanho mínimo do cluster",
+            de="Min. Clustergröße",
+            zh="最小聚类大小",
+        ),
     )  # type: ignore
     min_samples: schema_field(
         int_field(ge=1),
@@ -44,8 +54,23 @@ class HDBSCANClusteringSchema(BaseSchema):
                 "Número de muestras en una vecindad para que un punto "
                 "sea considerado central."
             ),
+            pt=(
+                "Número de amostras em uma vizinhança para que um ponto "
+                "seja considerado central."
+            ),
+            de=(
+                "Anzahl der Stichproben in einer Nachbarschaft, damit ein Punkt "
+                "als Kernpunkt gilt."
+            ),
+            zh="使一个点被视为核心点所需邻域内的样本数。",
         ),
-        alias=MultilingualString(en="Min samples", es="Mínimo de muestras"),
+        alias=MultilingualString(
+            en="Min samples",
+            es="Mínimo de muestras",
+            pt="Mínimo de amostras",
+            de="Min. Stichproben",
+            zh="最小样本数",
+        ),
     )  # type: ignore
     metric: schema_field(
         enum_field(["euclidean", "manhattan", "cosine"]),
@@ -53,8 +78,13 @@ class HDBSCANClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Distance metric used to compute core distances.",
             es="Métrica de distancia usada para calcular distancias centrales.",
+            pt="Métrica de distância usada para calcular distâncias centrais.",
+            de="Distanzmetrik zur Berechnung der Kernabstände.",
+            zh="用于计算核心距离的距离度量。",
         ),
-        alias=MultilingualString(en="Metric", es="Métrica"),
+        alias=MultilingualString(
+            en="Metric", es="Métrica", pt="Métrica", de="Metrik", zh="度量"
+        ),
     )  # type: ignore
 
 
@@ -81,10 +111,17 @@ class HDBSCANClustering(SklearnLikeClusterer, _HDBSCAN):
     """
 
     SCHEMA = HDBSCANClusteringSchema
-    DISPLAY_NAME = MultilingualString(en="HDBSCAN", es="HDBSCAN")
+    DISPLAY_NAME = MultilingualString(
+        en="HDBSCAN", es="HDBSCAN", pt="HDBSCAN", de="HDBSCAN", zh="HDBSCAN"
+    )
     DESCRIPTION = MultilingualString(
         en="Hierarchical density-based clustering with variable density support.",
         es="Clustering jerárquico basado en densidad con soporte de densidad variable.",
+        pt="Clustering hierárquico baseado em densidade com suporte a densidade "
+        "variável.",
+        de="Hierarchisches dichtebasiertes Clustering mit Unterstützung "
+        "variabler Dichte.",
+        zh="支持可变密度的层次化基于密度的聚类方法。",
     )
     COLOR = "#26C6DA"
     ICON = "Layers"

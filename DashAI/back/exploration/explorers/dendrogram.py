@@ -42,6 +42,7 @@ class DendrogramExplorer(ClusteringExplorer):
         es="Dendrograma",
         pt="Dendrograma",
         de="Dendrogramm",
+        zh="树状图",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -72,12 +73,18 @@ class DendrogramExplorer(ClusteringExplorer):
             "sowie die Erkennung von Ausreißern. Nur verfügbar nach agglomerativem "
             "Clustering mit aktivierter 'Distanzberechnung'."
         ),
+        zh=(
+            "呈现层次聚类（Agglomerative）产生的完整合并层级。每次合并的高度反映"
+            "了链接距离，便于识别自然的聚类数量并检测离群点。仅在启用"
+            "'计算距离'运行层次聚类后可用。"
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Full merge hierarchy for Agglomerative clustering.",
         es="Jerarquía completa de fusiones para agrupamiento Aglomerativo.",
         pt="Hierarquia completa de fusões para agrupamento aglomerativo.",
         de="Vollständige Fusionshierarchie für agglomeratives Clustering.",
+        zh="层次聚类的完整合并层级。",
     )
     IMAGE_PREVIEW = "dendrogram.png"
     SCHEMA = DendrogramSchema

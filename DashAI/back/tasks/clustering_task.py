@@ -15,8 +15,14 @@ class ClusteringTask(UnsupervisedTask):
     DESCRIPTION: str = MultilingualString(
         en="Group similar samples from numeric features without target labels.",
         es="Agrupa muestras similares desde variables numericas sin etiquetas.",
+        pt="Agrupa amostras semelhantes a partir de variáveis numéricas sem rótulos.",
+        de="Gruppiert ähnliche Stichproben anhand numerischer Merkmale ohne "
+        "Zielbezeichnungen.",
+        zh="根据数值特征对相似样本进行分组，无需目标标签。",
     )
-    DISPLAY_NAME: str = MultilingualString(en="Clustering", es="Agrupamiento")
+    DISPLAY_NAME: str = MultilingualString(
+        en="Clustering", es="Agrupamiento", pt="Agrupamento", de="Clustering", zh="聚类"
+    )
 
     SCORING_PROFILES = {
         "cluster_separation": {

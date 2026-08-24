@@ -32,8 +32,13 @@ class FaissKMeansClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Number of clusters to form.",
             es="Número de clusters a formar.",
+            pt="Número de clusters a formar.",
+            de="Anzahl der zu bildenden Cluster.",
+            zh="要形成的聚类数量。",
         ),
-        alias=MultilingualString(en="Clusters", es="Clusters"),
+        alias=MultilingualString(
+            en="Clusters", es="Clusters", pt="Clusters", de="Cluster", zh="聚类数"
+        ),
     )  # type: ignore
     max_iter: schema_field(
         int_field(ge=1),
@@ -41,8 +46,17 @@ class FaissKMeansClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum number of Lloyd's algorithm iterations.",
             es="Número máximo de iteraciones del algoritmo de Lloyd.",
+            pt="Número máximo de iterações do algoritmo de Lloyd.",
+            de="Maximale Anzahl an Iterationen des Lloyd-Algorithmus.",
+            zh="Lloyd算法的最大迭代次数。",
         ),
-        alias=MultilingualString(en="Max iterations", es="Iteraciones máximas"),
+        alias=MultilingualString(
+            en="Max iterations",
+            es="Iteraciones máximas",
+            pt="Iterações máximas",
+            de="Max. Iterationen",
+            zh="最大迭代次数",
+        ),
     )  # type: ignore
     random_state: schema_field(
         int_field(ge=0),
@@ -50,8 +64,17 @@ class FaissKMeansClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Random seed for centroid initialisation.",
             es="Semilla aleatoria para la inicialización de centroides.",
+            pt="Semente aleatória para a inicialização dos centroides.",
+            de="Zufallsstartwert für die Zentroiden-Initialisierung.",
+            zh="用于质心初始化的随机种子。",
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
     )  # type: ignore
 
 
@@ -74,7 +97,13 @@ class FaissKMeansClustering(FaissLikeClusterer):
     """
 
     SCHEMA = FaissKMeansClusteringSchema
-    DISPLAY_NAME = MultilingualString(en="FAISS K-Means", es="FAISS K-Means")
+    DISPLAY_NAME = MultilingualString(
+        en="FAISS K-Means",
+        es="FAISS K-Means",
+        pt="FAISS K-Means",
+        de="FAISS K-Means",
+        zh="FAISS K-均值",
+    )
     DESCRIPTION = MultilingualString(
         en=(
             "K-Means via FAISS — C++ vectorised and faster than sklearn "
@@ -84,6 +113,15 @@ class FaissKMeansClustering(FaissLikeClusterer):
             "K-Means vía FAISS — vectorización C++, más rápido que sklearn "
             "en datasets grandes."
         ),
+        pt=(
+            "K-Means via FAISS — vetorizado em C++, mais rápido que o sklearn "
+            "em datasets grandes."
+        ),
+        de=(
+            "K-Means über FAISS — C++-vektorisiert und schneller als sklearn "
+            "bei großen Datensätzen."
+        ),
+        zh="通过FAISS实现的K-Means——C++向量化，在大型数据集上比sklearn更快。",
     )
     COLOR = "#66BB6A"
     ICON = "FlashOn"

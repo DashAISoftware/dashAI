@@ -30,6 +30,7 @@ class ClusteringExplorer(BaseExplorer):
         es="Análisis de Agrupamiento",
         pt="Análise de Agrupamento",
         de="Clustering-Analyse",
+        zh="聚类分析",
     )
     ICON: Final[str] = Icon.ScatterPlot.value
     COLOR: Final[str] = "rgb(72, 149, 239)"

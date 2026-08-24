@@ -30,8 +30,13 @@ class SpectralClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Number of clusters to form.",
             es="Número de clusters a formar.",
+            pt="Número de clusters a formar.",
+            de="Anzahl der zu bildenden Cluster.",
+            zh="要形成的聚类数量。",
         ),
-        alias=MultilingualString(en="Clusters", es="Clusters"),
+        alias=MultilingualString(
+            en="Clusters", es="Clusters", pt="Clusters", de="Cluster", zh="聚类数"
+        ),
     )  # type: ignore
     affinity: schema_field(
         enum_field(["rbf", "nearest_neighbors", "cosine"]),
@@ -45,8 +50,19 @@ class SpectralClusteringSchema(BaseSchema):
                 "Medida de similitud para construir el grafo de afinidad. "
                 "'rbf' usa un kernel gaussiano controlado por 'gamma'."
             ),
+            pt=(
+                "Medida de similaridade usada para construir o grafo de afinidade. "
+                "'rbf' usa um kernel gaussiano controlado por 'gamma'."
+            ),
+            de=(
+                "Ähnlichkeitsmaß zur Konstruktion des Affinitätsgraphen. "
+                "'rbf' verwendet einen Gauß-Kernel, gesteuert über 'gamma'."
+            ),
+            zh="用于构建亲和图的相似性度量。'rbf'使用由'gamma'控制的高斯核。",
         ),
-        alias=MultilingualString(en="Affinity", es="Afinidad"),
+        alias=MultilingualString(
+            en="Affinity", es="Afinidad", pt="Afinidade", de="Affinität", zh="亲和度"
+        ),
     )  # type: ignore
     gamma: schema_field(
         float_field(gt=0.0),
@@ -60,8 +76,19 @@ class SpectralClusteringSchema(BaseSchema):
                 "Coeficiente del kernel para la afinidad 'rbf'. "
                 "Se ignora para otras afinidades."
             ),
+            pt=(
+                "Coeficiente do kernel para a afinidade 'rbf'. "
+                "Ignorado para outras afinidades."
+            ),
+            de=(
+                "Kernel-Koeffizient für die 'rbf'-Affinität. "
+                "Wird für andere Affinitäten ignoriert."
+            ),
+            zh="'rbf'亲和度的核系数。对其他亲和度类型无效。",
         ),
-        alias=MultilingualString(en="Gamma", es="Gamma"),
+        alias=MultilingualString(
+            en="Gamma", es="Gamma", pt="Gamma", de="Gamma", zh="Gamma"
+        ),
     )  # type: ignore
     random_state: schema_field(
         int_field(ge=0),
@@ -74,8 +101,23 @@ class SpectralClusteringSchema(BaseSchema):
                 "Semilla aleatoria para la descomposición de "
                 "eigenvectores e inicialización de k-means."
             ),
+            pt=(
+                "Semente aleatória para a decomposição de autovetores "
+                "e inicialização do k-means."
+            ),
+            de=(
+                "Zufallsstartwert für die Eigenvektorzerlegung und die "
+                "K-Means-Initialisierung."
+            ),
+            zh="用于特征向量分解和k-means初始化的随机种子。",
         ),
-        alias=MultilingualString(en="Random state", es="Estado aleatorio"),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
     )  # type: ignore
 
 
@@ -102,10 +144,15 @@ class SpectralClustering(SklearnLikeClusterer, _SpectralClustering):
     """
 
     SCHEMA = SpectralClusteringSchema
-    DISPLAY_NAME = MultilingualString(en="Spectral", es="Espectral")
+    DISPLAY_NAME = MultilingualString(
+        en="Spectral", es="Espectral", pt="Espectral", de="Spektral", zh="谱聚类"
+    )
     DESCRIPTION = MultilingualString(
         en="Graph-based clustering via eigenvalue decomposition.",
         es="Clustering basado en grafos mediante descomposición de eigenvalores.",
+        pt="Clustering baseado em grafos por meio de decomposição de autovalores.",
+        de="Graphbasiertes Clustering mittels Eigenwertzerlegung.",
+        zh="通过特征值分解实现的基于图的聚类方法。",
     )
     COLOR = "#EC407A"
     ICON = "Grain"

@@ -53,6 +53,7 @@ class ClusterStabilityExplorer(ClusteringExplorer):
         es="Estabilidad de Clústeres (HDBSCAN)",
         pt="Estabilidade de Clusters (HDBSCAN)",
         de="Cluster-Stabilität (HDBSCAN)",
+        zh="聚类稳定性（HDBSCAN）",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -79,12 +80,17 @@ class ClusterStabilityExplorer(ClusteringExplorer):
             "überlebt. Höhere Werte zeigen robustere, stabilere Cluster an. "
             "Nur nach HDBSCAN-Clustering verfügbar."
         ),
+        zh=(
+            "显示HDBSCAN发现的每个聚类的持久性得分。持久性衡量一个聚类在不同密度阈值"
+            "范围内存续的时长，值越高表示聚类越稳健、越稳定。仅在运行HDBSCAN聚类后可用。"
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Per-cluster persistence scores from HDBSCAN.",
         es="Puntuaciones de persistencia por clúster de HDBSCAN.",
         pt="Pontuações de persistência por cluster do HDBSCAN.",
         de="Pro-Cluster-Persistenzwerte von HDBSCAN.",
+        zh="HDBSCAN每个聚类的持久性得分。",
     )
     IMAGE_PREVIEW = "cluster_stability.png"
     SCHEMA = ClusterStabilitySchema
