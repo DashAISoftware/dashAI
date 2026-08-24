@@ -130,6 +130,7 @@
     "hideCompleted": "隐藏已完成",
     "noActiveJobs": "无活动任务",
     "noCompletedJobs": "无已完成任务",
+    "cancelJob": "取消任务",
     "noJobs": "队列中无任务",
     "refresh": "刷新",
     "relativeTime": {

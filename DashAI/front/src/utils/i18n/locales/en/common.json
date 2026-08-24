@@ -132,6 +132,7 @@
     "hideCompleted": "Hide Completed",
     "noActiveJobs": "No active jobs",
     "noCompletedJobs": "No completed jobs",
+    "cancelJob": "Cancel job",
     "noJobs": "No jobs in queue",
     "refresh": "Refresh",
     "relativeTime": {

@@ -142,16 +142,20 @@ class ExplainerJob(BaseJob):
                     "Failed to generate the explanation",
                 ) from e
             try:
+                from pathlib import Path as _Path
+
+                from DashAI.back.core.atomic import atomic_open
+
                 explanation_filename = f"global_explanation_{explainer_id}.pickle"
                 explanation_path = os.path.join(
                     config["EXPLANATIONS_PATH"], explanation_filename
                 )
-                with open(explanation_path, "wb") as file:
+                with atomic_open(_Path(explanation_path), "wb") as file:
                     pickle.dump(explanation, file)
 
                 plot_filename = f"global_explanation_plot_{explainer_id}.pickle"
                 plot_path = os.path.join(config["EXPLANATIONS_PATH"], plot_filename)
-                with open(plot_path, "wb") as file:
+                with atomic_open(_Path(plot_path), "wb") as file:
                     pickle.dump(plot, file)
 
             except Exception as e:
@@ -344,16 +348,20 @@ class ExplainerJob(BaseJob):
                     "Failed to generate the explanation",
                 ) from e
             try:
+                from pathlib import Path as _Path
+
+                from DashAI.back.core.atomic import atomic_open
+
                 explanation_filename = f"local_explanation_{explainer_id}.pickle"
                 explanation_path = os.path.join(
                     config["EXPLANATIONS_PATH"], explanation_filename
                 )
-                with open(explanation_path, "wb") as file:
+                with atomic_open(_Path(explanation_path), "wb") as file:
                     pickle.dump(explanation, file)
 
                 plots_filename = f"local_explanation_plots_{explainer_id}.pickle"
                 plots_path = os.path.join(config["EXPLANATIONS_PATH"], plots_filename)
-                with open(plots_path, "wb") as file:
+                with atomic_open(_Path(plots_path), "wb") as file:
                     pickle.dump(plots, file)
 
             except Exception as e:

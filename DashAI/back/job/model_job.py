@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, List
 from kink import inject
 from sqlalchemy import exc
 
-from DashAI.back.api.utils import remove_path
+from DashAI.back.core.atomic import atomic_save_path
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
@@ -189,9 +189,8 @@ class ModelJob(BaseJob):
                 self.report_progress(0.95, "Saving model")
                 try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))
-                    if os.path.exists(run_path):
-                        remove_path(run_path)
-                    model.save(run_path)
+                    with atomic_save_path(run_path) as tmp_run_path:
+                        model.save(str(tmp_run_path))
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
