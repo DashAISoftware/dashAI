@@ -305,6 +305,8 @@ class PredictJob(BaseJob):
                 prediction.set_status_as_started()
                 db.commit()
 
+                self.report_progress(0.1, "Loading model")
+
                 dataset_id = prediction.dataset_id
 
                 # Validate input data
@@ -422,7 +424,8 @@ class PredictJob(BaseJob):
                         manual_input_data, dataset_trained_path
                     )
 
-                prepared_dataset, y_pred = _run_prediction_pipeline(
+                self.report_progress(0.4, "Running prediction")
+                _, y_pred = _run_prediction_pipeline(
                     task=task,
                     trained_model=trained_model,
                     train_dataset=train_dataset,
@@ -452,6 +455,8 @@ class PredictJob(BaseJob):
                     "Model prediction failed",
                 ) from e
 
+            self.report_progress(0.9, "Saving predictions")
+
             # Save Predictions to Arrow file
             try:
                 # Create unique folder for predictions
@@ -460,9 +465,13 @@ class PredictJob(BaseJob):
                 full_path = Path(path) / folder_name
                 full_path.mkdir(parents=True, exist_ok=True)
 
-                # Add predictions to loaded dataset
+                output_col = model_session.output_columns[0]
+                base_columns = [
+                    col for col in loaded_dataset.column_names if col != output_col
+                ]
+                output_dataset = loaded_dataset.select_columns(base_columns)
                 dataset_with_prediction = to_dashai_dataset(
-                    prepared_dataset.add_column(model_session.output_columns[0], y_pred)
+                    output_dataset.add_column(output_col, y_pred)
                 )
 
                 # Filter schema from trained dataset

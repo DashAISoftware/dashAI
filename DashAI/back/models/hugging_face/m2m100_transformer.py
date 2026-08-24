@@ -9,6 +9,9 @@ from sklearn.exceptions import NotFittedError
 
 from DashAI.back.core.schema_fields import schema_field, string_field
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.hugging_face.opus_mt_en_es_transformer import (
     OpusMtEnESTransformerSchema,
 )
@@ -97,7 +100,7 @@ class M2M100TransformerSchema(OpusMtEnESTransformerSchema):
     )  # type: ignore
 
 
-class M2M100Transformer(TranslationModel):
+class M2M100Transformer(HFPretrainedDownloadMixin, TranslationModel):
     """M2M100 multilingual seq2seq model for configurable language-pair translation.
 
     Fine-tunes the ``facebook/m2m100_418M`` checkpoint from Meta AI. The base
@@ -128,39 +131,41 @@ class M2M100Transformer(TranslationModel):
         en=(
             "Facebook M2M-100 model for direct translation across 100 languages "
             "using ISO 639-1 codes. "
-            "Downloads weights from Hugging Face on first use (internet required)."
+            "Download its weights from Hugging Face before use (internet required)."
         ),
         es=(
             "Modelo M2M-100 de Facebook para traducción directa entre 100 idiomas "
             "usando códigos ISO 639-1. "
-            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+            "Descarga sus pesos de Hugging Face antes de usarlo (requiere internet)."
         ),
         pt=(
             "Modelo M2M-100 do Facebook para tradução direta entre 100 idiomas "
             "usando códigos ISO 639-1. "
-            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+            "Baixe seus pesos do Hugging Face antes de usar (requer internet)."
         ),
         de=(
             "Facebook M2M-100-Modell für direkte Übersetzung zwischen 100 Sprachen "
             "mit ISO 639-1-Codes. "
-            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "Lädt die Gewichte vor der Nutzung von Hugging Face herunter "
             "(Internet erforderlich)."
         ),
         zh=(
             "Facebook M2M-100 模型，使用 ISO 639-1 代码支持"
             " 100 种语言之间的直接翻译。"
-            "首次使用时从 Hugging Face 下载权重（需要网络）。"
+            "使用前需从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#6A1B9A"
     ICON: str = "Language"
+    MODEL_NAME: str = "facebook/m2m100_418M"
+    DOWNLOAD_SIZE_BYTES: int = 1941936305
 
-    def __init__(self, model=None, **kwargs):
+    def __init__(self, model=None, pretrained_dir=None, **kwargs):
         kwargs = self.validate_and_transform(kwargs)
 
         from transformers import AutoTokenizer
 
-        self.model_name = "facebook/m2m100_418M"
+        self.model_name = self._pretrained_source(pretrained_dir)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
         self.source_language = kwargs.get("source_language", "en")
@@ -352,6 +357,7 @@ class M2M100Transformer(TranslationModel):
         save_dir.mkdir(parents=True, exist_ok=True)
 
         self.model.save_pretrained(save_dir)
+        self.tokenizer.save_pretrained(save_dir)
         config = AutoConfig.from_pretrained(save_dir)
         config.custom_params = {
             "num_train_epochs": self.training_args.get("num_train_epochs"),
@@ -376,6 +382,7 @@ class M2M100Transformer(TranslationModel):
 
         loaded_model = cls(
             model=model,
+            pretrained_dir=str(filename),
             num_train_epochs=custom_params.get("num_train_epochs"),
             batch_size=custom_params.get("batch_size"),
             learning_rate=custom_params.get("learning_rate"),

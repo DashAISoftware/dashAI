@@ -264,7 +264,9 @@ class DashAIDataset(Dataset):
         dict
             Dictionary with statistics for each numeric column.
         """
-        numeric_keys = self._get_numeric_columns()
+        numeric_keys = [
+            k for k in self._get_numeric_columns() if k in dataset_df.columns
+        ]
         numeric_cols = dataset_df[numeric_keys]
         numeric_stats = {}
 
@@ -316,7 +318,9 @@ class DashAIDataset(Dataset):
         dict
             Dictionary with statistics for each categorical column.
         """
-        categorical_keys = self._get_categorical_columns()
+        categorical_keys = [
+            k for k in self._get_categorical_columns() if k in dataset_df.columns
+        ]
         categorical_cols = dataset_df[categorical_keys]
         categorical_stats = {}
 
@@ -388,6 +392,9 @@ class DashAIDataset(Dataset):
             Dictionary with quality indicators including completeness,
             constant columns, high cardinality columns, and quality score.
         """
+        if dataset_df.empty:
+            return {}
+
         # Count rows with missing values
         rows_with_any_nan = int(dataset_df.isna().any(axis=1).sum())
         rows_with_multiple_nan = int((dataset_df.isna().sum(axis=1) > 1).sum())
@@ -465,7 +472,9 @@ class DashAIDataset(Dataset):
         dict
             Nested dictionary representing the correlation matrix.
         """
-        numeric_keys = self._get_numeric_columns()
+        numeric_keys = [
+            k for k in self._get_numeric_columns() if k in dataset_df.columns
+        ]
         numeric_cols = dataset_df[numeric_keys]
 
         if numeric_cols.empty:
@@ -508,6 +517,11 @@ class DashAIDataset(Dataset):
         modified_dataset = super().remove_columns(column_names)
         # Update self with modified dataset attributes
         self.__dict__.update(modified_dataset.__dict__)
+
+        # Keep self.types in sync so Arrow metadata stays consistent
+        if self.types is not None:
+            for col in column_names:
+                self.types.pop(col, None)
 
         return self
 
@@ -1163,6 +1177,65 @@ def split_dataset(
             "train": DashAIDataset(train_table, types=dataset.types),
             "test": DashAIDataset(test_table, types=dataset.types),
             "validation": DashAIDataset(val_table, types=dataset.types),
+        }
+    )
+
+    return separate_dataset_dict
+
+
+def split_dataset_cv(
+    dataset: DashAIDataset,
+    indices: Dict[Dict[str, List[int]]],
+    train_indexes: List = None,
+    test_indexes: List = None,
+) -> object:
+    """
+    Split a dataset into train and test subsets for cross-validation.
+
+    Parameters
+    ----------
+    dataset : DashAIDataset
+        A HuggingFace DashAIDataset containing the data to be partitioned.
+    indices : Dict[Dict[str, List[int]]]
+        Mapping of split names to their corresponding train and test index
+        lists, which is stored in the dataset metadata.
+    train_indexes : List, optional
+        Indices of the rows assigned to the training subset.
+    test_indexes : List, optional
+        Indices of the rows assigned to the test subset.
+
+    Returns
+    -------
+    DatasetDict
+        A dataset dictionary containing the train and test splits.
+    """
+    import numpy as np
+
+    # Get the number of records
+    n = len(dataset)
+
+    # Convert the indexes into boolean masks
+    train_mask = np.isin(np.arange(n), train_indexes)
+    test_mask = np.isin(np.arange(n), test_indexes)
+
+    # Get the underlying table
+    import pyarrow as pa  # local import
+
+    table = dataset.arrow_table
+
+    dataset.splits["split_indices"] = indices
+
+    # Create separate tables for each split
+    train_table = table.filter(pa.array(train_mask))
+    test_table = table.filter(pa.array(test_mask))
+
+    # Preserve types from the original dataset to maintain categorical mappings
+    from datasets import DatasetDict  # local import
+
+    separate_dataset_dict = DatasetDict(
+        {
+            "train": DashAIDataset(train_table, types=dataset.types),
+            "test": DashAIDataset(test_table, types=dataset.types),
         }
     )
 

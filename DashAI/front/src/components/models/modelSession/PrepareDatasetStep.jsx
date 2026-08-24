@@ -24,12 +24,21 @@ import { Trans } from "react-i18next";
 import { useModels } from "../ModelsContext";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
- * and the splits for training, validation and testing
+ * and the splits for training, validation and testing.
  * @param {object} newExp object that contains the Experiment Modal state
  * @param {function} setNewExp updates the Eperimento Modal state (newExp)
  * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal
+ * @param {string} evaluationStrategy the evaluation strategy selected for the experiment, either holdout or cross-validation
+ * @param {function} setEvaluationStrategy function to update the evaluation strategy in the parent component (CreateSessionSteps)
  */
-function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
+function PrepareDatasetStep({
+  newExp,
+  setNewExp,
+  setNextEnabled,
+  dataset,
+  evaluationStrategy,
+  setEvaluationStrategy,
+}) {
   const { setSessionRightContent } = useModels();
   const [datasetInfo, setDatasetInfo] = useState({});
   const [datasetTypes, setDatasetTypes] = useState({});
@@ -37,15 +46,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
   const [infoLoading, setInfoLoading] = useState(true);
   const { t } = useTranslation(["experiments", "common"]);
 
-  const [taskRequirements, setTaskRequirements] = useState({
-    name: "",
-    metadata: {
-      inputs_types: [],
-      inputs_cardinality: "",
-      outputs_types: [],
-      outputs_cardinality: "",
-    },
-  });
+  // null means "not fetched yet" — distinct from the empty-but-loaded shape
+  // getTaskRequirements falls back to when the task genuinely isn't found.
+  // The banner below only renders once this is non-null, otherwise it briefly
+  // interpolates its message with blank task name/types/cardinality.
+  const [taskRequirements, setTaskRequirements] = useState(null);
 
   const [inputColumnNames, setInputColumnNames] = useState(
     newExp.input_columns,
@@ -56,9 +61,20 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
 
   const [columnsReady, setColumnsReady] = useState(false);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
+  // True until the current column selection has actually been checked against
+  // the backend at least once — distinct from columnsAreValid=false, so the
+  // banner doesn't flash red while columns are still being auto-selected or a
+  // check is in flight, only once a real valid/invalid result is known.
+  const [validationPending, setValidationPending] = useState(true);
   const [shuffle, setShuffle] = useState(true);
   const [stratify, setStratify] = useState(false);
   const [seed, setSeed] = useState(42);
+
+  // Cross-Validation configuration states
+  const [cvType, setCvType] = useState(null);
+  const [numFolds, setNumFolds] = useState(5);
+  const [numRepeats, setNumRepeats] = useState(2);
+  const [groupColumn, setGroupColumn] = useState("");
 
   const defaultParitionsIndex = {
     train: [],
@@ -189,21 +205,21 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
   };
 
   const validateColumns = async () => {
-    if (
-      !datasetInfo ||
-      !datasetInfo.column_names ||
-      datasetInfo.column_names.length === 0
-    ) {
-      setColumnsAreValid(false);
-      return;
-    }
-
-    if (inputColumnNames.length === 0 || outputColumnNames.length === 0) {
-      setColumnsAreValid(false);
-      return;
-    }
-
     try {
+      if (
+        !datasetInfo ||
+        !datasetInfo.column_names ||
+        datasetInfo.column_names.length === 0
+      ) {
+        setColumnsAreValid(false);
+        return;
+      }
+
+      if (inputColumnNames.length === 0 || outputColumnNames.length === 0) {
+        setColumnsAreValid(false);
+        return;
+      }
+
       const validation = await validateColumnsRequest(
         newExp.task_name,
         dataset.id,
@@ -221,6 +237,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
         console.error("Unknown Error", error.message);
       }
       setColumnsAreValid(false);
+    } finally {
+      setValidationPending(false);
     }
   };
 
@@ -237,27 +255,46 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
       ...newExp,
       input_columns: inputColumnNames,
       output_columns: outputColumnNames,
+      evaluation_strategy: evaluationStrategy,
     };
 
-    if (splitType === SPLIT_TYPES.MANUAL) {
+    if (evaluationStrategy === "HoldoutEvaluationStrategy") {
+      if (splitType === SPLIT_TYPES.MANUAL) {
+        updatedExpData.splits = {
+          ...rowsPartitionsIndex,
+          splitter_name: "HoldoutSplitter",
+          splitType: splitType,
+        };
+      } else if (splitType === SPLIT_TYPES.RANDOM) {
+        updatedExpData.splits = {
+          ...rowsPartitionsPercentage,
+          shuffle: shuffle,
+          stratify: stratify,
+          seed: seed === "" || seed == null ? 42 : Number(seed),
+          splitter_name: "HoldoutSplitter",
+          splitType: splitType,
+        };
+      } else if (splitType === SPLIT_TYPES.PREDEFINED) {
+        updatedExpData.splits = {
+          ...datasetPartitionsIndex,
+          splitter_name: "HoldoutSplitter",
+          splitType: splitType,
+        };
+      }
+    } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
+      const cvSchemaProperties = cvType.schema?.properties || {};
       updatedExpData.splits = {
-        ...rowsPartitionsIndex,
-        splitType: splitType,
-      };
-    } else if (splitType === SPLIT_TYPES.RANDOM) {
-      updatedExpData.splits = {
-        ...rowsPartitionsPercentage,
-        shuffle: shuffle,
-        stratify: stratify,
+        splitter_name: cvType.name,
         seed: seed === "" || seed == null ? 42 : Number(seed),
-        splitType: splitType,
-      };
-    } else if (splitType === SPLIT_TYPES.PREDEFINED) {
-      updatedExpData.splits = {
-        ...datasetPartitionsIndex,
-        splitType: splitType,
+        ...(cvSchemaProperties.n_splits ? { n_splits: numFolds } : {}),
+        ...(cvSchemaProperties.n_repeats ? { n_repeats: numRepeats } : {}),
+        ...(cvSchemaProperties.group_column
+          ? { group_column: groupColumn }
+          : {}),
+        ...(cvSchemaProperties.shuffle ? { shuffle: shuffle } : {}),
       };
     }
+
     setNewExp(updatedExpData);
   };
 
@@ -277,9 +314,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
       datasetInfo.column_names &&
       datasetInfo.column_names.length > 0
     ) {
+      setValidationPending(true);
       validateColumns();
     } else {
       setColumnsAreValid(false);
+      setValidationPending(true);
     }
   }, [
     columnsReady,
@@ -306,6 +345,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
     seed,
     inputColumnNames,
     outputColumnNames,
+    cvType,
+    numFolds,
+    numRepeats,
+    groupColumn,
+    evaluationStrategy,
   ]);
 
   useEffect(() => {
@@ -350,6 +394,18 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
         setStratify={setStratify}
         seed={seed}
         setSeed={setSeed}
+        evaluationStrategy={evaluationStrategy}
+        setEvaluationStrategy={setEvaluationStrategy}
+        cvType={cvType}
+        setCvType={setCvType}
+        numFolds={numFolds}
+        setNumFolds={setNumFolds}
+        numRepeats={numRepeats}
+        setNumRepeats={setNumRepeats}
+        groupColumn={groupColumn}
+        setGroupColumn={setGroupColumn}
+        inputColumnNames={inputColumnNames}
+        taskName={newExp.task_name}
       />,
     );
     return () => setSessionRightContent(null);
@@ -362,6 +418,12 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
     shuffle,
     stratify,
     seed,
+    evaluationStrategy,
+    cvType,
+    numFolds,
+    numRepeats,
+    groupColumn,
+    inputColumnNames,
   ]);
 
   const renderTypesAsChips = (typesList) => {
@@ -430,81 +492,79 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
           </Alert>
         ) : null
       ) : null}
-      <Alert
-        severity={columnsAreValid ? "success" : "error"}
-        sx={{
-          mb: 2,
-          "& .MuiAlert-icon": { fontSize: 24 },
-          bgcolor: (theme) =>
-            `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
-          border: (theme) =>
-            `1px solid ${theme.palette[columnsAreValid ? "success" : "error"].main}`,
-        }}
-        data-tour="models-validation-alert"
-      >
-        <AlertTitle>
-          {taskRequirements
-            ? t(
-                columnsAreValid
-                  ? "experiments:label.columnsValidRequirements"
-                  : "experiments:label.columnsInvalidRequirements",
-                { taskName: taskRequirements.display_name },
-              )
-            : null}
-        </AlertTitle>
-        <Grid container spacing={4}>
-          <Grid size={{ xs: 12 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                flexWrap: "wrap",
-              }}
-            >
-              <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
-                <span>The input columns must be of the types</span>
-                {taskRequirements
-                  ? renderTypesAsChips(taskRequirements.metadata.inputs_types)
-                  : null}
-                <span>
-                  , and they should have a cardinality of
+      {taskRequirements && !validationPending && (
+        <Alert
+          severity={columnsAreValid ? "success" : "error"}
+          sx={{
+            mb: 2,
+            "& .MuiAlert-icon": { fontSize: 24 },
+            bgcolor: (theme) =>
+              `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
+            border: (theme) =>
+              `1px solid ${theme.palette[columnsAreValid ? "success" : "error"].main}`,
+          }}
+          data-tour="models-validation-alert"
+        >
+          <AlertTitle>
+            {t(
+              columnsAreValid
+                ? "experiments:label.columnsValidRequirements"
+                : "experiments:label.columnsInvalidRequirements",
+              { taskName: taskRequirements.display_name },
+            )}
+          </AlertTitle>
+          <Grid container spacing={4}>
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
+                  <span>The input columns must be of the types</span>
+                  {renderTypesAsChips(taskRequirements.metadata.inputs_types)}
                   <span>
+                    , and they should have a cardinality of
+                    <span>
+                      {{
+                        cardinality:
+                          taskRequirements.metadata.inputs_cardinality,
+                      }}
+                      .
+                    </span>
+                  </span>
+                </Trans>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                  flexWrap: "wrap",
+                }}
+              >
+                <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
+                  <span>The output columns must be of the types</span>
+                  {renderTypesAsChips(taskRequirements.metadata.outputs_types)}
+                  <span>
+                    , and they should have a cardinality of
                     {{
-                      cardinality: taskRequirements.metadata.inputs_cardinality,
+                      cardinality:
+                        taskRequirements.metadata.outputs_cardinality,
                     }}
                     .
                   </span>
-                </span>
-              </Trans>
-            </Box>
+                </Trans>
+              </Box>
+            </Grid>
           </Grid>
-          <Grid size={{ xs: 12 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                flexWrap: "wrap",
-              }}
-            >
-              <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
-                <span>The output columns must be of the types</span>
-                {taskRequirements
-                  ? renderTypesAsChips(taskRequirements.metadata.outputs_types)
-                  : null}
-                <span>
-                  , and they should have a cardinality of
-                  {{
-                    cardinality: taskRequirements.metadata.outputs_cardinality,
-                  }}
-                  .
-                </span>
-              </Trans>
-            </Box>
-          </Grid>
-        </Grid>
-      </Alert>
+        </Alert>
+      )}
 
       {!infoLoading ? (
         <Grid container spacing={2}>

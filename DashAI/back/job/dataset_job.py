@@ -174,6 +174,8 @@ class DatasetJob(BaseJob):
                 db.commit()
                 db.refresh(dataset)
 
+            self.report_progress(0.1, "Loading data")
+
             if n_sample and dataset.file_path != "":
                 folder_path = Path(dataset.file_path)
             else:
@@ -346,6 +348,8 @@ class DatasetJob(BaseJob):
 
                     new_dataset = transform_dataset_with_schema(new_dataset, schema)
 
+                self.report_progress(0.5, "Computing metadata")
+
                 compute_meta = params.get("compute_metadata", True)
                 extended_keys = (
                     "general_info",
@@ -382,6 +386,8 @@ class DatasetJob(BaseJob):
                     for stale_key in extended_keys:
                         new_dataset.splits.pop(stale_key, None)
                 gc.collect()
+
+                self.report_progress(0.8, "Saving dataset")
 
                 dataset_save_path = folder_path / "dataset"
                 log.debug("Saving dataset in %s", str(dataset_save_path))

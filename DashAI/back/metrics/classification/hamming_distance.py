@@ -41,7 +41,6 @@ class HammingDistance(ClassificationMetric):
     """
 
     MAXIMIZE: bool = False
-    NORMALIZE_REF: float = 1.0
     DESCRIPTION = MultilingualString(
         en=(
             "Hamming Distance measures the fraction of "

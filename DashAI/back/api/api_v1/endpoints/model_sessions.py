@@ -8,9 +8,11 @@ from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.model_sessions_params import (
     ColumnsValidationParams,
+    ModelSessionBulkDeleteParams,
     ModelSessionParams,
 )
-from DashAI.back.dependencies.database.models import Dataset, ModelSession
+from DashAI.back.api.utils import remove_path
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -230,6 +232,7 @@ async def create_model_session(
                 train_metrics=params.train_metrics,
                 validation_metrics=params.validation_metrics,
                 test_metrics=params.test_metrics,
+                evaluation_strategy=params.evaluation_strategy,
                 splits=params.splits,
             )
             db.add(model_session)
@@ -242,6 +245,46 @@ async def create_model_session(
                 status_code=status.HTTP_409_CONFLICT,
                 detail=f"Model session with name '{params.name}' already exists.",
             ) from e
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
+@router.delete("/")
+@inject
+async def delete_model_sessions(
+    params: ModelSessionBulkDeleteParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Delete multiple model sessions, in a single transaction.
+
+    Parameters
+    ----------
+    params : ModelSessionBulkDeleteParams
+        The IDs of the model sessions to delete. IDs that do not match an
+        existing model session are silently skipped rather than failing the
+        whole request.
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy session.
+        The generated session can be used to access and query the database.
+
+    Returns
+    -------
+    Response with code 204 NO_CONTENT
+    """
+    with session_factory() as db:
+        try:
+            for model_session_id in params.ids:
+                model_session = db.get(ModelSession, model_session_id)
+                if not model_session:
+                    continue
+                db.delete(model_session)
+
+            db.commit()
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -270,6 +313,8 @@ async def delete_model_session(
     -------
     Response with code 204 NO_CONTENT
     """
+    import os
+
     with session_factory() as db:
         try:
             model_session = db.get(ModelSession, model_session_id)
@@ -278,15 +323,41 @@ async def delete_model_session(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Model session not found",
                 )
+
+            # Snapshot the on-disk paths of the runs that the FK cascade is
+            # about to delete, so they can be cleaned up after the commit.
+            runs = db.query(Run).filter(Run.model_session_id == model_session_id).all()
+            paths_to_clean = [
+                path
+                for run in runs
+                for path in (
+                    run.run_path,
+                    run.plot_history_path,
+                    run.plot_slice_path,
+                    run.plot_contour_path,
+                    run.plot_importance_path,
+                )
+            ]
+
             db.delete(model_session)
             db.commit()
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+    # Best-effort disk cleanup, done only once the DB delete has committed:
+    # a cleanup failure here must not undo an otherwise-successful deletion.
+    for path in paths_to_clean:
+        if path and os.path.exists(path):
+            try:
+                remove_path(path)
+            except (OSError, ValueError) as e:
+                log.warning(f"Failed to delete path {path}: {e}")
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch("/{model_session_id}")

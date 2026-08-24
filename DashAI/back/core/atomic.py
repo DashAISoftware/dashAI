@@ -99,7 +99,10 @@ def atomic_save_path(final_path: Union[str, Path]):
     """
     final_path = Path(final_path)
     final_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = final_path.parent / f".tmp_{secrets.token_hex(6)}"
+    # No leading dot: torch.save() derives the zip's internal archive name by
+    # stripping everything from the last dot, so a name like '.tmp_ab12cd' ends
+    # up empty and PyTorchFileWriter rejects it with 'invalid file name'.
+    tmp_path = final_path.parent / f"tmp_{secrets.token_hex(6)}.partial"
     try:
         yield tmp_path
         # Rename-before-delete: move the existing artifact aside first so it is

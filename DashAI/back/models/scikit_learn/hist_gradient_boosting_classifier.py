@@ -4,6 +4,8 @@ from sklearn.ensemble import (
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
+    enum_field,
+    none_type,
     optimizer_float_field,
     optimizer_int_field,
     schema_field,
@@ -226,6 +228,46 @@ class HistGradientBoostingClassifierSchema(BaseSchema):
             pt="Regularização L2",
             de="L2-Regularisierung",
             zh="L2正则化",
+        ),
+    )  # type: ignore
+    class_weight: schema_field(
+        none_type(enum_field(enum=["balanced"])),
+        placeholder=None,
+        description=MultilingualString(
+            en=(
+                "Weights associated with classes, used to correct for class "
+                "imbalance. 'balanced' automatically adjusts weights inversely "
+                "proportional to class frequencies. Use None for no weighting."
+            ),
+            es=(
+                "Pesos asociados a las clases, usados para corregir el desbalance "
+                "de clases. 'balanced' ajusta automáticamente los pesos de forma "
+                "inversamente proporcional a la frecuencia de cada clase. Use None "
+                "para no aplicar ponderación."
+            ),
+            pt=(
+                "Pesos associados às classes, usados para corrigir o "
+                "desbalanceamento de classes. 'balanced' ajusta automaticamente os "
+                "pesos de forma inversamente proporcional à frequência de cada "
+                "classe. Use None para não aplicar ponderação."
+            ),
+            de=(
+                "Gewichte, die den Klassen zugeordnet sind, um "
+                "Klassenungleichgewichte auszugleichen. 'balanced' passt die "
+                "Gewichte automatisch umgekehrt proportional zur "
+                "Klassenhäufigkeit an. Verwenden Sie None für keine Gewichtung."
+            ),
+            zh=(
+                "与类别关联的权重，用于纠正类别不平衡。'balanced'会根据类别频率的"
+                "反比自动调整权重。使用None表示不加权。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Class weight",
+            es="Peso de clase",
+            pt="Peso da classe",
+            de="Klassengewicht",
+            zh="类别权重",
         ),
     )  # type: ignore
 
