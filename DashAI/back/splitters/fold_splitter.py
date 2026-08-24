@@ -13,6 +13,30 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
+def sklearn_random_state(shuffle: bool, random_state: int):
+    """Adapt a seed to scikit-learn's shuffle contract.
+
+    The ``KFold`` family raises when ``random_state`` is set while ``shuffle``
+    is False, so the seed is only forwarded when it can have an effect. Meant
+    for the splitters that expose ``shuffle`` as a parameter; the repeated
+    splitters always shuffle and take no such argument, so they pass their seed
+    through directly.
+
+    Parameters
+    ----------
+    shuffle : bool
+        Whether the splitter shuffles before splitting.
+    random_state : int
+        The configured seed.
+
+    Returns
+    -------
+    int or None
+        ``random_state`` when shuffling, ``None`` otherwise.
+    """
+    return random_state if shuffle else None
+
+
 class FoldSplitter(BaseSplitter):
     """Shared base class for splitters that generate multiple cross-validation folds.
 

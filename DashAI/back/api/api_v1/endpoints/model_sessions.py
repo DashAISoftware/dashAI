@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Union
 from fastapi import APIRouter, Depends, Response, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
+from pydantic import ValidationError
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.model_sessions_params import (
@@ -13,6 +14,11 @@ from DashAI.back.api.api_v1.schemas.model_sessions_params import (
 )
 from DashAI.back.api.utils import remove_path
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
+from DashAI.back.splitters.splits_payload import (
+    META_KEYS,
+    normalize_splits_payload,
+    schema_placeholder_defaults,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -171,11 +177,65 @@ async def validate_columns(
     return validation_response
 
 
+def _validate_splits(splits: str, component_registry: "ComponentRegistry") -> None:
+    """Validate a splits payload against the schema of its splitter.
+
+    The payload carries the splitter's schema parameters at the top level. Any
+    parameter the caller left out is filled with the schema placeholder, which
+    is the value the frontend form would have submitted, so a manual split
+    (which carries row indexes instead of proportions) validates too.
+
+    Parameters
+    ----------
+    splits : str
+        The splits payload, serialized as JSON.
+    component_registry : ComponentRegistry
+        Registry used to resolve the splitter named in the payload.
+
+    Raises
+    ------
+    HTTPException
+        If the payload is not valid JSON, names a splitter that is not
+        registered, or carries parameters the splitter schema rejects.
+    """
+    import json
+
+    try:
+        splits_data = normalize_splits_payload(json.loads(splits))
+    except (TypeError, ValueError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"splits is not a valid JSON object: {e}",
+        ) from e
+
+    splitter_name = splits_data.get("splitter_name")
+    if splitter_name not in component_registry:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Splitter {splitter_name} does not exist in the registry.",
+        )
+
+    splitter_class = component_registry[splitter_name]["class"]
+    parameters = {
+        key: value for key, value in splits_data.items() if key not in META_KEYS
+    }
+    try:
+        splitter_class.SCHEMA.model_validate(
+            {**schema_placeholder_defaults(splitter_class), **parameters}
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid configuration for splitter {splitter_name}: {e}",
+        ) from e
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def create_model_session(
     params: ModelSessionParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Create a new model session.
 
@@ -186,6 +246,8 @@ async def create_model_session(
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
+    component_registry : ComponentRegistry
+        Registry used to resolve the splitter named in the splits payload.
 
     Returns
     -------
@@ -195,12 +257,16 @@ async def create_model_session(
     Raises
     ------
     HTTPException
+        If the splits payload is not valid for the selected splitter.
+    HTTPException
         If the dataset with id dataset_id is not registered in the DB.
     """
     import os
 
     import pyarrow as pa
     import pyarrow.ipc as ipc
+
+    _validate_splits(params.splits, component_registry)
 
     with session_factory() as db:
         try:

@@ -80,7 +80,10 @@ function FormSchemaRenderFields({
     const fields = [];
 
     for (const key in modelSchema) {
+      // Fields the caller renders by hand: a schema field whose input needs
+      // context the schema cannot carry, such as a dataset's column names.
       if (excludeFields.includes(key)) continue;
+
       const fieldSchema = modelSchema[key];
       const objName = key;
       const value = formik?.values?.[objName];
@@ -183,6 +186,7 @@ function FormSchemaRenderFields({
     handleChange,
     setError,
     errorsMessage,
+    excludeFields,
   ]);
 
   return <Stack spacing={spacing}>{renderFields()}</Stack>;

@@ -22,6 +22,11 @@ import { getColorByColumnType } from "../../../utils";
 import { useTranslation } from "react-i18next";
 import { Trans } from "react-i18next";
 import { useModels } from "../ModelsContext";
+import {
+  buildSplitsPayload,
+  resolveSplitterName,
+  SPLIT_TYPES,
+} from "../../../utils/splitsPayload";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
  * and the splits for training, validation and testing.
@@ -66,14 +71,14 @@ function PrepareDatasetStep({
   // banner doesn't flash red while columns are still being auto-selected or a
   // check is in flight, only once a real valid/invalid result is known.
   const [validationPending, setValidationPending] = useState(true);
-  const [shuffle, setShuffle] = useState(true);
-  const [stratify, setStratify] = useState(false);
-  const [seed, setSeed] = useState(42);
+
+  // Values submitted by the schema generated splitter form, and whether that
+  // form currently reports a validation error.
+  const [splitterParams, setSplitterParams] = useState(null);
+  const [paramsError, setParamsError] = useState(false);
 
   // Cross-Validation configuration states
   const [cvType, setCvType] = useState(null);
-  const [numFolds, setNumFolds] = useState(5);
-  const [numRepeats, setNumRepeats] = useState(2);
   const [groupColumn, setGroupColumn] = useState("");
 
   const defaultParitionsIndex = {
@@ -81,25 +86,11 @@ function PrepareDatasetStep({
     validation: [],
     test: [],
   };
-  const defaultPartitionsPercentage = {
-    train: 0.6,
-    validation: 0.2,
-    test: 0.2,
-  };
-
   const [datasetPartitionsIndex, setDatasetPartitionsIndex] = useState({});
 
   const [rowsPartitionsIndex, setRowsPartitionsIndex] = useState(
     defaultParitionsIndex,
   );
-  const [rowsPartitionsPercentage, setRowsPartitionsPercentage] = useState(
-    defaultPartitionsPercentage,
-  );
-  const SPLIT_TYPES = {
-    RANDOM: "random",
-    MANUAL: "manual",
-    PREDEFINED: "predefined",
-  };
   const [splitType, setSplitType] = useState("");
 
   const [splitsReady, setSplitsReady] = useState(false);
@@ -258,41 +249,27 @@ function PrepareDatasetStep({
       evaluation_strategy: evaluationStrategy,
     };
 
-    if (evaluationStrategy === "HoldoutEvaluationStrategy") {
-      if (splitType === SPLIT_TYPES.MANUAL) {
-        updatedExpData.splits = {
-          ...rowsPartitionsIndex,
-          splitter_name: "HoldoutSplitter",
-          splitType: splitType,
-        };
-      } else if (splitType === SPLIT_TYPES.RANDOM) {
-        updatedExpData.splits = {
-          ...rowsPartitionsPercentage,
-          shuffle: shuffle,
-          stratify: stratify,
-          seed: seed === "" || seed == null ? 42 : Number(seed),
-          splitter_name: "HoldoutSplitter",
-          splitType: splitType,
-        };
-      } else if (splitType === SPLIT_TYPES.PREDEFINED) {
-        updatedExpData.splits = {
-          ...datasetPartitionsIndex,
-          splitter_name: "HoldoutSplitter",
-          splitType: splitType,
-        };
-      }
-    } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
-      const cvSchemaProperties = cvType.schema?.properties || {};
-      updatedExpData.splits = {
-        splitter_name: cvType.name,
-        seed: seed === "" || seed == null ? 42 : Number(seed),
-        ...(cvSchemaProperties.n_splits ? { n_splits: numFolds } : {}),
-        ...(cvSchemaProperties.n_repeats ? { n_repeats: numRepeats } : {}),
-        ...(cvSchemaProperties.group_column
-          ? { group_column: groupColumn }
-          : {}),
-        ...(cvSchemaProperties.shuffle ? { shuffle: shuffle } : {}),
-      };
+    const splitterName = resolveSplitterName(evaluationStrategy, cvType);
+    if (splitterName) {
+      updatedExpData.splits = buildSplitsPayload({
+        splitterName,
+        splitType:
+          evaluationStrategy === "HoldoutEvaluationStrategy"
+            ? splitType
+            : SPLIT_TYPES.CV,
+        params: {
+          ...(splitterParams ?? {}),
+          // The group column select is rendered by hand, so its value is not
+          // part of the generated form's values.
+          ...(cvType?.schema?.properties?.group_column
+            ? { group_column: groupColumn }
+            : {}),
+        },
+        indexes:
+          splitType === SPLIT_TYPES.PREDEFINED
+            ? datasetPartitionsIndex
+            : rowsPartitionsIndex,
+      });
     }
 
     setNewExp(updatedExpData);
@@ -306,10 +283,13 @@ function PrepareDatasetStep({
     }
   }, [inputColumnNames, outputColumnNames]);
 
+  // Column validity depends on the columns, the dataset and the task, never on
+  // the split configuration. Gating it on the splits being ready made every
+  // split change re-check the columns over HTTP and blank the requirements
+  // banner in the meantime.
   useEffect(() => {
     if (
       columnsReady &&
-      splitsReady &&
       datasetInfo &&
       datasetInfo.column_names &&
       datasetInfo.column_names.length > 0
@@ -320,13 +300,7 @@ function PrepareDatasetStep({
       setColumnsAreValid(false);
       setValidationPending(true);
     }
-  }, [
-    columnsReady,
-    splitsReady,
-    inputColumnNames,
-    outputColumnNames,
-    datasetInfo,
-  ]);
+  }, [columnsReady, inputColumnNames, outputColumnNames, datasetInfo]);
 
   useEffect(() => {
     if (columnsAreValid && splitsReady && columnsReady) {
@@ -340,16 +314,14 @@ function PrepareDatasetStep({
     splitsReady,
     columnsAreValid,
     splitType,
-    shuffle,
-    stratify,
-    seed,
+    splitterParams,
     inputColumnNames,
     outputColumnNames,
     cvType,
-    numFolds,
-    numRepeats,
     groupColumn,
     evaluationStrategy,
+    rowsPartitionsIndex,
+    datasetPartitionsIndex,
   ]);
 
   useEffect(() => {
@@ -382,26 +354,18 @@ function PrepareDatasetStep({
         datasetInfo={datasetInfo}
         rowsPartitionsIndex={rowsPartitionsIndex}
         setRowsPartitionsIndex={setRowsPartitionsIndex}
-        rowsPartitionsPercentage={rowsPartitionsPercentage}
-        setRowsPartitionsPercentage={setRowsPartitionsPercentage}
         setSplitsReady={setSplitsReady}
         splitType={splitType}
         setSplitType={setSplitType}
         SPLIT_TYPES={SPLIT_TYPES}
-        shuffle={shuffle}
-        setShuffle={setShuffle}
-        stratify={stratify}
-        setStratify={setStratify}
-        seed={seed}
-        setSeed={setSeed}
+        splitterParams={splitterParams}
+        setSplitterParams={setSplitterParams}
+        paramsError={paramsError}
+        setParamsError={setParamsError}
         evaluationStrategy={evaluationStrategy}
         setEvaluationStrategy={setEvaluationStrategy}
         cvType={cvType}
         setCvType={setCvType}
-        numFolds={numFolds}
-        setNumFolds={setNumFolds}
-        numRepeats={numRepeats}
-        setNumRepeats={setNumRepeats}
         groupColumn={groupColumn}
         setGroupColumn={setGroupColumn}
         inputColumnNames={inputColumnNames}
@@ -413,15 +377,11 @@ function PrepareDatasetStep({
     infoLoading,
     datasetInfo,
     rowsPartitionsIndex,
-    rowsPartitionsPercentage,
     splitType,
-    shuffle,
-    stratify,
-    seed,
+    splitterParams,
+    paramsError,
     evaluationStrategy,
     cvType,
-    numFolds,
-    numRepeats,
     groupColumn,
     inputColumnNames,
   ]);

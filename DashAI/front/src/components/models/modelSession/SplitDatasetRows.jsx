@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import {
@@ -11,18 +11,15 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
-  Button,
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
 } from "@mui/material";
-import BooleanInput from "../../configurableObject/Inputs/BooleanInput";
-import FormSchemaFieldCard, {
-  DescriptionBlock,
-} from "../../shared/FormSchemaFieldCard";
+import { DescriptionBlock } from "../../shared/FormSchemaFieldCard";
+import FormSchema from "../../shared/FormSchema";
+import FormSchemaLayout from "../../shared/FormSchemaLayout";
+import { resolveSplitterName } from "../../../utils/splitsPayload";
 import { useTranslation } from "react-i18next";
-import { SplitscreenOutlined } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { getComponents } from "../../../api/component";
 
@@ -74,26 +71,18 @@ function SplitDatasetRows({
   datasetInfo,
   rowsPartitionsIndex,
   setRowsPartitionsIndex,
-  rowsPartitionsPercentage,
-  setRowsPartitionsPercentage,
   setSplitsReady,
   splitType,
   setSplitType,
   SPLIT_TYPES,
-  shuffle,
-  setShuffle,
-  stratify,
-  setStratify,
-  seed,
-  setSeed,
+  splitterParams,
+  setSplitterParams,
+  paramsError,
+  setParamsError,
   evaluationStrategy,
   setEvaluationStrategy,
   cvType,
   setCvType,
-  numFolds,
-  setNumFolds,
-  numRepeats,
-  setNumRepeats,
   groupColumn,
   setGroupColumn,
   inputColumnNames,
@@ -101,7 +90,6 @@ function SplitDatasetRows({
 }) {
   const { t } = useTranslation(["experiments", "common"]);
   const { enqueueSnackbar } = useSnackbar();
-
   const totalRows = datasetInfo.total_rows;
   const trainDatasetPercentage = (datasetInfo.train_size / totalRows).toFixed(
     2,
@@ -119,15 +107,93 @@ function SplitDatasetRows({
   const checkSplit = (train, validation, test) =>
     Math.abs(train + validation + test - 1) < 0.0001;
 
-  const [randomSplitError, setRandomSplitError] = useState(false);
-  const [randomSplitErrorText, setRandomSplitErrorText] = useState("");
+  // The splitter's own parameters come from the schema generated form; only the
+  // rules the schema cannot express are checked here.
+  const splitterName = resolveSplitterName(evaluationStrategy, cvType);
+  const isIndexMode =
+    splitType === SPLIT_TYPES.MANUAL || splitType === SPLIT_TYPES.PREDEFINED;
+  const params = splitterParams ?? {};
+  const proportionsAreNumbers = ["train", "validation", "test"].every(
+    (key) => typeof params[key] === "number",
+  );
+  const proportionsSumToOne =
+    proportionsAreNumbers &&
+    checkSplit(params.train, params.validation, params.test);
+  const trainIsEmpty = params.train === 0;
+  const folds = params.n_splits;
+  const tooManyFolds =
+    typeof folds === "number" && folds > (datasetInfo.total_rows ?? 0);
+  // group_column is rendered by hand because its options are the dataset's own
+  // columns, so the generated form never validates it.
+  // Memoized because the generated form memoizes its field list on this array.
+  const excludedFields = useMemo(
+    () =>
+      isIndexMode
+        ? ["group_column", "train", "test", "validation"]
+        : ["group_column"],
+    [isIndexMode],
+  );
+
+  // The generated form reports its values only once the user edits a field, so
+  // the schema placeholders are pushed up here: without them a session created
+  // without touching the form would carry no splitter parameters at all.
+  //
+  // The schema is fetched by name rather than read from the shared schema hook
+  // on purpose. That hook keeps the previous splitter's schema for one render
+  // after the name changes, and seeding from it left the parameters of the
+  // splitter that was selected a moment ago in place.
+  useEffect(() => {
+    if (!splitterName) return undefined;
+    let cancelled = false;
+
+    const seedSplitterParams = async () => {
+      try {
+        const component = await getComponents({ model: splitterName });
+        if (cancelled) return;
+        const properties = component?.schema?.properties ?? {};
+        const defaults = Object.fromEntries(
+          Object.entries(properties)
+            .filter(([, property]) => "placeholder" in property)
+            .map(([key, property]) => [key, property.placeholder]),
+        );
+        if (Object.keys(defaults).length > 0) {
+          setSplitterParams(defaults);
+        }
+      } catch (error) {
+        console.error(`Error fetching the ${splitterName} schema`, error);
+      }
+    };
+
+    seedSplitterParams();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [splitterName]);
+
+  // Rules that span several fields, which a per field schema cannot express.
+  let splitsMessage = "";
+  if (
+    evaluationStrategy === "HoldoutEvaluationStrategy" &&
+    splitType === SPLIT_TYPES.RANDOM
+  ) {
+    if (trainIsEmpty) {
+      splitsMessage = t("experiments:error.trainSplitMustBeGreaterThanZero");
+    } else if (proportionsAreNumbers && !proportionsSumToOne) {
+      splitsMessage = t("experiments:error.splitsMustSumToOne");
+    }
+  } else if (
+    evaluationStrategy === "CrossValidationEvaluationStrategy" &&
+    tooManyFolds
+  ) {
+    splitsMessage = t("experiments:error.foldsMustBeLessThanDatasetSize", {
+      datasetSize: datasetInfo.total_rows,
+    });
+  }
+
   const [manualSplitError, setManualSplitError] = useState(false);
   const [manualSplitErrorText, setManualSplitErrorText] = useState("");
 
-  const [cvFoldError, setCvFoldError] = useState(false);
-  const [cvFoldErrorText, setCvFoldErrorText] = useState("");
-  const [cvRepeatError, setCvRepeatError] = useState(false);
-  const [cvRepeatErrorText, setCvRepeatErrorText] = useState("");
   const [groupColumnError, setGroupColumnError] = useState(true);
   const [allowedCvTypes, setAllowedCvTypes] = useState([]);
 
@@ -163,27 +229,6 @@ function SplitDatasetRows({
     if (newType === SPLIT_TYPES.PREDEFINED) {
       setSplitsReady(true);
     }
-    if (newType === SPLIT_TYPES.RANDOM) {
-      const newSplit = { train: 0.6, test: 0.2, validation: 0.2 };
-      setRowsPartitionsPercentage(newSplit);
-      const hasZero = newSplit.train === 0;
-      const sumsToOne = checkSplit(
-        newSplit.train,
-        newSplit.validation,
-        newSplit.test,
-      );
-      if (hasZero) {
-        setRandomSplitErrorText(
-          t("experiments:error.trainSplitMustBeGreaterThanZero"),
-        );
-        setRandomSplitError(true);
-      } else if (!sumsToOne) {
-        setRandomSplitErrorText(t("experiments:error.splitsMustSumToOne"));
-        setRandomSplitError(true);
-      } else {
-        setRandomSplitError(false);
-      }
-    }
     if (newType === SPLIT_TYPES.MANUAL) {
       const newIndex = { train: [], test: [], validation: [] };
       setRowsPartitionsIndex(newIndex);
@@ -198,60 +243,22 @@ function SplitDatasetRows({
     const value = event.target.value;
     const id = event.target.id;
 
-    if (splitType === SPLIT_TYPES.MANUAL) {
-      try {
-        const rowsIndex = parseRangeToIndex(value, totalRows);
-        const updatedIndex = { ...rowsPartitionsIndex, [id]: rowsIndex };
-        setRowsPartitionsIndex(updatedIndex);
-        if (updatedIndex.train.length === 0) {
-          setManualSplitErrorText(
-            t("experiments:error.trainSplitMustHaveAtLeastOneRow"),
-          );
-          setManualSplitError(true);
-        } else {
-          setManualSplitError(false);
-        }
-      } catch (error) {
-        setManualSplitErrorText(error.message);
-        setManualSplitError(true);
-      }
-    } else {
-      const numValue = parseFloat(value) || 0;
-      const newSplit = { ...rowsPartitionsPercentage, [id]: numValue };
-      setRowsPartitionsPercentage(newSplit);
-      const hasZero = newSplit.train === 0;
-      const sumsToOne = checkSplit(
-        newSplit.train,
-        newSplit.validation,
-        newSplit.test,
-      );
-      if (hasZero) {
-        setRandomSplitErrorText(
-          t("experiments:error.trainSplitMustBeGreaterThanZero"),
+    try {
+      const rowsIndex = parseRangeToIndex(value, totalRows);
+      const updatedIndex = { ...rowsPartitionsIndex, [id]: rowsIndex };
+      setRowsPartitionsIndex(updatedIndex);
+      if (updatedIndex.train.length === 0) {
+        setManualSplitErrorText(
+          t("experiments:error.trainSplitMustHaveAtLeastOneRow"),
         );
-        setRandomSplitError(true);
-      } else if (!sumsToOne) {
-        setRandomSplitErrorText(t("experiments:error.splitsMustSumToOne"));
-        setRandomSplitError(true);
+        setManualSplitError(true);
       } else {
-        setRandomSplitError(false);
+        setManualSplitError(false);
       }
+    } catch (error) {
+      setManualSplitErrorText(error.message);
+      setManualSplitError(true);
     }
-  };
-
-  const handleShuffleChange = (value) => {
-    setShuffle(value);
-    if (!value) setStratify(false);
-  };
-
-  const handleStratifyChange = (value) => {
-    if (shuffle) setStratify(value);
-    else setStratify(false);
-  };
-
-  const handleSeedChange = (event) => {
-    const value = event.target.value === "" ? "" : Number(event.target.value);
-    setSeed(value);
   };
 
   const handleGroupColumnChange = (event) => {
@@ -264,53 +271,6 @@ function SplitDatasetRows({
     }
   };
 
-  const handleNumFoldsChange = (event) => {
-    const value = event.target.value === "" ? "" : Number(event.target.value);
-    setNumFolds(value);
-    if (value !== "" && value > 1 && value <= datasetInfo.total_rows) {
-      setCvFoldError(false);
-      setCvFoldErrorText("");
-      return;
-    }
-
-    if (value === "") {
-      setCvFoldErrorText(t("experiments:error.foldsMustBeAnInteger"));
-    } else if (value <= 1) {
-      setCvFoldErrorText(t("experiments:error.foldsMustBeGreaterThanOne"));
-    } else if (value > datasetInfo.total_rows) {
-      setCvFoldErrorText(
-        t("experiments:error.foldsMustBeLessThanDatasetSize", {
-          datasetSize: datasetInfo.total_rows,
-        }),
-      );
-    }
-    setCvFoldError(true);
-    return;
-  };
-
-  const handleOnBlurSeed = (event) => {
-    if (event.target.value === "") {
-      setSeed(42);
-    }
-  };
-
-  const handleNumRepeatsChange = (event) => {
-    const value = event.target.value === "" ? "" : Number(event.target.value);
-    setNumRepeats(value);
-    if (value !== "" && value > 1) {
-      setCvRepeatError(false);
-      setCvRepeatErrorText("");
-      return;
-    }
-    if (value === "") {
-      setCvRepeatErrorText(t("experiments:error.repeatsMustBeGreaterThanOne"));
-    } else if (value <= 1) {
-      setCvRepeatErrorText(t("experiments:error.repeatsMustBeGreaterThanOne"));
-    }
-    setCvRepeatError(true);
-    return;
-  };
-
   useEffect(() => {
     if (hasPredefinedSplits) {
       setSplitType(SPLIT_TYPES.PREDEFINED);
@@ -320,6 +280,10 @@ function SplitDatasetRows({
   }, [hasPredefinedSplits]);
 
   useEffect(() => {
+    if (paramsError) {
+      setSplitsReady(false);
+      return;
+    }
     if (evaluationStrategy === "HoldoutEvaluationStrategy") {
       if (splitType === SPLIT_TYPES.PREDEFINED) {
         setSplitsReady(true);
@@ -331,32 +295,31 @@ function SplitDatasetRows({
         setSplitsReady(true);
       } else if (
         splitType === SPLIT_TYPES.RANDOM &&
-        !randomSplitError &&
-        rowsPartitionsPercentage.train > 0
+        proportionsSumToOne &&
+        !trainIsEmpty
       ) {
         setSplitsReady(true);
       } else {
         setSplitsReady(false);
       }
     } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
-      if (!cvFoldError && !cvRepeatError && !groupColumnError) {
-        setSplitsReady(true);
-      } else {
-        setSplitsReady(false);
-      }
+      setSplitsReady(
+        Boolean(splitterName) && !tooManyFolds && !groupColumnError,
+      );
     } else {
       setSplitsReady(false);
     }
   }, [
     rowsPartitionsIndex,
-    rowsPartitionsPercentage,
-    randomSplitError,
     manualSplitError,
     splitType,
     evaluationStrategy,
-    cvFoldError,
-    cvRepeatError,
+    paramsError,
+    proportionsSumToOne,
+    trainIsEmpty,
+    tooManyFolds,
     groupColumnError,
+    splitterName,
   ]);
 
   const splitOptions = [
@@ -510,85 +473,6 @@ function SplitDatasetRows({
             </SplitsCard>
           )}
 
-          {/* Random */}
-          {splitType === SPLIT_TYPES.RANDOM && (
-            <>
-              <SplitsCard
-                label={t("experiments:label.splits")}
-                description={t("experiments:label.splitsDescription")}
-                errorMessage={
-                  randomSplitError ? randomSplitErrorText : undefined
-                }
-              >
-                <Grid container spacing={4}>
-                  {splitFields.map(({ id, label }) => (
-                    <Grid key={id} size={{ xs: 4 }}>
-                      <TextField
-                        id={id}
-                        label={label}
-                        value={rowsPartitionsPercentage[id]}
-                        type="number"
-                        size="small"
-                        fullWidth
-                        error={randomSplitError}
-                        onChange={handleRowsChange}
-                        slotProps={{
-                          inputLabel: { shrink: true },
-                          htmlInput: { step: 0.1 },
-                        }}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-              </SplitsCard>
-
-              <FormSchemaFieldCard
-                label={t("experiments:label.shuffle")}
-                description={t("experiments:label.shuffleDescription")}
-              >
-                <BooleanInput
-                  name="shuffle"
-                  value={shuffle}
-                  label={t("experiments:label.shuffle")}
-                  onChange={handleShuffleChange}
-                  description={t("experiments:label.shuffleDescription")}
-                />
-              </FormSchemaFieldCard>
-
-              <FormSchemaFieldCard
-                label={t("experiments:label.stratify")}
-                description={
-                  !shuffle
-                    ? t("experiments:label.stratifyRequiresShuffle")
-                    : t("experiments:label.stratifyDescription")
-                }
-              >
-                <BooleanInput
-                  name="stratify"
-                  value={stratify}
-                  label={t("experiments:label.stratify")}
-                  onChange={handleStratifyChange}
-                  description={t("experiments:label.stratifyDescription")}
-                />
-              </FormSchemaFieldCard>
-
-              <FormSchemaFieldCard
-                label={t("experiments:label.seed")}
-                description={t("experiments:label.enterSeedValue")}
-              >
-                <TextField
-                  id="seed"
-                  label={t("experiments:label.seed")}
-                  value={seed}
-                  onChange={handleSeedChange}
-                  type="number"
-                  size="small"
-                  fullWidth
-                />
-              </FormSchemaFieldCard>
-            </>
-          )}
-
           {/* Manual */}
           {splitType === SPLIT_TYPES.MANUAL && (
             <SplitsCard
@@ -635,46 +519,6 @@ function SplitDatasetRows({
             </FormControl>
           </SplitsCard>
 
-          {/* Number of Folds */}
-          {Boolean(cvType?.schema?.properties?.n_splits) && (
-            <SplitsCard
-              label={t("experiments:label.numFolds")}
-              description={t("experiments:label.numFoldsDescription")}
-              errorMessage={cvFoldError ? cvFoldErrorText : undefined}
-            >
-              <TextField
-                id="numFolds"
-                value={numFolds}
-                onChange={handleNumFoldsChange}
-                type="number"
-                size="small"
-                fullWidth
-                error={cvFoldError}
-                inputProps={{ min: 2, max: 20 }}
-              />
-            </SplitsCard>
-          )}
-
-          {/* Number of Repeats */}
-          {Boolean(cvType?.schema?.properties?.n_repeats) && (
-            <SplitsCard
-              label={t("experiments:label.numRepeats")}
-              description={t("experiments:label.numRepeatsDescription")}
-              errorMessage={cvRepeatError ? cvRepeatErrorText : undefined}
-            >
-              <TextField
-                id="numRepeats"
-                value={numRepeats}
-                onChange={handleNumRepeatsChange}
-                type="number"
-                size="small"
-                fullWidth
-                error={cvRepeatError}
-                inputProps={{ min: 2, max: 10 }}
-              />
-            </SplitsCard>
-          )}
-
           {/* Group Column */}
           {Boolean(cvType?.schema?.properties?.group_column) && (
             <SplitsCard
@@ -701,39 +545,28 @@ function SplitDatasetRows({
               </FormControl>
             </SplitsCard>
           )}
+        </>
+      )}
 
-          {/* Shuffle */}
-          {Boolean(cvType?.schema?.properties?.shuffle) && (
-            <FormSchemaFieldCard
-              label={t("experiments:label.shuffle")}
-              description={t("experiments:label.shuffleDescription")}
-            >
-              <BooleanInput
-                name="shuffle"
-                value={shuffle}
-                label={t("experiments:label.shuffle")}
-                onChange={handleShuffleChange}
-                description={t("experiments:label.shuffleDescription")}
-              />
-            </FormSchemaFieldCard>
-          )}
-
-          {/* Seed */}
-          <FormSchemaFieldCard
-            label={t("experiments:label.seed")}
-            description={t("experiments:label.enterSeedValue")}
-          >
-            <TextField
-              id="seed"
-              label={t("experiments:label.seed")}
-              value={seed}
-              onChange={handleSeedChange}
-              onBlur={handleOnBlurSeed}
-              type="number"
-              size="small"
-              fullWidth
+      {/* Splitter parameters, generated from the component schema */}
+      {splitterName && (
+        <>
+          <FormSchemaLayout>
+            <FormSchema
+              autoSave
+              hideButtons
+              key={splitterName}
+              model={splitterName}
+              onFormSubmit={setSplitterParams}
+              setError={setParamsError}
+              excludeFields={excludedFields}
             />
-          </FormSchemaFieldCard>
+          </FormSchemaLayout>
+          {splitsMessage && (
+            <FormHelperText error sx={{ px: 4 }}>
+              {splitsMessage}
+            </FormHelperText>
+          )}
         </>
       )}
     </Stack>
@@ -744,26 +577,18 @@ SplitDatasetRows.propTypes = {
   datasetInfo: PropTypes.object.isRequired,
   rowsPartitionsIndex: PropTypes.object.isRequired,
   setRowsPartitionsIndex: PropTypes.func.isRequired,
-  rowsPartitionsPercentage: PropTypes.object.isRequired,
-  setRowsPartitionsPercentage: PropTypes.func.isRequired,
   setSplitsReady: PropTypes.func.isRequired,
   splitType: PropTypes.string.isRequired,
   setSplitType: PropTypes.func.isRequired,
   SPLIT_TYPES: PropTypes.object.isRequired,
-  shuffle: PropTypes.bool.isRequired,
-  setShuffle: PropTypes.func.isRequired,
-  stratify: PropTypes.bool.isRequired,
-  setStratify: PropTypes.func.isRequired,
-  seed: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-  setSeed: PropTypes.func.isRequired,
+  splitterParams: PropTypes.object,
+  setSplitterParams: PropTypes.func.isRequired,
+  paramsError: PropTypes.bool,
+  setParamsError: PropTypes.func.isRequired,
   evaluationStrategy: PropTypes.string.isRequired,
   setEvaluationStrategy: PropTypes.func.isRequired,
-  cvType: PropTypes.string.isRequired,
+  cvType: PropTypes.object,
   setCvType: PropTypes.func.isRequired,
-  numFolds: PropTypes.number.isRequired,
-  setNumFolds: PropTypes.func.isRequired,
-  numRepeats: PropTypes.number.isRequired,
-  setNumRepeats: PropTypes.func.isRequired,
   groupColumn: PropTypes.string,
   setGroupColumn: PropTypes.func.isRequired,
   inputColumnNames: PropTypes.arrayOf(PropTypes.string),

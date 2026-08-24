@@ -28,10 +28,7 @@
     "taskRequirementsNotFound": "Task requirements for {{taskName}} not found",
     "trainSplitMustBeGreaterThanZero": "Train split must be greater than zero",
     "trainSplitMustHaveAtLeastOneRow": "Train split must have at least one row",
-    "foldsMustBeGreaterThanOne": "Number of folds must be greater than 1",
     "foldsMustBeLessThanDatasetSize": "Number of folds must be less than or equal to the number of samples in the dataset ({{datasetSize}})",
-    "foldsMustBeAnInteger": "Number of folds must be an integer",
-    "repeatsMustBeGreaterThanOne": "Number of repeats must be greater than 1",
     "groupColumnMustBeSelected": "A group column must be selected"
   },
   "label": {
@@ -48,7 +45,6 @@
     "datasetOutputColumnRequirements": "<0>The output columns must be of the types</0><1></1><2>, and they should have a cardinality of </2><3>{{cardinality}}.</3>",
     "duration": "Duration",
     "endTime": "End Time",
-    "enterSeedValue": "Enter a seed value (default: 42)",
     "experimentName": "Experiment Name",
     "experimentsModuleTitle": "Experiments Module",
     "manual": "Manual",

@@ -15,7 +15,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 
-from .fold_splitter import FoldSplitter
+from .fold_splitter import FoldSplitter, sklearn_random_state
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -23,14 +23,14 @@ if TYPE_CHECKING:
 
 class StratifiedGroupKFoldSplitterSchema(BaseSchema):
     n_splits: schema_field(
-        int_field(ge=2),
+        int_field(ge=2, le=20),
         placeholder=5,
         description=MultilingualString(
-            en="Number of folds. Must be an integer greater than or equal to 2.",
-            es="Número de particiones. Debe ser un entero mayor o igual a 2.",
-            pt="Número de partições. Deve ser um inteiro maior ou igual a 2.",
-            de="Anzahl der Folds. Muss eine ganze Zahl größer oder gleich 2 sein.",
-            zh="折数，必须为大于或等于2的整数。",
+            en="Number of folds. Must be an integer between 2 and 20.",
+            es="Número de particiones. Debe ser un entero entre 2 y 20.",
+            pt="Número de partições. Deve ser um inteiro entre 2 e 20.",
+            de="Anzahl der Folds. Muss eine ganze Zahl zwischen 2 und 20 sein.",
+            zh="折数，必须为2到20之间的整数。",
         ),
         alias=MultilingualString(
             en="Number of folds",
@@ -78,11 +78,26 @@ class StratifiedGroupKFoldSplitterSchema(BaseSchema):
         bool_field(),
         placeholder=True,
         description=MultilingualString(
-            en="Whether to shuffle each group's samples before splitting.",
-            es="Si se deben mezclar las muestras de cada grupo antes de dividir.",
-            pt="Se as amostras de cada grupo devem ser embaralhadas antes de dividir.",
-            de="Ob die Proben jeder Gruppe vor der Aufteilung gemischt werden sollen.",
-            zh="划分前是否打乱每个分组内的样本。",
+            en=(
+                "Whether to shuffle each group's samples before splitting. When "
+                "shuffling is disabled, the random state has no effect."
+            ),
+            es=(
+                "Si se deben mezclar las muestras de cada grupo antes de dividir. "
+                "Cuando la mezcla está desactivada, el estado aleatorio no tiene "
+                "efecto."
+            ),
+            pt=(
+                "Se as amostras de cada grupo devem ser embaralhadas antes de "
+                "dividir. Quando o embaralhamento está desativado, o estado aleatório "
+                "não tem efeito."
+            ),
+            de=(
+                "Ob die Proben jeder Gruppe vor der Aufteilung gemischt werden "
+                "sollen. Wenn das Mischen deaktiviert ist, hat der Zufallszustand "
+                "keine Wirkung."
+            ),
+            zh="划分前是否打乱每个分组内的样本。关闭打乱时，随机状态不起作用。",
         ),
         alias=MultilingualString(
             en="Shuffle", es="Mezclar", pt="Embaralhar", de="Mischen", zh="打乱"
@@ -92,20 +107,24 @@ class StratifiedGroupKFoldSplitterSchema(BaseSchema):
         int_field(ge=0),
         placeholder=42,
         description=MultilingualString(
-            en="Seed used to make the split reproducible when shuffle is enabled.",
+            en=(
+                "Seed used to make the split reproducible when shuffle is enabled. It "
+                "is ignored when shuffling is disabled."
+            ),
             es=(
-                "Semilla utilizada para que la división sea reproducible cuando "
-                "se activa la mezcla."
+                "Semilla utilizada para que la división sea reproducible cuando se "
+                "activa la mezcla. Se ignora cuando la mezcla está desactivada."
             ),
             pt=(
                 "Semente usada para tornar a divisão reproduzível quando o "
-                "embaralhamento está ativado."
+                "embaralhamento está ativado. É ignorada quando o embaralhamento está "
+                "desativado."
             ),
             de=(
                 "Seed, um die Aufteilung reproduzierbar zu machen, wenn Mischen "
-                "aktiviert ist."
+                "aktiviert ist. Wird ignoriert, wenn das Mischen deaktiviert ist."
             ),
-            zh="启用打乱时，用于使划分可复现的随机种子。",
+            zh="启用打乱时，用于使划分可复现的随机种子。关闭打乱时将被忽略。",
         ),
         alias=MultilingualString(
             en="Random state",
@@ -199,7 +218,7 @@ class StratifiedGroupKFoldSplitter(FoldSplitter):
             sgkf = StratifiedGroupKFold(
                 n_splits=self.n_splits,
                 shuffle=self.shuffle,
-                random_state=self.random_state,
+                random_state=sklearn_random_state(self.shuffle, self.random_state),
             )
             folds = list(sgkf.split(indexes, y=y_labels, groups=dataset_df_groups))
         except ValueError as e:

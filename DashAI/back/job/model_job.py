@@ -13,6 +13,7 @@ from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 from DashAI.back.splitters.base_splitter import BaseSplitter
+from DashAI.back.splitters.splits_payload import normalize_splits_payload
 from DashAI.back.tasks.base_task import BaseTask
 
 if TYPE_CHECKING:
@@ -336,6 +337,9 @@ class ModelJob(BaseJob):
             splits_data = json.loads(model_session.splits)
             if run.split_indexes:
                 splits_data["splitted_indexes"] = json.loads(run.split_indexes)
+            # Sessions created before the splits payload followed the splitter
+            # schema use different keys for the seed and for manual indexes.
+            splits_data = normalize_splits_payload(splits_data)
         except Exception as e:
             log.exception(e)
             raise JobError(

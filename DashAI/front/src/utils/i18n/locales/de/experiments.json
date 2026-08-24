@@ -28,10 +28,7 @@
     "taskRequirementsNotFound": "Aufgabenanforderungen für {{taskName}} nicht gefunden",
     "trainSplitMustBeGreaterThanZero": "Trainingsaufteilung muss größer als null sein",
     "trainSplitMustHaveAtLeastOneRow": "Trainingsaufteilung muss mindestens eine Zeile haben",
-    "foldsMustBeGreaterThanOne": "Die Anzahl der Folds muss größer als 1 sein",
     "foldsMustBeLessThanDatasetSize": "Die Anzahl der Folds muss kleiner oder gleich der Anzahl der Stichproben im Datensatz sein ({{datasetSize}})",
-    "foldsMustBeAnInteger": "Die Anzahl der Folds muss eine ganze Zahl sein",
-    "repeatsMustBeGreaterThanOne": "Die Anzahl der Wiederholungen muss größer als 1 sein",
     "groupColumnMustBeSelected": "Es muss eine Spalte zum Gruppieren ausgewählt werden"
   },
   "label": {
@@ -48,7 +45,6 @@
     "datasetOutputColumnRequirements": "<0>Die Ausgabespalten müssen folgende Typen haben</0><1></1><2>, und eine Kardinalität von </2><3>{{cardinality}}.</3>",
     "duration": "Dauer",
     "endTime": "Endzeit",
-    "enterSeedValue": "Seed-Wert eingeben (Standard: 42)",
     "experimentName": "Experimentname",
     "experimentsModuleTitle": "Experiment-Modul",
     "manual": "Manuell",

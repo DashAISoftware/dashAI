@@ -319,6 +319,214 @@ def test_job_with_wrong_run(client: TestClient):
     assert response.status_code == 500, response.text
 
 
+def _run_with_splits(
+    client: TestClient, model_session_id: int, splits: dict, run_name: str
+):
+    """Train a run over a session temporarily configured with given splits.
+
+    Parameters
+    ----------
+    client : TestClient
+        The API test client.
+    model_session_id : int
+        Session whose splits are swapped for the duration of the call.
+    splits : dict
+        The splits payload to store on the session.
+    run_name : str
+        Name for the run created over that session.
+
+    Returns
+    -------
+    tuple
+        (job status string, split indexes stored on the run).
+    """
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        model_session = db.get(ModelSession, model_session_id)
+        original_splits = model_session.splits
+        model_session.splits = json.dumps(splits)
+        db.commit()
+
+    response = client.post(
+        "/api/v1/run/",
+        json={
+            "model_session_id": model_session_id,
+            "model_name": "DummyModel",
+            "name": run_name,
+            "parameters": {},
+            "optimizer_name": "",
+            "optimizer_parameters": {
+                "n_trials": 10,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            "goal_metric": "",
+            "description": "Run over a specific splits payload",
+            "plot_history_path": "path/to/history.png",
+            "plot_slice_path": "path/to/slice.png",
+            "plot_contour_path": "path/to/contour.png",
+            "plot_importance_path": "path/to/importance.png",
+        },
+    )
+    assert response.status_code == 201, response.text
+    run_id = response.json()["id"]
+
+    try:
+        response = client.post(
+            "/api/v1/job/",
+            data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
+        )
+        assert response.status_code == 201, response.text
+        job_id = response.json()["id"]
+
+        response = client.get(f"/api/v1/job/status/{job_id}")
+        assert response.status_code == 200, response.text
+        status = response.json()["status"]
+
+        with session_factory() as db:
+            run = db.get(Run, run_id)
+            split_indexes = json.loads(run.split_indexes) if run.split_indexes else None
+
+        return status, split_indexes
+    finally:
+        with session_factory() as db:
+            db.get(ModelSession, model_session_id).splits = original_splits
+            db.commit()
+        client.delete(f"/api/v1/run/{run_id}")
+
+
+def test_manual_splits_from_the_splitter_schema_train(
+    client: TestClient, model_session_id: int
+):
+    """The payload the wizard writes for a manual split trains as given."""
+    status, split_indexes = _run_with_splits(
+        client,
+        model_session_id,
+        {
+            "splitter_name": "HoldoutSplitter",
+            "splitType": "manual",
+            "splitted_indexes": {
+                "train_indexes": [0, 1, 2, 3, 4, 5],
+                "test_indexes": [6, 7],
+                "val_indexes": [8, 9],
+            },
+            "stratify": False,
+            "shuffle": True,
+            "random_state": 42,
+        },
+        "SchemaManualSplitRun",
+    )
+
+    assert status == "finished"
+    assert split_indexes == {
+        "train_indexes": [0, 1, 2, 3, 4, 5],
+        "test_indexes": [6, 7],
+        "val_indexes": [8, 9],
+    }
+
+
+def test_random_splits_honor_the_random_state(
+    client: TestClient, model_session_id: int
+):
+    """The seed reaches the splitter, so two seeds give two different splits."""
+    base = {
+        "splitter_name": "HoldoutSplitter",
+        "splitType": "random",
+        "train": 0.6,
+        "test": 0.2,
+        "validation": 0.2,
+        "stratify": False,
+        "shuffle": True,
+    }
+
+    first_status, first = _run_with_splits(
+        client, model_session_id, {**base, "random_state": 1}, "SeedOneRun"
+    )
+    other_status, other = _run_with_splits(
+        client, model_session_id, {**base, "random_state": 99}, "SeedNinetyNineRun"
+    )
+
+    assert first_status == "finished"
+    assert other_status == "finished"
+    assert first["train_indexes"] != other["train_indexes"]
+
+
+def test_legacy_manual_splits_still_train(client: TestClient, model_session_id: int):
+    """A session stored before the splits payload followed the splitter schema.
+
+    Manual and predefined holdout splits used to be stored with the partition
+    indexes under the ``train`` / ``test`` / ``validation`` keys, which the
+    splitter reads as proportions.
+    """
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        model_session = db.get(ModelSession, model_session_id)
+        original_splits = model_session.splits
+        model_session.splits = json.dumps(
+            {
+                "splitter_name": "HoldoutSplitter",
+                "splitType": "manual",
+                "train": [0, 1, 2, 3, 4, 5],
+                "test": [6, 7],
+                "validation": [8, 9],
+            }
+        )
+        db.commit()
+
+    response = client.post(
+        "/api/v1/run/",
+        json={
+            "model_session_id": model_session_id,
+            "model_name": "DummyModel",
+            "name": "LegacyManualSplitRun",
+            "parameters": {},
+            "optimizer_name": "",
+            "optimizer_parameters": {
+                "n_trials": 10,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            "goal_metric": "",
+            "description": "Run over a legacy manual split payload",
+            "plot_history_path": "path/to/history.png",
+            "plot_slice_path": "path/to/slice.png",
+            "plot_contour_path": "path/to/contour.png",
+            "plot_importance_path": "path/to/importance.png",
+        },
+    )
+    assert response.status_code == 201, response.text
+    run_id = response.json()["id"]
+
+    try:
+        response = client.post(
+            "/api/v1/job/",
+            data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
+        )
+        assert response.status_code == 201, response.text
+        job_id = response.json()["id"]
+
+        response = client.get(f"/api/v1/job/status/{job_id}")
+        assert response.status_code == 200, response.text
+        assert response.json()["status"] == "finished"
+
+        with session_factory() as db:
+            run = db.get(Run, run_id)
+            assert json.loads(run.split_indexes) == {
+                "train_indexes": [0, 1, 2, 3, 4, 5],
+                "test_indexes": [6, 7],
+                "val_indexes": [8, 9],
+            }
+    finally:
+        with session_factory() as db:
+            db.get(ModelSession, model_session_id).splits = original_splits
+            db.commit()
+        client.delete(f"/api/v1/run/{run_id}")
+
+
 def test_execute_job_with_stale_run_path(client: TestClient, model_session_id: int):
     """A leftover file/dir at run_path (e.g. from a run that reused this id)
     must not prevent training from finishing."""

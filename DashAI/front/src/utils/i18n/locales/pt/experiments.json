@@ -28,10 +28,7 @@
     "taskRequirementsNotFound": "Nenhum requisito de tarefa encontrado para {{taskName}}",
     "trainSplitMustBeGreaterThanZero": "A divisão de treinamento deve ser maior que zero",
     "trainSplitMustHaveAtLeastOneRow": "A divisão de treinamento deve ter pelo menos uma linha",
-    "foldsMustBeGreaterThanOne": "O número de dobras deve ser maior que 1",
     "foldsMustBeLessThanDatasetSize": "O número de dobras deve ser menor ou igual ao número de amostras no conjunto de dados ({{datasetSize}})",
-    "foldsMustBeAnInteger": "O número de dobras deve ser um número inteiro",
-    "repeatsMustBeGreaterThanOne": "O número de repetições deve ser maior que 1",
     "groupColumnMustBeSelected": "Uma coluna para agrupamento deve ser selecionada"
   },
   "label": {
@@ -48,7 +45,6 @@
     "datasetOutputColumnRequirements": "<0>As colunas de saída devem ser dos tipos</0><1></1><2>, e devem ter uma cardinalidade de </2><3>{{cardinality}}.</3>",
     "duration": "Duração",
     "endTime": "Hora de Conclusão",
-    "enterSeedValue": "Insira um valor de semente (padrão: 42)",
     "experimentName": "Nome do Experimento",
     "experimentsModuleTitle": "Módulo de Experimentos",
     "manual": "Manual",

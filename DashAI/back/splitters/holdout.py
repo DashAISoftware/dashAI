@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
+from pydantic import model_validator
+
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
     float_field,
     int_field,
-    none_type,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
 
 class HoldoutSplitterSchema(BaseSchema):
     train: schema_field(
-        none_type(float_field(ge=0, le=1)),
+        float_field(ge=0, le=1),
         placeholder=0.6,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the training partition.",
@@ -37,7 +38,7 @@ class HoldoutSplitterSchema(BaseSchema):
         ),
     )  # type: ignore
     test: schema_field(
-        none_type(float_field(ge=0, le=1)),
+        float_field(ge=0, le=1),
         placeholder=0.2,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the test partition.",
@@ -51,7 +52,7 @@ class HoldoutSplitterSchema(BaseSchema):
         ),
     )  # type: ignore
     validation: schema_field(
-        none_type(float_field(ge=0, le=1)),
+        float_field(ge=0, le=1),
         placeholder=0.2,
         description=MultilingualString(
             en="Proportion of the dataset assigned to the validation partition.",
@@ -90,11 +91,23 @@ class HoldoutSplitterSchema(BaseSchema):
         bool_field(),
         placeholder=True,
         description=MultilingualString(
-            en="Whether to shuffle the data before splitting it.",
-            es="Si se deben mezclar los datos antes de dividirlos.",
-            pt="Se os dados devem ser embaralhados antes de dividi-los.",
-            de="Ob die Daten vor der Aufteilung gemischt werden sollen.",
-            zh="划分前是否打乱数据。",
+            en=(
+                "Whether to shuffle the data before splitting it. When shuffling is "
+                "disabled, the random state has no effect."
+            ),
+            es=(
+                "Si se deben mezclar los datos antes de dividirlos. Cuando la mezcla "
+                "está desactivada, el estado aleatorio no tiene efecto."
+            ),
+            pt=(
+                "Se os dados devem ser embaralhados antes de dividi-los. Quando o "
+                "embaralhamento está desativado, o estado aleatório não tem efeito."
+            ),
+            de=(
+                "Ob die Daten vor der Aufteilung gemischt werden sollen. Wenn das "
+                "Mischen deaktiviert ist, hat der Zufallszustand keine Wirkung."
+            ),
+            zh="划分前是否打乱数据。关闭打乱时，随机状态不起作用。",
         ),
         alias=MultilingualString(
             en="Shuffle", es="Mezclar", pt="Embaralhar", de="Mischen", zh="打乱"
@@ -104,20 +117,24 @@ class HoldoutSplitterSchema(BaseSchema):
         int_field(ge=0),
         placeholder=42,
         description=MultilingualString(
-            en="Seed used to make the split reproducible when shuffle is enabled.",
+            en=(
+                "Seed used to make the split reproducible when shuffle is enabled. It "
+                "is ignored when shuffling is disabled."
+            ),
             es=(
-                "Semilla utilizada para que la división sea reproducible cuando "
-                "se activa la mezcla."
+                "Semilla utilizada para que la división sea reproducible cuando se "
+                "activa la mezcla. Se ignora cuando la mezcla está desactivada."
             ),
             pt=(
                 "Semente usada para tornar a divisão reproduzível quando o "
-                "embaralhamento está ativado."
+                "embaralhamento está ativado. É ignorada quando o embaralhamento está "
+                "desativado."
             ),
             de=(
                 "Seed, um die Aufteilung reproduzierbar zu machen, wenn Mischen "
-                "aktiviert ist."
+                "aktiviert ist. Wird ignoriert, wenn das Mischen deaktiviert ist."
             ),
-            zh="启用打乱时，用于使划分可复现的随机种子。",
+            zh="启用打乱时，用于使划分可复现的随机种子。关闭打乱时将被忽略。",
         ),
         alias=MultilingualString(
             en="Random state",
@@ -127,6 +144,30 @@ class HoldoutSplitterSchema(BaseSchema):
             zh="随机状态",
         ),
     )  # type: ignore
+
+    @model_validator(mode="after")
+    def check_partitions(self):
+        """Validate that the three partitions describe the whole dataset.
+
+        Returns
+        -------
+        HoldoutSplitterSchema
+            The validated schema instance.
+
+        Raises
+        ------
+        ValueError
+            If the proportions do not sum to one, or if the training partition
+            is empty.
+        """
+        total = self.train + self.test + self.validation
+        if abs(total - 1) > 1e-6:
+            raise ValueError(
+                f"train, test and validation proportions must sum to 1, got {total}."
+            )
+        if self.train <= 0:
+            raise ValueError("The train proportion must be greater than 0.")
+        return self
 
 
 class HoldoutSplitter(BaseSplitter):
