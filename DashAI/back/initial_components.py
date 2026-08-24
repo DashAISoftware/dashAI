@@ -56,6 +56,9 @@ from DashAI.back.converters.scikit_learn.standard_scaler import StandardScaler
 from DashAI.back.converters.scikit_learn.tf_idf import TFIDFConverter
 from DashAI.back.converters.scikit_learn.truncated_svd import TruncatedSVD
 from DashAI.back.converters.scikit_learn.variance_threshold import VarianceThreshold
+from DashAI.back.converters.segmentation.sam3_segment_converter import (
+    SAM3SegmentConverter,
+)
 
 # Simple converters
 from DashAI.back.converters.simple_converters.character_replacer import (
@@ -663,6 +666,7 @@ def get_initial_components():
         StandardScaler,
         Embedding,
         ImageEmbeddingConverter,
+        SAM3SegmentConverter,
         TFIDFConverter,
         TokenizerConverter,
         BagOfWordsConverter,
