@@ -9,6 +9,7 @@ export default function OptionBox({
   onClick,
   Icon = null,
   chips = [],
+  badge = null,
   dataTour,
   ...otherProps
 }) {
@@ -71,24 +72,50 @@ export default function OptionBox({
       }}
       {...otherProps}
     >
-      {/* Header: icon */}
-      {Icon && (
-        <Box sx={{ display: "flex", mb: "14px", width: "100%" }}>
-          <Box
-            sx={{
-              width: 38,
-              height: 38,
-              borderRadius: "6px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: accentDim,
-              color: accent,
-              flexShrink: 0,
-            }}
-          >
-            <Icon sx={{ fontSize: 25 }} />
-          </Box>
+      {/* Header: icon + badge */}
+      {(Icon || badge) && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            mb: "14px",
+            width: "100%",
+          }}
+        >
+          {Icon && (
+            <Box
+              sx={{
+                width: 38,
+                height: 38,
+                borderRadius: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: accentDim,
+                color: accent,
+                flexShrink: 0,
+              }}
+            >
+              <Icon sx={{ fontSize: 25 }} />
+            </Box>
+          )}
+          {badge && (
+            <Box
+              sx={{
+                ...theme.typography.statusBadge,
+                color: `${accent}B3`,
+                border: `1px solid ${accentBorder}`,
+                background: accentDim,
+                px: "8px",
+                py: "3px",
+                borderRadius: "2px",
+                flexShrink: 0,
+              }}
+            >
+              {badge}
+            </Box>
+          )}
         </Box>
       )}
 

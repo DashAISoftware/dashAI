@@ -147,6 +147,8 @@
     "testMetrics": "Testmetriken",
     "testSet": "Testmenge",
     "thereAreNoMetricsForThisRun": "Es gibt keine Metriken für {{set}} in diesem Durchlauf",
+    "supervisedBadge": "Überwacht",
+    "unsupervisedBadge": "Unüberwacht",
     "train": "Training",
     "trainingMetrics": "Trainingsmetriken",
     "trainSet": "Trainingsmenge",

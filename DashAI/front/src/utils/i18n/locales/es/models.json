@@ -149,6 +149,8 @@
     "testMetrics": "Métricas de Prueba",
     "testSet": "conjunto de prueba",
     "thereAreNoMetricsForThisRun": "no hay métricas asociadas con el {{set}} en esta ejecución",
+    "supervisedBadge": "Supervisado",
+    "unsupervisedBadge": "No supervisado",
     "train": "Entrenamiento",
     "trainingMetrics": "Métricas de Entrenamiento",
     "trainSet": "conjunto de entrenamiento",

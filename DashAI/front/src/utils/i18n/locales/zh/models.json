@@ -147,6 +147,8 @@
     "testMetrics": "测试集指标",
     "testSet": "测试集",
     "thereAreNoMetricsForThisRun": "此运行中没有与 {{set}} 关联的指标",
+    "supervisedBadge": "有监督",
+    "unsupervisedBadge": "无监督",
     "train": "训练",
     "trainingMetrics": "训练集指标",
     "trainSet": "训练集",
