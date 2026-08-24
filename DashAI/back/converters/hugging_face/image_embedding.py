@@ -1,4 +1,4 @@
-"""HuggingFace image embedding converter with lazy-loaded dependencies."""
+"""HuggingFace image embedding converter"""
 
 from typing import TYPE_CHECKING, Callable, Dict, Optional
 
@@ -38,7 +38,7 @@ IMAGE_ENCODERS: Dict[str, str] = {
     "ResNet 50": "microsoft/resnet-50",
 }
 
-DEFAULT_IMAGE_ENCODER: str = "DINOv2 base"
+DEFAULT_IMAGE_ENCODER: str = "DINOv2 small"
 
 
 class ImageEmbeddingSchema(BaseSchema):
@@ -322,6 +322,12 @@ class ImageEmbeddingConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper
                 pooled if pooled is not None else outputs.last_hidden_state[:, 0]
             )
 
+        # Backbones disagree on the shape of a pooled representation. A vision
+        # transformer such as DINOv2 returns (batch, hidden), while a CNN such
+        # as ResNet returns the spatially pooled (batch, channels, 1, 1). Flatten
+        # everything after the batch dimension so a row is always one vector.
+        embeddings = embeddings.reshape(embeddings.shape[0], -1)
+
         return embeddings.cpu().numpy()
 
     def _process_batch(self, batch: "DashAIDataset") -> "DashAIDataset":
@@ -403,6 +409,17 @@ class ImageEmbeddingConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper
                 continue
 
             embeddings_np = np.concatenate(chunks, axis=0)
+
+            # One row must be one flat vector. A backbone that returns a
+            # spatially pooled tensor, or an injected encoder returning the
+            # wrong shape, would otherwise surface as an opaque pyarrow
+            # conversion error naming a nested list.
+            if embeddings_np.ndim != 2:
+                raise ValueError(
+                    f"The encoder for column '{column}' returned an array of "
+                    f"shape {embeddings_np.shape}; an embedding must be two "
+                    "dimensional, one flat vector per image."
+                )
 
             for i in range(embeddings_np.shape[1]):
                 result_table = result_table.append_column(
