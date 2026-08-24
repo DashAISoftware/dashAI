@@ -133,6 +133,7 @@
     "hideCompleted": "Abgeschlossene ausblenden",
     "noActiveJobs": "Keine aktiven Aufgaben",
     "noCompletedJobs": "Keine abgeschlossenen Aufgaben",
+    "cancelJob": "Aufgabe abbrechen",
     "noJobs": "Keine Aufgaben in der Warteschlange",
     "refresh": "Aktualisieren",
     "relativeTime": {

@@ -79,8 +79,11 @@ export default function ResultsTabsHeader({
   } catch {
     sessionSplits = null;
   }
+  // Sessions written while the reserved proportion was still called "holdout"
+  // carry that key instead, the same fallback the backend normalizer applies.
   const hasDataToExplain =
-    !isCrossValidation || Number(sessionSplits?.test_size) > 0;
+    !isCrossValidation ||
+    Number(sessionSplits?.test_size ?? sessionSplits?.holdout) > 0;
   const explainabilityTooltip = !isFinished
     ? notFinishedTooltip
     : !hasDataToExplain

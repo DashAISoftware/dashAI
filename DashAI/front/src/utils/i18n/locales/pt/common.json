@@ -137,6 +137,7 @@
     "hideCompleted": "Ocultar concluídos",
     "noActiveJobs": "Não há trabalhos ativos",
     "noCompletedJobs": "Não há trabalhos concluídos",
+    "cancelJob": "Cancelar trabalho",
     "noJobs": "Não há trabalhos na fila",
     "refresh": "Atualizar",
     "relativeTime": {

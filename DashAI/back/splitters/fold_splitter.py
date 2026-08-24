@@ -89,7 +89,11 @@ class FoldSplitter(BaseSplitter):
         """
         super().__init__(splits_data)
         self.n_splits = splits_data.get("n_splits", 5)
-        self.test_size = splits_data.get("test_size", 0.1)
+        # Sessions created before the test set existed name no proportion, and
+        # reserving rows for them would silently shrink the folds of a session
+        # whose earlier runs used every row. The schema placeholder gives new
+        # sessions their 0.1, so only the older ones land on this default.
+        self.test_size = splits_data.get("test_size", 0)
 
     @classmethod
     def get_metadata(cls) -> dict:

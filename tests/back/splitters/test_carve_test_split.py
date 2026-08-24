@@ -105,6 +105,36 @@ def test_a_zero_test_size_keeps_every_row_in_cross_validation(splitter_cls):
 
 
 @pytest.mark.parametrize("splitter_cls", ALL_SPLITTERS)
+def test_a_session_from_before_the_test_split_cross_validates_every_row(splitter_cls):
+    """Sessions created before the test split existed name no proportion.
+
+    Reserving rows for them would shrink the folds of a session whose earlier
+    runs used the whole dataset, leaving the runs of one session trained on
+    different amounts of data without saying so.
+    """
+    x, y = xy()
+    legacy = config()
+    del legacy["test_size"]
+
+    _, _, indices = splitter_cls(legacy).split(x, y)
+
+    assert indices["full_dataset"]["test_indexes"] == []
+    assert len(indices["full_dataset"]["train_indexes"]) == 100
+
+
+@pytest.mark.parametrize("splitter_cls", ALL_SPLITTERS)
+def test_the_proportion_is_still_read_under_its_former_name(splitter_cls):
+    """The reserved proportion was called "holdout" before it was named after
+    what it produces, so a session stored under the old key keeps its size."""
+    from DashAI.back.splitters.splits_payload import normalize_splits_payload
+
+    old = config()
+    old["holdout"] = old.pop("test_size")
+
+    assert splitter_cls(normalize_splits_payload(old)).test_size == 0.1
+
+
+@pytest.mark.parametrize("splitter_cls", ALL_SPLITTERS)
 def test_fold_datasets_match_the_reported_indexes(splitter_cls):
     x, y = xy()
     x_folds, y_folds, indices = splitter_cls(config()).split(x, y)

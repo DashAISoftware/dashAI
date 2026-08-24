@@ -93,7 +93,11 @@ export const resolveSplitterName = (evaluationStrategy, cvType) => {
 export const hasPartition = (splits, partition) => {
   if (!splits) return false;
   if (splits.splitType === SPLIT_TYPES.CV) {
-    if (partition === "test") return Number(splits.test_size ?? 0) > 0;
+    // Sessions written while the reserved proportion was still called
+    // "holdout" carry that key instead, the same fallback the backend
+    // normalizer applies.
+    if (partition === "test")
+      return Number(splits.test_size ?? splits.holdout ?? 0) > 0;
     return true;
   }
 

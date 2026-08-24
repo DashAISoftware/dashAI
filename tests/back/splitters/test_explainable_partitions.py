@@ -88,3 +88,31 @@ def test_indexes_of_each_family_land_in_the_right_slots():
 def test_a_payload_from_another_splitter_is_refused():
     with pytest.raises(ValueError, match="do not match the splitter"):
         explainable_indexes(KFoldSplitter, HOLDOUT_RUN)
+
+
+HOLDOUT_RUN_VALIDATION_ONLY = {
+    "train_indexes": [0, 1, 2, 3, 4, 5, 6, 7],
+    "test_indexes": [],
+    "val_indexes": [8, 9],
+}
+
+
+def test_a_holdout_run_without_a_test_partition_is_explained_on_validation():
+    """A 0.8 / 0 / 0.2 split is valid, and validation is data the model never
+    fitted on, so the run is explainable even though the partition explanations
+    are normally measured on came up empty."""
+    assert HoldoutSplitter.explainable_splits(HOLDOUT_RUN_VALIDATION_ONLY) == [
+        {"name": "train", "rows": 8},
+        {"name": "val", "rows": 2},
+        {"name": "all", "rows": 10},
+    ]
+
+    train, evaluation, validation = explainable_indexes(
+        HoldoutSplitter, HOLDOUT_RUN_VALIDATION_ONLY
+    )
+    assert train == [0, 1, 2, 3, 4, 5, 6, 7]
+    # The rows an explanation is measured on fall back to validation, so a
+    # global explainer reading the evaluation slot gets unseen rows instead of
+    # an empty dataset.
+    assert evaluation == [8, 9]
+    assert validation == [8, 9]
