@@ -32,6 +32,7 @@
   "error": {
     "failedToCreateSession": "创建会话失败",
     "failedToDeleteSession": "删除会话失败",
+    "failedToDeleteSessions": "删除所选会话失败",
     "failedToFetchHistory": "获取参数历史记录失败",
     "failedToFetchMessages": "获取消息失败",
     "failedToFetchSessionInfo": "获取会话信息失败",
@@ -49,6 +50,9 @@
     "attachMediaToContinue": "附加媒体以继续",
     "configureSession": "配置会话",
     "confirmDeleteSession": "确定要删除会话 \"{{name}}\" 吗？此操作无法撤销。",
+    "confirmBulkDeleteSessions_one": "确定要删除所选的会话吗？此操作无法撤销。",
+    "confirmBulkDeleteSessions_other": "确定要删除所选的 {{count}} 个会话吗？此操作无法撤销。",
+    "selectSessionsToDelete": "选择要删除的会话",
     "createNewSession": "创建新会话",
     "createNewSessionDescription": "选择模型，配置参数，开始对话。",
     "deleteSessionConfirmation": "确定要删除此会话吗？此操作无法撤销。",

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import FolderIcon from "@mui/icons-material/Folder";
 import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import SearchBar from "../threeSectionLayout/SearchBar";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import InfoSessionModal from "./InfoSessionModal";
 import GroupedCollapsibleList from "../threeSectionLayout/GroupedCollapsibleList";
 import Footer from "../threeSectionLayout/Footer";
@@ -29,7 +29,10 @@ export default function SessionBar({
     sessions: sessionsCtx,
     selectedSessionId: selectedSessionIdCtx,
     deleteSessionById,
+    deleteSessionsByIds,
     editSession,
+    openSections,
+    setOpenSections,
   } = useGenerative();
 
   const sessions = sessionsProp ?? sessionsCtx ?? [];
@@ -37,7 +40,6 @@ export default function SessionBar({
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredSessions, setFilteredSessions] = useState(sessions);
   const [selectedInfoSession, setSelectedInfoSession] = useState(null);
-  const [openSections, setOpenSections] = useState({});
   const { t } = useTranslation(["generative", "common"]);
 
   const SEARCH_THRESHOLD = 10;
@@ -47,11 +49,14 @@ export default function SessionBar({
   }, [sessions.length]);
 
   // Create a map of task_name to display_name for quick lookup
-  const taskDisplayNameMap =
-    tasks?.reduce((map, task) => {
-      map[task.name] = task.display_name;
-      return map;
-    }, {}) || {};
+  const taskDisplayNameMap = useMemo(
+    () =>
+      tasks?.reduce((map, task) => {
+        map[task.name] = task.display_name;
+        return map;
+      }, {}) || {},
+    [tasks],
+  );
 
   useEffect(() => {
     // Initialize all sections as closed based on unique task display names
@@ -140,28 +145,49 @@ export default function SessionBar({
       { name: session.name },
     );
 
-  // Group sessions by task display_name
-  const groupedSessions = filteredSessions?.reduce((groups, session) => {
-    // Get the display name from the task using the session's task_name
-    const displayName =
-      taskDisplayNameMap[session.task_name] || t("common:other");
+  const getSessionBulkDeleteConfirmationContent = (count) =>
+    t("generative:label.confirmBulkDeleteSessions", {
+      count,
+      defaultValue:
+        "Are you sure you want to delete the {{count}} selected sessions? This action cannot be undone.",
+    });
 
-    if (!groups[displayName]) {
-      groups[displayName] = [];
+  const handleBulkSessionDelete = async (ids) => {
+    const idSet = new Set(ids);
+    const wasSelected = idSet.has(selectedSessionId);
+    const ok = await deleteSessionsByIds(ids);
+    if (ok && wasSelected) {
+      navigate("/app/generative");
     }
-    groups[displayName].push(session);
-    return groups;
-  }, {});
+    return ok;
+  };
 
-  // Sort grouped sessions to maintain consistent order
-  const sortedGroupedSessions = groupedSessions
-    ? Object.keys(groupedSessions)
-        .sort()
-        .reduce((sorted, key) => {
-          sorted[key] = groupedSessions[key];
-          return sorted;
-        }, {})
-    : {};
+  // Group sessions by task display_name, sorted to maintain a consistent order.
+  // Memoized so the object identity stays stable across renders that don't
+  // change the underlying data — GroupedCollapsibleList uses `groups` as an
+  // effect dependency, so a fresh literal every render would re-run it.
+  const sortedGroupedSessions = useMemo(() => {
+    const groupedSessions = filteredSessions?.reduce((groups, session) => {
+      // Get the display name from the task using the session's task_name
+      const displayName =
+        taskDisplayNameMap[session.task_name] || t("common:other");
+
+      if (!groups[displayName]) {
+        groups[displayName] = [];
+      }
+      groups[displayName].push(session);
+      return groups;
+    }, {});
+
+    return groupedSessions
+      ? Object.keys(groupedSessions)
+          .sort()
+          .reduce((sorted, key) => {
+            sorted[key] = groupedSessions[key];
+            return sorted;
+          }, {})
+      : {};
+  }, [filteredSessions, taskDisplayNameMap, t]);
 
   return (
     <SideBar>
@@ -213,9 +239,18 @@ export default function SessionBar({
           onItemInfo={handleSessionInfo}
           title={t("common:generative")}
           Icon={FolderIcon}
-          initialOpenGroups={openSections}
+          openGroups={openSections}
+          onOpenGroupsChange={setOpenSections}
           getItemDescription={(session) => session.model_name}
           getDeleteConfirmationContent={getSessionDeleteConfirmationContent}
+          onBulkDelete={handleBulkSessionDelete}
+          selectItemsTooltip={t(
+            "generative:label.selectSessionsToDelete",
+            "Select sessions to delete",
+          )}
+          getBulkDeleteConfirmationContent={
+            getSessionBulkDeleteConfirmationContent
+          }
         />
       </Box>
 

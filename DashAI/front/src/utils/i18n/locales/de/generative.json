@@ -32,6 +32,7 @@
   "error": {
     "failedToCreateSession": "Sitzung konnte nicht erstellt werden",
     "failedToDeleteSession": "Sitzung konnte nicht gelöscht werden",
+    "failedToDeleteSessions": "Die ausgewählten Sitzungen konnten nicht gelöscht werden",
     "failedToFetchHistory": "Parameterverlauf konnte nicht abgerufen werden",
     "failedToFetchMessages": "Nachrichten konnten nicht abgerufen werden",
     "failedToFetchSessionInfo": "Sitzungsinformationen konnten nicht abgerufen werden",
@@ -49,6 +50,9 @@
     "attachMediaToContinue": "Medien anhängen, um fortzufahren",
     "configureSession": "Sitzung konfigurieren",
     "confirmDeleteSession": "Sind Sie sicher, dass Sie die Sitzung \"{{name}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmBulkDeleteSessions_one": "Sind Sie sicher, dass Sie die ausgewählte Sitzung löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "confirmBulkDeleteSessions_other": "Sind Sie sicher, dass Sie die {{count}} ausgewählten Sitzungen löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "selectSessionsToDelete": "Sitzungen zum Löschen auswählen",
     "createNewSession": "Neue Sitzung erstellen",
     "createNewSessionDescription": "Wählen Sie ein Modell, konfigurieren Sie dessen Parameter und beginnen Sie zu chatten.",
     "deleteSessionConfirmation": "Sind Sie sicher, dass Sie diese Sitzung löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",

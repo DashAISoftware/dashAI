@@ -714,6 +714,10 @@ class Explorer(Base):
     # Render artifacts built once, when the exploration is created, so results
     # keep rendering after the explorer class is removed from the registry.
     artifacts_path: Mapped[str] = mapped_column(String, nullable=True)
+    # Per artifact index -> edited plotly figure, applied over the stored
+    # artifacts on read. Kept apart from artifacts_path so the computed figure
+    # survives an edit and a reset can restore it.
+    plot_overrides: Mapped[JSON] = mapped_column(JSON, nullable=True)
     # Metadata
     name: Mapped[str] = mapped_column(String, nullable=True)
 

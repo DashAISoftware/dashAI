@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
-from pydantic import BaseModel
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.explainers_params import (
@@ -14,7 +13,13 @@ from DashAI.back.api.api_v1.schemas.explainers_params import (
     ValidateDatasetParams,
     ValidDatasetsParams,
 )
-from DashAI.back.core.artifacts import Artifact, ArtifactGroup, GroupedArtifacts
+from DashAI.back.core.artifacts import (
+    Artifact,
+    ArtifactGroup,
+    GroupedArtifacts,
+    PlotOverrideBody,
+    apply_plot_overrides,
+)
 from DashAI.back.core.enums.status import ExplainerStatus
 from DashAI.back.dependencies.database.models import (
     Dataset,
@@ -34,58 +39,6 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()
-
-
-def _apply_overrides(artifacts: list, overrides: dict | None) -> list:
-    """Replace plotly artifact payloads with stored edited figures.
-
-    Leaves nested inside a ``"grouped"`` selector (see
-    :class:`DashAI.back.core.artifacts.GroupedArtifacts`), i.e. under each
-    group's ``artifacts``, are matched by their stamped ``"index"`` just
-    like top level ones, so a group's plotly artifact can be edited/reset the
-    same way as a top level one.
-
-    Parameters
-    ----------
-    artifacts : list
-        Normalized artifact/grouped dicts from ``normalize_artifacts``.
-    overrides : dict or None
-        Mapping of ``str(index)`` to an edited plotly figure (JSON string).
-
-    Returns
-    -------
-    list
-        The artifacts with overridden plotly payloads applied.
-    """
-    if not overrides:
-        return artifacts
-    import json
-
-    leaves_by_index = {}
-
-    def collect_leaves(items):
-        for item in items:
-            if item.get("type") == "grouped":
-                for group in item.get("groups", []):
-                    collect_leaves(group.get("artifacts", []))
-            else:
-                leaves_by_index[item.get("index")] = item
-
-    collect_leaves(artifacts)
-
-    for key, figure in overrides.items():
-        try:
-            idx = int(key)
-        except (TypeError, ValueError):
-            continue
-        leaf = leaves_by_index.get(idx)
-        if leaf is not None and leaf.get("type") == "plotly":
-            leaf["payload"] = figure if isinstance(figure, str) else json.dumps(figure)
-            # Flag so the frontend renders the user's edited figure verbatim
-            # instead of re-applying the app theme (which would clobber the
-            # edited colors/background).
-            leaf["overridden"] = True
-    return artifacts
 
 
 def _resolve_story_explainer(
@@ -292,21 +245,6 @@ def _attach_stories(
             )
 
 
-class PlotOverrideBody(BaseModel):
-    """Request body for saving one plot override.
-
-    Parameters
-    ----------
-    index : int
-        Artifact index whose payload is being overridden.
-    figure : object
-        The edited plotly figure, either a JSON string or a dict.
-    """
-
-    index: int
-    figure: object
-
-
 @router.get("/global")
 @inject
 async def get_global_explainers(
@@ -491,7 +429,7 @@ async def get_global_explanation_plot(
                 detail="Internal database error",
             ) from e
 
-    artifacts = _apply_overrides(normalize_artifacts(plot), plot_overrides)
+    artifacts = apply_plot_overrides(normalize_artifacts(plot), plot_overrides)
     story_explainer = _resolve_story_explainer(
         explainer_name, parameters, component_registry
     )
@@ -795,7 +733,7 @@ async def get_local_explanation_plot(
                 detail="Internal database error",
             ) from e
 
-    artifacts = _apply_overrides(
+    artifacts = apply_plot_overrides(
         normalize_artifacts(plots, create_grouped=True), plot_overrides
     )
     story_explainer = _resolve_story_explainer(
