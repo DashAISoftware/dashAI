@@ -79,10 +79,14 @@ class BaseConverter(ConfigObject, ABC):
         )
 
         # Serialize allowed_types to the names the frontend compares against.
-        # Each type reports its own name via display_name(), which is the same
-        # string a column emits through to_string(), so the two always agree.
+        # A DashAI type reports its own name via display_name(), which is the
+        # same string a column emits through to_string(), so the two always
+        # agree.
         raw_types = meta.get("allowed_types", [])
-        meta["allowed_types"] = [t.display_name() for t in raw_types]
+        meta["allowed_types"] = [
+            t.display_name() if hasattr(t, "display_name") else t.__name__
+            for t in raw_types
+        ]
 
         # Normalize allowed_dtypes: absent or ["*"] → [] (empty means no restriction)
         if not meta.get("allowed_dtypes") or meta["allowed_dtypes"] == ["*"]:

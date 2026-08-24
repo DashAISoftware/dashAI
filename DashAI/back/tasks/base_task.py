@@ -60,8 +60,19 @@ class BaseTask:
         """
         metadata = cls.metadata
 
-        inputs_types = [t.display_name() for t in metadata["inputs_types"]]
-        outputs_types = [t.display_name() for t in metadata["outputs_types"]]
+        def _name(dashai_type) -> str:
+            """Name the frontend uses, tolerating types from outside DashAI.
+
+            A DashAI type reports its own name through ``display_name()``, which
+            matches what a column emits via ``to_string()``. These lists may
+            also hold foreign classes, for example HuggingFace dataset features
+            or a plugin's own types, so those fall back to the class name.
+            """
+            getter = getattr(dashai_type, "display_name", None)
+            return getter() if callable(getter) else dashai_type.__name__
+
+        inputs_types = [_name(t) for t in metadata["inputs_types"]]
+        outputs_types = [_name(t) for t in metadata["outputs_types"]]
 
         parsed_metadata: dict = {
             "inputs_types": inputs_types,
