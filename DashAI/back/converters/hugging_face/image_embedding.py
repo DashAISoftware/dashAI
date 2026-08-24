@@ -11,10 +11,14 @@ from DashAI.back.core.schema_fields import (
     enum_field,
     int_field,
     schema_field,
-    string_field,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.utils import (
+    DEVICE_ENUM,
+    DEVICE_PLACEHOLDER,
+    DEVICE_TO_IDX,
+)
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.value_types import Float
@@ -25,29 +29,44 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
+# Vision encoders offered for image embedding. Restricted to permissively
+# licensed weights, Apache 2.0 here, so the component stays compatible with the
+# project's MIT licence.
+IMAGE_ENCODERS: Dict[str, str] = {
+    "DINOv2 base": "facebook/dinov2-base",
+    "DINOv2 small": "facebook/dinov2-small",
+    "ResNet 50": "microsoft/resnet-50",
+}
+
+DEFAULT_IMAGE_ENCODER: str = "DINOv2 base"
+
+
 class ImageEmbeddingSchema(BaseSchema):
     """Schema for ImageEmbedding converter hyperparameters."""
 
     model_name: schema_field(
-        string_field(),
-        "facebook/dinov2-base",
+        enum_field(list(IMAGE_ENCODERS)),
+        DEFAULT_IMAGE_ENCODER,
         description=MultilingualString(
-            en="HuggingFace repository id of the pretrained vision model "
-            "used to encode images.",
-            es="Identificador del repositorio de HuggingFace del modelo de "
-            "visión preentrenado usado para codificar imágenes.",
-            pt="Identificador do repositório do HuggingFace do modelo de "
-            "visão pré treinado usado para codificar imagens.",
-            de="HuggingFace Repository ID des vortrainierten "
-            "Bildverarbeitungsmodells, das zum Kodieren von Bildern "
-            "verwendet wird.",
-            zh="用于编码图像的预训练视觉模型的HuggingFace仓库标识。",
+            en="Pretrained vision model used to encode images. All options are "
+            "Apache 2.0 licensed, which is compatible with this project.",
+            es="Modelo de visión preentrenado usado para codificar imágenes. "
+            "Todas las opciones tienen licencia Apache 2.0, compatible con "
+            "este proyecto.",
+            pt="Modelo de visão pré treinado usado para codificar imagens. "
+            "Todas as opções têm licença Apache 2.0, compatível com este "
+            "projeto.",
+            de="Vortrainiertes Bildverarbeitungsmodell zum Kodieren von "
+            "Bildern. Alle Optionen stehen unter Apache 2.0 und sind mit "
+            "diesem Projekt vereinbar.",
+            zh="用于编码图像的预训练视觉模型。所有选项均为 Apache 2.0 许可，"
+            "与本项目兼容。",
         ),
     )  # type: ignore
 
     device: schema_field(
-        enum_field(["cpu", "cuda"]),
-        "cpu",
+        enum_field(DEVICE_ENUM),
+        DEVICE_PLACEHOLDER,
         description=MultilingualString(
             en="Device to use for computation.",
             es="Dispositivo a usar para el cómputo.",
@@ -169,10 +188,12 @@ class ImageEmbeddingConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper
             so no weights are downloaded. Default ``None``.
         **kwargs : dict
             model_name : str, optional
-                HuggingFace repository id of the pretrained vision model.
-                Default ``"facebook/dinov2-base"``.
+                Key of ``IMAGE_ENCODERS``, for example ``"DINOv2 base"``. A
+                repository id is also accepted and used as given. Default
+                ``DEFAULT_IMAGE_ENCODER``.
             device : str, optional
-                Torch device string (e.g. ``"cpu"`` or ``"cuda"``).
+                Device label from ``DEVICE_ENUM``, for example ``"CPU"``
+                or ``"GPU 0: ..."``. Resolved to a torch device string.
                 Default ``"cpu"``.
             batch_size : int, optional
                 Number of images per inference batch. Default ``32``.
@@ -182,8 +203,19 @@ class ImageEmbeddingConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper
         """
         super().__init__(**kwargs)
         self._encoder = encoder
-        self.model_name = kwargs.get("model_name", "facebook/dinov2-base")
-        self.device = kwargs.get("device", "cpu")
+        # The schema offers friendly names; resolve to the repository id here so
+        # the rest of the class only ever deals with what transformers needs. An
+        # unrecognised value is passed through, which keeps a hand written API
+        # payload working and keeps this from silently substituting a model the
+        # caller did not ask for.
+        selected = kwargs.get("model_name", DEFAULT_IMAGE_ENCODER)
+        self.model_name = IMAGE_ENCODERS.get(selected, selected)
+        # DEVICE_ENUM entries are user facing labels such as
+        # "GPU 0: NVIDIA ... " or "CPU", so map through DEVICE_TO_IDX to get a
+        # torch device string.
+        device_label = kwargs.get("device", DEVICE_PLACEHOLDER)
+        device_index = DEVICE_TO_IDX.get(device_label, -1)
+        self.device = f"cuda:{device_index}" if device_index >= 0 else "cpu"
         self.batch_size = kwargs.get("batch_size", 32)
         self.keep_source_column = kwargs.get("keep_source_column", True)
         self.model = None
@@ -332,7 +364,7 @@ class ImageEmbeddingConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper
             relative to the batch being processed, not the whole dataset:
             ``HuggingFaceWrapper.transform`` chunks the dataset before
             calling this method and never passes the chunk's offset, so a
-            dataset-global index would be wrong for any dataset larger than
+            dataset global index would be wrong for any dataset larger than
             one batch, which is worse than an index that plainly says what
             it is relative to.
         """
