@@ -7,7 +7,7 @@ before the splitter forms were generated from the component schemas used a
 different set of keys, so every reader normalizes the payload first.
 """
 
-from typing import Any, Dict, Type
+from typing import Any, Dict, List, Tuple, Type
 
 # Before fold splitters existed the payload named no splitter at all: every
 # split was a holdout split.
@@ -92,3 +92,86 @@ def schema_placeholder_defaults(splitter_cls: Type) -> Dict[str, Any]:
         for name, prop in properties.items()
         if "placeholder" in prop
     }
+
+
+def splitter_class_for(session_splits: Dict[str, Any], component_registry) -> Type:
+    """Resolve the splitter class that produced a run.
+
+    Parameters
+    ----------
+    session_splits : dict
+        The ``ModelSession.splits`` payload, already parsed.
+    component_registry : ComponentRegistry
+        Registry used to resolve the splitter by name.
+
+    Returns
+    -------
+    type
+        The splitter class named by the payload.
+
+    Raises
+    ------
+    ValueError
+        If the payload names a splitter that is not registered.
+    """
+    splitter_name = normalize_splits_payload(session_splits)["splitter_name"]
+    if splitter_name not in component_registry:
+        raise ValueError(f"Splitter {splitter_name} does not exist in the registry.")
+    return component_registry[splitter_name]["class"]
+
+
+def explainable_indexes(
+    splitter_class: Type, split_indexes: Dict[str, Any]
+) -> Tuple[List[int], List[int], List[int]]:
+    """Resolve the rows an explainer may use for a run of a given splitter.
+
+    The partitions and their names come from the splitter itself; this maps them
+    onto the three slots the explainers' dataset dictionary is built from.
+
+    Parameters
+    ----------
+    splitter_class : type
+        The splitter that produced the run.
+    split_indexes : dict
+        The ``Run.split_indexes`` payload, already parsed.
+
+    Returns
+    -------
+    tuple[list[int], list[int], list[int]]
+        Row indexes for the train, evaluation and validation slots. Splitters
+        without a validation partition return an empty third list.
+
+    Raises
+    ------
+    ValueError
+        If the run has no rows in the partition explanations are measured on.
+    """
+    try:
+        partitions = splitter_class.explainable_partitions(split_indexes)
+    except (KeyError, NotImplementedError, TypeError) as e:
+        raise ValueError(
+            "The run's split indexes do not match the splitter that produced "
+            "it, so there is no data to explain."
+        ) from e
+
+    training = splitter_class.TRAINING_PARTITION
+    unseen = {
+        name: indexes
+        for name, indexes in partitions.items()
+        if name != training and indexes
+    }
+    if not unseen:
+        raise ValueError(
+            "The run has no rows outside the data the model was fitted on "
+            f"(its {splitter_class.EVALUATION_PARTITION} partition is empty), "
+            "so there is nothing to explain."
+        )
+
+    # Explanations are measured on the splitter's preferred partition, falling
+    # back to whichever unseen partition the run actually filled: a holdout run
+    # configured without a test partition is explained on validation.
+    evaluation = unseen.get(splitter_class.EVALUATION_PARTITION) or next(
+        iter(unseen.values())
+    )
+
+    return partitions.get(training, []), evaluation, partitions.get("val", [])
