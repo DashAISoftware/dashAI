@@ -30,8 +30,14 @@ class DBSCANClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Maximum distance between two samples to be considered neighbours.",
             es="Distancia máxima entre dos muestras para considerarlas vecinas.",
+            pt="Distância máxima entre duas amostras para serem consideradas vizinhas.",
+            de=(
+                "Maximaler Abstand zwischen zwei Stichproben, um als Nachbarn "
+                "zu gelten."
+            ),
+            zh="两个样本被视为邻居的最大距离。",
         ),
-        alias=MultilingualString(en="Eps", es="Eps"),
+        alias=MultilingualString(en="Eps", es="Eps", pt="Eps", de="Eps", zh="Eps"),
     )  # type: ignore
     min_samples: schema_field(
         int_field(ge=1),
@@ -39,8 +45,18 @@ class DBSCANClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Minimum samples in a neighbourhood for a point to be core.",
             es="Mínimo de muestras en una vecindad para que un punto sea central.",
+            pt="Mínimo de amostras em uma vizinhança para que um ponto seja central.",
+            de="Mindestanzahl an Stichproben in einer Nachbarschaft, damit ein Punkt "
+            "als Kernpunkt gilt.",
+            zh="一个点成为核心点所需邻域内的最小样本数。",
         ),
-        alias=MultilingualString(en="Min samples", es="Mínimo de muestras"),
+        alias=MultilingualString(
+            en="Min samples",
+            es="Mínimo de muestras",
+            pt="Mínimo de amostras",
+            de="Min. Stichproben",
+            zh="最小样本数",
+        ),
     )  # type: ignore
     metric: schema_field(
         enum_field(["euclidean", "manhattan", "cosine"]),
@@ -48,8 +64,13 @@ class DBSCANClusteringSchema(BaseSchema):
         description=MultilingualString(
             en="Distance metric used by DBSCAN.",
             es="Métrica de distancia usada por DBSCAN.",
+            pt="Métrica de distância usada pelo DBSCAN.",
+            de="Von DBSCAN verwendete Distanzmetrik.",
+            zh="DBSCAN使用的距离度量。",
         ),
-        alias=MultilingualString(en="Metric", es="Métrica"),
+        alias=MultilingualString(
+            en="Metric", es="Métrica", pt="Métrica", de="Metrik", zh="度量"
+        ),
     )  # type: ignore
 
 
@@ -75,10 +96,15 @@ class DBSCANClustering(SklearnLikeClusterer, _DBSCAN):
     """
 
     SCHEMA = DBSCANClusteringSchema
-    DISPLAY_NAME = MultilingualString(en="DBSCAN", es="DBSCAN")
+    DISPLAY_NAME = MultilingualString(
+        en="DBSCAN", es="DBSCAN", pt="DBSCAN", de="DBSCAN", zh="DBSCAN"
+    )
     DESCRIPTION = MultilingualString(
         en="Density-based clustering that can identify noise points.",
         es="Clustering basado en densidad que puede identificar puntos de ruido.",
+        pt="Clustering baseado em densidade que pode identificar pontos de ruído.",
+        de="Dichtebasiertes Clustering, das Rauschpunkte identifizieren kann.",
+        zh="基于密度的聚类方法，能够识别噪声点。",
     )
     COLOR = "#7E57C2"
     ICON = "Radar"
@@ -99,4 +125,4 @@ class DBSCANClustering(SklearnLikeClusterer, _DBSCAN):
         import numpy as np
 
         n_noise = int(np.sum(self._labels == -1))
-        return {"n_noise_points": n_noise} if n_noise > 0 else {}
+        return {"n_noise_points": n_noise}

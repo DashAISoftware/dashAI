@@ -35,6 +35,7 @@ class ClusteringSchema(BaseSchema):
             es="Algoritmo de clustering a aplicar.",
             pt="Algoritmo de clustering a ser aplicado.",
             de="Clustering-Algorithmus, der angewendet werden soll.",
+            zh="要应用的聚类算法。",
         ),
     )  # type: ignore
     algorithm_params: schema_field(
@@ -45,6 +46,7 @@ class ClusteringSchema(BaseSchema):
             es="Parametros del algoritmo de clustering seleccionado.",
             pt="Parâmetros para o algoritmo de clustering selecionado.",
             de="Parameter für den ausgewählten Clustering-Algorithmus.",
+            zh="所选聚类算法的参数。",
         ),
     )  # type: ignore
     output_column_name: schema_field(
@@ -55,6 +57,7 @@ class ClusteringSchema(BaseSchema):
             es="Nombre de la columna de salida para guardar las etiquetas de cluster.",
             pt="Nome da coluna de saída para armazenar as etiquetas de cluster.",
             de="Name der Ausgabespalte zum Speichern der Clusterbezeichnungen.",
+            zh="用于存储聚类标签的输出列名称。",
         ),
     )  # type: ignore
 
@@ -93,15 +96,24 @@ class Clustering(ClusteringConverter, BaseConverter):
             "Cluster und fügt eine Cluster-Label-Spalte hinzu. Es wird keine "
             "Zielspalte benötigt, der Algorithmus findet die Struktur in den Daten."
         ),
+        zh=(
+            "根据数值特征的相似性将数据集的行分组为多个聚类，并添加一个聚类标签列。"
+            "无需目标列，算法会自动发现数据中的自然分组。"
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Groups rows into clusters based on their numeric features.",
         es="Agrupa filas en clusters según sus características numéricas.",
         pt="Agrupa linhas em clusters com base em características numéricas.",
         de="Gruppiert Zeilen anhand numerischer Merkmale in Cluster.",
+        zh="根据数值特征将行分组为多个聚类。",
     )
     DISPLAY_NAME = MultilingualString(
-        en="Clustering", es="Agrupamiento", pt="Agrupamento", de="Clustering"
+        en="Clustering",
+        es="Agrupamiento",
+        pt="Agrupamento",
+        de="Clustering",
+        zh="聚类",
     )
     IMAGE_PREVIEW = "clustering.png"
 
@@ -248,7 +260,9 @@ class Clustering(ClusteringConverter, BaseConverter):
         Clustering
             The fitted converter instance (self).
         """
-        self._model.train(x)
+        numeric_dataset = self._select_numeric_dataset(x)
+
+        self._model.train(numeric_dataset)
         self._labels = self._model.get_cluster_labels()
 
         algorithm_key = self.algorithm_name.lower().removesuffix("clustering")
@@ -257,10 +271,58 @@ class Clustering(ClusteringConverter, BaseConverter):
                 "algorithm": self.algorithm_name,
                 "algorithm_key": algorithm_key,
                 "cluster_column": self.output_column_name,
-                **self._build_report_data(x),
+                **self._build_report_data(numeric_dataset),
             }
         )
         return self
+
+    def _select_numeric_dataset(self, x: "DashAIDataset") -> "DashAIDataset":
+        """Select the numeric columns of ``x`` used to train the model.
+
+        Clustering algorithms operate only on numeric features. Non-numeric
+        columns are excluded here so that they are neither passed to the
+        model nor included in the report, while remaining untouched in the
+        dataset returned by ``transform``.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Scoped dataset received by ``fit``.
+
+        Returns
+        -------
+        DashAIDataset
+            A dataset containing only the numeric columns of ``x``.
+
+        Raises
+        ------
+        ValueError
+            If ``x`` has no numeric column, or if the numeric columns
+            contain NaN values.
+        """
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+        numeric_columns = [
+            name
+            for name, dtype in x.types.items()
+            if isinstance(dtype, (Float, Integer))
+        ]
+        if not numeric_columns:
+            raise ValueError(
+                f"{self.__class__.__name__} requires at least one numeric "
+                "column to fit."
+            )
+
+        x_pandas = x.to_pandas()
+        if x_pandas[numeric_columns].isna().to_numpy().any():
+            raise ValueError(
+                f"{self.__class__.__name__} input contains NaN values in the "
+                "numeric columns used for clustering."
+            )
+
+        numeric_table = x.arrow_table.select(numeric_columns)
+        numeric_types = {name: x.types[name] for name in numeric_columns}
+        return DashAIDataset(numeric_table, types=numeric_types, splits=x.splits)
 
     def transform(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None

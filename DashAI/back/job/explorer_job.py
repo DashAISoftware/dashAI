@@ -30,28 +30,40 @@ def _build_explorer_context(
     via ``metadata["requires_converter_report"] = True``.
 
     When the explorer also declares ``metadata["requires_converter_class"]``,
-    only converters of that specific class are considered. Otherwise the most
-    recently finished converter of any type is used.
+    the most recently finished converter of any type in the notebook must be
+    of that class. This guarantees the referenced report describes exactly
+    the current dataset state: nothing could have run afterwards to alter the
+    columns the report depends on. If a different converter ran more recently,
+    the explorer is refused instead of silently reusing a report that may no
+    longer match the live dataset.
     """
     explorer_metadata = explorer_instance.get_metadata()
     if not explorer_metadata.get("requires_converter_report", False):
         return {}
 
     required_class = explorer_metadata.get("requires_converter_class")
-    converter_query = (
+    latest_converter = (
         db.query(Converter)
         .filter(Converter.notebook_id == notebook_info.id)
         .filter(Converter.status == ConverterStatus.FINISHED)
+        .order_by(Converter.created.desc())
+        .first()
     )
-    if required_class:
-        converter_query = converter_query.filter(Converter.converter == required_class)
-    latest_converter = converter_query.order_by(Converter.created.desc()).first()
 
     if latest_converter is None:
         class_hint = f" of type '{required_class}'" if required_class else ""
         raise JobError(
             f"This explorer requires a converter report, but the notebook has "
             f"no finished converters{class_hint}."
+        )
+
+    if required_class and latest_converter.converter != required_class:
+        raise JobError(
+            f"This explorer requires a report from the most recently finished "
+            f"converter in the notebook, but the last converter was "
+            f"'{latest_converter.converter}', not '{required_class}'. Re-run "
+            f"the '{required_class}' converter before creating this explorer "
+            f"so its report reflects the current dataset."
         )
 
     notebook_output_path = config["NOTEBOOK_PATH"] / str(notebook_info.id)

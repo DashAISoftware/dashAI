@@ -373,15 +373,17 @@ export default function RightBar({ notebook, onToggle }) {
   const { filteredExplorers, filteredConverters } = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 
+    const asString = (value) => (typeof value === "string" ? value : "");
+
     const rankMatch = (item) => {
       const displayName = (
-        item.metadata?.display_name ||
-        item.name ||
+        asString(item.metadata?.display_name) ||
+        asString(item.name) ||
         ""
       ).toLowerCase();
       const description = (
-        item.metadata?.short_description ||
-        item.description ||
+        asString(item.metadata?.short_description) ||
+        asString(item.description) ||
         ""
       ).toLowerCase();
       if (displayName.includes(query)) return 1;

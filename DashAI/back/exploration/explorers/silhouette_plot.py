@@ -58,6 +58,7 @@ class SilhouettePlotExplorer(ClusteringExplorer):
         es="Gráfico de Silueta",
         pt="Gráfico de Silhueta",
         de="Silhouette-Diagramm",
+        zh="轮廓图",
     )
     DESCRIPTION = MultilingualString(
         en=(
@@ -84,12 +85,17 @@ class SilhouettePlotExplorer(ClusteringExplorer):
             "mögliche Fehlzuordnung. Die gestrichelte Linie markiert den "
             "Datensatzmittelwert."
         ),
+        zh=(
+            "按聚类分组展示每个样本的轮廓系数。每根柱条代表一个样本；柱条向右表示"
+            "聚类分配良好，向左表示可能分配错误。虚线标记数据集的平均轮廓系数。"
+        ),
     )
     SHORT_DESCRIPTION = MultilingualString(
         en="Per-sample silhouette coefficients grouped by cluster.",
         es="Coeficientes de silueta por muestra agrupados por clúster.",
         pt="Coeficientes de silhueta por amostra agrupados por cluster.",
         de="Pro-Sample-Silhouette-Koeffizienten nach Cluster.",
+        zh="按聚类分组的每个样本的轮廓系数。",
     )
     IMAGE_PREVIEW = "silhouette_plot.png"
     SCHEMA = SilhouettePlotSchema
@@ -162,7 +168,8 @@ class SilhouettePlotExplorer(ClusteringExplorer):
         ------
         ValueError
             If fewer than two valid (non-noise) clusters are present in the
-            data after excluding noise points.
+            data after excluding noise points, or if a selected column was
+            not part of the feature set used to fit the clustering algorithm.
         """
         import numpy as np
         import plotly.graph_objects as go
@@ -171,6 +178,7 @@ class SilhouettePlotExplorer(ClusteringExplorer):
         cr = self.context.get("converter_report", {})
         cluster_column = cr.get("cluster_column", "cluster")
         algorithm = cr.get("algorithm", "unknown")
+        converter_feature_cols = set(cr.get("feature_columns", []))
 
         data = dataset.to_pandas()
         feature_cols = [
@@ -178,6 +186,16 @@ class SilhouettePlotExplorer(ClusteringExplorer):
             for c in explorer_info.columns
             if c["columnName"] != cluster_column
         ]
+
+        if converter_feature_cols:
+            invalid = [c for c in feature_cols if c not in converter_feature_cols]
+            if invalid:
+                raise ValueError(
+                    f"The following columns were not used by the Clustering "
+                    f"converter and cannot be used for the silhouette score: "
+                    f"{invalid}. Select only columns from the converter scope: "
+                    f"{sorted(converter_feature_cols)}."
+                )
 
         X = data[feature_cols].dropna()
         labels = data.loc[X.index, cluster_column].values
