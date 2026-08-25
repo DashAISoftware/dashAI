@@ -52,7 +52,7 @@ dependencies = [
     "rich",
     "torch",
     "torchvision",
-    "transformers",
+    "transformers>=5.0.0",
     "sentence-transformers",
     "controlnet_aux",
     "sacrebleu",
