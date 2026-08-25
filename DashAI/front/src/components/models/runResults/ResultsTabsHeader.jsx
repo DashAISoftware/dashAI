@@ -69,7 +69,7 @@ export default function ResultsTabsHeader({
   const isNestedCrossValidation = !!run?.nested;
 
   // Cross-validation runs can only be explained when the session reserved rows
-  // for it: the final model is refit on everything else, so without a holdout
+  // for it: the final model is refit on everything else, so without a test set
   // there is no data the model has not already seen.
   let sessionSplits = null;
   try {
@@ -79,8 +79,11 @@ export default function ResultsTabsHeader({
   } catch {
     sessionSplits = null;
   }
+  // Sessions written while the reserved proportion was still called "holdout"
+  // carry that key instead, the same fallback the backend normalizer applies.
   const hasDataToExplain =
-    !isCrossValidation || Number(sessionSplits?.holdout) > 0;
+    !isCrossValidation ||
+    Number(sessionSplits?.test_size ?? sessionSplits?.holdout) > 0;
   const explainabilityTooltip = !isFinished
     ? notFinishedTooltip
     : !hasDataToExplain

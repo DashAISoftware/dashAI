@@ -273,20 +273,9 @@ class ExplainerJob(BaseJob):
                             prepared_instance = prepared_instance.select(valid_indexes)
                     else:
                         split = self.explainer_db.scope.get("split")
-                        valid_splits = [
-                            "train",
-                            "val",
-                            "all",
-                            self.evaluation_partition,
-                        ]
+                        valid_splits = ["train", "val", "all", "test"]
                         if split not in valid_splits:
                             raise JobError(f"{split} is not a valid split")
-
-                        # A splitter may name the partition explanations are
-                        # measured on whatever fits its strategy; in the dataset
-                        # dictionary those rows always live under "test".
-                        if split == self.evaluation_partition:
-                            split = "test"
 
                         if split != "all":
                             if not same_dataset:
@@ -529,7 +518,6 @@ class ExplainerJob(BaseJob):
                     train_idx, test_idx, val_idx = explainable_indexes(
                         splitter_class, json.loads(run.split_indexes)
                     )
-                    self.evaluation_partition = splitter_class.EVALUATION_PARTITION
                     splits = {
                         "train_indexes": train_idx,
                         "test_indexes": test_idx,

@@ -13,8 +13,11 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
     """Evaluation strategy implementing k-fold cross-validation with optional
     nested CV and HPO.
 
-    This strategy partitions the dataset into k folds and performs k rounds of training
-    and evaluation.
+    This strategy partitions the dataset into k folds and performs k rounds of
+    training and evaluation. Each fold is split into a train and a validation
+    partition, so the scores obtained by resampling are validation estimates.
+    When the session reserved rows, the final model is fitted on everything the
+    folds could use and scored once against those reserved rows.
 
     The strategy handles metric aggregation at multiple levels:
     - FOLD level: Individual metrics from each fold
@@ -33,8 +36,10 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
         ----------
         x : list of DatasetDict
             List of fold DatasetDict each containing:
-            {"train": X_train, "test": X_test}
-            The last element is the complete dataset for final training.
+            {"train": X_train, "validation": X_validation}
+            The last element is not a fold: it holds every row the folds could
+            use as {"train": X_pool, "test": X_test}, where the test partition
+            is empty when the session reserved nothing.
         y : list of DatasetDict
             List of fold label DatasetDicts with same structure as x.
         run : Run
@@ -106,7 +111,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                 split=SplitEnum.TRAIN, level=LevelEnum.FOLD, fold_index=i
             )
             model.calculate_metrics(
-                split=SplitEnum.TEST, level=LevelEnum.FOLD, fold_index=i
+                split=SplitEnum.VALIDATION, level=LevelEnum.FOLD, fold_index=i
             )
 
         # STEP 3: Aggregate metrics across all folds
@@ -118,10 +123,20 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             level_to_save=LevelEnum.LAST,
         )
 
-        # STEP 4: Final model training on complete dataset
-        # Train on all available data (the last fold contains the full dataset)
+        # STEP 4: Final model training on every row the folds could use, which
+        # excludes the rows reserved when the session asked for them.
         self._report_progress(0.85, "Training final model")
+        model.x_data = x[-1]
+        model.y_data = y[-1]
         model.train(x[-1]["train"], y[-1]["train"])
+
+        # STEP 5: Score the final model once on the reserved rows. No fold and
+        # no hyperparameter trial ever saw them, so this is the only estimate
+        # that stays honest after a model is picked out of the comparison
+        # table. It is a single measurement, hence no standard deviation.
+        if len(x[-1]["test"]) > 0:
+            self._report_progress(0.90, "Evaluating on the reserved rows")
+            model.calculate_metrics(split=SplitEnum.TEST, level=LevelEnum.LAST)
 
         return model, plot_paths
 
@@ -130,18 +145,18 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
         function).
 
         This method implements cross-validation evaluation for hyperparameter
-        optimization. It trains and evaluates the model on k-1 folds and computes
-        the average performance. When used in nested CV, it evaluates on inner folds
-        within a specific outer fold.
+        optimization. It trains on each fold's train partition, scores the fold's
+        validation partition and averages the results. When used in nested CV, it
+        evaluates on inner folds within a specific outer fold.
 
         Parameters
         ----------
         model : BaseModel
             The model instance to evaluate (with specific hyperparameters).
         input_dataset : list of DatasetDict
-            List of fold data {"train": X_train, "test": X_test}.
+            List of fold data {"train": X_train, "validation": X_validation}.
         output_dataset : list of DatasetDict
-            List of fold labels {"train": y_train, "test": y_test}.
+            List of fold labels {"train": y_train, "validation": y_validation}.
         metric : Metric
             The metric function to optimize.
         **kwargs
@@ -166,7 +181,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
         # Dictionaries to accumulate all metrics across folds for averaging
         train_results = {}
-        test_results = {}
+        validation_results = {}
 
         # Cross-validation loop
         # Iterate through k-1 folds (last fold is the complete dataset)
@@ -186,16 +201,16 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
             # Compute metrics on both training and validation sets
             train_scores = model.compute_metrics(split=SplitEnum.TRAIN)
-            test_scores = model.compute_metrics(split=SplitEnum.TEST)
+            validation_scores = model.compute_metrics(split=SplitEnum.VALIDATION)
 
             # Collect the goal metric value from this fold
-            folds_results.append(test_scores[metric.__name__])
+            folds_results.append(validation_scores[metric.__name__])
 
             # Accumulate all metrics only if NOT in nested CV inner loop
             if fold_index is None:
                 for results, scores in [
                     (train_results, train_scores),
-                    (test_results, test_scores),
+                    (validation_results, validation_scores),
                 ]:
                     for metric_name, value in scores.items():
                         if metric_name not in results:
@@ -208,8 +223,8 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             averaged_train_results = {
                 metric: np.mean(values) for metric, values in train_results.items()
             }
-            averaged_test_results = {
-                metric: np.mean(values) for metric, values in test_results.items()
+            averaged_validation_results = {
+                metric: np.mean(values) for metric, values in validation_results.items()
             }
 
             # Persist averaged metrics as TRIAL level (intermediate HPO result)
@@ -219,8 +234,8 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
                 level=LevelEnum.TRIAL,
             )
             model._save_metrics(
-                results=averaged_test_results,
-                split=SplitEnum.TEST,
+                results=averaged_validation_results,
+                split=SplitEnum.VALIDATION,
                 level=LevelEnum.TRIAL,
             )
 
@@ -236,8 +251,9 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
         - Outer loop: Standard k-fold CV for unbiased final performance estimation
         - Inner loop: Separate CV fold within each outer fold for HPO
 
-        This prevents "information leakage" where the test set influences hyperparameter
-        selection, which would overestimate true generalization performance.
+        This prevents "information leakage" where the data used to score a fold also
+        influences hyperparameter selection, which would overestimate true
+        generalization performance.
 
         Parameters
         ----------
@@ -246,9 +262,11 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
         model : BaseModel
             The model instance to optimize and evaluate.
         input_dataset : list of DatasetDict
-            List of outer fold data {"train": X_train, "test": X_test}.
+            List of outer fold data
+            {"train": X_train, "validation": X_validation}.
         output_dataset : list of DatasetDict
-            List of outer fold labels {"train": y_train, "test": y_test}.
+            List of outer fold labels
+            {"train": y_train, "validation": y_validation}.
         db : Session
             SQLAlchemy database session for persisting aggregated metrics.
         """
@@ -293,7 +311,7 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
             # Evaluate on outer fold's test data (this is OUTER_FOLD level metric)
             outer_model.calculate_metrics(
-                split=SplitEnum.TEST, level=LevelEnum.OUTER_FOLD, fold_index=i
+                split=SplitEnum.VALIDATION, level=LevelEnum.OUTER_FOLD, fold_index=i
             )
             outer_model.calculate_metrics(
                 split=SplitEnum.TRAIN, level=LevelEnum.OUTER_FOLD, fold_index=i

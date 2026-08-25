@@ -64,12 +64,13 @@ export default function OuterFoldMetricsTable({ run }) {
   }
 
   const train = metrics?.train_metrics || {};
-  const test = metrics?.test_metrics || {};
+  // Nested CV scores each outer fold on its validation partition.
+  const validation = metrics?.validation_metrics || {};
   const trainStd = metrics?.train_metrics_std || {};
-  const testStd = metrics?.test_metrics_std || {};
+  const validationStd = metrics?.validation_metrics_std || {};
 
   const metricNames = Array.from(
-    new Set([...Object.keys(train), ...Object.keys(test)]),
+    new Set([...Object.keys(train), ...Object.keys(validation)]),
   ).sort();
 
   if (error || metricNames.length === 0) {
@@ -93,7 +94,7 @@ export default function OuterFoldMetricsTable({ run }) {
                 {t("models:label.train")}
               </TableCell>
               <TableCell align="right" sx={{ fontWeight: 600 }}>
-                {t("models:label.test")}
+                {t("models:label.validation")}
               </TableCell>
             </TableRow>
           </TableHead>
@@ -105,7 +106,7 @@ export default function OuterFoldMetricsTable({ run }) {
                   {fmt(train[name], trainStd[name])}
                 </TableCell>
                 <TableCell align="right">
-                  {fmt(test[name], testStd[name])}
+                  {fmt(validation[name], validationStd[name])}
                 </TableCell>
               </TableRow>
             ))}

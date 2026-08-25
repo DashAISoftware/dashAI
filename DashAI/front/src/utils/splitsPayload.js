@@ -80,8 +80,9 @@ export const resolveSplitterName = (evaluationStrategy, cvType) => {
 /**
  * Report whether a splits payload gives a partition any rows.
  *
- * Cross-validation folds every row into train and test, and never builds a
- * validation partition. Index modes carry row indexes, random splits carry
+ * Cross-validation splits every fold into train and validation, so those two
+ * always receive rows; it only fills a test partition when the session reserved
+ * rows the folds never see. Index modes carry row indexes, random splits carry
  * proportions, and payloads written before the splits followed the splitter
  * schema carry the indexes under the partition names.
  *
@@ -91,7 +92,14 @@ export const resolveSplitterName = (evaluationStrategy, cvType) => {
  */
 export const hasPartition = (splits, partition) => {
   if (!splits) return false;
-  if (splits.splitType === SPLIT_TYPES.CV) return partition !== "validation";
+  if (splits.splitType === SPLIT_TYPES.CV) {
+    // Sessions written while the reserved proportion was still called
+    // "holdout" carry that key instead, the same fallback the backend
+    // normalizer applies.
+    if (partition === "test")
+      return Number(splits.test_size ?? splits.holdout ?? 0) > 0;
+    return true;
+  }
 
   const indexes = splits.splitted_indexes;
   if (indexes) {

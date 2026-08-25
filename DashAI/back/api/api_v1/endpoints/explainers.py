@@ -1084,7 +1084,8 @@ async def get_explainable_splits(
     The available partitions depend on how the run was evaluated, so they are
     resolved here rather than assumed by the caller: a holdout run exposes its
     train, test and validation partitions, while a cross-validation run exposes
-    the rows it reserved for explanations under the name ``holdout``.
+    its train partition and the rows it reserved as a test set, which are the
+    only ones the saved model never saw.
 
     Parameters
     ----------

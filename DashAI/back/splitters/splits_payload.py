@@ -25,10 +25,12 @@ META_KEYS = ("splitter_name", "splitType", "splitted_indexes", "seed")
 def normalize_splits_payload(splits_data: Dict[str, Any]) -> Dict[str, Any]:
     """Translate a legacy splits payload into the current contract.
 
-    Three legacy shapes are handled:
+    Four legacy shapes are handled:
 
     - No ``splitter_name``, from before fold splitters existed.
     - ``seed`` instead of the schema's ``random_state``.
+    - ``holdout`` instead of ``test_size``, which is what the reserved
+      proportion was called when fold splitters first got one.
     - ``train`` / ``test`` / ``validation`` holding index lists instead of
       proportions, which is how manual and predefined holdout splits used to
       be stored.
@@ -51,6 +53,9 @@ def normalize_splits_payload(splits_data: Dict[str, Any]) -> Dict[str, Any]:
 
     if "random_state" not in normalized and "seed" in normalized:
         normalized["random_state"] = normalized["seed"]
+
+    if "test_size" not in normalized and "holdout" in normalized:
+        normalized["test_size"] = normalized["holdout"]
 
     index_lists = {
         split: normalized[split]
@@ -162,16 +167,13 @@ def explainable_indexes(
     }
     if not unseen:
         raise ValueError(
-            "The run has no rows outside the data the model was fitted on "
-            f"(its {splitter_class.EVALUATION_PARTITION} partition is empty), "
-            "so there is nothing to explain."
+            "The run has no rows outside the data the model was fitted on (its "
+            "test partition is empty), so there is nothing to explain."
         )
 
-    # Explanations are measured on the splitter's preferred partition, falling
-    # back to whichever unseen partition the run actually filled: a holdout run
-    # configured without a test partition is explained on validation.
-    evaluation = unseen.get(splitter_class.EVALUATION_PARTITION) or next(
-        iter(unseen.values())
-    )
+    # Explanations are measured on the test partition, falling back to whichever
+    # unseen partition the run actually filled: a holdout run configured without
+    # a test partition is explained on validation.
+    evaluation = unseen.get("test") or next(iter(unseen.values()))
 
     return partitions.get(training, []), evaluation, partitions.get("val", [])

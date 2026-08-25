@@ -9,7 +9,7 @@ from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
 from DashAI.back.api.utils import remove_path
-from DashAI.back.core.enums.metrics import LevelEnum
+from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import (
     GlobalExplainer,
     LocalExplainer,
@@ -44,7 +44,9 @@ def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
     Returns
     -------
     dict
-        A dictionary containing train, validation, and test metrics for the run.
+        The train, validation and test metrics of the run, each paired with the
+        standard deviation that fold aggregation produces for cross-validation
+        runs. A partition the run did not score comes back as ``None``.
     """
     metrics = (
         db.query(Metric)
@@ -52,14 +54,12 @@ def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
         .all()
     )
 
-    # Initialize the response structure
-    response = {
-        "train_metrics": None,
-        "validation_metrics": None,
-        "test_metrics": None,
-        "train_metrics_std": None,
-        "test_metrics_std": None,
-    }
+    # One value entry and one standard deviation entry per split, derived from
+    # SplitEnum so a split cannot be silently left out of the response.
+    response = {}
+    for split in SplitEnum:
+        response[f"{split.value}_metrics"] = None
+        response[f"{split.value}_metrics_std"] = None
 
     # Group metrics by split
     for metric in metrics:
@@ -81,6 +81,21 @@ def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
             response[std_key][metric.name] = metric.std_value
 
     return response
+
+
+def attach_metrics_to_run(db, run) -> None:
+    """Attach the metrics of a run to it as plain attributes for serialization.
+
+    Parameters
+    ----------
+    db : Session
+        SQLAlchemy session to interact with the database.
+    run : Run
+        The run to annotate. The attributes are not persisted; they exist so the
+        endpoint response carries the metrics alongside the run.
+    """
+    for key, value in get_metrics_for_run(db, run.id).items():
+        setattr(run, key, value)
 
 
 @router.get("/")
@@ -129,12 +144,7 @@ async def get_runs(
 
             # Add metrics to each run
             for run in runs:
-                metrics = get_metrics_for_run(db, run.id)
-                run.train_metrics = metrics["train_metrics"]
-                run.validation_metrics = metrics["validation_metrics"]
-                run.test_metrics = metrics["test_metrics"]
-                run.train_metrics_std = metrics["train_metrics_std"]
-                run.test_metrics_std = metrics["test_metrics_std"]
+                attach_metrics_to_run(db, run)
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -180,12 +190,7 @@ async def get_run_by_id(
                     detail="Run not found",
                 )
             # Add metrics to the run
-            metrics = get_metrics_for_run(db, run_id)
-            run.train_metrics = metrics["train_metrics"]
-            run.validation_metrics = metrics["validation_metrics"]
-            run.test_metrics = metrics["test_metrics"]
-            run.train_metrics_std = metrics["train_metrics_std"]
-            run.test_metrics_std = metrics["test_metrics_std"]
+            attach_metrics_to_run(db, run)
 
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -469,20 +474,15 @@ async def update_run(
                 reset_run(run)
             if params.goal_metric is not None:
                 run.goal_metric = params.goal_metric
-            if params.nested is not None:
+            # `nested` is nullable, so None is also how the client asks to drop
+            # the nested CV config. Check what was actually sent instead of the
+            # value, or clearing it would be indistinguishable from omitting it.
+            if "nested" in params.model_fields_set:
                 run.nested = params.nested
 
-            if any(
-                [
-                    params.run_name,
-                    params.run_description,
-                    params.parameters,
-                    params.optimizer,
-                    params.optimizer_parameters,
-                    params.goal_metric,
-                    params.nested,
-                ]
-            ):
+            # Truthiness would read a cleared optimizer ("" / {}) as "nothing
+            # changed" and skip the commit, so go by which fields were sent.
+            if params.model_fields_set:
                 db.commit()
                 db.refresh(run)
                 return run
@@ -710,9 +710,9 @@ def reset_run(run):
     import os
 
     setattr(run, "status", RunStatus.NOT_STARTED)
-    setattr(run, "train_metrics", None)
-    setattr(run, "validation_metrics", None)
-    setattr(run, "test_metrics", None)
+    for split in SplitEnum:
+        setattr(run, f"{split.value}_metrics", None)
+        setattr(run, f"{split.value}_metrics_std", None)
     setattr(run, "start_time", None)
     setattr(run, "delivery_time", None)
     setattr(run, "end_time", None)
@@ -801,7 +801,7 @@ def _group_fold_metrics(db, run_id: int, level, split_enum):
 @inject
 async def get_fold_metrics(
     run_id: int,
-    metric_split: Literal["train", "test"] = Query("test"),
+    metric_split: Literal["train", "validation"] = Query("validation"),
     scope: Literal["default", "outer"] = Query("default"),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
@@ -812,7 +812,10 @@ async def get_fold_metrics(
     run_id : int
         ID of the run to retrieve fold metrics for.
     metric_split : str, optional
-        Which metrics to use: "train", "validation", or "test", by default "test".
+        Which metrics to use: "train" or "validation", by default "validation".
+        A fold is scored on its validation partition, so no test metric exists
+        at fold level: the rows the session reserved are scored once, by the
+        final model, and live at LAST level.
     scope : Literal["default", "outer"], optional
         "default" returns the standard per-fold metrics (LevelEnum.FOLD).
         "outer" returns the outer-loop metrics of a nested CV run
@@ -831,18 +834,16 @@ async def get_fold_metrics(
     HTTPException
         If the run is not found or has no fold metrics for the given scope.
     """
-    from DashAI.back.core.enums.metrics import SplitEnum
-
     split_map = {
         "train": SplitEnum.TRAIN,
-        "test": SplitEnum.TEST,
+        "validation": SplitEnum.VALIDATION,
     }
     level_map = {
         "default": LevelEnum.FOLD,
         "outer": LevelEnum.OUTER_FOLD,
     }
 
-    split_enum = split_map.get(metric_split, SplitEnum.TEST)
+    split_enum = split_map.get(metric_split, SplitEnum.VALIDATION)
     level_enum = level_map.get(scope, LevelEnum.FOLD)
 
     with session_factory() as db:
@@ -883,12 +884,7 @@ async def get_outer_averaged_metrics(
                 db, run_id, level_enum=LevelEnum.LAST_OUTER
             )
 
-            return {
-                "train_metrics": outer_averaged_metrics["train_metrics"],
-                "test_metrics": outer_averaged_metrics["test_metrics"],
-                "train_metrics_std": outer_averaged_metrics["train_metrics_std"],
-                "test_metrics_std": outer_averaged_metrics["test_metrics_std"],
-            }
+            return outer_averaged_metrics
 
         except exc.SQLAlchemyError as e:
             log.exception(e)

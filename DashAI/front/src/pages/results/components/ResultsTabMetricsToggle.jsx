@@ -3,10 +3,20 @@ import PropTypes from "prop-types";
 import { Grid, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
+/**
+ * Toggle that picks which split's metrics are displayed.
+ *
+ * Which buttons appear is driven by the metrics the run actually produced, not
+ * by its evaluation strategy: a cross-validation run always scores a validation
+ * partition, and only scores a test one when the session reserved rows the
+ * folds never see.
+ */
 function ResultsTabMetricsToggle({
   displaySet,
   setDisplaySet,
-  evaluationStrategy,
+  hasTrainData = true,
+  hasValidationData = true,
+  hasTestData = true,
 }) {
   const { t } = useTranslation(["common"]);
 
@@ -23,9 +33,13 @@ function ResultsTabMetricsToggle({
         }}
         sx={{ float: "right" }}
       >
-        <ToggleButton value="test_metrics">{t("common:test")}</ToggleButton>
-        <ToggleButton value="train_metrics">{t("common:train")}</ToggleButton>
-        {evaluationStrategy !== "CrossValidationEvaluationStrategy" && (
+        {hasTestData && (
+          <ToggleButton value="test_metrics">{t("common:test")}</ToggleButton>
+        )}
+        {hasTrainData && (
+          <ToggleButton value="train_metrics">{t("common:train")}</ToggleButton>
+        )}
+        {hasValidationData && (
           <ToggleButton value="validation_metrics">
             {t("common:validation")}
           </ToggleButton>
@@ -38,7 +52,9 @@ function ResultsTabMetricsToggle({
 ResultsTabMetricsToggle.propTypes = {
   displaySet: PropTypes.string.isRequired,
   setDisplaySet: PropTypes.func.isRequired,
-  evaluationStrategy: PropTypes.string.isRequired,
+  hasTrainData: PropTypes.bool,
+  hasValidationData: PropTypes.bool,
+  hasTestData: PropTypes.bool,
 };
 
 export default ResultsTabMetricsToggle;

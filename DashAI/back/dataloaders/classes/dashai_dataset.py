@@ -1185,29 +1185,31 @@ def split_dataset(
 
 def split_dataset_cv(
     dataset: DashAIDataset,
-    indices: Dict[Dict[str, List[int]]],
     train_indexes: List = None,
     test_indexes: List = None,
+    second_split_name: str = "test",
 ) -> object:
     """
-    Split a dataset into train and test subsets for cross-validation.
+    Split a dataset into two subsets for cross-validation.
 
     Parameters
     ----------
     dataset : DashAIDataset
         A HuggingFace DashAIDataset containing the data to be partitioned.
-    indices : Dict[Dict[str, List[int]]]
-        Mapping of split names to their corresponding train and test index
-        lists, which is stored in the dataset metadata.
     train_indexes : List, optional
         Indices of the rows assigned to the training subset.
     test_indexes : List, optional
-        Indices of the rows assigned to the test subset.
+        Indices of the rows assigned to the second subset.
+    second_split_name : str, optional
+        Name the second subset takes in the returned dictionary. Folds are
+        scored on their ``"validation"`` partition; the trailing entry that
+        fits the final model keeps the default ``"test"`` for the reserved
+        rows it is measured on.
 
     Returns
     -------
     DatasetDict
-        A dataset dictionary containing the train and test splits.
+        A dataset dictionary containing the train split and the second split.
     """
     import numpy as np
 
@@ -1223,8 +1225,6 @@ def split_dataset_cv(
 
     table = dataset.arrow_table
 
-    dataset.splits["split_indices"] = indices
-
     # Create separate tables for each split
     train_table = table.filter(pa.array(train_mask))
     test_table = table.filter(pa.array(test_mask))
@@ -1235,7 +1235,7 @@ def split_dataset_cv(
     separate_dataset_dict = DatasetDict(
         {
             "train": DashAIDataset(train_table, types=dataset.types),
-            "test": DashAIDataset(test_table, types=dataset.types),
+            second_split_name: DashAIDataset(test_table, types=dataset.types),
         }
     )
 

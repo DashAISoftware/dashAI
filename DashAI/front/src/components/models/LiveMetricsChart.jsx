@@ -307,13 +307,18 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
     setLevel(newLevel);
   };
 
-  // Save the evaluation strategy from the session
-  const isCV = useMemo(() => {
-    return (
-      modelSessionDetail?.evaluation_strategy ===
-      "CrossValidationEvaluationStrategy"
-    );
+  // Both strategies score a validation split. A session only produces test
+  // metrics when it reserved rows the training never saw, and its configured
+  // metric lists are what say so.
+  const hasTestSplit = useMemo(() => {
+    if (!modelSessionDetail) return true;
+    return (modelSessionDetail.test_metrics ?? []).length > 0;
   }, [modelSessionDetail]);
+
+  // Never leave the group pointing at a button that is no longer rendered.
+  useEffect(() => {
+    if (!hasTestSplit && split === "TEST") setSplit("TRAIN");
+  }, [hasTestSplit, split]);
 
   return (
     <Box
@@ -362,16 +367,14 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
           <ToggleButton value="TRAIN" sx={{ px: 1.5 }}>
             {t("models:label.train")}
           </ToggleButton>
-          {/* Cross-validation folds every row into train and test, so those
-              runs have no validation partition to plot. */}
-          {!isCV && (
-            <ToggleButton value="VALIDATION" sx={{ px: 1.5 }}>
-              {t("models:label.validation")}
+          <ToggleButton value="VALIDATION" sx={{ px: 1.5 }}>
+            {t("models:label.validation")}
+          </ToggleButton>
+          {hasTestSplit && (
+            <ToggleButton value="TEST" sx={{ px: 1.5 }}>
+              {t("models:label.test")}
             </ToggleButton>
           )}
-          <ToggleButton value="TEST" sx={{ px: 1.5 }}>
-            {t("models:label.test")}
-          </ToggleButton>
         </PillToggleButtonGroup>
       </Box>
 

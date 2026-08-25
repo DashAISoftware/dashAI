@@ -41,19 +41,16 @@ class FoldSplitter(BaseSplitter):
     """Shared base class for splitters that generate multiple cross-validation folds.
 
     This abstraction centralizes the logic required by fold-based evaluation
-    strategies, including the creation of several train/test partitions and the
-    addition of a full-data fold for training on the complete dataset.
+    strategies: it reserves an optional test set, builds several
+    train/validation partitions over the rows that are left, and adds a final
+    partition that fits the model on all of them and scores it on the reserved
+    ones.
     """
 
-    # How the rows reserved for explanations are chosen. ``"random"`` samples
-    # them uniformly, ``"stratified"`` preserves the target distribution, and
+    # How the rows of the test set are chosen. ``"random"`` samples them
+    # uniformly, ``"stratified"`` preserves the target distribution, and
     # ``"group"`` moves whole groups so a group never spans the carve.
-    HOLDOUT_STRATEGY: str = "random"
-
-    # The rows kept out of the folds are the ones the final model never saw.
-    # They are not called "test" because a fold based run already reports test
-    # metrics, averaged over the folds.
-    EVALUATION_PARTITION: str = "holdout"
+    TEST_SPLIT_STRATEGY: str = "random"
 
     @classmethod
     def explainable_partitions(cls, split_indexes):
@@ -61,7 +58,8 @@ class FoldSplitter(BaseSplitter):
 
         The folds themselves are not offered: the model that gets saved is refit
         on everything the folds could use, so only the reserved rows are data it
-        has not seen.
+        has not seen. Those are the same rows the run reports its test metrics
+        on, which is why they carry the ``test`` name here too.
 
         Parameters
         ----------
@@ -71,12 +69,12 @@ class FoldSplitter(BaseSplitter):
         Returns
         -------
         dict
-            Row indexes for the ``train`` and ``holdout`` partitions.
+            Row indexes for the ``train`` and ``test`` partitions.
         """
         full_dataset = split_indexes["full_dataset"]
         return {
             "train": full_dataset["train_indexes"],
-            "holdout": full_dataset.get("test_indexes", []),
+            "test": full_dataset.get("test_indexes", []),
         }
 
     def __init__(self, splits_data):
@@ -86,15 +84,16 @@ class FoldSplitter(BaseSplitter):
         ----------
         splits_data : dict
             Configuration dictionary that may include the number of folds to
-            generate.
+            generate and the proportion of the dataset to reserve as a test
+            set.
         """
         super().__init__(splits_data)
         self.n_splits = splits_data.get("n_splits", 5)
-        # Sessions created before the holdout existed name no proportion, and
+        # Sessions created before the test set existed name no proportion, and
         # reserving rows for them would silently shrink the folds of a session
         # whose earlier runs used every row. The schema placeholder gives new
         # sessions their 0.1, so only the older ones land on this default.
-        self.holdout = splits_data.get("holdout", 0)
+        self.test_size = splits_data.get("test_size", 0)
 
     @classmethod
     def get_metadata(cls) -> dict:
@@ -125,12 +124,12 @@ class FoldSplitter(BaseSplitter):
             "The split indexes method must be implemented by subclasses."
         )
 
-    def _carve_holdout(
+    def _carve_test_split(
         self, x: DashAIDataset, y: DashAIDataset
     ) -> Tuple[List[int], List[int]]:
         """Reserve the rows that stay out of cross-validation.
 
-        The reserved rows are picked according to ``HOLDOUT_STRATEGY`` so the
+        The reserved rows are picked according to ``TEST_SPLIT_STRATEGY`` so the
         carve respects whatever the splitter guarantees: a stratified splitter
         keeps the class balance, and a grouped one never splits a group.
 
@@ -144,7 +143,7 @@ class FoldSplitter(BaseSplitter):
         Returns
         -------
         tuple[list[int], list[int]]
-            The reserved row indexes and the rows left for the folds, both as
+            The test row indexes and the rows left for the folds, both as
             positions in the original dataset.
 
         Raises
@@ -155,44 +154,44 @@ class FoldSplitter(BaseSplitter):
         import numpy as np
 
         all_indexes = list(range(len(x)))
-        if not self.holdout:
+        if not self.test_size:
             return [], all_indexes
 
-        n_holdout = int(round(len(x) * self.holdout))
-        if n_holdout < 1 or len(x) - n_holdout < self.n_splits:
+        n_test = int(round(len(x) * self.test_size))
+        if n_test < 1 or len(x) - n_test < self.n_splits:
             raise ValueError(
-                f"""A holdout of {self.holdout} leaves too few rows: it would
-                reserve {n_holdout} of {len(x)} samples for explanations and
-                leave {len(x) - n_holdout} for {self.n_splits} folds."""
+                f"""A test set of {self.test_size} leaves too few rows: it
+                would reserve {n_test} of {len(x)} samples and leave
+                {len(x) - n_test} for {self.n_splits} folds."""
             )
 
         indexes = np.arange(len(x))
         seed = self.random_state
 
-        if self.HOLDOUT_STRATEGY == "group":
+        if self.TEST_SPLIT_STRATEGY == "group":
             from sklearn.model_selection import GroupShuffleSplit
 
             groups = x.to_pandas()[self.group_column]
             splitter = GroupShuffleSplit(
-                n_splits=1, test_size=self.holdout, random_state=seed
+                n_splits=1, test_size=self.test_size, random_state=seed
             )
-            pool, holdout = next(splitter.split(indexes, groups=groups))
-        elif self.HOLDOUT_STRATEGY == "stratified":
+            pool, test_rows = next(splitter.split(indexes, groups=groups))
+        elif self.TEST_SPLIT_STRATEGY == "stratified":
             from sklearn.model_selection import StratifiedShuffleSplit
 
             splitter = StratifiedShuffleSplit(
-                n_splits=1, test_size=self.holdout, random_state=seed
+                n_splits=1, test_size=self.test_size, random_state=seed
             )
-            pool, holdout = next(splitter.split(indexes, y=self.prepare_y(y)))
+            pool, test_rows = next(splitter.split(indexes, y=self.prepare_y(y)))
         else:
             from sklearn.model_selection import ShuffleSplit
 
             splitter = ShuffleSplit(
-                n_splits=1, test_size=self.holdout, random_state=seed
+                n_splits=1, test_size=self.test_size, random_state=seed
             )
-            pool, holdout = next(splitter.split(indexes))
+            pool, test_rows = next(splitter.split(indexes))
 
-        return sorted(int(i) for i in holdout), sorted(int(i) for i in pool)
+        return sorted(int(i) for i in test_rows), sorted(int(i) for i in pool)
 
     def split(
         self, x: DashAIDataset, y: DashAIDataset
@@ -218,7 +217,7 @@ class FoldSplitter(BaseSplitter):
             If the number of samples is lower than the number of requested
             splits.
         """
-        holdout_indexes, fold_pool = self._carve_holdout(x, y)
+        test_indexes, fold_pool = self._carve_test_split(x, y)
 
         if len(fold_pool) < self.n_splits:
             raise ValueError(f"""Number of splits (n_splits={self.n_splits}) cannot be
@@ -227,35 +226,44 @@ class FoldSplitter(BaseSplitter):
         # The folds are built over the rows left after the carve, so
         # ``split_indexes`` sees a dataset without the reserved rows and returns
         # positions within it, which are mapped back to original row numbers.
-        pool_x = x.select(fold_pool) if holdout_indexes else x
-        pool_y = y.select(fold_pool) if holdout_indexes else y
+        # ``fold_pool`` is sorted, so filtering the reserved rows out keeps the
+        # rows in the order the mapping below assumes.
+        pool_x = split_dataset_cv(x, fold_pool, [])["train"] if test_indexes else x
+        pool_y = split_dataset_cv(y, fold_pool, [])["train"] if test_indexes else y
         folds = self.split_indexes(pool_x, pool_y)
 
         indices = {}
         x_prepared, y_prepared = [], []
 
-        for i, (train_positions, test_positions) in enumerate(folds):
+        # A fold is scored on the rows it held back from its own training, which
+        # is a validation estimate: the reserved rows below are the only data no
+        # fold and no hyperparameter search ever touched.
+        for i, (train_positions, validation_positions) in enumerate(folds):
             train_idx = [fold_pool[p] for p in train_positions]
-            test_idx = [fold_pool[p] for p in test_positions]
+            validation_idx = [fold_pool[p] for p in validation_positions]
             indice = {
                 "train_indexes": train_idx,
-                "test_indexes": test_idx,
+                "validation_indexes": validation_idx,
             }
             indices[f"fold_{i}"] = indice
 
-            x_prepared.append(split_dataset_cv(x, indice, train_idx, test_idx))
-            y_prepared.append(split_dataset_cv(y, indice, train_idx, test_idx))
+            x_prepared.append(
+                split_dataset_cv(x, train_idx, validation_idx, "validation")
+            )
+            y_prepared.append(
+                split_dataset_cv(y, train_idx, validation_idx, "validation")
+            )
 
         # The trailing entry trains the final model. Its train partition is
         # every row the folds could use, and its test partition holds the rows
-        # reserved for scoring and explaining that model, which is empty when no
-        # holdout was requested.
+        # reserved for scoring and explaining that model, which is empty when
+        # nothing was reserved.
         indice = {
             "train_indexes": fold_pool,
-            "test_indexes": holdout_indexes,
+            "test_indexes": test_indexes,
         }
         indices["full_dataset"] = indice
-        x_prepared.append(split_dataset_cv(x, indice, fold_pool, holdout_indexes))
-        y_prepared.append(split_dataset_cv(y, indice, fold_pool, holdout_indexes))
+        x_prepared.append(split_dataset_cv(x, fold_pool, test_indexes))
+        y_prepared.append(split_dataset_cv(y, fold_pool, test_indexes))
 
         return x_prepared, y_prepared, indices

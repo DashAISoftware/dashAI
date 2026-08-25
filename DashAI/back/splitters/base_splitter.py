@@ -22,15 +22,9 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
 
     TYPE: Final[str] = "Splitter"
 
-    # Name of the partition an explainer evaluates on, which is the data the
-    # trained model has not seen. Splitters that reserve rows under another
-    # name override this so the frontend and the metrics never disagree about
-    # what "test" means.
-    EVALUATION_PARTITION: str = "test"
-
     # Name of the partition the model was fitted on. Every other partition a
     # splitter declares holds rows the model never saw, so any of them can
-    # carry an explanation when the preferred one came out empty.
+    # carry an explanation when the test partition came out empty.
     TRAINING_PARTITION: str = "train"
 
     @classmethod
@@ -94,7 +88,7 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
         if not any(split["name"] != cls.TRAINING_PARTITION for split in splits):
             # Every row went into fitting the model, so there is nothing an
             # explanation could be measured on. A run that filled some other
-            # partition than the preferred one still qualifies: a holdout run
+            # partition than the test one still qualifies: a holdout run
             # configured without a test partition is explained on validation.
             return []
 
