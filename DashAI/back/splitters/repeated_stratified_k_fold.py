@@ -1,0 +1,207 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Tuple
+
+import numpy as np
+from sklearn.model_selection import RepeatedStratifiedKFold
+
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    float_field,
+    int_field,
+    schema_field,
+)
+from DashAI.back.core.utils import MultilingualString
+
+from .fold_splitter import FoldSplitter
+
+if TYPE_CHECKING:
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+
+class RepeatedStratifiedKFoldSplitterSchema(BaseSchema):
+    n_splits: schema_field(
+        int_field(ge=2, le=20),
+        placeholder=5,
+        description=MultilingualString(
+            en="Number of folds. Must be an integer between 2 and 20.",
+            es="Número de particiones. Debe ser un entero entre 2 y 20.",
+            pt="Número de partições. Deve ser um inteiro entre 2 e 20.",
+            de="Anzahl der Folds. Muss eine ganze Zahl zwischen 2 und 20 sein.",
+            zh="折数，必须为2到20之间的整数。",
+        ),
+        alias=MultilingualString(
+            en="Number of folds",
+            es="Número de particiones",
+            pt="Número de partições",
+            de="Anzahl der Folds",
+            zh="折数",
+        ),
+    )  # type: ignore
+    n_repeats: schema_field(
+        int_field(ge=2, le=10),
+        placeholder=2,
+        description=MultilingualString(
+            en=(
+                "Number of times the Stratified K-Fold procedure is repeated. "
+                "Must be an integer between 2 and 10."
+            ),
+            es=(
+                "Número de veces que se repite el procedimiento K-Fold "
+                "estratificado. Debe ser un entero entre 2 y 10."
+            ),
+            pt=(
+                "Número de vezes que o procedimento K-Fold estratificado é "
+                "repetido. Deve ser um inteiro entre 2 e 10."
+            ),
+            de=(
+                "Anzahl der Wiederholungen des stratifizierten K-Fold-"
+                "Verfahrens. Muss eine ganze Zahl zwischen 2 und 10 sein."
+            ),
+            zh="分层K折过程重复的次数，必须为2到10之间的整数。",
+        ),
+        alias=MultilingualString(
+            en="Number of repeats",
+            es="Número de repeticiones",
+            pt="Número de repetições",
+            de="Anzahl der Wiederholungen",
+            zh="重复次数",
+        ),
+    )  # type: ignore
+    random_state: schema_field(
+        int_field(ge=0),
+        placeholder=42,
+        description=MultilingualString(
+            en="Seed used to make the repeated split reproducible.",
+            es="Semilla utilizada para que la división repetida sea reproducible.",
+            pt="Semente usada para tornar a divisão repetida reproduzível.",
+            de="Seed, um die wiederholte Aufteilung reproduzierbar zu machen.",
+            zh="用于使重复划分可复现的随机种子。",
+        ),
+        alias=MultilingualString(
+            en="Random state",
+            es="Estado aleatorio",
+            pt="Estado aleatório",
+            de="Zufallszustand",
+            zh="随机状态",
+        ),
+    )  # type: ignore
+    holdout: schema_field(
+        float_field(ge=0, le=0.5),
+        placeholder=0.1,
+        description=MultilingualString(
+            en=(
+                "Proportion of the dataset kept out of cross-validation. Those rows "
+                "are never used to fit or select the model, so they are the data the "
+                "final model can be explained on. Set it to 0 to cross-validate every "
+                "row, which leaves the run without data to explain."
+            ),
+            es=(
+                "Proporción del dataset que se mantiene fuera de la validación "
+                "cruzada. Esas filas nunca se usan para ajustar ni seleccionar el "
+                "modelo, por lo que son los datos con los que se puede explicar el "
+                "modelo final. Usa 0 para validar de forma cruzada todas las filas, "
+                "lo que deja la ejecución sin datos que explicar."
+            ),
+            pt=(
+                "Proporção do dataset mantida fora da validação cruzada. Essas linhas "
+                "nunca são usadas para ajustar ou selecionar o modelo, portanto são "
+                "os dados com os quais o modelo final pode ser explicado. Use 0 para "
+                "validar de forma cruzada todas as linhas, o que deixa a execução sem "
+                "dados para explicar."
+            ),
+            de=(
+                "Anteil des Datensatzes, der von der Kreuzvalidierung ausgenommen "
+                "wird. Diese Zeilen werden nie zum Trainieren oder Auswählen des "
+                "Modells verwendet und sind daher die Daten, mit denen das endgültige "
+                "Modell erklärt werden kann. Mit 0 werden alle Zeilen "
+                "kreuzvalidiert, wodurch der Lauf keine Daten zum Erklären hat."
+            ),
+            zh=(
+                "从交叉验证中保留的数据集比例。这些行不会用于拟合或选择模型，"
+                "因此可用于解释最终模型。设为 0 时全部行都参与交叉验证，"
+                "该运行将没有可解释的数据。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Held out for explanations",
+            es="Reservado para explicaciones",
+            pt="Reservado para explicações",
+            de="Für Erklärungen zurückgehalten",
+            zh="用于解释的保留数据",
+        ),
+    )  # type: ignore
+
+
+class RepeatedStratifiedKFoldSplitter(FoldSplitter):
+    """Splitter that repeats the stratified K-fold procedure multiple times.
+
+    This strategy preserves class proportions in each fold while repeating the
+    partitioning scheme several times, which makes it particularly useful for
+    imbalanced classification problems where a stable and representative estimate
+    is needed.
+
+    References
+    ----------
+    - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.RepeatedStratifiedKFold.html
+    """
+
+    HOLDOUT_STRATEGY: str = "stratified"
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "ImageClassificationTask",
+    ]
+    DISPLAY_NAME: str = MultilingualString(
+        en="Repeated Stratified K-Fold",
+        es="K-Fold Estratificado Repetido",
+        pt="K-Fold Estratificado Repetido",
+        de="Wiederholtes stratifiziertes K-Fold",
+        zh="重复分层 K 折交叉验证",
+    )
+    COMPATIBLE_INNER_SPLITTERS = ["KFoldSplitter", "StratifiedKFoldSplitter"]
+    SCHEMA = RepeatedStratifiedKFoldSplitterSchema
+
+    def __init__(self, splits_data):
+        """Initialize the repeated stratified K-fold splitter.
+
+        Parameters
+        ----------
+        splits_data : dict
+            Configuration dictionary that may include the number of repeats.
+        """
+        super().__init__(splits_data)
+        self.n_repeats = splits_data.get("n_repeats", 2)
+
+    def split_indexes(
+        self, x: DashAIDataset, y: DashAIDataset
+    ) -> List[Tuple[List, List]]:
+        """Generate train/test index pairs preserving class proportions.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input dataset whose length determines the number of available samples.
+        y : DashAIDataset
+            Target values used to preserve class distribution across folds.
+
+        Returns
+        -------
+        list[tuple]
+            A list of train/test index pairs for all folds and repeats.
+        """
+        indexes = np.arange(len(x))
+
+        try:
+            y_labels = self.prepare_y(y)
+
+            rskf = RepeatedStratifiedKFold(
+                n_splits=self.n_splits,
+                n_repeats=self.n_repeats,
+                random_state=self.random_state,
+            )
+            folds = list(rskf.split(indexes, y=y_labels))
+        except ValueError as e:
+            raise ValueError(f"Error in RepeatedStratifiedKFold splitting: {e}") from e
+
+        return folds

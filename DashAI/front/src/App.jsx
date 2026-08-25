@@ -1,6 +1,12 @@
 import React from "react";
 
-import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+} from "react-router-dom";
 import { TourRegistryProvider } from "./contexts/TourRegistryContext";
 import ModuleThemeWrapper from "./components/ModuleThemeWrapper";
 
@@ -13,11 +19,18 @@ import PluginsPage from "./pages/plugins/Plugins";
 import PipelinesPage from "./pages/pipelines/Pipelines";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import Generative from "./pages/generative/Generative";
+import { GenerativeProvider } from "./components/generative/GenerativeContext";
 import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import HubContent from "./pages/hub/HubContent";
 import HubImportPage from "./pages/hub/HubImportPage";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
+import RAGDocumentsPage from "./pages/generative/RAG/RAGDocumentsPage";
+import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
+import RAGSessionPage from "./pages/generative/RAGSession/RAGSessionPage";
+import SessionRouter from "./pages/generative/SessionRouter";
 import { DatasetsAndNotebooksProvider } from "./components/custom/contexts/DatasetsAndNotebooksContext";
+import { DatasetsProvider } from "./contexts/DatasetsContext";
+import { ModelsProvider } from "./components/models/ModelsContext";
 
 function DataSectionLayout() {
   return (
@@ -33,60 +46,103 @@ function App() {
       <BrowserRouter
         future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
       >
-        <ResponsiveAppBar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/app" element={<Home />} />
-          <Route path="/app/data" element={<DataSectionLayout />}>
-            <Route index element={<DatasetsPage />} />
-            <Route path="datasets/new" element={<DatasetsPage />} />
-            <Route
-              path="datasets/new/:dataloaderName"
-              element={<DatasetsPage />}
-            />
-            <Route path="datasets/:id" element={<DatasetsPage />} />
-            <Route path="notebooks/new" element={<DatasetsPage />} />
-            <Route path="notebooks/:id" element={<DatasetsPage />} />
-            <Route path="hub" element={<HubContent />} />
-            <Route
-              path="hub/import/:datafileId/*"
-              element={<HubImportPage />}
-            />
-            <Route path="hub/:sourceName" element={<HubContent />} />
-          </Route>
-          <Route path="/app/models" element={<ModelsPage />} />
-          <Route path="/app/models/datasets/:id" element={<ModelsPage />} />
-          <Route path="/app/models/sessions/:id" element={<ModelsPage />} />
-          <Route
-            path="/app/models/sessions/new/:taskName"
-            element={<ModelsPage />}
-          />
-          <Route
-            path="/app/models/sessions/:id/model/:runId"
-            element={<ModelsPage />}
-          />
-          <Route path="/app/generative" element={<Generative />} />
-          <Route path="/app/generative/sessions/new" element={<Generative />} />
-          <Route
-            path="/app/generative/sessions/new/:modelName"
-            element={<Generative />}
-          />
-          <Route path="/app/generative/sessions/:id" element={<Generative />} />
-          <Route path="/app/pipelines" element={<PipelinesPage />} />
-          <Route path="/app/pipelines/new" element={<NewPipelineWrapper />} />
-          <Route
-            path="/app/pipelines/:pipelineId"
-            element={<NewPipelineWrapper />}
-          />
-          <Route path="/app/plugins">
-            <Route index element={<PluginsPage />} />
-            <Route path=":category">
-              <Route index element={<PluginsPage />} />
-              <Route path="details/:id" element={<PluginsDetails />} />
-            </Route>
-          </Route>
-        </Routes>
-        <JobQueueWidget />
+        <DatasetsProvider>
+          <ModelsProvider>
+            <GenerativeProvider>
+              <ResponsiveAppBar />
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/app" element={<Home />} />
+                <Route path="/app/data" element={<DataSectionLayout />}>
+                  <Route index element={<DatasetsPage />} />
+                  <Route path="datasets/new" element={<DatasetsPage />} />
+                  <Route
+                    path="datasets/new/:dataloaderName"
+                    element={<DatasetsPage />}
+                  />
+                  <Route path="datasets/:id" element={<DatasetsPage />} />
+                  <Route path="notebooks/new" element={<DatasetsPage />} />
+                  <Route path="notebooks/:id" element={<DatasetsPage />} />
+                  <Route path="hub" element={<HubContent />} />
+                  <Route
+                    path="hub/import/:datafileId/*"
+                    element={<HubImportPage />}
+                  />
+                  <Route path="hub/:sourceName" element={<HubContent />} />
+                </Route>
+                <Route path="/app/models" element={<ModelsPage />} />
+                <Route
+                  path="/app/models/datasets/:id"
+                  element={<ModelsPage />}
+                />
+                <Route
+                  path="/app/models/sessions/:id"
+                  element={<ModelsPage />}
+                />
+                <Route
+                  path="/app/models/sessions/new/:taskName"
+                  element={<ModelsPage />}
+                />
+                <Route
+                  path="/app/models/sessions/:id/model/:runId"
+                  element={<ModelsPage />}
+                />
+                <Route path="/app/generative" element={<Generative />} />
+                <Route
+                  path="/app/generative/RAG"
+                  element={
+                    <Navigate to="/app/generative/sessions/new" replace />
+                  }
+                />
+                <Route
+                  path="/app/generative/RAG/documents"
+                  element={
+                    <GenerativeProvider>
+                      <RAGDocumentsPage />
+                    </GenerativeProvider>
+                  }
+                />
+                <Route
+                  path="/app/generative/RAG/prompts"
+                  element={
+                    <GenerativeProvider>
+                      <RAGPromptsPage />
+                    </GenerativeProvider>
+                  }
+                />
+                <Route
+                  path="/app/generative/sessions/new"
+                  element={<Generative />}
+                />
+                <Route
+                  path="/app/generative/sessions/new/:modelName"
+                  element={<Generative />}
+                />
+                <Route
+                  path="/app/generative/sessions/:id"
+                  element={<SessionRouter />}
+                />
+                <Route path="/app/pipelines" element={<PipelinesPage />} />
+                <Route
+                  path="/app/pipelines/new"
+                  element={<NewPipelineWrapper />}
+                />
+                <Route
+                  path="/app/pipelines/:pipelineId"
+                  element={<NewPipelineWrapper />}
+                />
+                <Route path="/app/plugins">
+                  <Route index element={<PluginsPage />} />
+                  <Route path=":category">
+                    <Route index element={<PluginsPage />} />
+                    <Route path="details/:id" element={<PluginsDetails />} />
+                  </Route>
+                </Route>
+              </Routes>
+              <JobQueueWidget />
+            </GenerativeProvider>
+          </ModelsProvider>
+        </DatasetsProvider>
       </BrowserRouter>
     </TourRegistryProvider>
   );

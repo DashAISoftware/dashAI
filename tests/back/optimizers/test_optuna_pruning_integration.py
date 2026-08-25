@@ -5,9 +5,10 @@ epoch+validation, `TrialPruned` is raised. This one wires the real parts
 together and checks the outcome Optuna records, which is what the feature is
 for — a pruner that never prunes passes every unit test in the file next door.
 
-Real, not stubbed: `OptunaOptimizer.optimize`, `BaseModel.calculate_metrics`
-(where the hook lives), `_report_epoch`, and Optuna's own MedianPruner and
-trial bookkeeping.
+Real, not stubbed: `OptunaOptimizer.optimize`, `HoldoutEvaluationStrategy.
+evaluate` (the strategy that trains with validation data), `BaseModel.
+calculate_metrics` (where the hook lives), `_report_epoch`, and Optuna's own
+MedianPruner and trial bookkeeping.
 
 Stubbed: `_save_metrics` (persistence needs a database and is not what this
 proves) and the training itself, which is replaced by a loop that improves by a
@@ -25,8 +26,21 @@ import optuna
 import pytest
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
+from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
+
+
+def _holdout_evaluate(model, input_dataset, output_dataset, metric):
+    """The real holdout evaluation path, called unbound.
+
+    `evaluate` never touches `self`, and building a full strategy instance
+    needs a `ModelFactory` this test does not. If either stops being true,
+    this helper fails loudly and the test should switch to a real instance.
+    """
+    return HoldoutEvaluationStrategy.evaluate(
+        None, model, input_dataset, output_dataset, metric
+    )
 
 EPOCHS = 12
 N_TRIALS = 10
@@ -95,7 +109,7 @@ class SteppedModel(BaseModel):
     def prepare_output(self, y_data, is_fit=False):
         return y_data
 
-    def _save_metrics(self, split, level, results, log_index=None):
+    def _save_metrics(self, split, level, results, log_index=None, **kwargs):
         """Persistence is out of scope; the database is not what this proves."""
 
 
@@ -115,7 +129,7 @@ def _run(pruner, n_trials=N_TRIALS):
         dataset,
         [(model, "rate", (0.01, 10.0), "number")],
         {"class": Score, "metadata": {"maximize": True}},
-        "TabularClassificationTask",
+        _holdout_evaluate,
     )
     return optimizer, model
 
@@ -148,11 +162,11 @@ def test_pruning_stops_training_early():
     _, without = _run("NopPruner")
 
     # Pruned trials die on their first epoch: their opening score is already
-    # below the median. +1 trial in both: the refit `optimize` does at the end.
-    completed = STARTUP_TRIALS + 1
-    expected = completed * EPOCHS + (N_TRIALS - STARTUP_TRIALS)
+    # below the median. No refit here: `optimize` only writes the best params
+    # back, and the final training happens later in the strategy's `execute`.
+    expected = STARTUP_TRIALS * EPOCHS + (N_TRIALS - STARTUP_TRIALS)
 
-    assert without.epochs_run == (N_TRIALS + 1) * EPOCHS
+    assert without.epochs_run == N_TRIALS * EPOCHS
     assert with_pruning.epochs_run == expected, (
         f"pruning ran {with_pruning.epochs_run} epochs, expected {expected}. "
         f"Reaching {without.epochs_run} means the trials were cut short on paper "
@@ -170,4 +184,5 @@ def test_disabled_pruning_completes_every_trial():
     states = _states(optimizer)
     assert all(s is optuna.trial.TrialState.COMPLETE for s in states)
     assert len(states) == N_TRIALS
-    assert model.epochs_run == EPOCHS * (N_TRIALS + 1)  # +1: the final refit
+    # No refit inside `optimize`: final training belongs to the strategy.
+    assert model.epochs_run == EPOCHS * N_TRIALS

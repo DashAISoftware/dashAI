@@ -36,9 +36,22 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     split_indexes,
 )
 from DashAI.back.dataloaders.classes.image_dataloader import ImageDataLoader
+from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 from DashAI.back.metrics.classification.accuracy import Accuracy
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
 from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
+
+
+def _holdout_evaluate(model, input_dataset, output_dataset, metric):
+    """The real holdout evaluation path, called unbound.
+
+    `evaluate` never touches `self`, and building a full strategy instance
+    needs a `ModelFactory` this test does not. If either stops being true,
+    this helper fails loudly and the test should switch to a real instance.
+    """
+    return HoldoutEvaluationStrategy.evaluate(
+        None, model, input_dataset, output_dataset, metric
+    )
 
 EPOCHS = 3
 N_TRIALS = 3
@@ -129,7 +142,7 @@ def test_a_real_model_reports_every_epoch_to_the_trial(image_splits):
         y,
         [(model, "learning_rate", (1e-3, 5e-2), "number")],
         {"class": Accuracy, "metadata": {"maximize": True}},
-        "ImageClassificationTask",
+        _holdout_evaluate,
     )
 
     reported = [len(t.intermediate_values) for t in optimizer.study.trials]

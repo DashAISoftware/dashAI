@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 
-from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -227,19 +226,27 @@ class OptunaOptimizer(BaseOptimizer):
         self.sampler = sampler
         self.pruner = pruner
 
-    def optimize(self, model, input_dataset, output_dataset, parameters, metric, task):
+    def optimize(
+        self, model, input_dataset, output_dataset, parameters, metric, strategy
+    ):
         """
-        Optimization process
+        Run hyperparameter optimization.
 
-        Args:
-            model (class): class for the model from the current experiment
-            dataset (dict): dict with the data to train and validation
-            parameters (dict): dict with the information to create the search space
-            metric (class): class for the metric to optimize
-
-        Returns
-        -------
-            None
+        Parameters
+        ----------
+        model : object
+            Model instance to optimize.
+        input_dataset : dict
+            Dataset splits keyed by "train" and "validation".
+        output_dataset : dict
+            Label splits keyed by "train" and "validation".
+        parameters : list
+            Tuples of (obj, key, bounds, dtype) for each hyperparameter.
+        metric : dict
+            Dict with keys "class" (metric instance) and "metadata".
+        strategy : callable
+            Function that trains the model and returns a score based on the metric.
+            Depends on the specific evaluation strategy used.
         """
         import optuna
 
@@ -269,39 +276,27 @@ class OptunaOptimizer(BaseOptimizer):
                     raise ValueError(f"Unsupported parameter type for {key} : {dtype}")
                 setattr(obj, key, value)
 
-            # Validation data is passed on purpose. Without it the epoch loops
-            # skip `calculate_metrics(split=VALIDATION, level=EPOCH)` entirely —
-            # they guard it behind `if x_validation is not None` — so during
-            # optimization the per-epoch validation score was never computed.
+            # The reporter is installed around the whole strategy call: any
+            # epoch-level validation metric computed while the strategy trains
+            # feeds the pruner, and `TrialPruned` raised from inside it reaches
+            # `study.optimize` untouched, so the trial is recorded as pruned.
             #
-            # That is the deeper reason pruning could not work here: the number a
-            # pruner needs to decide did not exist, independently of whether the
-            # pruner itself was an instance or a string.
+            # Whether it ever fires depends on the strategy. It does when the
+            # model is trained with validation data — the epoch loops guard
+            # `calculate_metrics(split=VALIDATION, level=EPOCH)` behind
+            # `if x_validation is not None` — and a strategy that trains
+            # without validation data never triggers it, so that trial simply
+            # runs to completion unpruned.
             self.model._epoch_reporter = _report_epoch(trial, self.metric)
             try:
-                self.model.train(
-                    self.input_dataset["train"],
-                    self.output_dataset["train"],
-                    self.input_dataset["validation"],
-                    self.output_dataset["validation"],
+                # Train the model and get the score from the strategy
+                score = strategy(
+                    self.model, self.input_dataset, self.output_dataset, self.metric
                 )
             finally:
                 # Cleared even when the trial is pruned: the model instance is
-                # reused across trials and by the final refit below.
+                # reused across trials and by the final refit afterwards.
                 self.model._epoch_reporter = None
-
-            y_pred = self.model.predict(input_dataset["validation"])
-
-            # Calculate metric for train and validation data each trial
-            self.model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
-            self.model.calculate_metrics(
-                split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL
-            )
-
-            output_dataset_transformed = self.model.prepare_output(
-                output_dataset["validation"], is_fit=False
-            )
-            score = self.metric.score(output_dataset_transformed, y_pred)
 
             return score
 
@@ -318,7 +313,7 @@ class OptunaOptimizer(BaseOptimizer):
         for obj, key, _bounds, _dtype in self.parameters:
             if key in best_params:
                 setattr(obj, key, best_params[key])
-        self.model.train(self.input_dataset["train"], self.output_dataset["train"])
+
         self.study = study
 
     def get_model(self):

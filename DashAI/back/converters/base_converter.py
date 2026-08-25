@@ -70,6 +70,8 @@ class BaseConverter(ConfigObject, ABC):
         meta["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
         meta["icon"] = cls.ICON if cls.ICON else Icon.Extension.value
         meta["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
+        meta["requires_download"] = bool(getattr(cls, "REQUIRES_DOWNLOAD", False))
+        meta["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
         meta["supervised"] = cls.SUPERVISED
         meta["changes_row_count"] = cls.CHANGES_ROW_COUNT
         meta["n_components_features_bounded"] = getattr(

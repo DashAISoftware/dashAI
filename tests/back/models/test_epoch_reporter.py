@@ -37,7 +37,7 @@ class ModelStub(BaseModel):
     def prepare_output(self, y_data, is_fit=False):
         return y_data
 
-    def _save_metrics(self, split, level, results, log_index=None):
+    def _save_metrics(self, split, level, results, log_index=None, **kwargs):
         self.saved.append((split, level, results))
 
 

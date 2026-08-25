@@ -89,6 +89,8 @@ class BaseExplorer(ConfigObject, ABC):
         meta["category"] = cls.CATEGORY if cls.CATEGORY else "Other"
         meta["icon"] = cls.ICON if cls.ICON else Icon.Extension.value
         meta["color"] = cls.COLOR if cls.COLOR else "rgb(255, 255, 255)"
+        meta["requires_download"] = bool(getattr(cls, "REQUIRES_DOWNLOAD", False))
+        meta["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
 
         if meta.get("input_cardinality") is None:
             meta["input_cardinality"] = {"min": 1}
