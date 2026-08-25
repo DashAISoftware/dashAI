@@ -31,7 +31,7 @@ class DummyModel:
         self.sub = DummySubComponent()
         self.trained_with = None
 
-    def train(self, x, y):
+    def train(self, x, y, x_validation=None, y_validation=None):
         # Record what the model was actually fitted with, which is the value the
         # sub-component holds at that moment.
         self.trained_with = self.sub.C
@@ -129,7 +129,7 @@ def test_flat_model_still_works(dataset):
             super().__init__()
             self.C = 1.0
 
-        def train(self, x, y):
+        def train(self, x, y, x_validation=None, y_validation=None):
             self.trained_with = self.C
 
         def predict(self, dataset):
@@ -157,7 +157,7 @@ def test_integer_parameters_keep_their_type(dataset):
             super().__init__()
             self.sub = IntSub()
 
-        def train(self, x, y):
+        def train(self, x, y, x_validation=None, y_validation=None):
             self.trained_with = self.sub.n
 
         def predict(self, dataset):

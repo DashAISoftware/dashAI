@@ -114,8 +114,20 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
         float
             The metric score value for this hyperparameter combination.
         """
-        # Train the model with the training set
-        model.train(input_dataset["train"], output_dataset["train"])
+        # Validation data is passed on purpose. Without it the epoch loops
+        # skip `calculate_metrics(split=VALIDATION, level=EPOCH)` entirely —
+        # they guard it behind `if x_validation is not None` — so during
+        # optimization the per-epoch validation score was never computed.
+        #
+        # That is the deeper reason pruning could not work here: the number a
+        # pruner needs to decide did not exist, independently of whether the
+        # pruner itself was an instance or a string.
+        model.train(
+            input_dataset["train"],
+            output_dataset["train"],
+            input_dataset["validation"],
+            output_dataset["validation"],
+        )
 
         # Evaluate the model on the validation set
         y_pred = model.predict(input_dataset["validation"])

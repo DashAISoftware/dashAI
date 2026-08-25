@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
@@ -6,6 +8,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
+
+if TYPE_CHECKING:
+    import optuna
 
 
 class OptunaSchema(BaseSchema):
@@ -115,6 +120,82 @@ class OptunaSchema(BaseSchema):
     )  # type: ignore
 
 
+def _build_pruner(name: "str | None") -> "optuna.pruners.BasePruner":
+    """Resolve a pruner name from the schema into an Optuna pruner instance.
+
+    ``create_study`` accepts any object for ``pruner`` without validating it, so
+    passing the raw schema string silently produces a study whose pruner is a
+    ``str``. The failure only surfaces later, as
+    ``AttributeError: 'str' object has no attribute 'prune'``.
+
+    ``"None"`` (the string the schema sends when pruning is disabled) maps to
+    ``NopPruner``, Optuna's explicit no-op.
+
+    Only pruners that Optuna can build with default arguments are supported.
+    ``PatientPruner``, ``PercentilePruner`` and ``ThresholdPruner`` need
+    configuration (a wrapped pruner, a percentile, a threshold), so exposing them
+    means adding those fields to the schema first.
+    """
+    import optuna
+
+    if name in (None, "", "None"):
+        return optuna.pruners.NopPruner()
+
+    pruner_class = getattr(optuna.pruners, name, None)
+    if pruner_class is None:
+        raise ValueError(f"Unknown pruner '{name}'. Available: {_no_arg_pruners()}")
+    try:
+        return pruner_class()
+    except TypeError as exc:
+        raise ValueError(
+            f"Pruner '{name}' requires configuration and cannot be built from its "
+            f"name alone. Available: {_no_arg_pruners()}"
+        ) from exc
+
+
+def _no_arg_pruners() -> "list[str]":
+    """Pruner names Optuna can instantiate with no arguments."""
+    import optuna
+
+    names = []
+    for name in dir(optuna.pruners):
+        if not name.endswith("Pruner") or name == "BasePruner":
+            continue
+        try:
+            getattr(optuna.pruners, name)()
+        except TypeError:
+            continue
+        names.append(name)
+    return sorted(names)
+
+
+def _report_epoch(trial, metric):
+    """Build the per-epoch callback handed to the model during a trial.
+
+    Optuna prunes by being told how a trial is doing while it still runs:
+    `trial.report(value, step)` feeds the pruner, `trial.should_prune()` asks it
+    for a verdict, and raising `TrialPruned` is how a trial is abandoned.
+
+    Nothing between here and `study.optimize` catches that exception, so it
+    reaches Optuna and the trial is recorded as pruned rather than failed.
+
+    A missing metric is not an error: `calculate_metrics` skips any metric that
+    returns a non-finite value, so a given epoch may legitimately have nothing to
+    report. The trial simply continues unpruned.
+    """
+    import optuna
+
+    def report(results, step):
+        value = results.get(metric.__name__)
+        if value is None:
+            return
+        trial.report(value, step)
+        if trial.should_prune():
+            raise optuna.TrialPruned()
+
+    return report
+
+
 class OptunaOptimizer(BaseOptimizer):
     DISPLAY_NAME: str = MultilingualString(
         en="Optuna Optimizer",
@@ -170,6 +251,7 @@ class OptunaOptimizer(BaseOptimizer):
         import optuna
 
         sampler = getattr(optuna.samplers, self.sampler)
+        pruner = _build_pruner(self.pruner)
 
         self.model = model
         self.input_dataset = input_dataset
@@ -177,7 +259,7 @@ class OptunaOptimizer(BaseOptimizer):
         self.parameters = parameters
         direction = "maximize" if metric["metadata"]["maximize"] else "minimize"
         study = optuna.create_study(
-            direction=direction, sampler=sampler(), pruner=self.pruner
+            direction=direction, sampler=sampler(), pruner=pruner
         )
 
         self.metric = metric["class"]
@@ -194,10 +276,27 @@ class OptunaOptimizer(BaseOptimizer):
                     raise ValueError(f"Unsupported parameter type for {key} : {dtype}")
                 setattr(obj, key, value)
 
-            # Train the model and get the score from the strategy
-            score = strategy(
-                self.model, self.input_dataset, self.output_dataset, self.metric
-            )
+            # The reporter is installed around the whole strategy call: any
+            # epoch-level validation metric computed while the strategy trains
+            # feeds the pruner, and `TrialPruned` raised from inside it reaches
+            # `study.optimize` untouched, so the trial is recorded as pruned.
+            #
+            # Whether it ever fires depends on the strategy. It does when the
+            # model is trained with validation data — the epoch loops guard
+            # `calculate_metrics(split=VALIDATION, level=EPOCH)` behind
+            # `if x_validation is not None` — and a strategy that trains
+            # without validation data never triggers it, so that trial simply
+            # runs to completion unpruned.
+            self.model._epoch_reporter = _report_epoch(trial, self.metric)
+            try:
+                # Train the model and get the score from the strategy
+                score = strategy(
+                    self.model, self.input_dataset, self.output_dataset, self.metric
+                )
+            finally:
+                # Cleared even when the trial is pruned: the model instance is
+                # reused across trials and by the final refit afterwards.
+                self.model._epoch_reporter = None
 
             return score
 
