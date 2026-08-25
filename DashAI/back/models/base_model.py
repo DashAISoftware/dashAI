@@ -394,7 +394,6 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
 
         return results
 
-
     def prepare_dataset(
         self, dataset: "DashAIDataset", is_fit: bool = False
     ) -> "DashAIDataset":

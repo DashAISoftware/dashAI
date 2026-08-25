@@ -191,7 +191,7 @@ def _report_epoch(trial, metric):
             return
         trial.report(value, step)
         if trial.should_prune():
-            raise optuna.TrialPruned()
+            raise optuna.TrialPruned
 
     return report
 
