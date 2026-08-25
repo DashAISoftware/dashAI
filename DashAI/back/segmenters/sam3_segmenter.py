@@ -28,13 +28,14 @@ class SAM3Segmenter(BaseSegmenter):
     never triggers a load or a network call by itself.
 
     This class never decides where its weights come from, which device to
-    run on, or what score threshold to apply: all three are handed in by
-    the caller. The only caller in this codebase is
-    ``SAM3SegmentConverter``, which resolves ``model_source`` through
+    run on, or which thresholds to apply: all of them are handed in by the
+    caller. The only caller in this codebase is ``SAM3SegmentConverter``,
+    which resolves ``model_source`` through
     ``HFPretrainedDownloadMixin._pretrained_source`` (preferring the
     component's own downloaded copy and falling back to the Hub repo id)
-    and forwards its own ``min_score`` setting as ``score_threshold``. This
-    class does not perform its own download.
+    and forwards its ``min_score`` and ``mask_threshold`` schema fields as
+    ``score_threshold`` and ``mask_threshold``. This class does not perform
+    its own download.
 
     Parameters
     ----------
@@ -53,11 +54,11 @@ class SAM3Segmenter(BaseSegmenter):
         Mask binarisation cutoff, passed to
         ``post_process_instance_segmentation`` as ``mask_threshold``. It
         decides which pixels of a kept instance belong to the object, and
-        is deliberately *not* tied to ``score_threshold``: the two apply to
-        unrelated quantities, and reusing the score cutoff here would
-        reshape every mask. A ``score_threshold`` of 0 would then leave
-        every pixel above the cutoff, turning each mask into the whole
-        image. Defaults to 0.5, SAM 3's own default.
+        is deliberately a separate knob from ``score_threshold``: the two
+        apply to unrelated quantities, and reusing the score cutoff here
+        would reshape every mask. A ``score_threshold`` of 0 would then
+        leave every pixel above the cutoff, turning each mask into the
+        whole image. Defaults to 0.5, SAM 3's own default.
     """
 
     def __init__(

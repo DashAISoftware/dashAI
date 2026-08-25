@@ -150,6 +150,34 @@ class SAM3SegmentConverterSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    mask_threshold: schema_field(
+        float_field(gt=0.0, lt=1.0),
+        0.5,
+        description=MultilingualString(
+            en="Probability above which a pixel counts as part of the "
+            "detected object. Lower values grow every mask, higher values "
+            "tighten it. Unrelated to min_score, which drops whole "
+            "instances by their confidence.",
+            es="Probabilidad sobre la cual un píxel cuenta como parte del "
+            "objeto detectado. Los valores más bajos agrandan cada "
+            "máscara, los más altos la ajustan. No tiene relación con "
+            "min_score, que descarta instancias completas según su "
+            "confianza.",
+            pt="Probabilidade acima da qual um pixel conta como parte do "
+            "objeto detectado. Valores mais baixos aumentam cada máscara, "
+            "valores mais altos a estreitam. Não tem relação com "
+            "min_score, que descarta instâncias inteiras pela sua "
+            "confiança.",
+            de="Wahrscheinlichkeit, ab der ein Pixel als Teil des "
+            "erkannten Objekts zählt. Niedrigere Werte vergrößern jede "
+            "Maske, höhere Werte verengen sie. Unabhängig von min_score, "
+            "das ganze Instanzen nach ihrer Konfidenz verwirft.",
+            zh="像素被视为检测对象一部分的概率阈值。较低的值会扩大每个掩"
+            "码，较高的值会收紧掩码。与 min_score 无关，后者按置信度丢弃"
+            "整个实例。",
+        ),
+    )  # type: ignore
+
     min_area_fraction: schema_field(
         float_field(ge=0.0, le=1.0),
         0.0,
@@ -440,6 +468,7 @@ class SAM3SegmentConverter(HFPretrainedDownloadMixin, AdvancedPreprocessingConve
         self.image_column = kwargs["image_column"]
         self.max_masks = kwargs["max_masks"]
         self.min_score = kwargs["min_score"]
+        self.mask_threshold = kwargs["mask_threshold"]
         self.min_area_fraction = kwargs["min_area_fraction"]
         self.crop_to_bbox = kwargs["crop_to_bbox"]
         self.background_fill = kwargs["background_fill"]
@@ -530,6 +559,7 @@ class SAM3SegmentConverter(HFPretrainedDownloadMixin, AdvancedPreprocessingConve
         self._segmenter = SAM3Segmenter(
             model_source=self._pretrained_source(None),
             score_threshold=self.min_score,
+            mask_threshold=self.mask_threshold,
             device=self.device,
         )
         return self._segmenter
