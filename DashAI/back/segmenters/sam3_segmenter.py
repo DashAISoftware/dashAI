@@ -45,10 +45,19 @@ class SAM3Segmenter(BaseSegmenter):
         Torch device string, e.g. ``"cuda"`` or ``"cpu"``. Defaults to
         ``"cuda"`` when available, otherwise ``"cpu"``.
     score_threshold : float, optional
-        Passed to ``post_process_instance_segmentation`` both as the
-        instance score cutoff (``threshold``) and the mask binarisation
-        cutoff (``mask_threshold``); the constructor exposes a single
-        threshold, so the same value serves both purposes. Defaults to 0.5.
+        Instance score cutoff, passed to
+        ``post_process_instance_segmentation`` as ``threshold``: an
+        instance whose confidence falls below it is discarded. Defaults to
+        0.5.
+    mask_threshold : float, optional
+        Mask binarisation cutoff, passed to
+        ``post_process_instance_segmentation`` as ``mask_threshold``. It
+        decides which pixels of a kept instance belong to the object, and
+        is deliberately *not* tied to ``score_threshold``: the two apply to
+        unrelated quantities, and reusing the score cutoff here would
+        reshape every mask. A ``score_threshold`` of 0 would then leave
+        every pixel above the cutoff, turning each mask into the whole
+        image. Defaults to 0.5, SAM 3's own default.
     """
 
     def __init__(
@@ -56,10 +65,12 @@ class SAM3Segmenter(BaseSegmenter):
         model_source: str,
         device: Optional[str] = None,
         score_threshold: float = 0.5,
+        mask_threshold: float = 0.5,
     ) -> None:
         self.model_source = model_source
         self._requested_device = device
         self.score_threshold = score_threshold
+        self.mask_threshold = mask_threshold
         self._model = None
         self._processor = None
         self._device: Optional[str] = None
@@ -147,7 +158,7 @@ class SAM3Segmenter(BaseSegmenter):
         results = self._processor.post_process_instance_segmentation(
             outputs,
             threshold=self.score_threshold,
-            mask_threshold=self.score_threshold,
+            mask_threshold=self.mask_threshold,
             target_sizes=inputs.get("original_sizes").tolist(),
         )[0]
 

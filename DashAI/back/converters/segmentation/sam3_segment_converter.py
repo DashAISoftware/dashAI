@@ -718,7 +718,13 @@ class SAM3SegmentConverter(HFPretrainedDownloadMixin, AdvancedPreprocessingConve
                 )
             elif self.on_no_detection == "keep_original":
                 buffer = io.BytesIO()
-                pil_image.save(buffer, format="PNG")
+                # Convert before encoding: PNG cannot hold every PIL mode, so
+                # a CMYK source (a JPEG out of a print workflow) would raise
+                # "cannot write mode CMYK as PNG" here, outside the row
+                # indexed guard above. render_segment already converts to RGB
+                # for the detected rows, so this also keeps a single mode
+                # across the whole segment column.
+                pil_image.convert("RGB").save(buffer, format="PNG")
                 row_segments.append(
                     {"bytes": buffer.getvalue(), "path": f"{source_path}#0"}
                 )
