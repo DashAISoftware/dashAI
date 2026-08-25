@@ -270,6 +270,7 @@
     "selectTask": "选择任务",
     "selectTaskForSession": "为会话选择任务",
     "sessionConfiguration": "会话配置",
+    "appliedConverters": "已应用的转换器",
     "sessionName": "会话名称",
     "showResults": "显示结果",
     "step": "步骤",

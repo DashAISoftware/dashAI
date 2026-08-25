@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Box, Typography, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { formatDate } from "../../utils";
-import ParamInfoList from "./ParamInfoBox";
+import { getComponents } from "../../api/component";
+import ParamInfoList, { ParamInfoBox } from "./ParamInfoBox";
 
 const SPLIT_TYPE_LABEL_KEYS = {
   random: "experiments:label.random",
@@ -23,6 +24,29 @@ export default function SessionInfoContent({
   tasks = [],
 }) {
   const { t } = useTranslation(["common", "experiments", "models"]);
+  // `converter.converter` is the raw component name (e.g. "Binarizer"), not
+  // localized — the same lookup SessionConvertersRightBar/RightBar use to
+  // show a converter's translated display_name instead of its class name.
+  const [converterDisplayNames, setConverterDisplayNames] = useState({});
+
+  useEffect(() => {
+    let cancelled = false;
+    getComponents({ selectTypes: ["Converter"] })
+      .then((data) => {
+        if (cancelled) return;
+        const map = {};
+        (data || []).forEach((c) => {
+          map[c.name] = c.display_name || c.name;
+        });
+        setConverterDisplayNames(map);
+      })
+      .catch((error) =>
+        console.error("Error fetching converter display names:", error),
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (!session) return null;
 
@@ -123,6 +147,26 @@ export default function SessionInfoContent({
         <ParamInfoList rows={configRows} />
       </Box>
 
+      {(session.converters || []).length > 0 && (
+        <Box>
+          <Typography variant="subtitle2" gutterBottom>
+            {t("models:label.appliedConverters")}
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {session.converters.map((converter, index) => (
+              <ParamInfoBox
+                key={`${converter.converter}-${index}`}
+                label={
+                  converterDisplayNames[converter.converter] ||
+                  converter.converter
+                }
+                value={(converter.columns || []).join(", ")}
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
+
       <Box>
         <Typography variant="subtitle2" gutterBottom>
           {t("common:metadata")}
@@ -145,6 +189,12 @@ SessionInfoContent.propTypes = {
     created: PropTypes.string,
     last_modified: PropTypes.string,
     description: PropTypes.string,
+    converters: PropTypes.arrayOf(
+      PropTypes.shape({
+        converter: PropTypes.string,
+        columns: PropTypes.arrayOf(PropTypes.string),
+      }),
+    ),
   }),
   datasets: PropTypes.array,
   tasks: PropTypes.array,
