@@ -261,6 +261,9 @@ class Clustering(ClusteringConverter, BaseConverter):
             The fitted converter instance (self).
         """
         numeric_dataset = self._select_numeric_dataset(x)
+        self.output_column_name = self._make_unique_column_name(
+            x.column_names, self.output_column_name
+        )
 
         self._model.train(numeric_dataset)
         self._labels = self._model.get_cluster_labels()
@@ -275,6 +278,37 @@ class Clustering(ClusteringConverter, BaseConverter):
             }
         )
         return self
+
+    @staticmethod
+    def _make_unique_column_name(existing_names: list, base_name: str) -> str:
+        """Return ``base_name``, or a ``{base_name}_{n}`` variant if taken.
+
+        Re-running the converter on a dataset that already carries a cluster
+        label column (e.g. a previous run with the same output column name)
+        would otherwise collide when ``transform`` appends the new column.
+
+        Parameters
+        ----------
+        existing_names : list
+            Column names already present in the dataset.
+        base_name : str
+            The configured output column name.
+
+        Returns
+        -------
+        str
+            ``base_name`` if unused, otherwise the first free
+            ``{base_name}_{n}`` variant.
+        """
+        if base_name not in existing_names:
+            return base_name
+
+        counter = 1
+        candidate = f"{base_name}_{counter}"
+        while candidate in existing_names:
+            counter += 1
+            candidate = f"{base_name}_{counter}"
+        return candidate
 
     def _select_numeric_dataset(self, x: "DashAIDataset") -> "DashAIDataset":
         """Select the numeric columns of ``x`` used to train the model.
