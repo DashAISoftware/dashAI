@@ -2,6 +2,7 @@ import logging
 from typing import TYPE_CHECKING, Union
 
 from fastapi import APIRouter, Depends, Response, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc, select
@@ -362,9 +363,22 @@ async def update_model_session(
     dataset_id: Union[int, None] = None,
     task_name: Union[str, None] = None,
     name: Union[str, None] = None,
+    input_columns: Union[str, None] = None,
+    output_columns: Union[str, None] = None,
+    splits: Union[str, None] = None,
+    evaluation_strategy: Union[str, None] = None,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Update the model session associated with the provided ID.
+
+    `input_columns`/`output_columns`/`splits` are JSON-encoded strings
+    (matching the convention `ModelSessionParams.splits` already uses),
+    e.g. `input_columns='["a","b"]'`. Setting `splits` or
+    `evaluation_strategy` on a session that already has converters applied
+    invalidates them (clears `converters`/`preprocessed_path`, resets
+    `preprocessing_status`) since the partition those converters were fit
+    on no longer matches — the response's `converters_invalidated` field
+    is `True` when this happened, so the frontend can warn the user.
 
     Parameters
     ----------
@@ -377,8 +391,11 @@ async def update_model_session(
     Returns
     -------
     Dict
-        A dictionary containing the updated model session record.
+        A dictionary containing the updated model session record, plus a
+        `converters_invalidated` boolean.
     """
+    import json as json_module
+
     with session_factory() as db:
         try:
             model_session = db.get(ModelSession, model_session_id)
@@ -418,11 +435,48 @@ async def update_model_session(
                 setattr(model_session, "dataset_id", dataset_id)
             if task_name:
                 setattr(model_session, "task_name", task_name)
+            if input_columns is not None:
+                model_session.input_columns = json_module.loads(input_columns)
+            if output_columns is not None:
+                model_session.output_columns = json_module.loads(output_columns)
 
-            if dataset_id or task_name or name:
+            converters_invalidated = False
+            splits_or_strategy_changed = (
+                splits is not None or evaluation_strategy is not None
+            )
+            if splits_or_strategy_changed and (model_session.converters or []):
+                model_session.converters = []
+                model_session.preprocessed_path = None
+                from DashAI.back.core.enums.status import SessionPreprocessingStatus
+
+                model_session.preprocessing_status = (
+                    SessionPreprocessingStatus.NOT_STARTED
+                )
+                converters_invalidated = True
+
+            if splits is not None:
+                model_session.splits = splits
+            if evaluation_strategy is not None:
+                model_session.evaluation_strategy = evaluation_strategy
+
+            any_field_set = any(
+                v is not None
+                for v in (
+                    dataset_id,
+                    task_name,
+                    name,
+                    input_columns,
+                    output_columns,
+                    splits,
+                    evaluation_strategy,
+                )
+            )
+            if any_field_set:
                 db.commit()
                 db.refresh(model_session)
-                return model_session
+                response = jsonable_encoder(model_session)
+                response["converters_invalidated"] = converters_invalidated
+                return response
             else:
                 raise HTTPException(
                     status_code=status.HTTP_304_NOT_MODIFIED,
