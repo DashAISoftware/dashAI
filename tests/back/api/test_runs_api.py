@@ -253,12 +253,12 @@ def test_create_model_session_persists_converters(client: TestClient, dataset_id
     )
     assert response.status_code == 201, response.text
     session = response.json()
-    assert session["converters"] == converters
+    assert session["converters"] == [{**converters[0], "target_column": None}]
 
     get_response = client.get(f"/api/v1/model-session/{session['id']}")
     assert get_response.status_code == 200, get_response.text
     persisted = get_response.json()
-    assert persisted["converters"] == converters
+    assert persisted["converters"] == [{**converters[0], "target_column": None}]
     # Creating a session with converters auto-enqueues preprocessing; in test
     # mode the job queue runs it synchronously, so it's already done by now.
     assert persisted["preprocessing_status"] == 3  # FINISHED

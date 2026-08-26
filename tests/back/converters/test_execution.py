@@ -16,6 +16,7 @@ from DashAI.back.converters.imbalanced_learn.random_under_sampler_converter impo
     RandomUnderSamplerConverter,
 )
 from DashAI.back.converters.scikit_learn.pca import PCA
+from DashAI.back.converters.scikit_learn.select_k_best import SelectKBest
 from DashAI.back.converters.scikit_learn.standard_scaler import StandardScaler
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
@@ -178,6 +179,39 @@ def test_fit_failure_raises_joberror_with_context():
         fit_transform_on_partition(
             config, registry, x_train, y_train, x_others={}, partition_label="fold_0"
         )
+
+
+def test_supervised_converter_uses_local_target_column_from_x_when_set():
+    """When a converter's config carries `target_column` (the per-converter
+    local target, used before the session has a real output column), a
+    SUPERVISED converter must fit against that column pulled from x_train —
+    not against y_train, which is empty in this scenario (no session output
+    column chosen yet)."""
+    x_train = _dataset(
+        pd.DataFrame(
+            {
+                "a": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],
+                "b": [6.0, 5.0, 4.0, 3.0, 2.0, 1.0],
+                "label": [0, 0, 0, 1, 1, 1],
+            }
+        )
+    )
+    y_train = to_dashai_dataset(pd.DataFrame(index=range(6)))
+    assert y_train.column_names == []
+
+    registry = _registry(SelectKBest)
+    config = [_converter_config("SelectKBest", params={"k": 1}, columns=["a", "b"])]
+    config[0]["target_column"] = "label"
+
+    new_x_train, new_y_train, _x_others, fitted = fit_transform_on_partition(
+        config, registry, x_train, y_train, x_others={}
+    )
+
+    # SelectKBest(k=1) drops one of "a"/"b"; "label" was never in `columns`
+    # (the transform scope) so it must survive untouched in x_train.
+    assert "label" in new_x_train.column_names
+    assert len(fitted) == 1
+    assert new_y_train.column_names == []
 
 
 def test_apply_session_converters_holdout_shape():

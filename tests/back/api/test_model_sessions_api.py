@@ -92,12 +92,23 @@ def test_put_converters_enqueues_apply_job(
     response = client.put(
         f"/api/v1/model-session/{model_session_id}/converters",
         json={
-            "converters": [{"converter": "StandardScaler", "params": {}, "columns": []}]
+            "converters": [
+                {
+                    "converter": "StandardScaler",
+                    "params": {},
+                    "columns": INPUT_COLUMNS,
+                }
+            ]
         },
     )
     assert response.status_code == 200
     assert response.json()["converters"] == [
-        {"converter": "StandardScaler", "params": {}, "columns": []}
+        {
+            "converter": "StandardScaler",
+            "params": {},
+            "columns": INPUT_COLUMNS,
+            "target_column": None,
+        }
     ]
 
 
@@ -170,3 +181,100 @@ def test_patch_splits_invalidates_existing_converters(
     assert body["converters_invalidated"] is True
     assert body["converters"] == []
     assert body["preprocessed_path"] is None
+
+
+def test_get_preprocessed_columns_reflects_applied_converters(
+    client: TestClient, dataset_1: Dataset
+) -> None:
+    create_response = client.post(
+        "/api/v1/model-session/",
+        json={
+            "dataset_id": dataset_1.id,
+            "task_name": "TabularClassificationTask",
+            "name": "Preprocessed Columns Test",
+            "input_columns": [],
+            "output_columns": [],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
+            "splits": json.dumps(HOLDOUT_SPLITS),
+        },
+    )
+    model_session_id = create_response.json()["id"]
+
+    # Before any converter: reflects the raw dataset's columns.
+    response = client.get(
+        f"/api/v1/model-session/{model_session_id}/preprocessed-columns"
+    )
+    assert response.status_code == 200
+    assert set(response.json()["columns"].keys()) == set(INPUT_COLUMNS + OUTPUT_COLUMNS)
+
+    client.put(
+        f"/api/v1/model-session/{model_session_id}/converters",
+        json={
+            "converters": [
+                {
+                    "converter": "PCA",
+                    "params": {"n_components": 2},
+                    # No output column chosen yet, so "all columns" would
+                    # include the (still categorical) target — scope
+                    # explicitly to the numeric input columns instead, same
+                    # as a real user would in the wizard's column picker.
+                    "columns": INPUT_COLUMNS,
+                }
+            ]
+        },
+    )
+
+    # After PCA: reflects the transformed columns.
+    response = client.get(
+        f"/api/v1/model-session/{model_session_id}/preprocessed-columns"
+    )
+    assert response.status_code == 200
+    columns = response.json()["columns"]
+    assert "Species" in columns
+    assert len(columns) == 3  # 2 PCA components + Species
+
+
+def test_put_converters_works_before_output_columns_are_chosen(
+    client: TestClient, dataset_1: Dataset
+) -> None:
+    """The real wizard scenario Task 4's own test doesn't cover: applying a
+    converter when output_columns is still empty (Preprocessing, step 2,
+    comes before Columns, step 3)."""
+    create_response = client.post(
+        "/api/v1/model-session/",
+        json={
+            "dataset_id": dataset_1.id,
+            "task_name": "TabularClassificationTask",
+            "name": "No Columns PUT Converters Test",
+            "input_columns": [],
+            "output_columns": [],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
+            "splits": json.dumps(HOLDOUT_SPLITS),
+        },
+    )
+    model_session_id = create_response.json()["id"]
+
+    response = client.put(
+        f"/api/v1/model-session/{model_session_id}/converters",
+        json={
+            "converters": [
+                {
+                    "converter": "StandardScaler",
+                    "params": {},
+                    "columns": INPUT_COLUMNS,
+                }
+            ]
+        },
+    )
+    assert response.status_code == 200
+
+    session_response = client.get(f"/api/v1/model-session/{model_session_id}")
+    body = session_response.json()
+    assert body["preprocessing_status"] == 3  # FINISHED
+    assert body["preprocessed_path"] is not None

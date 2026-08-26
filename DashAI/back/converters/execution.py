@@ -219,6 +219,7 @@ def fit_transform_on_partition(
         converter_name = entry["converter"]
         params = entry.get("params") or {}
         columns = entry.get("columns") or list(x_train.column_names)
+        target_column = entry.get("target_column")
 
         converter_instance = instantiate_converter(
             component_registry, converter_name, params
@@ -232,10 +233,23 @@ def fit_transform_on_partition(
             # Samplers resample the whole feature set based on y; a partial
             # column scope would desync the model's expected input columns.
             X_fit = x_train
-            y_fit = y_train
+            y_fit = (
+                x_train.select_columns([target_column])
+                if supervised and target_column
+                else y_train
+            )
         else:
             X_fit = x_train.select_columns(columns)
-            y_fit = y_train if supervised else None
+            if not supervised:
+                y_fit = None
+            elif target_column:
+                # Local target for this converter only (e.g. a feature
+                # selector applied before the session has a real output
+                # column) — pulled from x_train, not y_train, since the
+                # target hasn't been separated out yet at this point.
+                y_fit = x_train.select_columns([target_column])
+            else:
+                y_fit = y_train
 
         try:
             converter_instance = converter_instance.fit(X_fit, y_fit)

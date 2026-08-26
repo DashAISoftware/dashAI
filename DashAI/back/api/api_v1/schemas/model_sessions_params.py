@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -7,6 +7,7 @@ class SessionConverterParams(BaseModel):
     converter: str
     params: Dict[str, Any] = {}
     columns: List[str] = []
+    target_column: Optional[str] = None
 
 
 class UpdateConvertersParams(BaseModel):

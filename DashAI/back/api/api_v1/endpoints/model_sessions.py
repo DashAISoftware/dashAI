@@ -564,3 +564,47 @@ async def update_session_converters(
             job_queue.put(job)
 
         return model_session
+
+
+@router.get("/{model_session_id}/preprocessed-columns")
+@inject
+async def get_preprocessed_columns(
+    model_session_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Column names/types the session's wizard should offer right now —
+    the *current*, possibly-preprocessed state, not the raw dataset's,
+    once at least one converter has been applied for real.
+
+    Returns
+    -------
+    dict
+        `{"columns": {<name>: {"type": str, "dtype": str}, ...}}`
+    """
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+
+    with session_factory() as db:
+        model_session = db.get(ModelSession, model_session_id)
+        if model_session is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Model session not found",
+            )
+
+        if model_session.preprocessed_path:
+            import os
+
+            is_cv = (
+                model_session.evaluation_strategy == "CrossValidationEvaluationStrategy"
+            )
+            relative = os.path.join("full_dataset", "train") if is_cv else "train"
+            partition_path = os.path.join(model_session.preprocessed_path, relative)
+            if os.path.isdir(partition_path):
+                return {"columns": get_columns_spec(partition_path)}
+
+        dataset = db.get(Dataset, model_session.dataset_id)
+        if not dataset:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Dataset not found"
+            )
+        return {"columns": get_columns_spec(f"{dataset.file_path}/dataset")}

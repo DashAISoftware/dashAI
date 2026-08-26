@@ -20,6 +20,17 @@ if TYPE_CHECKING:
 
 log = logging.getLogger(__name__)
 
+NO_OUTPUT_PLACEHOLDER_COLUMN = "__no_output_placeholder__"
+"""Reserved column name used as `Y` when a session has no output columns yet
+(the wizard's Preprocessing step comes before its Columns step). A
+`DashAIDataset` with zero columns always reports zero rows — a
+`datasets.Dataset` quirk, `num_rows` isn't derived from the arrow table's
+actual row count once there are no columns — so a genuinely empty `Y` can't
+track `X`'s row count through the splitter. Callers that persist a session's
+preprocessed partitions (`SessionPreprocessingJob`) must strip this column
+back out rather than merge it in as a real output column.
+"""
+
 
 def load_dataset_and_splitter(
     model_session: ModelSession,
@@ -81,30 +92,63 @@ def load_dataset_and_splitter(
             f"Unable to find Task with name {model_session.task_name} in registry"
         ) from e
 
-    try:
-        prepared_dataset = task.prepare_for_task(
-            dataset=loaded_dataset,
-            input_columns=model_session.input_columns,
-            output_columns=model_session.output_columns,
-        )
-    except Exception as e:
-        log.exception(e)
-        raise JobError(
-            f"""Can not prepare Dataset {dataset.id}
-            for Task {model_session.task_name}""",
-        ) from e
+    if model_session.output_columns:
+        try:
+            prepared_dataset = task.prepare_for_task(
+                dataset=loaded_dataset,
+                input_columns=model_session.input_columns,
+                output_columns=model_session.output_columns,
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"""Can not prepare Dataset {dataset.id}
+                for Task {model_session.task_name}""",
+            ) from e
 
-    try:
-        X, Y = select_columns(
-            prepared_dataset,
-            model_session.input_columns,
-            model_session.output_columns,
+        try:
+            X, Y = select_columns(
+                prepared_dataset,
+                model_session.input_columns,
+                model_session.output_columns,
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Error selecting input and output columns from dataset {dataset.id}"
+            ) from e
+    else:
+        # No output column chosen yet (the wizard's Preprocessing step comes
+        # before its Columns step) — nothing to validate against the task
+        # yet, so skip `prepare_for_task` entirely. Treat the whole dataset
+        # as X; Y carries only `NO_OUTPUT_PLACEHOLDER_COLUMN` (see its
+        # docstring for why a genuinely empty Y can't work here), so the
+        # splitter and `apply_session_converters` keep working uniformly. A
+        # `SUPERVISED` converter that needs a real target in this state
+        # supplies its own `target_column` (see `fit_transform_on_partition`
+        # in `execution.py`), pulled out of X directly.
+        import pyarrow as pa
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            DashAIDataset,
+            to_dashai_dataset,
         )
-    except Exception as e:
-        log.exception(e)
-        raise JobError(
-            f"Error selecting input and output columns from dataset {dataset.id}"
-        ) from e
+
+        prepared_dataset = to_dashai_dataset(loaded_dataset)
+        try:
+            X = prepared_dataset
+            Y = DashAIDataset(
+                table=pa.table(
+                    {
+                        NO_OUTPUT_PLACEHOLDER_COLUMN: pa.array(
+                            [0] * len(prepared_dataset), type=pa.int64()
+                        )
+                    }
+                )
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(f"Error selecting columns from dataset {dataset.id}") from e
 
     try:
         splits_data = json.loads(model_session.splits)

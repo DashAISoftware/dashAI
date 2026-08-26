@@ -234,6 +234,13 @@ class SessionPreprocessingJob(BaseJob):
                 if os.path.exists(stale_converters_path):
                     os.remove(stale_converters_path)
 
+                # No output column chosen yet (the wizard's Preprocessing
+                # step comes before its Columns step) — `y` only carries the
+                # `NO_OUTPUT_PLACEHOLDER_COLUMN` placeholder (see
+                # `dataset_split_utils.py`), which must never be persisted
+                # as if it were a real output column.
+                has_output_columns = bool(model_session.output_columns)
+
                 if isinstance(x, list):
                     last_index = len(x) - 1
                     for i, (x_fold, y_fold) in enumerate(zip(x, y, strict=True)):
@@ -241,8 +248,10 @@ class SessionPreprocessingJob(BaseJob):
                         for split_name, x_part in x_fold.items():
                             if len(x_part) == 0:
                                 continue
-                            combined = merge_input_output_columns(
-                                x_part, y_fold[split_name]
+                            combined = (
+                                merge_input_output_columns(x_part, y_fold[split_name])
+                                if has_output_columns
+                                else x_part
                             )
                             save_dataset(
                                 combined,
@@ -252,7 +261,11 @@ class SessionPreprocessingJob(BaseJob):
                     for split_name, x_part in x.items():
                         if len(x_part) == 0:
                             continue
-                        combined = merge_input_output_columns(x_part, y[split_name])
+                        combined = (
+                            merge_input_output_columns(x_part, y[split_name])
+                            if has_output_columns
+                            else x_part
+                        )
                         save_dataset(combined, os.path.join(session_dir, split_name))
 
                 save_fitted_converters(session_dir, fitted_converters)
