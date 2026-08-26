@@ -79,6 +79,9 @@ function PrepareDatasetStep({
 
   // Cross-Validation configuration states
   const [cvType, setCvType] = useState(null);
+  // Which holdout splitter this task uses. Resolved from the task rather
+  // than hardcoded, so a time series cannot be handed a shuffling one.
+  const [holdoutType, setHoldoutType] = useState(null);
   const [groupColumn, setGroupColumn] = useState("");
 
   const defaultParitionsIndex = {
@@ -249,7 +252,11 @@ function PrepareDatasetStep({
       evaluation_strategy: evaluationStrategy,
     };
 
-    const splitterName = resolveSplitterName(evaluationStrategy, cvType);
+    const splitterName = resolveSplitterName(
+      evaluationStrategy,
+      cvType,
+      holdoutType,
+    );
     if (splitterName) {
       updatedExpData.splits = buildSplitsPayload({
         splitterName,
@@ -318,6 +325,7 @@ function PrepareDatasetStep({
     inputColumnNames,
     outputColumnNames,
     cvType,
+    holdoutType,
     groupColumn,
     evaluationStrategy,
     rowsPartitionsIndex,
@@ -366,6 +374,8 @@ function PrepareDatasetStep({
         setEvaluationStrategy={setEvaluationStrategy}
         cvType={cvType}
         setCvType={setCvType}
+        holdoutType={holdoutType}
+        setHoldoutType={setHoldoutType}
         groupColumn={groupColumn}
         setGroupColumn={setGroupColumn}
         inputColumnNames={inputColumnNames}
@@ -382,6 +392,7 @@ function PrepareDatasetStep({
     paramsError,
     evaluationStrategy,
     cvType,
+    holdoutType,
     groupColumn,
     inputColumnNames,
   ]);

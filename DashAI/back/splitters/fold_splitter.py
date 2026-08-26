@@ -47,6 +47,11 @@ class FoldSplitter(BaseSplitter):
     ones.
     """
 
+    # Every fold splitter produces several train and validation pairs rather
+    # than one set of partitions, which is what pairs it with the
+    # cross-validation strategy instead of the holdout one.
+    PARTITIONING: str = "folds"
+
     # How the rows of the test set are chosen. ``"random"`` samples them
     # uniformly, ``"stratified"`` preserves the target distribution, and
     # ``"group"`` moves whole groups so a group never spans the carve.
@@ -99,6 +104,7 @@ class FoldSplitter(BaseSplitter):
     def get_metadata(cls) -> dict:
         """Return metadata describing the splitter's compatibility."""
         return {
+            **super().get_metadata(),
             "compatibleInnerSplitters": getattr(cls, "COMPATIBLE_INNER_SPLITTERS", []),
         }
 

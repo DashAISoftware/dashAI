@@ -62,19 +62,67 @@ export const buildSplitsPayload = ({
   return payload;
 };
 
+/** Splitters that produce one set of partitions rather than several folds. */
+export const HOLDOUT_PARTITIONING = "holdout";
+/** Splitters that produce several train and validation pairs. */
+export const FOLD_PARTITIONING = "folds";
+
+/**
+ * Keep only the splitters that pair with a given evaluation strategy.
+ *
+ * The backend reports how each splitter carves the dataset, so which strategy
+ * it belongs to is read from the component rather than inferred from its name.
+ *
+ * @param {Array} splitters splitter components compatible with the task
+ * @param {string} partitioning HOLDOUT_PARTITIONING or FOLD_PARTITIONING
+ * @returns {Array} the splitters that carve the dataset that way
+ */
+export const filterByPartitioning = (splitters, partitioning) =>
+  (splitters ?? []).filter(
+    (splitter) => splitter?.metadata?.partitioning === partitioning,
+  );
+
 /**
  * Resolve the registry name of the splitter a session configuration uses.
  *
- * Holdout has a single splitter; cross-validation picks one from the registry.
+ * Both strategies now pick from the splitters the task allows. Holdout used to
+ * return the literal "HoldoutSplitter" whatever the task was, which offered a
+ * shuffling splitter for time series: shuffling a series trains a model on its
+ * own future and reports a score it could never reproduce, with nothing raising
+ * an error.
  *
  * @param {string} evaluationStrategy the selected evaluation strategy
  * @param {object} cvType the splitter component selected for cross-validation
+ * @param {object} holdoutType the splitter component selected for holdout
  * @returns {string|null} the splitter name, or null when none is resolved yet
  */
-export const resolveSplitterName = (evaluationStrategy, cvType) => {
-  if (evaluationStrategy === HOLDOUT_STRATEGY) return "HoldoutSplitter";
+export const resolveSplitterName = (
+  evaluationStrategy,
+  cvType,
+  holdoutType = null,
+) => {
+  if (evaluationStrategy === HOLDOUT_STRATEGY) return holdoutType?.name ?? null;
   if (evaluationStrategy === CV_STRATEGY) return cvType?.name ?? null;
   return null;
+};
+
+/**
+ * Choose which holdout splitter a task should start on.
+ *
+ * Every task that had one before keeps it, so enabling this selection changes
+ * nothing for them. A task without it, which today means forecasting, takes the
+ * only holdout splitter it allows.
+ *
+ * @param {Array} holdoutSplitters the task's holdout splitter components
+ * @returns {object|null} the splitter to select by default
+ */
+export const defaultHoldoutSplitter = (holdoutSplitters) => {
+  const options = holdoutSplitters ?? [];
+  return (
+    options.find((splitter) => splitter?.name === "HoldoutSplitter") ??
+    options[0] ??
+    null
+  );
 };
 
 /**

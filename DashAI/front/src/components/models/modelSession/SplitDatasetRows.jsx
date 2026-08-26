@@ -18,7 +18,13 @@ import {
 import { DescriptionBlock } from "../../shared/FormSchemaFieldCard";
 import FormSchema from "../../shared/FormSchema";
 import FormSchemaLayout from "../../shared/FormSchemaLayout";
-import { resolveSplitterName } from "../../../utils/splitsPayload";
+import {
+  defaultHoldoutSplitter,
+  filterByPartitioning,
+  FOLD_PARTITIONING,
+  HOLDOUT_PARTITIONING,
+  resolveSplitterName,
+} from "../../../utils/splitsPayload";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import { getComponents } from "../../../api/component";
@@ -83,6 +89,8 @@ function SplitDatasetRows({
   setEvaluationStrategy,
   cvType,
   setCvType,
+  holdoutType,
+  setHoldoutType,
   groupColumn,
   setGroupColumn,
   inputColumnNames,
@@ -109,7 +117,11 @@ function SplitDatasetRows({
 
   // The splitter's own parameters come from the schema generated form; only the
   // rules the schema cannot express are checked here.
-  const splitterName = resolveSplitterName(evaluationStrategy, cvType);
+  const splitterName = resolveSplitterName(
+    evaluationStrategy,
+    cvType,
+    holdoutType,
+  );
   const isIndexMode =
     splitType === SPLIT_TYPES.MANUAL || splitType === SPLIT_TYPES.PREDEFINED;
   const params = splitterParams ?? {};
@@ -196,6 +208,7 @@ function SplitDatasetRows({
 
   const [groupColumnError, setGroupColumnError] = useState(true);
   const [allowedCvTypes, setAllowedCvTypes] = useState([]);
+  const [allowedHoldoutTypes, setAllowedHoldoutTypes] = useState([]);
 
   // Update allowed CV types when task changes
   useEffect(() => {
@@ -205,7 +218,12 @@ function SplitDatasetRows({
           selectTypes: ["Splitter"],
           relatedComponent: taskName,
         });
-        setAllowedCvTypes(response);
+        // A holdout splitter is not a cross-validation method, so the two
+        // kinds are kept apart rather than both landing in the CV dropdown.
+        setAllowedCvTypes(filterByPartitioning(response, FOLD_PARTITIONING));
+        setAllowedHoldoutTypes(
+          filterByPartitioning(response, HOLDOUT_PARTITIONING),
+        );
       } catch (error) {
         console.error("Error fetching splitters:", error);
         enqueueSnackbar(t("models:error.fetchingStatisticalTests"), {
@@ -221,6 +239,11 @@ function SplitDatasetRows({
   useEffect(() => {
     setCvType(allowedCvTypes.length > 0 ? allowedCvTypes[0] : null);
   }, [allowedCvTypes]);
+
+  // Same for the holdout splitter, which used to be a hardcoded name.
+  useEffect(() => {
+    setHoldoutType(defaultHoldoutSplitter(allowedHoldoutTypes));
+  }, [allowedHoldoutTypes]);
 
   const handleSplitTypeChange = (_e, newType) => {
     if (!newType) return;
@@ -588,6 +611,8 @@ SplitDatasetRows.propTypes = {
   evaluationStrategy: PropTypes.string.isRequired,
   setEvaluationStrategy: PropTypes.func.isRequired,
   cvType: PropTypes.object,
+  holdoutType: PropTypes.object,
+  setHoldoutType: PropTypes.func,
   setCvType: PropTypes.func.isRequired,
   groupColumn: PropTypes.string,
   setGroupColumn: PropTypes.func.isRequired,
