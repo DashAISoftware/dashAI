@@ -1,5 +1,12 @@
+import pandas as pd
 import pyarrow as pa
 
+from DashAI.back.dataloaders.classes.dashai_dataset import (
+    load_dataset,
+    save_dataset,
+    to_dashai_dataset,
+    transform_dataset_with_schema,
+)
 from DashAI.back.types.utils import (
     get_types_from_arrow_metadata,
     save_types_in_arrow_metadata,
@@ -32,6 +39,32 @@ def test_date_without_a_stored_format_falls_back_to_iso():
 
     assert isinstance(restored["when"], Date)
     assert restored["when"].format == "%Y-%m-%d"
+
+
+def test_a_date_column_survives_a_real_save_and_load(tmp_path):
+    # The end to end version of the round trip: a schema carrying a Date goes
+    # through transform, save and load, and comes back a Date with its format
+    # and its original text intact.
+    frame = pd.DataFrame(
+        {"when": ["31/01/2020", "15/02/2020", "03/03/2020"], "sales": [100, 120, 115]}
+    )
+    schema = {
+        "when": {"type": "Date", "dtype": "%d/%m/%Y"},
+        "sales": {"type": "Integer", "dtype": "int64"},
+    }
+
+    dataset = transform_dataset_with_schema(to_dashai_dataset(frame), schema)
+    save_dataset(dataset, tmp_path / "dataset")
+    restored = load_dataset(str(tmp_path / "dataset"))
+
+    assert isinstance(restored.types["when"], Date)
+    assert restored.types["when"].format == "%d/%m/%Y"
+    # Text preserved byte for byte, since nothing parses at rest.
+    assert restored.arrow_table.column("when").to_pylist() == [
+        "31/01/2020",
+        "15/02/2020",
+        "03/03/2020",
+    ]
 
 
 def test_text_columns_are_unaffected():
