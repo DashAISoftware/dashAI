@@ -11,7 +11,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 
-from .holdout import HoldoutSplitter
+from .holdout import PartitionSplitter
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -105,7 +105,7 @@ class TemporalHoldoutSplitterSchema(BaseSchema):
         return self
 
 
-class TemporalHoldoutSplitter(HoldoutSplitter):
+class TemporalHoldoutSplitter(PartitionSplitter):
     """Split a series in time order: train first, then validation, then test.
 
     Rows are cut where they lie rather than sampled, so every row a model is
