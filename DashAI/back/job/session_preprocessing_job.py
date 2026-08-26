@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
-def _merge_input_output_columns(
+def merge_input_output_columns(
     x_partition: "DashAIDataset", y_partition: "DashAIDataset"
 ) -> "DashAIDataset":
     """Combine a partition's input and output columns into a single dataset,
@@ -241,7 +241,7 @@ class SessionPreprocessingJob(BaseJob):
                         for split_name, x_part in x_fold.items():
                             if len(x_part) == 0:
                                 continue
-                            combined = _merge_input_output_columns(
+                            combined = merge_input_output_columns(
                                 x_part, y_fold[split_name]
                             )
                             save_dataset(
@@ -252,7 +252,7 @@ class SessionPreprocessingJob(BaseJob):
                     for split_name, x_part in x.items():
                         if len(x_part) == 0:
                             continue
-                        combined = _merge_input_output_columns(x_part, y[split_name])
+                        combined = merge_input_output_columns(x_part, y[split_name])
                         save_dataset(combined, os.path.join(session_dir, split_name))
 
                 save_fitted_converters(session_dir, fitted_converters)
