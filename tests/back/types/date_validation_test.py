@@ -35,6 +35,40 @@ def test_text_to_date_detects_the_format_when_none_is_given():
     assert is_valid, message
 
 
+def test_categorical_to_date_is_allowed():
+    # A date column with few enough distinct values is inferred as Categorical,
+    # and the user should be able to correct that in one step rather than
+    # detouring through Text.
+    column = pd.Series(["05/01/2026", "14/02/2026", "25/12/2026"])
+
+    is_valid, message, converted = validate_type_change(
+        column, "Categorical", "Date", "%d/%m/%Y"
+    )
+
+    assert is_valid, message
+    assert list(converted) == ["05/01/2026", "14/02/2026", "25/12/2026"]
+
+
+def test_categorical_to_date_detects_the_format_when_none_is_given():
+    data = pd.DataFrame({"when": ["05/01/2026", "14/02/2026", "25/12/2026"]})
+
+    all_valid, errors, resolved = validate_multiple_type_changes(
+        data, {"when": {"current_type": "Categorical", "new_type": "Date"}}
+    )
+
+    assert all_valid, errors
+    assert resolved["when"] == "%d/%m/%Y"
+
+
+def test_categorical_to_date_rejects_values_that_are_not_dates():
+    column = pd.Series(["red", "green", "blue"])
+
+    is_valid, message, _ = validate_type_change(column, "Categorical", "Date", None)
+
+    assert not is_valid
+    assert message
+
+
 def test_date_to_text_is_allowed():
     column = pd.Series(["2020-01-31"])
 

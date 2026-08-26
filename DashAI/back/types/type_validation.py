@@ -59,6 +59,11 @@ def validate_type_change(
         ("Categorical", "Text"): lambda x: (True, "", x.astype(str)),
         ("Categorical", "Integer"): _validate_categorical_to_int,
         ("Categorical", "Float"): _validate_categorical_to_float,
+        # A date column with few enough distinct values is inferred as
+        # Categorical. Its values are the same date strings a Text column
+        # holds, so the check is identical, and without this the user has to
+        # detour through Text to correct the type.
+        ("Categorical", "Date"): lambda x: _validate_text_to_date(x, new_dtype),
     }
 
     # Get the appropriate validation function
