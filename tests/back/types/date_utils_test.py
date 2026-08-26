@@ -64,6 +64,57 @@ def test_detect_date_format_resolves_ambiguity_from_the_whole_column():
     assert detected == "%d/%m/%Y"
 
 
+TEST_COLUMNS = [
+    (["2026-01-05", "2026-02-14", "2026-12-25"], "%Y-%m-%d"),
+    (["01/05/2026", "02/14/2026", "12/25/2026"], "%m/%d/%Y"),
+    (["05/01/2026", "14/02/2026", "25/12/2026"], "%d/%m/%Y"),
+    (["05/01/26", "14/02/26", "25/12/26"], "%d/%m/%y"),
+    (["January 5 2026", "February 14 2026", "December 25 2026"], "%B %d %Y"),
+    (["5 Jan 2026", "14 Feb 2026", "25 Dec 2026"], "%d %b %Y"),
+    (
+        ["2026-01-05T09:30:00", "2026-02-14T14:20:00", "2026-12-25T16:30:00"],
+        "%Y-%m-%dT%H:%M:%S",
+    ),
+    (
+        ["2026-01-05 09:30:00", "2026-02-14 14:20:00", "2026-12-25 16:30:00"],
+        "%Y-%m-%d %H:%M:%S",
+    ),
+    (
+        ["01/05/2026 09:30 AM", "02/14/2026 02:20 PM", "12/25/2026 04:30 PM"],
+        "%m/%d/%Y %I:%M %p",
+    ),
+    (
+        ["05/01/2026 09:30", "14/02/2026 14:20", "25/12/2026 16:30"],
+        "%d/%m/%Y %H:%M",
+    ),
+    (
+        [
+            "2026-01-05T09:30:00-03:00",
+            "2026-02-14T14:20:00-03:00",
+            "2026-12-25T16:30:00-03:00",
+        ],
+        "%Y-%m-%dT%H:%M:%S%z",
+    ),
+    # A year and a month name no day, so reading them as dates would invent one.
+    (["2026-01", "2026-02", "2026-12"], None),
+    (["Jan-2026", "Feb-2026", "Dec-2026"], None),
+    (["1767616200", "1771093200", "1798227000"], None),
+]
+
+
+@pytest.mark.parametrize(("values", "expected"), TEST_COLUMNS)
+def test_detect_date_format_on_test_columns(values, expected):
+    assert detect_date_format(values) == expected
+
+
+def test_detect_date_format_rejects_a_column_with_one_odd_value():
+    # A single stray value is enough to disqualify a format, which is what
+    # makes whole column validation worth doing. A shifted CSV row lands here.
+    values = ["2026-01-05T09:30:00-03:00", "2026-02-14T14:20:00-03:00", "2026-12"]
+
+    assert detect_date_format(values) is None
+
+
 def test_detect_date_format_returns_none_for_unreadable_values():
     assert detect_date_format(["Q1 2020", "Q2 2020"]) is None
 

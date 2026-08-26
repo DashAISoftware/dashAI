@@ -52,6 +52,30 @@ def _as_clean_text(values: Any) -> "pd.Series":
     return text.mask(text == "")
 
 
+def _names_a_full_date(date_format: str) -> bool:
+    """Check that a strptime format pins down a specific day.
+
+    A format naming only a year and a month, such as ``"%Y-%m"``, parses
+    cleanly but silently invents a day of the month. Treating such a column as
+    a Date would hand every consumer a date the data never stated, so those
+    columns are better left as text.
+
+    Parameters
+    ----------
+    date_format : str
+        The strptime format to check.
+
+    Returns
+    -------
+    bool
+        ``True`` when the format names a day, a month and a year.
+    """
+    has_day = "%d" in date_format
+    has_month = any(token in date_format for token in ("%m", "%b", "%B"))
+    has_year = "%Y" in date_format or "%y" in date_format
+    return has_day and has_month and has_year
+
+
 def parse_date_column(values: Any, format: str = DEFAULT_DATE_FORMAT) -> "pd.Series":
     """Parse a column of date strings into datetimes.
 
@@ -146,6 +170,8 @@ def detect_date_format(values: Any, hint: Optional[str] = None) -> Optional[str]
     candidates.extend(fmt for fmt in extras if fmt not in candidates)
 
     for candidate in candidates:
+        if not _names_a_full_date(candidate):
+            continue
         try:
             parse_date_column(text, candidate)
         except ValueError:
