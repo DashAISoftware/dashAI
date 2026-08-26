@@ -9,12 +9,16 @@ class SessionConverterParams(BaseModel):
     columns: List[str] = []
 
 
+class UpdateConvertersParams(BaseModel):
+    converters: List[SessionConverterParams] = []
+
+
 class ModelSessionParams(BaseModel):
     dataset_id: int
     task_name: str
     name: str
-    input_columns: List[str]
-    output_columns: List[str]
+    input_columns: List[str] = []
+    output_columns: List[str] = []
     train_metrics: List[str]
     validation_metrics: List[str]
     test_metrics: List[str]

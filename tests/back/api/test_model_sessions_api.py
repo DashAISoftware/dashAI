@@ -1,3 +1,5 @@
+import json
+
 from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import Dataset, ModelSession
@@ -43,3 +45,57 @@ def test_model_session_can_be_created_without_columns(
         assert model_session.output_columns is None
         db.delete(model_session)
         db.commit()
+
+
+def test_create_session_without_columns(client: TestClient, dataset_1: Dataset) -> None:
+    response = client.post(
+        "/api/v1/model-session/",
+        json={
+            "dataset_id": dataset_1.id,
+            "task_name": "TabularClassificationTask",
+            "name": "Step 1 Only",
+            "input_columns": [],
+            "output_columns": [],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
+            "splits": "{}",
+        },
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["input_columns"] == []
+    assert body["output_columns"] == []
+
+
+def test_put_converters_enqueues_apply_job(
+    client: TestClient, dataset_1: Dataset
+) -> None:
+    create_response = client.post(
+        "/api/v1/model-session/",
+        json={
+            "dataset_id": dataset_1.id,
+            "task_name": "TabularClassificationTask",
+            "name": "Converters PUT Test",
+            "input_columns": [],
+            "output_columns": [],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
+            "splits": json.dumps(HOLDOUT_SPLITS),
+        },
+    )
+    model_session_id = create_response.json()["id"]
+
+    response = client.put(
+        f"/api/v1/model-session/{model_session_id}/converters",
+        json={
+            "converters": [{"converter": "StandardScaler", "params": {}, "columns": []}]
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["converters"] == [
+        {"converter": "StandardScaler", "params": {}, "columns": []}
+    ]

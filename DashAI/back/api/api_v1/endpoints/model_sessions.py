@@ -10,6 +10,7 @@ from DashAI.back.api.api_v1.schemas.model_sessions_params import (
     ColumnsValidationParams,
     ModelSessionBulkDeleteParams,
     ModelSessionParams,
+    UpdateConvertersParams,
 )
 from DashAI.back.dependencies.database.models import Dataset, ModelSession
 
@@ -442,3 +443,70 @@ async def update_model_session(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+@router.put("/{model_session_id}/converters")
+@inject
+async def update_session_converters(
+    model_session_id: int,
+    params: UpdateConvertersParams,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    job_queue=Depends(lambda: di["job_queue"]),
+):
+    """Replace a model session's converter list and, if non-empty, apply it
+    for real right away by enqueuing `SessionPreprocessingJob`. The same
+    job `create_model_session` enqueues when converters are set at
+    creation time. Used by the preprocessing step of the session wizard,
+    every time the converter list changes, before the session is
+    finalized. There's no separate "finalize" computation: if nothing
+    invalidates it afterwards, the last run from this endpoint is already
+    the session's final preprocessed data. An empty list clears any
+    previously applied converters and their persisted preprocessed data
+    without enqueuing a job.
+
+    Parameters
+    ----------
+    model_session_id : int
+        ID of the model session to update.
+    params : UpdateConvertersParams
+        The new, complete converter list (replaces the existing one).
+    session_factory : Callable[..., ContextManager[Session]]
+        A factory that creates a context manager that handles a SQLAlchemy
+        session.
+    job_queue : BaseJobQueue
+        Injected job queue, used to enqueue the apply job.
+
+    Returns
+    -------
+    ModelSession
+        The updated model session.
+    """
+    with session_factory() as db:
+        model_session = db.get(ModelSession, model_session_id)
+        if model_session is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Model session not found",
+            )
+
+        model_session.converters = [c.model_dump() for c in params.converters]
+
+        if not model_session.converters:
+            model_session.preprocessed_path = None
+            from DashAI.back.core.enums.status import SessionPreprocessingStatus
+
+            model_session.preprocessing_status = SessionPreprocessingStatus.NOT_STARTED
+
+        db.commit()
+        db.refresh(model_session)
+
+        if model_session.converters:
+            from DashAI.back.job.session_preprocessing_job import (
+                SessionPreprocessingJob,
+            )
+
+            job = SessionPreprocessingJob(kwargs={"model_session_id": model_session.id})
+            job.set_status_as_delivered()
+            job_queue.put(job)
+
+        return model_session
