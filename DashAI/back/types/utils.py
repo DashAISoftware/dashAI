@@ -73,9 +73,13 @@ PTYPE_TO_DASHAI = {
     # For simplicity, we use categorical for booleans.
     "boolean": {"type": "Categorical", "dtype": "string"},
     "categorical": {"type": "Categorical", "dtype": "string"},
-    # Date types mapped to Text until date support is implemented
-    "date-iso-8601": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
-    "date-eu": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
+    # The dtype is a placeholder. The real strptime format is detected from the
+    # column in DashAIPtype.infer_types, because the ptype label names the
+    # component ordering but not the separator.
+    "date-iso-8601": {"type": "Date", "dtype": "%Y-%m-%d"},
+    "date-eu": {"type": "Date", "dtype": "%Y-%m-%d"},
+    # No format can be inferred for the rest, and guessing one would corrupt
+    # data silently, so they stay Text.
     "date-non-std": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
     "date-non-std-subtype": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
     "time": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
