@@ -420,8 +420,10 @@ from DashAI.back.splitters.repeated_k_fold import RepeatedKFoldSplitter
 from DashAI.back.splitters.repeated_stratified_k_fold import (
     RepeatedStratifiedKFoldSplitter,
 )
+from DashAI.back.splitters.rolling_origin import RollingOriginSplitter
 from DashAI.back.splitters.stratified_group_k_fold import StratifiedGroupKFoldSplitter
 from DashAI.back.splitters.stratified_k_fold import StratifiedKFoldSplitter
+from DashAI.back.splitters.temporal_holdout import TemporalHoldoutSplitter
 from DashAI.back.statistical_tests.anova_test import AnovaTest
 from DashAI.back.statistical_tests.corrected_paired_t_test import (
     CorrectedPairedTTest,
@@ -441,6 +443,7 @@ from DashAI.back.statistical_tests.wilcoxon_sr_test import (
     WilcoxonSRTest,
 )
 from DashAI.back.tasks.controlnet_task import ControlNetTask
+from DashAI.back.tasks.forecasting_task import ForecastingTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 
 # Tasks
@@ -473,6 +476,7 @@ def get_initial_components():
         TextClassificationTask,
         TranslationTask,
         RegressionTask,
+        ForecastingTask,
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
@@ -702,6 +706,8 @@ def get_initial_components():
         RandomUnderSamplerConverter,
         # Splitters
         HoldoutSplitter,
+        TemporalHoldoutSplitter,
+        RollingOriginSplitter,
         KFoldSplitter,
         StratifiedKFoldSplitter,
         StratifiedGroupKFoldSplitter,
