@@ -169,6 +169,8 @@ from DashAI.back.metrics.classification.matthews_corrcoef import MatthewsCorrCoe
 from DashAI.back.metrics.classification.precision import Precision
 from DashAI.back.metrics.classification.recall import Recall
 from DashAI.back.metrics.classification.roc_auc import ROCAUC
+from DashAI.back.metrics.forecasting.mape import MAPE
+from DashAI.back.metrics.forecasting.smape import SMAPE
 from DashAI.back.metrics.regression.explained_variance import ExplainedVariance
 from DashAI.back.metrics.regression.mae import MAE
 from DashAI.back.metrics.regression.median_absolute_error import MedianAbsoluteError
@@ -181,6 +183,14 @@ from DashAI.back.metrics.translation.ter import Ter
 from DashAI.back.models.cnn_image_classifier import CNNImageClassifier
 from DashAI.back.models.efficientnet_b0_image_classifier import (
     EfficientNetB0ImageClassifier,
+)
+from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.exponential_smoothing import (
+    ExponentialSmoothing,
+)
+from DashAI.back.models.forecasting.naive import NaiveForecaster
+from DashAI.back.models.forecasting.seasonal_naive import (
+    SeasonalNaiveForecaster,
 )
 
 # Models
@@ -477,6 +487,10 @@ def get_initial_components():
         TranslationTask,
         RegressionTask,
         ForecastingTask,
+        NaiveForecaster,
+        SeasonalNaiveForecaster,
+        ARIMA,
+        ExponentialSmoothing,
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
@@ -601,6 +615,8 @@ def get_initial_components():
         Chrf,
         MSE,
         RMSE,
+        MAPE,
+        SMAPE,
         MAE,
         R2,
         MedianAbsoluteError,
