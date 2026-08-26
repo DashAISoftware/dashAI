@@ -205,10 +205,13 @@ def test_apply_session_converters_holdout_shape():
     assert len(fitted) == 1
 
 
-def test_apply_session_converters_cv_each_fold_fits_independently():
-    """Two folds with very different train distributions must produce
-    different learned parameters (no cross-fold leakage), and the final
-    'full_dataset' entry (empty test) must be fit on the whole dataset."""
+def test_cv_non_supervised_converter_fits_once_and_matches_across_folds():
+    """A non-supervised, non-row-changing converter (StandardScaler here,
+    standing in for anything data-dependent like a text vectorizer) must
+    produce IDENTICAL fitted parameters across every fold — because it's
+    fit once on full_dataset and reused via transform(), never refit per
+    fold. Different train subsets would normally give different mean/std;
+    identical values across folds is the signal the fix is working."""
     fold_0 = {
         "train": _dataset(pd.DataFrame({"a": [1.0, 2.0, 3.0]})),
         "test": _dataset(pd.DataFrame({"a": [10.0]})),
@@ -242,27 +245,31 @@ def test_apply_session_converters_cv_each_fold_fits_independently():
 
     new_x, _, fitted = apply_session_converters(x, y, config, registry)
 
-    fold_0_expected = SkStandardScaler().fit(pd.DataFrame({"a": [1.0, 2.0, 3.0]}))
-    fold_1_expected = SkStandardScaler().fit(pd.DataFrame({"a": [100.0, 200.0, 300.0]}))
+    # Fit only on full_dataset's train (all 6 rows) — same expected
+    # transform everywhere, including fold_0/fold_1's own test partitions.
+    full_expected = SkStandardScaler().fit(
+        pd.DataFrame({"a": [1.0, 2.0, 3.0, 100.0, 200.0, 300.0]})
+    )
 
     fold_0_transformed_test = new_x[0]["test"].to_pandas()["a"].tolist()
     fold_1_transformed_test = new_x[1]["test"].to_pandas()["a"].tolist()
 
     assert fold_0_transformed_test == pytest.approx(
-        fold_0_expected.transform(pd.DataFrame({"a": [10.0]})).ravel().tolist()
+        full_expected.transform(pd.DataFrame({"a": [10.0]})).ravel().tolist()
     )
     assert fold_1_transformed_test == pytest.approx(
-        fold_1_expected.transform(pd.DataFrame({"a": [150.0]})).ravel().tolist()
+        full_expected.transform(pd.DataFrame({"a": [150.0]})).ravel().tolist()
     )
-    # Different folds learned different scaling parameters (no leakage).
-    assert fold_0_transformed_test != fold_1_transformed_test
+    # fold_0's own train, transformed with the SAME (full_dataset-fitted)
+    # scaler — NOT what an independent per-fold fit on [1,2,3] would give.
+    fold_0_train_transformed = new_x[0]["train"].to_pandas()["a"].tolist()
+    assert fold_0_train_transformed == pytest.approx(
+        full_expected.transform(pd.DataFrame({"a": [1.0, 2.0, 3.0]})).ravel().tolist()
+    )
 
     # full_dataset (last entry) fit on the whole dataset; its empty test
     # partition is left alone (no error, still empty).
     assert len(new_x[2]["test"]) == 0
-    full_expected = SkStandardScaler().fit(
-        pd.DataFrame({"a": [1.0, 2.0, 3.0, 100.0, 200.0, 300.0]})
-    )
     assert new_x[2]["train"].to_pandas()["a"].tolist() == pytest.approx(
         full_expected.transform(
             pd.DataFrame({"a": [1.0, 2.0, 3.0, 100.0, 200.0, 300.0]})
@@ -270,8 +277,7 @@ def test_apply_session_converters_cv_each_fold_fits_independently():
         .ravel()
         .tolist()
     )
-    # the fitted converters returned are the full_dataset fold's, not an
-    # intermediate evaluation fold's — matches full_expected, not fold_0/1.
+    # the fitted converters returned are the full_dataset fold's fit.
     assert len(fitted) == 1
     assert fitted[0]["instance"].transform(
         _dataset(pd.DataFrame({"a": [1.0, 2.0, 3.0, 100.0, 200.0, 300.0]}))
@@ -282,6 +288,86 @@ def test_apply_session_converters_cv_each_fold_fits_independently():
         .ravel()
         .tolist()
     )
+
+
+def test_cv_supervised_converter_still_fits_independently_per_fold():
+    """Unchanged-behavior guard: a SUPERVISED converter (sampler here) must
+    keep fitting independently per fold — this must NOT be swept into the
+    fit-once path, since that would leak target information across folds."""
+    df_x = pd.DataFrame({"a": list(range(20))})
+    df_y = pd.DataFrame({"target": [0] * 15 + [1] * 5})
+    fold_0 = {"train": _dataset(df_x), "test": _dataset(pd.DataFrame({"a": [999.0]}))}
+    full_dataset = {"train": _dataset(df_x), "test": _dataset(pd.DataFrame({"a": []}))}
+    y_fold_0 = {
+        "train": _dataset(df_y),
+        "test": _dataset(pd.DataFrame({"target": [1]})),
+    }
+    y_full_dataset = {
+        "train": _dataset(df_y),
+        "test": _dataset(pd.DataFrame({"target": []})),
+    }
+
+    x = [fold_0, full_dataset]
+    y = [y_fold_0, y_full_dataset]
+
+    registry = _registry(RandomUnderSamplerConverter)
+    config = [
+        _converter_config(
+            "RandomUnderSamplerConverter",
+            params={"sampling_strategy": "auto", "random_state": 0},
+        )
+    ]
+
+    new_x, new_y, fitted = apply_session_converters(x, y, config, registry)
+
+    # Both folds independently resampled the SAME 20-row input to 10 rows —
+    # the real guard is that x_others (test) stayed untouched, same as
+    # before this change (samplers never touch validation/test).
+    assert len(new_x[0]["train"]) == 10
+    assert len(new_x[1]["train"]) == 10
+    assert new_x[0]["test"].to_pandas()["a"].tolist() == [999.0]
+    assert fitted == []  # samplers are never kept for prediction-time replay
+
+
+def test_cv_non_supervised_row_changing_converter_still_fits_per_fold():
+    """A non-supervised converter that changes row count (NanRemover) is
+    NOT swept into the fit-once path either — only fit_transform_on_partition's
+    existing CHANGES_ROW_COUNT handling (train-only, x_others untouched)
+    applies, same as it always has. NanRemover's own fit doesn't depend on
+    row content (only column names/types), so per-fold independent fits
+    already produce identical columns everywhere — no consistency problem
+    to solve here in the first place."""
+    fold_0 = {
+        "train": _dataset(pd.DataFrame({"a": [1.0, None, 3.0]})),
+        "test": _dataset(pd.DataFrame({"a": [10.0]})),
+    }
+    full_dataset = {
+        "train": _dataset(pd.DataFrame({"a": [1.0, None, 3.0, 4.0, None]})),
+        "test": _dataset(pd.DataFrame({"a": []})),
+    }
+    y_fold_0 = {
+        "train": _dataset(pd.DataFrame({"target": [0, 1, 0]})),
+        "test": _dataset(pd.DataFrame({"target": [1]})),
+    }
+    y_full_dataset = {
+        "train": _dataset(pd.DataFrame({"target": [0, 1, 0, 1, 0]})),
+        "test": _dataset(pd.DataFrame({"target": []})),
+    }
+
+    x = [fold_0, full_dataset]
+    y = [y_fold_0, y_full_dataset]
+
+    registry = _registry(NanRemover)
+    config = [_converter_config("NanRemover")]
+
+    new_x, new_y, _ = apply_session_converters(x, y, config, registry)
+
+    # fold_0's own 1 NaN row dropped from its own 3-row train -> 2 rows.
+    assert len(new_x[0]["train"]) == 2
+    # full_dataset's own 2 NaN rows dropped from its own 5-row train -> 3.
+    assert len(new_x[1]["train"]) == 3
+    # test partitions untouched, as CHANGES_ROW_COUNT converters always do.
+    assert len(new_x[0]["test"]) == 1
 
 
 def test_apply_session_converters_noop_without_config():

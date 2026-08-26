@@ -305,10 +305,15 @@ def apply_session_converters(
     `x`/`y` are either a single `DatasetDict` with keys `train`/`validation`/`test`
     (holdout), or a list of `DatasetDict` with keys `train`/`test` (cross-validation:
     one entry per fold, plus a final `"full_dataset"` entry whose `train` is the
-    entire dataset, used to train the production model). Each partition/fold gets
-    its own independent fit — no fold ever "sees" another fold's data through a
-    converter, and the CV `full_dataset` entry is fit on the whole dataset exactly
-    as intended, with no special-casing needed.
+    entire dataset, used to train the production model). Each fold gets its own
+    independent fit for SUPERVISED or CHANGES_ROW_COUNT converters (no fold ever
+    "sees" another fold's target or resampling through those). A converter that is
+    neither — one whose output structure can depend on which rows it saw, e.g. a
+    text vectorizer's vocabulary, but that never reads the target — is instead fit
+    once on `full_dataset` and reused (transform-only) everywhere else, so every
+    fold ends up with the exact same columns. This is a deliberate, narrower
+    exception to "no fold sees another fold's data": it only ever shares
+    non-target-derived structure.
 
     Parameters
     ----------
@@ -339,25 +344,77 @@ def apply_session_converters(
         return x, y, []
 
     if isinstance(x, list):
-        new_x, new_y = [], []
         last_index = len(x) - 1
+        # Mutable per-fold state, advanced converter-by-converter (not
+        # fold-by-fold) so a converter fit once on full_dataset can be
+        # applied to every fold's *current* state, in the same chain order
+        # a fold-by-fold loop would produce.
+        x_state = [dict(fold) for fold in x]
+        y_state = [dict(fold) for fold in y]
         fitted_converters: List[Dict[str, Any]] = []
-        for i, (x_fold, y_fold) in enumerate(zip(x, y, strict=True)):
-            x_others = {k: v for k, v in x_fold.items() if k != "train"}
-            y_others = {k: v for k, v in y_fold.items() if k != "train"}
-            label = "full_dataset" if i == last_index else f"fold_{i}"
-            x_train, y_train, x_rest, fold_fitted = fit_transform_on_partition(
-                converters_config,
-                component_registry,
-                x_fold["train"],
-                y_fold["train"],
-                x_others=x_others,
-                partition_label=label,
+
+        for entry in converters_config:
+            converter_name = entry["converter"]
+            params = entry.get("params") or {}
+            converter_instance = instantiate_converter(
+                component_registry, converter_name, params
             )
-            new_x.append(DatasetDict({"train": x_train, **x_rest}))
-            new_y.append(DatasetDict({"train": y_train, **y_others}))
-            if i == last_index:
-                fitted_converters = fold_fitted
+            supervised = bool(getattr(type(converter_instance), "SUPERVISED", False))
+            changes_row_count = bool(
+                getattr(type(converter_instance), "CHANGES_ROW_COUNT", False)
+            )
+            single_entry_config = [entry]
+
+            if supervised or changes_row_count:
+                # Unchanged semantics: every fold (including full_dataset)
+                # fits this converter independently, on only its own train.
+                for i in range(len(x_state)):
+                    label = "full_dataset" if i == last_index else f"fold_{i}"
+                    x_others = {k: v for k, v in x_state[i].items() if k != "train"}
+                    y_others = {k: v for k, v in y_state[i].items() if k != "train"}
+                    x_train, y_train, x_rest, fold_fitted = fit_transform_on_partition(
+                        single_entry_config,
+                        component_registry,
+                        x_state[i]["train"],
+                        y_state[i]["train"],
+                        x_others=x_others,
+                        partition_label=label,
+                    )
+                    x_state[i] = {"train": x_train, **x_rest}
+                    y_state[i] = {"train": y_train, **y_others}
+                    if i == last_index:
+                        fitted_converters.extend(fold_fitted)
+            else:
+                # Fit once on full_dataset's train; reuse (transform only,
+                # never re-fit) on every other fold's every partition —
+                # including full_dataset's own non-train partitions, if any.
+                other_partitions: Dict[str, "DashAIDataset"] = {}
+                for i in range(len(x_state)):
+                    if i == last_index:
+                        continue
+                    for split_name, x_part in x_state[i].items():
+                        other_partitions[f"{i}:{split_name}"] = x_part
+                for split_name, x_part in x_state[last_index].items():
+                    if split_name != "train":
+                        other_partitions[f"{last_index}:{split_name}"] = x_part
+
+                x_train, y_train, x_rest, full_fitted = fit_transform_on_partition(
+                    single_entry_config,
+                    component_registry,
+                    x_state[last_index]["train"],
+                    y_state[last_index]["train"],
+                    x_others=other_partitions,
+                    partition_label="full_dataset",
+                )
+                x_state[last_index]["train"] = x_train
+                y_state[last_index]["train"] = y_train
+                for key, transformed in x_rest.items():
+                    fold_i_str, split_name = key.split(":", 1)
+                    x_state[int(fold_i_str)][split_name] = transformed
+                fitted_converters.extend(full_fitted)
+
+        new_x = [DatasetDict(fold) for fold in x_state]
+        new_y = [DatasetDict(fold) for fold in y_state]
         return new_x, new_y, fitted_converters
 
     x_others = {k: v for k, v in x.items() if k != "train"}

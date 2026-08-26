@@ -136,8 +136,8 @@ class ModelSession(Base):
     dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"))
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     task_name: Mapped[str] = mapped_column(String, nullable=False)
-    input_columns: Mapped[str] = mapped_column(JSON, nullable=False)
-    output_columns: Mapped[str] = mapped_column(JSON, nullable=False)
+    input_columns: Mapped[Optional[str]] = mapped_column(JSON, nullable=True)
+    output_columns: Mapped[Optional[str]] = mapped_column(JSON, nullable=True)
 
     # Metrics per split
     train_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
