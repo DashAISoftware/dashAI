@@ -140,6 +140,9 @@ from DashAI.back.exploration.explorers.parallel_cordinates import (
 )
 from DashAI.back.exploration.explorers.scatter_matrix import ScatterMatrixExplorer
 from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
+from DashAI.back.exploration.explorers.time_series_plot import (
+    TimeSeriesPlotExplorer,
+)
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
@@ -644,6 +647,7 @@ def get_initial_components():
         ECDFPlotExplorer,
         HistogramPlotExplorer,
         ScatterMatrixExplorer,
+        TimeSeriesPlotExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
         # Converters
