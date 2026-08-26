@@ -4,6 +4,7 @@ from typing import Any, Dict, Final, List
 
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.date_utils import DEFAULT_DATE_FORMAT
 from DashAI.back.types.value_types import (
     Binary,
     DashAIValue,
@@ -235,6 +236,17 @@ def get_types_from_arrow_metadata(
 
                 dtype = info.get("dtype", "struct")
                 dashai_types[column] = DashAIImage(dtype=dtype)
+            elif _type == "Date":
+                # A Date column is text plus a strptime format, so its stored
+                # dtype is "string" and the layout lives in "format". Routing
+                # it through the dtype map below would rebuild it as Text and
+                # drop the format, which is exactly the bug this branch fixes.
+                import pyarrow as pa  # local import
+
+                dashai_types[column] = Date(
+                    arrow_type=pa.string(),
+                    format=info.get("format", DEFAULT_DATE_FORMAT),
+                )
             else:
                 dtype = info.get("dtype")
                 dtype_map = _get_dtype_arrow_map()
