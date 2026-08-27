@@ -37,10 +37,15 @@ class ChunkingService:
 
     # ── Chunk set identity ──
 
-    def _build_chunk_set_signature(
+    def build_chunk_set_signature(
         self, document_ids: list[int], pipeline_config: dict[str, Any]
     ) -> str:
-        """Build SHA-256 signature for deterministic chunk set identity."""
+        """Build SHA-256 signature for deterministic chunk set identity.
+
+        Public because read-only callers (e.g. the index-status service) must
+        compute the *same* signature the pipeline will use; a second
+        implementation would drift and report a stale index as fresh.
+        """
         extractors = {}
         for doc_id in sorted(document_ids):
             db_doc = self._db.get(Document, doc_id)
@@ -73,7 +78,7 @@ class ChunkingService:
 
         Raises RuntimeError on DB error.
         """
-        signature = self._build_chunk_set_signature(document_ids, pipeline_config)
+        signature = self.build_chunk_set_signature(document_ids, pipeline_config)
         try:
             existing = (
                 self._db.query(RAGChunkSet).filter_by(signature=signature).first()

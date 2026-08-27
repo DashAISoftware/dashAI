@@ -8,6 +8,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
     BaseChunkingModel,
 )
@@ -25,21 +26,69 @@ class TokenChunkModelSchema(BaseSchema):
             ],
         ),
         placeholder="intfloat/e5-mistral-7b-instruct",
-        description="The tokenizer model to use for tokenizing the text.",
+        alias=MultilingualString(
+            en="Tokenizer",
+            es="Tokenizador",
+            pt="Tokenizador",
+            de="Tokenizer",
+            zh="分词器",
+        ),
+        description=MultilingualString(
+            en="The tokenizer model used to split the text into tokens.",
+            es="El tokenizador que se usa para dividir el texto en tokens.",
+            pt="O tokenizador usado para dividir o texto em tokens.",
+            de="Das Tokenizer-Modell, das den Text in Tokens zerlegt.",
+            zh="用于将文本切分为标记的分词器模型。",
+        ),
     )  # type: ignore
 
     chunk_size: schema_field(
         int_field(gt=1),
         placeholder=400,
-        description="The size of each chunk in tokens.",
+        alias=MultilingualString(
+            en="Chunk size",
+            es="Tamaño de fragmento",
+            pt="Tamanho do fragmento",
+            de="Chunk-Größe",
+            zh="块大小",
+        ),
+        description=MultilingualString(
+            en="Size of each chunk in tokens.",
+            es="Tamaño de cada fragmento en tokens.",
+            pt="Tamanho de cada fragmento em tokens.",
+            de="Größe jedes Chunks in Tokens.",
+            zh="每个块的标记数。",
+        ),
     )  # type: ignore
 
     chunk_overlap: schema_field(
         int_field(ge=0),
         placeholder=40,
-        description=(
-            "The number of overlapping tokens between chunks. "
-            "Must be less than chunk_size."
+        alias=MultilingualString(
+            en="Chunk overlap",
+            es="Superposición entre fragmentos",
+            pt="Sobreposição entre fragmentos",
+            de="Chunk-Überlappung",
+            zh="块重叠",
+        ),
+        description=MultilingualString(
+            en=(
+                "Number of tokens to overlap between chunks. "
+                "Must be less than the chunk size."
+            ),
+            es=(
+                "Cantidad de tokens que se repiten entre fragmentos "
+                "consecutivos. Debe ser menor que el tamaño de fragmento."
+            ),
+            pt=(
+                "Quantidade de tokens repetidos entre fragmentos consecutivos. "
+                "Deve ser menor que o tamanho do fragmento."
+            ),
+            de=(
+                "Anzahl der Tokens, die sich zwischen Chunks überlappen. "
+                "Muss kleiner als die Chunk-Größe sein."
+            ),
+            zh="相邻块之间重叠的标记数，必须小于块大小。",
         ),
     )  # type: ignore
 
@@ -68,6 +117,42 @@ class TokenChunkModel(BaseChunkingModel):
     """
 
     SCHEMA = TokenChunkModelSchema
+    CHUNK_UNIT = "tokens"
+    DISPLAY_NAME = MultilingualString(
+        en="Token chunking",
+        es="Fragmentación por tokens",
+        pt="Fragmentação por tokens",
+        de="Token-basiertes Chunking",
+        zh="按标记切分",
+    )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Splits documents at token boundaries using a tokenizer, so chunk "
+            "sizes line up exactly with the language model's context window. "
+            "Slower than character chunking and downloads a tokenizer."
+        ),
+        es=(
+            "Divide los documentos en límites de tokens usando un tokenizador, "
+            "de modo que el tamaño de los fragmentos coincide con la ventana "
+            "de contexto del modelo. Es más lento que la fragmentación por "
+            "caracteres y descarga un tokenizador."
+        ),
+        pt=(
+            "Divide os documentos em limites de tokens usando um tokenizador, "
+            "alinhando o tamanho dos fragmentos à janela de contexto do "
+            "modelo. É mais lento que a fragmentação por caracteres e baixa "
+            "um tokenizador."
+        ),
+        de=(
+            "Teilt Dokumente an Token-Grenzen mit einem Tokenizer, sodass die "
+            "Chunk-Größe exakt zum Kontextfenster des Sprachmodells passt. "
+            "Langsamer als zeichenbasiertes Chunking und lädt einen Tokenizer."
+        ),
+        zh=(
+            "使用分词器在标记边界切分文档，使块大小与语言模型的"
+            "上下文窗口精确对齐。比按字符切分更慢，并且需要下载分词器。"
+        ),
+    )
 
     def __init__(self, **kwargs):
         """Initialize the token chunking model.

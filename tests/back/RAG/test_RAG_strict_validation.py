@@ -7,15 +7,20 @@ the ``BM25VectorizerModel`` inside a ``BM25Retriever`` — against the
 component's own schema (``SCHEMA.model_validate(params)``).  A failing
 sub-component rejects the whole request with HTTP 400.
 
-Every schema field carries a ``default`` (its placeholder), so empty or
-missing params are accepted and filled with the schema defaults.  The default
-prompts (``DefaultRAGGenerationPrompt`` and ``DefaultQARAGenerationPrompt`` —
-the QA class name contains a double ``GG``) additionally accept a
-language-only ``{"language": ...}`` body: the backend injects
+The ``generation_model`` is the one component picked by name alone, so the
+backend fills its missing parameters from its schema placeholders; explicit
+values always win.  Every other component — including any nested
+sub-component such as the vectorizer inside a retriever — must arrive complete,
+so a caller sending a half-built configuration is told about it instead of
+having the gaps silently papered over.
+
+The default prompts (``DefaultRAGGenerationPrompt`` and
+``DefaultQARAGenerationPrompt`` — the QA class name contains a double ``GG``)
+accept a language-only ``{"language": ...}`` body: the backend injects
 ``template = TEMPLATES[language]`` and persists the resolved template.  Empty,
 whitespace-only or ``None`` templates are normalised the same way.  Truly
 invalid values (wrong types, out-of-range numbers, unknown enums, missing
-placeholders) are still rejected with HTTP 400.
+placeholders) are rejected with HTTP 400.
 """
 
 import pytest
@@ -126,18 +131,39 @@ def test_create_session_with_empty_vectorizer_params_rejected(
     )
 
 
-def test_create_session_with_empty_generation_model_params_rejected(
+def test_create_session_with_empty_generation_model_params_filled(
     client: TestClient, test_doc_id: int
 ) -> None:
-    """Empty ``Llama32_1BInstruct`` params are rejected — backend must not fill gaps."""
+    """Empty generation-model params are filled from the model's own schema.
+
+    The generation model is picked by name — the creation flow asks *which*
+    model, not how to tune it — so its parameters are resolved by the backend.
+    """
     params = _complete_params(test_doc_id, name="strict_incomplete_llama")
     params["parameters"]["generation_model"]["params"] = {}
 
     response = client.post("/api/v1/generative-session/", json=params)
-    assert response.status_code == 400, (
-        "An empty Llama32_1BInstruct params dict must be rejected, "
-        f"got {response.status_code}: {response.text}"
+    assert response.status_code == 201, (
+        "An empty generation-model params dict should be filled with the "
+        f"schema defaults, got {response.status_code}: {response.text}"
     )
+    stored = response.json()["parameters"]["generation_model"]["params"]
+    assert stored, "the generation model's parameters were not resolved"
+    assert "context_window" in stored
+
+
+def test_create_session_with_partial_generation_model_params_kept(
+    client: TestClient, test_doc_id: int
+) -> None:
+    """Explicit generation-model values survive the default filling."""
+    params = _complete_params(test_doc_id, name="strict_partial_llama")
+    params["parameters"]["generation_model"]["params"] = {"max_tokens": 77}
+
+    response = client.post("/api/v1/generative-session/", json=params)
+    assert response.status_code == 201, response.text
+    stored = response.json()["parameters"]["generation_model"]["params"]
+    assert stored["max_tokens"] == 77
+    assert "temperature" in stored
 
 
 def test_create_session_with_default_prompt_accepts_language_only(

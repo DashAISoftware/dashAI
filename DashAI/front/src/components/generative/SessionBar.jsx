@@ -12,7 +12,23 @@ import NewItemButton from "../threeSectionLayout/NewItemButton";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
+import { standaloneRouteFor } from "./standaloneEntryPoints";
 
+/**
+ * The generative module's session list.
+ *
+ * @param {object} props
+ * @param {Function} [props.onToggle] - Collapses the panel.
+ * @param {Array} [props.sessions] - Overrides the sessions from context.
+ * @param {number} [props.selectedSessionId] - Overrides the current selection.
+ * @param {Function} [props.handleSessionClick] - Overrides click behaviour.
+ * @param {Function} [props.handleNewSessionButton] - Overrides the new-session action.
+ * @param {Function} [props.handleSessionDelete] - Overrides delete behaviour.
+ * @param {boolean} [props.showSearch=true] - Whether to show the search field.
+ * @param {string} [props.title] - Heading for the list. Defaults to the module
+ *   name; a view scoped to one task passes that task's display name.
+ * @returns {JSX.Element} The session sidebar.
+ */
 export default function SessionBar({
   onToggle,
   sessions: sessionsProp,
@@ -21,6 +37,7 @@ export default function SessionBar({
   handleNewSessionButton: handleNewSessionButtonProp,
   handleSessionDelete: handleSessionDeleteProp,
   showSearch = true,
+  title,
 }) {
   const theme = useTheme();
   const navigate = useNavigate();
@@ -123,7 +140,12 @@ export default function SessionBar({
       return;
     }
 
-    navigate(`/app/generative/sessions/${sessionId}`);
+    const standaloneRoute = standaloneRouteFor(session.task_name);
+    navigate(
+      standaloneRoute
+        ? `${standaloneRoute}/sessions/${sessionId}`
+        : `/app/generative/sessions/${sessionId}`,
+    );
   };
 
   const handleSessionDelete = async (id) => {
@@ -237,7 +259,7 @@ export default function SessionBar({
           onItemDelete={handleSessionDelete}
           onItemEdit={editSession}
           onItemInfo={handleSessionInfo}
-          title={t("common:generative")}
+          title={title ?? t("common:generative")}
           Icon={FolderIcon}
           openGroups={openSections}
           onOpenGroupsChange={setOpenSections}

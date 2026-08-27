@@ -5,7 +5,19 @@ import { IDocumentResponse } from "../types/documentResponse";
 import { IComponent } from "../types/component";
 import { IRAGPrompt } from "../types/ragPrompt";
 import { RetrieverPresetRecipe } from "../types/retrieverPreset";
+import {
+  IRAGConfiguration,
+  IRAGIndexStatus,
+  IRAGPreset,
+  IRAGSessionDefaults,
+} from "../types/ragConfiguration";
 import { getChildComponents } from "./component";
+
+/** The generative task every RAG session belongs to. */
+export const RAG_TASK_NAME = "RAGTask";
+
+/** The generative model every RAG session runs on. */
+export const RAG_MODEL_NAME = "RAGPipeline";
 
 /**
  * Creates a new RAG prompt via the API.
@@ -24,17 +36,16 @@ export const createRAGPrompt = async (prompt: {
   return response.data;
 };
 
-/** Fetches all generative sessions filtered to RAGTask. @returns List of RAG sessions. */
+/** Fetches the RAG sessions. Filtering happens server-side. @returns List of RAG sessions. */
 export const getRAGSessions = async (): Promise<ISession[]> => {
-  const response = await api.get<ISession[]>("/v1/generative-session/");
+  const response = await api.get<ISession[]>("/v1/generative-session/", {
+    params: { task_name: RAG_TASK_NAME },
+  });
   if (response.status !== 200) {
     throw new Error(`Failed to fetch RAG sessions: ${response.statusText}`);
   }
 
-  const ragSessions = response.data.filter(
-    (session) => session.task_name === "RAGTask",
-  );
-  return ragSessions;
+  return response.data;
 };
 
 /** Fetches a single RAG session by ID. @param sessionId - The session ID. @returns The session object. */
@@ -61,8 +72,8 @@ export const createRAGSession = async (
     {
       name: sessionData.name,
       description: sessionData.description,
-      task_name: "RAGTask",
-      model_name: "RAGPipeline",
+      task_name: RAG_TASK_NAME,
+      model_name: RAG_MODEL_NAME,
       display_name: "",
       parameters: sessionData.parameters,
     };
@@ -157,6 +168,73 @@ export const getRetrieverPresets = async (
     throw new Error(
       `Failed to fetch retriever presets: ${response.statusText}`,
     );
+  }
+  return response.data;
+};
+
+/**
+ * Fetches resolved chunking preset recipes.
+ * Names and summaries are localized by the backend, so they render as-is.
+ * @returns List of chunking presets.
+ */
+export const getChunkingPresets = async (): Promise<IRAGPreset[]> => {
+  const response = await api.get<IRAGPreset[]>("/v1/rag/chunking-presets");
+  if (response.status !== 200) {
+    throw new Error(`Failed to fetch chunking presets: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/**
+ * Fetches the configuration a new RAG session gets when the user picks none.
+ * This is the very same dict the backend applies on create, so showing it is
+ * an honest preview rather than a client-side guess.
+ * @returns The resolved defaults for chunking, retrieval and prompt.
+ */
+export const getSessionDefaults = async (): Promise<IRAGSessionDefaults> => {
+  const response = await api.get<IRAGSessionDefaults>(
+    "/v1/rag/session-defaults",
+  );
+  if (response.status !== 200) {
+    throw new Error(`Failed to fetch session defaults: ${response.statusText}`);
+  }
+  return response.data;
+};
+
+/**
+ * Fetches a session's configuration already resolved into friendly labels.
+ * @param sessionId - The RAG session ID.
+ * @returns Display names, preset labels, labelled parameters and the context budget.
+ */
+export const getSessionConfiguration = async (
+  sessionId: number,
+): Promise<IRAGConfiguration> => {
+  const response = await api.get<IRAGConfiguration>(
+    `/v1/rag/sessions/${sessionId}/configuration`,
+  );
+  if (response.status !== 200) {
+    throw new Error(
+      `Failed to fetch session configuration: ${response.statusText}`,
+    );
+  }
+  return response.data;
+};
+
+/**
+ * Fetches whether a session's documents are indexed for its current config.
+ * Read-only: it never triggers indexing, it only reports what the chat job
+ * would find.
+ * @param sessionId - The RAG session ID.
+ * @returns The indexing status, with a localized message ready to render.
+ */
+export const getSessionIndexStatus = async (
+  sessionId: number,
+): Promise<IRAGIndexStatus> => {
+  const response = await api.get<IRAGIndexStatus>(
+    `/v1/rag/sessions/${sessionId}/index-status`,
+  );
+  if (response.status !== 200) {
+    throw new Error(`Failed to fetch index status: ${response.statusText}`);
   }
   return response.data;
 };

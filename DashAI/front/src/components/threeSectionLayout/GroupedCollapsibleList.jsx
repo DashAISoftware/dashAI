@@ -77,11 +77,16 @@ export default function GroupedCollapsibleList({
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
-  const allItems = Object.values(groups || {}).flat();
+  const groupEntries = Object.entries(groups || {});
+  const allItems = groupEntries.flatMap(([, items]) => items ?? []);
+  // One group under a section header that already names the list adds a level
+  // of nesting that carries no information, so it is rendered flat.
+  const showGroupHeaders = groupEntries.length > 1;
 
-  // Auto-open group when an item is selected
+  // Auto-open group when an item is selected. A flattened single group is
+  // always visible, so there is nothing to open.
   useEffect(() => {
-    if (selectedItemId) {
+    if (selectedItemId && showGroupHeaders) {
       // Find which group contains the selected item
       for (const [groupName, items] of Object.entries(groups)) {
         if (items?.some((item) => item.id === selectedItemId)) {
@@ -118,6 +123,57 @@ export default function GroupedCollapsibleList({
   const totalCount = allItems.length;
 
   const defaultGetDescription = (item) => item.description || "";
+
+  /**
+   * Render one group's items, or the empty notice when it has none.
+   * @param {Array} items - The items to render.
+   * @returns {JSX.Element|JSX.Element[]} The rendered rows.
+   */
+  const renderItems = (items) =>
+    items?.length ? (
+      items.map((item) => (
+        <ItemBox
+          key={item.id ?? item.name}
+          ref={item.id === selectedItemId ? selectedItemRef : null}
+          isSelected={item.id === selectedItemId}
+          name={item.name}
+          description={
+            getItemDescription
+              ? getItemDescription(item)
+              : defaultGetDescription(item)
+          }
+          id={item.id}
+          onClick={() => onItemClick(item.id)}
+          onDelete={() => onItemDelete(item.id)}
+          onEdit={(name) => onItemEdit(item.id, name)}
+          onInfo={onItemInfo ? () => onItemInfo(item.id) : undefined}
+          deleteConfirmationContent={
+            getDeleteConfirmationContent
+              ? getDeleteConfirmationContent(item)
+              : undefined
+          }
+          deleteConfirmationWarning={
+            getDeleteConfirmationWarning
+              ? getDeleteConfirmationWarning(item)
+              : undefined
+          }
+          selectable={selectionMode}
+          checked={selectedIds.has(item.id)}
+          onToggleSelect={handleToggleSelect}
+        />
+      ))
+    ) : (
+      <Typography
+        sx={{
+          color: theme.palette.text.primary,
+          opacity: 0.5,
+          textAlign: "center",
+          p: 8,
+        }}
+      >
+        {t("common:noItemsInGroup", "No items found.")}
+      </Typography>
+    );
 
   const handleToggleSelect = (id) => {
     setSelectedIds((prev) => {
@@ -315,119 +371,77 @@ export default function GroupedCollapsibleList({
           overflowY: "auto",
         }}
       >
-        {Object.entries(groups || {}).map(([groupName, items]) => (
-          <Box key={groupName} mb={2}>
-            {/* Group Header */}
-            <Box
-              display="flex"
-              alignItems="center"
-              sx={{
-                cursor: "pointer",
-                py: 2,
-                px: 4,
-                borderRadius: 1,
-                "&:hover": {
-                  bgcolor: theme.palette.ui.hover,
-                },
-              }}
-              onClick={() => toggleGroup(groupName)}
-            >
-              {openGroups[groupName] ? (
-                <KeyboardArrowDownIcon
-                  sx={{ fontSize: 20, color: theme.palette.primary.main }}
-                />
-              ) : (
-                <KeyboardArrowRightIcon
-                  sx={{ fontSize: 20, color: theme.palette.primary.main }}
-                />
-              )}
-              <Typography
-                sx={{
-                  ml: 4,
-                  ...theme.typography.h5,
-                  textTransform: "capitalize",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  wordBreak: "break-all",
-                  whiteSpace: "nowrap",
-                  flex: 1,
-                }}
-                color="text.primary"
-              >
-                {groupName}
-              </Typography>
-              <Typography
-                variant="body2"
-                component="div"
-                sx={{
-                  ml: 4,
-                  bgcolor: "primary.main",
-                  color: "primary.contrastText",
-                  borderRadius: "50%",
-                  width: 20,
-                  height: 20,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {items?.length || 0}
-              </Typography>
-            </Box>
+        {!showGroupHeaders && (
+          <Box pl={4}>{renderItems(groupEntries[0]?.[1] ?? [])}</Box>
+        )}
 
-            {/* Group Items */}
-            <Collapse in={openGroups[groupName]} timeout="auto">
-              <Box pl={4}>
-                {items?.length ? (
-                  items.map((item) => (
-                    <ItemBox
-                      key={item.id ?? item.name}
-                      ref={item.id === selectedItemId ? selectedItemRef : null}
-                      isSelected={item.id === selectedItemId}
-                      name={item.name}
-                      description={
-                        getItemDescription
-                          ? getItemDescription(item)
-                          : defaultGetDescription(item)
-                      }
-                      id={item.id}
-                      onClick={() => onItemClick(item.id)}
-                      onDelete={() => onItemDelete(item.id)}
-                      onEdit={(name) => onItemEdit(item.id, name)}
-                      onInfo={
-                        onItemInfo ? () => onItemInfo(item.id) : undefined
-                      }
-                      deleteConfirmationContent={
-                        getDeleteConfirmationContent
-                          ? getDeleteConfirmationContent(item)
-                          : undefined
-                      }
-                      deleteConfirmationWarning={
-                        getDeleteConfirmationWarning
-                          ? getDeleteConfirmationWarning(item)
-                          : undefined
-                      }
-                      selectable={selectionMode}
-                      checked={selectedIds.has(item.id)}
-                      onToggleSelect={handleToggleSelect}
-                    />
-                  ))
+        {showGroupHeaders &&
+          groupEntries.map(([groupName, items]) => (
+            <Box key={groupName} mb={2}>
+              {/* Group Header */}
+              <Box
+                display="flex"
+                alignItems="center"
+                sx={{
+                  cursor: "pointer",
+                  py: 2,
+                  px: 4,
+                  borderRadius: 1,
+                  "&:hover": {
+                    bgcolor: theme.palette.ui.hover,
+                  },
+                }}
+                onClick={() => toggleGroup(groupName)}
+              >
+                {openGroups[groupName] ? (
+                  <KeyboardArrowDownIcon
+                    sx={{ fontSize: 20, color: theme.palette.primary.main }}
+                  />
                 ) : (
-                  <Typography
-                    sx={{
-                      color: theme.palette.text.primary,
-                      opacity: 0.5,
-                      textAlign: "center",
-                      p: 8,
-                    }}
-                  >
-                    {t("common:noItemsInGroup", "No items found.")}
-                  </Typography>
+                  <KeyboardArrowRightIcon
+                    sx={{ fontSize: 20, color: theme.palette.primary.main }}
+                  />
                 )}
+                <Typography
+                  sx={{
+                    ml: 4,
+                    ...theme.typography.h5,
+                    textTransform: "capitalize",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    wordBreak: "break-all",
+                    whiteSpace: "nowrap",
+                    flex: 1,
+                  }}
+                  color="text.primary"
+                >
+                  {groupName}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  component="div"
+                  sx={{
+                    ml: 4,
+                    bgcolor: "primary.main",
+                    color: "primary.contrastText",
+                    borderRadius: "50%",
+                    width: 20,
+                    height: 20,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  {items?.length || 0}
+                </Typography>
               </Box>
-            </Collapse>
-          </Box>
-        ))}
+
+              {/* Group Items */}
+              <Collapse in={openGroups[groupName]} timeout="auto">
+                <Box pl={4}>{renderItems(items)}</Box>
+              </Collapse>
+            </Box>
+          ))}
       </Box>
 
       {onBulkDelete && (

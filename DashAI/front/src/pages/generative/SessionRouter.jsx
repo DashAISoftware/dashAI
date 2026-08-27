@@ -1,26 +1,30 @@
-import { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Navigate, useParams } from "react-router-dom";
 import { Box, CircularProgress, Typography } from "@mui/material";
+import { useTranslation } from "react-i18next";
 import { getGenerativeSession } from "../../api/generativeTask";
+import { RAG_TASK_NAME } from "../../api/rag";
 import Generative from "./Generative";
-import { GenerativeProvider } from "../../components/generative/GenerativeContext";
-import RAGSessionPage from "./RAGSession/RAGSessionPage";
 
 /**
- * Route a session URL to the correct view based on the session's task_name.
- * RAGTask sessions render RAGSessionPage; all others render the generic Generative view.
- * Shows a loading spinner while fetching session metadata.
- * @returns {JSX.Element} The appropriate session page or a loading indicator.
+ * Route a generic session URL to the right view.
+ *
+ * Tasks with their own entry point live under that entry point's URL, so a RAG
+ * session reached through the shared `/sessions/:id` path is redirected to its
+ * canonical address rather than rendered here. Older links therefore keep
+ * working while there is only one URL per session.
+ *
+ * @returns {JSX.Element} The session view, a redirect, or a loading indicator.
  */
 export default function SessionRouter() {
   const { id } = useParams();
+  const { t } = useTranslation(["generative"]);
   const [taskName, setTaskName] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const prevViewRef = useRef({ taskName: null, loaded: false });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const sid = Number(id);
-    if (!Number.isFinite(sid) || sid <= 0) {
+    const sessionId = Number(id);
+    if (!Number.isFinite(sessionId) || sessionId <= 0) {
       setTaskName(null);
       setLoading(false);
       return;
@@ -29,19 +33,12 @@ export default function SessionRouter() {
     let cancelled = false;
     setLoading(true);
 
-    getGenerativeSession(sid)
+    getGenerativeSession(sessionId)
       .then((session) => {
-        if (!cancelled) {
-          const tn = session?.task_name || null;
-          setTaskName(tn);
-          prevViewRef.current = { taskName: tn, loaded: true };
-        }
+        if (!cancelled) setTaskName(session?.task_name || null);
       })
       .catch(() => {
-        if (!cancelled) {
-          setTaskName(null);
-          prevViewRef.current = { taskName: null, loaded: true };
-        }
+        if (!cancelled) setTaskName(null);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -52,10 +49,7 @@ export default function SessionRouter() {
     };
   }, [id]);
 
-  const effectiveView = loading ? prevViewRef.current.taskName : taskName;
-  const isFirstLoad = !prevViewRef.current.loaded && loading;
-
-  if (isFirstLoad) {
+  if (loading) {
     return (
       <Box
         display="flex"
@@ -68,7 +62,7 @@ export default function SessionRouter() {
     );
   }
 
-  if (!effectiveView) {
+  if (!taskName) {
     return (
       <Box
         display="flex"
@@ -77,18 +71,14 @@ export default function SessionRouter() {
         height="100vh"
       >
         <Typography variant="h6" color="text.secondary">
-          Session not found
+          {t("generative:rag.session.notFound")}
         </Typography>
       </Box>
     );
   }
 
-  if (effectiveView === "RAGTask") {
-    return (
-      <GenerativeProvider key={id}>
-        <RAGSessionPage />
-      </GenerativeProvider>
-    );
+  if (taskName === RAG_TASK_NAME) {
+    return <Navigate to={`/app/generative/rag/sessions/${id}`} replace />;
   }
 
   return <Generative key={id} />;

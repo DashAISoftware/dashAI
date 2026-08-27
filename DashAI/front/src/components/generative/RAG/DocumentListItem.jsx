@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Typography, useTheme } from "@mui/material";
+import { Box, Chip, Typography, useTheme } from "@mui/material";
 import {
   Description,
   PictureAsPdf,
@@ -30,12 +30,15 @@ const getDocumentIcon = (fileType) => {
  * @param {object}  props.document - The document object ({ id, name, type, ... }).
  * @param {boolean} [props.disabled=false] - Whether the item is greyed out and non-interactive.
  * @param {function} [props.onClick] - Click handler for the item.
+ * @param {object}  [props.indexState] - This document's indexing state within
+ *   the session (`{ chunks, indexed }`), as reported by the backend.
  * @returns {JSX.Element}
  */
 export default function DocumentListItem({
   document,
   disabled = false,
   onClick,
+  indexState,
 }) {
   const { t } = useTranslation(["generative"]);
   const [isHovered, setIsHovered] = useState(false);
@@ -125,15 +128,35 @@ export default function DocumentListItem({
             {document.name}
           </Typography>
         </Box>
-        <Typography
-          variant="caption"
-          sx={{
-            color: disabled ? "text.disabled" : "text.secondary",
-            textTransform: "uppercase",
-          }}
-        >
-          {document.type || t("generative:rag.documents.table.unknownType")}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: disabled ? "text.disabled" : "text.secondary",
+              textTransform: "uppercase",
+            }}
+          >
+            {document.type || t("generative:rag.documents.table.unknownType")}
+          </Typography>
+          {indexState && (
+            <Chip
+              size="small"
+              variant="outlined"
+              color={indexState.indexed ? "success" : "default"}
+              label={
+                indexState.indexed
+                  ? t("generative:rag.index.chunkCount", {
+                      count: indexState.chunks,
+                    })
+                  : t("generative:rag.index.notIndexed")
+              }
+              sx={{
+                height: 18,
+                "& .MuiChip-label": { px: 0.75, fontSize: 10 },
+              }}
+            />
+          )}
+        </Box>
       </Box>
     </Box>
   );

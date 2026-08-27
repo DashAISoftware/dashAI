@@ -23,6 +23,8 @@ import DocumentPreviewModal from "./DocumentPreviewModal";
 import DocumentExtractorModal from "./DocumentExtractorModal";
 import { normalizeUrl } from "../../../utils/urlUtils";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
+import { getApiErrorMessage } from "../../../utils/apiError";
 
 /**
  * DataGrid table listing documents with preview, deletion, and upload actions.
@@ -48,6 +50,7 @@ export default function DocumentTable({
   showTableTitle = false,
 }) {
   const { t } = useTranslation(["generative", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [txtContent, setTxtContent] = useState("");
@@ -107,9 +110,19 @@ export default function DocumentTable({
         }
         if (onAddDocument) onAddDocument(result.document);
       } catch (error) {
-        // Non-duplicate error (500, network error, etc.) - log and continue
+        // Anything other than a duplicate: tell the user which file failed and
+        // why, then keep going with the rest of the selection.
         console.error("Upload failed:", error);
-        // TODO: Show error to user via snackbar/alert
+        enqueueSnackbar(
+          t("generative:rag.documents.uploadFailedReason", {
+            file: file.name,
+            reason: getApiErrorMessage(
+              error,
+              t("generative:rag.documents.uploadFailed"),
+            ),
+          }),
+          { variant: "error" },
+        );
       }
     }
     setUploadOpen(false);
@@ -122,13 +135,27 @@ export default function DocumentTable({
     if (!duplicatePending) return;
     const { file, url } = duplicatePending;
     setDuplicatePending(null);
-    const result = await addDocument({
-      file,
-      optional_metadata: { name: file.name, source: url },
-      force: true,
-    });
-    if (!result.duplicate && onAddDocument) {
-      onAddDocument(result.document);
+    try {
+      const result = await addDocument({
+        file,
+        optional_metadata: { name: file.name, source: url },
+        force: true,
+      });
+      if (!result.duplicate && onAddDocument) {
+        onAddDocument(result.document);
+      }
+    } catch (error) {
+      console.error("Forced upload failed:", error);
+      enqueueSnackbar(
+        t("generative:rag.documents.uploadFailedReason", {
+          file: file.name,
+          reason: getApiErrorMessage(
+            error,
+            t("generative:rag.documents.uploadFailed"),
+          ),
+        }),
+        { variant: "error" },
+      );
     }
     setUploadOpen(false);
   };

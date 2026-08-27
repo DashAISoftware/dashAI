@@ -5,6 +5,7 @@ import os
 import tempfile
 
 from DashAI.back.dependencies.database.models import Document, RAGExtractor
+from DashAI.back.models.RAG.documents import DocumentFileType
 
 
 def _create_document(
@@ -161,6 +162,28 @@ class TestUploadWarmsExtractionCache:
     def test_upload_unsupported_type_rejected(self, client):
         """Uploading an unsupported extension returns 400 before extraction."""
         resp = self._upload(client, "notes.exe", b"not a supported type")
+        assert resp.status_code == 400
+        assert "Unsupported file type" in resp.json()["detail"]
+
+    def test_upload_rejection_names_the_supported_types(self, client):
+        """The rejection says which formats *are* accepted.
+
+        "Unsupported file type: ipynb" on its own leaves the user guessing, so
+        the message has to carry the list the enum defines.
+        """
+        resp = self._upload(client, "analysis.ipynb", b'{"cells": []}')
+        assert resp.status_code == 400
+
+        detail = resp.json()["detail"]
+        assert "ipynb" in detail
+        for extension in DocumentFileType.supported_extensions():
+            assert extension in detail, (
+                f"the rejection does not mention '{extension}': {detail}"
+            )
+
+    def test_upload_without_extension_rejected(self, client):
+        """A name with no extension is rejected rather than read as empty."""
+        resp = self._upload(client, "README", b"no extension here")
         assert resp.status_code == 400
         assert "Unsupported file type" in resp.json()["detail"]
 

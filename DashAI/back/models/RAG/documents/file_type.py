@@ -32,3 +32,12 @@ class DocumentFileType(str, Enum):
     RST = "rst"
     TEX = "tex"
     CSV = "csv"
+
+    @classmethod
+    def supported_extensions(cls) -> list[str]:
+        """Return every supported extension, sorted, without leading dots.
+
+        Used to tell the user which formats *are* accepted when a rejected
+        upload would otherwise leave them guessing.
+        """
+        return sorted(member.value for member in cls)

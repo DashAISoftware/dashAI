@@ -50,6 +50,10 @@ class RAGTask(BaseGenerativeTask):
 
     USE_HISTORY: bool = True
 
+    # RAG owns a dedicated entry point in the Generative module, so it is
+    # not offered through the shared "create session" model gallery.
+    ENTRY_POINT: str = "standalone"
+
     def prepare_for_task(
         self,
         input: List[ProcessData],

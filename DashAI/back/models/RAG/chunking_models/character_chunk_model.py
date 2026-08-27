@@ -7,6 +7,7 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
     BaseChunkingModel,
 )
@@ -18,16 +19,51 @@ class CharacterChunkModelSchema(BaseSchema):
 
     chunk_size: schema_field(
         int_field(gt=1),
-        placeholder=400,
-        description="Size of each chunk in characters.",
+        placeholder=500,
+        alias=MultilingualString(
+            en="Chunk size",
+            es="Tamaño de fragmento",
+            pt="Tamanho do fragmento",
+            de="Chunk-Größe",
+            zh="块大小",
+        ),
+        description=MultilingualString(
+            en="Size of each chunk in characters.",
+            es="Tamaño de cada fragmento en caracteres.",
+            pt="Tamanho de cada fragmento em caracteres.",
+            de="Größe jedes Chunks in Zeichen.",
+            zh="每个块的字符数。",
+        ),
     )  # type: ignore
 
     chunk_overlap: schema_field(
         int_field(gt=0),
-        placeholder=40,
-        description=(
-            "Number of characters to overlap between chunks. "
-            "Must be less than chunk_size."
+        placeholder=50,
+        alias=MultilingualString(
+            en="Chunk overlap",
+            es="Superposición entre fragmentos",
+            pt="Sobreposição entre fragmentos",
+            de="Chunk-Überlappung",
+            zh="块重叠",
+        ),
+        description=MultilingualString(
+            en=(
+                "Number of characters to overlap between chunks. "
+                "Must be less than the chunk size."
+            ),
+            es=(
+                "Cantidad de caracteres que se repiten entre fragmentos "
+                "consecutivos. Debe ser menor que el tamaño de fragmento."
+            ),
+            pt=(
+                "Quantidade de caracteres repetidos entre fragmentos "
+                "consecutivos. Deve ser menor que o tamanho do fragmento."
+            ),
+            de=(
+                "Anzahl der Zeichen, die sich zwischen Chunks überlappen. "
+                "Muss kleiner als die Chunk-Größe sein."
+            ),
+            zh="相邻块之间重叠的字符数，必须小于块大小。",
         ),
     )  # type: ignore
 
@@ -51,6 +87,39 @@ class CharacterChunkModel(BaseChunkingModel):
     """
 
     SCHEMA = CharacterChunkModelSchema
+    DISPLAY_NAME = MultilingualString(
+        en="Character chunking",
+        es="Fragmentación por caracteres",
+        pt="Fragmentação por caracteres",
+        de="Zeichenbasiertes Chunking",
+        zh="按字符切分",
+    )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Splits documents into fixed-size pieces counted in characters. "
+            "Fast, predictable and needs no model download, which makes it a "
+            "good default for most documents."
+        ),
+        es=(
+            "Divide los documentos en fragmentos de tamaño fijo medidos en "
+            "caracteres. Es rápido, predecible y no requiere descargar ningún "
+            "modelo, por lo que es un buen valor por defecto."
+        ),
+        pt=(
+            "Divide os documentos em fragmentos de tamanho fixo medidos em "
+            "caracteres. É rápido, previsível e não exige baixar nenhum "
+            "modelo, sendo um bom padrão."
+        ),
+        de=(
+            "Teilt Dokumente in Stücke fester Größe, gezählt in Zeichen. "
+            "Schnell, vorhersehbar und ohne Modell-Download — ein guter "
+            "Standardwert."
+        ),
+        zh=(
+            "按字符数将文档切分为固定大小的块。速度快、结果可预期，"
+            "且无需下载模型，是大多数文档的良好默认选择。"
+        ),
+    )
 
     def __init__(self, **kwargs):
         """
