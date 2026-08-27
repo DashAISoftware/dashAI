@@ -67,7 +67,8 @@
     "failedToLoadTests": "No se pudieron cargar los tests guardados.",
     "failedToDeleteTest": "No se pudo eliminar el test.",
     "failedToSaveTest": "No se pudieron guardar los resultados del test.",
-    "fetchingInnerSplitters": "No se pudieron cargar los splitters internos para validación cruzada anidada"
+    "fetchingInnerSplitters": "No se pudieron cargar los splitters internos para validación cruzada anidada",
+    "converterApplyFailed": "Error al aplicar el converter"
   },
   "label": {
     "addModelToSession": "Agregar Modelo a la Sesión",
@@ -271,6 +272,8 @@
     "configureTest": "Configurar Test",
     "selectDataset": "Seleccionar Dataset",
     "selectDatasetForSession": "Seleccione un dataset para su sesión",
+    "selectColumns": "Seleccionar Columnas",
+    "selectColumnsDescription": "Elige qué columnas son de entrada y cuál es la de salida para esta sesión.",
     "selectDatasetAndPrepare": "Nombra tu sesión, selecciona un dataset y configura sus columnas y particiones.",
     "selectDatasetFirst": "Selecciona un dataset para configurar sus columnas y particiones de filas.",
     "selectSessionToViewModels": "Seleccione una sesión para ver los modelos disponibles.",
@@ -293,10 +296,13 @@
     "validation": "Validación",
     "validationMetrics": "Métricas de Validación",
     "validationSet": "conjunto de validación",
-    "viewResultsAs": "Ver resultados como columnas o gráficos"
+    "viewResultsAs": "Ver resultados como columnas o gráficos",
+    "converterApplying": "Aplicando converter…",
+    "converterApplied": "Converter aplicado"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",
+    "convertersInvalidatedBySplitChange": "Los converters aplicados se invalidaron porque cambiaste el split.",
     "confirmDeleteRun": "¿Está seguro de que desea eliminar esta ejecución? Esta acción no se puede deshacer.",
     "editingParametersWarning": "Al editar los parámetros se restablecerá el estado de esta ejecución a 'No Iniciado'. Todas las métricas y resultados existentes se perderán.",
     "aboutToUpdateParameters": "Está a punto de actualizar los parámetros para la ejecución <strong>{{runName}}</strong>. Esta acción tendrá las siguientes consecuencias:",

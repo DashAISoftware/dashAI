@@ -67,7 +67,8 @@
     "failedToSaveTest": "Não foi possível salvar os resultados do teste.",
     "selectMetric": "Por favor, selecione uma métrica",
     "failedToExecuteTest": "Erro ao executar o teste estatístico",
-    "fetchingInnerSplitters": "Não foi possível carregar os divisores internos para a validação cruzada aninhada."
+    "fetchingInnerSplitters": "Não foi possível carregar os divisores internos para a validação cruzada aninhada.",
+    "converterApplyFailed": "Falha ao aplicar o converter"
   },
   "label": {
     "addModelToSession": "Adicionar Modelo à Sessão",
@@ -271,6 +272,8 @@
     "configureTest": "Configurar Teste",
     "selectDataset": "Selecionar Conjunto de Dados",
     "selectDatasetForSession": "Selecione um conjunto de dados para sua sessão",
+    "selectColumns": "Selecionar Colunas",
+    "selectColumnsDescription": "Escolha quais colunas são de entrada e qual é a de saída para esta sessão.",
     "selectDatasetAndPrepare": "Nomeie sua sessão, selecione um conjunto de dados e configure suas colunas e partições.",
     "selectDatasetFirst": "Selecione um conjunto de dados para configurar suas colunas e partições de linhas.",
     "selectSessionToViewModels": "Selecione uma sessão para ver os modelos disponíveis.",
@@ -293,10 +296,13 @@
     "validation": "Validação",
     "validationMetrics": "Métricas de Validação",
     "validationSet": "conjunto de validação",
-    "viewResultsAs": "Ver resultados como colunas ou gráficos"
+    "viewResultsAs": "Ver resultados como colunas ou gráficos",
+    "converterApplying": "Aplicando converter…",
+    "converterApplied": "Converter aplicado"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",
+    "convertersInvalidatedBySplitChange": "Os converters aplicados foram invalidados porque você alterou a divisão.",
     "confirmDeleteRun": "Tem certeza de que deseja excluir esta execução? Esta ação não pode ser desfeita.",
     "editingParametersWarning": "Ao editar os parâmetros, o estado desta execução será redefinido para 'Não Iniciado'. Todas as métricas e resultados existentes serão perdidos.",
     "hypothesis_reject": "rejeitamos",

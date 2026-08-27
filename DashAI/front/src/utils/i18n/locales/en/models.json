@@ -67,7 +67,8 @@
     "failedToLoadTests": "Could not load saved tests.",
     "failedToDeleteTest": "Could not delete the test.",
     "failedToSaveTest": "Failed to save the test results.",
-    "fetchingInnerSplitters": "Failed to load inner splitters for nested cross validaiton"
+    "fetchingInnerSplitters": "Failed to load inner splitters for nested cross validaiton",
+    "converterApplyFailed": "Failed to apply converter"
   },
   "label": {
     "addModelToSession": "Add Model to Session",
@@ -265,6 +266,8 @@
     "configureTest": "Configure Test",
     "selectDataset": "Select Dataset",
     "selectDatasetForSession": "Select dataset for your session",
+    "selectColumns": "Select Columns",
+    "selectColumnsDescription": "Choose which columns are inputs and which is the output for this session.",
     "selectDatasetAndPrepare": "Name your session, select a dataset and configure its columns and splits.",
     "selectDatasetFirst": "Select a dataset to configure its columns and row splits.",
     "selectSessionToViewModels": "Select a session to view available models.",
@@ -287,10 +290,13 @@
     "validation": "Validation",
     "validationMetrics": "Validation Metrics",
     "validationSet": "validation set",
-    "viewResultsAs": "View results as columns or graphs"
+    "viewResultsAs": "View results as columns or graphs",
+    "converterApplying": "Applying converter…",
+    "converterApplied": "Converter applied"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
+    "convertersInvalidatedBySplitChange": "The applied converters were invalidated because you changed the split.",
     "confirmDeleteRun": "Are you sure you want to delete this run? This action cannot be undone.",
     "editingParametersWarning": "Editing parameters will reset this run's status to 'Not Started'. All existing metrics and results will be lost.",
     "aboutToUpdateParameters": "You are about to update the parameters for run <strong>{{runName}}</strong>. This action will have the following consequences:",

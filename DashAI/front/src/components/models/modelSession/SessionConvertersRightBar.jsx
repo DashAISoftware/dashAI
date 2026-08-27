@@ -17,6 +17,7 @@ import { getComponents } from "../../../api/component";
 import { validateConverter } from "../../notebooks/tool/toolValidation";
 import { useExplorersAndConverters } from "../../notebooks/context/ExplorersAndConvertersContext";
 import FormSessionConverterSection from "./FormSessionConverterSection";
+import { getCurrentDataFilePath } from "../../../utils/sessionPreprocessing";
 
 /**
  * Converters-only sidebar for the session wizard's preprocessing step,
@@ -29,10 +30,12 @@ import FormSessionConverterSection from "./FormSessionConverterSection";
  * resolution.
  */
 export default function SessionConvertersRightBar({
-  dataset,
+  session,
   inputColumnNames,
   columnTypes,
-  onAddConverter,
+  onConvertersChanged,
+  onApplyStart,
+  isApplying,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "datasets", "common"]);
@@ -65,21 +68,25 @@ export default function SessionConvertersRightBar({
     };
   }, [t]);
 
-  // Only the session's input columns are eligible scope — never the output
-  // column, unlike the notebook sidebar which validates against every
-  // dataset column.
+  // Every current column is eligible scope here — same as the notebook
+  // sidebar. Unlike the session flow's original design, output columns
+  // aren't chosen yet at this point (that's a later wizard step), so
+  // there's no "input vs output" distinction to filter by. `columnTypes`
+  // reflects the session's *current* (possibly preprocessed) state:
+  // PreprocessingStep sources it from
+  // `GET /model-session/{id}/preprocessed-columns` and re-reads it on every
+  // converter apply/removal, so a second converter is scoped against the
+  // column names the first one actually produced.
   const datasetColumns = useMemo(
     () =>
-      Object.entries(columnTypes || {})
-        .filter(([name]) => inputColumnNames.includes(name))
-        .map(([columnName, typeInfo], idx) => ({
-          id: idx,
-          columnName,
-          valueType: typeInfo.type || t("common:unknown"),
-          dataType: typeInfo.dtype || t("common:unknown"),
-          order: idx,
-        })),
-    [columnTypes, inputColumnNames, t],
+      Object.entries(columnTypes || {}).map(([columnName, typeInfo], idx) => ({
+        id: idx,
+        columnName,
+        valueType: typeInfo.type || t("common:unknown"),
+        dataType: typeInfo.dtype || t("common:unknown"),
+        order: idx,
+      })),
+    [columnTypes, t],
   );
 
   const validatedConverters = useMemo(
@@ -88,12 +95,17 @@ export default function SessionConvertersRightBar({
         const validation = validateConverter(converter, datasetColumns, t);
         return {
           ...converter,
-          disabled: validation.disabled,
-          tooltip: validation.tooltip,
+          // While a previous apply is still in flight, gray out every card
+          // so the user can't fire a second overlapping PUT before the
+          // first one's poll settles.
+          disabled: isApplying || validation.disabled,
+          tooltip: isApplying
+            ? t("models:label.converterApplying")
+            : validation.tooltip,
           validColumns: validation.validColumns,
         };
       }),
-    [converters, datasetColumns, t],
+    [converters, datasetColumns, t, isApplying],
   );
 
   const filteredConverters = useMemo(() => {
@@ -116,12 +128,21 @@ export default function SessionConvertersRightBar({
           {...sectionProps}
           inputColumnNames={inputColumnNames}
           columnTypes={columnTypes}
-          onAddConverter={onAddConverter}
+          session={session}
+          onApplyStart={onApplyStart}
+          onApplied={onConvertersChanged}
+          onApplyError={onConvertersChanged}
         />
       );
     }
     return Wrapped;
-  }, [inputColumnNames, columnTypes, onAddConverter]);
+  }, [
+    inputColumnNames,
+    columnTypes,
+    session,
+    onConvertersChanged,
+    onApplyStart,
+  ]);
 
   // No outer SideBar/header here: this renders inside ModelsRightBar's
   // "Configure Session" wrapper (see ModelsRightBar.jsx), which is
@@ -153,6 +174,21 @@ export default function SessionConvertersRightBar({
           placeholder={t("datasets:label.searchConverters")}
         />
       </Box>
+      {isApplying && (
+        <Box
+          sx={{
+            px: 4,
+            py: 1.5,
+            bgcolor: theme.palette.ui.box,
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
+            flexShrink: 0,
+          }}
+        >
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            {t("models:label.converterApplying")}
+          </Typography>
+        </Box>
+      )}
       <Box
         sx={{
           display: "flex",
@@ -208,7 +244,7 @@ export default function SessionConvertersRightBar({
           <Box sx={containerSx}>
             <ListComponent
               tools={filteredConverters}
-              notebook={dataset}
+              notebook={{ file_path: getCurrentDataFilePath(session) }}
               FormComponent={SessionFormSection}
             />
           </Box>
@@ -219,8 +255,10 @@ export default function SessionConvertersRightBar({
 }
 
 SessionConvertersRightBar.propTypes = {
-  dataset: PropTypes.object.isRequired,
+  session: PropTypes.object.isRequired,
   inputColumnNames: PropTypes.arrayOf(PropTypes.string).isRequired,
   columnTypes: PropTypes.object,
-  onAddConverter: PropTypes.func.isRequired,
+  onConvertersChanged: PropTypes.func.isRequired,
+  onApplyStart: PropTypes.func.isRequired,
+  isApplying: PropTypes.bool,
 };

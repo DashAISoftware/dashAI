@@ -122,6 +122,22 @@ async def validate_columns(
                 )
 
             dataset_path = f"{dataset.file_path}/dataset"
+            if params.model_session_id is not None:
+                model_session = db.get(ModelSession, params.model_session_id)
+                if model_session and model_session.preprocessed_path:
+                    is_cv = (
+                        model_session.evaluation_strategy
+                        == "CrossValidationEvaluationStrategy"
+                    )
+                    relative = (
+                        os.path.join("full_dataset", "train") if is_cv else "train"
+                    )
+                    partition_path = os.path.join(
+                        model_session.preprocessed_path, relative
+                    )
+                    if os.path.isdir(partition_path):
+                        dataset_path = partition_path
+
             data_filepath = os.path.join(dataset_path, "data.arrow")
             with pa.OSFile(data_filepath, "rb") as source:
                 reader = ipc.open_file(source)

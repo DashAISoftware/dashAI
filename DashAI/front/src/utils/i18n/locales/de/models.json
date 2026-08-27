@@ -67,7 +67,8 @@
     "failedToLoadTests": "Die gespeicherten Tests konnten nicht geladen werden.",
     "failedToDeleteTest": "Der Test konnte nicht gelöscht werden.",
     "failedToSaveTest": "Die Testergebnisse konnten nicht gespeichert werden.",
-    "fetchingInnerSplitters": "Die inneren Splitter für die verschachtelte Kreuzvalidierung konnten nicht geladen werden"
+    "fetchingInnerSplitters": "Die inneren Splitter für die verschachtelte Kreuzvalidierung konnten nicht geladen werden",
+    "converterApplyFailed": "Fehler beim Anwenden des Converters"
   },
   "label": {
     "addModelToSession": "Modell zur Sitzung hinzufügen",
@@ -265,6 +266,8 @@
     "configureTest": "Test konfigurieren",
     "selectDataset": "Datensatz auswählen",
     "selectDatasetForSession": "Datensatz für Ihre Sitzung auswählen",
+    "selectColumns": "Spalten auswählen",
+    "selectColumnsDescription": "Wählen Sie aus, welche Spalten Eingaben sind und welche die Ausgabe für diese Sitzung ist.",
     "selectDatasetAndPrepare": "Benennen Sie Ihre Sitzung, wählen Sie einen Datensatz aus und konfigurieren Sie Spalten und Aufteilungen.",
     "selectDatasetFirst": "Wählen Sie einen Datensatz aus, um Spalten und Zeilenaufteilungen zu konfigurieren.",
     "selectSessionToViewModels": "Wählen Sie eine Sitzung, um verfügbare Modelle anzuzeigen.",
@@ -287,10 +290,13 @@
     "validation": "Validierung",
     "validationMetrics": "Validierungsmetriken",
     "validationSet": "Validierungsmenge",
-    "viewResultsAs": "Ergebnisse als Spalten oder Graphen anzeigen"
+    "viewResultsAs": "Ergebnisse als Spalten oder Graphen anzeigen",
+    "converterApplying": "Converter wird angewendet…",
+    "converterApplied": "Converter angewendet"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} hat alle Durchläufe abgeschlossen.",
+    "convertersInvalidatedBySplitChange": "Die angewendeten Converter wurden ungültig, da Sie die Aufteilung geändert haben.",
     "confirmDeleteRun": "Sind Sie sicher, dass Sie diesen Durchlauf löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "editingParametersWarning": "Das Bearbeiten von Parametern setzt den Status dieses Durchlaufs auf 'Nicht gestartet' zurück. Alle vorhandenen Metriken und Ergebnisse gehen verloren.",
     "aboutToUpdateParameters": "Sie sind dabei, die Parameter für Durchlauf <strong>{{runName}}</strong> zu aktualisieren. Diese Aktion hat folgende Konsequenzen:",

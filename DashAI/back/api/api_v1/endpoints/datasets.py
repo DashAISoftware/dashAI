@@ -167,7 +167,7 @@ class _FilteredTableCache:
         if time.time() - ts > self._ttl:
             del self._store[key]
             return None
-        arrow_file_path = f"{path}/dataset/data.arrow"
+        arrow_file_path = _resolve_arrow_file_path(path)
         try:
             if os.path.getmtime(arrow_file_path) > ts:
                 del self._store[key]
@@ -199,6 +199,31 @@ class _FilteredTableCache:
 _filtered_table_cache = _FilteredTableCache()
 
 
+def _resolve_arrow_file_path(path: str) -> str:
+    """Resolve a by-path dataset request's actual `data.arrow` location.
+
+    Two different storage conventions reach these by-path routes with the
+    same `path` query param:
+
+    - Raw datasets and notebooks (`Dataset.file_path`/`Notebook.file_path`):
+      `<path>/dataset/data.arrow` — the folder itself has a nested
+      `dataset` subfolder (notebooks are created by `shutil.copytree`-ing
+      a dataset's own folder, so they inherit this shape).
+    - A session's preprocessed partitions (`ModelSession.preprocessed_path`
+      + `/train` etc., written by `SessionPreprocessingJob`): `data.arrow`
+      lives directly in `<path>` — no nested `dataset` subfolder.
+
+    Try the dataset/notebook convention first (the common case), falling
+    back to the flat session-partition convention so the same by-path
+    routes work for both without the caller needing to know which shape
+    it's asking for.
+    """
+    nested = os.path.join(path, "dataset", "data.arrow")
+    if os.path.isfile(nested):
+        return nested
+    return os.path.join(path, "data.arrow")
+
+
 def _load_and_filter_table(
     path: str,
     filter_model: str | None,
@@ -217,7 +242,7 @@ def _load_and_filter_table(
 
     from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
 
-    arrow_file_path = f"{path}/dataset/data.arrow"
+    arrow_file_path = _resolve_arrow_file_path(path)
     with pa.OSFile(arrow_file_path, "rb") as source:
         reader = ipc.RecordBatchFileReader(source)
         batches = [reader.get_batch(i) for i in range(reader.num_record_batches)]
@@ -358,7 +383,9 @@ def _load_and_filter_table(
         total = table.num_rows
     else:
         try:
-            total = get_dataset_info(f"{path}/dataset")["total_rows"]
+            total = get_dataset_info(os.path.dirname(_resolve_arrow_file_path(path)))[
+                "total_rows"
+            ]
         except Exception:
             total = table.num_rows
 
@@ -716,7 +743,7 @@ async def get_info_by_file(
     from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
 
     try:
-        info = get_dataset_info(f"{path}/dataset")
+        info = get_dataset_info(os.path.dirname(_resolve_arrow_file_path(path)))
     except exc.SQLAlchemyError as e:
         logger.exception(e)
         raise HTTPException(
@@ -908,7 +935,7 @@ async def get_types_by_file_path(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Dataset not found",
             )
-        columns_spec = get_columns_spec(f"{path}/dataset")
+        columns_spec = get_columns_spec(os.path.dirname(_resolve_arrow_file_path(path)))
         if not columns_spec:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -1561,7 +1588,7 @@ async def get_dataset_file(
 
     from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
 
-    arrow_file_path = f"{path}/dataset/data.arrow"
+    arrow_file_path = _resolve_arrow_file_path(path)
     rows = []
 
     start = page * page_size
@@ -1622,7 +1649,9 @@ async def get_dataset_file(
             if rows_collected >= page_size:
                 break
 
-    total_rows = get_dataset_info(f"{path}/dataset")["total_rows"]
+    total_rows = get_dataset_info(os.path.dirname(_resolve_arrow_file_path(path)))[
+        "total_rows"
+    ]
 
     return JSONResponse(content={"rows": rows, "total": total_rows})
 
@@ -1791,7 +1820,7 @@ async def export_dataset_as_csv(
     import os
 
     try:
-        arrow_file_path = f"{path}/dataset/data.arrow"
+        arrow_file_path = _resolve_arrow_file_path(path)
         if not os.path.exists(arrow_file_path):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

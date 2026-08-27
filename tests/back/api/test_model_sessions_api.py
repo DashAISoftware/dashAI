@@ -237,6 +237,56 @@ def test_get_preprocessed_columns_reflects_applied_converters(
     assert len(columns) == 3  # 2 PCA components + Species
 
 
+def test_validate_columns_against_preprocessed_state(
+    client: TestClient, dataset_1: Dataset
+) -> None:
+    create_response = client.post(
+        "/api/v1/model-session/",
+        json={
+            "dataset_id": dataset_1.id,
+            "task_name": "TabularClassificationTask",
+            "name": "Validate Against Preprocessed Test",
+            "input_columns": [],
+            "output_columns": [],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
+            "splits": json.dumps(HOLDOUT_SPLITS),
+        },
+    )
+    model_session_id = create_response.json()["id"]
+
+    client.put(
+        f"/api/v1/model-session/{model_session_id}/converters",
+        json={
+            "converters": [
+                {
+                    "converter": "PCA",
+                    "params": {"n_components": 2},
+                    "columns": INPUT_COLUMNS,
+                }
+            ]
+        },
+    )
+
+    # A PCA component name doesn't exist in the raw dataset — validating
+    # against it without model_session_id would 400/error; with it, the
+    # preprocessed columns (2 PCA components + Species) are used instead.
+    response = client.post(
+        "/api/v1/model-session/validation",
+        json={
+            "task_name": "TabularClassificationTask",
+            "dataset_id": dataset_1.id,
+            "model_session_id": model_session_id,
+            "inputs_columns": ["pca0", "pca1"],
+            "outputs_columns": ["Species"],
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["dataset_status"] == "valid"
+
+
 def test_put_converters_works_before_output_columns_are_chosen(
     client: TestClient, dataset_1: Dataset
 ) -> None:

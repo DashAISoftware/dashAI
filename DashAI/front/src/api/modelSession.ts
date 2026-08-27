@@ -52,11 +52,24 @@ export const updateModelSession = async ({
   formData,
 }: {
   id: string;
-  formData: { name?: string; dataset_id?: number; task_name?: string };
-}): Promise<object> => {
-  const response = await api.patch(`/v1/model-session/${id}`, null, {
-    params: formData,
-  });
+  formData: {
+    name?: string;
+    dataset_id?: number;
+    task_name?: string;
+    input_columns?: string[];
+    output_columns?: string[];
+    splits?: string;
+    evaluation_strategy?: string;
+  };
+}): Promise<IModelSession> => {
+  const params: Record<string, unknown> = { ...formData };
+  if (formData.input_columns !== undefined) {
+    params.input_columns = JSON.stringify(formData.input_columns);
+  }
+  if (formData.output_columns !== undefined) {
+    params.output_columns = JSON.stringify(formData.output_columns);
+  }
+  const response = await api.patch(`${endpointURL}/${id}`, null, { params });
   return response.data;
 };
 
@@ -77,16 +90,38 @@ export const validateColumns = async (
   datasetId: number,
   inputColumns: string[],
   outputColumns: string[],
+  modelSessionId?: number,
 ): Promise<object> => {
   const formData = {
     task_name: taskName,
     dataset_id: datasetId,
     inputs_columns: inputColumns,
     outputs_columns: outputColumns,
+    ...(modelSessionId !== undefined
+      ? { model_session_id: modelSessionId }
+      : {}),
   };
   const response = await api.post<object>(
     "/v1/model-session/validation",
     formData,
   );
+  return response.data;
+};
+
+export const updateSessionConverters = async (
+  id: string,
+  converters: ISessionConverter[],
+): Promise<IModelSession> => {
+  const response = await api.put<IModelSession>(
+    `${endpointURL}/${id}/converters`,
+    { converters },
+  );
+  return response.data;
+};
+
+export const getPreprocessedColumns = async (
+  id: string,
+): Promise<{ columns: Record<string, { type: string; dtype: string }> }> => {
+  const response = await api.get(`${endpointURL}/${id}/preprocessed-columns`);
   return response.data;
 };

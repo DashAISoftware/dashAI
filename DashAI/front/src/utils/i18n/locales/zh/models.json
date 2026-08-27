@@ -67,7 +67,8 @@
     "failedToLoadTests": "无法加载已保存的检验。",
     "failedToDeleteTest": "无法删除该检验。",
     "failedToSaveTest": "无法保存检验结果。",
-    "fetchingInnerSplitters": "无法加载用于嵌套交叉验证的内部划分器"
+    "fetchingInnerSplitters": "无法加载用于嵌套交叉验证的内部划分器",
+    "converterApplyFailed": "应用转换器失败"
   },
   "label": {
     "addModelToSession": "将模型添加到会话",
@@ -264,6 +265,8 @@
     "configureTest": "配置检验",
     "selectDataset": "选择数据集",
     "selectDatasetForSession": "为会话选择数据集",
+    "selectColumns": "选择列",
+    "selectColumnsDescription": "选择哪些列作为输入，哪一列作为此会话的输出。",
     "selectDatasetAndPrepare": "为会话命名，选择数据集并配置列和划分。",
     "selectDatasetFirst": "选择数据集以配置其列和行划分。",
     "selectSessionToViewModels": "选择会话以查看可用模型。",
@@ -286,10 +289,13 @@
     "validation": "验证",
     "validationMetrics": "验证集指标",
     "validationSet": "验证集",
-    "viewResultsAs": "以列或图表方式查看结果"
+    "viewResultsAs": "以列或图表方式查看结果",
+    "converterApplying": "正在应用转换器…",
+    "converterApplied": "转换器已应用"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} 已完成所有运行。",
+    "convertersInvalidatedBySplitChange": "由于您更改了数据集划分，已应用的转换器已失效。",
     "confirmDeleteRun": "确定要删除此运行吗？此操作无法撤销。",
     "editingParametersWarning": "编辑参数将把此运行的状态重置为「未开始」。所有现有指标和结果将丢失。",
     "aboutToUpdateParameters": "您即将更新运行 <strong>{{runName}}</strong> 的参数。此操作将产生以下后果：",
