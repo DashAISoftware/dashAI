@@ -90,9 +90,58 @@ class ForecastingTask(BaseTask):
         Returns
         -------
         DashAIDataset
-            Dataset with validated types.
+            Dataset with validated types, in date order.
         """
-        return super().prepare_for_task(dataset, input_columns, output_columns)
+        prepared = super().prepare_for_task(dataset, input_columns, output_columns)
+        return self._sort_by_date(prepared, input_columns[0])
+
+    @staticmethod
+    def _sort_by_date(dataset: "DashAIDataset", date_column: str) -> "DashAIDataset":
+        """Put the rows in date order.
+
+        Everything downstream reads row order as time order and none of it
+        checks: the temporal splitter carves its partitions by position, and
+        the models hand their values to statsmodels in the order they arrive.
+        A file that is not sorted by its date column therefore produces
+        partitions that are not periods of time and a model fitted on a
+        scrambled series, with nothing reporting a problem.
+
+        This is the task's job rather than the splitter's. The splitter is
+        handed the selected input columns, which on the windowed route through
+        ``TimeSeriesWindowConverter`` are lag columns with no date among them.
+
+        Sorting reads the format the column declares. Text order only matches
+        time order for ISO layouts: as text, "01/02/2020" precedes
+        "31/01/2020" while following it in time.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The validated dataset.
+        date_column : str
+            The single input column, which the task has already checked is a
+            ``Date``.
+
+        Returns
+        -------
+        DashAIDataset
+            The same rows and types, ordered by date.
+        """
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.types.date_utils import DEFAULT_DATE_FORMAT, parse_date_column
+
+        date_format = (
+            getattr(dataset.types[date_column], "format", None) or DEFAULT_DATE_FORMAT
+        )
+        frame = dataset.to_pandas()
+        order = parse_date_column(frame[date_column], date_format).sort_values().index
+
+        if list(order) == list(frame.index):
+            return dataset
+
+        return to_dashai_dataset(
+            frame.loc[order].reset_index(drop=True), types=dict(dataset.types)
+        )
 
     def process_predictions(
         self, dataset: "DashAIDataset", predictions: "ndarray", output_column: str
