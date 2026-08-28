@@ -151,3 +151,55 @@ def test_a_session_without_validation_rows_still_fits():
 
     last_train_date = pd.to_datetime(xs["train"].to_pandas().iloc[:, 0]).max()
     assert model._last_train_date == last_train_date
+
+
+# --- hyperparameter trials ---------------------------------------------------
+
+
+class _RecordingModel:
+    """Stands in for a model, noting which partitions it is asked to score."""
+
+    def __init__(self):
+        self.scored = []
+
+    def train(self, *args, **kwargs):
+        return self
+
+    def predict(self, x):
+        import numpy as np
+
+        return np.zeros(len(x))
+
+    def prepare_output(self, y, is_fit=False):
+        return y
+
+    def calculate_metrics(self, split, level=None, **kwargs):
+        self.scored.append(split)
+
+
+def _evaluate_with(strategy_class):
+    from DashAI.back.metrics.regression.mae import MAE
+
+    xs, ys, _ = _split()
+    strategy = strategy_class.__new__(strategy_class)
+    model = _RecordingModel()
+    strategy.evaluate(model, xs, ys, MAE)
+    return model.scored
+
+
+def test_a_forecasting_trial_never_scores_the_training_partition():
+    # The optimizer runs this once per trial. Asking for training metrics
+    # means predicting on dates the model was fitted on, which a forecaster
+    # refuses, so every trial failed and hyperparameter search could not run
+    # at all.
+    scored = _evaluate_with(ForecastingHoldoutEvaluationStrategy)
+
+    assert SplitEnum.TRAIN not in scored
+    assert SplitEnum.VALIDATION in scored
+
+
+def test_an_ordinary_trial_still_scores_both():
+    scored = _evaluate_with(HoldoutEvaluationStrategy)
+
+    assert SplitEnum.TRAIN in scored
+    assert SplitEnum.VALIDATION in scored
