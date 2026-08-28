@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useStrategyKind } from "../../hooks/useStrategyKind";
+import { STRATEGY_KINDS } from "../../utils/splitsPayload";
 import { Box, Typography, Divider, Button, ToggleButton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
@@ -60,7 +62,7 @@ export default function SessionVisualization() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const isCrossValidation =
-    session?.evaluation_strategy === "CrossValidationEvaluationStrategy";
+    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
 
   // This component stays mounted across session navigations (same route,
   // different :sessionId), so metricSplit would otherwise carry over from

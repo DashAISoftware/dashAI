@@ -25,6 +25,7 @@ import { useModels } from "../ModelsContext";
 import {
   buildSplitsPayload,
   resolveSplitterName,
+  STRATEGY_KINDS,
   SPLIT_TYPES,
 } from "../../../utils/splitsPayload";
 /**
@@ -82,6 +83,10 @@ function PrepareDatasetStep({
   // Which holdout splitter this task uses. Resolved from the task rather
   // than hardcoded, so a time series cannot be handed a shuffling one.
   const [holdoutType, setHoldoutType] = useState(null);
+  // The split shape of the selected strategy, reported by the backend. The
+  // screens used to compare strategy names, which is why a new strategy
+  // rendered nothing at all.
+  const [strategyKind, setStrategyKind] = useState(null);
   const [groupColumn, setGroupColumn] = useState("");
 
   const defaultParitionsIndex = {
@@ -252,18 +257,12 @@ function PrepareDatasetStep({
       evaluation_strategy: evaluationStrategy,
     };
 
-    const splitterName = resolveSplitterName(
-      evaluationStrategy,
-      cvType,
-      holdoutType,
-    );
+    const splitterName = resolveSplitterName(strategyKind, cvType, holdoutType);
     if (splitterName) {
       updatedExpData.splits = buildSplitsPayload({
         splitterName,
         splitType:
-          evaluationStrategy === "HoldoutEvaluationStrategy"
-            ? splitType
-            : SPLIT_TYPES.CV,
+          strategyKind === STRATEGY_KINDS.HOLDOUT ? splitType : SPLIT_TYPES.CV,
         params: {
           ...(splitterParams ?? {}),
           // The group column select is rendered by hand, so its value is not
@@ -326,6 +325,7 @@ function PrepareDatasetStep({
     outputColumnNames,
     cvType,
     holdoutType,
+    strategyKind,
     groupColumn,
     evaluationStrategy,
     rowsPartitionsIndex,
@@ -376,6 +376,8 @@ function PrepareDatasetStep({
         setCvType={setCvType}
         holdoutType={holdoutType}
         setHoldoutType={setHoldoutType}
+        strategyKind={strategyKind}
+        setStrategyKind={setStrategyKind}
         groupColumn={groupColumn}
         setGroupColumn={setGroupColumn}
         inputColumnNames={inputColumnNames}
@@ -393,6 +395,7 @@ function PrepareDatasetStep({
     evaluationStrategy,
     cvType,
     holdoutType,
+    strategyKind,
     groupColumn,
     inputColumnNames,
   ]);

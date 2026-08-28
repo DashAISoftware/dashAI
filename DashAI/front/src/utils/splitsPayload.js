@@ -5,8 +5,35 @@ export const SPLIT_TYPES = {
   CV: "cv",
 };
 
-export const HOLDOUT_STRATEGY = "HoldoutEvaluationStrategy";
-export const CV_STRATEGY = "CrossValidationEvaluationStrategy";
+/**
+ * How an evaluation strategy divides the dataset.
+ *
+ * Read from the component's metadata rather than from its name. Comparing
+ * names meant a new strategy rendered no split controls at all, since none of
+ * the checks scattered through these screens matched it.
+ */
+export const STRATEGY_KINDS = {
+  HOLDOUT: "holdout",
+  CV: "cv",
+};
+
+/**
+ * Read the split shape a strategy component declares.
+ *
+ * @param {object} strategy an EvaluationStrategy component
+ * @returns {string|null} "holdout", "cv", or null when it declares neither
+ */
+export const strategyKindOf = (strategy) => strategy?.metadata?.kind ?? null;
+
+/**
+ * Find the strategy component a session's stored strategy name refers to.
+ *
+ * @param {Array} strategies strategy components allowed for the task
+ * @param {string} name the stored evaluation_strategy
+ * @returns {object|null} the matching component
+ */
+export const findStrategy = (strategies, name) =>
+  (strategies ?? []).find((strategy) => strategy?.name === name) ?? null;
 
 // Proportions describe a random split only. Manual and predefined splits carry
 // the row indexes instead, and the backend splitter picks its index branch when
@@ -91,18 +118,18 @@ export const filterByPartitioning = (splitters, partitioning) =>
  * own future and reports a score it could never reproduce, with nothing raising
  * an error.
  *
- * @param {string} evaluationStrategy the selected evaluation strategy
+ * @param {string} strategyKind the split shape of the selected strategy
  * @param {object} cvType the splitter component selected for cross-validation
  * @param {object} holdoutType the splitter component selected for holdout
  * @returns {string|null} the splitter name, or null when none is resolved yet
  */
 export const resolveSplitterName = (
-  evaluationStrategy,
+  strategyKind,
   cvType,
   holdoutType = null,
 ) => {
-  if (evaluationStrategy === HOLDOUT_STRATEGY) return holdoutType?.name ?? null;
-  if (evaluationStrategy === CV_STRATEGY) return cvType?.name ?? null;
+  if (strategyKind === STRATEGY_KINDS.HOLDOUT) return holdoutType?.name ?? null;
+  if (strategyKind === STRATEGY_KINDS.CV) return cvType?.name ?? null;
   return null;
 };
 

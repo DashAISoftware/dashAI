@@ -9,7 +9,7 @@ from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrate
 from DashAI.back.splitters.base_splitter import BaseSplitter
 
 
-class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
+class FoldEvaluationStrategy(BaseEvaluationStrategy):
     """Evaluation strategy implementing k-fold cross-validation with optional
     nested CV and HPO.
 
@@ -24,6 +24,8 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
     - TRIAL level: Metrics during HPO trials
     - LAST/LAST_OUTER: Aggregated metrics (mean and std) for simple/nested CV
     """
+
+    KIND: str = "cv"
 
     def execute(self, x, y, run: Run, db):
         """Execute k-fold cross-validation with optional nested CV and HPO.
@@ -107,9 +109,10 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             model.train(x_fold["train"], y_fold["train"])
 
             # Compute and store metrics for this fold
-            model.calculate_metrics(
-                split=SplitEnum.TRAIN, level=LevelEnum.FOLD, fold_index=i
-            )
+            if SplitEnum.TRAIN in self.SCORED_SPLITS:
+                model.calculate_metrics(
+                    split=SplitEnum.TRAIN, level=LevelEnum.FOLD, fold_index=i
+                )
             model.calculate_metrics(
                 split=SplitEnum.VALIDATION, level=LevelEnum.FOLD, fold_index=i
             )
@@ -200,7 +203,11 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             model.train(x_fold["train"], y_fold["train"])
 
             # Compute metrics on both training and validation sets
-            train_scores = model.compute_metrics(split=SplitEnum.TRAIN)
+            train_scores = (
+                model.compute_metrics(split=SplitEnum.TRAIN)
+                if SplitEnum.TRAIN in self.SCORED_SPLITS
+                else {}
+            )
             validation_scores = model.compute_metrics(split=SplitEnum.VALIDATION)
 
             # Collect the goal metric value from this fold
@@ -228,11 +235,12 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             }
 
             # Persist averaged metrics as TRIAL level (intermediate HPO result)
-            model._save_metrics(
-                results=averaged_train_results,
-                split=SplitEnum.TRAIN,
-                level=LevelEnum.TRIAL,
-            )
+            if SplitEnum.TRAIN in self.SCORED_SPLITS:
+                model._save_metrics(
+                    results=averaged_train_results,
+                    split=SplitEnum.TRAIN,
+                    level=LevelEnum.TRIAL,
+                )
             model._save_metrics(
                 results=averaged_validation_results,
                 split=SplitEnum.VALIDATION,
@@ -313,9 +321,10 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
             outer_model.calculate_metrics(
                 split=SplitEnum.VALIDATION, level=LevelEnum.OUTER_FOLD, fold_index=i
             )
-            outer_model.calculate_metrics(
-                split=SplitEnum.TRAIN, level=LevelEnum.OUTER_FOLD, fold_index=i
-            )
+            if SplitEnum.TRAIN in self.SCORED_SPLITS:
+                outer_model.calculate_metrics(
+                    split=SplitEnum.TRAIN, level=LevelEnum.OUTER_FOLD, fold_index=i
+                )
 
         # Aggregate outer fold metrics
         # Compute mean and std of OUTER_FOLD metrics and store as LAST_OUTER level
@@ -406,3 +415,20 @@ class CrossValidationEvaluationStrategy(BaseEvaluationStrategy):
 
         # Persist aggregated metrics to database
         db.commit()
+
+
+class CrossValidationEvaluationStrategy(FoldEvaluationStrategy):
+    """Score a model across folds, recording train and validation for each.
+
+    The ordinary cross-validation evaluation. Not offered for
+    ``ForecastingTask``, whose folds have no in-sample score to report;
+    ``ForecastingCrossValidationEvaluationStrategy`` handles that.
+    """
+
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "ImageClassificationTask",
+        "TranslationTask",
+        "RegressionTask",
+    ]

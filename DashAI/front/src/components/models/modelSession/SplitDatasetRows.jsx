@@ -21,9 +21,12 @@ import FormSchemaLayout from "../../shared/FormSchemaLayout";
 import {
   defaultHoldoutSplitter,
   filterByPartitioning,
+  findStrategy,
   FOLD_PARTITIONING,
   HOLDOUT_PARTITIONING,
   resolveSplitterName,
+  STRATEGY_KINDS,
+  strategyKindOf,
 } from "../../../utils/splitsPayload";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
@@ -91,6 +94,8 @@ function SplitDatasetRows({
   setCvType,
   holdoutType,
   setHoldoutType,
+  strategyKind,
+  setStrategyKind,
   groupColumn,
   setGroupColumn,
   inputColumnNames,
@@ -117,11 +122,7 @@ function SplitDatasetRows({
 
   // The splitter's own parameters come from the schema generated form; only the
   // rules the schema cannot express are checked here.
-  const splitterName = resolveSplitterName(
-    evaluationStrategy,
-    cvType,
-    holdoutType,
-  );
+  const splitterName = resolveSplitterName(strategyKind, cvType, holdoutType);
   const isIndexMode =
     splitType === SPLIT_TYPES.MANUAL || splitType === SPLIT_TYPES.PREDEFINED;
   const params = splitterParams ?? {};
@@ -186,7 +187,7 @@ function SplitDatasetRows({
   // Rules that span several fields, which a per field schema cannot express.
   let splitsMessage = "";
   if (
-    evaluationStrategy === "HoldoutEvaluationStrategy" &&
+    strategyKind === STRATEGY_KINDS.HOLDOUT &&
     splitType === SPLIT_TYPES.RANDOM
   ) {
     if (trainIsEmpty) {
@@ -194,10 +195,7 @@ function SplitDatasetRows({
     } else if (proportionsAreNumbers && !proportionsSumToOne) {
       splitsMessage = t("experiments:error.splitsMustSumToOne");
     }
-  } else if (
-    evaluationStrategy === "CrossValidationEvaluationStrategy" &&
-    tooManyFolds
-  ) {
+  } else if (strategyKind === STRATEGY_KINDS.CV && tooManyFolds) {
     splitsMessage = t("experiments:error.foldsMustBeLessThanDatasetSize", {
       datasetSize: datasetInfo.total_rows,
     });
@@ -209,6 +207,7 @@ function SplitDatasetRows({
   const [groupColumnError, setGroupColumnError] = useState(true);
   const [allowedCvTypes, setAllowedCvTypes] = useState([]);
   const [allowedHoldoutTypes, setAllowedHoldoutTypes] = useState([]);
+  const [allowedStrategies, setAllowedStrategies] = useState([]);
 
   // Update allowed CV types when task changes
   useEffect(() => {
@@ -224,6 +223,15 @@ function SplitDatasetRows({
         setAllowedHoldoutTypes(
           filterByPartitioning(response, HOLDOUT_PARTITIONING),
         );
+
+        // Which strategies exist is a property of the task too, so a
+        // forecasting session cannot be pointed at one that scores its
+        // training partition.
+        const strategies = await getComponents({
+          selectTypes: ["EvaluationStrategy"],
+          relatedComponent: taskName,
+        });
+        setAllowedStrategies(strategies);
       } catch (error) {
         console.error("Error fetching splitters:", error);
         enqueueSnackbar(t("models:error.fetchingStatisticalTests"), {
@@ -244,6 +252,24 @@ function SplitDatasetRows({
   useEffect(() => {
     setHoldoutType(defaultHoldoutSplitter(allowedHoldoutTypes));
   }, [allowedHoldoutTypes]);
+
+  // Publish the split shape so the rest of the session reads it instead of
+  // comparing strategy names.
+  useEffect(() => {
+    setStrategyKind(
+      strategyKindOf(findStrategy(allowedStrategies, evaluationStrategy)),
+    );
+  }, [allowedStrategies, evaluationStrategy, setStrategyKind]);
+
+  // And for the strategy itself, which the session used to start on by name.
+  useEffect(() => {
+    if (!allowedStrategies.length) return;
+    if (findStrategy(allowedStrategies, evaluationStrategy)) return;
+    const holdout = allowedStrategies.find(
+      (strategy) => strategyKindOf(strategy) === STRATEGY_KINDS.HOLDOUT,
+    );
+    setEvaluationStrategy((holdout ?? allowedStrategies[0]).name);
+  }, [allowedStrategies, evaluationStrategy, setEvaluationStrategy]);
 
   const handleSplitTypeChange = (_e, newType) => {
     if (!newType) return;
@@ -307,7 +333,7 @@ function SplitDatasetRows({
       setSplitsReady(false);
       return;
     }
-    if (evaluationStrategy === "HoldoutEvaluationStrategy") {
+    if (strategyKind === STRATEGY_KINDS.HOLDOUT) {
       if (splitType === SPLIT_TYPES.PREDEFINED) {
         setSplitsReady(true);
       } else if (
@@ -325,7 +351,7 @@ function SplitDatasetRows({
       } else {
         setSplitsReady(false);
       }
-    } else if (evaluationStrategy === "CrossValidationEvaluationStrategy") {
+    } else if (strategyKind === STRATEGY_KINDS.CV) {
       setSplitsReady(
         Boolean(splitterName) && !tooManyFolds && !groupColumnError,
       );
@@ -397,24 +423,23 @@ function SplitDatasetRows({
             fullWidth
             size="small"
           >
-            <ToggleButton
-              value="HoldoutEvaluationStrategy"
-              sx={{ textTransform: "none", fontSize: "0.8rem" }}
-            >
-              {t("experiments:label.holdout")}
-            </ToggleButton>
-            <ToggleButton
-              value="CrossValidationEvaluationStrategy"
-              sx={{ textTransform: "none", fontSize: "0.8rem" }}
-            >
-              {t("experiments:label.crossValidation")}
-            </ToggleButton>
+            {allowedStrategies.map((strategy) => (
+              <ToggleButton
+                key={strategy.name}
+                value={strategy.name}
+                sx={{ textTransform: "none", fontSize: "0.8rem" }}
+              >
+                {strategyKindOf(strategy) === STRATEGY_KINDS.CV
+                  ? t("experiments:label.crossValidation")
+                  : t("experiments:label.holdout")}
+              </ToggleButton>
+            ))}
           </ToggleButtonGroup>
         </Box>
       </Paper>
 
       {/* HOLDOUT SECTION */}
-      {evaluationStrategy === "HoldoutEvaluationStrategy" && (
+      {strategyKind === STRATEGY_KINDS.HOLDOUT && (
         <>
           {/* Split type selector */}
           <Paper
@@ -524,7 +549,7 @@ function SplitDatasetRows({
       )}
 
       {/* CROSS-VALIDATION SECTION */}
-      {evaluationStrategy === "CrossValidationEvaluationStrategy" && (
+      {strategyKind === STRATEGY_KINDS.CV && (
         <>
           {/* CV Type Selector */}
           <SplitsCard label={t("experiments:label.cvType")}>
@@ -613,6 +638,8 @@ SplitDatasetRows.propTypes = {
   cvType: PropTypes.object,
   holdoutType: PropTypes.object,
   setHoldoutType: PropTypes.func,
+  strategyKind: PropTypes.string,
+  setStrategyKind: PropTypes.func,
   setCvType: PropTypes.func.isRequired,
   groupColumn: PropTypes.string,
   setGroupColumn: PropTypes.func.isRequired,

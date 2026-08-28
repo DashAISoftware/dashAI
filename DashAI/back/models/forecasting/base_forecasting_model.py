@@ -2,7 +2,6 @@
 
 from typing import TYPE_CHECKING, Any, List
 
-from DashAI.back.core.enums.metrics import SplitEnum
 from DashAI.back.models.base_model import BaseModel
 
 if TYPE_CHECKING:
@@ -193,6 +192,31 @@ class ForecastingModel(BaseModel):
         values = np.asarray(forecast(int(steps.max())), dtype=float)
         return values[steps - 1]
 
+    @staticmethod
+    def _extend(earlier: "DashAIDataset", later: "DashAIDataset") -> "DashAIDataset":
+        """Join two consecutive partitions into one continuous history.
+
+        Parameters
+        ----------
+        earlier : DashAIDataset
+            The partition that comes first in time.
+        later : DashAIDataset
+            The partition that follows it.
+
+        Returns
+        -------
+        DashAIDataset
+            The two concatenated, keeping the column types of the first.
+        """
+        import pandas as pd
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
+        return to_dashai_dataset(
+            pd.concat([earlier.to_pandas(), later.to_pandas()], ignore_index=True),
+            types=dict(earlier.types),
+        )
+
     def save(self, filename: str) -> None:
         """Serialise the model to disk using joblib.
 
@@ -222,29 +246,3 @@ class ForecastingModel(BaseModel):
         import joblib
 
         return joblib.load(filename)
-
-    def calculate_metrics(self, split=SplitEnum.VALIDATION, **kwargs):
-        """Record metrics for every partition except the training one.
-
-        The base implementation scores a split by predicting on it, which for
-        a forecaster would mean asking for dates it was fitted on. An in
-        sample fit statistic is not comparable with the forecast error on the
-        later partitions, and putting the two side by side in one results
-        table invites exactly that comparison, so none is recorded.
-
-        Parameters
-        ----------
-        split : SplitEnum
-            The partition to score.
-        **kwargs
-            Passed through to the base implementation.
-
-        Returns
-        -------
-        Any
-            Whatever the base implementation returns, or ``None`` for the
-            training partition.
-        """
-        if split == SplitEnum.TRAIN:
-            return None
-        return super().calculate_metrics(split=split, **kwargs)

@@ -6,6 +6,7 @@ from typing import Callable, Final, List, Optional
 from kink import di
 
 from DashAI.back.core.artifacts import normalize_artifacts
+from DashAI.back.core.enums.metrics import SplitEnum
 from DashAI.back.dependencies.database.models import Run
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.model_factory import ModelFactory
@@ -21,6 +22,28 @@ class BaseEvaluationStrategy(metaclass=ABCMeta):
     """
 
     TYPE: Final[str] = "EvaluationStrategy"
+
+    # How this strategy divides the dataset. The frontend renders holdout
+    # controls or fold controls from this rather than comparing class names,
+    # which is what previously made a new strategy unreachable from the UI.
+    KIND: str = "holdout"
+
+    # Which partitions this strategy records metrics for. Scoring the training
+    # partition means predicting on rows the model was fitted on, which is a
+    # fit statistic; a forecaster has no such thing to report.
+    SCORED_SPLITS: tuple = (SplitEnum.TRAIN, SplitEnum.VALIDATION, SplitEnum.TEST)
+
+    @classmethod
+    def get_metadata(cls) -> dict:
+        """Describe the strategy for the frontend.
+
+        Returns
+        -------
+        dict
+            Mapping with ``kind``, which says whether this strategy splits the
+            dataset once or into folds.
+        """
+        return {"kind": cls.KIND}
 
     def __init__(
         self,
