@@ -7,6 +7,7 @@ import ScopeStepSessionConverter from "./ScopeStepSessionConverter";
 import ParameterStepConverter from "../../notebooks/converterCreation/ParameterStepConverter";
 import { updateSessionConverters } from "../../../api/modelSession";
 import { pollSessionPreprocessing } from "../../../utils/sessionPreprocessing";
+import { startJobPolling } from "../../../utils/jobPoller";
 
 /**
  * Session-flow counterpart to the notebook's FormConverterSection. Same
@@ -68,6 +69,20 @@ export default function FormSessionConverterSection({
       // is what tells us when the (possibly stale) preprocessed data is
       // ready, so we don't use updatedSession directly here.
       void updatedSession;
+      // Wakes the shared job-queue widget (utils/jobPoller.js) so it shows
+      // this apply as an active job in real time, the same way the
+      // notebook's converter flow does — otherwise the widget's own poller
+      // may be idle and never observes this job before it finishes. Purely
+      // a visibility signal: the actual outcome this component reacts to
+      // still comes from pollSessionPreprocessing below, not from these
+      // callbacks.
+      if (updatedSession?.preprocessing_huey_id) {
+        startJobPolling(
+          updatedSession.preprocessing_huey_id,
+          () => {},
+          () => {},
+        );
+      }
       const cancel = pollSessionPreprocessing(session.id, {
         onFinished: (finishedSession) => {
           enqueueSnackbar(t("models:label.converterApplied"), {

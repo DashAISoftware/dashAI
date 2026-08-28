@@ -276,7 +276,10 @@ async def create_model_session(
                     kwargs={"model_session_id": model_session.id}
                 )
                 job.set_status_as_delivered()
-                job_queue.put(job)
+                enqueued = job_queue.put(job)
+                model_session.preprocessing_huey_id = enqueued.id
+                db.commit()
+                db.refresh(model_session)
 
             return model_session
         except exc.IntegrityError as e:
@@ -577,7 +580,16 @@ async def update_session_converters(
 
             job = SessionPreprocessingJob(kwargs={"model_session_id": model_session.id})
             job.set_status_as_delivered()
-            job_queue.put(job)
+            enqueued = job_queue.put(job)
+            # Persisted immediately (not left for the job's own run() to set,
+            # the way Run/Explorer/Prediction do it) because the frontend
+            # needs this id synchronously, in this same response, to hand to
+            # the shared job-queue poller (utils/jobPoller.js) right away —
+            # exactly like the notebook converter flow does with the id
+            # returned from its own enqueue call.
+            model_session.preprocessing_huey_id = enqueued.id
+            db.commit()
+            db.refresh(model_session)
 
         return model_session
 

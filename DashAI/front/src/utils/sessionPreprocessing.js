@@ -31,9 +31,14 @@ const ERROR = 4;
 
 /**
  * Polls `GET /model-session/{id}` until `preprocessing_status` reaches a
- * terminal state. `preprocessing_huey_id` is never actually populated by
- * the backend (confirmed by inspection), so this can't use the generic
- * job-id-based `jobPoller.js` — it's a dedicated interval instead.
+ * terminal state. `preprocessing_huey_id` is populated (see
+ * `update_session_converters`/`create_model_session`), but this stays a
+ * dedicated interval rather than switching to the generic job-id-based
+ * `jobPoller.js`: callers need the full refreshed session (columns,
+ * preprocessed_path) on completion, not just a raw job status record.
+ * Callers additionally register the huey id with `startJobPolling` purely
+ * so the shared job-queue widget observes the job live. See
+ * `FormSessionConverterSection.jsx` and `PreprocessingStep.jsx`.
  *
  * @returns {() => void} cancel function — call on unmount to stop polling.
  */

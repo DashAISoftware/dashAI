@@ -19,6 +19,7 @@ export interface IModelSession {
   converters_invalidated?: boolean;
   // 0=NOT_STARTED, 1=DELIVERED, 2=STARTED, 3=FINISHED, 4=ERROR
   preprocessing_status?: number;
+  preprocessing_huey_id?: string | null;
   preprocessed_path?: string | null;
   evaluation_strategy?: string;
   step: string;

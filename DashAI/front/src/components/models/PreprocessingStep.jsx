@@ -12,6 +12,7 @@ import {
   getCurrentDataFilePath,
   pollSessionPreprocessing,
 } from "../../utils/sessionPreprocessing";
+import { startJobPolling } from "../../utils/jobPoller";
 import { useModels } from "./ModelsContext";
 import { useExplorersAndConverters } from "../notebooks/context/ExplorersAndConvertersContext";
 import AppliedConvertersView from "./modelSession/AppliedConvertersView";
@@ -211,6 +212,17 @@ function PreprocessingStep({
       if (nextConverters.length === 0) {
         setIsApplying(false);
         return;
+      }
+      // Wakes the shared job-queue widget the same way the add path does
+      // (see FormSessionConverterSection) — pure visibility signal, the
+      // actual state transition below still comes from
+      // pollSessionPreprocessing.
+      if (updated?.preprocessing_huey_id) {
+        startJobPolling(
+          updated.preprocessing_huey_id,
+          () => {},
+          () => {},
+        );
       }
       pollSessionPreprocessing(modelSessionId, {
         onFinished: (finalSession) => {
