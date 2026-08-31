@@ -435,6 +435,120 @@ def test_run_with_session_converter_cross_validation_finishes(
     client.delete(f"/api/v1/model-session/{session['id']}")
 
 
+def test_run_with_input_column_added_by_converter_finishes(
+    client: TestClient, dataset_id: int
+):
+    """Regression test: a converter that *adds* a new column (LabelEncoder
+    appending `le_<col>` next to the untouched original) used to break
+    training whenever the session's final input/output selection included
+    that new column — the raw dataset never had it, so `ModelJob`'s
+    raw-dataset split-for-indices step (`dataset_split_utils.py`) and its
+    `n_labels` computation both blew up with a `KeyError`. Both must now
+    fall back to the preprocessed data instead of the raw one.
+
+    Uses `le_Species` as an *input* (a numeric feature derived from the
+    categorical target) with `Species` itself untouched as the real
+    output — mirrors the actual scenario a live session hit. (Selecting a
+    LabelEncoder-produced integer column as the *output* of a
+    classification task is a separate, legitimate type-system rejection —
+    classification targets must stay `Categorical` — not covered here.)"""
+    create_session_response = client.post(
+        "/api/v1/model-session/",
+        json={
+            "dataset_id": dataset_id,
+            "task_name": "TabularClassificationTask",
+            "name": "LabelEncoder Input Session",
+            # `le_Species` doesn't exist on the raw dataset — LabelEncoder
+            # creates it during preprocessing. One original input column is
+            # dropped to keep the total column count within the raw
+            # dataset's own count (`create_model_session` only checks the
+            # *count*, not that every name resolves — the actual
+            # name-resolution bug this test targets only surfaces later,
+            # inside the job).
+            "input_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "le_Species",
+            ],
+            "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
+            "splits": json.dumps(
+                {
+                    "train": 0.6,
+                    "test": 0.2,
+                    "validation": 0.2,
+                    "is_random": True,
+                    "has_changed": True,
+                    "seed": 42,
+                    "shuffle": True,
+                    "stratify": False,
+                    "splitType": "random",
+                    "splitter_name": "HoldoutSplitter",
+                }
+            ),
+            "converters": [
+                {"converter": "LabelEncoder", "params": {}, "columns": ["Species"]}
+            ],
+        },
+    )
+    assert create_session_response.status_code == 201, create_session_response.text
+    session = create_session_response.json()
+    # Creating the session already exercises SessionPreprocessingJob's own
+    # raw-dataset split call with `input_columns` including `le_Species`
+    # from the start — this alone used to raise before ever reaching
+    # ModelJob.
+    assert session["preprocessing_status"] == 3, session  # FINISHED
+
+    create_run_response = client.post(
+        "/api/v1/run/",
+        json={
+            "model_session_id": session["id"],
+            "model_name": "KNeighborsClassifier",
+            "name": "LabelEncoder Input Run",
+            "parameters": {
+                "n_neighbors": 5,
+                "weights": "uniform",
+                "algorithm": "auto",
+            },
+            "optimizer_name": "",
+            "optimizer_parameters": {
+                "n_trials": 10,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            "goal_metric": "",
+            "description": "LabelEncoder input run",
+            "plot_history_path": "path/to/history.png",
+            "plot_slice_path": "path/to/slice.png",
+            "plot_contour_path": "path/to/contour.png",
+            "plot_importance_path": "path/to/importance.png",
+        },
+    )
+    assert create_run_response.status_code == 201, create_run_response.text
+    run_id = create_run_response.json()["id"]
+
+    job_response = client.post(
+        "/api/v1/job/",
+        data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
+    )
+    assert job_response.status_code == 201, job_response.text
+    job_id = job_response.json()["id"]
+
+    status_response = client.get(f"/api/v1/job/status/{job_id}")
+    assert status_response.status_code == 200, status_response.text
+    assert status_response.json()["status"] == "finished", status_response.json()
+
+    run_response = client.get(f"/api/v1/run/{run_id}")
+    assert run_response.status_code == 200, run_response.text
+    assert run_response.json()["status"] == 3
+
+    client.delete(f"/api/v1/model-session/{session['id']}")
+
+
 def test_get_run(client: TestClient):
     response = client.get("/api/v1/run/1")
     assert response.status_code == 200

@@ -92,32 +92,7 @@ def load_dataset_and_splitter(
             f"Unable to find Task with name {model_session.task_name} in registry"
         ) from e
 
-    if model_session.output_columns:
-        try:
-            prepared_dataset = task.prepare_for_task(
-                dataset=loaded_dataset,
-                input_columns=model_session.input_columns,
-                output_columns=model_session.output_columns,
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"""Can not prepare Dataset {dataset.id}
-                for Task {model_session.task_name}""",
-            ) from e
-
-        try:
-            X, Y = select_columns(
-                prepared_dataset,
-                model_session.input_columns,
-                model_session.output_columns,
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Error selecting input and output columns from dataset {dataset.id}"
-            ) from e
-    else:
+    def _build_placeholder_xy():
         # No output column chosen yet (the wizard's Preprocessing step comes
         # before its Columns step) — nothing to validate against the task
         # yet, so skip `prepare_for_task` entirely. Treat the whole dataset
@@ -134,14 +109,14 @@ def load_dataset_and_splitter(
             to_dashai_dataset,
         )
 
-        prepared_dataset = to_dashai_dataset(loaded_dataset)
+        placeholder_prepared = to_dashai_dataset(loaded_dataset)
         try:
-            X = prepared_dataset
-            Y = DashAIDataset(
+            placeholder_x = placeholder_prepared
+            placeholder_y = DashAIDataset(
                 table=pa.table(
                     {
                         NO_OUTPUT_PLACEHOLDER_COLUMN: pa.array(
-                            [0] * len(prepared_dataset), type=pa.int64()
+                            [0] * len(placeholder_prepared), type=pa.int64()
                         )
                     }
                 )
@@ -149,6 +124,46 @@ def load_dataset_and_splitter(
         except Exception as e:
             log.exception(e)
             raise JobError(f"Error selecting columns from dataset {dataset.id}") from e
+        return placeholder_x, placeholder_y, placeholder_prepared
+
+    if model_session.output_columns:
+        try:
+            prepared_dataset = task.prepare_for_task(
+                dataset=loaded_dataset,
+                input_columns=model_session.input_columns,
+                output_columns=model_session.output_columns,
+            )
+            X, Y = select_columns(
+                prepared_dataset,
+                model_session.input_columns,
+                model_session.output_columns,
+            )
+        except Exception as e:
+            if not model_session.converters:
+                log.exception(e)
+                raise JobError(
+                    f"""Can not prepare Dataset {dataset.id}
+                    for Task {model_session.task_name}""",
+                ) from e
+            # Converters can add or rename columns the raw dataset never had
+            # (e.g. `LabelEncoder` appending `le_<col>`), so a session's
+            # final input/output selection may not resolve against the raw
+            # data once one of those columns is picked. This function's
+            # result is only used for row-index bookkeeping in that case —
+            # callers that need the real, typed prepared dataset when
+            # converters are present must load it from the preprocessed
+            # partitions instead (see `load_preprocessed_reference_dataset`
+            # in `session_preprocessing_job.py`).
+            log.info(
+                "Falling back to a placeholder split for session %s: "
+                "input/output columns don't resolve against the raw "
+                "dataset (likely converter-produced columns): %s",
+                model_session.id,
+                e,
+            )
+            X, Y, prepared_dataset = _build_placeholder_xy()
+    else:
+        X, Y, prepared_dataset = _build_placeholder_xy()
 
     try:
         splits_data = json.loads(model_session.splits)

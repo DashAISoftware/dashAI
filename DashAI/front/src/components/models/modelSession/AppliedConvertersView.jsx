@@ -4,7 +4,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CircularProgress,
   IconButton,
   Typography,
 } from "@mui/material";
@@ -51,21 +50,6 @@ export default function AppliedConvertersView({
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       <Box sx={{ position: "relative" }}>
-        {isApplying && (
-          <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "rgba(0,0,0,0.4)",
-              zIndex: 1,
-            }}
-          >
-            <CircularProgress />
-          </Box>
-        )}
         <DatasetTable
           fetchPage={fetchDatasetPage}
           // `filePath` alone is NOT enough to detect a change: once a session

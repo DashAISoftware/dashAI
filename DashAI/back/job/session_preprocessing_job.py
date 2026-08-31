@@ -1,7 +1,7 @@
 import logging
 import os
 import shutil
-from typing import TYPE_CHECKING, Any, Tuple
+from typing import TYPE_CHECKING, Any, Optional, Tuple
 
 from kink import inject
 from sqlalchemy import exc
@@ -13,7 +13,10 @@ from DashAI.back.converters.execution import (
 )
 from DashAI.back.dependencies.database.models import ModelSession
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.job.dataset_split_utils import load_dataset_and_splitter
+from DashAI.back.job.dataset_split_utils import (
+    NO_OUTPUT_PLACEHOLDER_COLUMN,
+    load_dataset_and_splitter,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -108,6 +111,46 @@ def load_preprocessed_session_data(model_session: ModelSession) -> Tuple[Any, An
         y_list.append(DatasetDict(y_fold))
 
     return x_list, y_list
+
+
+def get_reference_partition_path(model_session: ModelSession) -> Optional[str]:
+    """Path to the single partition that best represents a session's
+    current preprocessed state: `full_dataset/train` for cross-validation,
+    `train` for holdout. Mirrors `get_preprocessed_columns`'s own
+    resolution logic in `model_sessions.py` (duplicated rather than
+    imported — endpoints and jobs live in different layers).
+
+    Returns None if the session has no `preprocessed_path`, or the
+    partition isn't on disk.
+    """
+    if not model_session.preprocessed_path:
+        return None
+    is_cv = model_session.evaluation_strategy == "CrossValidationEvaluationStrategy"
+    relative = os.path.join("full_dataset", "train") if is_cv else "train"
+    partition_path = os.path.join(model_session.preprocessed_path, relative)
+    return partition_path if os.path.isdir(partition_path) else None
+
+
+def load_preprocessed_reference_dataset(
+    model_session: ModelSession,
+) -> "DashAIDataset":
+    """Load the combined (input+output columns together) reference
+    partition — the session's *actual* training data, including any column
+    a converter added or renamed (e.g. `LabelEncoder` appending
+    `le_<col>`). `ModelJob` uses this to validate/prepare the session's
+    final input/output selection and compute `n_labels` when converters are
+    present, since the raw dataset never had those converter-produced
+    columns to validate against.
+    """
+    from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
+
+    partition_path = get_reference_partition_path(model_session)
+    if not partition_path:
+        raise JobError(
+            f"Model session {model_session.id} has no usable preprocessed "
+            "reference partition."
+        )
+    return load_dataset(partition_path)
 
 
 class SessionPreprocessingJob(BaseJob):
@@ -234,12 +277,26 @@ class SessionPreprocessingJob(BaseJob):
                 if os.path.exists(stale_converters_path):
                     os.remove(stale_converters_path)
 
-                # No output column chosen yet (the wizard's Preprocessing
-                # step comes before its Columns step) — `y` only carries the
-                # `NO_OUTPUT_PLACEHOLDER_COLUMN` placeholder (see
-                # `dataset_split_utils.py`), which must never be persisted
-                # as if it were a real output column.
-                has_output_columns = bool(model_session.output_columns)
+                # `y` carries only the `NO_OUTPUT_PLACEHOLDER_COLUMN`
+                # placeholder (see `dataset_split_utils.py`) whenever no
+                # real output was available to split on — either no output
+                # column has been chosen yet (the wizard's Preprocessing
+                # step comes before its Columns step), or one was chosen
+                # but doesn't resolve against the raw dataset (a converter
+                # produced it, e.g. `LabelEncoder` appending `le_<col>`).
+                # Checking `y` itself (not `model_session.output_columns`)
+                # is what actually matches what's about to be merged below
+                # — a converter-produced output column falls into the same
+                # "no real output to merge" case even though
+                # `output_columns` is set.
+                first_y_partition = (
+                    next(iter(y[0].values()))
+                    if isinstance(y, list)
+                    else next(iter(y.values()))
+                )
+                has_output_columns = (
+                    NO_OUTPUT_PLACEHOLDER_COLUMN not in first_y_partition.column_names
+                )
 
                 if isinstance(x, list):
                     last_index = len(x) - 1

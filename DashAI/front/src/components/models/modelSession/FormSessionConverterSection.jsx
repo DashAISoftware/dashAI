@@ -61,9 +61,6 @@ export default function FormSessionConverterSection({
         ...(session.converters || []),
         newEntry,
       ]);
-      enqueueSnackbar(t("models:label.converterApplying"), {
-        variant: "info",
-      });
       // updatedSession reflects the converter list right after the PUT, but
       // preprocessing hasn't finished yet — pollSessionPreprocessing below
       // is what tells us when the (possibly stale) preprocessed data is

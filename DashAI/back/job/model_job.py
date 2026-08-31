@@ -10,7 +10,10 @@ from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.job.dataset_split_utils import load_dataset_and_splitter
-from DashAI.back.job.session_preprocessing_job import load_preprocessed_session_data
+from DashAI.back.job.session_preprocessing_job import (
+    load_preprocessed_reference_dataset,
+    load_preprocessed_session_data,
+)
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
@@ -145,18 +148,10 @@ class ModelJob(BaseJob):
                     # above on the raw dataset is only kept for
                     # run.split_indexes (explainer_job.py needs it later);
                     # the actual training data comes from disk instead.
+                    # (preprocessing-finished is already checked in
+                    # _prepare_dataset_and_components, before this point.)
                     model_session: ModelSession = preparation_results["model_session"]
                     if model_session.converters:
-                        if (
-                            model_session.preprocessing_status
-                            != SessionPreprocessingStatus.FINISHED
-                        ):
-                            raise JobError(
-                                f"Model session {model_session.id} preprocessing "
-                                f"is not finished (status="
-                                f"{model_session.preprocessing_status}); cannot "
-                                "train a Run until preprocessing finishes."
-                            )
                         self.report_progress(0.15, "Loading preprocessed data")
                         x, y = load_preprocessed_session_data(model_session)
                 except JobError:
@@ -296,15 +291,55 @@ class ModelJob(BaseJob):
                 f"Model session {run.model_session_id} does not exist in DB."
             )
 
+        if (
+            model_session.converters
+            and model_session.preprocessing_status
+            != SessionPreprocessingStatus.FINISHED
+        ):
+            raise JobError(
+                f"Model session {model_session.id} preprocessing is not "
+                f"finished (status={model_session.preprocessing_status}); "
+                "cannot train a Run until preprocessing finishes."
+            )
+
         splitted_indexes = json.loads(run.split_indexes) if run.split_indexes else None
         X, Y, splitter, task, prepared_dataset = load_dataset_and_splitter(
             model_session, db, component_registry, splitted_indexes=splitted_indexes
         )
 
         try:
-            n_labels = task.num_labels(
-                prepared_dataset, model_session.output_columns[0]
-            )
+            if model_session.converters:
+                # The raw dataset never had any column a converter added or
+                # renamed (e.g. `LabelEncoder` appending `le_<col>`), so
+                # `prepared_dataset` above may only be the placeholder
+                # `load_dataset_and_splitter` falls back to in that case —
+                # it can't answer `num_labels` for a converter-produced
+                # output column. Validate/type the session's *actual*
+                # training data (the preprocessed reference partition)
+                # instead, purely for this computation.
+                #
+                # `input_columns=[]` here is deliberate: a converter that
+                # only transforms *inputs* in place (e.g. `StandardScaler`)
+                # doesn't reliably preserve full DashAI type metadata for
+                # every passed-through column once saved to disk (a
+                # separate, pre-existing gap in how partitions persist
+                # types) — but this computation only ever needs the
+                # *output* column's type, and both task classes' input
+                # cardinality is "n", so skipping input validation here
+                # changes nothing this call cares about.
+                reference_dataset = load_preprocessed_reference_dataset(model_session)
+                reference_prepared = task.prepare_for_task(
+                    dataset=reference_dataset,
+                    input_columns=[],
+                    output_columns=model_session.output_columns,
+                )
+                n_labels = task.num_labels(
+                    reference_prepared, model_session.output_columns[0]
+                )
+            else:
+                n_labels = task.num_labels(
+                    prepared_dataset, model_session.output_columns[0]
+                )
         except Exception as e:
             log.exception(e)
             raise JobError(
