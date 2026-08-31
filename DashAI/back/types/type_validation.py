@@ -357,6 +357,16 @@ def validate_multiple_type_changes(
             from DashAI.back.types.date_utils import detect_date_format
 
             new_dtype = detect_date_format(data[column_name].dropna())
+            if not new_dtype:
+                # A Date column is meaningless without a format, and
+                # validate_type_change would wave an all-null column through:
+                # it answers "valid" for any target before looking at the
+                # values. Saying yes here hands the frontend a change with no
+                # dtype, which crashes the dataset job when it builds the type.
+                errors[column_name] = (
+                    "No known date format reads every value in this column"
+                )
+                continue
 
         is_valid, error_msg, _ = validate_type_change(
             data[column_name], current_type, new_type, new_dtype

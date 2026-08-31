@@ -1,5 +1,6 @@
 import pandas as pd
 import pyarrow as pa
+import pytest
 
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     load_dataset,
@@ -76,3 +77,31 @@ def test_text_columns_are_unaffected():
     restored = get_types_from_arrow_metadata(table)
 
     assert isinstance(restored["note"], Text)
+
+
+def test_a_date_survives_a_schema_built_from_to_string():
+    # Two dict shapes reach transform_dataset_with_schema. Inference and
+    # get_columns_spec put the strptime format in "dtype"; to_string() puts it
+    # in "format" and leaves "dtype" as the arrow type. predict_job and
+    # dataset_job build their schema the second way, which used to overwrite
+    # the format with the literal "string".
+    frame = pd.DataFrame({"when": ["31/01/2020", "15/02/2020"]})
+    dataset = transform_dataset_with_schema(
+        to_dashai_dataset(frame), {"when": {"type": "Date", "dtype": "%d/%m/%Y"}}
+    )
+
+    schema = {col: typ.to_string() for col, typ in dataset.types.items()}
+    reloaded = transform_dataset_with_schema(dataset, schema)
+
+    assert reloaded.types["when"].format == "%d/%m/%Y"
+
+
+def test_a_date_without_a_resolvable_format_is_refused():
+    # Better a named error than the AttributeError raised deep in
+    # arrow_to_dashai_types when it is handed a format of None.
+    frame = pd.DataFrame({"when": ["31/01/2020"]})
+
+    with pytest.raises(ValueError, match="carries no format"):
+        transform_dataset_with_schema(
+            to_dashai_dataset(frame), {"when": {"type": "Date", "dtype": None}}
+        )

@@ -99,3 +99,19 @@ def test_multiple_changes_report_an_unreadable_date_column():
     assert not all_valid
     assert "when" in errors
     assert resolved == {}
+
+
+def test_an_empty_column_is_not_accepted_as_a_date():
+    # validate_type_change waves any target through for a column with no
+    # values, which would report a Date change as valid with no format to go
+    # with it. The frontend then sends a Date column with a null dtype and the
+    # dataset job dies building the type.
+    data = pd.DataFrame({"when": [None, None, None]})
+
+    all_valid, errors, resolved = validate_multiple_type_changes(
+        data, {"when": {"current_type": "Text", "new_type": "Date"}}
+    )
+
+    assert not all_valid
+    assert "when" in errors
+    assert resolved == {}
