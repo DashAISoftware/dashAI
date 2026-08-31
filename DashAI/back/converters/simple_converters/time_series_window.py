@@ -262,8 +262,8 @@ class TimeSeriesWindowConverter(FeatureEngineeringConverter, BaseConverter):
         Raises
         ------
         ValueError
-            If the dates hold duplicates, or if the window leaves no complete
-            row.
+            If any date is missing or repeated, if the series has gaps, or if
+            the window leaves no complete row.
         """
         import pandas as pd
 
@@ -273,12 +273,39 @@ class TimeSeriesWindowConverter(FeatureEngineeringConverter, BaseConverter):
         dates = parse_date_column(x.to_pandas()[self._date_column], self._date_format)
         values = y.to_pandas()[self._target_column]
 
+        # A row with no date is the same problem as a repeated one, except it
+        # fails quietly: sort_values sends every NaT to the end, so the value
+        # is windowed as the most recent point of the series instead of
+        # wherever it belongs. With no date at all on any row there is no
+        # order left, and the rows would be windowed in file order, which is
+        # exactly what sorting is here to stop mattering.
+        undated = int(dates.isna().sum())
+        if undated:
+            raise ValueError(
+                f"The date column holds {undated} row(s) with no date, so "
+                "there is no single order to take lags along. Fill them in or "
+                "drop those rows before windowing."
+            )
+
         duplicated = dates[dates.duplicated()].dropna()
         if not duplicated.empty:
             sample = ", ".join(str(d.date()) for d in duplicated.unique()[:3])
             raise ValueError(
                 "The date column holds repeated dates, so there is no single "
                 f"order to take lags along: {sample}."
+            )
+
+        # A hole in the series cannot be windowed: it turns into a missing lag
+        # for the rows that reach over it. An integer series fails the cast at
+        # the end of this method with a message about non-finite values, and a
+        # float one keeps going and hands the model NaN, so say it here.
+        missing_values = int(values.isna().sum())
+        if missing_values:
+            raise ValueError(
+                f"The target column holds {missing_values} row(s) with no "
+                "value, so the windows reaching over them would be "
+                "incomplete. Fill the gaps or drop those rows before "
+                "windowing."
             )
 
         ordered = pd.DataFrame({"date": dates, "value": values}).sort_values("date")

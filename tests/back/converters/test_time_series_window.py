@@ -186,3 +186,42 @@ def test_an_irregular_series_warns_but_still_produces_rows(capsys):
 
     assert len(result) == 3
     assert "irregular" in capsys.readouterr().out.lower()
+
+
+def test_a_missing_date_is_refused():
+    # A row with no date sorts to the end, so its value would be windowed as
+    # the most recent point of the series rather than wherever it belongs.
+    # The converter already refuses repeated dates for the same reason.
+    x, y = _series(dates=[DATES[0], None] + DATES[2:])
+
+    with pytest.raises(ValueError, match="no date"):
+        _apply(TimeSeriesWindowConverter(window_size=3), x, y)
+
+
+def test_a_column_of_no_dates_at_all_is_refused():
+    # The worst version of the same thing: nothing left to sort by, so the
+    # rows would be windowed in whatever order the file happened to hold.
+    x, y = _series(dates=[None] * len(DATES))
+
+    with pytest.raises(ValueError, match="no date"):
+        _apply(TimeSeriesWindowConverter(window_size=3), x, y)
+
+
+def test_a_gap_in_the_series_is_refused():
+    # An integer series used to fail the int64 cast with a message about
+    # non-finite values, and a float one used to hand the model NaN lags.
+    x, y = _series(sales=[100, 120, None, 140, 150, 160])
+
+    with pytest.raises(ValueError, match="no value"):
+        _apply(TimeSeriesWindowConverter(window_size=3), x, y)
+
+
+def test_a_gap_in_a_float_series_is_refused_too():
+    x, y = _series(
+        sales=[100.0, 120.0, None, 140.0, 150.0, 160.0],
+        sales_type="Float",
+        sales_dtype="float64",
+    )
+
+    with pytest.raises(ValueError, match="no value"):
+        _apply(TimeSeriesWindowConverter(window_size=3), x, y)
