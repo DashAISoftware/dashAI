@@ -351,11 +351,11 @@ function AddModelDialog({
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
   const isStep2Valid = Boolean(
     selectedOptimizer &&
-      goalMetric &&
-      (!useNestedCV ||
-        (innerConfig.splitterType &&
-          innerConfig.nSplits > 1 &&
-          innerConfig.nSplits <= maxInnerFolds)),
+    goalMetric &&
+    (!useNestedCV ||
+      (innerConfig.splitterType &&
+        innerConfig.nSplits > 1 &&
+        innerConfig.nSplits <= maxInnerFolds)),
   );
 
   return (
