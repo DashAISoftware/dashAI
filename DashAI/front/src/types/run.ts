@@ -1,6 +1,7 @@
 export interface IRun {
   id: string;
   model_session_id: string;
+  evaluation_strategy: string;
   created: Date;
   last_modified: Date;
   model_name: string;
@@ -23,4 +24,5 @@ export interface IRun {
   status: string;
   start_time: Date;
   end_time: Date;
+  nested?: object;
 }

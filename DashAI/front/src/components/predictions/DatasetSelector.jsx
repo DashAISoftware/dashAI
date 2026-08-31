@@ -13,7 +13,6 @@ import {
   getDatasetFile,
   getDatasetFileFiltered,
   getDatasetTypesByFilePath,
-  getDatasetInfo,
 } from "../../api/datasets";
 import { formatDate } from "../../pages/results/constants/formatDate";
 import { useTranslation } from "react-i18next";
@@ -23,10 +22,10 @@ function DatasetSelector({
   datasets,
   selectedDataset,
   setSelectedDataset,
+  actionSlot = null,
 }) {
   const { t } = useTranslation(["prediction", "common", "datasets"]);
   const [columnTypes, setColumnTypes] = useState({});
-  const [infosById, setInfosById] = useState({});
 
   useEffect(() => {
     if (!selectedDataset?.file_path) return;
@@ -34,24 +33,6 @@ function DatasetSelector({
       .then(setColumnTypes)
       .catch(() => {});
   }, [selectedDataset?.file_path]);
-
-  const fetchMissingInfos = async (items) => {
-    const missing = items.filter((d) => d?.id != null && !infosById[d.id]);
-    if (missing.length === 0) return;
-    try {
-      const results = await Promise.allSettled(
-        missing.map((d) => getDatasetInfo(d.id)),
-      );
-      const map = {};
-      results.forEach((res, idx) => {
-        const id = missing[idx]?.id;
-        if (res.status === "fulfilled" && id != null) map[id] = res.value;
-      });
-      setInfosById((prev) => ({ ...prev, ...map }));
-    } catch (e) {
-      console.warn("Some dataset infos could not be fetched", e);
-    }
-  };
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel, sortModel) => {
@@ -73,51 +54,53 @@ function DatasetSelector({
 
   return (
     <Box sx={{ mb: 6 }}>
-      <Autocomplete
-        options={datasets}
-        getOptionLabel={(option) => option.name}
-        isOptionEqualToValue={(opt, val) => opt.id === val.id}
-        value={selectedDataset}
-        onOpen={() => fetchMissingInfos(datasets)}
-        onChange={(_, newValue) => setSelectedDataset(newValue)}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label={t("prediction:label.selectDataset")}
-            variant="outlined"
-            placeholder={t("datasets:label.typeToSearchDatasets")}
-          />
-        )}
-        renderOption={(props, option) => {
-          const { key, ...rootProps } = props;
-          const info = infosById[option.id];
-          return (
-            <Box component="li" key={key} {...rootProps}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  width: "100%",
-                  gap: 0.25,
-                }}
-              >
-                <Typography variant="body1" fontWeight="medium">
-                  {option.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {t("common:created")}: {formatDate(option.created)}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {t("datasets:label.rowsColumnsInfo", {
-                    totalRows: info ? info.total_rows : "...",
-                    totalColumns: info ? info.total_columns : "...",
-                  })}
-                </Typography>
+      <Box sx={{ display: "flex", alignItems: "stretch", gap: 2 }}>
+        <Autocomplete
+          sx={{ flex: 1 }}
+          options={datasets}
+          getOptionLabel={(option) => option.name}
+          isOptionEqualToValue={(opt, val) => opt.id === val.id}
+          value={selectedDataset}
+          onChange={(_, newValue) => setSelectedDataset(newValue)}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={t("prediction:label.selectDataset")}
+              variant="outlined"
+              placeholder={t("datasets:label.typeToSearchDatasets")}
+            />
+          )}
+          renderOption={(props, option) => {
+            const { key, ...rootProps } = props;
+            return (
+              <Box component="li" key={key} {...rootProps}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    width: "100%",
+                    gap: 0.25,
+                  }}
+                >
+                  <Typography variant="body1" fontWeight="medium">
+                    {option.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {t("common:created")}: {formatDate(option.created)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {t("datasets:label.rowsColumnsInfo", {
+                      totalRows: option.total_rows ?? "...",
+                      totalColumns: option.total_columns ?? "...",
+                    })}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          );
-        }}
-      />
+            );
+          }}
+        />
+        {actionSlot}
+      </Box>
       {selectedDataset && (
         <>
           <Alert severity="info" sx={{ mt: 4 }}>

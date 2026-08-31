@@ -12,9 +12,6 @@ from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
-from DashAI.back.job.task_executors.supervised_task_executor import (
-    SupervisedTaskExecutor,
-)
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.models.supervised_model import SupervisedModel
 from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
@@ -62,10 +59,6 @@ class DummyMetric(BaseMetric):
         return 1
 
 
-class DummyTaskExecutor(SupervisedTaskExecutor):
-    COMPATIBLE_COMPONENTS = ["DummyTask"]
-
-
 @pytest.fixture(autouse=True, name="test_registry")
 def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
     """Setup a test registry with test task, dataloader and model components."""
@@ -79,7 +72,6 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
             CSVDataLoader,
             JSONDataLoader,
             ModelJob,
-            DummyTaskExecutor,
             OptunaOptimizer,
             TabularClassificationTask,
         ]
@@ -215,6 +207,7 @@ def create_model_session(client: TestClient, dataset: Dataset):
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
+            evaluation_strategy="HoldoutEvaluationStrategy",
             splits=json.dumps(
                 {
                     "train": 0.5,
@@ -225,6 +218,7 @@ def create_model_session(client: TestClient, dataset: Dataset):
                     "seed": 42,
                     "shuffle": True,
                     "stratify": False,
+                    "splitter_name": "HoldoutSplitter",
                 }
             ),
         )
@@ -349,12 +343,12 @@ def test_filter_datasets_endpoint(
         params={"run_id": trained_run_id},
     )
     assert response.status_code == 200, response.text
-    datasets = response.json()
-    assert isinstance(datasets, list)
-    assert len(datasets) == 1
-    dataset_names = [ds["name"] for ds in datasets]
-    assert dataset["name"] in dataset_names
-    assert dataset_2["name"] not in dataset_names
+    body = response.json()
+    valid_dataset_ids = body["valid_dataset_ids"]
+    assert isinstance(valid_dataset_ids, list)
+    assert len(valid_dataset_ids) == 1
+    assert dataset["id"] in valid_dataset_ids
+    assert dataset_2["id"] not in valid_dataset_ids
 
 
 def test_delete_prediction(client: TestClient, trained_run_id: int):

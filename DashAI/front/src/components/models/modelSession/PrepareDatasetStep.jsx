@@ -22,14 +22,28 @@ import { getColorByColumnType } from "../../../utils";
 import { useTranslation } from "react-i18next";
 import { Trans } from "react-i18next";
 import { useModels } from "../ModelsContext";
+import {
+  buildSplitsPayload,
+  resolveSplitterName,
+  SPLIT_TYPES,
+} from "../../../utils/splitsPayload";
 /**
  * Step of the experiment modal: Set the input and output columns to use for clasification
- * and the splits for training, validation and testing
+ * and the splits for training, validation and testing.
  * @param {object} newExp object that contains the Experiment Modal state
  * @param {function} setNewExp updates the Eperimento Modal state (newExp)
  * @param {function} setNextEnabled function to enable or disable the "Next" button in the modal
+ * @param {string} evaluationStrategy the evaluation strategy selected for the experiment, either holdout or cross-validation
+ * @param {function} setEvaluationStrategy function to update the evaluation strategy in the parent component (CreateSessionSteps)
  */
-function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
+function PrepareDatasetStep({
+  newExp,
+  setNewExp,
+  setNextEnabled,
+  dataset,
+  evaluationStrategy,
+  setEvaluationStrategy,
+}) {
   const { setSessionRightContent } = useModels();
   const [datasetInfo, setDatasetInfo] = useState({});
   const [datasetTypes, setDatasetTypes] = useState({});
@@ -37,17 +51,11 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
   const [infoLoading, setInfoLoading] = useState(true);
   const { t } = useTranslation(["experiments", "common"]);
 
-  const [taskRequirements, setTaskRequirements] = useState({
-    name: "",
-    metadata: {
-      inputs_types: [],
-      inputs_cardinality: "",
-      outputs_types: [],
-      outputs_cardinality: "",
-      requires_target: true,
-      session_config_schema: {},
-    },
-  });
+  // null means "not fetched yet" — distinct from the empty-but-loaded shape
+  // getTaskRequirements falls back to when the task genuinely isn't found.
+  // The banner below only renders once this is non-null, otherwise it briefly
+  // interpolates its message with blank task name/types/cardinality.
+  const [taskRequirements, setTaskRequirements] = useState(null);
 
   const [inputColumnNames, setInputColumnNames] = useState(
     newExp.input_columns,
@@ -58,38 +66,35 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
 
   const [columnsReady, setColumnsReady] = useState(false);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
-  const [shuffle, setShuffle] = useState(true);
-  const [stratify, setStratify] = useState(false);
-  const [seed, setSeed] = useState(42);
+  // True until the current column selection has actually been checked against
+  // the backend at least once — distinct from columnsAreValid=false, so the
+  // banner doesn't flash red while columns are still being auto-selected or a
+  // check is in flight, only once a real valid/invalid result is known.
+  const [validationPending, setValidationPending] = useState(true);
+
+  // Values submitted by the schema generated splitter form, and whether that
+  // form currently reports a validation error.
+  const [splitterParams, setSplitterParams] = useState(null);
+  const [paramsError, setParamsError] = useState(false);
+
+  // Cross-Validation configuration states
+  const [cvType, setCvType] = useState(null);
+  const [groupColumn, setGroupColumn] = useState("");
 
   const defaultParitionsIndex = {
     train: [],
     validation: [],
     test: [],
   };
-  const defaultPartitionsPercentage = {
-    train: 0.6,
-    validation: 0.2,
-    test: 0.2,
-  };
-
   const [datasetPartitionsIndex, setDatasetPartitionsIndex] = useState({});
 
   const [rowsPartitionsIndex, setRowsPartitionsIndex] = useState(
     defaultParitionsIndex,
   );
-  const [rowsPartitionsPercentage, setRowsPartitionsPercentage] = useState(
-    defaultPartitionsPercentage,
-  );
-  const SPLIT_TYPES = {
-    RANDOM: "random",
-    MANUAL: "manual",
-    PREDEFINED: "predefined",
-  };
   const [splitType, setSplitType] = useState("");
 
   const [splitsReady, setSplitsReady] = useState(false);
-  const requiresTarget = taskRequirements.metadata?.requires_target !== false;
+  const requiresTarget = taskRequirements?.metadata?.requires_target !== false;
   const splitStrategy =
     taskRequirements.metadata?.session_config_schema?.split_strategy;
   const usesSplits = splitStrategy !== "none";
@@ -199,24 +204,24 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
   };
 
   const validateColumns = async () => {
-    if (
-      !datasetInfo ||
-      !datasetInfo.column_names ||
-      datasetInfo.column_names.length === 0
-    ) {
-      setColumnsAreValid(false);
-      return;
-    }
-
-    if (
-      inputColumnNames.length === 0 ||
-      (requiresTarget && outputColumnNames.length === 0)
-    ) {
-      setColumnsAreValid(false);
-      return;
-    }
-
     try {
+      if (
+        !datasetInfo ||
+        !datasetInfo.column_names ||
+        datasetInfo.column_names.length === 0
+      ) {
+        setColumnsAreValid(false);
+        return;
+      }
+
+      if (
+        inputColumnNames.length === 0 ||
+        (requiresTarget && outputColumnNames.length === 0)
+      ) {
+        setColumnsAreValid(false);
+        return;
+      }
+
       const validation = await validateColumnsRequest(
         newExp.task_name,
         dataset.id,
@@ -234,6 +239,8 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
         console.error("Unknown Error", error.message);
       }
       setColumnsAreValid(false);
+    } finally {
+      setValidationPending(false);
     }
   };
 
@@ -250,31 +257,38 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
       ...newExp,
       input_columns: inputColumnNames,
       output_columns: requiresTarget ? outputColumnNames : [],
+      evaluation_strategy: evaluationStrategy,
     };
 
+    // A task that trains on the whole dataset (clustering) has no splitter to
+    // resolve; the backend recognises the session by this splitType.
     if (!usesSplits) {
-      updatedExpData.splits = {
-        splitType: "none",
-      };
-    } else if (splitType === SPLIT_TYPES.MANUAL) {
-      updatedExpData.splits = {
-        ...rowsPartitionsIndex,
-        splitType: splitType,
-      };
-    } else if (splitType === SPLIT_TYPES.RANDOM) {
-      updatedExpData.splits = {
-        ...rowsPartitionsPercentage,
-        shuffle: shuffle,
-        stratify: stratify,
-        seed: seed === "" || seed == null ? 42 : Number(seed),
-        splitType: splitType,
-      };
-    } else if (splitType === SPLIT_TYPES.PREDEFINED) {
-      updatedExpData.splits = {
-        ...datasetPartitionsIndex,
-        splitType: splitType,
-      };
+      updatedExpData.splits = { splitType: "none" };
+    } else {
+      const splitterName = resolveSplitterName(evaluationStrategy, cvType);
+      if (splitterName) {
+        updatedExpData.splits = buildSplitsPayload({
+          splitterName,
+          splitType:
+            evaluationStrategy === "HoldoutEvaluationStrategy"
+              ? splitType
+              : SPLIT_TYPES.CV,
+          params: {
+            ...(splitterParams ?? {}),
+            // The group column select is rendered by hand, so its value is not
+            // part of the generated form's values.
+            ...(cvType?.schema?.properties?.group_column
+              ? { group_column: groupColumn }
+              : {}),
+          },
+          indexes:
+            splitType === SPLIT_TYPES.PREDEFINED
+              ? datasetPartitionsIndex
+              : rowsPartitionsIndex,
+        });
+      }
     }
+
     setNewExp(updatedExpData);
   };
 
@@ -309,26 +323,29 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
     }
   }, [usesSplits]);
 
+  // Column validity depends on the columns, the dataset and the task, never on
+  // the split configuration. Gating it on the splits being ready made every
+  // split change re-check the columns over HTTP and blank the requirements
+  // banner in the meantime.
   useEffect(() => {
     if (
       columnsReady &&
-      (splitsReady || !usesSplits) &&
       datasetInfo &&
       datasetInfo.column_names &&
       datasetInfo.column_names.length > 0
     ) {
+      setValidationPending(true);
       validateColumns();
     } else {
       setColumnsAreValid(false);
+      setValidationPending(true);
     }
   }, [
     columnsReady,
-    splitsReady,
     inputColumnNames,
     outputColumnNames,
     datasetInfo,
     requiresTarget,
-    usesSplits,
   ]);
 
   useEffect(() => {
@@ -343,13 +360,16 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
     splitsReady,
     columnsAreValid,
     splitType,
-    shuffle,
-    stratify,
-    seed,
+    splitterParams,
     inputColumnNames,
     outputColumnNames,
     requiresTarget,
     usesSplits,
+    cvType,
+    groupColumn,
+    evaluationStrategy,
+    rowsPartitionsIndex,
+    datasetPartitionsIndex,
   ]);
 
   useEffect(() => {
@@ -390,18 +410,22 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
         datasetInfo={datasetInfo}
         rowsPartitionsIndex={rowsPartitionsIndex}
         setRowsPartitionsIndex={setRowsPartitionsIndex}
-        rowsPartitionsPercentage={rowsPartitionsPercentage}
-        setRowsPartitionsPercentage={setRowsPartitionsPercentage}
         setSplitsReady={setSplitsReady}
         splitType={splitType}
         setSplitType={setSplitType}
         SPLIT_TYPES={SPLIT_TYPES}
-        shuffle={shuffle}
-        setShuffle={setShuffle}
-        stratify={stratify}
-        setStratify={setStratify}
-        seed={seed}
-        setSeed={setSeed}
+        splitterParams={splitterParams}
+        setSplitterParams={setSplitterParams}
+        paramsError={paramsError}
+        setParamsError={setParamsError}
+        evaluationStrategy={evaluationStrategy}
+        setEvaluationStrategy={setEvaluationStrategy}
+        cvType={cvType}
+        setCvType={setCvType}
+        groupColumn={groupColumn}
+        setGroupColumn={setGroupColumn}
+        inputColumnNames={inputColumnNames}
+        taskName={newExp.task_name}
       />,
     );
     return () => setSessionRightContent(null);
@@ -409,12 +433,14 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
     infoLoading,
     datasetInfo,
     rowsPartitionsIndex,
-    rowsPartitionsPercentage,
     splitType,
-    shuffle,
-    stratify,
-    seed,
     usesSplits,
+    splitterParams,
+    paramsError,
+    evaluationStrategy,
+    cvType,
+    groupColumn,
+    inputColumnNames,
   ]);
 
   const renderTypesAsChips = (typesList) => {
@@ -483,56 +509,28 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
           </Alert>
         ) : null
       ) : null}
-      <Alert
-        severity={columnsAreValid ? "success" : "error"}
-        sx={{
-          mb: 2,
-          "& .MuiAlert-icon": { fontSize: 24 },
-          bgcolor: (theme) =>
-            `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
-          border: (theme) =>
-            `1px solid ${theme.palette[columnsAreValid ? "success" : "error"].main}`,
-        }}
-        data-tour="models-validation-alert"
-      >
-        <AlertTitle>
-          {taskRequirements
-            ? t(
-                columnsAreValid
-                  ? "experiments:label.columnsValidRequirements"
-                  : "experiments:label.columnsInvalidRequirements",
-                { taskName: taskRequirements.display_name },
-              )
-            : null}
-        </AlertTitle>
-        <Grid container spacing={4}>
-          <Grid size={{ xs: 12 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                flexWrap: "wrap",
-              }}
-            >
-              <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
-                <span>The input columns must be of the types</span>
-                {taskRequirements
-                  ? renderTypesAsChips(taskRequirements.metadata.inputs_types)
-                  : null}
-                <span>
-                  , and they should have a cardinality of
-                  <span>
-                    {{
-                      cardinality: taskRequirements.metadata.inputs_cardinality,
-                    }}
-                    .
-                  </span>
-                </span>
-              </Trans>
-            </Box>
-          </Grid>
-          {requiresTarget && (
+      {taskRequirements && !validationPending && (
+        <Alert
+          severity={columnsAreValid ? "success" : "error"}
+          sx={{
+            mb: 2,
+            "& .MuiAlert-icon": { fontSize: 24 },
+            bgcolor: (theme) =>
+              `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
+            border: (theme) =>
+              `1px solid ${theme.palette[columnsAreValid ? "success" : "error"].main}`,
+          }}
+          data-tour="models-validation-alert"
+        >
+          <AlertTitle>
+            {t(
+              columnsAreValid
+                ? "experiments:label.columnsValidRequirements"
+                : "experiments:label.columnsInvalidRequirements",
+              { taskName: taskRequirements.display_name },
+            )}
+          </AlertTitle>
+          <Grid container spacing={4}>
             <Grid size={{ xs: 12 }}>
               <Box
                 sx={{
@@ -542,27 +540,52 @@ function PrepareDatasetStep({ newExp, setNewExp, setNextEnabled, dataset }) {
                   flexWrap: "wrap",
                 }}
               >
-                <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
-                  <span>The output columns must be of the types</span>
-                  {taskRequirements
-                    ? renderTypesAsChips(
-                        taskRequirements.metadata.outputs_types,
-                      )
-                    : null}
+                <Trans i18nKey="experiments:label.datasetInputColumnRequirements">
+                  <span>The input columns must be of the types</span>
+                  {renderTypesAsChips(taskRequirements.metadata.inputs_types)}
                   <span>
                     , and they should have a cardinality of
-                    {{
-                      cardinality:
-                        taskRequirements.metadata.outputs_cardinality,
-                    }}
-                    .
+                    <span>
+                      {{
+                        cardinality:
+                          taskRequirements.metadata.inputs_cardinality,
+                      }}
+                      .
+                    </span>
                   </span>
                 </Trans>
               </Box>
             </Grid>
-          )}
-        </Grid>
-      </Alert>
+            {requiresTarget && (
+              <Grid size={{ xs: 12 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
+                    <span>The output columns must be of the types</span>
+                    {renderTypesAsChips(
+                      taskRequirements.metadata.outputs_types,
+                    )}
+                    <span>
+                      , and they should have a cardinality of
+                      {{
+                        cardinality:
+                          taskRequirements.metadata.outputs_cardinality,
+                      }}
+                      .
+                    </span>
+                  </Trans>
+                </Box>
+              </Grid>
+            )}
+          </Grid>
+        </Alert>
+      )}
 
       {!infoLoading ? (
         <Grid container spacing={2}>

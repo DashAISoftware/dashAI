@@ -23,6 +23,7 @@ class ClassificationTask(SupervisedTask):
 
     COMPATIBLE_COMPONENTS = [
         "Accuracy",
+        "BalancedAccuracy",
         "Precision",
         "Recall",
         "F1",

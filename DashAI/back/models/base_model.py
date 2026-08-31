@@ -26,6 +26,21 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     COLOR: str = "#795548"
     ICON: str = "Science"
 
+    # Optional hook, set by an optimizer that wants to watch training as it goes.
+    #
+    # Signature: ``(results: dict[str, float], step: int) -> None``. It is called
+    # once per epoch with the validation metrics of that epoch, and it may raise
+    # to abort training early — that is how Optuna's pruning works.
+    #
+    # It lives here, on the base class, because every model with an epoch loop
+    # already routes its per-epoch metrics through `calculate_metrics`. Hooking
+    # the loops one by one would mean touching five files that do not share a
+    # common ancestor, and missing any model added later.
+    #
+    # Models that train in a single shot never call `calculate_metrics` with
+    # `level=EPOCH`, so for them this stays None and nothing changes.
+    _epoch_reporter = None
+
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         """Get metadata values for the current model.
@@ -38,7 +53,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         """
         metadata: Dict[str, Any] = {}
         metadata["icon"] = cls.ICON if cls.ICON else "Science"
-
+        metadata["requires_download"] = bool(getattr(cls, "REQUIRES_DOWNLOAD", False))
+        metadata["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
         return metadata
 
     @abstractmethod
@@ -107,6 +123,70 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             the model.
         """
         return dataset
+
+    def predict_prepared(self, features: Any) -> Any:
+        """Predict from data that is already in this model's feature space.
+
+        ``predict`` takes a ``DashAIDataset`` with the raw columns and runs
+        ``prepare_dataset`` itself. Explainers that perturb the feature matrix
+        (SHAP, partial dependence, permutation importance, DiCE) instead hold a
+        frame that ``prepare_dataset`` already produced, and must not have it
+        prepared a second time. They call this method.
+
+        Subclasses that can consume a feature matrix must override it, and
+        should implement ``predict`` as
+        ``self.predict_prepared(self.prepare_dataset(x, is_fit=False).to_pandas())``
+        so both paths share the same estimator call.
+
+        Parameters
+        ----------
+        features : pandas.DataFrame or numpy.ndarray
+            Feature matrix as returned by ``prepare_dataset(..., is_fit=False)``.
+            No further preparation is applied to it.
+
+        Returns
+        -------
+        Any
+            The same kind of output as ``predict``: predicted values for
+            regressors, class probabilities for DashAI classifiers.
+
+        Raises
+        ------
+        NotImplementedError
+            If the model cannot consume a raw feature matrix.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not support prediction from a prepared "
+            "feature matrix, so explainers that perturb the model input are not "
+            "available for it."
+        )
+
+    def predict_proba_prepared(self, features: Any) -> Any:
+        """Return class probabilities for data already in the feature space.
+
+        Classification counterpart of ``predict_prepared``, for explainers that
+        need the sklearn-native ``predict_proba`` semantics.
+
+        Parameters
+        ----------
+        features : pandas.DataFrame or numpy.ndarray
+            Feature matrix as returned by ``prepare_dataset(..., is_fit=False)``.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array of shape ``(n_samples, n_classes)`` with class probabilities.
+
+        Raises
+        ------
+        NotImplementedError
+            If the model cannot consume a raw feature matrix.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} does not support probability prediction from "
+            "a prepared feature matrix, so explainers that perturb the model "
+            "input are not available for it."
+        )
 
     def prepare_output(
         self, dataset: "DashAIDataset", is_fit: bool = False

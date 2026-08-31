@@ -1,4 +1,5 @@
 import logging
+from contextlib import suppress
 from typing import TYPE_CHECKING
 
 from kink import di, inject
@@ -75,6 +76,53 @@ class DatasetJob(BaseJob):
                     "Error while setting the status of the dataset as error."
                 ) from e
 
+    @inject
+    def on_cancel(
+        self, session_factory: "sessionmaker" = lambda di: di["session_factory"]
+    ) -> None:
+        """Delete all artifacts produced by a cancelled DatasetJob.
+
+        The dataset was never successfully saved, so:
+        - Any partially-written dataset directory is removed from disk.
+        - The temp upload directory is removed.
+        - The Dataset DB record is deleted entirely so it no longer appears in the UI.
+        """
+        import shutil
+
+        dataset_id: int = self.kwargs.get("dataset_id")
+        temp_dir = self.kwargs.get("temp_dir")
+
+        # Clean up temp upload directory
+        if temp_dir:
+            with suppress(Exception):
+                shutil.rmtree(temp_dir, ignore_errors=True)
+
+        if dataset_id is None:
+            return
+
+        try:
+            with session_factory() as db:
+                from DashAI.back.dependencies.database.models import Dataset
+
+                dataset = db.get(Dataset, dataset_id)
+                if dataset is None:
+                    return
+
+                # Delete the partially-written dataset directory if it exists
+                file_path = dataset.file_path or ""
+                if file_path:
+                    with suppress(Exception):
+                        shutil.rmtree(file_path, ignore_errors=True)
+
+                # Delete the record — it was never a valid dataset
+                db.delete(dataset)
+                db.commit()
+
+        except Exception:
+            log.exception(
+                f"on_cancel cleanup failed for DatasetJob (dataset_id={dataset_id})"
+            )
+
     def get_job_name(self) -> str:
         """Get a descriptive name for the job."""
         name = self.kwargs.get("name", "")
@@ -126,6 +174,8 @@ class DatasetJob(BaseJob):
                 db.commit()
                 db.refresh(dataset)
 
+            self.report_progress(0.1, "Loading data")
+
             if n_sample and dataset.file_path != "":
                 folder_path = Path(dataset.file_path)
             else:
@@ -140,6 +190,14 @@ class DatasetJob(BaseJob):
                     raise JobError(
                         f"A dataset with the name {random_name} already exists."
                     ) from e
+
+                # Write folder_path to DB immediately so on_cancel can delete it
+                # even if the job is killed before the final commit.
+                with session_factory() as db:
+                    _d = db.get(Dataset, dataset_id)
+                    if _d is not None:
+                        _d.file_path = str(os.path.realpath(folder_path))
+                        db.commit()
 
             from_notebook_no_converters = False
             try:
@@ -244,7 +302,7 @@ class DatasetJob(BaseJob):
                             filepath_or_buffer=(
                                 str(file_path) if file_path is not None else url
                             ),
-                            temp_path=str(temp_dir),
+                            temp_path=str(temp_dir) if temp_dir is not None else None,
                             params=parsed_params.model_dump(),
                             n_sample=n_sample,
                         )
@@ -290,6 +348,8 @@ class DatasetJob(BaseJob):
 
                     new_dataset = transform_dataset_with_schema(new_dataset, schema)
 
+                self.report_progress(0.5, "Computing metadata")
+
                 compute_meta = params.get("compute_metadata", True)
                 extended_keys = (
                     "general_info",
@@ -326,6 +386,8 @@ class DatasetJob(BaseJob):
                     for stale_key in extended_keys:
                         new_dataset.splits.pop(stale_key, None)
                 gc.collect()
+
+                self.report_progress(0.8, "Saving dataset")
 
                 dataset_save_path = folder_path / "dataset"
                 log.debug("Saving dataset in %s", str(dataset_save_path))

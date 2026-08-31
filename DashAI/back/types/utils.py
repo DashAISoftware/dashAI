@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Final, List
 
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -16,6 +16,11 @@ from DashAI.back.types.value_types import (
     Time,
     Timestamp,
 )
+
+# Dtypes that cannot be treated as numeric. Shared default for components
+# (explorers, converters) that accept the Categorical semantic type but only
+# when it is numerically encoded (an empty dtype means the dtype is unknown).
+NON_NUMERIC_DTYPES: Final[List[str]] = ["string", "bool", ""]
 
 
 def _get_dtype_arrow_map() -> Dict[str, Any]:
@@ -348,16 +353,48 @@ def is_image_path(value: Any) -> bool:
 # Like "1.234,56" or "1,234.56"
 # So it doesn't overwrite already good floats
 def comma_float_to_float(array: Any) -> Any:
-    """Convert a PyArrow array of float strings with commas to a PyArrow float64 array."""  # noqa: E501
-    # Remove commas and convert to float
-    try:
-        import pyarrow as pa  # local import
+    """Convert a PyArrow array of numeric strings to a PyArrow float64 array.
 
-        if pa.types.is_floating(array.type):
-            return array
-        else:
-            return pa.array(
-                array.to_pandas().str.replace(",", ".").astype(float), type=pa.float64()
-            )
-    except Exception as e:
-        print("Unable to convert array to float:", e)
+    Strings may use either "." or "," as decimal separator. Empty and
+    whitespace only entries are treated as missing values, since delimited files
+    commonly use them to represent an absent number.
+
+    Parameters
+    ----------
+    array : pa.Array or pa.ChunkedArray
+        The array to convert. Floating arrays are returned unchanged.
+
+    Returns
+    -------
+    pa.Array or pa.ChunkedArray
+        A float64 array with the converted values.
+
+    Raises
+    ------
+    ValueError
+        If the array holds values that cannot be read as floats.
+    """
+    import pandas as pd  # local import
+    import pyarrow as pa  # local import
+
+    if pa.types.is_floating(array.type):
+        return array
+
+    if not (pa.types.is_string(array.type) or pa.types.is_large_string(array.type)):
+        try:
+            return array.cast(pa.float64())
+        except pa.ArrowInvalid as e:
+            raise ValueError(
+                f"Unable to convert values of type {array.type} to float: {e}"
+            ) from e
+
+    values = array.to_pandas().str.strip().str.replace(",", ".", regex=False)
+    values = values.mask(values == "")
+    converted = pd.to_numeric(values, errors="coerce")
+
+    unconvertible = values.notna() & converted.isna()
+    if unconvertible.any():
+        sample = ", ".join(repr(value) for value in values[unconvertible].unique()[:3])
+        raise ValueError(f"Unable to convert values to float: {sample}")
+
+    return pa.array(converted.astype(float), type=pa.float64())

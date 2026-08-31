@@ -24,21 +24,6 @@ class ClusteringTask(UnsupervisedTask):
         en="Clustering", es="Agrupamiento", pt="Agrupamento", de="Clustering", zh="聚类"
     )
 
-    SCORING_PROFILES = {
-        "cluster_separation": {
-            "description": "Cluster Separation",
-            "weights": {"Silhouette": 0.6, "CalinskiHarabasz": 0.4},
-        },
-        "cluster_compactness": {
-            "description": "Cluster Compactness",
-            "weights": {
-                "Silhouette": 0.4,
-                "DaviesBouldin": 0.4,
-                "CalinskiHarabasz": 0.2,
-            },
-        },
-    }
-
     metadata: dict = {
         "inputs_types": [Float, Integer],
         "outputs_types": [],

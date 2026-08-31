@@ -1,10 +1,10 @@
 """Base class for models trained and evaluated with target columns."""
 
+import logging
 import math
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Dict, final
 
-from fastapi import logger
 from kink import di
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
@@ -13,6 +13,8 @@ from DashAI.back.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+logger = logging.getLogger(__name__)
 
 
 class SupervisedModel(BaseModel):
@@ -62,6 +64,8 @@ class SupervisedModel(BaseModel):
         level: LevelEnum,
         results: Dict[str, float],
         log_index: int = None,
+        fold_index: int = None,
+        inner_fold_index: int = None,
     ):
         """Persist computed metric values to the database.
 
@@ -167,6 +171,8 @@ class SupervisedModel(BaseModel):
                         name=name,
                         value=score,
                         step=log_index,
+                        fold_index=fold_index,
+                        inner_fold_index=inner_fold_index,
                     )
                     for name, score in results.items()
                 ]
@@ -182,6 +188,8 @@ class SupervisedModel(BaseModel):
         log_index: int = None,
         x_data: "DashAIDataset" = None,
         y_data: "DashAIDataset" = None,
+        fold_index: int = None,
+        inner_fold_index: int = None,
     ):
         """Calculate and save metrics for a given data split and level.
 
@@ -246,5 +254,80 @@ class SupervisedModel(BaseModel):
 
         # Save to database
         self._save_metrics(
-            split=split, level=level, results=results, log_index=log_index
+            split=split,
+            level=level,
+            results=results,
+            log_index=log_index,
+            fold_index=fold_index,
+            inner_fold_index=inner_fold_index,
         )
+
+        # Report the epoch to whoever is watching, AFTER persisting: the reporter
+        # is allowed to raise (Optuna prunes that way), and the metrics of the
+        # epoch that triggered the stop should survive it.
+        if (
+            self._epoch_reporter is not None
+            and level is LevelEnum.EPOCH
+            and split is SplitEnum.VALIDATION
+        ):
+            self._epoch_reporter(results, log_index)
+
+    # Create a function similar to calculate_metrics that returns the scores
+    # instead of saving them to the database, to be used in the CV evaluation loop
+    def compute_metrics(
+        self,
+        split: SplitEnum = SplitEnum.TEST,
+        x_data: "DashAIDataset" = None,
+        y_data: "DashAIDataset" = None,
+    ) -> Dict[str, float]:
+        """Calculate and return metric scores for a given data split.
+
+        Parameters
+        ----------
+        split : SplitEnum
+            The data split to evaluate (TRAIN, VALIDATION,
+            or TEST). Defaults to SplitEnum.VALIDATION.
+        x_data : DashAIDataset, optional
+            Input features. If None, the
+            dataset stored in the model for the given split is used.
+            Defaults to None.
+        y_data : DashAIDataset, optional
+            Target labels. If None, the
+            labels stored in the model for the given split are used.
+            Defaults to None.
+
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary mapping metric names to their computed scores.
+        """
+        # Get the appropriate metrics based on split
+        metrics_attr = f"{split.value}_metrics"
+        metrics = getattr(self, metrics_attr, None)
+
+        # If no metrics, return empty dict
+        if not metrics:
+            return {}
+
+        # Load data if not provided
+        if x_data is None or y_data is None:
+            if self.x_data is None or self.y_data is None:
+                return {}
+            x_data = self.x_data[split.value]
+            y_data = self.y_data[split.value]
+
+        # If data is empty after retrieval, return empty dict
+        if x_data is None or y_data is None:
+            return {}
+
+        # Make predictions and transform outputs
+        y_pred = self.predict(x_data)
+        y_transformed = self.prepare_output(y_data, is_fit=False)
+
+        # Calculate metric scores
+        results = {}
+        for metric in metrics:
+            score = metric.score(y_transformed, y_pred)
+            results[metric.__name__] = score
+
+        return results

@@ -24,9 +24,11 @@ export function GenerativeProvider({ children }) {
     fetchSessions,
     fetchTasks,
     deleteSessionById,
+    deleteSessionsByIds,
     editSession,
   } = useSessions({ t });
   const [stepIndex, setStepIndex] = useState(0);
+  const [openSections, setOpenSections] = useState({});
 
   useEffect(() => {
     fetchSessions();
@@ -53,7 +55,10 @@ export function GenerativeProvider({ children }) {
     fetchTasks,
     stepIndex,
     setStepIndex,
+    openSections,
+    setOpenSections,
     deleteSessionById,
+    deleteSessionsByIds,
     editSession,
   };
 

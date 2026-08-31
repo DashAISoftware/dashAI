@@ -1,18 +1,26 @@
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from kink import inject
 from sqlalchemy import exc
 
+from DashAI.back.core.atomic import atomic_save_path
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
+from DashAI.back.dependencies.downloads.nested import missing_downloads
+from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
 from DashAI.back.job.base_job import BaseJob, JobError
-from DashAI.back.job.model_job_context import ModelJobContext
+from DashAI.back.metrics.base_metric import BaseMetric
+from DashAI.back.models.model_factory import ModelFactory
+from DashAI.back.optimizers.base_optimizer import BaseOptimizer
+from DashAI.back.splitters.base_splitter import BaseSplitter
+from DashAI.back.splitters.splits_payload import normalize_splits_payload
 from DashAI.back.tasks.base_task import BaseTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+    from DashAI.back.models.base_model import BaseModel
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -82,9 +90,11 @@ class ModelJob(BaseJob):
         return f"Model Training ({run_id})"
 
     @inject
-    def run(self) -> None:
-        """Run a model job by delegating execution to the task executor."""
+    def run(
+        self,
+    ) -> None:
         import gc
+        import json
         import os
 
         from kink import di
@@ -93,20 +103,46 @@ class ModelJob(BaseJob):
         session_factory = di["session_factory"]
         config = di["config"]
 
+        # Get the necessary parameters
         run_id: int = self.kwargs["run_id"]
 
         with session_factory() as db:
             run: Run = db.get(Run, run_id)
             run.huey_id = self.kwargs.get("huey_id", None)
             db.commit()
-
+            self.report_progress(0.05, "Preparing data")
             try:
-                context = self._build_context(
-                    run=run,
-                    db=db,
-                    component_registry=component_registry,
-                    config=config,
-                )
+                try:
+                    # Get the dataset and components prepared for the model training
+                    preparation_results = self._prepare_dataset_and_components(
+                        run_id=run_id, db=db, component_registry=component_registry
+                    )
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Error preparing dataset and components for run {run_id}: {e}",
+                    ) from e
+
+                requires_target = preparation_results["requires_target"]
+
+                if requires_target:
+                    try:
+                        # Get splits from the splitter
+                        splitter: BaseSplitter = preparation_results["splitter"]
+                        # Get the dataset splits between input and output columns
+                        X, Y = preparation_results["X"], preparation_results["Y"]
+
+                        # Get x,y but now splitted with train, validation and test
+                        # indexes each one, and the indexes used for the splits
+                        x, y, splits = splitter.split(X, Y)
+
+                        # save the obtained splits into the database
+                        run.split_indexes = json.dumps(splits)
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            f"Error splitting the dataset for run {run_id}: {e}",
+                        ) from e
 
                 try:
                     run.set_status_as_started()
@@ -117,18 +153,53 @@ class ModelJob(BaseJob):
                         "Connection with the database failed",
                     ) from e
 
+                self.report_progress(0.2, "Training")
                 try:
-                    executor = self._get_task_executor(context)
-                    model = executor.execute(context)
+                    # Hyperparameter Tunning
+                    plot_paths = []
+
+                    if requires_target:
+                        evaluation_estrategy: BaseEvaluationStrategy = (
+                            preparation_results["evaluation_strategy"]
+                        )
+
+                        evaluation_estrategy.set_progress_reporter(self.report_progress)
+                        model, plot_paths = evaluation_estrategy.execute(
+                            x=x,
+                            y=y,
+                            run=run,
+                            db=db,
+                        )
+                    else:
+                        # No evaluation strategy: nothing was held out, so the
+                        # model is fitted once and scored over the whole dataset.
+                        model = self._train_without_target(preparation_results, run, db)
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
-                        f"Model training failed {e}",
+                        f"Model training and evaluation failed {e}",
                     ) from e
 
                 try:
+                    paths = plot_paths + [None] * (4 - len(plot_paths))
+                    (
+                        run.plot_history_path,
+                        run.plot_slice_path,
+                        run.plot_contour_path,
+                        run.plot_importance_path,
+                    ) = paths[:4]
+                    db.commit()
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Hyperparameter plot path saving failed {e}",
+                    ) from e
+
+                self.report_progress(0.95, "Saving model")
+                try:
                     run_path = os.path.join(config["RUNS_PATH"], str(run.id))
-                    model.save(run_path)
+                    with atomic_save_path(run_path) as tmp_run_path:
+                        model.save(str(tmp_run_path))
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -161,10 +232,51 @@ class ModelJob(BaseJob):
             finally:
                 gc.collect()
 
-    def _build_context(self, run, db, component_registry, config) -> ModelJobContext:
-        """Build the shared context consumed by task-specific executors."""
-        from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
+    def _prepare_dataset_and_components(
+        self, run_id: int, db, component_registry
+    ) -> Dict[str, Any]:
+        """Prepare the dataset, task, splitter, metrics, model, and evaluation strategy.
 
+        This helper resolves the persisted training configuration for a run,
+        loads the associated dataset from disk, prepares it for the selected
+        task, instantiates the required components from the component registry,
+        and builds the model factory together with the evaluation strategy.
+
+        Parameters
+        ----------
+        run_id : int
+            Identifier of the training run whose configuration and artifacts must
+            be loaded.
+        db : object
+            Database access object used to retrieve the run, model session, and
+            related persisted entities.
+        component_registry : object
+            Registry containing the available task, splitter, metric, model,
+            optimizer, and evaluation strategy implementations.
+
+        Returns
+        -------
+        dict
+            A dictionary containing the prepared input and output datasets, the
+            instantiated splitter, and the evaluation strategy.
+
+        Raises
+        ------
+        JobError
+            If the run, model session, dataset, task, splitter, metrics, model,
+            optimizer, or evaluation strategy cannot be resolved or instantiated.
+        """
+
+        import json
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import (
+            load_dataset,
+            select_columns,
+        )
+
+        run: Run = db.get(Run, run_id)
+
+        # Get the model session and dataset from the database
         model_session: ModelSession = db.get(ModelSession, run.model_session_id)
         if not model_session:
             raise JobError(
@@ -176,6 +288,7 @@ class ModelJob(BaseJob):
             raise JobError(f"Dataset {model_session.dataset_id} does not exist in DB.")
 
         try:
+            # Load dataset from the file path
             loaded_dataset: "DashAIDataset" = load_dataset(
                 f"{dataset.file_path}/dataset"
             )
@@ -186,6 +299,7 @@ class ModelJob(BaseJob):
             ) from e
 
         try:
+            # Get task from model session
             task: BaseTask = component_registry[model_session.task_name]["class"]()
         except Exception as e:
             log.exception(e)
@@ -196,39 +310,388 @@ class ModelJob(BaseJob):
                 ),
             ) from e
 
-        return ModelJobContext(
-            run=run,
-            model_session=model_session,
-            dataset_record=dataset,
-            dataset=loaded_dataset,
-            task=task,
-            component_registry=component_registry,
-            db=db,
-            config=config,
-        )
+        # A task that declares no target (clustering) trains on the whole dataset:
+        # there is nothing to hold out, nothing to optimise against and no
+        # y_true to score predictions with, so it skips the splitter, the
+        # optimiser and the evaluation strategy entirely.
+        #
+        # This branch is deliberately a flag rather than a task-specific
+        # executor: the units stack (PRs #791/#792, reverted from develop on
+        # 2026-08-17) is where per-task steps belong, and building a parallel
+        # abstraction here would only have to be deleted when it comes back.
+        if not getattr(task, "REQUIRES_TARGET", True):
+            return self._prepare_without_target(
+                run=run,
+                model_session=model_session,
+                dataset=dataset,
+                loaded_dataset=loaded_dataset,
+                task=task,
+                component_registry=component_registry,
+            )
 
-    def _get_task_executor(self, context: ModelJobContext):
-        """Resolve the executor compatible with the current task.
+        try:
+            # Prepare dataset for the task and get number of labels of the task
+            prepared_dataset = task.prepare_for_task(
+                dataset=loaded_dataset,
+                input_columns=model_session.input_columns,
+                output_columns=model_session.output_columns,
+            )
+            n_labels = task.num_labels(
+                prepared_dataset, model_session.output_columns[0]
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"""Can not prepare Dataset {dataset.id}
+                for Task {model_session.task_name}""",
+            ) from e
 
-        Each task must have exactly one compatible executor. Executors are
-        internal job components related to tasks through ``COMPATIBLE_COMPONENTS``;
-        this keeps ``ModelJob`` independent from concrete task families such as
-        supervised learning, clustering, or forecasting.
+        try:
+            # Divide the dataset into two datasets:
+            # one with the input columns and another with the output column
+            X, Y = select_columns(
+                loaded_dataset,
+                model_session.input_columns,
+                model_session.output_columns,
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Error selecting input and output columns from dataset {dataset.id}",
+            ) from e
+
+        try:
+            # Get splits data from model session
+            splits_data = json.loads(model_session.splits)
+            if run.split_indexes:
+                splits_data["splitted_indexes"] = json.loads(run.split_indexes)
+            # Sessions created before the splits payload followed the splitter
+            # schema use different keys for the seed and for manual indexes.
+            splits_data = normalize_splits_payload(splits_data)
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Can not load splits data from model session {model_session.id}",
+            ) from e
+
+        try:
+            # Get the splitter class from the registry and split the dataset
+            splitter_name = splits_data.get("splitter_name", None)
+            splitter: BaseSplitter = component_registry[splitter_name]["class"](
+                splits_data=splits_data,
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"""Unable to find Splitter with name
+                {splitter_name} in registry.""",
+            ) from e
+
+        try:
+            # Get metrics from model session
+            train_metrics: List[BaseMetric] = [
+                component_registry[m]["class"] for m in model_session.train_metrics
+            ]
+            validation_metrics: List[BaseMetric] = [
+                component_registry[m]["class"] for m in model_session.validation_metrics
+            ]
+            test_metrics: List[BaseMetric] = [
+                component_registry[m]["class"] for m in model_session.test_metrics
+            ]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                "Unable to find metrics associated with"
+                f"Task {model_session.task_name} in registry",
+            ) from e
+
+        try:
+            # Get the model class from the registry
+            run_model_class = component_registry[run.model_name]["class"]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Unable to find Model with name {run.model_name} in registry.",
+            ) from e
+
+        # Make sure the model (and any nested components) are downloaded
+        # before attempting to train, otherwise fail fast with a clear error.
+        if getattr(run_model_class, "REQUIRES_DOWNLOAD", False) and not (
+            run_model_class.is_downloaded()
+        ):
+            raise JobError(
+                f"Model {run.model_name} is not downloaded. "
+                "Download it before training."
+            )
+        nested_missing = missing_downloads(run.parameters, component_registry)
+        if nested_missing:
+            names = ", ".join(m["name"] for m in nested_missing)
+            raise JobError(
+                "These components are not downloaded. "
+                f"Download them before training: {names}."
+            )
+
+        try:
+            # Get the optimizer if defined
+            optimizer: BaseOptimizer = None
+            goal_metric = None
+
+            if run.optimizer_name:
+                run_optimizer_class = component_registry[run.optimizer_name]["class"]
+                optimizer: BaseOptimizer = run_optimizer_class(
+                    **run.optimizer_parameters
+                )
+                goal_metric = component_registry[run.goal_metric]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Error instantiating optimizer {run.optimizer_name}, {e}",
+            ) from e
+
+        try:
+            # Instantiate the model using the ModelFactory
+            # and get the optimizable parameters
+            factory = ModelFactory(
+                model=run_model_class,
+                params=run.parameters,
+                run_id=run_id,
+                train_metrics=train_metrics,
+                validation_metrics=validation_metrics,
+                test_metrics=test_metrics,
+                n_labels=n_labels,
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Unable to instantiate model using run {run_id}",
+            ) from e
+
+        try:
+            # Get the evaluation strategy for the model session
+            evaluation_strategy: BaseEvaluationStrategy = component_registry[
+                model_session.evaluation_strategy
+            ]["class"](
+                factory=factory,
+                optimizer=optimizer,
+                goal_metric=goal_metric,
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                # string is too long, so it has to be split in two
+                f"""Unable to find Evaluation Strategy with name
+                {model_session.evaluation_strategy} in registry.""",
+            ) from e
+
+        return {
+            "requires_target": True,
+            "X": X,
+            "Y": Y,
+            "splitter": splitter,
+            "evaluation_strategy": evaluation_strategy,
+        }
+
+    def _prepare_without_target(
+        self,
+        run: Run,
+        model_session: ModelSession,
+        dataset: Dataset,
+        loaded_dataset: "DashAIDataset",
+        task: BaseTask,
+        component_registry,
+    ) -> Dict[str, Any]:
+        """Prepare the dataset and the model for a task with no target column.
+
+        The counterpart of :meth:`_prepare_dataset_and_components` for tasks
+        whose ``REQUIRES_TARGET`` is False. It resolves only what such a task
+        can use: the input columns and the model. There is no splitter, no
+        optimiser and no evaluation strategy, because none of them mean
+        anything without held-out rows to evaluate against.
+
+        Parameters
+        ----------
+        run : Run
+            The run being trained.
+        model_session : ModelSession
+            The session holding the column selection and the task name.
+        dataset : Dataset
+            The dataset record, used for error messages.
+        loaded_dataset : DashAIDataset
+            The dataset already loaded from disk.
+        task : BaseTask
+            The instantiated task.
+        component_registry : object
+            Registry used to resolve the model and the task's metrics.
+
+        Returns
+        -------
+        dict
+            ``{"requires_target": False, "X", "factory", "metrics"}``.
+
+        Raises
+        ------
+        JobError
+            If the dataset cannot be prepared or the model cannot be built.
         """
-        task_name = context.model_session.task_name
-        component_registry = context.component_registry
+        from DashAI.back.dataloaders.classes.dashai_dataset import select_columns
 
-        related_components = component_registry.get_related_components(task_name)
-        executor_components = [
-            component
-            for component in related_components
-            if component.get("type") == "TaskExecutor"
-        ]
+        try:
+            # No metric picker of its own: every Metric registered for the task
+            # is computed, since there is no split to choose between.
+            metric_names = [
+                component["name"]
+                for component in component_registry.get_related_components(
+                    model_session.task_name
+                )
+                if component.get("type") == "Metric"
+            ]
+            metrics: List[BaseMetric] = [
+                component_registry[name]["class"] for name in metric_names
+            ]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                "Unable to find metrics associated with "
+                f"Task {model_session.task_name} in registry",
+            ) from e
 
-        if not executor_components:
-            raise JobError(f"No task executor found for Task {task_name}.")
+        try:
+            prepared_dataset = task.prepare_for_task(
+                dataset=loaded_dataset,
+                input_columns=model_session.input_columns,
+                output_columns=[],
+            )
+            X, _ = select_columns(prepared_dataset, model_session.input_columns, [])
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"""Can not prepare Dataset {dataset.id}
+                for Task {model_session.task_name}""",
+            ) from e
 
-        if len(executor_components) > 1:
-            raise JobError(f"Multiple task executors found for Task {task_name}.")
+        try:
+            run_model_class = component_registry[run.model_name]["class"]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Unable to find Model with name {run.model_name} in registry.",
+            ) from e
 
-        return executor_components[0]["class"]()
+        if getattr(run_model_class, "REQUIRES_DOWNLOAD", False) and not (
+            run_model_class.is_downloaded()
+        ):
+            raise JobError(
+                f"Model {run.model_name} is not downloaded. "
+                "Download it before training."
+            )
+        nested_missing = missing_downloads(run.parameters, component_registry)
+        if nested_missing:
+            names = ", ".join(m["name"] for m in nested_missing)
+            raise JobError(
+                "These components are not downloaded. "
+                f"Download them before training: {names}."
+            )
+
+        try:
+            factory = ModelFactory(
+                model=run_model_class,
+                params=run.parameters,
+                run_id=run.id,
+                n_labels=None,
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Unable to instantiate model using run {run.id}",
+            ) from e
+
+        return {
+            "requires_target": False,
+            "X": X,
+            "factory": factory,
+            "metrics": metrics,
+        }
+
+    def _train_without_target(
+        self, preparation_results: Dict[str, Any], run: Run, db
+    ) -> "BaseModel":
+        """Fit a model with no target column and score it over the whole dataset.
+
+        Parameters
+        ----------
+        preparation_results : dict
+            The dict returned by :meth:`_prepare_without_target`.
+        run : Run
+            The run being trained, used as the metrics' correlation id.
+        db : object
+            Open database session the metrics are written through.
+
+        Returns
+        -------
+        BaseModel
+            The fitted model, for the job's common saving path.
+
+        Raises
+        ------
+        JobError
+            If training or metric computation fails.
+        """
+        from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
+        from DashAI.back.dependencies.database.models import Metric
+
+        x = preparation_results["X"]
+        model = preparation_results["factory"].model
+
+        try:
+            model.train(x)
+            labels = model.get_cluster_labels(x)
+        except Exception as e:
+            log.exception(e)
+            raise JobError(f"Model training failed {e}") from e
+
+        try:
+            results = {}
+            for metric in preparation_results["metrics"]:
+                score = metric.score(x, labels)
+                if score is not None:
+                    results[metric.__name__] = score
+        except Exception as e:
+            log.exception(e)
+            raise JobError(f"Metric calculation failed {e}") from e
+
+        # Written straight here rather than through BaseModel.calculate_metrics:
+        # that path compares y_true against predictions, which is precisely what
+        # this kind of task does not have. One row per metric, over the full
+        # dataset, upserted so a re-train replaces the previous values.
+        try:
+            for name, value in results.items():
+                existing = (
+                    db.query(Metric)
+                    .filter_by(
+                        run_id=run.id,
+                        split=SplitEnum.FULL,
+                        level=LevelEnum.LAST,
+                        name=name,
+                    )
+                    .first()
+                )
+                if existing:
+                    existing.value = value
+                    existing.step = 0
+                else:
+                    db.add(
+                        Metric(
+                            run_id=run.id,
+                            split=SplitEnum.FULL,
+                            level=LevelEnum.LAST,
+                            name=name,
+                            value=value,
+                            step=0,
+                        )
+                    )
+            db.commit()
+        except Exception as e:
+            log.exception(e)
+            raise JobError(f"Metric saving failed {e}") from e
+
+        return model

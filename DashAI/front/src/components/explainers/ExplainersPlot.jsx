@@ -1,159 +1,325 @@
-import { React, useEffect, useMemo, useState } from "react";
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  CircularProgress,
-  Box,
-} from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import Plot from "react-plotly.js";
+import { React, useEffect, useState } from "react";
+import { CircularProgress, Box } from "@mui/material";
 import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 
 import { getExplainerPlot as getExplainerPlotRequest } from "../../api/explainer";
 import { useTranslation } from "react-i18next";
-import { applyThemeToLayout } from "../../utils/plotlyTheme";
+import ArtifactViewer from "../shared/ArtifactViewer";
+import ExplainerInstanceTable from "./ExplainerInstanceTable";
+import StoryBox from "./StoryBox";
 
-export default function ExplainersPlot({ explainer, scope }) {
-  const { enqueueSnackbar } = useSnackbar();
-  const theme = useTheme();
-  const [explainersPlots, setExplainersPlots] = useState([]);
-  const [currentPlot, setCurrentPlot] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const isLocal = scope === "local";
+/** Wrap legacy plotly JSON strings as plotly artifacts; pass typed dicts through. */
+function parseExplanationArtifacts(items) {
+  return items.map((item) =>
+    typeof item === "string"
+      ? { type: "plotly", payload: item, title: null, role: "explanation" }
+      : item,
+  );
+}
+
+/** Build the onSaveEdit/onResetEdit/canReset props shared by every leaf. */
+function leafProps(
+  artifact,
+  { onSaveOverride, onResetOverride, overriddenIndexes },
+) {
+  return {
+    canReset: overriddenIndexes.includes(artifact.index),
+    onSaveEdit: onSaveOverride
+      ? (figure) => onSaveOverride(artifact.index, figure)
+      : null,
+    onResetEdit: onResetOverride ? () => onResetOverride(artifact.index) : null,
+  };
+}
+
+/**
+ * Lay out a batch of leaf artifacts: the first artifact fills the row beside
+ * whatever `leading` element is passed (a selector, or nothing); any further
+ * artifacts stack below at full width, most recent first. `siblings` is the
+ * full artifact list of the batch so the fullscreen viewer can navigate
+ * between them.
+ */
+function ArtifactBatch({
+  artifacts,
+  siblings,
+  ctx,
+  leading = null,
+  leadingFlex,
+  leadingMinWidth = 0,
+  siblingOffset = 0,
+}) {
+  // Key by position within the batch, not by artifact.index: switching the
+  // selected group then reuses the same viewer/Plot instance at each slot and
+  // updates it in place (Plotly diffs) instead of unmounting the tall old plot
+  // and mounting a new one, which briefly collapses page height and makes the
+  // window scroll up.
+  //
+  // siblingIndex maps this leaf into `siblings` (which may span every group,
+  // not just this batch) via siblingOffset, so the fullscreen viewer can page
+  // across groups even when each group has a single artifact.
+  const renderLeaf = (artifact, i) => (
+    <ArtifactViewer
+      key={i}
+      artifact={artifact}
+      siblingArtifacts={siblings}
+      siblingIndex={siblingOffset + i}
+      {...leafProps(artifact, ctx)}
+    />
+  );
+
+  const [firstArtifact, ...rest] = artifacts;
+  const stacked = rest.map((artifact, i) => ({ artifact, i: i + 1 })).reverse();
+
+  return (
+    <Box
+      sx={{ display: "flex", flexDirection: "column", gap: 3, width: "100%" }}
+    >
+      <Box sx={{ display: "flex", gap: 3, alignItems: "stretch" }}>
+        {leading && (
+          <Box
+            sx={{
+              flex: leadingFlex,
+              minWidth: leadingMinWidth,
+              // Flex + stretch so the leading element (a table whose root is
+              // height:100%) fills this cell and matches the first artifact's
+              // height instead of collapsing to its own content.
+              display: "flex",
+              minHeight: 0,
+            }}
+          >
+            {leading}
+          </Box>
+        )}
+        <Box sx={{ flex: 1, minWidth: 0 }}>{renderLeaf(firstArtifact, 0)}</Box>
+      </Box>
+      {stacked.map(({ artifact, i }) => renderLeaf(artifact, i))}
+    </Box>
+  );
+}
+
+ArtifactBatch.propTypes = {
+  artifacts: PropTypes.array.isRequired,
+  siblings: PropTypes.array.isRequired,
+  ctx: PropTypes.object.isRequired,
+  leading: PropTypes.node,
+  leadingFlex: PropTypes.string,
+  leadingMinWidth: PropTypes.number,
+  siblingOffset: PropTypes.number,
+};
+
+/**
+ * Render a GroupedArtifacts item: a selector listing every group, beside the
+ * selected group's first artifact (with the rest stacked below). Holds its own
+ * selection state, so multiple selectors on one card are independent.
+ *
+ * The selector widget depends on `datasetPath`: local explainers pass the
+ * explained rows dataset path so the picker shows the actual instance feature
+ * values (the row index selects the group); global explainers omit it and get
+ * a plain title list.
+ */
+function GroupedArtifactsView({
+  grouped,
+  ctx,
+  datasetPath = null,
+  selected: selectedProp = null,
+  onSelect = null,
+}) {
   const { t } = useTranslation(["explainers"]);
+  const [localSelected, setLocalSelected] = useState(0);
+  const selected = selectedProp ?? localSelected;
+  const setSelected = onSelect ?? setLocalSelected;
+  const groups = grouped.groups ?? [];
+  if (groups.length === 0) return null;
 
-  const themedLayout = useMemo(() => {
-    if (!explainersPlots[currentPlot]) return {};
-    return applyThemeToLayout(explainersPlots[currentPlot].layout, theme);
-  }, [explainersPlots, currentPlot, theme]);
-  function parseExplanationPlot(explanation) {
-    const formattedPlot = JSON.parse(JSON.stringify(explanation));
-    return formattedPlot.map(JSON.parse);
+  const group = groups[selected] ?? groups[0];
+  const titles = groups.map(
+    (g, i) =>
+      g.title ?? t("explainers:label.instanceNumber", { number: i + 1 }),
+  );
+  const wide = Boolean(datasetPath);
+
+  // Fullscreen navigation spans every group's artifacts (flattened), so the
+  // viewer can page across groups even when each group has a single artifact.
+  // The selected group's artifacts occupy the slice starting at `offset`.
+  const allArtifacts = groups.flatMap((g) => g.artifacts);
+  const offset = groups
+    .slice(0, selected)
+    .reduce((n, g) => n + g.artifacts.length, 0);
+
+  // Rendered directly (no height cap): ExplainerInstanceTable's root is
+  // height:100%, so it fills the stretched batch cell and matches the height
+  // of the first artifact beside it, scrolling internally when long.
+  const selector = (
+    <ExplainerInstanceTable
+      datasetPath={datasetPath}
+      titles={titles}
+      selectedIndex={selected}
+      onSelect={setSelected}
+    />
+  );
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <ArtifactBatch
+        artifacts={group.artifacts}
+        siblings={allArtifacts}
+        siblingOffset={offset}
+        ctx={ctx}
+        leading={selector}
+        leadingFlex={wide ? "0 0 46%" : "0 0 25%"}
+        leadingMinWidth={wide ? 320 : 220}
+      />
+      <StoryBox story={group.story} groupTitle={group.title} />
+    </Box>
+  );
+}
+
+GroupedArtifactsView.propTypes = {
+  grouped: PropTypes.object.isRequired,
+  ctx: PropTypes.object.isRequired,
+  datasetPath: PropTypes.string,
+  selected: PropTypes.number,
+  onSelect: PropTypes.func,
+};
+
+/**
+ * Render one top level response item: a "grouped" selector
+ * (`GroupedArtifactsView`) or a plain leaf artifact (shown alone at full
+ * width). `datasetPath` is forwarded to grouped items so local explainers get
+ * the dataset row picker.
+ */
+function renderItem(item, ctx, datasetPath = null, selection = null) {
+  if (item.type === "grouped") {
+    return (
+      <GroupedArtifactsView
+        grouped={item}
+        ctx={ctx}
+        datasetPath={datasetPath}
+        selected={selection ? selection.selected : null}
+        onSelect={selection ? selection.onSelect : null}
+      />
+    );
   }
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      <ArtifactViewer artifact={item} {...leafProps(item, ctx)} />
+      <StoryBox story={item.story} groupTitle={item.title} />
+    </Box>
+  );
+}
+
+export default function ExplainersPlot({
+  explainer,
+  scope,
+  onSaveOverride = null,
+  onResetOverride = null,
+  overriddenIndexes = [],
+  cacheEntry = null,
+  onCacheUpdate = null,
+}) {
+  const { enqueueSnackbar } = useSnackbar();
+  const cachedItems = cacheEntry ? cacheEntry.items : null;
+  const [items, setItems] = useState(() => cachedItems ?? []);
+  const [loading, setLoading] = useState(() => cachedItems == null);
+  const { t } = useTranslation(["explainers"]);
+  const isLocal = scope === "local";
+  const datasetPath = isLocal ? explainer.input_dataset_path : null;
 
   const getExplainerPlot = async () => {
     setLoading(true);
     try {
-      const explainersPlots = await getExplainerPlotRequest(
-        explainer.id,
-        scope,
-      );
-      if (!explainersPlots || explainersPlots.length === 0) {
-        setExplainersPlots([]);
-        setCurrentPlot(0);
-        enqueueSnackbar(t("explainers:error.noData"), {
-          variant: "warning",
-        });
+      const response = await getExplainerPlotRequest(explainer.id, scope);
+      if (!response || response.length === 0) {
+        setItems([]);
+        if (onCacheUpdate) onCacheUpdate({ items: [] });
+        enqueueSnackbar(t("explainers:error.noData"), { variant: "warning" });
       } else {
-        const parsedExplainersPlot = parseExplanationPlot(explainersPlots);
-        setExplainersPlots(parsedExplainersPlot);
-        // Reset currentPlot when data updates to avoid stale index
-        setCurrentPlot(0);
+        const parsed = parseExplanationArtifacts(response);
+        setItems(parsed);
+        if (onCacheUpdate) onCacheUpdate({ items: parsed });
       }
     } catch (error) {
-      setExplainersPlots([]);
-      setCurrentPlot(0);
+      setItems([]);
+      if (onCacheUpdate) onCacheUpdate({ items: [] });
       enqueueSnackbar(t("explainers:error.fetchExplainers"), {
         variant: "error",
       });
-      if (error.response) {
-        console.error("Response error:", error.message);
-      } else if (error.request) {
-        console.error("Request error", error.request);
-      } else {
-        console.error("Unknown Error", error.message);
-      }
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (explainer.status === 3) {
-      getExplainerPlot();
+    if (explainer.status !== 3) return;
+    // Cache hit: reuse fetched artifacts, skip the network entirely so a card
+    // scrolled back into view does not refetch.
+    if (cacheEntry && cacheEntry.items != null) {
+      setItems(cacheEntry.items);
+      setLoading(false);
+      return;
     }
-  }, [explainer.id, explainer.status]);
+    getExplainerPlot();
+  }, [explainer.id, explainer.status, scope]);
 
+  if (loading || explainer.status !== 3) {
+    if (explainer.status === 4) {
+      return <Box sx={{ p: 4 }}>{t("explainers:error.explainerFailed")}</Box>;
+    }
+    return (
+      <Box sx={{ display: "flex", justifyContent: "flex-start", p: 2 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (items.length === 0) {
+    return <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>;
+  }
+
+  const ctx = { onSaveOverride, onResetOverride, overriddenIndexes };
+
+  // Every top level item renders continuously: a plain artifact at full width,
+  // a "grouped" item as its own self contained selector. Local explainers pass
+  // the explained rows dataset path so their grouped selector shows the
+  // instance feature values instead of plain labels.
   return (
     <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        maxWidth: 700,
-        border: 1,
-        borderColor: "divider",
-        bgcolor: "background.default",
-        borderRadius: 1,
-        overflow: "hidden",
-        p: 1,
-      }}
+      sx={{ display: "flex", flexDirection: "column", gap: 3, width: "100%" }}
     >
-      {!loading && isLocal && explainersPlots.length > 0 && (
-        <FormControl variant="outlined" sx={{ minWidth: "200px", mb: 2 }}>
-          <InputLabel id="select-type-label">Select an instance</InputLabel>
-          <Select
-            id="select-type"
-            value={currentPlot}
-            onChange={(event) => setCurrentPlot(event.target.value)}
-            label="class"
-            autoWidth
-          >
-            {explainersPlots.map((_, i) => (
-              <MenuItem key={i} value={i}>
-                {t("explainers:label.instanceNumber", { number: i + 1 })}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      )}
-      {!loading && explainer.status === 3 ? (
-        explainersPlots.length > 0 && explainersPlots[currentPlot] ? (
-          <Plot
-            data={explainersPlots[currentPlot].data}
-            layout={{
-              ...themedLayout,
-              height: 380,
-              autosize: true,
-            }}
-            config={{ displayModeBar: false }}
-            useResizeHandler
-            style={{ width: "100%" }}
-          />
-        ) : (
-          <Box sx={{ p: 2 }}>{t("explainers:error.noData")}</Box>
-        )
-      ) : explainer.status === 4 ? (
-        <Box sx={{ p: 4 }}>{t("explainers:error.explainerFailed")}</Box>
-      ) : (
-        <Box sx={{ display: "flex", justifyContent: "flex-start", p: 2 }}>
-          <CircularProgress />
+      {items.map((item, i) => (
+        <Box key={i}>
+          {renderItem(item, ctx, datasetPath, {
+            selected: cacheEntry ? (cacheEntry.selectedGroups?.[i] ?? 0) : null,
+            onSelect: onCacheUpdate
+              ? (value) =>
+                  onCacheUpdate({
+                    selectedGroups: {
+                      ...(cacheEntry?.selectedGroups ?? {}),
+                      [i]: value,
+                    },
+                  })
+              : null,
+          })}
         </Box>
-      )}
+      ))}
     </Box>
   );
 }
 
 ExplainersPlot.propTypes = {
   explainer: PropTypes.shape({
-    explainer_name: PropTypes.string,
     id: PropTypes.number,
-    parameters: PropTypes.objectOf(
-      PropTypes.oneOfType([
-        PropTypes.number,
-        PropTypes.string,
-        PropTypes.arrayOf(PropTypes.string),
-      ]),
-    ),
     status: PropTypes.number,
-    runId: PropTypes.number,
-    explanationPath: PropTypes.string,
-    plot_path: PropTypes.string,
-    name: PropTypes.string,
-    created: PropTypes.string,
+    input_dataset_path: PropTypes.string,
   }).isRequired,
   scope: PropTypes.string.isRequired,
+  onSaveOverride: PropTypes.func,
+  onResetOverride: PropTypes.func,
+  overriddenIndexes: PropTypes.arrayOf(PropTypes.number),
+  cacheEntry: PropTypes.shape({
+    items: PropTypes.array,
+    selectedGroups: PropTypes.object,
+  }),
+  onCacheUpdate: PropTypes.func,
 };

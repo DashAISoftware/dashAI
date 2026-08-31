@@ -7,11 +7,18 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import ComponentSelector from "../custom/ComponentSelector";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
 import GenerativeBreadcrumbs from "./GenerativeBreadcrumbs";
 import { useCreateSession } from "./CreateSessionContext";
+import { useGenerative } from "./GenerativeContext";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
 import { useTourContext } from "../tour/TourProvider";
+import RAGSessionSetup from "../../pages/generative/RAGSession/RAGSessionSetup";
 
 export default function CreateSessionCenter() {
   const { t } = useTranslation(["generative", "common"]);
@@ -29,6 +36,7 @@ export default function CreateSessionCenter() {
     step,
     models,
     loadingModels,
+    markModelDownloaded,
     selectedModel,
     handleSelectModel,
     formik,
@@ -37,6 +45,9 @@ export default function CreateSessionCenter() {
     handleBack,
     handleCreate,
   } = useCreateSession();
+
+  const navigate = useNavigate();
+  const { sessions, setSessions } = useGenerative();
 
   const handleSelectModelWithTour = useCallback(
     (model) => {
@@ -56,6 +67,18 @@ export default function CreateSessionCenter() {
     handleCreate();
   }, [handleCreate, tourContext]);
 
+  const handleRagSessionCreated = useCallback(
+    (createdSession) => {
+      setSessions((prev) => [...prev, createdSession]);
+      navigate(`/app/generative/sessions/${createdSession.id}`);
+    },
+    [setSessions, navigate],
+  );
+
+  const handleRagClose = useCallback(() => {
+    handleBack();
+  }, [handleBack]);
+
   useEffect(() => {
     if (!tourContext?.run) return;
     const currentTarget = tourContext.steps?.[tourContext.stepIndex]?.target;
@@ -67,9 +90,31 @@ export default function CreateSessionCenter() {
     }
   }, [step]);
 
-  const canGoNext = !!selectedModel;
+  // Read the download status from the (in place updated) models list so the
+  // gate reacts to an inline download without needing selectedModel to change.
+  const selectedModelState =
+    models.find((m) => m.name === selectedModel?.name) || selectedModel;
+  const selectedNeedsDownload =
+    Boolean(selectedModelState?.metadata?.requires_download) &&
+    !selectedModelState?.downloaded;
+
+  // Credentials gate the same way downloads do: a model whose required
+  // credentials are unmet cannot be used to create a session, even when it was
+  // preselected via URL (which bypasses the disabled card in the selector).
+  const { statuses, loaded } = useCredentialStatuses();
+  const { locked: selectedCredentialsLocked } = getComponentCredentialState(
+    selectedModelState || {},
+    statuses,
+    loaded,
+  );
+  const selectedUsable = !selectedNeedsDownload && !selectedCredentialsLocked;
+
+  const canGoNext = !!selectedModel && selectedUsable;
   const canCreate =
-    !!selectedModel && !!formik.values.name?.trim() && !submitting;
+    !!selectedModel &&
+    selectedUsable &&
+    !!formik.values.name?.trim() &&
+    !submitting;
 
   return (
     <Box
@@ -84,18 +129,20 @@ export default function CreateSessionCenter() {
       }}
     >
       <GenerativeBreadcrumbs />
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5" component="h2">
-          {step === 0
-            ? t("generative:label.selectModel")
-            : t("generative:label.configureSession")}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {step === 0
-            ? t("generative:label.pickAModelGroupedByTask")
-            : t("generative:label.nameAndDescribeYourSession")}
-        </Typography>
-      </Box>
+      {step === 1 && selectedModel?.task_name === "RAGTask" ? null : (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5" component="h2">
+            {step === 0
+              ? t("generative:label.selectModel")
+              : t("generative:label.configureSession")}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {step === 0
+              ? t("generative:label.pickAModelGroupedByTask")
+              : t("generative:label.nameAndDescribeYourSession")}
+          </Typography>
+        </Box>
+      )}
 
       <Box
         data-tour={step === 1 ? "session-config" : undefined}
@@ -126,12 +173,21 @@ export default function CreateSessionCenter() {
               components={models}
               selected={selectedModel}
               onSelect={handleSelectModelWithTour}
+              onDownloadChange={(model, isDownloaded) =>
+                markModelDownloaded(model.name, isDownloaded)
+              }
               categoryKey="task_display_name"
               searchPlaceholder={t("generative:label.searchModels")}
               tourDataFor={tourContext?.run ? "model-card-qwen" : null}
               tourDataMatchFn={(c) => c.name.toLowerCase().includes("qwen")}
             />
           )
+        ) : selectedModel?.task_name === "RAGTask" ? (
+          <RAGSessionSetup
+            onClose={handleRagClose}
+            onSessionCreated={handleRagSessionCreated}
+            existingSessions={sessions}
+          />
         ) : (
           <Stack spacing={4} sx={{ maxWidth: "100%" }}>
             <TextField
@@ -158,24 +214,26 @@ export default function CreateSessionCenter() {
         )}
       </Box>
 
-      <StepperNavigationFooter
-        onBack={handleBack}
-        onNext={step === 0 ? handleNextWithTour : handleCreateWithTour}
-        backDisabled={submitting}
-        nextDisabled={step === 0 ? !canGoNext : !canCreate}
-        nextLabel={
-          step === 0 ? t("common:next") : t("generative:button.createSession")
-        }
-        loading={submitting}
-        variant={step === 0 ? "next" : "save"}
-        nextDataTour={
-          tourContext?.run
-            ? step === 0
-              ? "create-session-next"
-              : "create-session-button"
-            : null
-        }
-      />
+      {step === 1 && selectedModel?.task_name === "RAGTask" ? null : (
+        <StepperNavigationFooter
+          onBack={handleBack}
+          onNext={step === 0 ? handleNextWithTour : handleCreateWithTour}
+          backDisabled={submitting}
+          nextDisabled={step === 0 ? !canGoNext : !canCreate}
+          nextLabel={
+            step === 0 ? t("common:next") : t("generative:button.createSession")
+          }
+          loading={submitting}
+          variant={step === 0 ? "next" : "save"}
+          nextDataTour={
+            tourContext?.run
+              ? step === 0
+                ? "create-session-next"
+                : "create-session-button"
+              : null
+          }
+        />
+      )}
     </Box>
   );
 }

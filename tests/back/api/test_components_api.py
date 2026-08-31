@@ -114,6 +114,20 @@ class TestModel2(BaseModel):
     def load(self, filename): ...
 
 
+class TestParentComponent(BaseModel):
+    COMPATIBLE_COMPONENTS = ["TestTask1"]
+
+    @classmethod
+    def get_schema(cls) -> dict:
+        return {}
+
+
+class TestConcreteComponent(TestParentComponent):
+    @classmethod
+    def get_schema(cls) -> dict:
+        return {}
+
+
 @pytest.fixture(
     autouse=True,
     name="test_registry",
@@ -131,6 +145,8 @@ def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch) -> ComponentReg
             TestDataloader3,
             TestModel1,
             TestModel2,
+            TestParentComponent,
+            TestConcreteComponent,
         ]
     )
     monkeypatch.setitem(
@@ -166,6 +182,10 @@ def test_get_component_by_id(client: TestClient):
         "description": "Task 1.",
         "display_name": "Test Task 1",
         "color": "#795548",
+        "required_credentials": [],
+        "optional_credentials": [],
+        "credentials_satisfied": True,
+        "downloaded": True,
     }
 
     response = client.get("/api/v1/component/TestTask2/")
@@ -186,6 +206,10 @@ def test_get_component_by_id(client: TestClient):
         "description": "Task 2.",
         "display_name": None,
         "color": None,
+        "required_credentials": [],
+        "optional_credentials": [],
+        "credentials_satisfied": True,
+        "downloaded": True,
     }
 
     response = client.get("/api/v1/component/TestDataloader1/")
@@ -203,6 +227,10 @@ def test_get_component_by_id(client: TestClient):
         "description": None,
         "display_name": None,
         "color": None,
+        "required_credentials": [],
+        "optional_credentials": [],
+        "credentials_satisfied": True,
+        "downloaded": True,
     }
 
 
@@ -236,7 +264,7 @@ def test_get_all_components(client: TestClient):
     assert response.status_code == 200
     data = response.json()
 
-    assert len(data) == 7
+    assert len(data) == 9
     # Verify important fields for each component
     assert data[0]["name"] == "TestTask1"
     assert data[0]["type"] == "Task"
@@ -270,6 +298,12 @@ def test_get_all_components(client: TestClient):
     }
     assert data[6]["color"] == "#795548"
 
+    assert data[7]["name"] == "TestParentComponent"
+    assert data[7]["type"] == "Model"
+
+    assert data[8]["name"] == "TestConcreteComponent"
+    assert data[8]["type"] == "Model"
+
 
 # -------------------------------------------------------------------------------------
 # Test type select parameter in component getter
@@ -298,6 +332,10 @@ def test_get_components_select_only_tasks(client: TestClient):
             "description": "Task 1.",
             "display_name": "Test Task 1",
             "color": "#795548",
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestTask2",
@@ -315,6 +353,10 @@ def test_get_components_select_only_tasks(client: TestClient):
             "description": "Task 2.",
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
     ]
 
@@ -338,6 +380,10 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -352,6 +398,10 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader3",
@@ -366,6 +416,10 @@ def test_get_components_select_only_dataloaders(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
     ]
 
@@ -376,7 +430,7 @@ def test_get_components_select_tasks_and_models(client: TestClient):
     assert response.status_code == 200
     data = response.json()
 
-    assert len(data) == 4
+    assert len(data) == 6
     # Verify models
     assert data[0]["name"] == "TestModel1"
     assert data[0]["type"] == "Model"
@@ -390,15 +444,21 @@ def test_get_components_select_tasks_and_models(client: TestClient):
     }
     assert data[1]["color"] == "#795548"
 
-    assert data[2]["name"] == "TestTask1"
-    assert data[2]["type"] == "Task"
-    assert data[2]["description"] == "Task 1."
-    assert data[2]["display_name"] == "Test Task 1"
-    assert data[2]["color"] == "#795548"
+    assert data[2]["name"] == "TestParentComponent"
+    assert data[2]["type"] == "Model"
 
-    assert data[3]["name"] == "TestTask2"
-    assert data[3]["type"] == "Task"
-    assert data[3]["description"] == "Task 2."
+    assert data[3]["name"] == "TestConcreteComponent"
+    assert data[3]["type"] == "Model"
+
+    assert data[4]["name"] == "TestTask1"
+    assert data[4]["type"] == "Task"
+    assert data[4]["description"] == "Task 1."
+    assert data[4]["display_name"] == "Test Task 1"
+    assert data[4]["color"] == "#795548"
+
+    assert data[5]["name"] == "TestTask2"
+    assert data[5]["type"] == "Task"
+    assert data[5]["description"] == "Task 2."
 
 
 def test_get_components_select_unexistant_type(client: TestClient):
@@ -448,6 +508,10 @@ def test_get_components_ignore_models(client: TestClient):
             "description": "Task 1.",
             "display_name": "Test Task 1",
             "color": "#795548",
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestTask2",
@@ -465,6 +529,10 @@ def test_get_components_ignore_models(client: TestClient):
             "description": "Task 2.",
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader1",
@@ -479,6 +547,10 @@ def test_get_components_ignore_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -493,6 +565,10 @@ def test_get_components_ignore_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader3",
@@ -507,6 +583,10 @@ def test_get_components_ignore_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
     ]
 
@@ -529,6 +609,10 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -543,6 +627,10 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader3",
@@ -557,6 +645,10 @@ def test_get_components_ignore_tasks_and_models(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
     ]
 
@@ -591,7 +683,7 @@ def test_get_components_related_with_some_task(client: TestClient):
     response = client.get("/api/v1/component?related_component=TestTask1")
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 3
+    assert len(data) == 5
     assert data[0]["name"] == "TestDataloader1"
     assert data[0]["type"] == "DataLoader"
     assert data[1]["name"] == "TestDataloader2"
@@ -600,6 +692,10 @@ def test_get_components_related_with_some_task(client: TestClient):
     assert data[2]["type"] == "Model"
     assert data[2]["schema"] == {"properties": {"parameter_1": {"type": "number"}}}
     assert data[2]["color"] == "#795548"
+    assert data[3]["name"] == "TestParentComponent"
+    assert data[3]["type"] == "Model"
+    assert data[4]["name"] == "TestConcreteComponent"
+    assert data[4]["type"] == "Model"
 
 
 def test_get_components_related_inverse_relation(client: TestClient):
@@ -622,6 +718,10 @@ def test_get_components_related_inverse_relation(client: TestClient):
             "description": "Task 1.",
             "display_name": "Test Task 1",
             "color": "#795548",
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         }
     ]
 
@@ -667,6 +767,10 @@ def test_get_components_dataloader_component_parent(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -681,6 +785,10 @@ def test_get_components_dataloader_component_parent(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
     ]
 
@@ -720,6 +828,10 @@ def test_get_components_by_type_and_task(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -734,6 +846,10 @@ def test_get_components_by_type_and_task(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
     ]
 
@@ -745,11 +861,15 @@ def test_get_components_by_type_and_task_2(client: TestClient):
     )
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
+    assert len(data) == 3
     assert data[0]["name"] == "TestModel1"
     assert data[0]["type"] == "Model"
     assert data[0]["schema"] == {"properties": {"parameter_1": {"type": "number"}}}
     assert data[0]["color"] == "#795548"
+    assert data[1]["name"] == "TestParentComponent"
+    assert data[1]["type"] == "Model"
+    assert data[2]["name"] == "TestConcreteComponent"
+    assert data[2]["type"] == "Model"
 
 
 def test_get_components_select_and_ignore_by_type(client: TestClient):
@@ -772,6 +892,10 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -786,6 +910,10 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader3",
@@ -800,6 +928,10 @@ def test_get_components_select_and_ignore_by_type(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
     ]
 
@@ -825,6 +957,10 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
         {
             "name": "TestDataloader2",
@@ -839,5 +975,9 @@ def test_get_components_select_type_and_parent(client: TestClient):
             "description": None,
             "display_name": None,
             "color": None,
+            "required_credentials": [],
+            "optional_credentials": [],
+            "credentials_satisfied": True,
+            "downloaded": True,
         },
     ]

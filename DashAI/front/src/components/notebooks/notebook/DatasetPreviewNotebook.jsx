@@ -63,6 +63,7 @@ export default function DatasetPreviewNotebook({
   );
 
   const [localColumnTypes, setLocalColumnTypes] = useState({});
+  const [totalRows, setTotalRows] = useState(null);
 
   // Sync types from context — updated by fetchExplorersAndConverters (initial
   // load + delete path) and by handleStatusChange / FormConverterSection
@@ -96,6 +97,14 @@ export default function DatasetPreviewNotebook({
     },
     [notebook?.id],
   );
+
+  // Re-fetch row count whenever converters change
+  useEffect(() => {
+    if (!notebook?.file_path) return;
+    fetchDatasetPage(0, 1, null, null)
+      .then(({ total }) => setTotalRows(total))
+      .catch(() => setTotalRows(null));
+  }, [converterKey, fetchDatasetPage]);
 
   if (!notebook) {
     return (
@@ -307,6 +316,7 @@ export default function DatasetPreviewNotebook({
         )}
         existingDatasets={existingDatasets}
         notebook={notebook}
+        hasNoColumns={convertersLoaded && totalRows === 0}
       />
 
       <NotebookHistoryModal

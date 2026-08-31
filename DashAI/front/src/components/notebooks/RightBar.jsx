@@ -372,6 +372,7 @@ export default function RightBar({ notebook, onToggle }) {
 
   const { filteredExplorers, filteredConverters } = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
+    const tokens = query.split(/\s+/).filter(Boolean);
 
     const asString = (value) => (typeof value === "string" ? value : "");
 
@@ -386,13 +387,14 @@ export default function RightBar({ notebook, onToggle }) {
         asString(item.description) ||
         ""
       ).toLowerCase();
-      if (displayName.includes(query)) return 1;
-      if (description.includes(query)) return 2;
+      if (tokens.every((token) => displayName.includes(token))) return 1;
+      const combined = `${displayName} ${description}`;
+      if (tokens.every((token) => combined.includes(token))) return 2;
       return 0;
     };
 
     const filterAndRank = (items) => {
-      if (!query) return items;
+      if (!tokens.length) return items;
       return items
         .map((item) => ({ item, rank: rankMatch(item) }))
         .filter(({ rank }) => rank > 0)

@@ -457,7 +457,7 @@ class Clustering(ClusteringConverter, BaseConverter):
 
         Discovers concrete ``ClusteringMetric`` subclasses at runtime, so new
         metrics are picked up automatically without changes here. Keys match
-        the class name (consistent with ``ClusteringTaskExecutor``). Each score
+        the class name (consistent with the metrics ``ModelJob`` persists). Each score
         is ``None`` when undefined — handled by ``prepare_to_metric`` inside
         each metric class.
 

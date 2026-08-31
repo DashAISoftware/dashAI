@@ -13,3 +13,6 @@ class LevelEnum(Enum):
     TRIAL = "trial"
     STEP = "step"
     EPOCH = "epoch"
+    FOLD = "fold"
+    OUTER_FOLD = "outer_fold"
+    LAST_OUTER = "last_outer"
