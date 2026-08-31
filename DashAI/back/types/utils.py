@@ -4,6 +4,7 @@ from typing import Any, Dict, Final, List
 
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
+from DashAI.back.types.date_utils import DEFAULT_DATE_FORMAT
 from DashAI.back.types.value_types import (
     Binary,
     DashAIValue,
@@ -72,9 +73,13 @@ PTYPE_TO_DASHAI = {
     # For simplicity, we use categorical for booleans.
     "boolean": {"type": "Categorical", "dtype": "string"},
     "categorical": {"type": "Categorical", "dtype": "string"},
-    # Date types mapped to Text until date support is implemented
-    "date-iso-8601": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
-    "date-eu": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
+    # The dtype is a placeholder. The real strptime format is detected from the
+    # column in DashAIPtype.infer_types, because the ptype label names the
+    # component ordering but not the separator.
+    "date-iso-8601": {"type": "Date", "dtype": "%Y-%m-%d"},
+    "date-eu": {"type": "Date", "dtype": "%Y-%m-%d"},
+    # No format can be inferred for the rest, and guessing one would corrupt
+    # data silently, so they stay Text.
     "date-non-std": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
     "date-non-std-subtype": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
     "time": {"type": "Text", "dtype": "string", "encoding": "utf-8"},
@@ -235,6 +240,17 @@ def get_types_from_arrow_metadata(
 
                 dtype = info.get("dtype", "struct")
                 dashai_types[column] = DashAIImage(dtype=dtype)
+            elif _type == "Date":
+                # A Date column is text plus a strptime format, so its stored
+                # dtype is "string" and the layout lives in "format". Routing
+                # it through the dtype map below would rebuild it as Text and
+                # drop the format, which is exactly the bug this branch fixes.
+                import pyarrow as pa  # local import
+
+                dashai_types[column] = Date(
+                    arrow_type=pa.string(),
+                    format=info.get("format", DEFAULT_DATE_FORMAT),
+                )
             else:
                 dtype = info.get("dtype")
                 dtype_map = _get_dtype_arrow_map()
