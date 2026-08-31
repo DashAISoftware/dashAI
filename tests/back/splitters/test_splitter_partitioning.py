@@ -56,14 +56,15 @@ def test_the_shuffling_holdout_splitter_still_serves_every_other_task():
         assert task in HoldoutSplitter.COMPATIBLE_COMPONENTS
 
 
+def test_the_temporal_splitters_are_offered_for_forecasting_alone():
+    for splitter in (TemporalHoldoutSplitter, RollingOriginSplitter):
+        assert splitter.COMPATIBLE_COMPONENTS == ["ForecastingTask"]
+
+
 def test_the_temporal_splitter_does_not_inherit_the_other_ones_tasks():
-    # Both share a base class, and the registry unions COMPATIBLE_COMPONENTS
-    # along the MRO. Declaring the task list on a shared parent would offer a
-    # temporal split for image classification, which means nothing there.
-    assert set(TemporalHoldoutSplitter.COMPATIBLE_COMPONENTS) == {
-        "ForecastingTask",
-        "RegressionTask",
-    }
+    assert "TabularClassificationTask" not in (
+        TemporalHoldoutSplitter.COMPATIBLE_COMPONENTS
+    )
 
 
 def test_forecasting_can_reach_a_holdout_splitter_at_all():

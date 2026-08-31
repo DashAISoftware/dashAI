@@ -85,7 +85,9 @@ class TimeSeriesWindowConverter(FeatureEngineeringConverter, BaseConverter):
       longer line up with the original ones.
     * Consecutive rows overlap by ``k - 1`` values. A splitter that shuffles
       will therefore put near duplicate rows on both sides of the split and
-      report a score that is too good. Split chronologically instead.
+      report a score that is too good. The output is regression data, so split
+      it chronologically by turning shuffling off on the splitter rather than
+      leaving it on.
     """
 
     SCHEMA = TimeSeriesWindowConverterSchema
