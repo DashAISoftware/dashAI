@@ -104,7 +104,7 @@ function PrepareDatasetStep({
   const [splitsReady, setSplitsReady] = useState(false);
   const requiresTarget = taskRequirements?.metadata?.requires_target !== false;
   const splitStrategy =
-    taskRequirements.metadata?.session_config_schema?.split_strategy;
+    taskRequirements?.metadata?.session_config_schema?.split_strategy;
   const usesSplits = splitStrategy !== "none";
 
   const getDatasetInfo = async () => {
@@ -265,7 +265,11 @@ function PrepareDatasetStep({
       ...newExp,
       input_columns: inputColumnNames,
       output_columns: requiresTarget ? outputColumnNames : [],
-      evaluation_strategy: evaluationStrategy,
+      // A task without splits never renders SplitDatasetRows, which is the only
+      // place that sets a strategy, so the parent's state stays null. The
+      // backend types this field as a plain str, so send the empty string it
+      // was initialised with instead of null.
+      evaluation_strategy: evaluationStrategy ?? "",
     };
 
     // A task that trains on the whole dataset (clustering) has no splitter to
