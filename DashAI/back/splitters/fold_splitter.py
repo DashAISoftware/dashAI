@@ -168,6 +168,16 @@ class FoldSplitter(BaseSplitter):
         indexes = np.arange(len(x))
         seed = self.random_state
 
+        if self.TEST_SPLIT_STRATEGY == "temporal":
+            # The reserved rows must be the most recent ones. Every other
+            # strategy samples them from anywhere in the dataset, which for a
+            # series would scatter future rows through the training data of
+            # every fold and report a score that cannot be reproduced in use.
+            return (
+                [int(i) for i in indexes[-n_test:]],
+                [int(i) for i in indexes[:-n_test]],
+            )
+
         if self.TEST_SPLIT_STRATEGY == "group":
             from sklearn.model_selection import GroupShuffleSplit
 
