@@ -3,7 +3,7 @@ from DashAI.back.dependencies.database.models import Metric, Run
 from DashAI.back.evaluation.base_evaluation_strategy import BaseEvaluationStrategy
 
 
-class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
+class SinglePartitionEvaluationStrategy(BaseEvaluationStrategy):
     """Evaluation strategy implementing holdout (train/validation/test split)
     validation.
 
@@ -15,6 +15,8 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
     - TRIAL level: Metrics during HPO trials on validation set
     - LAST level: Final metrics computed on all three partitions after training
     """
+
+    KIND: str = "holdout"
 
     def execute(self, x, y, run: Run, db):
         """Execute holdout validation: train on training set, optimize with validation,
@@ -59,14 +61,32 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
 
         # Train the model with the provided data and return it
         self._report_progress(0.5, "Training")
-        model.train(x["train"], y["train"], x["validation"], y["validation"])
+        self._fit_final_model(model, x, y)
 
         # Calculate metrics at the end of training if not done already
         self._report_progress(0.85, "Computing metrics")
-        for split in (SplitEnum.TRAIN, SplitEnum.VALIDATION, SplitEnum.TEST):
+        for split in self.SCORED_SPLITS:
             self._calculate_metrics_if_missing(model, run, db, split)
 
         return model, plot_paths
+
+    def _fit_final_model(self, model, x, y):
+        """Fit the model that gets kept.
+
+        Separate from the trial fits so a strategy can differ on what the
+        kept model is allowed to learn from, which is the one thing
+        forecasting needs to change here.
+
+        Parameters
+        ----------
+        model : BaseModel
+            The model to fit.
+        x : DatasetDict
+            Input partitions.
+        y : DatasetDict
+            Target partitions.
+        """
+        model.train(x["train"], y["train"], x["validation"], y["validation"])
 
     def _calculate_metrics_if_missing(self, model, run: Run, db, split: SplitEnum):
         """Compute and persist LAST-level metrics for a split, unless already saved.
@@ -136,11 +156,34 @@ class HoldoutEvaluationStrategy(BaseEvaluationStrategy):
             output_dataset["validation"], is_fit=False
         )
 
-        # Calculate metric for train and validation data each trial
-        model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
+        # Calculate metric for train and validation data each trial. The
+        # training partition is skipped for a strategy that does not score it,
+        # which for a forecaster is not a preference: predicting on dates it
+        # was fitted on is refused, so asking would fail every trial.
+        if SplitEnum.TRAIN in self.SCORED_SPLITS:
+            model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
         model.calculate_metrics(split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL)
 
         # Compute the objective metric score on the validation set
         score = metric.score(output_dataset_transformed, y_pred)
 
         return score
+
+
+class HoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
+    """Split once into train, validation and test, and score all three.
+
+    The ordinary holdout evaluation. Not offered for ``ForecastingTask``:
+    scoring the training partition of a forecaster means predicting on dates
+    it was fitted on, and keeping validation out of the final fit throws away
+    the most recent history right before asking what comes next.
+    ``ForecastingHoldoutEvaluationStrategy`` handles both.
+    """
+
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "ImageClassificationTask",
+        "TranslationTask",
+        "RegressionTask",
+    ]

@@ -32,15 +32,15 @@ from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 
 
 def _holdout_evaluate(model, input_dataset, output_dataset, metric):
-    """The real holdout evaluation path, called unbound.
+    """The real holdout evaluation path, on a strategy with no factory.
 
-    `evaluate` never touches `self`, and building a full strategy instance
-    needs a `ModelFactory` this test does not. If either stops being true,
-    this helper fails loudly and the test should switch to a real instance.
+    `evaluate` reads which partitions its strategy scores, so it needs a real
+    instance rather than None for self. Building one through __init__ would
+    need a `ModelFactory` this test does not have, and does not need: the only
+    thing read off the instance is a class attribute.
     """
-    return HoldoutEvaluationStrategy.evaluate(
-        None, model, input_dataset, output_dataset, metric
-    )
+    strategy = HoldoutEvaluationStrategy.__new__(HoldoutEvaluationStrategy)
+    return strategy.evaluate(model, input_dataset, output_dataset, metric)
 
 
 EPOCHS = 12

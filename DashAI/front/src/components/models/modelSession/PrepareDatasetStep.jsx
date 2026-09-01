@@ -25,6 +25,7 @@ import { useModels } from "../ModelsContext";
 import {
   buildSplitsPayload,
   resolveSplitterName,
+  STRATEGY_KINDS,
   SPLIT_TYPES,
 } from "../../../utils/splitsPayload";
 /**
@@ -79,6 +80,13 @@ function PrepareDatasetStep({
 
   // Cross-Validation configuration states
   const [cvType, setCvType] = useState(null);
+  // Which holdout splitter this task uses. Resolved from the task rather
+  // than hardcoded, so a time series cannot be handed a shuffling one.
+  const [holdoutType, setHoldoutType] = useState(null);
+  // The split shape of the selected strategy, reported by the backend. The
+  // screens used to compare strategy names, which is why a new strategy
+  // rendered nothing at all.
+  const [strategyKind, setStrategyKind] = useState(null);
   const [groupColumn, setGroupColumn] = useState("");
 
   const defaultParitionsIndex = {
@@ -265,12 +273,16 @@ function PrepareDatasetStep({
     if (!usesSplits) {
       updatedExpData.splits = { splitType: "none" };
     } else {
-      const splitterName = resolveSplitterName(evaluationStrategy, cvType);
+      const splitterName = resolveSplitterName(
+        strategyKind,
+        cvType,
+        holdoutType,
+      );
       if (splitterName) {
         updatedExpData.splits = buildSplitsPayload({
           splitterName,
           splitType:
-            evaluationStrategy === "HoldoutEvaluationStrategy"
+            strategyKind === STRATEGY_KINDS.HOLDOUT
               ? splitType
               : SPLIT_TYPES.CV,
           params: {
@@ -366,6 +378,8 @@ function PrepareDatasetStep({
     requiresTarget,
     usesSplits,
     cvType,
+    holdoutType,
+    strategyKind,
     groupColumn,
     evaluationStrategy,
     rowsPartitionsIndex,
@@ -422,6 +436,10 @@ function PrepareDatasetStep({
         setEvaluationStrategy={setEvaluationStrategy}
         cvType={cvType}
         setCvType={setCvType}
+        holdoutType={holdoutType}
+        setHoldoutType={setHoldoutType}
+        strategyKind={strategyKind}
+        setStrategyKind={setStrategyKind}
         groupColumn={groupColumn}
         setGroupColumn={setGroupColumn}
         inputColumnNames={inputColumnNames}
@@ -439,6 +457,8 @@ function PrepareDatasetStep({
     paramsError,
     evaluationStrategy,
     cvType,
+    holdoutType,
+    strategyKind,
     groupColumn,
     inputColumnNames,
   ]);

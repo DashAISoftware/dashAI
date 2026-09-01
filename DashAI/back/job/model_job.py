@@ -348,9 +348,14 @@ class ModelJob(BaseJob):
 
         try:
             # Divide the dataset into two datasets:
-            # one with the input columns and another with the output column
+            # one with the input columns and another with the output column.
+            # This reads the prepared dataset rather than the loaded one: a
+            # task may reorder or otherwise adjust the rows, and forecasting
+            # does, sorting them by date so the temporal splitter carves real
+            # periods of time. Selecting from the loaded dataset would drop
+            # that work on the floor.
             X, Y = select_columns(
-                loaded_dataset,
+                prepared_dataset,
                 model_session.input_columns,
                 model_session.output_columns,
             )

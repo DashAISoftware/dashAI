@@ -38,10 +38,9 @@ function CreateSessionSteps({
       : null,
   );
 
-  // Holdout or cross-validation
-  const [evaluationStrategy, setEvaluationStrategy] = useState(
-    "HoldoutEvaluationStrategy",
-  );
+  // Which evaluation strategy the session uses. Left empty until the task's
+  // strategies load, since which ones exist depends on the task.
+  const [evaluationStrategy, setEvaluationStrategy] = useState(null);
 
   const [newExp, setNewExp] = useState({
     name: "",

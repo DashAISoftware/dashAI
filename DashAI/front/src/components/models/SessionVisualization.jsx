@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useStrategyKind } from "../../hooks/useStrategyKind";
+import { STRATEGY_KINDS } from "../../utils/splitsPayload";
 import { Box, Typography, Divider, Button, ToggleButton } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useParams, useNavigate } from "react-router-dom";
@@ -60,7 +62,7 @@ export default function SessionVisualization() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const isCrossValidation =
-    session?.evaluation_strategy === "CrossValidationEvaluationStrategy";
+    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
 
   // This component stays mounted across session navigations (same route,
   // different :sessionId), so metricSplit would otherwise carry over from
@@ -207,6 +209,21 @@ export default function SessionVisualization() {
       }),
       [runs],
     );
+
+  const availableSplits = React.useMemo(
+    () =>
+      [
+        hasTrainMetrics && "train",
+        hasValidationMetrics && "validation",
+        hasTestMetrics && "test",
+      ].filter(Boolean),
+    [hasTrainMetrics, hasValidationMetrics, hasTestMetrics],
+  );
+
+  const effectiveSplit =
+    availableSplits.length === 0 || availableSplits.includes(metricSplit)
+      ? metricSplit
+      : availableSplits[0];
 
   const handleTrainWithTour = (run) => {
     if (onTrain) onTrain(run);
@@ -592,7 +609,7 @@ export default function SessionVisualization() {
                       hasValidationMetrics ||
                       hasTestMetrics) && (
                       <PillToggleButtonGroup
-                        value={metricSplit}
+                        value={effectiveSplit}
                         onChange={(e, newValue) => {
                           if (newValue !== null) setMetricSplit(newValue);
                         }}
@@ -638,7 +655,7 @@ export default function SessionVisualization() {
                     onViewDetails={handleViewDetails}
                     onDelete={onDeleteRun}
                     onRowClick={handleRowClick}
-                    metricSplit={metricSplit}
+                    metricSplit={effectiveSplit}
                   />
 
                   {/* Graphs and statistical tests button toggle just when cross validation is being used */}
@@ -686,7 +703,7 @@ export default function SessionVisualization() {
                   {view === "graphs" ? (
                     <ResultsGraphs
                       runs={runs}
-                      selectedSplit={metricSplit}
+                      selectedSplit={effectiveSplit}
                       onSplitChange={setMetricSplit}
                       metrics={allMetrics}
                     />

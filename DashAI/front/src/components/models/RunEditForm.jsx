@@ -1,4 +1,6 @@
 import React, { useMemo } from "react";
+import { useStrategyKind } from "../../hooks/useStrategyKind";
+import { STRATEGY_KINDS } from "../../utils/splitsPayload";
 import PropTypes from "prop-types";
 import { Box, Typography, TextField } from "@mui/material";
 import { useTranslation } from "react-i18next";
@@ -39,6 +41,11 @@ export default function RunEditForm({
 }) {
   const { t } = useTranslation(["models", "common"]);
   const { selectedSession: session, datasetRowCount } = useModels();
+
+  // Nested cross-validation only applies to a folded strategy, which the
+  // backend reports rather than the strategy name implying it.
+  const isCrossValidation =
+    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
 
   const outerSplit = useMemo(() => {
     return session?.splits ? JSON.parse(session.splits) : null;
@@ -82,8 +89,7 @@ export default function RunEditForm({
           />
         </Box>
 
-        {session?.evaluation_strategy ===
-          "CrossValidationEvaluationStrategy" && (
+        {isCrossValidation && (
           <NestedCVSelector
             useNestedCV={editedUseNestedCV}
             onChange={setEditedUseNestedCV}

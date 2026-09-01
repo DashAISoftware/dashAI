@@ -817,8 +817,23 @@ def transform_dataset_with_schema(
                     # we are saving them as strings to preserve the original format.
                     # Can modify classes in value_types.py
                     # if want to use PyArrow date, time or timestamp types.
+                    #
+                    # Two dict shapes reach this function. The one built by
+                    # type inference and by get_columns_spec carries the
+                    # strptime format in "dtype"; the one a column emits
+                    # through to_string() carries it in "format" and leaves
+                    # "dtype" as the arrow type. Reading only "dtype" turned
+                    # the second shape's format into the literal "string".
+                    _format = info.get("format") or dtype
+                    if not _format:
+                        raise ValueError(
+                            f"Column '{column_name}' is typed as {_type} but "
+                            "carries no format. A date, time or timestamp "
+                            "column is stored as text plus a strptime format, "
+                            "so the format has to be resolved before saving."
+                        )
                     dashai_types[column_name] = arrow_to_dashai_types(
-                        arrow_type=_type, format=dtype
+                        arrow_type=_type, format=_format
                     )
                     pa_type = to_arrow_types("string")
                     dai_table[column_name] = table.column(column_name)

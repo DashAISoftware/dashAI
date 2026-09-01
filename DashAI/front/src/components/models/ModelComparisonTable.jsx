@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useStrategyKind } from "../../hooks/useStrategyKind";
+import { STRATEGY_KINDS } from "../../utils/splitsPayload";
 import PropTypes from "prop-types";
 import {
   MaterialReactTable,
@@ -91,8 +93,7 @@ function ModelComparisonTable({
   // ────────────────────────────────────────────────────────────────────────
 
   const isCrossValidation =
-    selectedSession?.evaluation_strategy ===
-    "CrossValidationEvaluationStrategy";
+    useStrategyKind(selectedSession?.evaluation_strategy) === STRATEGY_KINDS.CV;
 
   // Run type color using existing theme.palette.accent tokens
   const getRunType = (run) => {

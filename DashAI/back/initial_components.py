@@ -71,6 +71,9 @@ from DashAI.back.converters.simple_converters.column_concat import ColumnConcat
 from DashAI.back.converters.simple_converters.column_remover import ColumnRemover
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 from DashAI.back.converters.simple_converters.numeric_expansion import NumericExpansion
+from DashAI.back.converters.simple_converters.time_series_window import (
+    TimeSeriesWindowConverter,
+)
 from DashAI.back.converters.simple_converters.type_cast import TypeCast
 
 # Credentials
@@ -93,6 +96,12 @@ from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSourc
 
 # Evaluation Strategies
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
+from DashAI.back.evaluation.forecasting_cv import (
+    ForecastingCrossValidationEvaluationStrategy,
+)
+from DashAI.back.evaluation.forecasting_holdout import (
+    ForecastingHoldoutEvaluationStrategy,
+)
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 
 # Explainers
@@ -156,6 +165,9 @@ from DashAI.back.exploration.explorers.parallel_cordinates import (
 from DashAI.back.exploration.explorers.scatter_matrix import ScatterMatrixExplorer
 from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.silhouette_plot import SilhouettePlotExplorer
+from DashAI.back.exploration.explorers.time_series_plot import (
+    TimeSeriesPlotExplorer,
+)
 from DashAI.back.exploration.explorers.wordcloud import WordcloudExplorer
 
 # Jobs
@@ -185,6 +197,8 @@ from DashAI.back.metrics.classification.roc_auc import ROCAUC
 from DashAI.back.metrics.clustering.calinski_harabasz import CalinskiHarabasz
 from DashAI.back.metrics.clustering.davies_bouldin import DaviesBouldin
 from DashAI.back.metrics.clustering.silhouette import Silhouette
+from DashAI.back.metrics.forecasting.mape import MAPE
+from DashAI.back.metrics.forecasting.smape import SMAPE
 from DashAI.back.metrics.regression.explained_variance import ExplainedVariance
 from DashAI.back.metrics.regression.mae import MAE
 from DashAI.back.metrics.regression.median_absolute_error import MedianAbsoluteError
@@ -202,6 +216,14 @@ from DashAI.back.models.efficientnet_b0_image_classifier import (
 # Models
 from DashAI.back.models.faiss.faiss_dbscan_clustering import FaissDBSCANClustering
 from DashAI.back.models.faiss.faiss_kmeans_clustering import FaissKMeansClustering
+from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.exponential_smoothing import (
+    ExponentialSmoothing,
+)
+from DashAI.back.models.forecasting.naive import NaiveForecaster
+from DashAI.back.models.forecasting.seasonal_naive import (
+    SeasonalNaiveForecaster,
+)
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
 from DashAI.back.models.hugging_face.bert_transformer import BertTransformer
 from DashAI.back.models.hugging_face.bertin_transformer import BertinTransformer
@@ -448,8 +470,10 @@ from DashAI.back.splitters.repeated_k_fold import RepeatedKFoldSplitter
 from DashAI.back.splitters.repeated_stratified_k_fold import (
     RepeatedStratifiedKFoldSplitter,
 )
+from DashAI.back.splitters.rolling_origin import RollingOriginSplitter
 from DashAI.back.splitters.stratified_group_k_fold import StratifiedGroupKFoldSplitter
 from DashAI.back.splitters.stratified_k_fold import StratifiedKFoldSplitter
+from DashAI.back.splitters.temporal_holdout import TemporalHoldoutSplitter
 from DashAI.back.statistical_tests.anova_test import AnovaTest
 from DashAI.back.statistical_tests.corrected_paired_t_test import (
     CorrectedPairedTTest,
@@ -472,6 +496,7 @@ from DashAI.back.statistical_tests.wilcoxon_sr_test import (
 # Tasks
 from DashAI.back.tasks.clustering_task import ClusteringTask
 from DashAI.back.tasks.controlnet_task import ControlNetTask
+from DashAI.back.tasks.forecasting_task import ForecastingTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 
 # Tasks
@@ -504,6 +529,11 @@ def get_initial_components():
         TextClassificationTask,
         TranslationTask,
         RegressionTask,
+        ForecastingTask,
+        NaiveForecaster,
+        SeasonalNaiveForecaster,
+        ARIMA,
+        ExponentialSmoothing,
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
@@ -640,6 +670,8 @@ def get_initial_components():
         Chrf,
         MSE,
         RMSE,
+        MAPE,
+        SMAPE,
         MAE,
         R2,
         MedianAbsoluteError,
@@ -690,6 +722,7 @@ def get_initial_components():
         ECDFPlotExplorer,
         HistogramPlotExplorer,
         ScatterMatrixExplorer,
+        TimeSeriesPlotExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
         ClusteringProfileExplorer,
@@ -707,6 +740,7 @@ def get_initial_components():
         ColumnArithmetic,
         ColumnConcat,
         NumericExpansion,
+        TimeSeriesWindowConverter,
         TypeCast,
         FastICA,
         IncrementalPCA,
@@ -751,6 +785,8 @@ def get_initial_components():
         RandomUnderSamplerConverter,
         # Splitters
         HoldoutSplitter,
+        TemporalHoldoutSplitter,
+        RollingOriginSplitter,
         KFoldSplitter,
         StratifiedKFoldSplitter,
         StratifiedGroupKFoldSplitter,
@@ -761,6 +797,8 @@ def get_initial_components():
         # Evaluation Strategies
         CrossValidationEvaluationStrategy,
         HoldoutEvaluationStrategy,
+        ForecastingHoldoutEvaluationStrategy,
+        ForecastingCrossValidationEvaluationStrategy,
         # Statistical tests
         AnovaTest,
         FriedmanTest,
