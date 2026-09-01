@@ -69,6 +69,9 @@ from DashAI.back.converters.simple_converters.column_concat import ColumnConcat
 from DashAI.back.converters.simple_converters.column_remover import ColumnRemover
 from DashAI.back.converters.simple_converters.nan_remover import NanRemover
 from DashAI.back.converters.simple_converters.numeric_expansion import NumericExpansion
+from DashAI.back.converters.simple_converters.time_series_window import (
+    TimeSeriesWindowConverter,
+)
 from DashAI.back.converters.simple_converters.type_cast import TypeCast
 
 # Credentials
@@ -650,6 +653,7 @@ def get_initial_components():
         ColumnArithmetic,
         ColumnConcat,
         NumericExpansion,
+        TimeSeriesWindowConverter,
         TypeCast,
         FastICA,
         IncrementalPCA,
