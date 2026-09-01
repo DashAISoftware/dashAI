@@ -217,8 +217,9 @@ class ARIMA(ForecastingModel):
         Parameters
         ----------
         x_train : DashAIDataset
-            The date column. Unused: statsmodels is given the values in order,
-            and the spacing is assumed regular.
+            The date column. statsmodels is given the values in order and the
+            spacing is assumed regular; the dates are kept so a later
+            partition can be forecast at its own dates.
         y_train : DashAIDataset
             The series to forecast.
         x_validation : DashAIDataset, optional
@@ -256,6 +257,7 @@ class ARIMA(ForecastingModel):
             self._result = _ARIMA(series, order=(self.p, self.d, self.q)).fit()
 
         self._history = list(series)
+        self._remember_dates(x_train)
         self._fitted = True
         return self
 
@@ -265,14 +267,12 @@ class ARIMA(ForecastingModel):
         Parameters
         ----------
         x : DashAIDataset
-            The rows to forecast. Only their number is used.
+            The rows to forecast, whose dates say how far ahead each one is.
 
         Returns
         -------
         np.ndarray
             One forecast value per requested row.
         """
-        import numpy as np
-
         self._require_fitted()
-        return np.asarray(self._result.forecast(steps=self._horizon(x)), dtype=float)
+        return self._forecast_at(x, lambda steps: self._result.forecast(steps=steps))

@@ -156,7 +156,8 @@ class SeasonalNaiveForecaster(ForecastingModel):
         Parameters
         ----------
         x_train : DashAIDataset
-            The date column. Unused: this model reads only the series.
+            The date column, used to record where the training data ends so a
+            later partition can be forecast at its own dates.
         y_train : DashAIDataset
             The series to forecast.
         x_validation : DashAIDataset, optional
@@ -185,16 +186,17 @@ class SeasonalNaiveForecaster(ForecastingModel):
 
         self._history = list(series)
         self._last_season = [float(v) for v in series[-self.season_length :]]
+        self._remember_dates(x_train)
         self._fitted = True
         return self
 
     def predict(self, x: "DashAIDataset") -> "np.ndarray":
-        """Repeat the last full season for as many steps as requested.
+        """Repeat the last full season out to the dates requested.
 
         Parameters
         ----------
         x : DashAIDataset
-            The rows to forecast. Only their number is used.
+            The rows to forecast, whose dates say how far ahead each one is.
 
         Returns
         -------
@@ -204,8 +206,10 @@ class SeasonalNaiveForecaster(ForecastingModel):
         import numpy as np
 
         self._require_fitted()
-        horizon = self._horizon(x)
-        return np.array(
-            [self._last_season[i % self.season_length] for i in range(horizon)],
-            dtype=float,
+        return self._forecast_at(
+            x,
+            lambda steps: np.array(
+                [self._last_season[i % self.season_length] for i in range(steps)],
+                dtype=float,
+            ),
         )

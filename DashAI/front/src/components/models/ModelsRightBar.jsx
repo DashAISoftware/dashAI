@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useStrategyKind } from "../../hooks/useStrategyKind";
+import { STRATEGY_KINDS } from "../../utils/splitsPayload";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -211,7 +213,7 @@ export default function ModelsRightBar({ onToggle }) {
 
   // Determine if statistical tests should be shown (only for nested CV sessions)
   const isCv =
-    session?.evaluation_strategy === "CrossValidationEvaluationStrategy";
+    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
 
   useEffect(() => {
     if (!isCv) {

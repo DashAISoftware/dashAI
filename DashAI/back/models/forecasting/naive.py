@@ -78,7 +78,8 @@ class NaiveForecaster(ForecastingModel):
         Parameters
         ----------
         x_train : DashAIDataset
-            The date column. Unused: this model reads only the series.
+            The date column, used to record where the training data ends so a
+            later partition can be forecast at its own dates.
         y_train : DashAIDataset
             The series to forecast.
         x_validation : DashAIDataset, optional
@@ -102,6 +103,7 @@ class NaiveForecaster(ForecastingModel):
 
         self._history = list(series)
         self._last_value = float(series[-1])
+        self._remember_dates(x_train)
         self._fitted = True
         return self
 
@@ -111,7 +113,7 @@ class NaiveForecaster(ForecastingModel):
         Parameters
         ----------
         x : DashAIDataset
-            The rows to forecast. Only their number is used.
+            The rows to forecast, whose dates say how far ahead each one is.
 
         Returns
         -------
@@ -121,4 +123,6 @@ class NaiveForecaster(ForecastingModel):
         import numpy as np
 
         self._require_fitted()
-        return np.full(self._horizon(x), self._last_value, dtype=float)
+        return self._forecast_at(
+            x, lambda steps: np.full(steps, self._last_value, dtype=float)
+        )

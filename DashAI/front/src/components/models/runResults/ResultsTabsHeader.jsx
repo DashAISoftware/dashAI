@@ -1,4 +1,6 @@
 import React from "react";
+import { useStrategyKind } from "../../../hooks/useStrategyKind";
+import { STRATEGY_KINDS } from "../../../utils/splitsPayload";
 import PropTypes from "prop-types";
 import { Box, Typography, Tab, Tooltip, Chip } from "@mui/material";
 import { useTranslation } from "react-i18next";
@@ -64,8 +66,7 @@ export default function ResultsTabsHeader({
   // Get session from context to check if the evaluation strategy is Cross Validation
   const { selectedSession } = useModels();
   const isCrossValidation =
-    selectedSession?.evaluation_strategy ===
-    "CrossValidationEvaluationStrategy";
+    useStrategyKind(selectedSession?.evaluation_strategy) === STRATEGY_KINDS.CV;
   const isNestedCrossValidation = !!run?.nested;
 
   // Cross-validation runs can only be explained when the session reserved rows

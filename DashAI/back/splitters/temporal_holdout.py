@@ -11,7 +11,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 
-from .holdout import HoldoutSplitter
+from .holdout import PartitionSplitter
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -105,7 +105,7 @@ class TemporalHoldoutSplitterSchema(BaseSchema):
         return self
 
 
-class TemporalHoldoutSplitter(HoldoutSplitter):
+class TemporalHoldoutSplitter(PartitionSplitter):
     """Split a series in time order: train first, then validation, then test.
 
     Rows are cut where they lie rather than sampled, so every row a model is
@@ -121,7 +121,9 @@ class TemporalHoldoutSplitter(HoldoutSplitter):
       already seen instead of extrapolating past them.
     * On the output of ``TimeSeriesWindowConverter`` it is worse still, because
       consecutive rows share ``window_size - 1`` of their values, so a random
-      split puts near duplicates of the training rows into the test set.
+      split puts near duplicates of the training rows into the test set. That
+      route goes through ``RegressionTask``, which this splitter is not offered
+      for; use ``HoldoutSplitter`` with shuffling turned off there.
 
     Row order is taken as time order. This splitter receives the selected input
     columns, which for a windowed dataset no longer include a date, so it
@@ -129,7 +131,7 @@ class TemporalHoldoutSplitter(HoldoutSplitter):
     """
 
     SCHEMA = TemporalHoldoutSplitterSchema
-    COMPATIBLE_COMPONENTS = ["ForecastingTask", "RegressionTask"]
+    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
     DISPLAY_NAME: str = MultilingualString(
         en="Temporal Holdout",
         es="Holdout Temporal",

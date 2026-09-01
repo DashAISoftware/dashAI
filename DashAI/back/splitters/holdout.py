@@ -170,7 +170,7 @@ class HoldoutSplitterSchema(BaseSchema):
         return self
 
 
-class HoldoutSplitter(BaseSplitter):
+class PartitionSplitter(BaseSplitter):
     """Splitter that creates train, test, and validation partitions for holdout
     evaluation.
 
@@ -186,8 +186,6 @@ class HoldoutSplitter(BaseSplitter):
     ----------
     - https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html
     """
-
-    SCHEMA = HoldoutSplitterSchema
 
     @classmethod
     def explainable_partitions(cls, split_indexes):
@@ -355,3 +353,28 @@ class HoldoutSplitter(BaseSplitter):
             stratify=stratify_labels_test_val,
         )
         return train_indexes.tolist(), test_indexes.tolist(), val_indexes.tolist()
+
+
+class HoldoutSplitter(PartitionSplitter):
+    """Split the dataset into train, test and validation partitions at random.
+
+    The ordinary holdout split: rows are sampled into three partitions, with
+    optional shuffling, stratification and a seed to make the sample
+    reproducible.
+
+    Not offered for ``ForecastingTask``. Sampling rows out of a series lets a
+    model train on its own future and report a score it could never reproduce
+    in use, and nothing about that failure raises an error. Forecasting uses
+    ``TemporalHoldoutSplitter``, which cuts the rows where they lie.
+    """
+
+    SCHEMA = HoldoutSplitterSchema
+    # Listed per task rather than left universal, so the frontend can resolve
+    # a holdout splitter from the task instead of hardcoding this class.
+    COMPATIBLE_COMPONENTS = [
+        "TabularClassificationTask",
+        "TextClassificationTask",
+        "ImageClassificationTask",
+        "TranslationTask",
+        "RegressionTask",
+    ]
