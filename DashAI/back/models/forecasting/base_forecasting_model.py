@@ -6,6 +6,7 @@ from DashAI.back.models.base_model import BaseModel
 
 if TYPE_CHECKING:
     import numpy as np
+    import pandas as pd
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
@@ -45,6 +46,7 @@ class ForecastingModel(BaseModel):
         # is what lets predict turn a date into a number of steps ahead.
         self._last_train_date = None
         self._step_delta = None
+        self._freq_alias = None
         self._date_format = None
 
     @staticmethod
@@ -90,7 +92,11 @@ class ForecastingModel(BaseModel):
         x_train : DashAIDataset
             The training input, holding the date column.
         """
-        from DashAI.back.types.date_utils import DEFAULT_DATE_FORMAT, parse_date_column
+        from DashAI.back.types.date_utils import (
+            DEFAULT_DATE_FORMAT,
+            infer_frequency,
+            parse_date_column,
+        )
         from DashAI.back.types.value_types import Date
 
         date_columns = [
@@ -102,6 +108,7 @@ class ForecastingModel(BaseModel):
             # Nothing to align against; predict falls back to counting rows.
             self._last_train_date = None
             self._step_delta = None
+            self._freq_alias = None
             return
 
         self._date_format = (
@@ -119,6 +126,54 @@ class ForecastingModel(BaseModel):
         self._step_delta = gaps.median() if not gaps.empty else None
         if self._step_delta is not None and self._step_delta.total_seconds() <= 0:
             self._step_delta = None
+
+        # A calendar period is not a fixed number of days, so measuring in
+        # days drifts: months run 28 to 31, the median lands on 31, and after
+        # a couple of years the count is a whole period short. When the rows
+        # sit on a regular grid the alias names that grid, and a position on
+        # it is exact however long the horizon gets.
+        alias = infer_frequency(dates)
+        self._freq_alias = alias if isinstance(alias, str) else None
+
+    def _steps_from_grid(self, dates: "pd.Series") -> "np.ndarray | None":
+        """Read each date as a position on the calendar grid of the training rows.
+
+        Counting positions rather than dividing durations is what keeps a
+        monthly or quarterly series aligned: those periods are not a fixed
+        number of days, so a duration divided by the typical gap drifts by a
+        whole period over a long enough horizon.
+
+        Parameters
+        ----------
+        dates : pd.Series
+            The requested dates, already parsed.
+
+        Returns
+        -------
+        np.ndarray or None
+            One step number per date, or ``None`` when the grid cannot answer:
+            no regular frequency, a missing date, or a date that does not land
+            on the grid. The caller then measures by duration instead.
+        """
+        import pandas as pd
+
+        if self._freq_alias is None or dates.isna().any():
+            return None
+
+        grid = pd.date_range(
+            start=self._last_train_date, end=dates.max(), freq=self._freq_alias
+        )
+        # The grid starts at the last training date, so a position on it is
+        # already a number of steps past the end of training. date_range rolls
+        # a start that is off the grid forward, which would break that.
+        if len(grid) == 0 or grid[0] != self._last_train_date:
+            return None
+
+        positions = grid.get_indexer(pd.DatetimeIndex(dates))
+        if (positions < 0).any():
+            return None
+
+        return positions
 
     def _steps_ahead(self, x: "DashAIDataset") -> "np.ndarray":
         """Work out how many periods past training each requested date falls.
@@ -158,8 +213,13 @@ class ForecastingModel(BaseModel):
             return np.arange(1, len(x) + 1)
 
         dates = parse_date_column(x.to_pandas()[date_columns[0]], self._date_format)
-        offsets = (dates - self._last_train_date) / self._step_delta
-        steps = np.rint(offsets.to_numpy(dtype=float)).astype(int)
+
+        steps = self._steps_from_grid(dates)
+        if steps is None:
+            # No regular grid to count on, so the best available reading is
+            # how many typical gaps each date lies past the end of training.
+            offsets = (dates - self._last_train_date) / self._step_delta
+            steps = np.rint(offsets.to_numpy(dtype=float)).astype(int)
 
         if (steps < 1).any():
             raise ValueError(

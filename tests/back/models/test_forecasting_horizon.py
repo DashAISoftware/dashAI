@@ -49,6 +49,14 @@ def _actual(y_split):
     return np.asarray(y_split.to_pandas().iloc[:, 0], dtype=float)
 
 
+def _rows(dataset, start, stop):
+    """A contiguous slice of a dataset, keeping its column types."""
+    return to_dashai_dataset(
+        dataset.to_pandas().iloc[start:stop].reset_index(drop=True),
+        types=dict(dataset.types),
+    )
+
+
 def test_the_test_partition_is_forecast_at_its_own_dates():
     # The regression this file exists for. On a perfectly linear series ARIMA
     # should land on the test values; before the fix it returned the
@@ -129,3 +137,74 @@ def test_asking_for_a_date_inside_the_training_range_is_refused(model_class):
 
     with pytest.raises(ValueError, match="inside the training data"):
         model.predict(xs["train"])
+
+
+@pytest.mark.parametrize("freq", ["MS", "ME", "QS"])
+def test_a_calendar_series_stays_aligned_over_a_long_horizon(freq):
+    # A calendar period is not a fixed number of days. Reading the distance to
+    # a date in days and dividing by the typical gap drifts: months run 28 to
+    # 31, the median lands on 31, and after roughly two years the count is a
+    # whole period short. Two different months then collapse onto the same
+    # forecast and every later row is off by one.
+    xs, ys, _ = _split(n=180, freq=freq)
+    model = NaiveForecaster()
+    model.train(xs["train"], ys["train"])
+
+    steps = model._steps_ahead(xs["test"])
+
+    first = len(xs["validation"]) + 1
+    assert list(steps) == list(range(first, first + len(xs["test"])))
+
+
+def test_a_seasonal_monthly_series_is_forecast_exactly():
+    # The value level version of the same thing: a seasonal naive forecaster
+    # given the right season length on a perfectly seasonal series should get
+    # every month right, and the drift used to spoil more than half of them.
+    dates = pd.date_range("2016-01-01", periods=120, freq="MS").strftime("%Y-%m-%d")
+    series = [float(10 * (i % 12)) for i in range(120)]
+    dataset = transform_dataset_with_schema(
+        to_dashai_dataset(pd.DataFrame({"date": dates.tolist(), "v": series})),
+        {
+            "date": {"type": "Date", "dtype": "%Y-%m-%d"},
+            "v": {"type": "Float", "dtype": "float64"},
+        },
+    )
+    x, y = select_columns(dataset, ["date"], ["v"])
+    cut = 60
+
+    model = SeasonalNaiveForecaster(season_length=12)
+    model.train(_rows(x, 0, cut), _rows(y, 0, cut))
+
+    forecast = np.asarray(model.predict(_rows(x, cut, 120)), dtype=float)
+
+    assert forecast == pytest.approx(series[cut:])
+
+
+def test_an_irregular_series_still_forecasts_by_typical_gap():
+    # No regular grid to count positions on, so the reading falls back to how
+    # many typical gaps each date lies past the end of training. That is the
+    # best available answer rather than a refusal.
+    dates = [
+        "2026-01-01",
+        "2026-01-05",
+        "2026-01-06",
+        "2026-02-01",
+        "2026-02-15",
+        "2026-03-02",
+    ]
+    dataset = transform_dataset_with_schema(
+        to_dashai_dataset(
+            pd.DataFrame({"date": dates, "v": [float(i) for i in range(6)]})
+        ),
+        {
+            "date": {"type": "Date", "dtype": "%Y-%m-%d"},
+            "v": {"type": "Float", "dtype": "float64"},
+        },
+    )
+    x, y = select_columns(dataset, ["date"], ["v"])
+
+    model = NaiveForecaster()
+    model.train(_rows(x, 0, 4), _rows(y, 0, 4))
+
+    assert model._freq_alias is None
+    assert len(model.predict(_rows(x, 4, 6))) == 2
