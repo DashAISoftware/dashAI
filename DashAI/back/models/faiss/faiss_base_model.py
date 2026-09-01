@@ -73,8 +73,13 @@ class FaissBaseModel:
 
         joblib.dump(self, filename)
 
-    def load(self, filename: str) -> Any:
+    @staticmethod
+    def load(filename: str) -> Any:
         """Restore a fitted model from disk.
+
+        Declared static to match every other model adapter: the job layer
+        reloads a run through ``model_cls.load(path)``, so an instance method
+        here would bind the path to ``self``.
 
         Parameters
         ----------
