@@ -30,6 +30,8 @@ def _create_model_session(
     splits: dict,
     converters: list,
     name: str,
+    input_columns: list = INPUT_COLUMNS,
+    output_columns: list = OUTPUT_COLUMNS,
 ) -> int:
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
@@ -37,8 +39,8 @@ def _create_model_session(
             dataset_id=dataset_id,
             name=name,
             task_name="TabularClassificationTask",
-            input_columns=INPUT_COLUMNS,
-            output_columns=OUTPUT_COLUMNS,
+            input_columns=input_columns,
+            output_columns=output_columns,
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
@@ -173,13 +175,20 @@ def test_cv_preprocessing_produces_folds_and_full_dataset(
 def test_loading_survives_a_converter_that_renames_input_columns(
     client: TestClient, dataset_id: int
 ):
-    """Regression test: a converter that changes the input columns' names/
-    count (e.g. PCA, which replaces the 4 iris columns with N components)
-    used to break `load_preprocessed_session_data`, which re-selected the
-    *original* `model_session.input_columns` from the saved (already
-    transformed) partitions — columns that no longer existed under those
-    names. Output columns are never renamed by any converter, so they're
-    the only safe fixed point to split on."""
+    """Regression test: a converter that changes the input columns'
+    names/count (e.g. PCA, which replaces the 4 iris columns with N
+    components) must load correctly once `model_session.input_columns` is
+    updated to the post-conversion names — exactly what the wizard's
+    Columns step does (it only ever runs *after* preprocessing, so it never
+    sees the pre-conversion names in the first place). Preprocessing itself
+    still runs with the original 4 iris columns as input, same as the real
+    wizard: converters apply before the Columns step has set anything.
+
+    `_load_partition` selects `input_columns` directly rather than
+    inferring "everything except output" — that heuristic used to let a
+    converter's leftover original column (e.g. BagOfWords appending
+    `bow_<word>` next to the untouched source text) silently leak into
+    training data the user never selected."""
     pca_config = [{"converter": "PCA", "params": {"n_components": 2}, "columns": []}]
     model_session_id = _create_model_session(
         client,
@@ -192,13 +201,72 @@ def test_loading_survives_a_converter_that_renames_input_columns(
 
     SessionPreprocessingJob(kwargs={"model_session_id": model_session_id}).run()
 
+    # Simulates the wizard's Columns step: it only runs after preprocessing,
+    # and only ever offers the *current* (already-transformed) columns.
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        model_session = db.get(ModelSession, model_session_id)
+        model_session.input_columns = ["pca0", "pca1"]
+        db.commit()
+
     model_session = _get_session(client, model_session_id)
     assert model_session.preprocessing_status == SessionPreprocessingStatus.FINISHED
 
     x, y = load_preprocessed_session_data(model_session)
     # PCA replaced the 4 original input columns with 2 components.
-    assert len(x["train"].column_names) == 2
+    assert set(x["train"].column_names) == {"pca0", "pca1"}
     assert set(y["train"].column_names) == set(OUTPUT_COLUMNS)
+    assert len(x["train"]) == len(y["train"])
+
+    _delete_session(client, model_session_id)
+
+
+def test_loading_excludes_a_converters_leftover_original_column(
+    client: TestClient, dataset_id: int
+):
+    """Regression test: a converter that *appends* a new column instead of
+    replacing the original (e.g. `LabelEncoder` leaving `Species` next to
+    the `le_Species` it adds, or `BagOfWords` leaving the source text next
+    to its `bow_<word>` columns) used to leak that untouched original
+    column into training data — `_load_partition` inferred input columns
+    as "everything except output", so a column that's neither the selected
+    input nor the selected output still slipped through. Here `Species`
+    (the label) is neither the chosen input (the 4 numeric columns) nor
+    the chosen output (`le_Species`) — it must not appear in `x` at all."""
+    label_encoder_config = [
+        {"converter": "LabelEncoder", "params": {}, "columns": ["Species"]}
+    ]
+    model_session_id = _create_model_session(
+        client,
+        dataset_id,
+        evaluation_strategy="HoldoutEvaluationStrategy",
+        splits=HOLDOUT_SPLITS,
+        converters=label_encoder_config,
+        name="LabelEncoder Leftover Column Session",
+        # No columns chosen yet — matches the real wizard order (Preprocessing
+        # runs before Columns), and gives LabelEncoder access to "Species"
+        # within X (it wouldn't be there if output_columns had already split
+        # it out into Y before the converter ran).
+        input_columns=[],
+        output_columns=[],
+    )
+
+    SessionPreprocessingJob(kwargs={"model_session_id": model_session_id}).run()
+
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        model_session = db.get(ModelSession, model_session_id)
+        model_session.input_columns = INPUT_COLUMNS
+        model_session.output_columns = ["le_Species"]
+        db.commit()
+
+    model_session = _get_session(client, model_session_id)
+    assert model_session.preprocessing_status == SessionPreprocessingStatus.FINISHED
+
+    x, y = load_preprocessed_session_data(model_session)
+    assert set(x["train"].column_names) == set(INPUT_COLUMNS)
+    assert "Species" not in x["train"].column_names
+    assert set(y["train"].column_names) == {"le_Species"}
     assert len(x["train"]) == len(y["train"])
 
     _delete_session(client, model_session_id)

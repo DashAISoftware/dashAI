@@ -43,16 +43,33 @@ def _run_prediction_pipeline(
     transformation to match. The returned `prepared_dataset` stays
     untransformed, since it is also used to build a human-readable preview of
     the input alongside the prediction.
+
+    `loaded_dataset` carries the *raw* schema (whatever manual input or an
+    uploaded prediction dataset actually has). `prepared_dataset` narrows it
+    to real inputs — every column except the output — never straight to
+    `model_session.input_columns`: a converter that only appends columns
+    (e.g. BagOfWords' `bow_<word>`, LabelEncoder's `le_<col>`) needs its
+    original column present to transform *from*, and `input_columns` names
+    that transform's *output*, which doesn't exist in raw data yet. Once
+    the fitted converters (if any) have run, `model_input` is narrowed to
+    `model_session.input_columns` — exactly what the model was trained
+    on — dropping any leftover original column the converter left behind.
     """
     import numpy as np
 
-    prepared_dataset = loaded_dataset.select_columns(model_session.input_columns)
+    input_columns = [
+        col
+        for col in loaded_dataset.column_names
+        if col not in model_session.output_columns
+    ]
+    prepared_dataset = loaded_dataset.select_columns(input_columns)
 
     model_input = prepared_dataset
     if model_session.preprocessed_path:
         fitted_converters = load_fitted_converters(model_session.preprocessed_path)
         if fitted_converters:
             model_input = transform_for_prediction(prepared_dataset, fitted_converters)
+    model_input = model_input.select_columns(model_session.input_columns)
 
     y_pred_proba = np.array(trained_model.predict(model_input))
     y_pred = task.process_predictions(
@@ -226,7 +243,12 @@ def run_manual_prediction(
         output_col = model_session.output_columns[0]
         return _build_preview_rows(
             prepared_dataset=prepared_dataset,
-            input_columns=list(model_session.input_columns),
+            # `prepared_dataset`'s own columns, not `model_session
+            # .input_columns` (see `_run_prediction_pipeline`'s docstring):
+            # this stays in the *raw* schema, which is what the preview
+            # should show the user regardless of what a converter renamed
+            # it to internally.
+            input_columns=list(prepared_dataset.column_names),
             output_col=output_col,
             y_pred=y_pred,
         )

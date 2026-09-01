@@ -265,17 +265,45 @@ class ExplainerJob(BaseJob):
                         manual_input_data,
                         f"{instance.file_path}/dataset",
                     )
-                    # Manual input carries only the input columns (no target), so
-                    # keep just those instead of the standard input/output split.
-                    # select_columns returns a DashAIDataset (same shape the
-                    # split path produces), which is what the explainers expect.
-                    X = prepared_instance.select_columns(self.input_columns)
+                    # Manual input carries only the input columns (no target,
+                    # and — like predict_job.py's manual-prediction contract —
+                    # always in the *raw* schema: `process_manual_input`
+                    # validates every entered key against the raw dataset, so
+                    # `prepared_instance` already has exactly those columns.
+                    # Never `self.input_columns` here: a converter that only
+                    # appends (BagOfWords, LabelEncoder) names its *output*
+                    # there, which doesn't exist in raw manual input yet — the
+                    # reapply below is what produces it.
+                    X = prepared_instance
                 else:
-                    prepared_instance = task.prepare_for_task(
-                        loaded_instance,
-                        input_columns=self.input_columns,
-                        output_columns=self.output_columns,
-                    )
+                    # Not `self.input_columns`: same reasoning as the manual
+                    # branch above — a converter that only appends means those
+                    # names don't exist in `loaded_instance`'s raw schema yet.
+                    raw_input_columns = [
+                        col
+                        for col in loaded_instance.column_names
+                        if col not in self.output_columns
+                    ]
+                    if fitted_converters:
+                        # `raw_input_columns` includes whatever a converter
+                        # reads from (e.g. free text for BagOfWords), which
+                        # is never itself a valid task input type — only
+                        # the converter's *output* (self.input_columns) is
+                        # meant to satisfy that. Skip the task's type
+                        # validation on this intermediate raw data (same
+                        # reasoning as predict_job.py's
+                        # `_run_prediction_pipeline`).
+                        from DashAI.back.dataloaders.classes.dashai_dataset import (
+                            to_dashai_dataset,
+                        )
+
+                        prepared_instance = to_dashai_dataset(loaded_instance)
+                    else:
+                        prepared_instance = task.prepare_for_task(
+                            loaded_instance,
+                            input_columns=raw_input_columns,
+                            output_columns=self.output_columns,
+                        )
 
                     if mode == "rows":
                         # Explain a set of rows the user marked in the table.
@@ -340,7 +368,7 @@ class ExplainerJob(BaseJob):
                     prepared_instance = DatasetDict({"train": prepared_instance})
                     X, _ = select_columns(
                         prepared_instance,
-                        self.input_columns,
+                        raw_input_columns,
                         self.output_columns,
                     )
                 # Persist the original selected rows (the model input for each
@@ -360,6 +388,19 @@ class ExplainerJob(BaseJob):
                 # (prepare_model_input) is a separate, later step some
                 # explainers apply on top of this.
                 X = _reapply_session_converters(X, fitted_converters or [])
+                # Narrow to exactly what the model was trained on — a
+                # converter that only appends (BagOfWords, LabelEncoder)
+                # leaves its original column sitting alongside the new
+                # ones; the model never saw that column.
+                if isinstance(X, DatasetDict):
+                    X = DatasetDict(
+                        {
+                            split_name: part.select_columns(self.input_columns)
+                            for split_name, part in X.items()
+                        }
+                    )
+                else:
+                    X = X.select_columns(self.input_columns)
 
             except Exception as e:
                 log.exception(e)
@@ -413,6 +454,7 @@ class ExplainerJob(BaseJob):
     ) -> None:
         import json
 
+        from datasets import DatasetDict
         from kink import di
 
         from DashAI.back.dataloaders.classes.dashai_dataset import (
@@ -518,6 +560,20 @@ class ExplainerJob(BaseJob):
                     ) from e
                 try:
                     splits = json.loads(run.split_indexes)
+                    # `self.input_columns`/`self.output_columns` name the
+                    # session's *final* columns — a converter that only
+                    # appends (BagOfWords' `bow_<word>`, LabelEncoder's
+                    # `le_<col>`) means those input names don't exist in the
+                    # raw dataset yet. Validate/select the *raw* inputs
+                    # (everything except output) first; the fitted
+                    # converters replayed below reproduce
+                    # `self.input_columns` from there — same reasoning as
+                    # predict_job.py's `_run_prediction_pipeline`.
+                    raw_input_columns = [
+                        col
+                        for col in loaded_dataset.column_names
+                        if col not in self.output_columns
+                    ]
                     loaded_dataset = split_dataset(
                         loaded_dataset,
                         train_indexes=splits["train_indexes"],
@@ -525,14 +581,31 @@ class ExplainerJob(BaseJob):
                         val_indexes=splits["val_indexes"],
                     )
 
-                    prepared_dataset = task.prepare_for_task(
-                        dataset=loaded_dataset,
-                        input_columns=self.input_columns,
-                        output_columns=self.output_columns,
-                    )
+                    if model_session.converters:
+                        # `raw_input_columns` includes whatever a converter
+                        # reads from (e.g. free text for BagOfWords), which
+                        # is never itself a valid task input type — only
+                        # the converter's *output* (self.input_columns) is
+                        # meant to satisfy that. Skip the task's type
+                        # validation on this intermediate raw data; the
+                        # column selection below is all it's needed for
+                        # (same reasoning as predict_job.py's
+                        # `_run_prediction_pipeline`, which never validates
+                        # the raw stage either).
+                        from DashAI.back.dataloaders.classes.dashai_dataset import (
+                            to_dashai_dataset,
+                        )
+
+                        prepared_dataset = to_dashai_dataset(loaded_dataset)
+                    else:
+                        prepared_dataset = task.prepare_for_task(
+                            dataset=loaded_dataset,
+                            input_columns=raw_input_columns,
+                            output_columns=self.output_columns,
+                        )
                     data = select_columns(
                         prepared_dataset,
-                        self.input_columns,
+                        raw_input_columns,
                         self.output_columns,
                     )
 
@@ -565,6 +638,15 @@ class ExplainerJob(BaseJob):
                             model_session.preprocessed_path
                         )
                     data_x = _reapply_session_converters(data_x, fitted_converters)
+                    # Narrow to exactly what the model was trained on — a
+                    # converter that only appends leaves its original column
+                    # sitting alongside the new ones; the model never saw it.
+                    data_x = DatasetDict(
+                        {
+                            split_name: part.select_columns(self.input_columns)
+                            for split_name, part in data_x.items()
+                        }
+                    )
 
                 except Exception as e:
                     log.exception(e)

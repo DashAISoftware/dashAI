@@ -122,9 +122,27 @@ export default function SelectDatasetStep({
       try {
         const run = await getRunById(newExpl.run_id);
         const session = await getModelSessionById(run.model_session_id);
-        setInputColumns(session.input_columns ?? []);
-        setOutputColumns(session.output_columns ?? []);
+        const sessionOutputColumns = session.output_columns ?? [];
+        setOutputColumns(sessionOutputColumns);
         setTrainingDatasetId(session.dataset_id);
+        // Not `session.input_columns`: a converter that adds/renames input
+        // columns (BagOfWords' `bow_<word>`, PCA's `pca0`/`pca1`) means
+        // those names only exist in the session's preprocessed data, never
+        // in a raw dataset — this info panel showed a required column no
+        // real dataset (including a fully compatible one) would ever have.
+        // The training dataset's own raw schema is what a compatible
+        // dataset actually needs to provide.
+        try {
+          const rawTypes = await getDatasetTypes(session.dataset_id);
+          setInputColumns(
+            Object.keys(rawTypes).filter(
+              (col) => !sessionOutputColumns.includes(col),
+            ),
+          );
+        } catch (error) {
+          console.error("Error loading training dataset schema", error);
+          setInputColumns([]);
+        }
         const sessionSplits = JSON.parse(session.splits);
         setSplitFractions((prev) => ({
           ...prev,

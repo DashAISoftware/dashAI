@@ -684,7 +684,6 @@ async def get_sample_by_file(
     Dict
         A Dict with a sample of 10 rows
     """
-    import os
 
     import pyarrow as pa
     import pyarrow.ipc as ipc
@@ -696,7 +695,7 @@ async def get_sample_by_file(
                 detail="Dataset not found",
             )
 
-        arrow_path = os.path.join(path, "dataset", "data.arrow")
+        arrow_path = _resolve_arrow_file_path(path)
 
         with pa.OSFile(arrow_path, "rb") as source:
             reader = ipc.open_file(source)

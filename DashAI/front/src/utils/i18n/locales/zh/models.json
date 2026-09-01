@@ -173,6 +173,7 @@
     "sessionConvertersDescription": "所选的转换器仅在训练数据上进行拟合，然后应用于其余数据，以避免数据泄露。",
     "noConvertersAdded": "尚未添加任何转换器。",
     "converterColumns": "列：{{columns}}",
+    "deleteConverterConfirmation": "确定要删除转换器 \"{{converter}}\" 吗？这也会删除在它之后应用的所有转换器。此操作无法撤销。",
     "selectConverterFirst": "请选择一个转换器以继续。",
     "preprocessingInProgress": "正在处理会话数据...",
     "preprocessingFailed": "会话预处理失败。请检查转换器配置。",

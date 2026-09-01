@@ -169,7 +169,29 @@ async def filter_datasets_endpoint(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Model session not found",
                 )
-            input_columns = list(model_session.input_columns)
+
+            # Not `model_session.input_columns`: prediction on a whole new
+            # dataset feeds it the same *raw* schema manual prediction does
+            # (predict_job.py replays the session's fitted converters on it
+            # before the model sees it) — a converter that adds/renames
+            # input columns (BagOfWords' `bow_<word>`, PCA's `pca0`/`pca1`)
+            # means no real dataset would ever have those names, so every
+            # candidate used to fail this check. Compare against the
+            # session's own raw training dataset's columns instead — every
+            # one of those except the output is a genuine raw input.
+            trained_dataset: Dataset = db.get(Dataset, model_session.dataset_id)
+            if not trained_dataset:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Model session's dataset not found",
+                )
+            trained_columns_spec = get_columns_spec(
+                f"{trained_dataset.file_path}/dataset"
+            )
+            output_columns = set(model_session.output_columns)
+            input_columns = [
+                col for col in trained_columns_spec if col not in output_columns
+            ]
 
             datasets = db.query(Dataset).all()
             valid_dataset_ids = []

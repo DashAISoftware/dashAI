@@ -549,6 +549,154 @@ def test_run_with_input_column_added_by_converter_finishes(
     client.delete(f"/api/v1/model-session/{session['id']}")
 
 
+def test_predict_with_input_column_added_by_converter(
+    client: TestClient, dataset_id: int
+):
+    """Regression test: manual prediction input is always in the *raw*
+    dataset's schema — predict_job.py replays a session's fitted converters
+    on it before the model sees it (same principle as predicting with raw,
+    unscaled StandardScaler input in the holdout test above). Using PCA to
+    turn the 4 raw numeric columns into `pca0`/`pca1` used to break this two
+    different ways: a `KeyError` selecting `pca0`/`pca1` straight from the
+    raw-schema loaded dataset (selection ran before the fitted PCA replay),
+    and, before that, "Column 'pca0' not found in training dataset" from
+    `process_manual_input` validating manual input against the raw
+    dataset's own columns."""
+    pca_config = [{"converter": "PCA", "params": {"n_components": 2}, "columns": []}]
+    # Preprocessing must run with the *raw* input columns — PCA needs them
+    # present to fit on, and they match the raw dataset from the start
+    # (unlike `pca0`/`pca1`, which don't exist until PCA creates them).
+    create_session_response = client.post(
+        "/api/v1/model-session/",
+        json={
+            "dataset_id": dataset_id,
+            "task_name": "TabularClassificationTask",
+            "name": "PCA Predict Session",
+            "input_columns": [
+                "SepalLengthCm",
+                "SepalWidthCm",
+                "PetalLengthCm",
+                "PetalWidthCm",
+            ],
+            "output_columns": ["Species"],
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
+            "splits": json.dumps(
+                {
+                    "train": 0.6,
+                    "test": 0.2,
+                    "validation": 0.2,
+                    "is_random": True,
+                    "has_changed": True,
+                    "seed": 42,
+                    "shuffle": True,
+                    "stratify": False,
+                    "splitType": "random",
+                    "splitter_name": "HoldoutSplitter",
+                }
+            ),
+            "converters": pca_config,
+        },
+    )
+    assert create_session_response.status_code == 201, create_session_response.text
+    session = create_session_response.json()
+    assert session["preprocessing_status"] == 3, session  # FINISHED
+
+    # Simulates the wizard's Columns step: it only runs after preprocessing,
+    # and only ever offers the *current* (already-transformed) columns.
+    from DashAI.back.dependencies.database.models import ModelSession
+
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        model_session = db.get(ModelSession, session["id"])
+        model_session.input_columns = ["pca0", "pca1"]
+        db.commit()
+
+    create_run_response = client.post(
+        "/api/v1/run/",
+        json={
+            "model_session_id": session["id"],
+            "model_name": "KNeighborsClassifier",
+            "name": "PCA Predict Run",
+            "parameters": {
+                "n_neighbors": 5,
+                "weights": "uniform",
+                "algorithm": "auto",
+            },
+            "optimizer_name": "",
+            "optimizer_parameters": {
+                "n_trials": 10,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            "goal_metric": "",
+            "description": "PCA predict run",
+            "plot_history_path": "path/to/history.png",
+            "plot_slice_path": "path/to/slice.png",
+            "plot_contour_path": "path/to/contour.png",
+            "plot_importance_path": "path/to/importance.png",
+        },
+    )
+    assert create_run_response.status_code == 201, create_run_response.text
+    run_id = create_run_response.json()["id"]
+
+    job_response = client.post(
+        "/api/v1/job/",
+        data={"job_type": "ModelJob", "kwargs": json.dumps({"run_id": run_id})},
+    )
+    assert job_response.status_code == 201, job_response.text
+    job_id = job_response.json()["id"]
+    status_response = client.get(f"/api/v1/job/status/{job_id}")
+    assert status_response.json()["status"] == "finished", status_response.json()
+
+    # Manual input matches the *raw* dataset's schema — the 4 original
+    # numeric columns — never `pca0`/`pca1`.
+    predict_response = client.post(
+        "/api/v1/predict/preview",
+        data={
+            "run_id": str(run_id),
+            "manual_input_data": json.dumps(
+                [
+                    {
+                        "SepalLengthCm": 5.1,
+                        "SepalWidthCm": 3.5,
+                        "PetalLengthCm": 1.4,
+                        "PetalWidthCm": 0.2,
+                    }
+                ]
+            ),
+        },
+    )
+    assert predict_response.status_code == 200, predict_response.text
+    preview = predict_response.json()
+    # Preview shows the raw schema the user actually entered, never the
+    # converter-produced pca0/pca1.
+    assert "pca0" not in preview["columns"]
+    assert set(preview["columns"]) == {
+        "SepalLengthCm",
+        "SepalWidthCm",
+        "PetalLengthCm",
+        "PetalWidthCm",
+        "Species",
+    }
+    assert len(preview["rows"]) == 1
+
+    # Regression check: the dataset-picker's compatibility filter must use
+    # the same raw schema — comparing candidate datasets against
+    # `model_session.input_columns` (`pca0`/`pca1`) meant no real dataset
+    # (this one included) could ever match, leaving the picker empty.
+    filter_response = client.get(
+        "/api/v1/predict/filter_datasets",
+        params={"run_id": run_id},
+    )
+    assert filter_response.status_code == 200, filter_response.text
+    assert dataset_id in filter_response.json()["valid_dataset_ids"]
+
+    client.delete(f"/api/v1/model-session/{session['id']}")
+
+
 def test_get_run(client: TestClient):
     response = client.get("/api/v1/run/1")
     assert response.status_code == 200

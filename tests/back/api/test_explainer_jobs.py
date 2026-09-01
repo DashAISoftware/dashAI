@@ -196,6 +196,42 @@ class RecordingConverter(BaseConverter):
         return x
 
 
+class AppendingConverter(BaseConverter):
+    """Fake fitted session converter that *appends* a new column instead of
+    transforming in place — mirrors LabelEncoder (`le_<col>`) and BagOfWords
+    (`bow_<word>`), which leave the original column sitting alongside
+    whatever they add. Used to verify `ExplainerJob` validates/selects the
+    *raw* schema before replaying converters (not `model_session
+    .input_columns`, which names the converter's *output* and doesn't
+    exist in the raw dataset yet)."""
+
+    COMPATIBLE_COMPONENTS = ["DummyTask"]
+    SCHEMA = None
+
+    def get_output_type(self, column_name=None):
+        import pyarrow as pa
+
+        from DashAI.back.types.value_types import Integer
+
+        return Integer(arrow_type=pa.int64())
+
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, x, y=None):
+        import pyarrow as pa
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+        RECORDED_TRANSFORM_COLUMNS.append(sorted(x.column_names))
+        table = x.arrow_table.append_column(
+            "engineered_col", pa.array([0] * len(x), type=pa.int64())
+        )
+        types = dict(x.types)
+        types["engineered_col"] = self.get_output_type()
+        return DashAIDataset(table, types=types, splits=x.splits)
+
+
 @pytest.fixture(autouse=True, name="test_registry")
 def setup_test_registry(client, monkeypatch: pytest.MonkeyPatch):
     """Setup a test registry with test task and explainers components."""
@@ -712,6 +748,230 @@ def test_explainer_reapplies_session_converters(
         with session_factory() as db:
             db.delete(db.get(LocalExplainer, local_explainer_id))
             db.delete(db.get(GlobalExplainer, global_explainer_id))
+            db.delete(db.get(Run, run_id))
+            db.delete(db.get(ModelSession, session_id))
+            db.commit()
+
+
+def test_explainer_handles_converter_that_appends_input_columns(
+    client: TestClient, dataset_id: int, tmp_path
+):
+    """Regression test: a converter that *appends* a new column instead of
+    transforming in place (e.g. BagOfWords' `bow_<word>`, LabelEncoder's
+    `le_<col>`) used to crash both explanation scopes with a `KeyError` —
+    `run()` validated/selected `model_session.input_columns` (the
+    converter's *output* name, `engineered_col`) directly against the raw
+    dataset, before the fitted converter that actually produces it ever
+    ran. Uses `RawInputLocalExplainer` to confirm the local explanation
+    doesn't just avoid crashing, but is actually handed `engineered_col` —
+    not the original scope column the converter read from."""
+    container = client.app.container
+    session_factory = container["session_factory"]
+    RECORDED_TRANSFORM_COLUMNS.clear()
+    RAW_INPUT_COLUMNS.clear()
+
+    preprocessed_path = str(tmp_path / "session_dir_appending")
+    fitted_converters = [
+        {"instance": AppendingConverter(), "columns": ["SepalLengthCm"]}
+    ]
+    joblib.dump(fitted_converters, f"{preprocessed_path}_converters.pkl")
+
+    with session_factory() as db:
+        model_session = ModelSession(
+            dataset_id=dataset_id,
+            name="AppendingConverterExplainerSession",
+            task_name="DummyTask",
+            # The session's *final* input is the converter-produced column,
+            # not the raw one it was derived from — mirrors picking
+            # `bow_<word>`/`le_<col>` in the wizard's Columns step.
+            input_columns=["engineered_col"],
+            output_columns=output_columns,
+            evaluation_strategy="holdout",
+            splits=splits,
+            converters=[
+                {
+                    "converter": "AppendingConverter",
+                    "params": {},
+                    "columns": ["SepalLengthCm"],
+                }
+            ],
+            preprocessed_path=preprocessed_path,
+        )
+        db.add(model_session)
+        db.commit()
+        db.refresh(model_session)
+        session_id = model_session.id
+
+        run = Run(
+            model_session_id=session_id,
+            optimizer_name="OptunaOptimizer",
+            optimizer_parameters={
+                "n_trials": 1,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            model_name="DummyModel",
+            parameters={},
+            goal_metric="Accuracy",
+            name="AppendingConverterExplainerRun",
+            split_indexes="""{
+                "train_indexes": [0, 1, 2, 3, 4],
+                "test_indexes": [5, 6, 7, 8],
+                "val_indexes": [9, 10, 11, 12]
+            }""",
+        )
+        db.add(run)
+        db.commit()
+        db.refresh(run)
+        run_id = run.id
+
+        global_explainer = GlobalExplainer(
+            name="test_appending_global",
+            run_id=run_id,
+            explainer_name="DummyGlobalExplainer",
+            parameters={},
+        )
+        db.add(global_explainer)
+        db.commit()
+        db.refresh(global_explainer)
+        global_explainer_id = global_explainer.id
+
+        local_explainer = LocalExplainer(
+            name="test_appending_local",
+            run_id=run_id,
+            explainer_name="RawInputLocalExplainer",
+            dataset_id=dataset_id,
+            scope={"split": "test", "percentage": 100},
+            parameters={},
+            fit_parameters={},
+        )
+        db.add(local_explainer)
+        db.commit()
+        db.refresh(local_explainer)
+        local_explainer_id = local_explainer.id
+
+    try:
+        response = client.post(
+            "/api/v1/job/",
+            data={
+                "job_type": "ExplainerJob",
+                "kwargs": json.dumps(
+                    {"explainer_id": global_explainer_id, "explainer_scope": "global"}
+                ),
+            },
+        )
+        assert response.status_code == 201, response.text
+        job_status = client.get(f"/api/v1/job/status/{response.json()['id']}").json()
+        assert job_status["status"] == "finished", job_status
+
+        # The converter was actually invoked, scoped to the *raw* column it
+        # reads from — proof the validate/select step ran on the raw
+        # schema, not on `engineered_col` (which doesn't exist yet then).
+        assert RECORDED_TRANSFORM_COLUMNS, (
+            "the converter was never called for the global explanation"
+        )
+        assert all(cols == ["SepalLengthCm"] for cols in RECORDED_TRANSFORM_COLUMNS)
+
+        RECORDED_TRANSFORM_COLUMNS.clear()
+
+        response = client.post(
+            "/api/v1/job/",
+            data={
+                "job_type": "ExplainerJob",
+                "kwargs": json.dumps(
+                    {"explainer_id": local_explainer_id, "explainer_scope": "local"}
+                ),
+            },
+        )
+        assert response.status_code == 201, response.text
+        job_status = client.get(f"/api/v1/job/status/{response.json()['id']}").json()
+        assert job_status["status"] == "finished", job_status
+
+        assert RECORDED_TRANSFORM_COLUMNS, (
+            "the converter was never called for the local explanation"
+        )
+        assert all(cols == ["SepalLengthCm"] for cols in RECORDED_TRANSFORM_COLUMNS)
+
+        # The explainer itself was handed exactly the model's real input
+        # (the converter's output), not the raw column left behind.
+        assert RAW_INPUT_COLUMNS, "the explainer never received any instance"
+        assert set(RAW_INPUT_COLUMNS) == {"engineered_col"}
+    finally:
+        with session_factory() as db:
+            db.delete(db.get(LocalExplainer, local_explainer_id))
+            db.delete(db.get(GlobalExplainer, global_explainer_id))
+            db.delete(db.get(Run, run_id))
+            db.delete(db.get(ModelSession, session_id))
+            db.commit()
+
+
+def test_valid_datasets_uses_raw_schema_when_converters_rename_inputs(
+    client: TestClient, dataset_id: int
+):
+    """Regression test: `/local/valid-datasets` used to compare candidate
+    datasets against `model_session.input_columns` directly — for a
+    session with a converter that adds/renames input columns (BagOfWords'
+    `bow_<word>`, PCA's `pca0`/`pca1`), no dataset (not even the session's
+    own training dataset) would ever have those names, so the picker
+    always came back empty. It must compare against the training
+    dataset's own raw schema instead."""
+    container = client.app.container
+    session_factory = container["session_factory"]
+
+    with session_factory() as db:
+        model_session = ModelSession(
+            dataset_id=dataset_id,
+            name="ValidDatasetsAppendingSession",
+            task_name="DummyTask",
+            input_columns=["engineered_col"],
+            output_columns=output_columns,
+            evaluation_strategy="holdout",
+            splits=splits,
+            converters=[
+                {
+                    "converter": "AppendingConverter",
+                    "params": {},
+                    "columns": ["SepalLengthCm"],
+                }
+            ],
+        )
+        db.add(model_session)
+        db.commit()
+        db.refresh(model_session)
+        session_id = model_session.id
+
+        run = Run(
+            model_session_id=session_id,
+            optimizer_name="OptunaOptimizer",
+            optimizer_parameters={
+                "n_trials": 1,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            model_name="DummyModel",
+            parameters={},
+            goal_metric="Accuracy",
+            name="ValidDatasetsAppendingRun",
+            split_indexes="""{
+                "train_indexes": [0, 1, 2, 3, 4],
+                "test_indexes": [5, 6, 7, 8],
+                "val_indexes": [9, 10, 11, 12]
+            }""",
+        )
+        db.add(run)
+        db.commit()
+        db.refresh(run)
+        run_id = run.id
+
+    try:
+        response = client.post(
+            "/api/v1/explainer/local/valid-datasets",
+            json={"run_id": run_id},
+        )
+        assert response.status_code == 200, response.text
+        assert dataset_id in response.json()["valid_dataset_ids"], response.json()
+    finally:
+        with session_factory() as db:
             db.delete(db.get(Run, run_id))
             db.delete(db.get(ModelSession, session_id))
             db.commit()

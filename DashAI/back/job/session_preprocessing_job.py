@@ -77,15 +77,20 @@ def load_preprocessed_session_data(model_session: ModelSession) -> Tuple[Any, An
 
     def _load_partition(path: str):
         combined = load_dataset(path)
-        # Not `model_session.input_columns`: converters like PCA or an
-        # encoder can rename/add/drop input columns, so those names go
-        # stale. Output columns are never renamed by any converter, so
-        # they're the only safe fixed point — everything else is input.
-        output_columns = model_session.output_columns
-        input_columns = [
-            col for col in combined.column_names if col not in output_columns
-        ]
-        return select_columns(combined, input_columns, output_columns)
+        # `model_session.input_columns`/`output_columns` are the session's
+        # *finalized* selection — set by the wizard's Columns step, which
+        # only ever runs after preprocessing, offering exactly the current
+        # (already-transformed) column set. They're trustworthy here for
+        # the same reason: a converter that only *appends* columns (e.g.
+        # `LabelEncoder`'s `le_<col>`, `BagOfWords`'s `bow_<word>`) leaves
+        # the original column sitting in the saved partition too — taking
+        # "everything except output" as input used to silently pull that
+        # leftover original column (e.g. raw text) into training data the
+        # user never selected, alongside real errors from anything that
+        # can't convert to a numeric feature.
+        return select_columns(
+            combined, model_session.input_columns, model_session.output_columns
+        )
 
     if os.path.isdir(os.path.join(session_dir, "train")):
         x, y = {}, {}

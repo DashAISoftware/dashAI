@@ -223,6 +223,19 @@ export default function ManualPredictionsTable({
         );
         if (cancelled) return;
         setModelSession(sessionData);
+        // Manual entry always speaks the *raw* dataset's schema, never
+        // `sessionData.input_columns` — predict_job.py's manual-input path
+        // (task.process_manual_input) validates every entered column
+        // against the raw dataset on disk, then replays the session's
+        // fitted converters on it before the model sees it (same as
+        // predicting with raw, unscaled StandardScaler input: it works
+        // because the raw column names are what the backend expects).
+        // A converter that adds/renames input columns (BagOfWords'
+        // `bow_<word>`, PCA's `pca0`/`pca1`) only exists post-conversion,
+        // so rendering fields from `input_columns` sends keys the backend
+        // rejects with "Column '...' not found in training dataset" — and
+        // earlier, before this used the raw schema consistently, crashed
+        // "Add Row" outright (inputSample had no entry for those keys).
         const [types, sample] = await Promise.all([
           getDatasetTypes(sessionData.dataset_id),
           getDatasetSample(sessionData.dataset_id),
@@ -245,7 +258,14 @@ export default function ManualPredictionsTable({
     };
   }, [run, session]);
 
-  const inputColumns = modelSession?.input_columns ?? EMPTY_ARRAY;
+  // Every raw dataset column except the target — not `modelSession
+  // .input_columns` (see the fetch effect above for why).
+  const inputColumns = useMemo(() => {
+    const outputColumns = modelSession?.output_columns ?? EMPTY_ARRAY;
+    return Object.keys(inputTypes).filter(
+      (col) => !outputColumns.includes(col),
+    );
+  }, [inputTypes, modelSession]);
 
   const createEmptyRow = useCallback(() => {
     if (!inputSample || inputColumns.length === 0) return {};

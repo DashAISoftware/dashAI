@@ -197,9 +197,14 @@ function PreprocessingStep({
   const handleRemoveConverter = async (index) => {
     if (!session) return;
     setIsApplying(true);
-    const nextConverters = (session.converters || []).filter(
-      (_, i) => i !== index,
-    );
+    // Cascade delete, matching the notebook's own converter removal
+    // (NotebookView.jsx's getItemsToDelete/handleConfirmConverterDelete):
+    // removing a converter also removes every converter applied after it,
+    // since a later converter may have been scoped against columns this
+    // one produced — keeping it would silently re-fit it against a scope
+    // that no longer exists. AppliedConvertersView already confirms this
+    // with the user (via ItemsToDeleteList) before calling this handler.
+    const nextConverters = (session.converters || []).slice(0, index);
     try {
       const updated = await updateSessionConverters(
         modelSessionId,

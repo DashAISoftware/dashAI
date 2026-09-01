@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 
 import { Box } from "@mui/system";
 import ManualInputForm from "./ManualInputForm";
@@ -23,6 +23,19 @@ export default function ManualInput({
 }) {
   const { t } = useTranslation(["prediction"]);
 
+  // Not `experiment.input_columns`: a converter that adds or renames input
+  // columns (e.g. BagOfWords' `bow_<word>`, PCA's `pca0`/`pca1`) means
+  // those names only exist inside the session's preprocessed data, never
+  // in `types`/`sample` (both always fetched from the raw dataset by every
+  // caller) — showing/requiring them here asked the user to fill in
+  // columns their actual dataset never has. `types`' own keys are exactly
+  // what the raw dataset offers; `targetColumn` (when this caller shows
+  // one) is excluded the same way the output column is everywhere else.
+  const inputColumns = useMemo(
+    () => Object.keys(types).filter((col) => col !== targetColumn),
+    [types, targetColumn],
+  );
+
   return (
     <Box>
       {loading ? (
@@ -31,7 +44,7 @@ export default function ManualInput({
         <ManualInputForm
           types={types}
           sample={sample}
-          inputColumns={experiment.input_columns}
+          inputColumns={inputColumns}
           onSubmit={(values) => console.log("Form submitted:", values)}
           manualInputData={manualInputData}
           setManualInputData={setManualInputData}

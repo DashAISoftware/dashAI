@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import {
+  getDataset,
   getDatasetFile,
   getDatasetFileFiltered,
   getDatasetTypesByFilePath,
@@ -26,6 +27,7 @@ function DatasetSelector({
 }) {
   const { t } = useTranslation(["prediction", "common", "datasets"]);
   const [columnTypes, setColumnTypes] = useState({});
+  const [rawInputColumns, setRawInputColumns] = useState([]);
 
   useEffect(() => {
     if (!selectedDataset?.file_path) return;
@@ -33,6 +35,38 @@ function DatasetSelector({
       .then(setColumnTypes)
       .catch(() => {});
   }, [selectedDataset?.file_path]);
+
+  // Not `experiment.input_columns`: a converter that adds or renames input
+  // columns (e.g. BagOfWords' `bow_<word>`) means those names only exist
+  // *inside* the session's own preprocessed data, never in a raw dataset.
+  // Not the *selected* dataset's own columns either — a dataset can pass
+  // `filter_datasets` by having extra columns beyond what's needed (e.g.
+  // one already carrying pre-computed `bow_<word>` columns of its own),
+  // and showing every one of those here made a single required column
+  // ("text") look like hundreds. The session's own raw *training* dataset
+  // (`experiment.dataset_id`) is the actual source of truth for what's
+  // required — independent of whichever dataset happens to be selected.
+  useEffect(() => {
+    let cancelled = false;
+    getDataset(experiment.dataset_id)
+      .then((trainedDataset) =>
+        getDatasetTypesByFilePath(`${trainedDataset.file_path}/dataset`),
+      )
+      .then((trainedTypes) => {
+        if (cancelled) return;
+        setRawInputColumns(
+          Object.keys(trainedTypes).filter(
+            (col) => !experiment.output_columns.includes(col),
+          ),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setRawInputColumns([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [experiment.dataset_id, experiment.output_columns]);
 
   const fetchDatasetPage = useCallback(
     async (page, pageSize, filterModel, sortModel) => {
@@ -111,7 +145,7 @@ function DatasetSelector({
             <Box sx={{ mb: 2 }}>
               <strong>{t("prediction:label.inputColumns")}:</strong>
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mt: 1 }}>
-                {experiment.input_columns.map((col) => (
+                {rawInputColumns.map((col) => (
                   <Chip
                     key={col}
                     label={col}

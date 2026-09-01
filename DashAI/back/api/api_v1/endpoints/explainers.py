@@ -1122,9 +1122,17 @@ async def valid_datasets(
                 detail="Internal database error",
             ) from e
 
+    # Fallback only: a converter that adds/renames input columns
+    # (BagOfWords' `bow_<word>`, PCA's `pca0`/`pca1`) means
+    # `model_session.input_columns` only exist in the session's
+    # preprocessed data, never in a raw dataset — every candidate used to
+    # fail this check. Replaced below with the training dataset's own raw
+    # schema whenever it's readable; kept here only for the rare case that
+    # read fails, so this doesn't silently accept every dataset.
     required_columns = model_session.input_columns + model_session.output_columns
 
     training_types = {}
+    training_spec = {}
     if training_dataset:
         try:
             training_spec = get_columns_spec(f"{training_dataset.file_path}/dataset")
@@ -1133,6 +1141,11 @@ async def valid_datasets(
             }
         except Exception as e:
             log.warning(f"Could not read training dataset schema: {e}")
+
+    if training_spec:
+        required_columns = [
+            col for col in training_spec if col not in model_session.output_columns
+        ] + model_session.output_columns
 
     valid_dataset_ids = []
     for dataset in datasets:
