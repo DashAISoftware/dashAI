@@ -189,6 +189,21 @@ export default function SessionVisualization() {
       [runs],
     );
 
+  const availableSplits = React.useMemo(
+    () =>
+      [
+        hasTrainMetrics && "train",
+        hasValidationMetrics && "validation",
+        hasTestMetrics && "test",
+      ].filter(Boolean),
+    [hasTrainMetrics, hasValidationMetrics, hasTestMetrics],
+  );
+
+  const effectiveSplit =
+    availableSplits.length === 0 || availableSplits.includes(metricSplit)
+      ? metricSplit
+      : availableSplits[0];
+
   const handleTrainWithTour = (run) => {
     if (onTrain) onTrain(run);
     if (sessionTourContext?.run && sessionTourContext?.stepIndex === 5) {
@@ -569,7 +584,7 @@ export default function SessionVisualization() {
                     hasValidationMetrics ||
                     hasTestMetrics) && (
                     <PillToggleButtonGroup
-                      value={metricSplit}
+                      value={effectiveSplit}
                       onChange={(e, newValue) => {
                         if (newValue !== null) setMetricSplit(newValue);
                       }}
@@ -615,7 +630,7 @@ export default function SessionVisualization() {
                     onViewDetails={handleViewDetails}
                     onDelete={onDeleteRun}
                     onRowClick={handleRowClick}
-                    metricSplit={metricSplit}
+                    metricSplit={effectiveSplit}
                   />
 
                   {/* Graphs and statistical tests button toggle just when cross validation is being used */}
@@ -663,7 +678,7 @@ export default function SessionVisualization() {
                   {view === "graphs" ? (
                     <ResultsGraphs
                       runs={runs}
-                      selectedSplit={metricSplit}
+                      selectedSplit={effectiveSplit}
                       onSplitChange={setMetricSplit}
                       metrics={allMetrics}
                     />
