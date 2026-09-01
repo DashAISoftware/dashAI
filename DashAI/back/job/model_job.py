@@ -567,6 +567,7 @@ class ModelJob(BaseJob):
                 output_columns=[],
             )
             X, _ = select_columns(prepared_dataset, model_session.input_columns, [])
+            X = self._standardise_features(X)
         except Exception as e:
             log.exception(e)
             raise JobError(
@@ -617,6 +618,51 @@ class ModelJob(BaseJob):
             "metrics": metrics,
         }
 
+    @staticmethod
+    def _standardise_features(x: "DashAIDataset") -> "DashAIDataset":
+        """Centre and scale the input columns of a target free dataset.
+
+        Every clustering algorithm DashAI ships measures distances, so a column
+        expressed in a wider unit dominates the ones next to it. On a dataset
+        holding scores from 0 to 100 beside hours from 1 to 11, DBSCAN's default
+        eps of 0.5 labels every row as noise and Spectral's RBF affinity
+        underflows to an empty graph, which is why this runs before the model
+        sees the data.
+
+        Both the model and the metrics are handed the result, so cluster
+        quality is measured in the space the clusters were found in rather than
+        the raw one.
+
+        This is the model session path, which has no converter step of its own.
+        A notebook that already applied the StandardScaler converter reaches the
+        models through a different route and is not touched here.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input features, restricted to the session's input columns.
+
+        Returns
+        -------
+        DashAIDataset
+            The same dataset with its numeric columns standardised. Columns with
+            no variance are left alone, since dividing them by a zero standard
+            deviation is what produces the NaNs the models then reject.
+        """
+        from sklearn.preprocessing import StandardScaler  # local import
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
+        frame = x.to_pandas()
+        numeric = frame.select_dtypes(include=["number"]).columns
+        movable = [c for c in numeric if frame[c].std(ddof=0) > 0]
+        if not movable:
+            return x
+
+        frame = frame.copy()
+        frame[movable] = StandardScaler().fit_transform(frame[movable])
+        return to_dashai_dataset(frame)
+
     def _train_without_target(
         self, preparation_results: Dict[str, Any], run: Run, db
     ) -> "BaseModel":
@@ -653,6 +699,26 @@ class ModelJob(BaseJob):
         except Exception as e:
             log.exception(e)
             raise JobError(f"Model training failed {e}") from e
+
+        # Internal validity indices are only defined over two or more clusters,
+        # which is why prepare_to_metric answers None outside that range. Left
+        # alone, a density based model that sends every sample to noise finishes
+        # the run green with an empty metric table and nothing pointing at the
+        # parameters that caused it, so the degenerate outcome is raised here.
+        import numpy as np  # local import
+
+        label_values = np.asarray(labels)
+        clustered = label_values[label_values != -1]
+        n_noise = int(label_values.size - clustered.size)
+        n_clusters = int(np.unique(clustered).size)
+        if n_clusters < 2 or n_clusters >= clustered.size:
+            raise JobError(
+                f"{type(model).__name__} produced {n_clusters} cluster(s) over "
+                f"{label_values.size} samples, {n_noise} of them labelled as "
+                "noise. Clustering metrics need at least two clusters, so this "
+                "run has no result to report. Adjust the model parameters, for "
+                "instance a larger eps or a smaller min_samples for DBSCAN."
+            )
 
         try:
             results = {}
