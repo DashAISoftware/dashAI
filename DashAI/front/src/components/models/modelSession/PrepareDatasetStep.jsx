@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 import {
@@ -64,7 +64,8 @@ function PrepareDatasetStep({
     newExp.output_columns,
   );
 
-  const [columnsReady, setColumnsReady] = useState(false);
+  const columnsReady =
+    inputColumnNames.length >= 1 && outputColumnNames.length >= 1;
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   // True until the current column selection has actually been checked against
   // the backend at least once — distinct from columnsAreValid=false, so the
@@ -275,30 +276,37 @@ function PrepareDatasetStep({
     setNewExp(updatedExpData);
   };
 
-  useEffect(() => {
-    if (inputColumnNames.length >= 1 && outputColumnNames.length >= 1) {
-      setColumnsReady(true);
-    } else {
-      setColumnsReady(false);
-    }
-  }, [inputColumnNames, outputColumnNames]);
-
   // Column validity depends on the columns, the dataset and the task, never on
   // the split configuration. Gating it on the splits being ready made every
   // split change re-check the columns over HTTP and blank the requirements
   // banner in the meantime.
-  useEffect(() => {
+  //
+  // When columnsReady is false we already know the selection is invalid
+  // (input or output is empty) without asking the backend, so
+  // validationPending goes straight to false — otherwise the requirements
+  // banner below stayed hidden forever after the user cleared a column,
+  // instead of showing why the selection is invalid.
+  //
+  // This runs as a layout effect (not a regular effect) so that when
+  // columns go from empty back to a ready selection — e.g. the dataset
+  // finishes loading and auto-selects defaults — validationPending flips
+  // back to true synchronously before the browser paints. A regular effect
+  // runs one commit too late: React would paint a frame with the stale
+  // "already validated" state (an incorrect red banner) against the new,
+  // not-yet-checked columns before the effect corrected it.
+  useLayoutEffect(() => {
+    if (!columnsReady) {
+      setColumnsAreValid(false);
+      setValidationPending(false);
+      return;
+    }
     if (
-      columnsReady &&
       datasetInfo &&
       datasetInfo.column_names &&
       datasetInfo.column_names.length > 0
     ) {
       setValidationPending(true);
       validateColumns();
-    } else {
-      setColumnsAreValid(false);
-      setValidationPending(true);
     }
   }, [columnsReady, inputColumnNames, outputColumnNames, datasetInfo]);
 
@@ -452,7 +460,7 @@ function PrepareDatasetStep({
           </Alert>
         ) : null
       ) : null}
-      {taskRequirements && !validationPending && (
+      {taskRequirements && !infoLoading && !validationPending && (
         <Alert
           severity={columnsAreValid ? "success" : "error"}
           sx={{
@@ -535,6 +543,14 @@ function PrepareDatasetStep({
             onInputColumnNamesChange={setInputColumnNames}
             selectedOutputColumnNames={outputColumnNames}
             onOutputColumnNamesChange={setOutputColumnNames}
+            inputError={inputColumnNames.length === 0}
+            inputHelperText={
+              inputColumnNames.length === 0 ? t("common:required") : ""
+            }
+            outputError={outputColumnNames.length === 0}
+            outputHelperText={
+              outputColumnNames.length === 0 ? t("common:required") : ""
+            }
             disabled={
               infoLoading || (datasetInfo.column_names || []).length === 0
             }
