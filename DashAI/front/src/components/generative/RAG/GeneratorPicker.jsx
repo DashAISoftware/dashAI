@@ -77,9 +77,15 @@ export default function GeneratorPicker({
     credentialsLoaded,
   );
 
+  // Nothing is reported while the list is still in flight: without it there is
+  // no `selected` to judge, and a panel that mounts and unmounts this picker
+  // before the response lands would keep that premature "unavailable" after
+  // the picker is gone, leaving its save button dead with nothing explaining
+  // why.
   useEffect(() => {
+    if (loading) return;
     onAvailabilityChange?.(Boolean(selected) && !needsDownload && !locked);
-  }, [selected, needsDownload, locked, onAvailabilityChange]);
+  }, [loading, selected, needsDownload, locked, onAvailabilityChange]);
 
   /**
    * Select a model and seed it with the parameters its schema declares.
