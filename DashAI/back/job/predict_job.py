@@ -12,6 +12,7 @@ from DashAI.back.dependencies.database.models import Dataset, ModelSession, Pred
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.regression_task import RegressionTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -481,6 +482,14 @@ class PredictJob(BaseJob):
                     for key, value in trained_schema.items()
                     if key in model_session.input_columns + model_session.output_columns
                 }
+
+                # Regression models predict continuous values regardless of
+                # the training target's original dtype (e.g. a target column
+                # that happened to hold only integer-looking values), so the
+                # output column's saved schema must reflect that instead of
+                # inheriting the training dataset's type.
+                if isinstance(task, RegressionTask):
+                    filtered_schema[output_col] = {"type": "Float", "dtype": "float64"}
 
                 # Store num of rows, columns, and column names
                 dataset_with_prediction.compute_base_metadata()

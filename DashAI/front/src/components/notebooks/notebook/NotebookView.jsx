@@ -411,6 +411,7 @@ export default function NotebookView({ notebook }) {
           style={{ height: "100%" }}
           initialTopMostItemIndex={listSize > 1 ? listSize - 1 : 0}
           data={explorersAndConverters}
+          computeItemKey={(index, item) => `${item.type}-${item.id}`}
           itemContent={(index, item) => (
             <RowItem
               item={item}
