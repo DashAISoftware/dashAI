@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Union
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from kink import di
 from sqlalchemy import exc, select
 
@@ -10,6 +10,7 @@ from DashAI.back.api.api_v1.schemas.generative_session_params import (
     GenerativeSessionBulkDeleteParams,
     GenerativeSessionParams,
 )
+from DashAI.back.core.utils import localize
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
@@ -39,6 +40,7 @@ log = logging.getLogger(__name__)
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def upload_generative_session(
     params: GenerativeSessionParams,
+    accept_language: str | None = Header(default=None),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
@@ -67,18 +69,6 @@ async def upload_generative_session(
                     ),
                 )
 
-            # A parameter may select another component that itself needs
-            # downloading; block until every nested one is present.
-            nested_missing = missing_downloads(params.parameters, component_registry)
-            if nested_missing:
-                names = ", ".join(m["name"] for m in nested_missing)
-                raise HTTPException(
-                    status_code=status.HTTP_409_CONFLICT,
-                    detail=(
-                        f"These components must be downloaded before use: {names}."
-                    ),
-                )
-
             # Check if the model is a subclass of GenerativeModel
             if not issubclass(model_class, BaseGenerativeModel):
                 raise HTTPException(
@@ -95,17 +85,31 @@ async def upload_generative_session(
                 )
             task_class = component_registry[params.task_name]["class"]
 
-            # RAG: validate and normalise RAG-specific parameters
+            # RAG: validate and normalise RAG-specific parameters, filling in
+            # the components the caller did not choose.
             if task_class == RAGTask:
                 try:
                     params.parameters = SessionValidationService(
                         db, component_registry
-                    ).prepare_RAG_params(params.parameters)
+                    ).prepare_RAG_params(params.parameters, accept_language)
                 except (ValueError, RAGWorkflowError) as e:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=str(e),
                     ) from e
+
+            # A parameter may select another component that itself needs
+            # downloading; block until every nested one is present. Runs after
+            # the RAG defaults are applied so it sees the final configuration.
+            nested_missing = missing_downloads(params.parameters, component_registry)
+            if nested_missing:
+                names = ", ".join(m["name"] for m in nested_missing)
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=(
+                        f"These components must be downloaded before use: {names}."
+                    ),
+                )
 
             # Validate schema
             try:
@@ -164,7 +168,11 @@ async def upload_generative_session(
                 "description": session.description,
                 "created": session.created,
                 "last_modified": session.last_modified,
-                "display_name": component_registry[session.task_name]["display_name"],
+                # Localized here so the client never receives a language object.
+                "display_name": localize(
+                    component_registry[session.task_name]["display_name"],
+                    accept_language,
+                ),
             }
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -220,12 +228,17 @@ async def get_generative_session(
 
 @router.get("/", status_code=status.HTTP_200_OK)
 async def get_all_generative_sessions(
+    task_name: Union[str, None] = None,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
     """Get all generative sessions ordered by creation date.
 
     Parameters
     ----------
+    task_name : str | None
+        If given, return only sessions of that generative task. A view scoped to
+        one task (the RAG entry point, say) uses this; the shared session list
+        asks for everything and groups the result by task.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -233,8 +246,8 @@ async def get_all_generative_sessions(
     Returns
     -------
     list
-        A list of dictionaries with all generative sessions on the database,
-        ordered by creation date.
+        A list of dictionaries with the matching generative sessions, ordered by
+        creation date.
 
     Raises
     ------
@@ -244,11 +257,10 @@ async def get_all_generative_sessions(
 
     with session_factory() as db:
         try:
-            sessions = (
-                db.query(GenerativeSession)
-                .order_by(GenerativeSession.created.asc())
-                .all()
-            )
+            query = db.query(GenerativeSession)
+            if task_name is not None:
+                query = query.filter(GenerativeSession.task_name == task_name)
+            sessions = query.order_by(GenerativeSession.created.asc()).all()
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(

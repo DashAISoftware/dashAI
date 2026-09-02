@@ -158,23 +158,17 @@ class TestCreateRAGSession:
         )
 
     # ------------------------------------------------------------------
-    # Missing required parameter keys  (caught by RAGPipelineSchema → 400)
+    # Missing parameter keys: required ones fail, defaulted ones are filled
     # ------------------------------------------------------------------
 
     @pytest.mark.parametrize(
         "missing_param_key",
-        [
-            "prompt",
-            "chunking_model",
-            "retriever_model",
-            "generation_model",
-            "documents",
-        ],
+        ["generation_model", "documents"],
     )
-    def test_create_rag_session_missing_parameter(
+    def test_create_rag_session_missing_required_parameter(
         self, client: TestClient, test_doc_id: int, missing_param_key: str
     ):
-        """Omitting a required key inside ``parameters`` returns 400."""
+        """Omitting a key with no sensible default returns 400."""
         params = _base_session_params(test_doc_id)
         params["name"] = f"test_missing_param_{missing_param_key}"
         del params["parameters"][missing_param_key]
@@ -186,6 +180,49 @@ class TestCreateRAGSession:
         )
         # The error detail should mention the missing field
         assert missing_param_key in response.text.lower()
+
+    @pytest.mark.parametrize(
+        "missing_param_key",
+        ["prompt", "chunking_model", "retriever_model"],
+    )
+    def test_create_rag_session_defaults_missing_parameter(
+        self, client: TestClient, test_doc_id: int, missing_param_key: str
+    ):
+        """Omitting a defaulted key succeeds and stores the backend default."""
+        params = _base_session_params(test_doc_id)
+        params["name"] = f"test_defaulted_param_{missing_param_key}"
+        del params["parameters"][missing_param_key]
+
+        response = client.post("/api/v1/generative-session/", json=params)
+        assert response.status_code == 201, (
+            f"Missing parameter '{missing_param_key}' should be defaulted, "
+            f"got {response.status_code}: {response.text}"
+        )
+        stored = response.json()["parameters"][missing_param_key]
+        assert stored["component"], f"{missing_param_key} was not resolved"
+        assert isinstance(stored["params"], dict)
+
+    def test_create_rag_session_with_only_documents_and_model(
+        self, client: TestClient, test_doc_id: int
+    ):
+        """Name, documents and a generation model are enough to create a session."""
+        base = _base_session_params(test_doc_id)
+        params = {
+            "model_name": base["model_name"],
+            "task_name": base["task_name"],
+            "name": "test_minimal_creation",
+            "parameters": {
+                "documents": base["parameters"]["documents"],
+                "generation_model": base["parameters"]["generation_model"],
+            },
+        }
+
+        response = client.post("/api/v1/generative-session/", json=params)
+        assert response.status_code == 201, response.text
+
+        stored = response.json()["parameters"]
+        for key in ("prompt", "chunking_model", "retriever_model"):
+            assert stored[key]["component"], f"{key} was not defaulted"
 
     # ------------------------------------------------------------------
     # Component-structure validation

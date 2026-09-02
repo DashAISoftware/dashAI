@@ -8,6 +8,10 @@ import Box from "@mui/material/Box";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useGenerative } from "../GenerativeContext";
+import { RAG_TASK_NAME } from "../../../api/rag";
+
+/** Root of the RAG entry point, in the canonical lowercase form. */
+const RAG_ROOT = "/app/generative/rag";
 
 /**
  * Breadcrumbs component for RAG navigation.
@@ -41,8 +45,10 @@ function RAGBreadcrumbs({ sessionName }) {
    * @returns {Array<{label: string, path: string|null, current?: boolean, isSession?: boolean}>}
    */
   const getBreadcrumbs = () => {
-    const path = location.pathname;
-    if (!path.startsWith("/app/generative/RAG")) return [];
+    // Route matching is case-insensitive, so a URL may still arrive with the
+    // old /RAG/ casing; compare lowercased.
+    const path = location.pathname.toLowerCase();
+    if (!path.startsWith(RAG_ROOT)) return [];
 
     const base = [
       {
@@ -51,11 +57,11 @@ function RAGBreadcrumbs({ sessionName }) {
       },
       {
         label: t("generative:rag.breadcrumbs.rag"),
-        path: "/app/generative/RAG",
+        path: RAG_ROOT,
       },
     ];
 
-    if (path === "/app/generative/RAG/documents")
+    if (path === `${RAG_ROOT}/documents`)
       return [
         ...base,
         {
@@ -64,11 +70,20 @@ function RAGBreadcrumbs({ sessionName }) {
           current: true,
         },
       ];
-    if (path === "/app/generative/RAG/prompts")
+    if (path === `${RAG_ROOT}/prompts`)
       return [
         ...base,
         {
           label: t("generative:rag.breadcrumbs.prompts"),
+          path: null,
+          current: true,
+        },
+      ];
+    if (path === `${RAG_ROOT}/new`)
+      return [
+        ...base,
+        {
+          label: t("generative:rag.create.title"),
           path: null,
           current: true,
         },
@@ -96,9 +111,9 @@ function RAGBreadcrumbs({ sessionName }) {
       navigateToGenerative();
       return;
     }
-    if (path === "/app/generative/RAG") {
+    if (path === RAG_ROOT) {
       setSelectedSessionId?.(null);
-      setSelectedTaskName?.("RAGTask");
+      setSelectedTaskName?.(RAG_TASK_NAME);
       setSelectedDisplayName?.(null);
       setStepIndex?.(0);
     }

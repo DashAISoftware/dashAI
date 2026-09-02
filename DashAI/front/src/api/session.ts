@@ -1,8 +1,20 @@
 import api from "./api";
 import type { ISession } from "../types/session";
 
-export const getSessions = async (): Promise<ISession[]> => {
-  const response = await api.get<ISession[]>("/v1/generative-session");
+/**
+ * Fetches generative sessions, optionally narrowed by the backend.
+ * @param filters.taskName - Only sessions of this generative task. A view
+ *   scoped to one task uses this; the shared list asks for everything.
+ * @returns The matching sessions, oldest first.
+ */
+export const getSessions = async (filters?: {
+  taskName?: string;
+}): Promise<ISession[]> => {
+  const params: Record<string, string> = {};
+  if (filters?.taskName) params.task_name = filters.taskName;
+  const response = await api.get<ISession[]>("/v1/generative-session", {
+    params,
+  });
   return response.data;
 };
 

@@ -1,12 +1,6 @@
 import React from "react";
 
-import {
-  BrowserRouter,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-} from "react-router-dom";
+import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import { TourRegistryProvider } from "./contexts/TourRegistryContext";
 import ModuleThemeWrapper from "./components/ModuleThemeWrapper";
 
@@ -24,13 +18,35 @@ import NewPipelineWrapper from "./pages/pipelines/newPipelineWrapper";
 import HubContent from "./pages/hub/HubContent";
 import HubImportPage from "./pages/hub/HubImportPage";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
+import RAGCreatePage from "./pages/generative/RAG/RAGCreatePage";
 import RAGDocumentsPage from "./pages/generative/RAG/RAGDocumentsPage";
+import RAGHomePage from "./pages/generative/RAG/RAGHomePage";
 import RAGPromptsPage from "./pages/generative/RAG/RAGPromptsPage";
 import RAGSessionPage from "./pages/generative/RAGSession/RAGSessionPage";
 import SessionRouter from "./pages/generative/SessionRouter";
 import { DatasetsAndNotebooksProvider } from "./components/custom/contexts/DatasetsAndNotebooksContext";
 import { DatasetsProvider } from "./contexts/DatasetsContext";
 import { ModelsProvider } from "./components/models/ModelsContext";
+import { RAG_TASK_NAME } from "./api/rag";
+
+/**
+ * Scopes a RAG route to its own session list.
+ *
+ * The app-level provider serves the shared "create session" flow, which must
+ * not see RAG sessions; RAG routes get a provider of their own asking the
+ * backend for exactly its task.
+ *
+ * @param {object} props
+ * @param {JSX.Element} props.children - The RAG page to render.
+ * @returns {JSX.Element} The scoped subtree.
+ */
+function RAGScope({ children }) {
+  return (
+    <GenerativeProvider sessionFilter={{ taskName: RAG_TASK_NAME }}>
+      {children}
+    </GenerativeProvider>
+  );
+}
 
 function DataSectionLayout() {
   return (
@@ -88,26 +104,49 @@ function App() {
                   element={<ModelsPage />}
                 />
                 <Route path="/app/generative" element={<Generative />} />
+                {/* RAG is an entry point of the Generative module, not a step
+                    inside session creation. Its own provider scopes the session
+                    list to RAG so the shared list stays separate. Route
+                    matching is case-insensitive, so the previous
+                    /app/generative/RAG/... links keep working. */}
                 <Route
-                  path="/app/generative/RAG"
+                  path="/app/generative/rag"
                   element={
-                    <Navigate to="/app/generative/sessions/new" replace />
+                    <RAGScope>
+                      <RAGHomePage />
+                    </RAGScope>
                   }
                 />
                 <Route
-                  path="/app/generative/RAG/documents"
+                  path="/app/generative/rag/new"
                   element={
-                    <GenerativeProvider>
+                    <RAGScope>
+                      <RAGCreatePage />
+                    </RAGScope>
+                  }
+                />
+                <Route
+                  path="/app/generative/rag/sessions/:id"
+                  element={
+                    <RAGScope>
+                      <RAGSessionPage />
+                    </RAGScope>
+                  }
+                />
+                <Route
+                  path="/app/generative/rag/documents"
+                  element={
+                    <RAGScope>
                       <RAGDocumentsPage />
-                    </GenerativeProvider>
+                    </RAGScope>
                   }
                 />
                 <Route
-                  path="/app/generative/RAG/prompts"
+                  path="/app/generative/rag/prompts"
                   element={
-                    <GenerativeProvider>
+                    <RAGScope>
                       <RAGPromptsPage />
-                    </GenerativeProvider>
+                    </RAGScope>
                   }
                 />
                 <Route

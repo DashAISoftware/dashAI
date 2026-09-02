@@ -88,7 +88,7 @@ export default function PromptParamsCard({
   onTokenCountChange,
 }) {
   const navigate = useNavigate();
-  const goToPromptsDetail = () => navigate("/app/generative/RAG/prompts");
+  const goToPromptsDetail = () => navigate("/app/generative/rag/prompts");
   const { t, i18n } = useTranslation(["generative"]);
   const theme = useTheme();
   const placeholderColors = useMemo(

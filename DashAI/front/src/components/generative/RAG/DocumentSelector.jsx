@@ -11,6 +11,8 @@ import PropTypes from "prop-types";
 import AddIcon from "@mui/icons-material/AddCircleOutline";
 import { Visibility, Delete, Settings } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
+import { useSnackbar } from "notistack";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import { useTheme } from "@mui/material/styles";
 import {
   MaterialReactTable,
@@ -44,6 +46,7 @@ export default function DocumentSelector({
   sx,
 }) {
   const { t, i18n } = useTranslation(["generative"]);
+  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const [documents, setDocuments] = useState([]);
   const [selectedIds, setSelectedIds] = useState(initialSelectedIds);
@@ -259,17 +262,26 @@ export default function DocumentSelector({
             uploadedDocuments.push(result.document);
           }
         } catch (error) {
-          // Non-duplicate error (500, network error, etc.) - show to user
+          // Anything other than a duplicate: tell the user which file failed
+          // and why, then keep going with the rest of the selection.
           console.error("Upload failed:", error);
-          // TODO: Show error to user via snackbar/alert
-          // For now, just log and continue with next file
+          enqueueSnackbar(
+            t("generative:rag.documents.uploadFailedReason", {
+              file: file.name,
+              reason: getApiErrorMessage(
+                error,
+                t("generative:rag.documents.uploadFailed"),
+              ),
+            }),
+            { variant: "error" },
+          );
         }
       }
 
       applyUploadedDocuments(uploadedDocuments);
       setUploadOpen(false);
     },
-    [handleAddDocument, applyUploadedDocuments],
+    [handleAddDocument, applyUploadedDocuments, enqueueSnackbar, t],
   );
 
   /**
@@ -279,16 +291,30 @@ export default function DocumentSelector({
     if (!duplicatePending) return;
     const { file, url } = duplicatePending;
     setDuplicatePending(null);
-    const result = await addDocument({
-      file,
-      optional_metadata: { name: file.name, source: url },
-      force: true,
-    });
-    if (!result.duplicate && result.document) {
-      applyUploadedDocuments([result.document]);
+    try {
+      const result = await addDocument({
+        file,
+        optional_metadata: { name: file.name, source: url },
+        force: true,
+      });
+      if (!result.duplicate && result.document) {
+        applyUploadedDocuments([result.document]);
+      }
+    } catch (error) {
+      console.error("Forced upload failed:", error);
+      enqueueSnackbar(
+        t("generative:rag.documents.uploadFailedReason", {
+          file: file.name,
+          reason: getApiErrorMessage(
+            error,
+            t("generative:rag.documents.uploadFailed"),
+          ),
+        }),
+        { variant: "error" },
+      );
     }
     setUploadOpen(false);
-  }, [duplicatePending, applyUploadedDocuments]);
+  }, [duplicatePending, applyUploadedDocuments, enqueueSnackbar, t]);
 
   const selectedIdSet = useMemo(
     () => new Set(selectedIds.map((id) => String(id))),

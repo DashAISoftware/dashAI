@@ -9,9 +9,11 @@ import { normalizeUrl } from "../../../utils/urlUtils";
  *
  * @param {object} props
  * @param {Array}  props.documents - Array of document objects to display.
+ * @param {object} [props.indexStateByDocument] - Map of document id to its
+ *   indexing state, used to badge each row.
  * @returns {JSX.Element}
  */
-export default function DocumentList({ documents }) {
+export default function DocumentList({ documents, indexStateByDocument }) {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [txtContent, setTxtContent] = useState("");
@@ -58,6 +60,7 @@ export default function DocumentList({ documents }) {
             key={document.id}
             document={document}
             disabled={false}
+            indexState={indexStateByDocument?.[document.id]}
             onClick={() => handleOpenPreview(document)}
           />
         ))}

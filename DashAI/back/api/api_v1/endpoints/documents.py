@@ -198,9 +198,13 @@ async def upload_document(
     try:
         file_type = DocumentFileType(ext)
     except ValueError:
+        supported = ", ".join(DocumentFileType.supported_extensions())
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file type: {ext}",
+            detail=(
+                f"Unsupported file type: {ext or '(none)'}. "
+                f"Supported types: {supported}."
+            ),
         ) from None
     with session_factory() as db:
         try:

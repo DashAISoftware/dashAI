@@ -41,7 +41,16 @@ import { useGenerative } from "./GenerativeContext";
 import { useTourContext } from "../tour/TourProvider";
 import { useTheme } from "@mui/material/styles";
 
-export default function GenerativeChat() {
+/**
+ * The conversation view, shared by every generative task.
+ *
+ * @param {object} props
+ * @param {object} [props.indexStatus] - For RAG sessions, the backend-reported
+ *   indexing state. When documents are not indexed yet, the first answer also
+ *   pays for indexing, so the waiting state says so instead of looking stuck.
+ * @returns {JSX.Element} The chat.
+ */
+export default function GenerativeChat({ indexStatus }) {
   const theme = useTheme();
 
   const {
@@ -620,7 +629,18 @@ export default function GenerativeChat() {
                         )}
                       </>
                     ) : (
-                      <ChatBubble isWaiting={true} sender="Model" />
+                      <>
+                        <ChatBubble isWaiting={true} sender="Model" />
+                        {indexStatus && indexStatus.status !== "indexed" && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ ml: "40px" }}
+                          >
+                            {t("generative:rag.index.indexingInProgress")}
+                          </Typography>
+                        )}
+                      </>
                     )}
                   </>
                 )}

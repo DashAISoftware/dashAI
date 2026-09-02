@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -16,6 +16,7 @@ import DocumentList from "./DocumentList";
 import Upload from "../../shared/Upload";
 import DuplicateDocumentDialog from "./DuplicateDocumentDialog";
 import { useSnackbar } from "notistack";
+import { getApiErrorMessage } from "../../../utils/apiError";
 import {
   getSessionDocuments,
   addDocument,
@@ -38,6 +39,7 @@ export default function DocumentsBar({
   taskName,
   onDocumentChange,
   showSearch = true,
+  indexStatus,
 }) {
   const { t } = useTranslation("generative");
   const [searchQuery, setSearchQuery] = useState("");
@@ -49,8 +51,17 @@ export default function DocumentsBar({
   const navigate = useNavigate();
 
   const goToDocumentsDetail = () => {
-    navigate("/app/generative/RAG/documents");
+    navigate("/app/generative/rag/documents");
   };
+
+  // Per-document chunk counts, so each row can say whether it is indexed.
+  const indexStateByDocument = useMemo(() => {
+    const map = {};
+    (indexStatus?.documents ?? []).forEach((entry) => {
+      map[entry.document_id] = entry;
+    });
+    return map;
+  }, [indexStatus]);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -148,9 +159,16 @@ export default function DocumentsBar({
         setDocuments((prevDocs) => [transformedDoc, ...prevDocs]);
         uploadedCount += 1;
       } catch (error) {
-        // Non-duplicate error (500, network error, etc.) - log and continue
+        // Anything other than a duplicate: tell the user which file failed and
+        // why, then keep going with the rest of the selection.
         console.error("Upload failed:", error);
-        // TODO: Show error to user via snackbar/alert
+        enqueueSnackbar(
+          t("documentsBar.uploadFailedReason", {
+            file: file.name,
+            reason: getApiErrorMessage(error, t("documentsBar.failedUpload")),
+          }),
+          { variant: "error" },
+        );
       }
     }
 
@@ -211,7 +229,7 @@ export default function DocumentsBar({
   };
 
   const handleDetailedView = () => {
-    navigate("/app/generative/RAG/documents");
+    navigate("/app/generative/rag/documents");
   };
 
   return (
@@ -306,7 +324,10 @@ export default function DocumentsBar({
         }}
       >
         {filteredDocuments.length > 0 ? (
-          <DocumentList documents={filteredDocuments} />
+          <DocumentList
+            documents={filteredDocuments}
+            indexStateByDocument={indexStateByDocument}
+          />
         ) : (
           <Box
             sx={{

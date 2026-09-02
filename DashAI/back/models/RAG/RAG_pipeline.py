@@ -229,7 +229,7 @@ class RAGPipelineSchema(BaseSchema):
 
     retriever_model: schema_field(
         component_field(parent="RetrieverModel"),
-        placeholder={"component": "TFIDFRetriever", "params": {}},
+        placeholder={"component": "BM25Retriever", "params": {}},
         description=MultilingualString(
             en="Retriever component used in the RAG pipeline.",
             es="Componente recuperador usado en el pipeline RAG.",

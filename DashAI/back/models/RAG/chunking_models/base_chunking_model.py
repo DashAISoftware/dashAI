@@ -17,6 +17,11 @@ class BaseChunkingModel(ConfigObject, metaclass=ABCMeta):
     TYPE: Final[str] = "ChunkingModel"
     REQUIRED_EXTRA_KWARGS: Final[List[str]] = ["documents"]
 
+    #: Unit ``chunk_size`` is expressed in: ``"characters"`` or ``"tokens"``.
+    #: Lets callers convert a chunk size into a token budget without having to
+    #: guess from the class name.
+    CHUNK_UNIT: str = "characters"
+
     def __init__(self, **kwargs):
         """Initialize the chunking model.
 

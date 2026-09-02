@@ -25,6 +25,7 @@ from DashAI.back.core.component_validation import (
     find_component_refs,
     validate_component_refs,
 )
+from DashAI.back.core.schema_fields.defaults import resolve_component_defaults
 from DashAI.back.core.schema_fields.utils import normalize_payload
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.prompts.generation.default_QA_RAG_generation_prompt import (
@@ -33,9 +34,16 @@ from DashAI.back.models.RAG.prompts.generation.default_QA_RAG_generation_prompt 
 from DashAI.back.models.RAG.prompts.generation.default_RAG_generation_prompt import (
     DefaultRAGGenerationPrompt,
 )
-from DashAI.back.models.RAG.RAG_constants import RAG_MODEL_KEYS
+from DashAI.back.models.RAG.RAG_constants import (
+    RAG_MODEL_KEYS,
+    RAG_PARAM_GENERATION_MODEL,
+)
 from DashAI.back.services.RAG.document_service import DocumentService
 from DashAI.back.services.RAG.prompt_service import PromptService
+from DashAI.back.services.RAG.session_defaults_service import (
+    build_default_parameters,
+    generation_model_overrides,
+)
 
 log = logging.getLogger(__name__)
 
@@ -85,18 +93,23 @@ class SessionValidationService:
     # ------------------------------------------------------------------
 
     def prepare_RAG_params(  # noqa: N802
-        self, raw_params: dict[str, Any]
+        self,
+        raw_params: dict[str, Any],
+        accept_language: str | None = None,
     ) -> dict[str, Any]:
         """Validate and normalise parameters for a *new* RAG session.
 
-        All model keys (``prompt`` / ``prompt_id``, ``chunking_model``,
-        ``retriever_model``, ``generation_model``) and ``documents``
-        are **required**.
+        Only ``documents`` and ``generation_model`` are required: neither has a
+        sensible default. ``chunking_model``, ``retriever_model`` and ``prompt``
+        are filled in from the backend defaults when the caller omits them, so a
+        session can be created from just a name, its documents and a model.
 
         Parameters
         ----------
         raw_params : dict
             Raw ``parameters`` payload from the create request.
+        accept_language : str | None
+            Request language, used to pick the default prompt template.
 
         Returns
         -------
@@ -111,7 +124,15 @@ class SessionValidationService:
         """
         normalized = normalize_payload(dict(raw_params))
 
-        # ── 0. Resolve prompt_id early (before structure validation) ──
+        # ── 0a. Fill in the components the user does not have to choose ──
+        # Only keys the caller actually omitted are defaulted; anything sent
+        # explicitly wins, including an explicit ``None`` being rejected later.
+        defaults = build_default_parameters(self._registry, accept_language)
+        if "prompt_id" in normalized:
+            defaults.pop("prompt", None)
+        normalized = {**defaults, **normalized}
+
+        # ── 0b. Resolve prompt_id early (before structure validation) ──
         # The caller may provide prompt_id (an integer FK) instead of a full
         # prompt component ref.  Convert it *before* validating model keys so
         # that prompt_id is transparently treated as prompt.
@@ -121,13 +142,16 @@ class SessionValidationService:
             prompt = self._prompt_service.resolve_prompt_id_to_component(prompt_id)
             normalized["prompt"] = prompt
 
-        # ── 1. Validate structure of every model key (all required) ──
+        # ── 1. Validate structure of every model key (defaults applied) ──
         self._validate_model_keys(normalized, require_all=True)
 
         # ── 2. Validate components exist in registry ──
         component_errors = validate_component_refs(normalized, self._registry)
         if component_errors:
             raise ValueError("; ".join(component_errors))
+
+        # ── 2b. Fill in the picked generation model's parameters ──
+        self._apply_generation_model_defaults(normalized)
 
         # ── 3. Strictly validate every component's params against its schema ──
         param_errors = self._validate_component_params(normalized)
@@ -189,6 +213,9 @@ class SessionValidationService:
         if component_errors:
             raise ValueError("; ".join(component_errors))
 
+        # ── 2b. Fill in the picked generation model's parameters ──
+        self._apply_generation_model_defaults(normalized)
+
         # ── 3. Strictly validate every component's params against its schema ──
         param_errors = self._validate_component_params(normalized)
         if param_errors:
@@ -245,6 +272,40 @@ class SessionValidationService:
                     f"'params' of '{key}' must be a dict, got "
                     f"{type(ref['params']).__name__}."
                 )
+
+    def _apply_generation_model_defaults(self, normalized: dict[str, Any]) -> None:
+        """Fill the generation model's missing params from its schema.
+
+        The generation model is the one component a user picks *by name*: the
+        creation flow asks which model to use, not how to tune it. Its
+        parameters are therefore resolved here, from the same schema
+        placeholders the parameter form would have shown. Whatever the caller
+        does send wins; only omitted keys are filled.
+
+        Scoped deliberately to this one key. Chunking, retrieval and the prompt
+        arrive as complete recipes (see
+        :mod:`DashAI.back.services.RAG.session_defaults_service`), and a
+        partially-specified retriever is a caller bug worth reporting rather
+        than silently papering over — one such bug is covered by
+        ``test_auto_save_partial_data_rejected``.
+
+        Parameters
+        ----------
+        normalized : dict
+            Normalised parameters dict, mutated in place.
+        """
+        ref = normalized.get(RAG_PARAM_GENERATION_MODEL)
+        if not isinstance(ref, dict):
+            return
+        name = ref.get("component")
+        params = ref.get("params")
+        if not name or not isinstance(params, dict):
+            return
+        defaults = resolve_component_defaults(name, self._registry)
+        # RAG-specific overrides sit between the schema placeholders and what
+        # the caller sent: they widen the context window a RAG pipeline needs,
+        # without overriding a value the caller chose.
+        ref["params"] = {**defaults, **generation_model_overrides(), **params}
 
     def _validate_component_params(self, normalized: dict[str, Any]) -> list[str]:
         """Validate every ``{component, params}`` against its own schema.
