@@ -23,15 +23,10 @@ class BaseEvaluationStrategy(metaclass=ABCMeta):
 
     TYPE: Final[str] = "EvaluationStrategy"
 
-    # How this strategy divides the dataset. The frontend renders holdout
-    # controls or fold controls from this rather than comparing class names,
-    # which is what previously made a new strategy unreachable from the UI.
     KIND: str = "holdout"
-
-    # Which partitions this strategy records metrics for. Scoring the training
-    # partition means predicting on rows the model was fitted on, which is a
-    # fit statistic; a forecaster has no such thing to report.
     SCORED_SPLITS: tuple = (SplitEnum.TRAIN, SplitEnum.VALIDATION, SplitEnum.TEST)
+
+    FINAL_FIT_PARTITIONS: tuple = ("train",)
 
     @classmethod
     def get_metadata(cls) -> dict:

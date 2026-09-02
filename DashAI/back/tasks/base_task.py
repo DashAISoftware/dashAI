@@ -16,6 +16,8 @@ class BaseTask:
 
     TYPE: Final[str] = "Task"
 
+    PREDICTS_FORWARD_ONLY: bool = False
+
     @property
     @abstractmethod
     def schema(self) -> Dict[str, Any]:
