@@ -167,6 +167,7 @@ function CreateSessionSteps({
       const hasTrain = hasPartition(newExp.splits, "train");
       const hasValidation = hasPartition(newExp.splits, "validation");
       const hasTest = hasPartition(newExp.splits, "test");
+      const requiresTarget = selectedTask?.metadata?.requires_target !== false;
 
       let effectiveName = sessionName;
       let response;
@@ -176,10 +177,10 @@ function CreateSessionSteps({
           selectedTask?.name || newExp.task_name,
           effectiveName,
           newExp.input_columns,
-          newExp.output_columns,
-          hasTrain ? allMetricNames : [],
-          hasValidation ? allMetricNames : [],
-          hasTest ? allMetricNames : [],
+          requiresTarget ? newExp.output_columns : [],
+          requiresTarget && hasTrain ? allMetricNames : [],
+          requiresTarget && hasValidation ? allMetricNames : [],
+          requiresTarget && hasTest ? allMetricNames : [],
           newExp.evaluation_strategy,
           JSON.stringify(newExp.splits),
         );
@@ -192,10 +193,10 @@ function CreateSessionSteps({
             selectedTask?.name || newExp.task_name,
             effectiveName,
             newExp.input_columns,
-            newExp.output_columns,
-            hasTrain ? allMetricNames : [],
-            hasValidation ? allMetricNames : [],
-            hasTest ? allMetricNames : [],
+            requiresTarget ? newExp.output_columns : [],
+            requiresTarget && hasTrain ? allMetricNames : [],
+            requiresTarget && hasValidation ? allMetricNames : [],
+            requiresTarget && hasTest ? allMetricNames : [],
             newExp.evaluation_strategy,
             JSON.stringify(newExp.splits),
           );

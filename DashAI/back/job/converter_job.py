@@ -5,6 +5,9 @@ from kink import inject
 from sqlalchemy import exc
 
 from DashAI.back.api.api_v1.schemas.converter_params import ConverterParams
+from DashAI.back.converters.converter_report import (
+    save_converter_report,
+)
 from DashAI.back.dependencies.database.models import Converter
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
 from DashAI.back.job.base_job import BaseJob, JobError
@@ -205,6 +208,7 @@ class ConverterJob(BaseJob):
 
         session_factory = di["session_factory"]
         component_registry = di["component_registry"]
+        config = di["config"]
 
         def instantiate_converters(
             converter_name: str,
@@ -406,6 +410,15 @@ class ConverterJob(BaseJob):
                         raise JobError(
                             f"Error transforming data with {converter_name}: {e}"
                         ) from e
+
+                    report = converter_instance.get_report()
+                    if report is not None:
+                        save_converter_report(
+                            notebook_path=config["NOTEBOOK_PATH"]
+                            / str(converter.notebook.id),
+                            converter_id=converter.id,
+                            report=report,
+                        )
 
                     if type(converter_instance).CHANGES_ROW_COUNT:
                         loaded_dataset = transformed_dataset

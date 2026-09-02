@@ -278,7 +278,10 @@
     "validation": "Validation",
     "validationMetrics": "Validation Metrics",
     "validationSet": "validation set",
-    "viewResultsAs": "View results as columns or graphs"
+    "viewResultsAs": "View results as columns or graphs",
+    "last": "Final",
+    "supervisedBadge": "Supervised",
+    "unsupervisedBadge": "Unsupervised"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

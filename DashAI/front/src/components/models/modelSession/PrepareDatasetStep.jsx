@@ -65,8 +65,6 @@ function PrepareDatasetStep({
     newExp.output_columns,
   );
 
-  const columnsReady =
-    inputColumnNames.length >= 1 && outputColumnNames.length >= 1;
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   // True until the current column selection has actually been checked against
   // the backend at least once — distinct from columnsAreValid=false, so the
@@ -103,6 +101,16 @@ function PrepareDatasetStep({
   const [splitType, setSplitType] = useState("");
 
   const [splitsReady, setSplitsReady] = useState(false);
+  const requiresTarget = taskRequirements?.metadata?.requires_target !== false;
+  // Derived rather than held in state, so it never lags a render behind the
+  // selection. A task with no target has no output column to wait for, which
+  // is what keeps the Next button reachable for clustering.
+  const columnsReady =
+    inputColumnNames.length >= 1 &&
+    (!requiresTarget || outputColumnNames.length >= 1);
+  const splitStrategy =
+    taskRequirements?.metadata?.session_config_schema?.split_strategy;
+  const usesSplits = splitStrategy !== "none";
 
   const getDatasetInfo = async () => {
     if (!dataset?.id) return;
@@ -132,6 +140,7 @@ function PrepareDatasetStep({
       ) {
         const allNames = fetchedDatasetInfo.column_names;
         if (
+          requiresTarget &&
           inputColumnNames.length === 0 &&
           (!newExp.input_columns || newExp.input_columns.length === 0)
         ) {
@@ -143,6 +152,7 @@ function PrepareDatasetStep({
         }
 
         if (
+          requiresTarget &&
           outputColumnNames.length === 0 &&
           (!newExp.output_columns || newExp.output_columns.length === 0)
         ) {
@@ -189,6 +199,8 @@ function PrepareDatasetStep({
             inputs_cardinality: "",
             outputs_types: [],
             outputs_cardinality: "",
+            requires_target: true,
+            session_config_schema: {},
           },
         });
       }
@@ -215,7 +227,10 @@ function PrepareDatasetStep({
         return;
       }
 
-      if (inputColumnNames.length === 0 || outputColumnNames.length === 0) {
+      if (
+        inputColumnNames.length === 0 ||
+        (requiresTarget && outputColumnNames.length === 0)
+      ) {
         setColumnsAreValid(false);
         return;
       }
@@ -224,7 +239,7 @@ function PrepareDatasetStep({
         newExp.task_name,
         dataset.id,
         inputColumnNames,
-        outputColumnNames,
+        requiresTarget ? outputColumnNames : [],
       );
       setColumnsAreValid(validation.dataset_status === "valid");
     } catch (error) {
@@ -254,33 +269,69 @@ function PrepareDatasetStep({
     const updatedExpData = {
       ...newExp,
       input_columns: inputColumnNames,
-      output_columns: outputColumnNames,
-      evaluation_strategy: evaluationStrategy,
+      output_columns: requiresTarget ? outputColumnNames : [],
+      // A task without splits never renders SplitDatasetRows, which is the only
+      // place that sets a strategy, so the parent's state stays null. The
+      // backend types this field as a plain str, so send the empty string it
+      // was initialised with instead of null.
+      evaluation_strategy: evaluationStrategy ?? "",
     };
 
-    const splitterName = resolveSplitterName(strategyKind, cvType, holdoutType);
-    if (splitterName) {
-      updatedExpData.splits = buildSplitsPayload({
-        splitterName,
-        splitType:
-          strategyKind === STRATEGY_KINDS.HOLDOUT ? splitType : SPLIT_TYPES.CV,
-        params: {
-          ...(splitterParams ?? {}),
-          // The group column select is rendered by hand, so its value is not
-          // part of the generated form's values.
-          ...(cvType?.schema?.properties?.group_column
-            ? { group_column: groupColumn }
-            : {}),
-        },
-        indexes:
-          splitType === SPLIT_TYPES.PREDEFINED
-            ? datasetPartitionsIndex
-            : rowsPartitionsIndex,
-      });
+    // A task that trains on the whole dataset (clustering) has no splitter to
+    // resolve; the backend recognises the session by this splitType.
+    if (!usesSplits) {
+      updatedExpData.splits = { splitType: "none" };
+    } else {
+      const splitterName = resolveSplitterName(
+        strategyKind,
+        cvType,
+        holdoutType,
+      );
+      if (splitterName) {
+        updatedExpData.splits = buildSplitsPayload({
+          splitterName,
+          splitType:
+            strategyKind === STRATEGY_KINDS.HOLDOUT
+              ? splitType
+              : SPLIT_TYPES.CV,
+          params: {
+            ...(splitterParams ?? {}),
+            // The group column select is rendered by hand, so its value is not
+            // part of the generated form's values.
+            ...(cvType?.schema?.properties?.group_column
+              ? { group_column: groupColumn }
+              : {}),
+          },
+          indexes:
+            splitType === SPLIT_TYPES.PREDEFINED
+              ? datasetPartitionsIndex
+              : rowsPartitionsIndex,
+        });
+      }
     }
 
     setNewExp(updatedExpData);
   };
+
+  // For tasks without a target column (e.g. clustering), input columns always default
+  // to the full dataset and output columns are always empty. This is a separate effect
+  // (rather than inline in getDatasetInfo) so it corrects itself regardless of whether
+  // dataset info or task requirements resolves first.
+  useEffect(() => {
+    if (!requiresTarget) {
+      setOutputColumnNames([]);
+      if (datasetInfo?.column_names?.length > 0) {
+        setInputColumnNames(datasetInfo.column_names);
+      }
+    }
+  }, [requiresTarget, datasetInfo]);
+
+  useEffect(() => {
+    if (!usesSplits) {
+      setSplitsReady(true);
+      setSplitType("none");
+    }
+  }, [usesSplits]);
 
   // Column validity depends on the columns, the dataset and the task, never on
   // the split configuration. Gating it on the splits being ready made every
@@ -314,10 +365,16 @@ function PrepareDatasetStep({
       setValidationPending(true);
       validateColumns();
     }
-  }, [columnsReady, inputColumnNames, outputColumnNames, datasetInfo]);
+  }, [
+    columnsReady,
+    inputColumnNames,
+    outputColumnNames,
+    datasetInfo,
+    requiresTarget,
+  ]);
 
   useEffect(() => {
-    if (columnsAreValid && splitsReady && columnsReady) {
+    if (columnsAreValid && (splitsReady || !usesSplits) && columnsReady) {
       updateExperiment();
       setNextEnabled(true);
     } else {
@@ -331,6 +388,8 @@ function PrepareDatasetStep({
     splitterParams,
     inputColumnNames,
     outputColumnNames,
+    requiresTarget,
+    usesSplits,
     cvType,
     holdoutType,
     strategyKind,
@@ -362,6 +421,14 @@ function PrepareDatasetStep({
         >
           <CircularProgress size={32} />
         </Box>,
+      );
+      return () => setSessionRightContent(null);
+    }
+    if (!usesSplits) {
+      setSessionRightContent(
+        <Alert severity="info">
+          {t("experiments:label.noSplitConfigNeeded")}
+        </Alert>,
       );
       return () => setSessionRightContent(null);
     }
@@ -398,6 +465,7 @@ function PrepareDatasetStep({
     datasetInfo,
     rowsPartitionsIndex,
     splitType,
+    usesSplits,
     splitterParams,
     paramsError,
     evaluationStrategy,
@@ -521,29 +589,33 @@ function PrepareDatasetStep({
                 </Trans>
               </Box>
             </Grid>
-            <Grid size={{ xs: 12 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 2,
-                  flexWrap: "wrap",
-                }}
-              >
-                <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
-                  <span>The output columns must be of the types</span>
-                  {renderTypesAsChips(taskRequirements.metadata.outputs_types)}
-                  <span>
-                    , and they should have a cardinality of
-                    {{
-                      cardinality:
-                        taskRequirements.metadata.outputs_cardinality,
-                    }}
-                    .
-                  </span>
-                </Trans>
-              </Box>
-            </Grid>
+            {requiresTarget && (
+              <Grid size={{ xs: 12 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Trans i18nKey="experiments:label.datasetOutputColumnRequirements">
+                    <span>The output columns must be of the types</span>
+                    {renderTypesAsChips(
+                      taskRequirements.metadata.outputs_types,
+                    )}
+                    <span>
+                      , and they should have a cardinality of
+                      {{
+                        cardinality:
+                          taskRequirements.metadata.outputs_cardinality,
+                      }}
+                      .
+                    </span>
+                  </Trans>
+                </Box>
+              </Grid>
+            )}
           </Grid>
         </Alert>
       )}
@@ -557,13 +629,16 @@ function PrepareDatasetStep({
             onInputColumnNamesChange={setInputColumnNames}
             selectedOutputColumnNames={outputColumnNames}
             onOutputColumnNamesChange={setOutputColumnNames}
+            requiresTarget={requiresTarget}
             inputError={inputColumnNames.length === 0}
             inputHelperText={
               inputColumnNames.length === 0 ? t("common:required") : ""
             }
-            outputError={outputColumnNames.length === 0}
+            outputError={requiresTarget && outputColumnNames.length === 0}
             outputHelperText={
-              outputColumnNames.length === 0 ? t("common:required") : ""
+              requiresTarget && outputColumnNames.length === 0
+                ? t("common:required")
+                : ""
             }
             disabled={
               infoLoading || (datasetInfo.column_names || []).length === 0

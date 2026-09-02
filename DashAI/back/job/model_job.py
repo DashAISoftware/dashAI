@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+    from DashAI.back.models.base_model import BaseModel
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -122,23 +123,26 @@ class ModelJob(BaseJob):
                         f"Error preparing dataset and components for run {run_id}: {e}",
                     ) from e
 
-                try:
-                    # Get splits from the splitter
-                    splitter: BaseSplitter = preparation_results["splitter"]
-                    # Get the dataset splits between input columns and output column
-                    X, Y = preparation_results["X"], preparation_results["Y"]
+                requires_target = preparation_results["requires_target"]
 
-                    # Get x,y but now splitted with train, validation and test indexes
-                    # each one, and the indexes used for the splits
-                    x, y, splits = splitter.split(X, Y)
+                if requires_target:
+                    try:
+                        # Get splits from the splitter
+                        splitter: BaseSplitter = preparation_results["splitter"]
+                        # Get the dataset splits between input and output columns
+                        X, Y = preparation_results["X"], preparation_results["Y"]
 
-                    # save the obtained splits into the database
-                    run.split_indexes = json.dumps(splits)
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Error splitting the dataset for run {run_id}: {e}",
-                    ) from e
+                        # Get x,y but now splitted with train, validation and test
+                        # indexes each one, and the indexes used for the splits
+                        x, y, splits = splitter.split(X, Y)
+
+                        # save the obtained splits into the database
+                        run.split_indexes = json.dumps(splits)
+                    except Exception as e:
+                        log.exception(e)
+                        raise JobError(
+                            f"Error splitting the dataset for run {run_id}: {e}",
+                        ) from e
 
                 try:
                     run.set_status_as_started()
@@ -154,17 +158,22 @@ class ModelJob(BaseJob):
                     # Hyperparameter Tunning
                     plot_paths = []
 
-                    evaluation_estrategy: BaseEvaluationStrategy = preparation_results[
-                        "evaluation_strategy"
-                    ]
+                    if requires_target:
+                        evaluation_estrategy: BaseEvaluationStrategy = (
+                            preparation_results["evaluation_strategy"]
+                        )
 
-                    evaluation_estrategy.set_progress_reporter(self.report_progress)
-                    model, plot_paths = evaluation_estrategy.execute(
-                        x=x,
-                        y=y,
-                        run=run,
-                        db=db,
-                    )
+                        evaluation_estrategy.set_progress_reporter(self.report_progress)
+                        model, plot_paths = evaluation_estrategy.execute(
+                            x=x,
+                            y=y,
+                            run=run,
+                            db=db,
+                        )
+                    else:
+                        # No evaluation strategy: nothing was held out, so the
+                        # model is fitted once and scored over the whole dataset.
+                        model = self._train_without_target(preparation_results, run, db)
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -300,6 +309,25 @@ class ModelJob(BaseJob):
                     "in registry"
                 ),
             ) from e
+
+        # A task that declares no target (clustering) trains on the whole dataset:
+        # there is nothing to hold out, nothing to optimise against and no
+        # y_true to score predictions with, so it skips the splitter, the
+        # optimiser and the evaluation strategy entirely.
+        #
+        # This branch is deliberately a flag rather than a task-specific
+        # executor: the units stack (PRs #791/#792, reverted from develop on
+        # 2026-08-17) is where per-task steps belong, and building a parallel
+        # abstraction here would only have to be deleted when it comes back.
+        if not getattr(task, "REQUIRES_TARGET", True):
+            return self._prepare_without_target(
+                run=run,
+                model_session=model_session,
+                dataset=dataset,
+                loaded_dataset=loaded_dataset,
+                task=task,
+                component_registry=component_registry,
+            )
 
         try:
             # Prepare dataset for the task and get number of labels of the task
@@ -461,8 +489,280 @@ class ModelJob(BaseJob):
             ) from e
 
         return {
+            "requires_target": True,
             "X": X,
             "Y": Y,
             "splitter": splitter,
             "evaluation_strategy": evaluation_strategy,
         }
+
+    def _prepare_without_target(
+        self,
+        run: Run,
+        model_session: ModelSession,
+        dataset: Dataset,
+        loaded_dataset: "DashAIDataset",
+        task: BaseTask,
+        component_registry,
+    ) -> Dict[str, Any]:
+        """Prepare the dataset and the model for a task with no target column.
+
+        The counterpart of :meth:`_prepare_dataset_and_components` for tasks
+        whose ``REQUIRES_TARGET`` is False. It resolves only what such a task
+        can use: the input columns and the model. There is no splitter, no
+        optimiser and no evaluation strategy, because none of them mean
+        anything without held-out rows to evaluate against.
+
+        Parameters
+        ----------
+        run : Run
+            The run being trained.
+        model_session : ModelSession
+            The session holding the column selection and the task name.
+        dataset : Dataset
+            The dataset record, used for error messages.
+        loaded_dataset : DashAIDataset
+            The dataset already loaded from disk.
+        task : BaseTask
+            The instantiated task.
+        component_registry : object
+            Registry used to resolve the model and the task's metrics.
+
+        Returns
+        -------
+        dict
+            ``{"requires_target": False, "X", "factory", "metrics"}``.
+
+        Raises
+        ------
+        JobError
+            If the dataset cannot be prepared or the model cannot be built.
+        """
+        from DashAI.back.dataloaders.classes.dashai_dataset import select_columns
+
+        try:
+            # No metric picker of its own: every Metric registered for the task
+            # is computed, since there is no split to choose between.
+            metric_names = [
+                component["name"]
+                for component in component_registry.get_related_components(
+                    model_session.task_name
+                )
+                if component.get("type") == "Metric"
+            ]
+            metrics: List[BaseMetric] = [
+                component_registry[name]["class"] for name in metric_names
+            ]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                "Unable to find metrics associated with "
+                f"Task {model_session.task_name} in registry",
+            ) from e
+
+        try:
+            prepared_dataset = task.prepare_for_task(
+                dataset=loaded_dataset,
+                input_columns=model_session.input_columns,
+                output_columns=[],
+            )
+            X, _ = select_columns(prepared_dataset, model_session.input_columns, [])
+            X = self._standardise_features(X)
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"""Can not prepare Dataset {dataset.id}
+                for Task {model_session.task_name}""",
+            ) from e
+
+        try:
+            run_model_class = component_registry[run.model_name]["class"]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Unable to find Model with name {run.model_name} in registry.",
+            ) from e
+
+        if getattr(run_model_class, "REQUIRES_DOWNLOAD", False) and not (
+            run_model_class.is_downloaded()
+        ):
+            raise JobError(
+                f"Model {run.model_name} is not downloaded. "
+                "Download it before training."
+            )
+        nested_missing = missing_downloads(run.parameters, component_registry)
+        if nested_missing:
+            names = ", ".join(m["name"] for m in nested_missing)
+            raise JobError(
+                "These components are not downloaded. "
+                f"Download them before training: {names}."
+            )
+
+        try:
+            factory = ModelFactory(
+                model=run_model_class,
+                params=run.parameters,
+                run_id=run.id,
+                n_labels=None,
+            )
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Unable to instantiate model using run {run.id}",
+            ) from e
+
+        return {
+            "requires_target": False,
+            "X": X,
+            "factory": factory,
+            "metrics": metrics,
+        }
+
+    @staticmethod
+    def _standardise_features(x: "DashAIDataset") -> "DashAIDataset":
+        """Centre and scale the input columns of a target free dataset.
+
+        Every clustering algorithm DashAI ships measures distances, so a column
+        expressed in a wider unit dominates the ones next to it. On a dataset
+        holding scores from 0 to 100 beside hours from 1 to 11, DBSCAN's default
+        eps of 0.5 labels every row as noise and Spectral's RBF affinity
+        underflows to an empty graph, which is why this runs before the model
+        sees the data.
+
+        Both the model and the metrics are handed the result, so cluster
+        quality is measured in the space the clusters were found in rather than
+        the raw one.
+
+        This is the model session path, which has no converter step of its own.
+        A notebook that already applied the StandardScaler converter reaches the
+        models through a different route and is not touched here.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Input features, restricted to the session's input columns.
+
+        Returns
+        -------
+        DashAIDataset
+            The same dataset with its numeric columns standardised. Columns with
+            no variance are left alone, since dividing them by a zero standard
+            deviation is what produces the NaNs the models then reject.
+        """
+        from sklearn.preprocessing import StandardScaler  # local import
+
+        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+
+        frame = x.to_pandas()
+        numeric = frame.select_dtypes(include=["number"]).columns
+        movable = [c for c in numeric if frame[c].std(ddof=0) > 0]
+        if not movable:
+            return x
+
+        frame = frame.copy()
+        frame[movable] = StandardScaler().fit_transform(frame[movable])
+        return to_dashai_dataset(frame)
+
+    def _train_without_target(
+        self, preparation_results: Dict[str, Any], run: Run, db
+    ) -> "BaseModel":
+        """Fit a model with no target column and score it over the whole dataset.
+
+        Parameters
+        ----------
+        preparation_results : dict
+            The dict returned by :meth:`_prepare_without_target`.
+        run : Run
+            The run being trained, used as the metrics' correlation id.
+        db : object
+            Open database session the metrics are written through.
+
+        Returns
+        -------
+        BaseModel
+            The fitted model, for the job's common saving path.
+
+        Raises
+        ------
+        JobError
+            If training or metric computation fails.
+        """
+        from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
+        from DashAI.back.dependencies.database.models import Metric
+
+        x = preparation_results["X"]
+        model = preparation_results["factory"].model
+
+        try:
+            model.train(x)
+            labels = model.get_cluster_labels(x)
+        except Exception as e:
+            log.exception(e)
+            raise JobError(f"Model training failed {e}") from e
+
+        # Internal validity indices are only defined over two or more clusters,
+        # which is why prepare_to_metric answers None outside that range. Left
+        # alone, a density based model that sends every sample to noise finishes
+        # the run green with an empty metric table and nothing pointing at the
+        # parameters that caused it, so the degenerate outcome is raised here.
+        import numpy as np  # local import
+
+        label_values = np.asarray(labels)
+        clustered = label_values[label_values != -1]
+        n_noise = int(label_values.size - clustered.size)
+        n_clusters = int(np.unique(clustered).size)
+        if n_clusters < 2 or n_clusters >= clustered.size:
+            raise JobError(
+                f"{type(model).__name__} produced {n_clusters} cluster(s) over "
+                f"{label_values.size} samples, {n_noise} of them labelled as "
+                "noise. Clustering metrics need at least two clusters, so this "
+                "run has no result to report. Adjust the model parameters, for "
+                "instance a larger eps or a smaller min_samples for DBSCAN."
+            )
+
+        try:
+            results = {}
+            for metric in preparation_results["metrics"]:
+                score = metric.score(x, labels)
+                if score is not None:
+                    results[metric.__name__] = score
+        except Exception as e:
+            log.exception(e)
+            raise JobError(f"Metric calculation failed {e}") from e
+
+        # Written straight here rather than through BaseModel.calculate_metrics:
+        # that path compares y_true against predictions, which is precisely what
+        # this kind of task does not have. One row per metric, over the full
+        # dataset, upserted so a re-train replaces the previous values.
+        try:
+            for name, value in results.items():
+                existing = (
+                    db.query(Metric)
+                    .filter_by(
+                        run_id=run.id,
+                        split=SplitEnum.FULL,
+                        level=LevelEnum.LAST,
+                        name=name,
+                    )
+                    .first()
+                )
+                if existing:
+                    existing.value = value
+                    existing.step = 0
+                else:
+                    db.add(
+                        Metric(
+                            run_id=run.id,
+                            split=SplitEnum.FULL,
+                            level=LevelEnum.LAST,
+                            name=name,
+                            value=value,
+                            step=0,
+                        )
+                    )
+            db.commit()
+        except Exception as e:
+            log.exception(e)
+            raise JobError(f"Metric saving failed {e}") from e
+
+        return model

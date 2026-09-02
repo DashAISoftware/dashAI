@@ -42,6 +42,7 @@ function ColumnSelector({
   allowedDtypes = [],
   allowedTypes = [],
   nonAllowedDtypes = [],
+  allowedColumnNames = null,
   excludedColumnIds = [],
   onSelectionChange = () => {},
   onValidationChange = () => {},
@@ -133,11 +134,11 @@ function ColumnSelector({
   const isValidSelection = useCallback(
     (selection) => {
       if (selection.length === 0) {
-        return false;
+        return inputCardinality.exact === 0;
       }
 
       if (
-        inputCardinality.exact &&
+        inputCardinality.exact != null &&
         selection.length !== inputCardinality.exact
       ) {
         return false;
@@ -156,8 +157,15 @@ function ColumnSelector({
     [inputCardinality],
   );
   const getValidColumnIds = useCallback(() => {
+    if (inputCardinality.exact === 0) return [];
     return rows
       .filter((row) => {
+        if (
+          allowedColumnNames !== null &&
+          !allowedColumnNames.has(row.columnName)
+        ) {
+          return false;
+        }
         if (excludedColumnIds.includes(row.id)) {
           return false;
         }
@@ -175,7 +183,14 @@ function ColumnSelector({
         return true;
       })
       .map((row) => row.id);
-  }, [rows, allowedDtypes, allowedTypes, nonAllowedDtypes, excludedColumnIds]);
+  }, [
+    rows,
+    allowedDtypes,
+    allowedTypes,
+    nonAllowedDtypes,
+    allowedColumnNames,
+    excludedColumnIds,
+  ]);
 
   // Deselect any already-selected column that becomes excluded (e.g. it was
   // picked as scope and then also set as the target column)
@@ -376,11 +391,14 @@ function ColumnSelector({
               exact: inputCardinality.exact,
               min: inputCardinality.min || 0,
               max: inputCardinality.max,
-              context: inputCardinality.exact
-                ? "exact"
-                : inputCardinality.max
-                  ? "range"
-                  : "min",
+              context:
+                inputCardinality.exact === 0
+                  ? "none"
+                  : inputCardinality.exact
+                    ? "exact"
+                    : inputCardinality.max
+                      ? "range"
+                      : "min",
             })}
           </Typography>
         )}

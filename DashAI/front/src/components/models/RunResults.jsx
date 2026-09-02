@@ -15,6 +15,22 @@ import PredictionResultsTab from "./runResults/PredictionResultsTab";
 import FoldMetricsChart from "./FoldMetricsChart";
 import OuterFoldMetricsTable from "./OuterFoldMetricsTable";
 
+// A session whose splitter is "none" (clustering) trains on the whole dataset
+// and has no held-out rows to predict on, so it never offers a predictions tab.
+function getSessionSplitType(session) {
+  if (!session?.splits) return null;
+  if (typeof session.splits !== "string") {
+    return session.splits.splitType || null;
+  }
+
+  try {
+    const splits = JSON.parse(session.splits || "{}");
+    return splits.splitType || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Shows a run's results as two tab groups (metrics: live/hyperparameters,
  * operations: explainability/predictions). The data layer lives in
@@ -59,6 +75,8 @@ export default function RunResults({
     handleExplainerDeleted,
     handlePredictionDeleted,
   } = useRunResultsData({ run, session, onRefresh, explainerRefreshTrigger });
+
+  const supportsPredictions = getSessionSplitType(session) !== "none";
 
   const [internalVisible, setInternalVisible] = useState(() => {
     if (run.status === 0) return false;
@@ -118,6 +136,10 @@ export default function RunResults({
   const setRunDetailTab = modelsContext?.setRunDetailTab;
   const isDetailView = String(params.runId ?? "") === String(run.id);
   useEffect(() => {
+    if (activeTab === 2 && !supportsPredictions) setActiveTab(0);
+  }, [activeTab, supportsPredictions]);
+
+  useEffect(() => {
     if (!isDetailView || !setRunDetailTab) return;
     setRunDetailTab(activeTab);
     return () => setRunDetailTab(null);
@@ -131,6 +153,7 @@ export default function RunResults({
       optimizables={optimizables}
       explainerCount={globalExplainers.length + localExplainers.length}
       predictionCount={predictions.length}
+      supportsPredictions={supportsPredictions}
       run={run}
     />
   );
@@ -162,7 +185,7 @@ export default function RunResults({
         />
       )}
 
-      {activeTab === 2 && isFinished && (
+      {activeTab === 2 && isFinished && supportsPredictions && (
         <PredictionResultsTab
           run={run}
           session={session}
@@ -251,6 +274,7 @@ RunResults.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     task_name: PropTypes.string,
+    splits: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }),
   onRefresh: PropTypes.func,
   explainerRefreshTrigger: PropTypes.number,

@@ -1,10 +1,11 @@
-"""Tests for the per-epoch reporting hook on BaseModel.
+"""Tests for the per-epoch reporting hook on SupervisedModel.
 
 The hook exists so an optimizer can watch a trial while it trains. It lives on
-the base class rather than inside each model's epoch loop because every model
-that trains in epochs already routes its per-epoch metrics through
+the supervised base class rather than inside each model's epoch loop because
+every model that trains in epochs already routes its per-epoch metrics through
 `calculate_metrics` — five loops across five files that share no common ancestor
-below `BaseModel`.
+below `SupervisedModel`. The flag itself (`_epoch_reporter`) stays on
+`BaseModel`, since the optimizer sets it without knowing the model's family.
 
 What matters here is that it fires for exactly one combination (validation
 metrics, epoch level) and stays out of the way otherwise.
@@ -13,10 +14,10 @@ metrics, epoch level) and stays out of the way otherwise.
 import pytest
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
-from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.supervised_model import SupervisedModel
 
 
-class ModelStub(BaseModel):
+class ModelStub(SupervisedModel):
     """The smallest thing `calculate_metrics` will run against."""
 
     def __init__(self) -> None:

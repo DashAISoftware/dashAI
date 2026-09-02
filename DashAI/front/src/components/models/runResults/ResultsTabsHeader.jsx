@@ -43,6 +43,7 @@ export default function ResultsTabsHeader({
   optimizables,
   explainerCount,
   predictionCount,
+  supportsPredictions = true,
   run,
 }) {
   const { t } = useTranslation(["models"]);
@@ -193,24 +194,26 @@ export default function ResultsTabsHeader({
             }
             disabled={!isFinished || !hasDataToExplain}
           />
-          <Tab
-            value={2}
-            label={
-              <Tooltip title={notFinishedTooltip}>
-                <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
-                  <span>{t("models:label.predictions")}</span>
-                  {isFinished && (
-                    <Chip
-                      label={predictionCount}
-                      size="small"
-                      color="primary"
-                    />
-                  )}
-                </Box>
-              </Tooltip>
-            }
-            disabled={!isFinished}
-          />
+          {supportsPredictions && (
+            <Tab
+              value={2}
+              label={
+                <Tooltip title={notFinishedTooltip}>
+                  <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
+                    <span>{t("models:label.predictions")}</span>
+                    {isFinished && (
+                      <Chip
+                        label={predictionCount}
+                        size="small"
+                        color="primary"
+                      />
+                    )}
+                  </Box>
+                </Tooltip>
+              }
+              disabled={!isFinished}
+            />
+          )}
         </PillTabs>
       </Box>
     </Box>
@@ -224,4 +227,5 @@ ResultsTabsHeader.propTypes = {
   optimizables: PropTypes.number,
   explainerCount: PropTypes.number,
   predictionCount: PropTypes.number,
+  supportsPredictions: PropTypes.bool,
 };

@@ -101,6 +101,45 @@ class BaseConverter(ConfigObject, ABC):
 
         return meta
 
+    def changes_row_count(self) -> bool:
+        """Indicate whether this converter changes the number of dataset rows.
+
+        Samplers (e.g. SMOTE, RandomUnderSampler) return True because they
+        add or remove rows. Most transformers return False.
+
+        Returns
+        -------
+        bool
+            True if the converter may add or remove rows, False otherwise.
+        """
+        return False
+
+    def get_report(self) -> Union[Dict[str, Any], None]:
+        """Return the converter report produced after execution, if any.
+
+        The report complements the transformed dataset with information that
+        helps downstream tools (explorers, visualisations) interpret what the
+        converter did during its pipeline step. Persisted to disk per converter
+        execution. Optional — converters that produce no supplementary
+        information return ``None``.
+
+        Returns
+        -------
+        Dict[str, Any] or None
+            JSON-serializable report dict, or ``None`` when the converter does
+            not produce one.
+        """
+        return None
+
+    def build_report(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Wrap converter-specific data with the producer converter name.
+
+        Subclasses pass only information that is useful after the conversion
+        has finished. Configuration parameters are already persisted with the
+        converter DB row.
+        """
+        return {"converter": self.__class__.__name__, **data}
+
     @abstractmethod
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a given column.

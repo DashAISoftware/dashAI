@@ -15,6 +15,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
 from DashAI.back.dataloaders.classes.json_dataloader import JSONDataLoader
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.controlnet_task import ControlNetTask
+from DashAI.back.tasks.supervised_task import SupervisedTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
@@ -134,11 +135,13 @@ def test_get_tabular_class_task_metadata():
     tabular_class_task = TabularClassificationTask()
     metadata = tabular_class_task.get_metadata()
 
-    assert len(metadata.keys()) == 4
+    assert len(metadata.keys()) == 6
     assert metadata["inputs_types"] == ["Float", "Integer", "Categorical"]
     assert metadata["outputs_types"] == ["Categorical"]
     assert metadata["inputs_cardinality"] == "n"
     assert metadata["outputs_cardinality"] == 1
+    assert metadata["requires_target"] is True
+    assert metadata["session_config_schema"] == SupervisedTask.SESSION_CONFIG_SCHEMA
 
 
 @pytest.fixture(scope="module", name="text_classification_dataset")
@@ -195,11 +198,13 @@ def test_get_text_class_task_metadata():
     text_class_task = TextClassificationTask()
     metadata = text_class_task.get_metadata()
 
-    assert len(metadata.keys()) == 4
+    assert len(metadata.keys()) == 6
     assert metadata["inputs_types"] == ["Text"]
     assert metadata["outputs_types"] == ["Categorical"]
     assert metadata["inputs_cardinality"] == 1
     assert metadata["outputs_cardinality"] == 1
+    assert metadata["requires_target"] is True
+    assert metadata["session_config_schema"] == SupervisedTask.SESSION_CONFIG_SCHEMA
 
 
 @pytest.fixture(scope="module", name="translation_dataset")
@@ -256,11 +261,13 @@ def test_get_translation_task_metadata():
     translation_task = TranslationTask()
     metadata = translation_task.get_metadata()
 
-    assert len(metadata.keys()) == 4
+    assert len(metadata.keys()) == 6
     assert metadata["inputs_types"] == ["Text"]
     assert metadata["outputs_types"] == ["Text"]
     assert metadata["inputs_cardinality"] == 1
     assert metadata["outputs_cardinality"] == 1
+    assert metadata["requires_target"] is True
+    assert metadata["session_config_schema"] == SupervisedTask.SESSION_CONFIG_SCHEMA
 
 
 # Generative tasks

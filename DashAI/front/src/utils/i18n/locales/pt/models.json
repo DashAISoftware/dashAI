@@ -284,7 +284,10 @@
     "validation": "Validação",
     "validationMetrics": "Métricas de Validação",
     "validationSet": "conjunto de validação",
-    "viewResultsAs": "Ver resultados como colunas ou gráficos"
+    "viewResultsAs": "Ver resultados como colunas ou gráficos",
+    "last": "Final",
+    "supervisedBadge": "Supervisionado",
+    "unsupervisedBadge": "Não supervisionado"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",

@@ -4,7 +4,9 @@ from typing import TYPE_CHECKING, Type
 from kink import inject
 from sqlalchemy import exc
 
-from DashAI.back.dependencies.database.models import Explorer, Notebook
+from DashAI.back.converters.converter_report import load_converter_report
+from DashAI.back.core.enums.status import ConverterStatus
+from DashAI.back.dependencies.database.models import Converter, Explorer, Notebook
 from DashAI.back.exploration.base_explorer import BaseExplorer
 from DashAI.back.job.base_job import BaseJob, JobError
 
@@ -13,6 +15,88 @@ if TYPE_CHECKING:
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
+
+
+def _build_explorer_context(
+    db,
+    notebook_info: Notebook,
+    explorer_instance: BaseExplorer,
+    config: dict,
+) -> dict:
+    """Build optional runtime context for explorers.
+
+    Explorers keep receiving the current notebook dataset as their main input.
+    A converter report is loaded only when the explorer explicitly requires it
+    via ``metadata["requires_converter_report"] = True``.
+
+    When the explorer also declares ``metadata["requires_converter_class"]``,
+    the most recently finished converter of any type in the notebook must be
+    of that class. This guarantees the referenced report describes exactly
+    the current dataset state: nothing could have run afterwards to alter the
+    columns the report depends on. If a different converter ran more recently,
+    the explorer is refused instead of silently reusing a report that may no
+    longer match the live dataset.
+    """
+    explorer_metadata = explorer_instance.get_metadata()
+    if not explorer_metadata.get("requires_converter_report", False):
+        return {}
+
+    required_class = explorer_metadata.get("requires_converter_class")
+    latest_converter = (
+        db.query(Converter)
+        .filter(Converter.notebook_id == notebook_info.id)
+        .filter(Converter.status == ConverterStatus.FINISHED)
+        .order_by(Converter.created.desc())
+        .first()
+    )
+
+    if latest_converter is None:
+        class_hint = f" of type '{required_class}'" if required_class else ""
+        raise JobError(
+            f"This explorer requires a converter report, but the notebook has "
+            f"no finished converters{class_hint}."
+        )
+
+    if required_class and latest_converter.converter != required_class:
+        raise JobError(
+            f"This explorer requires a report from the most recently finished "
+            f"converter in the notebook, but the last converter was "
+            f"'{latest_converter.converter}', not '{required_class}'. Re-run "
+            f"the '{required_class}' converter before creating this explorer "
+            f"so its report reflects the current dataset."
+        )
+
+    notebook_output_path = config["NOTEBOOK_PATH"] / str(notebook_info.id)
+    converter_report = load_converter_report(
+        notebook_output_path,
+        latest_converter.id,
+    )
+
+    if converter_report is None:
+        class_hint = f" '{required_class}'" if required_class else ""
+        raise JobError(
+            f"This explorer requires a converter report, but the latest "
+            f"finished{class_hint} converter did not produce one."
+        )
+
+    required_algorithm = explorer_metadata.get("requires_algorithm")
+    if required_algorithm:
+        used_algorithm = converter_report.get("algorithm_key", "").lower()
+        if used_algorithm != required_algorithm.lower():
+            raise JobError(
+                f"This explorer requires the '{required_algorithm}' clustering "
+                f"algorithm, but the last Clustering converter ran '{used_algorithm}'"
+                f". Re-run the Clustering converter selecting the "
+                f"'{required_algorithm}' algorithm."
+            )
+
+    return {
+        "converter_report": converter_report,
+        "converter_report_source": {
+            "converter_id": latest_converter.id,
+            "converter": latest_converter.converter,
+        },
+    }
 
 
 class ExplorerJob(BaseJob):
@@ -164,6 +248,27 @@ class ExplorerJob(BaseJob):
                     f"Error instancing the explorer {explorer_info.exploration_type}."
                 ) from e
 
+            try:
+                explorer_context = _build_explorer_context(
+                    db,
+                    notebook_info,
+                    explorer_instance,
+                    config,
+                )
+                explorer_instance.set_context(explorer_context)
+            except JobError:
+                explorer_info.set_status_as_error()
+                db.commit()
+                raise
+            except Exception as e:
+                log.exception(e)
+                explorer_info.set_status_as_error()
+                db.commit()
+                raise JobError(
+                    "Error loading context for explorer "
+                    f"{explorer_info.exploration_type}."
+                ) from e
+
             # prepare the dataset
             try:
                 prepared_dataset = explorer_instance.prepare_dataset(
@@ -185,6 +290,10 @@ class ExplorerJob(BaseJob):
                 result = explorer_instance.launch_exploration(
                     prepared_dataset, explorer_info
                 )
+            except (JobError, ValueError) as e:
+                explorer_info.set_status_as_error()
+                db.commit()
+                raise JobError(str(e)) from e
             except Exception as e:
                 log.exception(e)
                 explorer_info.set_status_as_error()

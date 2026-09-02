@@ -156,6 +156,19 @@ export default function SessionVisualization() {
     [runs],
   );
 
+  const sessionSplits = React.useMemo(() => {
+    if (!session?.splits) return {};
+    if (typeof session.splits === "object") return session.splits;
+
+    try {
+      return JSON.parse(session.splits);
+    } catch {
+      return {};
+    }
+  }, [session?.splits]);
+
+  const usesFullMetrics = sessionSplits.splitType === "none";
+
   const activeRun = React.useMemo(
     () =>
       params.runId ? runs.find((r) => String(r.id) === params.runId) : null,
@@ -166,6 +179,14 @@ export default function SessionVisualization() {
     () => datasets.find((d) => d.id === session?.dataset_id)?.name,
     [datasets, session?.dataset_id],
   );
+
+  useEffect(() => {
+    if (usesFullMetrics) {
+      setMetricSplit("full");
+    } else if (metricSplit === "full") {
+      setMetricSplit("test");
+    }
+  }, [usesFullMetrics, metricSplit, session?.id]);
 
   // Check which metrics are available. This re-scan only needs to happen
   // when `runs` itself changes, not on every render (e.g. drag state, tour
@@ -579,33 +600,37 @@ export default function SessionVisualization() {
                     flexWrap: "wrap",
                   }}
                 >
-                  {/* Metric Split Selector: controls both table and graph views */}
-                  {(hasTrainMetrics ||
-                    hasValidationMetrics ||
-                    hasTestMetrics) && (
-                    <PillToggleButtonGroup
-                      value={effectiveSplit}
-                      onChange={(e, newValue) => {
-                        if (newValue !== null) setMetricSplit(newValue);
-                      }}
-                    >
-                      {hasTrainMetrics && (
-                        <ToggleButton value="train">
-                          {t("common:train")}
-                        </ToggleButton>
-                      )}
-                      {hasValidationMetrics && (
-                        <ToggleButton value="validation">
-                          {t("common:validation")}
-                        </ToggleButton>
-                      )}
-                      {hasTestMetrics && (
-                        <ToggleButton value="test">
-                          {t("common:test")}
-                        </ToggleButton>
-                      )}
-                    </PillToggleButtonGroup>
-                  )}
+                  {/* Metric Split Selector: controls both table and graph views.
+                      Hidden when the session only ever has one metric set
+                      (clustering's full-dataset runs): there is nothing to
+                      switch between. */}
+                  {!usesFullMetrics &&
+                    (hasTrainMetrics ||
+                      hasValidationMetrics ||
+                      hasTestMetrics) && (
+                      <PillToggleButtonGroup
+                        value={effectiveSplit}
+                        onChange={(e, newValue) => {
+                          if (newValue !== null) setMetricSplit(newValue);
+                        }}
+                      >
+                        {hasTrainMetrics && (
+                          <ToggleButton value="train">
+                            {t("common:train")}
+                          </ToggleButton>
+                        )}
+                        {hasValidationMetrics && (
+                          <ToggleButton value="validation">
+                            {t("common:validation")}
+                          </ToggleButton>
+                        )}
+                        {hasTestMetrics && (
+                          <ToggleButton value="test">
+                            {t("common:test")}
+                          </ToggleButton>
+                        )}
+                      </PillToggleButtonGroup>
+                    )}
                 </Box>
               </Box>
 

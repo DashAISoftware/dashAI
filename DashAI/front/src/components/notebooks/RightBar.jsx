@@ -177,6 +177,31 @@ export default function RightBar({ notebook, onToggle }) {
       });
     }
 
+    // Restrict selectable columns to those used by the last converter (if required)
+    if (
+      explorer?.metadata?.restricts_to_converter_columns &&
+      explorer?.metadata?.requires_converter_class
+    ) {
+      const latestConverter = [...explorersAndConverters]
+        .filter(
+          (item) =>
+            item.type === "converter" &&
+            item.status === 3 &&
+            item.converter === explorer.metadata.requires_converter_class,
+        )
+        .sort((a, b) => (b.id || 0) - (a.id || 0))[0];
+      if (latestConverter) {
+        const converterColNames = new Set(
+          (latestConverter?.parameters?.scope?.columns || []).map(
+            (c) => c.columnName,
+          ),
+        );
+        validColumns = validColumns.filter((col) =>
+          converterColNames.has(col.columnName),
+        );
+      }
+    }
+
     // Check cardinality requirements
     if (inputCardinality.exact != null) {
       if (validColumns.length < inputCardinality.exact) {
@@ -213,6 +238,41 @@ export default function RightBar({ notebook, onToggle }) {
       tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypesMentioned", {
         dtypes: [...allowedTypes, ...allowedDtypes].join(", "),
       })}`;
+    }
+
+    // Check if a required converter class has been run and finished
+    const requiresConverterClass = explorer?.metadata?.requires_converter_class;
+    if (requiresConverterClass) {
+      const finishedConverters = explorersAndConverters.filter(
+        (item) =>
+          item.type === "converter" &&
+          item.status === 3 &&
+          item.converter === requiresConverterClass,
+      );
+      if (finishedConverters.length === 0) {
+        disabled = true;
+        tooltip += `\n\n${t("datasets:error.requiresConverter", {
+          converterClass: requiresConverterClass,
+        })}`;
+      } else {
+        // Check if a specific algorithm is required (e.g. hdbscan, agglomerative)
+        const requiresAlgorithm =
+          explorer?.metadata?.requires_algorithm?.toLowerCase();
+        if (requiresAlgorithm) {
+          const latest = [...finishedConverters].sort(
+            (a, b) => (b.id || 0) - (a.id || 0),
+          )[0];
+          const usedAlgorithm = (
+            latest?.parameters?.params?.algorithm?.toLowerCase() ?? ""
+          ).replace(/clustering$/, "");
+          if (usedAlgorithm !== requiresAlgorithm) {
+            disabled = true;
+            tooltip += `\n\n${t("datasets:error.requiresAlgorithm", {
+              algorithm: requiresAlgorithm,
+            })}`;
+          }
+        }
+      }
     }
 
     return { disabled, tooltip, validColumns };
@@ -292,7 +352,7 @@ export default function RightBar({ notebook, onToggle }) {
           notebook,
         };
       }),
-    [explorers, datasetColumns, notebook?.id],
+    [explorers, datasetColumns, notebook?.id, explorersAndConverters],
   );
 
   const validatedConverters = useMemo(
@@ -314,15 +374,17 @@ export default function RightBar({ notebook, onToggle }) {
     const query = searchQuery.trim().toLowerCase();
     const tokens = query.split(/\s+/).filter(Boolean);
 
+    const asString = (value) => (typeof value === "string" ? value : "");
+
     const rankMatch = (item) => {
       const displayName = (
-        item.metadata?.display_name ||
-        item.name ||
+        asString(item.metadata?.display_name) ||
+        asString(item.name) ||
         ""
       ).toLowerCase();
       const description = (
-        item.metadata?.short_description ||
-        item.description ||
+        asString(item.metadata?.short_description) ||
+        asString(item.description) ||
         ""
       ).toLowerCase();
       if (tokens.every((token) => displayName.includes(token))) return 1;
