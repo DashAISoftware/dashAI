@@ -35,6 +35,7 @@ import {
   updateGenerativeSessionParams,
 } from "../../../api/rag";
 import { updateGenerativeSession } from "../../../api/session";
+import { getApiErrorMessage } from "../../../utils/apiError";
 
 /** Section keys, matching the RAG parameter keys the backend uses. */
 const SECTIONS = [
@@ -258,8 +259,10 @@ export default function RAGConfigPanel({
     } catch (error) {
       console.error("Failed to update RAG session:", error);
       enqueueSnackbar(
-        error.response?.data?.detail ||
+        getApiErrorMessage(
+          error,
           t("generative:rag.paramsPanel.failedToUpdate"),
+        ),
         { variant: "error" },
       );
     } finally {

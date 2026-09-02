@@ -36,6 +36,7 @@ import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
 import { ThreePanelLayoutContext } from "../../../components/threeSectionLayout/panels/ThreePanelLayoutContext";
 import { FormSchemaProvider } from "../../../contexts/schema";
 import { generateSequentialName } from "../../../utils/nameGenerator";
+import { getApiErrorMessage } from "../../../utils/apiError";
 
 /**
  * Minimal RAG session creation: a name, some documents, and a model.
@@ -178,9 +179,7 @@ export default function RAGCreatePage() {
     } catch (error) {
       console.error("Error creating RAG session:", error);
       enqueueSnackbar(
-        error.response?.data?.detail ||
-          error.message ||
-          t("generative:error.failedToCreateSession"),
+        getApiErrorMessage(error, t("generative:error.failedToCreateSession")),
         { variant: "error" },
       );
     } finally {
