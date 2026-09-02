@@ -156,10 +156,7 @@ class SinglePartitionEvaluationStrategy(BaseEvaluationStrategy):
             output_dataset["validation"], is_fit=False
         )
 
-        # Calculate metric for train and validation data each trial. The
-        # training partition is skipped for a strategy that does not score it,
-        # which for a forecaster is not a preference: predicting on dates it
-        # was fitted on is refused, so asking would fail every trial.
+        # Calculate metric for train and validation data each trial.
         if SplitEnum.TRAIN in self.SCORED_SPLITS:
             model.calculate_metrics(split=SplitEnum.TRAIN, level=LevelEnum.TRIAL)
         model.calculate_metrics(split=SplitEnum.VALIDATION, level=LevelEnum.TRIAL)

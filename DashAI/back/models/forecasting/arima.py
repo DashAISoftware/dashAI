@@ -250,9 +250,6 @@ class ARIMA(ForecastingModel):
             )
 
         with warnings.catch_warnings():
-            # statsmodels warns that it is assuming evenly spaced observations
-            # because no date index was supplied. That is the assumption this
-            # model makes on purpose, so the warning says nothing new.
             warnings.simplefilter("ignore")
             self._result = _ARIMA(series, order=(self.p, self.d, self.q)).fit()
 
@@ -261,18 +258,17 @@ class ARIMA(ForecastingModel):
         self._fitted = True
         return self
 
-    def predict(self, x: "DashAIDataset") -> "np.ndarray":
-        """Forecast forward from the end of the training series.
+    def _forecast(self, steps: int) -> "np.ndarray":
+        """Forecast the next ``steps`` periods after the end of the history.
 
         Parameters
         ----------
-        x : DashAIDataset
-            The rows to forecast, whose dates say how far ahead each one is.
+        steps : int
+            How many periods to forecast.
 
         Returns
         -------
         np.ndarray
-            One forecast value per requested row.
+            One value per period, in order.
         """
-        self._require_fitted()
-        return self._forecast_at(x, lambda steps: self._result.forecast(steps=steps))
+        return self._result.forecast(steps=steps)
