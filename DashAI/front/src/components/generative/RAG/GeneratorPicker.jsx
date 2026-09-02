@@ -152,9 +152,7 @@ export default function GeneratorPicker({
       {selected && locked && (
         <Alert severity="warning" sx={{ py: 0.5 }}>
           {t("generative:validation.apiKeyMissingDescription")}
-          {requiredPlatforms?.length
-            ? ` (${requiredPlatforms.join(", ")})`
-            : ""}
+          {requiredPlatforms ? ` (${requiredPlatforms})` : ""}
         </Alert>
       )}
 
