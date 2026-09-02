@@ -95,11 +95,49 @@ class FaissBaseModel:
 
         return joblib.load(filename)
 
+    @staticmethod
+    def _import_faiss():
+        """Import FAISS with its thread pool pinned to one thread on macOS.
+
+        FAISS ships its own OpenMP runtime and so does torch, which any process
+        running DashAI has already loaded. Two OpenMP runtimes in one process
+        deadlock on macOS the first time FAISS opens a parallel region: a CI run
+        hung for six hours inside ``FaissKMeansClustering.train`` while the six
+        scikit-learn clusterers beside it finished in under a second, on the
+        same commit where Linux and Windows passed in four minutes.
+
+        Pinning FAISS to a single thread keeps it out of that parallel region.
+        Only macOS is constrained, so the acceleration this adapter exists for
+        is untouched everywhere else.
+
+        Returns
+        -------
+        module
+            The imported ``faiss`` module.
+
+        Raises
+        ------
+        ImportError
+            If the ``faiss`` package is not installed.
+        """
+        import sys
+
+        try:
+            import faiss
+        except ImportError as exc:
+            raise ImportError(
+                "FAISS is required. Install it with: pip install faiss-cpu"
+            ) from exc
+
+        if sys.platform == "darwin":
+            faiss.omp_set_num_threads(1)
+        return faiss
+
     def __getstate__(self) -> dict:
         """Serialise the FAISS index as raw bytes before pickling."""
         state = self.__dict__.copy()
         if state.get("_index") is not None:
-            import faiss
+            faiss = self._import_faiss()
 
             state["_index"] = faiss.serialize_index(state["_index"]).tobytes()
             state["_index_serialized"] = True
@@ -108,7 +146,7 @@ class FaissBaseModel:
     def __setstate__(self, state: dict) -> None:
         """Restore the FAISS index from raw bytes after unpickling."""
         if state.pop("_index_serialized", False):
-            import faiss
+            faiss = self._import_faiss()
 
             index_bytes = np.frombuffer(state["_index"], dtype=np.uint8)
             state["_index"] = faiss.deserialize_index(index_bytes)

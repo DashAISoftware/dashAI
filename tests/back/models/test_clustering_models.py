@@ -1,4 +1,5 @@
 import json
+import sys
 
 import numpy as np
 import pandas as pd
@@ -179,3 +180,35 @@ def test_kmeans_reports_its_centres_and_inertia_after_fitting():
     # Inertia is the summed squared distance to each centre. With 300 points
     # drawn around two axes at a spread of 0.1, that is 300 * 2 * 0.1 ** 2.
     assert attributes["inertia"] == pytest.approx(6.0, rel=0.3)
+
+
+# --- the macOS deadlock ------------------------------------------------------
+
+
+def test_faiss_is_pinned_to_one_thread_on_macos(monkeypatch):
+    """FAISS and torch each ship an OpenMP runtime, and two of them in one
+    process deadlock on macOS. That hung a CI job for six hours inside
+    FaissKMeansClustering.train while the scikit-learn clusterers beside it
+    finished in under a second.
+    """
+    faiss = FaissKMeansClustering._import_faiss()
+    before = faiss.omp_get_max_threads()
+    try:
+        monkeypatch.setattr(sys, "platform", "darwin")
+
+        FaissKMeansClustering._import_faiss()
+
+        assert faiss.omp_get_max_threads() == 1
+    finally:
+        faiss.omp_set_num_threads(before)
+
+
+def test_faiss_keeps_its_threads_everywhere_else(monkeypatch):
+    """The adapter exists to accelerate large datasets, so only macOS pays."""
+    faiss = FaissKMeansClustering._import_faiss()
+    before = faiss.omp_get_max_threads()
+    monkeypatch.setattr(sys, "platform", "linux")
+
+    FaissKMeansClustering._import_faiss()
+
+    assert faiss.omp_get_max_threads() == before

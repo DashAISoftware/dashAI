@@ -188,12 +188,7 @@ class FaissKMeansClustering(FaissLikeClusterer):
         ImportError
             If the ``faiss`` package is not installed.
         """
-        try:
-            import faiss
-        except ImportError as exc:
-            raise ImportError(
-                "FAISS is required. Install it with: pip install faiss-cpu"
-            ) from exc
+        faiss = self._import_faiss()
 
         x = self._to_float32(x_train)
         d = x.shape[1]
