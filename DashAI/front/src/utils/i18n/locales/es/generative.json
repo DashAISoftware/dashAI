@@ -151,7 +151,8 @@
     },
     "config": {
       "advanced": "Configuración avanzada",
-      "chunkCount": "{{count}} fragmentos",
+      "chunkCount_one": "{{count}} fragmento",
+      "chunkCount_other": "{{count}} fragmentos",
       "contextBudget": "Presupuesto de contexto"
     },
     "create": {
@@ -229,7 +230,8 @@
       "title": "Generación Aumentada por Recuperación"
     },
     "index": {
-      "chunkCount": "{{count}} fragmentos",
+      "chunkCount_one": "{{count}} fragmento",
+      "chunkCount_other": "{{count}} fragmentos",
       "indexingInProgress": "Indexando documentos…",
       "notIndexed": "Sin indexar"
     },

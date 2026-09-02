@@ -147,7 +147,8 @@
     },
     "config": {
       "advanced": "Erweiterte Konfiguration",
-      "chunkCount": "{{count}} Chunks",
+      "chunkCount_one": "{{count}} Chunk",
+      "chunkCount_other": "{{count}} Chunks",
       "contextBudget": "Kontextbudget"
     },
     "create": {
@@ -225,7 +226,8 @@
       "title": "Retrieval-Augmented Generation"
     },
     "index": {
-      "chunkCount": "{{count}} Chunks",
+      "chunkCount_one": "{{count}} Chunk",
+      "chunkCount_other": "{{count}} Chunks",
       "indexingInProgress": "Dokumente werden indexiert…",
       "notIndexed": "Nicht indexiert"
     },

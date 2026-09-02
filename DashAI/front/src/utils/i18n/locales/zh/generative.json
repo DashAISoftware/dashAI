@@ -147,7 +147,7 @@
     },
     "config": {
       "advanced": "高级配置",
-      "chunkCount": "{{count}} 个块",
+      "chunkCount_other": "{{count}} 个块",
       "contextBudget": "上下文预算"
     },
     "create": {
@@ -225,7 +225,7 @@
       "title": "检索增强生成"
     },
     "index": {
-      "chunkCount": "{{count}} 个块",
+      "chunkCount_other": "{{count}} 个块",
       "indexingInProgress": "正在为文档建立索引…",
       "notIndexed": "未建立索引"
     },
