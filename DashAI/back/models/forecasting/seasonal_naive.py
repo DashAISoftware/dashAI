@@ -190,13 +190,13 @@ class SeasonalNaiveForecaster(ForecastingModel):
         self._fitted = True
         return self
 
-    def predict(self, x: "DashAIDataset") -> "np.ndarray":
-        """Repeat the last full season out to the dates requested.
+    def _forecast(self, steps: int) -> "np.ndarray":
+        """Repeat the last full season out to the requested length.
 
         Parameters
         ----------
-        x : DashAIDataset
-            The rows to forecast, whose dates say how far ahead each one is.
+        steps : int
+            How many periods to forecast.
 
         Returns
         -------
@@ -205,11 +205,7 @@ class SeasonalNaiveForecaster(ForecastingModel):
         """
         import numpy as np
 
-        self._require_fitted()
-        return self._forecast_at(
-            x,
-            lambda steps: np.array(
-                [self._last_season[i % self.season_length] for i in range(steps)],
-                dtype=float,
-            ),
+        return np.array(
+            [self._last_season[i % self.season_length] for i in range(steps)],
+            dtype=float,
         )

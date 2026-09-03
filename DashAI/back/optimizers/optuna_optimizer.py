@@ -1,3 +1,4 @@
+import logging
 from typing import TYPE_CHECKING
 
 from DashAI.back.core.schema_fields import (
@@ -11,6 +12,10 @@ from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 
 if TYPE_CHECKING:
     import optuna
+
+logger = logging.getLogger(__name__)
+
+UNFITTABLE_TRIAL_ERRORS = (ValueError, ArithmeticError)
 
 
 class OptunaSchema(BaseSchema):
@@ -265,6 +270,8 @@ class OptunaOptimizer(BaseOptimizer):
 
         self.metric = metric["class"]
 
+        failures = []
+
         def objective(trial):
             # Set value for each hyperparameter and for each model
             # (either self or submodels nested inside)
@@ -294,6 +301,9 @@ class OptunaOptimizer(BaseOptimizer):
                 score = strategy(
                     self.model, self.input_dataset, self.output_dataset, self.metric
                 )
+            except UNFITTABLE_TRIAL_ERRORS as e:
+                failures.append(e)
+                raise
             finally:
                 # Cleared even when the trial is pruned: the model instance is
                 # reused across trials and by the final refit afterwards.
@@ -301,7 +311,31 @@ class OptunaOptimizer(BaseOptimizer):
 
             return score
 
-        study.optimize(objective, n_trials=self.n_trials)
+        study.optimize(objective, n_trials=self.n_trials, catch=UNFITTABLE_TRIAL_ERRORS)
+
+        completed = study.get_trials(
+            deepcopy=False, states=(optuna.trial.TrialState.COMPLETE,)
+        )
+        if not completed:
+            raise ValueError(
+                f"Every one of the {len(study.trials)} trials failed: the model "
+                f"could not be fitted with any combination the search drew from "
+                f"the ranges given. Narrow them and try again. The last trial "
+                f"failed with: {failures[-1]}"
+                if failures
+                else (
+                    f"Every one of the {len(study.trials)} trials failed and none "
+                    f"produced a score."
+                )
+            )
+        if failures:
+            logger.warning(
+                "%d of %d hyperparameter trials could not be fitted and were "
+                "skipped. The last one failed with: %s",
+                len(failures),
+                len(study.trials),
+                failures[-1],
+            )
 
         # Write the best values back onto the objects that actually declare them.
         # `self.parameters` holds (owner, key, bounds, dtype) tuples built by
