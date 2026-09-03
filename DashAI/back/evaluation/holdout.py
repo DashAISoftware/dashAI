@@ -172,9 +172,12 @@ class HoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
 
     The ordinary holdout evaluation. Not offered for ``ForecastingTask``:
     scoring the training partition of a forecaster means predicting on dates
-    it was fitted on, and keeping validation out of the final fit throws away
-    the most recent history right before asking what comes next.
-    ``ForecastingHoldoutEvaluationStrategy`` handles both.
+    it was fitted on, which is a fit statistic rather than a forecast and does
+    not belong in the same results table as one.
+    ``ForecastingHoldoutEvaluationStrategy`` records validation and test only.
+
+    The final fit is the same in both: the kept model is fitted on the training
+    partition alone, so it is the model the recorded metrics describe.
     """
 
     COMPATIBLE_COMPONENTS = [
