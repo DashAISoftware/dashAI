@@ -31,8 +31,6 @@ def test_fold_splitters_report_their_partitioning(splitter):
 
 
 def test_fold_splitters_keep_reporting_their_inner_splitters():
-    # The partitioning key is added alongside what was already there rather
-    # than replacing it, since nested CV reads this.
     metadata = KFoldSplitter.get_metadata()
 
     assert "compatibleInnerSplitters" in metadata
@@ -40,9 +38,8 @@ def test_fold_splitters_keep_reporting_their_inner_splitters():
 
 
 def test_the_shuffling_holdout_splitter_is_not_offered_for_forecasting():
-    # The whole point of the fix: this splitter can shuffle, so forecasting
-    # must not be able to reach it.
     assert "ForecastingTask" not in HoldoutSplitter.COMPATIBLE_COMPONENTS
+    assert "ExogenousForecastingTask" not in HoldoutSplitter.COMPATIBLE_COMPONENTS
 
 
 def test_the_shuffling_holdout_splitter_still_serves_every_other_task():
@@ -58,7 +55,10 @@ def test_the_shuffling_holdout_splitter_still_serves_every_other_task():
 
 def test_the_temporal_splitters_are_offered_for_forecasting_alone():
     for splitter in (TemporalHoldoutSplitter, RollingOriginSplitter):
-        assert splitter.COMPATIBLE_COMPONENTS == ["ForecastingTask"]
+        assert splitter.COMPATIBLE_COMPONENTS == [
+            "ForecastingTask",
+            "ExogenousForecastingTask",
+        ]
 
 
 def test_the_temporal_splitter_does_not_inherit_the_other_ones_tasks():
@@ -68,8 +68,6 @@ def test_the_temporal_splitter_does_not_inherit_the_other_ones_tasks():
 
 
 def test_forecasting_can_reach_a_holdout_splitter_at_all():
-    # If no holdout splitter were compatible, the frontend would resolve None
-    # and the holdout strategy would silently stop working for forecasting.
     reachable = [
         splitter
         for splitter in HOLDOUT_SPLITTERS

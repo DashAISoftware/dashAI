@@ -25,7 +25,11 @@ class RegressionMetric(BaseMetric):
     # ForecastingTask measures the same thing: a continuous prediction against
     # a continuous truth. Listing it here is what makes MAE, RMSE and the rest
     # available to forecasting runs without reimplementing any of them.
-    COMPATIBLE_COMPONENTS = ["RegressionTask", "ForecastingTask"]
+    COMPATIBLE_COMPONENTS = [
+        "RegressionTask",
+        "ForecastingTask",
+        "ExogenousForecastingTask",
+    ]
 
 
 def prepare_to_metric(

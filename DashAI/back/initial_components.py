@@ -459,6 +459,9 @@ from DashAI.back.statistical_tests.wilcoxon_sr_test import (
     WilcoxonSRTest,
 )
 from DashAI.back.tasks.controlnet_task import ControlNetTask
+from DashAI.back.tasks.exogenous_forecasting_task import (
+    ExogenousForecastingTask,
+)
 from DashAI.back.tasks.forecasting_task import ForecastingTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 
@@ -493,6 +496,7 @@ def get_initial_components():
         TranslationTask,
         RegressionTask,
         ForecastingTask,
+        ExogenousForecastingTask,
         NaiveForecaster,
         SeasonalNaiveForecaster,
         ARIMA,
