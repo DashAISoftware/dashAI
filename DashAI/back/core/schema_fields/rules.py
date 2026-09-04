@@ -647,17 +647,40 @@ def collect_field_names(ast: Any) -> List[str]:
     return found
 
 
-def validate_rules(rules: Sequence[Rule], *, owner: str, known: Iterable[str]) -> None:
+def validate_rules(
+    rules: Sequence[Rule],
+    *,
+    owner: str,
+    known: Iterable[str],
+    unreadable: Iterable[str] = (),
+) -> None:
     """Check a schema's rules against the fields it actually declares.
+
+    Parameters
+    ----------
+    rules : sequence of Rule
+        The schema's own rules, before merging with its parents'.
+    owner : str
+        The schema class name, for the error message.
+    known : iterable of str
+        The field names the schema declares.
+    unreadable : iterable of str
+        Fields whose value the algebra cannot read, so an expression over them
+        can only ever be pending. Today that is the optimizer fields: their
+        value is the ``{optimize, fixed_value, lower_bound, upper_bound}``
+        envelope rather than a number, and the arithmetic and comparison nodes
+        refuse a non-number by design.
 
     Raises
     ------
     RuleDeclarationError
-        If a rule is not a :class:`Rule`, or references a field the schema does
-        not have. The message suggests the closest real field name, because the
-        overwhelmingly common cause is a typo.
+        If a rule is not a :class:`Rule`, references a field the schema does not
+        have, duplicates a rule id, or reads a field whose value the algebra
+        cannot judge. The message suggests the closest real field name, because
+        the overwhelmingly common cause is a typo.
     """
     known_names = set(known)
+    unreadable_names = set(unreadable)
     seen_ids: Dict[str, int] = {}
     for index, rule in enumerate(rules):
         if not isinstance(rule, Rule):
@@ -668,13 +691,29 @@ def validate_rules(rules: Sequence[Rule], *, owner: str, known: Iterable[str]) -
         if isinstance(rule, Check):
             seen_ids[rule.id] = seen_ids.get(rule.id, 0) + 1
         for name in rule.field_names():
-            if name in known_names:
-                continue
-            hint = difflib.get_close_matches(name, sorted(known_names), n=1)
-            suggestion = f" Did you mean {hint[0]!r}?" if hint else ""
+            if name not in known_names:
+                hint = difflib.get_close_matches(name, sorted(known_names), n=1)
+                suggestion = f" Did you mean {hint[0]!r}?" if hint else ""
+                raise RuleDeclarationError(
+                    f"{owner}.rules[{index}] references {name!r}, which is not a "
+                    f"field of {owner}.{suggestion}"
+                )
+        # A rule that reads a value the algebra cannot judge is not a rule, it
+        # is a permanently pending one. Reported rather than passed, so nothing
+        # is validated wrongly, but nobody reads a pending report either, so it
+        # fails here instead of never firing.
+        read = _reads_of(rule)
+        blocked = sorted(read & unreadable_names)
+        if blocked:
             raise RuleDeclarationError(
-                f"{owner}.rules[{index}] references {name!r}, which is not a "
-                f"field of {owner}.{suggestion}"
+                f"{owner}.rules[{index}] reads {blocked}, whose value is the "
+                "optimizer envelope ({'optimize', 'fixed_value', 'lower_bound', "
+                "'upper_bound'}) rather than a number, so the rule could only "
+                "ever be pending and would never fire.\n"
+                "Until an optimizable hyperparameter is a declared type instead "
+                "of a shape carried by its placeholder, a constraint on one has "
+                "to stay in a validator. A Relevance rule *targeting* the field "
+                "is fine: it reads its condition, not the field's own value."
             )
     duplicates = sorted(name for name, count in seen_ids.items() if count > 1)
     if duplicates:
@@ -682,6 +721,25 @@ def validate_rules(rules: Sequence[Rule], *, owner: str, known: Iterable[str]) -
             f"{owner} declares more than one Check with id {duplicates!r}. Rule "
             "ids identify a violation to clients, so they must be unique."
         )
+
+
+def _reads_of(rule: Rule) -> set:
+    """Field names a rule's expressions read, as opposed to the ones it targets.
+
+    The distinction matters: ``Relevance("season_length", when=...)`` targets a
+    field it never reads, so it is judgeable even when that field's own value is
+    one the algebra cannot handle.
+    """
+    if isinstance(rule, Check):
+        asts = [rule.expr.to_ast()] + [b.to_ast() for b in rule.bindings.values()]
+    elif isinstance(rule, Relevance):
+        asts = [rule.when.to_ast()]
+    else:  # pragma: no cover - a future rule kind must say what it reads
+        asts = []
+    found = set()
+    for ast in asts:
+        found.update(collect_field_names(ast))
+    return found
 
 
 def rules_to_wire(rules: Sequence[Rule]) -> List[Dict[str, Any]]:

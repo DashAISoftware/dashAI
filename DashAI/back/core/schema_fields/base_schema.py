@@ -173,7 +173,12 @@ class BaseSchema(BaseModel):
         cls.__dashai_rules__ = merged
 
         if own:
-            validate_rules(own, owner=cls.__name__, known=cls.model_fields.keys())
+            validate_rules(
+                own,
+                owner=cls.__name__,
+                known=cls.model_fields.keys(),
+                unreadable=_optimizer_fields(cls),
+            )
 
         previous = cls.model_config.get("json_schema_extra")
         cls.model_config = {
@@ -223,6 +228,26 @@ BaseSchema.model_config = {
     **BaseSchema.model_config,
     "json_schema_extra": _schema_postprocessor(None, None),
 }
+
+
+def _optimizer_fields(schema_cls: type) -> List[str]:
+    """Fields whose value is the optimizer envelope rather than a scalar.
+
+    ``optimizer_int_field`` and ``optimizer_float_field`` are byte-identical to
+    their plain counterparts: the only thing marking a hyperparameter as
+    optimizable is the shape of its placeholder, a dict carrying ``optimize``.
+    So that shape is what identifies them here too, until the search space
+    becomes a declared type.
+    """
+    found = []
+    for name, field in schema_cls.model_fields.items():
+        extra = field.json_schema_extra
+        if not isinstance(extra, dict):
+            continue
+        placeholder = extra.get("placeholder")
+        if isinstance(placeholder, dict) and "optimize" in placeholder:
+            found.append(name)
+    return found
 
 
 def check_rules(schema_cls: type, values: Dict[str, Any], ctx: Any = None):
