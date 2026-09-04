@@ -15,6 +15,7 @@ import { validateYupSchema, yupToFormErrors } from "formik";
 import {
   SCHEMA_RULES,
   emptyValueFor,
+  getValidator,
   formattedModel,
   generateYupSchema,
   getSchemaRules,
@@ -232,5 +233,56 @@ describe("what an emptied input means, derived from the schema", () => {
     expect(normalizeEmptyValue(undefined, nullableColumn)).toBeNull();
     expect(normalizeEmptyValue("", nullablePrompt)).toBe("");
     expect(normalizeEmptyValue(undefined, nullablePrompt)).toBe("");
+  });
+});
+
+describe("multipleOf, the standard keyword nobody was emitting", () => {
+  // The diffusion models' image sizes must be multiples of 8 because the VAE
+  // downsamples by that factor. That was stated in the description in five
+  // languages, checked nowhere, and 28 properties carried it. It is a per-field
+  // type constraint, not a relation between fields, so it belongs in the
+  // schema's own vocabulary rather than in the rule engine.
+  const imageSize = {
+    type: "integer",
+    minimum: 64,
+    maximum: 2048,
+    multipleOf: 8,
+    required: true,
+  };
+
+  const check = async (value) => {
+    try {
+      await getValidator(imageSize).validate(value);
+      return null;
+    } catch (error) {
+      return error.message;
+    }
+  };
+
+  it("accepts a multiple", async () => {
+    await expect(check(1024)).resolves.toBeNull();
+    await expect(check(64)).resolves.toBeNull();
+    await expect(check(512)).resolves.toBeNull();
+  });
+
+  it("rejects a value the pipeline could not honour", async () => {
+    await expect(check(513)).resolves.toBe("Must be a multiple of 8");
+    await expect(check(1020)).resolves.toBe("Must be a multiple of 8");
+  });
+
+  it("still enforces the bounds alongside it", async () => {
+    await expect(check(32)).resolves.toMatch(/greater than or equal to 64/);
+    await expect(check(4096)).resolves.toMatch(/less than or equal to 2048/);
+  });
+
+  it("leaves a field without the keyword alone", async () => {
+    const plain = { type: "integer", minimum: 1, required: true };
+    let message = null;
+    try {
+      await getValidator(plain).validate(7);
+    } catch (error) {
+      message = error.message;
+    }
+    expect(message).toBeNull();
   });
 });

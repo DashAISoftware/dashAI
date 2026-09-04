@@ -298,6 +298,33 @@ const applyMinMax = (
   return validator;
 };
 
+/**
+ * Enforce the standard JSON Schema `multipleOf` keyword.
+ *
+ * Yup has no built-in for it, so it rides a test. Used by the diffusion models'
+ * image sizes, which have to be multiples of 8 because the VAE downsamples by
+ * that factor: the constraint used to live in the description in five languages
+ * and nothing checked it, so a width of 513 reached the pipeline.
+ *
+ * @param {object} validator a Yup number validator
+ * @param {number|undefined} multipleOf the required factor
+ * @returns {object} the validator, with the constraint applied when there is one
+ */
+const applyMultipleOf = (validator, multipleOf) => {
+  if (multipleOf === undefined || multipleOf === null) return validator;
+  return validator.test(
+    "multiple-of",
+    `Must be a multiple of ${multipleOf}`,
+    // An absent value is the required check's business, not this one's, and a
+    // non-number is the type check's.
+    (value) =>
+      value === undefined ||
+      value === null ||
+      !Number.isFinite(Number(value)) ||
+      Number(value) % multipleOf === 0,
+  );
+};
+
 const applyArrayConstraints = (validator, itemSchema, minItems, maxItems) => {
   if (itemSchema) {
     validator = validator.of(itemSchema);
@@ -333,6 +360,7 @@ export const getValidator = (option) => {
     option.exclusiveMinimum,
     option.exclusiveMaximum,
   );
+  validator = applyMultipleOf(validator, option.multipleOf);
   validator = applyRequired(validator, option.required);
 
   return validator;
