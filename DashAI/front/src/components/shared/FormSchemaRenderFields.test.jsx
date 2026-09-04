@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 // react-markdown ships ESM only and Create React App's jest does not transform
@@ -315,5 +315,82 @@ describe("relevance on a union field, the SimpleImputer case", () => {
       fill_value: 99,
     });
     expect(inputFor(container, "strategy")).not.toBeDisabled();
+  });
+});
+
+describe("an emptied nullable field", () => {
+  // The oldest defect on this path: a cleared box handed back "" and the
+  // backend stored a column named "", which sklearn then choked on. The
+  // historical workaround displayed the word "none" for a null value, which
+  // survived only because the null branch renders the input disabled.
+  const nullableSchema = (placeholder) => ({
+    title: "S",
+    type: "object",
+    required: ["group_column"],
+    properties: {
+      group_column: {
+        anyOf: [{ type: "string" }, { type: "null" }],
+        placeholder,
+        title: "Group column",
+        description: "The column to group by.",
+      },
+    },
+  });
+
+  async function renderNullable(value, placeholder = null) {
+    const modelSchema = await formattedModel(nullableSchema(placeholder));
+    const formik = fakeFormik({ group_column: value });
+    const result = renderWithProviders(
+      <FormSchemaRenderFields
+        modelSchema={modelSchema}
+        formik={formik}
+        handleUpdateSchema={jest.fn()}
+      />,
+    );
+    return { ...result, formik };
+  }
+
+  it("shows an empty box for a null value, not the word none", async () => {
+    const { container } = await renderNullable(null);
+    const input = inputFor(container, "group_column");
+    expect(input).toHaveValue("");
+    expect(screen.queryByDisplayValue("none")).not.toBeInTheDocument();
+  });
+
+  it("stores null when the user clears it", async () => {
+    const { container, formik } = await renderNullable("some_column");
+    const input = inputFor(container, "group_column");
+    expect(input).not.toBeDisabled();
+
+    await userEvent.clear(input);
+
+    await waitFor(() =>
+      expect(formik.setFieldValue).toHaveBeenCalledWith(
+        "group_column",
+        null,
+        true,
+      ),
+    );
+    // Never the empty string, which is the value that used to reach sklearn.
+    expect(formik.setFieldValue).not.toHaveBeenCalledWith(
+      "group_column",
+      "",
+      true,
+    );
+  });
+
+  it("keeps the empty string when the author chose it as the default", async () => {
+    // The diffusion models' negative_prompt: same wire shape, opposite
+    // meaning, which is why this is derived per field instead of globally.
+    const { container, formik } = await renderNullable("a prompt", "");
+    await userEvent.clear(inputFor(container, "group_column"));
+
+    await waitFor(() =>
+      expect(formik.setFieldValue).toHaveBeenCalledWith(
+        "group_column",
+        "",
+        true,
+      ),
+    );
   });
 });

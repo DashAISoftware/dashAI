@@ -5,7 +5,11 @@ import FormSchemaFieldWithOptions from "./FormSchemaFieldWithOptions";
 import FormSchemaFieldWithCollapse from "./FormSchemaFieldWithCollapse";
 import FormSchemaFieldWithOptimizers from "./FormSchemaFieldWithOptimizers";
 import FormSchemaFieldWithParent from "./FormSchemaFieldWithParent";
-import { getModelFromSubform, getSchemaRules } from "../../utils/schema";
+import {
+  getModelFromSubform,
+  getSchemaRules,
+  normalizeEmptyValue,
+} from "../../utils/schema";
 import { evaluateRules } from "../../utils/ruleEngine";
 import { Stack } from "@mui/material";
 import PropTypes from "prop-types";
@@ -63,8 +67,15 @@ function FormSchemaRenderFields({
   if (!modelSchema) return null;
 
   const handleChange = useCallback(
-    (name, subName) => (value) => {
+    (name, subName) => (rawValue) => {
       const fieldPath = subName ? `${name}.${subName}` : name;
+      // One place decides what an emptied input means, so no leaf input has to
+      // know: a cleared box on a nullable field submits null instead of the
+      // empty string that used to reach sklearn as a column named "".
+      const fieldSchema = subName
+        ? modelSchema?.[name]?.properties?.[subName]
+        : modelSchema?.[name];
+      const value = normalizeEmptyValue(rawValue, fieldSchema);
       formik.setFieldValue(fieldPath, value, true);
       // Always pass complete formik.values so handleUpdateSchema receives
       // ALL fields regardless of whether the context store has been
@@ -74,7 +85,7 @@ function FormSchemaRenderFields({
         autoSave ? onFormSubmit : null,
       );
     },
-    [formik, handleUpdateSchema, autoSave, onFormSubmit],
+    [formik, handleUpdateSchema, autoSave, onFormSubmit, modelSchema],
   );
 
   // Which fields the schema's own rules say are meaningful right now. The
@@ -144,6 +155,7 @@ function FormSchemaRenderFields({
             setError={setError}
             field={baseField}
             disabled={disabled}
+            placeholder={fieldSchema.placeholder}
           />,
         );
       } else if (isOptimizable) {

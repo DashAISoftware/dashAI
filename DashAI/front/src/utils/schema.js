@@ -43,6 +43,57 @@ export async function resolveDefaults(
   }
 }
 
+/**
+ * What an emptied input means for a given field.
+ *
+ * The problem this answers is old: a cleared text box hands back `""`, and for
+ * a field like `group_column` an empty string is not "no value", it is a column
+ * named "". sklearn then fails on it, or the backend stores it and a Huey worker
+ * raises a KeyError much later. The historical patch went the other way, trying
+ * to translate `""` to None during validation, and there was no good place for
+ * it: the schema layer cannot tell, from a bare string, whether the author meant
+ * "unset" or "the empty string".
+ *
+ * It can be derived instead, from what the schema already says on the wire:
+ *
+ *  - The field does not admit null: `""` is a value like any other, so it stays.
+ *    A required field then reports itself empty, which is correct.
+ *  - It admits null and its placeholder is `""`: the author chose the empty
+ *    string as the default, so that is what empty means. This is the case of the
+ *    14 `negative_prompt` fields across the diffusion models, and it is exactly
+ *    why a single global rule would have been wrong.
+ *  - It admits null and its placeholder is anything else: empty means unset.
+ *
+ * So there is no new keyword, no authoring burden and no backend change. The
+ * answer was already in the schema; nobody was reading it.
+ *
+ * @param {object} subSchema one property of a formatted schema
+ * @returns {null|string} the value an emptied input should submit
+ */
+export const emptyValueFor = (subSchema) => {
+  const branches = Array.isArray(subSchema?.anyOf) ? subSchema.anyOf : [];
+  const admitsNull =
+    branches.some((branch) => branch.type === "null") ||
+    subSchema?.type === "null";
+  if (!admitsNull) return "";
+  return subSchema?.placeholder === "" ? "" : null;
+};
+
+/**
+ * Replace an emptied input's value with what empty means for that field.
+ *
+ * Applied at the single point where a form reports a change, so every input
+ * type is covered and no leaf component has to know about it.
+ *
+ * @param {*} value the value the input handed back
+ * @param {object} subSchema the schema of the field that changed
+ * @returns {*} the value to store
+ */
+export const normalizeEmptyValue = (value, subSchema) => {
+  if (value !== "" && value !== undefined) return value;
+  return emptyValueFor(subSchema);
+};
+
 // Generate a Yup schema from a JSON schema object based on the JSON schema specification from the api, it also generates the initial values of the form
 export const generateYupSchema = (schemaObj) => {
   const schema = {};

@@ -14,9 +14,11 @@ import { validateYupSchema, yupToFormErrors } from "formik";
 
 import {
   SCHEMA_RULES,
+  emptyValueFor,
   formattedModel,
   generateYupSchema,
   getSchemaRules,
+  normalizeEmptyValue,
 } from "./schema";
 import {
   holdoutWireSchema,
@@ -175,5 +177,60 @@ describe("generateYupSchema enforces the declared rules", () => {
     // reported on the siblings.
     expect(errors.train).toMatch(/less than or equal to 1/);
     expect(errors.validation).toMatch(/must sum to 1/);
+  });
+});
+
+describe("what an emptied input means, derived from the schema", () => {
+  // The old question, answered from data instead of by a global rule. The
+  // schema already says whether null is allowed and what the author chose as
+  // the default; between those two facts there is no ambiguity left.
+  const nullableColumn = {
+    anyOf: [{ type: "string" }, { type: "null" }],
+    placeholder: null,
+  };
+  const nullablePrompt = {
+    anyOf: [{ type: "string" }, { type: "null" }],
+    placeholder: "",
+  };
+  const plainString = { type: "string", placeholder: "abc" };
+  const nullableInt = {
+    anyOf: [{ type: "integer" }, { type: "null" }],
+    placeholder: null,
+  };
+
+  it("means unset for a nullable field whose default is not the empty string", () => {
+    // group_column and the other 76 string-or-null fields: an empty string
+    // here is a column named "", which is what reached sklearn.
+    expect(emptyValueFor(nullableColumn)).toBeNull();
+    expect(emptyValueFor(nullableInt)).toBeNull();
+  });
+
+  it("means the empty string when the author chose it as the default", () => {
+    // The 14 negative_prompt fields across the diffusion models. A single
+    // global "empty means null" rule would be wrong for exactly these.
+    expect(emptyValueFor(nullablePrompt)).toBe("");
+  });
+
+  it("leaves a non-nullable field alone", () => {
+    expect(emptyValueFor(plainString)).toBe("");
+  });
+
+  it("tolerates a field it knows nothing about", () => {
+    expect(emptyValueFor(undefined)).toBe("");
+    expect(emptyValueFor({})).toBe("");
+  });
+
+  it("only rewrites empty values, never real ones", () => {
+    expect(normalizeEmptyValue("abc", nullableColumn)).toBe("abc");
+    expect(normalizeEmptyValue(0, nullableInt)).toBe(0);
+    expect(normalizeEmptyValue(false, nullableColumn)).toBe(false);
+    expect(normalizeEmptyValue(null, nullableColumn)).toBeNull();
+  });
+
+  it("treats a cleared box and an absent value the same way", () => {
+    expect(normalizeEmptyValue("", nullableColumn)).toBeNull();
+    expect(normalizeEmptyValue(undefined, nullableColumn)).toBeNull();
+    expect(normalizeEmptyValue("", nullablePrompt)).toBe("");
+    expect(normalizeEmptyValue(undefined, nullablePrompt)).toBe("");
   });
 });
