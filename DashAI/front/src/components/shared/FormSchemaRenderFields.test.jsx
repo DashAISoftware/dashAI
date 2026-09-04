@@ -208,3 +208,112 @@ describe("FormSchemaRenderFields with a schema that declares no rules", () => {
     expect(within(container).queryAllByRole("textbox")).toHaveLength(0);
   });
 });
+
+describe("relevance on a union field, the SimpleImputer case", () => {
+  // A four-branch union governed by an enum value rather than a boolean. It
+  // renders through FormSchemaFieldWithOptions, a different branch of the
+  // dispatcher than the holdout fields, so the disable effect has to reach the
+  // type-selector chips as well as the input: leaving those live would let a
+  // user switch the type and write a value into a field that means nothing.
+  const imputerSchema = {
+    title: "SimpleImputerSchema",
+    type: "object",
+    required: ["strategy", "fill_value"],
+    properties: {
+      strategy: {
+        type: "string",
+        enum: ["mean", "median", "most_frequent", "constant"],
+        placeholder: "mean",
+        title: "Strategy",
+        description: "The imputation strategy.",
+      },
+      fill_value: {
+        anyOf: [
+          { type: "integer" },
+          { type: "number" },
+          { type: "string" },
+          { type: "null" },
+        ],
+        placeholder: null,
+        title: "Fill Value",
+        description: "The value to replace missing values with.",
+      },
+    },
+    "x-dashai-rules": [
+      {
+        kind: "relevance",
+        field: "fill_value",
+        when: {
+          n: "cmp",
+          op: "eq",
+          a: { n: "field", f: "strategy" },
+          b: { n: "lit", v: "constant" },
+        },
+        effect: "disable",
+        reason:
+          'The fill value is only used by the "constant" strategy; the others compute the replacement from the data.',
+      },
+    ],
+  };
+
+  async function renderImputer(values) {
+    const modelSchema = await formattedModel(imputerSchema);
+    return renderWithProviders(
+      <FormSchemaRenderFields
+        modelSchema={modelSchema}
+        formik={fakeFormik(values)}
+        handleUpdateSchema={jest.fn()}
+      />,
+    );
+  }
+
+  it("disables the union input and its type chips under a non-constant strategy", async () => {
+    const { container } = await renderImputer({
+      strategy: "mean",
+      fill_value: 99,
+    });
+
+    expect(inputFor(container, "fill_value")).toBeDisabled();
+    const chips = screen.getAllByRole("button", {
+      name: /Int|Float|String|Null/,
+    });
+    expect(chips.length).toBeGreaterThan(0);
+    chips.forEach((chip) => expect(chip).toBeDisabled());
+    expect(
+      screen.getByText(/only used by the "constant" strategy/i),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the value the user typed while the field is inert", async () => {
+    const { container } = await renderImputer({
+      strategy: "mean",
+      fill_value: 99,
+    });
+    // sklearn discards this 99 silently; the form must not, or switching back
+    // to "constant" would lose it.
+    expect(inputFor(container, "fill_value")).toHaveValue(99);
+  });
+
+  it("enables it again under the constant strategy", async () => {
+    const { container } = await renderImputer({
+      strategy: "constant",
+      fill_value: 99,
+    });
+
+    expect(inputFor(container, "fill_value")).not.toBeDisabled();
+    screen
+      .getAllByRole("button", { name: /Int|Float|String|Null/ })
+      .forEach((chip) => expect(chip).not.toBeDisabled());
+    expect(
+      screen.queryByText(/only used by the "constant" strategy/i),
+    ).not.toBeInTheDocument();
+  });
+
+  it("never disables the field the condition reads", async () => {
+    const { container } = await renderImputer({
+      strategy: "mean",
+      fill_value: 99,
+    });
+    expect(inputFor(container, "strategy")).not.toBeDisabled();
+  });
+});

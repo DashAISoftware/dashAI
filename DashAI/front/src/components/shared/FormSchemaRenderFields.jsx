@@ -105,9 +105,21 @@ function FormSchemaRenderFields({
       // the payload, which some backends distinguish by presence. Both are the
       // same decision here: do not render it.
       if (isIrrelevant && fieldState.effect !== "disable") continue;
+      // Honoured by the scalar and anyOf branches below. An optimizer field
+      // or a nested component field cannot be disabled yet, and no shipped
+      // schema asks for it; passing the prop to a component that ignores it
+      // would just make it look handled. "hide" and "omit" work everywhere,
+      // because they are decided above before any branch is chosen.
       const disabled = isIrrelevant && fieldState.effect === "disable";
 
       const fieldSchema = modelSchema[key];
+      // The cards render their description as markdown, so the reason a
+      // control is inert sits right under it in italics rather than leaving
+      // the user to wonder why they cannot type into it.
+      const description =
+        disabled && fieldState.reason
+          ? `${fieldSchema.description ?? ""}\n\n_${fieldState.reason}_`
+          : fieldSchema.description;
       const objName = key;
       const value = formik?.values?.[objName];
       const error = formik?.errors?.[objName];
@@ -125,12 +137,13 @@ function FormSchemaRenderFields({
           <FormSchemaFieldWithOptions
             key={objName}
             title={fieldSchema.title}
-            description={fieldSchema.description}
+            description={description}
             options={fieldSchema.anyOf}
             required={fieldSchema.required}
             objName={objName}
             setError={setError}
             field={baseField}
+            disabled={disabled}
           />,
         );
       } else if (isOptimizable) {
@@ -189,14 +202,7 @@ function FormSchemaRenderFields({
             key={objName}
             label={fieldSchema.title}
             paramKey={objName}
-            description={
-              // The card renders its description as markdown, so the reason a
-              // control is inert sits right under it in italics rather than
-              // leaving the user to guess why they cannot type.
-              disabled && fieldState.reason
-                ? `${fieldSchema.description ?? ""}\n\n_${fieldState.reason}_`
-                : fieldSchema.description
-            }
+            description={description}
           >
             <FormSchemaField
               objName={objName}
