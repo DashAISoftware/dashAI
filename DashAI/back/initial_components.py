@@ -191,10 +191,14 @@ from DashAI.back.models.efficientnet_b0_image_classifier import (
     EfficientNetB0ImageClassifier,
 )
 from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.exogenous_linear_regression import (
+    ExogenousLinearRegression,
+)
 from DashAI.back.models.forecasting.exponential_smoothing import (
     ExponentialSmoothing,
 )
 from DashAI.back.models.forecasting.naive import NaiveForecaster
+from DashAI.back.models.forecasting.sarimax import SARIMAX
 from DashAI.back.models.forecasting.seasonal_naive import (
     SeasonalNaiveForecaster,
 )
@@ -500,6 +504,8 @@ def get_initial_components():
         NaiveForecaster,
         SeasonalNaiveForecaster,
         ARIMA,
+        SARIMAX,
+        ExogenousLinearRegression,
         ExponentialSmoothing,
         TextToImageGenerationTask,
         TextToTextGenerationTask,

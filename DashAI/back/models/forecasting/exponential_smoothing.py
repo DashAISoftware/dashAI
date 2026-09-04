@@ -166,6 +166,7 @@ class ExponentialSmoothing(ForecastingModel):
     """
 
     SCHEMA = ExponentialSmoothingSchema
+    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
     DESCRIPTION = MultilingualString(
         en=(
             "Forecasts from a weighted average that favours recent "

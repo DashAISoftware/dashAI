@@ -85,6 +85,7 @@ class SeasonalNaiveForecaster(ForecastingModel):
     """
 
     SCHEMA = SeasonalNaiveForecasterSchema
+    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
     DESCRIPTION = MultilingualString(
         en=(
             "Predicts that each value repeats the one a full season earlier, "

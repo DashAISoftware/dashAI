@@ -140,9 +140,14 @@ class ARIMA(ForecastingModel):
     average part (``q``) lets recent forecast errors feed back in.
 
     It is the standard reference model for a series without a strong seasonal
-    pattern. For seasonality, prefer :class:`ExponentialSmoothing` with a
-    seasonal component, since seasonal ARIMA would need three more orders that
-    this wrapper does not expose.
+    pattern. For seasonality, prefer :class:`SARIMAX`, which adds the three
+    seasonal orders this one does not expose, or
+    :class:`ExponentialSmoothing`.
+
+    Explanatory variables are optional. Given any, the model regresses the
+    series on them and models what is left over as an ARIMA, which is why it
+    serves both forecasting tasks: with the date alone it is the plain ARIMA
+    above, and with variables beside it, an ARIMA with regressors.
 
     The orders are not chosen automatically. ``d = 1`` suits a series that
     trends, ``d = 0`` one that hovers around a level, and the DashAI optimizer
@@ -155,6 +160,8 @@ class ARIMA(ForecastingModel):
     """
 
     SCHEMA = ARIMASchema
+    COMPATIBLE_COMPONENTS = ["ForecastingTask", "ExogenousForecastingTask"]
+    SUPPORTS_EXOGENOUS = True
     DESCRIPTION = MultilingualString(
         en=(
             "Models a series from its own past values and past errors, after "
@@ -217,9 +224,10 @@ class ARIMA(ForecastingModel):
         Parameters
         ----------
         x_train : DashAIDataset
-            The date column. statsmodels is given the values in order and the
-            spacing is assumed regular; the dates are kept so a later
-            partition can be forecast at its own dates.
+            The date column, and any numeric columns beside it, which are
+            taken as explanatory variables. statsmodels is given the values in
+            order and the spacing is assumed regular; the dates are kept so a
+            later partition can be forecast at its own dates.
         y_train : DashAIDataset
             The series to forecast.
         x_validation : DashAIDataset, optional
@@ -249,26 +257,35 @@ class ARIMA(ForecastingModel):
                 f"{len(series)}."
             )
 
+        self._remember_exogenous(x_train)
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self._result = _ARIMA(series, order=(self.p, self.d, self.q)).fit()
+            self._result = _ARIMA(
+                series,
+                exog=self._exogenous_of(x_train),
+                order=(self.p, self.d, self.q),
+            ).fit()
 
         self._history = list(series)
         self._remember_dates(x_train)
         self._fitted = True
         return self
 
-    def _forecast(self, steps: int) -> "np.ndarray":
+    def _forecast(self, steps: int, exog: "np.ndarray | None" = None) -> "np.ndarray":
         """Forecast the next ``steps`` periods after the end of the history.
 
         Parameters
         ----------
         steps : int
             How many periods to forecast.
+        exog : np.ndarray, optional
+            The explanatory variables over those periods, when the model was
+            fitted with any.
 
         Returns
         -------
         np.ndarray
             One value per period, in order.
         """
-        return self._result.forecast(steps=steps)
+        return self._result.forecast(steps=steps, exog=exog)
