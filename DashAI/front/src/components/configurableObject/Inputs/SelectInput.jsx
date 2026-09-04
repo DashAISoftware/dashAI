@@ -22,6 +22,7 @@ function SelectInput({
   description,
   options,
   optionNames = undefined,
+  disabled = false,
 }) {
   const handleChange = (event) => {
     const inputValue = event.target.value;
@@ -38,6 +39,7 @@ function SelectInput({
       <Input
         select
         size="small"
+        disabled={disabled}
         name={name}
         label={label}
         value={value !== null ? value : ""}
@@ -72,6 +74,7 @@ function SelectInput({
   );
 }
 SelectInput.propTypes = {
+  disabled: PropTypes.bool,
   name: PropTypes.string.isRequired,
   value: PropTypes.string,
   label: PropTypes.string.isRequired,

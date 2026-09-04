@@ -1,5 +1,29 @@
 import * as Yup from "yup";
 import { getComponents } from "../api/component";
+import { withRules } from "./ruleEngine";
+
+/**
+ * Where a schema's cross-field rules travel once `formattedModel` has flattened
+ * the JSON Schema down to its properties.
+ *
+ * A symbol key on purpose: every consumer of a formatted schema walks it with
+ * `Object.keys` or `for...in` to render one field per entry, and both ignore
+ * symbols, so the rules ride along without ever being mistaken for a field. It
+ * is left enumerable so that a consumer which spreads the object (`{...schema}`)
+ * keeps them.
+ */
+export const SCHEMA_RULES = Symbol.for("dashai.schemaRules");
+
+/**
+ * Read the cross-field rules off a formatted schema.
+ *
+ * @param {object} formattedSchema output of `formattedModel`
+ * @returns {Array<object>} the rule set, empty when the schema declares none
+ */
+export const getSchemaRules = (formattedSchema) => {
+  const rules = formattedSchema?.[SCHEMA_RULES];
+  return Array.isArray(rules) ? rules : [];
+};
 
 export async function resolveDefaults(
   modelName,
@@ -32,7 +56,12 @@ export const generateYupSchema = (schemaObj) => {
     initialValues[key] = generateInitialValues(subSchema);
   });
 
-  return { schema: Yup.object().shape(schema), initialValues };
+  // withRules falls back to a plain object schema when there are no rules, so
+  // every existing form keeps exactly the validation it had.
+  return {
+    schema: withRules(schema, getSchemaRules(schemaObj)),
+    initialValues,
+  };
 };
 
 export const generateInitialValues = (subSchema) => {
@@ -305,6 +334,13 @@ export const formattedModel = async (schema) => {
       required: required.includes(key),
     };
   });
+
+  // This function flattens the schema down to its properties, which is where
+  // the root-level rule set would otherwise be dropped. Carry it on a symbol
+  // so it survives without becoming a fourteenth field to render.
+  formattedSchema[SCHEMA_RULES] = Array.isArray(schema["x-dashai-rules"])
+    ? schema["x-dashai-rules"]
+    : [];
 
   return formattedSchema;
 };

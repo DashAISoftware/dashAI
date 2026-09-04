@@ -5,7 +5,8 @@ import FormSchemaFieldWithOptions from "./FormSchemaFieldWithOptions";
 import FormSchemaFieldWithCollapse from "./FormSchemaFieldWithCollapse";
 import FormSchemaFieldWithOptimizers from "./FormSchemaFieldWithOptimizers";
 import FormSchemaFieldWithParent from "./FormSchemaFieldWithParent";
-import { getModelFromSubform } from "../../utils/schema";
+import { getModelFromSubform, getSchemaRules } from "../../utils/schema";
+import { evaluateRules } from "../../utils/ruleEngine";
 import { Stack } from "@mui/material";
 import PropTypes from "prop-types";
 
@@ -76,6 +77,20 @@ function FormSchemaRenderFields({
     [formik, handleUpdateSchema, autoSave, onFormSubmit],
   );
 
+  // Which fields the schema's own rules say are meaningful right now. The
+  // errors those same rules produce arrive through formik, because the yup
+  // schema built in generateYupSchema already enforces them; here we only need
+  // the render side: what to disable and what to leave out.
+  //
+  // A field whose relevance cannot be judged yet stays relevant, so nothing is
+  // ever disabled just because something else has not been filled in.
+  const relevance = useMemo(
+    () =>
+      evaluateRules(getSchemaRules(modelSchema), formik?.values ?? {})
+        .relevance,
+    [modelSchema, formik?.values],
+  );
+
   const renderFields = useCallback(() => {
     const fields = [];
 
@@ -83,6 +98,14 @@ function FormSchemaRenderFields({
       // Fields the caller renders by hand: a schema field whose input needs
       // context the schema cannot carry, such as a dataset's column names.
       if (excludeFields.includes(key)) continue;
+
+      const fieldState = relevance[key];
+      const isIrrelevant = fieldState !== undefined && !fieldState.relevant;
+      // "hide" takes the control away; "omit" additionally drops the key from
+      // the payload, which some backends distinguish by presence. Both are the
+      // same decision here: do not render it.
+      if (isIrrelevant && fieldState.effect !== "disable") continue;
+      const disabled = isIrrelevant && fieldState.effect === "disable";
 
       const fieldSchema = modelSchema[key];
       const objName = key;
@@ -166,12 +189,20 @@ function FormSchemaRenderFields({
             key={objName}
             label={fieldSchema.title}
             paramKey={objName}
-            description={fieldSchema.description}
+            description={
+              // The card renders its description as markdown, so the reason a
+              // control is inert sits right under it in italics rather than
+              // leaving the user to guess why they cannot type.
+              disabled && fieldState.reason
+                ? `${fieldSchema.description ?? ""}\n\n_${fieldState.reason}_`
+                : fieldSchema.description
+            }
           >
             <FormSchemaField
               objName={objName}
               paramJsonSchema={fieldSchema}
               field={baseField}
+              disabled={disabled}
             />
           </FormSchemaFieldCard>,
         );
@@ -187,6 +218,7 @@ function FormSchemaRenderFields({
     setError,
     errorsMessage,
     excludeFields,
+    relevance,
   ]);
 
   return <Stack spacing={spacing}>{renderFields()}</Stack>;
