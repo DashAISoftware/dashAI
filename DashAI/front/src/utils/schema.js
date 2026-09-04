@@ -71,9 +71,17 @@ export async function resolveDefaults(
  * @returns {null|string} the value an emptied input should submit
  */
 export const emptyValueFor = (subSchema) => {
-  const branches = Array.isArray(subSchema?.anyOf) ? subSchema.anyOf : [];
+  const branches = Array.isArray(subSchema?.anyOf)
+    ? subSchema.anyOf
+    : [subSchema ?? {}];
+  // If "" is one of the offered options it is a value, not emptiness. Plotly's
+  // histnorm is the case: its empty string means raw counts.
+  const emptyIsAnOption = branches.some(
+    (branch) => Array.isArray(branch?.enum) && branch.enum.includes(""),
+  );
+  if (emptyIsAnOption) return "";
   const admitsNull =
-    branches.some((branch) => branch.type === "null") ||
+    branches.some((branch) => branch?.type === "null") ||
     subSchema?.type === "null";
   if (!admitsNull) return "";
   return subSchema?.placeholder === "" ? "" : null;

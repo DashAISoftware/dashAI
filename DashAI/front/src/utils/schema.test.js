@@ -286,3 +286,45 @@ describe("multipleOf, the standard keyword nobody was emitting", () => {
     expect(message).toBeNull();
   });
 });
+
+describe("an empty string that is itself an option", () => {
+  // Plotly's histnorm offers "" as a real value meaning raw counts, and it is
+  // the default. Treating it as emptiness made the option unselectable: the
+  // form sent null, the backend rejected it for a field that does not admit
+  // one, and there was no way back to the default.
+  const histnorm = {
+    type: "string",
+    enum: ["", "percent", "probability", "density", "probability density"],
+    enumNames: [
+      "Count",
+      "Percent",
+      "Probability",
+      "Density",
+      "Probability density",
+    ],
+    placeholder: "",
+  };
+
+  it("keeps the empty string as a value", () => {
+    expect(emptyValueFor(histnorm)).toBe("");
+    expect(normalizeEmptyValue("", histnorm)).toBe("");
+  });
+
+  it("still means unset for a nullable enum that does not offer it", () => {
+    const nullableEnum = {
+      anyOf: [{ type: "string", enum: ["sqrt", "log2"] }, { type: "null" }],
+      placeholder: null,
+    };
+    expect(emptyValueFor(nullableEnum)).toBeNull();
+  });
+
+  it("wins over nullability, so the two layers cannot disagree", () => {
+    // Contrived: an enum offering "" on a field that also admits null. The
+    // option is a value, so it must survive either way.
+    const both = {
+      anyOf: [{ type: "string", enum: ["", "x"] }, { type: "null" }],
+      placeholder: null,
+    };
+    expect(emptyValueFor(both)).toBe("");
+  });
+});
