@@ -7,8 +7,6 @@ from DashAI.back.core.schema_fields import (
     BaseSchema,
     Check,
     F,
-    IsTrue,
-    Relevance,
     Sum,
     bool_field,
     float_field,
@@ -17,6 +15,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset
+from DashAI.back.splitters.rules import SEED_ONLY_MATTERS_WHEN_SHUFFLING
 
 from .base_splitter import BaseSplitter
 
@@ -95,23 +94,11 @@ class HoldoutSplitterSchema(BaseSchema):
         bool_field(),
         placeholder=True,
         description=MultilingualString(
-            en=(
-                "Whether to shuffle the data before splitting it. When shuffling is "
-                "disabled, the random state has no effect."
-            ),
-            es=(
-                "Si se deben mezclar los datos antes de dividirlos. Cuando la mezcla "
-                "está desactivada, el estado aleatorio no tiene efecto."
-            ),
-            pt=(
-                "Se os dados devem ser embaralhados antes de dividi-los. Quando o "
-                "embaralhamento está desativado, o estado aleatório não tem efeito."
-            ),
-            de=(
-                "Ob die Daten vor der Aufteilung gemischt werden sollen. Wenn das "
-                "Mischen deaktiviert ist, hat der Zufallszustand keine Wirkung."
-            ),
-            zh="划分前是否打乱数据。关闭打乱时，随机状态不起作用。",
+            en="Whether to shuffle the data before splitting it.",
+            es="Si se deben mezclar los datos antes de dividirlos.",
+            pt="Se os dados devem ser embaralhados antes de dividi-los.",
+            de="Ob die Daten vor der Aufteilung gemischt werden sollen.",
+            zh="划分前是否打乱数据。",
         ),
         alias=MultilingualString(
             en="Shuffle", es="Mezclar", pt="Embaralhar", de="Mischen", zh="打乱"
@@ -183,27 +170,8 @@ class HoldoutSplitterSchema(BaseSchema):
                 zh="训练集比例必须大于 0。",
             ),
         ),
-        Relevance(
-            "random_state",
-            when=IsTrue(F("shuffle")),
-            effect="disable",
-            reason=MultilingualString(
-                en="The random state has no effect while shuffling is disabled.",
-                es=(
-                    "El estado aleatorio no tiene efecto mientras la mezcla "
-                    "está desactivada."
-                ),
-                pt=(
-                    "O estado aleatório não tem efeito enquanto o "
-                    "embaralhamento está desativado."
-                ),
-                de=(
-                    "Der Zufallszustand hat keine Wirkung, solange das Mischen "
-                    "deaktiviert ist."
-                ),
-                zh="关闭打乱时，随机状态不起作用。",
-            ),
-        ),
+        # Shared with the four fold splitters, which carry the same dependency.
+        SEED_ONLY_MATTERS_WHEN_SHUFFLING,
     ]
 
 
