@@ -44,5 +44,5 @@ class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
     they must not be fitted on it.
     """
 
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["ForecastingTask", "ExogenousForecastingTask"]
     SCORED_SPLITS: tuple = (SplitEnum.VALIDATION, SplitEnum.TEST)

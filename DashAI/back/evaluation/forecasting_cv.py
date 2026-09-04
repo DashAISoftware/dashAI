@@ -21,5 +21,5 @@ class ForecastingCrossValidationEvaluationStrategy(FoldEvaluationStrategy):
     origin forward through time.
     """
 
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["ForecastingTask", "ExogenousForecastingTask"]
     SCORED_SPLITS: tuple = (SplitEnum.VALIDATION, SplitEnum.TEST)

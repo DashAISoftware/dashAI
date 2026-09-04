@@ -131,7 +131,7 @@ class TemporalHoldoutSplitter(PartitionSplitter):
     """
 
     SCHEMA = TemporalHoldoutSplitterSchema
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["ForecastingTask", "ExogenousForecastingTask"]
     DISPLAY_NAME: str = MultilingualString(
         en="Temporal Holdout",
         es="Holdout Temporal",
@@ -150,9 +150,6 @@ class TemporalHoldoutSplitter(PartitionSplitter):
             proportions, and optionally previously computed indexes.
         """
         super().__init__(splits_data)
-        # The base class defaults these to values that would reintroduce
-        # randomness, and the schema does not expose either, so they are
-        # pinned here rather than trusted to arrive absent.
         self.shuffle = False
         self.stratify = False
 
