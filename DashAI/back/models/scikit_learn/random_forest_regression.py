@@ -170,9 +170,15 @@ class RandomForestRegressionSchema(BaseSchema):
     )  # type: ignore
 
     max_features: schema_field(
-        union_type(
-            optimizer_float_field(gt=0.0, le=1.0),
-            enum_field(enum=["auto", "sqrt", "log2", None]),
+        # "auto" was deprecated in scikit-learn 1.1 and removed in 1.3, and it
+        # was the first option in the list, so it is the one a user trying the
+        # dropdown reached first. None moves out of the enum because enum_field
+        # is str-typed and could never validate it.
+        none_type(
+            union_type(
+                optimizer_float_field(gt=0.0, le=1.0),
+                enum_field(enum=["sqrt", "log2"]),
+            )
         ),
         placeholder="sqrt",
         description=MultilingualString(

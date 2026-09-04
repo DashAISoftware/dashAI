@@ -122,7 +122,10 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     criterion: schema_field(
-        enum_field(enum=["friedman_mse", "mse", "mae"]),
+        # "mse" and "mae" were deprecated in scikit-learn 1.0 and removed in
+        # 1.2; picking either raised InvalidParameterError at fit time, inside a
+        # worker. "squared_error" is what replaced them.
+        enum_field(enum=["friedman_mse", "squared_error"]),
         placeholder="friedman_mse",
         description=MultilingualString(
             en="The function to measure the quality of a split.",
@@ -296,9 +299,14 @@ class GradientBoostingRSchema(BaseSchema):
     )  # type: ignore
 
     max_features: schema_field(
-        union_type(
-            optimizer_float_field(gt=0.0, le=1.0),
-            enum_field(enum=["sqrt", "log2", None]),
+        # None belongs outside the enum: enum_field is str-typed, so a None
+        # member is advertised in the JSON Schema and then rejected by the
+        # field's own validator, which made this field's default unsubmittable.
+        none_type(
+            union_type(
+                optimizer_float_field(gt=0.0, le=1.0),
+                enum_field(enum=["sqrt", "log2"]),
+            )
         ),
         placeholder=None,
         description=MultilingualString(
