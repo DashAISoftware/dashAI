@@ -121,6 +121,26 @@ def test_a_forecast_far_ahead_reads_the_variables_of_its_own_rows(model_class):
 
 
 @pytest.mark.parametrize("model_class", EXOGENOUS_MODELS)
+def test_the_filled_gap_never_reaches_the_requested_rows(model_class):
+    model = _fit(model_class())
+    tail = np.array([[200.0, 0.0], [201.0, 1.0], [202.0, 0.0]])
+    horizon = 23
+
+    scaffolding = {
+        "flat": np.tile(tail[0], (horizon - len(tail), 1)),
+        "wild": np.tile([-5000.0, 99.0], (horizon - len(tail), 1)),
+        "zero": np.zeros((horizon - len(tail), 2)),
+    }
+    forecasts = {
+        label: np.asarray(model._forecast(horizon, np.vstack([gap, tail])))[-3:]
+        for label, gap in scaffolding.items()
+    }
+
+    assert list(forecasts["wild"]) == pytest.approx(list(forecasts["flat"]))
+    assert list(forecasts["zero"]) == pytest.approx(list(forecasts["flat"]))
+
+
+@pytest.mark.parametrize("model_class", EXOGENOUS_MODELS)
 def test_a_missing_variable_is_refused_rather_than_ignored(model_class):
     model = _fit(model_class())
     without = _x(3, start=model._trained_on, with_exogenous=False)

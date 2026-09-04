@@ -414,10 +414,14 @@ class ForecastingModel(BaseModel):
         it, so the variables have to cover the horizon too. The requested rows
         need not: a test partition that starts a validation window after the
         training data leaves the periods in between with no values at all.
-        Those are filled by interpolating between the rows that do have them,
-        which is the same bargain the forecast itself makes across such a gap,
-        where the model's own output stands in for the periods nobody asked
-        about.
+        Those are filled by interpolating between the rows that do have them.
+
+        The filled rows are scaffolding, not data. An explanatory variable
+        enters a forecast at the period it belongs to, so the value returned
+        for a requested step is built from that step's own row and from the
+        history of the series, never from a filled row. The filled rows
+        produce the values at their own steps, which are discarded. Whatever
+        they hold, the requested rows come back the same.
 
         Parameters
         ----------
