@@ -5,6 +5,8 @@ from pydantic.json_schema import JsonSchemaValue
 from pydantic_core import core_schema
 from typing_extensions import Annotated
 
+from DashAI.back.core.schema_fields.enum_labels import labels_for
+
 
 def __check_choices(enum: List[str]) -> Callable[[str], str]:
     """Factory to create custom validator for enum field.
@@ -93,6 +95,12 @@ def enum_field(enum: List[str], labels: Optional[Dict[str, Any]] = None) -> Type
     ValidationError
         If the value of the field is not in the enum list.
     """
+    if labels is None:
+        # Nothing declared: fall back to the shared vocabulary, so a component
+        # gets the names for an option set everyone shares without repeating
+        # them. Explicit labels always win.
+        labels = labels_for(enum) or None
+
     resolved = None
     if labels is not None:
         unknown = sorted(set(labels) - set(enum))
