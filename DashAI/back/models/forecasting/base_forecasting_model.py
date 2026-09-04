@@ -19,8 +19,10 @@ class ForecastingModel(BaseModel):
     is a date column, and everything the model knows comes from the history of
     the series itself. Two consequences shape the interface.
 
-    ``train`` reads the series out of ``y_train`` and ignores the feature
-    matrix, because there is nothing in it to learn from.
+    ``train`` reads the series out of ``y_train``. A model that declares
+    ``SUPPORTS_EXOGENOUS`` also reads the numeric columns beside the date as
+    explanatory variables; the rest ignore the feature matrix, because for
+    them there is nothing in it to learn from.
 
     ``predict`` reads the **dates** it is handed and works out how far each one
     lies beyond the end of training, then returns the forecast for exactly
@@ -33,15 +35,22 @@ class ForecastingModel(BaseModel):
     That is why the windowed route through ``TimeSeriesWindowConverter`` and
     ``RegressionTask`` exists alongside this one. It turns the history into
     real features, which is the only way an ordinary regressor can help.
+
+    Each model names the tasks it serves itself rather than inheriting a list
+    from here. A model that reads only the date belongs to ``ForecastingTask``
+    alone, one that requires explanatory variables to
+    ``ExogenousForecastingTask`` alone, and one that can do either belongs to
+    both.
     """
 
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    SUPPORTS_EXOGENOUS: bool = False
 
     def __init__(self, **kwargs):
         """Initialize the shared forecasting state."""
         super().__init__(**kwargs)
         self._history: List[float] = []
         self._fitted = False
+        self._exogenous_columns: List[str] = []
         # Where the training data ends and how far apart its rows sit, which
         # is what lets predict turn a date into a number of steps ahead.
         self._last_train_date = None
@@ -286,15 +295,19 @@ class ForecastingModel(BaseModel):
             One forecast value per requested row.
         """
         self._require_fitted()
-        return self._forecast_at(x, self._forecast)
+        return self._forecast_at(x)
 
-    def _forecast(self, steps: int) -> "np.ndarray":
+    def _forecast(self, steps: int, exog: "np.ndarray | None" = None) -> "np.ndarray":
         """Forecast the next ``steps`` periods after the end of the history.
 
         Parameters
         ----------
         steps : int
             How many periods to forecast.
+        exog : np.ndarray, optional
+            The explanatory variables over those periods, one row per step.
+            Passed only to a model that declares ``SUPPORTS_EXOGENOUS`` and
+            was fitted with variables.
 
         Returns
         -------
@@ -310,15 +323,13 @@ class ForecastingModel(BaseModel):
             "A forecasting model must say how it forecasts a number of steps."
         )
 
-    def _forecast_at(self, x: "DashAIDataset", forecast) -> "np.ndarray":
+    def _forecast_at(self, x: "DashAIDataset") -> "np.ndarray":
         """Pick the forecast values for the requested dates.
 
         Parameters
         ----------
         x : DashAIDataset
             The rows that were requested.
-        forecast : callable
-            Takes a number of steps and returns that many forecast values.
 
         Returns
         -------
@@ -328,8 +339,114 @@ class ForecastingModel(BaseModel):
         import numpy as np
 
         steps = self._steps_ahead(x)
-        values = np.asarray(forecast(int(steps.max())), dtype=float)
-        return values[steps - 1]
+        horizon = int(steps.max())
+
+        if self._exogenous_columns:
+            values = self._forecast(horizon, self._exogenous_over(x, steps, horizon))
+        else:
+            values = self._forecast(horizon)
+
+        return np.asarray(values, dtype=float)[steps - 1]
+
+    def _remember_exogenous(self, x_train: "DashAIDataset") -> None:
+        """Record which input columns are explanatory variables.
+
+        Everything that is not the date column is one. A model that does not
+        support them records none, so it goes on forecasting from the history
+        alone even if the columns are there.
+
+        Parameters
+        ----------
+        x_train : DashAIDataset
+            The training input.
+        """
+        from DashAI.back.types.value_types import Date
+
+        if not self.SUPPORTS_EXOGENOUS:
+            self._exogenous_columns = []
+            return
+
+        self._exogenous_columns = [
+            name
+            for name in x_train.column_names
+            if not isinstance(x_train.types.get(name), Date)
+        ]
+
+    def _exogenous_of(self, x: "DashAIDataset") -> "np.ndarray | None":
+        """Read the explanatory variables out of a set of rows.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Rows holding the columns recorded at training time.
+
+        Returns
+        -------
+        np.ndarray or None
+            One row per observation and one column per variable, in the order
+            the columns were recorded, or ``None`` when there are none.
+
+        Raises
+        ------
+        ValueError
+            If a column the model was fitted with is missing.
+        """
+        if not self._exogenous_columns:
+            return None
+
+        frame = x.to_pandas()
+        missing = [name for name in self._exogenous_columns if name not in frame]
+        if missing:
+            raise ValueError(
+                f"{type(self).__name__} was fitted with the explanatory "
+                f"variables {self._exogenous_columns}, but "
+                f"{missing} are not among the columns it was given."
+            )
+
+        return frame[self._exogenous_columns].to_numpy(dtype=float)
+
+    def _exogenous_over(
+        self, x: "DashAIDataset", steps: "np.ndarray", horizon: int
+    ) -> "np.ndarray":
+        """Lay the explanatory variables out over every step of the horizon.
+
+        A model forecasts a whole horizon and the requested rows are read off
+        it, so the variables have to cover the horizon too. The requested rows
+        need not: a test partition that starts a validation window after the
+        training data leaves the periods in between with no values at all.
+        Those are filled by interpolating between the rows that do have them.
+
+        The filled rows are scaffolding, not data. An explanatory variable
+        enters a forecast at the period it belongs to, so the value returned
+        for a requested step is built from that step's own row and from the
+        history of the series, never from a filled row. The filled rows
+        produce the values at their own steps, which are discarded. Whatever
+        they hold, the requested rows come back the same.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            The rows that were requested.
+        steps : np.ndarray
+            How many periods past training each requested row falls.
+        horizon : int
+            The furthest step being forecast.
+
+        Returns
+        -------
+        np.ndarray
+            One row per step from 1 to ``horizon``, in that order.
+        """
+        import pandas as pd
+
+        given = pd.DataFrame(self._exogenous_of(x), index=steps)
+        given = given[~given.index.duplicated()]
+
+        return (
+            given.reindex(range(1, horizon + 1))
+            .interpolate(limit_direction="both")
+            .to_numpy(dtype=float)
+        )
 
     def save(self, filename: str) -> None:
         """Serialise the model to disk using joblib.

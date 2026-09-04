@@ -32,6 +32,7 @@ class NaiveForecaster(ForecastingModel):
     """
 
     SCHEMA = NaiveForecasterSchema
+    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
     DESCRIPTION = MultilingualString(
         en=(
             "Predicts that every future value equals the last observed one. "
