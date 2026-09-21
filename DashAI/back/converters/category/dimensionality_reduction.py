@@ -26,3 +26,4 @@ class DimensionalityReductionConverter(BaseConverter):
     )
     ICON: Final[str] = Icon.Layers.value
     COLOR: Final[str] = "rgb(255, 99, 132)"
+    N_COMPONENTS_FEATURES_BOUNDED: bool = True

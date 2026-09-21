@@ -13,6 +13,7 @@ from DashAI.back.api.api_v1.schemas.pipelines_params import (
     ValidateNodeParams,
     ValidatePipelineParams,
 )
+from DashAI.back.core.artifacts import normalize_artifacts
 from DashAI.back.dependencies.database.models import (
     Dataset,
     NodeRun,
@@ -416,7 +417,7 @@ async def get_pipeline_dataexploration_results(
                     "node_id": node_id,
                     "exploration_id": exploration_id,
                     "exploration_type": exploration_type,
-                    "results": result,
+                    "results": normalize_artifacts(result),
                     "name": name,
                 }
             )

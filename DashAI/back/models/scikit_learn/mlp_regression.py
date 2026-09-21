@@ -4,13 +4,14 @@ from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     enum_field,
+    float_field,
     int_field,
     none_type,
-    optimizer_float_field,
-    optimizer_int_field,
     schema_field,
+    search_space,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.categorical_encoder_mixin import CategoricalEncoderMixin
 from DashAI.back.models.regression_model import RegressionModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -29,14 +30,11 @@ class MLPRegressorSchema(BaseSchema):
     implementation uses PyTorch (``torch.nn``).
     """
 
-    hidden_size: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 5,
-            "lower_bound": 1,
-            "upper_bound": 15,
-        },
+    hidden_size: search_space(
+        int_field(ge=1),
+        fixed=16,
+        low=1,
+        high=64,
         description=MultilingualString(
             en="Number of neurons in the hidden layer.",
             es="Número de neuronas en la capa oculta.",
@@ -53,9 +51,9 @@ class MLPRegressorSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    activation: schema_field(
+    activation: search_space(
         enum_field(enum=["relu", "tanh", "sigmoid", "identity"]),
-        placeholder="relu",
+        fixed="relu",
         description=MultilingualString(
             en="Activation function.",
             es="Función de activación.",
@@ -72,14 +70,11 @@ class MLPRegressorSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    learning_rate: schema_field(
-        optimizer_float_field(ge=1e-6, le=1.0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0.001,
-            "lower_bound": 1e-6,
-            "upper_bound": 1.0,
-        },
+    learning_rate: search_space(
+        float_field(ge=1e-6, le=1.0),
+        fixed=0.001,
+        low=1e-06,
+        high=1.0,
         description=MultilingualString(
             en="Initial learning rate for the optimizer.",
             es="Tasa de aprendizaje inicial para el optimizador.",
@@ -96,14 +91,11 @@ class MLPRegressorSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    epochs: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 5,
-            "lower_bound": 1,
-            "upper_bound": 15,
-        },
+    epochs: search_space(
+        int_field(ge=1),
+        fixed=20,
+        low=1,
+        high=50,
         description=MultilingualString(
             en="Total number of training passes over the dataset.",
             es="Número total de pasadas de entrenamiento sobre el conjunto de datos.",
@@ -290,7 +282,7 @@ class MLPRegressorSchema(BaseSchema):
     )  # type: ignore
 
 
-class MLPRegression(RegressionModel):
+class MLPRegression(CategoricalEncoderMixin, RegressionModel):
     """Single hidden-layer MLP regressor implemented in PyTorch.
 
     A Multi-layer Perceptron (MLP) is a feedforward neural network composed of an
@@ -403,6 +395,11 @@ class MLPRegression(RegressionModel):
             else "cpu"
         )
         self.model = None
+
+        # Initialise the categorical encoder state inherited from
+        # CategoricalEncoderMixin. These fields are persisted by ``save`` and
+        # restored by ``load`` so ``predict`` reuses the training-time encoders.
+        self._setup_categorical_encoders()
 
     def train(
         self,
@@ -551,10 +548,26 @@ class MLPRegression(RegressionModel):
         ndarray
             Predicted continuous values as a 1-D NumPy array.
         """
+        return self.predict_prepared(self.prepare_dataset(x, is_fit=False).to_pandas())
+
+    def predict_prepared(self, features) -> "ndarray":
+        """Predict from a feature matrix already in the model's feature space.
+
+        Parameters
+        ----------
+        features : pandas.DataFrame or numpy.ndarray
+            Feature matrix as produced by ``prepare_dataset``.
+
+        Returns
+        -------
+        ndarray
+            Predicted continuous values as a 1-D NumPy array.
+        """
+        import numpy as np
         import torch
 
         self.model.eval()
-        x_proc = self.prepare_dataset(x, is_fit=False).to_pandas().values
+        x_proc = np.asarray(getattr(features, "values", features), dtype="float32")
         x_tensor = torch.tensor(x_proc, dtype=torch.float32).to(self.device)
         with torch.no_grad():
             return self.model(x_tensor).cpu().numpy().flatten()
@@ -574,6 +587,9 @@ class MLPRegression(RegressionModel):
                 "state": self.model.state_dict(),
                 "params": self.params,
                 "input_dim": self.model.model[0].in_features,
+                "encodings": self.encodings,
+                "one_hot_encoder": self.one_hot_encoder,
+                "categorical_columns": self.categorical_columns,
             },
             filename,
         )
@@ -594,7 +610,10 @@ class MLPRegression(RegressionModel):
         """
         import torch
 
-        data = torch.load(filename)
+        # weights_only=False is required because the checkpoint stores the
+        # fitted categorical encoders (e.g. a scikit-learn OneHotEncoder), which
+        # are not part of torch's safe-globals allowlist.
+        data = torch.load(filename, weights_only=False)
         instance = MLPRegression(**data["params"])
 
         # Rebuild the model architecture using saved input_dim
@@ -606,5 +625,11 @@ class MLPRegression(RegressionModel):
 
         # Load the trained weights
         instance.model.load_state_dict(data["state"])
+
+        # Restore the categorical encoders so predictions match training-time
+        # preprocessing.
+        instance.encodings = data.get("encodings", {})
+        instance.one_hot_encoder = data.get("one_hot_encoder")
+        instance.categorical_columns = data.get("categorical_columns", [])
 
         return instance

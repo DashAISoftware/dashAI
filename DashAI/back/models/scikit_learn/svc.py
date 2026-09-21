@@ -4,16 +4,14 @@ from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
     enum_field,
-    optimizer_float_field,
-    optimizer_int_field,
-    schema_field,
+    float_field,
+    int_field,
+    none_type,
+    search_space,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
-)
-from DashAI.back.models.scikit_learn.sklearn_like_model import (
-    CategoricalEncodingStrategy,
 )
 from DashAI.back.models.tabular_classification_model import TabularClassificationModel
 
@@ -27,14 +25,11 @@ class SVCSchema(BaseSchema):
     ``sklearn.svm.SVC``.
     """
 
-    C: schema_field(
-        optimizer_float_field(gt=0.0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 1.0,
-            "lower_bound": 1.0,
-            "upper_bound": 10.0,
-        },
+    C: search_space(
+        float_field(gt=0.0),
+        fixed=1.0,
+        low=1.0,
+        high=10.0,
         description=MultilingualString(
             en=(
                 "The parameter 'C' is a regularization parameter. "
@@ -56,14 +51,11 @@ class SVCSchema(BaseSchema):
         ),
         alias=MultilingualString(en="C", es="C", pt="C", de="C", zh="C"),
     )  # type: ignore
-    coef0: schema_field(
-        optimizer_float_field(),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 1.0,
-            "lower_bound": 1.0,
-            "upper_bound": 10.0,
-        },
+    coef0: search_space(
+        float_field(),
+        fixed=1.0,
+        low=1.0,
+        high=10.0,
         description=MultilingualString(
             en=(
                 "The parameter 'coef0' is independent term in "
@@ -91,14 +83,11 @@ class SVCSchema(BaseSchema):
             en="coef0", es="coef0", pt="coef0", de="coef0", zh="coef0"
         ),
     )  # type: ignore
-    degree: schema_field(
-        optimizer_float_field(ge=0.0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 1.0,
-            "lower_bound": 1.0,
-            "upper_bound": 10.0,
-        },
+    degree: search_space(
+        float_field(ge=0.0),
+        fixed=1.0,
+        low=1.0,
+        high=10.0,
         description=MultilingualString(
             en="The 'degree' parameter is only significant for 'poly' kernel.",
             es="El parámetro 'grado' solo es significativo para el kernel 'poly'.",
@@ -110,9 +99,9 @@ class SVCSchema(BaseSchema):
             en="degree", es="grado", pt="grau", de="Grad", zh="次数"
         ),
     )  # type: ignore
-    gamma: schema_field(
+    gamma: search_space(
         enum_field(enum=["scale", "auto"]),
-        placeholder="scale",
+        fixed="scale",
         description=MultilingualString(
             en="Coefficient for 'rbf', 'poly' and 'sigmoid' kernels.",
             es="Coeficiente para los kernels 'rbf', 'poly' y 'sigmoid'.",
@@ -124,9 +113,9 @@ class SVCSchema(BaseSchema):
             en="gamma", es="gamma", pt="gamma", de="Gamma", zh="gamma"
         ),
     )  # type: ignore
-    kernel: schema_field(
+    kernel: search_space(
         enum_field(enum=["linear", "poly", "rbf", "sigmoid"]),
-        placeholder="rbf",
+        fixed="rbf",
         description=MultilingualString(
             en="The 'kernel' parameter is the kernel used in the model.",
             es="El parámetro 'kernel' es el kernel utilizado en el modelo.",
@@ -138,14 +127,11 @@ class SVCSchema(BaseSchema):
             en="kernel", es="kernel", pt="kernel", de="Kernel", zh="核函数"
         ),
     )  # type: ignore
-    max_iter: schema_field(
-        optimizer_int_field(ge=-1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": -1,
-            "lower_bound": -1,
-            "upper_bound": 10,
-        },
+    max_iter: search_space(
+        int_field(ge=-1),
+        fixed=-1,
+        low=-1,
+        high=10,
         description=MultilingualString(
             en=(
                 "The 'max_iter' parameter determines the iteration limit for the "
@@ -177,9 +163,9 @@ class SVCSchema(BaseSchema):
             zh="最大迭代次数",
         ),
     )  # type: ignore
-    shrinking: schema_field(
+    shrinking: search_space(
         bool_field(),
-        placeholder=True,
+        fixed=True,
         description=MultilingualString(
             en=(
                 "The 'shrinking' parameter determines whether "
@@ -203,14 +189,11 @@ class SVCSchema(BaseSchema):
             en="shrinking", es="reducción", pt="redução", de="Schrumpfung", zh="收缩"
         ),
     )  # type: ignore
-    tol: schema_field(
-        optimizer_float_field(gt=0.0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 1.0,
-            "lower_bound": 1.0,
-            "upper_bound": 10.0,
-        },
+    tol: search_space(
+        float_field(gt=0.0),
+        fixed=1.0,
+        low=1.0,
+        high=10.0,
         description=MultilingualString(
             en=("The parameter 'tol' determines the tolerance for the stop criterion."),
             es=(
@@ -223,6 +206,46 @@ class SVCSchema(BaseSchema):
         ),
         alias=MultilingualString(
             en="tolerance", es="tolerancia", pt="tolerância", de="Toleranz", zh="容差"
+        ),
+    )  # type: ignore
+    class_weight: search_space(
+        none_type(enum_field(enum=["balanced"])),
+        fixed=None,
+        description=MultilingualString(
+            en=(
+                "Weights associated with classes, used to correct for class "
+                "imbalance. 'balanced' automatically adjusts weights inversely "
+                "proportional to class frequencies. Use None for no weighting."
+            ),
+            es=(
+                "Pesos asociados a las clases, usados para corregir el desbalance "
+                "de clases. 'balanced' ajusta automáticamente los pesos de forma "
+                "inversamente proporcional a la frecuencia de cada clase. Use None "
+                "para no aplicar ponderación."
+            ),
+            pt=(
+                "Pesos associados às classes, usados para corrigir o "
+                "desbalanceamento de classes. 'balanced' ajusta automaticamente os "
+                "pesos de forma inversamente proporcional à frequência de cada "
+                "classe. Use None para não aplicar ponderação."
+            ),
+            de=(
+                "Gewichte, die den Klassen zugeordnet sind, um "
+                "Klassenungleichgewichte auszugleichen. 'balanced' passt die "
+                "Gewichte automatisch umgekehrt proportional zur "
+                "Klassenhäufigkeit an. Verwenden Sie None für keine Gewichtung."
+            ),
+            zh=(
+                "与类别关联的权重，用于纠正类别不平衡。'balanced'会根据类别频率的"
+                "反比自动调整权重。使用None表示不加权。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Class weight",
+            es="Peso de clase",
+            pt="Peso da classe",
+            de="Klassengewicht",
+            zh="类别权重",
         ),
     )  # type: ignore
 
@@ -257,57 +280,14 @@ class SVC(TabularClassificationModel, SklearnLikeClassifier, _SVC):
         de="Support-Vektor-Maschine (SVM)",
     )
     DESCRIPTION: str = MultilingualString(
-        en=(
-            "Support Vector Machine (SVM) is a supervised machine learning algorithm "
-            "used for classification and regression tasks. It works by finding the "
-            "optimal hyperplane that maximizes the margin between different classes "
-            "in a high dimensional feature space. SVMs are effective in cases where "
-            "the number of features is large relative to the number of samples and "
-            "can model complex, nonlinear decision boundaries through the use of "
-            "kernel functions such as linear, polynomial, and radial basis function "
-            "(RBF) kernels."
-        ),
-        es=(
-            "La Máquina de Vectores de Soporte (SVM) es un algoritmo de aprendizaje "
-            "automático supervisado utilizado para tareas de clasificación y "
-            "regresión. Funciona encontrando el hiperplano óptimo que maximiza el "
-            "margen entre las distintas clases en un espacio de características de "
-            "alta dimensionalidad. Las SVM son especialmente efectivas cuando el "
-            "número de características es grande en relación con el número de "
-            "muestras y pueden modelar fronteras de decisión complejas y no lineales "
-            "mediante el uso de funciones kernel como lineal, polinomial y de base "
-            "radial (RBF)."
-        ),
-        pt=(
-            "A Máquina de Vetores de Suporte (SVM) é um algoritmo de aprendizado "
-            "de máquina supervisionado utilizado para tarefas de classificação e "
-            "regressão. Funciona encontrando o hiperplano ótimo que maximiza a "
-            "margem entre as diferentes classes em um espaço de características de "
-            "alta dimensionalidade. As SVMs são especialmente eficazes quando o "
-            "número de características é grande em relação ao número de amostras e "
-            "podem modelar fronteiras de decisão complexas e não lineares mediante "
-            "o uso de funções kernel como linear, polinomial e de base radial (RBF)."
-        ),
-        zh=(
-            "支持向量机（SVM）是一种监督学习算法，通过在高维特征空间中"
-            "寻找最优超平面来最大化类间间隔，支持线性、多项式和径向基函数（RBF）核。"
-        ),
-        de=(
-            "Die Support-Vektor-Maschine (SVM) ist ein überwachter "
-            "Machine Learning Algorithmus für Klassifikations- und "
-            "Regressionsaufgaben. Sie findet die optimale Hyperebene, die die "
-            "Margin zwischen verschiedenen Klassen in einem hochdimensionalen "
-            "Merkmalsraum maximiert. SVMs sind besonders effektiv, wenn die Anzahl "
-            "der Merkmale im Verhältnis zur Anzahl der Stichproben groß ist, und "
-            "können komplexe, nichtlineare Entscheidungsgrenzen durch den Einsatz "
-            "von Kernelfunktionen wie linear, polynomial und radialer Basisfunktion "
-            "(RBF) modellieren."
-        ),
+        en="Finds the optimal hyperplane that maximises the margin between classes.",
+        es="Encuentra el hiperplano óptimo que maximiza el margen entre clases.",
+        pt="Encontra o hiperplano ótimo que maximiza a margem entre classes.",
+        zh="寻找最优超平面以最大化类间间隔的分类算法。",
+        de="Findet die optimale Hyperebene, die den Margin zwischen Klassen maximiert.",
     )
     COLOR: str = "#FF80AB"
     ICON: str = "Timeline"
-
-    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs):
         """Initialise the model by forwarding all kwargs to the parent class.

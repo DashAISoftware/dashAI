@@ -1,6 +1,8 @@
 from typing import TYPE_CHECKING, Any, List, Tuple
 
 from DashAI.back.core.schema_fields import (
+    Check,
+    Lt,
     enum_field,
     float_field,
     int_field,
@@ -8,6 +10,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFDownloadableMixin,
+)
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -230,6 +235,28 @@ class SDXLCannyControlNetSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    # A range the underlying library takes as one tuple, which the schema
+    # cannot express, so it is split into two fields. OpenCV does not complain and
+    # produces the same edges either way, so an inverted pair is silently wrong rather
+    # than an error.
+    rules = [
+        Check(
+            Lt("canny_low_threshold", "canny_high_threshold"),
+            id="canny.thresholds_are_ordered",
+            targets=["canny_low_threshold", "canny_high_threshold"],
+            message=MultilingualString(
+                en="The low threshold must be smaller than the high threshold.",
+                es="El umbral bajo debe ser menor que el umbral alto.",
+                pt="O limiar baixo deve ser menor que o limiar alto.",
+                de=(
+                    "Der untere Schwellwert muss kleiner als der obere Schwellwert "
+                    "sein."
+                ),
+                zh="低阈值必须小于高阈值。",
+            ),
+        ),
+    ]
+
 
 def get_canny_image(
     image: "Image.Image", low_threshold: int, high_threshold: int
@@ -267,7 +294,7 @@ def get_canny_image(
     return Image.fromarray(edges_rgb)
 
 
-class SDXLCannyControlNetModel(BaseControlNetModel):
+class SDXLCannyControlNetModel(HFDownloadableMixin, BaseControlNetModel):
     """Canny-edge-conditioned ControlNet pipeline built on Stable Diffusion XL 1.0.
 
     Takes an input image and a text prompt. Canny edge maps are extracted using
@@ -288,6 +315,12 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
     """
 
     SCHEMA = SDXLCannyControlNetSchema
+    HF_REPOS = [
+        ("stabilityai/stable-diffusion-xl-base-1.0", "model"),
+        ("diffusers/controlnet-canny-sdxl-1.0", "model"),
+        ("madebyollin/sdxl-vae-fp16-fix", "model"),
+    ]
+    DOWNLOAD_SIZE_BYTES = 51644917846
     COLOR: str = "#1a237e"
     DISPLAY_NAME: str = MultilingualString(
         en="SDXL Canny ControlNet",
@@ -402,17 +435,17 @@ class SDXLCannyControlNetModel(BaseControlNetModel):
         )
 
         controlnet = ControlNetModel.from_pretrained(
-            "diffusers/controlnet-canny-sdxl-1.0",
+            self._local_or_repo("diffusers/controlnet-canny-sdxl-1.0"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         vae = AutoencoderKL.from_pretrained(
-            "madebyollin/sdxl-vae-fp16-fix",
+            self._local_or_repo("madebyollin/sdxl-vae-fp16-fix"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-xl-base-1.0",
+            self._local_or_repo("stabilityai/stable-diffusion-xl-base-1.0"),
             controlnet=controlnet,
             vae=vae,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,

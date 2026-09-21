@@ -8,6 +8,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFPretrainedDownloadMixin,
+)
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
@@ -195,7 +198,7 @@ class SDXLTurboSchema(BaseSchema):
     )  # type: ignore
 
     width: schema_field(
-        int_field(ge=64, le=2048),
+        int_field(ge=64, le=2048, multiple_of=8),
         placeholder=512,
         description=MultilingualString(
             en=(
@@ -231,7 +234,7 @@ class SDXLTurboSchema(BaseSchema):
     )  # type: ignore
 
     height: schema_field(
-        int_field(ge=64, le=2048),
+        int_field(ge=64, le=2048, multiple_of=8),
         placeholder=512,
         description=MultilingualString(
             en=(
@@ -299,7 +302,7 @@ class SDXLTurboSchema(BaseSchema):
     )  # type: ignore
 
 
-class SDXLTurboModel(TextToImageGenerationTaskModel):
+class SDXLTurboModel(HFPretrainedDownloadMixin, TextToImageGenerationTaskModel):
     """Distilled SDXL model for near real time text-to-image generation.
 
     Wraps ``stabilityai/sdxl-turbo``, a version of Stable Diffusion XL
@@ -323,6 +326,9 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
     """
 
     SCHEMA = SDXLTurboSchema
+    MODEL_NAME: str = "stabilityai/sdxl-turbo"
+    # SDXL-Turbo diffusers pipeline is ~7 GB.
+    DOWNLOAD_SIZE_BYTES: int = 41631892171
     COLOR: str = "#b71c1c"
     DISPLAY_NAME: str = MultilingualString(
         en="SDXL Turbo",
@@ -384,7 +390,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
         """Download and initialise the SDXL Turbo pipeline.
 
         Downloads ``stabilityai/sdxl-turbo`` from HuggingFace Hub via
-        ``AutoPipelineForText2Image.from_pretrained`` and moves the pipeline
+        ``StableDiffusionXLPipeline.from_pretrained`` and moves the pipeline
         to the requested device.  When a GPU is available, the ``fp16``
         variant is loaded to halve memory usage; CPU inference uses
         ``float32``.
@@ -414,7 +420,7 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
                 Number of images to generate per prompt call.
         """
         import torch
-        from diffusers import AutoPipelineForText2Image
+        from diffusers import StableDiffusionXLPipeline
 
         kwargs = self.validate_and_transform(kwargs)
         use_gpu = DEVICE_TO_IDX.get(kwargs.get("device")) >= 0
@@ -422,8 +428,8 @@ class SDXLTurboModel(TextToImageGenerationTaskModel):
             f"cuda:{DEVICE_TO_IDX.get(kwargs.get('device'))}" if use_gpu else "cpu"
         )
 
-        self.model = AutoPipelineForText2Image.from_pretrained(
-            "stabilityai/sdxl-turbo",
+        self.model = StableDiffusionXLPipeline.from_pretrained(
+            self._pretrained_source(None),
             torch_dtype=torch.float16 if use_gpu else torch.float32,
             variant="fp16" if use_gpu else None,
         ).to(self.device)

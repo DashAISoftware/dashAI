@@ -3,9 +3,11 @@ from sklearn.ensemble import ExtraTreesClassifier as _ExtraTreesClassifier
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
+    enum_field,
+    int_field,
     none_type,
-    optimizer_int_field,
     schema_field,
+    search_space,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
@@ -23,14 +25,11 @@ class ExtraTreesClassifierSchema(BaseSchema):
     implementation is ``sklearn.ensemble.ExtraTreesClassifier``.
     """
 
-    n_estimators: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 100,
-            "lower_bound": 50,
-            "upper_bound": 500,
-        },
+    n_estimators: search_space(
+        int_field(ge=1),
+        fixed=100,
+        low=50,
+        high=500,
         description=MultilingualString(
             en="The number of trees in the forest.",
             es="El número de árboles en el bosque.",
@@ -47,9 +46,11 @@ class ExtraTreesClassifierSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    max_depth: schema_field(
-        none_type(optimizer_int_field(ge=1)),
-        placeholder=None,
+    max_depth: search_space(
+        none_type(int_field(ge=1)),
+        fixed=None,
+        low=1,
+        high=32,
         description=MultilingualString(
             en=(
                 "The maximum depth of the tree. If None, nodes are expanded until "
@@ -84,14 +85,11 @@ class ExtraTreesClassifierSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    min_samples_split: schema_field(
-        optimizer_int_field(ge=2),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 2,
-            "lower_bound": 2,
-            "upper_bound": 10,
-        },
+    min_samples_split: search_space(
+        int_field(ge=2),
+        fixed=2,
+        low=2,
+        high=10,
         description=MultilingualString(
             en="The minimum number of samples required to split an internal node.",
             es="El número mínimo de muestras requeridas para dividir un nodo interno.",
@@ -108,14 +106,11 @@ class ExtraTreesClassifierSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    min_samples_leaf: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 1,
-            "lower_bound": 1,
-            "upper_bound": 10,
-        },
+    min_samples_leaf: search_space(
+        int_field(ge=1),
+        fixed=1,
+        low=1,
+        high=10,
         description=MultilingualString(
             en="The minimum number of samples required to be at a leaf node.",
             es="El número mínimo de muestras requeridas para estar en una hoja.",
@@ -132,9 +127,9 @@ class ExtraTreesClassifierSchema(BaseSchema):
         ),
     )  # type: ignore
 
-    bootstrap: schema_field(
+    bootstrap: search_space(
         bool_field(),
-        placeholder=False,
+        fixed=False,
         description=MultilingualString(
             en=(
                 "Whether bootstrap samples are used when building trees. "
@@ -164,7 +159,7 @@ class ExtraTreesClassifierSchema(BaseSchema):
     )  # type: ignore
 
     random_state: schema_field(
-        none_type(optimizer_int_field(ge=0)),
+        none_type(int_field(ge=0)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -196,6 +191,54 @@ class ExtraTreesClassifierSchema(BaseSchema):
             pt="Estado aleatório",
             de="Zufallszustand",
             zh="随机状态",
+        ),
+    )  # type: ignore
+    class_weight: search_space(
+        none_type(enum_field(enum=["balanced", "balanced_subsample"])),
+        fixed=None,
+        description=MultilingualString(
+            en=(
+                "Weights associated with classes, used to correct for class "
+                "imbalance. 'balanced' adjusts weights inversely proportional to "
+                "class frequencies in the whole dataset; 'balanced_subsample' does "
+                "the same but per bootstrap sample of each tree. Use None for no "
+                "weighting."
+            ),
+            es=(
+                "Pesos asociados a las clases, usados para corregir el desbalance "
+                "de clases. 'balanced' ajusta los pesos de forma inversamente "
+                "proporcional a la frecuencia de cada clase en todo el conjunto de "
+                "datos; 'balanced_subsample' hace lo mismo pero por cada muestra "
+                "bootstrap de cada árbol. Use None para no aplicar ponderación."
+            ),
+            pt=(
+                "Pesos associados às classes, usados para corrigir o "
+                "desbalanceamento de classes. 'balanced' ajusta os pesos de forma "
+                "inversamente proporcional à frequência de cada classe em todo o "
+                "conjunto de dados; 'balanced_subsample' faz o mesmo, mas por "
+                "amostra bootstrap de cada árvore. Use None para não aplicar "
+                "ponderação."
+            ),
+            de=(
+                "Gewichte, die den Klassen zugeordnet sind, um "
+                "Klassenungleichgewichte auszugleichen. 'balanced' passt die "
+                "Gewichte umgekehrt proportional zur Klassenhäufigkeit im "
+                "gesamten Datensatz an; 'balanced_subsample' tut dasselbe, jedoch "
+                "pro Bootstrap-Stichprobe jedes Baums. Verwenden Sie None für "
+                "keine Gewichtung."
+            ),
+            zh=(
+                "与类别关联的权重，用于纠正类别不平衡。'balanced'根据整个数据集中"
+                "各类别频率的反比调整权重；'balanced_subsample'则对每棵树的自举"
+                "采样分别执行相同操作。使用None表示不加权。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Class weight",
+            es="Peso de clase",
+            pt="Peso da classe",
+            de="Klassengewicht",
+            zh="类别权重",
         ),
     )  # type: ignore
 

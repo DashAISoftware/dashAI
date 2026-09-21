@@ -16,6 +16,7 @@ export default function DatasetAutocomplete({
   datasets,
   selectedDataset,
   setSelectedDataset,
+  showDetails = true,
 }) {
   const { t } = useTranslation(["datasets", "common"]);
 
@@ -87,7 +88,7 @@ export default function DatasetAutocomplete({
           sx={{ mb: 6 }}
         />
 
-        {selectedDataset && (
+        {showDetails && selectedDataset && (
           <Box
             sx={{
               mt: 6,

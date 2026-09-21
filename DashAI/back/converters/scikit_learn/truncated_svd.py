@@ -211,6 +211,7 @@ class TruncatedSVD(
     metadata = {
         "allowed_types": [Float, Integer],
         "allowed_dtypes": [],
+        "input_cardinality": {"min": 2},
     }
 
     def __init__(self, **kwargs):
@@ -226,6 +227,15 @@ class TruncatedSVD(
         if self.random_state == "RandomState":
             self.random_state = create_random_state()
         kwargs["random_state"] = self.random_state
+
+        # scikit-learn spells the QR-decomposition normalizer "OR" and rejects
+        # "QR" (verified on 1.7.2: its StrOptions are {"auto","OR","LU","none"}).
+        # That is a typo upstream, so the schema offers the correct name and the
+        # misspelling is confined to this line. tests/back/
+        # test_sklearn_option_validity.py pins it, and will tell us to remove
+        # this if scikit-learn ever fixes the spelling.
+        if kwargs.get("power_iteration_normalizer") == "QR":
+            kwargs["power_iteration_normalizer"] = "OR"
 
         super().__init__(**kwargs)
 

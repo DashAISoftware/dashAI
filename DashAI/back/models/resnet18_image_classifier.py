@@ -1,13 +1,14 @@
 """ResNet-18 image classifier for DashAI."""
 
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import TorchvisionDownloadMixin
 from DashAI.back.models.base_torchvision_image_classifier import (
     TorchvisionImageClassifier,
     TorchvisionImageClassifierSchema,
 )
 
 
-class ResNet18ImageClassifier(TorchvisionImageClassifier):
+class ResNet18ImageClassifier(TorchvisionDownloadMixin, TorchvisionImageClassifier):
     """ResNet-18 image classifier (He et al., 2015).
 
     18-layer residual network with skip connections that solve the vanishing
@@ -52,13 +53,21 @@ class ResNet18ImageClassifier(TorchvisionImageClassifier):
     )
     COLOR: str = "#2E7D32"
     ICON: str = "AccountTree"
+    DOWNLOAD_SIZE_BYTES: int = 47_000_000
+
+    @classmethod
+    def _weights(cls):
+        from torchvision.models import ResNet18_Weights
+
+        return ResNet18_Weights.DEFAULT
 
     def _build_backbone(self, num_classes: int, pretrained: bool):
         import torch.nn as nn
         from torchvision.models import ResNet18_Weights, resnet18
 
         weights = ResNet18_Weights.DEFAULT if pretrained else None
-        model = resnet18(weights=weights)
+        with self.local_hub():
+            model = resnet18(weights=weights)
         in_features = model.fc.in_features
         model.fc = nn.Sequential(
             nn.Dropout(self.dropout_rate),

@@ -3,15 +3,12 @@ from sklearn.linear_model import LinearRegression as _LinearRegression
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     bool_field,
+    int_field,
     none_type,
-    optimizer_int_field,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.regression_model import RegressionModel
-from DashAI.back.models.scikit_learn.sklearn_like_model import (
-    CategoricalEncodingStrategy,
-)
 from DashAI.back.models.scikit_learn.sklearn_like_regressor import SklearnLikeRegressor
 
 
@@ -79,7 +76,7 @@ class LinearRegressionSchema(BaseSchema):
     )  # type: ignore
 
     n_jobs: schema_field(
-        none_type(optimizer_int_field(ge=1)),
+        none_type(int_field(ge=1)),
         placeholder=None,
         description=MultilingualString(
             en=(
@@ -160,8 +157,6 @@ class LinearRegression(RegressionModel, SklearnLikeRegressor, _LinearRegression)
     )
     COLOR: str = "#3F51B5"
     ICON: str = "ShowChart"
-
-    CATEGORICAL_ENCODING = CategoricalEncodingStrategy.ONE_HOT
 
     def __init__(self, **kwargs) -> None:
         """Initialise the model by forwarding all kwargs to the parent class.

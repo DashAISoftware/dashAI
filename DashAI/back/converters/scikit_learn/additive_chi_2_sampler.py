@@ -78,7 +78,7 @@ class AdditiveChi2Sampler(
     )
     DISPLAY_NAME = MultilingualString(
         en="Additive Chi² Sampler",
-        es="Muestreador Chi²",
+        es="Muestreador Chi² Aditivo",
         pt="Amostrador Qui-2 Aditivo",
         de="Additiver Chi²-Stichprobennehmer",
         zh="加性卡方采样器",

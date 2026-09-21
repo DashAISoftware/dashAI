@@ -67,6 +67,8 @@ class ExplainedVariance(RegressionMetric):
         ),
     )
 
+    MAXIMIZE = True
+
     @staticmethod
     def score(
         true_values: "DashAIDataset",

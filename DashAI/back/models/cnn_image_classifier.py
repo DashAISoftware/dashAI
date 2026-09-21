@@ -11,6 +11,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.models.image_explainable_model import GradCamCompatibleModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 
@@ -402,7 +403,7 @@ def _build_cnn_model(
     )
 
 
-class CNNImageClassifier(BaseModel):
+class CNNImageClassifier(BaseModel, GradCamCompatibleModel):
     """CNN-based image classifier.
 
     A convolutional neural network with configurable depth and width that
@@ -412,6 +413,7 @@ class CNNImageClassifier(BaseModel):
 
     SCHEMA = CNNImageClassifierSchema
     COMPATIBLE_COMPONENTS = ["ImageClassificationTask"]
+
     DISPLAY_NAME: str = MultilingualString(
         en="CNN Image Classifier",
         es="Clasificador de Imágenes CNN",
@@ -506,6 +508,25 @@ class CNNImageClassifier(BaseModel):
                 f"2^num_conv_blocks = {min_size} "
                 f"for {self.num_conv_blocks} convolutional block(s)."
             )
+
+    def get_inference_transform(self):
+        """Return the transform applied to input images at inference time.
+
+        Returns
+        -------
+        Callable
+            Resize and tensor conversion matching the training pipeline
+            (no normalization).
+        """
+        from torchvision import transforms
+
+        return transforms.Compose(
+            [
+                transforms.Lambda(lambda img: img.convert("RGB")),
+                transforms.Resize((self.image_size, self.image_size)),
+                transforms.ToTensor(),
+            ]
+        )
 
     def prepare_output(self, dataset, is_fit=False):
         """Encode string labels to integer indices matching the model's class order."""

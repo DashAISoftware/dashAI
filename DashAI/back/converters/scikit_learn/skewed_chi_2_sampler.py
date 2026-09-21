@@ -148,7 +148,7 @@ class SkewedChi2Sampler(
     )
     DISPLAY_NAME = MultilingualString(
         en="Skewed Chi² Sampler",
-        es="Muestreador Chi²",
+        es="Muestreador Chi² Sesgado",
         pt="Amostrador Qui-2 Enviesado",
         de="Schiefer Chi²-Stichprobennehmer",
         zh="偏斜卡方采样器",

@@ -61,4 +61,5 @@ class DebertaV3Transformer(HuggingFaceTextClassificationTransformer):
     ICON: str = "Psychology"
     SCHEMA = DebertaV3TransformerSchema
     MODEL_NAME: str = "microsoft/deberta-v3-base"
+    DOWNLOAD_SIZE_BYTES: int = 373616107
     TEMP_CHECKPOINT_DIR: str = "DashAI/back/user_models/temp_checkpoints_deberta_v3"

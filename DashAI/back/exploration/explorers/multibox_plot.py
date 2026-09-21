@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING, Any, Dict, List
 
+from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.schema_fields import (
     bool_field,
     enum_field,
@@ -11,7 +12,10 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import (
+    NON_NUMERIC_DTYPES,
+    BaseExplorerSchema,
+)
 from DashAI.back.exploration.multidimensional_explorer import MultidimensionalExplorer
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
@@ -165,7 +169,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
-        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
+        "non_allowed_dtypes": NON_NUMERIC_DTYPES,
         "input_cardinality": {"min": 1},
     }
 
@@ -358,7 +362,7 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
 
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    ) -> List[Artifact]:
         """Load and return the saved multi-column box plot for the frontend.
 
         Parameters
@@ -370,17 +374,11 @@ class MultiColumnBoxPlotExplorer(MultidimensionalExplorer):
 
         Returns
         -------
-        Dict[str, Any]
-            Dictionary with keys ``"data"`` (JSON-serialized
-            Plotly figure), ``"type"`` (``"plotly_json"``), and
-            ``"config"`` (empty dict).
+        List[Artifact]
+            A single-element list with the plotly artifact of the saved
+            figure.
         """
-        from plotly.io import read_json
+        with open(exploration_path, "r", encoding="utf-8") as f:
+            result = f.read()
 
-        resultType = "plotly_json"
-        config = {}
-
-        result = read_json(exploration_path)
-        result = result.to_json()
-
-        return {"data": result, "type": resultType, "config": config}
+        return [PlotlyArtifact(payload=result)]

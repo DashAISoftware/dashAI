@@ -185,6 +185,11 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
                     pa.array(input_ids[:, i].tolist(), type=pa.int64()),
                 )
 
+        # Remove original text columns — they are replaced by their tok_* counterparts
+        for column in batch.column_names:
+            col_idx = result_table.column_names.index(column)
+            result_table = result_table.remove_column(col_idx)
+
         return DashAIDataset(result_table)
 
     def get_output_type(self, column_name: Optional[str] = None) -> DashAIDataType:

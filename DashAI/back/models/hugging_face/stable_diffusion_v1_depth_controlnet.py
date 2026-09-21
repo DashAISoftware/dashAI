@@ -8,6 +8,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.dependencies.downloads.downloadable import (
+    HFDownloadableMixin,
+)
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
@@ -153,7 +156,7 @@ class StableDiffusionXLV1ControlNetSchema(BaseSchema):
     )  # type: ignore
 
 
-def get_depth_map(image, device):
+def get_depth_map(image, device, model_source="Intel/dpt-hybrid-midas"):
     """Convert an input image to a normalised depth map for SDXL ControlNet.
 
     Uses Intel's DPT-Hybrid-MiDaS model to estimate per-pixel depth, then
@@ -179,10 +182,8 @@ def get_depth_map(image, device):
     from PIL import Image
     from transformers import DPTForDepthEstimation, DPTImageProcessor
 
-    depth_estimator = DPTForDepthEstimation.from_pretrained(
-        "Intel/dpt-hybrid-midas"
-    ).to(device)
-    feature_extractor = DPTImageProcessor.from_pretrained("Intel/dpt-hybrid-midas")
+    depth_estimator = DPTForDepthEstimation.from_pretrained(model_source).to(device)
+    feature_extractor = DPTImageProcessor.from_pretrained(model_source)
 
     image = feature_extractor(images=image, return_tensors="pt").pixel_values.to(device)
 
@@ -205,11 +206,18 @@ def get_depth_map(image, device):
     return image
 
 
-class StableDiffusionXLV1ControlNet(BaseControlNetModel):
+class StableDiffusionXLV1ControlNet(HFDownloadableMixin, BaseControlNetModel):
     """A wrapper implementation of ControlNet with depth preprocessing and stable
     diffusion xl 1.0 as pipeline."""
 
     SCHEMA = StableDiffusionXLV1ControlNetSchema
+    HF_REPOS = [
+        ("stabilityai/stable-diffusion-xl-base-1.0", "model"),
+        ("diffusers/controlnet-depth-sdxl-1.0-small", "model"),
+        ("madebyollin/sdxl-vae-fp16-fix", "model"),
+        ("Intel/dpt-hybrid-midas", "model"),
+    ]
+    DOWNLOAD_SIZE_BYTES = 39033373420
     COLOR: str = "#e65100"
     DISPLAY_NAME: str = MultilingualString(
         en="Stable Diffusion XL V1 ControlNet",
@@ -313,19 +321,19 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
         )
 
         self.controlnet = ControlNetModel.from_pretrained(
-            "diffusers/controlnet-depth-sdxl-1.0-small",
+            self._local_or_repo("diffusers/controlnet-depth-sdxl-1.0-small"),
             variant="fp16",
             use_safetensors=True,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.vae = AutoencoderKL.from_pretrained(
-            "madebyollin/sdxl-vae-fp16-fix",
+            self._local_or_repo("madebyollin/sdxl-vae-fp16-fix"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
         ).to(self.device)
 
         self.pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
-            "stabilityai/stable-diffusion-xl-base-1.0",
+            self._local_or_repo("stabilityai/stable-diffusion-xl-base-1.0"),
             controlnet=self.controlnet,
             vae=self.vae,
             variant="fp16",
@@ -355,7 +363,9 @@ class StableDiffusionXLV1ControlNet(BaseControlNetModel):
         image = input[0]
         prompt = input[1]
 
-        depth_map = get_depth_map(image, self.device)
+        depth_map = get_depth_map(
+            image, self.device, self._local_or_repo("Intel/dpt-hybrid-midas")
+        )
         image = self.pipe(
             prompt=prompt,
             image=depth_map,

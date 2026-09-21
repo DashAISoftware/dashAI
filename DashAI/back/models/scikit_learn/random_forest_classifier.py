@@ -1,6 +1,13 @@
 from sklearn.ensemble import RandomForestClassifier as _RandomForestClassifier
 
-from DashAI.back.core.schema_fields import BaseSchema, optimizer_int_field, schema_field
+from DashAI.back.core.schema_fields import (
+    BaseSchema,
+    enum_field,
+    int_field,
+    none_type,
+    schema_field,
+    search_space,
+)
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.scikit_learn.sklearn_like_classifier import (
     SklearnLikeClassifier,
@@ -17,14 +24,11 @@ class RandomForestClassifierSchema(BaseSchema):
     The underlying implementation is ``sklearn.ensemble.RandomForestClassifier``.
     """
 
-    n_estimators: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 100,
-            "lower_bound": 50,
-            "upper_bound": 200,
-        },
+    n_estimators: search_space(
+        int_field(ge=1),
+        fixed=100,
+        low=50,
+        high=200,
         description=MultilingualString(
             en=(
                 "The 'n_estimators' parameter corresponds to the number of decision "
@@ -53,14 +57,11 @@ class RandomForestClassifierSchema(BaseSchema):
             zh="估计器数量",
         ),
     )  # type: ignore
-    max_depth: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 2,
-            "lower_bound": 2,
-            "upper_bound": 10,
-        },
+    max_depth: search_space(
+        int_field(ge=1),
+        fixed=2,
+        low=2,
+        high=10,
         description=MultilingualString(
             en=(
                 "The parameter corresponds to the maximum depth of the "
@@ -88,14 +89,11 @@ class RandomForestClassifierSchema(BaseSchema):
             zh="最大深度",
         ),
     )  # type: ignore
-    min_samples_split: schema_field(
-        optimizer_int_field(ge=2),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 2,
-            "lower_bound": 2,
-            "upper_bound": 10,
-        },
+    min_samples_split: search_space(
+        int_field(ge=2),
+        fixed=2,
+        low=2,
+        high=10,
         description=MultilingualString(
             en=(
                 "This parameter sets the minimum number of samples "
@@ -127,14 +125,11 @@ class RandomForestClassifierSchema(BaseSchema):
             zh="最小拆分样本数",
         ),
     )  # type: ignore
-    min_samples_leaf: schema_field(
-        optimizer_int_field(ge=1),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 1,
-            "lower_bound": 1,
-            "upper_bound": 10,
-        },
+    min_samples_leaf: search_space(
+        int_field(ge=1),
+        fixed=1,
+        low=1,
+        high=10,
         description=MultilingualString(
             en=(
                 "This parameter sets the minimum number of samples "
@@ -166,14 +161,11 @@ class RandomForestClassifierSchema(BaseSchema):
             zh="最小叶节点样本数",
         ),
     )  # type: ignore
-    max_leaf_nodes: schema_field(
-        optimizer_int_field(ge=2),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 2,
-            "lower_bound": 2,
-            "upper_bound": 10,
-        },
+    max_leaf_nodes: search_space(
+        int_field(ge=2),
+        fixed=2,
+        low=2,
+        high=10,
         description=MultilingualString(
             en=(
                 "This parameter sets the maximum number of leaf nodes. It must be an "
@@ -202,13 +194,8 @@ class RandomForestClassifierSchema(BaseSchema):
         ),
     )  # type: ignore
     random_state: schema_field(
-        optimizer_int_field(ge=0),
-        placeholder={
-            "optimize": False,
-            "fixed_value": 0,
-            "lower_bound": 0,
-            "upper_bound": 10,
-        },
+        int_field(ge=0),
+        placeholder=0,
         description=MultilingualString(
             en=("This parameter must be an integer greater than or equal to 0."),
             es=("Este parámetro debe ser un entero mayor o igual a 0."),
@@ -222,6 +209,54 @@ class RandomForestClassifierSchema(BaseSchema):
             pt="Estado Aleatório",
             de="Zufallszustand",
             zh="随机状态",
+        ),
+    )  # type: ignore
+    class_weight: search_space(
+        none_type(enum_field(enum=["balanced", "balanced_subsample"])),
+        fixed=None,
+        description=MultilingualString(
+            en=(
+                "Weights associated with classes, used to correct for class "
+                "imbalance. 'balanced' adjusts weights inversely proportional to "
+                "class frequencies in the whole dataset; 'balanced_subsample' does "
+                "the same but per bootstrap sample of each tree. Use None for no "
+                "weighting."
+            ),
+            es=(
+                "Pesos asociados a las clases, usados para corregir el desbalance "
+                "de clases. 'balanced' ajusta los pesos de forma inversamente "
+                "proporcional a la frecuencia de cada clase en todo el conjunto de "
+                "datos; 'balanced_subsample' hace lo mismo pero por cada muestra "
+                "bootstrap de cada árbol. Use None para no aplicar ponderación."
+            ),
+            pt=(
+                "Pesos associados às classes, usados para corrigir o "
+                "desbalanceamento de classes. 'balanced' ajusta os pesos de forma "
+                "inversamente proporcional à frequência de cada classe em todo o "
+                "conjunto de dados; 'balanced_subsample' faz o mesmo, mas por "
+                "amostra bootstrap de cada árvore. Use None para não aplicar "
+                "ponderação."
+            ),
+            de=(
+                "Gewichte, die den Klassen zugeordnet sind, um "
+                "Klassenungleichgewichte auszugleichen. 'balanced' passt die "
+                "Gewichte umgekehrt proportional zur Klassenhäufigkeit im "
+                "gesamten Datensatz an; 'balanced_subsample' tut dasselbe, jedoch "
+                "pro Bootstrap-Stichprobe jedes Baums. Verwenden Sie None für "
+                "keine Gewichtung."
+            ),
+            zh=(
+                "与类别关联的权重，用于纠正类别不平衡。'balanced'根据整个数据集中"
+                "各类别频率的反比调整权重；'balanced_subsample'则对每棵树的自举"
+                "采样分别执行相同操作。使用None表示不加权。"
+            ),
+        ),
+        alias=MultilingualString(
+            en="Class weight",
+            es="Peso de clase",
+            pt="Peso da classe",
+            de="Klassengewicht",
+            zh="类别权重",
         ),
     )  # type: ignore
 

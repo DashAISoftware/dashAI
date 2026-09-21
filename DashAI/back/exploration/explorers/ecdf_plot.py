@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Dict, List, Union
 
+from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.schema_fields import (
     enum_field,
     int_field,
@@ -11,7 +12,10 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import Explorer, Notebook
-from DashAI.back.exploration.base_explorer import BaseExplorerSchema
+from DashAI.back.exploration.base_explorer import (
+    NON_NUMERIC_DTYPES,
+    BaseExplorerSchema,
+)
 from DashAI.back.exploration.distribution_explorer import DistributionExplorer
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.value_types import Float, Integer
@@ -170,7 +174,7 @@ class ECDFPlotExplorer(DistributionExplorer):
     metadata: Dict[str, Any] = {
         "allowed_types": [Float, Integer, Categorical],
         "allowed_dtypes": [],
-        "type_dtype_restrictions": {"Categorical": ["string", "bool", ""]},
+        "non_allowed_dtypes": NON_NUMERIC_DTYPES,
         "input_cardinality": {"min": 1},
     }
 
@@ -370,7 +374,7 @@ class ECDFPlotExplorer(DistributionExplorer):
 
     def get_results(
         self, exploration_path: str, options: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    ) -> List[Artifact]:
         """Load and return the saved ECDF plot for the frontend.
 
         Parameters
@@ -382,17 +386,11 @@ class ECDFPlotExplorer(DistributionExplorer):
 
         Returns
         -------
-        Dict[str, Any]
-            Dictionary with keys ``"data"`` (JSON-serialized
-            Plotly figure), ``"type"`` (``"plotly_json"``), and
-            ``"config"`` (empty dict).
+        List[Artifact]
+            A single-element list with the plotly artifact of the saved
+            figure.
         """
-        import plotly.io as pio
+        with open(exploration_path, "r", encoding="utf-8") as f:
+            result = f.read()
 
-        resultType = "plotly_json"
-        config = {}
-
-        result = pio.read_json(exploration_path)
-        result = result.to_json()
-
-        return {"data": result, "type": resultType, "config": config}
+        return [PlotlyArtifact(payload=result)]

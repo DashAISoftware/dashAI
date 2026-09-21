@@ -33,32 +33,33 @@ class MultilingualBertTransformer(HuggingFaceTextClassificationTransformer):
     DESCRIPTION: str = MultilingualString(
         en=(
             "BERT pretrained on 104 languages for multilingual text classification. "
-            "Downloads weights from Hugging Face on first use (internet required)."
+            "Download its weights from Hugging Face before use (internet required)."
         ),
         es=(
             "BERT preentrenado en 104 idiomas para clasificación de texto "
             "multilingüe. "
-            "Descarga pesos de Hugging Face en el primer uso (requiere internet)."
+            "Descarga sus pesos de Hugging Face antes de usarlo (requiere internet)."
         ),
         pt=(
             "BERT pré-treinado em 104 idiomas para classificação de texto "
             "multilingual. "
-            "Baixa os pesos do Hugging Face no primeiro uso (requer internet)."
+            "Baixe seus pesos do Hugging Face antes de usar (requer internet)."
         ),
         de=(
             "BERT vortrainiert auf 104 Sprachen für mehrsprachige Textklassifikation. "
-            "Lädt Gewichte von Hugging Face bei der ersten Verwendung herunter "
+            "Lädt die Gewichte vor der Nutzung von Hugging Face herunter "
             "(Internet erforderlich)."
         ),
         zh=(
             "在 104 种语言上预训练的 BERT，用于多语言文本分类。"
-            "首次使用时从 Hugging Face 下载权重（需要网络）。"
+            "使用前需从 Hugging Face 下载权重（需要网络）。"
         ),
     )
     COLOR: str = "#283593"
     ICON: str = "Translate"
     SCHEMA = DistilBertTransformerSchema
     MODEL_NAME: str = "bert-base-multilingual-cased"
+    DOWNLOAD_SIZE_BYTES: int = 1431570300
     TEMP_CHECKPOINT_DIR: str = (
         "DashAI/back/user_models/temp_checkpoints_multilingual_bert"
     )

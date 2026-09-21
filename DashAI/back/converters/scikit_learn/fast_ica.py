@@ -208,6 +208,7 @@ class FastICA(DimensionalityReductionConverter, SklearnWrapper, FastICAOperation
     """
 
     SCHEMA = FastICASchema
+    N_COMPONENTS_FEATURES_BOUNDED: bool = False
     DESCRIPTION = MultilingualString(
         en="FastICA: a fast algorithm for Independent Component Analysis.",
         es=(

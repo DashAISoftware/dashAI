@@ -170,6 +170,7 @@ class Nystroem(DimensionalityReductionConverter, SklearnWrapper, NystroemOperati
     """
 
     SCHEMA = NystroemSchema
+    N_COMPONENTS_FEATURES_BOUNDED: bool = False
     DESCRIPTION = MultilingualString(
         en=(
             "Approximate a kernel map using a subset of the training data. "
