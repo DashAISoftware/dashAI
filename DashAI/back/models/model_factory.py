@@ -1,6 +1,6 @@
 from collections import namedtuple
-import numpy as np
 
+import numpy as np
 from kink import di
 
 from DashAI.back.core.schema_fields.search_space import SEARCH_DTYPE_KEY
