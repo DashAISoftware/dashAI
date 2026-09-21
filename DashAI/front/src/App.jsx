@@ -160,7 +160,7 @@ function App() {
                   path="/app/generative/sessions/:id"
                   element={<SessionRouter />}
                 />
-                <Route path="/app/pipelines" element={<PipelinesPage />} />
+                <Route path="/app/pipelines" element={<NewPipelineWrapper />} />
                 <Route
                   path="/app/pipelines/new"
                   element={<NewPipelineWrapper />}
