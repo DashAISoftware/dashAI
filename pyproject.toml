@@ -84,6 +84,8 @@ dependencies = [
     "lime>=0.2.0.1",
     "statsmodels>=0.14.6",
     "pypdf",
+    "pdfminer.six",
+    "pdfplumber",
 ]
 
 [project.optional-dependencies]
