@@ -17,25 +17,24 @@ from DashAI.back.dependencies.database.models import (
 )
 
 _EXTRACTOR_BY_FILE_TYPE = {
-    "pdf": "PyMuPDFExtractor",
+    "pdf": "PypdfExtractor",
     "txt": "PlainTextExtractor",
     "md": "PlainTextExtractor",
 }
 
 
 def _make_minimal_pdf(path: str) -> None:
-    """Write a minimal valid PDF file to the given path."""
-    content = (
-        b"%PDF-1.4\n"
-        b"1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
-        b"2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n"
-        b"3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Resources<<>>>>endobj\n"  # noqa: E501
-        b"xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n"  # noqa: E501
-        b"trailer<</Size 4/Root 1 0 R>>\n"
-        b"startxref\n190\n%%EOF"
-    )
+    """Write a single-page PDF with a well-formed xref table.
+
+    The xref has to be correct because ``PypdfExtractor`` defaults to
+    ``strict=True``, which rejects a broken table outright.
+    """
+    from pypdf import PdfWriter
+
+    writer = PdfWriter()
+    writer.add_blank_page(width=612, height=792)
     with open(path, "wb") as f:
-        f.write(content)
+        writer.write(f)
 
 
 def _create_document(client, file_type: str, content: bytes | str) -> int:
@@ -256,52 +255,43 @@ class TestExtractionCacheFlowPdf:
         assert resp.json()["cached"] is True
 
     def test_pypdf2_different_params(self, client):
-        """PyMuPDF: different params -> cache miss (no password vs with password)."""
+        """Pypdf: different params -> cache miss (strict on vs off)."""
         client.post(
             f"/api/v1/document/{self.doc_id}/extract",
-            json={"extractor": {"component": "PyMuPDFExtractor", "params": {}}},
+            json={
+                "extractor": {
+                    "component": "PypdfExtractor",
+                    "params": {"strict": True},
+                }
+            },
         )
         resp = client.post(
             f"/api/v1/document/{self.doc_id}/extract",
             json={
                 "extractor": {
-                    "component": "PyMuPDFExtractor",
-                    "params": {"password": "test"},
+                    "component": "PypdfExtractor",
+                    "params": {"strict": False},
                 }
             },
         )
         assert resp.status_code == 200
         assert resp.json()["cached"] is False
 
-    # ── PyMuPDFExtractor ──
-
-    def test_pymupdf_extracts(self, client):
-        """PyMuPDFExtractor: should extract from a minimal PDF."""
+    def test_pypdf2_extracts(self, client):
+        """PypdfExtractor: should extract from a minimal PDF."""
         resp = client.post(
             f"/api/v1/document/{self.doc_id}/extract",
-            json={"extractor": {"component": "PyMuPDFExtractor", "params": {}}},
+            json={"extractor": {"component": "PypdfExtractor", "params": {}}},
         )
         assert resp.status_code == 200
         assert "text" in resp.json()
         assert resp.json()["cached"] is False
 
-    def test_pymupdf_cache_hit(self, client):
-        """PyMuPDFExtractor: cache hit on second extraction."""
-        extractor = {"component": "PyMuPDFExtractor", "params": {}}
-        client.post(
-            f"/api/v1/document/{self.doc_id}/extract", json={"extractor": extractor}
-        )
-        resp = client.post(
-            f"/api/v1/document/{self.doc_id}/extract", json={"extractor": extractor}
-        )
-        assert resp.status_code == 200
-        assert resp.json()["cached"] is True
-
     # ── Cross-extractor: different extractors produce different signatures ──
 
     def test_different_extractors_different_cache(self, client):
-        """Different PDF extractors → different signatures → the single row is
-        overwritten (1:1)."""
+        """Different PDF extractor configs → different signatures → the single
+        row is overwritten (1:1)."""
         resp_a = client.post(
             f"/api/v1/document/{self.doc_id}/extract",
             json={
@@ -313,7 +303,12 @@ class TestExtractionCacheFlowPdf:
         )
         resp_b = client.post(
             f"/api/v1/document/{self.doc_id}/extract",
-            json={"extractor": {"component": "PyMuPDFExtractor", "params": {}}},
+            json={
+                "extractor": {
+                    "component": "PypdfExtractor",
+                    "params": {"strict": True},
+                }
+            },
         )
         assert resp_a.status_code == 200
         assert resp_b.status_code == 200
@@ -342,7 +337,7 @@ class TestExtractionCacheFlowPdf:
         txt_id = _create_document(
             client, "txt", "txt content for incompatibility test."
         )
-        for component in ("PypdfExtractor", "PyMuPDFExtractor"):
+        for component in ("PypdfExtractor",):
             resp = client.post(
                 f"/api/v1/document/{txt_id}/extract",
                 json={"extractor": {"component": component, "params": {}}},

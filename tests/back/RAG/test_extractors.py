@@ -5,7 +5,6 @@ import pytest
 from DashAI.back.models.RAG.exceptions import RAGDocumentParsingError
 from DashAI.back.models.RAG.extractors.base_extractor import BaseExtractor
 from DashAI.back.models.RAG.extractors.plain_text_extractor import PlainTextExtractor
-from DashAI.back.models.RAG.extractors.pymupdf_extractor import PyMuPDFExtractor
 from DashAI.back.models.RAG.extractors.pypdf2_extractor import PypdfExtractor
 
 
@@ -65,84 +64,23 @@ class TestPypdfExtractor:
         assert metadata["supported_file_types"] == ["pdf"]
 
 
-class TestPyMuPDFExtractor:
-    def test_supported_file_types(self):
-        assert PyMuPDFExtractor.SUPPORTED_FILE_TYPES == ["pdf"]
-
-    def test_get_metadata(self):
-        metadata = PyMuPDFExtractor.get_metadata()
-        assert metadata["supported_file_types"] == ["pdf"]
-
-
-class TestEasyOCRExtractor:
-    """Tests for EasyOCR extractor schema and metadata."""
-
-    def test_supported_file_types(self):
-        from DashAI.back.models.RAG.extractors.easyocr_extractor import EasyOCRExtractor
-
-        assert EasyOCRExtractor.SUPPORTED_FILE_TYPES == ["pdf"]
-
-    def test_schema_has_languages_and_gpu(self):
-        """Schema exposes languages and gpu parameters for the frontend."""
-        from DashAI.back.models.RAG.extractors.easyocr_extractor import EasyOCRExtractor
-
-        schema = EasyOCRExtractor.get_schema()
-        assert "properties" in schema
-        assert "languages" in schema["properties"]
-        assert "gpu" in schema["properties"]
-
-    def test_get_metadata(self):
-        from DashAI.back.models.RAG.extractors.easyocr_extractor import EasyOCRExtractor
-
-        metadata = EasyOCRExtractor.get_metadata()
-        assert metadata["supported_file_types"] == ["pdf"]
-
-    def test_instantiate_with_defaults(self):
-        """Should work with no params (uses defaults)."""
-        from DashAI.back.models.RAG.extractors.easyocr_extractor import EasyOCRExtractor
-
-        ext = EasyOCRExtractor()
-        assert ext.languages == ["en"]
-        assert ext.gpu is True
-
-    def test_instantiate_with_params(self):
-        """Custom params should be stored on the instance."""
-        from DashAI.back.models.RAG.extractors.easyocr_extractor import EasyOCRExtractor
-
-        ext = EasyOCRExtractor(languages=["es", "fr"], gpu=False)
-        assert ext.languages == ["es", "fr"]
-        assert ext.gpu is False
-
-    def test_instantiate_with_partial_params(self):
-        """Missing params should use defaults."""
-        from DashAI.back.models.RAG.extractors.easyocr_extractor import EasyOCRExtractor
-
-        ext = EasyOCRExtractor(languages=["de"])
-        assert ext.languages == ["de"]
-        assert ext.gpu is True  # default
-
-    def test_config_object_inheritance(self):
-        """EasyOCRExtractor inherits from ConfigObject."""
-        from DashAI.back.config_object import ConfigObject
-        from DashAI.back.models.RAG.extractors.easyocr_extractor import EasyOCRExtractor
-
-        assert issubclass(EasyOCRExtractor, ConfigObject)
-
-    def test_type_is_extractor(self):
-        from DashAI.back.models.RAG.extractors.easyocr_extractor import EasyOCRExtractor
-
-        assert EasyOCRExtractor.TYPE == "Extractor"
-
-
 class TestExtractorSchemaRegistration:
     """Verify extractors are properly registered in the component registry."""
 
-    def test_easyocr_registered(self, client):
-        """EasyOCRExtractor should appear in component registry under Extractor type."""
+    def test_extractors_registered(self, client):
+        """Remaining extractors appear in the registry under Extractor type."""
         resp = client.get("/api/v1/component/?type=Extractor")
         assert resp.status_code == 200
-        names = [c["name"] for c in resp.json()]
-        assert "EasyOCRExtractor" in names
+        names = {c["name"] for c in resp.json()}
+        assert {"PypdfExtractor", "PlainTextExtractor"}.issubset(names)
+
+    def test_removed_extractors_absent(self, client):
+        """PyMuPDF and EasyOCR extractors are gone from the registry."""
+        resp = client.get("/api/v1/component/?type=Extractor")
+        assert resp.status_code == 200
+        names = {c["name"] for c in resp.json()}
+        assert "PyMuPDFExtractor" not in names
+        assert "EasyOCRExtractor" not in names
 
     def test_get_child_components(self, client):
         """getChildComponents('BaseExtractor', false) returns all extractors."""
@@ -152,34 +90,19 @@ class TestExtractorSchemaRegistration:
         names = {c["name"] for c in components}
         expected = {
             "PypdfExtractor",
-            "PyMuPDFExtractor",
             "PlainTextExtractor",
-            "EasyOCRExtractor",
         }
         assert expected.issubset(names)
 
-    def test_easyocr_schema_in_registry(self, client):
-        """Registry entry includes schema with languages and gpu params."""
-        resp = client.get("/api/v1/component/?type=Extractor")
-        assert resp.status_code == 200
-        easyocr_entry = next(
-            (c for c in resp.json() if c["name"] == "EasyOCRExtractor"), None
-        )
-        assert easyocr_entry is not None
-        assert easyocr_entry["configurable_object"] is True
-        schema = easyocr_entry["schema"]
-        assert "languages" in schema.get("properties", {})
-        assert "gpu" in schema.get("properties", {})
-
-    def test_easyocr_metadata_has_supported_types(self, client):
+    def test_pypdf_metadata_has_supported_types(self, client):
         """Registry metadata includes supported_file_types for frontend filtering."""
         resp = client.get("/api/v1/component/?type=Extractor")
         assert resp.status_code == 200
-        easyocr_entry = next(
-            (c for c in resp.json() if c["name"] == "EasyOCRExtractor"), None
+        pypdf_entry = next(
+            (c for c in resp.json() if c["name"] == "PypdfExtractor"), None
         )
-        assert easyocr_entry is not None
-        assert easyocr_entry["metadata"]["supported_file_types"] == ["pdf"]
+        assert pypdf_entry is not None
+        assert pypdf_entry["metadata"]["supported_file_types"] == ["pdf"]
 
 
 class TestPlainTextExtractorParams:
@@ -226,23 +149,3 @@ class TestPypdfExtractorParams:
 
         schema = PypdfExtractor.get_schema()
         assert "strict" in schema["properties"]
-
-
-class TestPyMuPDFExtractorParams:
-    def test_default_no_password(self):
-        from DashAI.back.models.RAG.extractors.pymupdf_extractor import PyMuPDFExtractor
-
-        ext = PyMuPDFExtractor()
-        assert ext.password is None
-
-    def test_with_password(self):
-        from DashAI.back.models.RAG.extractors.pymupdf_extractor import PyMuPDFExtractor
-
-        ext = PyMuPDFExtractor(password="secret123")
-        assert ext.password == "secret123"
-
-    def test_schema_has_password(self):
-        from DashAI.back.models.RAG.extractors.pymupdf_extractor import PyMuPDFExtractor
-
-        schema = PyMuPDFExtractor.get_schema()
-        assert "password" in schema["properties"]
