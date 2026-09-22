@@ -73,7 +73,7 @@ function SelectColumnsStep({
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   const [validationPending, setValidationPending] = useState(true);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Auto-select sensible defaults the first time the dataset's columns load.
     if (rawColumnNames.length === 0) return;
     if (
@@ -308,7 +308,9 @@ function SelectColumnsStep({
             bgcolor: (theme) =>
               `${theme.palette[columnsAreValid ? "success" : "error"].main}40`,
             border: (theme) =>
-              `1px solid ${theme.palette[columnsAreValid ? "success" : "error"].main}`,
+              `1px solid ${
+                theme.palette[columnsAreValid ? "success" : "error"].main
+              }`,
           }}
           data-tour="models-validation-alert"
         >
