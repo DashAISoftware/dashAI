@@ -27,7 +27,7 @@ function DivideDatasetColumns({
   outputHelperText = "",
   disabled = false,
 }) {
-  const { t } = useTranslation(["experiments", "common"]);
+  const { t } = useTranslation(["experiments", "common", "models"]);
   const theme = useTheme();
 
   const inputOptions = inputOptionNames || allColumnNames;
@@ -145,7 +145,7 @@ function DivideDatasetColumns({
           <TextField
             {...params}
             required
-            label="Input Columns"
+            label={t("models:label.inputColumns")}
             error={inputError}
             helperText={inputHelperText}
             placeholder={
@@ -175,7 +175,7 @@ function DivideDatasetColumns({
           <TextField
             {...params}
             required
-            label="Output Columns"
+            label={t("models:label.outputColumns")}
             error={outputError}
             helperText={outputHelperText}
             placeholder={
