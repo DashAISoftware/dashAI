@@ -22,6 +22,12 @@ import {
   getComponentCredentialState,
 } from "../../credentials/credentialStatus";
 
+const iconOnlySx = {
+  minWidth: 0,
+  px: 1,
+  "& .MuiButton-startIcon": { mx: 0 },
+};
+
 const formatSize = (bytes) => {
   if (bytes == null) return "";
   const mb = bytes / 1024 / 1024;
@@ -217,6 +223,8 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
   const handleDelete = () =>
     deleteComponent({ component, enqueueSnackbar, t, onStatusChange });
 
+  const sizeLabel = formatSize(meta.download_size_bytes);
+
   if (downloading) {
     return (
       <Box sx={{ my: 1 }}>
@@ -231,18 +239,17 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
   if (downloaded) {
     return (
       <>
-        <Button
-          size="small"
-          color="error"
-          startIcon={<DeleteIcon />}
-          onClick={() => setConfirmOpen(true)}
-        >
-          {meta.download_size_bytes != null
-            ? t("common:componentDownload.deleteWithSize", {
-                size: formatSize(meta.download_size_bytes),
-              })
-            : t("common:componentDownload.delete")}
-        </Button>
+        <Tooltip title={t("common:componentDownload.delete")}>
+          <Button
+            size="small"
+            color="error"
+            startIcon={<DeleteIcon />}
+            onClick={() => setConfirmOpen(true)}
+            sx={sizeLabel ? undefined : iconOnlySx}
+          >
+            {sizeLabel}
+          </Button>
+        </Tooltip>
         <DeleteConfirmationModal
           open={confirmOpen}
           onClose={() => setConfirmOpen(false)}
@@ -283,16 +290,17 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
   }
 
   return (
-    <Button
-      size="small"
-      variant="outlined"
-      startIcon={<DownloadIcon />}
-      onClick={handleDownload}
-    >
-      {t("common:componentDownload.download", {
-        size: formatSize(meta.download_size_bytes),
-      })}
-    </Button>
+    <Tooltip title={t("common:componentDownload.download")}>
+      <Button
+        size="small"
+        variant="outlined"
+        startIcon={<DownloadIcon />}
+        onClick={handleDownload}
+        sx={sizeLabel ? undefined : iconOnlySx}
+      >
+        {sizeLabel}
+      </Button>
+    </Tooltip>
   );
 };
 
