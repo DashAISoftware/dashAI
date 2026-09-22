@@ -170,7 +170,7 @@
     "documents": {
       "extractorModal": {
         "close": "Schließen",
-        "explanation": "Es gibt verschiedene Möglichkeiten, Text aus einer PDF zu extrahieren. Jeder Extraktor kann je nach Dokumentstruktur unterschiedliche Ergebnisse liefern — probieren Sie verschiedene Optionen aus und vergleichen Sie die Ausgabe. Wichtig: RAG verwendet nur Text. Wenn Ihre PDF Bilder mit Text enthalten (gescannte Dokumente, Diagramme), müssen Sie einen OCR-fähigen Extraktor wie EasyOCR verwenden, um diese Bilder in Text umzuwandeln, den RAG nutzen kann. Ohne OCR werden Bilder ignoriert.",
+        "explanation": "Es gibt verschiedene Möglichkeiten, Text aus einer PDF zu extrahieren. Jeder Extraktor kann je nach Dokumentstruktur unterschiedliche Ergebnisse liefern. Probieren Sie verschiedene Optionen aus und vergleichen Sie die Ausgabe. Wichtig: RAG verwendet nur Text. Wenn Ihre PDF Bilder mit Text enthält (gescannte Dokumente, Diagramme), wird dieser Inhalt ignoriert: Es ist kein OCR-Extraktor verfügbar.",
         "extractText": "Text extrahieren",
         "extractedContentLabel": "Extrahierter Text",
         "extracting": "Extrahiere Text...",
