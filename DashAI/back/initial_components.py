@@ -337,6 +337,8 @@ from DashAI.back.models.RAG.embeddings.dense import (
     SentenceTransformerEmbedding,
 )
 from DashAI.back.models.RAG.extractors import (
+    PdfMinerExtractor,
+    PdfPlumberExtractor,
     PlainTextExtractor,
     PypdfExtractor,
 )
@@ -820,6 +822,8 @@ def get_initial_components():
         TokenChunkModel,
         # Extractors
         PypdfExtractor,
+        PdfMinerExtractor,
+        PdfPlumberExtractor,
         PlainTextExtractor,
         # Encodings
         SentenceTransformerEmbedding,
