@@ -222,3 +222,35 @@ def test_feature_selection_and_variance_threshold_declare_preserves_input_type()
 
     assert FeatureSelectionConverter.get_metadata()["preserves_input_type"] is True
     assert VarianceThreshold.get_metadata()["preserves_input_type"] is True
+
+
+def test_get_metadata_learns_from_data_defaults_to_true():
+    meta = _FloatIntConverter.get_metadata()
+    assert meta["learns_from_data"] is True
+
+
+def test_get_metadata_reports_learns_from_data_false_when_declared():
+    class _StatelessConverter(BaseConverter):
+        SCHEMA = None
+        metadata = {"allowed_types": [Float, Integer]}
+        LEARNS_FROM_DATA = False
+
+        def get_output_type(self, column_name=None):
+            return None
+
+        def fit(self, x, y=None):
+            return self
+
+        def transform(self, x, y=None):
+            return x
+
+    meta = _StatelessConverter.get_metadata()
+    assert meta["learns_from_data"] is False
+
+
+def test_stateful_and_stateless_converters_declare_learns_from_data():
+    from DashAI.back.converters.scikit_learn.standard_scaler import StandardScaler
+    from DashAI.back.converters.simple_converters.type_cast import TypeCast
+
+    assert StandardScaler.get_metadata()["learns_from_data"] is True
+    assert TypeCast.get_metadata()["learns_from_data"] is False

@@ -266,6 +266,7 @@
     "lengthMetrics": "Length Metrics",
     "lowerBound": "Lower Bound",
     "lowUniquenessWarning": "Warning: This text column has a very low uniqueness ratio. This may be a categorical variable misclassified as text, which could lead to analysis issues.",
+    "leakageWarning": "This converter fits its parameters using the entire notebook dataset, without a train/test split. If you use the resulting dataset to train a model, this may introduce data leakage. To avoid this, consider adding this converter as a preprocessing step when creating the model session instead: there it is only fit on the training split.",
     "marginBottom": "Margin Bottom",
     "marginLeft": "Margin Left",
     "marginRight": "Margin Right",

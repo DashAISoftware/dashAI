@@ -271,6 +271,7 @@
     "lengthMetrics": "Métricas de Comprimento",
     "lineColor": "Cor da Linha",
     "lowUniquenessWarning": "Aviso: Esta coluna de texto tem uma proporção de unicidade muito baixa. Pode ser uma variável categórica classificada incorretamente como texto, o que pode causar problemas de análise.",
+    "leakageWarning": "Este conversor ajusta seus parâmetros usando todo o conjunto de dados do notebook, sem separação treino/teste. Se você usar o conjunto de dados resultante para treinar um modelo, isso pode introduzir data leakage. Para evitar isso, considere adicionar este conversor como uma etapa de pré-processamento ao criar a sessão do modelo: lá ele é ajustado apenas no split de treino.",
     "lowerBound": "Limite Inferior",
     "marginBottom": "Margem Inferior",
     "marginLeft": "Margem Esquerda",

@@ -57,6 +57,7 @@ class AdditiveChi2Sampler(
     """
 
     SCHEMA = AdditiveChi2SamplerSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Uses sampling the Fourier transform of the kernel characteristic "

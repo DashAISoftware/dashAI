@@ -127,6 +127,7 @@ class SkewedChi2Sampler(
     """
 
     SCHEMA = SkewedChi2SamplerSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Approximates the feature map of a chi-squared kernel by Monte Carlo "

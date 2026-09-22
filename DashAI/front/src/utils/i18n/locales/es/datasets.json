@@ -273,6 +273,7 @@
     "lengthMetrics": "Métricas de Longitud",
     "lowerBound": "Límite Inferior",
     "lowUniquenessWarning": "Advertencia: Esta columna de texto tiene una proporción de unicidad muy baja. Esta puede ser una variable categórica mal clasificada como texto, lo que podría causar problemas de análisis.",
+    "leakageWarning": "Este converter ajusta sus parámetros usando todo el dataset del notebook, sin separación train/test. Si usas el dataset resultante para entrenar un modelo, esto puede introducir data leakage. Para evitarlo, considera agregar este converter como paso de preprocesamiento al crear la sesión del modelo: ahí se ajusta solo sobre el split de entrenamiento.",
     "marginBottom": "Margen Inferior",
     "marginLeft": "Margen Izquierdo",
     "marginRight": "Margen Derecho",

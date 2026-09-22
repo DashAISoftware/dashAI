@@ -263,6 +263,7 @@
     "lengthMetrics": "长度指标",
     "lineColor": "线条颜色",
     "lowUniquenessWarning": "警告：此文本列的唯一值比例非常低。这可能是被错误分类为文本的分类变量，可能导致分析问题。",
+    "leakageWarning": "此转换器使用整个notebook数据集拟合参数，没有进行训练/测试分割。如果您使用生成的数据集来训练模型，这可能会导致数据泄漏（data leakage）。为避免此问题，建议在创建模型会话时将此转换器添加为预处理步骤，因为那里只会在训练集上拟合。",
     "lowerBound": "下界",
     "marginBottom": "底部边距",
     "marginLeft": "左侧边距",

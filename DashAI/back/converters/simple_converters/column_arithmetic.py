@@ -164,6 +164,7 @@ class ColumnArithmetic(FeatureEngineeringConverter, BaseConverter):
     """
 
     SCHEMA = ColumnArithmeticSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Applies an arithmetic operation (add, subtract, multiply, divide) "

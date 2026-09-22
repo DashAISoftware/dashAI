@@ -119,6 +119,7 @@ class ImageEmbeddingConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper
     """
 
     SCHEMA = ImageEmbeddingSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en="Embed an image column into dense float columns using a "
         "HuggingFace vision model. Each detected image column is encoded "

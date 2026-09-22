@@ -72,6 +72,8 @@ export default function ParameterStepConverter({
     nColumnsSelected > 0 &&
     currentNComponents > nColumnsSelected;
 
+  const showLeakageWarning = tool?.metadata?.learns_from_data === true;
+
   return (
     <Box
       sx={{
@@ -93,6 +95,11 @@ export default function ParameterStepConverter({
           {t("datasets:label.nComponentsColumnInfo", {
             n: nColumnsSelected,
           })}
+        </Alert>
+      )}
+      {showLeakageWarning && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          {t("datasets:label.leakageWarning")}
         </Alert>
       )}
       <FormSchemaContainer>

@@ -156,6 +156,7 @@ class TimeResamplerConverter(BasicPreprocessingConverter, BaseConverter):
 
     SCHEMA = TimeResamplerSchema
     CHANGES_ROW_COUNT = True
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Puts a dated table on a regular calendar grid: one row per day, "

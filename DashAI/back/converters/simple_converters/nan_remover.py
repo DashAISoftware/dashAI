@@ -42,6 +42,7 @@ class NanRemover(BasicPreprocessingConverter, BaseConverter):
 
     SCHEMA = NanRemoverSchema
     CHANGES_ROW_COUNT = True
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Removes the rows with NaN values from the dataset. Keep in mind that "
