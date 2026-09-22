@@ -324,7 +324,7 @@ async def extract_document_text(
 
     Request body (optional):
         {
-            "extractor": {"component": "PyMuPDFExtractor", "params": {}},
+            "extractor": {"component": "PypdfExtractor", "params": {}},
             "persist": true  // false for preview mode
         }
 

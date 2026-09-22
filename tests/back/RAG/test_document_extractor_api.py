@@ -107,7 +107,7 @@ class TestExtractEndpoint:
         # PDF extractors should not work with txt files
         resp = client.post(
             f"/api/v1/document/{doc_id}/extract",
-            json={"extractor": {"component": "PyMuPDFExtractor", "params": {}}},
+            json={"extractor": {"component": "PypdfExtractor", "params": {}}},
         )
         assert resp.status_code == 400
         assert "does not support" in resp.json()["detail"]

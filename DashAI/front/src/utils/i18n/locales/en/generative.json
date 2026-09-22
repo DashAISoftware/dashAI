@@ -170,7 +170,7 @@
     "documents": {
       "extractorModal": {
         "close": "Close",
-        "explanation": "There are different ways to process text from a PDF. Each extractor may produce different results depending on the document structure — try different options and compare the output. Important: RAG only uses text. If your PDF contains images with text (scanned documents, diagrams), you must use an OCR-capable extractor like EasyOCR to convert those images into text that RAG can use. Without OCR, images are ignored.",
+        "explanation": "There are different ways to process text from a PDF. Each extractor may produce different results depending on the document structure. Try different options and compare the output. Important: RAG only uses text. If your PDF contains images with text (scanned documents, diagrams), that content is ignored: there is no OCR extractor available.",
         "extractText": "Extract text",
         "extractedContentLabel": "Extracted text",
         "extracting": "Extracting text...",
