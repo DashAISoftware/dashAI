@@ -46,6 +46,7 @@ class Binarizer(EncodingConverter, SklearnWrapper, BinarizerOperation):
     """
 
     SCHEMA = BinarizerSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=("Binarize data (set feature values to 0 or 1) according to a threshold."),
         es=(

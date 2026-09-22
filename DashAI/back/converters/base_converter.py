@@ -42,6 +42,16 @@ class BaseConverter(ConfigObject, ABC):
     COLOR: Final[str] = "rgb(255, 255, 255)"
     SUPERVISED: bool = False
     CHANGES_ROW_COUNT: bool = False
+    # Whether `fit` computes anything from the actual values of the input
+    # data (e.g. a mean, a vocabulary, learned components) rather than just
+    # validating shapes/types or applying a fixed, user-specified rule.
+    # Defaults to True (the conservative choice): a converter added without
+    # setting this explicitly warns about possible leakage rather than
+    # silently skipping the warning for a converter that does learn from
+    # data. Used to flag possible data leakage when applied inside a
+    # notebook, where fit/transform runs on the whole dataset with no
+    # train/test split.
+    LEARNS_FROM_DATA: bool = True
     # True for converters that never transform values, only keep or drop
     # whole columns as-is (feature selection, variance thresholding): the
     # output type of a surviving column is always exactly its input type, no
@@ -84,6 +94,7 @@ class BaseConverter(ConfigObject, ABC):
         meta["supervised"] = cls.SUPERVISED
         meta["changes_row_count"] = cls.CHANGES_ROW_COUNT
         meta["preserves_input_type"] = cls.PRESERVES_INPUT_TYPE
+        meta["learns_from_data"] = cls.LEARNS_FROM_DATA
         meta["n_components_features_bounded"] = getattr(
             cls, "N_COMPONENTS_FEATURES_BOUNDED", False
         )
