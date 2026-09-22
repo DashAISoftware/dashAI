@@ -80,7 +80,7 @@ export default function DocumentInspectorModal({
     return supportedTypes.length === 0 || supportedTypes.includes(fileType);
   });
 
-  // --- Extraction ----------------------------------------------------------
+  // Extraction
 
   const performExtract = useCallback(async (docId, ref) => {
     setContentLoading(true);
@@ -96,7 +96,7 @@ export default function DocumentInspectorModal({
     }
   }, []);
 
-  // --- Init on open --------------------------------------------------------
+  // Init on open
 
   useEffect(() => {
     if (!open || !document) return;
@@ -104,6 +104,7 @@ export default function DocumentInspectorModal({
     setContent("");
     setRawContent("");
     setSettingsOpen(false);
+    formikRef.current = null;
 
     const currentName = document.extractor?.component || "";
     const currentParams = document.extractor?.params || {};
@@ -158,7 +159,7 @@ export default function DocumentInspectorModal({
     init();
   }, [open, document, fileType, performExtract]);
 
-  // --- Raw content for non-PDF files ---------------------------------------
+  // Raw content for non-PDF files
 
   useEffect(() => {
     if (!open || !document) return;
@@ -185,10 +186,11 @@ export default function DocumentInspectorModal({
     };
   }, [open, document, fileType, previewUrl]);
 
-  // --- Extractor change → re-extract ---------------------------------------
+  // Extractor change
 
   const handleExtractorChange = async (e) => {
     const name = e.target.value;
+    formikRef.current = null;
     setSelectedExtractor(name);
     setError("");
     setContent("");
@@ -201,22 +203,27 @@ export default function DocumentInspectorModal({
     setParams(defaults);
   };
 
-  // --- Params form callbacks -----------------------------------------------
+  // Params form callbacks
 
   const handleParamsChange = useCallback((values) => {
     setParams(values);
   }, []);
 
   const buildExtractorRef = useCallback(() => {
-    const latestParams =
-      formikRef.current?.values &&
-      Object.keys(formikRef.current.values).length > 0
-        ? formikRef.current.values
-        : params;
-    return { component: selectedExtractor, params: latestParams };
+    const formValues = formikRef.current?.values;
+    const expected = Object.keys(params);
+    const belongsToSelected =
+      formValues &&
+      expected.length > 0 &&
+      expected.length === Object.keys(formValues).length &&
+      expected.every((key) => key in formValues);
+    return {
+      component: selectedExtractor,
+      params: belongsToSelected ? formValues : params,
+    };
   }, [selectedExtractor, params]);
 
-  // --- Save ----------------------------------------------------------------
+  // Save
 
   const handleSaveExtractor = async () => {
     if (!hasChanged) return;
@@ -236,7 +243,7 @@ export default function DocumentInspectorModal({
     }
   };
 
-  // --- Render --------------------------------------------------------------
+  // Render
 
   const dialogContent = (
     <Dialog
@@ -246,7 +253,7 @@ export default function DocumentInspectorModal({
       fullWidth
       slotProps={{ backdrop: { sx: { backgroundColor: "rgba(0,0,0,0.7)" } } }}
     >
-      {/* ── Title bar: file name ── */}
+      {/* Title bar: file name */}
       <Box
         sx={{
           px: 3,
@@ -268,12 +275,12 @@ export default function DocumentInspectorModal({
           </Typography>
         ) : (
           <Box>
-            {/* ── Row 2: explanation (full width) ── */}
+            {/* Row 2: explanation (full width) */}
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               {t("generative:rag.documents.extractorModal.explanation")}
             </Typography>
 
-            {/* ── Row 3: file preview (left) + extractor config & extracted text (right) ── */}
+            {/* Row 3: file preview (left) plus extractor config and extracted text (right) */}
             <Box
               sx={{
                 display: "flex",
@@ -479,7 +486,7 @@ export default function DocumentInspectorModal({
         )}
       </DialogActions>
 
-      {/* ── Settings dialog: extractor parameters ── */}
+      {/* Settings dialog: extractor parameters */}
       <Dialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -488,7 +495,9 @@ export default function DocumentInspectorModal({
       >
         <DialogTitle>
           {selectedExtractor
-            ? `${t("generative:rag.documents.extractorModal.extractorLabel")}: ${selectedExtractor}`
+            ? `${t(
+                "generative:rag.documents.extractorModal.extractorLabel",
+              )}: ${selectedExtractor}`
             : t("generative:rag.documents.table.configureExtractor")}
         </DialogTitle>
         <DialogContent>
