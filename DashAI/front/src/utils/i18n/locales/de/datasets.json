@@ -264,6 +264,7 @@
     "lengthMetrics": "Längenmetriken",
     "lineColor": "Linienfarbe",
     "lowUniquenessWarning": "Warnung: Diese Textspalte hat eine sehr niedrige Eindeutigkeitsrate. Dies könnte eine kategorische Variable sein, die fälschlicherweise als Text klassifiziert wurde.",
+    "leakageWarning": "Dieser Konverter passt seine Parameter anhand des gesamten Notebook-Datensatzes an, ohne Trainings-/Test-Aufteilung. Wenn Sie den resultierenden Datensatz zum Trainieren eines Modells verwenden, kann dies zu Data Leakage führen. Um dies zu vermeiden, fügen Sie diesen Konverter stattdessen als Vorverarbeitungsschritt bei der Erstellung der Modellsitzung hinzu: dort wird er nur auf dem Trainings-Split angepasst.",
     "lowerBound": "Untergrenze",
     "marginBottom": "Unterer Rand",
     "marginLeft": "Linker Rand",
