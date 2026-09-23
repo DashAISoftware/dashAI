@@ -104,21 +104,15 @@ function ModelComparisonTable({
 
   const runTypeStyles = {
     withoutHpo: {
-      bg: theme.palette.dataType.default,
-      border: theme.palette.dataType.default,
-      color: theme.palette.dataType.default,
+      bg: "transparent",
       label: "Sin HPO",
     },
     withHpo: {
-      bg: theme.palette.accent.tealDim,
-      border: theme.palette.accent.tealBorder,
-      color: theme.palette.accent.teal,
+      bg: theme.palette.accentInverse.purpleDim,
       label: "HPO",
     },
     nestedCv: {
-      bg: "#585370",
-      border: "#585370",
-      color: "#585370",
+      bg: theme.palette.accentInverse.amberDim,
       label: "CV anidado",
     },
   };
@@ -440,7 +434,7 @@ function ModelComparisonTable({
     state: { columnOrder },
     muiTableBodyRowProps: ({ row }) => {
       const runType = getRunType(row.original);
-      const { bg, border } = runTypeStyles[runType] ?? runTypeStyles.withoutHpo;
+      const { bg } = runTypeStyles[runType] ?? runTypeStyles.withoutHpo;
       return {
         onClick: () => {
           if (onRowClick) onRowClick(row.original.id);
@@ -448,7 +442,6 @@ function ModelComparisonTable({
         sx: {
           cursor: onRowClick ? "pointer" : "default",
           backgroundColor: bg,
-          borderLeft: `3px solid ${border}`,
           "&:hover td": { backgroundColor: "transparent" },
         },
       };
@@ -485,7 +478,7 @@ function ModelComparisonTable({
                 height: 12,
                 borderRadius: "50%",
                 backgroundColor: item.bg,
-                border: `1px solid ${item.border}`,
+                border: `1px solid ${theme.palette.ui.border}`,
               }}
             />
             <Typography variant="body2" color="text.secondary">
