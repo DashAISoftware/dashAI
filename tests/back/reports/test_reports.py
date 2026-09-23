@@ -100,8 +100,23 @@ def test_roc_curve_draws_one_curve_for_a_binary_problem():
 
     figure = _figure(RocCurve().compute(y_true, probabilities, ["no", "yes"])[0])
 
-    # Chance line plus a single curve, not two mirrored ones.
     assert len(figure["data"]) == 2
+    assert figure["data"][1]["name"] == "yes (AUC 1.000)"
+
+
+def test_precision_recall_curve_draws_a_curve_per_label_for_a_binary_problem():
+    y_true = np.array([0, 1, 0, 1])
+    probabilities = np.array([[0.8, 0.2], [0.3, 0.7], [0.6, 0.4], [0.2, 0.8]])
+
+    figure = _figure(
+        PrecisionRecallCurve().compute(y_true, probabilities, ["no", "yes"])[0]
+    )
+
+    assert len(figure["data"]) == 2
+    assert [trace["name"] for trace in figure["data"]] == [
+        "no (AP 1.000)",
+        "yes (AP 1.000)",
+    ]
 
 
 def test_roc_curve_refuses_hard_labels():
