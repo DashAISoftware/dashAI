@@ -236,6 +236,12 @@ async def get_hyperparameter_optimization_plot(
             else:
                 plot_path = run_model[0].plot_importance_path
 
+            if not plot_path:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Run hyperaparameter plot not found",
+                )
+
             with open(plot_path, "rb") as file:
                 plot = pickle.load(file)
 

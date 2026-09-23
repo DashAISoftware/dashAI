@@ -6,14 +6,13 @@ import { enqueueSnackbar } from "notistack";
 import { checkHowManyOptimazers } from "../../utils/schema";
 import ArtifactViewer from "../shared/ArtifactViewer";
 
+const PLOT_TYPES = { history: 1, slice: 2, contour: 3, importance: 4 };
+
 function HyperparameterPlots({ run }) {
   // Each plot now arrives as a typed artifact ({type, payload, title}) built
   // server side, same contract Explainers/Explorers use - no client side
   // parsing or title guessing needed.
-  const [historicalPlot, setHistoricalPlot] = useState(null);
-  const [slicePlot, setSlicePlot] = useState(null);
-  const [contourPlot, setContourPlot] = useState(null);
-  const [importancePlot, setImportancePlot] = useState(null);
+  const [plots, setPlots] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const optimizables = checkHowManyOptimazers({
@@ -21,36 +20,43 @@ function HyperparameterPlots({ run }) {
   });
 
   const getHyperparameterPlot = async () => {
-    try {
-      setLoading(true);
-      if (optimizables >= 2) {
-        const [historical, slice, contour, importance] = await Promise.all([
-          getHyperparameterPlotRequest(run.id, 1),
-          getHyperparameterPlotRequest(run.id, 2),
-          getHyperparameterPlotRequest(run.id, 3),
-          getHyperparameterPlotRequest(run.id, 4),
-        ]);
+    const wanted =
+      optimizables >= 2
+        ? [
+            PLOT_TYPES.history,
+            PLOT_TYPES.slice,
+            PLOT_TYPES.contour,
+            PLOT_TYPES.importance,
+          ]
+        : optimizables === 1
+          ? [PLOT_TYPES.history, PLOT_TYPES.slice]
+          : [];
 
-        setHistoricalPlot(historical);
-        setSlicePlot(slice);
-        setContourPlot(contour);
-        setImportancePlot(importance);
-      } else if (optimizables === 1) {
-        const [historical, slice] = await Promise.all([
-          getHyperparameterPlotRequest(run.id, 1),
-          getHyperparameterPlotRequest(run.id, 2),
-        ]);
+    setLoading(true);
+    const settled = await Promise.allSettled(
+      wanted.map((plotType) => getHyperparameterPlotRequest(run.id, plotType)),
+    );
 
-        setHistoricalPlot(historical);
-        setSlicePlot(slice);
+    const available = [];
+    const failures = [];
+    settled.forEach((result, i) => {
+      if (result.status === "fulfilled") {
+        if (result.value) {
+          available.push({ plotType: wanted[i], artifact: result.value });
+        }
+      } else if (result.reason?.response?.status !== 404) {
+        failures.push(result.reason);
       }
-    } catch (error) {
+    });
+
+    setPlots(available);
+    setLoading(false);
+
+    if (failures.length > 0) {
       enqueueSnackbar("Error while trying to obtain hyperparameter plots", {
         variant: "error",
       });
-      console.error("Error loading hyperparameter plots:", error);
-    } finally {
-      setLoading(false);
+      console.error("Error loading hyperparameter plots:", failures);
     }
   };
 
@@ -129,7 +135,7 @@ function HyperparameterPlots({ run }) {
     );
   }
 
-  if (!historicalPlot && !slicePlot) {
+  if (plots.length === 0) {
     return (
       <Box
         sx={{
@@ -146,12 +152,7 @@ function HyperparameterPlots({ run }) {
     );
   }
 
-  const artifacts = [
-    historicalPlot,
-    slicePlot,
-    optimizables >= 2 && contourPlot,
-    optimizables >= 2 && importancePlot,
-  ].filter(Boolean);
+  const artifacts = plots.map(({ artifact }) => artifact);
 
   return (
     <Box sx={{ p: 4 }}>
@@ -167,9 +168,9 @@ function HyperparameterPlots({ run }) {
           gridTemplateColumns: "repeat(auto-fit, minmax(600px, 1fr))",
         }}
       >
-        {artifacts.map((artifact, index) => (
+        {plots.map(({ plotType, artifact }, index) => (
           <ArtifactViewer
-            key={artifact.index ?? index}
+            key={plotType}
             artifact={artifact}
             siblingArtifacts={artifacts}
             siblingIndex={index}
