@@ -96,8 +96,7 @@ class PrecisionRecallCurve(BaseReport):
         names = resolve_class_names(class_names, probabilities.shape[1])
 
         figure = go.Figure()
-        target_classes = [1] if probabilities.shape[1] == 2 else range(len(names))
-        for class_index in target_classes:
+        for class_index in range(len(names)):
             positives = (truth == class_index).astype(int)
             if positives.sum() == 0 or positives.sum() == len(positives):
                 continue
