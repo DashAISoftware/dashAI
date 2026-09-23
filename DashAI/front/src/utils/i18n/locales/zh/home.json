@@ -29,6 +29,15 @@
     "welcomeDashboardAI": "欢迎使用 dashAI！",
     "welcomeSubtitle": "选择一个模块开始使用"
   },
+  "link": {
+    "directMail": "联系我们",
+    "discord": "Discord",
+    "documentation": "文档",
+    "github": "GitHub",
+    "mailingList": "邮件列表",
+    "tutorials": "教程",
+    "website": "官方网站"
+  },
   "tag": {
     "advanced": "高级",
     "beginner": "入门"

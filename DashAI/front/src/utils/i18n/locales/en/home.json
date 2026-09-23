@@ -29,6 +29,15 @@
     "welcomeDashboardAI": "Welcome to dashAI!",
     "welcomeSubtitle": "Select a module to get started"
   },
+  "link": {
+    "directMail": "Contact us",
+    "discord": "Discord",
+    "documentation": "Documentation",
+    "github": "GitHub",
+    "mailingList": "Mailing list",
+    "tutorials": "Tutorials",
+    "website": "Website"
+  },
   "tag": {
     "advanced": "Advanced",
     "beginner": "Get Started"
