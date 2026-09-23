@@ -29,6 +29,15 @@
     "welcomeDashboardAI": "Willkommen bei dashAI!",
     "welcomeSubtitle": "Wählen Sie ein Modul aus, um zu beginnen"
   },
+  "link": {
+    "directMail": "Kontakt",
+    "discord": "Discord",
+    "documentation": "Dokumentation",
+    "github": "GitHub",
+    "mailingList": "Mailingliste",
+    "tutorials": "Tutorials",
+    "website": "Webseite"
+  },
   "tag": {
     "advanced": "Fortgeschritten",
     "beginner": "Erste Schritte"
