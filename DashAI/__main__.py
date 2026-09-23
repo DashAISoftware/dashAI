@@ -97,8 +97,26 @@ def _start_huey_thread() -> threading.Thread:
 
 
 def _start_backend_server(
-    local_path: pathlib.Path, logging_level: LoggingLevel
+    local_path: pathlib.Path,
+    logging_level: LoggingLevel,
+    embedded_huey: bool = False,
 ) -> None:
+    """Create the FastAPI app and serve it with Uvicorn.
+
+    Parameters
+    ----------
+    local_path : pathlib.Path
+        Path where dashAI files are stored.
+    logging_level : LoggingLevel
+        dashAI app logging level.
+    embedded_huey : bool, optional
+        Start the Huey consumer in a thread of this process once the app has
+        been created, by default False. The consumer startup hook imports the
+        same component modules as ``create_app``, and importing packages with
+        circular imports (such as scikit-learn) from two threads at the same
+        time can leave one of them with a partially initialized module, so the
+        consumer thread only starts after every app import has finished.
+    """
     import uvicorn
 
     from DashAI.back.app import create_app
@@ -108,6 +126,11 @@ def _start_backend_server(
         logging_level=logging_level.value,
     )
     logger = logging.getLogger(__name__)
+
+    if embedded_huey:
+        _start_huey_thread()
+        logger.info("Started embedded Huey consumer (thread).")
+
     logger.info("Starting Uvicorn server on http://127.0.0.1:8000")
 
     uvicorn.run(
@@ -296,10 +319,9 @@ def main(
     # "sys.executable -m huey..." re-enters the app instead of running Python.
     # Run it in a thread in those cases.
     in_appimage = bool(os.environ.get("APPIMAGE") or os.environ.get("APPDIR"))
-    if getattr(sys, "frozen", False) or in_appimage:
+    embedded_huey = bool(getattr(sys, "frozen", False) or in_appimage)
+    if embedded_huey:
         logger.info("Running inside a bundled launcher (PyInstaller/AppImage).")
-        _start_huey_thread()
-        logger.info("Started embedded Huey consumer (thread).")
     else:
         logger.info("Running in development mode.")
 
@@ -322,7 +344,7 @@ def main(
 
             t = threading.Thread(
                 target=_start_backend_server,
-                args=(resolved_local, logging_level),
+                args=(resolved_local, logging_level, embedded_huey),
                 daemon=True,
             )
             t.start()
@@ -337,7 +359,9 @@ def main(
                 logger.info("Browser auto-open disabled (--no-browser/-nb).")
 
             _start_backend_server(
-                local_path=resolved_local, logging_level=logging_level
+                local_path=resolved_local,
+                logging_level=logging_level,
+                embedded_huey=embedded_huey,
             )
 
     finally:
