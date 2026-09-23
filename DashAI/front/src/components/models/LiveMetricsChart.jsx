@@ -149,7 +149,12 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
 
     return () => {
       try {
-        ws.close();
+        if (ws.readyState === WebSocket.CONNECTING) {
+          ws.onerror = null;
+          ws.onopen = () => ws.close();
+        } else {
+          ws.close();
+        }
       } catch (e) {
         console.log("WebSocket already closed");
       }
