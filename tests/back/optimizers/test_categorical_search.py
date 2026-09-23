@@ -21,6 +21,8 @@ Each optimizer had its own way of not supporting this:
   ``float(raw_value)``, which would have set ``loss = 1.0`` on the final model.
 """
 
+import json
+
 import pytest
 
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
@@ -266,3 +268,147 @@ def test_hyperopt_refuses_an_unknown_dtype_rather_than_dropping_it(dataset):
             dataset,
             [(model, "loss", OPTIONS, "colour")],
         )
+
+
+THREE_OPTIONS = ["gini", "entropy", "log_loss"]
+
+GOAL_METRIC = {"name": "Accuracy", "metadata": {"maximize": True}}
+
+
+def _plot_trials(values):
+    return [{"params": params, "value": value} for params, value in values]
+
+
+def _plotted_params(artifact):
+    """The bar labels, read back out of the serialized figure."""
+    return set(json.loads(artifact.payload)["data"][0]["y"])
+
+
+def test_importance_plot_accepts_a_categorical_with_more_than_two_options():
+    """``for _, param, (low, high), dtype in self.parameters`` read every search
+    space as an interval, so a three-option enum raised "too many values to
+    unpack (expected 2)" and the whole run failed after the search had already
+    finished."""
+    model = DummyModel()
+    optimizer = OptunaOptimizer(n_trials=3, sampler="RandomSampler", pruner=None)
+    optimizer.parameters = [
+        (model, "criterion", THREE_OPTIONS, "categorical"),
+        (model, "max_depth", (2, 10), "integer"),
+    ]
+    trials = _plot_trials(
+        [
+            ({"criterion": "gini", "max_depth": 3}, 0.80),
+            ({"criterion": "entropy", "max_depth": 6}, 0.87),
+            ({"criterion": "log_loss", "max_depth": 9}, 0.85),
+        ]
+    )
+
+    artifact = optimizer.importance_plot(trials, GOAL_METRIC)
+
+    assert artifact.title == "Hyperparameter importance"
+    assert _plotted_params(artifact) == {"criterion", "max_depth"}
+
+
+def test_importance_plot_keeps_a_two_option_categorical_out_of_the_intervals():
+    """A boolean has exactly two options, so the unpack succeeded and the
+    parameter was then silently left out of ``distributions``, which optuna
+    refuses when the trial names it."""
+    model = DummyModel()
+    optimizer = OptunaOptimizer(n_trials=3, sampler="RandomSampler", pruner=None)
+    optimizer.parameters = [
+        (model, "bootstrap", [False, True], "categorical"),
+        (model, "C", (0.1, 10.0), "number"),
+    ]
+    trials = _plot_trials(
+        [
+            ({"bootstrap": False, "C": 0.5}, 0.70),
+            ({"bootstrap": True, "C": 2.0}, 0.90),
+            ({"bootstrap": True, "C": 8.0}, 0.88),
+        ]
+    )
+
+    artifact = optimizer.importance_plot(trials, GOAL_METRIC)
+
+    assert _plotted_params(artifact) == {"bootstrap", "C"}
+
+
+def test_contour_plot_pairs_only_the_numeric_parameters():
+    """One figure, one pair of axes, and an axis type is decided once for the
+    whole figure. The dropdown swapped `criterion` between x and y, so the
+    pair that put the options on the axis plotly had already typed `linear`
+    read every one of them as a missing value and left an empty grid, which
+    plotly.js crashed on with "Cannot read properties of undefined (reading
+    'length')". A contour also has nothing to say about a set of options:
+    there is no interpolating between `gini` and `entropy`.
+    """
+    model = DummyModel()
+    optimizer = OptunaOptimizer(n_trials=3, sampler="RandomSampler", pruner=None)
+    optimizer.parameters = [
+        (model, "criterion", THREE_OPTIONS, "categorical"),
+        (model, "max_depth", (2, 10), "integer"),
+        (model, "min_samples_split", (2, 5), "integer"),
+    ]
+    trials = _plot_trials(
+        [
+            ({"criterion": "gini", "max_depth": 3, "min_samples_split": 2}, 0.80),
+            ({"criterion": "entropy", "max_depth": 6, "min_samples_split": 3}, 0.87),
+            ({"criterion": "log_loss", "max_depth": 9, "min_samples_split": 4}, 0.85),
+        ]
+    )
+
+    figure = json.loads(optimizer.contour_plot(trials, GOAL_METRIC).payload)
+
+    names = {trace["name"] for trace in figure["data"]}
+    assert not any("criterion" in name for name in names), names
+    for trace in figure["data"]:
+        assert all(isinstance(value, (int, float)) for value in trace["x"]), trace
+        assert all(isinstance(value, (int, float)) for value in trace["y"]), trace
+
+
+def test_contour_plot_is_skipped_when_fewer_than_two_parameters_are_numeric():
+    """A contour needs two scales, and there are not two here."""
+    model = DummyModel()
+    optimizer = OptunaOptimizer(n_trials=3, sampler="RandomSampler", pruner=None)
+    optimizer.parameters = [
+        (model, "criterion", THREE_OPTIONS, "categorical"),
+        (model, "max_depth", (2, 10), "integer"),
+    ]
+    trials = _plot_trials(
+        [
+            ({"criterion": "gini", "max_depth": 3}, 0.80),
+            ({"criterion": "entropy", "max_depth": 6}, 0.87),
+        ]
+    )
+
+    assert optimizer.contour_plot(trials, GOAL_METRIC) is None
+
+
+def test_create_plots_leaves_the_contour_slot_empty_without_moving_importance():
+    """The four plots are written to four fixed columns of the run, by
+    position, so a skipped contour has to stay in place rather than let the
+    importance plot slide into its slot."""
+    model = DummyModel()
+    optimizer = OptunaOptimizer(n_trials=3, sampler="RandomSampler", pruner=None)
+    optimizer.parameters = [
+        (model, "criterion", THREE_OPTIONS, "categorical"),
+        (model, "max_depth", (2, 10), "integer"),
+    ]
+    trials = _plot_trials(
+        [
+            ({"criterion": "gini", "max_depth": 3}, 0.80),
+            ({"criterion": "entropy", "max_depth": 6}, 0.87),
+        ]
+    )
+
+    filenames, plots = optimizer.create_plots(
+        trials, run_id=7, n_params=2, goal_metric=GOAL_METRIC
+    )
+
+    assert filenames == [
+        "history_objective_plot_7.pickle",
+        "slice_plot_7.pickle",
+        "contour_plot_7.pickle",
+        "importance_plot_7.pickle",
+    ]
+    assert plots[2] is None
+    assert plots[3].title == "Hyperparameter importance"
