@@ -142,6 +142,7 @@ class DatasetJob(BaseJob):
         import json
         import os
         import shutil
+        import tempfile
         import uuid
         from pathlib import Path
 
@@ -285,9 +286,15 @@ class DatasetJob(BaseJob):
                             selected_dataloader,
                         )
                         hub_loader_params = params.get("dataloader_params", {})
+                        # Loaders write caches and extracted files into
+                        # temp_path; keep them out of the datafile, which is
+                        # listed to the user as the download's contents. The
+                        # cache backs the loaded dataset until it is saved, so
+                        # the ``finally`` below removes it afterwards.
+                        temp_dir = tempfile.mkdtemp(prefix="dashai_hub_import_")
                         new_dataset = dataloader.load_data(
                             filepath_or_buffer=file_path_hub,
-                            temp_path=hub_work_dir,
+                            temp_path=temp_dir,
                             params=hub_loader_params,
                             n_sample=None,
                         )

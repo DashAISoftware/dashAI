@@ -100,6 +100,7 @@ export const TourProvider = ({
     goToStep,
     nextStep,
     resumeAtStep,
+    markTourAsCompleted,
   } = useTour(tourKey);
 
   const tourData = tours[tourKey];
@@ -170,6 +171,7 @@ export const TourProvider = ({
     goToStep,
     nextStep,
     resumeAtStep,
+    markTourAsCompleted,
     setDisabled,
   };
 

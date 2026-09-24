@@ -106,5 +106,6 @@ export const useTour = (tourKey) => {
     goToStep,
     nextStep,
     resumeAtStep,
+    markTourAsCompleted,
   };
 };
