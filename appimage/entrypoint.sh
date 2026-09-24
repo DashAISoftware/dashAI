@@ -38,4 +38,11 @@ if [ "$(uname -m)" = "x86_64" ] && [ -r /proc/cpuinfo ] &&
     echo "warning may be a false alarm." >&2
 fi
 
+# The python-appimage wrapper sets sys.executable to whatever ARGV0 names, and
+# the AppImage runtime sets ARGV0 to the .AppImage file itself. Anything that
+# re-runs sys.executable as an interpreter (the spawned job worker, joblib
+# workers, "-m pip") would then land back in this entry point and die with
+# "No such option: -c". Point it at the bundled interpreter wrapper instead.
+export ARGV0="{{ python-executable }}"
+
 exec "{{ python-executable }}" "${APPDIR}/opt/python{{ python-version }}/bin/dashai" "$@"
