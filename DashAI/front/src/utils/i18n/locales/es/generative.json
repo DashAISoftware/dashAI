@@ -89,7 +89,7 @@
     "selectGenerativeTask": "Seleccione una tarea generativa para comenzar una nueva sesión",
     "selectModel": "Seleccione un modelo",
     "selectModelAndConfigureParameters": "Seleccione un modelo y configure sus parámetros.",
-    "selectModelCrumb": "Select Model",
+    "selectModelCrumb": "Seleccionar Modelo",
     "selectSessionToViewParameters": "Seleccione una sesión para ver y editar sus parámetros.",
     "selectSessionsToDelete": "Seleccionar sesiones para eliminar",
     "sessionDescription": "Descripción de la sesión",
