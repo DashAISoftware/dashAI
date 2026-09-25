@@ -304,7 +304,6 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
 from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
-from DashAI.back.models.pymc.bart_regression import BARTRegression
 from DashAI.back.models.RAG import RAGPipeline
 from DashAI.back.models.RAG.chunking_models import (
     CharacterChunkModel,
@@ -526,7 +525,6 @@ def get_initial_components():
         BertinTransformer,
         BetoTransformer,
         BayesianRidgeRegression,
-        BARTRegression,
         DebertaV3Transformer,
         DecisionTreeClassifier,
         DecisionTreeRegression,
