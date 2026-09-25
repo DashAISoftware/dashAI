@@ -3,7 +3,7 @@ const API_ORIGIN = (() => {
   try {
     return new URL(API_BASE).origin;
   } catch {
-    return API_BASE;
+    return "";
   }
 })();
 
