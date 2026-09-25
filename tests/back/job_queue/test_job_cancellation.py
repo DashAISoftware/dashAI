@@ -12,16 +12,21 @@ rather than milliseconds. That is the price of covering the one path that
 cannot be exercised in-process.
 """
 
+import os
 import sqlite3
 import threading
 import time
 import uuid
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+from huey.signals import SIGNAL_ERROR, SIGNAL_EXECUTING
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from DashAI.back.dependencies.database.models import Base
+from DashAI.back.dependencies.job_queues.base_job_queue import JobQueueError
 from DashAI.back.dependencies.job_queues.huey_job_queue import (
     HueyJobQueue,
     _JobCancelledError,
@@ -73,6 +78,40 @@ class QuickJob(CancellableJob):
 
     def get_job_name(self) -> str:
         return "Quick Job"
+
+
+class MarkingJob(CancellableJob):
+    """Job that leaves marker files where its entity status would be written.
+
+    Flags on the job object would not do: the cancel endpoint and the consumer
+    each work on their own copy of the job, so the markers go to disk.
+    """
+
+    def _mark(self, name: str) -> None:
+        Path(self.kwargs["marker_dir"], name).touch()
+
+    def run(self):
+        self._mark("ran")
+        return super().run()
+
+    def on_cancel(self) -> None:
+        self._mark("cancel")
+
+    def set_status_as_error(self) -> None:
+        self._mark("error")
+
+
+class QuickMarkingJob(MarkingJob):
+    """Marking job that returns immediately."""
+
+    SLEEP_SECONDS = 0
+
+
+class CrashingJob(MarkingJob):
+    """Marking job whose worker dies without anyone cancelling it."""
+
+    def run(self):
+        os._exit(3)
 
 
 @pytest.fixture(name="di_session_factory")
@@ -249,3 +288,168 @@ def test_worker_respawns_after_a_cancel(queue: HueyJobQueue):
     assert result == "completed"
     assert queue._worker_proc.is_alive()
     assert queue._worker_proc.pid != killed_pid, "the dead worker was reused"
+
+
+def _simulate_dequeue(queue: HueyJobQueue, huey_id: str, status: str) -> None:
+    """Take the task out of the Huey table the way the consumer does."""
+    with sqlite3.connect(queue.db_path) as conn:
+        conn.execute("DELETE FROM task")
+        conn.execute("UPDATE task_copy SET status = ? WHERE id = ?", (status, huey_id))
+
+
+def test_cancel_running_job_marks_its_entity_as_error(
+    queue: HueyJobQueue, tmp_path: Path
+):
+    """A killed job must leave its entity in error, whatever the entity is."""
+    huey_id = "job-running-entity"
+    _register_started(queue, huey_id)
+    job = MarkingJob(marker_dir=str(tmp_path))
+
+    consumer = _ConsumerThread(queue, job, huey_id)
+    consumer.start()
+    _wait_for_worker_pid(queue, huey_id)
+
+    assert queue.cancel(huey_id) is True
+    consumer.join(timeout=CANCEL_TIMEOUT)
+
+    assert isinstance(consumer.error, _JobCancelledError)
+    assert (tmp_path / "error").exists(), "the entity would stay 'started'"
+    assert (tmp_path / "cancel").exists()
+
+
+def test_cancel_of_a_dequeued_job_marks_the_entity_before_returning(
+    queue: HueyJobQueue, tmp_path: Path
+):
+    """The entity must already be in error when the cancel request returns."""
+    huey_id = queue.put(MarkingJob(marker_dir=str(tmp_path))).id
+    _simulate_dequeue(queue, huey_id, "started")
+
+    assert queue.cancel(huey_id) is True
+
+    assert _column(queue, huey_id, "status") == "cancelled"
+    assert (tmp_path / "error").exists()
+
+
+def test_cancel_while_the_worker_spawns_stops_the_job(
+    queue: HueyJobQueue, tmp_path: Path
+):
+    """A cancel landing before the PID is recorded must keep the job from running."""
+    huey_id = "job-spawning"
+    _register_started(queue, huey_id)
+
+    assert queue.cancel(huey_id) is True
+    assert _column(queue, huey_id, "status") == "cancelled"
+
+    with pytest.raises(_JobCancelledError):
+        queue._run_in_subprocess(QuickMarkingJob(marker_dir=str(tmp_path)), huey_id)
+
+    assert not (tmp_path / "ran").exists(), "the cancelled job still ran"
+    assert (tmp_path / "error").exists()
+    assert _column(queue, huey_id, "pid") is None
+
+
+def test_cancel_before_start_is_not_overwritten_by_the_start_signal(
+    queue: HueyJobQueue, tmp_path: Path
+):
+    """A job cancelled between dequeue and start must never run."""
+    huey_id = queue.put(QuickMarkingJob(marker_dir=str(tmp_path))).id
+    _simulate_dequeue(queue, huey_id, "not_started")
+
+    assert queue.cancel(huey_id) is True
+    queue.huey._emit(SIGNAL_EXECUTING, SimpleNamespace(id=huey_id))
+    assert _column(queue, huey_id, "status") == "cancelled"
+
+    with pytest.raises(_JobCancelledError):
+        queue._run_job(QuickMarkingJob(marker_dir=str(tmp_path)), huey_id)
+
+    assert not (tmp_path / "ran").exists()
+    assert (tmp_path / "error").exists()
+    assert (tmp_path / "cancel").exists()
+
+
+def test_cancel_queued_job_marks_the_entity_and_cleans_up(
+    queue: HueyJobQueue, tmp_path: Path
+):
+    """A queued cancel must end like a running one: entity in error, cleaned up."""
+    huey_id = queue.put(QuickMarkingJob(marker_dir=str(tmp_path))).id
+
+    assert queue.cancel(huey_id) is True
+
+    assert _column(queue, huey_id, "status") == "cancelled"
+    assert (tmp_path / "error").exists()
+    assert (tmp_path / "cancel").exists(), "partial artifacts would leak"
+
+
+def test_worker_crash_marks_the_entity_as_error(queue: HueyJobQueue, tmp_path: Path):
+    """A worker that dies on its own must also leave the entity in error."""
+    huey_id = "job-crashing"
+    _register_started(queue, huey_id)
+
+    with pytest.raises(JobQueueError):
+        queue._run_in_subprocess(CrashingJob(marker_dir=str(tmp_path)), huey_id)
+
+    assert (tmp_path / "error").exists()
+
+
+def test_error_signal_keeps_a_cancel_but_reports_the_change(queue: HueyJobQueue):
+    """SIGNAL_ERROR after a cancel must keep the status and refresh last_update."""
+    huey_id = "job-cancelled"
+    with sqlite3.connect(queue.db_path) as conn:
+        conn.execute(
+            "INSERT INTO task_copy (id, task_type, job_name, status, last_update)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (huey_id, "QuickJob", "Quick Job", "cancelled", "2000-01-01 00:00:00"),
+        )
+
+    queue.huey._emit(
+        SIGNAL_ERROR, SimpleNamespace(id=huey_id), _JobCancelledError("cancelled")
+    )
+
+    assert _column(queue, huey_id, "status") == "cancelled"
+    assert _column(queue, huey_id, "last_update") > "2000-01-01 00:00:00"
+
+
+def test_consumer_does_not_mark_the_entity_again_after_the_cancel_did(
+    queue: HueyJobQueue, tmp_path: Path
+):
+    """A late second mark would clobber a retry the user started meanwhile."""
+    huey_id = queue.put(QuickMarkingJob(marker_dir=str(tmp_path))).id
+    _simulate_dequeue(queue, huey_id, "started")
+
+    assert queue.cancel(huey_id) is True
+    assert (tmp_path / "error").exists()
+    (tmp_path / "error").unlink()
+
+    with pytest.raises(_JobCancelledError):
+        queue._run_job(QuickMarkingJob(marker_dir=str(tmp_path)), huey_id)
+
+    assert not (tmp_path / "error").exists()
+    assert (tmp_path / "cancel").exists(), "the cleanup must still run"
+
+
+def test_progress_does_not_surface_a_cancel(queue: HueyJobQueue):
+    """A worker still reporting progress must not bump a cancelled row."""
+    huey_id = "job-cancelled-progress"
+    with sqlite3.connect(queue.db_path) as conn:
+        conn.execute(
+            "INSERT INTO task_copy (id, task_type, job_name, status, last_update)"
+            " VALUES (?, ?, ?, ?, ?)",
+            (huey_id, "QuickJob", "Quick Job", "cancelled", "2000-01-01 00:00:00"),
+        )
+
+    queue.report_progress(huey_id, 50.0, "halfway")
+
+    assert _column(queue, huey_id, "last_update") == "2000-01-01 00:00:00"
+    assert _column(queue, huey_id, "progress") is None
+
+
+def test_restart_closes_jobs_left_started(queue: HueyJobQueue, tmp_path: Path):
+    """A job that died with the previous consumer must not stay in progress."""
+    huey_id = queue.put(MarkingJob(marker_dir=str(tmp_path))).id
+    _simulate_dequeue(queue, huey_id, "started")
+
+    assert queue.reconcile_interrupted_jobs() == 1
+
+    assert _column(queue, huey_id, "status") == "killed"
+    assert (tmp_path / "error").exists()
+    assert queue.is_empty()

@@ -140,31 +140,52 @@ def _worker_loop(in_q, out_q) -> None:
             out_q.put(_payload)
 
 
-def _terminate_pid(pid: int, grace_seconds: int = 30) -> None:
-    """Terminate a process by PID, escalating to SIGKILL after grace_seconds.
+def _signal_terminate(pid: int) -> bool:
+    """Send the terminate signal to a process without waiting for it to exit.
 
-    On Windows, os.kill sends TerminateProcess (immediate); grace_seconds ignored.
+    On Windows, os.kill sends TerminateProcess, which ends the process at once.
+
+    Parameters
+    ----------
+    pid : int
+        The process id.
+
+    Returns
+    -------
+    bool
+        False when the process was already gone, True otherwise.
     """
     try:
-        if sys.platform == "win32":
-            os.kill(pid, signal.SIGTERM)  # == TerminateProcess on Windows
-            return
-        # POSIX: SIGTERM then wait, escalate to SIGKILL if needed
-        try:
-            os.kill(pid, signal.SIGTERM)
-        except ProcessLookupError:
-            return  # Already gone
-        deadline = time.monotonic() + grace_seconds
-        while time.monotonic() < deadline:
-            try:
-                os.kill(pid, 0)  # Probe — raises ProcessLookupError if dead
-            except ProcessLookupError:
-                return
-            time.sleep(0.5)
-        with suppress(ProcessLookupError):
-            os.kill(pid, signal.SIGKILL)
+        os.kill(pid, signal.SIGTERM)
     except ProcessLookupError:
-        pass
+        return False
+    return True
+
+
+def _await_exit(pid: int, grace_seconds: int = 30) -> None:
+    """Wait for a signalled process to exit, escalating to SIGKILL if it does not.
+
+    On Windows the terminate signal is immediate, so there is nothing to wait
+    for and grace_seconds is ignored.
+
+    Parameters
+    ----------
+    pid : int
+        The process id, already sent the terminate signal.
+    grace_seconds : int, optional
+        How long to wait before sending SIGKILL, by default 30.
+    """
+    if sys.platform == "win32":
+        return
+    deadline = time.monotonic() + grace_seconds
+    while time.monotonic() < deadline:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return
+        time.sleep(0.5)
+    with suppress(ProcessLookupError):
+        os.kill(pid, signal.SIGKILL)
 
 
 class DillSerializer(BaseSerializer):
@@ -201,23 +222,176 @@ class HueyJobQueue(BaseJobQueue):
         @self.huey.task(context=True, priority=0)
         def _execute_base_job(job: BaseJob, task=None):
             job.kwargs["huey_id"] = task.id
-            # Run inline for test/immediate mode and for opt-out jobs (ISOLATED=False)
-            if self.huey.immediate or not getattr(job, "ISOLATED", True):
-                result = job.run()
-                # Wrap coroutines produced by async run() methods (e.g. PipelineJob)
-                if asyncio.iscoroutine(result):
-                    result = asyncio.get_event_loop().run_until_complete(result)
-                # If the job mutated the consumer's ComponentRegistry (e.g.
-                # SyncComponentsJob), the worker's DI container is now stale.
-                # Terminate it so _ensure_worker respawns a fresh one (fix #7).
-                if getattr(job, "RESETS_WORKER", False):
-                    with suppress(Exception):
-                        if self._worker_proc is not None:
-                            self._worker_proc.terminate()
-                return result
-            return self._run_in_subprocess(job, task.id)
+            try:
+                return self._run_job(job, task.id)
+            except _JobCancelledError:
+                raise
+            except Exception:
+                with suppress(Exception):
+                    job.set_status_as_error()
+                raise
 
         self._execute = _execute_base_job
+
+    def _run_job(self, job: BaseJob, huey_id: str):
+        """Run *job* inline or in the persistent worker, honouring a cancel.
+
+        A cancel that lands after the consumer dequeued the task but before it
+        started running only flips the ``task_copy`` status, so it is checked
+        here before any work is done. Jobs that run inline cannot be killed,
+        so a cancel issued while they run is honoured once they return.
+
+        Parameters
+        ----------
+        job : BaseJob
+            The job to run.
+        huey_id : str
+            The Huey task id of the job.
+
+        Returns
+        -------
+        Any
+            Whatever the job's ``run`` method returns.
+
+        Raises
+        ------
+        _JobCancelledError
+            If the job was cancelled before it started, or while it ran.
+        """
+        if self._cancel_requested(huey_id):
+            self._finalize_interrupted(job, huey_id)
+            raise _JobCancelledError(f"Job {huey_id} was cancelled before it started")
+
+        # Run inline for test/immediate mode and for opt-out jobs (ISOLATED=False)
+        if self.huey.immediate or not getattr(job, "ISOLATED", True):
+            result = job.run()
+            # Wrap coroutines produced by async run() methods (e.g. PipelineJob)
+            if asyncio.iscoroutine(result):
+                result = asyncio.get_event_loop().run_until_complete(result)
+            # If the job mutated the consumer's ComponentRegistry (e.g.
+            # SyncComponentsJob), the worker's DI container is now stale.
+            # Terminate it so _ensure_worker respawns a fresh one (fix #7).
+            if getattr(job, "RESETS_WORKER", False):
+                with suppress(Exception):
+                    if self._worker_proc is not None:
+                        self._worker_proc.terminate()
+            if self._cancel_requested(huey_id):
+                self._finalize_interrupted(job, huey_id)
+                raise _JobCancelledError(f"Job {huey_id} was cancelled while running")
+            return result
+        return self._run_in_subprocess(job, huey_id)
+
+    def _cancel_requested(self, huey_id: str) -> bool:
+        """Tell whether the job with *huey_id* was cancelled or killed.
+
+        Parameters
+        ----------
+        huey_id : str
+            The Huey task id of the job.
+
+        Returns
+        -------
+        bool
+            True when its ``task_copy`` status is 'cancelled' or 'killed'.
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                row = conn.execute(
+                    "SELECT status FROM task_copy WHERE id = ?", (huey_id,)
+                ).fetchone()
+        except Exception:
+            return False
+        return row is not None and row[0] in ("cancelled", "killed")
+
+    def _finalize_interrupted(self, job: BaseJob, huey_id: str) -> None:
+        """Leave the entity of a cancelled, killed or crashed job in error.
+
+        The job's own ``set_status_as_error`` resolves its entity from its
+        kwargs, so it works for every job type, unlike the ``huey_id`` lookup
+        of ``_mark_entity_error``, which is kept as a fallback. Both are
+        skipped when the cancel request already marked the entity, because by
+        now the user may have retried it and a late mark would clobber the
+        retry. The job's ``on_cancel`` hook then removes partially written
+        artifacts. Last, ``last_update`` is refreshed so the frontend polling
+        channel reports the job again once its entity already shows the error.
+
+        Parameters
+        ----------
+        job : BaseJob
+            The cancelled, killed or crashed job.
+        huey_id : str
+            The Huey task id of the job.
+        """
+        if not self._entity_marked(huey_id):
+            with suppress(Exception):
+                job.set_status_as_error()
+            self._mark_entity_error(huey_id)
+        with suppress(Exception):
+            job.on_cancel()
+        self._touch(huey_id)
+
+    def _entity_marked(self, huey_id: str) -> bool:
+        """Tell whether a cancel request already left the job's entity in error.
+
+        Parameters
+        ----------
+        huey_id : str
+            The Huey task id of the job.
+
+        Returns
+        -------
+        bool
+            True when ``task_copy.entity_marked`` is set for the job.
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                row = conn.execute(
+                    "SELECT entity_marked FROM task_copy WHERE id = ?", (huey_id,)
+                ).fetchone()
+        except Exception:
+            return False
+        return bool(row and row[0])
+
+    def _load_job(self, huey_id: str) -> BaseJob | None:
+        """Rebuild the job that was stored in ``task_copy`` when it was enqueued.
+
+        Parameters
+        ----------
+        huey_id : str
+            The Huey task id of the job.
+
+        Returns
+        -------
+        BaseJob or None
+            The job, or None when the row is gone, predates the ``job_blob``
+            column or holds a job that could not be serialized.
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                row = conn.execute(
+                    "SELECT job_blob FROM task_copy WHERE id = ?", (huey_id,)
+                ).fetchone()
+            if row is None or row[0] is None:
+                return None
+            return self.serializer._deserialize(row[0])
+        except Exception:
+            log.exception(f"Could not load the stored job for huey_id={huey_id}")
+            return None
+
+    def _touch(self, huey_id: str) -> None:
+        """Refresh ``last_update`` of a job so it surfaces in ``changes_since``.
+
+        Parameters
+        ----------
+        huey_id : str
+            The Huey task id of the job.
+        """
+        with suppress(Exception), sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                "UPDATE task_copy SET "
+                "last_update = STRFTIME('%Y-%m-%d %H:%M:%f','now') WHERE id = ?",
+                (huey_id,),
+            )
 
     def _ensure_worker(self) -> None:
         """Ensure the persistent worker process is alive, spawning one if needed.
@@ -276,6 +450,34 @@ class HueyJobQueue(BaseJobQueue):
         If the worker is killed while a job is running, ``_JobCancelled`` is raised
         so that Huey fires SIGNAL_ERROR while the on_error guard keeps the terminal
         status (cancelled/killed) intact.
+
+        The PID is only recorded while the job is still in ``task_copy`` and not
+        cancelled, and a cancel reads the PID only after marking the job, so a
+        cancel that lands while the worker is still spawning either stops the
+        job here, before it is sent, or finds the PID and kills the worker.
+        Whenever the worker dies, the job's entity is left in error before any
+        exception is raised. When a cancel arrives while the result comes back,
+        the cancel still wins, and the worker is terminated here, because the
+        cancel request is about to kill it and it must not take the next job.
+
+        Parameters
+        ----------
+        job : BaseJob
+            The job to run.
+        huey_id : str
+            The Huey task id of the job.
+
+        Returns
+        -------
+        Any
+            Whatever the job's ``run`` method returns.
+
+        Raises
+        ------
+        _JobCancelledError
+            If the job was cancelled or killed.
+        JobQueueError
+            If the worker could not run the job or died on its own.
         """
         import queue as _q
 
@@ -293,52 +495,55 @@ class HueyJobQueue(BaseJobQueue):
         out_q = self._worker_out_q
 
         # Record PID so the cancel endpoint can kill the right process
+        pid_recorded = None
         try:
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute(
-                    "UPDATE task_copy SET pid=? WHERE id=?",
+                cur = conn.execute(
+                    "UPDATE task_copy SET pid=? WHERE id=?"
+                    " AND status NOT IN ('cancelled', 'killed')",
                     (proc.pid, huey_id),
                 )
+                pid_recorded = cur.rowcount > 0
         except Exception:
             pass
 
-        # Send the job to the worker
-        in_q.put(job_bytes)
+        if pid_recorded is False:
+            self._finalize_interrupted(job, huey_id)
+            raise _JobCancelledError(f"Job {huey_id} was cancelled before it started")
 
-        # Poll for result; detect external kill via proc.is_alive()
         result_bytes = None
         killed_externally = False
-        while True:
-            try:
-                result_bytes = out_q.get(timeout=0.5)
-                break
-            except _q.Empty:
-                if not proc.is_alive():
-                    # Worker died — do one final drain before declaring killed.
-                    # Closes the race where the result landed on the queue in
-                    # the same window as the external kill.
-                    try:
-                        result_bytes = out_q.get(timeout=0.1)
-                    except _q.Empty:
-                        killed_externally = True
-                    break
-
-        # Clear PID now that the job is done (or killed)
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute("UPDATE task_copy SET pid=NULL WHERE id=?", (huey_id,))
-        except Exception:
-            pass
+            # Send the job to the worker
+            in_q.put(job_bytes)
+
+            # Poll for result; detect external kill via proc.is_alive()
+            while True:
+                try:
+                    result_bytes = out_q.get(timeout=0.5)
+                    break
+                except _q.Empty:
+                    if not proc.is_alive():
+                        # Worker died, so do one final drain before declaring killed.
+                        # Closes the race where the result landed on the queue in
+                        # the same window as the external kill.
+                        try:
+                            result_bytes = out_q.get(timeout=0.1)
+                        except _q.Empty:
+                            killed_externally = True
+                        break
+        finally:
+            # Clear PID now that the job is done (or killed)
+            try:
+                with sqlite3.connect(self.db_path) as conn:
+                    conn.execute("UPDATE task_copy SET pid=NULL WHERE id=?", (huey_id,))
+            except Exception:
+                pass
 
         if killed_externally:
-            current_status = ""
-            with suppress(Exception):
-                current_status = self.status(huey_id)["status"]
-            if current_status in ("cancelled", "killed"):
-                with suppress(Exception):
-                    job.on_cancel()
-                self._mark_entity_error(huey_id)
-                raise _JobCancelledError(f"Job {huey_id} was {current_status}")
+            self._finalize_interrupted(job, huey_id)
+            if self._cancel_requested(huey_id):
+                raise _JobCancelledError(f"Job {huey_id} was cancelled or killed")
             raise JobQueueError(
                 f"Worker process exited unexpectedly (code {proc.exitcode})"
             )
@@ -348,6 +553,13 @@ class HueyJobQueue(BaseJobQueue):
         except Exception as e:
             raise JobQueueError(f"Failed to deserialise worker result: {e}") from e
 
+        if self._cancel_requested(huey_id):
+            with suppress(Exception):
+                proc.terminate()
+                proc.join(timeout=5)
+            self._finalize_interrupted(job, huey_id)
+            raise _JobCancelledError(f"Job {huey_id} was cancelled while finishing")
+
         if outcome.get("ok"):
             return outcome.get("result")
         raise outcome.get("exc", JobQueueError("Unknown worker error"))
@@ -356,9 +568,15 @@ class HueyJobQueue(BaseJobQueue):
     def _mark_entity_error(huey_id: str) -> None:
         """Set the DB entity associated with *huey_id* to error status.
 
-        Called from the consumer process after the worker subprocess is killed,
-        because the job's own error-handling code never runs in that case.
-        Failures are logged but never re-raised — entity marking is best-effort.
+        Fallback for ``_finalize_interrupted`` and the watchdog, which covers
+        only the entities that record the id of the job that produces them.
+        Failures are logged and never raised again, because entity marking is
+        best effort.
+
+        Parameters
+        ----------
+        huey_id : str
+            The Huey task id of the job.
         """
         try:
             from kink import di
@@ -369,6 +587,8 @@ class HueyJobQueue(BaseJobQueue):
                 Explorer,
                 GlobalExplainer,
                 LocalExplainer,
+                Prediction,
+                Report,
                 Run,
             )
 
@@ -381,6 +601,8 @@ class HueyJobQueue(BaseJobQueue):
                     GlobalExplainer,
                     LocalExplainer,
                     Converter,
+                    Prediction,
+                    Report,
                 ):
                     entity = (
                         db.query(model_cls).filter(model_cls.huey_id == huey_id).first()
@@ -445,10 +667,15 @@ class HueyJobQueue(BaseJobQueue):
 
     def _register_signals(self):
         """Attach Huey lifecycle signal handlers to keep 'task_copy' in sync:
-        - SIGNAL_ENQUEUED: insert or replace a row with status `not_started`
-        - SIGNAL_EXECUTING: update the row to status `started`
-        - SIGNAL_COMPLETE: update the row to status `finished`
-        - SIGNAL_ERROR: update the row to status `error` and store the exception
+        - SIGNAL_ENQUEUED: insert or replace a row with status `not_started`,
+          keeping the serialized job so a cancel can reach its entity later
+        - SIGNAL_EXECUTING: update the row to status `started`, unless it was
+          already cancelled or killed
+        - SIGNAL_COMPLETE: update the row to status `finished`, unless it was
+          cancelled or killed
+        - SIGNAL_ERROR: update the row to status `error` and store the exception,
+          unless it was cancelled or killed. The row is stamped either way,
+          because the job's entity was just marked as error.
         All writes stamp last_update with microsecond precision to avoid same-second
         conflicts.
         """
@@ -470,13 +697,17 @@ class HueyJobQueue(BaseJobQueue):
             except Exception:
                 pass
 
+            job_blob = None
+            with suppress(Exception):
+                job_blob = self.serializer._serialize(task.args[0])
+
             exec_sql(
                 (
                     "INSERT OR REPLACE INTO task_copy "
-                    "(id, task_type, job_name, status, last_update) "
-                    f"VALUES (?, ?, ?, ?, {NOW_MICRO})"
+                    "(id, task_type, job_name, status, job_blob, last_update) "
+                    f"VALUES (?, ?, ?, ?, ?, {NOW_MICRO})"
                 ),
-                (task.id, job_type, job_name, "not_started"),
+                (task.id, job_type, job_name, "not_started", job_blob),
             )
 
         @self.huey.signal(SIGNAL_EXECUTING)
@@ -485,7 +716,7 @@ class HueyJobQueue(BaseJobQueue):
                 (
                     "UPDATE task_copy SET status = ?, "
                     f"last_update = {NOW_MICRO} "
-                    "WHERE id = ?"
+                    "WHERE id = ? AND status NOT IN ('cancelled', 'killed')"
                 ),
                 ("started", task.id),
             )
@@ -507,12 +738,15 @@ class HueyJobQueue(BaseJobQueue):
             # Do not overwrite terminal states set by the cancel/watchdog path
             exec_sql(
                 (
-                    "UPDATE task_copy SET status = ?, "
-                    f"last_update = {NOW_MICRO}, "
-                    "error_msg = ? "
-                    "WHERE id = ? AND status NOT IN ('cancelled', 'killed')"
+                    "UPDATE task_copy SET "
+                    "error_msg = CASE WHEN status IN ('cancelled', 'killed') "
+                    "THEN error_msg ELSE ? END, "
+                    "status = CASE WHEN status IN ('cancelled', 'killed') "
+                    "THEN status ELSE ? END, "
+                    f"last_update = {NOW_MICRO} "
+                    "WHERE id = ?"
                 ),
-                ("error", str(exc), task.id),
+                (str(exc), "error", task.id),
             )
 
     def _enable_wal(self):
@@ -538,6 +772,10 @@ class HueyJobQueue(BaseJobQueue):
         - pid (INTEGER): OS PID of the worker subprocess while running; NULL otherwise
         - progress (REAL): optional completion percentage in the range 0-100
         - progress_message (TEXT): optional short description of the current phase
+        - job_blob (BLOB): the serialized job, so a cancel issued after the
+          consumer dequeued it can still mark its entity as error
+        - entity_marked (INTEGER): 1 once a cancel request marked the job's
+          entity as error, so the consumer does not mark it a second time
         """
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
@@ -551,7 +789,9 @@ class HueyJobQueue(BaseJobQueue):
                     error_msg TEXT,
                     pid INTEGER,
                     progress REAL,
-                    progress_message TEXT
+                    progress_message TEXT,
+                    job_blob BLOB,
+                    entity_marked INTEGER NOT NULL DEFAULT 0
                 )
                 """)
             # Idempotent migration: add pid column to pre-existing databases
@@ -561,6 +801,13 @@ class HueyJobQueue(BaseJobQueue):
             }
             if "pid" not in existing:
                 conn.execute("ALTER TABLE task_copy ADD COLUMN pid INTEGER")
+            if "job_blob" not in existing:
+                conn.execute("ALTER TABLE task_copy ADD COLUMN job_blob BLOB")
+            if "entity_marked" not in existing:
+                conn.execute(
+                    "ALTER TABLE task_copy ADD COLUMN "
+                    "entity_marked INTEGER NOT NULL DEFAULT 0"
+                )
             conn.execute(
                 (
                     "CREATE INDEX IF NOT EXISTS idx_task_copy_last_update "
@@ -626,14 +873,17 @@ class HueyJobQueue(BaseJobQueue):
         Notes
         -----
         This also refreshes 'last_update' so the change surfaces through
-        'changes_since' and the frontend polling channel.
+        'changes_since' and the frontend polling channel. A cancelled or killed
+        job is left alone: its worker may still report progress until it is
+        killed, and that must not surface the cancel before the job's entity
+        is marked as error.
         """
         with sqlite3.connect(self.db_path) as conn:
             conn.execute(
                 (
                     "UPDATE task_copy SET progress = ?, progress_message = ?, "
                     "last_update = STRFTIME('%Y-%m-%d %H:%M:%f','now') "
-                    "WHERE id = ?"
+                    "WHERE id = ? AND status NOT IN ('cancelled', 'killed')"
                 ),
                 (progress, message, str(job_id)),
             )
@@ -774,25 +1024,41 @@ class HueyJobQueue(BaseJobQueue):
     def cancel(self, job_id: str, *, reason: str = "cancelled") -> bool:
         """Cancel the job with *job_id*, regardless of whether it has started.
 
-        - Not-started jobs: removed from the Huey task table and marked cancelled
-          in task_copy (entity marked as error via the job's own method).
+        - Jobs that have not started: removed from the Huey task table and
+          marked cancelled in task_copy (entity marked as error via the job's
+          own method).
         - Running jobs: task_copy status is set to *reason* first (so that
-          SIGNAL_ERROR cannot overwrite it), then the worker subprocess is killed.
+          SIGNAL_ERROR cannot overwrite it), then the worker subprocess is killed
+          and the entity is marked as error.
+        - Jobs in a terminal status are dismissed, removing them from the list.
 
-        Returns True if a job was found and acted on, False otherwise.
+        In both cancel cases the change only surfaces through ``changes_since``
+        once the entity is already in error, so a listener that reloads the
+        entity on that change never reads a stale status.
+
+        Parameters
+        ----------
+        job_id : str
+            The Huey task id of the job.
+        reason : str, optional
+            Status written for a running job, by default 'cancelled'.
+
+        Returns
+        -------
+        bool
+            True if a job was found and acted on, False otherwise.
         """
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
                 cur = conn.cursor()
-                cur.execute("SELECT status, pid FROM task_copy WHERE id = ?", (job_id,))
+                cur.execute("SELECT status FROM task_copy WHERE id = ?", (job_id,))
                 row = cur.fetchone()
 
             if not row:
                 return False
 
             current_status = row["status"]
-            pid = row["pid"]
 
             # ── Already fully gone — nothing to do ───────────────────────────
             if current_status == "deleted":
@@ -809,7 +1075,7 @@ class HueyJobQueue(BaseJobQueue):
 
             # ── Running (started) ─────────────────────────────────────────────
             if current_status == "started":
-                return self._cancel_running(job_id, pid, reason)
+                return self._cancel_running(job_id, reason)
 
             return False
 
@@ -818,7 +1084,23 @@ class HueyJobQueue(BaseJobQueue):
             return False
 
     def _cancel_queued(self, job_id: str) -> bool:
-        """Remove a not-yet-started job from the Huey task table."""
+        """Remove a job that has not started yet from the Huey task table.
+
+        When the consumer already took the task out of the table, the job is
+        about to run, so it is cancelled like a running one instead.
+
+        Parameters
+        ----------
+        job_id : str
+            The Huey task id of the job.
+
+        Returns
+        -------
+        bool
+            True if the job was removed or cancelled, False otherwise.
+        """
+        removed = False
+        job_obj = None
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.row_factory = sqlite3.Row
@@ -828,7 +1110,6 @@ class HueyJobQueue(BaseJobQueue):
                     (self.huey.storage.name,),
                 )
                 numeric_id = None
-                job_obj = None
                 for row in cur.fetchall():
                     try:
                         task_data = self.serializer._deserialize(row["data"])
@@ -841,48 +1122,103 @@ class HueyJobQueue(BaseJobQueue):
 
                 if numeric_id is not None:
                     cur.execute("DELETE FROM task WHERE id = ?", (numeric_id,))
-                    with suppress(Exception):
-                        job_obj.set_status_as_error()
+                    removed = cur.rowcount > 0
 
-                NOW_MICRO = "STRFTIME('%Y-%m-%d %H:%M:%f','now')"
-                _terminal = "('cancelled','killed','finished','error')"
-                cur.execute(
-                    f"UPDATE task_copy SET status='cancelled', last_update={NOW_MICRO}"
-                    f" WHERE id = ? AND status NOT IN {_terminal}",
-                    (job_id,),
-                )
-                return numeric_id is not None or cur.rowcount > 0
+                if removed:
+                    _terminal = "('cancelled','killed','finished','error')"
+                    cur.execute(
+                        "UPDATE task_copy SET status='cancelled'"
+                        f" WHERE id = ? AND status NOT IN {_terminal}",
+                        (job_id,),
+                    )
         except Exception as e:
             log.exception(f"Error cancelling queued job {job_id}: {e}")
             return False
 
-    def _cancel_running(self, job_id: str, pid, reason: str) -> bool:
-        """Kill the worker subprocess for a running job."""
-        NOW_MICRO = "STRFTIME('%Y-%m-%d %H:%M:%f','now')"
+        if not removed:
+            return self._cancel_running(job_id, "cancelled")
+
+        self._finalize_interrupted(job_obj, job_id)
+        return True
+
+    def _cancel_running(self, job_id: str, reason: str) -> bool:
+        """Kill the worker subprocess for a running job.
+
+        The PID is read after the status is marked. The consumer only records
+        a PID while the job is not cancelled, so either it sees the mark and
+        never sends the job, or this read sees its PID and kills the worker.
+
+        The worker is signalled first, so it can no longer write to the
+        entity, and the entity is then marked as error from the job stored at
+        enqueue. It is therefore already in error when the cancel shows up in
+        ``changes_since`` and when this returns. The consumer only cleans up
+        once it sees the worker die. On POSIX the wait for the worker to exit
+        comes last.
+
+        Parameters
+        ----------
+        job_id : str
+            The Huey task id of the job.
+        reason : str
+            Status written to task_copy, 'cancelled' or 'killed'.
+
+        Returns
+        -------
+        bool
+            True if the job was marked, False when it already ended.
+        """
         # Mark status BEFORE killing so SIGNAL_ERROR guard preserves it.
-        # Only kill if the UPDATE matched — if the job already finished, the
+        # Only kill if the UPDATE matched. If the job already finished, the
         # stale PID belongs to the next job's worker.
         marked = False
+        pid = None
         _terminal = "('cancelled','killed','finished','error')"
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cur = conn.execute(
-                    f"UPDATE task_copy SET status=?, last_update={NOW_MICRO}"
+                    "UPDATE task_copy SET status=?"
                     f" WHERE id=? AND status NOT IN {_terminal}",
                     (reason, job_id),
                 )
                 marked = cur.rowcount > 0
+            if marked:
+                with sqlite3.connect(self.db_path) as conn:
+                    row = conn.execute(
+                        "SELECT pid FROM task_copy WHERE id=?", (job_id,)
+                    ).fetchone()
+                pid = row[0] if row else None
         except Exception as e:
             log.exception(f"Failed to mark task_copy for {job_id}: {e}")
+            return marked
+
+        if not marked:
             return False
 
-        if marked and pid is not None:
+        signalled = False
+        if pid is not None:
             try:
-                _terminate_pid(int(pid), grace_seconds=30)
+                signalled = _signal_terminate(int(pid))
             except Exception as e:
                 log.warning(f"Could not terminate PID {pid} for job {job_id}: {e}")
 
-        return marked
+        job = self._load_job(job_id)
+        if job is not None:
+            with suppress(Exception):
+                job.set_status_as_error()
+            with suppress(Exception), sqlite3.connect(self.db_path) as conn:
+                conn.execute(
+                    "UPDATE task_copy SET entity_marked = 1, "
+                    "last_update = STRFTIME('%Y-%m-%d %H:%M:%f','now') WHERE id = ?",
+                    (job_id,),
+                )
+
+        if signalled:
+            try:
+                _await_exit(int(pid), grace_seconds=30)
+            except Exception as e:
+                log.warning(f"PID {pid} of job {job_id} did not exit: {e}")
+
+        return True
 
     def _dismiss(self, job_id: str) -> bool:
         """Remove a terminal job from task_copy so it disappears from the UI."""
@@ -946,6 +1282,50 @@ class HueyJobQueue(BaseJobQueue):
         except Exception as e:
             log.exception(f"Error deleting job: {e}")
             return False
+
+    def reconcile_interrupted_jobs(self) -> int:
+        """Close the jobs a previous consumer left running.
+
+        Called when the consumer starts, before it runs anything. With a single
+        consumer no job can be running yet, so every row still 'started'
+        belongs to a job that died with the previous consumer, for example
+        because the application was closed. Left alone, its entity would stay
+        in progress forever and the queue would never look empty. Each such
+        row is marked 'killed' and its entity is left in error.
+
+        Returns
+        -------
+        int
+            The number of jobs closed.
+        """
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                ids = [
+                    row[0]
+                    for row in conn.execute(
+                        "SELECT id FROM task_copy WHERE status = 'started'"
+                    ).fetchall()
+                ]
+                conn.executemany(
+                    "UPDATE task_copy SET status = 'killed', pid = NULL, "
+                    "error_msg = 'Interrupted when the application stopped' "
+                    "WHERE id = ? AND status = 'started'",
+                    [(huey_id,) for huey_id in ids],
+                )
+        except Exception:
+            log.exception("Could not reconcile interrupted jobs")
+            return 0
+
+        for huey_id in ids:
+            job = self._load_job(huey_id)
+            if job is not None:
+                with suppress(Exception):
+                    job.set_status_as_error()
+            self._mark_entity_error(huey_id)
+            self._touch(huey_id)
+        if ids:
+            log.warning("Closed %d jobs interrupted by a previous run", len(ids))
+        return len(ids)
 
     def start_watchdog(self, interval: float = 10.0) -> None:
         """Start a daemon thread that detects crashed worker subprocesses.
@@ -1066,6 +1446,8 @@ def create_container_huey():
 
     config = build_config_dict(local_path=local_path, logging_level=logging_level)
     build_container(config)
+
+    _job_queue.reconcile_interrupted_jobs()
 
     # Start the PID-liveness watchdog for detecting crashed worker subprocesses
     _job_queue.start_watchdog(interval=10.0)

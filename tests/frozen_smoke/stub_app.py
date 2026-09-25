@@ -10,9 +10,9 @@ couple of minutes and exercised in CI:
   a persistent worker via the ``spawn`` context, mirroring
   ``huey_job_queue._worker_loop`` / ``_ensure_worker`` / ``_run_in_subprocess``:
   SimpleQueue in, Queue out, ready handshake, dill-serialised jobs.
-- The cancel path of ``huey_job_queue._terminate_pid``: SIGTERM (TerminateProcess
-  on Windows), kill detection via ``proc.is_alive()`` with a final drain, then
-  transparent respawn.
+- The cancel path of ``huey_job_queue._signal_terminate`` and ``_await_exit``:
+  SIGTERM (TerminateProcess on Windows), kill detection via ``proc.is_alive()``
+  with a final drain, then transparent respawn.
 
 Exit codes:
 - 0: full scenario passed (prints FROZEN-SMOKE-OK).
@@ -68,7 +68,7 @@ def _worker_loop(in_q, out_q) -> None:
 
 
 def _terminate_pid(pid: int, grace_seconds: float = 10.0) -> None:
-    """Kill a worker by PID, mirroring huey_job_queue._terminate_pid."""
+    """Kill a worker by PID, mirroring huey_job_queue's kill helpers."""
     try:
         if sys.platform == "win32":
             os.kill(pid, signal.SIGTERM)  # TerminateProcess on Windows
