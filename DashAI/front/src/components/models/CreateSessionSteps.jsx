@@ -68,26 +68,30 @@ function CreateSessionSteps({
       output_columns: [],
       splits: {},
     }));
-    if (
-      tourContext?.run &&
-      tourContext?.stepIndex === 5 &&
-      newDataset &&
-      !hasAdvancedTourRef.current
-    ) {
-      hasAdvancedTourRef.current = true;
-      const waitForElement = () => {
-        const element = document.querySelector(
-          '[data-tour="models-validation-alert"]',
-        );
-        if (element) {
-          tourContext.nextStep();
-        } else {
-          setTimeout(waitForElement, 100);
-        }
-      };
-      setTimeout(waitForElement, 200);
-    }
   };
+
+  useEffect(() => {
+    if (
+      !tourContext?.run ||
+      tourContext.stepIndex !== 5 ||
+      !selectedDataset ||
+      hasAdvancedTourRef.current
+    ) {
+      return;
+    }
+    hasAdvancedTourRef.current = true;
+    const waitForElement = () => {
+      const element = document.querySelector(
+        '[data-tour="models-validation-alert"]',
+      );
+      if (element) {
+        tourContext.nextStep();
+      } else {
+        setTimeout(waitForElement, 100);
+      }
+    };
+    setTimeout(waitForElement, 200);
+  }, [tourContext?.run, tourContext?.stepIndex, selectedDataset]);
 
   const { defaultName } = useMemo(() => {
     if (!selectedTask) {
