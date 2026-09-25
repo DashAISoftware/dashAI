@@ -36,7 +36,7 @@ Requirements
      - x86_64 or Apple Silicon, AVX2 not required
    * - **Python**
      - Nothing to install: the installers bundle their own Python 3.12
-     - You install it yourself: Python 3.10 or greater (3.12 recommended)
+     - You install it yourself: Python 3.11 or greater (3.12 recommended)
 
 Desktop installers (Windows / macOS / Linux)
 =============================================
@@ -88,7 +88,7 @@ older CPUs (it may still fail if the CPU is very old, but it is worth trying).
 Installation (PyPI)
 ===================
 
-dashAI needs Python 3.10 or greater. We strongly recommend installing it inside
+dashAI needs Python 3.11 or greater. We strongly recommend installing it inside
 an isolated environment to avoid clashes with other packages. The quickest way
 to do that is with `uv <https://docs.astral.sh/uv/getting-started/installation/>`_
 (recommended, it even installs Python for you); classic ``venv``/``conda`` with

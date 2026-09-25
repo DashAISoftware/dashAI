@@ -1,6 +1,7 @@
 """Job that downloads a component's external artifacts."""
 
 import logging
+from contextlib import suppress
 
 from kink import di
 
@@ -24,6 +25,22 @@ class ComponentDownloadJob(BaseJob):
     def set_status_as_error(self) -> None:
         """No dedicated DB entity; nothing to mark as error."""
 
+    def on_cancel(self) -> None:
+        """Remove the partial download of a cancelled or killed job.
+
+        A partial download still looks downloaded to ``is_downloaded``, so it
+        is deleted. Only a job that reached the consumer, which stamps its
+        ``huey_id``, can have written anything, so a job cancelled while
+        still queued returns early.
+        """
+        if not self.kwargs.get("huey_id"):
+            return
+        try:
+            component_registry = di["component_registry"]
+            component_registry[self.kwargs["component_name"]]["class"].delete()
+        except Exception:
+            log.exception("on_cancel cleanup failed for ComponentDownloadJob")
+
     def get_job_name(self) -> str:
         """Return a descriptive name for the job.
 
@@ -36,6 +53,9 @@ class ComponentDownloadJob(BaseJob):
 
     def run(self) -> None:
         """Resolve the component and download its artifacts, reporting progress.
+
+        A download that fails is deleted, because a partial download still
+        looks downloaded to ``is_downloaded``.
 
         Raises
         ------
@@ -54,5 +74,10 @@ class ComponentDownloadJob(BaseJob):
             raise JobError(f"Component {name} does not require a download")
 
         self.report_progress(0.0, "Starting download")
-        component_class.download(self.report_progress)
+        try:
+            component_class.download(self.report_progress)
+        except Exception:
+            with suppress(Exception):
+                component_class.delete()
+            raise
         self.report_progress(1.0, "Download complete")

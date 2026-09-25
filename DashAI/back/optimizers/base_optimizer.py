@@ -20,18 +20,25 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
     TYPE: Final[str] = "Optimizer"
 
     @abstractmethod
-    def optimize(self, model, input, output, parameters, task):
+    def optimize(self, model, input, output, parameters, metric, strategy):
         """
-        Optimization process
+        Run hyperparameter optimization.
 
-        Args:
-            model (class): class for the model from the current experiment
-            dataset (dict): dict with the data to train and validation
-            parameters (dict): dict with the information to create the search space
-
-        Returns
-        -------
-            None
+        Parameters
+        ----------
+        model : object
+            Model instance to optimize.
+        input_dataset : dict
+            Dataset splits keyed by "train" and "validation".
+        output_dataset : dict
+            Label splits keyed by "train" and "validation".
+        parameters : list
+            Tuples of (obj, key, bounds, dtype) for each hyperparameter.
+        metric : dict
+            Dict with keys "class" (metric instance) and "metadata".
+        strategy : callable
+            Function that trains the model and returns a score based on the metric.
+            Depends on the specific evaluation strategy used.
         """
         raise NotImplementedError(
             "Optimization modules must implement optimize method."
@@ -215,18 +222,36 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         Contour plot between two hyperparameters
         and the goal metric achieved in the search space.
 
+        Only the hyperparameters measured on a scale are paired. A contour
+        reads the space between two coordinates and there is nothing between
+        two options, and one pair of axes is shared by every pair in the
+        dropdown while an axis type is decided once, so a categorical
+        parameter also broke the figure: the pair that put its options on the
+        axis already typed ``linear`` read them all as missing and left an
+        empty grid for plotly to crash on.
+
         Args:
             trial_values (list): List with the hyperparameters values
                                 and the goal metric per trial.
 
         Returns
         -------
-            artifact (PlotlyArtifact): typed artifact wrapping the plot data
+            artifact (PlotlyArtifact or None): typed artifact wrapping the plot
+                data, or ``None`` when fewer than two of the searched
+                parameters are measured on a scale.
         """
         # Lazy imports
         import plotly.graph_objects as go
 
-        param_names = list(trials[0]["params"].keys())
+        numeric = {
+            param
+            for _, param, _, dtype in self.parameters
+            if dtype in ("integer", "number")
+        }
+        param_names = [name for name in trials[0]["params"] if name in numeric]
+        if len(param_names) < 2:
+            return None
+
         traces = []
         scatter_traces = []
         for param_x in param_names:
@@ -313,6 +338,12 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         Plot to obtain the importance between all the hyperparameters
         involved in hyperparameter optimization.
 
+        A categorical parameter carries its set of options where a numeric one
+        carries a pair of bounds, so the search space is read by position
+        rather than destructured, and the options become a
+        ``CategoricalDistribution``. Leaving them out made optuna reject the
+        trial that named them.
+
         Args:
             trial_values (list): List with the hyperparameters values
                                 and the goal metric per trial.
@@ -327,11 +358,19 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         from optuna.importance import FanovaImportanceEvaluator
 
         distributions = {}
-        for _, param, (low, high), dtype in self.parameters:
+        for _, param, space, dtype in self.parameters:
             if dtype == "integer":
-                distributions[param] = optuna.distributions.IntDistribution(low, high)
+                distributions[param] = optuna.distributions.IntDistribution(
+                    space[0], space[1]
+                )
             elif dtype == "number":
-                distributions[param] = optuna.distributions.FloatDistribution(low, high)
+                distributions[param] = optuna.distributions.FloatDistribution(
+                    space[0], space[1]
+                )
+            elif dtype == "categorical":
+                distributions[param] = optuna.distributions.CategoricalDistribution(
+                    list(space)
+                )
 
         direction = "maximize" if goal_metric["metadata"]["maximize"] else "minimize"
         study = optuna.create_study(direction=direction)
@@ -398,6 +437,9 @@ class BaseOptimizer(ConfigObject, metaclass=ABCMeta):
         -------
             plots_filenames (list): Filenames to persist each plot under.
             plots_list (list): The matching list of PlotlyArtifact instances.
+                An entry is ``None`` where the plot does not apply to this
+                search; the slot is kept so the remaining plots stay in the
+                position their filename and database column expect.
         """
         if n_params >= 2:
             plots_filenames = [

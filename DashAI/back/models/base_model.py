@@ -3,7 +3,7 @@
 import logging
 import math
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Final, final
+from typing import TYPE_CHECKING, Any, Dict, Final, Optional, final
 
 from kink import di
 
@@ -30,6 +30,21 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     DESCRIPTION: str = ""
     COLOR: str = "#795548"
     ICON: str = "Science"
+
+    # Optional hook, set by an optimizer that wants to watch training as it goes.
+    #
+    # Signature: ``(results: dict[str, float], step: int) -> None``. It is called
+    # once per epoch with the validation metrics of that epoch, and it may raise
+    # to abort training early — that is how Optuna's pruning works.
+    #
+    # It lives here, on the base class, because every model with an epoch loop
+    # already routes its per-epoch metrics through `calculate_metrics`. Hooking
+    # the loops one by one would mean touching five files that do not share a
+    # common ancestor, and missing any model added later.
+    #
+    # Models that train in a single shot never call `calculate_metrics` with
+    # `level=EPOCH`, so for them this stays None and nothing changes.
+    _epoch_reporter = None
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -111,6 +126,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         level: LevelEnum,
         results: Dict[str, float],
         log_index: int = None,
+        fold_index: int = None,
+        inner_fold_index: int = None,
     ):
         """Persist computed metric values to the database.
 
@@ -216,12 +233,87 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                         name=name,
                         value=score,
                         step=log_index,
+                        fold_index=fold_index,
+                        inner_fold_index=inner_fold_index,
                     )
                     for name, score in results.items()
                 ]
                 db.add_all(metric_entries)
 
             db.commit()
+
+    def _score_split(
+        self,
+        split: SplitEnum,
+        x_data: "DashAIDataset" = None,
+        y_data: "DashAIDataset" = None,
+    ) -> Optional[Dict[str, float]]:
+        """Score the metrics declared for a split, dropping non-finite results.
+
+        This is the one scoring loop behind ``calculate_metrics``, which
+        persists the scores, and ``compute_metrics``, which returns them. They
+        used to carry a copy each and the copies drifted: only the logging one
+        dropped non-finite scores, so a NaN that was too suspect to write to
+        the database still reached the objective of an HPO trial through the
+        other, and poisoned every comparison downstream of it.
+
+        Parameters
+        ----------
+        split : SplitEnum
+            The data split to evaluate (TRAIN, VALIDATION, or TEST).
+        x_data : DashAIDataset, optional
+            Input features. If None, the dataset stored in the model for the
+            given split is used. Defaults to None.
+        y_data : DashAIDataset, optional
+            Target labels. If None, the labels stored in the model for the
+            given split are used. Defaults to None.
+
+        Returns
+        -------
+        Optional[Dict[str, float]]
+            The finite scores keyed by metric name, or None when there was
+            nothing to score: no metrics declared for the split, or no data
+            available for it. None and an empty dict are different answers --
+            the first says the question could not be asked, the second that
+            every metric was asked and none returned a usable number.
+        """
+        metrics = getattr(self, f"{split.value}_metrics", None)
+
+        # No metrics declared for this split: nothing to ask.
+        if not metrics:
+            return None
+
+        # Load data if not provided
+        if x_data is None or y_data is None:
+            if self.x_data is None or self.y_data is None:
+                return None
+            x_data = self.x_data[split.value]
+            y_data = self.y_data[split.value]
+
+        # If data is empty after retrieval, there is nothing to score
+        if x_data is None or y_data is None:
+            return None
+
+        # Make predictions and transform outputs
+        y_pred = self.predict(x_data)
+        y_transformed = self.prepare_output(y_data, is_fit=False)
+
+        # Calculate metric scores
+        results = {}
+        for metric in metrics:
+            score = metric.score(y_transformed, y_pred)
+            if not math.isfinite(score):
+                logger.warning(
+                    "Metric %s returned a non-finite value (%s) for split %s "
+                    "(e.g. only one class present in the split). Skipping.",
+                    metric.__name__,
+                    score,
+                    split,
+                )
+                continue
+            results[metric.__name__] = score
+
+        return results
 
     @final
     def calculate_metrics(
@@ -231,6 +323,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         log_index: int = None,
         x_data: "DashAIDataset" = None,
         y_data: "DashAIDataset" = None,
+        fold_index: int = None,
+        inner_fold_index: int = None,
     ):
         """Calculate and save metrics for a given data split and level.
 
@@ -255,48 +349,73 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             labels stored in the model for the given split are used.
             Defaults to None.
         """
-        # Get the appropriate metrics based on split
-        metrics_attr = f"{split.value}_metrics"
-        metrics = getattr(self, metrics_attr, None)
-
-        # If no metrics or run_id, skip calculation
-        if not metrics or not self.run_id:
+        # If no metrics or run_id, skip calculation. The run_id is checked
+        # before scoring rather than after: without a run there is nowhere to
+        # persist the result, and predicting only to discard the numbers is
+        # wasted work.
+        if not getattr(self, f"{split.value}_metrics", None) or not self.run_id:
             return
 
-        # Load data if not provided
-        if x_data is None or y_data is None:
-            if self.x_data is None or self.y_data is None:
-                return
-            x_data = self.x_data[split.value]
-            y_data = self.y_data[split.value]
-
-        # If data is empty after retrieval, skip calculation
-        if x_data is None or y_data is None:
+        results = self._score_split(split, x_data=x_data, y_data=y_data)
+        if results is None:
             return
-
-        # Make predictions and transform outputs
-        y_pred = self.predict(x_data)
-        y_transformed = self.prepare_output(y_data, is_fit=False)
-
-        # Calculate metric scores
-        results = {}
-        for metric in metrics:
-            score = metric.score(y_transformed, y_pred)
-            if not math.isfinite(score):
-                logger.warning(
-                    "Metric %s returned a non-finite value (%s) for split %s "
-                    "(e.g. only one class present in the split). Skipping.",
-                    metric.__name__,
-                    score,
-                    split,
-                )
-                continue
-            results[metric.__name__] = score
 
         # Save to database
         self._save_metrics(
-            split=split, level=level, results=results, log_index=log_index
+            split=split,
+            level=level,
+            results=results,
+            log_index=log_index,
+            fold_index=fold_index,
+            inner_fold_index=inner_fold_index,
         )
+
+        # Report the epoch to whoever is watching, AFTER persisting: the reporter
+        # is allowed to raise (Optuna prunes that way), and the metrics of the
+        # epoch that triggered the stop should survive it.
+        if (
+            self._epoch_reporter is not None
+            and level is LevelEnum.EPOCH
+            and split is SplitEnum.VALIDATION
+        ):
+            self._epoch_reporter(results, log_index)
+
+    # The sibling of calculate_metrics: same scoring loop, but the scores are
+    # returned instead of written to the database. Used by the CV evaluation
+    # loop, where they become the objective of an HPO trial.
+    def compute_metrics(
+        self,
+        split: SplitEnum = SplitEnum.TEST,
+        x_data: "DashAIDataset" = None,
+        y_data: "DashAIDataset" = None,
+    ) -> Dict[str, float]:
+        """Calculate and return metric scores for a given data split.
+
+        Parameters
+        ----------
+        split : SplitEnum
+            The data split to evaluate (TRAIN, VALIDATION,
+            or TEST). Defaults to SplitEnum.VALIDATION.
+        x_data : DashAIDataset, optional
+            Input features. If None, the
+            dataset stored in the model for the given split is used.
+            Defaults to None.
+        y_data : DashAIDataset, optional
+            Target labels. If None, the
+            labels stored in the model for the given split are used.
+            Defaults to None.
+
+        Returns
+        -------
+        Dict[str, float]
+            A dictionary mapping metric names to their computed scores. A
+            metric that scored a non-finite value is absent from the mapping
+            rather than present with a NaN: see ``_score_split``. Callers that
+            need a particular metric must therefore check that it is there.
+        """
+        # "Nothing to score" and "nothing scored finite" answer this method's
+        # question the same way: no usable numbers for this split.
+        return self._score_split(split, x_data=x_data, y_data=y_data) or {}
 
     def prepare_dataset(
         self, dataset: "DashAIDataset", is_fit: bool = False

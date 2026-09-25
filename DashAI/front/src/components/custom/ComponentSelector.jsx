@@ -10,15 +10,22 @@ import {
   Typography,
   Collapse,
   Paper,
+  Tooltip,
 } from "@mui/material";
 import {
   Search as SearchIcon,
   Clear as ClearIcon,
   ExpandMore as ExpandMoreIcon,
   Check as CheckIcon,
+  VpnKeyOutlined as KeyIcon,
 } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
 import ComponentDownloadControl from "../models/model/ComponentDownloadControl";
+import CredentialsDialog from "../credentials/CredentialsDialog";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
 
 const ALL_CATEGORY = "All";
 const SEARCH_THRESHOLD = 10;
@@ -40,13 +47,19 @@ function ComponentSelector({
   emptyText,
   getIcon,
   flat = false,
+  showFooter = true,
   tourDataFor = null,
   tourDataMatchFn = null,
   onDownloadChange = null,
 }) {
-  const { t } = useTranslation(["custom", "common"]);
+  const { t } = useTranslation(["custom", "credentials", "common"]);
+  // Live credential statuses so a card's lock state updates the instant a
+  // credential is verified, without a manual page refresh.
+  const { statuses: credentialStatuses, loaded: credentialsLoaded } =
+    useCredentialStatuses();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY);
+  const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
 
   const categories = useMemo(() => {
     const set = new Set();
@@ -109,8 +122,22 @@ function ComponentSelector({
   const renderCard = (component) => {
     const isSelected = selected?.name === component.name;
     const icon = getIcon?.(component);
+    const {
+      optionalCredentials,
+      locked,
+      requiredPlatforms,
+      optionalPlatforms,
+    } = getComponentCredentialState(
+      component,
+      credentialStatuses,
+      credentialsLoaded,
+    );
     const requiresDownload = Boolean(component.metadata?.requires_download);
     const needsDownload = requiresDownload && !component.downloaded;
+    // The card is always selectable so its details show in the side bar; the
+    // unmet download/credential requirements only dim the content as a hint.
+    // Actual usability is enforced by the downstream action buttons.
+    const notReady = locked || needsDownload;
     const isCsvComponent =
       tourDataFor &&
       (tourDataMatchFn
@@ -132,20 +159,18 @@ function ComponentSelector({
           borderColor: isSelected ? "primary.main" : "divider",
           bgcolor: isSelected ? "action.selected" : "background.paper",
           transition: "border-color 0.15s, background 0.15s",
-          "&:hover": {
-            borderColor: "secondary.main",
-          },
+          "&:hover": { borderColor: "secondary.main" },
         }}
       >
-        {/* Dim only the card content while a download is required, so the
-            download control below keeps its normal color (CSS opacity on the
-            card would otherwise cap the button's opacity too). */}
+        {/* Dim only the card content while it is not ready, so the download
+            control below keeps its normal color (CSS opacity on the card would
+            otherwise cap the button's opacity too). */}
         <Box
           sx={{
             display: "flex",
             gap: 3,
             alignItems: "flex-start",
-            opacity: needsDownload ? 0.6 : 1,
+            opacity: notReady ? 0.6 : 1,
           }}
         >
           {icon && (
@@ -182,16 +207,59 @@ function ComponentSelector({
               {getDescription(component, t("noDescriptionAvailable"))}
             </Typography>
           </Box>
-          {isSelected && (
-            <CheckIcon
-              fontSize="small"
-              color="primary"
-              sx={{ flexShrink: 0, mt: 1 }}
-            />
-          )}
+          {/* Credential status and selection check share the top right corner. */}
+          <Stack
+            direction="row"
+            spacing={1}
+            alignItems="center"
+            sx={{ flexShrink: 0, mt: 1 }}
+          >
+            {locked && (
+              <Tooltip
+                title={t("credentials:requiredTooltip", {
+                  platform: requiredPlatforms,
+                })}
+              >
+                <IconButton
+                  size="small"
+                  color="warning"
+                  aria-label={t("credentials:manage")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCredentialsDialogOpen(true);
+                  }}
+                >
+                  <KeyIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {!locked && optionalCredentials.length > 0 && (
+              <Tooltip
+                title={t("credentials:optionalTooltip", {
+                  platform: optionalPlatforms,
+                })}
+              >
+                <IconButton
+                  size="small"
+                  color="default"
+                  aria-label={t("credentials:manage")}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCredentialsDialogOpen(true);
+                  }}
+                >
+                  <KeyIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+            {isSelected && <CheckIcon fontSize="small" color="primary" />}
+          </Stack>
         </Box>
         {requiresDownload && (
-          <Box onClick={(e) => e.stopPropagation()}>
+          <Box
+            onClick={(e) => e.stopPropagation()}
+            sx={{ display: "inline-flex", alignSelf: "flex-start" }}
+          >
             <ComponentDownloadControl
               component={component}
               onStatusChange={(isDownloaded) =>
@@ -343,29 +411,39 @@ function ComponentSelector({
         )}
       </Box>
 
-      <Box
-        sx={{
-          pt: 4,
-          borderTop: 1,
-          borderColor: "divider",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <Typography variant="body2" color="text.secondary">
-          {t("componentsAvailable", { count: filtered.length })}
-        </Typography>
-        {selected && (
-          <Chip
-            icon={<CheckIcon />}
-            label={getLabel(selected)}
-            color="primary"
-            variant="outlined"
-            size="small"
-          />
-        )}
-      </Box>
+      {/* A running count of the options is only worth the strip when the list
+          is long enough to be worth scanning; the selected card already shows
+          its own tick. */}
+      {showFooter && (
+        <Box
+          sx={{
+            pt: 4,
+            borderTop: 1,
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            {t("componentsAvailable", { count: filtered.length })}
+          </Typography>
+          {selected && (
+            <Chip
+              icon={<CheckIcon />}
+              label={getLabel(selected)}
+              color="primary"
+              variant="outlined"
+              size="small"
+            />
+          )}
+        </Box>
+      )}
+
+      <CredentialsDialog
+        open={credentialsDialogOpen}
+        onClose={() => setCredentialsDialogOpen(false)}
+      />
     </Stack>
   );
 }
@@ -386,6 +464,7 @@ ComponentSelector.propTypes = {
   emptyText: PropTypes.string,
   getIcon: PropTypes.func,
   flat: PropTypes.bool,
+  showFooter: PropTypes.bool,
   tourDataFor: PropTypes.string,
   tourDataMatchFn: PropTypes.func,
   onDownloadChange: PropTypes.func,

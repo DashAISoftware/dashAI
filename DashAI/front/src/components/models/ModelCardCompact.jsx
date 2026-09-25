@@ -14,6 +14,10 @@ import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationMod
 import RunEditDialog from "./RunEditDialog";
 import RunStatusDot from "../shared/RunStatusDot";
 import { useModelDownloadGate } from "./model/ComponentDownloadControl";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
 
 /**
  * Compact launcher card for a single run — shows just enough to identify
@@ -29,9 +33,10 @@ function ModelCardCompact({
   onRefresh,
   onOpen,
   isHighlighted = false,
+  isLastRun = false,
 }) {
   const theme = useTheme();
-  const { t } = useTranslation(["models", "common"]);
+  const { t } = useTranslation(["models", "common", "credentials"]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
 
@@ -44,6 +49,12 @@ function ModelCardCompact({
   // otherwise clicking Train silently re-triggers a download for a model the
   // user just deleted. Mirrors the same gate in RunCard.
   const { modelNotDownloaded } = useModelDownloadGate(model, run.model_name);
+
+  // A model whose required credentials are unmet cannot be trained. Derived
+  // from the live credential store so the button reacts to verification.
+  const { statuses, loaded } = useCredentialStatuses();
+  const { locked: credentialsLocked, requiredPlatforms } =
+    getComponentCredentialState(model || {}, statuses, loaded);
 
   const statusColorKey = getRunStatusColor(run.status);
   const statusMain =
@@ -130,28 +141,39 @@ function ModelCardCompact({
           {canTrain && (
             <Tooltip
               title={
-                modelNotDownloaded
-                  ? t("common:componentDownload.mustDownload")
-                  : run.status === 3
-                    ? t("common:retrain")
-                    : t("common:trainVerb")
+                credentialsLocked
+                  ? t("credentials:requiredTooltip", {
+                      platform: requiredPlatforms,
+                    })
+                  : modelNotDownloaded
+                    ? t("common:componentDownload.mustDownload")
+                    : run.status === 3
+                      ? t("common:retrain")
+                      : t("common:trainVerb")
               }
             >
               <span>
                 <IconButton
                   size="small"
-                  disabled={modelNotDownloaded}
+                  disabled={modelNotDownloaded || credentialsLocked}
                   onClick={() => onTrain(run)}
+                  data-tour={isLastRun ? "train-button" : undefined}
                 >
                   <PlayArrow fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
           )}
-          <Tooltip title={t("common:edit")}>
-            <IconButton size="small" onClick={() => setConfigOpen(true)}>
-              <Edit fontSize="small" />
-            </IconButton>
+          <Tooltip title={isRunning ? "" : t("common:edit")}>
+            <span>
+              <IconButton
+                size="small"
+                disabled={isRunning}
+                onClick={() => setConfigOpen(true)}
+              >
+                <Edit fontSize="small" />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title={t("models:button.deleteRun")}>
             <IconButton
@@ -249,6 +271,7 @@ ModelCardCompact.propTypes = {
   onRefresh: PropTypes.func,
   onOpen: PropTypes.func.isRequired,
   isHighlighted: PropTypes.bool,
+  isLastRun: PropTypes.bool,
 };
 
 export default ModelCardCompact;

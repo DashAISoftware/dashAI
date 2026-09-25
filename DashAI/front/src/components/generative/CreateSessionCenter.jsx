@@ -8,6 +8,10 @@ import {
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import ComponentSelector from "../custom/ComponentSelector";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
 import GenerativeBreadcrumbs from "./GenerativeBreadcrumbs";
 import { useCreateSession } from "./CreateSessionContext";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
@@ -39,23 +43,10 @@ export default function CreateSessionCenter() {
     handleCreate,
   } = useCreateSession();
 
-  const handleSelectModelWithTour = useCallback(
-    (model) => {
-      handleSelectModel(model);
-      if (tourContext?.run) tourContext.nextStep();
-    },
-    [handleSelectModel, tourContext],
-  );
-
   const handleNextWithTour = useCallback(() => {
     if (tourContext?.run) tourContext.nextStep();
     handleNext();
   }, [handleNext, tourContext]);
-
-  const handleCreateWithTour = useCallback(() => {
-    if (tourContext?.run) tourContext.nextStep();
-    handleCreate();
-  }, [handleCreate, tourContext]);
 
   useEffect(() => {
     if (!tourContext?.run) return;
@@ -72,14 +63,39 @@ export default function CreateSessionCenter() {
   // gate reacts to an inline download without needing selectedModel to change.
   const selectedModelState =
     models.find((m) => m.name === selectedModel?.name) || selectedModel;
-  const selectedNeedsDownload =
-    Boolean(selectedModelState?.metadata?.requires_download) &&
-    !selectedModelState?.downloaded;
 
-  const canGoNext = !!selectedModel && !selectedNeedsDownload;
+  // Credentials gate the same way downloads do: a model whose required
+  // credentials are unmet cannot be used to create a session, even when it was
+  // preselected via URL (which bypasses the disabled card in the selector).
+  const { statuses, loaded } = useCredentialStatuses();
+  const isModelUsable = useCallback(
+    (model) =>
+      !(Boolean(model?.metadata?.requires_download) && !model?.downloaded) &&
+      !getComponentCredentialState(model || {}, statuses, loaded).locked,
+    [statuses, loaded],
+  );
+  const selectedUsable = isModelUsable(selectedModelState);
+
+  const handleSelectModelWithTour = useCallback(
+    (model) => {
+      handleSelectModel(model);
+      if (tourContext?.run && isModelUsable(model)) tourContext.nextStep();
+    },
+    [handleSelectModel, tourContext, isModelUsable],
+  );
+
+  useEffect(() => {
+    if (!tourContext?.run || !selectedModel || !selectedUsable) return;
+    const currentTarget = tourContext.steps?.[tourContext.stepIndex]?.target;
+    if (currentTarget === '[data-tour="model-card-qwen"]') {
+      tourContext.nextStep();
+    }
+  }, [selectedUsable]);
+
+  const canGoNext = !!selectedModel && selectedUsable;
   const canCreate =
     !!selectedModel &&
-    !selectedNeedsDownload &&
+    selectedUsable &&
     !!formik.values.name?.trim() &&
     !submitting;
 
@@ -175,7 +191,7 @@ export default function CreateSessionCenter() {
 
       <StepperNavigationFooter
         onBack={handleBack}
-        onNext={step === 0 ? handleNextWithTour : handleCreateWithTour}
+        onNext={step === 0 ? handleNextWithTour : handleCreate}
         backDisabled={submitting}
         nextDisabled={step === 0 ? !canGoNext : !canCreate}
         nextLabel={

@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, LinearProgress, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  LinearProgress,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useTranslation } from "react-i18next";
@@ -11,6 +17,16 @@ import {
 } from "../../../api/component";
 import { startJobPolling, stopJobPolling } from "../../../utils/jobPoller";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../../credentials/credentialStatus";
+
+const iconOnlySx = {
+  minWidth: 0,
+  px: 1,
+  "& .MuiButton-startIcon": { mx: 0 },
+};
 
 const formatSize = (bytes) => {
   if (bytes == null) return "";
@@ -96,16 +112,29 @@ export const startComponentDownload = async ({
           variant: "success",
         });
       },
-      () => {
+      async (job) => {
         activePollers.delete(component.name);
+        const interrupted =
+          job?.status === "cancelled" || job?.status === "killed";
+        const downloaded = interrupted
+          ? false
+          : await getComponentDownloadStatus(component.name)
+              .then((status) => Boolean(status.downloaded))
+              .catch(() => false);
         broadcastDownloadState(component.name, {
           downloading: false,
-          downloaded: false,
+          downloaded,
         });
-        if (onStatusChange) onStatusChange(false);
-        enqueueSnackbar(t("common:componentDownload.failed"), {
-          variant: "error",
-        });
+        if (onStatusChange) onStatusChange(downloaded);
+        if (job?.status === "cancelled") {
+          enqueueSnackbar(t("common:jobQueue.jobCancelled"), {
+            variant: "info",
+          });
+        } else {
+          enqueueSnackbar(t("common:componentDownload.failed"), {
+            variant: "error",
+          });
+        }
       },
     );
   } catch (e) {
@@ -187,10 +216,16 @@ export const deleteComponent = async ({
 };
 
 const ComponentDownloadControl = ({ component, onStatusChange }) => {
-  const { t } = useTranslation(["common"]);
+  const { t } = useTranslation(["common", "credentials"]);
   const { enqueueSnackbar } = useSnackbar();
   const meta = component.metadata || {};
   const { downloaded, downloading } = useComponentDownloadState(component);
+  const { statuses, loaded } = useCredentialStatuses();
+  const { locked, requiredPlatforms } = getComponentCredentialState(
+    component,
+    statuses,
+    loaded,
+  );
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (!meta.requires_download) return null;
@@ -200,6 +235,8 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
 
   const handleDelete = () =>
     deleteComponent({ component, enqueueSnackbar, t, onStatusChange });
+
+  const sizeLabel = formatSize(meta.download_size_bytes);
 
   if (downloading) {
     return (
@@ -215,18 +252,17 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
   if (downloaded) {
     return (
       <>
-        <Button
-          size="small"
-          color="error"
-          startIcon={<DeleteIcon />}
-          onClick={() => setConfirmOpen(true)}
-        >
-          {meta.download_size_bytes != null
-            ? t("common:componentDownload.deleteWithSize", {
-                size: formatSize(meta.download_size_bytes),
-              })
-            : t("common:componentDownload.delete")}
-        </Button>
+        <Tooltip title={t("common:componentDownload.delete")}>
+          <Button
+            size="small"
+            color="error"
+            startIcon={<DeleteIcon />}
+            onClick={() => setConfirmOpen(true)}
+            sx={sizeLabel ? undefined : iconOnlySx}
+          >
+            {sizeLabel}
+          </Button>
+        </Tooltip>
         <DeleteConfirmationModal
           open={confirmOpen}
           onClose={() => setConfirmOpen(false)}
@@ -242,17 +278,42 @@ const ComponentDownloadControl = ({ component, onStatusChange }) => {
     );
   }
 
+  // A component can only be downloaded once its required credentials are
+  // authenticated, so block the download behind a disabled, explanatory button.
+  if (locked) {
+    return (
+      <Tooltip
+        title={t("credentials:requiredTooltip", {
+          platform: requiredPlatforms,
+        })}
+      >
+        <span>
+          <Button
+            size="small"
+            variant="outlined"
+            color="warning"
+            startIcon={<DownloadIcon />}
+            disabled
+          >
+            {t("credentials:authRequired", { platform: requiredPlatforms })}
+          </Button>
+        </span>
+      </Tooltip>
+    );
+  }
+
   return (
-    <Button
-      size="small"
-      variant="outlined"
-      startIcon={<DownloadIcon />}
-      onClick={handleDownload}
-    >
-      {t("common:componentDownload.download", {
-        size: formatSize(meta.download_size_bytes),
-      })}
-    </Button>
+    <Tooltip title={t("common:componentDownload.download")}>
+      <Button
+        size="small"
+        variant="outlined"
+        startIcon={<DownloadIcon />}
+        onClick={handleDownload}
+        sx={sizeLabel ? undefined : iconOnlySx}
+      >
+        {sizeLabel}
+      </Button>
+    </Tooltip>
   );
 };
 

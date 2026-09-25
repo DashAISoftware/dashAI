@@ -33,6 +33,7 @@ import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
+import CancelIcon from "@mui/icons-material/Cancel";
 import DeleteIcon from "@mui/icons-material/Delete";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -40,7 +41,7 @@ import JobDetailsDialog from "./JobDetailsDialog";
 import DeleteSweepIcon from "@mui/icons-material/DeleteSweep";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { deleteAllJobs } from "../../api/job";
-import { useJobManager } from "../../hooks/useJobPolling";
+import { useJobManager, forceRefreshNow } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
 import { getStatusText } from "../../utils/jobStatusText";
 
@@ -53,7 +54,10 @@ export const StatusIcon = ({ status }) => {
     case "finished":
       return <CheckCircleIcon fontSize="small" color="success" />;
     case "error":
+    case "killed":
       return <ErrorIcon fontSize="small" color="error" />;
+    case "cancelled":
+      return <CancelIcon fontSize="small" color="warning" />;
     case "deleted":
       return <DeleteIcon fontSize="small" />;
     default:
@@ -198,6 +202,7 @@ const JobQueueWidget = () => {
       setClearingAll(true);
       await deleteAllJobs();
       refresh();
+      forceRefreshNow();
       setTimeout(() => {
         refresh();
         setClearingAll(false);
@@ -223,6 +228,7 @@ const JobQueueWidget = () => {
 
     try {
       await deleteJob(jobToDelete.id);
+      forceRefreshNow();
 
       setTimeout(() => {
         refresh();
@@ -244,7 +250,11 @@ const JobQueueWidget = () => {
     (job) => job.status === "started" || job.status === "not_started",
   );
   const finishedJobs = jobs.filter((job) => job.status === "finished");
-  const errorJobs = jobs.filter((job) => job.status === "error");
+  const errorJobs = jobs.filter(
+    (job) => job.status === "error" || job.status === "killed",
+  );
+  const isActiveJob = (job) =>
+    job?.status === "started" || job?.status === "not_started";
 
   const hasInitializedRef = useRef(false);
   const prevActiveCountRef = useRef(0);
@@ -586,7 +596,8 @@ const JobQueueWidget = () => {
                                       ? job.progress_message
                                       : getStatusText(job.status, t)}
                                   </span>
-                                  {job.status === "error" && (
+                                  {(job.status === "error" ||
+                                    job.status === "killed") && (
                                     <Tooltip
                                       title={
                                         job.error_msg ||
@@ -633,10 +644,14 @@ const JobQueueWidget = () => {
                             >
                               {getRelativeTime(job.last_update)}
                             </Typography>
-                            {(job.status === "not_started" ||
-                              job.status === "error" ||
-                              job.status === "finished") && (
-                              <Tooltip title={t("common:jobQueue.deleteJob")}>
+                            {job.status !== "deleted" && (
+                              <Tooltip
+                                title={
+                                  isActiveJob(job)
+                                    ? t("common:jobQueue.cancelJob")
+                                    : t("common:jobQueue.deleteJob")
+                                }
+                              >
                                 <IconButton
                                   edge="end"
                                   aria-label="delete"
@@ -725,11 +740,15 @@ const JobQueueWidget = () => {
         aria-labelledby="delete-job-dialog-title"
       >
         <DialogTitle id="delete-job-dialog-title">
-          {t("common:jobQueue.deleteJob")}
+          {isActiveJob(jobToDelete)
+            ? t("common:jobQueue.cancelJob")
+            : t("common:jobQueue.deleteJob")}
         </DialogTitle>
         <DialogContent>
           <Typography>
-            {t("common:jobQueue.confirmDeleteJob")}
+            {isActiveJob(jobToDelete)
+              ? t("common:jobQueue.confirmCancelJob")
+              : t("common:jobQueue.confirmDeleteJob")}
             {jobToDelete && (
               <Box component="span" fontWeight="bold" display="block" mt={1}>
                 {jobToDelete.job_name ||
@@ -741,10 +760,12 @@ const JobQueueWidget = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={cancelDeleteJob} color="primary">
-            {t("common:cancel")}
+            {isActiveJob(jobToDelete) ? t("common:back") : t("common:cancel")}
           </Button>
           <Button onClick={confirmDeleteJob} color="error">
-            {t("common:delete")}
+            {isActiveJob(jobToDelete)
+              ? t("common:jobQueue.cancelJob")
+              : t("common:delete")}
           </Button>
         </DialogActions>
       </Dialog>

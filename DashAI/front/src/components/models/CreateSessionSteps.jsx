@@ -16,6 +16,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useModels } from "./ModelsContext";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
+import { hasPartition } from "../../utils/splitsPayload";
 
 function CreateSessionSteps({
   backHome,
@@ -37,6 +38,10 @@ function CreateSessionSteps({
       : null,
   );
 
+  // Which evaluation strategy the session uses. Left empty until the task's
+  // strategies load, since which ones exist depends on the task.
+  const [evaluationStrategy, setEvaluationStrategy] = useState(null);
+
   const [newExp, setNewExp] = useState({
     name: "",
     dataset: null,
@@ -46,6 +51,7 @@ function CreateSessionSteps({
     train_metrics: [],
     validation_metrics: [],
     test_metrics: [],
+    evaluation_strategy: "",
     splits: {},
     runs: [],
   });
@@ -62,26 +68,30 @@ function CreateSessionSteps({
       output_columns: [],
       splits: {},
     }));
-    if (
-      tourContext?.run &&
-      tourContext?.stepIndex === 5 &&
-      newDataset &&
-      !hasAdvancedTourRef.current
-    ) {
-      hasAdvancedTourRef.current = true;
-      const waitForElement = () => {
-        const element = document.querySelector(
-          '[data-tour="models-validation-alert"]',
-        );
-        if (element) {
-          tourContext.nextStep();
-        } else {
-          setTimeout(waitForElement, 100);
-        }
-      };
-      setTimeout(waitForElement, 200);
-    }
   };
+
+  useEffect(() => {
+    if (
+      !tourContext?.run ||
+      tourContext.stepIndex !== 5 ||
+      !selectedDataset ||
+      hasAdvancedTourRef.current
+    ) {
+      return;
+    }
+    hasAdvancedTourRef.current = true;
+    const waitForElement = () => {
+      const element = document.querySelector(
+        '[data-tour="models-validation-alert"]',
+      );
+      if (element) {
+        tourContext.nextStep();
+      } else {
+        setTimeout(waitForElement, 100);
+      }
+    };
+    setTimeout(waitForElement, 200);
+  }, [tourContext?.run, tourContext?.stepIndex, selectedDataset]);
 
   const { defaultName } = useMemo(() => {
     if (!selectedTask) {
@@ -158,13 +168,9 @@ function CreateSessionSteps({
         console.warn("Could not fetch metrics:", error);
       }
 
-      const hasTrain =
-        newExp.splits.train !== undefined && newExp.splits.train !== 0;
-      const hasValidation =
-        newExp.splits.validation !== undefined &&
-        newExp.splits.validation !== 0;
-      const hasTest =
-        newExp.splits.test !== undefined && newExp.splits.test !== 0;
+      const hasTrain = hasPartition(newExp.splits, "train");
+      const hasValidation = hasPartition(newExp.splits, "validation");
+      const hasTest = hasPartition(newExp.splits, "test");
 
       let effectiveName = sessionName;
       let response;
@@ -178,6 +184,7 @@ function CreateSessionSteps({
           hasTrain ? allMetricNames : [],
           hasValidation ? allMetricNames : [],
           hasTest ? allMetricNames : [],
+          newExp.evaluation_strategy,
           JSON.stringify(newExp.splits),
         );
       } catch (createError) {
@@ -193,6 +200,7 @@ function CreateSessionSteps({
             hasTrain ? allMetricNames : [],
             hasValidation ? allMetricNames : [],
             hasTest ? allMetricNames : [],
+            newExp.evaluation_strategy,
             JSON.stringify(newExp.splits),
           );
         } else {
@@ -207,7 +215,7 @@ function CreateSessionSteps({
       formik.resetForm();
 
       if (tourContext?.run) {
-        tourContext.stopTour();
+        tourContext.completeTour();
         sessionStorage.setItem("startModelsSessionTour", "true");
       }
 
@@ -263,6 +271,8 @@ function CreateSessionSteps({
             newExp={newExp}
             setNewExp={setNewExp}
             setNextEnabled={setNextEnabled}
+            evaluationStrategy={evaluationStrategy}
+            setEvaluationStrategy={setEvaluationStrategy}
             dataset={selectedDataset}
           />
         )}

@@ -51,6 +51,18 @@ export const enqueueRunnerJob = async (runId: number): Promise<object> => {
   return response.data;
 };
 
+export const enqueueReportJob = async (reportId: number): Promise<object> => {
+  const formData = new FormData();
+  formData.append("job_type", "ReportJob");
+  formData.append("kwargs", JSON.stringify({ report_id: reportId }));
+  const response = await api.post<object>("/v1/job/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return response.data;
+};
+
 export const enqueueDatasetJob = async (
   dataset_id: number,
   file: File | null,
@@ -235,8 +247,8 @@ export const deleteJob = async (jobId: string): Promise<void> => {
   await api.delete(`/v1/job/${jobId}`);
 };
 
-export const deleteAllJobs = async (): Promise<{ deleted: number }> => {
-  const response = await api.delete<{ deleted: number }>("/v1/job/all");
+export const deleteAllJobs = async (): Promise<{ cancelled: number }> => {
+  const response = await api.delete<{ cancelled: number }>("/v1/job/all");
   return response.data;
 };
 

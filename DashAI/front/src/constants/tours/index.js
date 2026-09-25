@@ -2,7 +2,6 @@ import { homeTourSteps, homeTourConfig } from "./homeTour";
 import { datasetsTourSteps, datasetsTourConfig } from "./datasetsTour";
 import { datasetViewTourSteps, datasetViewTourConfig } from "./datasetViewTour";
 import { notebookTourSteps, notebookTourConfig } from "./notebookTour";
-import { experimentsTourSteps, experimentsTourConfig } from "./experimentsTour";
 import { modelsTourSteps, modelsTourConfig } from "./modelsTour";
 import {
   modelsSessionTourSteps,
@@ -27,10 +26,6 @@ export const tours = {
     steps: notebookTourSteps,
     config: notebookTourConfig,
   },
-  experiments: {
-    steps: experimentsTourSteps,
-    config: experimentsTourConfig,
-  },
   models: {
     steps: modelsTourSteps,
     config: modelsTourConfig,
@@ -50,11 +45,7 @@ export const TOUR_KEYS = {
   DATASETS: "datasets",
   DATASET_VIEW: "datasetView",
   NOTEBOOK: "notebook",
-  EXPERIMENTS: "experiments",
   MODELS: "models",
   MODELS_SESSION: "modelsSession",
-  PREDICTIONS: "predictions",
-  EXPLAINABILITY: "explainability",
-  PIPELINES: "pipelines",
   GENERATIVE: "generative",
 };

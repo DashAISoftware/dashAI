@@ -51,7 +51,12 @@ export default function DatasetsCenterContent() {
     (option) => {
       if (option === "dataset") {
         navigate("/app/data/datasets/new");
-        if (tourContext?.run) {
+        const currentTarget =
+          tourContext?.steps?.[tourContext?.stepIndex]?.target;
+        if (
+          tourContext?.run &&
+          currentTarget === '[data-tour="dataset-option"]'
+        ) {
           setTimeout(() => {
             tourContext.nextStep();
           }, 600);
@@ -83,6 +88,7 @@ export default function DatasetsCenterContent() {
   if (selectedNotebookId && selectedOption === "notebook") {
     return (
       <NotebookVisualization
+        key={selectedNotebookId}
         notebook={selectedNotebook}
         existingDatasets={datasets}
       />

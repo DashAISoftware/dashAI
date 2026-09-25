@@ -1,5 +1,4 @@
-import { Box, Divider, IconButton, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Box, Button, Divider, IconButton, Typography } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
@@ -24,13 +23,33 @@ import ModelSwitcher from "./ModelSwitcher";
 import ComponentDownloadControl, {
   useComponentDownloadState,
 } from "../models/model/ComponentDownloadControl";
+import CredentialsDialog from "../credentials/CredentialsDialog";
+import {
+  useCredentialStatuses,
+  getComponentCredentialState,
+} from "../credentials/credentialStatus";
+import VpnKeyOutlinedIcon from "@mui/icons-material/VpnKeyOutlined";
 import { useSnackbar } from "notistack";
+import { getApiErrorMessage } from "../../utils/apiError";
 import { MediaInput } from "./MediaInput";
+import JobQueueWidget from "../jobs/JobQueueWidget";
+import { getRunStatus } from "../../utils/runStatus";
+import TemplateModal from "../custom/TemplateModal";
+import SourcesDisplay from "./SourcesDisplay";
 import { Trans, useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
-import { useTourContext } from "../tour/TourProvider";
+import { useTheme } from "@mui/material/styles";
 
-export default function GenerativeChat() {
+/**
+ * The conversation view, shared by every generative task.
+ *
+ * @param {object} props
+ * @param {object} [props.indexStatus] - For RAG sessions, the backend-reported
+ *   indexing state. The composer is disabled while a run is in flight: the
+ *   retriever cannot answer over chunks that are still being written.
+ * @returns {JSX.Element} The chat.
+ */
+export default function GenerativeChat({ indexStatus }) {
   const theme = useTheme();
 
   const {
@@ -51,16 +70,24 @@ export default function GenerativeChat() {
   const [messages, setMessages] = useState([]);
   const [messagesWithHistory, setMessagesWithHistory] = useState([]);
   const [isLoadingMessage, setIsLoadingMessage] = useState(false);
+  // A question asked mid-index would retrieve over chunks that are still being
+  // written, so the composer waits for the run to finish.
+  const isIndexing = indexStatus?.status === "indexing";
   const chatContainerRef = useRef(null);
   const isAtBottomRef = useRef(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [sessionInfo, setSessionInfo] = useState(null);
   const [sessionInfoVisible, setSessionInfoVisible] = useState(false);
+  const [referenceModalOpen, setReferenceModalOpen] = useState(false);
+  const [selectedReferenceText, setSelectedReferenceText] = useState("");
+  const [referenceModalTitle, setReferenceModalTitle] = useState("");
   const [modelComponent, setModelComponent] = useState(null);
   const [modelsByName, setModelsByName] = useState({});
+  const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["generative"]);
-  const tourContext = useTourContext();
+  const { t } = useTranslation(["generative", "credentials"]);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const pollingProcessIdsRef = useRef(new Set());
 
   const scrollToBottom = (force = false) => {
     const el = chatContainerRef.current;
@@ -72,6 +99,22 @@ export default function GenerativeChat() {
     if (force || distanceFromBottom <= 100) {
       el.scrollTop = el.scrollHeight;
     }
+  };
+
+  const isAtBottom = () => {
+    if (!chatContainerRef.current) return true;
+    const { scrollTop, scrollHeight, clientHeight } = chatContainerRef.current;
+    return Math.abs(scrollHeight - clientHeight - scrollTop) < 5; // 5px threshold
+  };
+
+  const handleOpenReference = (ref, key) => {
+    const title = `Document ${ref.document_id}${
+      ref.document_name ? ` (${ref.document_name})` : ""
+    }${ref.document_position ? ` - Chunk ${ref.document_position}` : ""}`;
+    setReferenceModalTitle(title);
+    // Convert escaped newlines to actual newlines
+    setSelectedReferenceText(ref.text.replace(/\\n/g, "\n"));
+    setReferenceModalOpen(true);
   };
 
   const handleScroll = () => {
@@ -134,12 +177,26 @@ export default function GenerativeChat() {
   // present, and unblocks the moment the download actually finishes.
   const { downloaded: liveDownloaded, downloading: liveDownloading } =
     useComponentDownloadState(modelComponent || { name: modelName || "" });
-  const modelBlocked =
+  // A model is usable only when its required credentials are authenticated AND
+  // its weights are present. Credentials gate first: the download itself is
+  // blocked until they are satisfied (see ComponentDownloadControl).
+  const { statuses: credentialStatuses, loaded: credentialsLoaded } =
+    useCredentialStatuses();
+  const { locked: credentialsLocked, requiredPlatforms } =
+    getComponentCredentialState(
+      modelComponent || {},
+      credentialStatuses,
+      credentialsLoaded,
+    );
+  const downloadNeeded =
     Boolean(modelComponent?.metadata?.requires_download) &&
     !(liveDownloaded && !liveDownloading);
+  const modelBlocked =
+    Boolean(modelComponent) && (credentialsLocked || downloadNeeded);
 
   const getMessages = () => {
     getProcessesBySessionId(sessionId).then((response) => {
+      console.log("Fetched messages:", response); // Add here
       setIsLoadingMessage(false);
       setMessages(response);
     });
@@ -153,25 +210,31 @@ export default function GenerativeChat() {
 
   const handleSendMessage = (input) => {
     setIsLoadingMessage(true);
+    setShouldAutoScroll(true); // Enable auto-scroll when sending new message
 
-    postProcess(sessionId, input).then((response) => {
-      // Add the new message to the chat
-      setMessages((prevMessages) => [...prevMessages, response]);
+    postProcess(sessionId, input)
+      .then((response) => {
+        // Add the new message to the chat
+        setMessages((prevMessages) => [...prevMessages, response]);
 
-      // Enqueue the generative process job
-      enqueueGenerativeProcessJob(response.id).then(() => {
-        startJobQueue(true).then(() => {
-          setIsLoadingMessage(false);
-        });
+        // Enqueue the generative process job
+        return enqueueGenerativeProcessJob(response.id)
+          .then(() => startJobQueue(true))
+          .then(() => {
+            setIsLoadingMessage(false);
+          });
+      })
+      .catch((error) => {
+        // Without this the composer stays disabled forever and says nothing.
+        // A RAG session starts with no documents, so the backend refusing the
+        // first message is a routine outcome, not an exceptional one.
+        console.error("Failed to send message:", error);
+        setIsLoadingMessage(false);
+        enqueueSnackbar(
+          getApiErrorMessage(error, t("generative:error.failedToSendMessage")),
+          { variant: "error" },
+        );
       });
-
-      // End tour if on final step
-      if (tourContext?.run && tourContext?.stepIndex === 8) {
-        setTimeout(() => {
-          tourContext.stopTour();
-        }, 100);
-      }
-    });
   };
 
   useEffect(() => {
@@ -203,43 +266,57 @@ export default function GenerativeChat() {
       const unfinished = messages.filter(
         (m) =>
           m.status !== 3 && // Not Finished
-          m.status !== 4, // Not Error
+          !pollingProcessIdsRef.current.has(m.id),
       );
 
       if (unfinished.length === 0) {
-        clearInterval(intervalId); // nothing left to poll
+        if (messages.every((m) => m.status === 3)) {
+          clearInterval(intervalId); // nothing left to poll
+        }
         return;
       }
 
       // Fetch latest status for each unfinished process
       unfinished.forEach((msg) => {
-        getProcessById(msg.id).then((process) => {
-          const status = process.status;
+        pollingProcessIdsRef.current.add(msg.id);
+        getProcessById(msg.id)
+          .then((process) => {
+            const status = process.status;
 
-          // Error
-          if (status === 4) {
-            enqueueSnackbar(
-              t("generative:error.processError", {
-                error: process.output?.[0]?.data
-                  ? `\n${process.output[0].data}`
-                  : "",
-              }),
-              {
-                autoHideDuration: 8000,
-                style: { whiteSpace: "pre-line" },
-              },
-            );
-
-            deleteProcessById(process.id).then(() => {
+            // Error
+            if (status === 4) {
               setMessages((prev) => prev.filter((m) => m.id !== process.id));
-            });
-          } else {
+              enqueueSnackbar(
+                t("generative:error.processError", {
+                  error: process.output?.[0]?.data
+                    ? `\n${process.output[0].data}`
+                    : "",
+                }),
+                {
+                  autoHideDuration: 8000,
+                  style: { whiteSpace: "pre-line" },
+                },
+              );
+
+              return deleteProcessById(process.id).catch((error) =>
+                console.error("Failed to delete errored process:", error),
+              );
+            }
             // Update progress or final result
             setMessages((prev) =>
               prev.map((m) => (m.id === process.id ? process : m)),
             );
-          }
-        });
+          })
+          .catch((error) => {
+            if (error?.response?.status === 404) {
+              setMessages((prev) => prev.filter((m) => m.id !== msg.id));
+            } else {
+              console.error("Failed to poll generative process:", error);
+            }
+          })
+          .finally(() => {
+            pollingProcessIdsRef.current.delete(msg.id);
+          });
       });
     }, POLL_INTERVAL);
 
@@ -247,13 +324,92 @@ export default function GenerativeChat() {
   }, [messages]);
 
   useEffect(() => {
+    console.log("Combining messages and history for display"); // Add here
+    console.log("Messages:", messages);
+    console.log("TASK NAME:", taskName);
+    console.log("session name:", sessionInfo?.name);
+    console.log("session description:", sessionInfo?.description);
     let messagesObject = messages.map((process) => {
+      // Check if there's reference data in the output (only for RAGTask)
+      let referenceOutput = null;
+      let mainOutput = process.output;
+
+      if (
+        taskName === "RAGTask" &&
+        process.output &&
+        process.output.length > 1
+      ) {
+        // Look for Dict type output that contains reference information
+        const referenceItem = process.output.find(
+          (item) => item.data_type === "Dict",
+        );
+        if (referenceItem) {
+          console.log("Raw reference data:", referenceItem.data);
+          try {
+            // The data might be a Python dict string, try to parse it as JSON
+            let dataStr = referenceItem.data;
+
+            // If it starts with { but isn't valid JSON, it might be a Python dict
+            // Try to convert Python dict format to JSON format
+            if (dataStr.startsWith("{") && !dataStr.startsWith('{"')) {
+              // Replace Python dict format with JSON format
+              dataStr = dataStr
+                .replace(/'/g, '"') // Replace single quotes with double quotes
+                .replace(/True/g, "true") // Replace Python True with JSON true
+                .replace(/False/g, "false") // Replace Python False with JSON false
+                .replace(/None/g, "null"); // Replace Python None with JSON null
+            }
+
+            console.log("Processed data string:", dataStr);
+            const parsedData = JSON.parse(dataStr);
+            referenceOutput = parsedData;
+            // Keep only non-Dict outputs as main output
+            mainOutput = process.output.filter(
+              (item) => item.data_type !== "Dict",
+            );
+          } catch (e) {
+            console.log("Could not parse reference data:", e);
+            console.log("Original data:", referenceItem.data);
+            // If parsing fails, try to extract info using regex as fallback for multiple references
+            try {
+              // Updated regex to capture all fields: document_id, document_name, document_position, text
+              const matches = [
+                ...referenceItem.data.matchAll(
+                  /(\d+):\s*\{\s*['"]?document_id['"]?\s*:\s*(\d+).*?['"]?document_name['"]?\s*:\s*['"]([^'"]*)['"]\s*.*?['"]?document_position['"]?\s*:\s*(\d+).*?['"]?text['"]?\s*:\s*['"]([^'"]*)['"]/gs,
+                ),
+              ];
+              console.log("Regex matches for references:", matches);
+
+              if (matches.length > 0) {
+                referenceOutput = {};
+                matches.forEach((match) => {
+                  const refId = match[1];
+                  referenceOutput[refId] = {
+                    document_id: parseInt(match[2]),
+                    document_name: match[3],
+                    document_position: parseInt(match[4]),
+                    text: match[5],
+                  };
+                });
+                mainOutput = process.output.filter(
+                  (item) => item.data_type !== "Dict",
+                );
+                console.log("Fallback parsing successful:", referenceOutput);
+              }
+            } catch (fallbackError) {
+              console.log("Fallback parsing also failed:", fallbackError);
+            }
+          }
+        }
+      }
+
       return {
         type: "message",
         timestamp: process.created,
         id: process.id,
         input: process.input,
-        output: process.output,
+        output: mainOutput,
+        referenceOutput: referenceOutput,
         status: process.status,
         end_time: process.end_time,
       };
@@ -273,10 +429,10 @@ export default function GenerativeChat() {
             : change.parameter;
           const oldValue = isModel
             ? modelsByName[change.oldValue] || change.oldValue
-            : change.oldValue;
+            : formatHistoryValue(change.oldValue);
           const newValue = isModel
             ? modelsByName[change.newValue] || change.newValue
-            : change.newValue;
+            : formatHistoryValue(change.newValue);
           return (
             <span
               key={change.parameter}
@@ -300,6 +456,34 @@ export default function GenerativeChat() {
     );
     setMessagesWithHistory(combinedMessages);
   }, [messages, history]);
+
+  const formatHistoryValue = (value) => {
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+      return String(value);
+    }
+
+    if (typeof value === "object") {
+      if (value.component) {
+        return value.component;
+      }
+
+      try {
+        return JSON.stringify(value);
+      } catch (error) {
+        return String(value);
+      }
+    }
+
+    return String(value);
+  };
 
   return (
     <Box
@@ -325,22 +509,24 @@ export default function GenerativeChat() {
         }}
       >
         <Typography>
-          {sessionInfo?.name ? sessionInfo.name : "Untitled Session"}{" "}
+          {sessionInfo?.name || t("generative:label.untitledSession")}{" "}
           {sessionInfo?.description ? ":" : null} {sessionInfo?.description}
         </Typography>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <ModelSwitcher
-            sessionId={sessionId}
-            taskName={sessionInfo?.task_name}
-            currentModelName={sessionInfo?.model_name}
-            onChanged={() => {
-              getSessionInfo();
-              fetchSessions();
-              setParamsVersion((v) => v + 1);
-            }}
-          />
-        </Box>
+        {taskName !== "RAGTask" && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <ModelSwitcher
+              sessionId={sessionId}
+              taskName={sessionInfo?.task_name}
+              currentModelName={sessionInfo?.model_name}
+              onChanged={() => {
+                getSessionInfo();
+                fetchSessions();
+                setParamsVersion((v) => v + 1);
+              }}
+            />
+          </Box>
+        )}
       </Box>
 
       <Divider sx={{ width: "100%", bgcolor: "divider" }} />
@@ -360,13 +546,13 @@ export default function GenerativeChat() {
           flexDirection="column"
           justifyContent="flex-start"
           alignItems="flex-start"
-          gap={4}
+          gap={1}
           width={"100%"}
           flex={1}
           minHeight={0}
           overflow={"auto"}
-          mt={4}
-          p={8}
+          mt={1}
+          p={2}
           ref={chatContainerRef}
           onScroll={handleScroll}
         >
@@ -378,10 +564,10 @@ export default function GenerativeChat() {
                 flexDirection="column"
                 justifyContent="flex-start"
                 flexGrow={0}
-                gap={4}
+                gap={1}
                 width={"100%"}
                 //height={"100%"}
-                mt={4}
+                mt={1}
               >
                 {message.type === "history" ? (
                   <Typography variant="body1" sx={{ opacity: 0.8 }}>
@@ -409,15 +595,70 @@ export default function GenerativeChat() {
                       isUser={true}
                     />
                     {message.status === 3 ? (
-                      <ChatBubble
-                        messages={message.output}
-                        sender={"Model"}
-                        timestamp={new Date(
-                          message.end_time,
-                        ).toLocaleTimeString()}
-                      />
+                      <>
+                        {taskName === "RAGTask" && message.referenceOutput ? (
+                          // For RAG messages, we need custom layout to insert sources before timestamp
+                          <>
+                            <ChatBubble
+                              messages={message.output}
+                              sender={"Model"}
+                              timestamp={null} // We'll handle timestamp separately
+                            />
+                            <SourcesDisplay
+                              references={message.referenceOutput}
+                              onOpenReference={handleOpenReference}
+                              isUser={false}
+                            />
+                            {/* Add timestamp after sources with proper alignment */}
+                            <Box
+                              sx={{
+                                ml: "40px", // Same alignment as sources and message content
+                                mt: 1,
+                                display: "flex",
+                                justifyContent: "flex-start",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  fontSize: "0.75rem",
+                                  color: "text.secondary",
+                                  opacity: 0.7,
+                                }}
+                              >
+                                {new Date(
+                                  message.end_time,
+                                ).toLocaleTimeString()}
+                              </Box>
+                            </Box>
+                          </>
+                        ) : (
+                          // For non-RAG messages, use normal ChatBubble with timestamp
+                          <ChatBubble
+                            messages={message.output}
+                            sender={"Model"}
+                            timestamp={new Date(
+                              message.end_time,
+                            ).toLocaleTimeString()}
+                          />
+                        )}
+                      </>
                     ) : (
-                      <ChatBubble isWaiting={true} sender="Model" />
+                      <>
+                        <ChatBubble isWaiting={true} sender="Model" />
+                        {/* Only where the chat job still has to index: with
+                            eager indexing this is the fallback path, and
+                            "no_documents" never indexes at all. */}
+                        {(indexStatus?.status === "not_indexed" ||
+                          indexStatus?.status === "stale") && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ ml: "40px" }}
+                          >
+                            {t("generative:rag.index.indexingInProgress")}
+                          </Typography>
+                        )}
+                      </>
                     )}
                   </>
                 )}
@@ -462,22 +703,50 @@ export default function GenerativeChat() {
           }}
         >
           <Typography variant="body2" color="text.secondary">
-            {t("generative:label.modelNotDownloaded")}
+            {credentialsLocked
+              ? t("generative:label.modelRequiresCredentials", {
+                  platform: requiredPlatforms,
+                })
+              : t("generative:label.modelNotDownloaded")}
           </Typography>
-          <ComponentDownloadControl
-            component={modelComponent}
-            onStatusChange={() => refreshModelStatus()}
-          />
+          {credentialsLocked ? (
+            <Button
+              size="small"
+              variant="outlined"
+              startIcon={<VpnKeyOutlinedIcon />}
+              onClick={() => setCredentialsDialogOpen(true)}
+            >
+              {t("credentials:manage")}
+            </Button>
+          ) : (
+            <ComponentDownloadControl
+              component={modelComponent}
+              onStatusChange={() => refreshModelStatus()}
+            />
+          )}
         </Box>
       ) : (
-        <MediaInput
-          key={sessionId}
-          onSendMessage={(input) => {
-            handleSendMessage(input);
-          }}
-          isLoading={isLoadingMessage}
-          inputsCardinality={inputsCardinality}
-        />
+        <>
+          <MediaInput
+            key={sessionId}
+            onSendMessage={(input) => {
+              handleSendMessage(input);
+            }}
+            isLoading={isLoadingMessage || isIndexing}
+            inputsCardinality={inputsCardinality}
+          />
+          {/* Says why the composer is disabled, rather than leaving it looking
+              broken. The message is localized by the backend. */}
+          {isIndexing && (
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 0.5, textAlign: "center" }}
+            >
+              {indexStatus.message}
+            </Typography>
+          )}
+        </>
       )}
 
       {/* Session Info Modal */}
@@ -488,6 +757,11 @@ export default function GenerativeChat() {
           onClose={() => setSessionInfoVisible(false)}
         />
       )}
+
+      <CredentialsDialog
+        open={credentialsDialogOpen}
+        onClose={() => setCredentialsDialogOpen(false)}
+      />
     </Box>
   );
 }
