@@ -43,14 +43,6 @@ export default function CreateSessionCenter() {
     handleCreate,
   } = useCreateSession();
 
-  const handleSelectModelWithTour = useCallback(
-    (model) => {
-      handleSelectModel(model);
-      if (tourContext?.run) tourContext.nextStep();
-    },
-    [handleSelectModel, tourContext],
-  );
-
   const handleNextWithTour = useCallback(() => {
     if (tourContext?.run) tourContext.nextStep();
     handleNext();
@@ -71,20 +63,34 @@ export default function CreateSessionCenter() {
   // gate reacts to an inline download without needing selectedModel to change.
   const selectedModelState =
     models.find((m) => m.name === selectedModel?.name) || selectedModel;
-  const selectedNeedsDownload =
-    Boolean(selectedModelState?.metadata?.requires_download) &&
-    !selectedModelState?.downloaded;
 
   // Credentials gate the same way downloads do: a model whose required
   // credentials are unmet cannot be used to create a session, even when it was
   // preselected via URL (which bypasses the disabled card in the selector).
   const { statuses, loaded } = useCredentialStatuses();
-  const { locked: selectedCredentialsLocked } = getComponentCredentialState(
-    selectedModelState || {},
-    statuses,
-    loaded,
+  const isModelUsable = useCallback(
+    (model) =>
+      !(Boolean(model?.metadata?.requires_download) && !model?.downloaded) &&
+      !getComponentCredentialState(model || {}, statuses, loaded).locked,
+    [statuses, loaded],
   );
-  const selectedUsable = !selectedNeedsDownload && !selectedCredentialsLocked;
+  const selectedUsable = isModelUsable(selectedModelState);
+
+  const handleSelectModelWithTour = useCallback(
+    (model) => {
+      handleSelectModel(model);
+      if (tourContext?.run && isModelUsable(model)) tourContext.nextStep();
+    },
+    [handleSelectModel, tourContext, isModelUsable],
+  );
+
+  useEffect(() => {
+    if (!tourContext?.run || !selectedModel || !selectedUsable) return;
+    const currentTarget = tourContext.steps?.[tourContext.stepIndex]?.target;
+    if (currentTarget === '[data-tour="model-card-qwen"]') {
+      tourContext.nextStep();
+    }
+  }, [selectedUsable]);
 
   const canGoNext = !!selectedModel && selectedUsable;
   const canCreate =
