@@ -56,11 +56,6 @@ export default function CreateSessionCenter() {
     handleNext();
   }, [handleNext, tourContext]);
 
-  const handleCreateWithTour = useCallback(() => {
-    if (tourContext?.run) tourContext.nextStep();
-    handleCreate();
-  }, [handleCreate, tourContext]);
-
   useEffect(() => {
     if (!tourContext?.run) return;
     const currentTarget = tourContext.steps?.[tourContext.stepIndex]?.target;
@@ -190,7 +185,7 @@ export default function CreateSessionCenter() {
 
       <StepperNavigationFooter
         onBack={handleBack}
-        onNext={step === 0 ? handleNextWithTour : handleCreateWithTour}
+        onNext={step === 0 ? handleNextWithTour : handleCreate}
         backDisabled={submitting}
         nextDisabled={step === 0 ? !canGoNext : !canCreate}
         nextLabel={

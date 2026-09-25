@@ -38,7 +38,6 @@ import TemplateModal from "../custom/TemplateModal";
 import SourcesDisplay from "./SourcesDisplay";
 import { Trans, useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
-import { useTourContext } from "../tour/TourProvider";
 import { useTheme } from "@mui/material/styles";
 
 /**
@@ -87,7 +86,6 @@ export default function GenerativeChat({ indexStatus }) {
   const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative", "credentials"]);
-  const tourContext = useTourContext();
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const pollingProcessIdsRef = useRef(new Set());
 
@@ -225,14 +223,6 @@ export default function GenerativeChat({ indexStatus }) {
           .then(() => {
             setIsLoadingMessage(false);
           });
-      })
-      .then(() => {
-        // End tour if on final step
-        if (tourContext?.run && tourContext?.stepIndex === 8) {
-          setTimeout(() => {
-            tourContext.stopTour();
-          }, 100);
-        }
       })
       .catch((error) => {
         // Without this the composer stays disabled forever and says nothing.

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 
 const TOUR_STORAGE_KEY = "dashai_tours_completed";
+const TOUR_HANDOFF_KEY = "dashai_tour_handoff";
 const TARGET_POLL_MS = 200;
 const TARGET_WAIT_MS = 8000;
 
@@ -16,6 +17,15 @@ const isTargetVisible = (selector) => {
     if (display === "none" || visibility === "hidden") return false;
   }
   return true;
+};
+
+const takeHandoff = (tourKey) => {
+  const handoffs = JSON.parse(sessionStorage.getItem(TOUR_HANDOFF_KEY) || "{}");
+  if (!(tourKey in handoffs)) return null;
+  const step = handoffs[tourKey];
+  delete handoffs[tourKey];
+  sessionStorage.setItem(TOUR_HANDOFF_KEY, JSON.stringify(handoffs));
+  return step;
 };
 
 export const useTour = (tourKey) => {
@@ -40,14 +50,19 @@ export const useTour = (tourKey) => {
     setRun(false);
     setStepIndex(0);
 
-    const completedTours = JSON.parse(
-      localStorage.getItem(TOUR_STORAGE_KEY) || "{}",
-    );
-
-    if (!completedTours[tourKey]) {
-      const timer = setTimeout(() => setRun(true), 500);
-      return () => clearTimeout(timer);
-    }
+    const timer = setTimeout(() => {
+      const handoffStep = takeHandoff(tourKey);
+      if (handoffStep !== null) {
+        setStepIndex(handoffStep);
+        setRun(true);
+        return;
+      }
+      const completedTours = JSON.parse(
+        localStorage.getItem(TOUR_STORAGE_KEY) || "{}",
+      );
+      if (!completedTours[tourKey]) setRun(true);
+    }, 500);
+    return () => clearTimeout(timer);
   }, [tourKey, clearMissingWatch]);
 
   const startTour = useCallback(() => {
@@ -92,6 +107,17 @@ export const useTour = (tourKey) => {
     completedTours[tourKey] = true;
     localStorage.setItem(TOUR_STORAGE_KEY, JSON.stringify(completedTours));
   }, [tourKey]);
+
+  const handoffTour = useCallback(
+    (step) => {
+      const handoffs = JSON.parse(
+        sessionStorage.getItem(TOUR_HANDOFF_KEY) || "{}",
+      );
+      handoffs[tourKey] = step;
+      sessionStorage.setItem(TOUR_HANDOFF_KEY, JSON.stringify(handoffs));
+    },
+    [tourKey],
+  );
 
   const completeTour = useCallback(() => {
     clearMissingWatch();
@@ -163,6 +189,7 @@ export const useTour = (tourKey) => {
     startTour,
     stopTour,
     completeTour,
+    handoffTour,
     resetTour,
     resetAllTours,
     handleJoyrideCallback,
