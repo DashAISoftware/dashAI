@@ -110,7 +110,9 @@ export default function ConverterBox({
         }
       } catch (error) {
         console.error("Failed to fetch converter status:", error);
-        clearInterval(intervalId);
+        if (error.response?.status === 404) {
+          clearInterval(intervalId);
+        }
       }
     };
 

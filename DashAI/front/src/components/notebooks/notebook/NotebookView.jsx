@@ -228,14 +228,13 @@ export default function NotebookView({ notebook }) {
       setConverterToDelete(null);
       setDeleteModalContent("");
       setItemsToDelete([]);
+      fetchExplorersAndConverters();
       if (jobId) {
         startJobPolling(
           jobId,
           () => fetchExplorersAndConverters(),
           () => fetchExplorersAndConverters(),
         );
-      } else {
-        fetchExplorersAndConverters();
       }
     } catch (error) {
       console.error("Failed to delete converter:", error);
