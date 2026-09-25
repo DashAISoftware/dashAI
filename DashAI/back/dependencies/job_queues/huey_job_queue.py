@@ -99,16 +99,22 @@ def _worker_loop(in_q, out_q) -> None:
         out_q.put(_dill.dumps({"ready": False, "exc": str(_e)}))
         return
 
-    # Signal to the parent that we are ready to accept jobs
-    out_q.put(_dill.dumps({"ready": True}))
+    # Signal to the parent that we are ready to accept jobs. The PID is sent
+    # because the process the parent spawned may be a launcher wrapper (e.g. a
+    # shell script standing in for sys.executable in a packaged build) that
+    # runs this interpreter as a child, in which case signalling proc.pid
+    # would leave this process running.
+    out_q.put(_dill.dumps({"ready": True, "pid": _os.getpid()}))
 
-    # Install SIGTERM handler on POSIX so the process exits cleanly when killed
+    # A cancel sends SIGTERM, and the worker must die on it at once. A Python
+    # handler would not do: it only runs when the main thread is back in
+    # bytecode, so a long native call (a model fit) delays it, and raising
+    # SystemExit from it still waits for non-daemon threads (the Hugging Face
+    # download pool), so the job kept running. The default action lets the
+    # kernel end the process immediately. Nothing is lost: the parent does all
+    # the cleanup once it sees the worker die.
     if _sys.platform != "win32":
-
-        def _sigterm_handler(signum, frame):
-            _sys.exit(0)
-
-        _signal.signal(_signal.SIGTERM, _sigterm_handler)
+        _signal.signal(_signal.SIGTERM, _signal.SIG_DFL)
 
     # Job loop — one blocking iteration per job
     while True:
@@ -124,10 +130,6 @@ def _worker_loop(in_q, out_q) -> None:
             job = _dill.loads(job_bytes)
             result = job.run()
             out_q.put(_dill.dumps({"ok": True, "result": result}))
-        except SystemExit:
-            # SIGTERM handler raised SystemExit — exit without putting a result so
-            # the parent detects the kill via proc.is_alive() == False.
-            break
         except Exception as _exc:
             # Job-level errors are returned to the parent; the worker stays alive.
             # Guard against non-serialisable exceptions (e.g. SQLAlchemy errors
@@ -216,6 +218,7 @@ class HueyJobQueue(BaseJobQueue):
 
         # Persistent worker process state (None until first job or explicit pre-warm)
         self._worker_proc = None
+        self._worker_pid = None
         self._worker_in_q = None
         self._worker_out_q = None
 
@@ -274,7 +277,7 @@ class HueyJobQueue(BaseJobQueue):
             if getattr(job, "RESETS_WORKER", False):
                 with suppress(Exception):
                     if self._worker_proc is not None:
-                        self._worker_proc.terminate()
+                        self._terminate_worker(self._worker_proc, self._worker_pid)
             if self._cancel_requested(huey_id):
                 self._finalize_interrupted(job, huey_id)
                 raise _JobCancelledError(f"Job {huey_id} was cancelled while running")
@@ -416,6 +419,7 @@ class HueyJobQueue(BaseJobQueue):
         )
         proc.start()
         self._worker_proc = proc
+        self._worker_pid = None
 
         # Wait for the worker to finish building its DI container
         import queue as _q
@@ -438,7 +442,28 @@ class HueyJobQueue(BaseJobQueue):
                 f"Worker failed to initialise: {msg.get('exc', 'unknown error')}"
             )
 
-        log.info("Persistent worker ready (PID %d)", proc.pid)
+        self._worker_pid = msg.get("pid", proc.pid)
+        log.info("Persistent worker ready (PID %d)", self._worker_pid)
+
+    @staticmethod
+    def _terminate_worker(proc, pid: int | None) -> None:
+        """Terminate the worker, signalling the interpreter's own PID too.
+
+        ``proc.pid`` may belong to a launcher wrapper rather than to the
+        interpreter running the worker loop, so terminating only ``proc``
+        could leave the job running.
+
+        Parameters
+        ----------
+        proc : multiprocessing.Process
+            The worker process handle.
+        pid : int or None
+            The PID reported by the worker loop itself.
+        """
+        if pid is not None and pid != proc.pid:
+            with suppress(Exception):
+                _signal_terminate(pid)
+        proc.terminate()
 
     def _run_in_subprocess(self, job: BaseJob, huey_id: str):
         """Run *job* in the persistent worker process and return its result.
@@ -491,17 +516,19 @@ class HueyJobQueue(BaseJobQueue):
         # Capture local references so a concurrent _ensure_worker respawn cannot
         # swap the queue objects underneath us mid-job.
         proc = self._worker_proc
+        worker_pid = self._worker_pid or proc.pid
         in_q = self._worker_in_q
         out_q = self._worker_out_q
 
-        # Record PID so the cancel endpoint can kill the right process
+        # Record the interpreter's PID so the cancel endpoint kills the process
+        # that actually runs the job, not a launcher wrapper around it
         pid_recorded = None
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cur = conn.execute(
                     "UPDATE task_copy SET pid=? WHERE id=?"
                     " AND status NOT IN ('cancelled', 'killed')",
-                    (proc.pid, huey_id),
+                    (worker_pid, huey_id),
                 )
                 pid_recorded = cur.rowcount > 0
         except Exception:
@@ -555,7 +582,7 @@ class HueyJobQueue(BaseJobQueue):
 
         if self._cancel_requested(huey_id):
             with suppress(Exception):
-                proc.terminate()
+                self._terminate_worker(proc, worker_pid)
                 proc.join(timeout=5)
             self._finalize_interrupted(job, huey_id)
             raise _JobCancelledError(f"Job {huey_id} was cancelled while finishing")

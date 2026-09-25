@@ -71,6 +71,21 @@ class CancellableJob(BaseJob):
         return "Cancellable Job"
 
 
+class ThreadedJob(CancellableJob):
+    """Job whose work runs in a non-daemon thread pool, like a model download.
+
+    The main thread only waits on the pool, which is where a SIGTERM that is
+    turned into SystemExit gets stuck until the pool finishes.
+    """
+
+    def run(self):
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(max_workers=1) as pool:
+            pool.submit(time.sleep, self.SLEEP_SECONDS).result()
+        return "completed"
+
+
 class QuickJob(CancellableJob):
     """Same job, but it returns immediately."""
 
@@ -230,6 +245,82 @@ def test_cancel_running_job_kills_the_worker(queue: HueyJobQueue):
     assert _column(queue, huey_id, "pid") is None
     assert not queue._worker_proc.is_alive()
     assert job.cancel_hook_ran, "on_cancel() never ran, partial artifacts would leak"
+
+
+def _pid_alive(pid: int) -> bool:
+    """Tell whether *pid* is a live, non-zombie process."""
+    try:
+        with open(f"/proc/{pid}/stat") as f:
+            return f.read().rsplit(")", 1)[1].split()[0] != "Z"
+    except FileNotFoundError:
+        return False
+
+
+@pytest.mark.skipif(
+    not Path("/proc").is_dir(), reason="needs /proc and a POSIX shell wrapper"
+)
+def test_cancel_kills_the_worker_behind_a_launcher_wrapper(
+    queue: HueyJobQueue, tmp_path: Path
+):
+    """A cancel must kill the interpreter even when sys.executable is a wrapper.
+
+    Packaged builds (the python-appimage AppImage) can point sys.executable at
+    a shell script that runs Python as a child without exec, so the spawned
+    process handle is the shell, not the worker. Killing only the shell left
+    the job running in an orphaned interpreter.
+    """
+    import multiprocessing.spawn
+    import sys
+    from multiprocessing import resource_tracker
+
+    wrapper = tmp_path / "python-wrapper"
+    wrapper.write_text(f'#!/bin/sh\n"{sys.executable}" "$@"\n')
+    wrapper.chmod(0o755)
+    # Start the shared resource tracker with the real interpreter first, or it
+    # would also run behind the wrapper and hang the test session on exit.
+    resource_tracker.ensure_running()
+    previous = multiprocessing.spawn.get_executable()
+    multiprocessing.spawn.set_executable(str(wrapper))
+    try:
+        huey_id = "job-wrapped"
+        _register_started(queue, huey_id)
+        consumer = _ConsumerThread(queue, CancellableJob(), huey_id)
+        consumer.start()
+        pid = _wait_for_worker_pid(queue, huey_id)
+        assert pid != queue._worker_proc.pid, "the wrapper was not in between"
+
+        assert queue.cancel(huey_id, reason="cancelled") is True
+        consumer.join(timeout=CANCEL_TIMEOUT)
+
+        assert isinstance(consumer.error, _JobCancelledError)
+        assert not _pid_alive(pid), "the job kept running after the cancel"
+    finally:
+        multiprocessing.spawn.set_executable(previous)
+        if queue._worker_pid and _pid_alive(queue._worker_pid):
+            os.kill(queue._worker_pid, 9)
+
+
+def test_cancel_kills_a_job_working_in_a_thread_pool(queue: HueyJobQueue):
+    """A cancel must end the worker at once even when a thread does the work.
+
+    With SIGTERM turned into SystemExit the interpreter waited for the pool to
+    finish, so a download kept running until the 30 s SIGKILL escalation, and
+    the cancel request hung for as long.
+    """
+    huey_id = "job-threaded"
+    _register_started(queue, huey_id)
+    consumer = _ConsumerThread(queue, ThreadedJob(), huey_id)
+    consumer.start()
+    pid = _wait_for_worker_pid(queue, huey_id)
+
+    started = time.monotonic()
+    assert queue.cancel(huey_id, reason="cancelled") is True
+    elapsed = time.monotonic() - started
+    consumer.join(timeout=CANCEL_TIMEOUT)
+
+    assert elapsed < 10, f"the worker outlived the cancel for {elapsed:.0f} s"
+    assert isinstance(consumer.error, _JobCancelledError)
+    assert not _pid_alive(pid)
 
 
 def test_cancel_queued_job_removes_it_from_the_task_table(queue: HueyJobQueue):
