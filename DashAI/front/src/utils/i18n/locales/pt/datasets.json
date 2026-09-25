@@ -61,6 +61,7 @@
     "datasetExists": "Já existe um conjunto de dados com este nome.",
     "datasetNameEmpty": "O nome do conjunto de dados não pode estar vazio",
     "datasetNameExists": "Já existe um conjunto de dados com este nome.",
+    "datasetNotCreated": "Não foi possível criar este conjunto de dados porque seu trabalho falhou ou foi cancelado. Exclua o conjunto de dados e tente novamente.",
     "datasetRequired": "É necessário um conjunto de dados",
     "enqueueDatasetJob": "Erro ao tentar enfileirar o trabalho do conjunto de dados.",
     "errorCreatingNotebook": "Erro ao criar caderno",

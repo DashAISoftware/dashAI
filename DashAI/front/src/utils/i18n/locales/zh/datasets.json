@@ -58,6 +58,7 @@
     "datasetExists": "已存在同名数据集。",
     "datasetNameEmpty": "数据集名称不能为空",
     "datasetNameExists": "已存在同名数据集。",
+    "datasetNotCreated": "无法创建此数据集，因为其任务失败或已被取消。请删除它后重试。",
     "datasetRequired": "数据集为必填项",
     "enqueueDatasetJob": "将数据集任务加入队列时出错。",
     "errorCreatingNotebook": "创建笔记本时出错",

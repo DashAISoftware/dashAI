@@ -81,11 +81,15 @@ export default function HubContent() {
       if (watchedJobsRef.current.has(d.job_id)) continue;
       watchedJobsRef.current.add(d.job_id);
 
-      const onDone = async (isError) => {
+      const onDone = async (isError, job) => {
         try {
           const updated = await getDatafile(d.id);
           updateDownload(updated);
-          if (isError) {
+          if (job?.status === "cancelled") {
+            enqueueSnackbar(t("common:jobQueue.jobCancelled"), {
+              variant: "info",
+            });
+          } else if (isError) {
             enqueueSnackbar(
               `${t("hub:downloadFailed")}: ${d.name} - ${t("hub:checkQueue")}`,
               { variant: "error" },
@@ -105,7 +109,7 @@ export default function HubContent() {
       startJobPolling(
         d.job_id,
         () => onDone(false),
-        () => onDone(true),
+        (job) => onDone(true, job),
       );
     }
   }, [downloads]);
