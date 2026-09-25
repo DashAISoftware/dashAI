@@ -33,6 +33,12 @@ from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 OPTIONS = ["squared_hinge", "hinge"]
 BEST_OPTION = "hinge"
 
+# Neither optimizer seeds its sampler, and both start from uniform draws over
+# the four combinations of the space below. With 20 draws the winning pair
+# went unsampled about once in every 300 runs, which surfaced as a red job on
+# roughly one pull request in fifteen. With 80 the odds are around 1e-10.
+TRIALS_TO_FIND_THE_BEST = 80
+
 
 class DummyModel:
     """Scores best at ``loss == BEST_OPTION`` with ``bootstrap`` on."""
@@ -152,7 +158,9 @@ def test_a_nullable_field_no_longer_loses_its_dtype():
 def test_optuna_searches_the_options_and_finds_the_best(dataset):
     model = DummyModel()
     optimizer = _run(
-        OptunaOptimizer(n_trials=20, sampler="RandomSampler", pruner=None),
+        OptunaOptimizer(
+            n_trials=TRIALS_TO_FIND_THE_BEST, sampler="RandomSampler", pruner=None
+        ),
         model,
         dataset,
     )
@@ -223,7 +231,11 @@ def test_optuna_still_refuses_a_dtype_it_does_not_know(dataset):
 
 def test_hyperopt_searches_the_options_and_finds_the_best(dataset):
     model = DummyModel()
-    optimizer = _run(HyperOptOptimizer(n_trials=25, sampler="tpe"), model, dataset)
+    optimizer = _run(
+        HyperOptOptimizer(n_trials=TRIALS_TO_FIND_THE_BEST, sampler="tpe"),
+        model,
+        dataset,
+    )
     assert optimizer.get_best_params() == {"loss": BEST_OPTION, "bootstrap": True}
     assert model.loss == BEST_OPTION
 
