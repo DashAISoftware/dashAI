@@ -89,6 +89,12 @@ export const useTour = (tourKey) => {
     localStorage.setItem(TOUR_STORAGE_KEY, JSON.stringify(completedTours));
   }, [tourKey]);
 
+  const completeTour = useCallback(() => {
+    clearMissingWatch();
+    markTourAsCompleted();
+    setRun(false);
+  }, [clearMissingWatch, markTourAsCompleted]);
+
   const resetAllTours = useCallback(() => {
     localStorage.removeItem(TOUR_STORAGE_KEY);
   }, []);
@@ -152,6 +158,7 @@ export const useTour = (tourKey) => {
     stepIndex,
     startTour,
     stopTour,
+    completeTour,
     resetTour,
     resetAllTours,
     handleJoyrideCallback,

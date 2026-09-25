@@ -61,7 +61,7 @@ export default function UploadNotebookSteps({
         });
         handleNotebookCreated(createdNotebook);
         if (tourContext?.run) {
-          tourContext.stopTour();
+          tourContext.completeTour();
           sessionStorage.setItem("startNotebookTour", "true");
         }
       } catch (error) {
