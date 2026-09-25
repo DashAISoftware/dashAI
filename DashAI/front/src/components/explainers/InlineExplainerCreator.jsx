@@ -31,7 +31,6 @@ import SelectDatasetStep from "./SelectDatasetStep";
 import SetNameAndExplainerStep from "./SetNameAndExplainerStep";
 
 const SNACKBAR_AUTO_HIDE_MS = 5000;
-
 export default function InlineExplainerCreator({
   open,
   scope,
@@ -138,16 +137,26 @@ export default function InlineExplainerCreator({
             if (onCreated) onCreated();
           },
           (result) => {
-            console.error(`${scope} explainer job failed:`, result);
-            enqueueSnackbar(
-              t(
-                isLocal
-                  ? "explainers:error.localExplainerJobFailed"
-                  : "explainers:error.globalExplainerJobFailed",
-                { error: result.error || "Unknown error" },
-              ),
-              { variant: "error", autoHideDuration: SNACKBAR_AUTO_HIDE_MS },
-            );
+            if (result?.status === "cancelled") {
+              enqueueSnackbar(t("common:jobQueue.jobCancelled"), {
+                variant: "info",
+                autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
+              });
+            } else {
+              console.error(`${scope} explainer job failed:`, result);
+              enqueueSnackbar(
+                t(
+                  isLocal
+                    ? "explainers:error.localExplainerJobFailed"
+                    : "explainers:error.globalExplainerJobFailed",
+                  {
+                    error:
+                      result?.error_msg || result?.error || "Unknown error",
+                  },
+                ),
+                { variant: "error", autoHideDuration: SNACKBAR_AUTO_HIDE_MS },
+              );
+            }
             if (onCreated) onCreated();
           },
         );

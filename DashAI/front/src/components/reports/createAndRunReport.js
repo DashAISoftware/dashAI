@@ -3,7 +3,6 @@ import { enqueueReportJob } from "../../api/job";
 import { startJobPolling } from "../../utils/jobPoller";
 
 const SNACKBAR_AUTO_HIDE_MS = 5000;
-
 /**
  * True when a report has parameters worth asking the user about.
  *
@@ -56,11 +55,18 @@ export async function createAndRunReport({
         if (onCreated) onCreated();
       },
       (result) => {
-        console.error("Report job failed:", result);
-        enqueueSnackbar(t("reports:message.failed"), {
-          variant: "error",
-          autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
-        });
+        if (result?.status === "cancelled") {
+          enqueueSnackbar(t("common:jobQueue.jobCancelled"), {
+            variant: "info",
+            autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
+          });
+        } else {
+          console.error("Report job failed:", result);
+          enqueueSnackbar(t("reports:message.failed"), {
+            variant: "error",
+            autoHideDuration: SNACKBAR_AUTO_HIDE_MS,
+          });
+        }
         if (onCreated) onCreated();
       },
     );
