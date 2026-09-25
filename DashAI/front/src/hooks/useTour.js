@@ -36,6 +36,10 @@ export const useTour = (tourKey) => {
   useEffect(() => clearMissingWatch, [clearMissingWatch]);
 
   useEffect(() => {
+    clearMissingWatch();
+    setRun(false);
+    setStepIndex(0);
+
     const completedTours = JSON.parse(
       localStorage.getItem(TOUR_STORAGE_KEY) || "{}",
     );
@@ -44,7 +48,7 @@ export const useTour = (tourKey) => {
       const timer = setTimeout(() => setRun(true), 500);
       return () => clearTimeout(timer);
     }
-  }, [tourKey]);
+  }, [tourKey, clearMissingWatch]);
 
   const startTour = useCallback(() => {
     clearMissingWatch();
