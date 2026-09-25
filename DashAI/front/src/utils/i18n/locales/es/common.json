@@ -113,6 +113,7 @@
     "confirmClearAll": "¿Estás seguro de que deseas eliminar TODOS los trabajos registrados?",
     "confirmClearAllDetail": "Esto cancelará todos los trabajos de la cola.",
     "confirmDeleteJob": "¿Estás seguro de que deseas eliminar este trabajo?",
+    "confirmCancelJob": "¿Estás seguro de que deseas cancelar este trabajo?",
     "deleteJob": "Eliminar trabajo",
     "details": {
       "errorMessage": "Mensaje de error",
@@ -129,7 +130,9 @@
       "running": "En ejecución",
       "completed": "Completado",
       "failed": "Fallido",
-      "deleted": "Eliminado"
+      "deleted": "Eliminado",
+      "cancelled": "Cancelado",
+      "killed": "Interrumpido"
     },
     "failedCount_one": "{{count}} fallido",
     "failedCount_many": "{{count}} fallidos",
@@ -138,6 +141,7 @@
     "noActiveJobs": "No hay trabajos activos",
     "noCompletedJobs": "No hay trabajos completados",
     "cancelJob": "Cancelar trabajo",
+    "jobCancelled": "El trabajo fue cancelado.",
     "noJobs": "No hay trabajos en la cola",
     "refresh": "Actualizar",
     "relativeTime": {

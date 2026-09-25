@@ -61,6 +61,7 @@
     "datasetExists": "Ya existe un dataset con este nombre.",
     "datasetNameEmpty": "El nombre del dataset no puede estar vacío",
     "datasetNameExists": "Ya existe un dataset con este nombre.",
+    "datasetNotCreated": "No se pudo crear este dataset porque su trabajo falló o fue cancelado. Elimínalo e inténtalo de nuevo.",
     "datasetRequired": "Se requiere un dataset",
     "enqueueDatasetJob": "Error al intentar encolar el trabajo del dataset.",
     "errorCreatingNotebook": "Error al crear cuaderno",

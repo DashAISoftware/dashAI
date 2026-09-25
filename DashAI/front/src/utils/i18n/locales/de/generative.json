@@ -197,6 +197,7 @@
     "index": {
       "chunkCount_one": "{{count}} Chunk",
       "chunkCount_other": "{{count}} Chunks",
+      "indexCancelled": "Die Indexierung wurde vor dem Abschluss abgebrochen",
       "indexFailed": "Indexierung fehlgeschlagen",
       "indexing": "Wird indexiert…",
       "indexingInProgress": "Dokumente werden indexiert…",

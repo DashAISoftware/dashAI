@@ -85,7 +85,8 @@ class DatasetJob(BaseJob):
         The dataset was never successfully saved, so:
         - Any partially-written dataset directory is removed from disk.
         - The temp upload directory is removed.
-        - The Dataset DB record is deleted entirely so it no longer appears in the UI.
+        - The Dataset DB record is kept in error status, as the queue leaves it,
+          so it shows up as failed in the UI and can be deleted from there.
         """
         import shutil
 
@@ -114,8 +115,7 @@ class DatasetJob(BaseJob):
                     with suppress(Exception):
                         shutil.rmtree(file_path, ignore_errors=True)
 
-                # Delete the record — it was never a valid dataset
-                db.delete(dataset)
+                dataset.set_status_as_error()
                 db.commit()
 
         except Exception:

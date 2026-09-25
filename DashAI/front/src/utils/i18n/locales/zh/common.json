@@ -108,6 +108,7 @@
     "confirmClearAll": "确定要删除所有已注册的任务吗？",
     "confirmClearAllDetail": "这将取消队列中的所有任务。",
     "confirmDeleteJob": "确定要删除此任务吗？",
+    "confirmCancelJob": "确定要取消此任务吗？",
     "deleteJob": "删除任务",
     "details": {
       "errorMessage": "错误信息",
@@ -124,7 +125,9 @@
       "running": "运行中",
       "completed": "已完成",
       "failed": "已失败",
-      "deleted": "已删除"
+      "deleted": "已删除",
+      "cancelled": "已取消",
+      "killed": "已中断"
     },
     "failedCount_one": "{{count}} 个失败",
     "failedCount_other": "{{count}} 个失败",
@@ -132,6 +135,7 @@
     "noActiveJobs": "无活动任务",
     "noCompletedJobs": "无已完成任务",
     "cancelJob": "取消任务",
+    "jobCancelled": "任务已取消。",
     "noJobs": "队列中无任务",
     "refresh": "刷新",
     "relativeTime": {

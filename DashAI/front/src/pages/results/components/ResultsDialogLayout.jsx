@@ -132,12 +132,15 @@ function ResultsDialogLayout({
           },
           (result) => {
             console.error(`Run job ${response.id} failed:`, result);
+            const wasCancelled = result?.status === "cancelled";
             enqueueSnackbar(
-              t("models:message.runFailed", {
-                error: result.error || t("common:unknownError"),
-              }),
+              wasCancelled
+                ? t("common:jobQueue.jobCancelled")
+                : t("models:message.runFailed", {
+                    error: result.error || t("common:unknownError"),
+                  }),
               {
-                variant: "error",
+                variant: wasCancelled ? "info" : "error",
               },
             );
             getRuns({ showLoading: false });
@@ -280,12 +283,15 @@ function ResultsDialogLayout({
         },
         async (result) => {
           // Job failed, still fetch only this run
+          const wasCancelled = result?.status === "cancelled";
           enqueueSnackbar(
-            t("models:error.runFailedId", {
-              runId: run.id,
-              error: result.error || t("common:unknownError"),
-            }),
-            { variant: "error" },
+            wasCancelled
+              ? t("common:jobQueue.jobCancelled")
+              : t("models:error.runFailedId", {
+                  runId: run.id,
+                  error: result.error || t("common:unknownError"),
+                }),
+            { variant: wasCancelled ? "info" : "error" },
           );
 
           const updated = await getRunById(run.id);

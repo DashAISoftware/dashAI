@@ -13,6 +13,10 @@ const state = {
   lastCompletionTime: null, // Last time a job was completed
 };
 
+export const FAILED_JOB_STATUSES = ["error", "cancelled", "killed"];
+
+export const TERMINAL_JOB_STATUSES = ["finished", ...FAILED_JOB_STATUSES];
+
 /**
  * Start the global job polling system
  */
@@ -71,7 +75,6 @@ async function pollJobs() {
 
     const jobsToProcess = changeData.jobs || [];
 
-    const activeJobsExist = hasActiveJobs(jobsToProcess);
     for (const subscriber of state.subscribers) {
       try {
         subscriber(jobsToProcess);
@@ -87,7 +90,7 @@ async function pollJobs() {
         if (job.status === "finished") {
           if (watcher.onSuccess) watcher.onSuccess(job);
           stopJobPolling(jobId);
-        } else if (job.status === "error") {
+        } else if (FAILED_JOB_STATUSES.includes(job.status)) {
           if (watcher.onError) watcher.onError(job);
           stopJobPolling(jobId);
         }
@@ -126,7 +129,7 @@ async function pollJobs() {
           if (job?.status === "finished") {
             if (watcher.onSuccess) watcher.onSuccess(job);
             stopJobPolling(jobId);
-          } else if (job?.status === "error") {
+          } else if (FAILED_JOB_STATUSES.includes(job?.status)) {
             if (watcher.onError) watcher.onError(job);
             stopJobPolling(jobId);
           } else if (!job) {
@@ -147,16 +150,6 @@ async function pollJobs() {
         console.error("[JobPoller] Final flush failed, will retry:", e);
         // Fall through — watchers stay intact, next poll retries the flush
       }
-    }
-
-    if (
-      !activeJobsExist &&
-      state.jobWatchers.size === 0 &&
-      !changeData.recently_completed &&
-      timePassedSinceCompletion > MIN_POLLING_AFTER_COMPLETION
-    ) {
-      stopJobPoller();
-      return;
     }
   } catch (error) {
     console.error("[JobPoller] Error polling jobs:", error);

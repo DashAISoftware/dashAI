@@ -59,6 +59,7 @@
     "datasetExists": "Ein Datensatz mit diesem Namen existiert bereits.",
     "datasetNameEmpty": "Datensatzname darf nicht leer sein",
     "datasetNameExists": "Ein Datensatz mit diesem Namen existiert bereits.",
+    "datasetNotCreated": "Dieser Datensatz konnte nicht erstellt werden, weil seine Aufgabe fehlgeschlagen ist oder abgebrochen wurde. Löschen Sie ihn und versuchen Sie es erneut.",
     "datasetRequired": "Datensatz ist erforderlich",
     "enqueueDatasetJob": "Fehler beim Einreihen des Datensatz-Jobs.",
     "errorCreatingNotebook": "Fehler beim Erstellen des Notizbuchs",
