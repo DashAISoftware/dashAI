@@ -162,10 +162,16 @@ function ModelCardCompact({
               </span>
             </Tooltip>
           )}
-          <Tooltip title={t("common:edit")}>
-            <IconButton size="small" onClick={() => setConfigOpen(true)}>
-              <Edit fontSize="small" />
-            </IconButton>
+          <Tooltip title={isRunning ? "" : t("common:edit")}>
+            <span>
+              <IconButton
+                size="small"
+                disabled={isRunning}
+                onClick={() => setConfigOpen(true)}
+              >
+                <Edit fontSize="small" />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title={t("models:button.deleteRun")}>
             <IconButton
