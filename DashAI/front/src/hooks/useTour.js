@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { getToursAutostart } from "../api/appConfig";
 
 const TOUR_STORAGE_KEY = "dashai_tours_completed";
 
@@ -10,11 +11,20 @@ export const useTour = (tourKey) => {
     const completedTours = JSON.parse(
       localStorage.getItem(TOUR_STORAGE_KEY) || "{}",
     );
+    if (completedTours[tourKey]) return undefined;
 
-    if (!completedTours[tourKey]) {
-      const timer = setTimeout(() => setRun(true), 500);
-      return () => clearTimeout(timer);
-    }
+    // Auto-start can be turned off app-wide (`--no-tours`, e.g. for demos);
+    // the navbar help button still starts tours on demand.
+    let cancelled = false;
+    let timer;
+    getToursAutostart().then((enabled) => {
+      if (cancelled || !enabled) return;
+      timer = setTimeout(() => setRun(true), 500);
+    });
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [tourKey]);
 
   const startTour = useCallback(() => {
@@ -106,5 +116,6 @@ export const useTour = (tourKey) => {
     goToStep,
     nextStep,
     resumeAtStep,
+    markTourAsCompleted,
   };
 };
