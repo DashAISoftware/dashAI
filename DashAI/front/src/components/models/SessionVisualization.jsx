@@ -575,6 +575,7 @@ export default function SessionVisualization() {
                           )
                         }
                         isHighlighted={highlightedRunId === run.id}
+                        isLastRun={index === sortedRuns.length - 1}
                       />
                     </Box>
                   ))}

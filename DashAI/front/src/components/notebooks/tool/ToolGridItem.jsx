@@ -9,6 +9,7 @@ import { useTheme } from "@mui/material/styles";
 import { setCustomDragImage } from "../../../utils/dragImage";
 import ModelDownloadStatusIcon from "../../models/model/ModelDownloadStatusIcon";
 import { useToolGate } from "./useToolGate";
+import { getToolTourAttribute } from "./toolTourTarget";
 
 export default function ToolGridItem({
   tool,
@@ -84,6 +85,7 @@ export default function ToolGridItem({
       >
         <Box
           key={tool.id}
+          data-tour={getToolTourAttribute(tool)}
           draggable={!gate.blocked}
           onDragStart={
             !gate.blocked

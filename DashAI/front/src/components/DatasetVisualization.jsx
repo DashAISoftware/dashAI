@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import {
   Button,
   Grid,
@@ -82,18 +82,28 @@ export default function DatasetVisualization({
   const [columnTypes, setColumnTypes] = useState({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const tourContext = useTourContext();
+  const tourContextRef = useRef(tourContext);
+  tourContextRef.current = tourContext;
+  const datasetReady =
+    (dataset?.status === 3 || dataset?.status === 4) && !!datasetInfo;
 
   useEffect(() => {
+    if (!datasetReady) return;
     if (sessionStorage.getItem("startDatasetViewTour") === "true") {
       sessionStorage.removeItem("startDatasetViewTour");
       // Esperar más tiempo para que termine todo el ajuste de scroll
       setTimeout(() => {
-        if (tourContext && typeof tourContext.startTour === "function") {
-          tourContext.startTour();
+        const context = tourContextRef.current;
+        if (
+          context &&
+          !context.run &&
+          typeof context.startTour === "function"
+        ) {
+          context.startTour();
         }
       }, 1500);
     }
-  }, [tourContext]);
+  }, [datasetReady]);
 
   const fetchDatasetInfo = async () => {
     const isProcessing = !(dataset.status === 3 || dataset.status === 4);
