@@ -201,6 +201,7 @@
     "index": {
       "chunkCount_one": "{{count}} fragmento",
       "chunkCount_other": "{{count}} fragmentos",
+      "indexCancelled": "La indexación se detuvo antes de terminar",
       "indexFailed": "Falló la indexación",
       "indexing": "Indexando…",
       "indexingInProgress": "Indexando documentos…",

@@ -197,6 +197,7 @@
     "index": {
       "chunkCount_one": "{{count}} chunk",
       "chunkCount_other": "{{count}} chunks",
+      "indexCancelled": "Indexing was stopped before it finished",
       "indexFailed": "Indexing failed",
       "indexing": "Indexing…",
       "indexingInProgress": "Indexing documents…",
