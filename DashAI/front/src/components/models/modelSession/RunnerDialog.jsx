@@ -160,12 +160,15 @@ function RunnerDialog({
           },
           (result) => {
             console.error(`Run job ${response.id} failed:`, result);
+            const wasCancelled = result?.status === "cancelled";
             enqueueSnackbar(
-              t("experiments:error.runFailed", {
-                error: result.error || "Unknown error",
-              }),
+              wasCancelled
+                ? t("common:jobQueue.jobCancelled")
+                : t("experiments:error.runFailed", {
+                    error: result.error || "Unknown error",
+                  }),
               {
-                variant: "error",
+                variant: wasCancelled ? "info" : "error",
               },
             );
             getRuns({ showLoading: false });
@@ -267,12 +270,15 @@ function RunnerDialog({
           },
           (result) => {
             console.error(`Run job ${response.id} failed:`, result);
+            const wasCancelled = result?.status === "cancelled";
             enqueueSnackbar(
-              t("experiments:error.runFailed", {
-                error: result.error || "Unknown error",
-              }),
+              wasCancelled
+                ? t("common:jobQueue.jobCancelled")
+                : t("experiments:error.runFailed", {
+                    error: result.error || "Unknown error",
+                  }),
               {
-                variant: "error",
+                variant: wasCancelled ? "info" : "error",
               },
             );
             getRuns({ showLoading: false });

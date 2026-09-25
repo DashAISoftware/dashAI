@@ -380,26 +380,47 @@ export default function ManualPredictionsTable({
           },
           async (result) => {
             console.error("Prediction job failed:", result);
+            const wasCancelled = result?.status === "cancelled";
             enqueueSnackbar(
-              t("prediction:error.predictionFailed", {
-                error: result.error || t("common:unknownError"),
-              }),
-              { variant: "error" },
+              wasCancelled
+                ? t("common:jobQueue.jobCancelled")
+                : t("prediction:error.predictionFailed", {
+                    error: result.error || t("common:unknownError"),
+                  }),
+              { variant: wasCancelled ? "info" : "error" },
             );
             // This entry will never gain a real row, so it can't rely on the
             // `allRows` cleanup effect - drop it here instead.
             setManualEntries((prev) => prev.filter((e) => e.key !== entry.key));
+            let updatedPredictions = null;
             try {
-              const updatedPredictions = await getPredictions(run.id);
-              const updatedPrediction = updatedPredictions.find(
-                (p) => p.id === prediction.id,
-              );
-              if (onSaved) onSaved(updatedPrediction || prediction);
+              updatedPredictions = await getPredictions(run.id);
             } catch (refreshError) {
               console.error(
                 "Error refreshing prediction after job failure:",
                 refreshError,
               );
+            }
+            const updatedPrediction = updatedPredictions?.find(
+              (p) => p.id === prediction.id,
+            );
+            const shouldDiscard =
+              updatedPrediction?.status !== 3 &&
+              (wasCancelled || updatedPrediction?.status === 4);
+            if (shouldDiscard) {
+              try {
+                await deletePrediction(prediction.id);
+              } catch (deleteError) {
+                console.error(
+                  "Error deleting prediction after job failure:",
+                  deleteError,
+                );
+              }
+              if (onDelete) onDelete();
+              return;
+            }
+            if (updatedPredictions && onSaved) {
+              onSaved(updatedPrediction || prediction);
             }
           },
         );

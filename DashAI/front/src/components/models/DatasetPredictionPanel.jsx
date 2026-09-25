@@ -144,11 +144,14 @@ export default function DatasetPredictionPanel({
         },
         async (result) => {
           console.error("Prediction job failed:", result);
+          const wasCancelled = result?.status === "cancelled";
           enqueueSnackbar(
-            t("prediction:error.predictionFailed", {
-              error: result.error || t("common:unknownError"),
-            }),
-            { variant: "error" },
+            wasCancelled
+              ? t("common:jobQueue.jobCancelled")
+              : t("prediction:error.predictionFailed", {
+                  error: result.error || t("common:unknownError"),
+                }),
+            { variant: wasCancelled ? "info" : "error" },
           );
 
           try {
