@@ -138,7 +138,9 @@ class PreprocessingJob(BaseJob):
                             f"Fitting preprocessing for fold {i + 1}/{total_folds}",
                         )
                         fold_preprocessor = SessionPreprocessor(
-                            sequence, component_registry
+                            sequence,
+                            component_registry,
+                            target_columns=model_session.output_columns,
                         )
                         fold_preprocessor.fit_transform(x_folds[i])
                         with open(os.path.join(tmp_dir, f"fold_{i}.pkl"), "wb") as f:
@@ -146,7 +148,9 @@ class PreprocessingJob(BaseJob):
 
                     self.report_progress(0.85, "Fitting final preprocessing")
                     final_preprocessor = SessionPreprocessor(
-                        sequence, component_registry
+                        sequence,
+                        component_registry,
+                        target_columns=model_session.output_columns,
                     )
                     final_transformed, final_resolved = (
                         final_preprocessor.fit_transform(x_folds[-1])

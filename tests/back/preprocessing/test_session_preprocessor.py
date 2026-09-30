@@ -500,3 +500,75 @@ def test_a_preprocessor_pickles_even_when_its_registry_cannot_be_pickled():
 
     assert restored.transform_dataset(single).to_pandas()["age"].tolist() == [10]
     assert restored.component_registry is None
+
+
+class _TargetRecordingConverter(BaseConverter):
+    """A supervised converter that fails without a target, like a selector."""
+
+    SCHEMA = None
+    metadata = {"allowed_types": [Integer], "allowed_dtypes": []}
+    CHANGES_ROW_COUNT = False
+    SUPERVISED = True
+    seen_targets = []
+
+    def get_output_type(self, column_name=None):
+        import pyarrow as pa
+
+        return Integer(arrow_type=pa.int64())
+
+    def fit(self, x, y=None):
+        if y is None:
+            raise ValueError("This transformer requires y for fitting")
+        type(self).seen_targets.append(list(y.column_names))
+        return self
+
+    def transform(self, x, y=None):
+        return x
+
+
+def test_supervised_step_is_fit_with_the_target_columns():
+    registry = _FakeRegistry({"Selector": _TargetRecordingConverter})
+    sequence = ConverterSequence(
+        steps=[
+            ConverterStep(
+                converter="Selector", params={}, scope=[RawColumnRef(name="age")]
+            )
+        ]
+    )
+    preprocessor = SessionPreprocessor(sequence, registry, target_columns=["label"])
+    schema = {
+        "age": {"type": "Integer", "dtype": "int64"},
+        "label": {"type": "Integer", "dtype": "int64"},
+    }
+    split = {"train": _dataset({"age": [1, 2, 3], "label": [0, 1, 0]}, schema)}
+
+    preprocessor.fit_transform(split)
+
+    assert _TargetRecordingConverter.seen_targets == [["label"]]
+
+
+def test_a_renamed_new_column_is_recorded_under_its_final_name():
+    # The additive converter appends "derived", which already exists in the
+    # dataset outside the step's scope, so the new column becomes
+    # "derived_1"; the step's group must point at that one, not at the
+    # untouched original.
+    registry = _FakeRegistry({"Additive": _FakeAdditiveConverter})
+    sequence = ConverterSequence(
+        steps=[
+            ConverterStep(
+                converter="Additive", params={}, scope=[RawColumnRef(name="age")]
+            )
+        ]
+    )
+    preprocessor = SessionPreprocessor(sequence, registry)
+    schema = {
+        "age": {"type": "Integer", "dtype": "int64"},
+        "derived": {"type": "Integer", "dtype": "int64"},
+    }
+    split = {"train": _dataset({"age": [1, 2], "derived": [7, 7]}, schema)}
+
+    transformed, resolved = preprocessor.fit_transform(split)
+
+    assert resolved == {0: ["derived_1"]}
+    assert transformed["train"].to_pandas()["derived_1"].tolist() == [10, 20]
+    assert preprocessor.resolved_slots == {0: {"Integer": ["derived_1"]}}
