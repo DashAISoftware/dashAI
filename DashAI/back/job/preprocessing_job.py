@@ -108,6 +108,7 @@ class PreprocessingJob(BaseJob):
                 )
                 sequence.validate_scopes()
                 input_refs = parse_column_refs(model_session.input_column_refs or [])
+                task = component_registry[model_session.task_name]["class"]()
 
                 self.report_progress(0.05, "Splitting dataset")
                 splits_data = normalize_splits_payload(json.loads(model_session.splits))
@@ -116,10 +117,24 @@ class PreprocessingJob(BaseJob):
                     splits_data=splits_data
                 )
 
-                y_for_split = loaded_dataset.select_columns(
+                # Partition the dataset the task prepared, not the one loaded,
+                # because that is what ModelJob partitions
+                # (SplitterScopeMixin._prepare). A task may reorder the rows,
+                # and forecasting does, sorting them by date. Splitting the
+                # loaded dataset would fit fold_{i}.pkl and final.pkl on other
+                # rows than the entry they are applied to, and nothing would
+                # notice: the entries still come in the same number. As in the
+                # unit, only the raw refs are validated here, because a group
+                # ref names a column that exists once its converter has run.
+                prepared_dataset = task.prepare_for_task(
+                    dataset=loaded_dataset,
+                    input_columns=[ref.name for ref in input_refs if ref.kind == "raw"],
+                    output_columns=model_session.output_columns,
+                )
+                y_for_split = prepared_dataset.select_columns(
                     model_session.output_columns
                 )
-                x, _, _ = splitter.split(loaded_dataset, y_for_split)
+                x, _, _ = splitter.split(prepared_dataset, y_for_split)
 
                 is_cv = isinstance(x, list)
                 x_folds = x if is_cv else [x]
@@ -159,7 +174,6 @@ class PreprocessingJob(BaseJob):
                 )
 
                 self.report_progress(0.95, "Validating against the task")
-                task = component_registry[model_session.task_name]["class"]()
                 task.prepare_for_task(
                     dataset=final_transformed["train"],
                     input_columns=resolved_input_columns,
