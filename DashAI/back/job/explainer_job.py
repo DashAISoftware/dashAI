@@ -368,6 +368,16 @@ class ExplainerJob(BaseJob):
                 )
             except Exception as e:
                 log.exception(e)
+                # As in prediction: a model that cannot handle missing values
+                # fails with a technical error, so name the rows and columns.
+                from DashAI.back.types.missing_values import (
+                    missing_values_message,
+                )
+
+                instances = X["train"] if isinstance(X, DatasetDict) else X
+                message = missing_values_message(instances, list(self.input_columns))
+                if message is not None:
+                    raise JobError(message) from e
                 raise JobError(
                     "Failed to generate the explanation",
                 ) from e
@@ -460,6 +470,7 @@ class ExplainerJob(BaseJob):
                 ):
                     from DashAI.back.preprocessing.session_preprocessor import (
                         load_final_preprocessor,
+                        transform_by_split,
                     )
 
                     preprocessor = load_final_preprocessor(model_session)
@@ -547,7 +558,18 @@ class ExplainerJob(BaseJob):
                     raise JobError(str(e)) from e
                 try:
                     if preprocessor is not None:
-                        loaded_dataset = preprocessor.transform_dataset(loaded_dataset)
+                        # Split first, transform each part after: the run's
+                        # indexes stay valid even if a step removes rows
+                        # (NanRemover), and no resampled rows get in.
+                        loaded_dataset, train_idx, test_idx, val_idx = (
+                            transform_by_split(
+                                preprocessor,
+                                loaded_dataset,
+                                train_idx,
+                                test_idx,
+                                val_idx,
+                            )
+                        )
 
                     loaded_dataset = split_dataset(
                         loaded_dataset,

@@ -28,8 +28,15 @@ log = logging.getLogger(__name__)
 def apply_persisted_preprocessing(model_session: ModelSession, x, y):
     """Transform already-split fold data using the SessionPreprocessor that
     PreprocessingJob fit on this session's training data, then narrow to the
-    resolved concrete input columns. y is returned unchanged: output columns
-    are always raw in v1, so the splitter already narrowed y correctly.
+    resolved concrete input columns and the output columns.
+
+    The target is taken from the transformed data, not from the splitter's
+    y: it travels through the chain with the inputs, so a training-only
+    resampler (e.g. SMOTE) changes both together. No converter transforms
+    the target itself (it is never part of a scope), so for every other
+    split and every session without resampling this is the same target the
+    splitter produced. Every split is checked to have as many target rows as
+    input rows.
 
     Parameters
     ----------
@@ -41,14 +48,20 @@ def apply_persisted_preprocessing(model_session: ModelSession, x, y):
         The splitter's output for the input side: a list of per-fold dicts
         for Cross-Validation, or a single dict for Holdout.
     y : list of DatasetDict | DatasetDict
-        The splitter's output for the output side, already narrowed to
-        model_session.output_columns. Returned unchanged.
+        The splitter's output for the output side. Kept for the signature
+        only: the returned y comes from the transformed data.
 
     Returns
     -------
     tuple
-        (x, y) with x's datasets transformed and narrowed to the resolved
-        input columns for each fold/holdout split.
+        (x, y) for each fold/holdout split: x's datasets transformed and
+        narrowed to the resolved input columns, y's the matching target.
+
+    Raises
+    ------
+    ValueError
+        If preprocessing left a split with a different number of input and
+        target rows.
     """
     import os
     import pickle
@@ -61,7 +74,7 @@ def apply_persisted_preprocessing(model_session: ModelSession, x, y):
     total_folds = len(x_folds) - 1 if is_cv else 0
     fold_names = [f"fold_{i}" for i in range(total_folds)] + ["final"]
 
-    new_x = []
+    new_x, new_y = [], []
     for split_dict, fold_name in zip(x_folds, fold_names, strict=True):
         artifact_path = os.path.join(
             model_session.preprocessing_artifacts_path, f"{fold_name}.pkl"
@@ -74,13 +87,20 @@ def apply_persisted_preprocessing(model_session: ModelSession, x, y):
             input_refs, preprocessor.resolved_columns, preprocessor.resolved_slots
         )
 
-        fold_x = {
-            split_name: dataset.select_columns(resolved_input_columns)
-            for split_name, dataset in transformed.items()
-        }
+        fold_x, fold_y = {}, {}
+        for split_name, dataset in transformed.items():
+            fold_x[split_name] = dataset.select_columns(resolved_input_columns)
+            fold_y[split_name] = dataset.select_columns(model_session.output_columns)
+            if fold_x[split_name].num_rows != fold_y[split_name].num_rows:
+                raise ValueError(
+                    f"Preprocessing left {fold_x[split_name].num_rows} input rows "
+                    f"but {fold_y[split_name].num_rows} target rows in the "
+                    f"'{split_name}' split of {fold_name}."
+                )
         new_x.append(fold_x)
+        new_y.append(fold_y)
 
-    return (new_x, y) if is_cv else (new_x[0], y)
+    return (new_x, new_y) if is_cv else (new_x[0], new_y[0])
 
 
 class ModelJob(BaseJob):
