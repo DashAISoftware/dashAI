@@ -31,3 +31,18 @@ code {
 [data-theme="dark"] .updatemenu-item-rect {
   fill: var(--dashai-plot-menu-highlight, #1f1e1d) !important;
 }
+
+.react-flow__edge.edge-error .react-flow__edge-path {
+  stroke: #d32f2f;
+  stroke-width: 2;
+}
+
+.react-flow__edge.edge-warning .react-flow__edge-path {
+  stroke: #f57c00;
+  stroke-width: 2;
+}
+
+.react-flow__edge.edge-ok .react-flow__edge-path {
+  stroke: #4caf50;
+  stroke-width: 2;
+}

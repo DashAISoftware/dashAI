@@ -7,6 +7,10 @@ import ResultsTabMetricsToggle from "../../../pages/results/components/ResultsTa
 function PipelineResultsMetrics({ metricsData = {} }) {
   const [displaySet, setDisplaySet] = useState("test_metrics");
 
+  // The default parameter only covers `undefined`; guard against an explicit
+  // `null` so the component never crashes if it is ever rendered without data.
+  const safeMetricsData = metricsData || {};
+
   const displaySetMap = {
     train_metrics: "train",
     test_metrics: "test",
@@ -14,11 +18,11 @@ function PipelineResultsMetrics({ metricsData = {} }) {
   };
 
   const currentKey = displaySetMap[displaySet];
-  const currentMetrics = metricsData[currentKey] || {};
+  const currentMetrics = safeMetricsData[currentKey] || {};
 
-  const hasTrainData = !!metricsData.train;
-  const hasTestData = !!metricsData.test;
-  const hasValidationData = !!metricsData.validation;
+  const hasTrainData = !!safeMetricsData.train;
+  const hasTestData = !!safeMetricsData.test;
+  const hasValidationData = !!safeMetricsData.validation;
 
   return (
     <Grid container direction="column" rowSpacing={4}>
@@ -37,12 +41,14 @@ function PipelineResultsMetrics({ metricsData = {} }) {
           </Typography>
         ) : (
           Object.entries(currentMetrics).map(([metricName, value]) => (
-            <Grid container key={metricName}>
-              <Grid size={{ xs: 1 }}>
-                <Typography variant="body1">{metricName}</Typography>
+            <Grid container key={metricName} columnSpacing={3}>
+              <Grid size={{ xs: 3 }}>
+                <Typography variant="body1" fontWeight="bold">
+                  {metricName}
+                </Typography>
               </Grid>
-              <Grid size={{ xs: 1 }}>
-                <Typography variant="body1" align="right">
+              <Grid size={{ xs: 2 }}>
+                <Typography variant="body1">
                   {typeof value === "number" ? value.toFixed(4) : value}
                 </Typography>
               </Grid>

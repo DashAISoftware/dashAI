@@ -3,6 +3,10 @@ export { default as PipelineHeader } from "./PipelineHeader";
 export { default as PipelineToolbar } from "./PipelineToolbar";
 export { default as PipelineDesigner } from "./PipelineDesigner";
 export { default as NodeSidebar } from "./NodeSidebar";
+export { default as PipelineHistorySidebar } from "./PipelineHistorySidebar";
+export { default as PipelineTemplatesSidebar } from "./PipelineTemplatesSidebar";
+export { default as PipelineChatSidebar } from "./PipelineChatSidebar";
+export { default as PipelineNodeConfigSidebar } from "./PipelineNodeConfigSidebar";
 export { default as PipelinesTable } from "./PipelinesTable";
 export { default as CustomNode } from "./CustomNode";
 export { default as Run } from "./Run";
@@ -10,8 +14,10 @@ export { default as Run } from "./Run";
 // Node components
 export { default as DataSelectorNode } from "./nodes/DataSelectorNode";
 export { default as DataExplorationNode } from "./nodes/DataExplorationNode";
-export { default as TrainNode } from "./nodes/TrainNode";
 export { default as RetrieveModelNode } from "./nodes/RetrieveModelNode";
+export { default as SplitDataNode } from "./nodes/SplitDataNode";
+export { default as TaskAndModelNode } from "./nodes/TaskAndModelNode";
+export { default as MetricsEvalNode } from "./nodes/MetricsEvalNode";
 export { default as ParamsSettings } from "./ParamsSettings";
 export { default as ExplorationModal } from "./nodes/ExplorationModal";
 

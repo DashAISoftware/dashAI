@@ -23,6 +23,11 @@ export const getNodes = async () => {
   return response.data;
 };
 
+export const getNodeContracts = async () => {
+  const response = await api.get(`${pipelineEndpoint}/contracts`);
+  return response.data;
+};
+
 export const updatePipeline = async (
   id: number,
   formData: object,
@@ -61,6 +66,11 @@ export const validatePipeline = async (
   return response.data;
 };
 
+export const validateEdge = async (payload: object) => {
+  const response = await api.post(`${pipelineEndpoint}/validate_edge`, payload);
+  return response.data;
+};
+
 export const getPipelinePredictionSummary = async (predictionId: string) => {
   const response = await api.get(`${pipelineEndpoint}/predict_summary`, {
     params: {
@@ -73,6 +83,25 @@ export const getPipelinePredictionSummary = async (predictionId: string) => {
 export const getExplorationResults = async (id: number) => {
   const response = await api.get(
     `${pipelineEndpoint}/${id}/dataexploration/results`,
+  );
+  return response.data;
+};
+
+export const getLatestPipelineRun = async (
+  pipelineId: number,
+): Promise<{
+  id: number | null;
+  status: string | null;
+  error_message?: string | null;
+  node_runs: Array<{
+    node_id: string;
+    node_type: string;
+    status: string | null;
+    error_message?: string | null;
+  }>;
+}> => {
+  const response = await api.get(
+    `${pipelineEndpoint}/${pipelineId}/runs/latest`,
   );
   return response.data;
 };

@@ -9,11 +9,18 @@ from DashAI.back.api.api_v1.schemas.pipelines_params import (
     DatasetFilterParams,
     PipelineCreateParams,
     PipelineUpdateParams,
+    ValidateEdgeParams,
     ValidateNodeParams,
     ValidatePipelineParams,
 )
 from DashAI.back.core.artifacts import normalize_artifacts
-from DashAI.back.dependencies.database.models import Dataset, Pipeline
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    NodeRun,
+    Pipeline,
+    PipelineRun,
+)
+from DashAI.back.pipeline.contracts import get_contracts_payload, validate_edge
 from DashAI.back.pipeline.validator.nodes_definitions import NODES
 from DashAI.back.pipeline.validator.pipeline_validator import PipelineValidator
 from DashAI.back.pipeline.validator.validator import VALIDATOR_MAP
@@ -77,6 +84,18 @@ async def get_nodes() -> List[Dict[str, Any]]:
         ) from e
 
 
+@router.get("/contracts")
+async def get_node_contracts() -> List[Dict[str, Any]]:
+    """Retrieve pipeline node contracts."""
+    try:
+        return get_contracts_payload()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to load node contracts",
+        ) from e
+
+
 @router.get("/predict_summary")
 @inject
 async def pipeline_predict_summary(
@@ -124,28 +143,52 @@ async def pipeline_predict_summary(
             if isinstance(data[0], str):
                 summary["data_type"] = "string"
             else:
-                summary["data_type"] = "numeric"
-                class_set = set(data)
-                classes = [str(item) for item in class_set]
-                summary["Unique_classes"] = len(classes)
-                class_distribution = []
-                id = 1
-                for class_name in classes:
-                    try:
-                        occurrences = data.count(int(class_name))
-                    except ValueError as e:
-                        raise HTTPException(
-                            status_code=400, detail=f"Invalid class value: {class_name}"
-                        ) from e
-                    distribution = {
-                        "id": id,
-                        "Class": class_name,
-                        "Ocurrences": occurrences,
-                        "Percentage": round(occurrences / len(data) * 100, 2),
+                # Check if data looks like integers or floats
+                is_classification = all(
+                    isinstance(x, int) or (isinstance(x, float) and x.is_integer())
+                    for x in data
+                )
+                unique_values = len(set(data))
+
+                # If there are many unique values relative to total -> regression
+                if not is_classification or unique_values > len(data) * 0.5:
+                    # Regression: provide statistics
+                    summary["data_type"] = "regression"
+                    import numpy as np
+
+                    data_array = np.array(data)
+                    summary["statistics"] = {
+                        "mean": float(np.mean(data_array)),
+                        "median": float(np.median(data_array)),
+                        "std": float(np.std(data_array)),
+                        "min": float(np.min(data_array)),
+                        "max": float(np.max(data_array)),
                     }
-                    id += 1
-                    class_distribution.append(distribution)
-                summary["class_distribution"] = class_distribution
+                else:
+                    # Classification: count class occurrences
+                    summary["data_type"] = "classification"
+                    class_set = set(data)
+                    classes = [str(item) for item in class_set]
+                    summary["Unique_classes"] = len(classes)
+                    class_distribution = []
+                    id = 1
+                    for class_name in classes:
+                        # Count occurrences of the actual value (int or float)
+                        original_value = (
+                            int(float(class_name))
+                            if "." not in class_name
+                            else float(class_name)
+                        )
+                        occurrences = data.count(original_value)
+                        distribution = {
+                            "id": id,
+                            "Class": class_name,
+                            "Ocurrences": occurrences,
+                            "Percentage": round(occurrences / len(data) * 100, 2),
+                        }
+                        id += 1
+                        class_distribution.append(distribution)
+                    summary["class_distribution"] = class_distribution
 
             sample_data = [
                 {"id": idx, "value": value} for idx, value in enumerate(data[:50], 1)
@@ -204,6 +247,59 @@ async def get_pipeline(
     return pipeline
 
 
+@router.get("/{pipeline_id}/runs/latest")
+@inject
+async def get_latest_pipeline_run(
+    pipeline_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the latest execution run of a pipeline with per-node statuses.
+
+    Used by the frontend to color the pipeline nodes live as they execute.
+
+    Returns
+    -------
+    dict
+        The latest run id, its status name and a list of node runs, each with
+        its node_id, node_type and status name (NOT_STARTED, DELIVERED,
+        STARTED, FINISHED, ERROR).
+    """
+    with session_factory() as db:
+        try:
+            run = (
+                db.query(PipelineRun)
+                .filter(PipelineRun.pipeline_id == pipeline_id)
+                .order_by(PipelineRun.id.desc())
+                .first()
+            )
+            if run is None:
+                return {"id": None, "status": None, "node_runs": []}
+
+            node_runs = (
+                db.query(NodeRun).filter(NodeRun.pipeline_run_id == run.id).all()
+            )
+            return {
+                "id": run.id,
+                "status": run.status.name if run.status is not None else None,
+                "error_message": run.error_message,
+                "node_runs": [
+                    {
+                        "node_id": nr.node_id,
+                        "node_type": nr.node_type,
+                        "status": nr.status.name if nr.status is not None else None,
+                        "error_message": nr.error_message,
+                    }
+                    for nr in node_runs
+                ],
+            }
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+
 @router.get("/{pipeline_id}/dataexploration/results/")
 @inject
 async def get_pipeline_dataexploration_results(
@@ -257,9 +353,46 @@ async def get_pipeline_dataexploration_results(
             detail="Pipeline has no valid Data Exploration step",
         )
 
-    results = {}
+    grouped_results = {}
+    steps = pipeline.steps or []
+    edges = pipeline.edges or []
 
-    for exploration_id, exploration_info in dataexploration.items():
+    step_map = {
+        step.get("id"): step
+        for step in steps
+        if isinstance(step, dict) and step.get("id")
+    }
+    predecessor_map = {}
+    for edge in edges:
+        source = edge.get("source") if isinstance(edge, dict) else None
+        target = edge.get("target") if isinstance(edge, dict) else None
+        if source and target:
+            predecessor_map.setdefault(target, []).append(source)
+
+    def resolve_dataset_name_from_graph(node_id: str | None) -> str | None:
+        if not node_id:
+            return None
+
+        current = node_id
+        visited = set()
+        while current and current not in visited:
+            visited.add(current)
+            step = step_map.get(current)
+            if isinstance(step, dict) and step.get("type") == "DataSelector":
+                config = step.get("config") or {}
+                return config.get("name")
+
+            predecessors = predecessor_map.get(current) or []
+            current = predecessors[0] if predecessors else None
+
+        return None
+
+    def append_result(
+        dataset_name: str,
+        node_id: str,
+        exploration_id: str,
+        exploration_info: dict,
+    ) -> None:
         exploration_type = exploration_info["exploration_type"]
         exploration_path = exploration_info["path"]
         parameters = exploration_info.get("parameters", {})
@@ -279,11 +412,15 @@ async def get_pipeline_dataexploration_results(
                 exploration_path=exploration_path,
                 options={},
             )
-            results[exploration_id] = {
-                "exploration_type": exploration_type,
-                "results": normalize_artifacts(result),
-                "name": name,
-            }
+            grouped_results.setdefault(dataset_name, []).append(
+                {
+                    "node_id": node_id,
+                    "exploration_id": exploration_id,
+                    "exploration_type": exploration_type,
+                    "results": normalize_artifacts(result),
+                    "name": name,
+                }
+            )
         except Exception as e:
             logger.exception(e)
             raise HTTPException(
@@ -291,7 +428,54 @@ async def get_pipeline_dataexploration_results(
                 detail=(f"Error while getting results for '{exploration_type}'"),
             ) from e
 
-    return results
+    for node_or_exploration_id, node_or_exploration_info in dataexploration.items():
+        if not isinstance(node_or_exploration_info, dict):
+            continue
+
+        if "explorations" in node_or_exploration_info:
+            inferred_dataset_name = resolve_dataset_name_from_graph(
+                node_or_exploration_id
+            )
+            dataset_name = (
+                node_or_exploration_info.get("dataset_name")
+                or inferred_dataset_name
+                or "Unknown Dataset"
+            )
+            node_explorations = node_or_exploration_info.get("explorations") or {}
+            if not isinstance(node_explorations, dict):
+                continue
+
+            for exploration_id, exploration_info in node_explorations.items():
+                if not isinstance(exploration_info, dict):
+                    continue
+                append_result(
+                    dataset_name=dataset_name,
+                    node_id=node_or_exploration_id,
+                    exploration_id=exploration_id,
+                    exploration_info=exploration_info,
+                )
+            continue
+
+        dataexploration_nodes = [
+            step
+            for step in steps
+            if isinstance(step, dict) and step.get("type") == "DataExploration"
+        ]
+        inferred_legacy_node_id = (
+            dataexploration_nodes[-1].get("id") if dataexploration_nodes else "legacy"
+        )
+        inferred_legacy_dataset_name = (
+            resolve_dataset_name_from_graph(inferred_legacy_node_id)
+            or "Unknown Dataset"
+        )
+        append_result(
+            dataset_name=inferred_legacy_dataset_name,
+            node_id=inferred_legacy_node_id or "legacy",
+            exploration_id=node_or_exploration_id,
+            exploration_info=node_or_exploration_info,
+        )
+
+    return grouped_results
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -341,6 +525,9 @@ async def create_pipeline(
                 exploration=None,
                 train=None,
                 prediction=None,
+                split_data=None,
+                task_and_model=None,
+                metrics_result=None,
             )
             db.add(new_pipeline)
             db.commit()
@@ -403,6 +590,9 @@ async def update_pipeline(
             pipeline.exploration = None
             pipeline.train = None
             pipeline.prediction = None
+            pipeline.split_data = None
+            pipeline.task_and_model = None
+            pipeline.metrics_result = None
 
             steps_dict = [
                 step.model_dump() if hasattr(step, "model_dump") else step
@@ -530,6 +720,20 @@ async def validate_pipeline(
     return validator.validate()
 
 
+@router.post("/validate_edge")
+async def validate_edge_connection(params: ValidateEdgeParams) -> Dict[str, Any]:
+    """Validate a single edge connection between two node ports."""
+    result = validate_edge(
+        source_type=params.source.type,
+        target_type=params.target.type,
+        source_port=params.source.port,
+        target_port=params.target.port,
+        source_current_outputs=params.source.currentConnections,
+        target_current_inputs=params.target.currentConnections,
+    )
+    return result
+
+
 @router.post("/filter_models")
 async def filter_models_endpoint(
     params: DatasetFilterParams,
@@ -578,7 +782,7 @@ async def filter_models_endpoint(
                 if params.pipeline_id and pipeline.id == params.pipeline_id:
                     continue
 
-                if not pipeline.train:
+                if not (pipeline.train or pipeline.task_and_model):
                     continue
 
                 steps = pipeline.steps

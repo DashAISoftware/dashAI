@@ -10,6 +10,7 @@ import {
   useMediaQuery,
   useTheme,
   Box,
+  Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ConfigureExplorersStep from "../../../components/explorations/Steps/ConfigureExplorersStep";
@@ -17,7 +18,13 @@ import { useExplorationsContext } from "../../../components/explorations/context
 import { validateNode } from "../../../api/pipeline";
 import { useSnackbar } from "notistack";
 
-function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
+function ConfigureExplorersModal({
+  open,
+  onClose,
+  onSave,
+  savedConfig,
+  displayMode = "dialog",
+}) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const [valid, setValid] = useState(false);
@@ -83,8 +90,34 @@ function ConfigureExplorersModal({ open, onClose, onSave, savedConfig }) {
     }
   };
 
-  if (loading && open) {
+  if (!open) {
     return null;
+  }
+
+  if (loading) {
+    return null;
+  }
+
+  if (displayMode === "panel") {
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Typography variant="subtitle1">Configure Explorers</Typography>
+        <Box mt={1}>
+          <ConfigureExplorersStep onValidation={setValid} />
+        </Box>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            disabled={!valid}
+            color="primary"
+          >
+            Save
+          </Button>
+        </Box>
+      </Box>
+    );
   }
 
   return (

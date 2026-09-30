@@ -14,7 +14,6 @@ import {
   Check as CheckIcon,
 } from "@mui/icons-material";
 
-import { LoadingButton } from "@mui/material";
 import { useSnackbar } from "notistack";
 
 import { getComponents } from "../../api/component";

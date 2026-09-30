@@ -3,7 +3,7 @@
 import logging
 from typing import Dict, Tuple
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
@@ -41,8 +41,17 @@ def setup_sqlite_db(config: Dict[str, str]) -> Tuple[Engine, sessionmaker]:
     engine: Engine = create_engine(
         db_url,
         echo=config["LOGGING_LEVEL"] == logging.DEBUG,
-        connect_args={"check_same_thread": False},
+        connect_args={"check_same_thread": False, "timeout": 30},
+        pool_pre_ping=True,
     )
+
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragma(dbapi_connection, connection_record) -> None:
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL;")
+        cursor.execute("PRAGMA synchronous=NORMAL;")
+        cursor.execute("PRAGMA busy_timeout=30000;")
+        cursor.close()
 
     session_factory = sessionmaker(
         autocommit=False,

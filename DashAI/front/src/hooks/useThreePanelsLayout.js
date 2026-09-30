@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 const DEFAULT_LAYOUT = {
   leftBarVisible: true,
@@ -19,7 +21,11 @@ const readPersisted = (storageKey) => {
   }
 };
 
-export function useThreePanelLayout({ storageKey } = {}) {
+export function useThreePanelLayout({
+  storageKey,
+  overlayRightOnCompact = false,
+  compactBreakpoint = "md",
+} = {}) {
   const initial = readPersisted(storageKey);
   const [leftBarVisible, setLeftBarVisible] = useState(initial.leftBarVisible);
   const [rightBarVisible, setRightBarVisible] = useState(
@@ -108,13 +114,19 @@ export function useThreePanelLayout({ storageKey } = {}) {
     }, 300);
   }, []);
 
+  const theme = useTheme();
+  const isCompact = useMediaQuery(theme.breakpoints.down(compactBreakpoint));
+  const isRightOverlayActive = overlayRightOnCompact && isCompact;
+  const effectiveRightVisible = isRightOverlayActive ? false : rightBarVisible;
+  const effectiveRightWidth = isRightOverlayActive ? 0 : rightBarWidth;
+
   const centerWidth =
-    leftBarVisible && rightBarVisible
-      ? 100 - leftBarWidth - rightBarWidth
+    leftBarVisible && effectiveRightVisible
+      ? 100 - leftBarWidth - effectiveRightWidth
       : leftBarVisible
         ? 100 - leftBarWidth
-        : rightBarVisible
-          ? 100 - rightBarWidth
+        : effectiveRightVisible
+          ? 100 - effectiveRightWidth
           : 100;
 
   return {
@@ -123,6 +135,8 @@ export function useThreePanelLayout({ storageKey } = {}) {
     leftBarWidth,
     rightBarWidth,
     centerWidth,
+    isCompact,
+    isRightOverlayActive,
 
     handleToggleLeft,
     handleToggleRight,

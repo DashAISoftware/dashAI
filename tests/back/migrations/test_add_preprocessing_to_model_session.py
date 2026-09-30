@@ -8,7 +8,12 @@ def test_migration_adds_preprocessing_columns(tmp_path):
     alembic_cfg = Config("alembic.ini")
     alembic_cfg.set_main_option("sqlalchemy.url", f"sqlite:///{db_path}")
 
-    command.upgrade(alembic_cfg, "head")
+    # Upgrade to the migration under test rather than to ``head``: once this
+    # branch is merged into develop the head becomes a merge revision (two
+    # parents), which makes the relative ``downgrade("-1")`` below ambiguous.
+    # Targeting the revision keeps the downgrade unambiguous and tests exactly
+    # this migration's up/down behavior.
+    command.upgrade(alembic_cfg, "f4a91c62d8e7")
 
     engine = sa.create_engine(f"sqlite:///{db_path}")
     inspector = sa.inspect(engine)

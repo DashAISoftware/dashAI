@@ -11,6 +11,24 @@ import { filterModels } from "../../../api/pipeline";
 import { useSnackbar } from "notistack";
 import { validateNode } from "../../../api/pipeline";
 import { useParams } from "react-router-dom";
+
+const getModelEntry = (pipeline) => {
+  const pick = (obj) => {
+    if (!obj || typeof obj !== "object") return null;
+    if (obj.model_path) return obj; // flat (legacy) structure
+    const values = Object.values(obj); // aggregated: keyed by node id
+    return values.find((v) => v && v.model_path) || null;
+  };
+  const entry = pick(pipeline?.train) || pick(pipeline?.task_and_model);
+  if (!entry) return null;
+  return {
+    model: entry.info || entry.model || "",
+    model_path: entry.model_path || "",
+    input_columns: entry.input_columns || [],
+    task: entry.task || "",
+  };
+};
+
 function RetrieveModelNode({
   onClose,
   onSave,
@@ -31,7 +49,7 @@ function RetrieveModelNode({
   useEffect(() => {
     if (savedConfig?.model_path && pipelines.length > 0) {
       const matching = pipelines.find(
-        (p) => p.train?.model_path === savedConfig.model_path,
+        (p) => getModelEntry(p)?.model_path === savedConfig.model_path,
       );
       if (matching) {
         setSelectedModelId(matching.id);
@@ -67,12 +85,18 @@ function RetrieveModelNode({
     const selected = pipelines.find((m) => m.id === selectedModelId);
     if (!selected) return;
 
-    const train = selected.train || {};
+    const entry = getModelEntry(selected);
+    if (!entry) {
+      enqueueSnackbar("Selected pipeline has no trained model", {
+        variant: "warning",
+      });
+      return;
+    }
     const nodeData = {
-      model: train.info || "",
-      model_path: train.model_path || "",
-      input_columns: train.input_columns || [],
-      task: train.task || "",
+      model: entry.model,
+      model_path: entry.model_path,
+      input_columns: entry.input_columns,
+      task: entry.task,
     };
 
     try {
@@ -97,7 +121,7 @@ function RetrieveModelNode({
         id: "model",
         header: "Model",
         grow: true,
-        accessorFn: (row) => row.train?.info || "Unknown",
+        accessorFn: (row) => getModelEntry(row)?.model || "Unknown",
       },
     ],
     [],

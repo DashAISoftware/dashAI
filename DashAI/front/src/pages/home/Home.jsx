@@ -301,11 +301,11 @@ function Home() {
               p: 4,
               display: { xs: "flex", lg: "grid" },
               flexDirection: { xs: "column", lg: "row" },
-              gridTemplateColumns: { lg: "1fr 1fr" },
+              gridTemplateColumns: { lg: "1fr 1fr 1fr" },
               gridTemplateRows: { lg: "1fr 1fr" },
               gap: { xs: 2, lg: 4 },
               height: { xs: "auto", lg: "70%" },
-              width: { xs: "100%", lg: "80%" },
+              width: { xs: "100%", lg: "90%" },
               minHeight: 0,
             }}
           >

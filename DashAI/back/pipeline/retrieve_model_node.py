@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from kink import di, inject
+from kink import inject
 
 from DashAI.back.job.base_job import BaseJob, JobError
 
@@ -39,6 +39,12 @@ class RetrieveModel(BaseJob):
     def set_status_as_delivered(self) -> None:
         log.debug("RetrieveModel executed successfully.")
 
+    def set_status_as_error(self) -> None:
+        log.error("RetrieveModel encountered an error.")
+
+    def get_job_name(self) -> str:
+        return f"RetrieveModel: {self.model}"
+
     @inject
     async def run(
         self,
@@ -55,12 +61,17 @@ class RetrieveModel(BaseJob):
             context["task_name"] = self.task
 
             dataset = context["dataset"]
-            input_columns_names = get_column_names_from_indexes(
-                dataset, self.input_columns
-            )
+            if self.input_columns and all(
+                isinstance(col, str) for col in self.input_columns
+            ):
+                input_columns_names = self.input_columns
+            else:
+                input_columns_names = get_column_names_from_indexes(
+                    dataset, self.input_columns
+                )
             context["input_columns"] = input_columns_names
 
-            model_class = component_registry(di)[self.model]["class"]
+            model_class = component_registry[self.model]["class"]
             context["model_class"] = model_class
 
             return {

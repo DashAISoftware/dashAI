@@ -16,7 +16,6 @@ import ModelsPage from "./pages/models/Models";
 import Home from "./pages/home/Home";
 import ResponsiveAppBar from "./components/ResponsiveAppBar";
 import PluginsPage from "./pages/plugins/Plugins";
-import PipelinesPage from "./pages/pipelines/Pipelines";
 import PluginsDetails from "./pages/plugins/components/PluginsDetails";
 import Generative from "./pages/generative/Generative";
 import { GenerativeProvider } from "./components/generative/GenerativeContext";
@@ -159,7 +158,7 @@ function App() {
                   path="/app/generative/sessions/:id"
                   element={<SessionRouter />}
                 />
-                <Route path="/app/pipelines" element={<PipelinesPage />} />
+                <Route path="/app/pipelines" element={<NewPipelineWrapper />} />
                 <Route
                   path="/app/pipelines/new"
                   element={<NewPipelineWrapper />}

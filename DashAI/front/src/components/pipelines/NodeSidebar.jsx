@@ -1,11 +1,40 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import { getNodeHelp } from "./nodeHelp";
 
-function NodeSidebar({ availableNodes, onDragStart, nodeHelp }) {
+/**
+ * NodeSidebar – draggable node palette + contextual help.
+ *
+ * Highlighting props make pipeline construction more intuitive without ever
+ * restricting what can be dragged:
+ *   - highlightMode "start": the canvas is empty; root nodes (the ones that can
+ *     open a flow) are emphasized as the suggested starting point.
+ *   - highlightMode "successors": a node is focused on the canvas; the nodes
+ *     that can legally come after it are emphasized and the rest are dimmed.
+ * The set of emphasized node types is passed in `highlightedTypes`. Non-matching
+ * nodes stay fully draggable — they are only visually de-emphasized.
+ */
+function NodeSidebar({
+  availableNodes,
+  onDragStart,
+  nodeHelp,
+  highlightMode = null,
+  highlightedTypes = [],
+  highlightLabel = "",
+}) {
   const theme = useTheme();
+
+  const highlightActive = Boolean(highlightMode) && highlightedTypes.length > 0;
+  const highlightSet = new Set(highlightedTypes);
+  const accentColor =
+    highlightMode === "start"
+      ? theme.palette.success.main
+      : theme.palette.primary.main;
+
   return (
     <Box
       sx={{
@@ -22,24 +51,69 @@ function NodeSidebar({ availableNodes, onDragStart, nodeHelp }) {
       >
         Nodes
       </Typography>
-      {availableNodes.map((node) => (
+
+      {highlightActive && highlightLabel && (
         <Box
-          key={node.type}
-          onDragStart={(e) => onDragStart(e, node.type)}
-          draggable
           sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
             mb: 2,
-            p: 2,
-            backgroundColor: theme.palette.ui.border,
-            color: theme.palette.text.primary,
+            px: 1.5,
+            py: 1,
             borderRadius: 1,
-            textAlign: "center",
-            cursor: "grab",
+            backgroundColor: alpha(accentColor, 0.12),
+            border: `1px solid ${alpha(accentColor, 0.5)}`,
           }}
         >
-          <Typography>{node.name || node.type}</Typography>
+          {highlightMode === "start" ? (
+            <PlayArrowIcon sx={{ fontSize: 18, color: accentColor }} />
+          ) : (
+            <ArrowForwardIcon sx={{ fontSize: 18, color: accentColor }} />
+          )}
+          <Typography
+            variant="caption"
+            sx={{ color: theme.palette.text.primary, fontWeight: 600 }}
+          >
+            {highlightLabel}
+          </Typography>
         </Box>
-      ))}
+      )}
+
+      {availableNodes.map((node) => {
+        const isHighlighted = highlightActive && highlightSet.has(node.type);
+        const isDimmed = highlightActive && !isHighlighted;
+
+        return (
+          <Box
+            key={node.type}
+            onDragStart={(e) => onDragStart(e, node.type)}
+            draggable
+            sx={{
+              mb: 2,
+              p: 2,
+              backgroundColor: isHighlighted
+                ? alpha(accentColor, 0.16)
+                : theme.palette.ui.border,
+              color: theme.palette.text.primary,
+              borderRadius: 1,
+              textAlign: "center",
+              cursor: "grab",
+              border: isHighlighted
+                ? `2px solid ${accentColor}`
+                : "2px solid transparent",
+              boxShadow: isHighlighted
+                ? `0 0 8px ${alpha(accentColor, 0.5)}`
+                : "none",
+              opacity: isDimmed ? 0.35 : 1,
+              transition:
+                "opacity 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease",
+            }}
+          >
+            <Typography>{node.name || node.type}</Typography>
+          </Box>
+        );
+      })}
 
       <Box
         sx={{

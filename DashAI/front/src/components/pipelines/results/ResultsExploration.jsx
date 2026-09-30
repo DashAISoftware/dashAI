@@ -59,9 +59,35 @@ function Results({ pipelineId }) {
     return null;
   };
 
+  const normalizeGroupedResults = (results) => {
+    if (!results || typeof results !== "object") {
+      return {};
+    }
+
+    const entries = Object.entries(results);
+    if (entries.length === 0) {
+      return {};
+    }
+
+    const alreadyGrouped = entries.every(([, value]) => Array.isArray(value));
+    if (alreadyGrouped) {
+      return results;
+    }
+
+    return {
+      "Unknown Dataset": entries.map(([explorationId, result]) => ({
+        ...result,
+        exploration_id: explorationId,
+        node_id: "legacy",
+      })),
+    };
+  };
+
   if (!explorationResults) {
     return <Typography variant="body2">Loading...</Typography>;
   }
+
+  const groupedResults = normalizeGroupedResults(explorationResults);
 
   return (
     <Box

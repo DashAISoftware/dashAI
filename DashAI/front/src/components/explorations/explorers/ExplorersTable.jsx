@@ -10,7 +10,8 @@ import { useTableLocalization } from "../../../utils/useTableLocalization";
 import { Box, Grid, Paper, Typography } from "@mui/material";
 
 import DeleteItemModal from "../../custom/DeleteItemModal";
-import { EditParametersDialog, EditColumnsDialog } from "..";
+import EditParametersDialog from "./EditParametersDialog";
+import EditColumnsDialog from "./EditColumnsDialog";
 import { useExplorationsContext } from "../context";
 
 /**

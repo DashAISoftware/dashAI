@@ -8,6 +8,7 @@ export default function ModuleContainer({ children, ...props }) {
       }}
       width="100%"
       display="flex"
+      position="relative"
       data-container="datasets"
       {...props}
     >

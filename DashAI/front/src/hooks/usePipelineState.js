@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react";
-import { useEdgesState, useNodesState } from "reactflow";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { addEdge, useEdgesState, useNodesState } from "reactflow";
 import { useSnackbar } from "notistack";
 import {
   validatePipeline,
@@ -8,9 +8,42 @@ import {
   getNodeTypesMap,
   buildNodeHelp,
 } from "../components/pipelines";
-import { getPipelineById, getPipelines } from "../api/pipeline";
+import {
+  getPipelineById,
+  getPipelines,
+  validateEdge,
+  getLatestPipelineRun,
+} from "../api/pipeline";
 import { generateSequentialName } from "../utils/nameGenerator";
 import RunPipeline from "../components/pipelines/Run";
+
+const TWO_OUTPUT_NODE_TYPES = new Set([
+  "DataSelector",
+  "SplitData",
+  "TaskAndModel",
+]);
+
+const TWO_INPUT_NODE_TYPES = new Set(["MetricsEval"]);
+
+const normalizeNodeHandles = (nodes = []) =>
+  nodes.map((node) => {
+    const shouldNormalizeSource = TWO_OUTPUT_NODE_TYPES.has(node.type);
+    const shouldNormalizeTarget = TWO_INPUT_NODE_TYPES.has(node.type);
+
+    if (!shouldNormalizeSource && !shouldNormalizeTarget) {
+      return node;
+    }
+
+    return {
+      ...node,
+      ...(shouldNormalizeSource
+        ? { sourceHandles: Math.max(2, Number(node.sourceHandles) || 0) }
+        : {}),
+      ...(shouldNormalizeTarget
+        ? { targetHandles: Math.max(2, Number(node.targetHandles) || 0) }
+        : {}),
+    };
+  });
 
 export function usePipelineState(pipelineId, location, navigate) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -28,16 +61,115 @@ export function usePipelineState(pipelineId, location, navigate) {
   const [nodeHelp, setNodeHelp] = useState({});
   const [availableNodes, setAvailableNodes] = useState([]);
   const [nodeTypesMap, setNodeTypesMap] = useState([]);
-
-  // Name validation states
   const [nameError, setNameError] = useState(false);
   const [nameErrorMessage, setNameErrorMessage] = useState("");
   const [userHasModifiedName, setUserHasModifiedName] = useState(false);
   const [existingPipelines, setExistingPipelines] = useState([]);
   const [nodeIdCounter, setNodeIdCounter] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const pollRef = useRef(null);
+  const finishTimerRef = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
 
-  // Generate default name for new pipelines
+  const stopPolling = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    if (finishTimerRef.current) {
+      clearTimeout(finishTimerRef.current);
+      finishTimerRef.current = null;
+    }
+  }, []);
+
+  const applyNodeStatuses = useCallback(
+    (nodeRuns) => {
+      const statusById = {};
+      (nodeRuns || []).forEach((nr) => {
+        if (nr?.node_id) statusById[nr.node_id] = nr.status;
+      });
+      setNodes((nds) =>
+        nds.map((n) => ({
+          ...n,
+          data: { ...n.data, status: statusById[n.id] ?? "NOT_STARTED" },
+        })),
+      );
+    },
+    [setNodes],
+  );
+
+  const resetNodeStatuses = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) => ({ ...n, data: { ...n.data, status: "NOT_STARTED" } })),
+    );
+  }, [setNodes]);
+
+  const markAllNodesFinished = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) => ({ ...n, data: { ...n.data, status: "FINISHED" } })),
+    );
+  }, [setNodes]);
+
+  const startRunPolling = useCallback(
+    (pid, sinceRunId) => {
+      stopPolling();
+      setIsRunning(true);
+      const poll = async () => {
+        try {
+          const run = await getLatestPipelineRun(pid);
+          if (!run || run.id == null) return;
+          if (sinceRunId != null && run.id <= sinceRunId) return;
+          applyNodeStatuses(run.node_runs);
+          if (run.status === "FINISHED") {
+            stopPolling();
+            setIsRunning(false);
+            markAllNodesFinished();
+            enqueueSnackbar("Pipeline execution finished", {
+              variant: "success",
+            });
+            finishTimerRef.current = setTimeout(() => {
+              setActiveTab("results");
+            }, 1000);
+          } else if (run.status === "ERROR") {
+            stopPolling();
+            setIsRunning(false);
+            enqueueSnackbar(run.error_message || "Pipeline execution failed", {
+              variant: "error",
+            });
+          }
+        } catch (e) {
+          // transient error
+        }
+      };
+      poll();
+      pollRef.current = setInterval(poll, 800);
+    },
+    [
+      applyNodeStatuses,
+      markAllNodesFinished,
+      enqueueSnackbar,
+      stopPolling,
+      setActiveTab,
+    ],
+  );
+
+  useEffect(() => stopPolling, [stopPolling]);
+
+  useEffect(() => {
+    const since = location.state?.runningSinceRunId;
+    if (since === undefined || since === null) return;
+    if (!pipelineId || nodes.length === 0) return;
+    startRunPolling(Number(pipelineId), since);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [
+    pipelineId,
+    location.state,
+    location.pathname,
+    nodes.length,
+    startRunPolling,
+    navigate,
+  ]);
+
   const { defaultName } = useMemo(() => {
     if (pipelineId) return { defaultName: null };
 
@@ -49,7 +181,6 @@ export function usePipelineState(pipelineId, location, navigate) {
     return result;
   }, [existingPipelines, pipelineId]);
 
-  // Load existing pipelines for name generation
   useEffect(() => {
     const fetchPipelines = async () => {
       try {
@@ -65,10 +196,9 @@ export function usePipelineState(pipelineId, location, navigate) {
     }
   }, [pipelineId]);
 
-  // Load node types and available nodes
   useEffect(() => {
     const fetchData = async () => {
-      const nodes = await getNodeTypes();
+      const nodes = normalizeNodeHandles(await getNodeTypes());
       setAvailableNodes(nodes);
       buildNodeHelp(nodes);
     };
@@ -88,38 +218,28 @@ export function usePipelineState(pipelineId, location, navigate) {
     [nodeTypesMap],
   );
 
-  // Set initial name validation and default value for new pipelines
   useEffect(() => {
     if (defaultName && !userHasModifiedName && !pipelineId) {
-      if (
-        pipelineName === "undefined" ||
-        pipelineName.startsWith("Pipeline_")
-      ) {
-        setPipelineName(defaultName);
-        setNameError(false);
-        setNameErrorMessage("");
-      }
+      setPipelineName(defaultName);
+      setNameError(false);
+      setNameErrorMessage("");
     } else if (pipelineName === "" && userHasModifiedName) {
       setNameError(true);
       setNameErrorMessage("Name is required");
     }
   }, [defaultName, pipelineName, userHasModifiedName, pipelineId]);
 
-  // Handle active tab changes
   useEffect(() => {
     if (location.state?.activeTab) {
       setActiveTab(location.state.activeTab);
     }
   }, [location.state?.activeTab]);
 
-  // Load existing pipeline
   useEffect(() => {
     if (pipelineId) {
       (async () => {
         const pipeline = await getPipelineById(pipelineId);
-
-        // Get node types to assign source/target properties
-        const nodeTypes = await getNodeTypes();
+        const nodeTypes = normalizeNodeHandles(await getNodeTypes());
 
         const loadedNodes = pipeline.steps.map((step, idx) => {
           const nodeInfo = nodeTypes.find((n) => n.type === step.type);
@@ -131,6 +251,8 @@ export function usePipelineState(pipelineId, location, navigate) {
               label: step.label,
               source: nodeInfo?.source || false,
               target: nodeInfo?.target || false,
+              sourceHandles: nodeInfo?.sourceHandles || 1,
+              targetHandles: nodeInfo?.targetHandles || 1,
               onDelete: () => {
                 setNodes((nds) => nds.filter((n) => n.id !== step.id));
                 setNodeData((prev) => {
@@ -161,7 +283,6 @@ export function usePipelineState(pipelineId, location, navigate) {
         setPipelineName(pipeline.name);
         setUserHasModifiedName(false);
 
-        // Update nodeIdCounter
         const maxCounter = Math.max(
           ...loadedNodes.map((node) => {
             const match = node.id.match(/-(\d+)$/);
@@ -174,7 +295,22 @@ export function usePipelineState(pipelineId, location, navigate) {
     }
   }, [pipelineId]);
 
-  // Validate pipeline
+  useEffect(() => {
+    if (!pipelineId) {
+      setNodes([]);
+      setEdges([]);
+      setNodeData({});
+      setSelectedNode(null);
+      setResultId(null);
+      setValidationErrors({});
+      setHoveredNode(null);
+      setNodeHelp({});
+      setNodeIdCounter(0);
+      setUserHasModifiedName(false);
+      setActiveTab("flow");
+    }
+  }, [pipelineId]);
+
   useEffect(() => {
     const validate = async () => {
       const errors = await validatePipeline(nodes, edges);
@@ -183,7 +319,6 @@ export function usePipelineState(pipelineId, location, navigate) {
     validate();
   }, [nodes.length, edges]);
 
-  // Update node data with validation info
   useEffect(() => {
     setNodes((prevNodes) =>
       prevNodes.map((node) => {
@@ -203,6 +338,8 @@ export function usePipelineState(pipelineId, location, navigate) {
             name: nodeInfo?.name || node.type,
             source: nodeInfo?.source || false,
             target: nodeInfo?.target || false,
+            sourceHandles: nodeInfo?.sourceHandles || 1,
+            targetHandles: nodeInfo?.targetHandles || 1,
             type: nodeInfo?.type || node.type,
             configType: nodeInfo?.configType,
             configSchema: nodeInfo?.configSchema || null,
@@ -212,14 +349,12 @@ export function usePipelineState(pipelineId, location, navigate) {
     );
   }, [validationErrors, nodeData, availableNodes]);
 
-  // Event handlers
   const onDragStart = (event, nodeType) => {
     setDragging(nodeType);
     event.dataTransfer.setData("text/plain", nodeType);
     event.dataTransfer.effectAllowed = "move";
   };
 
-  // Handle pipeline name input changes with validation
   const handlePipelineNameChange = (event) => {
     setPipelineName(event.target.value);
     setUserHasModifiedName(true);
@@ -246,7 +381,6 @@ export function usePipelineState(pipelineId, location, navigate) {
   };
 
   const handleRun = async () => {
-    // Check if name is valid
     if (
       !pipelineName ||
       pipelineName.trim() === "" ||
@@ -265,6 +399,20 @@ export function usePipelineState(pipelineId, location, navigate) {
       enqueueSnackbar("Error in pipeline", { variant: "error" });
       return;
     }
+
+    stopPolling();
+    resetNodeStatuses();
+
+    let sinceRunId = 0;
+    if (pipelineId) {
+      try {
+        const prevRun = await getLatestPipelineRun(Number(pipelineId));
+        sinceRunId = prevRun?.id ?? 0;
+      } catch (e) {
+        sinceRunId = 0;
+      }
+    }
+
     const newId = await RunPipeline(
       sortedNodes,
       nodeData,
@@ -275,8 +423,14 @@ export function usePipelineState(pipelineId, location, navigate) {
     );
     if (newId) {
       setResultId(newId);
-      setActiveTab("results");
-      navigate(`/app/pipelines/${newId}`);
+      setActiveTab("flow");
+      if (String(newId) !== String(pipelineId)) {
+        navigate(`/app/pipelines/${newId}`, {
+          state: { runningSinceRunId: sinceRunId },
+        });
+      } else {
+        startRunPolling(Number(newId), sinceRunId);
+      }
     }
   };
 
@@ -300,7 +454,108 @@ export function usePipelineState(pipelineId, location, navigate) {
     setNodeHelp(null);
   };
 
-  // Clean up hovered node when nodes change
+  const handleEdgeRemove = (event, edge) => {
+    if (event?.stopPropagation) {
+      event.stopPropagation();
+    }
+    setEdges((eds) =>
+      eds.filter((e) => {
+        if (edge?.id && e.id === edge.id) {
+          return false;
+        }
+        return !(
+          e.source === edge.source &&
+          e.target === edge.target &&
+          e.sourceHandle === edge.sourceHandle &&
+          e.targetHandle === edge.targetHandle
+        );
+      }),
+    );
+  };
+
+  const handleConnect = async (params) => {
+    const sourceNode = nodes.find((node) => node.id === params.source);
+    const targetNode = nodes.find((node) => node.id === params.target);
+
+    if (!sourceNode || !targetNode) {
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            markerEnd: {
+              type: "arrowclosed",
+            },
+          },
+          eds,
+        ),
+      );
+      return;
+    }
+
+    const currentOutputs = edges.filter(
+      (edge) =>
+        edge.source === params.source &&
+        (params.sourceHandle
+          ? edge.sourceHandle === params.sourceHandle
+          : true),
+    ).length;
+    const currentInputs = edges.filter(
+      (edge) =>
+        edge.target === params.target &&
+        (params.targetHandle
+          ? edge.targetHandle === params.targetHandle
+          : true),
+    ).length;
+
+    let validation = null;
+    try {
+      validation = await validateEdge({
+        source: {
+          nodeId: params.source,
+          type: sourceNode.type,
+          port: params.sourceHandle || null,
+          currentConnections: currentOutputs,
+        },
+        target: {
+          nodeId: params.target,
+          type: targetNode.type,
+          port: params.targetHandle || null,
+          currentConnections: currentInputs,
+        },
+      });
+    } catch (error) {
+      console.error("Edge validation error:", error);
+    }
+
+    const shouldWarn = validation && validation.ok === false;
+    const edgeColor = validation?.style?.edgeColor;
+    const edgeClass = validation?.style?.edgeClass;
+
+    if (shouldWarn && validation?.message) {
+      enqueueSnackbar(validation.message, {
+        variant: validation.severity === "warning" ? "warning" : "error",
+      });
+    }
+
+    setEdges((eds) =>
+      addEdge(
+        {
+          ...params,
+          className: shouldWarn ? edgeClass : undefined,
+          style:
+            shouldWarn && edgeColor
+              ? { stroke: edgeColor, strokeWidth: 2 }
+              : undefined,
+          markerEnd: {
+            type: "arrowclosed",
+            color: shouldWarn && edgeColor ? edgeColor : undefined,
+          },
+        },
+        eds,
+      ),
+    );
+  };
+
   useEffect(() => {
     if (
       hoveredNode &&
@@ -329,6 +584,7 @@ export function usePipelineState(pipelineId, location, navigate) {
     nodeIdCounter,
     nameError,
     nameErrorMessage,
+    isRunning,
 
     // Setters
     setNodes,
@@ -356,6 +612,8 @@ export function usePipelineState(pipelineId, location, navigate) {
     onNodeMouseEnter,
     onNodeMouseLeave,
     onPaneClick,
+    handleConnect,
+    handleEdgeRemove,
     handlePipelineNameChange,
   };
 }

@@ -1,9 +1,9 @@
-import { getNodes } from "../../api/pipeline";
+import { getNodeContracts } from "../../api/pipeline";
 import CustomNode from "./CustomNode";
 
 export async function getNodeTypes() {
   try {
-    const response = await getNodes();
+    const response = await getNodeContracts();
     if (Array.isArray(response)) {
       return response;
     } else {

@@ -35,3 +35,15 @@ class ValidateNodeParams(BaseModel):
 class ValidatePipelineParams(BaseModel):
     nodes: List[Dict[str, Any]]
     edges: List[Dict[str, Any]]
+
+
+class EdgeEndpointRef(BaseModel):
+    nodeId: Optional[str] = None  # noqa: N815
+    type: str
+    port: Optional[str] = None
+    currentConnections: Optional[int] = None  # noqa: N815
+
+
+class ValidateEdgeParams(BaseModel):
+    source: EdgeEndpointRef
+    target: EdgeEndpointRef

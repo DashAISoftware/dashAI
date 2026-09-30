@@ -1,6 +1,6 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Box, Tooltip } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 import ReactFlow, {
   addEdge,
   Background,
@@ -16,6 +16,8 @@ function PipelineDesigner({
   setEdges,
   onNodesChange,
   onEdgesChange,
+  onConnect,
+  onEdgeDoubleClick,
   nodeTypes,
   onNodeClick,
   onNodeHelp,
@@ -31,23 +33,51 @@ function PipelineDesigner({
   nodeIdCounter,
   setNodeIdCounter,
   availableNodes,
+  canvasMode,
 }) {
   const theme = useTheme();
   const { screenToFlowPosition } = useReactFlow();
 
-  const onConnect = (params) => {
-    setEdges((eds) =>
-      addEdge(
-        {
-          ...params,
-          markerEnd: {
-            type: "arrowclosed",
-          },
-        },
-        eds,
-      ),
+  const isLightCanvas = canvasMode === "light";
+  const canvasBg = isLightCanvas ? "#ffffff" : theme.palette.background.box;
+  const canvasBorder = isLightCanvas
+    ? "1px solid #e0e0e0"
+    : `1px solid ${theme.palette.ui.borderLight}`;
+  const gridColor = isLightCanvas
+    ? alpha("#9e9e9e", 0.7)
+    : alpha(theme.palette.text.secondary, 0.6);
+
+  // Sync canvasMode into existing nodes so CustomNode can read it
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        data: { ...n.data, canvasMode },
+      })),
     );
-  };
+  }, [canvasMode, setNodes]);
+
+  const handleConnect = useCallback(
+    (params) => {
+      if (onConnect) {
+        onConnect(params);
+        return;
+      }
+
+      setEdges((eds) =>
+        addEdge(
+          {
+            ...params,
+            markerEnd: {
+              type: "arrowclosed",
+            },
+          },
+          eds,
+        ),
+      );
+    },
+    [onConnect, setEdges],
+  );
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -83,6 +113,9 @@ function PipelineDesigner({
           errors: nodeErrors,
           source: nodeInfo?.source || false,
           target: nodeInfo?.target || false,
+          sourceHandles: nodeInfo?.sourceHandles || 1,
+          targetHandles: nodeInfo?.targetHandles || 1,
+          canvasMode,
           onDelete: () => {
             setNodes((nds) => nds.filter((n) => n.id !== nodeId));
             setNodeData((prev) => {
@@ -103,6 +136,7 @@ function PipelineDesigner({
       setNodeIdCounter((prev) => prev + 1);
     },
     [
+      canvasMode,
       dragging,
       setNodes,
       setNodeData,
@@ -122,7 +156,8 @@ function PipelineDesigner({
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={handleConnect}
+        onEdgeDoubleClick={onEdgeDoubleClick}
         onDragOver={onDragOver}
         onDrop={onDrop}
         onNodeClick={onNodeHelp}
@@ -136,8 +171,8 @@ function PipelineDesigner({
           width: "100%",
           height: "100%",
           borderRadius: 12,
-          background: theme.palette.background.default,
-          border: `1px solid ${theme.palette.ui.border}`,
+          background: canvasBg,
+          border: canvasBorder,
           boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
         }}
       >
@@ -166,7 +201,7 @@ function PipelineDesigner({
           </Tooltip>
         )}
         <Controls />
-        <Background />
+        <Background color={gridColor} gap={18} size={2} />
       </ReactFlow>
     </Box>
   );

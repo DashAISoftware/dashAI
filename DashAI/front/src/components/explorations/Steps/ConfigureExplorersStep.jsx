@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 
 import useSchema from "../../../hooks/useSchema";
 import { useExplorationsContext } from "../context";
-import ExplorersTable from "../ExplorationsTable";
+import ExplorersTable from "../explorers/ExplorersTable";
 
 import { getComponents } from "../../../api/component";
 import { evaluateColumnEligibility } from "../../../utils/columnEligibility";
@@ -269,21 +269,9 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
         </Typography>
       </Grid>
 
-      {/* Form to add a single explorer to the exploration */}
       <Grid size={{ xs: 12 }}>
-        <Grid container direction="row" columnSpacing={6} wrap="nowrap">
-          <Grid size={{ xs: 4, md: 12 }}>
-            <TextField
-              label="Name (optional)"
-              value={explorerData.name}
-              onChange={(e) =>
-                setExplorerData({ ...explorerData, name: e.target.value })
-              }
-              fullWidth
-            />
-          </Grid>
-
-          <Grid size={{ xs: 4, md: 12 }}>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12 }}>
             <Autocomplete
               loading={loading}
               disablePortal
@@ -304,13 +292,25 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
             />
           </Grid>
 
-          <Grid size={{ xs: 1, md: 2 }}>
+          <Grid size={{ xs: 12, sm: 9 }}>
+            <TextField
+              label="Name (optional)"
+              value={explorerData.name}
+              onChange={(e) =>
+                setExplorerData({ ...explorerData, name: e.target.value })
+              }
+              fullWidth
+            />
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 3 }}>
             <Button
               variant="outlined"
               disabled={!value || value.disabled}
               startIcon={<AddIcon />}
               onClick={handleAddButton}
               sx={{ height: "100%" }}
+              fullWidth
             >
               Add
             </Button>
@@ -318,7 +318,6 @@ function ConfigureExplorersStep({ onValidation = () => {} }) {
         </Grid>
       </Grid>
 
-      {/* Explorers table */}
       <Grid size={{ xs: 12 }}>
         {loading && (
           <Box

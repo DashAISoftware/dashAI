@@ -9,19 +9,19 @@ class PipelineValidator:
         self.edges = edges
         self.errors: Dict[str, List[str]] = {}
         self.node_map = {n["id"]: n for n in nodes}
-        self.duplicated_ids = set()
 
         self.type_to_rule = {
             nt["type"]: {
                 "predecessors": set(nt.get("predecessors", [])),
                 "successors": set(nt.get("successors", [])),
+                "max_inputs": nt.get("maxInputs"),
+                "max_outputs": nt.get("maxOutputs"),
             }
             for nt in NODE_TYPES
         }
         self.type_to_name = {nt["type"]: nt["name"] for nt in NODE_TYPES}
 
     def validate(self) -> Dict[str, List[str]]:
-        self._validate_duplicates()
         self._validate_structure()
         return self.errors
 
@@ -32,31 +32,9 @@ class PipelineValidator:
     def _get_type_display_name(self, node_type: str) -> str:
         return self.type_to_name.get(node_type, node_type)
 
-    def _validate_duplicates(self):
-        def extract_number(id_str):
-            import re
-
-            match = re.search(r"-(\d+)$", id_str)
-            return int(match.group(1)) if match else float("inf")
-
-        type_to_ids = {}
-        for node in self.nodes:
-            node_type = node["type"]
-            node_name = self._get_node_display_name(node)
-            type_to_ids.setdefault(node_type, []).append((node["id"], node_name))
-
-        for _, ids in type_to_ids.items():
-            sorted_ids = sorted(ids, key=lambda x: extract_number(x[0]))
-            for id, name in sorted_ids[1:]:
-                self.duplicated_ids.add(id)
-                self.errors.setdefault(id, []).append(f"{name} already exists.")
-
     def _validate_structure(self):
         for node in self.nodes:
             node_id = node["id"]
-            if node_id in self.duplicated_ids:
-                continue
-
             node_type = node["type"]
             node_name = self._get_node_display_name(node)
             rule = self.type_to_rule.get(node_type)
@@ -66,10 +44,13 @@ class PipelineValidator:
             expected_predecessors = rule["predecessors"]
             predecessors = [e for e in self.edges if e["target"] == node_id]
 
-            if len(predecessors) > 1:
-                self.errors.setdefault(node_id, []).append(
-                    f"{node_name} cannot have more than one input."
-                )
+            max_inputs = rule.get("max_inputs", 1)
+            if max_inputs is not None and len(predecessors) > max_inputs:
+                if max_inputs == 1:
+                    message = f"{node_name} cannot have more than one input."
+                else:
+                    message = f"{node_name} supports up to {max_inputs} inputs."
+                self.errors.setdefault(node_id, []).append(message)
 
             predecessor_types = [
                 self.node_map[e["source"]]["type"]
@@ -98,4 +79,12 @@ class PipelineValidator:
                 if successors:
                     self.errors.setdefault(node_id, []).append(
                         f"{node_name} should not have any outputs."
+                    )
+
+            max_outputs = rule.get("max_outputs")
+            if max_outputs is not None:
+                outgoing_edges = [e for e in self.edges if e["source"] == node_id]
+                if len(outgoing_edges) > max_outputs:
+                    self.errors.setdefault(node_id, []).append(
+                        f"{node_name} supports up to {max_outputs} outputs."
                     )

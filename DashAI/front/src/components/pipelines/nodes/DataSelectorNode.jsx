@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import DatasetModal from "../../../components/datasets/DatasetModal";
 import { validateNode } from "../../../api/pipeline";
@@ -17,6 +17,7 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   const [openModal, setOpenModal] = useState(false);
   const [datasets, setDatasets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const pollingRef = useRef(null);
   const { enqueueSnackbar } = useSnackbar();
   const [validationStatus, setValidationStatus] = useState("");
   const theme = useTheme();
@@ -27,16 +28,39 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
     const res = await getDatasets();
     setDatasets(res);
     setLoading(false);
+    return res;
   };
 
   useEffect(() => {
     fetchDatasets();
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+    };
   }, []);
 
   const handleDatasetUpdate = async (newDatasetId) => {
-    await fetchDatasets();
+    const latestDatasets = await fetchDatasets();
     if (newDatasetId) {
       setDatasetId(newDatasetId);
+      const newDs = latestDatasets.find((d) => d.id === newDatasetId);
+      if (!newDs || !newDs.file_path) {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        pollingRef.current = setInterval(async () => {
+          try {
+            const res = await getDatasets();
+            setDatasets(res);
+            const updated = res.find((d) => d.id === newDatasetId);
+            if (updated && updated.file_path) {
+              clearInterval(pollingRef.current);
+              pollingRef.current = null;
+            }
+          } catch (err) {
+            console.error("Error polling datasets:", err);
+          }
+        }, 2000);
+      }
     }
   };
 
@@ -44,9 +68,25 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
   const handleCloseModal = () => setOpenModal(false);
 
   const handleSave = async () => {
-    const selected = datasets.find((d) => d.id === datasetId);
+    let latestDatasets;
+    try {
+      latestDatasets = await getDatasets();
+      setDatasets(latestDatasets);
+    } catch {
+      latestDatasets = datasets;
+    }
+
+    const selected = latestDatasets.find((d) => d.id === datasetId);
     if (!selected) {
-      console.error("Selected dataset not found.");
+      enqueueSnackbar("Please select a dataset first.", { variant: "warning" });
+      return;
+    }
+
+    if (!selected.file_path) {
+      enqueueSnackbar(
+        "The dataset is still being processed. Please wait a moment and try again.",
+        { variant: "warning" },
+      );
       return;
     }
 
@@ -63,7 +103,9 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
         onClose();
       } else {
         setValidationStatus("error");
-        enqueueSnackbar("Validation failed", { variant: "error" });
+        enqueueSnackbar(response.message || "Validation failed", {
+          variant: "error",
+        });
       }
     } catch (e) {
       setValidationStatus("error");
@@ -140,10 +182,16 @@ function DataSelectorNode({ onClose, onSave, savedConfig = null }) {
         <Grid size={{ xs: 12 }} container justifyContent="flex-end">
           <Button
             onClick={handleSave}
-            disabled={!datasetId}
+            disabled={
+              !datasetId ||
+              !(datasets.find((d) => d.id === datasetId) || {}).file_path
+            }
             variant="contained"
           >
-            Save
+            {datasetId &&
+            !(datasets.find((d) => d.id === datasetId) || {}).file_path
+              ? "Processing…"
+              : "Save"}
           </Button>
         </Grid>
       </Grid>

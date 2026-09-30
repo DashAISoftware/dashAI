@@ -6,6 +6,15 @@ import {
   Tab,
   Paper,
   CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Grid,
+  Card,
+  CardContent,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { getPipelinePredictionSummary } from "../../../api/pipeline";
@@ -61,10 +70,143 @@ function PredictionSummary({ predictName }) {
               </Typography>
             </Box>
           )}
-          {tab === 1 && summary.data_type !== "string" && (
-            <>Prediction Summary Tab Placeholder</>
+          {tab === 1 && summary.data_type === "regression" && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Regression Statistics
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card>
+                    <CardContent>
+                      <Typography color="textSecondary" gutterBottom>
+                        Mean
+                      </Typography>
+                      <Typography variant="h5">
+                        {summary.statistics?.mean?.toFixed(2) ?? "-"}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card>
+                    <CardContent>
+                      <Typography color="textSecondary" gutterBottom>
+                        Median
+                      </Typography>
+                      <Typography variant="h5">
+                        {summary.statistics?.median?.toFixed(2) ?? "-"}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card>
+                    <CardContent>
+                      <Typography color="textSecondary" gutterBottom>
+                        Std Deviation
+                      </Typography>
+                      <Typography variant="h5">
+                        {summary.statistics?.std?.toFixed(2) ?? "-"}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card>
+                    <CardContent>
+                      <Typography color="textSecondary" gutterBottom>
+                        Minimum
+                      </Typography>
+                      <Typography variant="h5">
+                        {summary.statistics?.min?.toFixed(2) ?? "-"}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card>
+                    <CardContent>
+                      <Typography color="textSecondary" gutterBottom>
+                        Maximum
+                      </Typography>
+                      <Typography variant="h5">
+                        {summary.statistics?.max?.toFixed(2) ?? "-"}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <Card>
+                    <CardContent>
+                      <Typography color="textSecondary" gutterBottom>
+                        Total Predictions
+                      </Typography>
+                      <Typography variant="h5">
+                        {summary.total_data_points ?? "-"}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              </Grid>
+            </Box>
           )}
-          {tab === 2 && <>Prediction Sample Table Placeholder</>}
+          {tab === 1 && summary.data_type === "classification" && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Class Distribution
+              </Typography>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Class</TableCell>
+                      <TableCell align="right">Occurrences</TableCell>
+                      <TableCell align="right">Percentage</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {summary.class_distribution?.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>{row.Class}</TableCell>
+                        <TableCell align="right">{row.Ocurrences}</TableCell>
+                        <TableCell align="right">{row.Percentage}%</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
+          {tab === 2 && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Sample Predictions (First 50)
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Index</TableCell>
+                      <TableCell align="right">Predicted Value</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {summary.sample_data?.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>{row.id}</TableCell>
+                        <TableCell align="right">
+                          {typeof row.value === "number"
+                            ? row.value.toFixed(2)
+                            : row.value}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          )}
         </Box>
       </Paper>
     </Box>
