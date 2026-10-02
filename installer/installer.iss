@@ -41,3 +41,14 @@ Name: "desktopicon"; Description: "Create a desktop icon"; Flags: unchecked
 
 [Run]
 Filename: "{app}\dashAI-launcher-cpu.exe"; Description: "Launch dashAI"; Flags: postinstall nowait skipifsilent
+; The in-app updater runs this installer silently with /RELAUNCH=1, so the
+; entry above is skipped. Start dashAI again in that case only: an admin
+; deploying silently to many machines does not want it to open. It runs as
+; the user who started the update, not as the elevated installer.
+Filename: "{app}\dashAI-launcher-cpu.exe"; Flags: nowait runasoriginaluser; Check: RelaunchRequested
+
+[Code]
+function RelaunchRequested: Boolean;
+begin
+  Result := ExpandConstant('{param:RELAUNCH|0}') = '1';
+end;

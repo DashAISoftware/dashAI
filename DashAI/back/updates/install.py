@@ -75,11 +75,13 @@ def _launch_windows_installer(installer: Path) -> None:
 
     ``os.startfile`` goes through ShellExecute, which shows the UAC prompt the
     installer needs to write to Program Files. ``/CLOSEAPPLICATIONS`` closes
-    anything still holding the install files.
+    anything still holding the install files, and ``/RELAUNCH=1`` (read by
+    installer/installer.iss) starts dashAI again once the install finishes.
     """
     log_file = installer.with_suffix(".log")
     arguments = (
-        f'/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /LOG="{log_file}"'
+        "/SILENT /SUPPRESSMSGBOXES /NORESTART /CLOSEAPPLICATIONS /RELAUNCH=1 "
+        f'/LOG="{log_file}"'
     )
     os.startfile(str(installer), "open", arguments)  # noqa: S606
 
