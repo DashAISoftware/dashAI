@@ -55,6 +55,15 @@ class UpdateInfo(BaseModel):
     check_failed: bool = False
 
 
+class UpdateAsset(BaseModel):
+    """A release file that installs dashAI for one install channel."""
+
+    name: str
+    url: str
+    size: Optional[int] = None
+    sha256: Optional[str] = None
+
+
 def _fetch_latest_release() -> Optional[dict]:
     """Ask GitHub for the latest published release.
 
@@ -119,22 +128,54 @@ def _asset_suffix(channel: InstallChannel) -> Optional[str]:
     return suffixes.get(channel)
 
 
-def _download_url(release: dict, channel: InstallChannel) -> Optional[str]:
-    """Return the download link of the release file for an install channel.
+def _select_asset(release: dict, channel: InstallChannel) -> Optional[UpdateAsset]:
+    """Return the release file for an install channel.
 
     Returns
     -------
-    Optional[str]
-        The link, or None when the channel has no installer (pip, source,
+    Optional[UpdateAsset]
+        The file, or None when the channel has no installer (pip, source,
         Docker) or the release does not ship one for this platform.
     """
     suffix = _asset_suffix(channel)
     if suffix is None:
         return None
     for asset in release.get("assets", []):
-        if asset.get("name", "").endswith(suffix):
-            return asset.get("browser_download_url")
+        name = asset.get("name", "")
+        if not name.endswith(suffix) or not asset.get("browser_download_url"):
+            continue
+        # GitHub publishes the digest as "sha256:<hex>".
+        algorithm, _, value = (asset.get("digest") or "").partition(":")
+        return UpdateAsset(
+            name=name,
+            url=asset["browser_download_url"],
+            size=asset.get("size"),
+            sha256=value if algorithm == "sha256" and value else None,
+        )
     return None
+
+
+def _is_newer(release: dict, current_version: Optional[str]) -> bool:
+    """Tell whether a release is newer than the running version."""
+    latest = _parse_version(release.get("tag_name"))
+    current = _parse_version(current_version)
+    return bool(latest and current and latest > current)
+
+
+def find_update_asset() -> Optional[UpdateAsset]:
+    """Return the file that updates this install, if a newer release has one.
+
+    Returns
+    -------
+    Optional[UpdateAsset]
+        The release file for the detected install channel, or None when there
+        is no newer release, GitHub is unreachable or the channel cannot be
+        updated from a downloaded file.
+    """
+    release = _get_latest_release()
+    if release is None or not _is_newer(release, get_installed_version()):
+        return None
+    return _select_asset(release, detect_install_channel())
 
 
 def check_for_updates(enabled: bool = True) -> UpdateInfo:
@@ -165,12 +206,12 @@ def check_for_updates(enabled: bool = True) -> UpdateInfo:
         return info
 
     latest = _parse_version(release.get("tag_name"))
-    current = _parse_version(current_version)
     info.latest_version = str(latest) if latest else None
     info.release_notes = release.get("body")
     info.release_url = release.get("html_url")
     info.published_at = release.get("published_at")
-    info.update_available = bool(latest and current and latest > current)
+    info.update_available = _is_newer(release, current_version)
     if info.update_available:
-        info.download_url = _download_url(release, channel)
+        asset = _select_asset(release, channel)
+        info.download_url = asset.url if asset else None
     return info
