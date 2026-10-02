@@ -28,6 +28,7 @@ class DefaultSettings(BaseSettings):
     DATAFILE_PATH: str = "datafiles"
     CREDENTIALS_KEY_PATH: str = ".credentials_key"
     COMPONENT_PATH: str = "components"
+    UPDATES_PATH: str = "updates"
 
     # Ask GitHub whether a newer release exists. Turned off with the
     # UPDATE_CHECK_ENABLED=false environment variable.
