@@ -29,6 +29,9 @@ import {
  * group of one of the session's converter steps, represented here as a
  * synthetic key (e.g. "__group__0") so the underlying Autocomplete only
  * ever deals with plain strings — the same shape a raw column name has.
+ *
+ * A task without a target (clustering) only picks inputs: the output picker
+ * is hidden and the session is created with no output columns.
  */
 function SelectColumnsStep({
   newExp,
@@ -37,6 +40,7 @@ function SelectColumnsStep({
   dataset,
   datasetInfo,
   datasetTypes,
+  requiresTarget = true,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["experiments", "models", "common"]);
@@ -68,8 +72,12 @@ function SelectColumnsStep({
   const inputColumnRefs = inputSelection.map(keyToRef);
   const rawInputNames = inputSelection.filter((key) => !isGroupKey(key));
 
+  // A task with no target has no output column to wait for, which is what
+  // keeps the Create button reachable for clustering.
+  const effectiveOutputColumns = requiresTarget ? outputColumnNames : [];
   const columnsReady =
-    inputSelection.length >= 1 && outputColumnNames.length >= 1;
+    inputSelection.length >= 1 &&
+    (!requiresTarget || outputColumnNames.length >= 1);
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   const [validationPending, setValidationPending] = useState(true);
 
@@ -93,6 +101,9 @@ function SelectColumnsStep({
             ? steps[lastIndex].outputSlots
             : [{ slot: null }];
         setInputSelection(slots.map(({ slot }) => groupKey(lastIndex, slot)));
+      } else if (!requiresTarget) {
+        // Nothing is reserved as a target, so every column is an input.
+        setInputSelection(rawColumnNames);
       } else {
         setInputSelection(
           rawColumnNames.length > 1
@@ -102,6 +113,7 @@ function SelectColumnsStep({
       }
     }
     if (
+      requiresTarget &&
       outputColumnNames.length === 0 &&
       (!newExp.output_columns || newExp.output_columns.length === 0)
     ) {
@@ -127,6 +139,8 @@ function SelectColumnsStep({
             inputs_cardinality: "",
             outputs_types: [],
             outputs_cardinality: "",
+            requires_target: requiresTarget,
+            session_config_schema: {},
           },
         });
       }
@@ -141,7 +155,7 @@ function SelectColumnsStep({
       if (
         rawColumnNames.length === 0 ||
         inputSelection.length === 0 ||
-        outputColumnNames.length === 0
+        (requiresTarget && outputColumnNames.length === 0)
       ) {
         setColumnsAreValid(false);
         return;
@@ -166,7 +180,7 @@ function SelectColumnsStep({
         newExp.task_name,
         dataset.id,
         hasGroupRef ? rawInputNames : inputSelection,
-        outputColumnNames,
+        effectiveOutputColumns,
         hasGroupRef ? inputColumnRefs : undefined,
         hasGroupRef ? converterOutputTypes : undefined,
       );
@@ -197,7 +211,7 @@ function SelectColumnsStep({
       setNewExp({
         ...newExp,
         input_columns: rawInputNames,
-        output_columns: outputColumnNames,
+        output_columns: effectiveOutputColumns,
         input_column_refs: inputColumnRefs,
       });
       setNextEnabled(true);
@@ -323,7 +337,7 @@ function SelectColumnsStep({
             )}
           </AlertTitle>
           <Grid container spacing={4}>
-            {["inputs", "outputs"].map((side) =>
+            {(requiresTarget ? ["inputs", "outputs"] : ["inputs"]).map((side) =>
               columnGroupsOf(side).map((group, index) => (
                 <Grid size={{ xs: 12 }} key={`${side}-${index}`}>
                   <Box
@@ -366,13 +380,16 @@ function SelectColumnsStep({
           onInputColumnNamesChange={setInputSelection}
           selectedOutputColumnNames={outputColumnNames}
           onOutputColumnNamesChange={setOutputColumnNames}
+          requiresTarget={requiresTarget}
           inputError={inputSelection.length === 0}
           inputHelperText={
             inputSelection.length === 0 ? t("common:required") : ""
           }
-          outputError={outputColumnNames.length === 0}
+          outputError={requiresTarget && outputColumnNames.length === 0}
           outputHelperText={
-            outputColumnNames.length === 0 ? t("common:required") : ""
+            requiresTarget && outputColumnNames.length === 0
+              ? t("common:required")
+              : ""
           }
           disabled={rawColumnNames.length === 0}
         />
@@ -388,6 +405,7 @@ SelectColumnsStep.propTypes = {
   dataset: PropTypes.object.isRequired,
   datasetInfo: PropTypes.object,
   datasetTypes: PropTypes.object,
+  requiresTarget: PropTypes.bool,
 };
 
 export default SelectColumnsStep;

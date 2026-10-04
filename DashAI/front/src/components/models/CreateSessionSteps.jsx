@@ -70,6 +70,12 @@ function CreateSessionSteps({
     input_column_refs: [],
   });
 
+  // A task without a target (clustering) picks no output column, and one
+  // whose split strategy is "none" trains on the whole dataset.
+  const requiresTarget = selectedTask?.metadata?.requires_target !== false;
+  const usesSplits =
+    selectedTask?.metadata?.session_config_schema?.split_strategy !== "none";
+
   const [nextEnabled, setNextEnabled] = useState(false);
   const [currentStep, setCurrentStep] = useState(STEP_PREPARE_DATASET);
 
@@ -265,10 +271,10 @@ function CreateSessionSteps({
           selectedTask?.name || newExp.task_name,
           effectiveName,
           newExp.input_columns,
-          newExp.output_columns,
-          hasTrain ? allMetricNames : [],
-          hasValidation ? allMetricNames : [],
-          hasTest ? allMetricNames : [],
+          requiresTarget ? newExp.output_columns : [],
+          requiresTarget && hasTrain ? allMetricNames : [],
+          requiresTarget && hasValidation ? allMetricNames : [],
+          requiresTarget && hasTest ? allMetricNames : [],
           newExp.evaluation_strategy,
           JSON.stringify(newExp.splits),
           newExp.preprocessing,
@@ -283,10 +289,10 @@ function CreateSessionSteps({
             selectedTask?.name || newExp.task_name,
             effectiveName,
             newExp.input_columns,
-            newExp.output_columns,
-            hasTrain ? allMetricNames : [],
-            hasValidation ? allMetricNames : [],
-            hasTest ? allMetricNames : [],
+            requiresTarget ? newExp.output_columns : [],
+            requiresTarget && hasTrain ? allMetricNames : [],
+            requiresTarget && hasValidation ? allMetricNames : [],
+            requiresTarget && hasTest ? allMetricNames : [],
             newExp.evaluation_strategy,
             JSON.stringify(newExp.splits),
             newExp.preprocessing,
@@ -386,6 +392,7 @@ function CreateSessionSteps({
                 dataset={selectedDataset}
                 datasetInfo={datasetInfo}
                 infoLoading={infoLoading}
+                usesSplits={usesSplits}
               />
             )}
           </>
@@ -415,6 +422,7 @@ function CreateSessionSteps({
                 dataset={selectedDataset}
                 datasetInfo={datasetInfo}
                 datasetTypes={datasetTypes}
+                requiresTarget={requiresTarget}
               />
             )}
           </>

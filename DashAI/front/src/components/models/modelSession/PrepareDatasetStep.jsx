@@ -31,6 +31,9 @@ import {
  * @param {object} dataset the selected dataset
  * @param {object} datasetInfo dataset metadata fetched by the parent step
  * @param {boolean} infoLoading whether datasetInfo is still being fetched
+ * @param {boolean} usesSplits false for a task that trains on the whole dataset
+ *   (clustering): no strategy or partitions are configured and no session
+ *   preprocessing is offered, since that is fitted per split.
  */
 function PrepareDatasetStep({
   newExp,
@@ -41,12 +44,13 @@ function PrepareDatasetStep({
   setEvaluationStrategy,
   datasetInfo,
   infoLoading,
+  usesSplits = true,
 }) {
   const { setSessionRightContent } = useModels();
   const { t } = useTranslation(["experiments", "models", "common"]);
 
   const [applyPreprocessing, setApplyPreprocessing] = useState(
-    Boolean(newExp.applyPreprocessing),
+    usesSplits && Boolean(newExp.applyPreprocessing),
   );
 
   // Values submitted by the schema generated splitter form, and whether that
@@ -79,6 +83,16 @@ function PrepareDatasetStep({
 
   const [splitsReady, setSplitsReady] = useState(false);
 
+  // SplitDatasetRows is what reports the splits as ready, and a task without
+  // splits never renders it.
+  useEffect(() => {
+    if (!usesSplits) {
+      setSplitsReady(true);
+      setSplitType("none");
+      setApplyPreprocessing(false);
+    }
+  }, [usesSplits]);
+
   useEffect(() => {
     if (
       datasetInfo &&
@@ -97,29 +111,45 @@ function PrepareDatasetStep({
   const updateExperiment = () => {
     const updatedExpData = {
       ...newExp,
-      evaluation_strategy: evaluationStrategy,
+      // A task without splits never renders SplitDatasetRows, which is the only
+      // place that sets a strategy, so the parent's state stays null. The
+      // backend types this field as a plain str, so send the empty string it
+      // was initialised with instead of null.
+      evaluation_strategy: evaluationStrategy ?? "",
       applyPreprocessing: applyPreprocessing,
     };
 
-    const splitterName = resolveSplitterName(strategyKind, cvType, holdoutType);
-    if (splitterName) {
-      updatedExpData.splits = buildSplitsPayload({
-        splitterName,
-        splitType:
-          strategyKind === STRATEGY_KINDS.HOLDOUT ? splitType : SPLIT_TYPES.CV,
-        params: {
-          ...(splitterParams ?? {}),
-          // The group column select is rendered by hand, so its value is not
-          // part of the generated form's values.
-          ...(cvType?.schema?.properties?.group_column
-            ? { group_column: groupColumn }
-            : {}),
-        },
-        indexes:
-          splitType === SPLIT_TYPES.PREDEFINED
-            ? datasetPartitionsIndex
-            : rowsPartitionsIndex,
-      });
+    // A task that trains on the whole dataset (clustering) has no splitter to
+    // resolve; the backend recognises the session by this splitType.
+    if (!usesSplits) {
+      updatedExpData.splits = { splitType: "none" };
+    } else {
+      const splitterName = resolveSplitterName(
+        strategyKind,
+        cvType,
+        holdoutType,
+      );
+      if (splitterName) {
+        updatedExpData.splits = buildSplitsPayload({
+          splitterName,
+          splitType:
+            strategyKind === STRATEGY_KINDS.HOLDOUT
+              ? splitType
+              : SPLIT_TYPES.CV,
+          params: {
+            ...(splitterParams ?? {}),
+            // The group column select is rendered by hand, so its value is not
+            // part of the generated form's values.
+            ...(cvType?.schema?.properties?.group_column
+              ? { group_column: groupColumn }
+              : {}),
+          },
+          indexes:
+            splitType === SPLIT_TYPES.PREDEFINED
+              ? datasetPartitionsIndex
+              : rowsPartitionsIndex,
+        });
+      }
     }
 
     setNewExp(updatedExpData);
@@ -134,6 +164,7 @@ function PrepareDatasetStep({
     }
   }, [
     splitsReady,
+    usesSplits,
     splitType,
     splitterParams,
     cvType,
@@ -150,6 +181,14 @@ function PrepareDatasetStep({
   useEffect(() => {
     if (infoLoading) {
       setSessionRightContent(null);
+      return () => setSessionRightContent(null);
+    }
+    if (!usesSplits) {
+      setSessionRightContent(
+        <Alert severity="info">
+          {t("experiments:label.noSplitConfigNeeded")}
+        </Alert>,
+      );
       return () => setSessionRightContent(null);
     }
     setSessionRightContent(
@@ -185,6 +224,7 @@ function PrepareDatasetStep({
     datasetInfo,
     rowsPartitionsIndex,
     splitType,
+    usesSplits,
     splitterParams,
     paramsError,
     evaluationStrategy,
@@ -224,28 +264,32 @@ function PrepareDatasetStep({
         ) : null
       ) : null}
 
-      <Box
-        sx={{
-          mt: 2,
-          p: 6,
-          border: 1,
-          borderColor: "divider",
-          borderRadius: 2,
-        }}
-      >
-        <FormControlLabel
-          control={
-            <Switch
-              checked={applyPreprocessing}
-              onChange={(event) => setApplyPreprocessing(event.target.checked)}
-            />
-          }
-          label={t("models:label.applyPreprocessing")}
-        />
-        <Typography variant="caption" component="p" sx={{ color: "grey" }}>
-          {t("models:label.applyPreprocessingDescription")}
-        </Typography>
-      </Box>
+      {usesSplits && (
+        <Box
+          sx={{
+            mt: 2,
+            p: 6,
+            border: 1,
+            borderColor: "divider",
+            borderRadius: 2,
+          }}
+        >
+          <FormControlLabel
+            control={
+              <Switch
+                checked={applyPreprocessing}
+                onChange={(event) =>
+                  setApplyPreprocessing(event.target.checked)
+                }
+              />
+            }
+            label={t("models:label.applyPreprocessing")}
+          />
+          <Typography variant="caption" component="p" sx={{ color: "grey" }}>
+            {t("models:label.applyPreprocessingDescription")}
+          </Typography>
+        </Box>
+      )}
     </React.Fragment>
   );
 }
@@ -272,5 +316,6 @@ PrepareDatasetStep.propTypes = {
   setEvaluationStrategy: PropTypes.func,
   datasetInfo: PropTypes.object,
   infoLoading: PropTypes.bool,
+  usesSplits: PropTypes.bool,
 };
 export default PrepareDatasetStep;

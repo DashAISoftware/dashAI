@@ -1,5 +1,7 @@
 import logging
 
+from DashAI.back.converters.clustering.clustering import Clustering
+
 # Hugging Face module
 from DashAI.back.converters.hugging_face.embedding import Embedding
 from DashAI.back.converters.hugging_face.image_embedding import (
@@ -136,8 +138,24 @@ from DashAI.back.exploration.explorers.autocorrelation_plot import (
 )
 from DashAI.back.exploration.explorers.box_plot import BoxPlotExplorer
 from DashAI.back.exploration.explorers.class_overlap import ClassOverlapExplorer
+from DashAI.back.exploration.explorers.cluster_distribution import (
+    ClusterDistributionExplorer,
+)
+from DashAI.back.exploration.explorers.cluster_stability import (
+    ClusterStabilityExplorer,
+)
+from DashAI.back.exploration.explorers.clustering_heatmap import (
+    ClusteringHeatmapExplorer,
+)
+from DashAI.back.exploration.explorers.clustering_profile import (
+    ClusteringProfileExplorer,
+)
+from DashAI.back.exploration.explorers.clustering_scatter import (
+    ClusteringScatterExplorer,
+)
 from DashAI.back.exploration.explorers.corr_matrix import CorrelationMatrixExplorer
 from DashAI.back.exploration.explorers.cov_matrix import CovarianceMatrixExplorer
+from DashAI.back.exploration.explorers.dendrogram import DendrogramExplorer
 from DashAI.back.exploration.explorers.density_heatmap import DensityHeatmapExplorer
 from DashAI.back.exploration.explorers.describe_explorer import DescribeExplorer
 from DashAI.back.exploration.explorers.ecdf_plot import ECDFPlotExplorer
@@ -154,6 +172,7 @@ from DashAI.back.exploration.explorers.scatter_plot import ScatterPlotExplorer
 from DashAI.back.exploration.explorers.seasonal_decomposition import (
     SeasonalDecompositionExplorer,
 )
+from DashAI.back.exploration.explorers.silhouette_plot import SilhouettePlotExplorer
 from DashAI.back.exploration.explorers.time_index_audit import TimeIndexAuditExplorer
 from DashAI.back.exploration.explorers.time_series_plot import (
     TimeSeriesPlotExplorer,
@@ -185,6 +204,9 @@ from DashAI.back.metrics.classification.matthews_corrcoef import MatthewsCorrCoe
 from DashAI.back.metrics.classification.precision import Precision
 from DashAI.back.metrics.classification.recall import Recall
 from DashAI.back.metrics.classification.roc_auc import ROCAUC
+from DashAI.back.metrics.clustering.calinski_harabasz import CalinskiHarabasz
+from DashAI.back.metrics.clustering.davies_bouldin import DaviesBouldin
+from DashAI.back.metrics.clustering.silhouette import Silhouette
 from DashAI.back.metrics.regression.explained_variance import ExplainedVariance
 from DashAI.back.metrics.regression.mae import MAE
 from DashAI.back.metrics.regression.median_absolute_error import MedianAbsoluteError
@@ -200,6 +222,8 @@ from DashAI.back.models.efficientnet_b0_image_classifier import (
 )
 
 # Models
+from DashAI.back.models.faiss.faiss_dbscan_clustering import FaissDBSCANClustering
+from DashAI.back.models.faiss.faiss_kmeans_clustering import FaissKMeansClustering
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
 from DashAI.back.models.hugging_face.bert_transformer import BertTransformer
 from DashAI.back.models.hugging_face.bertin_transformer import BertinTransformer
@@ -359,6 +383,9 @@ from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
 from DashAI.back.models.scikit_learn.adaboost_classifier import AdaBoostClassifier
 from DashAI.back.models.scikit_learn.adaboost_regression import AdaBoostRegression
+from DashAI.back.models.scikit_learn.agglomerative_clustering import (
+    AgglomerativeClustering,
+)
 from DashAI.back.models.scikit_learn.bagging_classifier import BaggingClassifier
 from DashAI.back.models.scikit_learn.bayesian_ridge_regression import (
     BayesianRidgeRegression,
@@ -366,6 +393,7 @@ from DashAI.back.models.scikit_learn.bayesian_ridge_regression import (
 from DashAI.back.models.scikit_learn.bow_text_classification_model import (
     BagOfWordsTextClassificationModel,
 )
+from DashAI.back.models.scikit_learn.dbscan_clustering import DBSCANClustering
 from DashAI.back.models.scikit_learn.decision_tree_classifier import (
     DecisionTreeClassifier,
 )
@@ -376,6 +404,9 @@ from DashAI.back.models.scikit_learn.dummy_classifier import DummyClassifier
 from DashAI.back.models.scikit_learn.elastic_net_regression import ElasticNetRegression
 from DashAI.back.models.scikit_learn.extra_trees_classifier import ExtraTreesClassifier
 from DashAI.back.models.scikit_learn.extra_trees_regression import ExtraTreesRegression
+from DashAI.back.models.scikit_learn.gaussian_mixture_clustering import (
+    GaussianMixtureClustering,
+)
 from DashAI.back.models.scikit_learn.gaussian_nb import GaussianNB
 from DashAI.back.models.scikit_learn.gradient_boosting_classifier import (
     GradientBoostingClassifier,
@@ -383,6 +414,7 @@ from DashAI.back.models.scikit_learn.gradient_boosting_classifier import (
 from DashAI.back.models.scikit_learn.gradient_boosting_regression import (
     GradientBoostingR,
 )
+from DashAI.back.models.scikit_learn.hdbscan_clustering import HDBSCANClustering
 from DashAI.back.models.scikit_learn.hist_gradient_boosting_classifier import (
     HistGradientBoostingClassifier,
 )
@@ -391,6 +423,7 @@ from DashAI.back.models.scikit_learn.hist_gradient_boosting_regression import (
 )
 from DashAI.back.models.scikit_learn.k_neighbors_classifier import KNeighborsClassifier
 from DashAI.back.models.scikit_learn.k_neighbors_regression import KNeighborsRegression
+from DashAI.back.models.scikit_learn.kmeans_clustering import KMeansClustering
 from DashAI.back.models.scikit_learn.lasso_regression import LassoRegression
 from DashAI.back.models.scikit_learn.linear_regression import LinearRegression
 from DashAI.back.models.scikit_learn.linear_svc_classifier import LinearSVCClassifier
@@ -406,6 +439,7 @@ from DashAI.back.models.scikit_learn.random_forest_regression import (
 )
 from DashAI.back.models.scikit_learn.ridge_regression import RidgeRegression
 from DashAI.back.models.scikit_learn.sgd_classifier import SGDClassifier
+from DashAI.back.models.scikit_learn.spectral_clustering import SpectralClustering
 from DashAI.back.models.scikit_learn.svc import SVC
 from DashAI.back.models.scikit_learn.svr import SVR
 from DashAI.back.models.scikit_learn.tfidf_logreg_text_classification_model import (
@@ -477,6 +511,9 @@ from DashAI.back.statistical_tests.post_hoc_tests.tukey_test import TukeyHSDTest
 from DashAI.back.statistical_tests.wilcoxon_sr_test import (
     WilcoxonSRTest,
 )
+
+# Tasks
+from DashAI.back.tasks.clustering_task import ClusteringTask
 from DashAI.back.tasks.controlnet_task import ControlNetTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 
@@ -561,7 +598,10 @@ def get_initial_components():
         ControlNetTask,
         RAGTask,
         ImageClassificationTask,
+        ClusteringTask,
         # Models
+        FaissDBSCANClustering,
+        FaissKMeansClustering,
         AdaBoostClassifier,
         AlbertTransformer,
         AdaBoostRegression,
@@ -574,6 +614,11 @@ def get_initial_components():
         DebertaV3Transformer,
         DecisionTreeClassifier,
         DecisionTreeRegression,
+        AgglomerativeClustering,
+        DBSCANClustering,
+        GaussianMixtureClustering,
+        HDBSCANClustering,
+        SpectralClustering,
         DistilBertTransformer,
         DummyClassifier,
         ElasticNetRegression,
@@ -588,6 +633,7 @@ def get_initial_components():
         KNeighborsClassifier,
         RAGPipeline,
         KNeighborsRegression,
+        KMeansClustering,
         LassoRegression,
         LinearRegression,
         LinearSVCClassifier,
@@ -675,6 +721,9 @@ def get_initial_components():
         BalancedAccuracy,
         Precision,
         Recall,
+        Silhouette,
+        DaviesBouldin,
+        CalinskiHarabasz,
         Bleu,
         Ter,
         Chrf,
@@ -783,9 +832,17 @@ def get_initial_components():
         SeasonalDecompositionExplorer,
         ParallelCategoriesExplorer,
         ParallelCordinatesExplorer,
+        ClusteringProfileExplorer,
+        ClusteringScatterExplorer,
+        ClusteringHeatmapExplorer,
+        SilhouettePlotExplorer,
+        ClusterDistributionExplorer,
+        DendrogramExplorer,
+        ClusterStabilityExplorer,
         ClassOverlapExplorer,
         # Converters
         ColumnRemover,
+        Clustering,
         NanRemover,
         CharacterReplacer,
         ColumnArithmetic,

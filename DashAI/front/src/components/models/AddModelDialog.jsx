@@ -105,6 +105,18 @@ function AddModelDialog({
   });
 
   const tourContext = useTourContext();
+  const sessionSplits = useMemo(() => {
+    if (!session?.splits) return {};
+    if (typeof session.splits === "object") return session.splits;
+
+    try {
+      return JSON.parse(session.splits);
+    } catch {
+      return {};
+    }
+  }, [session?.splits]);
+
+  const supportsOptimization = sessionSplits.splitType !== "none";
 
   const outerSplit = useMemo(() => {
     return session?.splits ? JSON.parse(session.splits) : null;
@@ -128,9 +140,10 @@ function AddModelDialog({
     return checkIfHaveOptimazers(modelParameters);
   }, [modelParameters]);
 
-  const steps = hasOptimizableParams
-    ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
-    : [t("models:label.configureModel")];
+  const steps =
+    supportsOptimization && hasOptimizableParams
+      ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
+      : [t("models:label.configureModel")];
 
   useEffect(() => {
     if (preselectedModel && preselectedModel !== selectedModel) {
@@ -236,7 +249,7 @@ function AddModelDialog({
         return;
       }
 
-      if (hasOptimizableParams) {
+      if (supportsOptimization && hasOptimizableParams) {
         setActiveStep(1);
       } else {
         handleCreateRun();
@@ -276,13 +289,15 @@ function AddModelDialog({
         selectedModel,
         name.trim(),
         modelParameters || {},
-        selectedOptimizer || "",
-        { ...defaultOptimizerParams, ...optimizerParameters },
+        supportsOptimization ? selectedOptimizer || "" : "",
+        supportsOptimization
+          ? { ...defaultOptimizerParams, ...optimizerParameters }
+          : {},
         "",
         "",
         "",
         "",
-        goalMetric || "",
+        supportsOptimization ? goalMetric || "" : "",
         "",
         nestedConfig,
       );
@@ -357,14 +372,17 @@ function AddModelDialog({
   );
 
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
-  const isStep2Valid = Boolean(
-    selectedOptimizer &&
-    goalMetric &&
-    (!useNestedCV ||
-      (innerConfig.splitterType &&
-        innerConfig.nSplits > 1 &&
-        innerConfig.nSplits <= maxInnerFolds)),
-  );
+  // A task without optimization (clustering) has no optimizer step to fill in.
+  const isStep2Valid =
+    !supportsOptimization ||
+    Boolean(
+      selectedOptimizer &&
+      goalMetric &&
+      (!useNestedCV ||
+        (innerConfig.splitterType &&
+          innerConfig.nSplits > 1 &&
+          innerConfig.nSplits <= maxInnerFolds)),
+    );
 
   return (
     <Dialog
@@ -566,7 +584,7 @@ AddModelDialog.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     task_name: PropTypes.string,
-    splits: PropTypes.string,
+    splits: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
   }),
   preselectedModel: PropTypes.string,
   preselectedModelObject: PropTypes.shape({

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 from kink import inject
 from sqlalchemy import exc
 
+from DashAI.back.converters.converter_report import save_converter_report
 from DashAI.back.dependencies.database.models import Converter
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
 from DashAI.back.job.base_job import BaseJob, JobError
@@ -100,6 +101,7 @@ class ConverterJob(BaseJob):
         from kink import di
 
         session_factory = di["session_factory"]
+        config = di["config"]
 
         ctx = ExecutionContext()
 
@@ -176,6 +178,18 @@ class ConverterJob(BaseJob):
             try:
                 self.report_progress(0.2, f"Applying {converter.converter}")
                 apply_converter(ctx)
+
+                # A converter may describe its own fit (Clustering does), and
+                # the explorers that read that description find it next to the
+                # notebook. Asked of the instance the unit fitted, so the report
+                # is about the fit that produced the dataset being saved.
+                report = ctx.require("fitted_converter").get_report()
+                if report is not None:
+                    save_converter_report(
+                        notebook_path=config["NOTEBOOK_PATH"] / str(notebook_id),
+                        converter_id=converter.id,
+                        report=report,
+                    )
 
                 self.report_progress(0.95, "Saving dataset")
                 SaveDatasetUnit()(ctx)
