@@ -446,8 +446,8 @@ class ModelJob(BaseJob):
         except Exception as e:
             log.exception(e)
             raise JobError(
-                f"""Can not prepare Dataset {dataset.id}
-                for Task {model_session.task_name}""",
+                f"Can not prepare Dataset {dataset.id} "
+                f"for Task {model_session.task_name}",
             ) from e
 
         try:
@@ -657,8 +657,8 @@ class ModelJob(BaseJob):
         except Exception as e:
             log.exception(e)
             raise JobError(
-                f"""Can not prepare Dataset {dataset.id}
-                for Task {model_session.task_name}""",
+                f"Can not prepare Dataset {dataset.id} "
+                f"for Task {model_session.task_name}",
             ) from e
 
         try:
