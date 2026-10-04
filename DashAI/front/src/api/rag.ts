@@ -76,9 +76,9 @@ export const updateGenerativeSessionParams = async (
   return response.data;
 };
 
-/** Fetches all available retriever paradigms (children of RetrieverModel). @returns List of retriever paradigm components. */
+/** Fetches all available retriever paradigms (children of BaseRetriever). @returns List of retriever paradigm components. */
 export const getRetrievalParadigm = async (): Promise<IComponent[]> => {
-  const response = await getChildComponents("RetrieverModel", true);
+  const response = await getChildComponents("BaseRetriever", true);
   if (!response) {
     throw new Error(`Failed to fetch retrieval options`);
   }

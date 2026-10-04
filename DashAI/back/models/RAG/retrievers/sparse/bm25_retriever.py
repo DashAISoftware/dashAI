@@ -23,8 +23,8 @@ from DashAI.back.core.schema_fields import (
     string_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.sparse.base_vectorizer import BaseVectorizer
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 
 log = logging.getLogger(__name__)
@@ -141,8 +141,8 @@ class BM25VectorizerSchema(BaseSchema):
     ]
 
 
-class BM25VectorizerModel(BaseModel):
-    """Model component that encapsulates a :class:`CountVectorizer` for BM25.
+class BM25VectorizerModel(BaseVectorizer):
+    """Component that encapsulates a :class:`CountVectorizer` for BM25.
 
     The vectorizer provides term-frequency counts; the BM25 weighting
     is applied by the parent :class:`BM25Retriever`.
@@ -185,15 +185,6 @@ class BM25VectorizerModel(BaseModel):
             min_df=self.params.pop("min_df"),
             max_features=self.params.pop("max_features"),
         )
-
-    def load(self):
-        """No-op load (state managed by the parent retriever)."""
-
-    def save(self):
-        """No-op save (state managed by the parent retriever)."""
-
-    def train(self):
-        """No-op train (fitting is done by the parent retriever)."""
 
 
 class BM25RetrieverSchema(BaseSchema):

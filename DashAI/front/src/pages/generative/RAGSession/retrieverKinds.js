@@ -18,7 +18,7 @@ export async function loadRetrieverKinds() {
     [composite, keyword, embedding] = await Promise.all([
       getRetrieverComponents("CompositeRetriever"),
       getRetrieverComponents("SparseRetriever"),
-      getRetrieverComponents("DenseEmbedding"),
+      getRetrieverComponents("BaseDenseEmbedding"),
     ]);
   } catch (error) {
     // Degrade gracefully: empty sets mean isComposite/isKeyword/isEmbedding

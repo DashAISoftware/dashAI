@@ -13,10 +13,10 @@ from DashAI.back.models.RAG.chunking_models.chunking_model_factory import (
     ChunkingFactoryResult,
 )
 from DashAI.back.models.RAG.documents import BaseDocument, Chunk
-from DashAI.back.models.RAG.prompts.prompt import Prompt
+from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
 from DashAI.back.models.RAG.RAG_models_factory import RAGModelsFactory
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline, RAGPipelineConfig
-from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
+from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
@@ -324,11 +324,11 @@ class SetupService:
         config: RAGPipelineConfig,
         pipeline_id: int,
         documents: Dict[int, BaseDocument],
-        prompt_model: Prompt,
+        prompt_model: BasePrompt,
         chunking_model_id: int,
         chunking_model: BaseChunkingModel,
         chunks: Dict[int, Dict[int, Chunk]],
-        retriever: RetrieverModel,
+        retriever: BaseRetriever,
         llm_model: TextToTextGenerationTaskModel,
     ) -> RAGPipeline:
         """Build a ``RAGPipeline`` from pre-assembled components.
@@ -338,11 +338,11 @@ class SetupService:
         config : RAGPipelineConfig
         pipeline_id : int
         documents : Dict[int, BaseDocument]
-        prompt_model : Prompt
+        prompt_model : BasePrompt
         chunking_model_id : int
         chunking_model : BaseChunkingModel
         chunks : Dict[int, Dict[int, Chunk]]
-        retriever : RetrieverModel
+        retriever : BaseRetriever
         llm_model : TextToTextGenerationTaskModel
 
         Returns

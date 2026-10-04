@@ -11,6 +11,10 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.downloads.downloadable import (
     HFPretrainedDownloadMixin,
 )
+from DashAI.back.models.hugging_face.diffusion_memory import (
+    GpuMemoryModeField,
+    place_pipeline,
+)
 from DashAI.back.models.text_to_image_generation_model import (
     TextToImageGenerationTaskModel,
 )
@@ -78,7 +82,7 @@ class SDXLTurboSchema(BaseSchema):
                 zh="负向提示",
             ),
         )  # type: ignore
-    ]
+    ] = None
 
     num_inference_steps: schema_field(
         int_field(ge=1, le=10),
@@ -159,6 +163,8 @@ class SDXLTurboSchema(BaseSchema):
             en="Device", es="Dispositivo", pt="Dispositivo", de="Gerät", zh="设备"
         ),
     )  # type: ignore
+
+    gpu_memory_mode: GpuMemoryModeField = "auto"  # type: ignore
 
     seed: schema_field(
         int_field(),
@@ -407,6 +413,9 @@ class SDXLTurboModel(HFPretrainedDownloadMixin, TextToImageGenerationTaskModel):
             device : str
                 Target device string from ``DEVICE_ENUM``.  Mapped to a
                 ``cuda:<index>`` string or ``"cpu"`` via ``DEVICE_TO_IDX``.
+            gpu_memory_mode : str
+                How much of the pipeline stays on the GPU; see
+                ``place_pipeline``. Defaults to ``"auto"``.
             seed : int
                 Fixed seed for reproducible outputs.  Values ≤ 0 disable
                 seeding.
@@ -432,7 +441,10 @@ class SDXLTurboModel(HFPretrainedDownloadMixin, TextToImageGenerationTaskModel):
             self._pretrained_source(None),
             torch_dtype=torch.float16 if use_gpu else torch.float32,
             variant="fp16" if use_gpu else None,
-        ).to(self.device)
+        )
+        self.model = place_pipeline(
+            self.model, self.device, kwargs.get("gpu_memory_mode")
+        )
 
         self.negative_prompt = kwargs.get("negative_prompt")
         self.num_inference_steps = kwargs.get("num_inference_steps", 1)

@@ -15,6 +15,7 @@ from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverError,
     RAGRetrieverMissingParameterError,
 )
+from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
@@ -23,7 +24,6 @@ from DashAI.back.models.RAG.retrievers.persistence import (
     DensePersistence,
     SparsePersistence,
 )
-from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 
 
@@ -32,10 +32,10 @@ class RetrieverFactoryResult:
     """Result of building a retriever via :class:`RetrieverFactory`.
 
     Attributes:
-        model: The fully constructed :class:`RetrieverModel` instance.
+        model: The fully constructed :class:`BaseRetriever` instance.
     """
 
-    model: RetrieverModel
+    model: BaseRetriever
 
 
 class RetrieverFactory:
@@ -89,7 +89,7 @@ class RetrieverFactory:
             model_class: The :class:`CompositeRetriever` subclass to
                 instantiate.
             params: Configuration parameters; the ``children`` key is
-                consumed and replaced with built :class:`RetrieverModel`
+                consumed and replaced with built :class:`BaseRetriever`
                 instances.
 
         Returns:

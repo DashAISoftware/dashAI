@@ -10,13 +10,13 @@ from DashAI.back.dependencies.database.models import (
     RAGPrompt,
 )
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
 from DashAI.back.models.RAG.prompts.generation.default_QA_RAG_generation_prompt import (
     DefaultQARAGGenerationPrompt,
 )
 from DashAI.back.models.RAG.prompts.generation.default_RAG_generation_prompt import (
     DefaultRAGGenerationPrompt,
 )
-from DashAI.back.models.RAG.prompts.prompt import Prompt
 from DashAI.back.services.RAG.exceptions import (
     RAGDatabaseError,
     RAGPromptValidationError,
@@ -72,7 +72,7 @@ class PromptService:
                 f"Component {class_name} is not registered in the registry."
             )
         prompt_class = self._registry[class_name]["class"]
-        if not issubclass(prompt_class, Prompt):
+        if not issubclass(prompt_class, BasePrompt):
             raise RAGPromptValidationError(
                 f"Component {class_name} is not a valid Prompt subclass."
             )
@@ -375,7 +375,7 @@ class PromptService:
         prompt_component = self._registry[class_name]
         prompt_class = prompt_component["class"]
 
-        if not issubclass(prompt_class, Prompt):
+        if not issubclass(prompt_class, BasePrompt):
             raise RAGPromptValidationError(
                 f"Component {class_name} is not a valid Prompt subclass."
             )

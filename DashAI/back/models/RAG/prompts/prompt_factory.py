@@ -5,14 +5,14 @@ from typing import Any
 
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.exceptions import RAGComponentNotFoundError
-from DashAI.back.models.RAG.prompts import Prompt
+from DashAI.back.models.RAG.prompts import BasePrompt
 
 
 @dataclass(frozen=True)
 class PromptFactoryResult:
     """Result of prompt instantiation via PromptFactory."""
 
-    model: Prompt
+    model: BasePrompt
 
 
 class PromptFactory:

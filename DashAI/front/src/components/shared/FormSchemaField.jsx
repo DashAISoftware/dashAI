@@ -61,10 +61,20 @@ function FormSchemaField({
           />
         );
       } else {
-        return <TextInput {...commonProps} />;
+        return (
+          <TextInput
+            {...commonProps}
+            nullable={paramJsonSchema.nullable === true}
+          />
+        );
       }
     case "text":
-      return <TextInput {...commonProps} />;
+      return (
+        <TextInput
+          {...commonProps}
+          nullable={paramJsonSchema.nullable === true}
+        />
+      );
     case "boolean":
       return <BooleanInput {...commonProps} />;
     case "array":

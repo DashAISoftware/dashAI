@@ -1,7 +1,7 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, Final, List
 
+from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.schema_fields import BaseSchema, schema_field, string_field
-from DashAI.back.models.base_model import BaseModel
 
 
 class PromptSchema(BaseSchema):
@@ -18,53 +18,29 @@ class PromptSchema(BaseSchema):
     )  # type: ignore
 
 
-class Prompt(BaseModel):
+class BasePrompt(ConfigObject):
     """
     Base class for all RAG prompt templates.
     This class defines the interface for creating and formatting prompts.
     """
 
+    TYPE: Final[str] = "Prompt"
     SCHEMA = PromptSchema
     DESCRIPTION: str = "Base class for RAG prompts."
     DISPLAY_NAME: str = "Base RAG Prompt"
     REQUIRED_EXTRA_KWARGS = []
 
-    def load(self, filename: str = "") -> None:
-        """Load a prompt from a file.
-
-        Args:
-            filename: Path to the file to load from. If empty, uses the
-                default.
-        """
-
-    def save(self, filename: str = "") -> None:
-        """Save the prompt to a file.
-
-        Args:
-            filename: Path to save to. If empty, uses the default.
-        """
-
-    def train(self, **kwargs: Any) -> None:
-        """No-op training method for compatibility with the model interface.
-
-        Args:
-            **kwargs: Ignored.
-        """
-
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
-        """Retrieve class metadata.
+        """Return the prompt-specific metadata declared by the subclass.
 
-        Returns:
-            Dictionary of metadata attributes including download requirements
-            from BaseModel, plus any prompt-specific metadata if defined.
+        Returns
+        -------
+        Dict[str, Any]
+            A copy of the class ``metadata`` attribute, or an empty dict when
+            the subclass does not declare one.
         """
-        # Start with BaseModel metadata (includes requires_download)
-        metadata = super().get_metadata()
-        # Add prompt-specific metadata if defined
-        if hasattr(cls, "metadata"):
-            metadata.update(cls.metadata)
-        return metadata
+        return dict(getattr(cls, "metadata", {}))
 
     @classmethod
     def get_required_placeholders(cls) -> List[str]:

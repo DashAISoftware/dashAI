@@ -46,8 +46,8 @@ if TYPE_CHECKING:
     from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
         BaseChunkingModel,
     )
-    from DashAI.back.models.RAG.prompts import Prompt
-    from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
+    from DashAI.back.models.RAG.prompts import BasePrompt
+    from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 
 
 @dataclass(frozen=True)
@@ -201,7 +201,7 @@ class RAGPipelineSchema(BaseSchema):
     )  # type: ignore
 
     prompt: schema_field(
-        component_field(parent="Prompt"),
+        component_field(parent="BasePrompt"),
         placeholder={"component": "DefaultRAGGenerationPrompt", "params": {}},
         description=MultilingualString(
             en="Prompt template used in the RAG pipeline.",
@@ -228,7 +228,7 @@ class RAGPipelineSchema(BaseSchema):
     )  # type: ignore
 
     retriever_model: schema_field(
-        component_field(parent="RetrieverModel"),
+        component_field(parent="BaseRetriever"),
         placeholder={"component": "BM25Retriever", "params": {}},
         description=MultilingualString(
             en="Retriever component used in the RAG pipeline.",
@@ -271,10 +271,10 @@ class RAGPipeline(BaseGenerativeModel):
     chunking_model_id: int
     documents_ids: List[int]
     documents: Dict[int, BaseDocument]
-    prompt_model: Prompt
+    prompt_model: BasePrompt
     chunking_model: BaseChunkingModel
     chunks: Dict[int, Dict[int, Chunk]]
-    retriever: RetrieverModel
+    retriever: BaseRetriever
     llm_model: TextToTextGenerationTaskModel
 
     DISPLAY_NAME: str = MultilingualString(
@@ -322,9 +322,9 @@ class RAGPipeline(BaseGenerativeModel):
         chunking_model_id: int,
         documents: Dict[int, BaseDocument],
         chunks: Dict[int, Dict[int, Chunk]],
-        prompt_model: Prompt,
+        prompt_model: BasePrompt,
         chunking_model: BaseChunkingModel,
-        retriever: RetrieverModel,
+        retriever: BaseRetriever,
         llm_model: TextToTextGenerationTaskModel,
     ) -> None:
         """Initialise the RAG pipeline with fully constructed dependencies.

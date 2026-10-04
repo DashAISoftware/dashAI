@@ -1,17 +1,19 @@
-from abc import abstractmethod
-from typing import Any, List
+from abc import ABCMeta, abstractmethod
+from typing import Any, Final, List
 
 import numpy as np
 
-from DashAI.back.models.base_model import BaseModel
+from DashAI.back.config_object import ConfigObject
 
 
-class DenseEmbedding(BaseModel):
+class BaseDenseEmbedding(ConfigObject, metaclass=ABCMeta):
     """Base class for all dense encoding (embedding) models.
 
     Subclasses must override :meth:`encode`, :meth:`batch_encode`, and
-    :meth:`train`, and set :attr:`embedding_dim` during initialisation.
+    :meth:`load`, and set :attr:`embedding_dim` during initialisation.
     """
+
+    TYPE: Final[str] = "DenseEmbedding"
 
     embedding_dim: int
 
@@ -52,10 +54,12 @@ class DenseEmbedding(BaseModel):
         raise NotImplementedError("Subclasses must implement this method.")
 
     @abstractmethod
-    def train(self, **kwargs):
-        """Train the embedding model on the provided data.
+    def load(self) -> None:
+        """Load the pretrained weights needed by :meth:`encode`.
 
-        Args:
-            **kwargs: Training configuration (data, hyperparameters, etc.).
+        Raises
+        ------
+        NotImplementedError
+            Subclasses must implement this method.
         """
-        return
+        raise NotImplementedError

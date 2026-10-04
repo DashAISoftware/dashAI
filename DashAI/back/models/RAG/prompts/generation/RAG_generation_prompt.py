@@ -1,9 +1,9 @@
 from typing import Any
 
-from DashAI.back.models.RAG.prompts.prompt import Prompt
+from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
 
 
-class RAGGenerationPrompt(Prompt):
+class RAGGenerationPrompt(BasePrompt):
     """
     RAGGenerationPrompt class for formatting prompts used in the language
     generation step of RAG.

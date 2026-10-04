@@ -13,7 +13,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
-from DashAI.back.models.RAG.embeddings import DenseEmbedding
+from DashAI.back.models.RAG.embeddings import BaseDenseEmbedding
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 
@@ -97,15 +97,15 @@ class DenseRetriever(UnitRetriever):
         """Initialise the embedding model and build the similarity matrix.
 
         Args:
-            embedding_model: A :class:`DenseEmbedding` instance used to
+            embedding_model: A :class:`BaseDenseEmbedding` instance used to
                 encode chunks.
 
         Raises:
-            TypeError: If *embedding_model* is not a ``DenseEmbedding``.
+            TypeError: If *embedding_model* is not a ``BaseDenseEmbedding``.
         """
-        if not isinstance(embedding_model, DenseEmbedding):
+        if not isinstance(embedding_model, BaseDenseEmbedding):
             raise TypeError(
-                f"Expected DenseEmbedding instance, "
+                f"Expected BaseDenseEmbedding instance, "
                 f"got {type(embedding_model).__name__}"
             )
         self.embedding_model = embedding_model

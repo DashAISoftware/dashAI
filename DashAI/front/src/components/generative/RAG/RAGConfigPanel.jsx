@@ -155,7 +155,7 @@ export default function RAGConfigPanel({
   // grouping needs the retriever taxonomy the backend exposes.
   useEffect(() => {
     loadRetrieverKinds()
-      .then(() => getRetrieverComponents("RetrieverModel"))
+      .then(() => getRetrieverComponents("BaseRetriever"))
       .then(setRetrieverComponents)
       .catch((error) =>
         console.error("Failed to load retriever components:", error),

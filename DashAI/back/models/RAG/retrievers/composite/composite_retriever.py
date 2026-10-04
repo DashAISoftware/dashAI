@@ -1,29 +1,28 @@
 from abc import ABC, abstractmethod
-from typing import Final, List
+from typing import List
 
 from DashAI.back.models.RAG.documents import Chunk
-from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
+from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 
 
-class CompositeRetriever(RetrieverModel, ABC):
+class CompositeRetriever(BaseRetriever, ABC):
     """
     Composite: abstract base for retrievers that contain child retrievers.
 
     Implements the Composite role in the Composite design pattern (GoF).
     """
 
-    TYPE: Final[str] = "RetrieverModel"
     REQUIRED_EXTRA_KWARGS: list = []
 
     def __init__(self, **kwargs):
         """Initialize the composite retriever with its children.
 
         Pops the ``children`` key from *kwargs* and validates that it is
-        a list of :class:`RetrieverModel` instances.
+        a list of :class:`BaseRetriever` instances.
 
         Args:
             **kwargs: Must contain a ``children`` key mapping to a list
-                of :class:`RetrieverModel` instances.
+                of :class:`BaseRetriever` instances.
 
         Raises:
             TypeError: If ``children`` is not a list or contains
@@ -35,35 +34,35 @@ class CompositeRetriever(RetrieverModel, ABC):
                 f"'children' must be a list, got {type(children_data).__name__}"
             )
         if children_data and not all(
-            isinstance(c, RetrieverModel) for c in children_data
+            isinstance(c, BaseRetriever) for c in children_data
         ):
             raise TypeError(
-                "All elements in 'children' must be RetrieverModel instances"
+                "All elements in 'children' must be BaseRetriever instances"
             )
-        self._children: List[RetrieverModel] = children_data
+        self._children: List[BaseRetriever] = children_data
         super().__init__(**kwargs)
 
-    def add(self, child: RetrieverModel) -> None:
+    def add(self, child: BaseRetriever) -> None:
         """Add a child retriever.
 
         Args:
-            child: The :class:`RetrieverModel` instance to add.
+            child: The :class:`BaseRetriever` instance to add.
         """
         self._children.append(child)
 
-    def remove(self, child: RetrieverModel) -> None:
+    def remove(self, child: BaseRetriever) -> None:
         """Remove a child retriever.
 
         Args:
-            child: The :class:`RetrieverModel` instance to remove.
+            child: The :class:`BaseRetriever` instance to remove.
         """
         self._children.remove(child)
 
-    def get_children(self) -> List[RetrieverModel]:
+    def get_children(self) -> List[BaseRetriever]:
         """Return a copy of the children list.
 
         Returns:
-            A new list containing all child :class:`RetrieverModel`
+            A new list containing all child :class:`BaseRetriever`
             instances.
         """
         return list(self._children)

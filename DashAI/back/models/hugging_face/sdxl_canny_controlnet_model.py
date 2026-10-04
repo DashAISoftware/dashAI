@@ -14,6 +14,10 @@ from DashAI.back.dependencies.downloads.downloadable import (
     HFDownloadableMixin,
 )
 from DashAI.back.models.controlnet_model import ControlNetModel as BaseControlNetModel
+from DashAI.back.models.hugging_face.diffusion_memory import (
+    GpuMemoryModeField,
+    place_pipeline,
+)
 from DashAI.back.models.utils import DEVICE_ENUM, DEVICE_PLACEHOLDER, DEVICE_TO_IDX
 
 if TYPE_CHECKING:
@@ -235,6 +239,8 @@ class SDXLCannyControlNetSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    gpu_memory_mode: GpuMemoryModeField = "auto"  # type: ignore
+
     # A range the underlying library takes as one tuple, which the schema
     # cannot express, so it is split into two fields. OpenCV does not complain and
     # produces the same edges either way, so an inverted pair is silently wrong rather
@@ -398,9 +404,8 @@ class SDXLCannyControlNetModel(HFDownloadableMixin, BaseControlNetModel):
         Loads ``diffusers/controlnet-canny-sdxl-1.0`` as the ControlNet
         backbone, ``madebyollin/sdxl-vae-fp16-fix`` as the VAE, and
         ``stabilityai/stable-diffusion-xl-base-1.0`` as the base diffusion
-        pipeline, all moved to the requested device. CPU offloading is enabled
-        automatically via ``pipe.enable_model_cpu_offload()`` to reduce VRAM
-        pressure.
+        pipeline, placed on the requested device by ``place_pipeline``
+        according to ``gpu_memory_mode``.
 
         Requires ``opencv-python`` (``pip install opencv-python``).
 
@@ -412,6 +417,9 @@ class SDXLCannyControlNetModel(HFDownloadableMixin, BaseControlNetModel):
 
             device : str
                 Target hardware (e.g. ``"GPU 0"`` or ``"CPU"``).
+            gpu_memory_mode : str
+                How much of the pipeline stays on the GPU; see
+                ``place_pipeline``. Defaults to ``"auto"``.
             num_inference_steps : int
                 Number of denoising steps during generation.
             controlnet_conditioning_scale : float
@@ -437,27 +445,28 @@ class SDXLCannyControlNetModel(HFDownloadableMixin, BaseControlNetModel):
         controlnet = ControlNetModel.from_pretrained(
             self._local_or_repo("diffusers/controlnet-canny-sdxl-1.0"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
-        ).to(self.device)
+        )
 
         vae = AutoencoderKL.from_pretrained(
             self._local_or_repo("madebyollin/sdxl-vae-fp16-fix"),
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
-        ).to(self.device)
+        )
 
         self.pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
             self._local_or_repo("stabilityai/stable-diffusion-xl-base-1.0"),
             controlnet=controlnet,
             vae=vae,
             torch_dtype=torch.float32 if self.device == "cpu" else torch.float16,
-        ).to(self.device)
+        )
 
         self.canny_low_threshold = kwargs.get("canny_low_threshold", 100)
         self.canny_high_threshold = kwargs.get("canny_high_threshold", 200)
         self.controlnet_conditioning_scale = kwargs.get("controlnet_conditioning_scale")
         self.num_inference_steps = kwargs.get("num_inference_steps")
 
-        if self.device != "cpu":
-            self.pipe.enable_model_cpu_offload()
+        self.pipe = place_pipeline(
+            self.pipe, self.device, kwargs.get("gpu_memory_mode")
+        )
 
     def generate(self, input: Tuple["Image.Image", str]) -> List[Any]:
         """Generate output from a generative model.

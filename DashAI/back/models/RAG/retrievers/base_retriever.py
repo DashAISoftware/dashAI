@@ -2,20 +2,20 @@ import os
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Final, List, Tuple
 
+from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions import RAGWorkflowError
 
 
-class RetrieverModel(BaseModel, ABC):
+class BaseRetriever(ConfigObject, ABC):
     """
-    Component: abstract base class for all retriever models.
+    Component: abstract base class for all retrievers.
 
     Implements the Component role in the Composite design pattern (GoF).
     """
 
-    TYPE: Final[str] = "RetrieverModel"
+    TYPE: Final[str] = "Retriever"
     DISPLAY_NAME: str = MultilingualString(
         en="Retriever",
         es="Recuperador",
@@ -36,6 +36,17 @@ class RetrieverModel(BaseModel, ABC):
     env_RAG_path: str | os.PathLike | None  # noqa: N815
     chunks: Dict[int, Dict[int, Chunk]]
     params: Dict[str, Any]
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """Return the UI metadata shared by every retriever.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary with the icon shown for the retriever in the frontend.
+        """
+        return {"icon": cls.ICON}
 
     def __init__(self, **kwargs):
         """Initialize the retriever model.
@@ -195,7 +206,7 @@ class RetrieverModel(BaseModel, ABC):
 
     # ── Child management (Composite pattern) ────────────────────────
 
-    def add(self, child: "RetrieverModel") -> None:
+    def add(self, child: "BaseRetriever") -> None:
         """Add a child retriever (Composite pattern).
 
         Args:
@@ -206,7 +217,7 @@ class RetrieverModel(BaseModel, ABC):
         """
         raise NotImplementedError
 
-    def remove(self, child: "RetrieverModel") -> None:
+    def remove(self, child: "BaseRetriever") -> None:
         """Remove a child retriever (Composite pattern).
 
         Args:
@@ -217,11 +228,11 @@ class RetrieverModel(BaseModel, ABC):
         """
         raise NotImplementedError
 
-    def get_children(self) -> List["RetrieverModel"]:
+    def get_children(self) -> List["BaseRetriever"]:
         """Return the list of child retrievers (Composite pattern).
 
         Returns:
-            A list of :class:`RetrieverModel` children.
+            A list of :class:`BaseRetriever` children.
 
         Raises:
             NotImplementedError: If the subclass does not support children.
@@ -243,11 +254,3 @@ class RetrieverModel(BaseModel, ABC):
             filename: Optional filename override. Defaults to an empty
                 string (subclasses determine their own default path).
         """
-
-    def train(self, **kwargs):
-        """Train the retriever on the injected chunks.
-
-        Args:
-            **kwargs: Training parameters. Default is a no-op.
-        """
-        return

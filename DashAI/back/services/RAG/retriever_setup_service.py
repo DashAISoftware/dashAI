@@ -28,6 +28,7 @@ from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverError,
     RAGRetrieverMissingParameterError,
 )
+from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
@@ -39,7 +40,6 @@ from DashAI.back.models.RAG.retrievers.persistence import (
 from DashAI.back.models.RAG.retrievers.retriever_factory import (
     RetrieverFactory,
 )
-from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.models.RAG.utils import hash_function
 from DashAI.back.services.RAG.embedding_storage_service import EmbeddingStorageService
@@ -51,7 +51,7 @@ log = logging.getLogger(__name__)
 @dataclass(frozen=True)
 class RetrieverSetupResult:
     db_record_id: int
-    model: RetrieverModel
+    model: BaseRetriever
 
 
 class RetrieverSetupService:
@@ -114,18 +114,18 @@ class RetrieverSetupService:
         component_name: str,
         params: dict[str, Any],
         persistence: DensePersistence | SparsePersistence | None = None,
-    ) -> RetrieverModel:
+    ) -> BaseRetriever:
         """Phase 1: Build model in memory. No I/O, no DB."""
         factory = RetrieverFactory(self._registry, self._env_RAG_path, self._chunks)
         result = factory.create(component_name, params, persistence)
         return result.model
 
-    def initialize_model(self, model: RetrieverModel) -> None:
+    def initialize_model(self, model: BaseRetriever) -> None:
         """Phase 2: Initialize model (load embeddings, similarity matrices)."""
         model.init_model()
 
     def persist_model(
-        self, model: RetrieverModel, component_name: str, sorted_params: dict
+        self, model: BaseRetriever, component_name: str, sorted_params: dict
     ) -> int:
         """Phase 3: Persist to DB and return bridge_id."""
         bridge_id = self._save_unit(model, sorted_params)
@@ -230,7 +230,7 @@ class RetrieverSetupService:
 
     def _load_unit_from_db(
         self, model_class: type, class_name: str, sorted_params: dict[str, Any]
-    ) -> RetrieverModel | None:
+    ) -> BaseRetriever | None:
         """Load a unit retriever (dense or sparse) from the DB cache.
 
         Args:
@@ -249,7 +249,7 @@ class RetrieverSetupService:
 
     def _load_dense(
         self, class_name: str, sorted_params: dict[str, Any]
-    ) -> RetrieverModel | None:
+    ) -> BaseRetriever | None:
         """Load a dense retriever from the DB cache by its natural key.
 
         Args:
@@ -285,7 +285,7 @@ class RetrieverSetupService:
 
     def _load_sparse(
         self, class_name: str, sorted_params: dict[str, Any]
-    ) -> RetrieverModel | None:
+    ) -> BaseRetriever | None:
         """Load a sparse retriever from the DB cache by its natural key.
 
         Args:
@@ -443,7 +443,7 @@ class RetrieverSetupService:
 
     # ── Private: Persistence ───────────────────────────────────────────
 
-    def _save_unit(self, model: RetrieverModel, sorted_params: dict[str, Any]) -> int:
+    def _save_unit(self, model: BaseRetriever, sorted_params: dict[str, Any]) -> int:
         """Persist a unit retriever (dense or sparse) and return its bridge id.
 
         Args:

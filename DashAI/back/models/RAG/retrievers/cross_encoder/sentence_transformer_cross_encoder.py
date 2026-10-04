@@ -199,7 +199,7 @@ class SentenceTransformerCrossEncoderRetrieverSchema(BaseSchema):
     )  # type: ignore
 
     children: schema_field(
-        list_field(component_field(parent="RetrieverModel"), min_items=1, max_items=1),
+        list_field(component_field(parent="BaseRetriever"), min_items=1, max_items=1),
         placeholder=[],
         description=MultilingualString(
             en="The child retriever whose candidates will be re-ranked.",
@@ -299,7 +299,7 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
         The model is lazily loaded — resource acquisition only occurs when
         this method is called, not during ``__init__``. The *filename*
         argument is accepted for signature compatibility with
-        :class:`RetrieverModel` but ignored: the model is always loaded
+        :class:`BaseRetriever` but ignored: the model is always loaded
         from HuggingFace by ``self.model_name``.
 
         Args:
