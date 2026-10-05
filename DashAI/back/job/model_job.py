@@ -18,7 +18,6 @@ from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 from DashAI.back.splitters.splits_payload import normalize_splits_payload
-from DashAI.back.tasks.base_task import BaseTask
 from DashAI.back.units.build_model_unit import BuildModelUnit
 from DashAI.back.units.context import ExecutionContext
 from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
@@ -30,12 +29,12 @@ from DashAI.back.units.fit_model_unit import FitModelUnit
 from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
 from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
+from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
-    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
     from DashAI.back.models.base_model import BaseModel
 
 
@@ -162,6 +161,29 @@ class ModelJob(BaseJob):
                         # keeps a model that cannot be trained from being reported
                         # as a splitting failure further down.
                         build_model.validate(ctx)
+                    else:
+                        # The same order the target free path always had: the
+                        # dataset, the task's metrics, the prepared features,
+                        # then the model. Every step reports as a preparation
+                        # failure, which is where the prepare unit's errors
+                        # were reported before it was a unit.
+                        model_session = preparation_results["model_session"]
+                        LoadDatasetUnit(dataset_id=model_session.dataset_id)(ctx)
+                        metrics = self._metrics_for_task(
+                            model_session.task_name, component_registry
+                        )
+                        PrepareWithoutTargetUnit(
+                            task_name=model_session.task_name,
+                            input_columns=model_session.input_columns,
+                            standardise=True,
+                        )(ctx)
+                        preparation_results.update(
+                            X=ctx.require("features"),
+                            metrics=metrics,
+                            factory=self._model_factory_without_target(
+                                run, component_registry
+                            ),
+                        )
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -501,26 +523,7 @@ class ModelJob(BaseJob):
             else None
         )
         if task_class is not None and not getattr(task_class, "REQUIRES_TARGET", True):
-            from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
-
-            try:
-                loaded_dataset: "DashAIDataset" = load_dataset(
-                    f"{dataset.file_path}/dataset"
-                )
-            except Exception as e:
-                log.exception(e)
-                raise JobError(
-                    f"Can not load dataset from path {dataset.file_path}",
-                ) from e
-
-            return self._prepare_without_target(
-                run=run,
-                model_session=model_session,
-                dataset=dataset,
-                loaded_dataset=loaded_dataset,
-                task=task_class(),
-                component_registry=component_registry,
-            )
+            return {"requires_target": False, "model_session": model_session}
 
         try:
             # Unpacking the JSON column is an artifact of how the row stores
@@ -610,58 +613,22 @@ class ModelJob(BaseJob):
             "goal_metric": goal_metric,
         }
 
-    def _prepare_without_target(
-        self,
-        run: Run,
-        model_session: ModelSession,
-        dataset: Dataset,
-        loaded_dataset: "DashAIDataset",
-        task: BaseTask,
-        component_registry,
-    ) -> Dict[str, Any]:
-        """Prepare the dataset and the model for a task with no target column.
+    @staticmethod
+    def _metrics_for_task(task_name: str, component_registry) -> List[BaseMetric]:
+        """Every metric the registry relates to a task without a target.
 
-        The counterpart of :meth:`_prepare_dataset_and_components` for tasks
-        whose ``REQUIRES_TARGET`` is False. It resolves only what such a task
-        can use: the input columns and the model. There is no splitter, no
-        optimiser and no evaluation strategy, because none of them mean
-        anything without held-out rows to evaluate against.
-
-        Parameters
-        ----------
-        run : Run
-            The run being trained.
-        model_session : ModelSession
-            The session holding the column selection and the task name.
-        dataset : Dataset
-            The dataset record, used for error messages.
-        loaded_dataset : DashAIDataset
-            The dataset already loaded from disk.
-        task : BaseTask
-            The instantiated task.
-        component_registry : object
-            Registry used to resolve the model and the task's metrics.
-
-        Returns
-        -------
-        dict
-            ``{"requires_target": False, "X", "factory", "metrics"}``.
+        Such a task has no metric picker of its own: every metric registered for
+        it is computed, since there is no split to choose between.
 
         Raises
         ------
         JobError
-            If the dataset cannot be prepared or the model cannot be built.
+            If the registry cannot answer.
         """
-        from DashAI.back.dataloaders.classes.dashai_dataset import select_columns
-
         try:
-            # No metric picker of its own: every Metric registered for the task
-            # is computed, since there is no split to choose between.
             metric_names = [
                 component["name"]
-                for component in component_registry.get_related_components(
-                    model_session.task_name
-                )
+                for component in component_registry.get_related_components(task_name)
                 if component.get("type") == "Metric"
             ]
             metrics: List[BaseMetric] = [
@@ -670,25 +637,20 @@ class ModelJob(BaseJob):
         except Exception as e:
             log.exception(e)
             raise JobError(
-                "Unable to find metrics associated with "
-                f"Task {model_session.task_name} in registry",
+                f"Unable to find metrics associated with Task {task_name} in registry",
             ) from e
 
-        try:
-            prepared_dataset = task.prepare_for_task(
-                dataset=loaded_dataset,
-                input_columns=model_session.input_columns,
-                output_columns=[],
-            )
-            X, _ = select_columns(prepared_dataset, model_session.input_columns, [])
-            X = self._standardise_features(X)
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Can not prepare Dataset {dataset.id} "
-                f"for Task {model_session.task_name}",
-            ) from e
+        return metrics
 
+    @staticmethod
+    def _model_factory_without_target(run: Run, component_registry) -> ModelFactory:
+        """Build the run's model for a task without a target.
+
+        Raises
+        ------
+        JobError
+            If the model is unknown, not downloaded, or cannot be instantiated.
+        """
         try:
             run_model_class = component_registry[run.model_name]["class"]
         except Exception as e:
@@ -725,57 +687,7 @@ class ModelJob(BaseJob):
                 f"Unable to instantiate model using run {run.id}",
             ) from e
 
-        return {
-            "requires_target": False,
-            "X": X,
-            "factory": factory,
-            "metrics": metrics,
-        }
-
-    @staticmethod
-    def _standardise_features(x: "DashAIDataset") -> "DashAIDataset":
-        """Centre and scale the input columns of a target free dataset.
-
-        Every clustering algorithm DashAI ships measures distances, so a column
-        expressed in a wider unit dominates the ones next to it. On a dataset
-        holding scores from 0 to 100 beside hours from 1 to 11, DBSCAN's default
-        eps of 0.5 labels every row as noise and Spectral's RBF affinity
-        underflows to an empty graph, which is why this runs before the model
-        sees the data.
-
-        Both the model and the metrics are handed the result, so cluster
-        quality is measured in the space the clusters were found in rather than
-        the raw one.
-
-        This is the model session path, which has no converter step of its own.
-        A notebook that already applied the StandardScaler converter reaches the
-        models through a different route and is not touched here.
-
-        Parameters
-        ----------
-        x : DashAIDataset
-            Input features, restricted to the session's input columns.
-
-        Returns
-        -------
-        DashAIDataset
-            The same dataset with its numeric columns standardised. Columns with
-            no variance are left alone, since dividing them by a zero standard
-            deviation is what produces the NaNs the models then reject.
-        """
-        from sklearn.preprocessing import StandardScaler  # local import
-
-        from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
-
-        frame = x.to_pandas()
-        numeric = frame.select_dtypes(include=["number"]).columns
-        movable = [c for c in numeric if frame[c].std(ddof=0) > 0]
-        if not movable:
-            return x
-
-        frame = frame.copy()
-        frame[movable] = StandardScaler().fit_transform(frame[movable])
-        return to_dashai_dataset(frame)
+        return factory
 
     def _train_without_target(
         self, preparation_results: Dict[str, Any], run: Run, db
@@ -785,7 +697,7 @@ class ModelJob(BaseJob):
         Parameters
         ----------
         preparation_results : dict
-            The dict returned by :meth:`_prepare_without_target`.
+            The preparation results: ``X``, ``factory`` and ``metrics``.
         run : Run
             The run being trained, used as the metrics' correlation id.
         db : object

@@ -7,6 +7,7 @@ EXPECTED_UNITS = {
     "LoadDatasetUnit",
     "PrepareAndSplitUnit",
     "PrepareAndFoldUnit",
+    "PrepareWithoutTargetUnit",
     "BuildModelUnit",
     "FitModelUnit",
     "FitModelOverFoldsUnit",

@@ -564,6 +564,7 @@ from DashAI.back.units.predict_unit import PredictUnit
 from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
 from DashAI.back.units.prepare_explanation_data_unit import PrepareExplanationDataUnit
+from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
 from DashAI.back.units.run_exploration_unit import RunExplorationUnit
 from DashAI.back.units.save_dataset_to_path_unit import SaveDatasetToPathUnit
 from DashAI.back.units.save_dataset_unit import SaveDatasetUnit
@@ -757,6 +758,7 @@ def get_initial_components():
         LoadDatasetUnit,
         PrepareAndSplitUnit,
         PrepareAndFoldUnit,
+        PrepareWithoutTargetUnit,
         BuildModelUnit,
         FitModelUnit,
         FitModelOverFoldsUnit,

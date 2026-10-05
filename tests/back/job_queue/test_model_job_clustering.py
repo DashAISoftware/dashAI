@@ -2,9 +2,9 @@
 
 Clustering runs take a different route through the job than every other task:
 no splitter, no optimiser, no evaluation strategy, and metrics scored over the
-whole dataset. These cover the two things that route gets wrong when left
-alone: handing the models unscaled columns, and finishing a run that produced
-nothing to report.
+whole dataset. These cover finishing a run that produced nothing to report.
+The tests for the scaling of the features moved to
+``tests/back/units/test_prepare_without_target_unit.py`` with the scaling.
 """
 
 from types import SimpleNamespace
@@ -77,101 +77,6 @@ def _blobs(per_centre=30, seed=0):
 
 def _preparation(model, x):
     return {"X": x, "factory": SimpleNamespace(model=model), "metrics": METRICS}
-
-
-# --- the features the models are handed --------------------------------------
-
-
-def test_every_numeric_column_is_centred_and_scaled():
-    scaled = ModelJob._standardise_features(_mixed_scales()).to_pandas()
-
-    for column in ("hours", "score"):
-        assert scaled[column].mean() == pytest.approx(0.0, abs=1e-12)
-        assert scaled[column].std(ddof=0) == pytest.approx(1.0)
-
-
-def test_a_column_without_variance_is_left_where_it_is():
-    """Dividing it by a zero standard deviation is what produces the NaNs the
-    models then refuse, so it is skipped rather than scaled."""
-    scaled = ModelJob._standardise_features(_mixed_scales()).to_pandas()
-
-    assert (scaled["constant"] == 1.0).all()
-
-
-def test_a_dataset_with_nothing_to_scale_is_returned_unchanged():
-    x = to_dashai_dataset(pd.DataFrame({"constant": np.ones(5)}))
-
-    assert ModelJob._standardise_features(x) is x
-
-
-def test_the_row_and_column_shape_survives_scaling():
-    x = _mixed_scales()
-
-    scaled = ModelJob._standardise_features(x)
-
-    assert scaled.to_pandas().shape == x.to_pandas().shape
-    assert list(scaled.to_pandas().columns) == list(x.to_pandas().columns)
-
-
-def test_scaling_is_what_lets_dbscan_find_anything_on_mixed_units():
-    """The failure this guards against: with raw columns the default eps is far
-    smaller than the spread of the widest one, so every row comes back noise."""
-    x = _mixed_scales()
-
-    raw = np.asarray(DBSCANClustering().train(x).get_cluster_labels(x))
-    scaled_x = ModelJob._standardise_features(x)
-    scaled = np.asarray(DBSCANClustering().train(scaled_x).get_cluster_labels(scaled_x))
-
-    assert (raw == -1).all()
-    assert (scaled != -1).any()
-
-
-def test_the_prepare_step_scales_before_the_model_is_built(monkeypatch):
-    """The helper above is only useful if the job actually calls it. Deleting
-    the one line in ``_prepare_without_target`` is otherwise invisible, since
-    nothing downstream fails, the results just get quietly worse.
-    """
-    from DashAI.back.tasks.clustering_task import ClusteringTask
-
-    seen = []
-    monkeypatch.setattr(
-        ModelJob,
-        "_standardise_features",
-        staticmethod(lambda x: seen.append(x) or x),
-    )
-
-    class _Registry:
-        """Answers the metric lookup and nothing else.
-
-        The model lookup that follows the scaling is left to fail on purpose:
-        by the time it does, the call under test has either happened or never
-        will, so the job does not need to run any further than this.
-        """
-
-        @staticmethod
-        def get_related_components(_task_name):
-            return [{"name": m.__name__, "type": "Metric"} for m in METRICS]
-
-        def __getitem__(self, name):
-            return {"class": next(m for m in METRICS if m.__name__ == name)}
-
-    # An instance without __init__: the method reaches the helper through self,
-    # and nothing else on the job is touched before it does.
-    job = ModelJob.__new__(ModelJob)
-
-    with pytest.raises(JobError):
-        job._prepare_without_target(
-            run=SimpleNamespace(id=1, model_name="absent", parameters={}),
-            model_session=SimpleNamespace(
-                task_name="ClusteringTask", input_columns=["hours", "score"]
-            ),
-            dataset=SimpleNamespace(id=1),
-            loaded_dataset=_mixed_scales(),
-            task=ClusteringTask(),
-            component_registry=_Registry(),
-        )
-
-    assert seen, "_prepare_without_target no escaló las columnas"
 
 
 # --- runs that produced nothing to report ------------------------------------
