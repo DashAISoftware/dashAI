@@ -68,6 +68,7 @@ class NumericExpansion(FeatureEngineeringConverter, BaseConverter):
     """
 
     SCHEMA = NumericExpansionSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Applies a unary numeric expansion (log1p, square, or sqrt) to "

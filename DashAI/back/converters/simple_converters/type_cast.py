@@ -86,6 +86,7 @@ class TypeCast(BasicPreprocessingConverter, BaseConverter):
     """
 
     SCHEMA = TypeCastSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Changes the type of the selected columns (Integer, Float, Text, "

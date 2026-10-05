@@ -65,7 +65,7 @@ export default function ModelsLeftBar({ onToggle }) {
       if (!taskName) return t("common:other");
       const task = tasks.find((t) => t.name === taskName);
       return (
-        task?.metadata?.display_name ||
+        task?.display_name ||
         taskName
           .replace("Task", "")
           .replace(/([A-Z])/g, " $1")

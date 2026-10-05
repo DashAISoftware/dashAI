@@ -168,7 +168,7 @@ export default function CompositeRetrieverBuilder({
       // SentenceTransformerEmbedding -> "SentenceTransformer Embedding").
       try {
         const embeddingComponents =
-          await getRetrieverComponents("DenseEmbedding");
+          await getRetrieverComponents("BaseDenseEmbedding");
         const nameMap = {};
         for (const comp of embeddingComponents || []) {
           nameMap[comp.name] =

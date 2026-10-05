@@ -147,6 +147,7 @@ class ColumnConcat(FeatureEngineeringConverter, BaseConverter):
     """
 
     SCHEMA = ColumnConcatSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Concatenates the selected string columns — two columns to join "

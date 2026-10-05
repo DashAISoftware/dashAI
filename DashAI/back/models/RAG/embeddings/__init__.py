@@ -4,6 +4,7 @@ Provides public aliases for all dense embedding implementations
 registered with the DashAI component system.
 """
 
+from DashAI.back.models.RAG.embeddings.base_dense_embedding import BaseDenseEmbedding
 from DashAI.back.models.RAG.embeddings.dense.bert_embedding import BERTEmbedding
 from DashAI.back.models.RAG.embeddings.dense.distilbert_embedding import (
     DistilBERTEmbedding,
@@ -20,10 +21,9 @@ from DashAI.back.models.RAG.embeddings.dense.roberta_embedding import RoBERTaEmb
 from DashAI.back.models.RAG.embeddings.dense.sentence_transformer_embedding import (
     SentenceTransformerEmbedding,
 )
-from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 __all__ = [
-    "DenseEmbedding",
+    "BaseDenseEmbedding",
     "BERTEmbedding",
     "DistilBERTEmbedding",
     "E5Embedding",

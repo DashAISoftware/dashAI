@@ -1,4 +1,3 @@
-import { maxWidth } from "@mui/system";
 import { Trans } from "react-i18next";
 
 export const modelsSessionTourSteps = [
@@ -187,11 +186,4 @@ export const modelsSessionTourConfig = {
   disableOverlayClose: true,
   disableCloseOnEsc: false,
   disableScrollParentFix: true,
-  locale: {
-    back: "Back",
-    close: "Close",
-    last: "Finish",
-    next: "Next",
-    skip: "Skip Tour",
-  },
 };

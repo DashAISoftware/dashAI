@@ -6,6 +6,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.RAG.embeddings.base_dense_embedding import BaseDenseEmbedding
 from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
     AGGREGATE,
     TRUNCATE,
@@ -13,7 +14,6 @@ from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
 from DashAI.back.models.RAG.embeddings.dense._sentence_transformer_embedding import (
     _SentenceTransformerEmbedding,
 )
-from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 LABSE_MODELS: Dict[str, dict] = {
     "sentence-transformers/LaBSE": {
@@ -127,7 +127,7 @@ class LaBSEmbeddingSchema(BaseSchema):
     )  # type: ignore
 
 
-class LaBSEmbedding(DenseEmbedding):
+class LaBSEmbedding(BaseDenseEmbedding):
     """Dense embeddings using the LaBSE multilingual model (109 languages).
 
     Wraps :class:`_SentenceTransformerEmbedding` (mean pooling, L2
@@ -195,9 +195,3 @@ class LaBSEmbedding(DenseEmbedding):
             A ``(batch, embedding_dim)`` float32 NumPy array.
         """
         return self._embedding.batch_encode(texts)
-
-    def save(self):
-        """No-op. Persistence is handled externally."""
-
-    def train(self, **kwargs):
-        """No-op. Pre-trained models are used as-is."""

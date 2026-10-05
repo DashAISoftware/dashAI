@@ -38,4 +38,16 @@ if [ "$(uname -m)" = "x86_64" ] && [ -r /proc/cpuinfo ] &&
     echo "warning may be a false alarm." >&2
 fi
 
+# The python-appimage wrapper sets sys.executable to whatever ARGV0 names, and
+# the AppImage runtime sets ARGV0 to the .AppImage file itself. Anything that
+# re-runs sys.executable as an interpreter (the spawned job worker, joblib
+# workers, "-m pip") would then land back in this entry point and die with
+# "No such option: -c". Point it at the real bundled interpreter, not at the
+# {{ python-executable }} wrapper: that wrapper runs Python as a child instead
+# of exec-ing it, so the PID of a spawned job worker would be the wrapper's
+# bash process, and cancelling a job would kill bash while the job kept
+# running. The wrapper's environment (APPDIR, SSL_CERT_FILE, ...) is already
+# exported here and inherited by every child, so it is not needed again.
+export ARGV0="${APPDIR}/opt/python{{ python-version }}/bin/python{{ python-version }}"
+
 exec "{{ python-executable }}" "${APPDIR}/opt/python{{ python-version }}/bin/dashai" "$@"

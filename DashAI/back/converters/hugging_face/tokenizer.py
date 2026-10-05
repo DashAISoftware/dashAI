@@ -81,6 +81,7 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     """Converter that tokenizes text and stores each token ID in a separate column."""
 
     SCHEMA = TokenizerSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Tokenize text into input IDs; each token ID goes into its own column. "

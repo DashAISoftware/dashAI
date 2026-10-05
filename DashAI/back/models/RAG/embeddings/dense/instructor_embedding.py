@@ -7,10 +7,10 @@ from DashAI.back.core.schema_fields import (
     string_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.RAG.embeddings.base_dense_embedding import BaseDenseEmbedding
 from DashAI.back.models.RAG.embeddings.dense._instructor_embedding import (
     _InstructorEmbedding,
 )
-from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 INSTRUCTOR_MODELS: Dict[str, dict] = {
     "hkunlp/instructor-base": {
@@ -74,7 +74,7 @@ class InstructorEmbeddingSchema(BaseSchema):
     )  # type: ignore
 
 
-class InstructorEmbedding(DenseEmbedding):
+class InstructorEmbedding(BaseDenseEmbedding):
     """Dense embeddings using INSTRUCTOR instruction-tuned models.
 
     Wraps :class:`_InstructorEmbedding` and exposes it as a DashAI component
@@ -142,9 +142,3 @@ class InstructorEmbedding(DenseEmbedding):
             A ``(batch, embedding_dim)`` float32 NumPy array.
         """
         return self._embedding.batch_encode(texts)
-
-    def save(self):
-        """No-op. Persistence is handled externally."""
-
-    def train(self, **kwargs):
-        """No-op. Pre-trained models are used as-is."""

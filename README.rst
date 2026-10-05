@@ -88,7 +88,7 @@ older CPUs (it may still fail if the CPU is very old, but it is worth trying).
 Installation (PyPI)
 ===================
 
-dashAI needs Python 3.10 or greater. We strongly recommend installing it inside
+dashAI needs Python 3.11 or greater. We strongly recommend installing it inside
 an isolated environment to avoid clashes with other packages. The quickest way
 to do that is with `uv <https://docs.astral.sh/uv/getting-started/installation/>`_
 (recommended, it even installs Python for you); classic ``venv``/``conda`` with

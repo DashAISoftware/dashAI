@@ -18,7 +18,7 @@ export default function ModelsBreadcrumbs() {
   const rootCrumb = { label: t("common:models"), path: "/app/models" };
 
   const taskDisplayName = (task) =>
-    task?.metadata?.display_name ||
+    task?.display_name ||
     task?.name
       ?.replace("Task", "")
       .replace(/([A-Z])/g, " $1")

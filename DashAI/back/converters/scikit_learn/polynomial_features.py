@@ -138,6 +138,7 @@ class PolynomialFeatures(
     """
 
     SCHEMA = PolynomialFeaturesSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Generate polynomial and interaction features. For example, if an "

@@ -25,6 +25,7 @@ import {
 } from "./utils";
 import { useGenerative } from "./GenerativeContext";
 import { isStandaloneTask } from "./standaloneEntryPoints";
+import { useTourContext } from "../tour/TourProvider";
 
 const CreateSessionContext = createContext(null);
 
@@ -36,6 +37,7 @@ export function CreateSessionProvider({ children }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative", "common"]);
   const { tasks, sessions: existingSessions, setSessions } = useGenerative();
+  const tourContext = useTourContext();
 
   const step = modelName ? 1 : 0;
   const [models, setModels] = useState([]);
@@ -153,6 +155,9 @@ export function CreateSessionProvider({ children }) {
         enqueueSnackbar(t("generative:message.sessionCreatedSuccess"), {
           variant: "success",
         });
+        if (tourContext?.run) {
+          tourContext.handoffTour(tourContext.stepIndex + 1);
+        }
         navigate(`/app/generative/sessions/${created.id}`);
       } catch (error) {
         console.error("Error creating session:", error);

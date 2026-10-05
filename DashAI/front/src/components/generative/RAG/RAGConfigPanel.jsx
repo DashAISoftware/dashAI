@@ -155,7 +155,7 @@ export default function RAGConfigPanel({
   // grouping needs the retriever taxonomy the backend exposes.
   useEffect(() => {
     loadRetrieverKinds()
-      .then(() => getRetrieverComponents("RetrieverModel"))
+      .then(() => getRetrieverComponents("BaseRetriever"))
       .then(setRetrieverComponents)
       .catch((error) =>
         console.error("Failed to load retriever components:", error),
@@ -510,7 +510,7 @@ export default function RAGConfigPanel({
           </Alert>
         )}
 
-        {indexStatus?.job?.status === "error" &&
+        {["error", "killed"].includes(indexStatus?.job?.status) &&
           indexStatus?.status !== "indexing" && (
             <Alert
               severity="error"
@@ -528,6 +528,27 @@ export default function RAGConfigPanel({
               }
             >
               {indexStatus.job.error || t("generative:rag.index.indexFailed")}
+            </Alert>
+          )}
+
+        {indexStatus?.job?.status === "cancelled" &&
+          ["not_indexed", "stale"].includes(indexStatus?.status) && (
+            <Alert
+              severity="warning"
+              sx={{ py: 0.5 }}
+              action={
+                onRetryIndexing && (
+                  <Button
+                    size="small"
+                    color="inherit"
+                    onClick={() => onRetryIndexing()}
+                  >
+                    {t("generative:rag.index.retryIndexing")}
+                  </Button>
+                )
+              }
+            >
+              {t("generative:rag.index.indexCancelled")}
             </Alert>
           )}
 

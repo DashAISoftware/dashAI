@@ -112,16 +112,29 @@ export const startComponentDownload = async ({
           variant: "success",
         });
       },
-      () => {
+      async (job) => {
         activePollers.delete(component.name);
+        const interrupted =
+          job?.status === "cancelled" || job?.status === "killed";
+        const downloaded = interrupted
+          ? false
+          : await getComponentDownloadStatus(component.name)
+              .then((status) => Boolean(status.downloaded))
+              .catch(() => false);
         broadcastDownloadState(component.name, {
           downloading: false,
-          downloaded: false,
+          downloaded,
         });
-        if (onStatusChange) onStatusChange(false);
-        enqueueSnackbar(t("common:componentDownload.failed"), {
-          variant: "error",
-        });
+        if (onStatusChange) onStatusChange(downloaded);
+        if (job?.status === "cancelled") {
+          enqueueSnackbar(t("common:jobQueue.jobCancelled"), {
+            variant: "info",
+          });
+        } else {
+          enqueueSnackbar(t("common:componentDownload.failed"), {
+            variant: "error",
+          });
+        }
       },
     );
   } catch (e) {

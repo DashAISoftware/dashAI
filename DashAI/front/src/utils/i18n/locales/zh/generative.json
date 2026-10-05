@@ -195,6 +195,7 @@
     },
     "index": {
       "chunkCount_other": "{{count}} 个块",
+      "indexCancelled": "索引在完成前已停止",
       "indexFailed": "索引失败",
       "indexing": "正在建立索引…",
       "indexingInProgress": "正在为文档建立索引…",

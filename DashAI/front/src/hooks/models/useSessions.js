@@ -194,12 +194,15 @@ export function useSessions({ t }) {
           setRuns((prevRuns) =>
             prevRuns.map((r) => (r.id === run.id ? updated : r)),
           );
+          const wasCancelled = result?.status === "cancelled";
           enqueueSnackbar(
-            t("models:error.runFailed", {
-              runName: run.name,
-              error: result.error || t("common:unknownError"),
-            }),
-            { variant: "error" },
+            wasCancelled
+              ? t("common:jobQueue.jobCancelled")
+              : t("models:error.runFailed", {
+                  runName: run.name,
+                  error: result.error || t("common:unknownError"),
+                }),
+            { variant: wasCancelled ? "info" : "error" },
           );
         },
       );

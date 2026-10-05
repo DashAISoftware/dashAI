@@ -113,6 +113,7 @@
     "confirmClearAll": "Tem certeza de que deseja excluir TODOS os trabalhos registrados?",
     "confirmClearAllDetail": "Isso cancelará todos os trabalhos da fila.",
     "confirmDeleteJob": "Tem certeza de que deseja excluir este trabalho?",
+    "confirmCancelJob": "Tem certeza de que deseja cancelar este trabalho?",
     "deleteJob": "Excluir trabalho",
     "details": {
       "errorMessage": "Mensagem de erro",
@@ -129,7 +130,9 @@
       "running": "Em execução",
       "completed": "Concluído",
       "failed": "Com falha",
-      "deleted": "Excluído"
+      "deleted": "Excluído",
+      "cancelled": "Cancelado",
+      "killed": "Interrompido"
     },
     "failedCount_one": "{{count}} com falha",
     "failedCount_many": "{{count}} com falha",
@@ -138,6 +141,7 @@
     "noActiveJobs": "Não há trabalhos ativos",
     "noCompletedJobs": "Não há trabalhos concluídos",
     "cancelJob": "Cancelar trabalho",
+    "jobCancelled": "O trabalho foi cancelado.",
     "noJobs": "Não há trabalhos na fila",
     "refresh": "Atualizar",
     "relativeTime": {

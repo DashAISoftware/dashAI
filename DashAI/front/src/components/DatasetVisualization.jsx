@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import {
   Button,
   Grid,
@@ -11,8 +11,13 @@ import {
   Tooltip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { AddCircleOutline as AddIcon } from "@mui/icons-material";
+import {
+  AddCircleOutline as AddIcon,
+  Delete as DeleteIcon,
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 import PillTabs from "./shared/PillTabs";
+import DeleteConfirmationModal from "./threeSectionLayout/DeleteConfirmationModal";
 import {
   getDatasetInfo,
   getDatasetFile,
@@ -67,21 +72,38 @@ export default function DatasetVisualization({
     modelsContext?.setScrollToColumn ??
     (() => {});
 
+  const contextDatasets =
+    datasetsContext?.datasets ?? modelsContext?.datasets ?? [];
+  const deleteDatasetById =
+    datasetsContext?.deleteDatasetById ?? modelsContext?.deleteDatasetById;
+  const navigate = useNavigate();
+
   const [datasetInfo, setDatasetInfo] = useState(null);
   const [columnTypes, setColumnTypes] = useState({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const tourContext = useTourContext();
+  const tourContextRef = useRef(tourContext);
+  tourContextRef.current = tourContext;
+  const datasetReady =
+    (dataset?.status === 3 || dataset?.status === 4) && !!datasetInfo;
 
   useEffect(() => {
+    if (!datasetReady) return;
     if (sessionStorage.getItem("startDatasetViewTour") === "true") {
       sessionStorage.removeItem("startDatasetViewTour");
       // Esperar más tiempo para que termine todo el ajuste de scroll
       setTimeout(() => {
-        if (tourContext && typeof tourContext.startTour === "function") {
-          tourContext.startTour();
+        const context = tourContextRef.current;
+        if (
+          context &&
+          !context.run &&
+          typeof context.startTour === "function"
+        ) {
+          context.startTour();
         }
       }, 1500);
     }
-  }, [tourContext]);
+  }, [datasetReady]);
 
   const fetchDatasetInfo = async () => {
     const isProcessing = !(dataset.status === 3 || dataset.status === 4);
@@ -176,7 +198,31 @@ export default function DatasetVisualization({
     }
   };
 
+  const handleDeleteFailedDataset = async () => {
+    setDeleteDialogOpen(false);
+    if (!dataset || !deleteDatasetById) return;
+    const datasetId = dataset.id;
+    const success = await deleteDatasetById(datasetId);
+    if (!success) return;
+    if (datasetsContext) {
+      datasetsContext.removeNotebooksByDatasetId?.(datasetId);
+      navigate("/app/data");
+    } else {
+      modelsContext?.setSessions?.((prev) =>
+        prev.filter((session) => session.dataset_id !== datasetId),
+      );
+      navigate("/app/models");
+    }
+  };
+
   if (!dataset) {
+    if (contextDatasets.length > 0) {
+      return (
+        <Box sx={{ mt: 4, mx: 2 }}>
+          <Alert severity="warning">{t("common:datasetNotFound")}</Alert>
+        </Box>
+      );
+    }
     return (
       <Box
         sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
@@ -195,6 +241,40 @@ export default function DatasetVisualization({
       <Box
         sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 4, mx: 2 }}
       >
+        {status === 4 && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Typography variant="h4">{dataset.name}</Typography>
+            <Typography variant="subtitle1" color="text.secondary">
+              {formatDate(dataset.created)}
+            </Typography>
+            <Alert
+              severity="error"
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  startIcon={<DeleteIcon />}
+                  disabled={!deleteDatasetById}
+                  onClick={() => setDeleteDialogOpen(true)}
+                >
+                  {t("common:delete")}
+                </Button>
+              }
+            >
+              {t("datasets:error.datasetNotCreated")}
+            </Alert>
+            <DeleteConfirmationModal
+              open={deleteDialogOpen}
+              onClose={() => setDeleteDialogOpen(false)}
+              onConfirm={handleDeleteFailedDataset}
+              content={t("datasets:label.confirmDeleteDataset", {
+                name: dataset.name,
+              })}
+              warning={t("datasets:label.confirmDeleteDatasetLinkedWarning")}
+            />
+          </Box>
+        )}
+
         {/* Quick Stats Section */}
         {!isProcessing && datasetInfo && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>

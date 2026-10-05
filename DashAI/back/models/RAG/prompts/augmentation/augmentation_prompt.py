@@ -1,9 +1,9 @@
 from typing import Any
 
-from DashAI.back.models.RAG.prompts.prompt import Prompt
+from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
 
 
-class AugmentationPrompt(Prompt):
+class AugmentationPrompt(BasePrompt):
     """
     AugmentationPrompt class for generating augmented retrieval prompts,
     it uses the language model to generate keywords or phrases that can be used

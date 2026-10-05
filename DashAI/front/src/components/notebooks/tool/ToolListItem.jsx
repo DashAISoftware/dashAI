@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { setCustomDragImage } from "../../../utils/dragImage";
 import ModelDownloadStatusIcon from "../../models/model/ModelDownloadStatusIcon";
 import { useToolGate } from "./useToolGate";
+import { getToolTourAttribute } from "./toolTourTarget";
 
 export default function ToolListItem({
   tool,
@@ -33,19 +34,6 @@ export default function ToolListItem({
       setAnchorEl(event.currentTarget);
       setHoveredTool(tool);
     }
-  };
-
-  const getTourAttribute = () => {
-    if (tool.name === "HistogramPlotExplorer") {
-      return "histogram-explorer";
-    }
-    if (tool.name === "LabelEncoder") {
-      return "label-encoder-converter";
-    }
-    if (tool.name === "NanRemover") {
-      return "nan-remover-converter";
-    }
-    return undefined;
   };
 
   const handleMouseLeave = () => {
@@ -98,7 +86,7 @@ export default function ToolListItem({
       >
         <Box
           key={tool.id}
-          data-tour={getTourAttribute()}
+          data-tour={getToolTourAttribute(tool)}
           {...props}
           draggable={!gate.blocked}
           onDragStart={

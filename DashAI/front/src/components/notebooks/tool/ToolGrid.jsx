@@ -11,6 +11,7 @@ import { useExplorersAndConverters } from "../context/ExplorersAndConvertersCont
 import { startComponentDownload } from "../../models/model/ComponentDownloadControl";
 import CredentialsDialog from "../../credentials/CredentialsDialog";
 import { useToolGate } from "./useToolGate";
+import { isToolTourStep } from "./toolTourTarget";
 
 function ResolveDrop({ tool, onUse, onDownload, onNeedsCredentials }) {
   const gate = useToolGate(tool);
@@ -41,19 +42,10 @@ export default function ToolGrid({ tools, notebook, FormComponent }) {
   const handleUseTool = (tool) => {
     setSelectedTool(tool);
     setOpen(true);
-
-    // Auto-advance tour for specific tools
-    if (tourContext && tourContext.run) {
-      const shouldAdvance =
-        tool.name === "HistogramPlotExplorer" ||
-        tool.name === "LabelEncoder" ||
-        tool.name === "NanRemover";
-
-      if (shouldAdvance) {
-        setTimeout(() => {
-          tourContext.nextStep();
-        }, 500);
-      }
+    if (isToolTourStep(tourContext, tool)) {
+      setTimeout(() => {
+        tourContext.nextStep();
+      }, 500);
     }
   };
 

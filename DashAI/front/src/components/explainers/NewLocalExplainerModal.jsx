@@ -165,13 +165,19 @@ export default function NewLocalExplainerModal({
             }
           },
           (result) => {
-            console.error("Local explainer job failed:", result);
-            enqueueSnackbar(
-              t("explainers:error.localExplainerJobFailed", {
-                error: result.error || "Unknown error",
-              }),
-              { variant: "error" },
-            );
+            if (result?.status === "cancelled") {
+              enqueueSnackbar(t("common:jobQueue.jobCancelled"), {
+                variant: "info",
+              });
+            } else {
+              console.error("Local explainer job failed:", result);
+              enqueueSnackbar(
+                t("explainers:error.localExplainerJobFailed", {
+                  error: result?.error_msg || result?.error || "Unknown error",
+                }),
+                { variant: "error" },
+              );
+            }
             updateExplainers();
             if (onExplainerCreated) {
               onExplainerCreated();

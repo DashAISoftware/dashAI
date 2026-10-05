@@ -6,6 +6,7 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.models.RAG.embeddings.base_dense_embedding import BaseDenseEmbedding
 from DashAI.back.models.RAG.embeddings.dense._bert_embedding import (
     MAX,
     MEAN,
@@ -15,7 +16,6 @@ from DashAI.back.models.RAG.embeddings.dense._overflow_handler import (
     AGGREGATE,
     TRUNCATE,
 )
-from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
 
 ROBERTA_POOLING_STRATEGIES = [MEAN, MAX]
 
@@ -201,7 +201,7 @@ class RoBERTaEmbeddingSchema(BaseSchema):
     )  # type: ignore
 
 
-class RoBERTaEmbedding(DenseEmbedding):
+class RoBERTaEmbedding(BaseDenseEmbedding):
     """Dense embeddings using RoBERTa / XLM-RoBERTa models with mean/max pooling.
 
     Wraps :class:`_BERTEmbedding` (reusing BERT pooling logic) and exposes
@@ -275,9 +275,3 @@ class RoBERTaEmbedding(DenseEmbedding):
             A ``(batch, embedding_dim)`` float32 NumPy array.
         """
         return self._embedding.batch_encode(texts)
-
-    def save(self):
-        """No-op. Persistence is handled externally."""
-
-    def train(self, **kwargs):
-        """No-op. Pre-trained models are used as-is."""

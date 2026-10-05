@@ -1,15 +1,15 @@
 from abc import ABC
-from typing import Any, Dict, Final, List
+from typing import Any, Dict, List
 
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.persistence import (
     DensePersistence,
     SparsePersistence,
 )
-from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
 
 
-class UnitRetriever(RetrieverModel, ABC):
+class UnitRetriever(BaseRetriever, ABC):
     """Leaf: abstract base for unit retrievers.
 
     A unit retriever cannot contain children — it is the leaf node in the
@@ -17,14 +17,12 @@ class UnitRetriever(RetrieverModel, ABC):
     or dense retrievers.
     """
 
-    TYPE: Final[str] = "RetrieverModel"
-
     def __init__(self, **kwargs):
         """Initialize the unit retriever.
 
         Args:
             **kwargs: Keyword arguments forwarded to the parent
-                :class:`RetrieverModel`.
+                :class:`BaseRetriever`.
         """
         super().__init__(**kwargs)
 
@@ -65,7 +63,7 @@ class UnitRetriever(RetrieverModel, ABC):
                 "Call inject_infra() before retrieve()."
             )
 
-    def add(self, child: RetrieverModel) -> None:
+    def add(self, child: BaseRetriever) -> None:
         """Add a child retriever (not supported for unit retrievers).
 
         Args:
@@ -79,7 +77,7 @@ class UnitRetriever(RetrieverModel, ABC):
             " cannot contain children."
         )
 
-    def remove(self, child: RetrieverModel) -> None:
+    def remove(self, child: BaseRetriever) -> None:
         """Remove a child retriever (not supported for unit retrievers).
 
         Args:
@@ -93,7 +91,7 @@ class UnitRetriever(RetrieverModel, ABC):
             " cannot contain children."
         )
 
-    def get_children(self) -> List[RetrieverModel]:
+    def get_children(self) -> List[BaseRetriever]:
         """Return the (empty) list of child retrievers.
 
         Returns:

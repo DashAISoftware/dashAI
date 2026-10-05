@@ -1,12 +1,23 @@
-from DashAI.back.models.RAG.prompts.prompt import Prompt
 from DashAI.back.models.RAG.prompts.augmentation import (
     AugmentationPrompt,
+    CustomAugmentationPrompt,
     DefaultAugmentationPrompt,
-    CustomAugmentationPrompt
 )
+from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
 from DashAI.back.models.RAG.prompts.generation import (
-    RAGGenerationPrompt,
     CustomRAGGenerationPrompt,
+    DefaultQARAGGenerationPrompt,
     DefaultRAGGenerationPrompt,
-    DefaultQARAGGenerationPrompt
+    RAGGenerationPrompt,
 )
+
+__all__ = [
+    "AugmentationPrompt",
+    "BasePrompt",
+    "CustomAugmentationPrompt",
+    "CustomRAGGenerationPrompt",
+    "DefaultAugmentationPrompt",
+    "DefaultQARAGGenerationPrompt",
+    "DefaultRAGGenerationPrompt",
+    "RAGGenerationPrompt",
+]

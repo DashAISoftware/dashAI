@@ -38,7 +38,6 @@ import TemplateModal from "../custom/TemplateModal";
 import SourcesDisplay from "./SourcesDisplay";
 import { Trans, useTranslation } from "react-i18next";
 import { useGenerative } from "./GenerativeContext";
-import { useTourContext } from "../tour/TourProvider";
 import { useTheme } from "@mui/material/styles";
 
 /**
@@ -87,8 +86,8 @@ export default function GenerativeChat({ indexStatus }) {
   const [credentialsDialogOpen, setCredentialsDialogOpen] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["generative", "credentials"]);
-  const tourContext = useTourContext();
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const pollingProcessIdsRef = useRef(new Set());
 
   const scrollToBottom = (force = false) => {
     const el = chatContainerRef.current;
@@ -225,14 +224,6 @@ export default function GenerativeChat({ indexStatus }) {
             setIsLoadingMessage(false);
           });
       })
-      .then(() => {
-        // End tour if on final step
-        if (tourContext?.run && tourContext?.stepIndex === 8) {
-          setTimeout(() => {
-            tourContext.stopTour();
-          }, 100);
-        }
-      })
       .catch((error) => {
         // Without this the composer stays disabled forever and says nothing.
         // A RAG session starts with no documents, so the backend refusing the
@@ -275,43 +266,57 @@ export default function GenerativeChat({ indexStatus }) {
       const unfinished = messages.filter(
         (m) =>
           m.status !== 3 && // Not Finished
-          m.status !== 4, // Not Error
+          !pollingProcessIdsRef.current.has(m.id),
       );
 
       if (unfinished.length === 0) {
-        clearInterval(intervalId); // nothing left to poll
+        if (messages.every((m) => m.status === 3)) {
+          clearInterval(intervalId); // nothing left to poll
+        }
         return;
       }
 
       // Fetch latest status for each unfinished process
       unfinished.forEach((msg) => {
-        getProcessById(msg.id).then((process) => {
-          const status = process.status;
+        pollingProcessIdsRef.current.add(msg.id);
+        getProcessById(msg.id)
+          .then((process) => {
+            const status = process.status;
 
-          // Error
-          if (status === 4) {
-            enqueueSnackbar(
-              t("generative:error.processError", {
-                error: process.output?.[0]?.data
-                  ? `\n${process.output[0].data}`
-                  : "",
-              }),
-              {
-                autoHideDuration: 8000,
-                style: { whiteSpace: "pre-line" },
-              },
-            );
-
-            deleteProcessById(process.id).then(() => {
+            // Error
+            if (status === 4) {
               setMessages((prev) => prev.filter((m) => m.id !== process.id));
-            });
-          } else {
+              enqueueSnackbar(
+                t("generative:error.processError", {
+                  error: process.output?.[0]?.data
+                    ? `\n${process.output[0].data}`
+                    : "",
+                }),
+                {
+                  autoHideDuration: 8000,
+                  style: { whiteSpace: "pre-line" },
+                },
+              );
+
+              return deleteProcessById(process.id).catch((error) =>
+                console.error("Failed to delete errored process:", error),
+              );
+            }
             // Update progress or final result
             setMessages((prev) =>
               prev.map((m) => (m.id === process.id ? process : m)),
             );
-          }
-        });
+          })
+          .catch((error) => {
+            if (error?.response?.status === 404) {
+              setMessages((prev) => prev.filter((m) => m.id !== msg.id));
+            } else {
+              console.error("Failed to poll generative process:", error);
+            }
+          })
+          .finally(() => {
+            pollingProcessIdsRef.current.delete(msg.id);
+          });
       });
     }, POLL_INTERVAL);
 

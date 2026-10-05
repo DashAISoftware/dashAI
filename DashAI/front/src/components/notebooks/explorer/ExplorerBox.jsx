@@ -140,7 +140,9 @@ export default function ExplorerBox({
         }
       } catch (error) {
         console.error("Failed to fetch explorer status:", error);
-        clearInterval(intervalId);
+        if (error.response?.status === 404) {
+          clearInterval(intervalId);
+        }
       }
     };
 

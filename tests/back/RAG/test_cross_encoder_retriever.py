@@ -14,6 +14,7 @@ from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverEmptyChildrenError,
     RAGRetrieverError,
 )
+from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
     MMRRerankerRetriever,
 )
@@ -23,7 +24,6 @@ from DashAI.back.models.RAG.retrievers.cross_encoder import (
 from DashAI.back.models.RAG.retrievers.cross_encoder.cross_encoder_retriever import (
     CrossEncoderRetriever,
 )
-from DashAI.back.models.RAG.retrievers.retriever_model import RetrieverModel
 
 
 def _make_chunk(chunk_id: int, doc_id: int = 1) -> Chunk:
@@ -31,7 +31,7 @@ def _make_chunk(chunk_id: int, doc_id: int = 1) -> Chunk:
     return Chunk(chunk_id, doc_id, chunk_id, f"chunk-{chunk_id}")
 
 
-class _FakeChildRetriever(RetrieverModel):
+class _FakeChildRetriever(BaseRetriever):
     """In-memory child retriever with configurable chunks and vectors."""
 
     def __init__(self, chunks, vectors=None, default_top_k: int | None = None):
@@ -101,7 +101,7 @@ class _FakeNLICrossEncoder:
         return np.asarray(self._logits)
 
 
-class _FakeVectorsUnavailableChild(RetrieverModel):
+class _FakeVectorsUnavailableChild(BaseRetriever):
     """Child that scores chunks but raises on ``get_chunk_vectors``."""
 
     def __init__(self, chunks):

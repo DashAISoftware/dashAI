@@ -225,6 +225,7 @@ class DateFeaturesConverter(FeatureEngineeringConverter, BaseConverter):
     """
 
     SCHEMA = DateFeaturesSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Extracts calendar features from each date column: year, month, "

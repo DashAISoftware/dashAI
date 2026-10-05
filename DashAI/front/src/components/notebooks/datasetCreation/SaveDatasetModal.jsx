@@ -163,6 +163,9 @@ export function SaveDatasetModal({
       });
       return;
     }
+    if (tourContext && tourContext.run) {
+      tourContext.completeTour();
+    }
     onSaveDataset(datasetName, {
       compute_metadata: effectiveComputeMetadata,
     });

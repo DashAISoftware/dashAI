@@ -110,6 +110,7 @@
     "confirmClearAll": "Sind Sie sicher, dass Sie ALLE registrierten Aufgaben löschen möchten?",
     "confirmClearAllDetail": "Dadurch werden alle Aufgaben in der Warteschlange abgebrochen.",
     "confirmDeleteJob": "Sind Sie sicher, dass Sie diese Aufgabe löschen möchten?",
+    "confirmCancelJob": "Sind Sie sicher, dass Sie diese Aufgabe abbrechen möchten?",
     "deleteJob": "Aufgabe löschen",
     "details": {
       "errorMessage": "Fehlermeldung",
@@ -126,7 +127,9 @@
       "running": "Wird ausgeführt",
       "completed": "Abgeschlossen",
       "failed": "Fehlgeschlagen",
-      "deleted": "Gelöscht"
+      "deleted": "Gelöscht",
+      "cancelled": "Abgebrochen",
+      "killed": "Unterbrochen"
     },
     "failedCount_one": "{{count}} fehlgeschlagen",
     "failedCount_other": "{{count}} fehlgeschlagen",
@@ -134,6 +137,7 @@
     "noActiveJobs": "Keine aktiven Aufgaben",
     "noCompletedJobs": "Keine abgeschlossenen Aufgaben",
     "cancelJob": "Aufgabe abbrechen",
+    "jobCancelled": "Die Aufgabe wurde abgebrochen.",
     "noJobs": "Keine Aufgaben in der Warteschlange",
     "refresh": "Aktualisieren",
     "relativeTime": {

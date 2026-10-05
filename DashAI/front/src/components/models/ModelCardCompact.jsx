@@ -33,6 +33,7 @@ function ModelCardCompact({
   onRefresh,
   onOpen,
   isHighlighted = false,
+  isLastRun = false,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "common", "credentials"]);
@@ -156,16 +157,23 @@ function ModelCardCompact({
                   size="small"
                   disabled={modelNotDownloaded || credentialsLocked}
                   onClick={() => onTrain(run)}
+                  data-tour={isLastRun ? "train-button" : undefined}
                 >
                   <PlayArrow fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
           )}
-          <Tooltip title={t("common:edit")}>
-            <IconButton size="small" onClick={() => setConfigOpen(true)}>
-              <Edit fontSize="small" />
-            </IconButton>
+          <Tooltip title={isRunning ? "" : t("common:edit")}>
+            <span>
+              <IconButton
+                size="small"
+                disabled={isRunning}
+                onClick={() => setConfigOpen(true)}
+              >
+                <Edit fontSize="small" />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title={t("models:button.deleteRun")}>
             <IconButton
@@ -263,6 +271,7 @@ ModelCardCompact.propTypes = {
   onRefresh: PropTypes.func,
   onOpen: PropTypes.func.isRequired,
   isHighlighted: PropTypes.bool,
+  isLastRun: PropTypes.bool,
 };
 
 export default ModelCardCompact;

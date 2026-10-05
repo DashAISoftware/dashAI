@@ -1,4 +1,5 @@
 import logging
+import traceback
 from typing import TYPE_CHECKING, Any
 
 from kink import inject
@@ -20,6 +21,26 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
 log = logging.getLogger(__name__)
+
+
+def _release_frames(error: BaseException) -> None:
+    """Drop the local variables that an exception chain's tracebacks pin.
+
+    A model that fails inside ``from_pretrained`` or ``generate`` leaves its
+    weights reachable from the traceback frames (``self`` in ``generate``, the
+    half-moved pipeline in ``.to()``). The job worker is persistent, so those
+    weights would keep their VRAM until the exception object dies. File and
+    line information is kept, so the traceback still logs normally.
+    """
+    pending = [error]
+    seen = set()
+    while pending:
+        current = pending.pop()
+        if current is None or id(current) in seen:
+            continue
+        seen.add(id(current))
+        traceback.clear_frames(current.__traceback__)
+        pending.extend([current.__cause__, current.__context__])
 
 
 class GenerativeJob(BaseJob):
@@ -129,6 +150,7 @@ class GenerativeJob(BaseJob):
 
         model = None
         generative_process = None
+        failure = None
         with session_factory() as db:
             try:
                 generative_process_id: int = self.kwargs["generative_process_id"]
@@ -296,9 +318,17 @@ class GenerativeJob(BaseJob):
                         "Error processing and saving generation output."
                     ) from e
 
-            finally:
-                if model:
-                    del model
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-                gc.collect()
+            except BaseException as error:
+                failure = error
+
+        # Cleanup runs here, after the except block, because while an exception
+        # is propagating its traceback still references the model. gc.collect()
+        # goes first so empty_cache() can hand the freed blocks back to CUDA.
+        model = None
+        if failure is not None:
+            _release_frames(failure)
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        if failure is not None:
+            raise failure

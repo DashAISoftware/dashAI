@@ -27,7 +27,7 @@ from DashAI.back.models.RAG.retrievers.persistence import DensePersistence
 
 
 class _FakeEmbedding:
-    """In-memory DenseEmbedding stand-in with deterministic vectors."""
+    """In-memory BaseDenseEmbedding stand-in with deterministic vectors."""
 
     def __init__(self):
         self.rng = np.random.RandomState(42)

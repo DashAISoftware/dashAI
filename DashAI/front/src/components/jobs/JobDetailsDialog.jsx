@@ -59,11 +59,12 @@ const JobDetailsDialog = ({ job, open, onClose }) => {
           color={
             displayJob.status === "finished"
               ? "success"
-              : displayJob.status === "error"
+              : displayJob.status === "error" || displayJob.status === "killed"
                 ? "error"
                 : displayJob.status === "started"
                   ? "primary"
-                  : displayJob.status === "deleted"
+                  : displayJob.status === "deleted" ||
+                      displayJob.status === "cancelled"
                     ? "warning"
                     : "default"
           }

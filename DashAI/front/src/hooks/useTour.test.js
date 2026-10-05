@@ -4,13 +4,13 @@ import { getToursAutostart } from "../api/appConfig";
 
 jest.mock("../api/appConfig", () => ({ getToursAutostart: jest.fn() }));
 
-// Let the mocked getToursAutostart promise settle, then pass the 500 ms delay.
+// Pass the 500 ms delay, then let the mocked getToursAutostart promise settle.
 const settleAutostart = async () => {
-  await act(async () => {
-    await Promise.resolve();
-  });
   act(() => {
     jest.advanceTimersByTime(600);
+  });
+  await act(async () => {
+    await Promise.resolve();
   });
 };
 

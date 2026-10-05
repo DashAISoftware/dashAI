@@ -19,6 +19,7 @@ import { useExplorersAndConverters } from "../context/ExplorersAndConvertersCont
 import { startComponentDownload } from "../../models/model/ComponentDownloadControl";
 import CredentialsDialog from "../../credentials/CredentialsDialog";
 import { useToolGate } from "./useToolGate";
+import { isToolTourStep } from "./toolTourTarget";
 
 function ResolveDrop({ tool, onUse, onDownload, onNeedsCredentials }) {
   const gate = useToolGate(tool);
@@ -49,7 +50,7 @@ export default function ToolList({ tools, notebook, FormComponent }) {
   const handleUseTool = (tool) => {
     setSelectedTool(tool);
     setOpen(true);
-    if (tourContext && tourContext.run) {
+    if (isToolTourStep(tourContext, tool)) {
       setTimeout(() => {
         tourContext.nextStep();
       }, 500);

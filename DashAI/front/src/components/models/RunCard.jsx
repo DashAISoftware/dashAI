@@ -48,7 +48,6 @@ function RunCard({
   onDelete,
   onOperationsRefresh,
   explainerRefreshTrigger,
-  isLastRun = false,
   existingRuns = [],
   onRefresh,
   isHighlighted = false,
@@ -289,7 +288,6 @@ function RunCard({
                           setAutoExpand(true);
                           onTrain(run, operationsCount);
                         }}
-                        data-tour={isLastRun ? "train-button" : undefined}
                       >
                         {run.status === 3
                           ? t("common:retrain")
@@ -461,7 +459,6 @@ RunCard.propTypes = {
   onDelete: PropTypes.func.isRequired,
   onOperationsRefresh: PropTypes.func,
   explainerRefreshTrigger: PropTypes.number,
-  isLastRun: PropTypes.bool,
   existingRuns: PropTypes.array,
   onRefresh: PropTypes.func,
   forceExpanded: PropTypes.bool,

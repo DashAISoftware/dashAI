@@ -3,10 +3,10 @@ from typing import List
 
 import numpy as np
 
-from DashAI.back.models.RAG.embeddings.dense_embedding import DenseEmbedding
+from DashAI.back.models.RAG.embeddings.base_dense_embedding import BaseDenseEmbedding
 
 
-class HuggingFaceEmbedding(DenseEmbedding):
+class HuggingFaceEmbedding(BaseDenseEmbedding):
     """Abstract base for dense embeddings powered by a HuggingFace ``AutoModel``.
 
     Handles tokenisation, device placement and inference dispatch; subclasses
@@ -29,12 +29,6 @@ class HuggingFaceEmbedding(DenseEmbedding):
         }
         self.model = None
         self.tokenizer = None
-
-    def save(self):
-        """No-op. Persistence is handled externally."""
-
-    def train(self, **kwargs):
-        """No-op. Pre-trained models are used as-is."""
 
     @abstractmethod
     def _pool(self, model_output, attention_mask):

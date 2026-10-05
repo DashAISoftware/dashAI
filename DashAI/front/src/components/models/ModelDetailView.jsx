@@ -118,10 +118,16 @@ export default function ModelDetailView({
                 </span>
               </Tooltip>
             )}
-            <Tooltip title={t("common:edit")}>
-              <IconButton size="small" onClick={() => setEditModalOpen(true)}>
-                <Edit fontSize="small" />
-              </IconButton>
+            <Tooltip title={isRunning ? "" : t("common:edit")}>
+              <span>
+                <IconButton
+                  size="small"
+                  disabled={isRunning}
+                  onClick={() => setEditModalOpen(true)}
+                >
+                  <Edit fontSize="small" />
+                </IconButton>
+              </span>
             </Tooltip>
             <Tooltip title={t("models:button.deleteRun")}>
               <IconButton

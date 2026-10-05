@@ -67,6 +67,7 @@ class CharacterReplacer(BasicPreprocessingConverter, BaseConverter):
     """
 
     SCHEMA = CharacterReplacerSchema
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(
             "Replaces or removes specified characters/substrings in selected "

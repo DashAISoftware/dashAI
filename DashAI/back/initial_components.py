@@ -101,12 +101,6 @@ from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSourc
 
 # Evaluation Strategies
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
-from DashAI.back.evaluation.forecasting_cv import (
-    ForecastingCrossValidationEvaluationStrategy,
-)
-from DashAI.back.evaluation.forecasting_holdout import (
-    ForecastingHoldoutEvaluationStrategy,
-)
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 
 # Explainers
@@ -191,8 +185,6 @@ from DashAI.back.metrics.classification.matthews_corrcoef import MatthewsCorrCoe
 from DashAI.back.metrics.classification.precision import Precision
 from DashAI.back.metrics.classification.recall import Recall
 from DashAI.back.metrics.classification.roc_auc import ROCAUC
-from DashAI.back.metrics.forecasting.mape import MAPE
-from DashAI.back.metrics.forecasting.smape import SMAPE
 from DashAI.back.metrics.regression.explained_variance import ExplainedVariance
 from DashAI.back.metrics.regression.mae import MAE
 from DashAI.back.metrics.regression.median_absolute_error import MedianAbsoluteError
@@ -205,14 +197,6 @@ from DashAI.back.metrics.translation.ter import Ter
 from DashAI.back.models.cnn_image_classifier import CNNImageClassifier
 from DashAI.back.models.efficientnet_b0_image_classifier import (
     EfficientNetB0ImageClassifier,
-)
-from DashAI.back.models.forecasting.arima import ARIMA
-from DashAI.back.models.forecasting.exponential_smoothing import (
-    ExponentialSmoothing,
-)
-from DashAI.back.models.forecasting.naive import NaiveForecaster
-from DashAI.back.models.forecasting.seasonal_naive import (
-    SeasonalNaiveForecaster,
 )
 
 # Models
@@ -320,7 +304,6 @@ from DashAI.back.models.hugging_face.xlm_roberta_transformer import (
 from DashAI.back.models.hugging_face.xlnet_transformer import XlnetTransformer
 from DashAI.back.models.lenet5_image_classifier import LeNet5ImageClassifier
 from DashAI.back.models.mlp_image_classifier import MLPImageClassifier
-from DashAI.back.models.pymc.bart_regression import BARTRegression
 from DashAI.back.models.RAG import RAGPipeline
 from DashAI.back.models.RAG.chunking_models import (
     CharacterChunkModel,
@@ -452,11 +435,6 @@ from DashAI.back.reports.classification.precision_recall_curve import (
     PrecisionRecallCurve,
 )
 from DashAI.back.reports.classification.roc_curve import RocCurve
-from DashAI.back.reports.forecasting.forecast_vs_actual import ForecastVsActual
-from DashAI.back.reports.forecasting.residual_autocorrelation import (
-    ResidualAutocorrelation,
-)
-from DashAI.back.reports.forecasting.residuals_over_time import ResidualsOverTime
 from DashAI.back.reports.regression.predicted_vs_actual import PredictedVsActual
 from DashAI.back.reports.regression.residual_histogram import ResidualHistogram
 from DashAI.back.reports.regression.residual_plot import ResidualPlot
@@ -500,7 +478,6 @@ from DashAI.back.statistical_tests.wilcoxon_sr_test import (
     WilcoxonSRTest,
 )
 from DashAI.back.tasks.controlnet_task import ControlNetTask
-from DashAI.back.tasks.forecasting_task import ForecastingTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 
 # Tasks
@@ -511,6 +488,52 @@ from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
 from DashAI.back.tasks.text_to_text_generation_task import TextToTextGenerationTask
 from DashAI.back.tasks.translation_task import TranslationTask
+
+# Units
+from DashAI.back.units.apply_converter_unit import ApplyConverterUnit
+from DashAI.back.units.apply_dataset_schema_unit import ApplyDatasetSchemaUnit
+from DashAI.back.units.apply_session_preprocessing_unit import (
+    ApplySessionPreprocessingUnit,
+)
+from DashAI.back.units.build_global_explainer_unit import BuildGlobalExplainerUnit
+from DashAI.back.units.build_local_explainer_unit import BuildLocalExplainerUnit
+from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
+from DashAI.back.units.build_model_unit import BuildModelUnit
+from DashAI.back.units.compute_dataset_metadata_unit import ComputeDatasetMetadataUnit
+from DashAI.back.units.evaluate_model_to_artifact_unit import (
+    EvaluateModelToArtifactUnit,
+)
+from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
+from DashAI.back.units.fit_converter_unit import FitConverterUnit
+from DashAI.back.units.fit_model_over_folds_unit import FitModelOverFoldsUnit
+from DashAI.back.units.fit_model_over_nested_folds_unit import (
+    FitModelOverNestedFoldsUnit,
+)
+from DashAI.back.units.fit_model_unit import FitModelUnit
+from DashAI.back.units.generate_global_explanation_unit import (
+    GenerateGlobalExplanationUnit,
+)
+from DashAI.back.units.generate_local_explanation_unit import (
+    GenerateLocalExplanationUnit,
+)
+from DashAI.back.units.infer_dataset_types_unit import InferDatasetTypesUnit
+from DashAI.back.units.load_datafile_dataset_unit import LoadDatafileDatasetUnit
+from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
+from DashAI.back.units.load_run_model_unit import LoadRunModelUnit
+from DashAI.back.units.load_trained_model_unit import LoadTrainedModelUnit
+from DashAI.back.units.load_training_dataset_unit import LoadTrainingDatasetUnit
+from DashAI.back.units.load_uploaded_dataset_unit import LoadUploadedDatasetUnit
+from DashAI.back.units.predict_unit import PredictUnit
+from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
+from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
+from DashAI.back.units.prepare_explanation_data_unit import PrepareExplanationDataUnit
+from DashAI.back.units.run_exploration_unit import RunExplorationUnit
+from DashAI.back.units.save_dataset_to_path_unit import SaveDatasetToPathUnit
+from DashAI.back.units.save_dataset_unit import SaveDatasetUnit
+from DashAI.back.units.save_exploration_unit import SaveExplorationUnit
+from DashAI.back.units.save_model_unit import SaveModelUnit
+from DashAI.back.units.save_prediction_unit import SavePredictionUnit
+from DashAI.back.units.transform_dataset_unit import TransformDatasetUnit
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
@@ -533,11 +556,6 @@ def get_initial_components():
         TextClassificationTask,
         TranslationTask,
         RegressionTask,
-        ForecastingTask,
-        NaiveForecaster,
-        SeasonalNaiveForecaster,
-        ARIMA,
-        ExponentialSmoothing,
         TextToImageGenerationTask,
         TextToTextGenerationTask,
         ControlNetTask,
@@ -553,7 +571,6 @@ def get_initial_components():
         BertinTransformer,
         BetoTransformer,
         BayesianRidgeRegression,
-        BARTRegression,
         DebertaV3Transformer,
         DecisionTreeClassifier,
         DecisionTreeRegression,
@@ -663,8 +680,6 @@ def get_initial_components():
         Chrf,
         MSE,
         RMSE,
-        MAPE,
-        SMAPE,
         MAE,
         R2,
         MedianAbsoluteError,
@@ -689,6 +704,41 @@ def get_initial_components():
         DatasetJob,
         GenerativeJob,
         PipelineJob,
+        # Units
+        LoadDatasetUnit,
+        PrepareAndSplitUnit,
+        PrepareAndFoldUnit,
+        BuildModelUnit,
+        FitModelUnit,
+        FitModelOverFoldsUnit,
+        FitModelOverNestedFoldsUnit,
+        EvaluateModelUnit,
+        EvaluateModelToArtifactUnit,
+        SaveModelUnit,
+        ApplyConverterUnit,
+        FitConverterUnit,
+        TransformDatasetUnit,
+        SaveDatasetUnit,
+        RunExplorationUnit,
+        SaveExplorationUnit,
+        LoadTrainedModelUnit,
+        LoadTrainingDatasetUnit,
+        BuildManualInputUnit,
+        ApplySessionPreprocessingUnit,
+        PredictUnit,
+        SavePredictionUnit,
+        LoadRunModelUnit,
+        BuildGlobalExplainerUnit,
+        BuildLocalExplainerUnit,
+        PrepareExplanationDataUnit,
+        GenerateGlobalExplanationUnit,
+        GenerateLocalExplanationUnit,
+        LoadUploadedDatasetUnit,
+        LoadDatafileDatasetUnit,
+        InferDatasetTypesUnit,
+        ApplyDatasetSchemaUnit,
+        ComputeDatasetMetadataUnit,
+        SaveDatasetToPathUnit,
         RAGJob,
         # Reports
         ConfusionMatrix,
@@ -698,9 +748,6 @@ def get_initial_components():
         PredictedVsActual,
         ResidualPlot,
         ResidualHistogram,
-        ForecastVsActual,
-        ResidualsOverTime,
-        ResidualAutocorrelation,
         PerSegmentComparison,
         SegmentScoreDistribution,
         LengthComparison,
@@ -803,8 +850,6 @@ def get_initial_components():
         # Evaluation Strategies
         CrossValidationEvaluationStrategy,
         HoldoutEvaluationStrategy,
-        ForecastingHoldoutEvaluationStrategy,
-        ForecastingCrossValidationEvaluationStrategy,
         # Statistical tests
         AnovaTest,
         FriedmanTest,

@@ -21,7 +21,7 @@ class DenseEmbeddingRetrieverSchema(BaseSchema):
     """
 
     embedding_model: schema_field(
-        component_field(parent="DenseEmbedding"),
+        component_field(parent="BaseDenseEmbedding"),
         placeholder={"component": "SentenceTransformerEmbedding", "params": {}},
         description=MultilingualString(
             en="Embedding model to use for encoding chunks.",
@@ -58,7 +58,7 @@ class DenseEmbeddingRetrieverSchema(BaseSchema):
 
 
 class DenseEmbeddingRetriever(DenseRetriever):
-    """Concrete dense retriever that accepts any :class:`DenseEmbedding` component.
+    """Concrete dense retriever that accepts any :class:`BaseDenseEmbedding` component.
 
     The embedding component is specified in the schema and instantiated
     by the factory via ``fill_objects``.

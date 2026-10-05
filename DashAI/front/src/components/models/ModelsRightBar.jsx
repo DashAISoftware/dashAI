@@ -307,7 +307,7 @@ export default function ModelsRightBar({ onToggle }) {
       <SideBar>
         <Box
           sx={{
-            p: 2,
+            p: 4,
             borderBottom: `1px solid ${theme.palette.ui.border}`,
             flexShrink: 0,
             height: 64,
@@ -346,7 +346,7 @@ export default function ModelsRightBar({ onToggle }) {
         >
           <Box
             sx={{
-              p: 2,
+              p: 4,
               height: 64,
               display: "flex",
               alignItems: "center",

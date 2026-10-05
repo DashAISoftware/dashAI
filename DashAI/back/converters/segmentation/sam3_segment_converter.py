@@ -333,6 +333,7 @@ class SAM3SegmentConverter(HFPretrainedDownloadMixin, AdvancedPreprocessingConve
 
     SCHEMA = SAM3SegmentConverterSchema
     CHANGES_ROW_COUNT = False
+    LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en="Detects every instance of a prompt in each image and appends "
         "2 times max_masks new columns, keeping every row unchanged: "
