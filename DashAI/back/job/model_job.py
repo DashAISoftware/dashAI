@@ -12,10 +12,8 @@ from DashAI.back.dependencies.database.models import (
     ModelSession,
     Run,
 )
-from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
-from DashAI.back.models.model_factory import ModelFactory
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 from DashAI.back.splitters.splits_payload import normalize_splits_payload
 from DashAI.back.units.build_model_unit import BuildModelUnit
@@ -139,36 +137,35 @@ class ModelJob(BaseJob):
                     preparation_results = self._prepare_dataset_and_components(
                         run_id=run_id, db=db, component_registry=component_registry
                     )
+                    model_session: ModelSession = preparation_results["model_session"]
+
+                    LoadDatasetUnit(dataset_id=model_session.dataset_id)(ctx)
+
+                    build_model = BuildModelUnit(
+                        model={
+                            "component": run.model_name,
+                            "params": run.parameters,
+                        },
+                        train_metrics=model_session.train_metrics,
+                        validation_metrics=model_session.validation_metrics,
+                        test_metrics=model_session.test_metrics,
+                        run_id=run_id,
+                    )
+                    # The download gate lives in validate(), and running it here
+                    # keeps a model that cannot be trained from being reported
+                    # as a splitting failure further down. A task without a
+                    # target gets the same order: a run with an unknown model
+                    # and a dataset the task cannot take reports the model.
+                    build_model.validate(ctx)
+
                     if preparation_results["requires_target"]:
-                        model_session: ModelSession = preparation_results[
-                            "model_session"
-                        ]
                         prepare = preparation_results["prepare_unit"]
-
-                        LoadDatasetUnit(dataset_id=model_session.dataset_id)(ctx)
-
-                        build_model = BuildModelUnit(
-                            model={
-                                "component": run.model_name,
-                                "params": run.parameters,
-                            },
-                            train_metrics=model_session.train_metrics,
-                            validation_metrics=model_session.validation_metrics,
-                            test_metrics=model_session.test_metrics,
-                            run_id=run_id,
-                        )
-                        # The download gate lives in validate(), and running it here
-                        # keeps a model that cannot be trained from being reported
-                        # as a splitting failure further down.
-                        build_model.validate(ctx)
                     else:
-                        # The same order the target free path always had: the
-                        # dataset, the task's metrics, the prepared features,
-                        # then the model. Every step reports as a preparation
-                        # failure, which is where the prepare unit's errors
-                        # were reported before it was a unit.
-                        model_session = preparation_results["model_session"]
-                        LoadDatasetUnit(dataset_id=model_session.dataset_id)(ctx)
+                        # Nothing is partitioned, so preparing and building are
+                        # both part of this step and report as preparation
+                        # failures, where they always were for this kind of
+                        # task. Which metrics score it is the job's choice: all
+                        # of those the registry relates to the task.
                         metrics = self._metrics_for_task(
                             model_session.task_name, component_registry
                         )
@@ -177,12 +174,11 @@ class ModelJob(BaseJob):
                             input_columns=model_session.input_columns,
                             standardise=True,
                         )(ctx)
+                        build_model(ctx)
                         preparation_results.update(
                             X=ctx.require("features"),
                             metrics=metrics,
-                            factory=self._model_factory_without_target(
-                                run, component_registry
-                            ),
+                            factory=ctx.require("factory"),
                         )
                 except Exception as e:
                     log.exception(e)
@@ -641,53 +637,6 @@ class ModelJob(BaseJob):
             ) from e
 
         return metrics
-
-    @staticmethod
-    def _model_factory_without_target(run: Run, component_registry) -> ModelFactory:
-        """Build the run's model for a task without a target.
-
-        Raises
-        ------
-        JobError
-            If the model is unknown, not downloaded, or cannot be instantiated.
-        """
-        try:
-            run_model_class = component_registry[run.model_name]["class"]
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Unable to find Model with name {run.model_name} in registry.",
-            ) from e
-
-        if getattr(run_model_class, "REQUIRES_DOWNLOAD", False) and not (
-            run_model_class.is_downloaded()
-        ):
-            raise JobError(
-                f"Model {run.model_name} is not downloaded. "
-                "Download it before training."
-            )
-        nested_missing = missing_downloads(run.parameters, component_registry)
-        if nested_missing:
-            names = ", ".join(m["name"] for m in nested_missing)
-            raise JobError(
-                "These components are not downloaded. "
-                f"Download them before training: {names}."
-            )
-
-        try:
-            factory = ModelFactory(
-                model=run_model_class,
-                params=run.parameters,
-                run_id=run.id,
-                n_labels=None,
-            )
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Unable to instantiate model using run {run.id}",
-            ) from e
-
-        return factory
 
     def _train_without_target(
         self, preparation_results: Dict[str, Any], run: Run, db
