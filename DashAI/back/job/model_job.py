@@ -30,12 +30,10 @@ from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
 from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
+from DashAI.back.units.score_clusters_unit import ScoreClustersUnit
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
-
-    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-    from DashAI.back.models.base_model import BaseModel
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -246,12 +244,14 @@ class ModelJob(BaseJob):
                         # dataset. The fitting unit publishes the model the
                         # saving unit below reads.
                         FitWithoutTargetUnit()(ctx)
-                        self._score_without_target(
-                            ctx.require("model"),
-                            ctx.require("features"),
-                            preparation_results["metrics"],
-                            run,
-                            db,
+                        ScoreClustersUnit(
+                            metrics=[
+                                metric.__name__
+                                for metric in preparation_results["metrics"]
+                            ]
+                        )(ctx)
+                        self._write_full_metrics(
+                            db, run_id, ctx.require("metrics")["full"]
                         )
                     elif getattr(strategy_class, "KIND", "holdout") == "holdout":
                         fit_model = FitModelUnit(
@@ -641,81 +641,26 @@ class ModelJob(BaseJob):
         return metrics
 
     @staticmethod
-    def _score_without_target(
-        model: "BaseModel", x: "DashAIDataset", metrics: List[BaseMetric], run: Run, db
-    ) -> None:
-        """Score a fitted model with no target column over the whole dataset.
+    def _write_full_metrics(db, run_id: int, results: Dict[str, float]) -> None:
+        """Write one LAST metric row per score, over the full dataset.
 
-        Parameters
-        ----------
-        model : BaseModel
-            The model ``FitWithoutTargetUnit`` fitted.
-        x : DashAIDataset
-            The features it was fitted on.
-        metrics : list of BaseMetric
-            The metrics to score it with.
-        run : Run
-            The run being trained, used as the metrics' correlation id.
-        db : object
-            Open database session the metrics are written through.
+        Written here rather than through ``BaseModel.calculate_metrics``: that
+        path compares y_true against predictions, which is precisely what a task
+        without a target does not have, and ``_save_metrics`` would number the
+        row's step instead of leaving it at 0. Upserted, so a re-train replaces
+        the previous values instead of adding rows.
 
         Raises
         ------
         JobError
-            If the labels cannot be read, the clustering is degenerate, or
-            metric computation fails.
+            If the rows cannot be written.
         """
-        from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
-        from DashAI.back.dependencies.database.models import Metric
-
-        # Read in the same step the model used to be fitted in, so a failure
-        # still reports as a training one.
-        try:
-            labels = model.get_cluster_labels(x)
-        except Exception as e:
-            log.exception(e)
-            raise JobError(f"Model training failed {e}") from e
-
-        # Internal validity indices are only defined over two or more clusters,
-        # which is why prepare_to_metric answers None outside that range. Left
-        # alone, a density based model that sends every sample to noise finishes
-        # the run green with an empty metric table and nothing pointing at the
-        # parameters that caused it, so the degenerate outcome is raised here.
-        import numpy as np  # local import
-
-        label_values = np.asarray(labels)
-        clustered = label_values[label_values != -1]
-        n_noise = int(label_values.size - clustered.size)
-        n_clusters = int(np.unique(clustered).size)
-        if n_clusters < 2 or n_clusters >= clustered.size:
-            raise JobError(
-                f"{type(model).__name__} produced {n_clusters} cluster(s) over "
-                f"{label_values.size} samples, {n_noise} of them labelled as "
-                "noise. Clustering metrics need at least two clusters, so this "
-                "run has no result to report. Adjust the model parameters, for "
-                "instance a larger eps or a smaller min_samples for DBSCAN."
-            )
-
-        try:
-            results = {}
-            for metric in metrics:
-                score = metric.score(x, labels)
-                if score is not None:
-                    results[metric.__name__] = score
-        except Exception as e:
-            log.exception(e)
-            raise JobError(f"Metric calculation failed {e}") from e
-
-        # Written straight here rather than through BaseModel.calculate_metrics:
-        # that path compares y_true against predictions, which is precisely what
-        # this kind of task does not have. One row per metric, over the full
-        # dataset, upserted so a re-train replaces the previous values.
         try:
             for name, value in results.items():
                 existing = (
                     db.query(Metric)
                     .filter_by(
-                        run_id=run.id,
+                        run_id=run_id,
                         split=SplitEnum.FULL,
                         level=LevelEnum.LAST,
                         name=name,
@@ -728,7 +673,7 @@ class ModelJob(BaseJob):
                 else:
                     db.add(
                         Metric(
-                            run_id=run.id,
+                            run_id=run_id,
                             split=SplitEnum.FULL,
                             level=LevelEnum.LAST,
                             name=name,

@@ -11,6 +11,7 @@ EXPECTED_UNITS = {
     "BuildModelUnit",
     "FitModelUnit",
     "FitWithoutTargetUnit",
+    "ScoreClustersUnit",
     "FitModelOverFoldsUnit",
     "FitModelOverNestedFoldsUnit",
     "EvaluateModelUnit",

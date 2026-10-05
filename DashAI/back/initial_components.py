@@ -572,6 +572,7 @@ from DashAI.back.units.save_dataset_unit import SaveDatasetUnit
 from DashAI.back.units.save_exploration_unit import SaveExplorationUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 from DashAI.back.units.save_prediction_unit import SavePredictionUnit
+from DashAI.back.units.score_clusters_unit import ScoreClustersUnit
 from DashAI.back.units.transform_dataset_unit import TransformDatasetUnit
 
 logging.basicConfig(level=logging.DEBUG)
@@ -763,6 +764,7 @@ def get_initial_components():
         BuildModelUnit,
         FitModelUnit,
         FitWithoutTargetUnit,
+        ScoreClustersUnit,
         FitModelOverFoldsUnit,
         FitModelOverNestedFoldsUnit,
         EvaluateModelUnit,
