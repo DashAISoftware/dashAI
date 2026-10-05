@@ -1,4 +1,5 @@
 import hashlib
+import sys
 
 import pytest
 
@@ -32,7 +33,9 @@ def test_appimage_is_replaced_and_restarted(tmp_path, monkeypatch):
     install.install_update(downloaded, _asset(NEW_CONTENT), InstallChannel.APPIMAGE)
 
     assert running.read_bytes() == NEW_CONTENT
-    assert running.stat().st_mode & 0o111
+    # AppImages only exist on Linux; Windows has no executable permission bits.
+    if sys.platform != "win32":
+        assert running.stat().st_mode & 0o111
     # The new instance must not inherit the running instance's AppImage paths.
     assert "APPIMAGE" not in launched[0]["env"]
 
