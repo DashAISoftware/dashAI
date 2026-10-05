@@ -47,7 +47,7 @@ def _update_asset(config: Dict[str, Any]) -> Optional[UpdateAsset]:
     """Return the update file for this install, unless update checks are off."""
     if not config["UPDATE_CHECK_ENABLED"]:
         return None
-    return find_update_asset()
+    return find_update_asset(config["UPDATE_CHECK_REPOSITORY"])
 
 
 @router.get("/update-check", response_model=UpdateInfo)
@@ -66,7 +66,10 @@ def get_update_check(
         The current and latest versions, the release notes and the download
         link for the detected install channel.
     """
-    return check_for_updates(enabled=config["UPDATE_CHECK_ENABLED"])
+    return check_for_updates(
+        enabled=config["UPDATE_CHECK_ENABLED"],
+        repository=config["UPDATE_CHECK_REPOSITORY"],
+    )
 
 
 @router.get("/update/download", response_model=UpdateDownloadStatus)

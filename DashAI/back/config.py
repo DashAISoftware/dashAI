@@ -33,3 +33,7 @@ class DefaultSettings(BaseSettings):
     # Ask GitHub whether a newer release exists. Turned off with the
     # UPDATE_CHECK_ENABLED=false environment variable.
     UPDATE_CHECK_ENABLED: bool = True
+    # GitHub repository ("owner/name") whose releases are checked. Pointing it
+    # at a fork with test releases (UPDATE_CHECK_REPOSITORY=me/DashAI) lets the
+    # updater be tried end to end without touching the official releases.
+    UPDATE_CHECK_REPOSITORY: str = "DashAISoftware/DashAI"
