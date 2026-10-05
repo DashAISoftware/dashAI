@@ -75,8 +75,12 @@ def _blobs(per_centre=30, seed=0):
     return to_dashai_dataset(pd.DataFrame({"x": points[:, 0], "y": points[:, 1]}))
 
 
-def _preparation(model, x):
-    return {"X": x, "factory": SimpleNamespace(model=model), "metrics": METRICS}
+def _score(model, x, db, run_id=1):
+    """Fit the model the way ``FitWithoutTargetUnit`` does, then score it."""
+    model.train(x)
+    ModelJob._score_without_target(
+        model, x, METRICS, run=SimpleNamespace(id=run_id), db=db
+    )
 
 
 # --- runs that produced nothing to report ------------------------------------
@@ -88,9 +92,7 @@ def test_a_run_where_every_point_is_noise_fails_instead_of_finishing_empty(db):
     x = _mixed_scales()
 
     with pytest.raises(JobError, match="at least two clusters"):
-        ModelJob._train_without_target(
-            None, _preparation(DBSCANClustering(), x), run=SimpleNamespace(id=1), db=db
-        )
+        _score(DBSCANClustering(), x, db)
 
     assert db.query(Metric).count() == 0
 
@@ -99,9 +101,7 @@ def test_the_failure_names_the_model_and_counts_the_noise(db):
     x = _mixed_scales()
 
     with pytest.raises(JobError) as raised:
-        ModelJob._train_without_target(
-            None, _preparation(DBSCANClustering(), x), run=SimpleNamespace(id=1), db=db
-        )
+        _score(DBSCANClustering(), x, db)
 
     message = str(raised.value)
     assert "DBSCANClustering" in message
@@ -112,24 +112,14 @@ def test_the_failure_names_the_model_and_counts_the_noise(db):
 def test_a_run_that_finds_a_single_cluster_fails_too(db):
     """Not a noise problem: k means asked for one group has nothing to compare."""
     with pytest.raises(JobError, match="at least two clusters"):
-        ModelJob._train_without_target(
-            None,
-            _preparation(KMeansClustering(n_clusters=1, random_state=0), _blobs()),
-            run=SimpleNamespace(id=1),
-            db=db,
-        )
+        _score(KMeansClustering(n_clusters=1, random_state=0), _blobs(), db)
 
 
 # --- runs that worked --------------------------------------------------------
 
 
 def test_a_healthy_clustering_writes_one_row_per_metric(db):
-    ModelJob._train_without_target(
-        None,
-        _preparation(KMeansClustering(n_clusters=2, random_state=0), _blobs()),
-        run=SimpleNamespace(id=1),
-        db=db,
-    )
+    _score(KMeansClustering(n_clusters=2, random_state=0), _blobs(), db)
 
     rows = db.query(Metric).all()
 
@@ -139,26 +129,11 @@ def test_a_healthy_clustering_writes_one_row_per_metric(db):
     assert all(row.step == 0 for row in rows)
 
 
-def test_the_fitted_model_is_handed_back_for_the_job_to_save(db):
-    model = KMeansClustering(n_clusters=2, random_state=0)
-
-    returned = ModelJob._train_without_target(
-        None, _preparation(model, _blobs()), run=SimpleNamespace(id=1), db=db
-    )
-
-    assert returned is model
-
-
 def test_training_again_replaces_the_previous_values_rather_than_adding_rows(db):
     x = _blobs()
 
     for seed in (0, 1):
-        ModelJob._train_without_target(
-            None,
-            _preparation(KMeansClustering(n_clusters=2, random_state=seed), x),
-            run=SimpleNamespace(id=1),
-            db=db,
-        )
+        _score(KMeansClustering(n_clusters=2, random_state=seed), x, db)
 
     assert db.query(Metric).count() == len(METRICS)
 
@@ -167,11 +142,6 @@ def test_two_runs_of_the_same_session_keep_their_own_rows(db):
     x = _blobs()
 
     for run_id in (1, 2):
-        ModelJob._train_without_target(
-            None,
-            _preparation(KMeansClustering(n_clusters=2, random_state=0), x),
-            run=SimpleNamespace(id=run_id),
-            db=db,
-        )
+        _score(KMeansClustering(n_clusters=2, random_state=0), x, db, run_id=run_id)
 
     assert db.query(Metric).count() == 2 * len(METRICS)

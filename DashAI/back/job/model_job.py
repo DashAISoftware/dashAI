@@ -24,6 +24,7 @@ from DashAI.back.units.fit_model_over_nested_folds_unit import (
     FitModelOverNestedFoldsUnit,
 )
 from DashAI.back.units.fit_model_unit import FitModelUnit
+from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
 from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
 from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
@@ -33,6 +34,7 @@ from DashAI.back.units.save_model_unit import SaveModelUnit
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
     from DashAI.back.models.base_model import BaseModel
 
 
@@ -175,11 +177,7 @@ class ModelJob(BaseJob):
                             standardise=True,
                         )(ctx)
                         build_model(ctx)
-                        preparation_results.update(
-                            X=ctx.require("features"),
-                            metrics=metrics,
-                            factory=ctx.require("factory"),
-                        )
+                        preparation_results["metrics"] = metrics
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
@@ -245,11 +243,15 @@ class ModelJob(BaseJob):
                     if not requires_target:
                         # No evaluation strategy: nothing was held out, so the
                         # model is fitted once and scored over the whole
-                        # dataset. Published for the saving unit below, the
-                        # same way the fitting units publish theirs.
-                        ctx.put(
-                            "model",
-                            self._train_without_target(preparation_results, run, db),
+                        # dataset. The fitting unit publishes the model the
+                        # saving unit below reads.
+                        FitWithoutTargetUnit()(ctx)
+                        self._score_without_target(
+                            ctx.require("model"),
+                            ctx.require("features"),
+                            preparation_results["metrics"],
+                            run,
+                            db,
                         )
                     elif getattr(strategy_class, "KIND", "holdout") == "holdout":
                         fit_model = FitModelUnit(
@@ -638,38 +640,37 @@ class ModelJob(BaseJob):
 
         return metrics
 
-    def _train_without_target(
-        self, preparation_results: Dict[str, Any], run: Run, db
-    ) -> "BaseModel":
-        """Fit a model with no target column and score it over the whole dataset.
+    @staticmethod
+    def _score_without_target(
+        model: "BaseModel", x: "DashAIDataset", metrics: List[BaseMetric], run: Run, db
+    ) -> None:
+        """Score a fitted model with no target column over the whole dataset.
 
         Parameters
         ----------
-        preparation_results : dict
-            The preparation results: ``X``, ``factory`` and ``metrics``.
+        model : BaseModel
+            The model ``FitWithoutTargetUnit`` fitted.
+        x : DashAIDataset
+            The features it was fitted on.
+        metrics : list of BaseMetric
+            The metrics to score it with.
         run : Run
             The run being trained, used as the metrics' correlation id.
         db : object
             Open database session the metrics are written through.
 
-        Returns
-        -------
-        BaseModel
-            The fitted model, for the job's common saving path.
-
         Raises
         ------
         JobError
-            If training or metric computation fails.
+            If the labels cannot be read, the clustering is degenerate, or
+            metric computation fails.
         """
         from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
         from DashAI.back.dependencies.database.models import Metric
 
-        x = preparation_results["X"]
-        model = preparation_results["factory"].model
-
+        # Read in the same step the model used to be fitted in, so a failure
+        # still reports as a training one.
         try:
-            model.train(x)
             labels = model.get_cluster_labels(x)
         except Exception as e:
             log.exception(e)
@@ -697,7 +698,7 @@ class ModelJob(BaseJob):
 
         try:
             results = {}
-            for metric in preparation_results["metrics"]:
+            for metric in metrics:
                 score = metric.score(x, labels)
                 if score is not None:
                     results[metric.__name__] = score
@@ -739,5 +740,3 @@ class ModelJob(BaseJob):
         except Exception as e:
             log.exception(e)
             raise JobError(f"Metric saving failed {e}") from e
-
-        return model

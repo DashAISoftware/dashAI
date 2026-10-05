@@ -10,6 +10,7 @@ EXPECTED_UNITS = {
     "PrepareWithoutTargetUnit",
     "BuildModelUnit",
     "FitModelUnit",
+    "FitWithoutTargetUnit",
     "FitModelOverFoldsUnit",
     "FitModelOverNestedFoldsUnit",
     "EvaluateModelUnit",

@@ -547,6 +547,7 @@ from DashAI.back.units.fit_model_over_nested_folds_unit import (
     FitModelOverNestedFoldsUnit,
 )
 from DashAI.back.units.fit_model_unit import FitModelUnit
+from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
 from DashAI.back.units.generate_global_explanation_unit import (
     GenerateGlobalExplanationUnit,
 )
@@ -761,6 +762,7 @@ def get_initial_components():
         PrepareWithoutTargetUnit,
         BuildModelUnit,
         FitModelUnit,
+        FitWithoutTargetUnit,
         FitModelOverFoldsUnit,
         FitModelOverNestedFoldsUnit,
         EvaluateModelUnit,
