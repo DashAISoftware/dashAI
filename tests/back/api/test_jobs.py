@@ -232,12 +232,10 @@ def test_enqueue_jobs(client: TestClient, run_id: int):
     assert response.status_code == 200, response.text
     job_status = response.json()
 
-    assert job_status["status"] in [
-        "finished",
-        "error",
-    ], f"Job status should be finished or error, got {job_status['status']}"
-    if job_status["status"] == "error":
-        assert "error" in job_status, "Error jobs should have an error message"
+    # Pinned to finished rather than "finished or error": a run of DummyModel
+    # has nothing that can fail, so an error here means the job broke, and
+    # accepting both would hide exactly that.
+    assert job_status["status"] == "finished", job_status
 
     response = client.post(
         "/api/v1/job/",
@@ -250,7 +248,7 @@ def test_enqueue_jobs(client: TestClient, run_id: int):
     response = client.get(f"/api/v1/job/status/{job_id_2}")
     assert response.status_code == 200, response.text
     job_status_2 = response.json()
-    assert job_status_2["status"] in ["finished", "error"]
+    assert job_status_2["status"] == "finished", job_status_2
 
     response = client.get("/api/v1/job")
     assert response.status_code == 200, response.text

@@ -27,7 +27,7 @@ class BaseConverter(ConfigObject, ABC):
     Converters modify dataset columns in a supervised or unsupervised way.
     Operations include scaling, encoding, dimensionality reduction, imputation,
     and feature engineering. Converters do not add or remove rows unless
-    `changes_row_count` returns True (e.g. samplers).
+    `CHANGES_ROW_COUNT` is True (e.g. samplers).
 
     All converters must implement `fit`, `transform`, and `get_output_type`.
     """
@@ -154,19 +154,6 @@ class BaseConverter(ConfigObject, ABC):
             meta["output_dtype"] = None
 
         return meta
-
-    def changes_row_count(self) -> bool:
-        """Indicate whether this converter changes the number of dataset rows.
-
-        Samplers (e.g. SMOTE, RandomUnderSampler) return True because they
-        add or remove rows. Most transformers return False.
-
-        Returns
-        -------
-        bool
-            True if the converter may add or remove rows, False otherwise.
-        """
-        return False
 
     def get_report(self) -> Union[Dict[str, Any], None]:
         """Return the converter report produced after execution, if any.

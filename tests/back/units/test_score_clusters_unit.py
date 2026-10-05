@@ -228,10 +228,11 @@ def test_a_metric_that_raises_is_a_metric_failure(monkeypatch):
 
 
 def test_an_unknown_metric_is_refused_before_scoring():
-    ctx = _kmeans_context()
-
+    """Refused by ``validate``, on an empty context: no labels are read and no
+    model is needed, which is what "before scoring" means. Going through
+    ``__call__`` would pass even if the lookup only happened in ``execute``."""
     with pytest.raises(JobError) as raised:
-        ScoreClustersUnit(metrics=["NoSuchMetric"])(ctx)
+        ScoreClustersUnit(metrics=["NoSuchMetric"]).validate(ExecutionContext())
 
     assert (
         str(raised.value) == "Unable to find Metric with name NoSuchMetric in registry."

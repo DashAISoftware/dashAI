@@ -1,11 +1,13 @@
-"""Tests for the per-epoch reporting hook on SupervisedModel.
+"""Tests for the per-epoch reporting hook in `BaseModel.calculate_metrics`.
 
-The hook exists so an optimizer can watch a trial while it trains. It lives on
-the supervised base class rather than inside each model's epoch loop because
-every model that trains in epochs already routes its per-epoch metrics through
-`calculate_metrics` — five loops across five files that share no common ancestor
-below `SupervisedModel`. The flag itself (`_epoch_reporter`) stays on
-`BaseModel`, since the optimizer sets it without knowing the model's family.
+The hook exists so an optimizer can watch a trial while it trains. It lives in
+the base class rather than inside each model's epoch loop because every model
+that trains in epochs already routes its per-epoch metrics through
+`calculate_metrics` — five loops across five files whose nearest common ancestor
+is `SupervisedModel`, which defines no scoring method of its own. Both the hook
+and its flag (`_epoch_reporter`) are on `BaseModel`, the one place the scoring
+methods are defined (`test_metric_methods_defined_once.py`). The stub is a
+supervised model because those are the ones that train in epochs.
 
 What matters here is that it fires for exactly one combination (validation
 metrics, epoch level) and stays out of the way otherwise.

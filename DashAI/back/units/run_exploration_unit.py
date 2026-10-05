@@ -290,7 +290,11 @@ class RunExplorationUnit(BaseUnit):
                 )
             except (JobError, ValueError) as e:
                 # The explorer's own complaint about the data it was given is
-                # already written for the user.
+                # already written for the user. That holds for every explorer,
+                # not only the clustering ones that brought the rule in: several
+                # older ones raise ValueError from here too. The traceback still
+                # goes to the log, as it does for the wrapped failures below.
+                log.exception(e)
                 raise JobError(str(e)) from e
             except Exception as e:
                 log.exception(e)
