@@ -41,13 +41,15 @@ VersionRow.propTypes = {
   value: PropTypes.string.isRequired,
 };
 
+// Takes the namespace in each key: i18next-cli cannot tell which namespace a
+// t function passed as an argument belongs to.
 function statusMessage(info, t) {
-  if (!info || info.check_failed) return t("checkFailed");
-  if (!info.enabled) return t("disabled");
+  if (!info || info.check_failed) return t("updates:checkFailed");
+  if (!info.enabled) return t("updates:disabled");
   if (info.update_available) {
-    return t("updateAvailable", { version: info.latest_version });
+    return t("updates:updateAvailable", { version: info.latest_version });
   }
-  return t("upToDate");
+  return t("updates:upToDate");
 }
 
 export default function UpdatesDialog({ open, onClose, info }) {
