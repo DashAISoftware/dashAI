@@ -1,0 +1,24 @@
+{
+  "title": "Atualizações",
+  "subtitle": "Versão do dashAI e novas versões",
+  "installedVersion": "Versão instalada",
+  "latestVersion": "Última versão",
+  "unknownVersion": "Desconhecida",
+  "upToDate": "Você tem a versão mais recente.",
+  "updateAvailable": "Uma nova versão está disponível: {{version}}",
+  "updateAvailableTooltip": "Nova versão disponível: {{version}}",
+  "checkFailed": "Não foi possível verificar atualizações. Verifique sua conexão com a internet.",
+  "disabled": "A verificação de atualizações está desativada nesta instalação.",
+  "releaseNotes": "Novidades",
+  "download": "Baixar",
+  "viewOnGitHub": "Ver no GitHub",
+  "hint": {
+    "windows": "Execute o instalador baixado. Seus dados e experimentos são mantidos.",
+    "macos": "Abra o arquivo baixado e arraste o dashAI para Aplicativos. Seus dados e experimentos são mantidos.",
+    "appimage": "Substitua seu arquivo .AppImage pelo baixado. Seus dados e experimentos são mantidos.",
+    "pip": "Atualize com este comando e depois reinicie o dashAI:",
+    "source": "Atualize o repositório com estes comandos e depois reinicie o dashAI:",
+    "docker": "Reconstrua a imagem Docker com a nova versão.",
+    "unknown": "Baixe a nova versão no GitHub."
+  }
+}

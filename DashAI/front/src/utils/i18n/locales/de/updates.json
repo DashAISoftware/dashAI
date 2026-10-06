@@ -1,0 +1,24 @@
+{
+  "title": "Updates",
+  "subtitle": "dashAI-Version und neue Versionen",
+  "installedVersion": "Installierte Version",
+  "latestVersion": "Neueste Version",
+  "unknownVersion": "Unbekannt",
+  "upToDate": "Sie haben die neueste Version.",
+  "updateAvailable": "Eine neue Version ist verfügbar: {{version}}",
+  "updateAvailableTooltip": "Neue Version verfügbar: {{version}}",
+  "checkFailed": "Es konnte nicht nach Updates gesucht werden. Prüfen Sie Ihre Internetverbindung.",
+  "disabled": "Die Suche nach Updates ist in dieser Installation deaktiviert.",
+  "releaseNotes": "Neuigkeiten",
+  "download": "Herunterladen",
+  "viewOnGitHub": "Auf GitHub ansehen",
+  "hint": {
+    "windows": "Führen Sie das heruntergeladene Installationsprogramm aus. Ihre Daten und Experimente bleiben erhalten.",
+    "macos": "Öffnen Sie die heruntergeladene Datei und ziehen Sie dashAI in den Ordner Programme. Ihre Daten und Experimente bleiben erhalten.",
+    "appimage": "Ersetzen Sie Ihre .AppImage-Datei durch die heruntergeladene. Ihre Daten und Experimente bleiben erhalten.",
+    "pip": "Aktualisieren Sie mit diesem Befehl und starten Sie dashAI dann neu:",
+    "source": "Aktualisieren Sie das Repository mit diesen Befehlen und starten Sie dashAI dann neu:",
+    "docker": "Erstellen Sie das Docker-Image mit der neuen Version neu.",
+    "unknown": "Laden Sie die neue Version von GitHub herunter."
+  }
+}

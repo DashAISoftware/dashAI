@@ -1,0 +1,24 @@
+{
+  "title": "Updates",
+  "subtitle": "dashAI version and new releases",
+  "installedVersion": "Installed version",
+  "latestVersion": "Latest version",
+  "unknownVersion": "Unknown",
+  "upToDate": "You have the latest version.",
+  "updateAvailable": "A new version is available: {{version}}",
+  "updateAvailableTooltip": "New version available: {{version}}",
+  "checkFailed": "Could not check for updates. Check your internet connection.",
+  "disabled": "Update checks are turned off for this installation.",
+  "releaseNotes": "What's new",
+  "download": "Download",
+  "viewOnGitHub": "View on GitHub",
+  "hint": {
+    "windows": "Run the downloaded installer. Your data and experiments are kept.",
+    "macos": "Open the downloaded file and drag dashAI to Applications. Your data and experiments are kept.",
+    "appimage": "Replace your .AppImage file with the downloaded one. Your data and experiments are kept.",
+    "pip": "Update with this command, then restart dashAI:",
+    "source": "Update the repository with these commands, then restart dashAI:",
+    "docker": "Rebuild the Docker image with the new version.",
+    "unknown": "Download the new version from GitHub."
+  }
+}

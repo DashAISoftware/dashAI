@@ -2,9 +2,21 @@
 ; ---------------------------------------------
 ; Command to generate the executable:
 ; pyinstaller -D -n dashAI-launcher-cpu --clean --add-data "DashAI/front/build;DashAI/front/build" --add-data "%CONDA_PREFIX%\Lib\site-packages\transformers;transformers" --add-binary "%CONDA_PREFIX%\Lib\site-packages\llama_cpp\lib\*;llama_cpp/lib" --additional-hooks-dir=hooks DashAI/__main__.py
+
+; The release workflow passes the version from pyproject.toml with
+; ISCC /DAppVersion=<version>. The fallback only applies to local builds.
+#ifndef AppVersion
+  #define AppVersion "0.0.0-dev"
+#endif
+
 [Setup]
+; Inno Setup recognises a previous install by AppId, so a new installer
+; upgrades in place only while this value stays the same. Releases built
+; without an explicit AppId used the AppName as their id, so it must stay
+; "dashAI" or existing installs end up duplicated.
+AppId=dashAI
 AppName=dashAI
-AppVersion=0.9.3
+AppVersion={#AppVersion}
 AppPublisher=DashAI Software
 AppPublisherURL=https://dash-ai.com
 DefaultDirName={pf}\dashAI
