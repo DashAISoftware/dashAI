@@ -282,6 +282,12 @@ class DatasetJob(BaseJob):
                             },
                             datafile_id=datafile_id,
                             selected_file=params.get("selected_file"),
+                            # Loaders write caches and extracted files into
+                            # temp_path. The job's temp_dir keeps them out of
+                            # the datafile, whose contents are listed to the
+                            # user, and lives until the ``finally`` below,
+                            # after the dataset that it backs is saved.
+                            temp_path=str(temp_dir),
                         )(ctx)
                     else:
                         # --- File / URL upload path ---

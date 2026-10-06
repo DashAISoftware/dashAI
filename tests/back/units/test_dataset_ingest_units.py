@@ -389,7 +389,7 @@ def fixture_datafile_rows():
 
 
 def test_datafile_unit_reads_the_selected_file(
-    registry, datafile_rows, csv_file, tmp_path
+    registry, datafile_rows, csv_file, tmp_path, tmp_path_factory
 ):
     from DashAI.back.core.enums.status import DatafileStatus
 
@@ -400,13 +400,16 @@ def test_datafile_unit_reads_the_selected_file(
         dataloader={"component": "CSVDataLoader", "params": {"separator": ","}},
         datafile_id=7,
         selected_file="data.csv",
+        temp_path=str(tmp_path_factory.mktemp("loader_cache")),
     )(ctx)
 
     assert ctx.require("dataset").column_names == ["n", "label"]
+    # The loader's cache goes to temp_path; the datafile only keeps the download.
+    assert [p.name for p in tmp_path.iterdir()] == ["data.csv"]
 
 
 def test_datafile_unit_skips_dotted_paths_when_choosing(
-    registry, datafile_rows, csv_file, tmp_path
+    registry, datafile_rows, csv_file, tmp_path, tmp_path_factory
 ):
     """Download tools leave metadata directories behind that sort before the real
     data, so without the filter the wrong file would win."""
@@ -422,6 +425,7 @@ def test_datafile_unit_skips_dotted_paths_when_choosing(
         dataloader={"component": "CSVDataLoader", "params": {"separator": ","}},
         datafile_id=7,
         selected_file=None,
+        temp_path=str(tmp_path_factory.mktemp("loader_cache")),
     )(ctx)
 
     assert ctx.require("dataset").column_names == ["n", "label"]
