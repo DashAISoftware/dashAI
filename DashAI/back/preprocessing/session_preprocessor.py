@@ -8,9 +8,10 @@ on new data (see load_final_preprocessor at the bottom of this module).
 
 import os
 import pickle
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from DashAI.back.converters.dataset_columns import (
+    plan_new_column_names,
     rebuild_dataset_with_transformed_columns,
 )
 from DashAI.back.preprocessing.column_ref import ConverterSequence, resolve_refs
@@ -26,11 +27,21 @@ class SessionPreprocessor:
     of an earlier step. Fitting always uses only the "train" entry of
     whatever split dict is passed in, so no step ever sees validation or
     test rows during fit.
+
+    Supervised converters (e.g. feature selectors) are fit with the
+    `target_columns` of the train split as `y`. The target is never part of
+    a step's scope, so no converter ever transforms it.
     """
 
-    def __init__(self, sequence: ConverterSequence, component_registry: Any):
+    def __init__(
+        self,
+        sequence: ConverterSequence,
+        component_registry: Any,
+        target_columns: Optional[List[str]] = None,
+    ):
         self.sequence = sequence
         self.component_registry = component_registry
+        self.target_columns = list(target_columns or [])
         self.fitted_converters: List[Any] = []
         self.resolved_columns: Dict[int, List[str]] = {}
         self.resolved_slots: Dict[int, Dict[str, List[str]]] = {}
@@ -65,6 +76,60 @@ class SessionPreprocessor:
             )
             slots.setdefault(type_name, []).append(name)
         return slots
+
+    def _fit(self, converter: Any, train: "DashAIDataset", train_scope) -> Any:
+        """Fit a step's converter, passing the target to supervised ones."""
+        # A preprocessor pickled before target_columns existed has no such
+        # attribute; it is only unpickled to transform, never to fit again.
+        target_columns = getattr(self, "target_columns", None)
+        if type(converter).SUPERVISED and target_columns:
+            return converter.fit(train_scope, train.select_columns(target_columns))
+        return converter.fit(train_scope)
+
+    def _record_group(
+        self,
+        index: int,
+        converter: Any,
+        train: "DashAIDataset",
+        scope_names: List[str],
+        output_names: List[str],
+    ) -> None:
+        """Record which real columns a step produced, and their slots.
+
+        A converter that only rewrites its scope columns in place (e.g. a
+        scaler: "age" in, scaled "age" out) has no other way to expose its
+        result, so the scope names ARE the group. A converter that adds new
+        columns (e.g. Bag-of-Words, which also keeps its scope column
+        verbatim) only exposes the new ones: a passthrough scope column is
+        not this step's output, and would still carry its pre-conversion
+        type (e.g. Text), which is never valid as a resolved input column.
+
+        New columns are recorded under the final name they get in the
+        dataset: one whose name is already taken is renamed by
+        rebuild_dataset_with_transformed_columns (e.g. "derived_1"). Slots
+        are classified with the names the converter itself produced, since
+        that is what its get_output_type knows.
+        """
+        new_columns = [name for name in output_names if name not in scope_names]
+        if not new_columns:
+            self.resolved_columns[index] = list(output_names)
+            self.resolved_slots[index] = self._classify_by_type(
+                converter, self.resolved_columns[index]
+            )
+            return
+
+        removed = {name for name in scope_names if name not in output_names}
+        final_names = plan_new_column_names(
+            [name for name in train.column_names if name not in removed],
+            new_columns,
+        )
+        self.resolved_columns[index] = [final_names[name] for name in new_columns]
+        self.resolved_slots[index] = {
+            type_name: [final_names[name] for name in names]
+            for type_name, names in self._classify_by_type(
+                converter, new_columns
+            ).items()
+        }
 
     @staticmethod
     def _transform_split(converter, dataset, scope_names, train_transformed):
@@ -129,7 +194,7 @@ class SessionPreprocessor:
             converter = self._instantiate(step)
 
             train_scope = current["train"].select_columns(scope_names)
-            converter = converter.fit(train_scope)
+            converter = self._fit(converter, current["train"], train_scope)
 
             train_transformed = converter.transform(train_scope)
             transformed_by_split = {"train": train_transformed}
@@ -140,27 +205,12 @@ class SessionPreprocessor:
                     converter, dataset, scope_names, train_transformed
                 )
 
-            # A converter that only rewrites its scope columns in place (e.g. a
-            # scaler: "age" in, scaled "age" out) has no other way to expose
-            # its result, so the scope names ARE the group. But a converter
-            # like Bag-of-Words additionally keeps its scope column verbatim
-            # alongside brand-new derived columns (see BagOfWordsConverter.
-            # transform's docstring: "the source text column is preserved
-            # unchanged") — for those, the untouched scope column is a
-            # passthrough, not this step's own output, so it must not leak
-            # into the group a later step or the wizard's input selection can
-            # reference (it would still carry the pre-conversion dtype, e.g.
-            # Text, which is never valid as a resolved input column).
-            new_columns = [
-                name
-                for name in train_transformed.column_names
-                if name not in scope_names
-            ]
-            self.resolved_columns[index] = (
-                new_columns if new_columns else list(train_transformed.column_names)
-            )
-            self.resolved_slots[index] = self._classify_by_type(
-                converter, self.resolved_columns[index]
+            self._record_group(
+                index,
+                converter,
+                current["train"],
+                scope_names,
+                list(train_transformed.column_names),
             )
 
             new_current = {}

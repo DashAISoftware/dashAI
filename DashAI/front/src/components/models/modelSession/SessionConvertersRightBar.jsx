@@ -16,21 +16,27 @@ import ToolGrid from "../../notebooks/tool/ToolGrid";
 import { getComponents } from "../../../api/component";
 import { evaluateColumnEligibility } from "../../../utils/columnEligibility";
 import FormSessionConverterSection from "./FormSessionConverterSection";
-import { buildColumnKeysAndTypes } from "./sessionColumnRefs";
+import { buildStepDisplayNames, stateToOptions } from "./sessionColumnRefs";
 
 /**
  * Converters-only sidebar for the session wizard's preprocessing step,
  * styled like the notebook module's own converters picker (same SearchBar,
  * ToolList/ToolGrid, category accordion, list/grid toggle). Unlike the
  * notebook flow, picking a converter here never fits anything or POSTs
- * anywhere — see FormSessionConverterSection, which just appends the
- * configured step to newExp.preprocessing.
+ * anywhere: FormSessionConverterSection just appends the configured step to
+ * newExp.preprocessing.
+ *
+ * A new converter always lands at the end of the chain, so it is offered
+ * (and scoped) against the estimated final dataset state: the surviving
+ * candidate columns plus everything earlier steps produced, never the
+ * output column. Converters that change the number of rows are hidden,
+ * since sessions do not support them yet.
  */
 export default function SessionConvertersRightBar({
   newExp,
   setNewExp,
   dataset,
-  datasetTypes,
+  structure,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["models", "datasets", "common"]);
@@ -56,20 +62,22 @@ export default function SessionConvertersRightBar({
     };
   }, [t]);
 
-  // A new converter can be scoped on any raw dataset column OR the output
-  // group (any declared slot) of any converter already configured — it
-  // always lands at the end of the sequence, so every existing step is
-  // "before" it and fair game to chain off. Gating this on raw columns
-  // alone wrongly blocked, e.g., PCA on a text-only dataset (no raw
-  // Integer/Float columns) even after adding Bag of Words, whose Integer
-  // output group PCA could legitimately scope on.
+  // Type-level friendly names (e.g. "Simple Imputer" for "SimpleImputer"),
+  // used to label earlier steps' output blocks, numbered the same way
+  // AppliedConvertersView numbers repeated converter types.
+  const convertersMeta = useMemo(
+    () => Object.fromEntries(converters.map((c) => [c.name, c])),
+    [converters],
+  );
+  const stepDisplayNames = useMemo(
+    () => buildStepDisplayNames(newExp.preprocessing, convertersMeta),
+    [newExp.preprocessing, convertersMeta],
+  );
+  const finalState = structure?.final;
+
   const { columnTypes: allColumnTypes } = useMemo(
-    () =>
-      buildColumnKeysAndTypes({
-        datasetTypes,
-        preprocessing: newExp.preprocessing,
-      }),
-    [datasetTypes, newExp.preprocessing],
+    () => stateToOptions(finalState, stepDisplayNames),
+    [finalState, stepDisplayNames],
   );
 
   const datasetColumns = useMemo(
@@ -120,21 +128,14 @@ export default function SessionConvertersRightBar({
     return { disabled, tooltip, validColumns };
   };
 
-  // Type-level friendly names (e.g. "Simple Imputer" for "SimpleImputer"),
-  // reused when scoping a new converter over an earlier one's output group
-  // — see FormSessionConverterSection -> ScopeStepSessionConverter, which
-  // disambiguates repeated types the same way AppliedConvertersView does.
-  const convertersMeta = useMemo(
-    () => Object.fromEntries(converters.map((c) => [c.name, c])),
-    [converters],
-  );
-
   const validatedConverters = useMemo(
     () =>
-      converters.map((converter) => {
-        const validation = validateConverter(converter);
-        return { ...converter, ...validation };
-      }),
+      converters
+        .filter((converter) => converter.metadata?.column_operation !== "rows")
+        .map((converter) => {
+          const validation = validateConverter(converter);
+          return { ...converter, ...validation };
+        }),
     [converters, datasetColumns, t],
   );
 
@@ -149,8 +150,8 @@ export default function SessionConvertersRightBar({
   }, [searchQuery, validatedConverters]);
 
   // Stable identity across re-renders (e.g. every keystroke in the search
-  // box) so ConfigureToolModal never remounts FormSessionConverterSection
-  // — and loses in-progress scope/parameter input — while it's open.
+  // box) so ConfigureToolModal never remounts FormSessionConverterSection,
+  // and loses in-progress scope/parameter input, while it's open.
   const SessionFormSection = useMemo(() => {
     function Wrapped(sectionProps) {
       return (
@@ -158,14 +159,14 @@ export default function SessionConvertersRightBar({
           {...sectionProps}
           newExp={newExp}
           setNewExp={setNewExp}
-          datasetTypes={datasetTypes}
+          finalState={finalState || []}
+          stepDisplayNames={stepDisplayNames}
           filePath={dataset?.file_path}
-          convertersMeta={convertersMeta}
         />
       );
     }
     return Wrapped;
-  }, [newExp, setNewExp, datasetTypes, dataset, convertersMeta]);
+  }, [newExp, setNewExp, finalState, stepDisplayNames, dataset]);
 
   return (
     <Box
@@ -249,5 +250,6 @@ SessionConvertersRightBar.propTypes = {
   newExp: PropTypes.object.isRequired,
   setNewExp: PropTypes.func.isRequired,
   dataset: PropTypes.object,
-  datasetTypes: PropTypes.object,
+  // The chain's estimated structure (see usePreprocessingStructure).
+  structure: PropTypes.object,
 };

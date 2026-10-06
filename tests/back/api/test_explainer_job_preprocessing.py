@@ -59,7 +59,7 @@ def _train_session_with_scaler(client: TestClient, dataset_id: int):
                     "scope": [{"kind": "raw", "name": "SepalLengthCm"}],
                 },
             ],
-            "input_column_refs": [{"kind": "group", "step": 0}],
+            "input_column_refs": [{"kind": "raw", "name": "SepalLengthCm"}],
         },
     )
     assert session_response.status_code == 201, session_response.text
