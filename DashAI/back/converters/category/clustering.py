@@ -26,3 +26,4 @@ class ClusteringConverter(BaseConverter):
     )
     ICON: Final[str] = Icon.Psychology.value
     COLOR: Final[str] = "rgb(72, 149, 239)"
+    COLUMN_OPERATION = "add"

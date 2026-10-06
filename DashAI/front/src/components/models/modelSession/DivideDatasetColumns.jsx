@@ -27,6 +27,8 @@ function DivideDatasetColumns({
   outputHelperText = "",
   requiresTarget = true,
   disabled = false,
+  inputLabel,
+  outputDisabled = false,
 }) {
   const { t } = useTranslation(["experiments", "common", "models"]);
   const theme = useTheme();
@@ -146,7 +148,7 @@ function DivideDatasetColumns({
           <TextField
             {...params}
             required
-            label={t("models:label.inputColumns")}
+            label={inputLabel || t("models:label.inputColumns")}
             error={inputError}
             helperText={inputHelperText}
             placeholder={
@@ -188,7 +190,7 @@ function DivideDatasetColumns({
             />
           )}
           sx={{ mb: 8 }}
-          disabled={disabled || allColumnNames.length === 0}
+          disabled={disabled || outputDisabled || allColumnNames.length === 0}
         />
       )}
     </React.Fragment>
@@ -213,6 +215,10 @@ DivideDatasetColumns.propTypes = {
   outputHelperText: PropTypes.string,
   requiresTarget: PropTypes.bool,
   disabled: PropTypes.bool,
+  // Overrides the input selector's label (defaults to "Input columns").
+  inputLabel: PropTypes.string,
+  // Shows the output as fixed, e.g. when it was chosen in an earlier step.
+  outputDisabled: PropTypes.bool,
 };
 
 export default DivideDatasetColumns;

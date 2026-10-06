@@ -109,6 +109,7 @@ class LoadDatafileDatasetUnit(BaseUnit):
     SCHEMA = LoadDatafileDatasetSchema
 
     PROVIDES = ("dataset",)
+    RUNTIME_PARAMS = ("temp_path",)
 
     def execute(self, ctx: ExecutionContext) -> None:
         from kink import di
@@ -148,7 +149,12 @@ class LoadDatafileDatasetUnit(BaseUnit):
             "dataset",
             dataloader.load_data(
                 filepath_or_buffer=source,
-                temp_path=work_dir,
+                # Never the datafile itself: loaders write caches and extracted
+                # files into temp_path, and the datafile's contents are listed
+                # to the user as the download's files. The cache backs the
+                # loaded dataset until it is saved, so whoever runs the unit
+                # owns the directory and removes it afterwards.
+                temp_path=self.config["temp_path"],
                 params=dataloader_config.get("params") or {},
                 n_sample=None,
             ),

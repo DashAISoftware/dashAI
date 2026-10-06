@@ -250,6 +250,7 @@ def get_unit_classes(client: TestClient):
 #: a name built from the id of a run that has not started.
 EXPECTED_RUNTIME_PARAMS = {
     ("LoadUploadedDatasetUnit", "temp_path"),
+    ("LoadDatafileDatasetUnit", "temp_path"),
     ("LoadTrainingDatasetUnit", "train_dataset_file_path"),
     ("BuildManualInputUnit", "train_dataset_file_path"),
     ("ApplySessionPreprocessingUnit", "preprocessing_artifacts_path"),

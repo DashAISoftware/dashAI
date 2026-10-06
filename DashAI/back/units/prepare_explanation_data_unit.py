@@ -95,9 +95,11 @@ class PrepareExplanationDataUnit(BaseUnit):
     Session preprocessing is another matter: converters the session fitted
     ahead of training (``PreprocessingJob``) are not part of the model, and
     the input columns the session records are the names they produced. When
-    ``preprocessing_artifacts_path`` is supplied, the persisted ``final.pkl``
-    is applied to the whole dataset before the split is replayed, so the
-    explainer's data is in the feature space the model was trained on. The
+    ``preprocessing_artifacts_path`` is supplied, the run's split is cut
+    first and the persisted ``final.pkl`` is applied to each part, so the
+    explainer's data is in the feature space the model was trained on. Cutting
+    first keeps the run's indexes valid when a step removes rows
+    (NanRemover), and no part is resampled, so no synthetic rows get in. The
     transformed dataset stays local to this unit: ``dataset`` in the context
     is left as it was loaded, since nothing downstream reads it and a unit
     that rewrote a key it requires would blur what it consumes and what it
@@ -166,16 +168,29 @@ class PrepareExplanationDataUnit(BaseUnit):
         input_columns = self.config["input_columns"]
         output_columns = self.config["output_columns"]
 
+        train_idx = splits["train_indexes"]
+        test_idx = splits["test_indexes"]
+        val_idx = splits["val_indexes"]
+
         artifacts_path = self.config.get("preprocessing_artifacts_path")
         if artifacts_path is not None:
+            from DashAI.back.preprocessing.session_preprocessor import (
+                transform_by_split,
+            )
+
+            # Split first, transform each part after: the run's indexes stay
+            # valid even if a step removes rows (NanRemover), and no
+            # resampled rows get in.
             preprocessor = load_persisted_preprocessor(artifacts_path)
-            loaded_dataset = preprocessor.transform_dataset(loaded_dataset)
+            loaded_dataset, train_idx, test_idx, val_idx = transform_by_split(
+                preprocessor, loaded_dataset, train_idx, test_idx, val_idx
+            )
 
         loaded_dataset = split_dataset(
             loaded_dataset,
-            train_indexes=splits["train_indexes"],
-            test_indexes=splits["test_indexes"],
-            val_indexes=splits["val_indexes"],
+            train_indexes=train_idx,
+            test_indexes=test_idx,
+            val_indexes=val_idx,
         )
 
         prepared_dataset = task.prepare_for_task(
@@ -187,15 +202,15 @@ class PrepareExplanationDataUnit(BaseUnit):
 
         data_x = split_dataset(
             data[0],
-            train_indexes=splits["train_indexes"],
-            test_indexes=splits["test_indexes"],
-            val_indexes=splits["val_indexes"],
+            train_indexes=train_idx,
+            test_indexes=test_idx,
+            val_indexes=val_idx,
         )
         data_y = split_dataset(
             data[1],
-            train_indexes=splits["train_indexes"],
-            test_indexes=splits["test_indexes"],
-            val_indexes=splits["val_indexes"],
+            train_indexes=train_idx,
+            test_indexes=test_idx,
+            val_indexes=val_idx,
         )
         # Inputs stay unprepared (see the class docstring); targets are encoded
         # because explainers compare them against the model's class indexes.

@@ -84,7 +84,9 @@ class PrepareAndFoldUnit(BaseUnit, SplitterScopeMixin):
         x_folds, y_folds, split_indexes = self._split(x, y)
         if preprocessing is not None:
             names = [f"fold_{i}" for i in range(len(x_folds) - 1)] + ["final"]
-            x_folds = self._apply_preprocessing(x_folds, names, preprocessing)
+            x_folds, y_folds = self._apply_preprocessing(
+                x_folds, names, preprocessing, self.config["output_columns"]
+            )
 
         ctx.put_ref("task_name", self.config["task_name"])
         ctx.put_ref("split_indexes", split_indexes)
