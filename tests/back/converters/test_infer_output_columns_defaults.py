@@ -54,6 +54,11 @@ class _Undeclared(_FakeConverter):
     pass
 
 
+class _TrainOnlyRows(_FakeConverter):
+    COLUMN_OPERATION = "rows"
+    ROWS_APPLY_TO = "train"
+
+
 def _inputs():
     return [
         ColumnItem(name="age", type="Integer", dtype="int64"),
@@ -135,3 +140,17 @@ def test_metadata_exposes_column_operation():
 def test_type_fields_reads_display_name_and_dtype():
     assert type_fields(Integer(arrow_type=pa.int32())) == ("Integer", "int32")
     assert type_fields(None) == (None, None)
+
+
+def test_train_only_rows_keeps_the_scope_and_drops_the_rest():
+    inputs = _inputs()
+    delta = _TrainOnlyRows().infer_output_columns(inputs)
+
+    assert delta.kept == inputs
+    assert delta.added == []
+    assert delta.drops_unscoped is True
+
+
+def test_metadata_exposes_rows_apply_to():
+    assert _TrainOnlyRows.get_metadata()["rows_apply_to"] == "train"
+    assert _Rows.get_metadata()["rows_apply_to"] is None

@@ -75,6 +75,10 @@ class StructureDelta(BaseModel):
 
     kept: List[StateItem] = Field(default_factory=list)
     added: List[StateItem] = Field(default_factory=list)
+    # True for a converter whose output keeps only its scope (e.g. a
+    # training-only resampler): every state item outside the scope is gone
+    # after the step.
+    drops_unscoped: bool = False
     warnings: List[StructureMessage] = Field(default_factory=list)
 
 

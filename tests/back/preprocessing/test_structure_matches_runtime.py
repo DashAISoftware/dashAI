@@ -104,6 +104,10 @@ CASES = [
     ("DateFeaturesConverter", {}, ["date"]),
     ("TypeCast", {"new_type": "Float"}, ["i_full"]),
     ("ColumnRemover", {}, ["f1"]),
+    ("SMOTEConverter", {"random_state": 0}, ["i_full", "f1"]),
+    ("SMOTEENNConverter", {"random_state": 0}, ["i_full", "f1"]),
+    ("RandomUnderSamplerConverter", {"random_state": 0}, ["i_full", "f1"]),
+    ("NanRemover", {}, ["i_null", "f_null"]),
 ]
 
 
@@ -167,6 +171,13 @@ def _converter_classes():
 
 def _is_rows(cls):
     return cls.COLUMN_OPERATION == "rows"
+
+
+def _unsupported_rows(cls):
+    return _is_rows(cls) and getattr(cls, "ROWS_APPLY_TO", None) not in (
+        "train",
+        "splits",
+    )
 
 
 def _dataset():
@@ -236,6 +247,28 @@ def test_estimated_structure_matches_runtime(case):
     else:
         converter.fit(x)
     transformed = converter.transform(x)
+
+    if getattr(cls, "ROWS_APPLY_TO", None) == "splits":
+        # Row removal on every split: the step keeps its scope columns and
+        # exactly the rows with no missing value in them.
+        frame = x.to_pandas()
+        expected = [i for i in range(len(frame)) if not frame.iloc[i].isna().any()]
+        assert converter.rows_to_keep(x) == expected
+        assert list(transformed.column_names) == scope
+        assert [item.name for item in delta.kept] == scope
+        assert delta.drops_unscoped is True
+        return
+
+    if delta.drops_unscoped:
+        # A training-only resampler keeps its scope columns (only rows change)
+        # plus the target it resampled along with them, and drops the rest.
+        assert list(transformed.column_names) == scope + ["target"]
+        assert [item.name for item in delta.kept] == scope
+        for item in delta.kept:
+            real = type_fields(transformed.types[item.name])[0]
+            assert real == item.type, f"type of kept {item.name}"
+        assert delta.added == []
+        return
     rebuilt = rebuild_dataset_with_transformed_columns(
         dataset,
         transformed,
@@ -303,7 +336,7 @@ def test_every_converter_is_covered():
     uncovered = {
         name
         for name, cls in _converter_classes().items()
-        if not _is_rows(cls) and name not in covered
+        if not _unsupported_rows(cls) and name not in covered
     }
     assert uncovered == set(), "add a CASES entry for every new converter"
 
@@ -313,9 +346,9 @@ def test_rows_operation_matches_changes_row_count():
         assert _is_rows(cls) == bool(cls.CHANGES_ROW_COUNT), name
 
 
-def test_rows_converters_are_not_supported_in_sessions():
+def test_unsupported_rows_converters_are_rejected_in_sessions():
     for cls in _converter_classes().values():
-        if not _is_rows(cls):
+        if not _unsupported_rows(cls):
             continue
         with pytest.raises(RowsNotSupportedError):
             BaseConverter.infer_output_columns(

@@ -440,6 +440,16 @@ class GenerateLocalExplanationUnit(BaseUnit):
             )
         except Exception as e:
             log.exception(e)
+            # As in prediction: a model that cannot handle missing values
+            # fails with a technical error, so name the rows and columns.
+            from DashAI.back.types.missing_values import missing_values_message
+
+            instances = x["train"] if isinstance(x, DatasetDict) else x
+            message = missing_values_message(
+                instances, list(self.config["input_columns"])
+            )
+            if message is not None:
+                raise JobError(message) from e
             raise JobError(
                 "Failed to generate the explanation",
             ) from e

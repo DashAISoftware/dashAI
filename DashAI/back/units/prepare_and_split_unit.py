@@ -55,7 +55,8 @@ class PrepareAndSplitUnit(BaseUnit, SplitterScopeMixin):
     to supply. With them the task is validated on the raw refs alone, the
     split carries every raw column, and the one entry is transformed with
     ``final.pkl`` before it is published, so what comes out is what the
-    model reads.
+    model reads. ``y`` is read from the transformed entry too, so a step
+    that adds or removes rows keeps the target aligned with the inputs.
     """
 
     SCHEMA = PrepareAndSplitSchema
@@ -89,7 +90,9 @@ class PrepareAndSplitUnit(BaseUnit, SplitterScopeMixin):
         if preprocessing is not None:
             # A holdout split is a single entry, and the job fitted it as the
             # trailing one.
-            (x,) = self._apply_preprocessing([x], ["final"], preprocessing)
+            (x,), (y,) = self._apply_preprocessing(
+                [x], ["final"], preprocessing, self.config["output_columns"]
+            )
 
         ctx.put_ref("task_name", self.config["task_name"])
         ctx.put_ref("split_indexes", split_indexes)

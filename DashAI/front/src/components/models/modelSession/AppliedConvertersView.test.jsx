@@ -130,7 +130,9 @@ describe("AppliedConvertersView", () => {
     // The second card's scope names the first converter's output.
     expect(screen.getByText("Bag of Words: output")).toBeInTheDocument();
     // Each card's output block shows its size, N when unknown.
-    expect(screen.getAllByText("Bag of Words: output (N)").length).toBe(1);
+    expect(screen.getAllByText("Bag of Words: output (N columns)").length).toBe(
+      1,
+    );
   });
 
   it("shows one chip per estimated block when a step's output mixes types", async () => {
@@ -155,9 +157,9 @@ describe("AppliedConvertersView", () => {
 
     renderView({ newExp, setNewExp: () => {}, structure });
 
-    expect(await screen.findAllByText("SelectKBest: output (N)")).toHaveLength(
-      2,
-    );
+    expect(
+      await screen.findAllByText("SelectKBest: output (N columns)"),
+    ).toHaveLength(2);
     expect(screen.getByText("Float")).toBeInTheDocument();
   });
 

@@ -86,13 +86,26 @@ export const itemToRef = (item) => {
     : { kind: "group", step: item.step, slot: item.slot };
 };
 
-const blockLabel = (block, stepName) => {
+// English text for callers that pass no translation function (e.g. tests).
+const englishLabels = (key, params = {}) =>
+  ({
+    "models:structure.output": "output",
+    "models:structure.unknownColumns": "N columns",
+    "models:structure.columns":
+      params.count === 1 ? "1 column" : `${params.count} columns`,
+  })[key] ?? key;
+
+const blockLabel = (block, stepName, t) => {
   const base =
     block.label && block.label !== "output"
       ? `${stepName}: ${block.label}`
-      : `${stepName}: output`;
-  // "N" when the column count is only known after fit.
-  return `${base} (${block.count ?? "N"})`;
+      : `${stepName}: ${t("models:structure.output")}`;
+  // "N columns" when the column count is only known after fit.
+  const size =
+    block.count == null
+      ? t("models:structure.unknownColumns")
+      : t("models:structure.columns", { count: block.count });
+  return `${base} (${size})`;
 };
 
 /**
@@ -105,8 +118,14 @@ const blockLabel = (block, stepName) => {
  * @param {Array<object>} state items from a StructureResult state
  * @param {string[]} stepDisplayNames one name per step (see
  *   buildStepDisplayNames)
+ * @param {Function} [t] i18next translation function for the block labels
+ *   ("output", column counts); English when omitted
  */
-export function stateToOptions(state, stepDisplayNames = []) {
+export function stateToOptions(
+  state,
+  stepDisplayNames = [],
+  t = englishLabels,
+) {
   const allKeys = [];
   const columnTypes = {};
   const optionLabels = {};
@@ -115,7 +134,11 @@ export function stateToOptions(state, stepDisplayNames = []) {
     allKeys.push(key);
     columnTypes[key] = { type: item.type ?? null, dtype: item.dtype ?? null };
     if (item.kind === "block") {
-      optionLabels[key] = blockLabel(item, stepDisplayNames[item.step] ?? "");
+      optionLabels[key] = blockLabel(
+        item,
+        stepDisplayNames[item.step] ?? "",
+        t,
+      );
     } else if (item.origin != null) {
       optionLabels[key] = item.name;
     }
@@ -127,13 +150,14 @@ export function stateToOptions(state, stepDisplayNames = []) {
  * A label for a ColumnRef without the estimated structure, for sessions
  * that are already created (e.g. the session info panel).
  */
-export function labelForRef(ref, stepDisplayNames = []) {
+export function labelForRef(ref, stepDisplayNames = [], t = englishLabels) {
   if (ref.kind === "raw") return ref.name;
   if (ref.name != null) return ref.name;
   const stepName = stepDisplayNames[ref.step] ?? `${ref.step}`;
+  const output = t("models:structure.output");
   return ref.slot == null
-    ? `${stepName}: output`
-    : `${stepName}: output (${ref.slot})`;
+    ? `${stepName}: ${output}`
+    : `${stepName}: ${output} (${ref.slot})`;
 }
 
 /**

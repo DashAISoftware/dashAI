@@ -42,8 +42,8 @@ export default function ScopeStepSessionConverter({
   const inputCardinality = tool?.metadata?.input_cardinality || {};
 
   const { columnTypes: columnTypesForSelector, optionLabels } = useMemo(
-    () => stateToOptions(finalState, stepDisplayNames),
-    [finalState, stepDisplayNames],
+    () => stateToOptions(finalState, stepDisplayNames, t),
+    [finalState, stepDisplayNames, t],
   );
 
   const handleSelectionChange = (selected) => {

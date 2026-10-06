@@ -7,6 +7,10 @@ from DashAI.back.converters.scikit_learn.standard_scaler import StandardScaler
 from DashAI.back.converters.simple_converters.date_features import (
     DateFeaturesConverter,
 )
+from DashAI.back.converters.simple_converters.nan_remover import NanRemover
+from DashAI.back.converters.simple_converters.time_resampler import (
+    TimeResamplerConverter,
+)
 from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
     transform_dataset_with_schema,
@@ -20,6 +24,7 @@ from DashAI.back.preprocessing.column_ref import (
 from DashAI.back.preprocessing.session_preprocessor import SessionPreprocessor
 from DashAI.back.preprocessing.structure import infer_structure
 from DashAI.back.preprocessing.structure_types import BlockItem, ColumnItem
+from DashAI.back.splitters.splits_payload import schema_placeholder_defaults
 
 REGISTRY = {
     cls.__name__: {"class": cls}
@@ -29,6 +34,8 @@ REGISTRY = {
         StandardScaler,
         DateFeaturesConverter,
         SMOTEConverter,
+        NanRemover,
+        TimeResamplerConverter,
     )
 }
 
@@ -135,10 +142,32 @@ def test_a_scope_type_the_converter_does_not_accept_is_an_error():
     assert result.steps[0].error.code == "type_not_allowed"
 
 
-def test_row_changing_converters_are_not_supported():
-    result = _infer([_step("SMOTEConverter", [RawColumnRef(name="age")])])
+def test_row_changing_converters_without_a_split_rule_are_not_supported():
+    params = schema_placeholder_defaults(TimeResamplerConverter)
+    result = _infer(
+        [_step("TimeResamplerConverter", [RawColumnRef(name="date")], **params)]
+    )
 
     assert result.steps[0].error.code == "rows_not_supported"
+
+
+def test_a_resampler_keeps_its_scope_and_drops_every_other_column():
+    result = _infer(
+        [
+            _step(
+                "SMOTEConverter",
+                [RawColumnRef(name="age"), RawColumnRef(name="height")],
+                random_state=0,
+            )
+        ]
+    )
+
+    step = result.steps[0]
+    assert step.status == "ok"
+    assert _names(step.state) == ["age", "height"]
+    codes = [warning.code for warning in step.warnings]
+    assert codes == ["train_only", "drops_columns"]
+    assert step.warnings[1].params == {"columns": ["city", "date"]}
 
 
 def test_more_components_than_columns_is_an_error():
@@ -226,3 +255,13 @@ def test_a_crashing_estimate_falls_back_to_one_unknown_block():
     (block,) = step.added
     assert (block.type, block.count) == (None, None)
     assert _names(step.state) == ["height"]
+
+
+def test_nan_remover_keeps_its_scope_and_warns_it_removes_rows_everywhere():
+    result = _infer([_step("NanRemover", [RawColumnRef(name="age")])])
+
+    step = result.steps[0]
+    assert step.status == "ok"
+    assert _names(step.state) == ["age"]
+    codes = [warning.code for warning in step.warnings]
+    assert codes == ["rows_removed_in_splits", "drops_columns"]

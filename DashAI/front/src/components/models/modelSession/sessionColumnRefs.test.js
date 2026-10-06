@@ -255,8 +255,39 @@ describe("sessionColumnRefs", () => {
 
       expect(optionLabels[allKeys[0]]).toBeUndefined();
       expect(optionLabels[allKeys[1]]).toBe("date_month");
-      expect(optionLabels[allKeys[2]]).toBe("PCA: output (2)");
-      expect(optionLabels[allKeys[3]]).toBe("One Hot Encoder: ohe_* (N)");
+      expect(optionLabels[allKeys[2]]).toBe("PCA: output (2 columns)");
+      expect(optionLabels[allKeys[3]]).toBe(
+        "One Hot Encoder: ohe_* (N columns)",
+      );
+    });
+
+    it("translates block labels, with a singular for one column", () => {
+      const spanish = (key, params = {}) =>
+        ({
+          "models:structure.output": "salida",
+          "models:structure.unknownColumns": "N columnas",
+          "models:structure.columns":
+            params.count === 1 ? "1 columna" : `${params.count} columnas`,
+        })[key];
+
+      const { allKeys, optionLabels } = stateToOptions(
+        state,
+        stepNames,
+        spanish,
+      );
+      const single = stateToOptions(
+        [{ ...state[2], count: 1 }],
+        stepNames,
+        spanish,
+      );
+
+      expect(optionLabels[allKeys[2]]).toBe("PCA: salida (2 columnas)");
+      expect(optionLabels[allKeys[3]]).toBe(
+        "One Hot Encoder: ohe_* (N columnas)",
+      );
+      expect(single.optionLabels[single.allKeys[0]]).toBe(
+        "PCA: salida (1 columna)",
+      );
     });
   });
 
@@ -274,6 +305,14 @@ describe("sessionColumnRefs", () => {
       expect(
         labelForRef({ kind: "group", step: 0, slot: "Float" }, stepNames),
       ).toBe("PCA: output (Float)");
+    });
+
+    it("translates the word output", () => {
+      const spanish = (key) => ({ "models:structure.output": "salida" })[key];
+
+      expect(labelForRef({ kind: "group", step: 0 }, stepNames, spanish)).toBe(
+        "PCA: salida",
+      );
     });
   });
 });

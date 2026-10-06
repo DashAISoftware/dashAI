@@ -30,7 +30,9 @@ import { buildStepDisplayNames, stateToOptions } from "./sessionColumnRefs";
  * (and scoped) against the estimated final dataset state: the surviving
  * candidate columns plus everything earlier steps produced, never the
  * output column. Converters that change the number of rows are hidden,
- * since sessions do not support them yet.
+ * except training-only resamplers (rows_apply_to "train", e.g. SMOTE) and
+ * row removers that run on every split (rows_apply_to "splits", e.g.
+ * NanRemover): sessions do not support the others yet.
  */
 export default function SessionConvertersRightBar({
   newExp,
@@ -76,8 +78,8 @@ export default function SessionConvertersRightBar({
   const finalState = structure?.final;
 
   const { columnTypes: allColumnTypes } = useMemo(
-    () => stateToOptions(finalState, stepDisplayNames),
-    [finalState, stepDisplayNames],
+    () => stateToOptions(finalState, stepDisplayNames, t),
+    [finalState, stepDisplayNames, t],
   );
 
   const datasetColumns = useMemo(
@@ -131,7 +133,11 @@ export default function SessionConvertersRightBar({
   const validatedConverters = useMemo(
     () =>
       converters
-        .filter((converter) => converter.metadata?.column_operation !== "rows")
+        .filter(
+          (converter) =>
+            converter.metadata?.column_operation !== "rows" ||
+            ["train", "splits"].includes(converter.metadata?.rows_apply_to),
+        )
         .map((converter) => {
           const validation = validateConverter(converter);
           return { ...converter, ...validation };

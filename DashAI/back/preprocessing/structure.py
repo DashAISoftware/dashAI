@@ -9,7 +9,7 @@ to show which columns exist after every step, and session creation uses it
 to reject a chain that would reference a column that no longer exists.
 """
 
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from DashAI.back.converters.dataset_columns import plan_new_column_names
 from DashAI.back.preprocessing.column_ref import ConverterStep
@@ -150,9 +150,45 @@ def _apply_step(
         )
     warnings.extend(delta.warnings)
     warnings.extend(_check_bounds(converter_class, converter, scope))
+    if delta.drops_unscoped:
+        warnings.extend(
+            _drop_warnings(
+                state, scope, getattr(converter_class, "ROWS_APPLY_TO", None)
+            )
+        )
 
     new_state, added = _apply_delta(index, state, scope, delta, taken)
+    if delta.drops_unscoped:
+        # The runtime replaces the dataset with the step's scope plus the
+        # target, so only those names remain taken.
+        scope_names = {item.name for item in scope if isinstance(item, ColumnItem)}
+        taken.intersection_update(scope_names | target)
     return new_state, added, warnings
+
+
+def _drop_warnings(
+    state: List[StateItem], scope: List[StateItem], rows_apply_to: Optional[str]
+) -> List[StructureMessage]:
+    """Tell the user where a row-changing step applies and what it drops.
+
+    Used for a step whose output keeps only its scope. A training-only
+    resampler ("train") leaves validation, test and prediction rows as they
+    are; a row remover ("splits") removes rows on every split but never at
+    prediction. Either way every column outside its scope is gone after it.
+    """
+    first = "train_only" if rows_apply_to == "train" else "rows_removed_in_splits"
+    warnings = [StructureMessage(code=first)]
+    scope_ids = {_identity(item) for item in scope}
+    dropped = [
+        item.name if isinstance(item, ColumnItem) else item.label
+        for item in state
+        if _identity(item) not in scope_ids
+    ]
+    if dropped:
+        warnings.append(
+            StructureMessage(code="drops_columns", params={"columns": dropped})
+        )
+    return warnings
 
 
 def _instantiate(converter_class: Any, params: Dict[str, Any]) -> Any:
@@ -352,7 +388,8 @@ def _apply_delta(
     for item in state:
         item_id = _identity(item)
         if item_id not in scope_ids:
-            new_state.append(item)
+            if not delta.drops_unscoped:
+                new_state.append(item)
         elif item_id in kept:
             new_state.append(kept[item_id])
         elif isinstance(item, ColumnItem):

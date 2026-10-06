@@ -146,8 +146,21 @@ class PredictUnit(BaseUnit):
         model = ctx.require("model")
         train_dataset = ctx.require("train_dataset")
 
-        prepared_dataset = model_input.select_columns(self.config["input_columns"])
-        y_pred_proba = np.array(model.predict(prepared_dataset))
+        input_columns = self.config["input_columns"]
+        prepared_dataset = model_input.select_columns(input_columns)
+        try:
+            y_pred_proba = np.array(model.predict(prepared_dataset))
+        except Exception as e:
+            # Most models (KNN, SVM, logistic regression...) cannot predict rows
+            # with missing values, and scikit-learn only says "Input X contains
+            # NaN". Name the rows and columns instead; any other failure keeps
+            # its own error. Models that accept missing values never get here.
+            from DashAI.back.types.missing_values import missing_values_message
+
+            message = missing_values_message(prepared_dataset, list(input_columns))
+            if message is None:
+                raise
+            raise ValueError(message) from e
         y_pred = task.process_predictions(
             train_dataset, y_pred_proba, self.config["output_columns"][0]
         )

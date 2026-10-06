@@ -351,8 +351,6 @@
   },
   "structure": {
     "currentState": "预处理后的数据集",
-    "columnsCount": "{{count}} 列",
-    "unknownCount": "N 列，训练后才能确定",
     "blocked": "请先修正上一步，再检查这一步。",
     "loadError": "无法估计预处理结果。",
     "missing_ref": "“{{ref}}”在链的这一位置不存在：之前的某一步可能已将其消耗。",
@@ -367,6 +365,13 @@
     "converter_rejected": "转换器拒绝此配置：{{detail}}",
     "inference_fallback": "无法预先确定此转换器的结果；其输出显示为一个大小未知的块。",
     "count_unknown_bound": "要求 {{n_components}} 个成分；列数是否足够要到训练时才能确定。",
-    "cast_may_skip": "无法转换为 {{new_type}} 的列会保留其原始类型。"
+    "cast_may_skip": "无法转换为 {{new_type}} 的列会保留其原始类型。",
+    "train_only": "仅应用于训练数据：验证集、测试集和预测不会被修改。",
+    "drops_columns": "其作用范围之外的列将被删除：{{columns}}。",
+    "rows_removed_in_splits": "在训练集、验证集和测试集中删除含缺失值的行，因此指标只使用完整的行。预测时不会删除任何行。",
+    "output": "输出",
+    "columns_one": "{{count}} 列",
+    "columns_other": "{{count}} 列",
+    "unknownColumns": "N 列"
   }
 }

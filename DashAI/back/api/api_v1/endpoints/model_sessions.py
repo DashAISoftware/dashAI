@@ -382,6 +382,51 @@ def _validate_splits(splits: str, component_registry: "ComponentRegistry") -> No
         ) from e
 
 
+# A training-only resampler runs twice (PreprocessingJob and ModelJob replay
+# the chain), so both runs must draw the same rows.
+DEFAULT_RESAMPLING_SEED = 42
+
+
+def _with_resampling_seeds(steps, component_registry):
+    """Give every training-only resampling step without a seed a fixed one.
+
+    Stored in the step's params, so it is visible in the session info. A
+    seed the user chose is kept.
+
+    Parameters
+    ----------
+    steps : list of ConverterStep
+        The session's preprocessing steps, as submitted.
+    component_registry : ComponentRegistry
+        Resolves each step's converter class.
+
+    Returns
+    -------
+    list of ConverterStep
+        The steps, with `random_state` filled in where it was missing.
+    """
+    seeded = []
+    for step in steps:
+        converter_class = (
+            component_registry[step.converter]["class"]
+            if step.converter in component_registry
+            else None
+        )
+        needs_seed = (
+            converter_class is not None
+            and getattr(converter_class, "ROWS_APPLY_TO", None) == "train"
+            and step.params.get("random_state") is None
+        )
+        if needs_seed:
+            step = step.model_copy(
+                update={
+                    "params": {**step.params, "random_state": DEFAULT_RESAMPLING_SEED}
+                }
+            )
+        seeded.append(step)
+    return seeded
+
+
 def _check_preprocessing_structure(
     db, params, sequence, input_column_refs, component_registry
 ) -> None:
@@ -467,7 +512,9 @@ async def create_model_session(
 
     _validate_splits(params.splits, component_registry)
 
-    sequence = ConverterSequence(steps=params.preprocessing)
+    sequence = ConverterSequence(
+        steps=_with_resampling_seeds(params.preprocessing, component_registry)
+    )
     try:
         sequence.validate_scopes()
     except ValueError as e:

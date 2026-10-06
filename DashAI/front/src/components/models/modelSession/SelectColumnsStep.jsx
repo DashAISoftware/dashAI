@@ -62,7 +62,7 @@ function SelectColumnsStep({
   });
 
   const stepDisplayNames = buildStepDisplayNames(steps, convertersMeta);
-  const finalOptions = stateToOptions(structure?.final, stepDisplayNames);
+  const finalOptions = stateToOptions(structure?.final, stepDisplayNames, t);
   const inputOptionNames = withPreprocessing
     ? finalOptions.allKeys
     : rawColumnNames;
@@ -95,10 +95,18 @@ function SelectColumnsStep({
   const inputColumnRefs = inputSelection.map(keyToRef);
   const rawInputNames = inputSelection.filter((key) => !isGroupKey(key));
 
+  // With preprocessing, the input options and their defaults arrive with the
+  // estimated structure, after the step has already rendered: until then an
+  // empty or unchecked selection is not a user mistake, so no validation
+  // error (alert or "Required") may show. useLayoutEffect cannot hide this
+  // gap, since it cannot wait for a network response.
+  const awaitingStructure = withPreprocessing && !structure;
+  const inputMissing = !awaitingStructure && inputSelection.length === 0;
+
   const columnsReady =
     inputSelection.length >= 1 &&
     outputColumnNames.length >= 1 &&
-    (!withPreprocessing || Boolean(structure));
+    !awaitingStructure;
   const [columnsAreValid, setColumnsAreValid] = useState(false);
   const [validationPending, setValidationPending] = useState(true);
 
@@ -192,6 +200,12 @@ function SelectColumnsStep({
   };
 
   useLayoutEffect(() => {
+    if (awaitingStructure) {
+      // A pending check, not an invalid selection (see awaitingStructure).
+      setColumnsAreValid(false);
+      setValidationPending(true);
+      return;
+    }
     if (!columnsReady) {
       setColumnsAreValid(false);
       setValidationPending(false);
@@ -201,7 +215,12 @@ function SelectColumnsStep({
       setValidationPending(true);
       validateColumns();
     }
-  }, [columnsReady, inputSelection.join(","), outputColumnNames.join(",")]);
+  }, [
+    columnsReady,
+    awaitingStructure,
+    inputSelection.join(","),
+    outputColumnNames.join(","),
+  ]);
 
   useEffect(() => {
     if (columnsAreValid && columnsReady) {
@@ -377,10 +396,8 @@ function SelectColumnsStep({
           onInputColumnNamesChange={setInputSelection}
           selectedOutputColumnNames={outputColumnNames}
           onOutputColumnNamesChange={setOutputColumnNames}
-          inputError={inputSelection.length === 0}
-          inputHelperText={
-            inputSelection.length === 0 ? t("common:required") : ""
-          }
+          inputError={inputMissing}
+          inputHelperText={inputMissing ? t("common:required") : ""}
           outputError={outputColumnNames.length === 0}
           outputHelperText={
             outputColumnNames.length === 0 ? t("common:required") : ""

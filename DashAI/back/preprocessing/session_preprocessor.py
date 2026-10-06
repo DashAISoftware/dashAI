@@ -20,6 +20,20 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
+def _row_rule(converter: Any) -> Optional[str]:
+    """Where a row-changing converter runs in a session, or None.
+
+    "train": only on the training split (resampling). "splits": on every
+    split, never on prediction inputs (row removal). None for converters
+    that keep their rows, or row-changing ones sessions do not support.
+    """
+    converter_class = type(converter)
+    if not converter_class.CHANGES_ROW_COUNT:
+        return None
+    rule = getattr(converter_class, "ROWS_APPLY_TO", None)
+    return rule if rule in ("train", "splits") else None
+
+
 class SessionPreprocessor:
     """Fits and applies converters from a ConverterSequence.
 
@@ -131,6 +145,67 @@ class SessionPreprocessor:
             ).items()
         }
 
+    def _apply_row_step(
+        self,
+        converter: Any,
+        current: Dict[str, "DashAIDataset"],
+        scope_names: List[str],
+        rule: str,
+        fit: bool,
+    ) -> Dict[str, "DashAIDataset"]:
+        """Apply a row-changing step to every split, following its rule.
+
+        Every split keeps only the step's scope and, when present, the
+        target, as the converter's own output does in notebooks, so all
+        splits share the same columns. A prediction input ("predict") never
+        loses or gains rows.
+
+        - "train": the train split is resampled, fitting the converter on it
+          every time (a resampler learns nothing to apply to other data);
+          every other split keeps its rows.
+        - "splits": every split but "predict" keeps only the rows the
+          converter reports with ``rows_to_keep``, cut on the whole split so
+          inputs and target stay aligned. The converter is fit once, on the
+          train split, when ``fit`` is true.
+        """
+        name = type(converter).__name__
+        target_columns = list(getattr(self, "target_columns", None) or [])
+        if rule == "train" and len(target_columns) != 1:
+            raise ValueError(
+                f"{name} needs exactly one target column to resample, "
+                f"got {len(target_columns)}."
+            )
+        if rule == "splits" and fit and "train" in current:
+            converter.fit(current["train"].select_columns(scope_names))
+
+        new_current = {}
+        for split_name, dataset in current.items():
+            has_target = bool(target_columns) and all(
+                c in dataset.column_names for c in target_columns
+            )
+            keep = scope_names + (target_columns if has_target else [])
+            if split_name == "predict" or (rule == "train" and split_name != "train"):
+                new_current[split_name] = dataset.select_columns(keep)
+                continue
+            if rule == "train":
+                if not has_target:
+                    raise ValueError(
+                        f"{name} needs the target column '{target_columns[0]}' "
+                        "in the training split."
+                    )
+                scoped = dataset.select_columns(scope_names)
+                target = dataset.select_columns(target_columns)
+                converter.fit(scoped, target)
+                new_current["train"] = converter.transform(scoped, target)
+                continue
+            positions = converter.rows_to_keep(dataset.select_columns(scope_names))
+            if dataset.num_rows > 0 and not positions:
+                raise ValueError(
+                    f"{name} removed every row of the '{split_name}' split."
+                )
+            new_current[split_name] = dataset.select(positions).select_columns(keep)
+        return new_current
+
     @staticmethod
     def _transform_split(converter, dataset, scope_names, train_transformed):
         """Transform one split's scoped columns, without crashing on 0 rows.
@@ -193,6 +268,20 @@ class SessionPreprocessor:
             )
             converter = self._instantiate(step)
 
+            rule = _row_rule(converter)
+            if rule is not None:
+                current = self._apply_row_step(
+                    converter, current, scope_names, rule, fit=True
+                )
+                # The step's output columns are its scope columns; the target
+                # that travels alongside them is not a column of its.
+                self.resolved_columns[index] = list(scope_names)
+                self.resolved_slots[index] = self._classify_by_type(
+                    converter, scope_names
+                )
+                self.fitted_converters.append(converter)
+                continue
+
             train_scope = current["train"].select_columns(scope_names)
             converter = self._fit(converter, current["train"], train_scope)
 
@@ -249,6 +338,13 @@ class SessionPreprocessor:
                 self.resolved_slots,
             )
 
+            rule = _row_rule(converter)
+            if rule is not None:
+                current = self._apply_row_step(
+                    converter, current, scope_names, rule, fit=False
+                )
+                continue
+
             train_transformed = None
             if "train" in current:
                 train_transformed = converter.transform(
@@ -281,8 +377,78 @@ class SessionPreprocessor:
         return current
 
     def transform_dataset(self, dataset: "DashAIDataset") -> "DashAIDataset":
-        """Convenience wrapper for a single dataset (predict/explain use)."""
-        return self.transform_only({"train": dataset})["train"]
+        """Transform a single dataset (predict/explain use).
+
+        Wrapped under its own "predict" key, never "train", so no step adds
+        or removes rows of it: neither resampling nor row removal
+        (NanRemover) touches prediction inputs.
+        """
+        return self.transform_only({"predict": dataset})["predict"]
+
+
+def transform_by_split(
+    preprocessor: "SessionPreprocessor",
+    dataset: "DashAIDataset",
+    train_indexes: List[int],
+    test_indexes: List[int],
+    val_indexes: List[int],
+) -> Tuple["DashAIDataset", List[int], List[int], List[int]]:
+    """Transform a dataset split by split, and reindex the splits.
+
+    Used by explainers, which need the run's train/test/validation rows
+    after preprocessing. Splitting first and transforming each part keeps
+    the run's indexes valid even when a step removes rows (NanRemover), and
+    the parts' keys are neither "train" nor "predict", so incomplete rows
+    are removed and no synthetic (resampled) rows are added. An empty part
+    is not transformed: it takes the transformed train part's columns with
+    no rows.
+
+    Parameters
+    ----------
+    preprocessor : SessionPreprocessor
+        The fitted preprocessor of the run's session.
+    dataset : DashAIDataset
+        The raw dataset the run was trained on.
+    train_indexes, test_indexes, val_indexes : list of int
+        The run's split indexes over ``dataset``.
+
+    Returns
+    -------
+    tuple
+        (dataset, train_indexes, test_indexes, val_indexes): the transformed
+        parts concatenated in train, test, validation order, and each
+        part's positions in it.
+    """
+    import pyarrow as pa
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import (
+        DashAIDataset,
+        split_dataset,
+    )
+
+    parts = split_dataset(
+        dataset,
+        train_indexes=train_indexes,
+        test_indexes=test_indexes,
+        val_indexes=val_indexes,
+    )
+    names = ["train", "test", "validation"]
+    non_empty = {
+        f"explain_{name}": parts[name] for name in names if parts[name].num_rows > 0
+    }
+    transformed = preprocessor.transform_only(non_empty)
+    template = transformed["explain_train"]
+    ordered = [
+        transformed.get(f"explain_{name}", template.select([])) for name in names
+    ]
+    table = pa.concat_tables([part.arrow_table for part in ordered])
+    merged = DashAIDataset(table, types=template.types)
+
+    offsets, start = [], 0
+    for part in ordered:
+        offsets.append(list(range(start, start + part.num_rows)))
+        start += part.num_rows
+    return merged, offsets[0], offsets[1], offsets[2]
 
 
 def load_final_preprocessor(model_session: Any) -> "SessionPreprocessor":

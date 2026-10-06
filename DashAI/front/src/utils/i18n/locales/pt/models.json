@@ -361,8 +361,6 @@
   },
   "structure": {
     "currentState": "Dataset após o pré-processamento",
-    "columnsCount": "{{count}} colunas",
-    "unknownCount": "N colunas, conhecido após o treinamento",
     "blocked": "Corrija a etapa anterior para verificar esta.",
     "loadError": "Não foi possível estimar o resultado do pré-processamento.",
     "missing_ref": "\"{{ref}}\" não existe neste ponto da cadeia: uma etapa anterior pode tê-la consumido.",
@@ -377,6 +375,13 @@
     "converter_rejected": "O conversor rejeita esta configuração: {{detail}}",
     "inference_fallback": "Não é possível antecipar o resultado deste conversor; sua saída é mostrada como um bloco de tamanho desconhecido.",
     "count_unknown_bound": "Pede {{n_components}} componentes; se há colunas suficientes só se sabe após o treinamento.",
-    "cast_may_skip": "Uma coluna que não puder ser convertida para {{new_type}} mantém seu tipo original."
+    "cast_may_skip": "Uma coluna que não puder ser convertida para {{new_type}} mantém seu tipo original.",
+    "train_only": "Aplicado apenas aos dados de treinamento: validação, teste e previsões não são modificados.",
+    "drops_columns": "As colunas fora do seu escopo são descartadas: {{columns}}.",
+    "rows_removed_in_splits": "Remove as linhas com valores ausentes em treinamento, validação e teste, então as métricas usam apenas linhas completas. Nenhuma linha é removida na previsão.",
+    "output": "saída",
+    "columns_one": "{{count}} coluna",
+    "columns_other": "{{count}} colunas",
+    "unknownColumns": "N colunas"
   }
 }

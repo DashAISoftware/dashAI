@@ -458,7 +458,8 @@ class SplitterScopeMixin:
         entries: List[Dict[str, "DashAIDataset"]],
         names: List[str],
         preprocessing: PersistedPreprocessing,
-    ) -> List[Dict[str, "DashAIDataset"]]:
+        output_columns: List[str],
+    ) -> Tuple[List[Dict[str, "DashAIDataset"]], List[Dict[str, "DashAIDataset"]]]:
         """Transform each entry the splitter produced with the fit made for it.
 
         ``PreprocessingJob`` fitted one ``SessionPreprocessor`` per entry, on
@@ -481,21 +482,35 @@ class SplitterScopeMixin:
             The artifact each entry was fitted under, in the same order.
         preprocessing : PersistedPreprocessing
             Where the artifacts live and which columns the model reads.
+        output_columns : list of str
+            The target columns, which every entry carries alongside its
+            inputs (see ``_prepare``).
 
         Returns
         -------
-        list of dict
-            The entries transformed and narrowed to the columns the input
-            refs resolve to against that entry's own fit. The output side
-            needs nothing: an output ref is always raw, so the splitter
-            already narrowed ``y``.
+        tuple
+            ``(x_entries, y_entries)``: the entries transformed and narrowed
+            to the columns the input refs resolve to against that entry's own
+            fit, and the matching target. The target is taken from the
+            transformed data, not from the splitter's ``y``: it travels
+            through the chain with the inputs, so a step that changes rows
+            (a resampler on train, NanRemover on every partition) changes
+            both together. No converter transforms the target itself (it is
+            never part of a scope), so without such steps it is the same
+            target the splitter produced.
+
+        Raises
+        ------
+        JobError
+            If an artifact cannot be applied, or preprocessing left a
+            partition with a different number of input and target rows.
         """
         import os
         import pickle
 
         from DashAI.back.preprocessing.column_ref import resolve_refs
 
-        transformed_entries = []
+        x_entries, y_entries = [], []
         for entry, name in zip(entries, names, strict=True):
             artifact = os.path.join(preprocessing.artifacts_path, f"{name}.pkl")
             try:
@@ -507,19 +522,26 @@ class SplitterScopeMixin:
                     preprocessor.resolved_columns,
                     preprocessor.resolved_slots,
                 )
-                transformed_entries.append(
-                    {
-                        partition: dataset.select_columns(input_columns)
-                        for partition, dataset in transformed.items()
-                    }
-                )
+                x_entry, y_entry = {}, {}
+                for partition, dataset in transformed.items():
+                    x_entry[partition] = dataset.select_columns(input_columns)
+                    y_entry[partition] = dataset.select_columns(output_columns)
             except Exception as e:
                 log.exception(e)
                 raise JobError(
                     f"Error applying the preprocessing fitted for {name} "
                     f"from {artifact}: {e}",
                 ) from e
-        return transformed_entries
+            for partition in x_entry:
+                if x_entry[partition].num_rows != y_entry[partition].num_rows:
+                    raise JobError(
+                        f"Preprocessing left {x_entry[partition].num_rows} input "
+                        f"rows but {y_entry[partition].num_rows} target rows in "
+                        f"the '{partition}' partition of {name}."
+                    )
+            x_entries.append(x_entry)
+            y_entries.append(y_entry)
+        return x_entries, y_entries
 
     def _split(self, x: "DashAIDataset", y: "DashAIDataset"):
         """Partition the pair with the configured splitter.

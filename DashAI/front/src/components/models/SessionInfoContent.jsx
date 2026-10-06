@@ -190,7 +190,7 @@ export default function SessionInfoContent({
                 key={`${step.converter}-${index}`}
                 label={stepDisplayNames[index]}
                 value={(step.scope || [])
-                  .map((ref) => labelForRef(ref, stepDisplayNames))
+                  .map((ref) => labelForRef(ref, stepDisplayNames, t))
                   .join(", ")}
               />
             ))}

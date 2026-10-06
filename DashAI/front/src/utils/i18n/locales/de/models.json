@@ -352,8 +352,6 @@
   },
   "structure": {
     "currentState": "Datensatz nach der Vorverarbeitung",
-    "columnsCount": "{{count}} Spalten",
-    "unknownCount": "N Spalten, erst nach dem Training bekannt",
     "blocked": "Korrigieren Sie den vorherigen Schritt, um diesen zu prüfen.",
     "loadError": "Das Ergebnis der Vorverarbeitung konnte nicht geschätzt werden.",
     "missing_ref": "\"{{ref}}\" existiert an dieser Stelle der Kette nicht: Ein früherer Schritt hat sie möglicherweise verbraucht.",
@@ -368,6 +366,13 @@
     "converter_rejected": "Der Converter lehnt diese Konfiguration ab: {{detail}}",
     "inference_fallback": "Das Ergebnis dieses Converters lässt sich nicht vorhersehen; seine Ausgabe wird als ein Block unbekannter Größe angezeigt.",
     "count_unknown_bound": "Es werden {{n_components}} Komponenten angefordert; ob genug Spalten vorhanden sind, zeigt sich erst beim Training.",
-    "cast_may_skip": "Eine Spalte, die nicht in {{new_type}} umgewandelt werden kann, behält ihren ursprünglichen Typ."
+    "cast_may_skip": "Eine Spalte, die nicht in {{new_type}} umgewandelt werden kann, behält ihren ursprünglichen Typ.",
+    "train_only": "Nur auf Trainingsdaten angewendet: Validierung, Test und Vorhersagen werden nicht verändert.",
+    "drops_columns": "Spalten außerhalb seines Geltungsbereichs werden entfernt: {{columns}}.",
+    "rows_removed_in_splits": "Entfernt Zeilen mit fehlenden Werten in Training, Validierung und Test, daher nutzen die Metriken nur vollständige Zeilen. Bei der Vorhersage wird keine Zeile entfernt.",
+    "output": "Ausgabe",
+    "columns_one": "{{count}} Spalte",
+    "columns_other": "{{count}} Spalten",
+    "unknownColumns": "N Spalten"
   }
 }

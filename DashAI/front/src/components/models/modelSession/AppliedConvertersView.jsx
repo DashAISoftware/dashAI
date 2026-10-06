@@ -78,9 +78,11 @@ RefChip.propTypes = {
  * column count, "N" when only known after fit).
  */
 function StateChips({ items, stepDisplayNames }) {
+  const { t } = useTranslation(["models"]);
   const { allKeys, columnTypes, optionLabels } = stateToOptions(
     items,
     stepDisplayNames,
+    t,
   );
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
@@ -123,7 +125,7 @@ function SessionConverterParametersTable({
     {
       key: t("datasets:label.scopeColumns"),
       value: step.scope
-        .map((ref) => labelForRef(ref, stepDisplayNames))
+        .map((ref) => labelForRef(ref, stepDisplayNames, t))
         .join(", "),
     },
     {

@@ -144,6 +144,36 @@ def test_validate_columns_rejects_group_refs_without_preprocessing(
     assert response.json()["dataset_status"] == "invalid"
 
 
+def test_a_resampling_step_without_a_seed_is_stored_with_seed_42(
+    client: TestClient, dataset_1: Dataset
+) -> None:
+    response = client.post(
+        "/api/v1/model-session/",
+        json={
+            **SESSION_PARAMS,
+            "dataset_id": dataset_1.id,
+            "name": "seeded-resampling-session",
+            "input_columns": [],
+            "preprocessing": [
+                {
+                    "converter": "RandomUnderSamplerConverter",
+                    "params": {"sampling_strategy": "auto", "random_state": None},
+                    "scope": [
+                        {"kind": "raw", "name": "SepalLengthCm"},
+                        {"kind": "raw", "name": "SepalWidthCm"},
+                    ],
+                }
+            ],
+            "input_column_refs": [{"kind": "raw", "name": "SepalLengthCm"}],
+        },
+    )
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["preprocessing"]["steps"][0]["params"]["random_state"] == 42
+    assert body["preprocessing_status"] == "ready", body["preprocessing_error"]
+    client.delete(f"/api/v1/model-session/{body['id']}")
+
+
 def test_bulk_delete_model_sessions(client: TestClient, dataset_1: Dataset) -> None:
     created_ids = []
     for name in ["bulk_delete_session_1", "bulk_delete_session_2"]:
