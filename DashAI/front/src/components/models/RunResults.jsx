@@ -16,22 +16,8 @@ import ReportResultsTab from "./runResults/ReportResultsTab";
 import FoldMetricsChart from "./FoldMetricsChart";
 import OuterFoldMetricsTable from "./OuterFoldMetricsTable";
 import { getReports } from "../../api/report";
-
-// A session whose splitter is "none" (clustering) trains on the whole dataset
-// and has no held-out rows to predict on, so it never offers a predictions tab.
-function getSessionSplitType(session) {
-  if (!session?.splits) return null;
-  if (typeof session.splits !== "string") {
-    return session.splits.splitType || null;
-  }
-
-  try {
-    const splits = JSON.parse(session.splits || "{}");
-    return splits.splitType || null;
-  } catch {
-    return null;
-  }
-}
+import { useStrategyKind } from "../../hooks/useStrategyKind";
+import { STRATEGY_KINDS } from "../../utils/splitsPayload";
 
 /**
  * Shows a run's results as two tab groups (metrics: live/hyperparameters,
@@ -78,7 +64,11 @@ export default function RunResults({
     handlePredictionDeleted,
   } = useRunResultsData({ run, session, onRefresh, explainerRefreshTrigger });
 
-  const supportsPredictions = getSessionSplitType(session) !== "none";
+  // A session whose strategy carves nothing (clustering) trains on the whole
+  // dataset and has no held-out rows to predict on or to report on, so it
+  // offers neither tab.
+  const supportsPredictions =
+    useStrategyKind(session?.evaluation_strategy) !== STRATEGY_KINDS.FULL;
 
   const [internalVisible, setInternalVisible] = useState(() => {
     if (run.status === 0) return false;

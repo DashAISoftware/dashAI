@@ -12,9 +12,6 @@ class UnsupervisedTask(BaseTask):
     """Base class for tasks trained without target columns."""
 
     REQUIRES_TARGET = False
-    SESSION_CONFIG_SCHEMA = {
-        "split_strategy": "none",
-    }
 
     def num_labels(
         self, dataset: "DashAIDataset", output_column: Optional[str] = None

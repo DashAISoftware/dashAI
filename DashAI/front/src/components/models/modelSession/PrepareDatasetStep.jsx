@@ -31,9 +31,6 @@ import {
  * @param {object} dataset the selected dataset
  * @param {object} datasetInfo dataset metadata fetched by the parent step
  * @param {boolean} infoLoading whether datasetInfo is still being fetched
- * @param {boolean} usesSplits false for a task that trains on the whole dataset
- *   (clustering): no strategy or partitions are configured and no session
- *   preprocessing is offered, since that is fitted per split.
  */
 function PrepareDatasetStep({
   newExp,
@@ -44,13 +41,12 @@ function PrepareDatasetStep({
   setEvaluationStrategy,
   datasetInfo,
   infoLoading,
-  usesSplits = true,
 }) {
   const { setSessionRightContent } = useModels();
   const { t } = useTranslation(["experiments", "models", "common"]);
 
   const [applyPreprocessing, setApplyPreprocessing] = useState(
-    usesSplits && Boolean(newExp.applyPreprocessing),
+    Boolean(newExp.applyPreprocessing),
   );
 
   // Values submitted by the schema generated splitter form, and whether that
@@ -83,15 +79,11 @@ function PrepareDatasetStep({
 
   const [splitsReady, setSplitsReady] = useState(false);
 
-  // SplitDatasetRows is what reports the splits as ready, and a task without
-  // splits never renders it.
-  useEffect(() => {
-    if (!usesSplits) {
-      setSplitsReady(true);
-      setSplitType("none");
-      setApplyPreprocessing(false);
-    }
-  }, [usesSplits]);
+  // Session preprocessing is fitted once per partition, so it is offered only
+  // once the strategy is known to carve some. One that carves nothing (the
+  // only one a task without a target offers) leaves nothing to fit it on.
+  const offersPreprocessing =
+    Boolean(strategyKind) && strategyKind !== STRATEGY_KINDS.FULL;
 
   useEffect(() => {
     if (
@@ -111,45 +103,31 @@ function PrepareDatasetStep({
   const updateExperiment = () => {
     const updatedExpData = {
       ...newExp,
-      // A task without splits never renders SplitDatasetRows, which is the only
-      // place that sets a strategy, so the parent's state stays null. The
-      // backend types this field as a plain str, so send the empty string it
-      // was initialised with instead of null.
-      evaluation_strategy: evaluationStrategy ?? "",
+      evaluation_strategy: evaluationStrategy,
       applyPreprocessing: applyPreprocessing,
     };
 
-    // A task that trains on the whole dataset (clustering) has no splitter to
-    // resolve; the backend recognises the session by this splitType.
-    if (!usesSplits) {
-      updatedExpData.splits = { splitType: "none" };
-    } else {
-      const splitterName = resolveSplitterName(
-        strategyKind,
-        cvType,
-        holdoutType,
-      );
-      if (splitterName) {
-        updatedExpData.splits = buildSplitsPayload({
-          splitterName,
-          splitType:
-            strategyKind === STRATEGY_KINDS.HOLDOUT
-              ? splitType
-              : SPLIT_TYPES.CV,
-          params: {
-            ...(splitterParams ?? {}),
-            // The group column select is rendered by hand, so its value is not
-            // part of the generated form's values.
-            ...(cvType?.schema?.properties?.group_column
-              ? { group_column: groupColumn }
-              : {}),
-          },
-          indexes:
-            splitType === SPLIT_TYPES.PREDEFINED
-              ? datasetPartitionsIndex
-              : rowsPartitionsIndex,
-        });
-      }
+    // A strategy that carves nothing resolves no splitter, so the session
+    // keeps the empty splits payload it started with.
+    const splitterName = resolveSplitterName(strategyKind, cvType, holdoutType);
+    if (splitterName) {
+      updatedExpData.splits = buildSplitsPayload({
+        splitterName,
+        splitType:
+          strategyKind === STRATEGY_KINDS.HOLDOUT ? splitType : SPLIT_TYPES.CV,
+        params: {
+          ...(splitterParams ?? {}),
+          // The group column select is rendered by hand, so its value is not
+          // part of the generated form's values.
+          ...(cvType?.schema?.properties?.group_column
+            ? { group_column: groupColumn }
+            : {}),
+        },
+        indexes:
+          splitType === SPLIT_TYPES.PREDEFINED
+            ? datasetPartitionsIndex
+            : rowsPartitionsIndex,
+      });
     }
 
     setNewExp(updatedExpData);
@@ -164,7 +142,6 @@ function PrepareDatasetStep({
     }
   }, [
     splitsReady,
-    usesSplits,
     splitType,
     splitterParams,
     cvType,
@@ -181,14 +158,6 @@ function PrepareDatasetStep({
   useEffect(() => {
     if (infoLoading) {
       setSessionRightContent(null);
-      return () => setSessionRightContent(null);
-    }
-    if (!usesSplits) {
-      setSessionRightContent(
-        <Alert severity="info">
-          {t("experiments:label.noSplitConfigNeeded")}
-        </Alert>,
-      );
       return () => setSessionRightContent(null);
     }
     setSessionRightContent(
@@ -224,7 +193,6 @@ function PrepareDatasetStep({
     datasetInfo,
     rowsPartitionsIndex,
     splitType,
-    usesSplits,
     splitterParams,
     paramsError,
     evaluationStrategy,
@@ -264,7 +232,7 @@ function PrepareDatasetStep({
         ) : null
       ) : null}
 
-      {usesSplits && (
+      {offersPreprocessing && (
         <Box
           sx={{
             mt: 2,
@@ -316,6 +284,5 @@ PrepareDatasetStep.propTypes = {
   setEvaluationStrategy: PropTypes.func,
   datasetInfo: PropTypes.object,
   infoLoading: PropTypes.bool,
-  usesSplits: PropTypes.bool,
 };
 export default PrepareDatasetStep;

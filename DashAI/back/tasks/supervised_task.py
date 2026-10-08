@@ -14,11 +14,6 @@ class SupervisedTask(BaseTask):
     """Base class for tasks trained with input and target columns."""
 
     REQUIRES_TARGET = True
-    SESSION_CONFIG_SCHEMA = {
-        "split_strategy": "random",
-        "supports_shuffle": True,
-        "supports_stratify": True,
-    }
 
     def num_labels(self, dataset: "DashAIDataset", output_column: str) -> int | None:
         """Return the number of unique labels in the output column for supervised tasks.

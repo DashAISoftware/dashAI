@@ -174,7 +174,6 @@ function SelectColumnsStep({
             outputs_types: [],
             outputs_cardinality: "",
             requires_target: requiresTarget,
-            session_config_schema: {},
           },
         });
       }

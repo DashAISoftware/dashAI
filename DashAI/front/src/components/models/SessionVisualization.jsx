@@ -74,8 +74,11 @@ export default function SessionVisualization() {
   const theme = useTheme();
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const isCrossValidation =
-    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
+  const strategyKind = useStrategyKind(session?.evaluation_strategy);
+  const isCrossValidation = strategyKind === STRATEGY_KINDS.CV;
+  // A strategy that carves nothing records a single full-dataset score per
+  // metric, so there is no split to switch between.
+  const usesFullMetrics = strategyKind === STRATEGY_KINDS.FULL;
 
   // This component stays mounted across session navigations (same route,
   // different :sessionId), so metricSplit would otherwise carry over from
@@ -169,19 +172,6 @@ export default function SessionVisualization() {
     () => [...runs].sort((a, b) => new Date(a.created) - new Date(b.created)),
     [runs],
   );
-
-  const sessionSplits = React.useMemo(() => {
-    if (!session?.splits) return {};
-    if (typeof session.splits === "object") return session.splits;
-
-    try {
-      return JSON.parse(session.splits);
-    } catch {
-      return {};
-    }
-  }, [session?.splits]);
-
-  const usesFullMetrics = sessionSplits.splitType === "none";
 
   const activeRun = React.useMemo(
     () =>

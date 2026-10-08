@@ -15,7 +15,6 @@ class BaseTask:
 
     TYPE: Final[str] = "Task"
     REQUIRES_TARGET: bool = True
-    SESSION_CONFIG_SCHEMA: Dict[str, Any] = {}
 
     PREDICTS_FORWARD_ONLY: bool = False
 
@@ -203,7 +202,7 @@ class BaseTask:
         Dict[str, Any]
             Dictionary with keys ``"inputs_types"``, ``"outputs_types"``,
             ``"inputs_cardinality"``, ``"outputs_cardinality"``, ``"inputs"``,
-            ``"outputs"``, ``"requires_target"`` and ``"session_config_schema"``.
+            ``"outputs"`` and ``"requires_target"``.
         """
         parsed_metadata: dict = {}
 
@@ -229,7 +228,6 @@ class BaseTask:
             ]
 
         parsed_metadata["requires_target"] = cls.REQUIRES_TARGET
-        parsed_metadata["session_config_schema"] = cls.SESSION_CONFIG_SCHEMA
 
         return parsed_metadata
 

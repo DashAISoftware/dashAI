@@ -75,11 +75,10 @@ function CreateSessionSteps({
     input_column_refs: [],
   });
 
-  // A task without a target (clustering) picks no output column, and one
-  // whose split strategy is "none" trains on the whole dataset.
+  // A task without a target (clustering) picks no output column. Whether the
+  // dataset is partitioned is the evaluation strategy's answer, which the
+  // prepare step reads from the strategies the task offers.
   const requiresTarget = selectedTask?.metadata?.requires_target !== false;
-  const usesSplits =
-    selectedTask?.metadata?.session_config_schema?.split_strategy !== "none";
 
   const [nextEnabled, setNextEnabled] = useState(false);
   const [currentStep, setCurrentStep] = useState(STEP_PREPARE_DATASET);
@@ -289,9 +288,9 @@ function CreateSessionSteps({
           effectiveName,
           newExp.input_columns,
           requiresTarget ? newExp.output_columns : [],
-          requiresTarget && hasTrain ? allMetricNames : [],
-          requiresTarget && hasValidation ? allMetricNames : [],
-          requiresTarget && hasTest ? allMetricNames : [],
+          hasTrain ? allMetricNames : [],
+          hasValidation ? allMetricNames : [],
+          hasTest ? allMetricNames : [],
           newExp.evaluation_strategy,
           JSON.stringify(newExp.splits),
           preprocessing,
@@ -307,9 +306,9 @@ function CreateSessionSteps({
             effectiveName,
             newExp.input_columns,
             requiresTarget ? newExp.output_columns : [],
-            requiresTarget && hasTrain ? allMetricNames : [],
-            requiresTarget && hasValidation ? allMetricNames : [],
-            requiresTarget && hasTest ? allMetricNames : [],
+            hasTrain ? allMetricNames : [],
+            hasValidation ? allMetricNames : [],
+            hasTest ? allMetricNames : [],
             newExp.evaluation_strategy,
             JSON.stringify(newExp.splits),
             preprocessing,
@@ -411,7 +410,6 @@ function CreateSessionSteps({
                 dataset={selectedDataset}
                 datasetInfo={datasetInfo}
                 infoLoading={infoLoading}
-                usesSplits={usesSplits}
               />
             )}
           </>

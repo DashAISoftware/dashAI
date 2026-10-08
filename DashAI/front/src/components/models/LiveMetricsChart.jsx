@@ -15,6 +15,7 @@ import PillToggleButtonGroup from "../shared/PillToggleButtonGroup";
 import PlotActions from "../shared/PlotActions";
 import { getTraceColors } from "../../utils/chartColors";
 import { useStrategyMetadata } from "../../hooks/useStrategyKind";
+import { STRATEGY_KINDS } from "../../utils/splitsPayload";
 import { useModels } from "./ModelsContext";
 
 const SPLITS = ["TRAIN", "VALIDATION", "TEST"];
@@ -68,7 +69,12 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
   const theme = useTheme();
   const [level, setLevel] = useState(null);
   const [split, setSplit] = useState("TRAIN");
-  const [usesFullMetrics, setUsesFullMetrics] = useState(false);
+  const strategyName =
+    useModels()?.selectedSession?.evaluation_strategy ?? null;
+  const strategyMetadata = useStrategyMetadata(strategyName);
+  // A strategy that carves nothing (clustering) records one full-dataset score
+  // per metric and nothing else, so FULL is the only split there is to show.
+  const usesFullMetrics = strategyMetadata?.kind === STRATEGY_KINDS.FULL;
   const [data, setData] = useState({});
   const [selectedMetrics, setSelectedMetrics] = useState([]);
   const [availableMetrics, setAvailableMetrics] = useState({
@@ -176,26 +182,11 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
   // once by the parent (useRunResultsData) and passed down, instead of this
   // component independently re-fetching the same /model-session/{id}.
   useEffect(() => {
-    if (!modelSessionDetail) return;
+    if (usesFullMetrics) setSplit("FULL");
+  }, [usesFullMetrics]);
 
-    let splitType;
-    if (
-      modelSessionDetail.splits &&
-      typeof modelSessionDetail.splits === "object"
-    ) {
-      splitType = modelSessionDetail.splits.splitType;
-    } else {
-      try {
-        splitType = JSON.parse(modelSessionDetail.splits || "{}").splitType;
-      } catch {
-        splitType = undefined;
-      }
-    }
-    const sessionUsesFullMetrics = splitType === "none";
-    setUsesFullMetrics(sessionUsesFullMetrics);
-    if (sessionUsesFullMetrics) {
-      setSplit("FULL");
-    }
+  useEffect(() => {
+    if (!modelSessionDetail) return;
 
     // Merged into the previous value rather than replacing it: the FULL entry
     // is written by its own effect below and must survive this one.
@@ -391,10 +382,6 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
     if (!modelSessionDetail) return true;
     return (modelSessionDetail.test_metrics ?? []).length > 0;
   }, [modelSessionDetail]);
-
-  const strategyName =
-    useModels()?.selectedSession?.evaluation_strategy ?? null;
-  const strategyMetadata = useStrategyMetadata(strategyName);
 
   const availableSplits = useMemo(() => {
     const scored = strategyMetadata?.scored_splits;

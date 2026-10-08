@@ -103,6 +103,7 @@ from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSourc
 
 # Evaluation Strategies
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
+from DashAI.back.evaluation.full_dataset import FullDatasetEvaluationStrategy
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 
 # Explainers
@@ -913,6 +914,7 @@ def get_initial_components():
         # Evaluation Strategies
         CrossValidationEvaluationStrategy,
         HoldoutEvaluationStrategy,
+        FullDatasetEvaluationStrategy,
         # Statistical tests
         AnovaTest,
         FriedmanTest,

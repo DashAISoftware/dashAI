@@ -5,6 +5,9 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
     transform_dataset_with_schema,
 )
+from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
+from DashAI.back.evaluation.full_dataset import FullDatasetEvaluationStrategy
+from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 from DashAI.back.tasks.clustering_task import ClusteringTask
 from DashAI.back.tasks.supervised_task import SupervisedTask
 from DashAI.back.tasks.unsupervised_task import UnsupervisedTask
@@ -35,19 +38,19 @@ def test_clustering_needs_no_target_column():
     assert SupervisedTask.REQUIRES_TARGET is True
 
 
-def test_clustering_asks_the_session_for_no_splits():
-    """PrepareDatasetStep hides the splitter on this value, and ModelJob reads
-    the matching ``splitType: none`` back when it runs the session."""
-    assert ClusteringTask.SESSION_CONFIG_SCHEMA["split_strategy"] == "none"
+def test_clustering_is_offered_only_the_strategy_that_carves_nothing():
+    """The wizard lists the strategies related to the task and reads their
+    kind, so this pairing is what leaves the splitter out of a clustering
+    session, and what ModelJob relies on to chain the units without a target."""
+    assert "ClusteringTask" in FullDatasetEvaluationStrategy.COMPATIBLE_COMPONENTS
+    assert FullDatasetEvaluationStrategy.KIND == "full"
+    for strategy in (HoldoutEvaluationStrategy, CrossValidationEvaluationStrategy):
+        assert "ClusteringTask" not in strategy.COMPATIBLE_COMPONENTS
 
 
-def test_the_metadata_sent_to_the_frontend_carries_both_session_flags():
-    """The screen derives ``requiresTarget`` and ``usesSplits`` from these two
-    keys, so dropping either one takes the session form down with it."""
-    metadata = ClusteringTask.get_metadata()
-
-    assert metadata["requires_target"] is False
-    assert metadata["session_config_schema"] == {"split_strategy": "none"}
+def test_the_metadata_sent_to_the_frontend_says_there_is_no_target():
+    """The screen hides the output column picker on this key."""
+    assert ClusteringTask.get_metadata()["requires_target"] is False
 
 
 def test_clustering_declares_no_output_columns():

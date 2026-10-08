@@ -138,6 +138,7 @@ class ModelJob(BaseJob):
                         run_id=run_id, db=db, component_registry=component_registry
                     )
                     model_session: ModelSession = preparation_results["model_session"]
+                    prepare = preparation_results["prepare_unit"]
 
                     LoadDatasetUnit(dataset_id=model_session.dataset_id)(ctx)
 
@@ -153,67 +154,39 @@ class ModelJob(BaseJob):
                     )
                     # The download gate lives in validate(), and running it here
                     # keeps a model that cannot be trained from being reported
-                    # as a splitting failure further down. A task without a
-                    # target gets the same order: a run with an unknown model
-                    # and a dataset the task cannot take reports the model.
+                    # as a preparation failure further down.
                     build_model.validate(ctx)
-
-                    if preparation_results["requires_target"]:
-                        prepare = preparation_results["prepare_unit"]
-                    else:
-                        # Nothing is partitioned, so preparing and building are
-                        # both part of this step and report as preparation
-                        # failures, where they always were for this kind of
-                        # task. Which metrics score it is the job's choice: all
-                        # of those the registry relates to the task.
-                        metrics = self._metrics_for_task(
-                            model_session.task_name, component_registry
-                        )
-                        PrepareWithoutTargetUnit(
-                            task_name=model_session.task_name,
-                            input_columns=model_session.input_columns,
-                            standardise=True,
-                        )(ctx)
-                        build_model(ctx)
-                        preparation_results["metrics"] = metrics
                 except Exception as e:
                     log.exception(e)
                     raise JobError(
                         f"Error preparing dataset and components for run {run_id}: {e}",
                     ) from e
 
-                requires_target = preparation_results["requires_target"]
+                try:
+                    # Preparing the dataset for the task and partitioning it are
+                    # one step: how many partitions there are and what they are
+                    # called is the strategy's and the splitter's answer, and
+                    # the units differ in the shape they publish for it. A
+                    # strategy that carves nothing publishes no partitions, so
+                    # there are no indexes to keep for a re-train.
+                    prepare(ctx)
 
-                if requires_target:
-                    try:
-                        # Preparing the dataset for the task and partitioning it are
-                        # one step: how many partitions there are and what they are
-                        # called is the splitter's answer, and the pair of units
-                        # differ only in which family of splitters they offer and in
-                        # the shape they publish for it.
-                        prepare(ctx)
-
-                        # Only the partitions are needed here, and only to ask
-                        # whether the session reserved any rows: the units read
-                        # what they work on from the context themselves.
-                        x = ctx.get("x") if ctx.has("x") else ctx.require("x_folds")
-
-                        # save the obtained splits into the database
+                    # save the obtained splits into the database
+                    if ctx.has("split_indexes"):
                         run.split_indexes = json.dumps(ctx.require("split_indexes"))
-                    except Exception as e:
-                        log.exception(e)
-                        raise JobError(
-                            f"Error splitting the dataset for run {run_id}: {e}",
-                        ) from e
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Error preparing the dataset for run {run_id}: {e}",
+                    ) from e
 
-                    try:
-                        build_model(ctx)
-                    except Exception as e:
-                        log.exception(e)
-                        raise JobError(
-                            "Error preparing dataset and components for run "
-                            f"{run_id}: {e}",
-                        ) from e
+                try:
+                    build_model(ctx)
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Error preparing dataset and components for run {run_id}: {e}",
+                    ) from e
 
                 try:
                     run.set_status_as_started()
@@ -224,36 +197,35 @@ class ModelJob(BaseJob):
                         "Connection with the database failed",
                     ) from e
 
-                if requires_target:
-                    strategy_class = preparation_results["evaluation_strategy_class"]
-                    # Which partitions a run records a score for is declared by
-                    # the strategy the session chose: a forecaster is not judged
-                    # on the dates it was fitted on, so its training partition is
-                    # not in this list even though metrics are configured for it.
-                    scored_splits = [
-                        split.name for split in strategy_class.SCORED_SPLITS
-                    ]
+                strategy_class = preparation_results["evaluation_strategy_class"]
+                # Which partitions a run records a score for is declared by the
+                # strategy the session chose: a forecaster is not judged on the
+                # dates it was fitted on, so its training partition is not in
+                # this list even though metrics are configured for it.
+                scored_splits = [split.name for split in strategy_class.SCORED_SPLITS]
 
                 self.report_progress(0.2, "Training")
                 try:
                     plot_paths = []
+                    kind = getattr(strategy_class, "KIND", "holdout")
 
-                    if not requires_target:
-                        # No evaluation strategy: nothing was held out, so the
-                        # model is fitted once and scored over the whole
-                        # dataset. The fitting unit publishes the model the
-                        # saving unit below reads.
+                    if kind == "full":
+                        # Nothing was held out, so the model is fitted once and
+                        # scored over the whole dataset, with every metric the
+                        # registry relates to the task: there is no split to
+                        # choose metrics for. The fitting unit publishes the
+                        # model the saving unit below reads.
+                        metrics = self._metrics_for_task(
+                            model_session.task_name, component_registry
+                        )
                         FitWithoutTargetUnit()(ctx)
                         ScoreClustersUnit(
-                            metrics=[
-                                metric.__name__
-                                for metric in preparation_results["metrics"]
-                            ]
+                            metrics=[metric.__name__ for metric in metrics]
                         )(ctx)
                         self._write_full_metrics(
                             db, run_id, ctx.require("metrics")["full"]
                         )
-                    elif getattr(strategy_class, "KIND", "holdout") == "holdout":
+                    elif kind == "holdout":
                         fit_model = FitModelUnit(
                             optimizer={
                                 "component": run.optimizer_name,
@@ -340,6 +312,7 @@ class ModelJob(BaseJob):
                         # uses. Whether there is anything to score is the
                         # caller's to know: a session that reserved nothing
                         # leaves that partition empty rather than absent.
+                        x = ctx.get("x") if ctx.has("x") else ctx.require("x_folds")
                         if "TEST" in scored_splits and len(x[-1]["test"]) > 0:
                             EvaluateModelUnit(run_id=run_id, splits=["TEST"])(ctx)
                 except Exception as e:
@@ -493,9 +466,6 @@ class ModelJob(BaseJob):
             If the run's session, its splits payload, its splitter, its
             optimizer or its evaluation strategy cannot be resolved.
         """
-
-        import json
-
         run: Run = db.get(Run, run_id)
 
         model_session: ModelSession = db.get(ModelSession, run.model_session_id)
@@ -508,20 +478,71 @@ class ModelJob(BaseJob):
         if not dataset:
             raise JobError(f"Dataset {model_session.dataset_id} does not exist in DB.")
 
-        # A task that declares no target (clustering) trains on the whole
-        # dataset: there is nothing to hold out, nothing to optimise against and
-        # no y_true to score predictions with, so it skips the splits payload,
-        # the splitter, the optimiser and the evaluation strategy entirely -- the
-        # session stores an empty strategy name, which must not reach the
-        # registry lookup below. A task the registry does not know falls through
-        # to the supervised path, whose unit reports it as it always has.
-        task_class = (
-            component_registry[model_session.task_name]["class"]
-            if model_session.task_name in component_registry
-            else None
-        )
-        if task_class is not None and not getattr(task_class, "REQUIRES_TARGET", True):
-            return {"requires_target": False, "model_session": model_session}
+        try:
+            evaluation_strategy_class = component_registry[
+                model_session.evaluation_strategy
+            ]["class"]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                # string is too long, so it has to be split in two
+                f"""Unable to find Evaluation Strategy with name
+                {model_session.evaluation_strategy} in registry.""",
+            ) from e
+
+        # A strategy that carves nothing has no splitter and no splits payload
+        # to read: its unit prepares the features over every row. The session
+        # API only pairs such a strategy with a task without a target, which is
+        # what lets that unit leave the target out.
+        if getattr(evaluation_strategy_class, "KIND", "holdout") == "full":
+            prepare_unit = PrepareWithoutTargetUnit(
+                task_name=model_session.task_name,
+                input_columns=model_session.input_columns,
+                standardise=True,
+            )
+        else:
+            prepare_unit = self._partitioning_unit(
+                run, model_session, component_registry
+            )
+
+        try:
+            # Get the optimizer if defined
+            optimizer: BaseOptimizer = None
+            goal_metric = None
+
+            if run.optimizer_name:
+                run_optimizer_class = component_registry[run.optimizer_name]["class"]
+                optimizer: BaseOptimizer = run_optimizer_class(
+                    **run.optimizer_parameters
+                )
+                goal_metric = component_registry[run.goal_metric]
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Error instantiating optimizer {run.optimizer_name}, {e}",
+            ) from e
+
+        return {
+            "model_session": model_session,
+            "prepare_unit": prepare_unit,
+            "evaluation_strategy_class": evaluation_strategy_class,
+            "optimizer": optimizer,
+            "goal_metric": goal_metric,
+        }
+
+    @staticmethod
+    def _partitioning_unit(run: Run, model_session: ModelSession, component_registry):
+        """Build the unit that prepares the dataset and partitions it.
+
+        Which unit it is follows from how the session's splitter carves the
+        dataset, which the splitter declares.
+
+        Raises
+        ------
+        JobError
+            If the session's splits payload or its splitter cannot be resolved.
+        """
+        import json
 
         try:
             # Unpacking the JSON column is an artifact of how the row stores
@@ -571,45 +592,7 @@ class ModelJob(BaseJob):
             prepare_config["preprocessing_artifacts_path"] = (
                 model_session.preprocessing_artifacts_path
             )
-        prepare_unit = prepare_class(**prepare_config)
-
-        try:
-            # Get the optimizer if defined
-            optimizer: BaseOptimizer = None
-            goal_metric = None
-
-            if run.optimizer_name:
-                run_optimizer_class = component_registry[run.optimizer_name]["class"]
-                optimizer: BaseOptimizer = run_optimizer_class(
-                    **run.optimizer_parameters
-                )
-                goal_metric = component_registry[run.goal_metric]
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                f"Error instantiating optimizer {run.optimizer_name}, {e}",
-            ) from e
-
-        try:
-            evaluation_strategy_class = component_registry[
-                model_session.evaluation_strategy
-            ]["class"]
-        except Exception as e:
-            log.exception(e)
-            raise JobError(
-                # string is too long, so it has to be split in two
-                f"""Unable to find Evaluation Strategy with name
-                {model_session.evaluation_strategy} in registry.""",
-            ) from e
-
-        return {
-            "requires_target": True,
-            "model_session": model_session,
-            "prepare_unit": prepare_unit,
-            "evaluation_strategy_class": evaluation_strategy_class,
-            "optimizer": optimizer,
-            "goal_metric": goal_metric,
-        }
+        return prepare_class(**prepare_config)
 
     @staticmethod
     def _metrics_for_task(task_name: str, component_registry) -> List[BaseMetric]:

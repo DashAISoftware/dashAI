@@ -9,9 +9,10 @@ calls a helper of the job, because those helpers are what the integration
 replaces.
 
 The sessions and runs are created through the API with the payload the front
-sends for a task without a target: no output columns, no metrics, an empty
-evaluation strategy and ``{"splitType": "none"}`` as splits. Rows the API
-refuses on purpose (an unknown model) are written straight to the database.
+sends for a task without a target: no output columns, no metrics, the
+``FullDatasetEvaluationStrategy`` its task offers and no splitter, so an empty
+splits payload. Rows the API refuses on purpose (an unknown model) are written
+straight to the database.
 """
 
 import json
@@ -125,8 +126,8 @@ def _create_session(
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
-            "evaluation_strategy": "",
-            "splits": json.dumps({"splitType": "none"}),
+            "evaluation_strategy": "FullDatasetEvaluationStrategy",
+            "splits": json.dumps({}),
             "preprocessing": [],
         },
     )
@@ -256,8 +257,8 @@ def test_the_session_is_stored_as_the_front_sent_it(client, session_id):
     assert session.train_metrics == []
     assert session.validation_metrics == []
     assert session.test_metrics == []
-    assert session.evaluation_strategy == ""
-    assert json.loads(session.splits) == {"splitType": "none"}
+    assert session.evaluation_strategy == "FullDatasetEvaluationStrategy"
+    assert json.loads(session.splits) == {}
     assert session.preprocessing_status == "ready"
     assert session.preprocessing_job_id is None
 
@@ -547,7 +548,7 @@ def test_a_dataset_the_task_cannot_take_is_reported(client, csv_dir, statuses):
         ModelJob(run_id=run_id).run()
 
     assert str(raised.value) == (
-        f"Error preparing dataset and components for run {run_id}: "
+        f"Error preparing the dataset for run {run_id}: "
         f"Can not prepare Dataset {dataset_id} for Task ClusteringTask"
     )
     _assert_failed_without_result(client, run_id, statuses, ["error"])

@@ -60,10 +60,13 @@ function AddModelDialog({
   onRunCreated,
 }) {
   const { enqueueSnackbar } = useSnackbar();
-  // Nested cross-validation only applies to a folded strategy, which the
-  // backend reports rather than the strategy name implying it.
-  const isCrossValidation =
-    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
+  // Nested cross-validation only applies to a folded strategy, and a search
+  // needs a held-out partition to be measured on, which a strategy that carves
+  // nothing does not make. Both are what the backend reports rather than what
+  // the strategy name implies.
+  const strategyKind = useStrategyKind(session?.evaluation_strategy);
+  const isCrossValidation = strategyKind === STRATEGY_KINDS.CV;
+  const supportsOptimization = strategyKind !== STRATEGY_KINDS.FULL;
 
   const [activeStep, setActiveStep] = useState(0);
   const [name, setName] = useState("");
@@ -105,19 +108,6 @@ function AddModelDialog({
   });
 
   const tourContext = useTourContext();
-  const sessionSplits = useMemo(() => {
-    if (!session?.splits) return {};
-    if (typeof session.splits === "object") return session.splits;
-
-    try {
-      return JSON.parse(session.splits);
-    } catch {
-      return {};
-    }
-  }, [session?.splits]);
-
-  const supportsOptimization = sessionSplits.splitType !== "none";
-
   const outerSplit = useMemo(() => {
     return session?.splits ? JSON.parse(session.splits) : null;
   }, [session?.splits]);
