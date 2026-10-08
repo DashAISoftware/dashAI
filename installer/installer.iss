@@ -28,6 +28,13 @@ SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64
 SetupIconFile=dashAI.ico
 
+[InstallDelete]
+; Installing over a previous version does not remove its files, so the old
+; *.dist-info folders would stay next to the new ones and importlib.metadata
+; (and pip, for plugins) could read the old version. User data and plugins
+; live in %USERPROFILE%\.DashAI, never in {app}.
+Type: filesandordirs; Name: "{app}\_internal"
+
 [Files]
 ; Copy all files from PyInstaller onedir output
 Source: "..\dist\dashAI-launcher-cpu\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
