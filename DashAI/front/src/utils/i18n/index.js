@@ -46,6 +46,11 @@ import credentialsES from "./locales/es/credentials.json";
 import credentialsPT from "./locales/pt/credentials.json";
 import credentialsDE from "./locales/de/credentials.json";
 import credentialsZH from "./locales/zh/credentials.json";
+import updatesEN from "./locales/en/updates.json";
+import updatesES from "./locales/es/updates.json";
+import updatesPT from "./locales/pt/updates.json";
+import updatesDE from "./locales/de/updates.json";
+import updatesZH from "./locales/zh/updates.json";
 import configurableObjectPT from "./locales/pt/configurableObject.json";
 import commonPT from "./locales/pt/common.json";
 import customPT from "./locales/pt/custom.json";
@@ -131,6 +136,7 @@ const resources = {
     hubTour: hubTourEN,
     hub: hubEN,
     credentials: credentialsEN,
+    updates: updatesEN,
   },
   es: {
     configurableObject: configurableObjectES,
@@ -154,6 +160,7 @@ const resources = {
     hubTour: hubTourES,
     hub: hubES,
     credentials: credentialsES,
+    updates: updatesES,
   },
   pt: {
     configurableObject: configurableObjectPT,
@@ -176,6 +183,7 @@ const resources = {
     generativeTour: generativeTourPT,
     hubTour: hubTourPT,
     credentials: credentialsPT,
+    updates: updatesPT,
   },
   de: {
     configurableObject: configurableObjectDE,
@@ -198,6 +206,7 @@ const resources = {
     generativeTour: generativeTourDE,
     hubTour: hubTourDE,
     credentials: credentialsDE,
+    updates: updatesDE,
   },
   zh: {
     configurableObject: configurableObjectZH,
@@ -221,6 +230,7 @@ const resources = {
     hubTour: hubTourZH,
     hub: hubZH,
     credentials: credentialsZH,
+    updates: updatesZH,
   },
 };
 
@@ -255,6 +265,7 @@ i18n
       "hubTour",
       "hub",
       "credentials",
+      "updates",
     ],
     defaultNS: "common",
 
