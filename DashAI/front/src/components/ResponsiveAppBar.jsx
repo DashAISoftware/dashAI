@@ -18,6 +18,7 @@ import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
 import Tooltip from "@mui/material/Tooltip";
 import HardwareMonitorButton from "./hardware/HardwareMonitorButton";
 import NavbarTourButton from "./tour/NavbarTourButton";
+import UserMenu from "../pages/profile/mem-utils/UserMenu";
 
 function ResponsiveAppBar() {
   const theme = useTheme();
@@ -239,6 +240,7 @@ function ResponsiveAppBar() {
               )}
             </IconButton>
           </Tooltip>
+          <UserMenu />
         </Box>
       </Toolbar>
     </AppBar>

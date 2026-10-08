@@ -19,6 +19,14 @@ import HubImportPage from "./pages/hub/HubImportPage";
 import JobQueueWidget from "./components/jobs/JobQueueWidget";
 import { DatasetsAndNotebooksProvider } from "./components/custom/contexts/DatasetsAndNotebooksContext";
 
+import Profile from "./pages/profile/user/Profile";
+import ManageProfile from "./pages/profile/user/ManageProfile";
+import Projects from "./pages/profile/projects/Projects";
+import Requests from "./pages/profile/projects/Requests";
+import LogIn from "./pages/profile/sessions/LogIn";
+import Register from "./pages/profile/sessions/Register";
+import ChangePassword from "./pages/profile/sessions/ChangePassword";
+
 function DataSectionLayout() {
   return (
     <DatasetsAndNotebooksProvider>
@@ -81,6 +89,13 @@ function App() {
               <Route path="details/:id" element={<PluginsDetails />} />
             </Route>
           </Route>
+          <Route path="/app/profile" element={<Profile />} />
+          <Route path="/app/profile/account" element={<ManageProfile />} />
+          <Route path="/app/profile/projects" element={<Projects />} />
+          <Route path="/app/profile/requests" element={<Requests />} />
+          <Route path="/app/profile/password" element={<ChangePassword />} />
+          <Route path="/app/login" element={<LogIn />} />
+          <Route path="/app/register" element={<Register />} />
         </Routes>
         <JobQueueWidget />
       </BrowserRouter>
