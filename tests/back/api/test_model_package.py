@@ -5,6 +5,7 @@ under test): a classifier behind a Binarizer preprocessing step, so the fitted
 preprocessor has to travel with the package, and a plain regressor.
 """
 
+import io
 import json
 import os
 import random
@@ -334,3 +335,54 @@ def test_a_file_that_is_not_a_package_is_refused(tmp_path):
         archive.writestr("something.txt", "hello")
     with pytest.raises(ModelPackageError, match="not a DashAI model package"):
         load_model(zip_without_manifest)
+
+
+def test_the_endpoint_downloads_the_package(client, regressor_run_id):
+    response = client.get(f"/api/v1/run/{regressor_run_id}/export")
+    assert response.status_code == 200, response.text
+    assert response.headers["content-type"] == "application/zip"
+    assert ".dashai-model" in response.headers["content-disposition"]
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        manifest = json.loads(archive.read(MANIFEST_ENTRY))
+    assert manifest["model"]["name"] == "LinearRegression"
+
+
+def test_the_endpoint_answers_404_for_a_missing_run(client):
+    response = client.get("/api/v1/run/999999/export")
+    assert response.status_code == 404
+    # An unknown route also answers 404; the detail tells the two apart.
+    assert response.json()["detail"] == "Run not found"
+
+
+def test_the_endpoint_answers_409_for_an_unfinished_run(client, dataset_1):
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session = ModelSession(
+            dataset_id=dataset_1.id,
+            name="model-package-endpoint-unfinished-session",
+            task_name="TabularClassificationTask",
+            input_columns=RAW_INPUT_COLUMNS,
+            output_columns=[CLASS_COLUMN],
+            train_metrics=[],
+            validation_metrics=[],
+            test_metrics=[],
+            evaluation_strategy="HoldoutEvaluationStrategy",
+            splits=json.dumps(SPLITS),
+        )
+        db.add(session)
+        db.commit()
+        run = Run(
+            model_session_id=session.id,
+            model_name="KNeighborsClassifier",
+            parameters={},
+            optimizer_name="OptunaOptimizer",
+            optimizer_parameters={},
+            name="Unfinished endpoint run",
+            goal_metric="Accuracy",
+        )
+        db.add(run)
+        db.commit()
+        run_id = run.id
+
+    response = client.get(f"/api/v1/run/{run_id}/export")
+    assert response.status_code == 409
