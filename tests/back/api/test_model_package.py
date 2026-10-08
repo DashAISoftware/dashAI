@@ -6,16 +6,21 @@ preprocessor has to travel with the package, and a plain regressor.
 """
 
 import json
+import os
 import random
+import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
+import pandas as pd
 import pyarrow as pa
 import pytest
 from fastapi.testclient import TestClient
 
 from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
+from DashAI.back.job.predict_job import run_manual_prediction
 from DashAI.back.model_package.export import (
     RunNotExportableError,
     build_package,
@@ -24,6 +29,7 @@ from DashAI.back.model_package.manifest import (
     MANIFEST_ENTRY,
     PREPROCESSOR_ENTRY,
     SCHEMA_ENTRY,
+    ModelPackageError,
 )
 from DashAI.back.preprocessing.session_preprocessor import load_final_preprocessor
 
@@ -245,3 +251,86 @@ def test_an_unfinished_run_cannot_be_exported(client, dataset_1, tmp_path):
 
     with pytest.raises(RunNotExportableError):
         _export(client, run_id, tmp_path / "unfinished.dashai-model")
+
+
+IRIS_CSV = Path(__file__).parent / "iris.csv"
+
+# Runs in a fresh interpreter: inside pytest the ``client`` fixture fills the
+# kink container, so only a separate process proves loading never needs it.
+LOAD_AND_PREDICT = """
+import json, sys
+import pandas as pd
+from DashAI import load_model
+
+model = load_model(sys.argv[1])
+rows = pd.read_csv(sys.argv[2]).head(int(sys.argv[3]))
+print(json.dumps(model.predict(rows)))
+"""
+
+
+def _predict_in_fresh_process(package, tmp_path, n_rows):
+    env = {**os.environ, "DASHAI_LOCAL_PATH": str(tmp_path / "unused-home")}
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            LOAD_AND_PREDICT,
+            str(package),
+            str(IRIS_CSV),
+            str(n_rows),
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=300,
+    )
+    assert completed.returncode == 0, completed.stderr
+    return json.loads(completed.stdout.strip().splitlines()[-1])
+
+
+def _predicted_in_app(client, run_id, columns, n_rows):
+    rows = pd.read_csv(IRIS_CSV).head(n_rows)[columns].to_dict(orient="records")
+    _, preview = run_manual_prediction(
+        run_id, rows, client.app.container["session_factory"]
+    )
+    return [row[-1] for row in preview]
+
+
+@pytest.mark.parametrize(
+    ("run_fixture", "app_columns"),
+    [
+        ("classifier_run_id", RAW_INPUT_COLUMNS),
+        ("regressor_run_id", REGRESSION_INPUTS),
+    ],
+)
+def test_a_loaded_package_predicts_what_the_app_predicts(
+    request, client, tmp_path, run_fixture, app_columns
+):
+    run_id = request.getfixturevalue(run_fixture)
+    package = tmp_path / "model.dashai-model"
+    _export(client, run_id, package)
+
+    # The CSV read in the fresh process keeps every column, target included,
+    # and pandas hands over numpy scalars: both must be accepted as is.
+    predicted = _predict_in_fresh_process(package, tmp_path, n_rows=10)
+
+    expected = _predicted_in_app(client, run_id, app_columns, n_rows=10)
+    if isinstance(expected[0], float):
+        assert predicted == pytest.approx(expected)
+    else:
+        assert predicted == expected
+
+
+def test_a_file_that_is_not_a_package_is_refused(tmp_path):
+    from DashAI import load_model
+
+    not_a_zip = tmp_path / "broken.dashai-model"
+    not_a_zip.write_text("not a zip", encoding="utf-8")
+    with pytest.raises(ModelPackageError, match="not a DashAI model package"):
+        load_model(not_a_zip)
+
+    zip_without_manifest = tmp_path / "empty.dashai-model"
+    with zipfile.ZipFile(zip_without_manifest, "w") as archive:
+        archive.writestr("something.txt", "hello")
+    with pytest.raises(ModelPackageError, match="not a DashAI model package"):
+        load_model(zip_without_manifest)
