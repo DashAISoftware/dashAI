@@ -386,3 +386,54 @@ def test_the_endpoint_answers_409_for_an_unfinished_run(client, dataset_1):
 
     response = client.get(f"/api/v1/run/{run_id}/export")
     assert response.status_code == 409
+
+
+def _zip_with_manifest(path, manifest_bytes):
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr(MANIFEST_ENTRY, manifest_bytes)
+    return path
+
+
+@pytest.mark.parametrize(
+    "manifest_bytes",
+    [
+        json.dumps({"name": "some browser extension"}).encode(),
+        json.dumps(["not", "a", "dict"]).encode(),
+        b"\xff\xfe not utf-8",
+    ],
+    ids=["foreign-manifest", "manifest-is-a-list", "manifest-not-utf8"],
+)
+def test_a_zip_with_a_foreign_manifest_is_refused(tmp_path, manifest_bytes):
+    from DashAI import load_model
+
+    package = _zip_with_manifest(tmp_path / "foreign.zip", manifest_bytes)
+    with pytest.raises(ModelPackageError, match="not a DashAI model package"):
+        load_model(package)
+
+
+def test_a_folder_or_a_missing_file_is_refused(tmp_path):
+    from DashAI import load_model
+
+    with pytest.raises(ModelPackageError, match="not a file"):
+        load_model(tmp_path)
+    with pytest.raises(ModelPackageError, match="not a file"):
+        load_model(tmp_path / "missing.dashai-model")
+
+
+def test_a_class_that_cannot_be_imported_is_refused(client, regressor_run_id, tmp_path):
+    package = tmp_path / "regressor.dashai-model"
+    _export(client, regressor_run_id, package)
+    broken = tmp_path / "broken-class.dashai-model"
+    with zipfile.ZipFile(package) as source, zipfile.ZipFile(broken, "w") as target:
+        for item in source.infolist():
+            data = source.read(item.filename)
+            if item.filename == MANIFEST_ENTRY:
+                manifest = json.loads(data)
+                manifest["model"]["module"] = "dashai_plugin_gone.models"
+                data = json.dumps(manifest).encode()
+            target.writestr(item, data)
+
+    from DashAI import load_model
+
+    with pytest.raises(ModelPackageError, match="dashai_plugin_gone.models"):
+        load_model(broken)

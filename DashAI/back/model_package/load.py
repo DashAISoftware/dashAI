@@ -26,11 +26,26 @@ from DashAI.back.model_package.manifest import (
 )
 
 NOT_A_PACKAGE = "{path} is not a DashAI model package"
+REQUIRED_MANIFEST_KEYS = (
+    "format_version",
+    "model",
+    "task",
+    "input_columns",
+    "output_columns",
+)
 
 
 def _import_class(reference: Dict[str, str]) -> type:
-    module = importlib.import_module(reference["module"])
-    return getattr(module, reference["class"])
+    """Import a class named by the manifest, or say which one is missing."""
+    try:
+        module = importlib.import_module(reference["module"])
+        return getattr(module, reference["class"])
+    except (ImportError, AttributeError) as e:
+        raise ModelPackageError(
+            f"This model needs {reference['module']}.{reference['class']}, "
+            "which is not available. It may come from a plugin or a DashAI "
+            "version that is not installed."
+        ) from e
 
 
 def _native(value: Any) -> Any:
@@ -131,6 +146,9 @@ def load_model(path: Union[str, Path]) -> PackagedModel:
         If the file is not a package, its format is newer than this DashAI
         reads, or a plugin it needs is not installed.
     """
+    if not Path(path).is_file():
+        raise ModelPackageError(f"{path} does not exist or is not a file")
+
     workdir = Path(tempfile.mkdtemp(prefix="dashai-model-"))
     try:
         try:
@@ -139,8 +157,18 @@ def load_model(path: Union[str, Path]) -> PackagedModel:
             manifest = json.loads(
                 (workdir / MANIFEST_ENTRY).read_text(encoding="utf-8")
             )
-        except (zipfile.BadZipFile, FileNotFoundError, json.JSONDecodeError) as e:
+        except (
+            zipfile.BadZipFile,
+            FileNotFoundError,
+            UnicodeDecodeError,
+            json.JSONDecodeError,
+        ) as e:
             raise ModelPackageError(NOT_A_PACKAGE.format(path=path)) from e
+        # Any zip may hold a manifest.json; only ours has these keys.
+        if not isinstance(manifest, dict) or any(
+            key not in manifest for key in REQUIRED_MANIFEST_KEYS
+        ):
+            raise ModelPackageError(NOT_A_PACKAGE.format(path=path))
 
         check_manifest(manifest)
         model_class = _import_class(manifest["model"])
