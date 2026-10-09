@@ -115,6 +115,7 @@ class PackagedModel:
         if not rows:
             return []
         schema_path = str(self._schema_path)
+        self._check_columns(rows[0], load_dataset(schema_path).column_names)
         dataset = self._task.process_manual_input(rows, schema_path)
         if self._preprocessor is not None:
             dataset = self._preprocessor.transform_dataset(dataset)
@@ -127,6 +128,24 @@ class PackagedModel:
             output_column=self._manifest["output_columns"][0],
         )
         return [_native(value) for value in predictions]
+
+    def _check_columns(self, row: Dict[str, Any], dataset_columns: List[str]) -> None:
+        """Name every input column the rows lack, before anything reads them.
+
+        Only columns of the original dataset are required: with preprocessing,
+        some model inputs are derived columns the caller never provides.
+        """
+        expected = [
+            column
+            for column in self._manifest["input_columns"]
+            if column in dataset_columns
+        ]
+        missing = [column for column in expected if column not in row]
+        if missing:
+            raise ModelPackageError(
+                f"Missing input columns: {', '.join(missing)}. "
+                f"This model expects: {', '.join(expected)}"
+            )
 
 
 def load_model(path: Union[str, Path]) -> PackagedModel:

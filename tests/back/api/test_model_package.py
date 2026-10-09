@@ -437,3 +437,20 @@ def test_a_class_that_cannot_be_imported_is_refused(client, regressor_run_id, tm
 
     with pytest.raises(ModelPackageError, match="dashai_plugin_gone.models"):
         load_model(broken)
+
+
+def test_missing_input_columns_are_all_named_at_once(
+    client, regressor_run_id, tmp_path
+):
+    package = tmp_path / "regressor.dashai-model"
+    _export(client, regressor_run_id, package)
+    from DashAI import load_model
+
+    model = load_model(package)
+    rows = pd.DataFrame({"SepalLengthCm": [5.1], "Species": ["Iris-setosa"]})
+
+    with pytest.raises(
+        ModelPackageError,
+        match="Missing input columns: SepalWidthCm, PetalLengthCm",
+    ):
+        model.predict(rows)
