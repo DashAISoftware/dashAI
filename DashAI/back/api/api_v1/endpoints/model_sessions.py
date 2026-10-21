@@ -15,7 +15,7 @@ from DashAI.back.api.api_v1.schemas.model_sessions_params import (
     SessionExportParams,
 )
 from DashAI.back.api.utils import remove_path
-from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Plugin, Run
 from DashAI.back.job.preprocessing_job import PreprocessingJob
 from DashAI.back.preprocessing.column_ref import ConverterSequence, RawColumnRef
 from DashAI.back.preprocessing.structure import (
@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 
     from DashAI.back.dependencies.job_queues import BaseJobQueue
     from DashAI.back.dependencies.registry import ComponentRegistry
+    from DashAI.back.model_package.manifest import ModelPackageError
     from DashAI.back.tasks.base_task import BaseTask
 
 
@@ -975,10 +976,14 @@ async def import_model_session(
             (accept_language or "en").split("-")[0].lower(),
         )
     except (UnsupportedPackageFormatError, MissingPluginError) as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=_import_error_detail(e, session_factory),
+        ) from e
     except ModelPackageError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=_import_error_detail(e, session_factory),
         ) from e
     except Exception as e:
         log.exception(e)
@@ -988,6 +993,32 @@ async def import_model_session(
         ) from e
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
+
+
+def _import_error_detail(
+    error: "ModelPackageError", session_factory: "sessionmaker"
+) -> dict:
+    """Describe a refused import so the app can say why in its own language.
+
+    ``detail`` keeps the English message for API and Python callers. For a
+    missing plugin, ``plugin_id`` points to its entry in the plugins module
+    when the plugin index lists it, so the app can link straight to it.
+    """
+    from DashAI.back.plugins.installer import canonical_name
+
+    params = dict(error.params)
+    if error.code == "missing_plugin" and params.get("plugin"):
+        wanted = canonical_name(params["plugin"])
+        with session_factory() as db:
+            params["plugin_id"] = next(
+                (
+                    plugin_id
+                    for plugin_id, name in db.query(Plugin.id, Plugin.name)
+                    if canonical_name(name) == wanted
+                ),
+                None,
+            )
+    return {"code": error.code, "detail": str(error), "params": params}
 
 
 @router.get("/{model_session_id}/export/preview")

@@ -21,7 +21,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.model_package.manifest import (
     MANIFEST_ENTRY,
-    MissingPluginError,
+    MissingComponentError,
     ModelPackageError,
     check_manifest,
 )
@@ -52,6 +52,8 @@ PLOT_PREFIXES = {
 
 class UnsafePackageError(ModelPackageError):
     """An entry of the zip would be written outside the extraction folder."""
+
+    code = "unsafe_file"
 
 
 def unique_name(base: str, taken: Set[str]) -> str:
@@ -150,9 +152,10 @@ def _check_components(recipe: Dict[str, Any], component_registry: Any) -> None:
     needed += [step["converter"] for step in steps]
     for name in needed:
         if name not in component_registry:
-            raise MissingPluginError(
+            raise MissingComponentError(
                 f"This session needs '{name}', which this DashAI does not have. "
-                "Install the plugin that provides it and try again."
+                "Install the plugin that provides it and try again.",
+                component=name,
             )
 
 

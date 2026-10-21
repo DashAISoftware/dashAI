@@ -16,6 +16,7 @@ from DashAI.back.dependencies.database.models import (
     Folder,
     Metric,
     ModelSession,
+    Plugin,
     Run,
 )
 from DashAI.back.model_package.manifest import (
@@ -634,7 +635,10 @@ def test_the_import_endpoint_answers_400_for_a_model_file(client, regressor, tmp
         )
 
     assert response.status_code == 400
-    assert "not a session file" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert detail["code"] == "wrong_kind"
+    assert detail["params"] == {"found": "model", "expected": "session"}
+    assert "not a session file" in detail["detail"]
 
 
 def test_the_import_endpoint_answers_409_for_a_newer_format(
@@ -654,7 +658,55 @@ def test_the_import_endpoint_answers_409_for_a_newer_format(
         )
 
     assert response.status_code == 409
-    assert "Update DashAI" in response.json()["detail"]
+    detail = response.json()["detail"]
+    assert detail["code"] == "newer_format"
+    assert detail["params"]["version"] == 99
+    assert "Update DashAI" in detail["detail"]
+
+
+def test_the_import_endpoint_links_a_missing_plugin_to_the_plugins_module(
+    client, regressor, tmp_path
+):
+    package = _export_all(client, regressor, tmp_path / "source.dashai")
+    plugin = {"name": "Dashai_Plugin-That-Is-Not-Installed", "version": "1.0"}
+    needs_plugin = _rewrite(
+        package,
+        tmp_path / "plugin.dashai",
+        manifest=lambda m: {**m, "plugins": [plugin]},
+    )
+    with client.app.container["session_factory"]() as db:
+        listed = Plugin(
+            name="dashai-plugin-that-is-not-installed",
+            author="someone",
+            installed_version="",
+            lastest_version="1.0",
+            summary="",
+            description="",
+            description_content_type="text/markdown",
+        )
+        db.add(listed)
+        db.commit()
+        plugin_id = listed.id
+
+    try:
+        with open(needs_plugin, "rb") as handle:
+            response = client.post(
+                "/api/v1/model-session/import",
+                files={"file": ("plugin.dashai", handle, "application/zip")},
+            )
+    finally:
+        with client.app.container["session_factory"]() as db:
+            db.delete(db.get(Plugin, plugin_id))
+            db.commit()
+
+    assert response.status_code == 409
+    detail = response.json()["detail"]
+    assert detail["code"] == "missing_plugin"
+    assert detail["params"] == {
+        "plugin": plugin["name"],
+        "version": "1.0",
+        "plugin_id": plugin_id,
+    }
 
 
 def test_importing_again_after_deleting_an_import_works(client, classifier, tmp_path):
