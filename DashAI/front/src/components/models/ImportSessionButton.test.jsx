@@ -11,6 +11,12 @@ jest.mock("notistack", () => {
   return { useSnackbar: () => snackbar };
 });
 
+const mockNavigate = jest.fn();
+jest.mock("react-router-dom", () => ({
+  ...jest.requireActual("react-router-dom"),
+  useNavigate: () => mockNavigate,
+}));
+
 jest.mock("../../api/modelSession", () => ({
   importModelSession: jest.fn(),
 }));
@@ -86,4 +92,31 @@ test("untrained models that need a download offer to download them", async () =>
   await waitFor(() => expect(downloadComponent).toHaveBeenCalledTimes(2));
   expect(downloadComponent).toHaveBeenCalledWith("M2M100Transformer");
   expect(downloadComponent).toHaveBeenCalledWith("NLLBTransformer");
+});
+
+test("a missing plugin is explained in the app language and links to it", async () => {
+  importModelSession.mockRejectedValue({
+    response: {
+      status: 409,
+      data: {
+        detail: {
+          code: "missing_plugin",
+          detail: "This file needs the plugin 'dashai-x'. Install it with: pip",
+          params: { plugin: "dashai-x", version: "0.1.1", plugin_id: 12 },
+        },
+      },
+    },
+  });
+  const { container } = renderWithProviders(<ImportSessionButton />);
+  fireEvent.change(container.querySelector('input[type="file"]'), {
+    target: { files: [new File(["zip"], "s.dashai")] },
+  });
+
+  expect(
+    await screen.findByText(/needs the plugin dashai-x \(version 0\.1\.1\)/),
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/pip/)).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: /go to plugins/i }));
+  expect(mockNavigate).toHaveBeenCalledWith("/app/plugins/browse/details/12");
 });

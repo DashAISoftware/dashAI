@@ -36,7 +36,9 @@ export default function ImportSessionButton({ onImported }) {
   // "closed" | "warning" | "importing" | "result" | "error"
   const [phase, setPhase] = useState("closed");
   const [result, setResult] = useState(null);
-  const [errorMessage, setErrorMessage] = useState("");
+  // { message, pluginsLink }: pluginsLink is set when installing a plugin
+  // from the plugins module is the way out.
+  const [importError, setImportError] = useState(null);
   const [downloadStarted, setDownloadStarted] = useState(false);
 
   const importing = phase === "importing";
@@ -79,11 +81,54 @@ export default function ImportSessionButton({ onImported }) {
         );
       }
     } catch (error) {
-      const reason = getApiErrorMessage(error);
-      const message = t("models:error.importSession");
-      setErrorMessage(reason ? `${message}: ${reason}` : message);
+      setImportError(describeImportError(error));
       setPhase("error");
     }
+  };
+
+  // The backend refuses a file with a code and the values its English
+  // message was built from, so the reason can be shown in the app language.
+  const describeImportError = (error) => {
+    const detail = error?.response?.data?.detail;
+    const code = detail?.code;
+    const params = detail?.params || {};
+    if (code === "missing_plugin") {
+      return {
+        message: t(
+          params.version
+            ? "models:importError.missingPluginVersion"
+            : "models:importError.missingPlugin",
+          params,
+        ),
+        pluginsLink: params.plugin_id
+          ? `/app/plugins/browse/details/${params.plugin_id}`
+          : "/app/plugins/browse",
+      };
+    }
+    if (code === "missing_component") {
+      return {
+        message: t("models:importError.missingComponent", params),
+        pluginsLink: "/app/plugins/browse",
+      };
+    }
+    const known = {
+      invalid_file: "invalidFile",
+      wrong_kind: "wrongKind",
+      newer_format: "newerFormat",
+      unsafe_file: "unsafeFile",
+    };
+    if (known[code]) {
+      return { message: t(`models:importError.${known[code]}`, params) };
+    }
+    const reason = getApiErrorMessage(error);
+    const message = t("models:error.importSession");
+    return { message: reason ? `${message}: ${reason}` : message };
+  };
+
+  const goToPlugins = () => {
+    const link = importError?.pluginsLink;
+    close();
+    navigate(link);
   };
 
   // Trained runs predict from their own saved copy, so the download only
@@ -120,11 +165,22 @@ export default function ImportSessionButton({ onImported }) {
     if (phase === "error") {
       return (
         <>
-          <Alert severity="error">{errorMessage}</Alert>
-          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-            <Button variant="contained" onClick={close}>
-              {t("common:close")}
-            </Button>
+          <Alert severity="error">{importError?.message}</Alert>
+          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+            {importError?.pluginsLink ? (
+              <>
+                <Button onClick={close} sx={{ color: "text.secondary" }}>
+                  {t("common:close")}
+                </Button>
+                <Button variant="contained" onClick={goToPlugins}>
+                  {t("models:button.goToPlugins")}
+                </Button>
+              </>
+            ) : (
+              <Button variant="contained" onClick={close}>
+                {t("common:close")}
+              </Button>
+            )}
           </Box>
         </>
       );

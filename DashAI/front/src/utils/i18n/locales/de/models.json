@@ -32,7 +32,8 @@
     "selectAll": "Alle auswählen",
     "selectNone": "Keine",
     "chooseFile": "Datei auswählen",
-    "gotIt": "Verstanden"
+    "gotIt": "Verstanden",
+    "goToPlugins": "Zu Plugins"
   },
   "error": {
     "exportModel": "Das Modell konnte nicht exportiert werden",
@@ -323,6 +324,15 @@
     "importingSession": "Sitzung wird importiert...",
     "importingSessionHelp": "Das kann etwas dauern, wenn die Sitzung trainierte Modelle enthält.",
     "sessionImportedTitle": "Sitzung importiert"
+  },
+  "importError": {
+    "invalidFile": "Diese Datei ist keine gültige dashAI-Sitzung.",
+    "wrongKind": "Diese Datei ist ein exportiertes Modell, keine Sitzung. Wähle eine .dashai-Sitzungsdatei.",
+    "newerFormat": "Diese Datei wurde mit einer neueren dashAI-Version erstellt. Aktualisiere dashAI, um sie zu importieren.",
+    "missingPlugin": "Diese Sitzung benötigt das Plugin {{plugin}}. Installiere es im Plugins-Modul und importiere die Sitzung erneut.",
+    "missingPluginVersion": "Diese Sitzung benötigt das Plugin {{plugin}} (Version {{version}}). Installiere es im Plugins-Modul und importiere die Sitzung erneut.",
+    "missingComponent": "Diese Sitzung verwendet \"{{component}}\", das in diesem dashAI nicht verfügbar ist. Es stammt wahrscheinlich aus einem Plugin: Installiere es im Plugins-Modul und importiere die Sitzung erneut.",
+    "unsafeFile": "Diese Datei enthält Inhalte, die außerhalb ihres Ordners geschrieben würden, daher wurde sie nicht importiert."
   },
   "message": {
     "allRunsCompleted": "{{experiment}} hat alle Durchläufe abgeschlossen.",

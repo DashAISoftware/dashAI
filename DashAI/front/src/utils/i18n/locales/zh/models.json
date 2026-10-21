@@ -32,7 +32,8 @@
     "selectAll": "全选",
     "selectNone": "全不选",
     "chooseFile": "选择文件",
-    "gotIt": "知道了"
+    "gotIt": "知道了",
+    "goToPlugins": "前往插件"
   },
   "error": {
     "exportModel": "无法导出模型",
@@ -322,6 +323,15 @@
     "importingSession": "正在导入会话...",
     "importingSessionHelp": "如果会话包含已训练的模型，可能需要一些时间。",
     "sessionImportedTitle": "会话已导入"
+  },
+  "importError": {
+    "invalidFile": "此文件不是有效的 dashAI 会话。",
+    "wrongKind": "此文件是导出的模型，而不是会话。请选择 .dashai 会话文件。",
+    "newerFormat": "此文件由更新版本的 dashAI 创建。请更新 dashAI 后再导入。",
+    "missingPlugin": "此会话需要插件 {{plugin}}。请在插件模块中安装后重新导入会话。",
+    "missingPluginVersion": "此会话需要插件 {{plugin}}（版本 {{version}}）。请在插件模块中安装后重新导入会话。",
+    "missingComponent": "此会话使用了“{{component}}”，但当前 dashAI 中不可用。它可能来自某个插件：请在插件模块中安装后重新导入会话。",
+    "unsafeFile": "此文件包含会写入其文件夹之外的内容，因此未导入。"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} 已完成所有运行。",
