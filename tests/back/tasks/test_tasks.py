@@ -135,7 +135,10 @@ def test_get_tabular_class_task_metadata():
     tabular_class_task = TabularClassificationTask()
     metadata = tabular_class_task.get_metadata()
 
-    assert len(metadata.keys()) == 7
+    # The flat view, the per-side lists, column_roles, io_roles and
+    # requires_target.
+    assert len(metadata.keys()) == 9
+    assert metadata["io_roles"] == {"inputs": ["features"], "outputs": ["target"]}
     assert metadata["inputs_types"] == ["Float", "Integer", "Categorical"]
     assert metadata["outputs_types"] == ["Categorical"]
     assert metadata["inputs_cardinality"] == "n"
@@ -201,7 +204,10 @@ def test_get_text_class_task_metadata():
     text_class_task = TextClassificationTask()
     metadata = text_class_task.get_metadata()
 
-    assert len(metadata.keys()) == 7
+    # The flat view, the per-side lists, column_roles, io_roles and
+    # requires_target.
+    assert len(metadata.keys()) == 9
+    assert metadata["io_roles"] == {"inputs": ["features"], "outputs": ["target"]}
     assert metadata["inputs_types"] == ["Text"]
     assert metadata["outputs_types"] == ["Categorical"]
     assert metadata["inputs_cardinality"] == 1
@@ -265,7 +271,10 @@ def test_get_translation_task_metadata():
     translation_task = TranslationTask()
     metadata = translation_task.get_metadata()
 
-    assert len(metadata.keys()) == 7
+    # The flat view, the per-side lists, column_roles, io_roles and
+    # requires_target.
+    assert len(metadata.keys()) == 9
+    assert metadata["io_roles"] == {"inputs": ["features"], "outputs": ["target"]}
     assert metadata["inputs_types"] == ["Text"]
     assert metadata["outputs_types"] == ["Text"]
     assert metadata["inputs_cardinality"] == 1

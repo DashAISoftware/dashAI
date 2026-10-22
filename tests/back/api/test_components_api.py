@@ -32,6 +32,38 @@ TEST_SCHEMA_2 = {
 }
 
 
+# What the API serves for the roles of a task in the x/y short form: features
+# from the inputs, target from the outputs, labels already localised.
+IO_ROLES = {"inputs": ["features"], "outputs": ["target"]}
+
+
+def _roles(input_types, input_min, input_max):
+    return [
+        {
+            "name": "features",
+            "label": "Features",
+            "types": input_types,
+            "min": input_min,
+            "max": input_max,
+            "required": input_min > 0,
+            "transformable": True,
+        },
+        {
+            "name": "target",
+            "label": "Target",
+            "types": ["ClassLabel"],
+            "min": 1,
+            "max": 1,
+            "required": True,
+            "transformable": False,
+        },
+    ]
+
+
+TASK1_ROLES = _roles(["ClassLabel", "Value"], 0, "n")
+TASK2_ROLES = _roles(["Image"], 1, 1)
+
+
 class TestTask1(BaseTask):
     DESCRIPTION = "Task 1."
     DISPLAY_NAME = "Test Task 1"
@@ -178,6 +210,8 @@ def test_get_component_by_id(client: TestClient):
             "outputs_cardinality": 1,
             "inputs": [{"types": ["ClassLabel", "Value"], "min": 0, "max": "n"}],
             "outputs": [{"types": ["ClassLabel"], "min": 1, "max": 1}],
+            "column_roles": TASK1_ROLES,
+            "io_roles": IO_ROLES,
             "requires_target": True,
         },
         "description": "Task 1.",
@@ -203,6 +237,8 @@ def test_get_component_by_id(client: TestClient):
             "outputs_cardinality": 1,
             "inputs": [{"types": ["Image"], "min": 1, "max": 1}],
             "outputs": [{"types": ["ClassLabel"], "min": 1, "max": 1}],
+            "column_roles": TASK2_ROLES,
+            "io_roles": IO_ROLES,
             "requires_target": True,
         },
         "description": "Task 2.",
@@ -332,6 +368,8 @@ def test_get_components_select_only_tasks(client: TestClient):
                 "outputs_cardinality": 1,
                 "inputs": [{"types": ["ClassLabel", "Value"], "min": 0, "max": "n"}],
                 "outputs": [{"types": ["ClassLabel"], "min": 1, "max": 1}],
+                "column_roles": TASK1_ROLES,
+                "io_roles": IO_ROLES,
                 "requires_target": True,
             },
             "description": "Task 1.",
@@ -354,6 +392,8 @@ def test_get_components_select_only_tasks(client: TestClient):
                 "outputs_cardinality": 1,
                 "inputs": [{"types": ["Image"], "min": 1, "max": 1}],
                 "outputs": [{"types": ["ClassLabel"], "min": 1, "max": 1}],
+                "column_roles": TASK2_ROLES,
+                "io_roles": IO_ROLES,
                 "requires_target": True,
             },
             "description": "Task 2.",
@@ -516,6 +556,8 @@ def test_get_components_ignore_models(client: TestClient):
                 "outputs_cardinality": 1,
                 "inputs": [{"types": ["ClassLabel", "Value"], "min": 0, "max": "n"}],
                 "outputs": [{"types": ["ClassLabel"], "min": 1, "max": 1}],
+                "column_roles": TASK1_ROLES,
+                "io_roles": IO_ROLES,
                 "requires_target": True,
             },
             "description": "Task 1.",
@@ -538,6 +580,8 @@ def test_get_components_ignore_models(client: TestClient):
                 "outputs_cardinality": 1,
                 "inputs": [{"types": ["Image"], "min": 1, "max": 1}],
                 "outputs": [{"types": ["ClassLabel"], "min": 1, "max": 1}],
+                "column_roles": TASK2_ROLES,
+                "io_roles": IO_ROLES,
                 "requires_target": True,
             },
             "description": "Task 2.",
@@ -740,6 +784,8 @@ def test_get_components_related_inverse_relation(client: TestClient):
                 "outputs_cardinality": 1,
                 "inputs": [{"types": ["ClassLabel", "Value"], "min": 0, "max": "n"}],
                 "outputs": [{"types": ["ClassLabel"], "min": 1, "max": 1}],
+                "column_roles": TASK1_ROLES,
+                "io_roles": IO_ROLES,
                 "requires_target": True,
             },
             "description": "Task 1.",
