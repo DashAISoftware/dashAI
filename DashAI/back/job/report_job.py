@@ -29,6 +29,7 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.splitters.splits_payload import predictable_splits, run_split_indexes
+from DashAI.back.tasks.session_roles import session_io
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -302,15 +303,14 @@ class ReportJob(BaseJob):
                     task: BaseTask = component_registry[model_session.task_name][
                         "class"
                     ]()
+                    io = session_io(model_session, task)
                     prepared_dataset = task.prepare_for_task(
                         dataset=loaded_dataset,
-                        input_columns=model_session.input_columns,
-                        output_columns=model_session.output_columns,
+                        input_columns=io.inputs,
+                        output_columns=io.outputs,
                     )
                     data_x, data_y = select_columns(
-                        prepared_dataset,
-                        model_session.input_columns,
-                        model_session.output_columns,
+                        prepared_dataset, io.inputs, io.outputs
                     )
                 except Exception as e:
                     log.exception(e)
