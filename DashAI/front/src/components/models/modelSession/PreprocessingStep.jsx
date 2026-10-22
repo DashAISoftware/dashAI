@@ -6,7 +6,6 @@ import { useModels } from "../ModelsContext";
 import SessionConvertersRightBar from "./SessionConvertersRightBar";
 import AppliedConvertersView from "./AppliedConvertersView";
 import usePreprocessingStructure from "./usePreprocessingStructure";
-import { rolesFromIo } from "./columnRoles";
 
 /**
  * Optional preprocessing step of the session wizard: build a chain of
@@ -24,23 +23,13 @@ import { rolesFromIo } from "./columnRoles";
  * (SessionConvertersRightBar), the already-added converters are shown as
  * cards in the main content area (AppliedConvertersView).
  */
-function PreprocessingStep({
-  newExp,
-  setNewExp,
-  setNextEnabled,
-  dataset,
-  taskMetadata,
-}) {
+function PreprocessingStep({ newExp, setNewExp, setNextEnabled, dataset }) {
   const { t } = useTranslation(["models"]);
   const { setSessionRightContent } = useModels();
   const { structure, loading, error } = usePreprocessingStructure({
     datasetId: dataset?.id,
     taskName: newExp.task_name,
-    columnRoles: rolesFromIo(
-      taskMetadata,
-      newExp.candidate_columns,
-      newExp.output_columns,
-    ),
+    columnRoles: newExp.column_roles_stage1 || {},
     steps: newExp.preprocessing,
   });
 
@@ -77,7 +66,6 @@ function PreprocessingStep({
 }
 
 PreprocessingStep.propTypes = {
-  taskMetadata: PropTypes.object,
   newExp: PropTypes.object.isRequired,
   setNewExp: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,

@@ -113,7 +113,7 @@ const blockLabel = (block, stepName, t) => {
  * item (the synthetic key of the ColumnRef pointing at it), its type, and a
  * label for every item that is not an original column. Plugs into the same
  * `{allKeys, columnTypes, optionLabels}` shape ColumnSelector and
- * DivideDatasetColumns already take.
+ * RoleColumnSelectors already take.
  *
  * @param {Array<object>} state items from a StructureResult state
  * @param {string[]} stepDisplayNames one name per step (see
