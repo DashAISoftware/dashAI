@@ -96,6 +96,7 @@ def build_package(
     )
     from DashAI.back.job.base_job import JobError
     from DashAI.back.job.predict_job import _preprocessing_artifacts_path
+    from DashAI.back.tasks.session_roles import session_io
     from DashAI.back.units.apply_session_preprocessing_unit import (
         FINAL_PREPROCESSOR_FILENAME,
     )
@@ -129,8 +130,12 @@ def build_package(
         trained_at = run.end_time.isoformat() if run.end_time else None
         task_name = session.task_name
         session_name = session.name
-        input_columns = list(session.input_columns)
-        output_columns = list(session.output_columns)
+        # The manifest keeps naming the model's inputs and outputs, a format
+        # packages already exported rely on; the session stores them by role
+        # and its task translates.
+        io = session_io(session, component_registry[task_name]["class"]())
+        input_columns = list(io.inputs)
+        output_columns = list(io.outputs)
         dataset_arrow = Path(dataset.file_path) / "dataset" / "data.arrow"
 
     model_class = component_registry[model_name]["class"]
