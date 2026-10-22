@@ -393,14 +393,6 @@ def _old_flat_metadata(cls):
             if all(g["min"] == g["max"] for g in groups)
             else "n"
         )
-        parsed[side] = [
-            {
-                "types": [_old_type_name(t) for t in g["types"]],
-                "min": g["min"],
-                "max": g["max"],
-            }
-            for g in groups
-        ]
     parsed["requires_target"] = cls.REQUIRES_TARGET
     return parsed
 
