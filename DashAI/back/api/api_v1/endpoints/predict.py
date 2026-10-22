@@ -16,6 +16,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.job.predict_job import run_manual_prediction
 from DashAI.back.splitters.splits_payload import predictable_splits
+from DashAI.back.tasks.session_roles import session_io
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session, sessionmaker
@@ -209,6 +210,7 @@ async def get_prediction_splits(
 async def filter_datasets_endpoint(
     run_id: int = Query(..., description="The ID of the trained model/run"),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
     Return the ids of every dataset that has all the run model's input columns.
@@ -247,7 +249,14 @@ async def filter_datasets_endpoint(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Model session not found",
                 )
-            input_columns = list(model_session.input_columns)
+            try:
+                task = component_registry[model_session.task_name]["class"]()
+            except KeyError as e:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Task {model_session.task_name} not found in the registry",
+                ) from e
+            input_columns = session_io(model_session, task).inputs
 
             datasets = db.query(Dataset).all()
             valid_dataset_ids = []

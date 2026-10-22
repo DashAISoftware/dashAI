@@ -10,6 +10,7 @@ from sqlalchemy import exc
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.splitters.splits_payload import run_split_indexes
+from DashAI.back.tasks.session_roles import SessionIO, session_io
 from DashAI.back.units.apply_session_preprocessing_unit import (
     ApplySessionPreprocessingUnit,
 )
@@ -52,25 +53,35 @@ def _preprocessing_artifacts_path(model_session: ModelSession) -> Optional[str]:
     return artifacts_path
 
 
-def _input_columns_training_prepared_with(model_session: ModelSession) -> List[str]:
+def _session_columns(model_session: ModelSession) -> Optional[SessionIO]:
+    """The session's columns as the model's inputs and outputs, or None.
+
+    The session stores its columns by role and its task translates them, so a
+    session whose task is not registered cannot be read. None is returned
+    then, and the caller reports the missing task where it always has: when
+    the prediction unit resolves it, ahead of the model.
+    """
+    try:
+        task = di["component_registry"][model_session.task_name]["class"]()
+    except Exception:
+        return None
+    return session_io(model_session, task)
+
+
+def _input_columns_training_prepared_with(
+    model_session: ModelSession, io: SessionIO
+) -> List[str]:
     """The input columns the task was handed when the run's rows were carved.
 
-    A session that preprocesses lists in ``input_columns`` the columns its
+    A session that preprocesses has among its inputs the columns its
     converters produce, which the loaded rows do not have, so training
     prepares with the raw refs instead (``SplitterScopeMixin._prepare``,
     ``PreprocessingJob``). Without steps, the session's inputs are the raw
     columns themselves.
     """
     if not (model_session.preprocessing and model_session.preprocessing.get("steps")):
-        return model_session.input_columns
-
-    from DashAI.back.preprocessing.column_ref import parse_column_refs
-
-    return [
-        ref.name
-        for ref in parse_column_refs(model_session.input_column_refs or [])
-        if ref.kind == "raw"
-    ]
+        return io.inputs
+    return io.raw_inputs
 
 
 def _build_preview_rows(
@@ -174,21 +185,23 @@ def run_manual_prediction(
                 detail="Training dataset not found",
             )
 
-        if not model_session.input_columns:
+        # Without its task the session's roles cannot be read; the missing
+        # task is reported below, where the units resolve it.
+        io = _session_columns(model_session)
+
+        if io is not None and not io.inputs:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Model session has no input columns configured",
             )
 
-        if not model_session.output_columns:
+        if io is not None and not io.outputs:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Model session has no output columns configured",
             )
 
         task_name = model_session.task_name
-        input_columns = list(model_session.input_columns)
-        output_columns = list(model_session.output_columns)
         train_dataset_file_path = dataset_trained.file_path
         try:
             preprocessing_artifacts_path = _preprocessing_artifacts_path(model_session)
@@ -196,6 +209,14 @@ def run_manual_prediction(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail=str(e)
             ) from e
+
+    if io is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Task {task_name} not found in the registry",
+        )
+    input_columns = list(io.inputs)
+    output_columns = list(io.outputs)
 
     ctx = ExecutionContext()
 
@@ -403,7 +424,12 @@ class PredictJob(BaseJob):
                         detail="Training dataset not found",
                     )
 
-                if not model_session.input_columns:
+                # Without its task the session's roles cannot be read; the
+                # missing task is reported below, where the prediction unit
+                # resolves it.
+                io = _session_columns(model_session)
+
+                if io is not None and not io.inputs:
                     prediction.set_status_as_error()
                     db.commit()
                     raise HTTPException(
@@ -411,7 +437,7 @@ class PredictJob(BaseJob):
                         detail="Model session has no input columns configured",
                     )
 
-                if not model_session.output_columns:
+                if io is not None and not io.outputs:
                     prediction.set_status_as_error()
                     db.commit()
                     raise HTTPException(
@@ -431,12 +457,16 @@ class PredictJob(BaseJob):
             # reported as a task problem instead of being overtaken by
             # whatever fails next. Same shape as ModelJob validating the fit
             # unit ahead of the status change.
-            predict = PredictUnit(
-                task_name=model_session.task_name,
-                input_columns=model_session.input_columns,
-                output_columns=model_session.output_columns,
-            )
             try:
+                if io is None:
+                    raise JobError(
+                        f"Task {model_session.task_name} not found in the registry"
+                    )
+                predict = PredictUnit(
+                    task_name=model_session.task_name,
+                    input_columns=io.inputs,
+                    output_columns=io.outputs,
+                )
                 predict.validate(ctx)
             except Exception as e:
                 prediction.set_status_as_error()
@@ -526,9 +556,9 @@ class PredictJob(BaseJob):
                         prepared = task.prepare_for_task(
                             dataset=ctx.require("dataset"),
                             input_columns=_input_columns_training_prepared_with(
-                                model_session
+                                model_session, io
                             ),
-                            output_columns=model_session.output_columns,
+                            output_columns=io.outputs,
                         )
                         ctx.put("dataset", prepared.select(row_indexes))
                 else:
@@ -581,8 +611,8 @@ class PredictJob(BaseJob):
             try:
                 SavePredictionUnit(
                     task_name=model_session.task_name,
-                    input_columns=model_session.input_columns,
-                    output_columns=model_session.output_columns,
+                    input_columns=io.inputs,
+                    output_columns=io.outputs,
                 )(ctx)
 
                 # Update Prediction record
