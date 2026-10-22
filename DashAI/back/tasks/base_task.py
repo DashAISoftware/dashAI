@@ -261,6 +261,104 @@ class BaseTask:
             return "output"
         return role_name
 
+    def check_role_names(self, roles: Mapping[str, Any]) -> None:
+        """Refuse a role this task does not declare.
+
+        Raises
+        ------
+        ValueError
+            Naming the first undeclared role and the task's roles.
+        """
+        names = [role.name for role in self.column_roles()]
+        for name in roles:
+            if name not in names:
+                raise ValueError(
+                    f"{type(self).__name__} has no column role {name!r}. Its "
+                    f"roles are: {', '.join(names)}."
+                )
+
+    def _declared_role(self, role_name: str) -> ColumnRole:
+        for role in self.column_roles():
+            if role.name == role_name:
+                return role
+        raise ValueError(f"{type(self).__name__} has no column role {role_name!r}.")
+
+    def validate_role(
+        self, role_name: str, columns: Sequence[str], types: Mapping[str, Any]
+    ) -> None:
+        """Check one role's columns against its types and cardinality.
+
+        Parameters
+        ----------
+        role_name : str
+            A declared role.
+        columns : sequence of str
+            The names of the role's columns.
+        types : mapping
+            The dataset's column types, keyed by column name.
+
+        Raises
+        ------
+        TypeError
+            If a column's type is not one the role accepts.
+        ValueError
+            If the role gets a number of columns outside its cardinality.
+        """
+        role = self._declared_role(role_name)
+        noun = self._role_noun(role.name, self.io_roles())
+        for column in columns:
+            column_type = types[column]
+            if not isinstance(column_type, role.types):
+                raise TypeError(
+                    f"{column_type} is not an allowed type for {noun} columns."
+                )
+        if not role.admits(len(columns)):
+            raise ValueError(
+                f"{noun.capitalize()} cardinality ({len(columns)}) does not "
+                f"match task cardinality ({role.cardinality_text()})"
+            )
+
+    def validate_estimated_role(
+        self, role_name: str, columns: Sequence[Tuple[Optional[str], Optional[int]]]
+    ) -> None:
+        """Check one role against the columns a preprocessing chain will give it.
+
+        Before the chain is fitted, its estimated structure only names the
+        type of each output and may not know how many columns a block holds.
+
+        Parameters
+        ----------
+        role_name : str
+            A declared role.
+        columns : sequence of (type name, count)
+            One entry per estimated output: the name of its type, or None when
+            unknown, and how many columns it holds, or None when unknown. An
+            unknown count is taken as at least one, and only the role's
+            minimum is checked then.
+
+        Raises
+        ------
+        TypeError
+            If an output's type is not one the role accepts.
+        ValueError
+            If the role gets a number of columns outside its cardinality.
+        """
+        role = self._declared_role(role_name)
+        noun = self._role_noun(role.name, self.io_roles())
+        for column_type, _ in columns:
+            if not role.accepts_type_name(column_type):
+                raise TypeError(
+                    f"{column_type} is not an allowed type for {noun} columns."
+                )
+        known = sum(count for _, count in columns if count is not None)
+        unknown = sum(1 for _, count in columns if count is None)
+        fits = known + unknown >= role.min if unknown else role.admits(known)
+        if not fits:
+            raise ValueError(
+                f"{noun.capitalize()} cardinality ({known + unknown}) does not "
+                f"match task cardinality ({role.cardinality_text()})"
+            )
+
     def validate_roles(
         self, roles: Mapping[str, Sequence[str]], types: Mapping[str, Any]
     ) -> None:
@@ -284,30 +382,9 @@ class BaseTask:
         TypeError
             If a column's type is not one its role accepts.
         """
-        declared = self.column_roles()
-        names = [role.name for role in declared]
-        for name in roles:
-            if name not in names:
-                raise ValueError(
-                    f"{type(self).__name__} has no column role {name!r}. Its "
-                    f"roles are: {', '.join(names)}."
-                )
-
-        sides = self.io_roles()
-        for role in declared:
-            columns = list(roles.get(role.name) or [])
-            noun = self._role_noun(role.name, sides)
-            for column in columns:
-                column_type = types[column]
-                if not isinstance(column_type, role.types):
-                    raise TypeError(
-                        f"{column_type} is not an allowed type for {noun} columns."
-                    )
-            if not role.admits(len(columns)):
-                raise ValueError(
-                    f"{noun.capitalize()} cardinality ({len(columns)}) does not "
-                    f"match task cardinality ({role.cardinality_text()})"
-                )
+        self.check_role_names(roles)
+        for role in self.column_roles():
+            self.validate_role(role.name, list(roles.get(role.name) or []), types)
 
     def validate_dataset_for_task(
         self,

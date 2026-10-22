@@ -4,6 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import Dataset
+from tests.back.api.row_order_tasks import ReversingTask
 
 input_columns_1 = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 input_columns_2 = ["SepalLengthCm", "PetalWidthCm"]
@@ -133,12 +134,18 @@ def test_not_found_model_session(client: TestClient):
 def test_update_model_session(client: TestClient, dataset_id: int):
     """Test that a model session can be updated through a patch call."""
 
-    # RegressionTask also offers the session's holdout strategy, so the API
-    # accepts the change of task.
-    response = client.patch(
-        "/api/v1/model-session/2?task_name=RegressionTask&name=ModelSession123",
-    )
-    assert response.status_code == 200
+    # ReversingTask offers the session's holdout strategy and splitter and
+    # takes its columns (a categorical target), so the API accepts the change
+    # of task. RegressionTask would refuse the categorical target.
+    registry = client.app.container["component_registry"]
+    registry.register_component(ReversingTask)
+    try:
+        response = client.patch(
+            "/api/v1/model-session/2?task_name=ReversingTask&name=ModelSession123",
+        )
+        assert response.status_code == 200, response.text
+    finally:
+        registry.unregister_component(ReversingTask)
 
     # get the updated model session
     response = client.get("/api/v1/model-session/2")
@@ -146,7 +153,7 @@ def test_update_model_session(client: TestClient, dataset_id: int):
 
     data = response.json()
     assert data["dataset_id"] == dataset_id
-    assert data["task_name"] == "RegressionTask"
+    assert data["task_name"] == "ReversingTask"
     assert data["name"] == "ModelSession123"
     assert data["created"] != data["last_modified"]
 

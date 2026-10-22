@@ -138,6 +138,40 @@ def _create_session(
     return response.json()["id"]
 
 
+def _store_session(
+    client: TestClient, dataset_id: int, name: str, input_columns
+) -> int:
+    """Write a session the API refuses straight to the database.
+
+    The API checks a session's columns against its task, so a session the
+    task cannot take never reaches a run through it. The job keeps its own
+    check as a defence, and this is how it is reached.
+    """
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session = ModelSession(
+            dataset_id=dataset_id,
+            name=name,
+            task_name="ClusteringTask",
+            input_columns=list(input_columns),
+            output_columns=[],
+            column_roles={
+                "features": {
+                    "refs": [{"kind": "raw", "name": c} for c in input_columns],
+                    "columns": list(input_columns),
+                }
+            },
+            train_metrics=[],
+            validation_metrics=[],
+            test_metrics=[],
+            evaluation_strategy="FullDatasetEvaluationStrategy",
+            splits=json.dumps({}),
+        )
+        db.add(session)
+        db.commit()
+        return session.id
+
+
 def _create_run(client: TestClient, session_id: int, model: str, params) -> int:
     """Create a run with the payload the front sends when HPO is off."""
     response = client.post(
@@ -542,7 +576,7 @@ def test_a_dataset_the_task_cannot_take_is_reported(client, csv_dir, statuses):
         "blobs with category",
         {**NUMERIC_SCHEMA, "group": {"type": "Categorical", "dtype": "string"}},
     )
-    session_id = _create_session(
+    session_id = _store_session(
         client, dataset_id, "clustering net, category", ["hours", "score", "group"]
     )
     run_id = _create_run(client, session_id, "KMeansClustering", {"n_clusters": 3})
