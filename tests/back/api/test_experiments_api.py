@@ -93,8 +93,8 @@ def test_create_and_get_model_session(
     assert data["dataset_id"] == dataset_id
     assert data["task_name"] == "TabularClassificationTask"
     assert data["name"] == "ExperimentA"
-    assert data["input_columns"] == input_columns_1
-    assert data["output_columns"] == output_columns
+    assert data["column_roles"]["features"]["columns"] == input_columns_1
+    assert data["column_roles"]["target"]["columns"] == output_columns
     assert data["splits"] == splits
     assert data["evaluation_strategy"] == "HoldoutEvaluationStrategy"
 
@@ -105,8 +105,8 @@ def test_create_and_get_model_session(
     assert data["dataset_id"] == dataset_id
     assert data["task_name"] == "TabularClassificationTask"
     assert data["name"] == "ExperimentB"
-    assert data["input_columns"] == input_columns_2
-    assert data["output_columns"] == output_columns
+    assert data["column_roles"]["features"]["columns"] == input_columns_2
+    assert data["column_roles"]["target"]["columns"] == output_columns
     assert data["splits"] == splits
     assert data["evaluation_strategy"] == "HoldoutEvaluationStrategy"
 

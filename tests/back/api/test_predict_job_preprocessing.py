@@ -101,7 +101,7 @@ def create_preprocessing_session(client: TestClient, dataset_1: Dataset):
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
         row = db.get(ModelSession, body["id"])
-        assert row.input_columns == [DERIVED_COLUMN]
+        assert row.column_roles["features"]["columns"] == [DERIVED_COLUMN]
         assert row.preprocessing_artifacts_path
         db.expunge(row)
         return row

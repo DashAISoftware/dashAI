@@ -1,9 +1,8 @@
 """Downgrade of the migration that stores RAG chunks as documents."""
 
 import sqlalchemy as sa
-from alembic.config import Config
-
 from alembic import command
+from alembic.config import Config
 
 PREVIOUS_REVISION = "c5d1a9e74f28"
 

@@ -1,11 +1,9 @@
-"""A session stores its columns by role, and reads back what the old fields say.
+"""A session stores its columns by role, and its task reads them back.
 
-While the old fields still exist, every writer of a session also writes
-``column_roles``: ``POST /model-session/`` with the refs it is given, and
-``PreprocessingJob`` with the columns the fitted chain resolved. ``session_io``
-reads the roles back as a model's inputs and outputs through the task, and
-must agree with ``input_columns``, ``output_columns`` and
-``input_column_refs`` for every kind of session.
+``POST /model-session/`` stores the refs it is given per role, and
+``PreprocessingJob`` the columns the fitted chain resolved. ``session_io``
+reads the roles back as a model's inputs and outputs through the task. The
+old fields are refused.
 
 Lives under ``tests/back/api`` to reuse the ``client`` and ``dataset_1``
 fixtures from this package's ``conftest.py``.
@@ -18,7 +16,7 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import ModelSession
 from DashAI.back.preprocessing.column_ref import parse_column_refs
-from DashAI.back.tasks.session_roles import session_io, session_roles
+from DashAI.back.tasks.session_roles import session_io
 
 IRIS_FEATURES = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 HOLDOUT = {
@@ -60,13 +58,11 @@ def _task(client: TestClient, session: ModelSession):
     return registry[session.task_name]["class"]()
 
 
-def _agrees_with_the_old_fields(client, session):
-    io = session_io(session, _task(client, session))
-    refs = parse_column_refs(session.input_column_refs or [])
-    assert io.inputs == session.input_columns
-    assert io.outputs == session.output_columns
-    assert io.input_refs == refs
-    assert io.raw_inputs == [ref.name for ref in refs if ref.kind == "raw"]
+RAW = [{"kind": "raw", "name": name} for name in IRIS_FEATURES]
+BINARIZED = [
+    {"kind": "raw", "name": "SepalWidthCm"},
+    {"kind": "group", "step": 0},
+]
 
 
 @pytest.fixture(scope="module", name="plain")
@@ -166,29 +162,36 @@ def test_a_session_without_a_target_stores_no_target_role(clustering):
     assert set(clustering.column_roles) == {"features"}
 
 
-@pytest.mark.parametrize("fixture", ["plain", "preprocessed", "clustering"])
-def test_the_roles_read_back_as_the_old_fields(request, client, fixture):
-    _agrees_with_the_old_fields(client, request.getfixturevalue(fixture))
-
-
-@pytest.mark.parametrize("fixture", ["plain", "preprocessed", "clustering"])
-def test_a_row_without_roles_is_read_from_the_old_fields(request, client, fixture):
-    """Rows built straight on the ORM, as many tests do, have no roles yet."""
+@pytest.mark.parametrize(
+    ("fixture", "inputs", "outputs", "refs", "raw_inputs"),
+    [
+        ("plain", IRIS_FEATURES, ["Species"], RAW, IRIS_FEATURES),
+        (
+            "preprocessed",
+            ["SepalWidthCm", "bin_SepalLengthCm"],
+            ["Species"],
+            BINARIZED,
+            ["SepalWidthCm"],
+        ),
+        (
+            "clustering",
+            ["SepalLengthCm", "PetalLengthCm"],
+            [],
+            RAW[:1] + [{"kind": "raw", "name": "PetalLengthCm"}],
+            ["SepalLengthCm", "PetalLengthCm"],
+        ),
+    ],
+)
+def test_the_task_reads_the_roles_as_inputs_and_outputs(
+    request, client, fixture, inputs, outputs, refs, raw_inputs
+):
     session = request.getfixturevalue(fixture)
-    without_roles = ModelSession(
-        dataset_id=session.dataset_id,
-        name=f"{session.name}-without-roles",
-        task_name=session.task_name,
-        input_columns=session.input_columns,
-        output_columns=session.output_columns,
-        input_column_refs=session.input_column_refs,
-        evaluation_strategy=session.evaluation_strategy,
-        splits=session.splits,
-    )
-    task = _task(client, session)
+    io = session_io(session, _task(client, session))
 
-    assert session_roles(without_roles, task) == session_roles(session, task)
-    _agrees_with_the_old_fields(client, without_roles)
+    assert io.inputs == inputs
+    assert io.outputs == outputs
+    assert io.input_refs == parse_column_refs(refs)
+    assert io.raw_inputs == raw_inputs
 
 
 @pytest.mark.parametrize(
