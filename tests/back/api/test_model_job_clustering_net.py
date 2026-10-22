@@ -121,8 +121,11 @@ def _create_session(
             "dataset_id": dataset_id,
             "task_name": "ClusteringTask",
             "name": name,
-            "input_columns": input_columns,
-            "output_columns": [],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": column} for column in input_columns
+                ]
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],

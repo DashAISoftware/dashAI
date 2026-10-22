@@ -14,8 +14,10 @@ def test_run_creation_is_rejected_while_preprocessing_is_pending(
             "dataset_id": dataset_1.id,
             "task_name": "TabularClassificationTask",
             "name": "pending-guard-session",
-            "input_columns": ["SepalLengthCm"],
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [{"kind": "raw", "name": "SepalLengthCm"}],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -83,8 +85,10 @@ def test_run_creation_surfaces_the_preprocessing_error_when_failed(
             "dataset_id": dataset_1.id,
             "task_name": "TabularClassificationTask",
             "name": "failed-guard-session",
-            "input_columns": [],
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [{"kind": "raw", "name": "SepalLengthCm"}],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -111,7 +115,6 @@ def test_run_creation_surfaces_the_preprocessing_error_when_failed(
                     "scope": [{"kind": "raw", "name": "SepalLengthCm"}],
                 },
             ],
-            "input_column_refs": [{"kind": "raw", "name": "SepalLengthCm"}],
         },
     )
     assert session_response.status_code == 201, session_response.text

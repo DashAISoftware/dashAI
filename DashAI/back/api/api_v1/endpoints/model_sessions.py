@@ -18,7 +18,7 @@ from DashAI.back.api.utils import offered_components, remove_path
 from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.job.preprocessing_job import PreprocessingJob
-from DashAI.back.preprocessing.column_ref import ConverterSequence, RawColumnRef
+from DashAI.back.preprocessing.column_ref import ConverterSequence
 from DashAI.back.preprocessing.structure import (
     StructureError,
     infer_structure,
@@ -171,6 +171,22 @@ def _load_sample_dataset(db, dataset_id: int):
     return DashAIDataset(pa.Table.from_batches([sample_batch]))
 
 
+def _task_or_404(task_name: str, component_registry) -> "BaseTask":
+    """The registered task by name; only it can read a session's roles.
+
+    Raises
+    ------
+    HTTPException
+        404 when no task of that name is registered.
+    """
+    if task_name not in component_registry:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task {task_name} not found in the registry.",
+        )
+    return component_registry[task_name]["class"]()
+
+
 def _type_allowed(type_name, allowed_types) -> bool:
     """Whether a column type is one of a task's allowed input types.
 
@@ -208,6 +224,7 @@ async def get_preprocessing_structure(
         The state after every step, their errors and warnings, and the final
         state.
     """
+    task = _task_or_404(params.task_name, component_registry)
     with session_factory() as db:
         try:
             sample = _load_sample_dataset(db, params.dataset_id)
@@ -217,10 +234,18 @@ async def get_preprocessing_structure(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+    # The roles the preprocessing may transform are what feeds the chain; the
+    # protected ones never enter it and no step may reference them.
+    candidates, protected = [], []
+    for role in task.column_roles():
+        side = candidates if role.transformable else protected
+        for name in params.column_roles.get(role.name, []):
+            if name not in side:
+                side.append(name)
     return infer_structure(
         dataset_types=sample.types,
-        candidates=params.candidates,
-        target=params.output_columns,
+        candidates=candidates,
+        target=protected,
         steps=params.steps,
         component_registry=component_registry,
     )
@@ -243,28 +268,6 @@ async def validate_columns(
     with session_factory() as db:
         try:
             minimal_dataset = _load_sample_dataset(db, params.dataset_id)
-
-            column_names = minimal_dataset.column_names
-
-            group_refs = [
-                ref for ref in (params.input_refs or []) if ref.kind == "group"
-            ]
-
-            if not group_refs and len(
-                params.inputs_columns + params.outputs_columns
-            ) > len(column_names):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Column index out of range",
-                )
-
-            inputs_names = (
-                [r.name for r in params.input_refs if r.kind == "raw"]
-                if params.input_refs
-                else params.inputs_columns
-            )
-            outputs_names = params.outputs_columns
-
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -272,13 +275,20 @@ async def validate_columns(
                 detail="Internal database error",
             ) from e
 
-    if params.task_name not in component_registry:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Task {params.task_name} not found in the registry.",
-        )
+    task = _task_or_404(params.task_name, component_registry)
 
-    task: "BaseTask" = component_registry[params.task_name]["class"]()
+    column_names = minimal_dataset.column_names
+    io = task.io_columns(params.column_roles)
+    input_refs = list(io.inputs)
+    group_refs = [ref for ref in input_refs if ref.kind == "group"]
+    inputs_names = [ref.name for ref in input_refs if ref.kind == "raw"]
+    outputs_names = [ref.name for ref in io.outputs]
+
+    if not group_refs and len(inputs_names + outputs_names) > len(column_names):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Column index out of range",
+        )
 
     if params.preprocessing:
         allowed_input_types = set(task.get_metadata().get("inputs_types", []))
@@ -295,9 +305,7 @@ async def validate_columns(
                 "error": "The preprocessing chain has an invalid step.",
             }
         try:
-            items = resolve_state_refs(
-                params.input_refs or [], structure.final, set(outputs_names)
-            )
+            items = resolve_state_refs(input_refs, structure.final, set(outputs_names))
         except StructureError as e:
             return {"dataset_status": "invalid", "error": e.message.code}
         for item in items:
@@ -615,7 +623,7 @@ def _with_resampling_seeds(steps, component_registry):
 
 
 def _check_preprocessing_structure(
-    db, params, sequence, input_column_refs, component_registry
+    db, params, sequence, input_column_refs, output_columns, component_registry
 ) -> None:
     """Reject a session whose chain or inputs cannot work, before creating it.
 
@@ -634,7 +642,7 @@ def _check_preprocessing_structure(
     structure = infer_structure(
         dataset_types=sample.types,
         candidates=list(sample.column_names),
-        target=params.output_columns,
+        target=output_columns,
         steps=sequence.steps,
         component_registry=component_registry,
     )
@@ -647,9 +655,7 @@ def _check_preprocessing_structure(
             },
         )
     try:
-        resolve_state_refs(
-            input_column_refs, structure.final, set(params.output_columns)
-        )
+        resolve_state_refs(input_column_refs, structure.final, set(output_columns))
     except StructureError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -731,23 +737,25 @@ async def create_model_session(
         ) from e
     has_preprocessing = len(sequence.steps) > 0
 
-    if has_preprocessing and not params.input_column_refs:
+    # The task translates the roles it was given into the model's inputs
+    # and outputs, which the checks below and the old fields still read.
+    task = component_registry[params.task_name]["class"]()
+    roles = {name: list(refs) for name, refs in params.column_roles.items() if refs}
+    io = task.io_columns(roles)
+    input_column_refs = list(io.inputs)
+    raw_inputs = [ref.name for ref in input_column_refs if ref.kind == "raw"]
+    output_columns = [ref.name for ref in io.outputs]
+
+    if has_preprocessing and not input_column_refs:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(
-                "input_column_refs is required when preprocessing steps are provided"
+                "column_roles has to give the model's inputs when preprocessing "
+                "steps are provided"
             ),
         )
 
-    input_column_refs = params.input_column_refs or [
-        RawColumnRef(name=name) for name in params.input_columns
-    ]
-    column_roles = SessionColumnRoles.from_io(
-        component_registry[params.task_name]["class"](),
-        input_columns=params.input_columns,
-        output_columns=params.output_columns,
-        input_refs=input_column_refs,
-    )
+    column_roles = SessionColumnRoles.from_refs(roles)
 
     with session_factory() as db:
         try:
@@ -766,15 +774,20 @@ async def create_model_session(
 
             if has_preprocessing:
                 _check_preprocessing_structure(
-                    db, params, sequence, input_column_refs, component_registry
+                    db,
+                    params,
+                    sequence,
+                    input_column_refs,
+                    output_columns,
+                    component_registry,
                 )
 
-            # When preprocessing is configured, input_columns is only a
-            # placeholder until PreprocessingJob resolves the real ones, so
-            # it cannot be checked against the raw dataset's column count.
-            if not has_preprocessing and len(
-                params.input_columns + params.output_columns
-            ) > len(column_names):
+            # When preprocessing is configured, some inputs are converter
+            # outputs that only exist once PreprocessingJob has fitted the
+            # chain, so they cannot be counted against the raw dataset.
+            if not has_preprocessing and len(raw_inputs + output_columns) > len(
+                column_names
+            ):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Column index out of range",
@@ -784,8 +797,8 @@ async def create_model_session(
                 dataset_id=params.dataset_id,
                 task_name=params.task_name,
                 name=params.name,
-                input_columns=params.input_columns,
-                output_columns=params.output_columns,
+                input_columns=raw_inputs,
+                output_columns=output_columns,
                 train_metrics=params.train_metrics,
                 validation_metrics=params.validation_metrics,
                 test_metrics=params.test_metrics,

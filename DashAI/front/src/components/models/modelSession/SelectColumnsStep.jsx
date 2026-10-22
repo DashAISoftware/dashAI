@@ -23,6 +23,7 @@ import {
   stateToOptions,
 } from "./sessionColumnRefs";
 import usePreprocessingStructure from "./usePreprocessingStructure";
+import { rawRefs, rolesFromIo } from "./columnRoles";
 
 /**
  * Last step of the session wizard: pick the model's input columns (and,
@@ -47,6 +48,7 @@ function SelectColumnsStep({
   datasetInfo,
   datasetTypes,
   requiresTarget = true,
+  taskMetadata,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["experiments", "models", "common"]);
@@ -60,8 +62,12 @@ function SelectColumnsStep({
 
   const { structure } = usePreprocessingStructure({
     datasetId: withPreprocessing ? dataset.id : undefined,
-    candidates: newExp.candidate_columns,
-    outputColumns: newExp.output_columns,
+    taskName: newExp.task_name,
+    columnRoles: rolesFromIo(
+      taskMetadata,
+      newExp.candidate_columns,
+      newExp.output_columns,
+    ),
     steps,
   });
 
@@ -198,9 +204,11 @@ function SelectColumnsStep({
       const validation = await validateColumnsRequest(
         newExp.task_name,
         dataset.id,
-        rawInputNames,
-        effectiveOutputColumns,
-        withPreprocessing ? inputColumnRefs : undefined,
+        rolesFromIo(
+          taskMetadata,
+          withPreprocessing ? inputColumnRefs : rawRefs(rawInputNames),
+          rawRefs(effectiveOutputColumns),
+        ),
         withPreprocessing ? steps : undefined,
       );
       setColumnsAreValid(validation.dataset_status === "valid");
@@ -428,6 +436,7 @@ function SelectColumnsStep({
 }
 
 SelectColumnsStep.propTypes = {
+  taskMetadata: PropTypes.object,
   newExp: PropTypes.object.isRequired,
   setNewExp: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,

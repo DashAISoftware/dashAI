@@ -115,12 +115,15 @@ def _create_session(
     refs, which a session with preprocessing needs because some inputs are
     converter outputs.
     """
+    raw_inputs = [{"kind": "raw", "name": column} for column in inputs]
     body = {
         "dataset_id": dataset_id,
         "task_name": task,
         "name": name,
-        "input_columns": [] if preprocessing else list(inputs),
-        "output_columns": list(outputs),
+        "column_roles": {
+            "features": refs if refs is not None else raw_inputs,
+            "target": [{"kind": "raw", "name": column} for column in outputs],
+        },
         "train_metrics": list(metrics),
         "validation_metrics": list(metrics),
         "test_metrics": list(metrics),
@@ -128,8 +131,6 @@ def _create_session(
         "splits": json.dumps(splits if splits is not None else HOLDOUT),
         "preprocessing": list(preprocessing),
     }
-    if refs is not None:
-        body["input_column_refs"] = refs
     response = client.post("/api/v1/model-session/", json=body)
     assert response.status_code == 201, response.text
     assert response.json()["preprocessing_status"] in (None, "ready"), response.text

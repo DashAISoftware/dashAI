@@ -28,8 +28,13 @@ def _payload(dataset_id: int, task: str, strategy: str, name: str, **overrides):
         "dataset_id": dataset_id,
         "task_name": task,
         "name": name,
-        "input_columns": IRIS_FEATURES,
-        "output_columns": [] if without_target else ["Species"],
+        "column_roles": {
+            "features": [{"kind": "raw", "name": column} for column in IRIS_FEATURES],
+            "target": [
+                {"kind": "raw", "name": name}
+                for name in ([] if without_target else ["Species"])
+            ],
+        },
         "train_metrics": [],
         "validation_metrics": [],
         "test_metrics": [],
@@ -158,7 +163,7 @@ def test_a_strategy_that_carves_nothing_refuses_session_preprocessing(
                     "scope": [{"kind": "raw", "name": "SepalLengthCm"}],
                 }
             ],
-            input_column_refs=[{"kind": "group", "step": 0}],
+            column_roles={"features": [{"kind": "group", "step": 0}]},
         ),
     )
 

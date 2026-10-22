@@ -11,6 +11,7 @@ import PreprocessingStep from "./modelSession/PreprocessingStep";
 import SelectColumnsStep from "./modelSession/SelectColumnsStep";
 import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomplete";
 import { createModelSession } from "../../api/modelSession";
+import { rawRefs, rolesFromIo } from "./modelSession/columnRoles";
 import { forceRefreshNow } from "../../utils/jobPoller";
 import { getComponents } from "../../api/component";
 import {
@@ -279,6 +280,14 @@ function CreateSessionSteps({
         ? newExp.preprocessing
         : [];
 
+      // The session is created with its columns by role; which role feeds
+      // the model's inputs and which its outputs is the task's declaration.
+      const columnRoles = rolesFromIo(
+        selectedTask?.metadata,
+        newExp.input_column_refs,
+        rawRefs(requiresTarget ? newExp.output_columns : []),
+      );
+
       let effectiveName = sessionName;
       let response;
       try {
@@ -286,15 +295,13 @@ function CreateSessionSteps({
           selectedDataset.id,
           selectedTask?.name || newExp.task_name,
           effectiveName,
-          newExp.input_columns,
-          requiresTarget ? newExp.output_columns : [],
+          columnRoles,
           hasTrain ? allMetricNames : [],
           hasValidation ? allMetricNames : [],
           hasTest ? allMetricNames : [],
           newExp.evaluation_strategy,
           JSON.stringify(newExp.splits),
           preprocessing,
-          newExp.input_column_refs,
         );
       } catch (createError) {
         if (createError?.response?.status === 409) {
@@ -304,15 +311,13 @@ function CreateSessionSteps({
             selectedDataset.id,
             selectedTask?.name || newExp.task_name,
             effectiveName,
-            newExp.input_columns,
-            requiresTarget ? newExp.output_columns : [],
+            columnRoles,
             hasTrain ? allMetricNames : [],
             hasValidation ? allMetricNames : [],
             hasTest ? allMetricNames : [],
             newExp.evaluation_strategy,
             JSON.stringify(newExp.splits),
             preprocessing,
-            newExp.input_column_refs,
           );
         } else {
           throw createError;
@@ -439,6 +444,7 @@ function CreateSessionSteps({
             setNewExp={setNewExp}
             setNextEnabled={setNextEnabled}
             dataset={selectedDataset}
+            taskMetadata={selectedTask?.metadata}
           />
         )}
 
@@ -457,6 +463,7 @@ function CreateSessionSteps({
                 datasetInfo={datasetInfo}
                 datasetTypes={datasetTypes}
                 requiresTarget={requiresTarget}
+                taskMetadata={selectedTask?.metadata}
               />
             )}
           </>
