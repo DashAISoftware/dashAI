@@ -196,9 +196,8 @@ class BaseTask:
 
         ``"column_roles"`` lists the roles and ``"io_roles"`` which of them
         feed a model's inputs and outputs. ``"inputs_types"`` and the three
-        keys beside it, and the per-side lists ``"inputs"`` and
-        ``"outputs"``, are the flat view existing consumers read, computed
-        from the roles of each side.
+        keys beside it are the flat view the remaining consumers read,
+        computed from the roles of each side.
 
         Type classes become their string names throughout so the result can be
         JSON-serialised by the DashAI frontend.
@@ -212,9 +211,8 @@ class BaseTask:
         -------
         Dict[str, Any]
             Dictionary with keys ``"inputs_types"``, ``"outputs_types"``,
-            ``"inputs_cardinality"``, ``"outputs_cardinality"``, ``"inputs"``,
-            ``"outputs"``, ``"column_roles"``, ``"io_roles"`` and
-            ``"requires_target"``.
+            ``"inputs_cardinality"``, ``"outputs_cardinality"``,
+            ``"column_roles"``, ``"io_roles"`` and ``"requires_target"``.
         """
         roles = cls.column_roles()
         sides = cls.io_roles()
@@ -233,14 +231,6 @@ class BaseTask:
 
             parsed_metadata[f"{side}_types"] = names
             parsed_metadata[f"{side}_cardinality"] = cls._total_cardinality(side_roles)
-            parsed_metadata[side] = [
-                {
-                    "types": [type_name(t) for t in role.types],
-                    "min": role.min,
-                    "max": role.max,
-                }
-                for role in side_roles
-            ]
 
         parsed_metadata["column_roles"] = [role.to_metadata() for role in roles]
         parsed_metadata["io_roles"] = sides
