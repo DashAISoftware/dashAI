@@ -6,13 +6,15 @@ from DashAI.back.dependencies.database.models import Dataset
 
 SESSION_PARAMS = {
     "task_name": "TabularClassificationTask",
-    "input_columns": [
-        "SepalLengthCm",
-        "SepalWidthCm",
-        "PetalLengthCm",
-        "PetalWidthCm",
-    ],
-    "output_columns": ["Species"],
+    "column_roles": {
+        "features": [
+            {"kind": "raw", "name": "SepalLengthCm"},
+            {"kind": "raw", "name": "SepalWidthCm"},
+            {"kind": "raw", "name": "PetalLengthCm"},
+            {"kind": "raw", "name": "PetalWidthCm"},
+        ],
+        "target": [{"kind": "raw", "name": "Species"}],
+    },
     "train_metrics": [],
     "validation_metrics": [],
     "test_metrics": [],
@@ -77,7 +79,10 @@ def test_create_model_session_with_preprocessing_fits_and_resolves_columns(
             **SESSION_PARAMS,
             "dataset_id": dataset_1.id,
             "name": "with-preprocessing-session",
-            "input_columns": [],
+            "column_roles": {
+                "features": [{"kind": "group", "step": 0}],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "preprocessing": [
                 {
                     "converter": "Binarizer",
@@ -85,7 +90,6 @@ def test_create_model_session_with_preprocessing_fits_and_resolves_columns(
                     "scope": [{"kind": "raw", "name": "SepalLengthCm"}],
                 },
             ],
-            "input_column_refs": [{"kind": "group", "step": 0}],
         },
     )
     assert response.status_code == 201, response.text
@@ -106,7 +110,7 @@ def test_create_model_session_with_preprocessing_fits_and_resolves_columns(
     client.delete(f"/api/v1/model-session/{session_id}")
 
 
-def test_create_model_session_with_preprocessing_requires_input_column_refs(
+def test_create_model_session_with_preprocessing_requires_the_model_inputs(
     client: TestClient, dataset_1: Dataset
 ) -> None:
     response = client.post(
@@ -115,6 +119,7 @@ def test_create_model_session_with_preprocessing_requires_input_column_refs(
             **SESSION_PARAMS,
             "dataset_id": dataset_1.id,
             "name": "missing-refs-session",
+            "column_roles": {"target": [{"kind": "raw", "name": "Species"}]},
             "preprocessing": [
                 {
                     "converter": "Binarizer",
@@ -125,6 +130,10 @@ def test_create_model_session_with_preprocessing_requires_input_column_refs(
         },
     )
     assert response.status_code == 422, response.text
+    assert response.json()["detail"] == (
+        "column_roles has to give the model's inputs when preprocessing steps "
+        "are provided"
+    )
 
 
 def test_validate_columns_rejects_group_refs_without_preprocessing(
@@ -135,9 +144,10 @@ def test_validate_columns_rejects_group_refs_without_preprocessing(
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": dataset_1.id,
-            "inputs_columns": [],
-            "outputs_columns": ["Species"],
-            "input_refs": [{"kind": "group", "step": 0}],
+            "column_roles": {
+                "features": [{"kind": "group", "step": 0}],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
         },
     )
     assert response.status_code == 200, response.text
@@ -153,7 +163,10 @@ def test_a_resampling_step_without_a_seed_is_stored_with_seed_42(
             **SESSION_PARAMS,
             "dataset_id": dataset_1.id,
             "name": "seeded-resampling-session",
-            "input_columns": [],
+            "column_roles": {
+                "features": [{"kind": "raw", "name": "SepalLengthCm"}],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "preprocessing": [
                 {
                     "converter": "RandomUnderSamplerConverter",
@@ -164,7 +177,6 @@ def test_a_resampling_step_without_a_seed_is_stored_with_seed_42(
                     ],
                 }
             ],
-            "input_column_refs": [{"kind": "raw", "name": "SepalLengthCm"}],
         },
     )
     assert response.status_code == 201, response.text
@@ -211,8 +223,11 @@ def test_preprocessing_structure_returns_the_state_after_each_step(
         "/api/v1/model-session/preprocessing/structure",
         json={
             "dataset_id": dataset_1.id,
-            "candidates": ["SepalLengthCm", "SepalWidthCm"],
-            "output_columns": ["Species"],
+            "task_name": "TabularClassificationTask",
+            "column_roles": {
+                "features": ["SepalLengthCm", "SepalWidthCm"],
+                "target": ["Species"],
+            },
             "steps": [BINARIZE_SEPAL_LENGTH],
         },
     )
@@ -238,8 +253,8 @@ def test_preprocessing_structure_reports_a_ref_to_a_missing_column(
         "/api/v1/model-session/preprocessing/structure",
         json={
             "dataset_id": dataset_1.id,
-            "candidates": ["SepalLengthCm"],
-            "output_columns": ["Species"],
+            "task_name": "TabularClassificationTask",
+            "column_roles": {"features": ["SepalLengthCm"], "target": ["Species"]},
             "steps": [
                 {
                     "converter": "StandardScaler",
@@ -264,7 +279,10 @@ def test_create_model_session_rejects_an_invalid_chain(
             **SESSION_PARAMS,
             "dataset_id": dataset_1.id,
             "name": "invalid-chain-session",
-            "input_columns": [],
+            "column_roles": {
+                "features": [{"kind": "raw", "name": "SepalWidthCm"}],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "preprocessing": [
                 {
                     "converter": "StandardScaler",
@@ -272,7 +290,6 @@ def test_create_model_session_rejects_an_invalid_chain(
                     "scope": [{"kind": "raw", "name": "Species"}],
                 }
             ],
-            "input_column_refs": [{"kind": "raw", "name": "SepalWidthCm"}],
         },
     )
     assert response.status_code == 422, response.text
@@ -289,7 +306,10 @@ def test_create_model_session_rejects_an_input_the_chain_consumed(
             **SESSION_PARAMS,
             "dataset_id": dataset_1.id,
             "name": "consumed-input-session",
-            "input_columns": [],
+            "column_roles": {
+                "features": [{"kind": "raw", "name": "SepalLengthCm"}],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "preprocessing": [
                 {
                     "converter": "PCA",
@@ -300,7 +320,6 @@ def test_create_model_session_rejects_an_input_the_chain_consumed(
                     ],
                 }
             ],
-            "input_column_refs": [{"kind": "raw", "name": "SepalLengthCm"}],
         },
     )
     assert response.status_code == 422, response.text
@@ -315,12 +334,13 @@ def test_validate_columns_with_preprocessing_accepts_a_generated_column(
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": dataset_1.id,
-            "inputs_columns": ["SepalWidthCm"],
-            "outputs_columns": ["Species"],
-            "input_refs": [
-                {"kind": "raw", "name": "SepalWidthCm"},
-                {"kind": "group", "step": 0, "name": "bin_SepalLengthCm"},
-            ],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "group", "step": 0, "name": "bin_SepalLengthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "preprocessing": [BINARIZE_SEPAL_LENGTH],
         },
     )
@@ -336,9 +356,10 @@ def test_validate_columns_with_preprocessing_rejects_an_input_cast_to_text(
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": dataset_1.id,
-            "inputs_columns": ["SepalLengthCm"],
-            "outputs_columns": ["Species"],
-            "input_refs": [{"kind": "raw", "name": "SepalLengthCm"}],
+            "column_roles": {
+                "features": [{"kind": "raw", "name": "SepalLengthCm"}],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "preprocessing": [
                 {
                     "converter": "TypeCast",

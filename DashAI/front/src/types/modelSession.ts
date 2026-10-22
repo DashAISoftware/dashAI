@@ -17,6 +17,16 @@ export interface IGroupColumnRef {
 
 export type IColumnRef = IRawColumnRef | IGroupColumnRef;
 
+// Role name to the role's column refs, as the task declares its roles.
+export type IColumnRoles = Record<string, IColumnRef[]>;
+
+// What a session stores per role: the refs chosen and the column names they
+// resolve to once the preprocessing is fitted.
+export interface IRoleColumns {
+  refs: IColumnRef[];
+  columns: string[];
+}
+
 export interface IConverterStep {
   converter: string;
   params: Record<string, unknown>;
@@ -82,6 +92,7 @@ export interface IModelSession {
   runs: IRun[];
   preprocessing?: IConverterStep[];
   input_column_refs?: IColumnRef[];
+  column_roles?: Record<string, IRoleColumns>;
   preprocessing_status?: IPreprocessingStatus;
   preprocessing_error?: string | null;
   preprocessing_job_id?: string | null;

@@ -35,13 +35,15 @@ def create_model_session_1(client: TestClient, dataset_id: int):
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "ExperimentA",
-            "input_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -60,8 +62,13 @@ def create_model_session_2(client: TestClient, dataset_id: int):
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "ExperimentB",
-            "input_columns": ["SepalLengthCm", "PetalWidthCm"],
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -169,13 +176,15 @@ def test_get_columns_validation_valid(client: TestClient, dataset_id: int):
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "outputs_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
         },
     )
     assert response.status_code == 200, response.text
@@ -189,13 +198,15 @@ def test_get_columns_validation_wrong_task_name(client: TestClient, dataset_id: 
         json={
             "task_name": "TabularClassTask",
             "dataset_id": dataset_id,
-            "inputs_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "outputs_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
         },
     )
     assert response.status_code == 404, response.text
@@ -210,13 +221,15 @@ def test_get_columns_validation_wrong_dataset(client: TestClient):
         json={
             "task_name": "TabularClassificationTask",
             "dataset_id": 127,
-            "inputs_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "outputs_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
         },
     )
     assert response.status_code == 404, response.text

@@ -79,6 +79,29 @@ class SessionColumnRoles(RootModel[Dict[str, RoleColumns]]):
         )
 
     @classmethod
+    def from_refs(cls, refs: Mapping[str, Sequence[Any]]) -> "SessionColumnRoles":
+        """Build the roles a session is created with, from the refs chosen.
+
+        Before the preprocessing is fitted, a role's columns are the names of
+        its raw refs. Roles given no refs are left out.
+
+        Parameters
+        ----------
+        refs : mapping
+            Role name to the role's column refs.
+        """
+        return cls(
+            {
+                name: RoleColumns(
+                    refs=list(role_refs),
+                    columns=[ref.name for ref in role_refs if ref.kind == "raw"],
+                )
+                for name, role_refs in refs.items()
+                if role_refs
+            }
+        )
+
+    @classmethod
     def from_io(
         cls,
         task: "BaseTask",

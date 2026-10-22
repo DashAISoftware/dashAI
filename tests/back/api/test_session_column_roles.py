@@ -77,8 +77,12 @@ def fixture_plain(client, dataset_1):
             "dataset_id": dataset_1.id,
             "task_name": "TabularClassificationTask",
             "name": "column-roles-plain",
-            "input_columns": IRIS_FEATURES,
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": column} for column in IRIS_FEATURES
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "evaluation_strategy": "HoldoutEvaluationStrategy",
             "splits": json.dumps(HOLDOUT),
         },
@@ -93,15 +97,16 @@ def fixture_preprocessed(client, dataset_1):
             "dataset_id": dataset_1.id,
             "task_name": "TabularClassificationTask",
             "name": "column-roles-preprocessed",
-            "input_columns": [],
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "group", "step": 0},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "evaluation_strategy": "HoldoutEvaluationStrategy",
             "splits": json.dumps(HOLDOUT),
             "preprocessing": [BINARIZER],
-            "input_column_refs": [
-                {"kind": "raw", "name": "SepalWidthCm"},
-                {"kind": "group", "step": 0},
-            ],
         },
     )
 
@@ -114,8 +119,13 @@ def fixture_clustering(client, dataset_1):
             "dataset_id": dataset_1.id,
             "task_name": "ClusteringTask",
             "name": "column-roles-clustering",
-            "input_columns": ["SepalLengthCm", "PetalLengthCm"],
-            "output_columns": [],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                ],
+                "target": [],
+            },
             "evaluation_strategy": "FullDatasetEvaluationStrategy",
             "splits": json.dumps({}),
         },
@@ -125,7 +135,7 @@ def fixture_clustering(client, dataset_1):
 def test_a_session_without_preprocessing_stores_raw_refs_by_role(plain):
     assert plain.column_roles == {
         "features": {
-            "refs": [{"kind": "raw", "name": name} for name in IRIS_FEATURES],
+            "refs": [{"kind": "raw", "name": column} for column in IRIS_FEATURES],
             "columns": IRIS_FEATURES,
         },
         "target": {
@@ -179,3 +189,48 @@ def test_a_row_without_roles_is_read_from_the_old_fields(request, client, fixtur
 
     assert session_roles(without_roles, task) == session_roles(session, task)
     _agrees_with_the_old_fields(client, without_roles)
+
+
+@pytest.mark.parametrize(
+    ("endpoint", "old_body"),
+    [
+        (
+            "/api/v1/model-session/",
+            {
+                "task_name": "TabularClassificationTask",
+                "name": "old-payload",
+                "input_columns": IRIS_FEATURES,
+                "output_columns": ["Species"],
+                "train_metrics": [],
+                "validation_metrics": [],
+                "test_metrics": [],
+                "evaluation_strategy": "HoldoutEvaluationStrategy",
+                "splits": json.dumps(HOLDOUT),
+            },
+        ),
+        (
+            "/api/v1/model-session/validation",
+            {
+                "task_name": "TabularClassificationTask",
+                "inputs_columns": IRIS_FEATURES,
+                "outputs_columns": ["Species"],
+            },
+        ),
+        (
+            "/api/v1/model-session/preprocessing/structure",
+            {"candidates": IRIS_FEATURES, "output_columns": ["Species"]},
+        ),
+    ],
+)
+def test_the_old_column_fields_are_refused(client, dataset_1, endpoint, old_body):
+    response = client.post(endpoint, json={"dataset_id": dataset_1.id, **old_body})
+
+    assert response.status_code == 422, response.text
+    refused = {error["loc"][-1] for error in response.json()["detail"]}
+    assert refused & {
+        "input_columns",
+        "output_columns",
+        "inputs_columns",
+        "outputs_columns",
+        "candidates",
+    }

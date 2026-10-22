@@ -43,8 +43,10 @@ def _payload(dataset_id, name, splits, task="TabularClassificationTask", **overr
         "dataset_id": dataset_id,
         "task_name": task,
         "name": name,
-        "input_columns": IRIS_FEATURES,
-        "output_columns": ["Species"],
+        "column_roles": {
+            "features": [{"kind": "raw", "name": column} for column in IRIS_FEATURES],
+            "target": [{"kind": "raw", "name": "Species"}],
+        },
         "train_metrics": [],
         "validation_metrics": [],
         "test_metrics": [],
@@ -143,8 +145,10 @@ def test_the_default_splitter_is_refused_where_the_task_does_not_offer_it(
             "series without a splitter",
             {"train": 0.6, "validation": 0.2, "test": 0.2},
             task=series_only_task.__name__,
-            input_columns=["SepalWidthCm"],
-            output_columns=["SepalLengthCm"],
+            column_roles={
+                "features": [{"kind": "raw", "name": "SepalWidthCm"}],
+                "target": [{"kind": "raw", "name": "SepalLengthCm"}],
+            },
         ),
     )
 
@@ -166,8 +170,10 @@ def test_the_splitter_the_task_offers_is_accepted(
             "series with its splitter",
             TEMPORAL,
             task=series_only_task.__name__,
-            input_columns=["SepalWidthCm"],
-            output_columns=["SepalLengthCm"],
+            column_roles={
+                "features": [{"kind": "raw", "name": "SepalWidthCm"}],
+                "target": [{"kind": "raw", "name": "SepalLengthCm"}],
+            },
         ),
     )
 
