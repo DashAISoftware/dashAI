@@ -218,6 +218,11 @@ class ModelSession(Base):
     splits: Mapped[str] = mapped_column(JSON, nullable=False)
     preprocessing: Mapped[dict] = mapped_column(JSON, nullable=True)
     input_column_refs: Mapped[list] = mapped_column(JSON, nullable=True)
+    # The columns by role, as the task declares them: per role, the refs
+    # chosen and the column names they resolve to (see
+    # tasks/session_roles.py). Written beside the three fields above until
+    # they are dropped.
+    column_roles: Mapped[dict] = mapped_column(JSON, nullable=True)
     preprocessing_status: Mapped[str] = mapped_column(
         String, nullable=False, default="ready", server_default="ready"
     )

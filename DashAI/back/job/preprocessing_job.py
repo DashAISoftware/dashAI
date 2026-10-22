@@ -17,6 +17,7 @@ from DashAI.back.preprocessing.column_ref import (
 )
 from DashAI.back.preprocessing.session_preprocessor import SessionPreprocessor
 from DashAI.back.splitters.splits_payload import normalize_splits_payload
+from DashAI.back.tasks.session_roles import session_roles
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -185,6 +186,15 @@ class PreprocessingJob(BaseJob):
                 )
 
                 model_session.input_columns = resolved_input_columns
+                model_session.column_roles = (
+                    session_roles(model_session, task)
+                    .with_columns(
+                        task.roles_from_io(
+                            resolved_input_columns, model_session.output_columns
+                        )
+                    )
+                    .to_stored()
+                )
                 model_session.preprocessing_artifacts_path = artifacts_dir
                 model_session.preprocessing_status = "ready"
                 model_session.preprocessing_error = None

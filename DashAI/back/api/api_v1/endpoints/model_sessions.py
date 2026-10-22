@@ -29,6 +29,7 @@ from DashAI.back.splitters.splits_payload import (
     META_KEYS,
     normalize_splits_payload,
 )
+from DashAI.back.tasks.session_roles import SessionColumnRoles
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -741,6 +742,12 @@ async def create_model_session(
     input_column_refs = params.input_column_refs or [
         RawColumnRef(name=name) for name in params.input_columns
     ]
+    column_roles = SessionColumnRoles.from_io(
+        component_registry[params.task_name]["class"](),
+        input_columns=params.input_columns,
+        output_columns=params.output_columns,
+        input_refs=input_column_refs,
+    )
 
     with session_factory() as db:
         try:
@@ -788,6 +795,7 @@ async def create_model_session(
                 input_column_refs=[
                     ref.model_dump(mode="json") for ref in input_column_refs
                 ],
+                column_roles=column_roles.to_stored(),
                 preprocessing_status="pending" if has_preprocessing else "ready",
             )
             db.add(model_session)
