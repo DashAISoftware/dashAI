@@ -1,0 +1,3374 @@
+{
+ "classification_holdout/explanation": {
+  "features": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm"
+  ],
+  "importances_mean": [
+   0.0,
+   0.0,
+   0.711,
+   0.133
+  ],
+  "importances_std": [
+   0.0,
+   0.0,
+   0.083,
+   0.109
+  ]
+ },
+ "classification_holdout/metrics": [
+  [
+   "test",
+   "last",
+   "Accuracy",
+   1,
+   null,
+   null,
+   1.0,
+   null
+  ],
+  [
+   "test",
+   "last",
+   "F1",
+   1,
+   null,
+   null,
+   1.0,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "Accuracy",
+   1,
+   null,
+   null,
+   0.9555555555555556,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "F1",
+   1,
+   null,
+   null,
+   0.9575757575757576,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "Accuracy",
+   1,
+   null,
+   null,
+   0.9666666666666667,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "F1",
+   1,
+   null,
+   null,
+   0.957351290684624,
+   null
+  ]
+ ],
+ "classification_holdout/package": {
+  "input_columns": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm"
+  ],
+  "output_columns": [
+   "Species"
+  ],
+  "predictions": [
+   "Iris-setosa",
+   "Iris-setosa",
+   "Iris-setosa",
+   "Iris-versicolor",
+   "Iris-versicolor",
+   "Iris-virginica",
+   "Iris-versicolor",
+   "Iris-virginica",
+   "Iris-virginica",
+   "Iris-virginica"
+  ]
+ },
+ "classification_holdout/preview": {
+  "columns": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm",
+   "Species"
+  ],
+  "rows": [
+   [
+    5.1,
+    3.5,
+    1.4,
+    0.2,
+    "Iris-setosa"
+   ],
+   [
+    4.9,
+    3.1,
+    1.5,
+    0.1,
+    "Iris-setosa"
+   ],
+   [
+    6.4,
+    2.9,
+    4.3,
+    1.3,
+    "Iris-versicolor"
+   ],
+   [
+    6.8,
+    3.0,
+    5.5,
+    2.1,
+    "Iris-virginica"
+   ],
+   [
+    5.9,
+    3.0,
+    5.1,
+    1.8,
+    "Iris-virginica"
+   ]
+  ]
+ },
+ "classification_holdout/split_indexes": {
+  "test_indexes": [
+   108,
+   104,
+   131,
+   67,
+   12,
+   65,
+   0,
+   85,
+   27,
+   30,
+   10,
+   18,
+   127,
+   118,
+   137,
+   32,
+   146,
+   128,
+   109,
+   110,
+   26,
+   55,
+   60,
+   29,
+   141,
+   86,
+   19,
+   45,
+   105,
+   4
+  ],
+  "train_indexes": [
+   123,
+   24,
+   25,
+   23,
+   94,
+   39,
+   95,
+   117,
+   47,
+   97,
+   113,
+   33,
+   138,
+   101,
+   62,
+   84,
+   148,
+   53,
+   5,
+   93,
+   111,
+   49,
+   35,
+   80,
+   77,
+   34,
+   114,
+   7,
+   43,
+   70,
+   98,
+   120,
+   83,
+   134,
+   135,
+   89,
+   8,
+   13,
+   119,
+   125,
+   3,
+   17,
+   38,
+   72,
+   136,
+   6,
+   112,
+   100,
+   2,
+   63,
+   54,
+   126,
+   50,
+   115,
+   46,
+   139,
+   61,
+   147,
+   79,
+   59,
+   91,
+   41,
+   58,
+   90,
+   48,
+   88,
+   107,
+   124,
+   21,
+   57,
+   144,
+   129,
+   37,
+   140,
+   1,
+   52,
+   130,
+   103,
+   99,
+   116,
+   87,
+   74,
+   121,
+   149,
+   20,
+   71,
+   106,
+   14,
+   92,
+   102
+  ],
+  "val_indexes": [
+   73,
+   31,
+   51,
+   81,
+   9,
+   122,
+   11,
+   75,
+   36,
+   40,
+   133,
+   96,
+   15,
+   78,
+   66,
+   69,
+   68,
+   64,
+   142,
+   76,
+   16,
+   132,
+   42,
+   44,
+   145,
+   28,
+   56,
+   143,
+   82,
+   22
+  ]
+ },
+ "classification_holdout/stored_columns": {
+  "input_refs": [
+   {
+    "kind": "raw",
+    "name": "SepalLengthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "SepalWidthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "PetalLengthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "PetalWidthCm"
+   }
+  ],
+  "inputs": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm"
+  ],
+  "outputs": [
+   "Species"
+  ]
+ },
+ "classification_holdout/test_prediction": {
+  "columns": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm",
+   "Species"
+  ],
+  "rows": {
+   "PetalLengthCm": [
+    5.8,
+    5.8,
+    6.4,
+    4.1,
+    1.4,
+    4.4,
+    1.4,
+    4.5,
+    1.5,
+    1.6,
+    1.5,
+    1.7,
+    4.9,
+    6.9,
+    5.5,
+    1.5,
+    5.0,
+    5.6,
+    6.1,
+    5.1,
+    1.6,
+    4.5,
+    3.5,
+    1.6,
+    5.1,
+    4.7,
+    1.5,
+    1.4,
+    6.6,
+    1.4
+   ],
+   "PetalWidthCm": [
+    1.8,
+    2.2,
+    2.0,
+    1.0,
+    0.1,
+    1.4,
+    0.2,
+    1.6,
+    0.2,
+    0.2,
+    0.2,
+    0.3,
+    1.8,
+    2.3,
+    1.8,
+    0.1,
+    1.9,
+    2.1,
+    2.5,
+    2.0,
+    0.4,
+    1.3,
+    1.0,
+    0.2,
+    2.3,
+    1.5,
+    0.3,
+    0.3,
+    2.1,
+    0.2
+   ],
+   "SepalLengthCm": [
+    6.7,
+    6.5,
+    7.9,
+    5.8,
+    4.8,
+    6.7,
+    5.1,
+    6.0,
+    5.2,
+    4.8,
+    5.4,
+    5.7,
+    6.1,
+    7.7,
+    6.4,
+    5.2,
+    6.3,
+    6.4,
+    7.2,
+    6.5,
+    5.0,
+    5.7,
+    5.0,
+    4.7,
+    6.9,
+    6.7,
+    5.1,
+    4.8,
+    7.6,
+    5.0
+   ],
+   "SepalWidthCm": [
+    2.5,
+    3.0,
+    3.8,
+    2.7,
+    3.0,
+    3.1,
+    3.5,
+    3.4,
+    3.5,
+    3.1,
+    3.7,
+    3.8,
+    3.0,
+    2.6,
+    3.1,
+    4.1,
+    2.5,
+    2.8,
+    3.6,
+    3.2,
+    3.4,
+    2.8,
+    2.0,
+    3.2,
+    3.1,
+    3.1,
+    3.8,
+    3.0,
+    3.0,
+    3.6
+   ],
+   "Species": [
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-setosa"
+   ]
+  },
+  "schema_metadata": {
+   "dashai_types": "{\"SepalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"SepalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"PetalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"PetalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"Species\": {\"type\": \"Categorical\", \"dtype\": \"string\", \"encoder\": \"one_hot\", \"categories\": [\"Iris-setosa\", \"Iris-versicolor\", \"Iris-virginica\"], \"num_categories\": 3, \"converted\": false}}"
+  },
+  "types": {
+   "PetalLengthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "PetalWidthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "SepalLengthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "SepalWidthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "Species": {
+    "categories": [
+     "Iris-setosa",
+     "Iris-versicolor",
+     "Iris-virginica"
+    ],
+    "converted": false,
+    "dtype": "string",
+    "encoder": "one_hot",
+    "num_categories": 3,
+    "type": "Categorical"
+   }
+  }
+ },
+ "classification_kfold/metrics": [
+  [
+   "test",
+   "last",
+   "Accuracy",
+   1,
+   null,
+   null,
+   0.9,
+   null
+  ],
+  [
+   "test",
+   "last",
+   "F1",
+   1,
+   null,
+   null,
+   0.9123809523809524,
+   null
+  ],
+  [
+   "train",
+   "fold",
+   "Accuracy",
+   1,
+   0,
+   null,
+   0.9875,
+   null
+  ],
+  [
+   "train",
+   "fold",
+   "Accuracy",
+   2,
+   1,
+   null,
+   0.975,
+   null
+  ],
+  [
+   "train",
+   "fold",
+   "Accuracy",
+   3,
+   2,
+   null,
+   1.0,
+   null
+  ],
+  [
+   "train",
+   "fold",
+   "F1",
+   1,
+   0,
+   null,
+   0.9863718537060214,
+   null
+  ],
+  [
+   "train",
+   "fold",
+   "F1",
+   2,
+   1,
+   null,
+   0.9761904761904763,
+   null
+  ],
+  [
+   "train",
+   "fold",
+   "F1",
+   3,
+   2,
+   null,
+   1.0,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "Accuracy",
+   0,
+   null,
+   null,
+   0.9874999999999999,
+   0.010206207261596585
+  ],
+  [
+   "train",
+   "last",
+   "F1",
+   0,
+   null,
+   null,
+   0.987520776632166,
+   0.009754088849528166
+  ],
+  [
+   "validation",
+   "fold",
+   "Accuracy",
+   1,
+   0,
+   null,
+   1.0,
+   null
+  ],
+  [
+   "validation",
+   "fold",
+   "Accuracy",
+   2,
+   1,
+   null,
+   1.0,
+   null
+  ],
+  [
+   "validation",
+   "fold",
+   "Accuracy",
+   3,
+   2,
+   null,
+   0.95,
+   null
+  ],
+  [
+   "validation",
+   "fold",
+   "F1",
+   1,
+   0,
+   null,
+   1.0,
+   null
+  ],
+  [
+   "validation",
+   "fold",
+   "F1",
+   2,
+   1,
+   null,
+   1.0,
+   null
+  ],
+  [
+   "validation",
+   "fold",
+   "F1",
+   3,
+   2,
+   null,
+   0.9513888888888888,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "Accuracy",
+   0,
+   null,
+   null,
+   0.9833333333333334,
+   0.023570226039551605
+  ],
+  [
+   "validation",
+   "last",
+   "F1",
+   0,
+   null,
+   null,
+   0.9837962962962963,
+   0.022915497538452952
+  ]
+ ],
+ "classification_kfold/split_indexes": {
+  "fold_0": {
+   "train_indexes": [
+    0,
+    1,
+    3,
+    4,
+    6,
+    7,
+    8,
+    9,
+    10,
+    15,
+    17,
+    18,
+    20,
+    22,
+    24,
+    25,
+    26,
+    29,
+    30,
+    31,
+    33,
+    34,
+    35,
+    36,
+    38,
+    39,
+    42,
+    43,
+    44,
+    45,
+    49,
+    53,
+    56,
+    57,
+    59,
+    60,
+    61,
+    62,
+    64,
+    65,
+    67,
+    68,
+    72,
+    73,
+    75,
+    76,
+    78,
+    81,
+    83,
+    86,
+    88,
+    89,
+    90,
+    92,
+    93,
+    95,
+    96,
+    103,
+    104,
+    107,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    118,
+    121,
+    123,
+    124,
+    125,
+    127,
+    128,
+    133,
+    134,
+    135,
+    143,
+    144,
+    145,
+    147
+   ],
+   "validation_indexes": [
+    2,
+    5,
+    12,
+    13,
+    14,
+    16,
+    19,
+    21,
+    23,
+    27,
+    47,
+    48,
+    50,
+    54,
+    55,
+    58,
+    69,
+    71,
+    74,
+    79,
+    87,
+    91,
+    98,
+    99,
+    100,
+    102,
+    105,
+    110,
+    117,
+    122,
+    126,
+    130,
+    131,
+    132,
+    136,
+    139,
+    141,
+    142,
+    146,
+    148
+   ]
+  },
+  "fold_1": {
+   "train_indexes": [
+    0,
+    2,
+    5,
+    6,
+    7,
+    8,
+    12,
+    13,
+    14,
+    15,
+    16,
+    19,
+    20,
+    21,
+    23,
+    24,
+    25,
+    26,
+    27,
+    38,
+    45,
+    47,
+    48,
+    49,
+    50,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    62,
+    65,
+    67,
+    68,
+    69,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    79,
+    81,
+    83,
+    86,
+    87,
+    89,
+    90,
+    91,
+    92,
+    98,
+    99,
+    100,
+    102,
+    103,
+    105,
+    110,
+    111,
+    112,
+    113,
+    115,
+    117,
+    118,
+    122,
+    123,
+    126,
+    127,
+    128,
+    130,
+    131,
+    132,
+    136,
+    139,
+    141,
+    142,
+    143,
+    146,
+    147,
+    148
+   ],
+   "validation_indexes": [
+    1,
+    3,
+    4,
+    9,
+    10,
+    17,
+    18,
+    22,
+    29,
+    30,
+    31,
+    33,
+    34,
+    35,
+    36,
+    39,
+    42,
+    43,
+    44,
+    59,
+    60,
+    61,
+    64,
+    78,
+    88,
+    93,
+    95,
+    96,
+    104,
+    107,
+    114,
+    116,
+    121,
+    124,
+    125,
+    133,
+    134,
+    135,
+    144,
+    145
+   ]
+  },
+  "fold_2": {
+   "train_indexes": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    9,
+    10,
+    12,
+    13,
+    14,
+    16,
+    17,
+    18,
+    19,
+    21,
+    22,
+    23,
+    27,
+    29,
+    30,
+    31,
+    33,
+    34,
+    35,
+    36,
+    39,
+    42,
+    43,
+    44,
+    47,
+    48,
+    50,
+    54,
+    55,
+    58,
+    59,
+    60,
+    61,
+    64,
+    69,
+    71,
+    74,
+    78,
+    79,
+    87,
+    88,
+    91,
+    93,
+    95,
+    96,
+    98,
+    99,
+    100,
+    102,
+    104,
+    105,
+    107,
+    110,
+    114,
+    116,
+    117,
+    121,
+    122,
+    124,
+    125,
+    126,
+    130,
+    131,
+    132,
+    133,
+    134,
+    135,
+    136,
+    139,
+    141,
+    142,
+    144,
+    145,
+    146,
+    148
+   ],
+   "validation_indexes": [
+    0,
+    6,
+    7,
+    8,
+    15,
+    20,
+    24,
+    25,
+    26,
+    38,
+    45,
+    49,
+    53,
+    56,
+    57,
+    62,
+    65,
+    67,
+    68,
+    72,
+    73,
+    75,
+    76,
+    81,
+    83,
+    86,
+    89,
+    90,
+    92,
+    103,
+    111,
+    112,
+    113,
+    115,
+    118,
+    123,
+    127,
+    128,
+    143,
+    147
+   ]
+  },
+  "full_dataset": {
+   "test_indexes": [
+    11,
+    28,
+    32,
+    37,
+    40,
+    41,
+    46,
+    51,
+    52,
+    63,
+    66,
+    70,
+    77,
+    80,
+    82,
+    84,
+    85,
+    94,
+    97,
+    101,
+    106,
+    108,
+    109,
+    119,
+    120,
+    129,
+    137,
+    138,
+    140,
+    149
+   ],
+   "train_indexes": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    29,
+    30,
+    31,
+    33,
+    34,
+    35,
+    36,
+    38,
+    39,
+    42,
+    43,
+    44,
+    45,
+    47,
+    48,
+    49,
+    50,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    64,
+    65,
+    67,
+    68,
+    69,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    78,
+    79,
+    81,
+    83,
+    86,
+    87,
+    88,
+    89,
+    90,
+    91,
+    92,
+    93,
+    95,
+    96,
+    98,
+    99,
+    100,
+    102,
+    103,
+    104,
+    105,
+    107,
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    118,
+    121,
+    122,
+    123,
+    124,
+    125,
+    126,
+    127,
+    128,
+    130,
+    131,
+    132,
+    133,
+    134,
+    135,
+    136,
+    139,
+    141,
+    142,
+    143,
+    144,
+    145,
+    146,
+    147,
+    148
+   ]
+  }
+ },
+ "classification_kfold/stored_columns": {
+  "input_refs": [
+   {
+    "kind": "raw",
+    "name": "SepalLengthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "SepalWidthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "PetalLengthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "PetalWidthCm"
+   }
+  ],
+  "inputs": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm"
+  ],
+  "outputs": [
+   "Species"
+  ]
+ },
+ "classification_preprocessing/explanation": {
+  "features": [
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm",
+   "bin_SepalLengthCm"
+  ],
+  "importances_mean": [
+   0.067,
+   0.681,
+   0.139,
+   0.0
+  ],
+  "importances_std": [
+   0.0,
+   0.08,
+   0.116,
+   0.0
+  ]
+ },
+ "classification_preprocessing/metrics": [
+  [
+   "test",
+   "last",
+   "Accuracy",
+   1,
+   null,
+   null,
+   1.0,
+   null
+  ],
+  [
+   "test",
+   "last",
+   "F1",
+   1,
+   null,
+   null,
+   1.0,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "Accuracy",
+   1,
+   null,
+   null,
+   0.9888888888888889,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "F1",
+   1,
+   null,
+   null,
+   0.9894179894179894,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "Accuracy",
+   1,
+   null,
+   null,
+   0.9666666666666667,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "F1",
+   1,
+   null,
+   null,
+   0.957351290684624,
+   null
+  ]
+ ],
+ "classification_preprocessing/package": {
+  "input_columns": [
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm",
+   "bin_SepalLengthCm"
+  ],
+  "output_columns": [
+   "Species"
+  ],
+  "predictions": [
+   "Iris-setosa",
+   "Iris-setosa",
+   "Iris-setosa",
+   "Iris-versicolor",
+   "Iris-versicolor",
+   "Iris-versicolor",
+   "Iris-versicolor",
+   "Iris-virginica",
+   "Iris-virginica",
+   "Iris-virginica"
+  ]
+ },
+ "classification_preprocessing/preview": {
+  "columns": [
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm",
+   "bin_SepalLengthCm",
+   "Species"
+  ],
+  "rows": [
+   [
+    3.5,
+    1.4,
+    0.2,
+    1.0,
+    "Iris-setosa"
+   ],
+   [
+    3.1,
+    1.5,
+    0.1,
+    1.0,
+    "Iris-setosa"
+   ],
+   [
+    2.9,
+    4.3,
+    1.3,
+    1.0,
+    "Iris-versicolor"
+   ],
+   [
+    3.0,
+    5.5,
+    2.1,
+    1.0,
+    "Iris-virginica"
+   ],
+   [
+    3.0,
+    5.1,
+    1.8,
+    1.0,
+    "Iris-virginica"
+   ]
+  ]
+ },
+ "classification_preprocessing/split_indexes": {
+  "test_indexes": [
+   108,
+   104,
+   131,
+   67,
+   12,
+   65,
+   0,
+   85,
+   27,
+   30,
+   10,
+   18,
+   127,
+   118,
+   137,
+   32,
+   146,
+   128,
+   109,
+   110,
+   26,
+   55,
+   60,
+   29,
+   141,
+   86,
+   19,
+   45,
+   105,
+   4
+  ],
+  "train_indexes": [
+   123,
+   24,
+   25,
+   23,
+   94,
+   39,
+   95,
+   117,
+   47,
+   97,
+   113,
+   33,
+   138,
+   101,
+   62,
+   84,
+   148,
+   53,
+   5,
+   93,
+   111,
+   49,
+   35,
+   80,
+   77,
+   34,
+   114,
+   7,
+   43,
+   70,
+   98,
+   120,
+   83,
+   134,
+   135,
+   89,
+   8,
+   13,
+   119,
+   125,
+   3,
+   17,
+   38,
+   72,
+   136,
+   6,
+   112,
+   100,
+   2,
+   63,
+   54,
+   126,
+   50,
+   115,
+   46,
+   139,
+   61,
+   147,
+   79,
+   59,
+   91,
+   41,
+   58,
+   90,
+   48,
+   88,
+   107,
+   124,
+   21,
+   57,
+   144,
+   129,
+   37,
+   140,
+   1,
+   52,
+   130,
+   103,
+   99,
+   116,
+   87,
+   74,
+   121,
+   149,
+   20,
+   71,
+   106,
+   14,
+   92,
+   102
+  ],
+  "val_indexes": [
+   73,
+   31,
+   51,
+   81,
+   9,
+   122,
+   11,
+   75,
+   36,
+   40,
+   133,
+   96,
+   15,
+   78,
+   66,
+   69,
+   68,
+   64,
+   142,
+   76,
+   16,
+   132,
+   42,
+   44,
+   145,
+   28,
+   56,
+   143,
+   82,
+   22
+  ]
+ },
+ "classification_preprocessing/stored_columns": {
+  "input_refs": [
+   {
+    "kind": "raw",
+    "name": "SepalWidthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "PetalLengthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "PetalWidthCm"
+   },
+   {
+    "kind": "group",
+    "step": 0
+   }
+  ],
+  "inputs": [
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm",
+   "bin_SepalLengthCm"
+  ],
+  "outputs": [
+   "Species"
+  ]
+ },
+ "classification_preprocessing/test_prediction": {
+  "columns": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "PetalWidthCm",
+   "Species"
+  ],
+  "rows": {
+   "PetalLengthCm": [
+    5.8,
+    5.8,
+    6.4,
+    4.1,
+    1.4,
+    4.4,
+    1.4,
+    4.5,
+    1.5,
+    1.6,
+    1.5,
+    1.7,
+    4.9,
+    6.9,
+    5.5,
+    1.5,
+    5.0,
+    5.6,
+    6.1,
+    5.1,
+    1.6,
+    4.5,
+    3.5,
+    1.6,
+    5.1,
+    4.7,
+    1.5,
+    1.4,
+    6.6,
+    1.4
+   ],
+   "PetalWidthCm": [
+    1.8,
+    2.2,
+    2.0,
+    1.0,
+    0.1,
+    1.4,
+    0.2,
+    1.6,
+    0.2,
+    0.2,
+    0.2,
+    0.3,
+    1.8,
+    2.3,
+    1.8,
+    0.1,
+    1.9,
+    2.1,
+    2.5,
+    2.0,
+    0.4,
+    1.3,
+    1.0,
+    0.2,
+    2.3,
+    1.5,
+    0.3,
+    0.3,
+    2.1,
+    0.2
+   ],
+   "SepalLengthCm": [
+    6.7,
+    6.5,
+    7.9,
+    5.8,
+    4.8,
+    6.7,
+    5.1,
+    6.0,
+    5.2,
+    4.8,
+    5.4,
+    5.7,
+    6.1,
+    7.7,
+    6.4,
+    5.2,
+    6.3,
+    6.4,
+    7.2,
+    6.5,
+    5.0,
+    5.7,
+    5.0,
+    4.7,
+    6.9,
+    6.7,
+    5.1,
+    4.8,
+    7.6,
+    5.0
+   ],
+   "SepalWidthCm": [
+    2.5,
+    3.0,
+    3.8,
+    2.7,
+    3.0,
+    3.1,
+    3.5,
+    3.4,
+    3.5,
+    3.1,
+    3.7,
+    3.8,
+    3.0,
+    2.6,
+    3.1,
+    4.1,
+    2.5,
+    2.8,
+    3.6,
+    3.2,
+    3.4,
+    2.8,
+    2.0,
+    3.2,
+    3.1,
+    3.1,
+    3.8,
+    3.0,
+    3.0,
+    3.6
+   ],
+   "Species": [
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-setosa"
+   ]
+  },
+  "schema_metadata": {
+   "dashai_types": "{\"SepalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"SepalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"PetalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"PetalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"Species\": {\"type\": \"Categorical\", \"dtype\": \"string\", \"encoder\": \"one_hot\", \"categories\": [\"Iris-setosa\", \"Iris-versicolor\", \"Iris-virginica\"], \"num_categories\": 3, \"converted\": false}}"
+  },
+  "types": {
+   "PetalLengthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "PetalWidthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "SepalLengthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "SepalWidthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "Species": {
+    "categories": [
+     "Iris-setosa",
+     "Iris-versicolor",
+     "Iris-virginica"
+    ],
+    "converted": false,
+    "dtype": "string",
+    "encoder": "one_hot",
+    "num_categories": 3,
+    "type": "Categorical"
+   }
+  }
+ },
+ "regression_holdout/metrics": [
+  [
+   "test",
+   "last",
+   "MAE",
+   1,
+   null,
+   null,
+   0.127251524026387,
+   null
+  ],
+  [
+   "test",
+   "last",
+   "R2",
+   1,
+   null,
+   null,
+   0.9627258870396238,
+   null
+  ],
+  [
+   "test",
+   "last",
+   "RMSE",
+   1,
+   null,
+   null,
+   0.16318914511371801,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "MAE",
+   1,
+   null,
+   null,
+   0.12637951935076572,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "R2",
+   1,
+   null,
+   null,
+   0.9488311010855889,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "RMSE",
+   1,
+   null,
+   null,
+   0.16907426033431905,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "MAE",
+   1,
+   null,
+   null,
+   0.1107312758336937,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "R2",
+   1,
+   null,
+   null,
+   0.9538733506927463,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "RMSE",
+   1,
+   null,
+   null,
+   0.14945253811678524,
+   null
+  ]
+ ],
+ "regression_holdout/package": {
+  "input_columns": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "Species"
+  ],
+  "output_columns": [
+   "PetalWidthCm"
+  ],
+  "predictions": [
+   0.24996723408641958,
+   0.24996723408641958,
+   0.39882377570924293,
+   1.4245391765108126,
+   1.5162427591493148,
+   1.5335061450603227,
+   1.332035070963742,
+   2.021377095428466,
+   2.004275248197076,
+   1.999588472084997
+  ]
+ },
+ "regression_holdout/preview": {
+  "columns": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "Species",
+   "PetalWidthCm"
+  ],
+  "rows": [
+   [
+    5.1,
+    3.5,
+    1.4,
+    "Iris-setosa",
+    0.24996723408641958
+   ],
+   [
+    4.9,
+    3.1,
+    1.5,
+    "Iris-setosa",
+    0.18823163719174385
+   ],
+   [
+    6.4,
+    2.9,
+    4.3,
+    "Iris-versicolor",
+    1.3137151820763866
+   ],
+   [
+    6.8,
+    3.0,
+    5.5,
+    "Iris-virginica",
+    1.9772076022364096
+   ],
+   [
+    5.9,
+    3.0,
+    5.1,
+    "Iris-virginica",
+    1.999588472084997
+   ]
+  ]
+ },
+ "regression_holdout/split_indexes": {
+  "test_indexes": [
+   108,
+   104,
+   131,
+   67,
+   12,
+   65,
+   0,
+   85,
+   27,
+   30,
+   10,
+   18,
+   127,
+   118,
+   137,
+   32,
+   146,
+   128,
+   109,
+   110,
+   26,
+   55,
+   60,
+   29,
+   141,
+   86,
+   19,
+   45,
+   105,
+   4
+  ],
+  "train_indexes": [
+   123,
+   24,
+   25,
+   23,
+   94,
+   39,
+   95,
+   117,
+   47,
+   97,
+   113,
+   33,
+   138,
+   101,
+   62,
+   84,
+   148,
+   53,
+   5,
+   93,
+   111,
+   49,
+   35,
+   80,
+   77,
+   34,
+   114,
+   7,
+   43,
+   70,
+   98,
+   120,
+   83,
+   134,
+   135,
+   89,
+   8,
+   13,
+   119,
+   125,
+   3,
+   17,
+   38,
+   72,
+   136,
+   6,
+   112,
+   100,
+   2,
+   63,
+   54,
+   126,
+   50,
+   115,
+   46,
+   139,
+   61,
+   147,
+   79,
+   59,
+   91,
+   41,
+   58,
+   90,
+   48,
+   88,
+   107,
+   124,
+   21,
+   57,
+   144,
+   129,
+   37,
+   140,
+   1,
+   52,
+   130,
+   103,
+   99,
+   116,
+   87,
+   74,
+   121,
+   149,
+   20,
+   71,
+   106,
+   14,
+   92,
+   102
+  ],
+  "val_indexes": [
+   73,
+   31,
+   51,
+   81,
+   9,
+   122,
+   11,
+   75,
+   36,
+   40,
+   133,
+   96,
+   15,
+   78,
+   66,
+   69,
+   68,
+   64,
+   142,
+   76,
+   16,
+   132,
+   42,
+   44,
+   145,
+   28,
+   56,
+   143,
+   82,
+   22
+  ]
+ },
+ "regression_holdout/stored_columns": {
+  "input_refs": [
+   {
+    "kind": "raw",
+    "name": "SepalLengthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "SepalWidthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "PetalLengthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "Species"
+   }
+  ],
+  "inputs": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "Species"
+  ],
+  "outputs": [
+   "PetalWidthCm"
+  ]
+ },
+ "regression_holdout/test_prediction": {
+  "columns": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "Species",
+   "PetalWidthCm"
+  ],
+  "rows": {
+   "PetalLengthCm": [
+    5.8,
+    5.8,
+    6.4,
+    4.1,
+    1.4,
+    4.4,
+    1.4,
+    4.5,
+    1.5,
+    1.6,
+    1.5,
+    1.7,
+    4.9,
+    6.9,
+    5.5,
+    1.5,
+    5.0,
+    5.6,
+    6.1,
+    5.1,
+    1.6,
+    4.5,
+    3.5,
+    1.6,
+    5.1,
+    4.7,
+    1.5,
+    1.4,
+    6.6,
+    1.4
+   ],
+   "PetalWidthCm": [
+    1.926134188777854,
+    2.103972802724153,
+    2.3004675719951466,
+    1.2876334495360713,
+    0.1457444421268817,
+    1.3564345053768636,
+    0.24996723408641958,
+    1.5760639296811816,
+    0.2627759721209628,
+    0.2304867040209918,
+    0.2926865573868963,
+    0.33325932608894965,
+    1.9150783384265018,
+    2.1114319285855023,
+    2.065778716856137,
+    0.44084671430287625,
+    1.764771626912098,
+    2.004275248197076,
+    2.2615771014202877,
+    1.9706063997615217,
+    0.2900757463172441,
+    1.4421626806913246,
+    1.0324781509112828,
+    0.27488832544866304,
+    1.8820352851417936,
+    1.4390302126725503,
+    0.366534507609272,
+    0.1457444421268817,
+    2.1622732138084433,
+    0.29436885551409075
+   ],
+   "SepalLengthCm": [
+    6.7,
+    6.5,
+    7.9,
+    5.8,
+    4.8,
+    6.7,
+    5.1,
+    6.0,
+    5.2,
+    4.8,
+    5.4,
+    5.7,
+    6.1,
+    7.7,
+    6.4,
+    5.2,
+    6.3,
+    6.4,
+    7.2,
+    6.5,
+    5.0,
+    5.7,
+    5.0,
+    4.7,
+    6.9,
+    6.7,
+    5.1,
+    4.8,
+    7.6,
+    5.0
+   ],
+   "SepalWidthCm": [
+    2.5,
+    3.0,
+    3.8,
+    2.7,
+    3.0,
+    3.1,
+    3.5,
+    3.4,
+    3.5,
+    3.1,
+    3.7,
+    3.8,
+    3.0,
+    2.6,
+    3.1,
+    4.1,
+    2.5,
+    2.8,
+    3.6,
+    3.2,
+    3.4,
+    2.8,
+    2.0,
+    3.2,
+    3.1,
+    3.1,
+    3.8,
+    3.0,
+    3.0,
+    3.6
+   ],
+   "Species": [
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-setosa"
+   ]
+  },
+  "schema_metadata": {
+   "dashai_types": "{\"SepalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"SepalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"PetalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"Species\": {\"type\": \"Categorical\", \"dtype\": \"string\", \"encoder\": \"one_hot\", \"categories\": [\"Iris-setosa\", \"Iris-versicolor\", \"Iris-virginica\"], \"num_categories\": 3, \"converted\": false}, \"PetalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}}"
+  },
+  "types": {
+   "PetalLengthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "PetalWidthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "SepalLengthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "SepalWidthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "Species": {
+    "categories": [
+     "Iris-setosa",
+     "Iris-versicolor",
+     "Iris-virginica"
+    ],
+    "converted": false,
+    "dtype": "string",
+    "encoder": "one_hot",
+    "num_categories": 3,
+    "type": "Categorical"
+   }
+  }
+ },
+ "regression_preprocessing/metrics": [
+  [
+   "test",
+   "last",
+   "MAE",
+   1,
+   null,
+   null,
+   0.127251524026387,
+   null
+  ],
+  [
+   "test",
+   "last",
+   "R2",
+   1,
+   null,
+   null,
+   0.9627258870396238,
+   null
+  ],
+  [
+   "test",
+   "last",
+   "RMSE",
+   1,
+   null,
+   null,
+   0.16318914511371801,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "MAE",
+   1,
+   null,
+   null,
+   0.12637951935076572,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "R2",
+   1,
+   null,
+   null,
+   0.9488311010855889,
+   null
+  ],
+  [
+   "train",
+   "last",
+   "RMSE",
+   1,
+   null,
+   null,
+   0.16907426033431905,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "MAE",
+   1,
+   null,
+   null,
+   0.1107312758336937,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "R2",
+   1,
+   null,
+   null,
+   0.9538733506927463,
+   null
+  ],
+  [
+   "validation",
+   "last",
+   "RMSE",
+   1,
+   null,
+   null,
+   0.14945253811678524,
+   null
+  ]
+ ],
+ "regression_preprocessing/preview": {
+  "columns": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "ohe_Species_Iris-setosa",
+   "ohe_Species_Iris-versicolor",
+   "ohe_Species_Iris-virginica",
+   "PetalWidthCm"
+  ],
+  "rows": [
+   [
+    5.1,
+    3.5,
+    1.4,
+    1,
+    0,
+    0,
+    0.24996723408641958
+   ],
+   [
+    4.9,
+    3.1,
+    1.5,
+    1,
+    0,
+    0,
+    0.18823163719174385
+   ],
+   [
+    6.4,
+    2.9,
+    4.3,
+    0,
+    1,
+    0,
+    1.3137151820763866
+   ],
+   [
+    6.8,
+    3.0,
+    5.5,
+    0,
+    0,
+    1,
+    1.9772076022364096
+   ],
+   [
+    5.9,
+    3.0,
+    5.1,
+    0,
+    0,
+    1,
+    1.999588472084997
+   ]
+  ]
+ },
+ "regression_preprocessing/split_indexes": {
+  "test_indexes": [
+   108,
+   104,
+   131,
+   67,
+   12,
+   65,
+   0,
+   85,
+   27,
+   30,
+   10,
+   18,
+   127,
+   118,
+   137,
+   32,
+   146,
+   128,
+   109,
+   110,
+   26,
+   55,
+   60,
+   29,
+   141,
+   86,
+   19,
+   45,
+   105,
+   4
+  ],
+  "train_indexes": [
+   123,
+   24,
+   25,
+   23,
+   94,
+   39,
+   95,
+   117,
+   47,
+   97,
+   113,
+   33,
+   138,
+   101,
+   62,
+   84,
+   148,
+   53,
+   5,
+   93,
+   111,
+   49,
+   35,
+   80,
+   77,
+   34,
+   114,
+   7,
+   43,
+   70,
+   98,
+   120,
+   83,
+   134,
+   135,
+   89,
+   8,
+   13,
+   119,
+   125,
+   3,
+   17,
+   38,
+   72,
+   136,
+   6,
+   112,
+   100,
+   2,
+   63,
+   54,
+   126,
+   50,
+   115,
+   46,
+   139,
+   61,
+   147,
+   79,
+   59,
+   91,
+   41,
+   58,
+   90,
+   48,
+   88,
+   107,
+   124,
+   21,
+   57,
+   144,
+   129,
+   37,
+   140,
+   1,
+   52,
+   130,
+   103,
+   99,
+   116,
+   87,
+   74,
+   121,
+   149,
+   20,
+   71,
+   106,
+   14,
+   92,
+   102
+  ],
+  "val_indexes": [
+   73,
+   31,
+   51,
+   81,
+   9,
+   122,
+   11,
+   75,
+   36,
+   40,
+   133,
+   96,
+   15,
+   78,
+   66,
+   69,
+   68,
+   64,
+   142,
+   76,
+   16,
+   132,
+   42,
+   44,
+   145,
+   28,
+   56,
+   143,
+   82,
+   22
+  ]
+ },
+ "regression_preprocessing/stored_columns": {
+  "input_refs": [
+   {
+    "kind": "raw",
+    "name": "SepalLengthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "SepalWidthCm"
+   },
+   {
+    "kind": "raw",
+    "name": "PetalLengthCm"
+   },
+   {
+    "kind": "group",
+    "step": 0
+   }
+  ],
+  "inputs": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "ohe_Species_Iris-setosa",
+   "ohe_Species_Iris-versicolor",
+   "ohe_Species_Iris-virginica"
+  ],
+  "outputs": [
+   "PetalWidthCm"
+  ]
+ },
+ "regression_preprocessing/test_prediction": {
+  "columns": [
+   "SepalLengthCm",
+   "SepalWidthCm",
+   "PetalLengthCm",
+   "Species",
+   "PetalWidthCm"
+  ],
+  "rows": {
+   "PetalLengthCm": [
+    5.8,
+    5.8,
+    6.4,
+    4.1,
+    1.4,
+    4.4,
+    1.4,
+    4.5,
+    1.5,
+    1.6,
+    1.5,
+    1.7,
+    4.9,
+    6.9,
+    5.5,
+    1.5,
+    5.0,
+    5.6,
+    6.1,
+    5.1,
+    1.6,
+    4.5,
+    3.5,
+    1.6,
+    5.1,
+    4.7,
+    1.5,
+    1.4,
+    6.6,
+    1.4
+   ],
+   "PetalWidthCm": [
+    1.926134188777854,
+    2.103972802724153,
+    2.3004675719951466,
+    1.2876334495360713,
+    0.1457444421268817,
+    1.3564345053768636,
+    0.24996723408641958,
+    1.5760639296811816,
+    0.2627759721209628,
+    0.2304867040209918,
+    0.2926865573868963,
+    0.33325932608894965,
+    1.9150783384265018,
+    2.1114319285855023,
+    2.065778716856137,
+    0.44084671430287625,
+    1.764771626912098,
+    2.004275248197076,
+    2.2615771014202877,
+    1.9706063997615217,
+    0.2900757463172441,
+    1.4421626806913246,
+    1.0324781509112828,
+    0.27488832544866304,
+    1.8820352851417936,
+    1.4390302126725503,
+    0.366534507609272,
+    0.1457444421268817,
+    2.1622732138084433,
+    0.29436885551409075
+   ],
+   "SepalLengthCm": [
+    6.7,
+    6.5,
+    7.9,
+    5.8,
+    4.8,
+    6.7,
+    5.1,
+    6.0,
+    5.2,
+    4.8,
+    5.4,
+    5.7,
+    6.1,
+    7.7,
+    6.4,
+    5.2,
+    6.3,
+    6.4,
+    7.2,
+    6.5,
+    5.0,
+    5.7,
+    5.0,
+    4.7,
+    6.9,
+    6.7,
+    5.1,
+    4.8,
+    7.6,
+    5.0
+   ],
+   "SepalWidthCm": [
+    2.5,
+    3.0,
+    3.8,
+    2.7,
+    3.0,
+    3.1,
+    3.5,
+    3.4,
+    3.5,
+    3.1,
+    3.7,
+    3.8,
+    3.0,
+    2.6,
+    3.1,
+    4.1,
+    2.5,
+    2.8,
+    3.6,
+    3.2,
+    3.4,
+    2.8,
+    2.0,
+    3.2,
+    3.1,
+    3.1,
+    3.8,
+    3.0,
+    3.0,
+    3.6
+   ],
+   "Species": [
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-virginica",
+    "Iris-setosa",
+    "Iris-versicolor",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-versicolor",
+    "Iris-setosa",
+    "Iris-setosa",
+    "Iris-virginica",
+    "Iris-setosa"
+   ]
+  },
+  "schema_metadata": {
+   "dashai_types": "{\"SepalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"SepalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"PetalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"Species\": {\"type\": \"Text\", \"encoding\": \"utf-8\", \"dtype\": \"string\"}, \"PetalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}}"
+  },
+  "types": {
+   "PetalLengthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "PetalWidthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "SepalLengthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "SepalWidthCm": {
+    "dtype": "float64",
+    "type": "Float"
+   },
+   "Species": {
+    "dtype": "string",
+    "encoding": "utf-8",
+    "type": "Text"
+   }
+  }
+ },
+ "wiring/image": {
+  "prediction": [
+   {
+    "event": "predict",
+    "x": {
+     "image": [
+      {
+       "bytes": "269a4f88a9bd4e94ed0a0885d089ca408e5cdf29",
+       "path": "dogs_05.png"
+      },
+      {
+       "bytes": "5cc1b8c1ad6b1a69c356a32de716818fd87a0d96",
+       "path": "cats_08.png"
+      },
+      {
+       "bytes": "0967eca717c3fb544bf9dd9a0006c8e1029089fc",
+       "path": "cats_01.png"
+      },
+      {
+       "bytes": "b5428af1837f7693e26e3229a9ef311786e1f8b8",
+       "path": "dogs_01.png"
+      }
+     ]
+    }
+   }
+  ],
+  "saved": {
+   "columns": [
+    "image",
+    "label"
+   ],
+   "types": {
+    "image": {
+     "dtype": "struct",
+     "type": "Image"
+    },
+    "label": {
+     "categories": [
+      "cats"
+     ],
+     "converted": false,
+     "dtype": "string",
+     "encoder": "one_hot",
+     "num_categories": 1,
+     "type": "Categorical"
+    }
+   }
+  },
+  "split_indexes": {
+   "test_indexes": [
+    15,
+    8,
+    1,
+    11
+   ],
+   "train_indexes": [
+    18,
+    16,
+    13,
+    2,
+    9,
+    19,
+    4,
+    12,
+    7,
+    10,
+    14,
+    6
+   ],
+   "val_indexes": [
+    17,
+    5,
+    0,
+    3
+   ]
+  },
+  "stored_columns": {
+   "input_refs": [
+    {
+     "kind": "raw",
+     "name": "image"
+    }
+   ],
+   "inputs": [
+    "image"
+   ],
+   "outputs": [
+    "label"
+   ]
+  },
+  "training": [
+   {
+    "event": "train",
+    "x": {
+     "image": [
+      {
+       "bytes": "f0d2095adf11ed0d022ce619d9ffe9f2bf9e0488",
+       "path": "cats_02.png"
+      },
+      {
+       "bytes": "3882e99e0c4ca5e4de533d54d50d5a4ccc09ff61",
+       "path": "cats_04.png"
+      },
+      {
+       "bytes": "587e4cdfc9e37e84c3ef406a077a5522e9a87ce9",
+       "path": "cats_06.png"
+      },
+      {
+       "bytes": "0efc248719b198769fec7ec16fbf6034f739021c",
+       "path": "cats_07.png"
+      },
+      {
+       "bytes": "3842c36e68fcb4de84435afa4c0fc19c1b84d32a",
+       "path": "cats_09.png"
+      },
+      {
+       "bytes": "fc7d07b9e792a4d821f599c45f918a7e0ac5ee02",
+       "path": "dogs_00.png"
+      },
+      {
+       "bytes": "8ea82d1490c3e7fb8e179e77e9773955f27f0e04",
+       "path": "dogs_02.png"
+      },
+      {
+       "bytes": "628a5fd1b5e3c6b6bc6d256738a5ca863773c326",
+       "path": "dogs_03.png"
+      },
+      {
+       "bytes": "08ec74940b020432f48118808bd4ce8fab1e4330",
+       "path": "dogs_04.png"
+      },
+      {
+       "bytes": "421813f6f6808b4de8235b8b192444f4c9e22ac9",
+       "path": "dogs_06.png"
+      },
+      {
+       "bytes": "6012d193f74fa593d913d8e5a2292439437950f6",
+       "path": "dogs_08.png"
+      },
+      {
+       "bytes": "d1845034a2cd26766ef5114f330bc2b1aab06f3f",
+       "path": "dogs_09.png"
+      }
+     ]
+    },
+    "x_validation": {
+     "image": [
+      {
+       "bytes": "e6971e8614e37dbd7f99df0a421d1cac3ff1f5a5",
+       "path": "cats_00.png"
+      },
+      {
+       "bytes": "38ab07798fc35aab3047f90c3190d085abe34e7a",
+       "path": "cats_03.png"
+      },
+      {
+       "bytes": "8728e6e09a36f59a00f11509c51ed5aaecdb394f",
+       "path": "cats_05.png"
+      },
+      {
+       "bytes": "eeba789dc7353d3318d26b89d8ecd83619f3b9c1",
+       "path": "dogs_07.png"
+      }
+     ]
+    },
+    "y": {
+     "label": [
+      "cats",
+      "cats",
+      "cats",
+      "cats",
+      "cats",
+      "dogs",
+      "dogs",
+      "dogs",
+      "dogs",
+      "dogs",
+      "dogs",
+      "dogs"
+     ]
+    },
+    "y_validation": {
+     "label": [
+      "cats",
+      "cats",
+      "cats",
+      "dogs"
+     ]
+    }
+   }
+  ]
+ },
+ "wiring/text": {
+  "prediction": [
+   {
+    "event": "predict",
+    "x": {
+     "text": [
+      "sample number 15 says yes",
+      "sample number 8 says no",
+      "sample number 1 says yes",
+      "sample number 11 says yes"
+     ]
+    }
+   }
+  ],
+  "saved": {
+   "columns": [
+    "text",
+    "label"
+   ],
+   "types": {
+    "label": {
+     "categories": [
+      "negative"
+     ],
+     "converted": false,
+     "dtype": "string",
+     "encoder": "one_hot",
+     "num_categories": 1,
+     "type": "Categorical"
+    },
+    "text": {
+     "dtype": "string",
+     "encoding": "utf-8",
+     "type": "Text"
+    }
+   }
+  },
+  "split_indexes": {
+   "test_indexes": [
+    15,
+    8,
+    1,
+    11
+   ],
+   "train_indexes": [
+    18,
+    16,
+    13,
+    2,
+    9,
+    19,
+    4,
+    12,
+    7,
+    10,
+    14,
+    6
+   ],
+   "val_indexes": [
+    17,
+    5,
+    0,
+    3
+   ]
+  },
+  "stored_columns": {
+   "input_refs": [
+    {
+     "kind": "raw",
+     "name": "text"
+    }
+   ],
+   "inputs": [
+    "text"
+   ],
+   "outputs": [
+    "label"
+   ]
+  },
+  "training": [
+   {
+    "event": "train",
+    "x": {
+     "text": [
+      "sample number 2 says no",
+      "sample number 4 says no",
+      "sample number 6 says no",
+      "sample number 7 says yes",
+      "sample number 9 says yes",
+      "sample number 10 says no",
+      "sample number 12 says no",
+      "sample number 13 says yes",
+      "sample number 14 says no",
+      "sample number 16 says no",
+      "sample number 18 says no",
+      "sample number 19 says yes"
+     ]
+    },
+    "x_validation": {
+     "text": [
+      "sample number 0 says no",
+      "sample number 3 says yes",
+      "sample number 5 says yes",
+      "sample number 17 says yes"
+     ]
+    },
+    "y": {
+     "label": [
+      "negative",
+      "negative",
+      "negative",
+      "positive",
+      "positive",
+      "negative",
+      "negative",
+      "positive",
+      "negative",
+      "negative",
+      "negative",
+      "positive"
+     ]
+    },
+    "y_validation": {
+     "label": [
+      "negative",
+      "positive",
+      "positive",
+      "positive"
+     ]
+    }
+   }
+  ]
+ },
+ "wiring/translation": {
+  "prediction": [
+   {
+    "event": "predict",
+    "x": {
+     "source": [
+      "the house number 15",
+      "the house number 8",
+      "the house number 1",
+      "the house number 11"
+     ]
+    }
+   }
+  ],
+  "saved": {
+   "columns": [
+    "source",
+    "target"
+   ],
+   "types": {
+    "source": {
+     "dtype": "string",
+     "encoding": "utf-8",
+     "type": "Text"
+    },
+    "target": {
+     "dtype": "string",
+     "encoding": "utf-8",
+     "type": "Text"
+    }
+   }
+  },
+  "split_indexes": {
+   "test_indexes": [
+    15,
+    8,
+    1,
+    11
+   ],
+   "train_indexes": [
+    18,
+    16,
+    13,
+    2,
+    9,
+    19,
+    4,
+    12,
+    7,
+    10,
+    14,
+    6
+   ],
+   "val_indexes": [
+    17,
+    5,
+    0,
+    3
+   ]
+  },
+  "stored_columns": {
+   "input_refs": [
+    {
+     "kind": "raw",
+     "name": "source"
+    }
+   ],
+   "inputs": [
+    "source"
+   ],
+   "outputs": [
+    "target"
+   ]
+  },
+  "training": [
+   {
+    "event": "train",
+    "x": {
+     "source": [
+      "the house number 2",
+      "the house number 4",
+      "the house number 6",
+      "the house number 7",
+      "the house number 9",
+      "the house number 10",
+      "the house number 12",
+      "the house number 13",
+      "the house number 14",
+      "the house number 16",
+      "the house number 18",
+      "the house number 19"
+     ]
+    },
+    "x_validation": {
+     "source": [
+      "the house number 0",
+      "the house number 3",
+      "the house number 5",
+      "the house number 17"
+     ]
+    },
+    "y": {
+     "target": [
+      "la casa numero 2",
+      "la casa numero 4",
+      "la casa numero 6",
+      "la casa numero 7",
+      "la casa numero 9",
+      "la casa numero 10",
+      "la casa numero 12",
+      "la casa numero 13",
+      "la casa numero 14",
+      "la casa numero 16",
+      "la casa numero 18",
+      "la casa numero 19"
+     ]
+    },
+    "y_validation": {
+     "target": [
+      "la casa numero 0",
+      "la casa numero 3",
+      "la casa numero 5",
+      "la casa numero 17"
+     ]
+    }
+   }
+  ]
+ }
+}
