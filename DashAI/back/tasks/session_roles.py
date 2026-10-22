@@ -16,14 +16,12 @@ them into a model's inputs and outputs.
 """
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Sequence
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Sequence
 
 from pydantic import BaseModel, Field, RootModel
 
 from DashAI.back.preprocessing.column_ref import (
     ColumnRef,
-    RawColumnRef,
-    parse_column_refs,
 )
 
 if TYPE_CHECKING:
@@ -101,41 +99,6 @@ class SessionColumnRoles(RootModel[Dict[str, RoleColumns]]):
             }
         )
 
-    @classmethod
-    def from_io(
-        cls,
-        task: "BaseTask",
-        input_columns: Sequence[str],
-        output_columns: Sequence[str],
-        input_refs: Optional[Sequence[Any]] = None,
-    ) -> "SessionColumnRoles":
-        """Build the roles from a model's inputs and outputs.
-
-        The outputs are always original columns, so they are raw refs. The
-        input refs default to the raw refs of the input columns.
-
-        Parameters
-        ----------
-        task : BaseTask
-            The session's task, which translates inputs and outputs to roles.
-        input_columns, output_columns : sequence of str
-            The model's inputs and outputs, as column names.
-        input_refs : sequence, optional
-            The model's inputs as column refs, when some are converter outputs.
-        """
-        if input_refs is None:
-            input_refs = [RawColumnRef(name=name) for name in input_columns]
-        output_refs = [RawColumnRef(name=name) for name in output_columns]
-        refs = task.roles_from_io(list(input_refs), output_refs)
-        names = task.roles_from_io(list(input_columns), list(output_columns))
-        return cls(
-            {
-                name: RoleColumns(refs=role_refs, columns=names.get(name, []))
-                for name, role_refs in refs.items()
-                if role_refs
-            }
-        )
-
 
 @dataclass(frozen=True)
 class SessionIO:
@@ -162,20 +125,11 @@ class SessionIO:
 def session_roles(model_session: Any, task: "BaseTask") -> SessionColumnRoles:
     """The roles a session stores.
 
-    Transitional: a row written before ``column_roles`` existed, or built
-    without it, is read from the old fields through the task. The fallback
-    goes with those fields.
+    ``task`` is the session's task. It is not needed to read the stored roles,
+    and is kept so that every reader goes through the task, as ``session_io``
+    does.
     """
-    stored = getattr(model_session, "column_roles", None)
-    if stored is not None:
-        return SessionColumnRoles.from_stored(stored)
-    refs = model_session.input_column_refs
-    return SessionColumnRoles.from_io(
-        task,
-        input_columns=list(model_session.input_columns or []),
-        output_columns=list(model_session.output_columns or []),
-        input_refs=parse_column_refs(refs) if refs is not None else None,
-    )
+    return SessionColumnRoles.from_stored(model_session.column_roles)
 
 
 def session_io(model_session: Any, task: "BaseTask") -> SessionIO:

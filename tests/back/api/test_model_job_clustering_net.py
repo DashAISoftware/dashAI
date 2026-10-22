@@ -46,6 +46,7 @@ from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.predict_job import PredictJob
 from DashAI.back.metrics.clustering.silhouette import Silhouette
 from DashAI.back.models.scikit_learn.kmeans_clustering import KMeansClustering
+from tests.back.session_columns import xy_roles
 
 BLOB_SIZE = 30
 N_ROWS = 3 * BLOB_SIZE
@@ -153,14 +154,7 @@ def _store_session(
             dataset_id=dataset_id,
             name=name,
             task_name="ClusteringTask",
-            input_columns=list(input_columns),
-            output_columns=[],
-            column_roles={
-                "features": {
-                    "refs": [{"kind": "raw", "name": c} for c in input_columns],
-                    "columns": list(input_columns),
-                }
-            },
+            column_roles=xy_roles(input_columns),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
@@ -289,8 +283,7 @@ def test_the_session_is_stored_as_the_front_sent_it(client, session_id):
     session = _get(client, ModelSession, session_id)
 
     assert session.task_name == "ClusteringTask"
-    assert session.input_columns == ["hours", "score"]
-    assert session.output_columns == []
+    assert session.column_roles == xy_roles(["hours", "score"])
     assert session.train_metrics == []
     assert session.validation_metrics == []
     assert session.test_metrics == []
@@ -351,8 +344,7 @@ def test_a_run_leaves_the_session_untouched(client, session_id):
     after = _get(client, ModelSession, session_id)
 
     for column in (
-        "input_columns",
-        "output_columns",
+        "column_roles",
         "train_metrics",
         "validation_metrics",
         "test_metrics",

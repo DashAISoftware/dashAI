@@ -40,6 +40,7 @@ from DashAI.back.job.base_job import JobError
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.predict_job import PredictJob
+from tests.back.session_columns import xy_roles
 
 INPUT_COLUMNS = [
     "SepalLengthCm",
@@ -78,8 +79,7 @@ def create_model_session(client: TestClient, dataset_1: Dataset):
             dataset_id=dataset_1.id,
             name="PredictJobSession",
             task_name="TabularClassificationTask",
-            input_columns=INPUT_COLUMNS,
-            output_columns=[OUTPUT_COLUMN],
+            column_roles=xy_roles(INPUT_COLUMNS, [OUTPUT_COLUMN]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
@@ -202,8 +202,7 @@ def fixture_restore_model_session(client: TestClient, model_session_id: int):
         original = {
             "dataset_id": session_row.dataset_id,
             "task_name": session_row.task_name,
-            "input_columns": list(session_row.input_columns),
-            "output_columns": list(session_row.output_columns),
+            "column_roles": dict(session_row.column_roles),
         }
 
     yield
@@ -355,8 +354,7 @@ def create_regression_run(client: TestClient, integer_target_dataset: Dataset):
             dataset_id=integer_target_dataset.id,
             name="PredictJobRegressionSession",
             task_name="RegressionTask",
-            input_columns=REGRESSION_INPUTS,
-            output_columns=[REGRESSION_TARGET],
+            column_roles=xy_roles(REGRESSION_INPUTS, [REGRESSION_TARGET]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
@@ -617,7 +615,10 @@ def test_a_model_session_without_input_columns_is_a_422(
 
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
-        db.get(ModelSession, model_session_id).input_columns = []
+        row = db.get(ModelSession, model_session_id)
+        row.column_roles = {
+            k: v for k, v in row.column_roles.items() if k != "features"
+        }
         db.commit()
 
     with pytest.raises(HTTPException) as excinfo:

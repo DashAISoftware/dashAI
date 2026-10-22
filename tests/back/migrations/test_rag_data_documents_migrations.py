@@ -3,9 +3,8 @@
 import json
 
 import sqlalchemy as sa
-from alembic.config import Config
-
 from alembic import command
+from alembic.config import Config
 
 PREVIOUS_REVISION = "a4c9d2e7f1b3"
 LINK_REVISION = "b3e8f2c61d47"

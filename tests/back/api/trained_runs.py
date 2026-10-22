@@ -17,6 +17,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import Metric, ModelSession, Run
 from DashAI.back.job.predict_job import run_manual_prediction
 from DashAI.back.preprocessing.session_preprocessor import load_final_preprocessor
+from tests.back.session_columns import xy_roles
 
 RAW_INPUT_COLUMNS = [
     "SepalLengthCm",
@@ -141,8 +142,7 @@ def new_regression_session(client, dataset, session_name):
             dataset_id=dataset.id,
             name=session_name,
             task_name="RegressionTask",
-            input_columns=REGRESSION_INPUTS,
-            output_columns=[REGRESSION_TARGET],
+            column_roles=xy_roles(REGRESSION_INPUTS, [REGRESSION_TARGET]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],

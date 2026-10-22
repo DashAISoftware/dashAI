@@ -50,6 +50,7 @@ from DashAI.back.job.predict_job import PredictJob
 from DashAI.back.model_package.export import build_package
 from DashAI.back.model_package.load import load_model
 from DashAI.back.models.base_model import BaseModel
+from tests.back.session_columns import stored_io
 
 GOLDEN_PATH = Path(__file__).with_name("column_roles_net_golden.json")
 RECORDING = os.environ.get("DASHAI_RECORD_COLUMN_ROLES_NET") == "1"
@@ -139,14 +140,7 @@ def _create_session(
 
 def _stored_columns(session: ModelSession) -> dict:
     """The session's columns as stored: model inputs, outputs and input refs."""
-    return {
-        "inputs": list(session.input_columns),
-        "outputs": list(session.output_columns),
-        "input_refs": [
-            {k: v for k, v in ref.items() if v is not None}
-            for ref in (session.input_column_refs or [])
-        ],
-    }
+    return stored_io(session)
 
 
 # --------------------------------------------------------------------------- #

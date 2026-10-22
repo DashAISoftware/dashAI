@@ -183,7 +183,6 @@ class PreprocessingJob(BaseJob):
                     output_columns=io.outputs,
                 )
 
-                model_session.input_columns = resolved_input_columns
                 model_session.column_roles = (
                     session_roles(model_session, task)
                     .with_columns(

@@ -101,7 +101,7 @@ def test_create_model_session_with_preprocessing_fits_and_resolves_columns(
     # source text column) — the group is only the genuinely new column it
     # produced, not the untouched original alongside it.
     assert body["preprocessing_status"] == "ready"
-    assert body["input_columns"] == ["bin_SepalLengthCm"]
+    assert body["column_roles"]["features"]["columns"] == ["bin_SepalLengthCm"]
     # The frontend tracks this exact job via the shared job-polling
     # mechanism (useJobTracker), so it must be a real, non-empty id.
     assert body["preprocessing_job_id"]

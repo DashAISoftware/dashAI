@@ -47,6 +47,7 @@ from tests.back.api.trained_runs import (
     new_run,
     predicted_in_app,
 )
+from tests.back.session_columns import stored_io
 
 
 def _session_of(client, run_id):
@@ -133,7 +134,7 @@ def test_a_session_package_carries_dataset_recipe_models_and_metrics(
 
     names, manifest, recipe, arrow = _read(package)
     assert manifest["kind"] == "session"
-    assert manifest["format_version"] == 1
+    assert manifest["format_version"] == 2
     assert manifest["includes_trained_models"] is True
     assert manifest["contents"] == ["dataset", "session", "runs", "metrics"]
     assert manifest["dataset_hash"] == hashlib.sha256(arrow).hexdigest()
@@ -341,6 +342,49 @@ def test_a_round_trip_keeps_dataset_splits_recipe_and_metrics(
             )
 
         assert metric_rows(new_run_.id) == metric_rows(old_run.id)
+
+
+def _as_format_1(case_session, refs_given):
+    """Rewrite a recipe the way format 1 spelt the columns, before roles."""
+    io = stored_io(case_session)
+
+    def recipe(data):
+        session = dict(data["session"])
+        del session["column_roles"]
+        session["input_columns"] = io["inputs"]
+        session["output_columns"] = io["outputs"]
+        session["input_column_refs"] = io["input_refs"] if refs_given else None
+        return {**data, "session": session}
+
+    return recipe
+
+
+@pytest.mark.parametrize(
+    ("case_name", "refs_given"),
+    [("classifier", True), ("regressor", True), ("regressor", False)],
+)
+def test_a_file_from_before_column_roles_imports_with_the_same_roles(
+    request, client, tmp_path, case_name, refs_given
+):
+    """Format 1 gave the columns as inputs and outputs, with the input refs
+    possibly missing; the task reads them back as the roles they came from."""
+    case = request.getfixturevalue(case_name)
+    package = _export_all(client, case, tmp_path / "format-2.dashai")
+    with client.app.container["session_factory"]() as db:
+        original = db.get(ModelSession, case["session_id"])
+        db.expunge(original)
+    old = _rewrite(
+        package,
+        tmp_path / "format-1.dashai",
+        manifest=lambda m: {**m, "format_version": 1},
+        recipe=_as_format_1(original, refs_given),
+    )
+
+    result = _import(client, old)
+
+    with client.app.container["session_factory"]() as db:
+        imported = db.get(ModelSession, result["session_id"])
+        assert imported.column_roles == original.column_roles
 
 
 @pytest.mark.parametrize(

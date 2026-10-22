@@ -206,8 +206,6 @@ class ModelSession(Base):
     dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"))
     name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     task_name: Mapped[str] = mapped_column(String, nullable=False)
-    input_columns: Mapped[str] = mapped_column(JSON, nullable=False)
-    output_columns: Mapped[str] = mapped_column(JSON, nullable=False)
 
     # Metrics per split
     train_metrics: Mapped[list[str]] = mapped_column(JSON, nullable=True)
@@ -217,12 +215,10 @@ class ModelSession(Base):
     evaluation_strategy: Mapped[str] = mapped_column(String, nullable=False)
     splits: Mapped[str] = mapped_column(JSON, nullable=False)
     preprocessing: Mapped[dict] = mapped_column(JSON, nullable=True)
-    input_column_refs: Mapped[list] = mapped_column(JSON, nullable=True)
     # The columns by role, as the task declares them: per role, the refs
     # chosen and the column names they resolve to (see
-    # tasks/session_roles.py). Written beside the three fields above until
-    # they are dropped.
-    column_roles: Mapped[dict] = mapped_column(JSON, nullable=True)
+    # tasks/session_roles.py).
+    column_roles: Mapped[dict] = mapped_column(JSON, nullable=False)
     preprocessing_status: Mapped[str] = mapped_column(
         String, nullable=False, default="ready", server_default="ready"
     )

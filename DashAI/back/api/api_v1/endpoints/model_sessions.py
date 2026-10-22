@@ -788,7 +788,7 @@ async def create_model_session(
     has_preprocessing = len(sequence.steps) > 0
 
     # The task translates the roles it was given into the model's inputs
-    # and outputs, which the checks below and the old fields still read.
+    # and outputs, which the checks below read.
     task = component_registry[params.task_name]["class"]()
     roles = {name: list(refs) for name, refs in params.column_roles.items() if refs}
     io = task.io_columns(roles)
@@ -859,17 +859,12 @@ async def create_model_session(
                 dataset_id=params.dataset_id,
                 task_name=params.task_name,
                 name=params.name,
-                input_columns=raw_inputs,
-                output_columns=output_columns,
                 train_metrics=params.train_metrics,
                 validation_metrics=params.validation_metrics,
                 test_metrics=params.test_metrics,
                 evaluation_strategy=params.evaluation_strategy,
                 splits=params.splits,
                 preprocessing=sequence.model_dump(mode="json"),
-                input_column_refs=[
-                    ref.model_dump(mode="json") for ref in input_column_refs
-                ],
                 column_roles=column_roles.to_stored(),
                 preprocessing_status="pending" if has_preprocessing else "ready",
             )
