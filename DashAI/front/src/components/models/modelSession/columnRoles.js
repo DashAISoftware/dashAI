@@ -11,6 +11,32 @@ export const rawRefs = (names = []) =>
   names.map((name) => ({ kind: "raw", name }));
 
 /**
+ * A session's columns as the model's inputs and outputs.
+ *
+ * Read from the roles the session stores, through the roles the task says
+ * feed each side (`metadata.io_roles`).
+ *
+ * @param {object} session a model session, with `column_roles`
+ * @param {object} taskMetadata the session's task metadata, with `io_roles`
+ * @returns {{inputs: string[], inputRefs: Array, outputs: string[],
+ *   target: string|undefined}} the input columns (resolved after the
+ *   preprocessing), the input refs, the output columns and the first of them
+ */
+export function sessionColumns(session, taskMetadata) {
+  const roles = session?.column_roles || {};
+  const sides = taskMetadata?.io_roles || { inputs: [], outputs: [] };
+  const gather = (names, key) =>
+    names.flatMap((name) => roles[name]?.[key] || []);
+  const outputs = gather(sides.outputs, "columns");
+  return {
+    inputs: gather(sides.inputs, "columns"),
+    inputRefs: gather(sides.inputs, "refs"),
+    outputs,
+    target: outputs[0],
+  };
+}
+
+/**
  * The session's roles built from the model's inputs and outputs, the way the
  * column step still keeps them: the inputs go to the task's input role and
  * the outputs to its output role. Roles given nothing are left out.

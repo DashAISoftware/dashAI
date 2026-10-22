@@ -42,6 +42,8 @@ import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomple
 import ExplainerSourceToggle from "./ExplainerSourceToggle";
 import RowSelectionModeToggle from "./RowSelectionModeToggle";
 import ExplanationInfo from "./ExplanationInfo";
+import { fetchTaskMetadata } from "../../hooks/useTaskMetadata";
+import { sessionColumns } from "../models/modelSession/columnRoles";
 
 export default function SelectDatasetStep({
   newExpl,
@@ -120,8 +122,12 @@ export default function SelectDatasetStep({
       try {
         const run = await getRunById(newExpl.run_id);
         const session = await getModelSessionById(run.model_session_id);
-        setInputColumns(session.input_columns ?? []);
-        setOutputColumns(session.output_columns ?? []);
+        const columns = sessionColumns(
+          session,
+          await fetchTaskMetadata(session.task_name),
+        );
+        setInputColumns(columns.inputs);
+        setOutputColumns(columns.outputs);
         setTrainingDatasetId(session.dataset_id);
         const splits = await getExplainableSplitsRequest(newExpl.run_id);
         setExplainableSplits(splits);
@@ -274,7 +280,7 @@ export default function SelectDatasetStep({
 
       {source === "manual" ? (
         <ManualInput
-          experiment={{ input_columns: inputColumns }}
+          inputColumns={inputColumns}
           loading={loadingManual}
           types={manualTypes}
           sample={manualSample}

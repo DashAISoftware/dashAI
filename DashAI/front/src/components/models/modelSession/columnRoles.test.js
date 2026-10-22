@@ -1,4 +1,4 @@
-import { rawRefs, rolesFromIo } from "./columnRoles";
+import { rawRefs, rolesFromIo, sessionColumns } from "./columnRoles";
 
 const SUPERVISED = { io_roles: { inputs: ["features"], outputs: ["target"] } };
 
@@ -41,5 +41,55 @@ describe("rolesFromIo", () => {
 
   test("builds nothing without the task's declaration", () => {
     expect(rolesFromIo(undefined, ["a"], ["b"])).toEqual({});
+  });
+});
+
+describe("sessionColumns", () => {
+  const session = {
+    task_name: "TabularClassificationTask",
+    column_roles: {
+      features: {
+        refs: [
+          { kind: "raw", name: "SepalWidthCm" },
+          { kind: "group", step: 0, slot: null, name: null },
+        ],
+        columns: ["SepalWidthCm", "bin_SepalLengthCm"],
+      },
+      target: {
+        refs: [{ kind: "raw", name: "Species" }],
+        columns: ["Species"],
+      },
+    },
+  };
+
+  test("reads the model's inputs and outputs through the task's io_roles", () => {
+    expect(sessionColumns(session, SUPERVISED)).toEqual({
+      inputs: ["SepalWidthCm", "bin_SepalLengthCm"],
+      inputRefs: session.column_roles.features.refs,
+      outputs: ["Species"],
+      target: "Species",
+    });
+  });
+
+  test("a session without a target has no target column", () => {
+    const clustering = {
+      column_roles: { features: { refs: [], columns: ["hours", "score"] } },
+    };
+
+    expect(sessionColumns(clustering, SUPERVISED)).toEqual({
+      inputs: ["hours", "score"],
+      inputRefs: [],
+      outputs: [],
+      target: undefined,
+    });
+  });
+
+  test("reads nothing without the task's declaration", () => {
+    expect(sessionColumns(session, {})).toEqual({
+      inputs: [],
+      inputRefs: [],
+      outputs: [],
+      target: undefined,
+    });
   });
 });
