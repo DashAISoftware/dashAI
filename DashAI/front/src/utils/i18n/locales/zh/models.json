@@ -142,7 +142,7 @@
     "inputColumns": "输入列",
     "baseColumnsTitle": "输出列与候选列",
     "baseColumnsDescription": "选择输出列（模型学习预测的列）以及可能输入模型的候选列。预处理只作用于候选列，输出列永远不会被转换。",
-    "candidateColumns": "候选列",
+    "candidatesForRole": "{{role}}（候选列）",
     "less": "更小（模型 1 < 模型 2）",
     "lines": "折线",
     "liveMetrics": "实时指标",

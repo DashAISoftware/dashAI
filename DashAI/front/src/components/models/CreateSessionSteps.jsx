@@ -11,7 +11,6 @@ import PreprocessingStep from "./modelSession/PreprocessingStep";
 import SelectColumnsStep from "./modelSession/SelectColumnsStep";
 import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomplete";
 import { createModelSession } from "../../api/modelSession";
-import { rawRefs, rolesFromIo } from "./modelSession/columnRoles";
 import { forceRefreshNow } from "../../utils/jobPoller";
 import { getComponents } from "../../api/component";
 import {
@@ -60,8 +59,6 @@ function CreateSessionSteps({
     name: "",
     dataset: null,
     task_name: selectedTask?.name || "",
-    input_columns: [],
-    output_columns: [],
     train_metrics: [],
     validation_metrics: [],
     test_metrics: [],
@@ -69,17 +66,14 @@ function CreateSessionSteps({
     splits: {},
     runs: [],
     applyPreprocessing: false,
-    // Original columns the preprocessing chain may work on (see
-    // BaseColumnsStep); only used when applyPreprocessing is on.
-    candidate_columns: [],
+    // Role name to the original columns given to it (see BaseColumnsStep);
+    // only used when applyPreprocessing is on.
+    column_roles_stage1: {},
     preprocessing: [],
-    input_column_refs: [],
+    // Role name to the column refs of its final columns (see
+    // SelectColumnsStep): what the session is created with.
+    column_roles: {},
   });
-
-  // A task without a target (clustering) picks no output column. Whether the
-  // dataset is partitioned is the evaluation strategy's answer, which the
-  // prepare step reads from the strategies the task offers.
-  const requiresTarget = selectedTask?.metadata?.requires_target !== false;
 
   const [nextEnabled, setNextEnabled] = useState(false);
   const [currentStep, setCurrentStep] = useState(STEP_PREPARE_DATASET);
@@ -142,10 +136,8 @@ function CreateSessionSteps({
     setNewExp((prev) => ({
       ...prev,
       dataset: newDataset,
-      input_columns: [],
-      output_columns: [],
-      candidate_columns: [],
-      input_column_refs: [],
+      column_roles_stage1: {},
+      column_roles: {},
       splits: {},
     }));
   };
@@ -280,13 +272,9 @@ function CreateSessionSteps({
         ? newExp.preprocessing
         : [];
 
-      // The session is created with its columns by role; which role feeds
-      // the model's inputs and which its outputs is the task's declaration.
-      const columnRoles = rolesFromIo(
-        selectedTask?.metadata,
-        newExp.input_column_refs,
-        rawRefs(requiresTarget ? newExp.output_columns : []),
-      );
+      // The session is created with its columns by role, as the column
+      // step left them.
+      const columnRoles = newExp.column_roles;
 
       let effectiveName = sessionName;
       let response;
@@ -433,6 +421,7 @@ function CreateSessionSteps({
                 setNextEnabled={setNextEnabled}
                 datasetInfo={datasetInfo}
                 datasetTypes={datasetTypes}
+                taskMetadata={selectedTask?.metadata}
               />
             )}
           </>
@@ -444,7 +433,6 @@ function CreateSessionSteps({
             setNewExp={setNewExp}
             setNextEnabled={setNextEnabled}
             dataset={selectedDataset}
-            taskMetadata={selectedTask?.metadata}
           />
         )}
 
@@ -462,8 +450,8 @@ function CreateSessionSteps({
                 dataset={selectedDataset}
                 datasetInfo={datasetInfo}
                 datasetTypes={datasetTypes}
-                requiresTarget={requiresTarget}
                 taskMetadata={selectedTask?.metadata}
+                taskDisplayName={selectedTask?.display_name}
               />
             )}
           </>

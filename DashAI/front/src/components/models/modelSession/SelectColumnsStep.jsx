@@ -1,44 +1,42 @@
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import PropTypes from "prop-types";
 
-import {
-  Grid,
-  CircularProgress,
-  Box,
-  Alert,
-  AlertTitle,
-  Chip,
-} from "@mui/material";
-import DivideDatasetColumns from "./DivideDatasetColumns";
+import { Grid, Box, Alert, AlertTitle, Chip } from "@mui/material";
+import RoleColumnSelectors from "./RoleColumnSelectors";
 import { getComponents as getComponentsRequest } from "../../../api/component";
 import { validateColumns as validateColumnsRequest } from "../../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { getColorByColumnType } from "../../../utils";
 import { useTranslation, Trans } from "react-i18next";
 import {
-  isGroupKey,
   refToKey,
-  keyToRef,
   buildStepDisplayNames,
   stateToOptions,
 } from "./sessionColumnRefs";
 import usePreprocessingStructure from "./usePreprocessingStructure";
-import { rawRefs, rolesFromIo } from "./columnRoles";
+import {
+  defaultRoleSelection,
+  optionsForRole,
+  resolveSelection,
+  selectionReady,
+  selectionToRefs,
+  shownRoles,
+} from "./columnRoles";
 
 /**
- * Last step of the session wizard: pick the model's input columns (and,
- * without preprocessing, its output column).
+ * Last step of the session wizard: the final columns of every role the task
+ * declares.
  *
- * With preprocessing, the inputs are picked from the estimated dataset
- * state after the whole chain (see usePreprocessingStructure): surviving
- * candidate columns plus what the converters produced, each represented by
- * the synthetic key of the ColumnRef pointing at it, so the underlying
- * Autocomplete only ever deals with plain strings. The output was already
- * chosen in BaseColumnsStep and is shown fixed. Every item of the final
- * state is selected by default.
+ * Without preprocessing, every role picks from the original columns. With
+ * it, a role the preprocessing may transform picks from the estimated
+ * dataset state after the whole chain (see usePreprocessingStructure):
+ * surviving candidate columns plus what the converters produced, each
+ * represented by the synthetic key of the ColumnRef pointing at it, so the
+ * selectors only ever deal with plain strings. A protected role keeps the
+ * original columns it got in BaseColumnsStep and is shown fixed.
  *
- * A task without a target (clustering) only picks inputs: the output picker
- * is hidden and the session is created with no output columns.
+ * A role that takes no columns (the target of a clustering task) has no
+ * selector, and the session is created without it.
  */
 function SelectColumnsStep({
   newExp,
@@ -47,171 +45,129 @@ function SelectColumnsStep({
   dataset,
   datasetInfo,
   datasetTypes,
-  requiresTarget = true,
   taskMetadata,
+  taskDisplayName,
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["experiments", "models", "common"]);
 
-  const [taskRequirements, setTaskRequirements] = useState(null);
   const [convertersMeta, setConvertersMeta] = useState({});
 
+  const roles = shownRoles(taskMetadata);
   const rawColumnNames = datasetInfo.column_names || [];
   const withPreprocessing = Boolean(newExp.applyPreprocessing);
   const steps = newExp.preprocessing || [];
+  const stage1 = newExp.column_roles_stage1 || {};
 
   const { structure } = usePreprocessingStructure({
     datasetId: withPreprocessing ? dataset.id : undefined,
     taskName: newExp.task_name,
-    columnRoles: rolesFromIo(
-      taskMetadata,
-      newExp.candidate_columns,
-      newExp.output_columns,
-    ),
+    columnRoles: stage1,
     steps,
   });
 
   const stepDisplayNames = buildStepDisplayNames(steps, convertersMeta);
   const finalOptions = stateToOptions(structure?.final, stepDisplayNames, t);
-  const inputOptionNames = withPreprocessing
-    ? finalOptions.allKeys
-    : rawColumnNames;
-  // The output keeps its dataset type; an input takes its type after the
-  // chain (e.g. a column cast in place by TypeCast).
+  // A transformable role picks from what the chain leaves; every other one
+  // from the original columns.
+  const baseOptionsFor = (role) =>
+    withPreprocessing && role.transformable
+      ? finalOptions.allKeys
+      : rawColumnNames;
+  // A protected role keeps its dataset type; a transformable one takes its
+  // type after the chain (e.g. a column cast in place by TypeCast).
   const columnTypesForSelector = withPreprocessing
     ? { ...datasetTypes, ...finalOptions.columnTypes }
     : datasetTypes;
   const optionLabels = withPreprocessing ? finalOptions.optionLabels : {};
+  const fixedRole = (role) => withPreprocessing && !role.transformable;
 
-  const [inputSelectionState, setInputSelection] = useState(() =>
-    newExp.input_column_refs && newExp.input_column_refs.length > 0
-      ? newExp.input_column_refs.map(refToKey)
-      : newExp.input_columns || [],
-  );
-  const [outputColumnNames, setOutputColumnNames] = useState(
-    newExp.output_columns || [],
+  const [selectionState, setSelection] = useState(() =>
+    Object.fromEntries(
+      Object.entries(newExp.column_roles || {}).map(([name, refs]) => [
+        name,
+        refs.map(refToKey),
+      ]),
+    ),
   );
 
-  // Only what can still be picked: going back and changing the chain can
-  // consume a column picked here before, and turning preprocessing off
-  // leaves only original columns.
+  // With preprocessing, a protected role is what BaseColumnsStep gave it.
+  // Only what can still be picked is kept: going back and changing the
+  // chain can consume a column picked here before, and turning
+  // preprocessing off leaves only original columns.
   const optionsKnown = withPreprocessing
     ? Boolean(structure)
     : rawColumnNames.length > 0;
-  const inputSelection = optionsKnown
-    ? inputSelectionState.filter((key) => inputOptionNames.includes(key))
-    : inputSelectionState;
+  const withFixed = {
+    ...selectionState,
+    ...Object.fromEntries(
+      roles
+        .filter(fixedRole)
+        .map((role) => [role.name, stage1[role.name] || []]),
+    ),
+  };
+  const selection = resolveSelection(
+    roles,
+    optionsKnown
+      ? Object.fromEntries(
+          roles.map((role) => [
+            role.name,
+            (withFixed[role.name] || []).filter((key) =>
+              baseOptionsFor(role).includes(key),
+            ),
+          ]),
+        )
+      : withFixed,
+  );
 
-  const inputColumnRefs = inputSelection.map(keyToRef);
-  const rawInputNames = inputSelection.filter((key) => !isGroupKey(key));
-
-  // With preprocessing, the input options and their defaults arrive with the
+  // With preprocessing, the options and their defaults arrive with the
   // estimated structure, after the step has already rendered: until then an
-  // empty or unchecked selection is not a user mistake, so no validation
-  // error (alert or "Required") may show. useLayoutEffect cannot hide this
-  // gap, since it cannot wait for a network response.
+  // empty selection is not a user mistake, so no validation error (alert or
+  // "Required") may show. useLayoutEffect cannot hide this gap, since it
+  // cannot wait for a network response.
   const awaitingStructure = withPreprocessing && !structure;
-  const inputMissing = !awaitingStructure && inputSelection.length === 0;
-
-  // A task with no target has no output column to wait for, which is what
-  // keeps the Create button reachable for clustering.
-  const effectiveOutputColumns = requiresTarget ? outputColumnNames : [];
   const columnsReady =
-    inputSelection.length >= 1 &&
-    (!requiresTarget || outputColumnNames.length >= 1) &&
-    !awaitingStructure;
+    roles.length > 0 && selectionReady(roles, selection) && !awaitingStructure;
   const [columnsAreValid, setColumnsAreValid] = useState(false);
+  const [validationError, setValidationError] = useState(null);
   const [validationPending, setValidationPending] = useState(true);
 
   useLayoutEffect(() => {
-    // Auto-select sensible defaults the first time the dataset's columns
-    // load. With preprocessing, the output comes from BaseColumnsStep and
-    // the inputs default once the estimated structure arrives (below).
-    if (rawColumnNames.length === 0 || withPreprocessing) return;
-    if (
-      inputSelectionState.length === 0 &&
-      (!newExp.input_columns || newExp.input_columns.length === 0)
-    ) {
-      if (!requiresTarget) {
-        // Nothing is reserved as a target, so every column is an input.
-        setInputSelection(rawColumnNames);
-      } else {
-        setInputSelection(
-          rawColumnNames.length > 1
-            ? rawColumnNames.slice(0, -1)
-            : [rawColumnNames[0]],
-        );
-      }
+    // Without preprocessing, default the first time the dataset's columns
+    // and the task's roles are known.
+    if (withPreprocessing || rawColumnNames.length === 0 || !roles.length) {
+      return;
     }
-    if (
-      requiresTarget &&
-      outputColumnNames.length === 0 &&
-      (!newExp.output_columns || newExp.output_columns.length === 0)
-    ) {
-      setOutputColumnNames([rawColumnNames[rawColumnNames.length - 1]]);
+    if (Object.values(selectionState).every((keys) => !keys?.length)) {
+      setSelection(defaultRoleSelection(roles, rawColumnNames));
     }
-  }, [rawColumnNames.join(",")]);
+  }, [rawColumnNames.join(","), roles.map((role) => role.name).join(",")]);
 
   useLayoutEffect(() => {
-    // With preprocessing, default to everything the chain leaves: the model
-    // is usually meant to use the chain's whole result.
+    // With preprocessing, the first role the chain may transform defaults to
+    // everything the chain leaves: the model is usually meant to use the
+    // chain's whole result.
     if (!withPreprocessing || !structure) return;
-    if (inputSelection.length === 0) {
-      setInputSelection(finalOptions.allKeys);
+    const first = roles.find((role) => role.transformable);
+    if (first && (selection[first.name] || []).length === 0) {
+      setSelection((prev) => ({ ...prev, [first.name]: finalOptions.allKeys }));
     }
   }, [structure]);
 
-  const getTaskRequirements = async () => {
-    try {
-      const taskComponents = await getComponentsRequest({
-        selectTypes: ["Task"],
-      });
-      const currentTask = taskComponents.find(
-        (task) => task.name === newExp.task_name,
-      );
-      if (currentTask) {
-        setTaskRequirements(currentTask);
-      } else {
-        setTaskRequirements({
-          name: newExp.task_name,
-          metadata: {
-            inputs_types: [],
-            inputs_cardinality: "",
-            outputs_types: [],
-            outputs_cardinality: "",
-            requires_target: requiresTarget,
-          },
-        });
-      }
-    } catch (error) {
-      enqueueSnackbar(t("experiments:error.errorFetchingTaskRequirements"));
-      console.error("Error fetching task requirements:", error);
-    }
-  };
+  const selectionKey = JSON.stringify(selection);
 
   const validateColumns = async () => {
     try {
-      if (
-        rawColumnNames.length === 0 ||
-        inputSelection.length === 0 ||
-        (requiresTarget && outputColumnNames.length === 0)
-      ) {
-        setColumnsAreValid(false);
-        return;
-      }
-      // With preprocessing, the backend types every input from the chain's
-      // estimated structure, the same one this step's options come from.
+      // With preprocessing, the backend types every transformable role from
+      // the chain's estimated structure, the same one these options come from.
       const validation = await validateColumnsRequest(
         newExp.task_name,
         dataset.id,
-        rolesFromIo(
-          taskMetadata,
-          withPreprocessing ? inputColumnRefs : rawRefs(rawInputNames),
-          rawRefs(effectiveOutputColumns),
-        ),
+        selectionToRefs(selection),
         withPreprocessing ? steps : undefined,
       );
       setColumnsAreValid(validation.dataset_status === "valid");
+      setValidationError(validation.error || null);
     } catch (error) {
       enqueueSnackbar(t("experiments:error.errorFetchingColumnsValidation"));
       console.error("Error validating columns:", error);
@@ -230,42 +186,22 @@ function SelectColumnsStep({
     }
     if (!columnsReady) {
       setColumnsAreValid(false);
+      setValidationError(null);
       setValidationPending(false);
       return;
     }
-    if (rawColumnNames.length > 0) {
-      setValidationPending(true);
-      validateColumns();
-    }
-  }, [
-    columnsReady,
-    awaitingStructure,
-    inputSelection.join(","),
-    outputColumnNames.join(","),
-  ]);
+    setValidationPending(true);
+    validateColumns();
+  }, [columnsReady, awaitingStructure, selectionKey]);
 
   useEffect(() => {
     if (columnsAreValid && columnsReady) {
-      setNewExp({
-        ...newExp,
-        input_columns: rawInputNames,
-        output_columns: effectiveOutputColumns,
-        input_column_refs: inputColumnRefs,
-      });
+      setNewExp({ ...newExp, column_roles: selectionToRefs(selection) });
       setNextEnabled(true);
     } else {
       setNextEnabled(false);
     }
-  }, [
-    columnsAreValid,
-    columnsReady,
-    inputSelection.join(","),
-    outputColumnNames.join(","),
-  ]);
-
-  useEffect(() => {
-    getTaskRequirements();
-  }, []);
+  }, [columnsAreValid, columnsReady, selectionKey]);
 
   useEffect(() => {
     // Only needed to name the steps in the option labels, disambiguating two
@@ -287,21 +223,6 @@ function SelectColumnsStep({
       cancelled = true;
     };
   }, []);
-
-  const columnGroupsOf = (side) => {
-    const metadata = taskRequirements?.metadata ?? {};
-    if (Array.isArray(metadata[side]) && metadata[side].length > 0) {
-      return metadata[side];
-    }
-    const cardinality = metadata[`${side}_cardinality`];
-    return [
-      {
-        types: metadata[`${side}_types`] ?? [],
-        min: cardinality === "n" ? 0 : cardinality,
-        max: cardinality,
-      },
-    ];
-  };
 
   const describeCardinality = ({ min, max }) => {
     if (max === "n") {
@@ -349,9 +270,14 @@ function SelectColumnsStep({
     );
   };
 
+  const missing = (role) =>
+    !awaitingStructure &&
+    role.required &&
+    (selection[role.name] || []).length === 0;
+
   return (
     <React.Fragment>
-      {taskRequirements && !validationPending && (
+      {roles.length > 0 && !validationPending && (
         <Alert
           severity={columnsAreValid ? "success" : "error"}
           sx={{
@@ -371,64 +297,58 @@ function SelectColumnsStep({
               columnsAreValid
                 ? "experiments:label.columnsValidRequirements"
                 : "experiments:label.columnsInvalidRequirements",
-              { taskName: taskRequirements.display_name },
+              { taskName: taskDisplayName || newExp.task_name },
             )}
           </AlertTitle>
           <Grid container spacing={4}>
-            {(requiresTarget ? ["inputs", "outputs"] : ["inputs"]).map((side) =>
-              columnGroupsOf(side).map((group, index) => (
-                <Grid size={{ xs: 12 }} key={`${side}-${index}`}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 2,
-                      flexWrap: "wrap",
+            {roles.map((role) => (
+              <Grid size={{ xs: 12 }} key={role.name}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <Trans
+                    i18nKey="experiments:label.datasetRoleColumnRequirements"
+                    values={{
+                      role: role.label,
+                      cardinality: describeCardinality(role),
                     }}
                   >
-                    <Trans
-                      i18nKey={
-                        side === "inputs"
-                          ? "experiments:label.datasetInputColumnRequirements"
-                          : "experiments:label.datasetOutputColumnRequirements"
-                      }
-                    >
-                      <span>The columns must be of the types</span>
-                      {renderTypesAsChips(group.types)}
-                      <span>, and they should have a cardinality of </span>
-                      <span>
-                        {{ cardinality: describeCardinality(group) }}.
-                      </span>
-                    </Trans>
-                  </Box>
-                </Grid>
-              )),
+                    <span>The columns of the role must be of the types</span>
+                    {renderTypesAsChips(role.types)}
+                    <span>, and they should have a cardinality of </span>
+                    <span>cardinality.</span>
+                  </Trans>
+                </Box>
+              </Grid>
+            ))}
+            {!columnsAreValid && validationError && (
+              <Grid size={{ xs: 12 }}>{validationError}</Grid>
             )}
           </Grid>
         </Alert>
       )}
 
       <Grid container spacing={2}>
-        <DivideDatasetColumns
-          allColumnNames={rawColumnNames}
-          columnTypes={columnTypesForSelector}
-          inputOptionNames={inputOptionNames}
-          optionLabels={optionLabels}
-          selectedInputColumnNames={inputSelection}
-          onInputColumnNamesChange={setInputSelection}
-          selectedOutputColumnNames={outputColumnNames}
-          onOutputColumnNamesChange={setOutputColumnNames}
-          requiresTarget={requiresTarget}
-          inputError={inputMissing}
-          inputHelperText={inputMissing ? t("common:required") : ""}
-          outputError={requiresTarget && outputColumnNames.length === 0}
-          outputHelperText={
-            requiresTarget && outputColumnNames.length === 0
-              ? t("common:required")
-              : ""
+        <RoleColumnSelectors
+          roles={roles}
+          selection={selection}
+          onChange={(name, keys) =>
+            setSelection((prev) => ({ ...prev, [name]: keys }))
           }
+          optionsFor={(role) =>
+            optionsForRole(role, baseOptionsFor(role), selection, roles)
+          }
+          columnTypes={columnTypesForSelector}
+          optionLabels={optionLabels}
+          errorFor={missing}
+          helperTextFor={(role) => (missing(role) ? t("common:required") : "")}
+          disabledFor={fixedRole}
           disabled={rawColumnNames.length === 0}
-          outputDisabled={withPreprocessing}
         />
       </Grid>
     </React.Fragment>
@@ -436,14 +356,14 @@ function SelectColumnsStep({
 }
 
 SelectColumnsStep.propTypes = {
-  taskMetadata: PropTypes.object,
   newExp: PropTypes.object.isRequired,
   setNewExp: PropTypes.func.isRequired,
   setNextEnabled: PropTypes.func.isRequired,
   dataset: PropTypes.object.isRequired,
   datasetInfo: PropTypes.object,
   datasetTypes: PropTypes.object,
-  requiresTarget: PropTypes.bool,
+  taskMetadata: PropTypes.object,
+  taskDisplayName: PropTypes.string,
 };
 
 export default SelectColumnsStep;
