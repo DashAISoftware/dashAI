@@ -1,7 +1,4 @@
-from DashAI.back.models.supervised_model import SupervisedModel
-
-
-class TabularClassificationModel(SupervisedModel):
+class TabularClassificationModel:
     """Base mixin for models that perform tabular classification tasks.
 
     Concrete tabular classification models should extend this class alongside

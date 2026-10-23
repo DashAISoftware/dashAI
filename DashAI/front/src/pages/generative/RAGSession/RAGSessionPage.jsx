@@ -207,7 +207,7 @@ export default function RAGSessionPage() {
                 showHubButton
                 onHubClick={() => navigate("/app/generative")}
               />
-              <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
+              <Divider />
               {/* Both halves may shrink, and each scrolls its own content:
                   a fixed basis with an outer scroll pushed the header out of
                   view as the lists grew. */}
@@ -219,6 +219,7 @@ export default function RAGSessionPage() {
                   showSearch
                 />
               </Box>
+              <Divider />
               <Box sx={{ flex: "1 1 45%", minHeight: 0, display: "flex" }}>
                 <SessionBar
                   sessions={sessions}

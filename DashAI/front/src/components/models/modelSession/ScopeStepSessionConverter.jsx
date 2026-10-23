@@ -5,32 +5,32 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import ColumnSelector from "../../notebooks/ColumnSelector";
 import FormSchemaButtonGroup from "../../shared/FormSchemaButtonGroup";
-import { keyToRef, stateToOptions } from "./sessionColumnRefs";
+import { buildColumnKeysAndTypes, keyToRef } from "./sessionColumnRefs";
 
 /**
  * Scope step for a converter being added to a session's preprocessing
- * sequence: column selection only. There's no row-level scope: the
+ * sequence: column selection only (there's no row-level scope — the
  * train/test split doesn't exist yet at config time, and a session
  * converter never sees rows outside its own fold's training partition at
- * fit time regardless of what's picked here.
+ * fit time regardless of what's picked here).
  *
- * The scope offered is the estimated dataset state at the end of the chain,
- * where this converter is appended (chaining): the candidate columns that
- * are still there, plus every column or block earlier converters produced,
- * and never a column an earlier step consumed or the output column. The
- * shared `ColumnSelector` only knows a plain `{name: {type, dtype}}` map, so
- * each state item is represented by the synthetic key of the ColumnRef
- * pointing at it (see `sessionColumnRefs`) and translated back into that
- * ColumnRef once the user picks a selection.
+ * The scope offered isn't just the dataset's raw columns: it's every raw
+ * column plus one synthetic key per output group of every converter
+ * already configured *before* this one in the sequence (chaining). The
+ * shared `ColumnSelector` only knows a plain `{name: {type, dtype}}` map,
+ * so groups are represented as synthetic keys built by `sessionColumnRefs`
+ * and translated back into real ColumnRef scope entries once the user
+ * picks a selection.
  */
 export default function ScopeStepSessionConverter({
   tool,
-  finalState,
-  stepDisplayNames,
+  datasetTypes,
+  preprocessing,
   filePath,
   scope,
   setScope,
   nextStep,
+  convertersMeta,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["common", "datasets", "models"]);
@@ -42,8 +42,9 @@ export default function ScopeStepSessionConverter({
   const inputCardinality = tool?.metadata?.input_cardinality || {};
 
   const { columnTypes: columnTypesForSelector, optionLabels } = useMemo(
-    () => stateToOptions(finalState, stepDisplayNames, t),
-    [finalState, stepDisplayNames, t],
+    () =>
+      buildColumnKeysAndTypes({ datasetTypes, preprocessing, convertersMeta }),
+    [datasetTypes, preprocessing, convertersMeta],
   );
 
   const handleSelectionChange = (selected) => {
@@ -101,10 +102,11 @@ export default function ScopeStepSessionConverter({
 
 ScopeStepSessionConverter.propTypes = {
   tool: PropTypes.object.isRequired,
-  finalState: PropTypes.array.isRequired,
-  stepDisplayNames: PropTypes.arrayOf(PropTypes.string).isRequired,
+  datasetTypes: PropTypes.object.isRequired,
+  preprocessing: PropTypes.array,
   filePath: PropTypes.string,
   scope: PropTypes.array.isRequired,
   setScope: PropTypes.func.isRequired,
   nextStep: PropTypes.func.isRequired,
+  convertersMeta: PropTypes.object,
 };

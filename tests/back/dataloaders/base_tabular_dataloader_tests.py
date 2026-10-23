@@ -10,7 +10,6 @@ from datasets.builder import DatasetGenerationError
 
 from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset, split_dataset
 from DashAI.back.dataloaders.classes.dataloader import BaseDataLoader
-from tests.back.scratch import scratch_dir
 
 # TODO: Test no header, empty file, bad split folder structure.
 
@@ -71,7 +70,7 @@ class BaseTabularDataLoaderTester:
         # load data
         dataset = dataloder_instance.load_data(
             filepath_or_buffer=file,
-            temp_path=scratch_dir("dataloaders"),
+            temp_path="tests/back/dataloaders",
             params=params,
         )
 
@@ -117,7 +116,7 @@ class BaseTabularDataLoaderTester:
 
         dataset = dataloder_instance.load_data(
             filepath_or_buffer=str(dataset_path),
-            temp_path=scratch_dir("dataloaders", "iris"),
+            temp_path="tests/back/dataloaders/iris",
             params=params,
         )
         dataset = split_dataset(dataset)
@@ -172,7 +171,7 @@ class BaseTabularDataLoaderTester:
         ):
             dataloder_instance.load_data(
                 filepath_or_buffer=file,
-                temp_path=scratch_dir("dataloaders", "iris"),
+                temp_path="tests/back/dataloaders/iris",
                 params=params,
             )
 
@@ -206,6 +205,6 @@ class BaseTabularDataLoaderTester:
         ):
             dataloder_instance.load_data(
                 filepath_or_buffer=file,
-                temp_path=scratch_dir("dataloaders", "iris"),
+                temp_path="tests/back/dataloaders/iris",
                 params=params,
             )

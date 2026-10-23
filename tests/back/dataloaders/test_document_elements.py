@@ -22,7 +22,6 @@ def test_starting_set_of_kinds():
         "image",
         "page_header",
         "page_footer",
-        "chunk",
     }
 
 

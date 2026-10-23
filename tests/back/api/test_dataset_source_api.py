@@ -1,7 +1,6 @@
 """Tests for the dataset_source API endpoints."""
 
 import os
-import shutil
 from typing import Any, Dict
 
 import pytest
@@ -14,9 +13,8 @@ from DashAI.back.dataset_sources.base_dataset_source import (
     DatasetEntry,
     SearchPage,
 )
-from DashAI.back.dependencies.database.models import Datafile, Dataset
+from DashAI.back.dependencies.database.models import Datafile
 from DashAI.back.dependencies.registry import ComponentRegistry
-from DashAI.back.job.dataset_job import DatasetJob
 
 
 class MockDataLoader(BaseDataLoader):
@@ -43,17 +41,6 @@ class MockDataLoader(BaseDataLoader):
 
         dataset_df = pd.read_csv(filepath_or_buffer)
         return to_dashai_dataset(dataset_df)
-
-
-class CachingDataLoader(MockDataLoader):
-    """DataLoader that leaves a cache file in temp_path, like CSVDataLoader."""
-
-    name = "CachingDataLoader"
-
-    def load_data(self, filepath_or_buffer, temp_path, params, n_sample=None):
-        with open(os.path.join(temp_path, "loader-cache.arrow"), "w") as f:
-            f.write("cache")
-        return super().load_data(filepath_or_buffer, temp_path, params, n_sample)
 
 
 class MockDatasetSource(BaseDatasetSource):
@@ -92,7 +79,7 @@ class MockDatasetSource(BaseDatasetSource):
 def setup_test_registry(client, monkeypatch):
     container = client.app.container
     test_registry = ComponentRegistry(
-        initial_components=[MockDatasetSource, MockDataLoader, CachingDataLoader]
+        initial_components=[MockDatasetSource, MockDataLoader]
     )
     monkeypatch.setitem(container._services, "component_registry", test_registry)
     return test_registry
@@ -210,53 +197,3 @@ def test_import_endpoint_unknown_source(client: TestClient):
         json={"dataset_id": 999, "params": {}},
     )
     assert response.status_code == 404
-
-
-def _datafile_contents(client, datafile_id):
-    session_factory = client.app.container._services["session_factory"]
-    with session_factory() as db:
-        local_path = db.get(Datafile, datafile_id).local_path
-    return sorted(os.listdir(local_path))
-
-
-def test_preview_keeps_loader_cache_out_of_datafile(client, ready_datafile):
-    response = client.post(
-        "/api/v1/dataset-source/MockDatasetSource/mock%2Fdataset/preview",
-        json={
-            "dataloader": "CachingDataLoader",
-            "params": {},
-            "n_rows": 3,
-            "datafile_id": ready_datafile,
-        },
-    )
-    assert response.status_code == 200
-    assert _datafile_contents(client, ready_datafile) == ["mock.csv"]
-
-
-def test_import_job_keeps_loader_cache_out_of_datafile(client, ready_datafile):
-    session_factory = client.app.container._services["session_factory"]
-    with session_factory() as db:
-        entry = Dataset(name="hub_cache_test", file_path="")
-        db.add(entry)
-        db.commit()
-        db.refresh(entry)
-        job = DatasetJob(
-            job_type="DatasetJob",
-            kwargs={
-                "dataset_id": entry.id,
-                "source_name": "MockDatasetSource",
-                "params": {
-                    "datafile_id": ready_datafile,
-                    "dataloader": "CachingDataLoader",
-                    "dataloader_params": {},
-                    "compute_metadata": False,
-                },
-            },
-            db=db,
-        )
-        job.run()
-        db.refresh(entry)
-        assert entry.total_rows == 3
-
-    assert _datafile_contents(client, ready_datafile) == ["mock.csv"]
-    shutil.rmtree(entry.file_path, ignore_errors=True)

@@ -19,9 +19,8 @@ function FormSchemaFieldWithCollapse({
   description,
   errorMessage,
   children,
-  defaultExpanded = false,
 }) {
-  const [showSection, setShowSection] = React.useState(defaultExpanded);
+  const [showSection, setShowSection] = React.useState(false);
   const { t } = useTranslation(["common"]);
 
   const toggleButton = (
@@ -57,7 +56,6 @@ FormSchemaFieldWithCollapse.propTypes = {
   description: PropTypes.string,
   errorMessage: PropTypes.string,
   children: PropTypes.node,
-  defaultExpanded: PropTypes.bool,
 };
 
 export default FormSchemaFieldWithCollapse;

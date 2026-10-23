@@ -60,13 +60,10 @@ function AddModelDialog({
   onRunCreated,
 }) {
   const { enqueueSnackbar } = useSnackbar();
-  // Nested cross-validation only applies to a folded strategy, and a search
-  // needs a held-out partition to be measured on, which a strategy that carves
-  // nothing does not make. Both are what the backend reports rather than what
-  // the strategy name implies.
-  const strategyKind = useStrategyKind(session?.evaluation_strategy);
-  const isCrossValidation = strategyKind === STRATEGY_KINDS.CV;
-  const supportsOptimization = strategyKind !== STRATEGY_KINDS.FULL;
+  // Nested cross-validation only applies to a folded strategy, which the
+  // backend reports rather than the strategy name implying it.
+  const isCrossValidation =
+    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
 
   const [activeStep, setActiveStep] = useState(0);
   const [name, setName] = useState("");
@@ -108,6 +105,7 @@ function AddModelDialog({
   });
 
   const tourContext = useTourContext();
+
   const outerSplit = useMemo(() => {
     return session?.splits ? JSON.parse(session.splits) : null;
   }, [session?.splits]);
@@ -130,10 +128,9 @@ function AddModelDialog({
     return checkIfHaveOptimazers(modelParameters);
   }, [modelParameters]);
 
-  const steps =
-    supportsOptimization && hasOptimizableParams
-      ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
-      : [t("models:label.configureModel")];
+  const steps = hasOptimizableParams
+    ? [t("models:label.configureModel"), t("models:label.configureOptimizer")]
+    : [t("models:label.configureModel")];
 
   useEffect(() => {
     if (preselectedModel && preselectedModel !== selectedModel) {
@@ -239,7 +236,7 @@ function AddModelDialog({
         return;
       }
 
-      if (supportsOptimization && hasOptimizableParams) {
+      if (hasOptimizableParams) {
         setActiveStep(1);
       } else {
         handleCreateRun();
@@ -279,15 +276,13 @@ function AddModelDialog({
         selectedModel,
         name.trim(),
         modelParameters || {},
-        supportsOptimization ? selectedOptimizer || "" : "",
-        supportsOptimization
-          ? { ...defaultOptimizerParams, ...optimizerParameters }
-          : {},
+        selectedOptimizer || "",
+        { ...defaultOptimizerParams, ...optimizerParameters },
         "",
         "",
         "",
         "",
-        supportsOptimization ? goalMetric || "" : "",
+        goalMetric || "",
         "",
         nestedConfig,
       );
@@ -362,17 +357,14 @@ function AddModelDialog({
   );
 
   const isStep1Valid = Boolean(selectedModel && name.trim() !== "");
-  // A task without optimization (clustering) has no optimizer step to fill in.
-  const isStep2Valid =
-    !supportsOptimization ||
-    Boolean(
-      selectedOptimizer &&
-      goalMetric &&
-      (!useNestedCV ||
-        (innerConfig.splitterType &&
-          innerConfig.nSplits > 1 &&
-          innerConfig.nSplits <= maxInnerFolds)),
-    );
+  const isStep2Valid = Boolean(
+    selectedOptimizer &&
+    goalMetric &&
+    (!useNestedCV ||
+      (innerConfig.splitterType &&
+        innerConfig.nSplits > 1 &&
+        innerConfig.nSplits <= maxInnerFolds)),
+  );
 
   return (
     <Dialog
@@ -574,7 +566,7 @@ AddModelDialog.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     task_name: PropTypes.string,
-    splits: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
+    splits: PropTypes.string,
   }),
   preselectedModel: PropTypes.string,
   preselectedModelObject: PropTypes.shape({

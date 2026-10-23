@@ -239,10 +239,7 @@ class ContrastiveShap(BaseLocalExplainer):
         """
         import shap
 
-        from DashAI.back.explainability.model_input import (
-            as_shap_predictor,
-            prepare_model_input,
-        )
+        from DashAI.back.explainability.model_input import prepare_model_input
 
         x, y = background_dataset
         # SHAP calls the model with perturbed matrices, so the background must
@@ -259,7 +256,7 @@ class ContrastiveShap(BaseLocalExplainer):
             background_data = shap.sample(background_data, n_samples)
 
         self.explainer = shap.KernelExplainer(
-            model=as_shap_predictor(self.model),
+            model=self.model.predict_prepared,
             data=background_data,
             feature_names=feature_names,
         )

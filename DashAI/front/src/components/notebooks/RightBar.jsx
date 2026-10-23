@@ -150,36 +150,8 @@ export default function RightBar({ notebook, onToggle }) {
     // The metadata contract lives in one place now: this used to be one of four
     // hand-written copies, and the copy in the exploration wizard had gone stale
     // on both the blacklist key and the empty-list polarity.
-    // Restrict selectable columns to those used by the last converter (if
-    // required). Applied to the candidates before the shared eligibility check
-    // so its cardinality count only sees the columns the converter produced.
-    let candidateColumns = datasetColumns;
-    if (
-      explorer?.metadata?.restricts_to_converter_columns &&
-      explorer?.metadata?.requires_converter_class
-    ) {
-      const latestConverter = [...explorersAndConverters]
-        .filter(
-          (item) =>
-            item.type === "converter" &&
-            item.status === 3 &&
-            item.converter === explorer.metadata.requires_converter_class,
-        )
-        .sort((a, b) => (b.id || 0) - (a.id || 0))[0];
-      if (latestConverter) {
-        const converterColNames = new Set(
-          (latestConverter?.parameters?.scope?.columns || []).map(
-            (c) => c.columnName,
-          ),
-        );
-        candidateColumns = datasetColumns.filter((col) =>
-          converterColNames.has(col.columnName),
-        );
-      }
-    }
-
     const { validColumns, shortfall, restrictions, restricted } =
-      evaluateColumnEligibility(explorer?.metadata, candidateColumns, {
+      evaluateColumnEligibility(explorer?.metadata, datasetColumns, {
         unknownLabel: t("common:unknown"),
       });
 
@@ -189,9 +161,7 @@ export default function RightBar({ notebook, onToggle }) {
 
     if (shortfall !== null) {
       if (validColumns.length === 0) {
-        tooltip += `
-
-${t("datasets:error.noValidColumnsForExplorer")}`;
+        tooltip += `\n\n${t("datasets:error.noValidColumnsForExplorer")}`;
       }
       const key =
         shortfall.kind === "exact"
@@ -211,41 +181,6 @@ ${t("datasets:error.noValidColumnsForExplorer")}`;
       tooltip += `\n\n${t("datasets:error.noValidColumnsWithDtypesMentioned", {
         dtypes: restrictions.join(", "),
       })}`;
-    }
-
-    // Check if a required converter class has been run and finished
-    const requiresConverterClass = explorer?.metadata?.requires_converter_class;
-    if (requiresConverterClass) {
-      const finishedConverters = explorersAndConverters.filter(
-        (item) =>
-          item.type === "converter" &&
-          item.status === 3 &&
-          item.converter === requiresConverterClass,
-      );
-      if (finishedConverters.length === 0) {
-        disabled = true;
-        tooltip += `\n\n${t("datasets:error.requiresConverter", {
-          converterClass: requiresConverterClass,
-        })}`;
-      } else {
-        // Check if a specific algorithm is required (e.g. hdbscan, agglomerative)
-        const requiresAlgorithm =
-          explorer?.metadata?.requires_algorithm?.toLowerCase();
-        if (requiresAlgorithm) {
-          const latest = [...finishedConverters].sort(
-            (a, b) => (b.id || 0) - (a.id || 0),
-          )[0];
-          const usedAlgorithm = (
-            latest?.parameters?.params?.algorithm?.toLowerCase() ?? ""
-          ).replace(/clustering$/, "");
-          if (usedAlgorithm !== requiresAlgorithm) {
-            disabled = true;
-            tooltip += `\n\n${t("datasets:error.requiresAlgorithm", {
-              algorithm: requiresAlgorithm,
-            })}`;
-          }
-        }
-      }
     }
 
     return { disabled, tooltip, validColumns };
@@ -302,7 +237,7 @@ ${t("datasets:error.noValidColumnsForExplorer")}`;
           notebook,
         };
       }),
-    [explorers, datasetColumns, notebook?.id, explorersAndConverters],
+    [explorers, datasetColumns, notebook?.id],
   );
 
   const validatedConverters = useMemo(
@@ -324,17 +259,15 @@ ${t("datasets:error.noValidColumnsForExplorer")}`;
     const query = searchQuery.trim().toLowerCase();
     const tokens = query.split(/\s+/).filter(Boolean);
 
-    const asString = (value) => (typeof value === "string" ? value : "");
-
     const rankMatch = (item) => {
       const displayName = (
-        asString(item.metadata?.display_name) ||
-        asString(item.name) ||
+        item.metadata?.display_name ||
+        item.name ||
         ""
       ).toLowerCase();
       const description = (
-        asString(item.metadata?.short_description) ||
-        asString(item.description) ||
+        item.metadata?.short_description ||
+        item.description ||
         ""
       ).toLowerCase();
       if (tokens.every((token) => displayName.includes(token))) return 1;

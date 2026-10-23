@@ -22,29 +22,8 @@ import { startJobPolling } from "../../hooks/useJobPolling";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import { useDatasetsAndNotebooks } from "../../components/custom/contexts/DatasetsAndNotebooksContext";
-import {
-  TourProvider,
-  useTourContext,
-} from "../../components/tour/TourProvider";
-import {
-  goToTourTarget,
-  isTourAtTarget,
-  useTourStageSync,
-} from "../../components/tour/tourUtils";
-import { TOUR_KEYS } from "../../constants/tours";
-
-// Source the hub tour walks the user through (public, no credentials).
-const TOUR_SOURCE = "HuggingFaceDatasetSource";
 
 export default function HubContent() {
-  return (
-    <TourProvider tourKey={TOUR_KEYS.HUB}>
-      <HubContentInner />
-    </TourProvider>
-  );
-}
-
-function HubContentInner() {
   const { t } = useTranslation(["hub"]);
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
@@ -56,8 +35,6 @@ function HubContentInner() {
   } = useDatasetsAndNotebooks();
   const { sourceName: sourceNameParam } = useParams();
   const threePanelLayout = useThreePanelLayout({ storageKey: "datasets" });
-  const tourContext = useTourContext();
-  useTourStageSync(tourContext, sourceNameParam ? "grid" : "source");
 
   const [sources, setSources] = useState([]);
   const [sourcesLoading, setSourcesLoading] = useState(true);
@@ -164,9 +141,6 @@ function HubContentInner() {
       );
       const entry = { ...row, job_id: job.id };
       addDownload(entry);
-      if (isTourAtTarget(tourContext, "hub-dataset-action")) {
-        tourContext.nextStep();
-      }
     } catch {
       // error shown via download status
     } finally {
@@ -188,43 +162,13 @@ function HubContentInner() {
     navigate(`/app/data/hub/import/${dl.id}`);
   };
 
-  const handleOpenSource = (source) => {
+  const handleSelectSource = (source) => {
     navigate(`/app/data/hub/${source.name}`);
   };
 
   const handleStartImport = () => {
     const dl = getDownloadForDataset(selectedDataset);
-    if (!dl) return;
-    if (isTourAtTarget(tourContext, "hub-dataset-add")) {
-      tourContext.markTourAsCompleted();
-      tourContext.stopTour();
-    }
-    navigate(`/app/data/hub/import/${dl.id}`);
-  };
-
-  const handleSelectSource = (source) => {
-    setPendingSource(source);
-    if (
-      source?.name === TOUR_SOURCE &&
-      isTourAtTarget(tourContext, "hub-source-example")
-    ) {
-      goToTourTarget(tourContext, "hub-source-details");
-    }
-  };
-
-  const handleSelectDataset = (ds) => {
-    setSelectedDataset(ds);
-    if (!isTourAtTarget(tourContext, "hub-iris-card")) return;
-    // Skip what the dataset no longer needs: a finished download goes
-    // straight to "Add to dashAI", one in progress to the datafiles list.
-    const dl = getDownloadForDataset(ds);
-    const target =
-      !dl || dl.status === "error"
-        ? "hub-dataset-action"
-        : dl.status === "ready"
-          ? "hub-dataset-add"
-          : "hub-datafiles-list";
-    goToTourTarget(tourContext, target);
+    if (dl) navigate(`/app/data/hub/import/${dl.id}`);
   };
 
   return (
@@ -242,7 +186,7 @@ function HubContentInner() {
               sourceName={sourceNameParam}
               sourceDisplayName={sourceDisplayName}
               selectedDataset={selectedDataset}
-              onSelectDataset={handleSelectDataset}
+              onSelectDataset={setSelectedDataset}
             />
           ) : (
             <Box
@@ -271,17 +215,14 @@ function HubContentInner() {
                     category: s.metadata?.category,
                   }))}
                   selected={pendingSource}
-                  onSelect={handleSelectSource}
+                  onSelect={setPendingSource}
                   searchPlaceholder={t("hub:searchSources")}
-                  tourDataFor={tourContext?.run ? "hub-source-example" : null}
-                  tourDataMatchFn={(c) => c.name === TOUR_SOURCE}
                 />
               </Box>
               <StepperNavigationFooter
                 onBack={() => navigate("/app/data")}
-                onNext={() => handleOpenSource(pendingSource)}
+                onNext={() => handleSelectSource(pendingSource)}
                 nextDisabled={!pendingSource}
-                nextDataTour="hub-source-next-button"
               />
             </Box>
           )}
@@ -289,10 +230,7 @@ function HubContentInner() {
 
         <RightPanel toggleButtonTop="50%">
           {!sourceNameParam ? (
-            <ComponentDetailsPanel
-              component={pendingSource}
-              dataTour="hub-source-details"
-            />
+            <ComponentDetailsPanel component={pendingSource} />
           ) : (
             <DatasetDetail
               dataset={selectedDataset}

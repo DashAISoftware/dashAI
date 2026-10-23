@@ -2,10 +2,7 @@ import api from "./api";
 import type {
   IColumnRef,
   IConverterStep,
-  IExportPreview,
   IModelSession,
-  ISessionImportResult,
-  IStructureResult,
 } from "../types/modelSession";
 
 const endpointURL = "/v1/model-session";
@@ -87,9 +84,7 @@ export const validateColumns = async (
   inputColumns: string[],
   outputColumns: string[],
   inputRefs?: IColumnRef[],
-  // With preprocessing, the backend types every input ref from the chain's
-  // estimated structure.
-  preprocessing?: IConverterStep[],
+  converterOutputTypes?: Record<string, string>,
 ): Promise<object> => {
   const formData = {
     task_name: taskName,
@@ -97,79 +92,11 @@ export const validateColumns = async (
     inputs_columns: inputColumns,
     outputs_columns: outputColumns,
     input_refs: inputRefs,
-    preprocessing: preprocessing?.map(({ converter, params, scope }) => ({
-      converter,
-      params,
-      scope,
-    })),
+    converter_output_types: converterOutputTypes,
   };
   const response = await api.post<object>(
     "/v1/model-session/validation",
     formData,
-  );
-  return response.data;
-};
-
-// Estimate the dataset state after every step of a preprocessing chain,
-// without fitting anything (see the backend's infer_structure).
-export const getPreprocessingStructure = async ({
-  datasetId,
-  candidates,
-  outputColumns,
-  steps,
-}: {
-  datasetId: number;
-  candidates: string[];
-  outputColumns: string[];
-  steps: IConverterStep[];
-}): Promise<IStructureResult> => {
-  const response = await api.post<IStructureResult>(
-    `${endpointURL}/preprocessing/structure`,
-    {
-      dataset_id: datasetId,
-      candidates,
-      output_columns: outputColumns,
-      steps: steps.map(({ converter, params, scope }) => ({
-        converter,
-        params,
-        scope,
-      })),
-    },
-  );
-  return response.data;
-};
-
-export const getSessionExportPreview = async (
-  id: number,
-): Promise<IExportPreview> => {
-  const response = await api.get<IExportPreview>(
-    `${endpointURL}/${id}/export/preview`,
-  );
-  return response.data;
-};
-
-export const exportModelSession = async (
-  id: number,
-  runIds: number[],
-  includeTrainedModels: boolean,
-): Promise<Blob> => {
-  const response = await api.post(
-    `${endpointURL}/${id}/export`,
-    { run_ids: runIds, include_trained_models: includeTrainedModels },
-    { responseType: "blob" },
-  );
-  return response.data;
-};
-
-export const importModelSession = async (
-  file: File,
-): Promise<ISessionImportResult> => {
-  const formData = new FormData();
-  formData.append("file", file);
-  const response = await api.post<ISessionImportResult>(
-    `${endpointURL}/import`,
-    formData,
-    { headers: { "Content-Type": "multipart/form-data" } },
   );
   return response.data;
 };

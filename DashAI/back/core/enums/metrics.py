@@ -5,7 +5,6 @@ class SplitEnum(Enum):
     TRAIN = "train"
     VALIDATION = "validation"
     TEST = "test"
-    FULL = "full"
 
 
 class LevelEnum(Enum):

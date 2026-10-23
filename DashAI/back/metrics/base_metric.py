@@ -7,10 +7,9 @@ class BaseMetric:
     """Abstract base class for all DashAI evaluation metrics.
 
     Every concrete metric must subclass ``BaseMetric`` (or one of its
-    category subclasses) and implement a static ``score`` method. The concrete
-    method signature depends on the evaluation family: supervised metrics use
-    true outputs and predictions, while clustering metrics use feature data and
-    discovered labels.
+    category subclasses) and implement a static ``score`` method that
+    accepts the true labels/values and model predictions and returns a
+    scalar float.
 
     Class attributes
     ----------------

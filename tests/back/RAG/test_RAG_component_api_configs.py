@@ -16,11 +16,11 @@ pipeline runtime, not during session creation.
 
 from fastapi.testclient import TestClient
 
-from tests.back.RAG.conftest import BOW_PARAMS, TFIDF_PARAMS
-
 # ---------------------------------------------------------------------------
 # helpers
 # ---------------------------------------------------------------------------
+
+ST_MINI_LM = "sentence-transformers/all-MiniLM-L6-v2"
 
 
 def _base_params() -> dict:
@@ -36,9 +36,16 @@ def _base_params() -> dict:
             "retriever_model": {
                 "component": "BM25Retriever",
                 "params": {
-                    "vectorizer": {
-                        "component": "BagOfWordsConverter",
-                        "params": dict(BOW_PARAMS),
+                    "BM25Vectorizer": {
+                        "component": "BM25VectorizerModel",
+                        "params": {
+                            "strip_accents": None,
+                            "lowercase": True,
+                            "stop_words": None,
+                            "max_df": 1.0,
+                            "min_df": 0.0,
+                            "max_features": None,
+                        },
                     },
                     "k1": 1.5,
                     "b": 0.75,
@@ -70,18 +77,19 @@ def _base_params() -> dict:
 def _dense_st_retriever(
     similarity_metric: str = "cosine",
     top_k: int = 10,
+    model_name: str = ST_MINI_LM,
 ) -> dict:
-    """Build a DenseEmbeddingRetriever + AllMiniLML6V2Embedding config."""
+    """Build a DenseEmbeddingRetriever + SentenceTransformerEmbedding config."""
     return {
         "component": "DenseEmbeddingRetriever",
         "params": {
             "embedding_model": {
-                "component": "AllMiniLML6V2Embedding",
+                "component": "SentenceTransformerEmbedding",
                 "params": {
-                    "device": "CPU",
-                    "batch_size": 32,
-                    "normalize": True,
+                    "model_name": model_name,
                     "overflow_strategy": "truncate",
+                    "normalize": True,
+                    "device": "cpu",
                 },
             },
             "similarity_metric": similarity_metric,
@@ -91,17 +99,17 @@ def _dense_st_retriever(
 
 
 def _dense_st_alt_retriever(top_k: int = 10) -> dict:
-    """Build a DenseEmbeddingRetriever + AllMiniLML6V2Embedding config."""
+    """Build a DenseEmbeddingRetriever + SentenceTransformerEmbedding config."""
     return {
         "component": "DenseEmbeddingRetriever",
         "params": {
             "embedding_model": {
-                "component": "AllMiniLML6V2Embedding",
+                "component": "SentenceTransformerEmbedding",
                 "params": {
-                    "device": "CPU",
-                    "batch_size": 32,
-                    "normalize": True,
+                    "model_name": ST_MINI_LM,
                     "overflow_strategy": "truncate",
+                    "normalize": True,
+                    "device": "cpu",
                 },
             },
             "similarity_metric": "cosine",
@@ -161,9 +169,16 @@ class TestEncodingModels:
         params["parameters"]["retriever_model"] = {
             "component": "BM25Retriever",
             "params": {
-                "vectorizer": {
-                    "component": "BagOfWordsConverter",
-                    "params": dict(BOW_PARAMS),
+                "BM25Vectorizer": {
+                    "component": "BM25VectorizerModel",
+                    "params": {
+                        "strip_accents": None,
+                        "lowercase": True,
+                        "stop_words": None,
+                        "max_df": 1.0,
+                        "min_df": 0.0,
+                        "max_features": None,
+                    },
                 },
                 "k1": 2.0,
                 "b": 0.5,
@@ -188,9 +203,22 @@ class TestEncodingModels:
         params["parameters"]["retriever_model"] = {
             "component": "TFIDFRetriever",
             "params": {
-                "vectorizer": {
-                    "component": "TFIDFConverter",
-                    "params": dict(TFIDF_PARAMS),
+                "TFIDFVectorizer": {
+                    "component": "TFIDFVectorizerModel",
+                    "params": {
+                        "strip_accents": "None",
+                        "lowercase": True,
+                        "analyzer": "word",
+                        "stop_words": [],
+                        "ngram_range": [1, 1],
+                        "max_df": 1.0,
+                        "min_df": 0.0,
+                        "max_features": 1000,
+                        "norm": "l2",
+                        "use_idf": True,
+                        "smooth_idf": True,
+                        "sublinear_tf": False,
+                    },
                 },
                 "similarity_function": "cosine",
                 "top_k": 5,
@@ -209,9 +237,22 @@ class TestEncodingModels:
         params["parameters"]["retriever_model"] = {
             "component": "TFIDFRetriever",
             "params": {
-                "vectorizer": {
-                    "component": "TFIDFConverter",
-                    "params": dict(TFIDF_PARAMS),
+                "TFIDFVectorizer": {
+                    "component": "TFIDFVectorizerModel",
+                    "params": {
+                        "strip_accents": "None",
+                        "lowercase": True,
+                        "analyzer": "word",
+                        "stop_words": [],
+                        "ngram_range": [1, 1],
+                        "max_df": 1.0,
+                        "min_df": 0.0,
+                        "max_features": 1000,
+                        "norm": "l2",
+                        "use_idf": True,
+                        "smooth_idf": True,
+                        "sublinear_tf": False,
+                    },
                 },
                 "similarity_function": "manhattan",
                 "top_k": 15,
@@ -224,7 +265,7 @@ class TestEncodingModels:
         assert ret["params"]["top_k"] == 15
 
     def test_encoding_dense_sentence_transformer(self, client: TestClient):
-        """DenseEmbeddingRetriever + AllMiniLML6V2Embedding."""
+        """DenseEmbeddingRetriever + SentenceTransformerEmbedding (all-MiniLM-L6-v2)."""
         params = _base_params()
         params["name"] = "Enc Dense ST"
         params["parameters"]["retriever_model"] = _dense_st_retriever(top_k=10)
@@ -232,14 +273,15 @@ class TestEncodingModels:
         ret = stored["parameters"]["retriever_model"]
         assert ret["component"] == "DenseEmbeddingRetriever"
         embed = ret["params"]["embedding_model"]
-        assert embed["component"] == "AllMiniLML6V2Embedding"
+        assert embed["component"] == "SentenceTransformerEmbedding"
+        assert embed["params"]["model_name"] == ST_MINI_LM
         assert embed["params"]["normalize"] is True
-        assert embed["params"]["device"] == "CPU"
+        assert embed["params"]["device"] == "cpu"
         assert ret["params"]["similarity_metric"] == "cosine"
         assert ret["params"]["top_k"] == 10
 
     def test_encoding_dense_st_alt(self, client: TestClient):
-        """DenseEmbeddingRetriever + AllMiniLML6V2Embedding."""
+        """DenseEmbeddingRetriever + SentenceTransformerEmbedding (all-MiniLM-L6-v2)."""
         params = _base_params()
         params["name"] = "Enc Dense ST Alt"
         params["parameters"]["retriever_model"] = _dense_st_alt_retriever(top_k=10)
@@ -247,9 +289,10 @@ class TestEncodingModels:
         ret = stored["parameters"]["retriever_model"]
         assert ret["component"] == "DenseEmbeddingRetriever"
         embed = ret["params"]["embedding_model"]
-        assert embed["component"] == "AllMiniLML6V2Embedding"
+        assert embed["component"] == "SentenceTransformerEmbedding"
+        assert embed["params"]["model_name"] == ST_MINI_LM
         assert embed["params"]["normalize"] is True
-        assert embed["params"]["device"] == "CPU"
+        assert embed["params"]["device"] == "cpu"
         assert ret["params"]["similarity_metric"] == "cosine"
         assert ret["params"]["top_k"] == 10
 
@@ -326,7 +369,7 @@ class TestRankingFunctions:
         assert children[0]["component"] == "DenseEmbeddingRetriever"
         assert (
             children[0]["params"]["embedding_model"]["component"]
-            == "AllMiniLML6V2Embedding"
+            == "SentenceTransformerEmbedding"
         )
         assert children[0]["params"]["top_k"] == 40
 
@@ -354,9 +397,22 @@ class TestTopK:
         params["parameters"]["retriever_model"] = {
             "component": "TFIDFRetriever",
             "params": {
-                "vectorizer": {
-                    "component": "TFIDFConverter",
-                    "params": dict(TFIDF_PARAMS),
+                "TFIDFVectorizer": {
+                    "component": "TFIDFVectorizerModel",
+                    "params": {
+                        "strip_accents": "None",
+                        "lowercase": True,
+                        "analyzer": "word",
+                        "stop_words": [],
+                        "ngram_range": [1, 1],
+                        "max_df": 1.0,
+                        "min_df": 0.0,
+                        "max_features": 1000,
+                        "norm": "l2",
+                        "use_idf": True,
+                        "smooth_idf": True,
+                        "sublinear_tf": False,
+                    },
                 },
                 "similarity_function": "cosine",
                 "top_k": 5,
@@ -374,7 +430,7 @@ class TestTopK:
         assert stored["parameters"]["retriever_model"]["params"]["top_k"] == 10
 
     def test_topk_dense_st_15(self, client: TestClient):
-        """DenseEmbeddingRetriever + AllMiniLML6V2Embedding with top_k=15."""
+        """DenseEmbeddingRetriever + SentenceTransformerEmbedding with top_k=15."""
         params = _base_params()
         params["name"] = "TopK Dense ST 15"
         params["parameters"]["retriever_model"] = _dense_st_alt_retriever(top_k=15)

@@ -14,7 +14,6 @@ import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import DeleteIcon from "@mui/icons-material/Delete";
 import InfoIcon from "@mui/icons-material/Info";
 import EditIcon from "@mui/icons-material/Edit";
-import FileUploadIcon from "@mui/icons-material/FileUpload";
 import DeleteConfirmationModal from "./DeleteConfirmationModal";
 import { useTranslation } from "react-i18next";
 
@@ -30,7 +29,6 @@ export default function ItemMenu({
   onInfo,
   onDelete,
   onEdit,
-  onExport,
   deleteConfirmationContent,
   deleteConfirmationWarning,
 }) {
@@ -131,19 +129,6 @@ export default function ItemMenu({
                 <EditIcon fontSize="small" />
               </ListItemIcon>
               <ListItemText>{t("common:edit")}</ListItemText>
-            </MenuItem>
-          )}
-          {onExport && (
-            <MenuItem
-              onClick={(e) => {
-                e.stopPropagation();
-                handleAction(onExport, itemId);
-              }}
-            >
-              <ListItemIcon>
-                <FileUploadIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>{t("common:export")}</ListItemText>
             </MenuItem>
           )}
           <Divider />

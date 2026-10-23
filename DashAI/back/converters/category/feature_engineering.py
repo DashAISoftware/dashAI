@@ -28,4 +28,3 @@ class FeatureEngineeringConverter(BaseConverter):
     )
     ICON: Final[str] = Icon.Functions.value
     COLOR: Final[str] = "rgb(0, 188, 212)"
-    COLUMN_OPERATION = "add"

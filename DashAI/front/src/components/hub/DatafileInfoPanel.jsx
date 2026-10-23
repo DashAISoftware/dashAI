@@ -22,7 +22,7 @@ export default function DatafileInfoPanel({ datafile }) {
   const theme = useTheme();
 
   return (
-    <SideBar data-tour="hub-datafile-info">
+    <SideBar>
       {/* Title */}
       <Box
         sx={{

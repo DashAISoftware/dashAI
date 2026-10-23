@@ -1,7 +1,6 @@
 """Dataset source API endpoints."""
 
 import logging
-import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict
 from urllib.parse import unquote
@@ -235,6 +234,7 @@ async def preview_dataset_with_params(
                     detail="No files found in hub download directory.",
                 )
             file_path = files[0]
+        work_dir = str(Path(file_path).parent)
         dataloader_name = body.dataloader
         if not dataloader_name:
             raise HTTPException(
@@ -266,19 +266,13 @@ async def preview_dataset_with_params(
                 n_rows=n_rows,
             )
         except NotImplementedError:
-            # Loaders write caches and extracted files into temp_path; keep
-            # them out of the datafile, whose contents are listed to the user.
-            with tempfile.TemporaryDirectory(
-                prefix="dashai_hub_preview_", ignore_cleanup_errors=True
-            ) as work_dir:
-                dataset = dataloader.load_data(
-                    filepath_or_buffer=file_path,
-                    temp_path=work_dir,
-                    params=params,
-                    n_sample=n_rows,
-                )
-                preview_df = dataset.to_pandas().head(n_rows)
-                del dataset
+            dataset = dataloader.load_data(
+                filepath_or_buffer=file_path,
+                temp_path=work_dir,
+                params=params,
+                n_sample=n_rows,
+            )
+            preview_df = dataset.to_pandas().head(n_rows)
 
     except HTTPException:
         raise

@@ -30,8 +30,6 @@ from DashAI.back.core.enums.status import (
     DocumentStatus,
     ExplainerStatus,
     ExplorerStatus,
-    NodeRunStatus,
-    PipelineRunStatus,
     PluginStatus,
     PredictionStatus,
     ReportStatus,
@@ -112,14 +110,10 @@ class Dataset(Base):
     def set_status_as_started(self) -> None:
         """
         Update the status of the dataset to started and set created to now.
-
-        Unlike ``Run`` or ``Explorer``, this table has no ``start_time`` /
-        ``end_time`` columns, so there is nothing to stamp beyond the timestamps
-        it does declare. Assigning them anyway only set an attribute on the
-        instance that was dropped at commit and read back as missing.
         """
         self.status = DatasetStatus.STARTED
         self.created = datetime.now()
+        self.start_time = datetime.now()
 
     def set_status_as_finished(self) -> None:
         """
@@ -127,6 +121,7 @@ class Dataset(Base):
         """
         self.status = DatasetStatus.FINISHED
         self.last_modified = datetime.now()
+        self.end_time = datetime.now()
 
     def set_status_as_error(self) -> None:
         """
@@ -727,170 +722,9 @@ class Pipeline(Base):
     name: Mapped[str] = mapped_column(String, nullable=False)
     steps: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
     edges: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
-    # Dead columns, kept for compatibility. Results live in NodeArtifact now,
-    # keyed by a PROVIDES key rather than by node type. They are still read by
-    # the pipelines endpoints (dataexploration/results, filter_models) and by
-    # the results view in the front, so dropping them is a change to those.
     exploration: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     train: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
     prediction: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
-
-    pipeline_runs: Mapped[List["PipelineRun"]] = relationship(
-        "PipelineRun", cascade="all, delete-orphan", back_populates="pipeline"
-    )
-
-
-class PipelineRun(Base):
-    __tablename__ = "pipeline_run"
-    """
-    Table to store one execution of a pipeline.
-
-    The definition of a graph lives in ``Pipeline`` and changes as the user
-    edits it; a run freezes the ``steps`` and ``edges`` it actually executed,
-    so a past execution stays readable after the pipeline it came from was
-    rewritten.
-    """
-    id: Mapped[int] = mapped_column(primary_key=True)
-    pipeline_id: Mapped[int] = mapped_column(
-        ForeignKey("pipeline.id", ondelete="CASCADE"), nullable=False
-    )
-    steps: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
-    edges: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
-    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
-    last_modified: Mapped[DateTime] = mapped_column(
-        DateTime, default=datetime.now, onupdate=datetime.now
-    )
-    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    status: Mapped[Enum] = mapped_column(
-        Enum(PipelineRunStatus),
-        nullable=False,
-        default=PipelineRunStatus.NOT_STARTED,
-    )
-    error_message: Mapped[str] = mapped_column(String, nullable=True)
-
-    pipeline: Mapped["Pipeline"] = relationship(
-        "Pipeline", back_populates="pipeline_runs"
-    )
-    node_runs: Mapped[List["NodeRun"]] = relationship(
-        "NodeRun", cascade="all, delete-orphan", back_populates="pipeline_run"
-    )
-
-    def set_status_as_delivered(self) -> None:
-        """Update the status of the pipeline run to delivered."""
-        self.status = PipelineRunStatus.DELIVERED
-        self.delivery_time = datetime.now()
-
-    def set_status_as_started(self) -> None:
-        """Update the status of the pipeline run to started."""
-        self.status = PipelineRunStatus.STARTED
-        self.start_time = datetime.now()
-
-    def set_status_as_finished(self) -> None:
-        """Update the status of the pipeline run to finished."""
-        self.status = PipelineRunStatus.FINISHED
-        self.end_time = datetime.now()
-
-    def set_status_as_error(self, error_message: Optional[str] = None) -> None:
-        """Update the status of the pipeline run to error."""
-        self.status = PipelineRunStatus.ERROR
-        self.error_message = error_message
-        self.end_time = datetime.now()
-
-
-class NodeRun(Base):
-    __tablename__ = "pipeline_node_run"
-    """
-    Table to store the execution of one node of a pipeline run.
-
-    A node is one unit. ``block_id`` is the visual block the node belongs to:
-    an editor groups several units into one block on the canvas, so a block
-    maps to N node runs and its status is an aggregate of theirs. In the first
-    version every block holds exactly one unit and ``block_id`` equals
-    ``node_id``, but the column is here from the start so growing to N never
-    needs a migration.
-    """
-    id: Mapped[int] = mapped_column(primary_key=True)
-    pipeline_run_id: Mapped[int] = mapped_column(
-        ForeignKey("pipeline_run.id", ondelete="CASCADE"), nullable=False
-    )
-    node_id: Mapped[str] = mapped_column(String, nullable=False)
-    block_id: Mapped[str] = mapped_column(String, nullable=False)
-    #: Class name of the unit this node runs, as the component registry knows it.
-    node_type: Mapped[str] = mapped_column(String, nullable=False)
-    config: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
-    input: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
-    output: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
-    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
-    last_modified: Mapped[DateTime] = mapped_column(
-        DateTime, default=datetime.now, onupdate=datetime.now
-    )
-    delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
-    status: Mapped[Enum] = mapped_column(
-        Enum(NodeRunStatus),
-        nullable=False,
-        default=NodeRunStatus.NOT_STARTED,
-    )
-    error_message: Mapped[str] = mapped_column(String, nullable=True)
-
-    pipeline_run: Mapped["PipelineRun"] = relationship(
-        "PipelineRun", back_populates="node_runs"
-    )
-    artifacts: Mapped[List["NodeArtifact"]] = relationship(
-        "NodeArtifact", cascade="all, delete-orphan", back_populates="node_run"
-    )
-
-    def set_status_as_delivered(self) -> None:
-        """Update the status of the node run to delivered."""
-        self.status = NodeRunStatus.DELIVERED
-        self.delivery_time = datetime.now()
-
-    def set_status_as_started(self) -> None:
-        """Update the status of the node run to started."""
-        self.status = NodeRunStatus.STARTED
-        self.start_time = datetime.now()
-
-    def set_status_as_finished(self) -> None:
-        """Update the status of the node run to finished."""
-        self.status = NodeRunStatus.FINISHED
-        self.end_time = datetime.now()
-
-    def set_status_as_error(self, error_message: Optional[str] = None) -> None:
-        """Update the status of the node run to error."""
-        self.status = NodeRunStatus.ERROR
-        self.error_message = error_message
-        self.end_time = datetime.now()
-
-    def set_status_as_cancelled(self) -> None:
-        """Update the status of the node run to cancelled.
-
-        A node that never ran because an earlier one failed, as opposed to one
-        still waiting its turn.
-        """
-        self.status = NodeRunStatus.CANCELLED
-        self.end_time = datetime.now()
-
-
-class NodeArtifact(Base):
-    __tablename__ = "pipeline_node_artifact"
-    """
-    Table to store one output of a node run.
-
-    ``key`` is a key from the unit's ``PROVIDES``, so what a node emits is
-    named by its own declared contract rather than by a column per node type.
-    """
-    id: Mapped[int] = mapped_column(primary_key=True)
-    node_run_id: Mapped[int] = mapped_column(
-        ForeignKey("pipeline_node_run.id", ondelete="CASCADE"), nullable=False
-    )
-    key: Mapped[str] = mapped_column(String, nullable=False)
-    value: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=True)
-    created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
-
-    node_run: Mapped["NodeRun"] = relationship("NodeRun", back_populates="artifacts")
 
 
 class Converter(Base):
@@ -1125,15 +959,46 @@ RAG tables
 """
 
 
+class Chunk(Base):
+    __tablename__ = "chunk"
+    """
+    Table to store all the information about a chunk.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    chunk_set_id: Mapped[int] = mapped_column(
+        ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False
+    )
+    document_id: Mapped[int] = mapped_column(
+        ForeignKey("data_document.id", ondelete="CASCADE"), nullable=False
+    )
+    chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    chunk_metadata: Mapped[Optional[dict]] = mapped_column(
+        "metadata", JSON, nullable=True
+    )
+
+    chunk_set: Mapped["RAGChunkSet"] = relationship(
+        "RAGChunkSet", back_populates="chunks"
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "chunk_set_id",
+            "document_id",
+            "chunk_index",
+            name="uix_chunk_set_doc_index",
+        ),
+    )
+
+
 class RAGChunkSet(Base):
     """Identity of the chunks one session built over a set of documents.
 
     The signature hashes the owning session, the document ids and the chunking
     configuration, so two sessions never share a chunk set even when they use
     the same Data documents with the same settings. ``session_id`` is NULL only
-    for chunk sets detached by migration d8f3a1c6e2b9 (stored in the old
-    format) or built before sessions owned them; the startup cleanup deletes
-    those.
+    for chunk sets built before sessions owned them; the startup backfill
+    deletes those.
     """
 
     __tablename__ = "rag_chunk_set"
@@ -1144,6 +1009,11 @@ class RAGChunkSet(Base):
         ForeignKey("generative_session.id", ondelete="CASCADE"), nullable=True
     )
 
+    chunks: Mapped[List["Chunk"]] = relationship(
+        "Chunk",
+        back_populates="chunk_set",
+        cascade="all, delete-orphan",
+    )
     documents: Mapped[List["RAGChunkSetDocument"]] = relationship(
         "RAGChunkSetDocument",
         back_populates="chunk_set",
@@ -1162,7 +1032,7 @@ class RAGChunkSet(Base):
 
 class RAGChunkSetDocument(Base):
     __tablename__ = "rag_chunk_set_document"
-    """Which documents belong to a chunk set and where their chunks are stored."""
+    """Which documents belong to a chunk set."""
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     chunk_set_id: Mapped[int] = mapped_column(
         ForeignKey("rag_chunk_set.id", ondelete="CASCADE"), nullable=False
@@ -1170,8 +1040,6 @@ class RAGChunkSetDocument(Base):
     document_id: Mapped[int] = mapped_column(
         ForeignKey("data_document.id", ondelete="CASCADE"), nullable=False
     )
-    path: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    n_chunks: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     chunk_set: Mapped["RAGChunkSet"] = relationship(
         "RAGChunkSet",

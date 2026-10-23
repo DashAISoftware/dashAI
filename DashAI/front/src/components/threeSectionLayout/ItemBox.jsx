@@ -13,7 +13,6 @@ const ItemBox = forwardRef(function ItemBox(
     onDelete,
     onEdit,
     onInfo,
-    onExport,
     deleteConfirmationContent,
     deleteConfirmationWarning,
     selectable = false,
@@ -178,7 +177,6 @@ const ItemBox = forwardRef(function ItemBox(
         <ItemMenu
           itemId={id}
           onInfo={onInfo}
-          onExport={onExport}
           onDelete={onDelete}
           onEdit={onEdit ? handleEdit : undefined}
           deleteConfirmationContent={deleteConfirmationContent}

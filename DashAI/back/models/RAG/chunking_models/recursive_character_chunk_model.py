@@ -114,7 +114,8 @@ class RecursiveCharacterChunkModel(BaseChunkingModel):
 
         Args:
             **kwargs: Must include ``chunk_size``, ``chunk_overlap``, and
-                ``separators``.
+                ``separators``, plus a ``documents`` mapping passed to the
+                parent class.
         """
         self.chunk_size = kwargs["chunk_size"]
         self.chunk_overlap = kwargs["chunk_overlap"]

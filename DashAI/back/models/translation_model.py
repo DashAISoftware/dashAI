@@ -1,7 +1,7 @@
-from DashAI.back.models.supervised_model import SupervisedModel
+from DashAI.back.models.base_model import BaseModel
 
 
-class TranslationModel(SupervisedModel):
+class TranslationModel(BaseModel):
     """Base class for models that perform text translation tasks.
 
     Concrete translation models must extend this class and implement ``save``,

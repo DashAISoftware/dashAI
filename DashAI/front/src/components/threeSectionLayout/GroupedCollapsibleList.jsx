@@ -25,8 +25,6 @@ export default function GroupedCollapsibleList({
   onItemDelete,
   onItemEdit,
   onItemInfo,
-  onItemExport,
-  headerActions,
   title = t("common:items", "Items"),
   Icon,
   getItemDescription,
@@ -149,7 +147,6 @@ export default function GroupedCollapsibleList({
           onDelete={() => onItemDelete(item.id)}
           onEdit={(name) => onItemEdit(item.id, name)}
           onInfo={onItemInfo ? () => onItemInfo(item.id) : undefined}
-          onExport={onItemExport ? () => onItemExport(item.id) : undefined}
           deleteConfirmationContent={
             getDeleteConfirmationContent
               ? getDeleteConfirmationContent(item)
@@ -319,7 +316,7 @@ export default function GroupedCollapsibleList({
             variant="body2"
             component="div"
             sx={{
-              mr: onBulkDelete || headerActions ? 2 : 0,
+              mr: onBulkDelete ? 2 : 0,
               bgcolor: "primary.main",
               color: "primary.contrastText",
               borderRadius: "50%",
@@ -332,7 +329,6 @@ export default function GroupedCollapsibleList({
           >
             {totalCount}
           </Typography>
-          {headerActions}
           {onBulkDelete && (
             <Tooltip title={selectItemsTooltip}>
               <span>

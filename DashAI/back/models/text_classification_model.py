@@ -1,10 +1,10 @@
 from abc import abstractmethod
 from typing import Any
 
-from DashAI.back.models.supervised_model import SupervisedModel
+from DashAI.back.models.base_model import BaseModel
 
 
-class TextClassificationModel(SupervisedModel):
+class TextClassificationModel(BaseModel):
     """Base class for models that perform text classification tasks.
 
     Concrete text classification models must extend this class and implement

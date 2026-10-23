@@ -103,15 +103,14 @@ def test_run_creation_surfaces_the_preprocessing_error_when_failed(
             ),
             "preprocessing": [
                 {
-                    # A chain the structure estimate accepts but the data
-                    # breaks: SepalLengthCm holds decimals (e.g. 5.1), which
-                    # cannot be cast to Integer, so PreprocessingJob fails.
-                    "converter": "TypeCast",
-                    "params": {"new_type": "Integer", "on_error": "raise"},
-                    "scope": [{"kind": "raw", "name": "SepalLengthCm"}],
+                    # Binarizer only accepts numeric columns; scoping it on the
+                    # categorical target makes PreprocessingJob's fit fail.
+                    "converter": "Binarizer",
+                    "params": {"threshold": 3.0},
+                    "scope": [{"kind": "raw", "name": "Species"}],
                 },
             ],
-            "input_column_refs": [{"kind": "raw", "name": "SepalLengthCm"}],
+            "input_column_refs": [{"kind": "group", "step": 0}],
         },
     )
     assert session_response.status_code == 201, session_response.text

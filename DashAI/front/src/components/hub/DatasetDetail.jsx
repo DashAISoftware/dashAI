@@ -188,16 +188,13 @@ export default function DatasetDetail({
             </Typography>
 
             <Stack
-              data-tour="hub-dataset-add"
               direction="row"
               spacing={1}
               mb={1.5}
               flexWrap="wrap"
               useFlexGap
             >
-              <Box data-tour="hub-dataset-action" sx={{ display: "flex" }}>
-                {renderActionButton()}
-              </Box>
+              {renderActionButton()}
               {download?.status === "ready" && (
                 <Chip
                   icon={<CheckCircleIcon />}

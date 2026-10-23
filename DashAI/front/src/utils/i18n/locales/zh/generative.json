@@ -15,21 +15,20 @@
     "detach": "从会话中移除",
     "detachWarning": "文档仍保留在数据中。此会话将在没有它的情况下重新建立索引。",
     "detached": "已从此会话中移除“{{file}}”",
+    "documentCount_one": "{{count}} 个文档",
+    "documentCount_other": "{{count}} 个文档",
     "failedAttach": "无法添加文档",
     "failedDetach": "无法移除文档",
     "failedFetch": "获取文档失败",
+    "inCurrentSession": " 在当前会话中",
     "noDocumentsFound": "未找到文档",
     "noDocumentsInSession": "此会话中没有文档",
     "noLibraryDocuments": "数据中还没有文档。请先上传一个。",
-    "noParsersFound": "没有与搜索匹配的解析器",
     "parseFailed": "无法解析该文件",
     "parserLabel": "解析器",
     "preview": "预览",
     "processingUpload": "“{{file}}”正在处理中，准备就绪后将加入此会话。",
-    "searchParsers": "搜索解析器",
     "searchPlaceholder": "搜索文档",
-    "selectParser": "选择一个解析器以查看其参数",
-    "selectToSeeDetails": "选择一个文档以查看其详细信息",
     "stillProcessing": "仍在处理中",
     "title": "文档",
     "upload": "上传",
@@ -140,8 +139,11 @@
       "addChild": "添加检索节点",
       "allChunks": "所有块",
       "chunkFusion": "分块融合",
+      "compositeGroup": "组合检索器",
       "compositeInstructions": "点击 + 按钮向此组合添加子检索器。点击检索器卡片以编辑其参数或选择其他模型。",
       "configureNode": "配置节点",
+      "denseGroup": "稠密检索器",
+      "keywordGroup": "关键词检索器",
       "mergeStrategyInterleave": "交错合并",
       "mergeStrategyRoundRobin": "轮询",
       "nestedCompositeNote": "这是一个组合检索器。其子节点可以在下方的树中配置。",
@@ -150,7 +152,8 @@
       "reranking": "重新排序",
       "retrieverDescription": "选择一个检索器来配置其参数。关键词检索器（BM25、TF-IDF）通过词频查找文档。嵌入检索器通过稠密向量捕获语义含义。组合检索器按顺序或并行地链接多个检索器。",
       "selectModel": "选择检索模型",
-      "selectedChunks": "已选块"
+      "selectedChunks": "已选块",
+      "simpleGroup": "简单检索器"
     },
     "config": {
       "advanced": "高级配置",
@@ -180,6 +183,11 @@
     "documentPreview": {
       "openInData": "在数据中打开",
       "title": "文档预览"
+    },
+    "documents": {
+      "table": {
+        "unknownType": "未知"
+      }
     },
     "generator": {
       "advancedButton": "打开高级配置",

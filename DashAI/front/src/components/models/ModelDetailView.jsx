@@ -1,16 +1,8 @@
 import React, { useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Box,
-  Typography,
-  Button,
-  IconButton,
-  Tooltip,
-  CircularProgress,
-} from "@mui/material";
-import { PlayArrow, Delete, Edit, FileUpload } from "@mui/icons-material";
+import { Box, Typography, Button, IconButton, Tooltip } from "@mui/material";
+import { PlayArrow, Delete, Edit } from "@mui/icons-material";
 import { useTranslation } from "react-i18next";
-import { useSnackbar } from "notistack";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import RunCard from "./RunCard";
 import RunEditDialog from "./RunEditDialog";
@@ -21,8 +13,6 @@ import {
   getComponentCredentialState,
 } from "../credentials/credentialStatus";
 import { canTrainRun, isRunActive } from "../../utils/runStatus";
-import { exportRunModel } from "../../api/run";
-import { getApiErrorMessageAsync } from "../../utils/apiError";
 
 /**
  * Full-screen detail view for a single model run: header with the run's
@@ -44,34 +34,6 @@ export default function ModelDetailView({
   const { t } = useTranslation(["models", "common", "credentials"]);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const { enqueueSnackbar } = useSnackbar();
-
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      const blob = await exportRunModel(run.id);
-      const safeName =
-        (run.name || "model").replace(/[^A-Za-z0-9_-]+/g, "_") || "model";
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `${safeName}.dashai-model`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error exporting model:", error);
-      const reason = await getApiErrorMessageAsync(error);
-      const message = t("models:error.exportModel");
-      enqueueSnackbar(reason ? `${message}: ${reason}` : message, {
-        variant: "error",
-      });
-    } finally {
-      setExporting(false);
-    }
-  };
 
   const model = models.find((m) => m.name === run.model_name);
   const modelDisplayName = model?.display_name || run.model_name;
@@ -153,23 +115,6 @@ export default function ModelDetailView({
                       ? t("common:retrain")
                       : t("common:trainVerb")}
                   </Button>
-                </span>
-              </Tooltip>
-            )}
-            {run.status === 3 && (
-              <Tooltip title={t("models:button.exportModel")}>
-                <span>
-                  <IconButton
-                    size="small"
-                    onClick={handleExport}
-                    disabled={exporting}
-                  >
-                    {exporting ? (
-                      <CircularProgress size={16} />
-                    ) : (
-                      <FileUpload fontSize="small" />
-                    )}
-                  </IconButton>
                 </span>
               </Tooltip>
             )}

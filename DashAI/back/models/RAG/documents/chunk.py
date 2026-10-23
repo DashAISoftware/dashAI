@@ -7,9 +7,10 @@ class Chunk:
     """A chunk of text extracted from a document.
 
     Note:
-        ``id`` is the ordinal of the chunk inside its chunk set: documents
-        sorted by id, then chunks by position. It is set by
-        :meth:`ChunkingService.read_chunks`.
+        ``id`` starts as ``None`` when the chunk is first created in memory
+        (see :meth:`BaseChunkingModel.chunk_document`). It is later set to the
+        real database primary key by :meth:`ChunkingService._update_chunk_ids`
+        after the chunk is persisted.
     """
 
     def __init__(
@@ -25,7 +26,7 @@ class Chunk:
         Parameters
         ----------
         id : int or None
-            The ordinal of the chunk in its chunk set, or None.
+            The database primary key, or None if not yet persisted.
         document_id : int
             The ``data_document`` id of the parent document.
         document_position : int

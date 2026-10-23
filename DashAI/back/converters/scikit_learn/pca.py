@@ -5,7 +5,6 @@ from DashAI.back.converters.category.dimensionality_reduction import (
     DimensionalityReductionConverter,
 )
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.converters.structure_mixins import ComponentsOutputMixin
 from DashAI.back.core.schema_fields import (
     bool_field,
     enum_field,
@@ -201,12 +200,7 @@ class PCASchema(BaseSchema):
     )  # type: ignore
 
 
-class PCA(
-    ComponentsOutputMixin,
-    DimensionalityReductionConverter,
-    SklearnWrapper,
-    PCAOPERATION,
-):
+class PCA(DimensionalityReductionConverter, SklearnWrapper, PCAOPERATION):
     """Reduce dimensionality using Principal Component Analysis (PCA).
 
     PCA finds a set of orthogonal axes (principal components) that successively

@@ -93,7 +93,6 @@ class TimeSeriesWindowConverter(FeatureEngineeringConverter, BaseConverter):
     SCHEMA = TimeSeriesWindowConverterSchema
     SUPERVISED = True
     CHANGES_ROW_COUNT = True
-    COLUMN_OPERATION = "rows"
     LEARNS_FROM_DATA = False
     DESCRIPTION = MultilingualString(
         en=(

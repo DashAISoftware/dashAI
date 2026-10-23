@@ -10,7 +10,6 @@ from DashAI.back.types.value_types import Integer
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
-    from DashAI.back.preprocessing.structure_types import ColumnItem
 
 
 class LabelEncoderSchema(BaseSchema):
@@ -67,7 +66,6 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     IMAGE_PREVIEW = "label_encoder.png"
 
     PREFIX = "le_"
-    ONE_COLUMN_PER_INPUT = True
 
     metadata = {
         "changes_data_types": True,
@@ -91,14 +89,6 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         super().__init__()
         self.encoders = {}
         self.fitted_columns = []
-
-    def _encodes(self, item: "ColumnItem") -> bool:
-        """Whether ``fit`` will encode a scope column.
-
-        ``fit`` only encodes columns stored as strings, so a Categorical
-        column of numeric labels (e.g. dtype int64) gets no encoded copy.
-        """
-        return item.type == "Text" or item.dtype == "string"
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

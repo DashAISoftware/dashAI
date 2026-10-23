@@ -279,9 +279,7 @@ const generateField = (subSchema) => {
   } else if (subSchema.type === "object") {
     field = Yup.object();
 
-    if (subSchema.conditionalSchemas) {
-      field = Yup.object();
-    } else if (!subSchema.parent) {
+    if (!subSchema.parent) {
       const properties = {};
       Object.keys(subSchema.properties).forEach((key) => {
         properties[key] = generateField(subSchema.properties[key]);
@@ -441,20 +439,6 @@ export const formattedModel = async (schema) => {
         const subform = await getComponents({
           model: obj.placeholder.component,
         });
-        const childParams = await formattedModel(subform.schema);
-        Object.entries(obj.placeholder.params ?? {}).forEach(
-          ([paramKey, value]) => {
-            const field = childParams[paramKey];
-            if (!field) return;
-            childParams[paramKey] =
-              field.placeholder?.optimize !== undefined
-                ? {
-                    ...field,
-                    placeholder: { ...field.placeholder, fixed_value: value },
-                  }
-                : { ...field, placeholder: value };
-          },
-        );
 
         subforms[key] = {
           properties: {
@@ -462,7 +446,7 @@ export const formattedModel = async (schema) => {
             params: {
               comp: {
                 component: obj.placeholder.component,
-                params: childParams,
+                params: await formattedModel(subform.schema),
               },
             },
           },

@@ -6,7 +6,6 @@ import { useFormik } from "formik";
 import { useTourContext } from "../tour/TourProvider";
 import SetNameAndDatasetStep from "./SetNameAndDatasetStep";
 import PrepareDatasetStep from "./modelSession/PrepareDatasetStep";
-import BaseColumnsStep from "./modelSession/BaseColumnsStep";
 import PreprocessingStep from "./modelSession/PreprocessingStep";
 import SelectColumnsStep from "./modelSession/SelectColumnsStep";
 import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomplete";
@@ -27,7 +26,6 @@ import StepperNavigationFooter from "../shared/StepperNavigationFooter";
 import { hasPartition } from "../../utils/splitsPayload";
 
 const STEP_PREPARE_DATASET = "prepareDataset";
-const STEP_BASE_COLUMNS = "baseColumns";
 const STEP_PREPROCESSING = "preprocessing";
 const STEP_SELECT_COLUMNS = "selectColumns";
 
@@ -68,17 +66,9 @@ function CreateSessionSteps({
     splits: {},
     runs: [],
     applyPreprocessing: false,
-    // Original columns the preprocessing chain may work on (see
-    // BaseColumnsStep); only used when applyPreprocessing is on.
-    candidate_columns: [],
     preprocessing: [],
     input_column_refs: [],
   });
-
-  // A task without a target (clustering) picks no output column. Whether the
-  // dataset is partitioned is the evaluation strategy's answer, which the
-  // prepare step reads from the strategies the task offers.
-  const requiresTarget = selectedTask?.metadata?.requires_target !== false;
 
   const [nextEnabled, setNextEnabled] = useState(false);
   const [currentStep, setCurrentStep] = useState(STEP_PREPARE_DATASET);
@@ -121,12 +111,7 @@ function CreateSessionSteps({
   const steps = useMemo(
     () => [
       STEP_PREPARE_DATASET,
-      // With preprocessing, the output and candidate columns come first, so
-      // the chain is built knowing what it is for and never touches the
-      // output.
-      ...(newExp.applyPreprocessing
-        ? [STEP_BASE_COLUMNS, STEP_PREPROCESSING]
-        : []),
+      ...(newExp.applyPreprocessing ? [STEP_PREPROCESSING] : []),
       STEP_SELECT_COLUMNS,
     ],
     [newExp.applyPreprocessing],
@@ -143,7 +128,6 @@ function CreateSessionSteps({
       dataset: newDataset,
       input_columns: [],
       output_columns: [],
-      candidate_columns: [],
       input_column_refs: [],
       splits: {},
     }));
@@ -273,12 +257,6 @@ function CreateSessionSteps({
       const hasValidation = hasPartition(newExp.splits, "validation");
       const hasTest = hasPartition(newExp.splits, "test");
 
-      // Steps added while the switch was on and then abandoned by turning
-      // it off must not be sent: the session would still preprocess.
-      const preprocessing = newExp.applyPreprocessing
-        ? newExp.preprocessing
-        : [];
-
       let effectiveName = sessionName;
       let response;
       try {
@@ -287,13 +265,13 @@ function CreateSessionSteps({
           selectedTask?.name || newExp.task_name,
           effectiveName,
           newExp.input_columns,
-          requiresTarget ? newExp.output_columns : [],
+          newExp.output_columns,
           hasTrain ? allMetricNames : [],
           hasValidation ? allMetricNames : [],
           hasTest ? allMetricNames : [],
           newExp.evaluation_strategy,
           JSON.stringify(newExp.splits),
-          preprocessing,
+          newExp.preprocessing,
           newExp.input_column_refs,
         );
       } catch (createError) {
@@ -305,13 +283,13 @@ function CreateSessionSteps({
             selectedTask?.name || newExp.task_name,
             effectiveName,
             newExp.input_columns,
-            requiresTarget ? newExp.output_columns : [],
+            newExp.output_columns,
             hasTrain ? allMetricNames : [],
             hasValidation ? allMetricNames : [],
             hasTest ? allMetricNames : [],
             newExp.evaluation_strategy,
             JSON.stringify(newExp.splits),
-            preprocessing,
+            newExp.preprocessing,
             newExp.input_column_refs,
           );
         } else {
@@ -350,14 +328,12 @@ function CreateSessionSteps({
 
   const stepTitle = {
     [STEP_PREPARE_DATASET]: t("models:label.prepareDataset"),
-    [STEP_BASE_COLUMNS]: t("models:label.baseColumnsTitle"),
     [STEP_PREPROCESSING]: t("models:label.preprocessingOptional"),
     [STEP_SELECT_COLUMNS]: t("models:label.selectColumnsTitle"),
   }[currentStep];
 
   const stepSubtitle = {
     [STEP_PREPARE_DATASET]: t("models:label.selectDatasetAndPrepare"),
-    [STEP_BASE_COLUMNS]: t("models:label.baseColumnsDescription"),
     [STEP_PREPROCESSING]: t("models:label.preprocessingOptionalDescription"),
     [STEP_SELECT_COLUMNS]: t("models:label.selectColumnsDescription"),
   }[currentStep];
@@ -415,30 +391,13 @@ function CreateSessionSteps({
           </>
         )}
 
-        {currentStep === STEP_BASE_COLUMNS && selectedDataset && (
-          <>
-            {infoLoading ? (
-              <Box sx={{ display: "flex", justifyContent: "center" }}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <BaseColumnsStep
-                newExp={newExp}
-                setNewExp={setNewExp}
-                setNextEnabled={setNextEnabled}
-                datasetInfo={datasetInfo}
-                datasetTypes={datasetTypes}
-              />
-            )}
-          </>
-        )}
-
         {currentStep === STEP_PREPROCESSING && selectedDataset && (
           <PreprocessingStep
             newExp={newExp}
             setNewExp={setNewExp}
             setNextEnabled={setNextEnabled}
             dataset={selectedDataset}
+            datasetTypes={datasetTypes}
           />
         )}
 
@@ -456,7 +415,6 @@ function CreateSessionSteps({
                 dataset={selectedDataset}
                 datasetInfo={datasetInfo}
                 datasetTypes={datasetTypes}
-                requiresTarget={requiresTarget}
               />
             )}
           </>

@@ -36,9 +36,6 @@ from DashAI.back.services.RAG.session_document_service import (
     DocumentNotReadyError,
     SessionDocumentService,
 )
-from DashAI.back.services.RAG.session_validation_service import (
-    SessionValidationService,
-)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -266,8 +263,7 @@ def start_session_indexing(
     ------
     HTTPException
         404 if the session does not exist, 409 if its parameters do not
-        describe a complete pipeline, 422 if its stored retriever uses
-        components that no longer exist or changed.
+        describe a complete pipeline.
     """
     with session_factory() as db:
         service = IndexStatusService(db, component_registry, job_queue)
@@ -293,15 +289,6 @@ def start_session_indexing(
                     f"Session {session_id} is missing configuration: {sorted(missing)}."
                 ),
             )
-
-        try:
-            SessionValidationService(db, component_registry).validate_stored_retriever(
-                session.parameters or {}
-            )
-        except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
-            ) from e
 
         # No set_status_as_delivered() here: that hook exists to move a job's
         # own DB entity into "delivered", and indexing has none — the queue

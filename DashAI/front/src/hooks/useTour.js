@@ -1,5 +1,4 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { getToursAutostart } from "../api/appConfig";
 
 const TOUR_STORAGE_KEY = "dashai_tours_completed";
 const TOUR_HANDOFF_KEY = "dashai_tour_handoff";
@@ -51,10 +50,7 @@ export const useTour = (tourKey) => {
     setRun(false);
     setStepIndex(0);
 
-    let cancelled = false;
     const timer = setTimeout(() => {
-      // A handoff continues a tour the user is already following on another
-      // page, so it resumes even when auto-start is off.
       const handoffStep = takeHandoff(tourKey);
       if (handoffStep !== null) {
         setStepIndex(handoffStep);
@@ -64,17 +60,9 @@ export const useTour = (tourKey) => {
       const completedTours = JSON.parse(
         localStorage.getItem(TOUR_STORAGE_KEY) || "{}",
       );
-      if (completedTours[tourKey]) return;
-      // Auto-start can be turned off app-wide (`--no-tours`, e.g. for demos);
-      // the navbar help button still starts tours on demand.
-      getToursAutostart().then((enabled) => {
-        if (!cancelled && enabled) setRun(true);
-      });
+      if (!completedTours[tourKey]) setRun(true);
     }, 500);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [tourKey, clearMissingWatch]);
 
   const startTour = useCallback(() => {
@@ -208,6 +196,5 @@ export const useTour = (tourKey) => {
     goToStep,
     nextStep,
     resumeAtStep,
-    markTourAsCompleted,
   };
 };

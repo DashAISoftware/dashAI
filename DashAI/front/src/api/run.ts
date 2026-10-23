@@ -151,10 +151,3 @@ export async function getOuterAveragedMetrics(
   });
   return response.data;
 }
-
-export const exportRunModel = async (runId: number): Promise<Blob> => {
-  const response = await api.get(`/v1/run/${runId}/export`, {
-    responseType: "blob",
-  });
-  return response.data;
-};

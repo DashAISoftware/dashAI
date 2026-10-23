@@ -161,7 +161,6 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     IMAGE_PREVIEW = "ordinal_encoder.png"
 
     PREFIX = "oe_"
-    ONE_COLUMN_PER_INPUT = True
 
     metadata = {
         "allowed_types": [Categorical],

@@ -1,6 +1,5 @@
 {
   "button": {
-    "exportModel": "Exportar modelo",
     "addConverter": "Adicionar Conversor",
     "addNewPrediction": "Adicionar Nova Previsão",
     "createExplainer": "Criar Explicador",
@@ -26,16 +25,9 @@
     "showOperations": "Mostrar Operações",
     "showParameters": "Mostrar Parâmetros",
     "updateAndRetrain": "Atualizar e Retreinar",
-    "uploadNewDataset": "Enviar Novo Conjunto de Dados",
-    "exportSession": "Exportar sessão",
-    "importSession": "Importar sessão",
-    "selectAll": "Selecionar todos",
-    "selectNone": "Nenhum",
-    "chooseFile": "Escolher arquivo",
-    "gotIt": "Entendi"
+    "uploadNewDataset": "Enviar Novo Conjunto de Dados"
   },
   "error": {
-    "exportModel": "Não foi possível exportar o modelo",
     "completeRequiredFields": "Por favor, preencha todos os campos obrigatórios",
     "createRun": "Erro ao tentar criar uma nova execução: {{name}}",
     "createRunReason": "Erro ao tentar criar uma nova execução \"{{name}}\": {{reason}}",
@@ -76,10 +68,7 @@
     "failedToSaveTest": "Não foi possível salvar os resultados do teste.",
     "selectMetric": "Por favor, selecione uma métrica",
     "failedToExecuteTest": "Erro ao executar o teste estatístico",
-    "fetchingInnerSplitters": "Não foi possível carregar os divisores internos para a validação cruzada aninhada.",
-    "exportSession": "Não foi possível exportar a sessão",
-    "importSession": "Não foi possível importar a sessão",
-    "loadExportPreview": "Não foi possível carregar os runs da sessão"
+    "fetchingInnerSplitters": "Não foi possível carregar os divisores internos para a validação cruzada aninhada."
   },
   "label": {
     "addModelToSession": "Adicionar Modelo à Sessão",
@@ -142,9 +131,6 @@
     "innerLoopConfiguration": "Configure a partição de dados para o loop interno de validação cruzada aninhada",
     "innerSplitter": "Divisor para o loop interno",
     "inputColumns": "Colunas de entrada",
-    "baseColumnsTitle": "Coluna de saída e colunas candidatas",
-    "baseColumnsDescription": "Escolha a coluna de saída (a que o modelo aprende a prever) e as colunas candidatas que podem alimentar o modelo. O pré-processamento só atua sobre as candidatas e a saída nunca é transformada.",
-    "candidateColumns": "Colunas candidatas",
     "less": "Menor (Modelo 1 < Modelo 2)",
     "lines": "Linhas",
     "liveMetrics": "Métricas ao Vivo",
@@ -308,27 +294,9 @@
     "validationMetrics": "Métricas de Validação",
     "validationSet": "conjunto de validação",
     "viewResultsAs": "Ver resultados como colunas ou gráficos",
-    "last": "Final",
-    "supervisedBadge": "Supervisionado",
-    "unsupervisedBadge": "Não supervisionado",
     "wilcoxonPairwiseComparisons": "Testes de Wilcoxon aos pares com correção de Holmes",
     "withHpo": "Com HPO",
-    "withoutHpo": "Sem HPO",
-    "exportSessionTitle": "Exportar \"{{name}}\"",
-    "includeTrainedModels": "Incluir modelos treinados",
-    "includeTrainedModelsHelp": "Desmarque para exportar só a configuração, sem modelos treinados: o arquivo fica menor e quem importar terá que treinar os modelos.",
-    "recipeOnly": "chegará sem treinar",
-    "waitUntilFinished": "aguarde terminar",
-    "approxSize": "Tamanho aproximado: {{size}}",
-    "includesDataset": "O arquivo inclui o dataset \"{{name}}\". Não o compartilhe se os dados forem privados.",
-    "importSessionWarning": "Uma sessão contém modelos que executam código ao serem usados. Importe apenas sessões de pessoas em quem você confia.",
-    "sessionImported": "Sessão importada como \"{{session}}\" com o dataset \"{{dataset}}\"",
-    "importedRecipeRuns": "Estes runs chegaram sem treinar: {{names}}",
-    "importedNeedsDownloadTrained": "Você pode prever com estes modelos, mas para retreiná-los baixe-os primeiro em Modelos Disponíveis: {{names}}",
-    "importedNeedsDownloadUntrained": "Estes modelos chegaram sem treinar e precisam ser baixados antes de treinar: {{names}}",
-    "importingSession": "Importando sessão...",
-    "importingSessionHelp": "Pode demorar um pouco se a sessão incluir modelos treinados.",
-    "sessionImportedTitle": "Sessão importada"
+    "withoutHpo": "Sem HPO"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",
@@ -387,30 +355,5 @@
     "skippedUndownloadedRuns": "Execuções cujo modelo não está baixado foram ignoradas. Baixe o modelo primeiro.",
     "skippedUnavailableRuns": "Execuções cujo modelo ainda precisa de download ou credenciais foram ignoradas. Resolva isso primeiro.",
     "tabAvailableAfterFinish": "Estará disponível quando a execução terminar o treinamento."
-  },
-  "structure": {
-    "currentState": "Dataset após o pré-processamento",
-    "blocked": "Corrija a etapa anterior para verificar esta.",
-    "loadError": "Não foi possível estimar o resultado do pré-processamento.",
-    "missing_ref": "\"{{ref}}\" não existe neste ponto da cadeia: uma etapa anterior pode tê-la consumido.",
-    "target_in_scope": "\"{{column}}\" é a coluna de saída, e a saída nunca é transformada.",
-    "type_not_allowed": "\"{{column}}\" é {{type}}, que este conversor não aceita (aceita: {{allowed}}).",
-    "cardinalityMin": "Este conversor precisa de pelo menos {{min}} colunas, mas há {{selected}} selecionadas.",
-    "cardinalityMax": "Este conversor aceita no máximo {{max}} colunas, mas há {{selected}} selecionadas.",
-    "rows_not_supported": "Conversores que alteram o número de linhas ainda não estão disponíveis em sessões.",
-    "n_components_exceeds": "Pede {{n_components}} componentes, mas há apenas {{columns}} colunas selecionadas.",
-    "unknown_converter": "O conversor \"{{converter}}\" não está disponível.",
-    "invalid_params": "Parâmetros inválidos: {{detail}}",
-    "converter_rejected": "O conversor rejeita esta configuração: {{detail}}",
-    "inference_fallback": "Não é possível antecipar o resultado deste conversor; sua saída é mostrada como um bloco de tamanho desconhecido.",
-    "count_unknown_bound": "Pede {{n_components}} componentes; se há colunas suficientes só se sabe após o treinamento.",
-    "cast_may_skip": "Uma coluna que não puder ser convertida para {{new_type}} mantém seu tipo original.",
-    "train_only": "Aplicado apenas aos dados de treinamento: validação, teste e previsões não são modificados.",
-    "drops_columns": "As colunas fora do seu escopo são descartadas: {{columns}}.",
-    "rows_removed_in_splits": "Remove as linhas com valores ausentes em treinamento, validação e teste, então as métricas usam apenas linhas completas. Nenhuma linha é removida na previsão.",
-    "output": "saída",
-    "columns_one": "{{count}} coluna",
-    "columns_other": "{{count}} colunas",
-    "unknownColumns": "N colunas"
   }
 }
