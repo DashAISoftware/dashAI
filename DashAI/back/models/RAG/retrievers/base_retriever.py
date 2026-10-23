@@ -78,6 +78,13 @@ class BaseRetriever(ConfigObject, ABC):
     )
     COLOR: str = "#9C27B0"
     ICON: str = "Search"
+    CATEGORY: MultilingualString = MultilingualString(
+        en="Other retrievers",
+        es="Otros recuperadores",
+        pt="Outros recuperadores",
+        de="Andere Retriever",
+        zh="其他检索器",
+    )
 
     #: Per-retriever representation template rendered by the frontend.
     #: ``None`` means the frontend falls back to the component description.
@@ -119,9 +126,10 @@ class BaseRetriever(ConfigObject, ABC):
         -------
         Dict[str, Any]
             Dictionary with the icon shown for the retriever in the frontend
-            and, when declared, its representation template.
+            and, when declared, its representation template and the category
+            the retriever pickers group it under.
         """
-        metadata: Dict[str, Any] = {"icon": cls.ICON}
+        metadata: Dict[str, Any] = {"icon": cls.ICON, "category": cls.CATEGORY}
         representation = cls.get_representation()
         if representation is not None:
             metadata["representation"] = representation

@@ -285,8 +285,7 @@ def _convert_session_rows(
         session.needs_reindex = True
         session.index_job_id = None
         SessionDocumentService(db).sync_session_documents(session)
-        if id_map:
-            _remap_chat_references(db, session.id, id_map)
+        _remap_chat_references(db, session.id, id_map)
 
     paths = [legacy.file_path for legacy in converted]
     for legacy in converted:
@@ -524,7 +523,9 @@ def _remap_chat_references(
     """Point a session's stored chat citations at the new document ids.
 
     All ids of the session are mapped at once, so a new id that equals another
-    legacy id is never mapped twice.
+    legacy id is never mapped twice. A legacy id with no new id, because its
+    file could not be converted, becomes None, so it never names an unrelated
+    ``data_document`` that happens to take that id.
 
     Parameters
     ----------
@@ -558,8 +559,11 @@ def _remap_chat_references(
             continue
         changed = False
         for reference in references.values():
-            if isinstance(reference, dict) and reference.get("document_id") in id_map:
-                reference["document_id"] = id_map[reference["document_id"]]
+            if not isinstance(reference, dict):
+                continue
+            legacy_id = reference.get("document_id")
+            if legacy_id is not None:
+                reference["document_id"] = id_map.get(legacy_id)
                 changed = True
         if changed:
             row.data = json.dumps(references, ensure_ascii=False)
@@ -610,3 +614,72 @@ def _remove_empty_blobs_dir(documents_root: pathlib.Path) -> None:
     blobs = documents_root / _BLOBS_DIRNAME
     if blobs.is_dir() and not any(blobs.iterdir()):
         blobs.rmdir()
+
+
+_RAG_TASK_NAME = "RAGTask"
+
+
+def backfill_rag_retrievers(
+    session_factory: "sessionmaker", component_registry
+) -> None:
+    """Rewrite RAG retrievers saved with components that were replaced.
+
+    A session whose stored ``retriever_model`` no longer validates gets it
+    translated by ``translate_legacy_retriever``. The translation is saved only
+    if it passes the same checks a parameter update does, and the session is
+    then marked to reindex. A retriever that still does not validate, such as
+    one using an embedding model no converter serves, is left as it was, so
+    the session keeps asking the user to choose a retriever again.
+
+    Parameters
+    ----------
+    session_factory : sessionmaker
+        SQLAlchemy session factory from the DI container.
+    component_registry : ComponentRegistry
+        Registry resolving the current RAG components.
+    """
+    from DashAI.back.dependencies.database.models import GenerativeSession
+    from DashAI.back.services.RAG.legacy_retrievers import translate_legacy_retriever
+    from DashAI.back.services.RAG.session_validation_service import (
+        SessionValidationService,
+    )
+
+    with session_factory() as db:
+        validator = SessionValidationService(db, component_registry)
+        sessions = (
+            db.query(GenerativeSession)
+            .filter(GenerativeSession.task_name == _RAG_TASK_NAME)
+            .all()
+        )
+        converted = 0
+        for session in sessions:
+            parameters = dict(session.parameters or {})
+            if parameters.get("retriever_model") is None:
+                continue
+            try:
+                validator.validate_stored_retriever(parameters)
+                continue
+            except ValueError:
+                pass
+            try:
+                translated = translate_legacy_retriever(
+                    parameters["retriever_model"], component_registry
+                )
+                normalized = validator.validate_update_payload(
+                    {"retriever_model": translated}
+                )
+            except Exception as e:
+                log.warning(
+                    "Could not convert the retriever of RAG session %d: %s",
+                    session.id,
+                    e,
+                )
+                continue
+            parameters["retriever_model"] = normalized["retriever_model"]
+            session.parameters = parameters
+            session.needs_reindex = True
+            session.index_job_id = None
+            converted += 1
+        if converted:
+            db.commit()
+            log.debug("Converted the retriever of %d RAG session(s).", converted)

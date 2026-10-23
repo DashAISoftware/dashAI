@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Tuple
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 
@@ -16,6 +17,13 @@ class CompositeRetriever(BaseRetriever, ABC):
     """
 
     REQUIRED_EXTRA_KWARGS: list = []
+    CATEGORY: MultilingualString = MultilingualString(
+        en="Composite retrievers",
+        es="Recuperadores compuestos",
+        pt="Recuperadores compostos",
+        de="Zusammengesetzte Retriever",
+        zh="组合检索器",
+    )
 
     def __init__(self, **kwargs):
         """Initialize the composite retriever with its children.

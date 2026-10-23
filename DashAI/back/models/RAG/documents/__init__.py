@@ -1,8 +1,7 @@
-"""Document representation layer for the RAG module.
-
-Provides the text view of a Data module document (``RAGDocument``, built from
-``TextSegment``s) and the ``Chunk`` data class.
-"""
+"""Document representation layer for the RAG module."""
 
 from .chunk import Chunk
-from .rag_document import RAGDocument, TextSegment
+from .rag_document import RAGDocument
+from .source_document import SourceDocument
+
+__all__ = ["Chunk", "RAGDocument", "SourceDocument"]

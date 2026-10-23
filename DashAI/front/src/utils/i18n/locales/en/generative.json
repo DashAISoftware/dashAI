@@ -15,20 +15,21 @@
     "detach": "Remove from session",
     "detachWarning": "The document stays in Data. This session reindexes without it.",
     "detached": "Removed \"{{file}}\" from this session",
-    "documentCount_one": "{{count}} document",
-    "documentCount_other": "{{count}} documents",
     "failedAttach": "Failed to add the documents",
     "failedDetach": "Failed to remove the document",
     "failedFetch": "Failed to fetch documents",
-    "inCurrentSession": " in current session",
     "noDocumentsFound": "No documents found",
     "noDocumentsInSession": "No documents in this session",
     "noLibraryDocuments": "There are no documents in Data yet. Upload one to start.",
+    "noParsersFound": "No parsers match your search",
     "parseFailed": "the file could not be parsed",
     "parserLabel": "Parser",
     "preview": "Preview",
     "processingUpload": "\"{{file}}\" is being processed. It joins this session when it is ready.",
+    "searchParsers": "Search parsers",
     "searchPlaceholder": "Search documents",
+    "selectParser": "Select a parser to see its parameters",
+    "selectToSeeDetails": "Select a document to see its details",
     "stillProcessing": "Still being processed",
     "title": "Documents",
     "upload": "Upload",
@@ -139,11 +140,8 @@
       "addChild": "Add retriever node",
       "allChunks": "All chunks",
       "chunkFusion": "Chunk fusion",
-      "compositeGroup": "Composite retrievers",
       "compositeInstructions": "Click the + button to add a child retriever to this composite. Click on a retriever card to edit its parameters or choose another model.",
       "configureNode": "Configure node",
-      "denseGroup": "Dense retrievers",
-      "keywordGroup": "Keyword retrievers",
       "mergeStrategyInterleave": "Interleave",
       "mergeStrategyRoundRobin": "Round robin",
       "nestedCompositeNote": "This is a composite retriever. Its children can be configured in the tree below.",
@@ -152,8 +150,7 @@
       "reranking": "Reranking",
       "retrieverDescription": "Choose a retriever to configure its parameters. Keyword retrievers (BM25, TF-IDF) find documents by term frequency. Embedding retrievers capture semantic meaning with dense vectors. Composite retrievers chain multiple retrievers together, sequentially or in parallel.",
       "selectModel": "Select retriever model",
-      "selectedChunks": "Selected chunks",
-      "simpleGroup": "Simple retrievers"
+      "selectedChunks": "Selected chunks"
     },
     "config": {
       "advanced": "Advanced configuration",
@@ -184,11 +181,6 @@
     "documentPreview": {
       "openInData": "Open in Data",
       "title": "Preview Document"
-    },
-    "documents": {
-      "table": {
-        "unknownType": "Unknown"
-      }
     },
     "generator": {
       "advancedButton": "Open advanced configuration",
