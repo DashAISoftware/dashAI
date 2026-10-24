@@ -34,8 +34,8 @@
   "label": {
     "addModelsToExperiment": "Agregar Modelos a su Experimento",
     "addOptimizersToExperiment": "Agregar Optimizadores a su Experimento",
-    "columnsInvalidRequirements": "Las columnas de Entrada y Salida actuales no coinciden con los requisitos de {{taskName}}",
-    "columnsValidRequirements": "Las columnas de Entrada y Salida actuales coinciden con los requisitos de {{taskName}}",
+    "columnsInvalidRequirements": "Las columnas elegidas no cumplen los requisitos de {{taskName}}",
+    "columnsValidRequirements": "Las columnas elegidas cumplen los requisitos de {{taskName}}",
     "configureExperimentsSubtitle": "Configure experimentos para entrenar modelos.",
     "configureModels": "Configurar modelos",
     "configureOptimizer": "Configurar optimización de hiperparámetros",

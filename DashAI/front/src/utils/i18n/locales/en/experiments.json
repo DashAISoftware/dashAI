@@ -34,8 +34,8 @@
   "label": {
     "addModelsToExperiment": "Add Models to your Experiment",
     "addOptimizersToExperiment": "Add Optimizers to your Experiment",
-    "columnsInvalidRequirements": "Current Input and Output columns do not match {{taskName}} requirements",
-    "columnsValidRequirements": "Current Input and Output columns match {{taskName}} requirements",
+    "columnsInvalidRequirements": "The selected columns do not match the requirements of {{taskName}}",
+    "columnsValidRequirements": "The selected columns match the requirements of {{taskName}}",
     "configureExperimentsSubtitle": "Configure experiments to train models.",
     "configureModels": "Configure models",
     "configureOptimizer": "Configure hyperparameter optimization",
