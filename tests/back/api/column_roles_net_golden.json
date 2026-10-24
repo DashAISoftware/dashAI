@@ -9,14 +9,14 @@
   "importances_mean": [
    0.0,
    0.0,
-   0.711,
-   0.133
+   0.222,
+   0.156
   ],
   "importances_std": [
    0.0,
    0.0,
    0.083,
-   0.109
+   0.031
   ]
  },
  "classification_holdout/metrics": [
@@ -47,7 +47,7 @@
    1,
    null,
    null,
-   0.9555555555555556,
+   1.0,
    null
   ],
   [
@@ -57,7 +57,7 @@
    1,
    null,
    null,
-   0.9575757575757576,
+   1.0,
    null
   ],
   [
@@ -97,7 +97,7 @@
    "Iris-setosa",
    "Iris-versicolor",
    "Iris-versicolor",
-   "Iris-virginica",
+   "Iris-versicolor",
    "Iris-versicolor",
    "Iris-virginica",
    "Iris-virginica",
@@ -559,7 +559,7 @@
    1,
    null,
    null,
-   0.9123809523809524,
+   0.9130434782608695,
    null
   ],
   [
@@ -569,7 +569,7 @@
    1,
    0,
    null,
-   0.9875,
+   1.0,
    null
   ],
   [
@@ -579,7 +579,7 @@
    2,
    1,
    null,
-   0.975,
+   1.0,
    null
   ],
   [
@@ -599,7 +599,7 @@
    1,
    0,
    null,
-   0.9863718537060214,
+   1.0,
    null
   ],
   [
@@ -609,7 +609,7 @@
    2,
    1,
    null,
-   0.9761904761904763,
+   1.0,
    null
   ],
   [
@@ -629,8 +629,8 @@
    0,
    null,
    null,
-   0.9874999999999999,
-   0.010206207261596585
+   1.0,
+   0.0
   ],
   [
    "train",
@@ -639,8 +639,8 @@
    0,
    null,
    null,
-   0.987520776632166,
-   0.009754088849528166
+   1.0,
+   0.0
   ],
   [
    "validation",
@@ -658,16 +658,6 @@
    "Accuracy",
    2,
    1,
-   null,
-   1.0,
-   null
-  ],
-  [
-   "validation",
-   "fold",
-   "Accuracy",
-   3,
-   2,
    null,
    0.95,
    null
@@ -675,6 +665,16 @@
   [
    "validation",
    "fold",
+   "Accuracy",
+   3,
+   2,
+   null,
+   0.925,
+   null
+  ],
+  [
+   "validation",
+   "fold",
    "F1",
    1,
    0,
@@ -689,7 +689,7 @@
    2,
    1,
    null,
-   1.0,
+   0.9363636363636364,
    null
   ],
   [
@@ -699,7 +699,7 @@
    3,
    2,
    null,
-   0.9513888888888888,
+   0.927741935483871,
    null
   ],
   [
@@ -709,8 +709,8 @@
    0,
    null,
    null,
-   0.9833333333333334,
-   0.023570226039551605
+   0.9583333333333334,
+   0.03118047822311617
   ],
   [
    "validation",
@@ -719,8 +719,8 @@
    0,
    null,
    null,
-   0.9837962962962963,
-   0.022915497538452952
+   0.9547018572825025,
+   0.03222343589952422
   ]
  ],
  "classification_kfold/split_indexes": {
@@ -1296,15 +1296,15 @@
    "bin_SepalLengthCm"
   ],
   "importances_mean": [
-   0.067,
-   0.681,
-   0.139,
+   0.0,
+   0.05,
+   0.567,
    0.0
   ],
   "importances_std": [
    0.0,
-   0.08,
-   0.116,
+   0.036,
+   0.076,
    0.0
   ]
  },
@@ -1336,7 +1336,7 @@
    1,
    null,
    null,
-   0.9888888888888889,
+   1.0,
    null
   ],
   [
@@ -1346,7 +1346,7 @@
    1,
    null,
    null,
-   0.9894179894179894,
+   1.0,
    null
   ],
   [
@@ -2925,19 +2925,19 @@
     "x": {
      "image": [
       {
-       "bytes": "269a4f88a9bd4e94ed0a0885d089ca408e5cdf29",
+       "bytes": "1250a8da2f86a9eb810279f253697649461ad8cd",
        "path": "dogs_05.png"
       },
       {
-       "bytes": "5cc1b8c1ad6b1a69c356a32de716818fd87a0d96",
+       "bytes": "bb669fb19b4f305a4cc6ad6d32bcd8c1f0c42e60",
        "path": "cats_08.png"
       },
       {
-       "bytes": "0967eca717c3fb544bf9dd9a0006c8e1029089fc",
+       "bytes": "795b621a2bb734e46a4347116f1cd92e2720d085",
        "path": "cats_01.png"
       },
       {
-       "bytes": "b5428af1837f7693e26e3229a9ef311786e1f8b8",
+       "bytes": "379037e2000e55540ae660e1c64e9b8260ef7655",
        "path": "dogs_01.png"
       }
      ]
@@ -3014,51 +3014,51 @@
     "x": {
      "image": [
       {
-       "bytes": "f0d2095adf11ed0d022ce619d9ffe9f2bf9e0488",
+       "bytes": "67b0d969f9d13cb0f0970a6bb0b4243fa3f201cf",
        "path": "cats_02.png"
       },
       {
-       "bytes": "3882e99e0c4ca5e4de533d54d50d5a4ccc09ff61",
+       "bytes": "02638ab1ac3b45770a030b1b202f57d1c13e236e",
        "path": "cats_04.png"
       },
       {
-       "bytes": "587e4cdfc9e37e84c3ef406a077a5522e9a87ce9",
+       "bytes": "9f74118b8b32d5fd51e9e47de45c05321eef8659",
        "path": "cats_06.png"
       },
       {
-       "bytes": "0efc248719b198769fec7ec16fbf6034f739021c",
+       "bytes": "9d674f548e8428a7387fa7d03e71480f5f7f4393",
        "path": "cats_07.png"
       },
       {
-       "bytes": "3842c36e68fcb4de84435afa4c0fc19c1b84d32a",
+       "bytes": "ceab06d926a22501bd18a026ff0e0958a2f8d9ed",
        "path": "cats_09.png"
       },
       {
-       "bytes": "fc7d07b9e792a4d821f599c45f918a7e0ac5ee02",
+       "bytes": "1e31330a39b4dd5b11039b45035f85467abbc31d",
        "path": "dogs_00.png"
       },
       {
-       "bytes": "8ea82d1490c3e7fb8e179e77e9773955f27f0e04",
+       "bytes": "cf59e8bafe29b692137d433c79fbb962c18642cc",
        "path": "dogs_02.png"
       },
       {
-       "bytes": "628a5fd1b5e3c6b6bc6d256738a5ca863773c326",
+       "bytes": "8945db9fc70e35f2283c97a384040db132a716f6",
        "path": "dogs_03.png"
       },
       {
-       "bytes": "08ec74940b020432f48118808bd4ce8fab1e4330",
+       "bytes": "acc6b9400d0495224283691403ff1ccb35fd7b34",
        "path": "dogs_04.png"
       },
       {
-       "bytes": "421813f6f6808b4de8235b8b192444f4c9e22ac9",
+       "bytes": "719fa39ec1910b2880ad965f746c20de4d17cfd9",
        "path": "dogs_06.png"
       },
       {
-       "bytes": "6012d193f74fa593d913d8e5a2292439437950f6",
+       "bytes": "f32058fe1eedbe1426e167ea4e5da73d46ff4491",
        "path": "dogs_08.png"
       },
       {
-       "bytes": "d1845034a2cd26766ef5114f330bc2b1aab06f3f",
+       "bytes": "87d13fa7313f1db9da2f58c731a14368aa777f82",
        "path": "dogs_09.png"
       }
      ]
@@ -3066,19 +3066,19 @@
     "x_validation": {
      "image": [
       {
-       "bytes": "e6971e8614e37dbd7f99df0a421d1cac3ff1f5a5",
+       "bytes": "b35bb53212abb5c9d3ebc130b8b0f2833ae48158",
        "path": "cats_00.png"
       },
       {
-       "bytes": "38ab07798fc35aab3047f90c3190d085abe34e7a",
+       "bytes": "b770698dc563e83d75fc9658cee3e9f485164af7",
        "path": "cats_03.png"
       },
       {
-       "bytes": "8728e6e09a36f59a00f11509c51ed5aaecdb394f",
+       "bytes": "59c27e4a6226da3edada202d110347a0ec21f9df",
        "path": "cats_05.png"
       },
       {
-       "bytes": "eeba789dc7353d3318d26b89d8ecd83619f3b9c1",
+       "bytes": "50875d8ea15b5ba96e964e6ed1cab3fe4e5dbdbd",
        "path": "dogs_07.png"
       }
      ]

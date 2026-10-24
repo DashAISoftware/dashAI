@@ -12,9 +12,17 @@ the columns and values it is handed.
 **Two helpers know how a session spells its columns**: ``_create_session``
 (the payload) and ``_stored_columns`` (what is read back from the row). They
 are the only part of this file the refactor may change. The values live in
-``column_roles_net_golden.json``, recorded once on the base with
-``DASHAI_RECORD_COLUMN_ROLES_NET=1`` and never re-recorded while the refactor
-is under way: a diff on that file is a behaviour change.
+``column_roles_net_golden.json``, recorded on the base with
+``DASHAI_RECORD_COLUMN_ROLES_NET=1`` and never re-recorded with the refactored
+code: a diff on that file is a behaviour change.
+
+**The same golden holds on every platform.** Floats are compared to a relative
+1e-9, because the last digits of a BLAS result differ between Windows, Linux
+and macOS; everything else is compared exactly. Images are pinned by their
+decoded pixels, not by their PNG bytes, which depend on the zlib that wrote
+them. And no scenario uses a model that can meet a tie the platforms break
+differently (see ``FOREST``). The classification and image values were
+re-recorded on the base for that, so they still pin the code before roles.
 
 Lives under ``tests/back/api`` to reuse the ``client`` and ``dataset_1``
 fixtures from this package's ``conftest.py``.
@@ -22,6 +30,7 @@ fixtures from this package's ``conftest.py``.
 
 import hashlib
 import json
+import math
 import os
 import pickle
 import zipfile
@@ -87,7 +96,11 @@ ONE_HOT = {
     "params": {"handle_unknown": "ignore", "dtype": "int64"},
     "scope": [{"kind": "raw", "name": "Species"}],
 }
-KNN = {"n_neighbors": 5, "weights": "uniform", "algorithm": "auto"}
+# A seeded forest, not KNN: iris has one-decimal values, so many rows meet a
+# distance tie at their fifth neighbour, and the kd-tree breaks it one way on
+# Windows and the other on Linux. The forest draws from numpy's generator, the
+# same everywhere, and compares no distances.
+FOREST = {"random_state": 0}
 CLASSIFICATION_METRICS = ["Accuracy", "F1"]
 REGRESSION_METRICS = ["MAE", "RMSE", "R2"]
 
@@ -182,8 +195,44 @@ def _plain(value):
     if isinstance(value, np.generic):
         return value.item()
     if isinstance(value, bytes):
-        return hashlib.sha1(value).hexdigest()
+        return _digest(value)
     return value
+
+
+def _digest(data: bytes) -> str:
+    """The sha1 of an image's decoded pixels, or of the bytes themselves.
+
+    A PNG's bytes depend on the zlib that wrote it; its pixels do not.
+    """
+    from PIL import Image, UnidentifiedImageError
+
+    try:
+        with Image.open(BytesIO(data)) as image:
+            image.load()
+            pixels = f"{image.mode}{image.size}".encode() + image.tobytes()
+    except UnidentifiedImageError:
+        return hashlib.sha1(data).hexdigest()
+    return hashlib.sha1(pixels).hexdigest()
+
+
+def _same(value, expected) -> bool:
+    """Equal, floats to a relative 1e-9 and everything else exactly."""
+    if isinstance(value, float) or isinstance(expected, float):
+        numbers = (int, float)
+        return (
+            isinstance(value, numbers)
+            and isinstance(expected, numbers)
+            and not isinstance(value, bool)
+            and not isinstance(expected, bool)
+            and math.isclose(value, expected, rel_tol=1e-9, abs_tol=1e-12)
+        )
+    if isinstance(value, dict) and isinstance(expected, dict):
+        return value.keys() == expected.keys() and all(
+            _same(value[k], expected[k]) for k in value
+        )
+    if isinstance(value, list) and isinstance(expected, list):
+        return len(value) == len(expected) and all(map(_same, value, expected))
+    return value == expected
 
 
 def _pin(golden, key: str, value) -> None:
@@ -192,7 +241,8 @@ def _pin(golden, key: str, value) -> None:
         _recorded[key] = value
         return
     assert key in golden, f"{key} was never recorded"
-    assert value == golden[key], key
+    if not _same(value, golden[key]):
+        assert value == golden[key], key
 
 
 # --------------------------------------------------------------------------- #
@@ -387,7 +437,7 @@ SCENARIOS = {
         "task": "TabularClassificationTask",
         "inputs": IRIS_FEATURES,
         "outputs": ["Species"],
-        "model": ("KNeighborsClassifier", KNN),
+        "model": ("RandomForestClassifier", FOREST),
         "metrics": CLASSIFICATION_METRICS,
     },
     "regression_holdout": {
@@ -401,7 +451,7 @@ SCENARIOS = {
         "task": "TabularClassificationTask",
         "inputs": IRIS_FEATURES,
         "outputs": ["Species"],
-        "model": ("KNeighborsClassifier", KNN),
+        "model": ("RandomForestClassifier", FOREST),
         "metrics": CLASSIFICATION_METRICS,
         "strategy": "CrossValidationEvaluationStrategy",
         "splits": KFOLD,
@@ -417,7 +467,7 @@ SCENARIOS = {
             {"kind": "group", "step": 0},
         ],
         "preprocessing": [BINARIZER],
-        "model": ("KNeighborsClassifier", KNN),
+        "model": ("RandomForestClassifier", FOREST),
         "metrics": CLASSIFICATION_METRICS,
     },
     "regression_preprocessing": {
