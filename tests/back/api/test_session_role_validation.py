@@ -201,6 +201,27 @@ def test_validation_answers_with_the_same_check(client: TestClient, dataset_1):
     ) == {"dataset_status": "valid"}
 
 
+def test_validation_refuses_a_target_for_a_task_without_one(
+    client: TestClient, dataset_1
+):
+    """Clustering declares no target role; an empty one asks for nothing."""
+    assert _validate(
+        client,
+        dataset_1.id,
+        {"features": _raw(*IRIS_FEATURES), "target": _raw("Species")},
+        task="ClusteringTask",
+    ) == {
+        "dataset_status": "invalid",
+        "error": "ClusteringTask has no column role 'target'. Its roles are: features.",
+    }
+    assert _validate(
+        client,
+        dataset_1.id,
+        {"features": _raw(*IRIS_FEATURES), "target": []},
+        task="ClusteringTask",
+    ) == {"dataset_status": "valid"}
+
+
 def test_validation_counts_converter_outputs_as_inputs(client: TestClient, dataset_1):
     """A group ref counts towards its role, so a task taking exactly one input
     can be fed a converter's output."""

@@ -35,8 +35,8 @@ import {
  * selectors only ever deal with plain strings. A protected role keeps the
  * original columns it got in BaseColumnsStep and is shown fixed.
  *
- * A role that takes no columns (the target of a clustering task) has no
- * selector, and the session is created without it.
+ * A role that takes no columns (max 0) has no selector, and the session is
+ * created without it.
  */
 function SelectColumnsStep({
   newExp,

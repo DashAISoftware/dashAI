@@ -89,9 +89,15 @@ def test_a_missing_output_column_list_is_treated_as_none_given():
 
 
 def test_naming_an_output_column_is_refused():
-    """``outputs_types`` is empty, so no column type is allowed as a target and
-    the refusal lands on the type check before cardinality is ever reached."""
-    with pytest.raises(TypeError, match="not an allowed type for output columns"):
+    """``outputs_cardinality`` is 0, so the task declares no target role and
+    an output column is refused as columns for a role it does not have."""
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"^ClusteringTask has no column role 'target'\. "
+            r"Its roles are: features\.$"
+        ),
+    ):
         ClusteringTask().validate_dataset_for_task(
             dataset=_dataset(),
             dataset_name="students",

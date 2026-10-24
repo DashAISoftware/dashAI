@@ -17,8 +17,8 @@ import { useTranslation } from "react-i18next";
  *
  * The roles come from the task's metadata (`column_roles`), so this never
  * names a role: a classifier shows its features and its target, a forecaster
- * its index, series and exogenous columns. A role that takes no columns
- * (max 0, e.g. the target of a clustering task) gets no selector.
+ * its index, series and exogenous columns, a clustering task only its
+ * features. A role that takes no columns (max 0) gets no selector.
  *
  * Options are plain strings: an original column name, or the synthetic key
  * of a ref to a converter's output (see sessionColumnRefs), shown through
