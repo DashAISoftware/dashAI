@@ -211,6 +211,28 @@ def test_an_undeclared_role_is_rejected(dataset):
         )
 
 
+def test_an_undeclared_role_given_no_columns_asks_for_nothing(dataset):
+    """The POST drops empty roles before checking; the other checks agree."""
+    RegressionTask().validate_roles(
+        {"features": ["units"], "target": ["price"], "index": []},
+        dataset._types,
+    )
+    ClusteringTask().validate_roles(
+        {"features": ["price", "units"], "target": []}, dataset._types
+    )
+
+
+def test_a_task_without_outputs_refuses_a_target_by_naming_its_roles(dataset):
+    with pytest.raises(
+        ValueError,
+        match=r"^ClusteringTask has no column role 'target'\. Its roles are: "
+        r"features\.$",
+    ):
+        ClusteringTask().validate_roles(
+            {"features": ["units"], "target": ["price"]}, dataset._types
+        )
+
+
 # --------------------------------------------------------------------------- #
 # The roles of the built-in tasks
 # --------------------------------------------------------------------------- #
@@ -265,7 +287,6 @@ def test_an_undeclared_role_is_rejected(dataset):
             ClusteringTask,
             [
                 ("features", ["Float", "Integer"], 0, "n", False, True),
-                ("target", [], 0, 0, False, False),
             ],
         ),
         (
@@ -279,7 +300,8 @@ def test_an_undeclared_role_is_rejected(dataset):
 )
 def test_the_built_in_tasks_get_the_roles_of_their_short_form(task, expected):
     assert _role_summary(task) == expected
-    assert task.io_roles() == {"inputs": ["features"], "outputs": ["target"]}
+    outputs = ["target"] if len(expected) > 1 else []
+    assert task.io_roles() == {"inputs": ["features"], "outputs": outputs}
 
 
 def test_the_role_metadata_names_its_types_and_keeps_its_label():
@@ -432,6 +454,21 @@ COLUMN_CHOICES = [
 ]
 OUTPUT_CHOICES = [None, [], ["price"], ["kind"], ["note"], ["price", "cost"]]
 
+# The one deliberate change: a task without outputs (clustering) declares no
+# target, so an output column is refused by naming the role it lacks, ahead
+# of the checks on the inputs. Before roles it was a TypeError on the output's
+# type, raised after them.
+NO_TARGET_REFUSAL = (
+    "ValueError",
+    "ClusteringTask has no column role 'target'. Its roles are: features.",
+)
+
+
+def _expected_now(task, outputs, before):
+    if task is ClusteringTask and outputs and before != "ok":
+        return NO_TARGET_REFUSAL
+    return before
+
 
 @pytest.mark.parametrize("task", TASKS, ids=lambda t: t.__name__)
 def test_validation_says_exactly_what_it_said_before_roles(dataset, task):
@@ -448,7 +485,7 @@ def test_validation_says_exactly_what_it_said_before_roles(dataset, task):
                     dataset, "dataset", inputs, outputs
                 )
             )
-            if before != after:
+            if _expected_now(task, outputs, before) != after:
                 differences.append((inputs, outputs, before, after))
     assert differences == []
 

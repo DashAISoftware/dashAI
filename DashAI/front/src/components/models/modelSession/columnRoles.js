@@ -13,8 +13,9 @@ export const rawRefs = (names = []) =>
 
 /**
  * The roles a column step shows: every declared role that takes columns.
- * A role whose maximum is 0 says the task takes no such columns (e.g. the
- * target of a clustering task).
+ * A role whose maximum is 0 says the task takes no such columns. The x/y
+ * tasks never declare one (a clustering task declares no target at all), but
+ * a task with roles of its own may.
  *
  * @param {object} taskMetadata the task's metadata, with `column_roles`
  * @returns {Array<object>} the roles, in the order the task declares them

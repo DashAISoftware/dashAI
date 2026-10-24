@@ -8,8 +8,8 @@ used, ``inputs_types`` and ``inputs_cardinality`` beside ``outputs_types`` and
 
 - ``features``: the inputs, which the session's preprocessing may transform;
 - ``target``: the outputs, protected from the preprocessing. A task whose
-  ``outputs_cardinality`` is 0, like clustering, declares a target that takes
-  no columns.
+  ``outputs_cardinality`` is 0, like clustering, has no target: it declares
+  only the features.
 
 The role names live here and nowhere else. ``BaseTask`` hands a task that
 declares the short form to these methods (``BaseTask._role_delegate``); a task
@@ -48,29 +48,35 @@ class XYRoles:
 
     @staticmethod
     def column_roles(task_cls: type) -> Tuple[ColumnRole, ...]:
-        """The features and the target, read from the task's metadata."""
+        """The features and, unless the task takes no outputs, the target."""
         metadata = task_cls.metadata
-        return (
-            ColumnRole(
-                name=FEATURES,
-                label=FEATURES_LABEL,
-                types=tuple(metadata["inputs_types"]),
-                transformable=True,
-                **bounds(metadata["inputs_cardinality"]),
-            ),
-            ColumnRole(
-                name=TARGET,
-                label=TARGET_LABEL,
-                types=tuple(metadata["outputs_types"]),
-                transformable=False,
-                **bounds(metadata["outputs_cardinality"]),
-            ),
+        features = ColumnRole(
+            name=FEATURES,
+            label=FEATURES_LABEL,
+            types=tuple(metadata["inputs_types"]),
+            transformable=True,
+            **bounds(metadata["inputs_cardinality"]),
         )
+        target_bounds = bounds(metadata["outputs_cardinality"])
+        if target_bounds["max"] == 0:
+            return (features,)
+        target = ColumnRole(
+            name=TARGET,
+            label=TARGET_LABEL,
+            types=tuple(metadata["outputs_types"]),
+            transformable=False,
+            **target_bounds,
+        )
+        return (features, target)
 
     @staticmethod
     def io_roles(task_cls: type) -> Dict[str, List[str]]:
         """The features feed the model's inputs and the target its outputs."""
-        return {"inputs": [FEATURES], "outputs": [TARGET]}
+        declared = {role.name for role in XYRoles.column_roles(task_cls)}
+        return {
+            "inputs": [FEATURES],
+            "outputs": [TARGET] if TARGET in declared else [],
+        }
 
     @staticmethod
     def io_columns(task_cls: type, roles: Mapping[str, Sequence]) -> IOColumns:

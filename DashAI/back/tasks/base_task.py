@@ -252,16 +252,20 @@ class BaseTask:
         return role_name
 
     def check_role_names(self, roles: Mapping[str, Any]) -> None:
-        """Refuse a role this task does not declare.
+        """Refuse columns for a role this task does not declare.
+
+        A role given no columns asks for nothing, so it passes whatever its
+        name: a session never stores an empty role.
 
         Raises
         ------
         ValueError
-            Naming the first undeclared role and the task's roles.
+            Naming the first undeclared role given columns and the task's
+            roles.
         """
         names = [role.name for role in self.column_roles()]
-        for name in roles:
-            if name not in names:
+        for name, columns in roles.items():
+            if columns and name not in names:
                 raise ValueError(
                     f"{type(self).__name__} has no column role {name!r}. Its "
                     f"roles are: {', '.join(names)}."
@@ -354,8 +358,9 @@ class BaseTask:
     ) -> None:
         """Check a session's columns, role by role, against the declaration.
 
-        Roles are checked in the order the task declares them. A role the
-        mapping leaves out counts as given no columns.
+        Columns for a role the task does not declare are refused first; then
+        the declared roles are checked in the order the task declares them. A
+        role the mapping leaves out counts as given no columns.
 
         Parameters
         ----------
@@ -367,8 +372,8 @@ class BaseTask:
         Raises
         ------
         ValueError
-            If a role is not declared, or gets a number of columns outside its
-            cardinality.
+            If a role the task does not declare is given columns, or a role
+            gets a number of columns outside its cardinality.
         TypeError
             If a column's type is not one its role accepts.
         """

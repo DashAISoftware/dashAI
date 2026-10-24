@@ -38,12 +38,10 @@ const SUPERVISED = {
   ],
   io_roles: { inputs: ["features"], outputs: ["target"] },
 };
+// A task without outputs declares no target role at all.
 const CLUSTERING = {
-  column_roles: [
-    role("features", "Features"),
-    role("target", "Target", { min: 0, max: 0, transformable: false }),
-  ],
-  io_roles: { inputs: ["features"], outputs: ["target"] },
+  column_roles: [role("features", "Features")],
+  io_roles: { inputs: ["features"], outputs: [] },
 };
 // A task with roles of its own, as a forecasting task would declare them.
 const THREE_ROLES = {
