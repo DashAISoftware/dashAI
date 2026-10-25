@@ -84,6 +84,20 @@ def _input_columns_training_prepared_with(
     return io.raw_inputs
 
 
+def _unseen_categories(ctx: ExecutionContext, input_columns: List[str]) -> List[dict]:
+    """The categories of the rows just predicted that training never saw.
+
+    Two encoders may have treated them: the session's, whose records
+    ``ApplySessionPreprocessingUnit`` publishes, and the model's own, which
+    the model reports for the columns it reads.
+    """
+    unseen = list(ctx.require("unseen_categories"))
+    reader = getattr(ctx.require("model"), "unseen_categories", None)
+    if reader is not None:
+        unseen.extend(reader(ctx.require("model_input").select_columns(input_columns)))
+    return unseen
+
+
 def _build_preview_rows(
     prepared_dataset: "DashAIDataset",
     input_columns: List[str],
@@ -123,6 +137,7 @@ def run_manual_prediction(
     run_id: int,
     manual_input_data: List[Dict],
     session_factory: "sessionmaker",
+    unseen: Optional[List[dict]] = None,
 ) -> Tuple[List[str], List[List]]:
     """Execute a manual prediction synchronously without persisting results.
 
@@ -147,6 +162,9 @@ def run_manual_prediction(
         must be the container's: the units resolve ``session_factory`` and
         ``component_registry`` from the DI container themselves, so a different
         one passed here would leave the two halves reading different databases.
+    unseen : list, optional
+        When given, the categories of the rows that training never saw are
+        appended to it, one ``unseen_record`` per encoder and column.
 
     Returns
     -------
@@ -281,6 +299,8 @@ def run_manual_prediction(
             # exactly the kind of derived value that must not cross a unit
             # boundary, since anything upstream may reshape it.
             prepared_dataset = ctx.require("model_input").select_columns(input_columns)
+            if unseen is not None:
+                unseen.extend(_unseen_categories(ctx, input_columns))
         except (ValueError, TypeError) as e:
             logging.exception("Manual prediction input error: %s", e)
             raise HTTPException(
@@ -578,6 +598,7 @@ class PredictJob(BaseJob):
 
                 self.report_progress(0.4, "Running prediction")
                 predict(ctx)
+                prediction.unseen_categories = _unseen_categories(ctx, io.inputs)
 
             except ValueError as ve:
                 prediction.set_status_as_error()

@@ -67,7 +67,9 @@ def categorical_label_encoder(
 # This function is used to apply the encodings stored in the model
 # to the categorical columns in the dataset.
 def apply_categorical_label_encoder(
-    dataset: "DashAIDataset", encodings: Dict[str, Dict[str, int]]
+    dataset: "DashAIDataset",
+    encodings: Dict[str, Dict[str, int]],
+    unknown_value: Optional[int] = None,
 ) -> "DashAIDataset":
     """Apply Model stored encodings to the categorical columns in the dataset.
 
@@ -80,6 +82,10 @@ def apply_categorical_label_encoder(
         A dictionary containing the encodings for each categorical column,
         where keys are column names and values are dictionaries
         mapping original values to encoded integers.
+    unknown_value : int, optional
+        The code of a value outside the stored encoding. By default there is
+        none and such a value raises: only features may be treated, since an
+        unknown label of the target cannot be decoded into a class.
 
     Returns
     -------
@@ -107,7 +113,17 @@ def apply_categorical_label_encoder(
             try:
                 categories = _type.categories
                 cat_type = Categorical(categories, encoding=encoding)
-                encoded_values = [cat_type.str2int(x.as_py()) for x in array]
+                if unknown_value is None:
+                    encoded_values = [cat_type.str2int(x.as_py()) for x in array]
+                else:
+                    # A missing value is not a category nobody saw, so it
+                    # stays as strict as before.
+                    encoded_values = [
+                        cat_type.str2int(value)
+                        if value is None or value in encoding
+                        else unknown_value
+                        for value in (x.as_py() for x in array)
+                    ]
                 new_columns[col] = pa.array(encoded_values, type=pa.int64())
 
                 types[col] = cat_type

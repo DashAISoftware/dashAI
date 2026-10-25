@@ -417,10 +417,17 @@ async def preview_manual_prediction(
         if rows_data[row_index].get(column_name) == field_name:
             rows_data[row_index][column_name] = value
 
+    unseen = []
     columns, rows = await run_in_threadpool(
         run_manual_prediction,
         run_id=run_id_int,
         manual_input_data=rows_data,
         session_factory=session_factory,
+        unseen=unseen,
     )
-    return {"columns": columns, "rows": rows}
+    response = {"columns": columns, "rows": rows}
+    # Only when there is something to say, so a preview of categories the
+    # model saw answers exactly as it always has.
+    if unseen:
+        response["unseen_categories"] = unseen
+    return response

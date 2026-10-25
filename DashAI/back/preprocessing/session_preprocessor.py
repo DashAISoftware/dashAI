@@ -15,6 +15,7 @@ from DashAI.back.converters.dataset_columns import (
     rebuild_dataset_with_transformed_columns,
 )
 from DashAI.back.preprocessing.column_ref import ConverterSequence, resolve_refs
+from DashAI.back.preprocessing.unseen_categories import unseen_record
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -66,7 +67,8 @@ class SessionPreprocessor:
 
     Supervised converters (e.g. feature selectors) are fit with the
     `target_columns` of the train split as `y`. The target is never part of
-    a step's scope, so no converter ever transforms it.
+    a step's scope, so no converter ever transforms it: ``fit_transform``
+    refuses a step whose scope takes it.
     """
 
     def __init__(
@@ -269,14 +271,39 @@ class SessionPreprocessor:
             return {}
         unseen = unseen_values(scoped)
         if unseen and converter.raises_on_unseen():
-            step_label = f"{self.sequence.steps[index].converter} (step {index + 1})"
             column, values = next(iter(unseen.items()))
             raise ValueError(
                 _unseen_message(
-                    step_label, type(converter).UNKNOWN_HINT, column, values, fitting
+                    self._step_label(index),
+                    type(converter).UNKNOWN_HINT,
+                    column,
+                    values,
+                    fitting,
                 )
             )
         return unseen
+
+    def _refuse_the_target(self, index: int, scope_names: List[str]) -> None:
+        """Refuse a step whose scope takes the target.
+
+        The API already refuses it when the session is created
+        (``target_in_scope``), but an imported session package is refitted
+        from its stored steps without that check. A converter that reached
+        the target could treat an unknown label of it, which would invent a
+        class, so the preprocessor holds the rule itself.
+        """
+        target_columns = getattr(self, "target_columns", None) or []
+        in_scope = [name for name in scope_names if name in target_columns]
+        if in_scope:
+            raise ValueError(
+                f"{self._step_label(index)} has the target column "
+                f"'{in_scope[0]}' in its scope: no converter transforms the "
+                "target."
+            )
+
+    def _step_label(self, index: int) -> str:
+        """How a step is named to the user: its converter and its position."""
+        return f"{self.sequence.steps[index].converter} (step {index + 1})"
 
     @staticmethod
     def _transform_split(converter, dataset, scope_names, train_transformed):
@@ -338,6 +365,7 @@ class SessionPreprocessor:
             scope_names = resolve_refs(
                 step.scope, self.resolved_columns, self.resolved_slots
             )
+            self._refuse_the_target(index, scope_names)
             converter = self._instantiate(step)
 
             rule = _row_rule(converter)
@@ -397,13 +425,24 @@ class SessionPreprocessor:
         return current, self.resolved_columns
 
     def transform_only(
-        self, split: Dict[str, "DashAIDataset"]
+        self,
+        split: Dict[str, "DashAIDataset"],
+        unseen: Optional[List[Dict]] = None,
     ) -> Dict[str, "DashAIDataset"]:
         """Apply already-fitted converters to new data, without fitting.
 
         Used after unpickling a SessionPreprocessor that was fit earlier (by
         PreprocessingJob), to transform fold data at training time, or a
         prediction/explanation input.
+
+        Parameters
+        ----------
+        split : dict
+            The datasets to transform, by split name.
+        unseen : list, optional
+            When given, one ``unseen_record`` is appended to it for each
+            column in which an encoder step met categories it did not see in
+            fit and treated them.
         """
         current: Dict[str, "DashAIDataset"] = dict(split)
         for index, converter in enumerate(self.fitted_converters):
@@ -421,9 +460,14 @@ class SessionPreprocessor:
                 continue
 
             for dataset in current.values():
-                self._unseen(
+                found = self._unseen(
                     index, converter, dataset.select_columns(scope_names), False
                 )
+                if unseen is not None:
+                    unseen.extend(
+                        unseen_record(self._step_label(index), column, values)
+                        for column, values in found.items()
+                    )
 
             train_transformed = None
             if "train" in current:
@@ -456,14 +500,17 @@ class SessionPreprocessor:
             current = new_current
         return current
 
-    def transform_dataset(self, dataset: "DashAIDataset") -> "DashAIDataset":
+    def transform_dataset(
+        self, dataset: "DashAIDataset", unseen: Optional[List[Dict]] = None
+    ) -> "DashAIDataset":
         """Transform a single dataset (predict/explain use).
 
         Wrapped under its own "predict" key, never "train", so no step adds
         or removes rows of it: neither resampling nor row removal
-        (NanRemover) touches prediction inputs.
+        (NanRemover) touches prediction inputs. ``unseen`` collects the
+        categories the encoder steps treated, as in ``transform_only``.
         """
-        return self.transform_only({"predict": dataset})["predict"]
+        return self.transform_only({"predict": dataset}, unseen=unseen)["predict"]
 
 
 def transform_by_split(
