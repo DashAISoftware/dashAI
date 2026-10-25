@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Dict, List, Union
 
 from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
@@ -99,6 +99,36 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         column of numeric labels (e.g. dtype int64) gets no encoded copy.
         """
         return item.type == "Text" or item.dtype == "string"
+
+    def raises_on_unseen(self) -> bool:
+        """Never: a label not seen in ``fit`` is encoded as -1."""
+        return False
+
+    def unseen_values(self, x: "DashAIDataset") -> Dict[str, List[str]]:
+        """The labels of each fitted column of ``x`` that ``fit`` did not see.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Rows of the converter's scope, as ``transform`` would get them.
+
+        Returns
+        -------
+        dict
+            Column name to its unseen labels as sorted strings, only for the
+            columns that have any.
+        """
+        frame = x.to_pandas()
+        unseen = {}
+        for col in self.fitted_columns:
+            if col not in frame.columns:
+                continue
+            values = frame[col].dropna()
+            known = self.encoders[col].classes_
+            new = sorted({str(v) for v in values[~values.isin(known)]})
+            if new:
+                unseen[col] = new
+        return unseen
 
     def get_output_type(self, column_name: str = None) -> DashAIDataType:
         """Return the DashAI data type produced by this converter for a column.

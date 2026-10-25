@@ -172,6 +172,8 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
 
     PREFIX = "ohe_"
 
+    UNKNOWN_HINT = 'set "handle_unknown" to "ignore" to encode them as a row of zeros'
+
     metadata = {
         "allowed_types": [Categorical],
         "allowed_dtypes": [],
