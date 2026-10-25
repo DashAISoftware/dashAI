@@ -588,7 +588,7 @@ def test_a_dataset_the_task_cannot_take_is_reported(client, csv_dir, statuses):
 # --------------------------------------------------------------------------- #
 
 
-NO_OUTPUT_COLUMNS = "Model session has no output columns configured"
+NO_OUTPUT_COLUMNS = "ClusteringTask does not predict: it declares no output columns."
 
 
 def _predictions_on_disk(client: TestClient) -> set:
@@ -601,8 +601,9 @@ def test_predicting_with_a_clustering_run_creates_no_prediction(
 ):
     """What survives fixing the job's exception type: no result, ERROR, the text.
 
-    The exception class and its status code are deliberately not asserted: a
-    job should raise ``JobError``, and this one does not yet.
+    The exception class and its status code are deliberately not asserted;
+    the job raises ``JobError`` since the PR that made the text say clustering
+    does not predict.
     """
     run_id = _train(client, session_id, "KMeansClustering", {"n_clusters": 3})
     response = client.post(
