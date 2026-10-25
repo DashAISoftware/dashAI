@@ -42,7 +42,10 @@ import DatasetAutocomplete from "../notebooks/notebookCreation/DatasetAutocomple
 import ExplainerSourceToggle from "./ExplainerSourceToggle";
 import RowSelectionModeToggle from "./RowSelectionModeToggle";
 import ExplanationInfo from "./ExplanationInfo";
-import { fetchTaskMetadata } from "../../hooks/useTaskMetadata";
+import {
+  TaskMetadataError,
+  fetchTaskMetadata,
+} from "../../hooks/useTaskMetadata";
 import { sessionColumns } from "../models/modelSession/columnRoles";
 import { getApiDetail } from "../../utils/apiError";
 
@@ -70,6 +73,8 @@ export default function SelectDatasetStep({
   const [inputColumns, setInputColumns] = useState([]);
   const [outputColumns, setOutputColumns] = useState([]);
   const [trainingDatasetId, setTrainingDatasetId] = useState(null);
+  // The session's task when it cannot be read: nothing can be explained then.
+  const [unavailableTask, setUnavailableTask] = useState(null);
   // Which partitions this run can be explained on, and how many rows each has.
   // The backend decides the list, so a new partition needs no change here.
   const [explainableSplits, setExplainableSplits] = useState([]);
@@ -121,6 +126,7 @@ export default function SelectDatasetStep({
   useEffect(() => {
     const fetchRunInfo = async () => {
       if (!newExpl.run_id) return;
+      setUnavailableTask(null);
       try {
         const run = await getRunById(newExpl.run_id);
         const session = await getModelSessionById(run.model_session_id);
@@ -139,6 +145,9 @@ export default function SelectDatasetStep({
           setSplit(splits[0].name);
         }
       } catch (error) {
+        if (error instanceof TaskMetadataError) {
+          setUnavailableTask(error.taskName);
+        }
         console.error(`Error fetching run info for ${newExpl.run_id}`, error);
       }
     };
@@ -280,6 +289,11 @@ export default function SelectDatasetStep({
 
   return (
     <Box sx={{ width: "100%" }}>
+      {unavailableTask && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {t("explainers:error.taskNotAvailable", { task: unavailableTask })}
+        </Alert>
+      )}
       <ExplainerSourceToggle source={source} onChange={setSource} />
 
       {source === "manual" ? (

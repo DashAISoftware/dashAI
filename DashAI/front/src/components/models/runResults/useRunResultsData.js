@@ -170,7 +170,11 @@ export default function useRunResultsData({
       .then(async (sessionData) => {
         if (cancelled) return null;
         setModelSessionDetail(sessionData);
-        const metadata = await fetchTaskMetadata(sessionData.task_name);
+        // Without its task's metadata the target is unknown, but the
+        // training sample is still worth loading.
+        const metadata = await fetchTaskMetadata(sessionData.task_name).catch(
+          () => ({}),
+        );
         if (cancelled) return null;
         setOutputColumn(sessionColumns(sessionData, metadata).target ?? null);
         return getDatasetSample(sessionData.dataset_id);
