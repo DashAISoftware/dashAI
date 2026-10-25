@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import pytest
 
 from DashAI.back.preprocessing.column_ref import (
@@ -147,3 +150,24 @@ def test_parse_column_refs_round_trips_a_named_group_ref():
     raw = [{"kind": "group", "step": 1, "name": "date_month"}]
     (ref,) = parse_column_refs(raw)
     assert (ref.step, ref.name, ref.slot) == (1, "date_month", None)
+
+
+# The same cases the front's rawColumnsNeededFor runs, so the two never
+# disagree on which dataset columns a session reads.
+RAW_COLUMNS_CASES = json.loads(
+    (
+        Path(__file__).parents[3]
+        / "DashAI/front/src/components/models/modelSession/__fixtures__"
+        / "rawColumnsCases.json"
+    ).read_text(encoding="utf-8")
+)
+
+
+@pytest.mark.parametrize(
+    "case", RAW_COLUMNS_CASES, ids=[case["name"] for case in RAW_COLUMNS_CASES]
+)
+def test_the_raw_columns_a_session_reads(case):
+    sequence = ConverterSequence.model_validate({"steps": case["steps"]})
+    refs = parse_column_refs(case["refs"])
+
+    assert sequence.raw_columns_read(refs) == case["expected"]

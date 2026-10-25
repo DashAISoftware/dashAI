@@ -16,7 +16,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.job.predict_job import run_manual_prediction
 from DashAI.back.splitters.splits_payload import predictable_splits
-from DashAI.back.tasks.session_roles import session_io
+from DashAI.back.tasks.session_roles import session_io, session_raw_columns
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session, sessionmaker
@@ -256,7 +256,9 @@ async def filter_datasets_endpoint(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Task {model_session.task_name} not found in the registry",
                 ) from e
-            input_columns = session_io(model_session, task).inputs
+            input_columns = session_raw_columns(
+                model_session, session_io(model_session, task)
+            )
 
             datasets = db.query(Dataset).all()
             valid_dataset_ids = []
