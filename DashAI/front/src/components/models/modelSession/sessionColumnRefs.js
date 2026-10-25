@@ -187,14 +187,19 @@ export function buildStepDisplayNames(steps, convertersMeta = {}) {
 }
 
 /**
- * Every RAW dataset column name needed to compute a list of ColumnRef,
- * walking group refs back to their step's own scope recursively (a group
- * ref's step may itself reference an earlier group, chained arbitrarily
- * deep). This is what a caller must actually supply values for, e.g.
+ * Every RAW dataset column name a model fed through these steps reads:
+ * the raw refs among `refs`, with group refs walked back to their step's
+ * own scope recursively (a group ref's step may itself reference an
+ * earlier group, chained arbitrarily deep), and then the raw scope of every
+ * step, since the fitted sequence runs all of them even when no input comes
+ * from one. This is what a caller must actually supply values for, e.g.
  * manual prediction, where the backend only ever accepts real dataset
  * columns as input (see BaseTask.process_manual_input), never a
  * converter's resolved output name like "pca_1": it runs the raw values
  * through the session's persisted preprocessor itself before predicting.
+ *
+ * Mirrors the backend's ConverterSequence.raw_columns_read; both run the
+ * cases in __fixtures__/rawColumnsCases.json.
  */
 export function rawColumnsNeededFor(refs, steps) {
   const needed = [];
@@ -212,5 +217,6 @@ export function rawColumnsNeededFor(refs, steps) {
     (step.scope || []).forEach(visit);
   };
   (refs || []).forEach(visit);
+  (steps || []).forEach((step) => (step.scope || []).forEach(visit));
   return needed;
 }

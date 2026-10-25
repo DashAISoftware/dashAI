@@ -445,6 +445,14 @@ class SessionPreprocessor:
             fit and treated them.
         """
         current: Dict[str, "DashAIDataset"] = dict(split)
+        reads = self.sequence.raw_columns_read()
+        for split_name, dataset in current.items():
+            missing = [name for name in reads if name not in dataset.column_names]
+            if missing:
+                raise ValueError(
+                    f"The '{split_name}' rows lack columns the preprocessing "
+                    f"reads: {', '.join(repr(name) for name in missing)}."
+                )
         for index, converter in enumerate(self.fitted_converters):
             scope_names = resolve_refs(
                 self.sequence.steps[index].scope,

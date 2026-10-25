@@ -122,6 +122,24 @@ class SessionIO:
     raw_inputs: List[str] = field(default_factory=list)
 
 
+def session_raw_columns(model_session: Any, io: SessionIO) -> List[str]:
+    """The dataset columns the session's model reads, through its preprocessing.
+
+    A session that preprocesses has among its inputs columns that only its
+    fitted converters produce, which no dataset has. What a dataset needs to
+    be predicted or explained on is what the fitted preprocessor reads
+    (``ConverterSequence.raw_columns_read``). Without steps, the inputs are
+    dataset columns themselves.
+    """
+    from DashAI.back.preprocessing.column_ref import ConverterSequence
+
+    preprocessing = model_session.preprocessing or {}
+    if not preprocessing.get("steps"):
+        return list(io.inputs)
+    sequence = ConverterSequence.model_validate(preprocessing)
+    return sequence.raw_columns_read(io.input_refs)
+
+
 def session_roles(model_session: Any, task: "BaseTask") -> SessionColumnRoles:
     """The roles a session stores.
 

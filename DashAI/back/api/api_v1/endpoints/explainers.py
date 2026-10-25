@@ -29,7 +29,11 @@ from DashAI.back.dependencies.database.models import (
     Run,
 )
 from DashAI.back.splitters.splits_payload import run_splits
-from DashAI.back.tasks.session_roles import SessionIO, session_io
+from DashAI.back.tasks.session_roles import (
+    SessionIO,
+    session_io,
+    session_raw_columns,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -1046,9 +1050,9 @@ async def validate_dataset(
 
     validation_response = {}
     io = _session_columns(model_session)
-    input_columns = io.inputs
-    output_columns = io.outputs
-    required_columns = input_columns + output_columns
+    # What the fitted preprocessor reads, not the columns it produces: those
+    # are in no dataset.
+    required_columns = session_raw_columns(model_session, io) + io.outputs
 
     instances_columns = list(instances.features)
 
@@ -1208,7 +1212,7 @@ async def valid_datasets(
             ) from e
 
     io = _session_columns(model_session)
-    required_columns = io.inputs + io.outputs
+    required_columns = session_raw_columns(model_session, io) + io.outputs
 
     training_types = {}
     if training_dataset:
