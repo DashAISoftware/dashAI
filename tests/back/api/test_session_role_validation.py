@@ -263,3 +263,28 @@ def test_changing_the_task_rechecks_the_columns(client: TestClient, dataset_1):
     assert response.json()["detail"].endswith(
         "is not an allowed type for output columns."
     )
+
+
+def test_the_dataset_of_a_session_does_not_change(client: TestClient, dataset_1):
+    """A session is one dataset: its roles, splits, preprocessing and runs
+    all point into it. Another dataset is another session, so the PATCH
+    refuses ``dataset_id`` rather than swapping it unchecked."""
+    created = _post(
+        client,
+        dataset_1.id,
+        "fixed dataset",
+        {"features": _raw(*IRIS_FEATURES), "target": _raw("Species")},
+    )
+    assert created.status_code == 201, created.text
+    session_id = created.json()["id"]
+
+    response = client.patch(
+        f"/api/v1/model-session/{session_id}",
+        params={"dataset_id": dataset_1.id + 1000, "name": "renamed"},
+    )
+
+    assert response.status_code == 422, response.text
+    assert "create a new session" in response.json()["detail"]
+    stored = client.get(f"/api/v1/model-session/{session_id}").json()
+    assert stored["dataset_id"] == dataset_1.id
+    assert stored["name"] == "fixed dataset"
