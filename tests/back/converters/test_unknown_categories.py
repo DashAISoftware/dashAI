@@ -115,3 +115,63 @@ def test_a_category_only_in_test_does_not_stop_the_fit(converter_name):
     )
 
     assert transformed["test"].num_rows == 2
+
+
+def _fitted(converter_name, params):
+    preprocessor = _session(converter_name, params)
+    preprocessor.fit_transform({"train": _dataset(["a", "b", "a"])})
+    return preprocessor
+
+
+HINTS = {
+    "OneHotEncoder": 'set "handle_unknown" to "ignore"',
+    "OrdinalEncoder": 'set "handle_unknown" to "use_encoded_value"',
+}
+
+
+@pytest.mark.parametrize("converter_name", sorted(HINTS))
+def test_error_at_training_names_what_only_appears_outside_the_train(
+    converter_name,
+):
+    preprocessor = _session(converter_name, {"handle_unknown": "error"})
+
+    with pytest.raises(ValueError, match="cannot encode values") as error:
+        preprocessor.fit_transform(
+            {"train": _dataset(["a", "b", "a"]), "test": _dataset(["a", "z", "w"])}
+        )
+
+    message = str(error.value)
+    assert f"{converter_name} (step 1)" in message
+    assert "column 'c'" in message
+    assert "'w', 'z'" in message
+    assert "only appear outside the training rows" in message
+    assert HINTS[converter_name] in message
+
+
+@pytest.mark.parametrize("converter_name", sorted(HINTS))
+def test_error_at_prediction_names_what_was_not_in_the_training_data(
+    converter_name,
+):
+    preprocessor = _fitted(converter_name, {"handle_unknown": "error"})
+
+    with pytest.raises(ValueError, match="cannot encode values") as error:
+        preprocessor.transform_dataset(_dataset(["a", "z"]))
+
+    message = str(error.value)
+    assert f"{converter_name} (step 1)" in message
+    assert "column 'c'" in message
+    assert "'z'" in message
+    assert "were not in the training data" in message
+    assert HINTS[converter_name] in message
+
+
+@pytest.mark.parametrize("converter_name", sorted(ENCODERS))
+def test_predicting_never_refits_the_encoder(converter_name):
+    import pickle
+
+    preprocessor = _fitted(converter_name, {})
+    before = pickle.dumps(preprocessor.fitted_converters)
+
+    preprocessor.transform_dataset(_dataset(["z", "a", "q"]))
+
+    assert pickle.dumps(preprocessor.fitted_converters) == before

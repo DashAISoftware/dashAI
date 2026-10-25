@@ -168,6 +168,11 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     PREFIX = "oe_"
     ONE_COLUMN_PER_INPUT = True
 
+    UNKNOWN_HINT = (
+        'set "handle_unknown" to "use_encoded_value" to encode them as its '
+        '"unknown_value"'
+    )
+
     metadata = {
         "allowed_types": [Categorical],
         "allowed_dtypes": [],

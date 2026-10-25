@@ -34,6 +34,28 @@ def _row_rule(converter: Any) -> Optional[str]:
     return rule if rule in ("train", "splits") else None
 
 
+#: How many unseen values a message lists before it only counts the rest.
+_SHOWN_UNSEEN = 10
+
+
+def _unseen_message(
+    step_label: str, hint: str, column: str, values: List[str], fitting: bool
+) -> str:
+    """The error of an encoder set to raise on a category it did not see."""
+    shown = ", ".join(repr(value) for value in values[:_SHOWN_UNSEEN])
+    if len(values) > _SHOWN_UNSEEN:
+        shown += f" and {len(values) - _SHOWN_UNSEEN} more"
+    where = (
+        "only appear outside the training rows"
+        if fitting
+        else "were not in the training data"
+    )
+    return (
+        f"{step_label} cannot encode values of column '{column}' that {where}: "
+        f"{shown}. It is set to raise on unknown categories; {hint}."
+    )
+
+
 class SessionPreprocessor:
     """Fits and applies converters from a ConverterSequence.
 
@@ -230,6 +252,32 @@ class SessionPreprocessor:
             new_current[split_name] = dataset.select(positions).select_columns(keep)
         return new_current
 
+    def _unseen(
+        self, index: int, converter: Any, scoped: "DashAIDataset", fitting: bool
+    ) -> Dict[str, List[str]]:
+        """The categories of a split that a fitted encoder step did not see.
+
+        An encoder set to raise on them raises here instead, with a message
+        that names the step, the column and the values, rather than letting
+        sklearn name the column by its position. ``fitting`` tells which of
+        the two cases it is: while the sequence is fit, the values only
+        appear in a split other than train; otherwise they were not in the
+        training data at all.
+        """
+        unseen_values = getattr(converter, "unseen_values", None)
+        if unseen_values is None or scoped.num_rows == 0:
+            return {}
+        unseen = unseen_values(scoped)
+        if unseen and converter.raises_on_unseen():
+            step_label = f"{self.sequence.steps[index].converter} (step {index + 1})"
+            column, values = next(iter(unseen.items()))
+            raise ValueError(
+                _unseen_message(
+                    step_label, type(converter).UNKNOWN_HINT, column, values, fitting
+                )
+            )
+        return unseen
+
     @staticmethod
     def _transform_split(converter, dataset, scope_names, train_transformed):
         """Transform one split's scoped columns, without crashing on 0 rows.
@@ -314,6 +362,9 @@ class SessionPreprocessor:
             for split_name, dataset in current.items():
                 if split_name == "train":
                     continue
+                self._unseen(
+                    index, converter, dataset.select_columns(scope_names), True
+                )
                 transformed_by_split[split_name] = self._transform_split(
                     converter, dataset, scope_names, train_transformed
                 )
@@ -368,6 +419,11 @@ class SessionPreprocessor:
                     converter, current, scope_names, rule, fit=False
                 )
                 continue
+
+            for dataset in current.values():
+                self._unseen(
+                    index, converter, dataset.select_columns(scope_names), False
+                )
 
             train_transformed = None
             if "train" in current:
