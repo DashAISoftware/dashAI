@@ -1,7 +1,16 @@
 import logging
 from typing import TYPE_CHECKING, Optional, Union
 
-from fastapi import APIRouter, Depends, File, Header, Response, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Header,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from pydantic import ValidationError
@@ -1006,7 +1015,7 @@ async def delete_model_session(
 @inject
 async def update_model_session(
     model_session_id: int,
-    dataset_id: Union[int, None] = None,
+    request: Request,
     task_name: Union[str, None] = None,
     name: Union[str, None] = None,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
@@ -1029,7 +1038,23 @@ async def update_model_session(
     -------
     Dict
         A dictionary containing the updated model session record.
+
+    Raises
+    ------
+    HTTPException
+        422 when the request names a ``dataset_id``. A session is one
+        dataset: its roles, splits, fitted preprocessing and runs all point
+        into it, so working on another dataset is another session.
     """
+    if "dataset_id" in request.query_params:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "The dataset of a model session cannot change: its columns, "
+                "splits, preprocessing and runs belong to it. To work on "
+                "another dataset, create a new session."
+            ),
+        )
     with session_factory() as db:
         try:
             model_session = db.get(ModelSession, model_session_id)
@@ -1065,8 +1090,6 @@ async def update_model_session(
                         )
                     setattr(model_session, "name", new_name)
 
-            if dataset_id:
-                setattr(model_session, "dataset_id", dataset_id)
             if task_name:
                 # The stored strategy and splitter must still be ones the new
                 # task offers, the same checks a new session goes through.
@@ -1089,7 +1112,7 @@ async def update_model_session(
                     )
                 setattr(model_session, "task_name", task_name)
 
-            if dataset_id or task_name or name:
+            if task_name or name:
                 db.commit()
                 db.refresh(model_session)
                 return model_session
