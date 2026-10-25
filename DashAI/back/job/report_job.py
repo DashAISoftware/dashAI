@@ -27,6 +27,10 @@ from DashAI.back.dependencies.database.models import (
     Run,
 )
 from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.job.predict_job import (
+    _input_columns_training_prepared_with,
+    _preprocessing_artifacts_path,
+)
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.splitters.splits_payload import predictable_splits, run_split_indexes
 from DashAI.back.tasks.session_roles import session_io
@@ -175,15 +179,37 @@ class ReportJob(BaseJob):
             return None
         return [str(label) for label in classes]
 
+    @staticmethod
+    def _model_input(rows, preprocessing_artifacts_path):
+        """The rows as the model was trained to see them.
+
+        Through the unit the prediction job uses, so a report and a
+        prediction never transform a session's rows differently.
+        """
+        from DashAI.back.units.apply_session_preprocessing_unit import (
+            ApplySessionPreprocessingUnit,
+        )
+        from DashAI.back.units.context import ExecutionContext
+
+        ctx = ExecutionContext()
+        ctx.put("dataset", rows)
+        ApplySessionPreprocessingUnit(
+            preprocessing_artifacts_path=preprocessing_artifacts_path
+        )(ctx)
+        return ctx.require("model_input")
+
     @inject
     def run(self) -> None:
         """Compute and persist the report's artifacts.
 
         The dataset is prepared once over every row and then indexed per
         partition, because the row indexes a splitter reports are indexes into
-        the dataset as stored. Inputs reach the model unprepared, exactly as
-        the prediction job feeds them, since the model applies its own
-        preprocessing; targets are encoded so they line up with the class
+        the dataset the task prepared. It is prepared as training prepared it:
+        with the raw refs when the session preprocesses, since its other
+        inputs only exist once its converters run. Each partition then goes
+        through the session's fitted preprocessor, exactly as the prediction
+        job feeds a model, and the model applies its own encoding inside
+        ``predict``; targets are encoded so they line up with the class
         indexes the model predicts.
 
         A partition that the report cannot describe, such as one holding a
@@ -207,10 +233,7 @@ class ReportJob(BaseJob):
             TextArtifact,
             normalize_artifacts,
         )
-        from DashAI.back.dataloaders.classes.dashai_dataset import (
-            load_dataset,
-            select_columns,
-        )
+        from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
         from DashAI.back.reports.base_report import ReportError
         from DashAI.back.tasks.base_task import BaseTask
 
@@ -298,6 +321,9 @@ class ReportJob(BaseJob):
                     log.exception(e)
                     raise JobError(str(e)) from e
 
+                preprocessing_artifacts_path = _preprocessing_artifacts_path(
+                    model_session
+                )
                 try:
                     loaded_dataset = load_dataset(f"{dataset.file_path}/dataset")
                     task: BaseTask = component_registry[model_session.task_name][
@@ -306,11 +332,10 @@ class ReportJob(BaseJob):
                     io = session_io(model_session, task)
                     prepared_dataset = task.prepare_for_task(
                         dataset=loaded_dataset,
-                        input_columns=io.inputs,
+                        input_columns=_input_columns_training_prepared_with(
+                            model_session, io
+                        ),
                         output_columns=io.outputs,
-                    )
-                    data_x, data_y = select_columns(
-                        prepared_dataset, io.inputs, io.outputs
                     )
                 except Exception as e:
                     log.exception(e)
@@ -325,15 +350,18 @@ class ReportJob(BaseJob):
                 last_error = None
 
                 for partition, row_indexes in partition_indexes.items():
-                    partition_x = (
-                        data_x if row_indexes is None else data_x.select(row_indexes)
+                    rows = (
+                        prepared_dataset
+                        if row_indexes is None
+                        else prepared_dataset.select(row_indexes)
                     )
-                    partition_y = (
-                        data_y if row_indexes is None else data_y.select(row_indexes)
-                    )
-                    if partition_x.num_rows == 0:
+                    if rows.num_rows == 0:
                         continue
                     try:
+                        partition_x = self._model_input(
+                            rows, preprocessing_artifacts_path
+                        ).select_columns(io.inputs)
+                        partition_y = rows.select_columns(io.outputs)
                         y_pred = trained_model.predict(partition_x)
                         y_true = (
                             trained_model.prepare_output(partition_y, is_fit=False)
