@@ -8,6 +8,7 @@ from fastapi.exceptions import HTTPException
 from kink import di, inject
 
 from DashAI.back.api.api_v1.schemas.prediction_params import PredictionCreationParams
+from DashAI.back.api.utils import task_or_http_error
 from DashAI.back.dependencies.database.models import (
     Dataset,
     ModelSession,
@@ -249,13 +250,7 @@ async def filter_datasets_endpoint(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Model session not found",
                 )
-            try:
-                task = component_registry[model_session.task_name]["class"]()
-            except KeyError as e:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Task {model_session.task_name} not found in the registry",
-                ) from e
+            task = task_or_http_error(model_session.task_name, component_registry)
             input_columns = session_raw_columns(
                 model_session, session_io(model_session, task)
             )

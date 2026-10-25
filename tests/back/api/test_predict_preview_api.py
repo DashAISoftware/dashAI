@@ -333,7 +333,7 @@ def test_an_unknown_task_is_a_500_naming_the_task(
     response = _preview(client, trained_run_id)
 
     assert response.status_code == 500
-    assert response.json()["detail"] == "Task NoSuchTask not found in the registry"
+    assert response.json()["detail"] == "Task NoSuchTask not found in the registry."
 
 
 def test_an_unknown_model_is_a_500_naming_the_model(

@@ -10,7 +10,12 @@ from sqlalchemy import exc
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.splitters.splits_payload import run_split_indexes
-from DashAI.back.tasks.session_roles import SessionIO, session_io
+from DashAI.back.tasks.session_roles import (
+    SessionIO,
+    TaskUnavailableError,
+    session_io,
+    session_task,
+)
 from DashAI.back.units.apply_session_preprocessing_unit import (
     ApplySessionPreprocessingUnit,
 )
@@ -53,19 +58,22 @@ def _preprocessing_artifacts_path(model_session: ModelSession) -> Optional[str]:
     return artifacts_path
 
 
-def _session_columns(model_session: ModelSession) -> Optional[SessionIO]:
-    """The session's columns as the model's inputs and outputs, or None.
+def _session_columns(
+    model_session: ModelSession,
+) -> Tuple[Optional[SessionIO], Optional[str]]:
+    """The session's columns as the model's inputs and outputs, or why not.
 
     The session stores its columns by role and its task translates them, so a
-    session whose task is not registered cannot be read. None is returned
-    then, and the caller reports the missing task where it always has: when
-    the prediction unit resolves it, ahead of the model.
+    session whose task cannot be built cannot be read. ``(None, reason)`` is
+    returned then, with the text ``session_task`` gives (not registered, or
+    its constructor raised), and the caller reports it where it always has:
+    when the prediction unit would resolve the task, ahead of the model.
     """
     try:
-        task = di["component_registry"][model_session.task_name]["class"]()
-    except Exception:
-        return None
-    return session_io(model_session, task)
+        task = session_task(model_session.task_name, di["component_registry"])
+    except TaskUnavailableError as e:
+        return None, str(e)
+    return session_io(model_session, task), None
 
 
 def _input_columns_training_prepared_with(
@@ -205,7 +213,7 @@ def run_manual_prediction(
 
         # Without its task the session's roles cannot be read; the missing
         # task is reported below, where the units resolve it.
-        io = _session_columns(model_session)
+        io, task_problem = _session_columns(model_session)
 
         if io is not None and not io.inputs:
             raise HTTPException(
@@ -231,7 +239,7 @@ def run_manual_prediction(
     if io is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Task {task_name} not found in the registry",
+            detail=task_problem,
         )
     input_columns = list(io.inputs)
     output_columns = list(io.outputs)
@@ -447,7 +455,7 @@ class PredictJob(BaseJob):
                 # Without its task the session's roles cannot be read; the
                 # missing task is reported below, where the prediction unit
                 # resolves it.
-                io = _session_columns(model_session)
+                io, task_problem = _session_columns(model_session)
 
                 if io is not None and not io.inputs:
                     prediction.set_status_as_error()
@@ -479,9 +487,7 @@ class PredictJob(BaseJob):
             # unit ahead of the status change.
             try:
                 if io is None:
-                    raise JobError(
-                        f"Task {model_session.task_name} not found in the registry"
-                    )
+                    raise JobError(task_problem)
                 predict = PredictUnit(
                     task_name=model_session.task_name,
                     input_columns=io.inputs,
