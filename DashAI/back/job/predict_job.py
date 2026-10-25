@@ -76,6 +76,22 @@ def _session_columns(
     return session_io(model_session, task), None
 
 
+def _no_outputs_problem(model_session: ModelSession) -> str:
+    """Why a session with no output columns cannot predict.
+
+    A task that declares no output role (clustering) does not predict at all,
+    so the message says that rather than blaming the session's configuration.
+    Called only once the task has been built, so it is registered.
+    """
+    task_class = di["component_registry"][model_session.task_name]["class"]
+    if not task_class.io_roles()["outputs"]:
+        return (
+            f"{model_session.task_name} does not predict: it declares no "
+            "output columns."
+        )
+    return "Model session has no output columns configured"
+
+
 def _input_columns_training_prepared_with(
     model_session: ModelSession, io: SessionIO
 ) -> List[str]:
@@ -224,7 +240,7 @@ def run_manual_prediction(
         if io is not None and not io.outputs:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Model session has no output columns configured",
+                detail=_no_outputs_problem(model_session),
             )
 
         task_name = model_session.task_name
@@ -468,10 +484,9 @@ class PredictJob(BaseJob):
                 if io is not None and not io.outputs:
                     prediction.set_status_as_error()
                     db.commit()
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail="Model session has no output columns configured",
-                    )
+                    # JobError, not HTTPException: this runs in the Huey
+                    # worker, where an HTTPException does not survive dill.
+                    raise JobError(_no_outputs_problem(model_session))
 
             except exc.SQLAlchemyError as e:
                 log.exception(e)
