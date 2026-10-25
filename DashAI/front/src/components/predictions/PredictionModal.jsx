@@ -385,7 +385,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
                   />
                 ) : (
                   <ManualInput
-                    inputColumns={columns?.inputs}
+                    inputColumns={columns?.rawInputs}
                     loading={loadingExperiment || !columns}
                     types={types}
                     sample={sample}
