@@ -44,6 +44,7 @@ import RowSelectionModeToggle from "./RowSelectionModeToggle";
 import ExplanationInfo from "./ExplanationInfo";
 import { fetchTaskMetadata } from "../../hooks/useTaskMetadata";
 import { sessionColumns } from "../models/modelSession/columnRoles";
+import { getApiDetail } from "../../utils/apiError";
 
 export default function SelectDatasetStep({
   newExpl,
@@ -103,9 +104,10 @@ export default function SelectDatasetStep({
         const validIdSet = new Set(validIds.map(String));
         setDatasets(all.filter((ds) => validIdSet.has(String(ds.id))));
       } catch (error) {
-        enqueueSnackbar(t("explainers:error.fetchDatasets"), {
-          variant: "error",
-        });
+        enqueueSnackbar(
+          getApiDetail(error, t("explainers:error.fetchDatasets")),
+          { variant: "error" },
+        );
         setRequestError(true);
         console.error("Error fetching datasets", error);
       } finally {

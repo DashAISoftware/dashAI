@@ -38,6 +38,7 @@ import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import { useSessionColumns } from "../../hooks/useTaskMetadata";
+import { getApiDetail } from "../../utils/apiError";
 
 export default function PredictionModal({ isOpen, onClose, run }) {
   const [activeTab, setActiveTab] = useState(0);
@@ -94,9 +95,10 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           );
         } catch (error) {
           console.error("Error fetching datasets:", error);
-          enqueueSnackbar(t("prediction:error.fetchingDatasets"), {
-            variant: "error",
-          });
+          enqueueSnackbar(
+            getApiDetail(error, t("prediction:error.fetchingDatasets")),
+            { variant: "error" },
+          );
         }
       }
     };
