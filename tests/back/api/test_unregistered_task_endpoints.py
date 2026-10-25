@@ -20,7 +20,7 @@ from DashAI.back.dependencies.database.models import ModelSession, Run
 from tests.back.session_columns import xy_roles
 
 MISSING_TASK = "UninstalledPluginTask"
-DETAIL = f"Task {MISSING_TASK} not found in the registry"
+DETAIL = f"Task {MISSING_TASK} not found in the registry."
 
 
 @pytest.fixture(scope="module", name="run_id")
