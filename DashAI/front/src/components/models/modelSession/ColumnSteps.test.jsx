@@ -1,5 +1,5 @@
 import React from "react";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { renderWithProviders } from "../../../test-utils/renderWithProviders";
 import { getComponents } from "../../../api/component";
 import {
@@ -63,7 +63,23 @@ const selectorLabels = () =>
       root.querySelector("label").textContent.replace(/\s*\*$/, ""),
     );
 
-const renderSelect = (taskMetadata, newExp = {}) => {
+const TYPES = {
+  a: { type: "Float" },
+  b: { type: "Integer" },
+  c: { type: "Categorical" },
+};
+
+// The type badge next to the column a role holds, in its selector.
+const heldType = (roleName, column) =>
+  within(
+    document
+      .querySelector(`#dataset-role-${roleName}-autocomplete`)
+      .closest(".MuiAutocomplete-root"),
+  )
+    .getByText(column)
+    .closest(".MuiChip-root").textContent;
+
+const renderSelect = (taskMetadata, newExp = {}, datasetTypes = {}) => {
   const setNewExp = jest.fn();
   const setNextEnabled = jest.fn();
   renderWithProviders(
@@ -73,7 +89,7 @@ const renderSelect = (taskMetadata, newExp = {}) => {
       setNextEnabled={setNextEnabled}
       dataset={{ id: 1 }}
       datasetInfo={{ column_names: COLUMNS }}
-      datasetTypes={{}}
+      datasetTypes={datasetTypes}
       taskMetadata={taskMetadata}
     />,
   );
@@ -185,6 +201,32 @@ describe("SelectColumnsStep", () => {
     const target = document.querySelector("#dataset-role-target-autocomplete");
     expect(target).toBeDisabled();
   });
+  it("shows the type of the column every role that takes one holds", async () => {
+    renderSelect(THREE_ROLES, {}, TYPES);
+    await waitFor(() => expect(validateColumns).toHaveBeenCalled());
+
+    expect(heldType("index", "c")).toBe("cCategorical");
+    expect(heldType("series", "b")).toBe("bInteger");
+  });
+
+  it("with preprocessing, the fixed target still shows its type", async () => {
+    getPreprocessingStructure.mockResolvedValue({
+      valid: true,
+      final: [{ kind: "column", name: "a", type: "Float", origin: null }],
+    });
+    renderSelect(
+      SUPERVISED,
+      {
+        applyPreprocessing: true,
+        column_roles_stage1: { features: ["a"], target: ["c"] },
+        preprocessing: [{ converter: "Binarizer", params: {}, scope: [] }],
+      },
+      TYPES,
+    );
+    await waitFor(() => expect(validateColumns).toHaveBeenCalled());
+
+    expect(heldType("target", "c")).toBe("cCategorical");
+  });
 });
 
 describe("BaseColumnsStep", () => {
@@ -212,5 +254,22 @@ describe("BaseColumnsStep", () => {
       features: ["a", "b"],
       target: ["c"],
     });
+  });
+
+  it("shows the type of the column the target holds", async () => {
+    const setNextEnabled = jest.fn();
+    renderWithProviders(
+      <BaseColumnsStep
+        newExp={{}}
+        setNewExp={jest.fn()}
+        setNextEnabled={setNextEnabled}
+        datasetInfo={{ column_names: COLUMNS }}
+        datasetTypes={TYPES}
+        taskMetadata={SUPERVISED}
+      />,
+    );
+
+    await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
+    expect(heldType("target", "c")).toBe("cCategorical");
   });
 });

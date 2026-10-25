@@ -65,10 +65,15 @@ const renderSelect = (newExp = {}) => {
   return { setNewExp, setNextEnabled };
 };
 
-const removeChip = (roleName, label) => {
-  const root = document
+const TYPES = { a: { type: "Categorical" }, b: { type: "Float" } };
+
+const rootOf = (roleName) =>
+  document
     .querySelector(`#dataset-role-${roleName}-autocomplete`)
     .closest(".MuiAutocomplete-root");
+
+const removeChip = (roleName, label) => {
+  const root = rootOf(roleName);
   const chip = within(root).getByText(label).closest(".MuiChip-root");
   fireEvent.click(chip.querySelector(".MuiChip-deleteIcon"));
 };
@@ -204,6 +209,47 @@ describe("RoleColumnSelectors, the maximum of a role", () => {
     fireEvent.click(screen.getByRole("option", { name: "b" }));
 
     expect(onChange).toHaveBeenLastCalledWith("target", ["b"]);
+  });
+
+  it("shows the type of the column a role that takes one holds", () => {
+    renderWithProviders(
+      <RoleColumnSelectors
+        roles={[role("target", "Target", { min: 1, max: 1 })]}
+        selection={{ target: ["a"] }}
+        onChange={jest.fn()}
+        optionsFor={() => ["a", "b"]}
+        columnTypes={TYPES}
+      />,
+    );
+
+    const chip = within(rootOf("target"))
+      .getByText("a")
+      .closest(".MuiChip-root");
+    expect(chip).toHaveTextContent("Categorical");
+  });
+
+  it("shows the type of every option, as a role that takes many does", () => {
+    renderWithProviders(
+      <RoleColumnSelectors
+        roles={[
+          role("features", "Features"),
+          role("target", "Target", { min: 1, max: 1 }),
+        ]}
+        selection={{ features: ["a"], target: [] }}
+        onChange={jest.fn()}
+        optionsFor={() => ["a", "b"]}
+        columnTypes={TYPES}
+      />,
+    );
+
+    const chip = within(rootOf("features"))
+      .getByText("a")
+      .closest(".MuiChip-root");
+    expect(chip).toHaveTextContent("Categorical");
+    fireEvent.mouseDown(within(rootOf("target")).getByRole("combobox"));
+    expect(screen.getByRole("option", { name: /^b/ })).toHaveTextContent(
+      "Float",
+    );
   });
 
   it("does not offer more columns once a role has its maximum", () => {

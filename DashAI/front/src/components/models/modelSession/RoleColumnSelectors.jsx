@@ -83,20 +83,26 @@ function RoleColumnSelectors({
     );
   };
 
-  const renderTags = (value, getTagProps) =>
-    value.map((option, index) => {
-      const { key, ...tagProps } = getTagProps({ index });
-      const chip = typeChip(option, true);
-      const label = chip ? (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <span>{getOptionLabel(option)}</span>
-          {chip}
-        </Box>
-      ) : (
-        getOptionLabel(option)
-      );
-      return <Chip key={key} label={label} {...tagProps} />;
-    });
+  const valueChip = (option, itemProps) => {
+    const { key, ...chipProps } = itemProps;
+    const chip = typeChip(option, true);
+    const label = chip ? (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <span>{getOptionLabel(option)}</span>
+        {chip}
+      </Box>
+    ) : (
+      getOptionLabel(option)
+    );
+    return <Chip key={key} label={label} {...chipProps} />;
+  };
+
+  // A single selector would show its column as plain text in the input, so
+  // it gets the same chip, with the type, as each column of a multiple one.
+  const renderValue = (value, getItemProps) =>
+    Array.isArray(value)
+      ? value.map((option, index) => valueChip(option, getItemProps({ index })))
+      : valueChip(value, getItemProps());
 
   const shown = roles.filter((role) => role.max !== 0);
   const firstTransformable = shown.find((role) => role.transformable)?.name;
@@ -153,7 +159,7 @@ function RoleColumnSelectors({
               !single && full && !picked.includes(option)
             }
             renderOption={renderColumnOption}
-            renderTags={renderTags}
+            renderValue={renderValue}
             filterSelectedOptions
             disableCloseOnSelect={!single}
             fullWidth
