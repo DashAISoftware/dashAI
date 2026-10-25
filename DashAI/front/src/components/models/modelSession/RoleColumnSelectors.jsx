@@ -26,6 +26,11 @@ import { useTranslation } from "react-i18next";
  *
  * The first role the preprocessing may transform and the first protected
  * one carry the tour anchors the input and output selectors used to.
+ *
+ * A role's maximum is held by the selector, never by trimming a pick: a role
+ * that takes one column is a single selector, where picking another replaces
+ * it in sight; one that takes a few disables the other options once it has
+ * them.
  */
 function RoleColumnSelectors({
   roles,
@@ -125,20 +130,32 @@ function RoleColumnSelectors({
 
       {shown.map((role) => {
         const options = optionsFor(role);
+        const picked = selection[role.name] || [];
+        const single = role.max === 1;
+        const full = typeof role.max === "number" && picked.length >= role.max;
         return (
           <Autocomplete
             key={role.name}
             data-tour={tourAnchor(role)}
-            multiple
+            multiple={!single}
             id={`dataset-role-${role.name}-autocomplete`}
             options={options}
-            value={selection[role.name] || []}
-            onChange={(event, newValue) => onChange(role.name, newValue)}
+            value={single ? (picked[0] ?? null) : picked}
+            onChange={(event, newValue) => {
+              if (!single) {
+                onChange(role.name, newValue);
+              } else {
+                onChange(role.name, newValue == null ? [] : [newValue]);
+              }
+            }}
             getOptionLabel={getOptionLabel}
+            getOptionDisabled={(option) =>
+              !single && full && !picked.includes(option)
+            }
             renderOption={renderColumnOption}
             renderTags={renderTags}
             filterSelectedOptions
-            disableCloseOnSelect={role.max !== 1}
+            disableCloseOnSelect={!single}
             fullWidth
             renderInput={(params) => (
               <TextField
