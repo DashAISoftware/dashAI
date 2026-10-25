@@ -175,3 +175,53 @@ def test_predicting_never_refits_the_encoder(converter_name):
     preprocessor.transform_dataset(_dataset(["z", "a", "q"]))
 
     assert pickle.dumps(preprocessor.fitted_converters) == before
+
+
+@pytest.mark.parametrize("converter_name", sorted(ENCODERS))
+def test_predicting_records_what_each_encoder_did_not_see(converter_name):
+    preprocessor = _fitted(converter_name, {})
+    unseen = []
+
+    preprocessor.transform_dataset(_dataset(["z", "a", "q", "z"]), unseen=unseen)
+
+    assert unseen == [
+        {
+            "source": f"{converter_name} (step 1)",
+            "column": "c",
+            "values": ["q", "z"],
+            "count": 2,
+        }
+    ]
+
+
+def test_the_record_keeps_a_bounded_sample_of_the_values():
+    preprocessor = _fitted("OneHotEncoder", {})
+    new = [f"n{i:03d}" for i in range(150)]
+    unseen = []
+
+    preprocessor.transform_dataset(_dataset(new), unseen=unseen)
+
+    assert unseen[0]["count"] == 150
+    assert unseen[0]["values"] == new[:20]
+
+
+@pytest.mark.parametrize("converter_name", sorted(ENCODERS))
+def test_an_encoder_never_reaches_the_target(converter_name):
+    """The API refuses a step scoped on the target (``target_in_scope``), but
+    an imported session package is refitted without that check, so the
+    preprocessor refuses it too: treating an unknown label of the target
+    would invent a class."""
+    sequence = ConverterSequence(
+        steps=[
+            ConverterStep(
+                converter=converter_name,
+                params={},
+                scope=[RawColumnRef(name="c"), RawColumnRef(name="y")],
+            )
+        ]
+    )
+    registry = {name: {"class": cls} for name, cls in ENCODERS.items()}
+    preprocessor = SessionPreprocessor(sequence, registry, target_columns=["y"])
+
+    with pytest.raises(ValueError, match=r"step 1\) has the target column 'y'"):
+        preprocessor.fit_transform({"train": _dataset(["a", "b"], ["p", "q"])})

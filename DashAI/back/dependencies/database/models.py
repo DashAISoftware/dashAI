@@ -334,6 +334,11 @@ class Prediction(Base):
     delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    # The categories of the predicted rows that training never saw, which an
+    # encoder treated instead of refusing: one record per encoder and column
+    # (``unseen_record``). Empty when there were none; NULL for predictions
+    # made before it was recorded, or that did not finish.
+    unseen_categories: Mapped[list] = mapped_column(JSON, nullable=True)
 
     # Relationships
     run: Mapped["Run"] = relationship("Run", back_populates="predictions")
