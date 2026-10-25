@@ -14,6 +14,7 @@ from DashAI.back.tasks.session_roles import (
     SessionIO,
     TaskUnavailableError,
     session_io,
+    session_raw_columns,
     session_task,
 )
 from DashAI.back.units.apply_session_preprocessing_unit import (
@@ -653,7 +654,10 @@ class PredictJob(BaseJob):
             try:
                 SavePredictionUnit(
                     task_name=model_session.task_name,
-                    input_columns=io.inputs,
+                    # The saved rows are the raw ones, so what keeps a type is
+                    # what the prediction read from them, not the columns a
+                    # preprocessor produced from it.
+                    input_columns=session_raw_columns(model_session, io),
                     output_columns=io.outputs,
                 )(ctx)
 

@@ -19,6 +19,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from DashAI.back.core.enums.status import PredictionStatus, RunStatus
+from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import Dataset, Prediction, Run
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
@@ -266,3 +267,25 @@ def test_a_preview_with_every_category_seen_answers_as_before(client, runs):
     preview = _preview(client, runs["session"], ["red", "blue"])
 
     assert set(preview) == {"columns", "rows"}
+
+
+def test_a_manual_prediction_keeps_the_type_of_the_column_the_encoder_read(
+    client, runs
+):
+    """The session's model reads the one-hot columns, not ``color``; the
+    saved rows are the raw ones, so ``color`` keeps its training type."""
+    response = client.post(
+        "/api/v1/predict/", json={"run_id": runs["session"], "dataset_id": None}
+    )
+    assert response.status_code == 200, response.text
+    prediction_id = response.json()["id"]
+    PredictJob(
+        prediction_id=prediction_id,
+        manual_input_data=[{"color": "red", "size": 1.0}],
+    ).run()
+    prediction = _get(client, Prediction, prediction_id)
+    assert prediction.status == PredictionStatus.FINISHED
+
+    saved = load_dataset(str(Path(prediction.results_path) / "dataset"))
+    schema = json.loads(saved.arrow_table.schema.metadata[b"dashai_types"])
+    assert schema["color"]["type"] == "Categorical"
