@@ -25,6 +25,9 @@ import { useSnackbar } from "notistack";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import InputField from "../predictions/InputField";
+import UnseenCategoriesAlert, {
+  mergeUnseen,
+} from "../predictions/UnseenCategoriesAlert";
 import {
   getDatasetFile,
   getDatasetTypesByFilePath,
@@ -633,6 +636,7 @@ export default function ManualPredictionsTable({
 
   return (
     <Box>
+      <UnseenCategoriesAlert unseen={mergeUnseen(finishedPredictions)} />
       <DatasetTable
         fetchPage={fetchPage}
         initialPageSize={25}

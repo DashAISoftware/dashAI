@@ -70,5 +70,11 @@
     "predictionJobSubmitted": "Vorhersage-Job erfolgreich eingereicht",
     "predictionsDeleted_one": "{{count}} Vorhersage erfolgreich gelöscht",
     "predictionsDeleted_other": "{{count}} Vorhersagen erfolgreich gelöscht"
+  },
+  "unseen": {
+    "title": "Kategorien, die das Modell im Training nie gesehen hat",
+    "description": "Sie wurden als unbekannt kodiert (eine Zeile aus Nullen oder -1), daher sind die Vorhersagen für die betroffenen Zeilen weniger zuverlässig.",
+    "line": "{{column}} ({{source}}): {{values}}",
+    "more": "und {{count}} weitere"
   }
 }
