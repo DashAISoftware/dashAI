@@ -126,7 +126,9 @@ export default function SelectDatasetStep({
           session,
           await fetchTaskMetadata(session.task_name),
         );
-        setInputColumns(columns.inputs);
+        // The rows typed by hand carry dataset columns; the backend runs
+        // the session's fitted preprocessor over them.
+        setInputColumns(columns.rawInputs);
         setOutputColumns(columns.outputs);
         setTrainingDatasetId(session.dataset_id);
         const splits = await getExplainableSplitsRequest(newExpl.run_id);

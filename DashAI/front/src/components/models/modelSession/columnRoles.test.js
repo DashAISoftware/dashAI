@@ -143,12 +143,22 @@ describe("sessionColumns", () => {
         columns: ["Species"],
       },
     },
+    preprocessing: {
+      steps: [
+        {
+          converter: "Binarizer",
+          params: {},
+          scope: [{ kind: "raw", name: "SepalLengthCm" }],
+        },
+      ],
+    },
   };
 
   test("reads the model's inputs and outputs through the task's io_roles", () => {
     expect(sessionColumns(session, SUPERVISED)).toEqual({
       inputs: ["SepalWidthCm", "bin_SepalLengthCm"],
       inputRefs: session.column_roles.features.refs,
+      rawInputs: ["SepalWidthCm", "SepalLengthCm"],
       outputs: ["Species"],
       target: "Species",
     });
@@ -162,6 +172,7 @@ describe("sessionColumns", () => {
     expect(sessionColumns(clustering, SUPERVISED)).toEqual({
       inputs: ["hours", "score"],
       inputRefs: [],
+      rawInputs: ["hours", "score"],
       outputs: [],
       target: undefined,
     });
@@ -171,6 +182,7 @@ describe("sessionColumns", () => {
     expect(sessionColumns(session, {})).toEqual({
       inputs: [],
       inputRefs: [],
+      rawInputs: [],
       outputs: [],
       target: undefined,
     });

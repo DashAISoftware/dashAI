@@ -45,9 +45,12 @@ export default function ManualInputForm({
 
   function createEmptyRow() {
     const row = {};
-    const randomIndex = Math.floor(
-      Math.random() * sample[inputColumns[0]].length,
+    // A column the sample does not have gets no value to start from.
+    const sampleSize = Math.max(
+      0,
+      ...inputColumns.map((col) => sample?.[col]?.length || 0),
     );
+    const randomIndex = Math.floor(Math.random() * sampleSize);
     inputColumns.forEach((col) => {
       const typeInfo = types[col];
       if (typeInfo?.type === "Image") {
@@ -59,7 +62,7 @@ export default function ManualInputForm({
         row[col] =
           typeInfo.categories[randomIndex % typeInfo.categories.length];
       } else {
-        row[col] = sample[col][randomIndex];
+        row[col] = sample?.[col]?.[randomIndex] ?? "";
       }
     });
     return row;
@@ -240,7 +243,7 @@ export default function ManualInputForm({
                         col={col}
                         typeInfo={types[col]}
                         value={row[col]}
-                        placeholder={sample[col][0]}
+                        placeholder={sample?.[col]?.[0]}
                       />
                     </td>
                   ))}
