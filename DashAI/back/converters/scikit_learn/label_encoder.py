@@ -166,7 +166,8 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         """Apply fitted label encoders and append encoded columns with a prefix.
 
         Encodes each fitted column and appends the result as a new
-        ``encoded_<col>`` column. The original column is left unchanged.
+        ``encoded_<col>`` column. The original column is left unchanged. A
+        label the encoder did not see in ``fit`` is encoded as ``-1``.
 
         Parameters
         ----------
@@ -195,8 +196,12 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
                 continue
             series = x_pandas[col].copy()
             mask = series.notna()
-            if mask.any():
-                series.loc[mask] = self.encoders[col].transform(series.loc[mask])
+            # A label not seen in fit gets -1, like the ordinal encoder's
+            # default: the encoder is never refitted on the rows it encodes.
+            seen = mask & series.isin(self.encoders[col].classes_)
+            if seen.any():
+                series.loc[seen] = self.encoders[col].transform(series.loc[seen])
+            series.loc[mask & ~seen] = -1
             prefixed = f"{self.PREFIX}{col}"
             combined_table = combined_table.append_column(
                 prefixed, pa.array(series.tolist(), type=pa.int64())
