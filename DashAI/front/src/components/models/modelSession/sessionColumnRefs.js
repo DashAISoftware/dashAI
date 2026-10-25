@@ -187,6 +187,45 @@ export function buildStepDisplayNames(steps, convertersMeta = {}) {
 }
 
 /**
+ * Drop the converter outputs picked for a chain that has changed since.
+ *
+ * A group ref names its step by position, so after the chain changes the
+ * same ref can point at a different converter's output: delete the one-hot
+ * encoder at step 0, add a PCA, and "__group__0" is now the PCA output. The
+ * picks were made for `pickedWith`; every group ref to its first changed
+ * step or a later one is dropped. Raw refs, and picks made for an unknown
+ * chain, are kept as they are.
+ *
+ * @param {Object<string, Array>} columnRoles role name to its column refs
+ * @param {Array|undefined} pickedWith the steps the refs were picked for
+ * @param {Array} steps the current steps
+ * @returns {Object<string, Array>} the roles without the stale group refs
+ */
+export function dropStaleGroupRefs(columnRoles, pickedWith, steps) {
+  if (!pickedWith) return columnRoles;
+  const comparable = (step) =>
+    JSON.stringify({
+      converter: step?.converter,
+      params: step?.params,
+      scope: step?.scope,
+    });
+  const current = steps || [];
+  let unchanged = 0;
+  while (
+    unchanged < Math.min(pickedWith.length, current.length) &&
+    comparable(pickedWith[unchanged]) === comparable(current[unchanged])
+  ) {
+    unchanged += 1;
+  }
+  return Object.fromEntries(
+    Object.entries(columnRoles).map(([name, refs]) => [
+      name,
+      refs.filter((ref) => ref.kind !== "group" || ref.step < unchanged),
+    ]),
+  );
+}
+
+/**
  * Every RAW dataset column name a model fed through these steps reads:
  * the raw refs among `refs`, with group refs walked back to their step's
  * own scope recursively (a group ref's step may itself reference an
