@@ -75,6 +75,7 @@
     "title": "Kategorien, die das Modell im Training nie gesehen hat",
     "description": "Sie wurden als unbekannt kodiert (eine Zeile aus Nullen oder -1), daher sind die Vorhersagen für die betroffenen Zeilen weniger zuverlässig.",
     "line": "{{column}} ({{source}}): {{values}}",
-    "more": "und {{count}} weitere"
+    "more_one": "und {{count}} weitere",
+    "more_other": "und {{count}} weitere"
   }
 }

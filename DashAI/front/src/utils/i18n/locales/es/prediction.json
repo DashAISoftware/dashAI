@@ -79,6 +79,7 @@
     "title": "Categorías que el modelo no vio al entrenar",
     "description": "Se codificaron como desconocidas (una fila de ceros, o -1), así que las predicciones de las filas que las tienen son menos confiables.",
     "line": "{{column}} ({{source}}): {{values}}",
-    "more": "y {{count}} más"
+    "more_one": "y {{count}} más",
+    "more_other": "y {{count}} más"
   }
 }
