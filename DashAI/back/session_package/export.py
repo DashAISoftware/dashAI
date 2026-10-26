@@ -99,6 +99,14 @@ def with_unknown_handling(
     return {**preprocessing, "steps": steps}
 
 
+def _session_default(converter_class: Any, name: str) -> Any:
+    """The value a session step that leaves ``name`` out runs with."""
+    return {
+        **schema_placeholder_defaults(converter_class),
+        **converter_class.SESSION_PARAMS,
+    }[name]
+
+
 class SessionNotFoundError(ModelPackageError):
     """The session to export does not exist."""
 
@@ -295,14 +303,14 @@ def build_session_package(
         dataset_dir = Path(dataset.file_path) / DATASET_ENTRY
         artifacts_path = session.preprocessing_artifacts_path
         recipe_session = {field: getattr(session, field) for field in SESSION_FIELDS}
-        # An encoder left without it uses its schema default, which the file
-        # writes down: importing reads a step without it as one from before
-        # that default changed.
+        # An encoder left without it uses the session's default, which the
+        # file writes down: importing reads a step without it as one from
+        # before that default changed.
         recipe_session["preprocessing"] = with_unknown_handling(
             recipe_session["preprocessing"],
-            lambda converter: schema_placeholder_defaults(
-                component_registry[converter]["class"]
-            )["handle_unknown"],
+            lambda converter: _session_default(
+                component_registry[converter]["class"], "handle_unknown"
+            ),
         )
         recipe_dataset = {
             "name": dataset.name,

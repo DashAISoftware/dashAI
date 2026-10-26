@@ -15,7 +15,7 @@ from DashAI.back.converters.dataset_columns import (
     rebuild_dataset_with_transformed_columns,
 )
 from DashAI.back.preprocessing.column_ref import ConverterSequence, resolve_refs
-from DashAI.back.preprocessing.unseen_categories import unseen_record
+from DashAI.back.preprocessing.unseen_categories import check_unseen, unseen_record
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -33,28 +33,6 @@ def _row_rule(converter: Any) -> Optional[str]:
         return None
     rule = getattr(converter_class, "ROWS_APPLY_TO", None)
     return rule if rule in ("train", "splits") else None
-
-
-#: How many unseen values a message lists before it only counts the rest.
-_SHOWN_UNSEEN = 10
-
-
-def _unseen_message(
-    step_label: str, hint: str, column: str, values: List[str], fitting: bool
-) -> str:
-    """The error of an encoder set to raise on a category it did not see."""
-    shown = ", ".join(repr(value) for value in values[:_SHOWN_UNSEEN])
-    if len(values) > _SHOWN_UNSEEN:
-        shown += f" and {len(values) - _SHOWN_UNSEEN} more"
-    where = (
-        "only appear outside the training rows"
-        if fitting
-        else "were not in the training data"
-    )
-    return (
-        f"{step_label} cannot encode values of column '{column}' that {where}: "
-        f"{shown}. It is set to raise on unknown categories; {hint}."
-    )
 
 
 class SessionPreprocessor:
@@ -110,7 +88,10 @@ class SessionPreprocessor:
                 f"{step.converter} only runs on documents, so it cannot "
                 "preprocess a model session."
             )
-        return converter_class(**step.params)
+        # A step that leaves a parameter out takes the session's default for
+        # it (``SESSION_PARAMS``), not the schema's: an encoder treats a
+        # category it did not see, as the wizard's form would have sent it.
+        return converter_class(**converter_class.session_params(step.params))
 
     @staticmethod
     def _classify_by_type(
@@ -266,22 +247,12 @@ class SessionPreprocessor:
         appear in a split other than train; otherwise they were not in the
         training data at all.
         """
-        unseen_values = getattr(converter, "unseen_values", None)
-        if unseen_values is None or scoped.num_rows == 0:
-            return {}
-        unseen = unseen_values(scoped)
-        if unseen and converter.raises_on_unseen():
-            column, values = next(iter(unseen.items()))
-            raise ValueError(
-                _unseen_message(
-                    self._step_label(index),
-                    type(converter).UNKNOWN_HINT,
-                    column,
-                    values,
-                    fitting,
-                )
-            )
-        return unseen
+        where = (
+            "only appear outside the training rows"
+            if fitting
+            else "were not in the training data"
+        )
+        return check_unseen(converter, scoped, self._step_label(index), where)
 
     def _refuse_the_target(self, index: int, scope_names: List[str]) -> None:
         """Refuse a step whose scope takes the target.

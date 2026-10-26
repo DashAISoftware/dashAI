@@ -74,10 +74,10 @@ class OneHotEncoderSchema(BaseSchema):
     )  # type: ignore
     handle_unknown: schema_field(
         enum_field(["error", "ignore", "infrequent_if_exist"]),
-        # A session fits its converters on the training rows only, so a
-        # category seen only in validation, test or the rows to predict is
-        # the normal case, not an accident: it gets a row of zeros.
-        "ignore",
+        # Strict, as the notebook uses it: there it may be fitted on a subset
+        # of rows and applied to all of them, and what it writes is saved. A
+        # session treats an unseen category instead (``SESSION_PARAMS``).
+        "error",
         description=MultilingualString(
             en=("How to handle unknown categories during transform."),
             es=("Cómo manejar categorías desconocidas durante la transformación."),
@@ -173,6 +173,11 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
     PREFIX = "ohe_"
 
     UNKNOWN_HINT = 'set "handle_unknown" to "ignore" to encode them as a row of zeros'
+
+    # A session fits its converters on the training rows only, so a category
+    # seen only in validation, test or the rows to predict is the normal
+    # case, not an accident: it gets a row of zeros.
+    SESSION_PARAMS = {"handle_unknown": "ignore"}
 
     metadata = {
         "allowed_types": [Categorical],

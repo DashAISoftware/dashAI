@@ -54,10 +54,10 @@ class OrdinalEncoderSchema(BaseSchema):
     )  # type: ignore
     handle_unknown: schema_field(
         enum_field(["error", "use_encoded_value"]),
-        # A session fits its converters on the training rows only, so a
-        # category seen only in validation, test or the rows to predict is
-        # the normal case, not an accident: it gets ``unknown_value``.
-        "use_encoded_value",
+        # Strict, as the notebook uses it: there it may be fitted on a subset
+        # of rows and applied to all of them, and what it writes is saved. A
+        # session treats an unseen category instead (``SESSION_PARAMS``).
+        "error",
         description=MultilingualString(
             en=(
                 "Whether to raise an error or use a specific encoded value when "
@@ -86,8 +86,7 @@ class OrdinalEncoderSchema(BaseSchema):
         # class `int` and was rejected. A user needs to type the sentinel
         # integer, so the int branch is a real number field now.
         none_type(union_type(int_field(), enum_field(["np.nan"]))),
-        # -1 and not nan: the output dtype is an integer one.
-        -1,
+        None,
         description=MultilingualString(
             en="The value to use for unknown categories.",
             es="El valor a usar para categorías desconocidas.",
@@ -172,6 +171,12 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
         'set "handle_unknown" to "use_encoded_value" to encode them as its '
         '"unknown_value"'
     )
+
+    # A session fits its converters on the training rows only, so a category
+    # seen only in validation, test or the rows to predict is the normal
+    # case, not an accident: it gets -1. Not nan: the output dtype is an
+    # integer one.
+    SESSION_PARAMS = {"handle_unknown": "use_encoded_value", "unknown_value": -1}
 
     metadata = {
         "allowed_types": [Categorical],
