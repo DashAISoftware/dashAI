@@ -2,10 +2,11 @@
 
 A session fits its converters on the training rows only, so a category that
 appears only in validation, in test or in the rows to predict reaches an
-encoder that never saw it. By default it is treated, never refitted: one-hot
-gives a row of zeros, ordinal and label give -1. A user who chose "error"
-keeps it, and gets a message that names the converter, the column and the
-values.
+encoder that never saw it. A session treats it by default, never refitting:
+one-hot gives a row of zeros, ordinal and label give -1. Those defaults are
+the session's own (``SESSION_PARAMS``): the encoders themselves stay strict,
+as the notebook uses them. A user who chose "error" keeps it, and gets a
+message that names the converter, the column and the values.
 """
 
 import pandas as pd
@@ -56,22 +57,41 @@ def _encoded(converter, values):
     return transformed[added].to_numpy().tolist()
 
 
-def _from_the_form(cls, **params):
-    """Built as the wizard builds it: every schema field, defaults included."""
+def _from_the_notebook(cls, **params):
+    """Built as the notebook builds it: every schema field, defaults included."""
     return cls(**{**schema_placeholder_defaults(cls), **params})
 
 
-@pytest.mark.parametrize("build", [OneHotEncoder, _from_the_form])
-def test_one_hot_gives_zeros_to_an_unseen_category_by_default(build):
-    converter = build(OneHotEncoder) if build is _from_the_form else build()
+def _from_the_wizard(cls, **params):
+    """Built as the session wizard builds it: the schema fields, with the
+    session's own defaults seeded over them."""
+    return cls(**{**schema_placeholder_defaults(cls), **cls.SESSION_PARAMS, **params})
+
+
+def _bare(cls, **params):
+    return cls(**params)
+
+
+@pytest.mark.parametrize("build", [_bare, _from_the_notebook])
+@pytest.mark.parametrize("cls", [OneHotEncoder, OrdinalEncoder])
+def test_an_encoder_refuses_an_unseen_category_by_default(cls, build):
+    converter = build(cls)
+    converter.fit(_scope(["a", "b", "a"]))
+
+    assert converter.raises_on_unseen()
+    with pytest.raises(ValueError, match="unknown categories"):
+        converter.transform(_scope(["a", "z"]))
+
+
+def test_one_hot_in_a_session_gives_zeros_to_an_unseen_category():
+    converter = _from_the_wizard(OneHotEncoder)
     converter.fit(_scope(["a", "b", "a"]))
 
     assert _encoded(converter, ["a", "z"]) == [[1, 0], [0, 0]]
 
 
-@pytest.mark.parametrize("build", [OrdinalEncoder, _from_the_form])
-def test_ordinal_gives_minus_one_to_an_unseen_category_by_default(build):
-    converter = build(OrdinalEncoder) if build is _from_the_form else build()
+def test_ordinal_in_a_session_gives_minus_one_to_an_unseen_category():
+    converter = _from_the_wizard(OrdinalEncoder)
     converter.fit(_scope(["a", "b", "a"]))
 
     assert _encoded(converter, ["a", "b", "z"]) == [[0], [1], [-1]]
@@ -85,8 +105,8 @@ def test_label_gives_minus_one_to_an_unseen_category():
 
 
 def test_ordinal_set_to_error_from_the_form_still_fits():
-    """The form sends the default unknown value along with "error"."""
-    converter = _from_the_form(OrdinalEncoder, handle_unknown="error")
+    """The session form sends its unknown value along with "error"."""
+    converter = _from_the_wizard(OrdinalEncoder, handle_unknown="error")
     converter.fit(_scope(["a", "b", "a"]))
 
     assert _encoded(converter, ["b", "a"]) == [[1], [0]]

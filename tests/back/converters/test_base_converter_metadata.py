@@ -284,3 +284,18 @@ def test_converter_metadata_keeps_declared_data_kinds():
 def test_converter_metadata_does_not_mutate_declared_data_kinds():
     _SharedKindsConverter.get_metadata()["data_kinds"].append("document")
     assert _SharedKindsConverter.metadata["data_kinds"] == ["dataset", "document"]
+
+
+def test_the_metadata_carries_the_session_defaults():
+    """The session wizard seeds its form with them; the notebook does not."""
+    from DashAI.back.converters.scikit_learn.one_hot_encoder import OneHotEncoder
+    from DashAI.back.converters.scikit_learn.ordinal_encoder import OrdinalEncoder
+
+    assert _EmptyMetaConverter.get_metadata()["session_params"] == {}
+    assert OneHotEncoder.get_metadata()["session_params"] == {
+        "handle_unknown": "ignore"
+    }
+    assert OrdinalEncoder.get_metadata()["session_params"] == {
+        "handle_unknown": "use_encoded_value",
+        "unknown_value": -1,
+    }
