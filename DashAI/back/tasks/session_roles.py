@@ -122,6 +122,64 @@ class SessionIO:
     raw_inputs: List[str] = field(default_factory=list)
 
 
+class TaskUnavailableError(Exception):
+    """A session's task cannot be built, so its columns cannot be read."""
+
+
+class TaskNotRegisteredError(TaskUnavailableError):
+    """No task of the session's name is registered (an uninstalled plugin)."""
+
+    def __init__(self, task_name: str):
+        super().__init__(f"Task {task_name} not found in the registry.")
+
+
+class TaskNotBuiltError(TaskUnavailableError):
+    """The task is registered, but its constructor raised (a broken plugin)."""
+
+    def __init__(self, task_name: str, cause: Exception):
+        super().__init__(f"Task {task_name} could not be built: {cause}")
+
+
+def session_task(task_name: str, component_registry: Any) -> "BaseTask":
+    """Build the task a session names: the one way to resolve it.
+
+    Only the task can read a session's roles, so every reader that needs
+    them goes through here, and a task that cannot be built is reported the
+    same way wherever it is met.
+
+    Raises
+    ------
+    TaskNotRegisteredError
+        When no task of that name is registered.
+    TaskNotBuiltError
+        When the task's constructor raised; the message gives its cause.
+    """
+    if task_name not in component_registry:
+        raise TaskNotRegisteredError(task_name)
+    try:
+        return component_registry[task_name]["class"]()
+    except Exception as e:
+        raise TaskNotBuiltError(task_name, e) from e
+
+
+def session_raw_columns(model_session: Any, io: SessionIO) -> List[str]:
+    """The dataset columns the session's model reads, through its preprocessing.
+
+    A session that preprocesses has among its inputs columns that only its
+    fitted converters produce, which no dataset has. What a dataset needs to
+    be predicted or explained on is what the fitted preprocessor reads
+    (``ConverterSequence.raw_columns_read``). Without steps, the inputs are
+    dataset columns themselves.
+    """
+    from DashAI.back.preprocessing.column_ref import ConverterSequence
+
+    preprocessing = model_session.preprocessing or {}
+    if not preprocessing.get("steps"):
+        return list(io.inputs)
+    sequence = ConverterSequence.model_validate(preprocessing)
+    return sequence.raw_columns_read(io.input_refs)
+
+
 def session_roles(model_session: Any, task: "BaseTask") -> SessionColumnRoles:
     """The roles a session stores.
 

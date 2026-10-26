@@ -57,7 +57,7 @@ export const updateModelSession = async ({
   formData,
 }: {
   id: string;
-  formData: { name?: string; dataset_id?: number; task_name?: string };
+  formData: { name?: string; task_name?: string };
 }): Promise<object> => {
   const response = await api.patch(`/v1/model-session/${id}`, null, {
     params: formData,

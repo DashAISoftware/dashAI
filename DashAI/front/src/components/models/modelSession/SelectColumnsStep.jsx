@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 
 import { Grid, Box, Alert, AlertTitle, Chip } from "@mui/material";
@@ -11,6 +11,7 @@ import { useTranslation, Trans } from "react-i18next";
 import {
   refToKey,
   buildStepDisplayNames,
+  dropStaleGroupRefs,
   stateToOptions,
 } from "./sessionColumnRefs";
 import usePreprocessingStructure from "./usePreprocessingStructure";
@@ -59,7 +60,7 @@ function SelectColumnsStep({
   const steps = newExp.preprocessing || [];
   const stage1 = newExp.column_roles_stage1 || {};
 
-  const { structure } = usePreprocessingStructure({
+  const { structure, error: structureError } = usePreprocessingStructure({
     datasetId: withPreprocessing ? dataset.id : undefined,
     taskName: newExp.task_name,
     columnRoles: stage1,
@@ -82,12 +83,18 @@ function SelectColumnsStep({
   const optionLabels = withPreprocessing ? finalOptions.optionLabels : {};
   const fixedRole = (role) => withPreprocessing && !role.transformable;
 
+  // A converter output is keyed by its step's position, so a pick made for
+  // another chain (the user went back and changed it) could silently point
+  // at a different converter's output: those picks are dropped.
   const [selectionState, setSelection] = useState(() =>
     Object.fromEntries(
-      Object.entries(newExp.column_roles || {}).map(([name, refs]) => [
-        name,
-        refs.map(refToKey),
-      ]),
+      Object.entries(
+        dropStaleGroupRefs(
+          newExp.column_roles || {},
+          newExp.column_roles_steps,
+          steps,
+        ),
+      ).map(([name, refs]) => [name, refs.map(refToKey)]),
     ),
   );
 
@@ -125,12 +132,19 @@ function SelectColumnsStep({
   // empty selection is not a user mistake, so no validation error (alert or
   // "Required") may show. useLayoutEffect cannot hide this gap, since it
   // cannot wait for a network response.
-  const awaitingStructure = withPreprocessing && !structure;
+  // When the structure cannot be estimated nothing can be checked, and the
+  // step says so instead of waiting for it forever.
+  const structureMissing = withPreprocessing && !structure;
+  const awaitingStructure = structureMissing && !structureError;
   const columnsReady =
-    roles.length > 0 && selectionReady(roles, selection) && !awaitingStructure;
-  const [columnsAreValid, setColumnsAreValid] = useState(false);
+    roles.length > 0 && selectionReady(roles, selection) && !structureMissing;
+  // The backend's answer, with the selection it was about. An answer only
+  // counts for the selection on screen, so a selection changed since, or an
+  // answer that arrives after a newer one, never enables Create.
+  const [validated, setValidated] = useState({ key: null, valid: false });
   const [validationError, setValidationError] = useState(null);
   const [validationPending, setValidationPending] = useState(true);
+  const latestValidation = useRef(null);
 
   useLayoutEffect(() => {
     // Without preprocessing, default the first time the dataset's columns
@@ -155,8 +169,11 @@ function SelectColumnsStep({
   }, [structure]);
 
   const selectionKey = JSON.stringify(selection);
+  const columnsAreValid =
+    columnsReady && validated.key === selectionKey && validated.valid;
 
-  const validateColumns = async () => {
+  const validateColumns = async (key) => {
+    const current = () => latestValidation.current === key;
     try {
       // With preprocessing, the backend types every transformable role from
       // the chain's estimated structure, the same one these options come from.
@@ -166,42 +183,49 @@ function SelectColumnsStep({
         selectionToRefs(selection),
         withPreprocessing ? steps : undefined,
       );
-      setColumnsAreValid(validation.dataset_status === "valid");
+      if (!current()) return;
+      setValidated({ key, valid: validation.dataset_status === "valid" });
       setValidationError(validation.error || null);
     } catch (error) {
+      if (!current()) return;
       enqueueSnackbar(t("experiments:error.errorFetchingColumnsValidation"));
       console.error("Error validating columns:", error);
-      setColumnsAreValid(false);
+      setValidated({ key, valid: false });
     } finally {
-      setValidationPending(false);
+      if (current()) setValidationPending(false);
     }
   };
 
   useLayoutEffect(() => {
+    latestValidation.current = null;
     if (awaitingStructure) {
       // A pending check, not an invalid selection (see awaitingStructure).
-      setColumnsAreValid(false);
       setValidationPending(true);
       return;
     }
     if (!columnsReady) {
-      setColumnsAreValid(false);
       setValidationError(null);
       setValidationPending(false);
       return;
     }
+    latestValidation.current = selectionKey;
     setValidationPending(true);
-    validateColumns();
+    validateColumns(selectionKey);
   }, [columnsReady, awaitingStructure, selectionKey]);
 
   useEffect(() => {
-    if (columnsAreValid && columnsReady) {
-      setNewExp({ ...newExp, column_roles: selectionToRefs(selection) });
+    if (columnsAreValid) {
+      setNewExp({
+        ...newExp,
+        column_roles: selectionToRefs(selection),
+        // The chain these picks were made for (see dropStaleGroupRefs).
+        column_roles_steps: steps,
+      });
       setNextEnabled(true);
     } else {
       setNextEnabled(false);
     }
-  }, [columnsAreValid, columnsReady, selectionKey]);
+  }, [columnsAreValid, selectionKey]);
 
   useEffect(() => {
     // Only needed to name the steps in the option labels, disambiguating two
@@ -277,7 +301,12 @@ function SelectColumnsStep({
 
   return (
     <React.Fragment>
-      {roles.length > 0 && !validationPending && (
+      {structureMissing && structureError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {t("models:structure.loadError")}
+        </Alert>
+      )}
+      {roles.length > 0 && !validationPending && !structureMissing && (
         <Alert
           severity={columnsAreValid ? "success" : "error"}
           sx={{

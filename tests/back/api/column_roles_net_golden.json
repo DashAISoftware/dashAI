@@ -2892,7 +2892,7 @@
    ]
   },
   "schema_metadata": {
-   "dashai_types": "{\"SepalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"SepalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"PetalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"Species\": {\"type\": \"Text\", \"encoding\": \"utf-8\", \"dtype\": \"string\"}, \"PetalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}}"
+   "dashai_types": "{\"SepalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"SepalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"PetalLengthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"Species\": {\"type\": \"Categorical\", \"dtype\": \"string\", \"encoder\": \"one_hot\", \"categories\": [\"Iris-setosa\", \"Iris-versicolor\", \"Iris-virginica\"], \"num_categories\": 3, \"converted\": false}, \"PetalWidthCm\": {\"type\": \"Float\", \"dtype\": \"float64\"}}"
   },
   "types": {
    "PetalLengthCm": {
@@ -2912,9 +2912,16 @@
     "type": "Float"
    },
    "Species": {
+    "categories": [
+     "Iris-setosa",
+     "Iris-versicolor",
+     "Iris-virginica"
+    ],
+    "converted": false,
     "dtype": "string",
-    "encoding": "utf-8",
-    "type": "Text"
+    "encoder": "one_hot",
+    "num_categories": 3,
+    "type": "Categorical"
    }
   }
  },

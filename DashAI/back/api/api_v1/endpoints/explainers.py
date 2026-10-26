@@ -13,6 +13,7 @@ from DashAI.back.api.api_v1.schemas.explainers_params import (
     ValidateDatasetParams,
     ValidDatasetsParams,
 )
+from DashAI.back.api.utils import task_or_http_error
 from DashAI.back.core.artifacts import (
     Artifact,
     ArtifactGroup,
@@ -29,7 +30,11 @@ from DashAI.back.dependencies.database.models import (
     Run,
 )
 from DashAI.back.splitters.splits_payload import run_splits
-from DashAI.back.tasks.session_roles import SessionIO, session_io
+from DashAI.back.tasks.session_roles import (
+    SessionIO,
+    session_io,
+    session_raw_columns,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -981,22 +986,19 @@ async def update_explainer() -> None:
     )
 
 
-def _session_columns(model_session: ModelSession) -> SessionIO:
+def _session_columns(
+    model_session: ModelSession, component_registry: "ComponentRegistry"
+) -> SessionIO:
     """The session's columns as the model's inputs and outputs.
 
     Raises
     ------
     HTTPException
-        404 when the session's task is not registered: its columns are stored
-        by role, and only the task can say which feed the model.
+        404 when the session's task is not registered, 500 when it cannot be
+        built (``task_or_http_error``): its columns are stored by role, and
+        only the task can say which feed the model.
     """
-    try:
-        task = di["component_registry"][model_session.task_name]["class"]()
-    except KeyError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Task {model_session.task_name} not found in the registry",
-        ) from e
+    task = task_or_http_error(model_session.task_name, component_registry)
     return session_io(model_session, task)
 
 
@@ -1005,6 +1007,7 @@ def _session_columns(model_session: ModelSession) -> SessionIO:
 async def validate_dataset(
     params: ValidateDatasetParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 
@@ -1045,10 +1048,10 @@ async def validate_dataset(
             ) from e
 
     validation_response = {}
-    io = _session_columns(model_session)
-    input_columns = io.inputs
-    output_columns = io.outputs
-    required_columns = input_columns + output_columns
+    io = _session_columns(model_session, component_registry)
+    # What the fitted preprocessor reads, not the columns it produces: those
+    # are in no dataset.
+    required_columns = session_raw_columns(model_session, io) + io.outputs
 
     instances_columns = list(instances.features)
 
@@ -1164,6 +1167,7 @@ async def get_explainable_splits(
 async def valid_datasets(
     params: ValidDatasetsParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """Return the ids of every dataset that can be explained by a run's model.
 
@@ -1207,8 +1211,8 @@ async def valid_datasets(
                 detail="Internal database error",
             ) from e
 
-    io = _session_columns(model_session)
-    required_columns = io.inputs + io.outputs
+    io = _session_columns(model_session, component_registry)
+    required_columns = session_raw_columns(model_session, io) + io.outputs
 
     training_types = {}
     if training_dataset:

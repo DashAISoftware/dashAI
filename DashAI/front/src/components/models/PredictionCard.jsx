@@ -16,6 +16,7 @@ import {
 import { deletePrediction } from "../../api/predict";
 import { useSnackbar } from "notistack";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
+import UnseenCategoriesAlert from "../predictions/UnseenCategoriesAlert";
 import {
   getDatasetFile,
   getDatasetFileFiltered,
@@ -197,6 +198,7 @@ export default function PredictionCard({
         {/* Results */}
         {isFinished && (
           <Box sx={{ mt: 4 }}>
+            <UnseenCategoriesAlert unseen={prediction.unseen_categories} />
             <DatasetTable
               fetchPage={fetchPage}
               initialPageSize={5}
@@ -247,6 +249,7 @@ PredictionCard.propTypes = {
       name: PropTypes.string,
     }),
     results_path: PropTypes.string,
+    unseen_categories: PropTypes.arrayOf(PropTypes.object),
   }).isRequired,
   onDelete: PropTypes.func,
   onUpdate: PropTypes.func,

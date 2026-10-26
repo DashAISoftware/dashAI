@@ -11,6 +11,29 @@
  * @returns {string} A human-readable reason, or the fallback.
  */
 export function getApiErrorMessage(error, fallback = "") {
+  const detail = getApiDetail(error);
+  if (detail) return detail;
+
+  if (typeof error?.message === "string" && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
+/**
+ * Only what the backend said with a failed request, or the fallback.
+ *
+ * Unlike getApiErrorMessage, a request that got no answer from the backend
+ * (a network error) gives the fallback, not axios's own "Network Error" or
+ * "Request failed with status code 500": for a caller with a translated
+ * message of its own, that is the better thing to show.
+ *
+ * @param {unknown} error - The rejected value, typically an axios error.
+ * @param {string} [fallback=""] - Returned when the backend said nothing.
+ * @returns {string} The backend's reason, or the fallback.
+ */
+export function getApiDetail(error, fallback = "") {
   const detail = error?.response?.data?.detail;
 
   if (typeof detail === "string" && detail.trim()) return detail;
@@ -27,10 +50,6 @@ export function getApiErrorMessage(error, fallback = "") {
         .filter((msg) => typeof msg === "string" && msg.trim());
       if (messages.length) return messages.join("; ");
     }
-  }
-
-  if (typeof error?.message === "string" && error.message.trim()) {
-    return error.message;
   }
 
   return fallback;

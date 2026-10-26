@@ -26,6 +26,11 @@ import { useTranslation } from "react-i18next";
  *
  * The first role the preprocessing may transform and the first protected
  * one carry the tour anchors the input and output selectors used to.
+ *
+ * A role's maximum is held by the selector, never by trimming a pick: a role
+ * that takes one column is a single selector, where picking another replaces
+ * it in sight; one that takes a few disables the other options once it has
+ * them.
  */
 function RoleColumnSelectors({
   roles,
@@ -78,20 +83,26 @@ function RoleColumnSelectors({
     );
   };
 
-  const renderTags = (value, getTagProps) =>
-    value.map((option, index) => {
-      const { key, ...tagProps } = getTagProps({ index });
-      const chip = typeChip(option, true);
-      const label = chip ? (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <span>{getOptionLabel(option)}</span>
-          {chip}
-        </Box>
-      ) : (
-        getOptionLabel(option)
-      );
-      return <Chip key={key} label={label} {...tagProps} />;
-    });
+  const valueChip = (option, itemProps) => {
+    const { key, ...chipProps } = itemProps;
+    const chip = typeChip(option, true);
+    const label = chip ? (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <span>{getOptionLabel(option)}</span>
+        {chip}
+      </Box>
+    ) : (
+      getOptionLabel(option)
+    );
+    return <Chip key={key} label={label} {...chipProps} />;
+  };
+
+  // A single selector would show its column as plain text in the input, so
+  // it gets the same chip, with the type, as each column of a multiple one.
+  const renderValue = (value, getItemProps) =>
+    Array.isArray(value)
+      ? value.map((option, index) => valueChip(option, getItemProps({ index })))
+      : valueChip(value, getItemProps());
 
   const shown = roles.filter((role) => role.max !== 0);
   const firstTransformable = shown.find((role) => role.transformable)?.name;
@@ -125,20 +136,32 @@ function RoleColumnSelectors({
 
       {shown.map((role) => {
         const options = optionsFor(role);
+        const picked = selection[role.name] || [];
+        const single = role.max === 1;
+        const full = typeof role.max === "number" && picked.length >= role.max;
         return (
           <Autocomplete
             key={role.name}
             data-tour={tourAnchor(role)}
-            multiple
+            multiple={!single}
             id={`dataset-role-${role.name}-autocomplete`}
             options={options}
-            value={selection[role.name] || []}
-            onChange={(event, newValue) => onChange(role.name, newValue)}
+            value={single ? (picked[0] ?? null) : picked}
+            onChange={(event, newValue) => {
+              if (!single) {
+                onChange(role.name, newValue);
+              } else {
+                onChange(role.name, newValue == null ? [] : [newValue]);
+              }
+            }}
             getOptionLabel={getOptionLabel}
+            getOptionDisabled={(option) =>
+              !single && full && !picked.includes(option)
+            }
             renderOption={renderColumnOption}
-            renderTags={renderTags}
+            renderValue={renderValue}
             filterSelectedOptions
-            disableCloseOnSelect={role.max !== 1}
+            disableCloseOnSelect={!single}
             fullWidth
             renderInput={(params) => (
               <TextField

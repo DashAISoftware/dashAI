@@ -143,15 +143,45 @@ describe("sessionColumns", () => {
         columns: ["Species"],
       },
     },
+    preprocessing: {
+      steps: [
+        {
+          converter: "Binarizer",
+          params: {},
+          scope: [{ kind: "raw", name: "SepalLengthCm" }],
+        },
+      ],
+    },
   };
 
   test("reads the model's inputs and outputs through the task's io_roles", () => {
     expect(sessionColumns(session, SUPERVISED)).toEqual({
       inputs: ["SepalWidthCm", "bin_SepalLengthCm"],
       inputRefs: session.column_roles.features.refs,
+      rawInputs: ["SepalWidthCm", "SepalLengthCm"],
       outputs: ["Species"],
       target: "Species",
     });
+  });
+
+  test("with steps, the dataset columns are what the steps read, as in the backend", () => {
+    // session_raw_columns decides by the steps, not by the refs: refs are
+    // the only source of truth, and a role with columns but no refs feeds
+    // the model nothing the backend would ask a dataset for.
+    const withoutRefs = {
+      ...session,
+      column_roles: {
+        ...session.column_roles,
+        features: {
+          refs: [],
+          columns: ["SepalWidthCm", "bin_SepalLengthCm"],
+        },
+      },
+    };
+
+    expect(sessionColumns(withoutRefs, SUPERVISED).rawInputs).toEqual([
+      "SepalLengthCm",
+    ]);
   });
 
   test("a session without a target has no target column", () => {
@@ -162,6 +192,7 @@ describe("sessionColumns", () => {
     expect(sessionColumns(clustering, SUPERVISED)).toEqual({
       inputs: ["hours", "score"],
       inputRefs: [],
+      rawInputs: ["hours", "score"],
       outputs: [],
       target: undefined,
     });
@@ -171,6 +202,7 @@ describe("sessionColumns", () => {
     expect(sessionColumns(session, {})).toEqual({
       inputs: [],
       inputRefs: [],
+      rawInputs: [],
       outputs: [],
       target: undefined,
     });

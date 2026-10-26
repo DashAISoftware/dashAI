@@ -5,7 +5,7 @@
  * feed a model's inputs and which its outputs (`metadata.io_roles`); this
  * module only reads those declarations and never names a role itself.
  */
-import { keyToRef } from "./sessionColumnRefs";
+import { keyToRef, rawColumnsNeededFor } from "./sessionColumnRefs";
 
 /** Raw column refs for original column names. */
 export const rawRefs = (names = []) =>
@@ -155,19 +155,32 @@ export function selectionToRefs(selection) {
  *
  * @param {object} session a model session, with `column_roles`
  * @param {object} taskMetadata the session's task metadata, with `io_roles`
- * @returns {{inputs: string[], inputRefs: Array, outputs: string[],
- *   target: string|undefined}} the input columns (resolved after the
- *   preprocessing), the input refs, the output columns and the first of them
+ * @returns {{inputs: string[], inputRefs: Array, rawInputs: string[],
+ *   outputs: string[], target: string|undefined}} the input columns
+ *   (resolved after the preprocessing), the input refs, the dataset columns
+ *   the inputs are computed from (what a hand-typed row has to carry), the
+ *   output columns and the first of them
  */
 export function sessionColumns(session, taskMetadata) {
   const roles = session?.column_roles || {};
   const sides = taskMetadata?.io_roles || { inputs: [], outputs: [] };
   const gather = (names, key) =>
     names.flatMap((name) => roles[name]?.[key] || []);
+  const inputs = gather(sides.inputs, "columns");
+  const inputRefs = gather(sides.inputs, "refs");
   const outputs = gather(sides.outputs, "columns");
+  const steps = session?.preprocessing?.steps || [];
   return {
-    inputs: gather(sides.inputs, "columns"),
-    inputRefs: gather(sides.inputs, "refs"),
+    inputs,
+    inputRefs,
+    // A converter's output (e.g. "bin_SepalLengthCm") is in no dataset: the
+    // backend takes the raw values and runs its fitted preprocessor itself.
+    // Decided as the backend's session_raw_columns does: by the steps.
+    // Without a task declaration nothing is read.
+    rawInputs:
+      steps.length > 0 && taskMetadata?.io_roles
+        ? rawColumnsNeededFor(inputRefs, steps)
+        : inputs,
     outputs,
     target: outputs[0],
   };

@@ -68,6 +68,62 @@ RUN_FIELDS = (
     "split_indexes",
     "artifacts",
 )
+# Encoders whose stored steps meant sklearn's "error" when they left
+# ``handle_unknown`` out, before sessions treated a category unseen in fit by
+# default. A file always says which one a step uses (``with_session_params``),
+# so importing a step without it reads it as one written before the change.
+# The label encoder is not here: an old one encodes an unseen label as -1, as
+# its pickles do.
+UNKNOWN_HANDLING_ENCODERS = ("OneHotEncoder", "OrdinalEncoder")
+
+
+def with_unknown_handling(
+    preprocessing: Optional[Dict[str, Any]], value_for: Any
+) -> Optional[Dict[str, Any]]:
+    """A copy of the steps with ``handle_unknown`` written into the encoders.
+
+    Only the encoder steps that leave it out are filled, with
+    ``value_for(converter_name)``. ``steps`` and ``params`` may be null, as an
+    imported file stores them; they mean no steps and no params.
+    """
+    if not preprocessing:
+        return preprocessing
+    steps = []
+    for step in preprocessing.get("steps") or []:
+        params = dict(step.get("params") or {})
+        if (
+            step.get("converter") in UNKNOWN_HANDLING_ENCODERS
+            and "handle_unknown" not in params
+        ):
+            params["handle_unknown"] = value_for(step["converter"])
+            step = {**step, "params": params}
+        steps.append(step)
+    return {**preprocessing, "steps": steps}
+
+
+def with_session_params(
+    preprocessing: Optional[Dict[str, Any]], component_registry: Any
+) -> Optional[Dict[str, Any]]:
+    """A copy of the steps with the session defaults they leave out written in.
+
+    A step runs with its converter's ``session_params``, so the file writes
+    them down: it then runs the same wherever it is imported, whatever the
+    session defaults are there. A converter that is not registered is left
+    as it is. ``steps`` and ``params`` may be null, as an imported file
+    stores them; they mean no steps and no params.
+    """
+    if not preprocessing:
+        return preprocessing
+    steps = []
+    for step in preprocessing.get("steps") or []:
+        converter = step.get("converter")
+        if isinstance(converter, str) and converter in component_registry:
+            params = step.get("params") or {}
+            filled = component_registry[converter]["class"].session_params(params)
+            if filled != params:
+                step = {**step, "params": filled}
+        steps.append(step)
+    return {**preprocessing, "steps": steps}
 
 
 class SessionNotFoundError(ModelPackageError):
@@ -266,6 +322,12 @@ def build_session_package(
         dataset_dir = Path(dataset.file_path) / DATASET_ENTRY
         artifacts_path = session.preprocessing_artifacts_path
         recipe_session = {field: getattr(session, field) for field in SESSION_FIELDS}
+        # A step left without a session default runs with it, and the file
+        # writes it down: importing reads an encoder without handle_unknown
+        # as one from before that default changed.
+        recipe_session["preprocessing"] = with_session_params(
+            recipe_session["preprocessing"], component_registry
+        )
         recipe_dataset = {
             "name": dataset.name,
             "total_rows": dataset.total_rows,

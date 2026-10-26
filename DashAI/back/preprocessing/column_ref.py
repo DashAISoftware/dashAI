@@ -8,7 +8,7 @@ any fit has happened — the concrete names only exist once the
 PreprocessingJob has fit the sequence (see session_preprocessor.py).
 """
 
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Sequence, Union
 
 from pydantic import BaseModel, Field, TypeAdapter, model_validator
 from typing_extensions import Annotated
@@ -59,6 +59,51 @@ class ConverterStep(BaseModel):
 
 class ConverterSequence(BaseModel):
     steps: List[ConverterStep] = Field(default_factory=list)
+
+    def raw_columns_read(
+        self, input_refs: Sequence[Union[RawColumnRef, GroupColumnRef]] = ()
+    ) -> List[str]:
+        """The dataset columns read by a model fed through this sequence.
+
+        These are the columns a dataset needs to be predicted or explained
+        on: the raw columns among ``input_refs``, which the model reads
+        directly, and the raw columns in the scope of every step, which the
+        fitted sequence reads even when no input comes from that step. A
+        group ref is walked back to its step's scope first, so the columns
+        come in the order the inputs name them.
+
+        It is the one definition of what the fitted sequence reads:
+        ``SessionPreprocessor.transform_only`` checks its rows against it,
+        and the endpoints that decide which datasets fit a session use it.
+        The front mirrors it in ``rawColumnsNeededFor``, and both run the
+        cases in ``__fixtures__/rawColumnsCases.json``.
+
+        Parameters
+        ----------
+        input_refs : list of ColumnRef, optional
+            The model's inputs. Without them, only what the steps read.
+
+        Returns
+        -------
+        list of str
+            Raw column names, each once.
+        """
+        names: List[str] = []
+
+        def visit(ref) -> None:
+            if ref.kind == "raw":
+                if ref.name not in names:
+                    names.append(ref.name)
+            elif 0 <= ref.step < len(self.steps):
+                for scope_ref in self.steps[ref.step].scope:
+                    visit(scope_ref)
+
+        for ref in input_refs:
+            visit(ref)
+        for step in self.steps:
+            for ref in step.scope:
+                visit(ref)
+        return names
 
     def validate_scopes(self) -> None:
         """Raise ValueError if any step's scope references itself or a later step.

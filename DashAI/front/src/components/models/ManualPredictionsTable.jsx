@@ -25,6 +25,9 @@ import { useSnackbar } from "notistack";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import InputField from "../predictions/InputField";
+import UnseenCategoriesAlert, {
+  mergeUnseen,
+} from "../predictions/UnseenCategoriesAlert";
 import {
   getDatasetFile,
   getDatasetTypesByFilePath,
@@ -38,7 +41,6 @@ import {
 } from "../../api/predict";
 import { enqueuePredictionJob } from "../../api/job";
 import { getModelSessionById } from "../../api/modelSession";
-import { rawColumnsNeededFor } from "./modelSession/sessionColumnRefs";
 import { startJobPolling } from "../../utils/jobPoller";
 import {
   getTargetDecimals,
@@ -254,12 +256,10 @@ export default function ManualPredictionsTable({
   // "pca_1". A session with no preprocessing has input refs already
   // wrapping its input columns 1:1, so this resolves to the same thing then.
   const sessionInputs = useSessionColumns(modelSession);
-  const inputColumns = useMemo(() => {
-    if (!modelSession || !sessionInputs) return EMPTY_ARRAY;
-    const refs = sessionInputs.inputRefs;
-    if (!refs || refs.length === 0) return sessionInputs.inputs;
-    return rawColumnsNeededFor(refs, modelSession.preprocessing?.steps || []);
-  }, [modelSession, sessionInputs]);
+  const inputColumns = useMemo(
+    () => sessionInputs?.rawInputs ?? EMPTY_ARRAY,
+    [sessionInputs],
+  );
 
   const createEmptyRow = useCallback(() => {
     if (!inputSample || inputColumns.length === 0) return {};
@@ -633,6 +633,7 @@ export default function ManualPredictionsTable({
 
   return (
     <Box>
+      <UnseenCategoriesAlert unseen={mergeUnseen(finishedPredictions)} />
       <DatasetTable
         fetchPage={fetchPage}
         initialPageSize={25}

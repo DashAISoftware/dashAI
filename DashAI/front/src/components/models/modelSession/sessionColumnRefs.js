@@ -187,14 +187,58 @@ export function buildStepDisplayNames(steps, convertersMeta = {}) {
 }
 
 /**
- * Every RAW dataset column name needed to compute a list of ColumnRef,
- * walking group refs back to their step's own scope recursively (a group
- * ref's step may itself reference an earlier group, chained arbitrarily
- * deep). This is what a caller must actually supply values for, e.g.
+ * Drop the converter outputs picked for a chain that has changed since.
+ *
+ * A group ref names its step by position, so after the chain changes the
+ * same ref can point at a different converter's output: delete the one-hot
+ * encoder at step 0, add a PCA, and "__group__0" is now the PCA output. The
+ * picks were made for `pickedWith`; every group ref to its first changed
+ * step or a later one is dropped. Raw refs, and picks made for an unknown
+ * chain, are kept as they are.
+ *
+ * @param {Object<string, Array>} columnRoles role name to its column refs
+ * @param {Array|undefined} pickedWith the steps the refs were picked for
+ * @param {Array} steps the current steps
+ * @returns {Object<string, Array>} the roles without the stale group refs
+ */
+export function dropStaleGroupRefs(columnRoles, pickedWith, steps) {
+  if (!pickedWith) return columnRoles;
+  const comparable = (step) =>
+    JSON.stringify({
+      converter: step?.converter,
+      params: step?.params,
+      scope: step?.scope,
+    });
+  const current = steps || [];
+  let unchanged = 0;
+  while (
+    unchanged < Math.min(pickedWith.length, current.length) &&
+    comparable(pickedWith[unchanged]) === comparable(current[unchanged])
+  ) {
+    unchanged += 1;
+  }
+  return Object.fromEntries(
+    Object.entries(columnRoles).map(([name, refs]) => [
+      name,
+      refs.filter((ref) => ref.kind !== "group" || ref.step < unchanged),
+    ]),
+  );
+}
+
+/**
+ * Every RAW dataset column name a model fed through these steps reads:
+ * the raw refs among `refs`, with group refs walked back to their step's
+ * own scope recursively (a group ref's step may itself reference an
+ * earlier group, chained arbitrarily deep), and then the raw scope of every
+ * step, since the fitted sequence runs all of them even when no input comes
+ * from one. This is what a caller must actually supply values for, e.g.
  * manual prediction, where the backend only ever accepts real dataset
  * columns as input (see BaseTask.process_manual_input), never a
  * converter's resolved output name like "pca_1": it runs the raw values
  * through the session's persisted preprocessor itself before predicting.
+ *
+ * Mirrors the backend's ConverterSequence.raw_columns_read; both run the
+ * cases in __fixtures__/rawColumnsCases.json.
  */
 export function rawColumnsNeededFor(refs, steps) {
   const needed = [];
@@ -212,5 +256,6 @@ export function rawColumnsNeededFor(refs, steps) {
     (step.scope || []).forEach(visit);
   };
   (refs || []).forEach(visit);
+  (steps || []).forEach((step) => (step.scope || []).forEach(visit));
   return needed;
 }

@@ -27,9 +27,16 @@ from DashAI.back.dependencies.database.models import (
     Run,
 )
 from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.job.predict_job import (
+    _input_columns_training_prepared_with,
+    _preprocessing_artifacts_path,
+)
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.splitters.splits_payload import predictable_splits, run_split_indexes
 from DashAI.back.tasks.session_roles import session_io
+from DashAI.back.units.apply_session_preprocessing_unit import (
+    ApplySessionPreprocessingUnit,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -175,15 +182,36 @@ class ReportJob(BaseJob):
             return None
         return [str(label) for label in classes]
 
+    @staticmethod
+    def _partition_rows(rows, partition, preprocessor):
+        """A partition's rows as training measured the model on them.
+
+        Through the session's fitted preprocessor under a key that is neither
+        "train" nor "predict", as ``transform_by_split`` does for explainers:
+        a step that removes rows from every partition (NanRemover) removes
+        them here, as it did before training measured the partition, and no
+        rows are resampled in. A prediction keeps every row instead, which a
+        report cannot: training never scored the rows it removed. The target
+        travels through the chain with the inputs, so both are read from the
+        result and stay aligned.
+        """
+        if preprocessor is None:
+            return rows
+        key = f"report_{partition}"
+        return preprocessor.transform_only({key: rows})[key]
+
     @inject
     def run(self) -> None:
         """Compute and persist the report's artifacts.
 
         The dataset is prepared once over every row and then indexed per
         partition, because the row indexes a splitter reports are indexes into
-        the dataset as stored. Inputs reach the model unprepared, exactly as
-        the prediction job feeds them, since the model applies its own
-        preprocessing; targets are encoded so they line up with the class
+        the dataset the task prepared. It is prepared as training prepared it:
+        with the raw refs when the session preprocesses, since its other
+        inputs only exist once its converters run. Each partition then goes
+        through the session's fitted preprocessor as training measured it
+        (``_partition_rows``), and the model applies its own encoding inside
+        ``predict``; targets are encoded so they line up with the class
         indexes the model predicts.
 
         A partition that the report cannot describe, such as one holding a
@@ -207,10 +235,7 @@ class ReportJob(BaseJob):
             TextArtifact,
             normalize_artifacts,
         )
-        from DashAI.back.dataloaders.classes.dashai_dataset import (
-            load_dataset,
-            select_columns,
-        )
+        from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
         from DashAI.back.reports.base_report import ReportError
         from DashAI.back.tasks.base_task import BaseTask
 
@@ -298,6 +323,16 @@ class ReportJob(BaseJob):
                     log.exception(e)
                     raise JobError(str(e)) from e
 
+                preprocessing_artifacts_path = _preprocessing_artifacts_path(
+                    model_session
+                )
+                preprocessor = (
+                    ApplySessionPreprocessingUnit._load_final_preprocessor(
+                        preprocessing_artifacts_path
+                    )
+                    if preprocessing_artifacts_path
+                    else None
+                )
                 try:
                     loaded_dataset = load_dataset(f"{dataset.file_path}/dataset")
                     task: BaseTask = component_registry[model_session.task_name][
@@ -306,11 +341,10 @@ class ReportJob(BaseJob):
                     io = session_io(model_session, task)
                     prepared_dataset = task.prepare_for_task(
                         dataset=loaded_dataset,
-                        input_columns=io.inputs,
+                        input_columns=_input_columns_training_prepared_with(
+                            model_session, io
+                        ),
                         output_columns=io.outputs,
-                    )
-                    data_x, data_y = select_columns(
-                        prepared_dataset, io.inputs, io.outputs
                     )
                 except Exception as e:
                     log.exception(e)
@@ -325,15 +359,19 @@ class ReportJob(BaseJob):
                 last_error = None
 
                 for partition, row_indexes in partition_indexes.items():
-                    partition_x = (
-                        data_x if row_indexes is None else data_x.select(row_indexes)
+                    rows = (
+                        prepared_dataset
+                        if row_indexes is None
+                        else prepared_dataset.select(row_indexes)
                     )
-                    partition_y = (
-                        data_y if row_indexes is None else data_y.select(row_indexes)
-                    )
-                    if partition_x.num_rows == 0:
+                    if rows.num_rows == 0:
                         continue
                     try:
+                        rows = self._partition_rows(rows, partition, preprocessor)
+                        if rows.num_rows == 0:
+                            continue
+                        partition_x = rows.select_columns(io.inputs)
+                        partition_y = rows.select_columns(io.outputs)
                         y_pred = trained_model.predict(partition_x)
                         y_true = (
                             trained_model.prepare_output(partition_y, is_fit=False)

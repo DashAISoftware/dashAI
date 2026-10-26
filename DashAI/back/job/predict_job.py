@@ -10,7 +10,13 @@ from sqlalchemy import exc
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.splitters.splits_payload import run_split_indexes
-from DashAI.back.tasks.session_roles import SessionIO, session_io
+from DashAI.back.tasks.session_roles import (
+    SessionIO,
+    TaskUnavailableError,
+    session_io,
+    session_raw_columns,
+    session_task,
+)
 from DashAI.back.units.apply_session_preprocessing_unit import (
     ApplySessionPreprocessingUnit,
 )
@@ -53,19 +59,38 @@ def _preprocessing_artifacts_path(model_session: ModelSession) -> Optional[str]:
     return artifacts_path
 
 
-def _session_columns(model_session: ModelSession) -> Optional[SessionIO]:
-    """The session's columns as the model's inputs and outputs, or None.
+def _session_columns(
+    model_session: ModelSession,
+) -> Tuple[Optional[SessionIO], Optional[str]]:
+    """The session's columns as the model's inputs and outputs, or why not.
 
     The session stores its columns by role and its task translates them, so a
-    session whose task is not registered cannot be read. None is returned
-    then, and the caller reports the missing task where it always has: when
-    the prediction unit resolves it, ahead of the model.
+    session whose task cannot be built cannot be read. ``(None, reason)`` is
+    returned then, with the text ``session_task`` gives (not registered, or
+    its constructor raised), and the caller reports it where it always has:
+    when the prediction unit would resolve the task, ahead of the model.
     """
     try:
-        task = di["component_registry"][model_session.task_name]["class"]()
-    except Exception:
-        return None
-    return session_io(model_session, task)
+        task = session_task(model_session.task_name, di["component_registry"])
+    except TaskUnavailableError as e:
+        return None, str(e)
+    return session_io(model_session, task), None
+
+
+def _no_outputs_problem(model_session: ModelSession) -> str:
+    """Why a session with no output columns cannot predict.
+
+    A task that declares no output role (clustering) does not predict at all,
+    so the message says that rather than blaming the session's configuration.
+    Called only once the task has been built, so it is registered.
+    """
+    task_class = di["component_registry"][model_session.task_name]["class"]
+    if not task_class.io_roles()["outputs"]:
+        return (
+            f"{model_session.task_name} does not predict: it declares no "
+            "output columns."
+        )
+    return "Model session has no output columns configured"
 
 
 def _input_columns_training_prepared_with(
@@ -82,6 +107,20 @@ def _input_columns_training_prepared_with(
     if not (model_session.preprocessing and model_session.preprocessing.get("steps")):
         return io.inputs
     return io.raw_inputs
+
+
+def _unseen_categories(ctx: ExecutionContext, input_columns: List[str]) -> List[dict]:
+    """The categories of the rows just predicted that training never saw.
+
+    Two encoders may have treated them: the session's, whose records
+    ``ApplySessionPreprocessingUnit`` publishes, and the model's own, which
+    the model reports for the columns it reads.
+    """
+    unseen = list(ctx.require("unseen_categories"))
+    reader = getattr(ctx.require("model"), "unseen_categories", None)
+    if reader is not None:
+        unseen.extend(reader(ctx.require("model_input").select_columns(input_columns)))
+    return unseen
 
 
 def _build_preview_rows(
@@ -123,6 +162,7 @@ def run_manual_prediction(
     run_id: int,
     manual_input_data: List[Dict],
     session_factory: "sessionmaker",
+    unseen: Optional[List[dict]] = None,
 ) -> Tuple[List[str], List[List]]:
     """Execute a manual prediction synchronously without persisting results.
 
@@ -147,6 +187,9 @@ def run_manual_prediction(
         must be the container's: the units resolve ``session_factory`` and
         ``component_registry`` from the DI container themselves, so a different
         one passed here would leave the two halves reading different databases.
+    unseen : list, optional
+        When given, the categories of the rows that training never saw are
+        appended to it, one ``unseen_record`` per encoder and column.
 
     Returns
     -------
@@ -187,7 +230,7 @@ def run_manual_prediction(
 
         # Without its task the session's roles cannot be read; the missing
         # task is reported below, where the units resolve it.
-        io = _session_columns(model_session)
+        io, task_problem = _session_columns(model_session)
 
         if io is not None and not io.inputs:
             raise HTTPException(
@@ -198,7 +241,7 @@ def run_manual_prediction(
         if io is not None and not io.outputs:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Model session has no output columns configured",
+                detail=_no_outputs_problem(model_session),
             )
 
         task_name = model_session.task_name
@@ -213,7 +256,7 @@ def run_manual_prediction(
     if io is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Task {task_name} not found in the registry",
+            detail=task_problem,
         )
     input_columns = list(io.inputs)
     output_columns = list(io.outputs)
@@ -281,6 +324,8 @@ def run_manual_prediction(
             # exactly the kind of derived value that must not cross a unit
             # boundary, since anything upstream may reshape it.
             prepared_dataset = ctx.require("model_input").select_columns(input_columns)
+            if unseen is not None:
+                unseen.extend(_unseen_categories(ctx, input_columns))
         except (ValueError, TypeError) as e:
             logging.exception("Manual prediction input error: %s", e)
             raise HTTPException(
@@ -427,7 +472,7 @@ class PredictJob(BaseJob):
                 # Without its task the session's roles cannot be read; the
                 # missing task is reported below, where the prediction unit
                 # resolves it.
-                io = _session_columns(model_session)
+                io, task_problem = _session_columns(model_session)
 
                 if io is not None and not io.inputs:
                     prediction.set_status_as_error()
@@ -440,10 +485,9 @@ class PredictJob(BaseJob):
                 if io is not None and not io.outputs:
                     prediction.set_status_as_error()
                     db.commit()
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail="Model session has no output columns configured",
-                    )
+                    # JobError, not HTTPException: this runs in the Huey
+                    # worker, where an HTTPException does not survive dill.
+                    raise JobError(_no_outputs_problem(model_session))
 
             except exc.SQLAlchemyError as e:
                 log.exception(e)
@@ -459,9 +503,7 @@ class PredictJob(BaseJob):
             # unit ahead of the status change.
             try:
                 if io is None:
-                    raise JobError(
-                        f"Task {model_session.task_name} not found in the registry"
-                    )
+                    raise JobError(task_problem)
                 predict = PredictUnit(
                     task_name=model_session.task_name,
                     input_columns=io.inputs,
@@ -578,6 +620,7 @@ class PredictJob(BaseJob):
 
                 self.report_progress(0.4, "Running prediction")
                 predict(ctx)
+                prediction.unseen_categories = _unseen_categories(ctx, io.inputs)
 
             except ValueError as ve:
                 prediction.set_status_as_error()
@@ -611,7 +654,10 @@ class PredictJob(BaseJob):
             try:
                 SavePredictionUnit(
                     task_name=model_session.task_name,
-                    input_columns=io.inputs,
+                    # The saved rows are the raw ones, so what keeps a type is
+                    # what the prediction read from them, not the columns a
+                    # preprocessor produced from it.
+                    input_columns=session_raw_columns(model_session, io),
                     output_columns=io.outputs,
                 )(ctx)
 

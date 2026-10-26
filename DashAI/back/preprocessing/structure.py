@@ -194,19 +194,21 @@ def _drop_warnings(
 def _instantiate(converter_class: Any, params: Dict[str, Any]) -> Any:
     """Validate the user's params and build the converter with them.
 
-    The params are validated the way the frontend form submits them, with
-    every field it seeds from the schema placeholders (as _validate_splits
-    does for splitters), but the converter is built from the params exactly
-    as given, as SessionPreprocessor builds it, so the estimate describes
-    the converter that will really run.
+    The params are validated the way the session wizard's form submits them,
+    with every field it seeds from the schema placeholders and the session's
+    own defaults over them (as _validate_splits does for splitters), but the
+    converter is built from the params with only the session defaults filled
+    in, as SessionPreprocessor builds it, so the estimate describes the
+    converter that will really run.
     """
     try:
+        session_params = converter_class.session_params(params)
         schema = getattr(converter_class, "SCHEMA", None)
         if schema is not None:
             schema.model_validate(
-                {**schema_placeholder_defaults(converter_class), **params}
+                {**schema_placeholder_defaults(converter_class), **session_params}
             )
-        return converter_class(**params)
+        return converter_class(**session_params)
     except Exception as e:
         raise StructureError("invalid_params", detail=str(e)) from e
 

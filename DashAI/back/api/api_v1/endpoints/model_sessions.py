@@ -1,7 +1,16 @@
 import logging
 from typing import TYPE_CHECKING, Optional, Union
 
-from fastapi import APIRouter, Depends, File, Header, Response, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Header,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.exceptions import HTTPException
 from kink import di, inject
 from pydantic import ValidationError
@@ -14,7 +23,11 @@ from DashAI.back.api.api_v1.schemas.model_sessions_params import (
     PreprocessingStructureParams,
     SessionExportParams,
 )
-from DashAI.back.api.utils import offered_components, remove_path
+from DashAI.back.api.utils import (
+    offered_components,
+    remove_path,
+    task_or_http_error,
+)
 from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.job.preprocessing_job import PreprocessingJob
@@ -155,6 +168,37 @@ def _load_sample_dataset(db, dataset_id: int):
     return DashAIDataset(pa.Table.from_batches([sample_batch]))
 
 
+def _ref_label(label: str) -> str:
+    """A ref as ``resolve_state_refs`` labels it, said in words.
+
+    A whole group is labelled by its step index ("0"), a slot of one by
+    "step:slot", and anything else by its column name.
+    """
+    step, _, slot = label.partition(":")
+    if step.isdigit():
+        number = int(step) + 1
+        if slot:
+            return f"the {slot} output of step {number}"
+        return f"the output of step {number}"
+    return repr(label)
+
+
+def _ref_problem(role_name: str, error: StructureError) -> str:
+    """The message of a role ref that does not resolve after the preprocessing."""
+    params = error.message.params
+    if error.message.code == "target_in_scope":
+        return (
+            f"The {role_name!r} role takes the column {params.get('column')!r}, "
+            "which is protected from the preprocessing."
+        )
+    if error.message.code == "missing_ref":
+        return (
+            f"The {role_name!r} role takes {_ref_label(str(params.get('ref')))}, "
+            "which does not exist after the preprocessing."
+        )
+    return error.message.code
+
+
 def _roles_problem(
     task: "BaseTask", roles, sample, steps, component_registry
 ) -> Optional[str]:
@@ -234,28 +278,12 @@ def _roles_problem(
                     ],
                 )
         except StructureError as e:
-            return e.message.code
+            return _ref_problem(role.name, e)
         except KeyError as e:
             return f"Column {e.args[0]!r} is not in the dataset."
         except (TypeError, ValueError) as e:
             return str(e)
     return None
-
-
-def _task_or_404(task_name: str, component_registry) -> "BaseTask":
-    """The registered task by name; only it can read a session's roles.
-
-    Raises
-    ------
-    HTTPException
-        404 when no task of that name is registered.
-    """
-    if task_name not in component_registry:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Task {task_name} not found in the registry.",
-        )
-    return component_registry[task_name]["class"]()
 
 
 @router.post("/preprocessing/structure")
@@ -282,7 +310,7 @@ async def get_preprocessing_structure(
         The state after every step, their errors and warnings, and the final
         state.
     """
-    task = _task_or_404(params.task_name, component_registry)
+    task = task_or_http_error(params.task_name, component_registry)
     with session_factory() as db:
         try:
             sample = _load_sample_dataset(db, params.dataset_id)
@@ -334,7 +362,7 @@ async def validate_columns(
                 detail="Internal database error",
             ) from e
 
-    task = _task_or_404(params.task_name, component_registry)
+    task = task_or_http_error(params.task_name, component_registry)
 
     column_names = minimal_dataset.column_names
     io = task.io_columns(params.column_roles)
@@ -524,7 +552,7 @@ def _validate_roles_for_task(
     HTTPException
         422 naming the task and what does not fit.
     """
-    task = component_registry[task_name]["class"]()
+    task = task_or_http_error(task_name, component_registry)
     roles = session_roles(model_session, task).refs()
     steps = ConverterSequence.model_validate(
         model_session.preprocessing or {"steps": []}
@@ -789,7 +817,7 @@ async def create_model_session(
 
     # The task translates the roles it was given into the model's inputs
     # and outputs, which the checks below read.
-    task = component_registry[params.task_name]["class"]()
+    task = task_or_http_error(params.task_name, component_registry)
     roles = {name: list(refs) for name, refs in params.column_roles.items() if refs}
     io = task.io_columns(roles)
     input_column_refs = list(io.inputs)
@@ -1006,7 +1034,7 @@ async def delete_model_session(
 @inject
 async def update_model_session(
     model_session_id: int,
-    dataset_id: Union[int, None] = None,
+    request: Request,
     task_name: Union[str, None] = None,
     name: Union[str, None] = None,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
@@ -1029,7 +1057,23 @@ async def update_model_session(
     -------
     Dict
         A dictionary containing the updated model session record.
+
+    Raises
+    ------
+    HTTPException
+        422 when the request names a ``dataset_id``. A session is one
+        dataset: its roles, splits, fitted preprocessing and runs all point
+        into it, so working on another dataset is another session.
     """
+    if "dataset_id" in request.query_params:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                "The dataset of a model session cannot change: its columns, "
+                "splits, preprocessing and runs belong to it. To work on "
+                "another dataset, create a new session."
+            ),
+        )
     with session_factory() as db:
         try:
             model_session = db.get(ModelSession, model_session_id)
@@ -1065,8 +1109,6 @@ async def update_model_session(
                         )
                     setattr(model_session, "name", new_name)
 
-            if dataset_id:
-                setattr(model_session, "dataset_id", dataset_id)
             if task_name:
                 # The stored strategy and splitter must still be ones the new
                 # task offers, the same checks a new session goes through.
@@ -1089,7 +1131,7 @@ async def update_model_session(
                     )
                 setattr(model_session, "task_name", task_name)
 
-            if dataset_id or task_name or name:
+            if task_name or name:
                 db.commit()
                 db.refresh(model_session)
                 return model_session
