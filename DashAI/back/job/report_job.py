@@ -34,6 +34,9 @@ from DashAI.back.job.predict_job import (
 from DashAI.back.models.base_model import BaseModel
 from DashAI.back.splitters.splits_payload import predictable_splits, run_split_indexes
 from DashAI.back.tasks.session_roles import session_io
+from DashAI.back.units.apply_session_preprocessing_unit import (
+    ApplySessionPreprocessingUnit,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -180,23 +183,22 @@ class ReportJob(BaseJob):
         return [str(label) for label in classes]
 
     @staticmethod
-    def _model_input(rows, preprocessing_artifacts_path):
-        """The rows as the model was trained to see them.
+    def _partition_rows(rows, partition, preprocessor):
+        """A partition's rows as training measured the model on them.
 
-        Through the unit the prediction job uses, so a report and a
-        prediction never transform a session's rows differently.
+        Through the session's fitted preprocessor under a key that is neither
+        "train" nor "predict", as ``transform_by_split`` does for explainers:
+        a step that removes rows from every partition (NanRemover) removes
+        them here, as it did before training measured the partition, and no
+        rows are resampled in. A prediction keeps every row instead, which a
+        report cannot: training never scored the rows it removed. The target
+        travels through the chain with the inputs, so both are read from the
+        result and stay aligned.
         """
-        from DashAI.back.units.apply_session_preprocessing_unit import (
-            ApplySessionPreprocessingUnit,
-        )
-        from DashAI.back.units.context import ExecutionContext
-
-        ctx = ExecutionContext()
-        ctx.put("dataset", rows)
-        ApplySessionPreprocessingUnit(
-            preprocessing_artifacts_path=preprocessing_artifacts_path
-        )(ctx)
-        return ctx.require("model_input")
+        if preprocessor is None:
+            return rows
+        key = f"report_{partition}"
+        return preprocessor.transform_only({key: rows})[key]
 
     @inject
     def run(self) -> None:
@@ -207,8 +209,8 @@ class ReportJob(BaseJob):
         the dataset the task prepared. It is prepared as training prepared it:
         with the raw refs when the session preprocesses, since its other
         inputs only exist once its converters run. Each partition then goes
-        through the session's fitted preprocessor, exactly as the prediction
-        job feeds a model, and the model applies its own encoding inside
+        through the session's fitted preprocessor as training measured it
+        (``_partition_rows``), and the model applies its own encoding inside
         ``predict``; targets are encoded so they line up with the class
         indexes the model predicts.
 
@@ -324,6 +326,13 @@ class ReportJob(BaseJob):
                 preprocessing_artifacts_path = _preprocessing_artifacts_path(
                     model_session
                 )
+                preprocessor = (
+                    ApplySessionPreprocessingUnit._load_final_preprocessor(
+                        preprocessing_artifacts_path
+                    )
+                    if preprocessing_artifacts_path
+                    else None
+                )
                 try:
                     loaded_dataset = load_dataset(f"{dataset.file_path}/dataset")
                     task: BaseTask = component_registry[model_session.task_name][
@@ -358,9 +367,10 @@ class ReportJob(BaseJob):
                     if rows.num_rows == 0:
                         continue
                     try:
-                        partition_x = self._model_input(
-                            rows, preprocessing_artifacts_path
-                        ).select_columns(io.inputs)
+                        rows = self._partition_rows(rows, partition, preprocessor)
+                        if rows.num_rows == 0:
+                            continue
+                        partition_x = rows.select_columns(io.inputs)
                         partition_y = rows.select_columns(io.outputs)
                         y_pred = trained_model.predict(partition_x)
                         y_true = (

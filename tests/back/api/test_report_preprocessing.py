@@ -10,7 +10,8 @@ StandardScaler, whose output keeps the raw names, so predicting on the raw
 values would not fail, only be wrong).
 
 The report's accuracy on each partition has to match the one training
-measured on it.
+measured on it. That includes the rows: a step that removes rows from every
+partition (NanRemover) removed them before training measured it.
 """
 
 import json
@@ -28,6 +29,9 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.report_job import ReportJob
+from tests.back.api.test_session_nan_remover import (  # noqa: F401
+    create_incomplete_dataset,
+)
 
 FEATURES = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 HOLDOUT = {
@@ -52,39 +56,58 @@ PARTITIONS = {"Train": SplitEnum.TRAIN, "Test": SplitEnum.TEST}
 
 
 def _train(client: TestClient, dataset: Dataset, converter: str) -> int:
+    return _train_session(
+        client,
+        dataset,
+        name=f"report-preprocessing-{converter}",
+        features=CONVERTERS[converter][1],
+        target="Species",
+        step={
+            "converter": converter,
+            "params": CONVERTERS[converter][0],
+            "scope": RAW_FEATURES,
+        },
+        model=("DecisionTreeClassifier", {"random_state": 0}),
+    )
+
+
+def _train_session(
+    client: TestClient,
+    dataset: Dataset,
+    name: str,
+    features: list,
+    target: str,
+    step: dict,
+    model: tuple,
+) -> int:
     response = client.post(
         "/api/v1/model-session/",
         json={
             "dataset_id": dataset.id,
             "task_name": "TabularClassificationTask",
-            "name": f"report-preprocessing-{converter}",
+            "name": name,
             "column_roles": {
-                "features": CONVERTERS[converter][1],
-                "target": [{"kind": "raw", "name": "Species"}],
+                "features": features,
+                "target": [{"kind": "raw", "name": target}],
             },
             "train_metrics": ["Accuracy"],
             "validation_metrics": ["Accuracy"],
             "test_metrics": ["Accuracy"],
             "evaluation_strategy": "HoldoutEvaluationStrategy",
             "splits": json.dumps(HOLDOUT),
-            "preprocessing": [
-                {
-                    "converter": converter,
-                    "params": CONVERTERS[converter][0],
-                    "scope": RAW_FEATURES,
-                }
-            ],
+            "preprocessing": [step],
         },
     )
     assert response.status_code == 201, response.text
     assert response.json()["preprocessing_status"] == "ready", response.text
+    model_name, parameters = model
     response = client.post(
         "/api/v1/run/",
         json={
             "model_session_id": response.json()["id"],
-            "model_name": "DecisionTreeClassifier",
-            "name": f"tree behind {converter}",
-            "parameters": {"random_state": 0},
+            "model_name": model_name,
+            "name": f"{model_name} in {name}",
+            "parameters": parameters,
             "optimizer_name": "",
             "optimizer_parameters": {},
             "plot_history_path": "",
@@ -145,6 +168,30 @@ def test_the_report_predicts_on_the_rows_the_model_was_trained_on(
     client: TestClient, dataset_1: Dataset, converter: str
 ):
     run_id = _train(client, dataset_1, converter)
+
+    accuracies = _report_accuracies(client, run_id)
+
+    for title, split in PARTITIONS.items():
+        assert accuracies[title] == pytest.approx(
+            _trained_accuracy(client, run_id, split)
+        ), title
+
+
+def test_the_report_leaves_out_the_rows_nan_remover_removed_in_training(
+    client: TestClient, incomplete_dataset: Dataset
+):
+    # KNN cannot take a missing value, so the report only finishes if it
+    # removed the incomplete rows of each partition, as training did.
+    raw = [{"kind": "raw", "name": "age"}, {"kind": "raw", "name": "height"}]
+    run_id = _train_session(
+        client,
+        incomplete_dataset,
+        name="report-preprocessing-NanRemover",
+        features=raw,
+        target="label",
+        step={"converter": "NanRemover", "params": {}, "scope": raw},
+        model=("KNeighborsClassifier", {"n_neighbors": 3}),
+    )
 
     accuracies = _report_accuracies(client, run_id)
 
