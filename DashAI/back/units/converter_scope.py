@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 from DashAI.back.converters.dataset_columns import (
     rebuild_dataset_with_transformed_columns,
 )
+from DashAI.back.converters.drop_source_columns import drops_source_columns
 from DashAI.back.core.schema_fields import (
     component_field,
     none_type,
@@ -111,11 +112,6 @@ def target_field():
             zh="目标列",
         ),
     )
-
-
-def _adds_columns(converter_instance) -> bool:
-    """Whether the converter keeps its scope columns and appends new ones."""
-    return getattr(type(converter_instance), "COLUMN_OPERATION", None) == "add"
 
 
 class ConverterScopeMixin:
@@ -261,7 +257,7 @@ class ConverterScopeMixin:
         scope_column_indexes = [column_names.index(name) for name in scope_column_names]
 
         columns_to_drop = []
-        if drop_source_columns and _adds_columns(converter_instance):
+        if drops_source_columns(type(converter_instance), drop_source_columns):
             columns_to_drop = [
                 name for name in scope_column_names if name != target_column_name
             ]

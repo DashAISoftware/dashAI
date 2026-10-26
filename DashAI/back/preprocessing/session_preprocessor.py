@@ -14,7 +14,10 @@ from DashAI.back.converters.dataset_columns import (
     plan_new_column_names,
     rebuild_dataset_with_transformed_columns,
 )
-from DashAI.back.converters.drop_source_columns import split_converter_params
+from DashAI.back.converters.drop_source_columns import (
+    drops_source_columns,
+    split_converter_params,
+)
 from DashAI.back.preprocessing.column_ref import ConverterSequence, resolve_refs
 
 if TYPE_CHECKING:
@@ -117,6 +120,17 @@ class SessionPreprocessor:
             slots.setdefault(type_name, []).append(name)
         return slots
 
+    @staticmethod
+    def _drops(converter: Any, step) -> bool:
+        """Whether a step removes its scope columns after transforming.
+
+        Read from the step's own params, which travel inside the pickle, so a
+        preprocessor fitted before the option existed never drops.
+        """
+        return drops_source_columns(
+            type(converter), split_converter_params(step.params)[1]
+        )
+
     def _fit(self, converter: Any, train: "DashAIDataset", train_scope) -> Any:
         """Fit a step's converter, passing the target to supervised ones."""
         # A preprocessor pickled before target_columns existed has no such
@@ -133,6 +147,7 @@ class SessionPreprocessor:
         train: "DashAIDataset",
         scope_names: List[str],
         output_names: List[str],
+        drop_source_columns: bool = False,
     ) -> None:
         """Record which real columns a step produced, and their slots.
 
@@ -149,16 +164,23 @@ class SessionPreprocessor:
         rebuild_dataset_with_transformed_columns (e.g. "derived_1"). Slots
         are classified with the names the converter itself produced, since
         that is what its get_output_type knows.
+
+        A step that drops its source columns removes its whole scope, so only
+        its new columns are its group, even when there are none.
         """
         new_columns = [name for name in output_names if name not in scope_names]
-        if not new_columns:
+        if not new_columns and not drop_source_columns:
             self.resolved_columns[index] = list(output_names)
             self.resolved_slots[index] = self._classify_by_type(
                 converter, self.resolved_columns[index]
             )
             return
 
-        removed = {name for name in scope_names if name not in output_names}
+        removed = {
+            name
+            for name in scope_names
+            if drop_source_columns or name not in output_names
+        }
         final_names = plan_new_column_names(
             [name for name in train.column_names if name not in removed],
             new_columns,
@@ -308,6 +330,7 @@ class SessionPreprocessor:
                 self.fitted_converters.append(converter)
                 continue
 
+            drop = self._drops(converter, step)
             train_scope = current["train"].select_columns(scope_names)
             converter = self._fit(converter, current["train"], train_scope)
 
@@ -326,6 +349,7 @@ class SessionPreprocessor:
                 current["train"],
                 scope_names,
                 list(train_transformed.column_names),
+                drop_source_columns=drop,
             )
 
             new_current = {}
@@ -341,6 +365,7 @@ class SessionPreprocessor:
                         transformed_by_split[split_name],
                         scope_names,
                         scope_indexes,
+                        columns_to_drop=scope_names if drop else (),
                     )
             current = new_current
             self.fitted_converters.append(converter)
@@ -358,6 +383,7 @@ class SessionPreprocessor:
         """
         current: Dict[str, "DashAIDataset"] = dict(split)
         for index, converter in enumerate(self.fitted_converters):
+            drop = self._drops(converter, self.sequence.steps[index])
             scope_names = resolve_refs(
                 self.sequence.steps[index].scope,
                 self.resolved_columns,
@@ -397,7 +423,11 @@ class SessionPreprocessor:
                         dataset.column_names.index(name) for name in scope_names
                     ]
                     new_current[split_name] = rebuild_dataset_with_transformed_columns(
-                        dataset, transformed, scope_names, scope_indexes
+                        dataset,
+                        transformed,
+                        scope_names,
+                        scope_indexes,
+                        columns_to_drop=scope_names if drop else (),
                     )
             current = new_current
         return current

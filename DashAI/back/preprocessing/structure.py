@@ -12,7 +12,10 @@ to reject a chain that would reference a column that no longer exists.
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from DashAI.back.converters.dataset_columns import plan_new_column_names
-from DashAI.back.converters.drop_source_columns import split_converter_params
+from DashAI.back.converters.drop_source_columns import (
+    drops_source_columns,
+    split_converter_params,
+)
 from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.preprocessing.column_ref import ConverterStep
 from DashAI.back.preprocessing.structure_types import (
@@ -149,6 +152,10 @@ def _apply_step(
         warnings.append(
             StructureMessage(code="inference_fallback", params={"step": index})
         )
+    if drops_source_columns(converter_class, split_converter_params(step.params)[1]):
+        # The runtime removes the scope columns after the merge, so none of
+        # them stays in the state, exactly as with an expand step.
+        delta = delta.model_copy(update={"kept": []})
     warnings.extend(delta.warnings)
     warnings.extend(_check_bounds(converter_class, converter, scope))
     if delta.drops_unscoped:

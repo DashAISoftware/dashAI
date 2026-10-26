@@ -64,3 +64,16 @@ def split_converter_params(
     clean = dict(params or {})
     drop = bool(clean.pop(DROP_SOURCE_COLUMNS, False))
     return clean, drop
+
+
+def drops_source_columns(converter_class: Any, drop_source_columns: bool) -> bool:
+    """Whether a step really drops its scope columns.
+
+    Only a column-adding converter keeps its scope columns; the other
+    operations already decide what happens to them, so the option is
+    ignored for those.
+    """
+    return (
+        drop_source_columns
+        and getattr(converter_class, "COLUMN_OPERATION", None) == "add"
+    )

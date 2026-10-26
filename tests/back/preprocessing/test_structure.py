@@ -265,3 +265,50 @@ def test_nan_remover_keeps_its_scope_and_warns_it_removes_rows_everywhere():
     assert _names(step.state) == ["age"]
     codes = [warning.code for warning in step.warnings]
     assert codes == ["rows_removed_in_splits", "drops_columns"]
+
+
+def test_an_add_step_that_drops_its_source_columns_removes_them_from_the_state():
+    result = _infer(
+        [
+            _step(
+                "DateFeaturesConverter",
+                [RawColumnRef(name="date")],
+                drop_source_columns=True,
+            )
+        ]
+    )
+
+    assert result.valid
+    assert "date" not in _names(result.final)
+    assert "date_month" in _names(result.final)
+
+
+def test_a_later_step_using_a_dropped_column_is_a_missing_ref():
+    result = _infer(
+        [
+            _step(
+                "DateFeaturesConverter",
+                [RawColumnRef(name="date")],
+                drop_source_columns=True,
+            ),
+            _step("StandardScaler", [RawColumnRef(name="date")]),
+        ]
+    )
+
+    assert result.steps[1].status == "error"
+    assert result.steps[1].error.code == "missing_ref"
+
+
+def test_dropping_source_columns_estimates_what_the_runtime_produces():
+    step = _step(
+        "DateFeaturesConverter", [RawColumnRef(name="date")], drop_source_columns=True
+    )
+
+    estimated = _infer([step])
+
+    preprocessor = SessionPreprocessor(ConverterSequence(steps=[step]), REGISTRY)
+    transformed, resolved = preprocessor.fit_transform({"train": _dataset()})
+    added = [item.name for item in estimated.steps[0].added]
+    assert added == resolved[0]
+    assert "date" not in transformed["train"].column_names
+    assert set(_names(estimated.final)) <= set(transformed["train"].column_names)
