@@ -5,6 +5,7 @@ import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import Upload from "../../shared/Upload";
 import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
+import { useModelDownloadGate } from "../../models/model/ComponentDownloadControl";
 import {
   createDocument,
   deleteDocument,
@@ -46,6 +47,10 @@ export default function ConfigureAndUploadDocumentStep({
   const [documentName, setDocumentName] = useState("");
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const { modelNotDownloaded } = useModelDownloadGate(
+    selectedLoader,
+    selectedLoader.name,
+  );
   const extensions = selectedLoader?.metadata?.supported_extensions || [];
   const effectiveName = documentName.trim() || defaultName;
 
@@ -145,7 +150,7 @@ export default function ConfigureAndUploadDocumentStep({
       <StepperNavigationFooter
         onBack={goToPrevStep}
         onNext={handleSubmit}
-        nextDisabled={!file || formHasErrors || uploading}
+        nextDisabled={!file || formHasErrors || uploading || modelNotDownloaded}
         nextLabel={t("common:upload")}
         loading={uploading}
       />

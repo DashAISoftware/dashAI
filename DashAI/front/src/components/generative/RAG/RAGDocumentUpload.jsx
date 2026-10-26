@@ -12,6 +12,9 @@ import {
   Typography,
 } from "@mui/material";
 import TuneIcon from "@mui/icons-material/Tune";
+import ComponentDownloadControl, {
+  useModelDownloadGate,
+} from "../../models/model/ComponentDownloadControl";
 import DescriptionText from "../../shared/DescriptionText";
 import Upload from "../../shared/Upload";
 import FormSchema from "../../shared/FormSchema";
@@ -140,6 +143,10 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
   const selectedDescription = loaderDescription(selectedLoader);
   const selectedExtensions =
     selectedLoader?.metadata?.supported_extensions ?? [];
+  const { modelNotDownloaded } = useModelDownloadGate(
+    selectedLoader,
+    loaderName,
+  );
 
   useEffect(() => {
     if (!usable.some((loader) => loader.name === loaderName)) {
@@ -275,6 +282,7 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 {selectedLoader.display_name || selectedLoader.name}
               </Typography>
+              <ComponentDownloadControl component={selectedLoader} />
               <Typography
                 variant="body2"
                 color="text.secondary"
@@ -306,7 +314,13 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
         <Button onClick={handleClose}>{t("common:cancel")}</Button>
         <Button
           variant="contained"
-          disabled={!file || !selectedLoader || formHasErrors || uploading}
+          disabled={
+            !file ||
+            !selectedLoader ||
+            formHasErrors ||
+            uploading ||
+            modelNotDownloaded
+          }
           onClick={handleUpload}
         >
           {t("generative:documentsBar.upload")}
