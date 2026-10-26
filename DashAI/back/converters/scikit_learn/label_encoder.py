@@ -2,7 +2,9 @@ from typing import TYPE_CHECKING, Dict, List, Union
 
 from DashAI.back.converters.category.encoding import EncodingConverter
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
+from DashAI.back.core.schema_fields import enum_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -16,10 +18,35 @@ if TYPE_CHECKING:
 class LabelEncoderSchema(BaseSchema):
     """Schema for LabelEncoder hyperparameters.
 
-    Placeholder schema for sklearn's ``LabelEncoder``. The encoder has no
-    user-configurable hyperparameters; the schema is kept for consistency with
-    the DashAI component registration pattern.
+    sklearn's ``LabelEncoder`` has no hyperparameters. DashAI's adds one:
+    what to do with a label not seen in ``fit``.
     """
+
+    handle_unknown: schema_field(
+        enum_field(["error", "use_encoded_value"]),
+        # Strict, as the notebook uses it: there it may be fitted on a subset
+        # of rows and applied to all of them, and what it writes is saved. A
+        # session encodes an unseen label instead (``SESSION_PARAMS``).
+        "error",
+        description=MultilingualString(
+            en=(
+                "Whether to raise an error or encode as -1 a label not seen during fit."
+            ),
+            es=(
+                "Si lanzar un error o codificar como -1 una etiqueta que no se "
+                "vio durante el ajuste."
+            ),
+            pt=(
+                "Se deve gerar um erro ou codificar como -1 um rótulo não visto "
+                "durante o ajuste."
+            ),
+            de=(
+                "Ob bei einer beim Anpassen nicht gesehenen Kategorie ein Fehler "
+                "ausgelöst oder sie als -1 kodiert wird."
+            ),
+            zh="对拟合时未见过的标签是报错还是编码为 -1。",
+        ),
+    )  # type: ignore
 
 
 class LabelEncoder(EncodingConverter, SklearnWrapper):
@@ -69,6 +96,13 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
     PREFIX = "le_"
     ONE_COLUMN_PER_INPUT = True
 
+    UNKNOWN_HINT = 'set "handle_unknown" to "use_encoded_value" to encode them as -1'
+
+    # A session fits its converters on the training rows only, so a label
+    # seen only in validation, test or the rows to predict is the normal
+    # case, not an accident: it gets -1.
+    SESSION_PARAMS = {"handle_unknown": "use_encoded_value"}
+
     metadata = {
         "changes_data_types": True,
         "allowed_types": [Categorical],
@@ -86,9 +120,12 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         ----------
         **kwargs
             Configuration keyword arguments matching the converter's
-            schema fields. Not forwarded to the parent class.
+            schema fields. A field left out takes its schema default, as the
+            form would have sent it. Not forwarded to the parent class.
         """
         super().__init__()
+        kwargs = {**schema_placeholder_defaults(type(self)), **kwargs}
+        self.handle_unknown = kwargs["handle_unknown"]
         self.encoders = {}
         self.fitted_columns = []
 
@@ -99,10 +136,6 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         column of numeric labels (e.g. dtype int64) gets no encoded copy.
         """
         return item.type == "Text" or item.dtype == "string"
-
-    def raises_on_unseen(self) -> bool:
-        """Never: a label not seen in ``fit`` is encoded as -1."""
-        return False
 
     def unseen_values(self, x: "DashAIDataset") -> Dict[str, List[str]]:
         """The labels of each fitted column of ``x`` that ``fit`` did not see.
@@ -197,7 +230,8 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
 
         Encodes each fitted column and appends the result as a new
         ``encoded_<col>`` column. The original column is left unchanged. A
-        label the encoder did not see in ``fit`` is encoded as ``-1``.
+        label the encoder did not see in ``fit`` is encoded as ``-1`` with
+        ``handle_unknown="use_encoded_value"``; with ``"error"``, it raises.
 
         Parameters
         ----------
@@ -221,14 +255,19 @@ class LabelEncoder(EncodingConverter, SklearnWrapper):
         combined_table = x.arrow_table
         combined_types = dict(x.types)
 
+        # Pickled before the option existed, an encoder only knew -1.
+        treat = getattr(self, "handle_unknown", "use_encoded_value") == (
+            "use_encoded_value"
+        )
         for col in self.fitted_columns:
             if col not in x_pandas.columns:
                 continue
             series = x_pandas[col].copy()
             mask = series.notna()
             # A label not seen in fit gets -1, like the ordinal encoder's
-            # default: the encoder is never refitted on the rows it encodes.
-            seen = mask & series.isin(self.encoders[col].classes_)
+            # unknown value: the encoder is never refitted on the rows it
+            # encodes. Strict, every label goes to sklearn, which refuses it.
+            seen = mask & series.isin(self.encoders[col].classes_) if treat else mask
             if seen.any():
                 series.loc[seen] = self.encoders[col].transform(series.loc[seen])
             series.loc[mask & ~seen] = -1

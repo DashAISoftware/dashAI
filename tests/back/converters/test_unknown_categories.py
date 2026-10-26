@@ -73,13 +73,13 @@ def _bare(cls, **params):
 
 
 @pytest.mark.parametrize("build", [_bare, _from_the_notebook])
-@pytest.mark.parametrize("cls", [OneHotEncoder, OrdinalEncoder])
+@pytest.mark.parametrize("cls", [OneHotEncoder, OrdinalEncoder, LabelEncoder])
 def test_an_encoder_refuses_an_unseen_category_by_default(cls, build):
     converter = build(cls)
     converter.fit(_scope(["a", "b", "a"]))
 
     assert converter.raises_on_unseen()
-    with pytest.raises(ValueError, match="unknown categories"):
+    with pytest.raises(ValueError, match="unknown categories|unseen labels"):
         converter.transform(_scope(["a", "z"]))
 
 
@@ -97,11 +97,24 @@ def test_ordinal_in_a_session_gives_minus_one_to_an_unseen_category():
     assert _encoded(converter, ["a", "b", "z"]) == [[0], [1], [-1]]
 
 
-def test_label_gives_minus_one_to_an_unseen_category():
-    converter = LabelEncoder()
+def test_label_in_a_session_gives_minus_one_to_an_unseen_category():
+    converter = _from_the_wizard(LabelEncoder)
     converter.fit(_scope(["a", "b", "a"]))
 
     assert _encoded(converter, ["a", "b", "z"]) == [[0], [1], [-1]]
+
+
+def test_a_label_encoder_pickled_before_the_option_keeps_minus_one():
+    """Sessions pickled their label encoders when -1 was all they did."""
+    import pickle
+
+    converter = _from_the_wizard(LabelEncoder)
+    converter.fit(_scope(["a", "b", "a"]))
+    del converter.handle_unknown
+    restored = pickle.loads(pickle.dumps(converter))
+
+    assert not restored.raises_on_unseen()
+    assert _encoded(restored, ["a", "z"]) == [[0], [-1]]
 
 
 def test_ordinal_set_to_error_from_the_form_still_fits():
@@ -146,6 +159,7 @@ def _fitted(converter_name, params):
 HINTS = {
     "OneHotEncoder": 'set "handle_unknown" to "ignore"',
     "OrdinalEncoder": 'set "handle_unknown" to "use_encoded_value"',
+    "LabelEncoder": 'set "handle_unknown" to "use_encoded_value"',
 }
 
 
