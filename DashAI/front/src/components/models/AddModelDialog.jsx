@@ -112,10 +112,14 @@ function AddModelDialog({
     return session?.splits ? JSON.parse(session.splits) : null;
   }, [session?.splits]);
 
+  // Translated name (e.g. "Arbol_de_Decision_1"); the class name is only the
+  // fallback. Numbering still counts runs of this model only.
+  const modelDisplayName = preselectedModelObject?.display_name;
+
   useEffect(() => {
     if (open && selectedModel) {
       const generated = generateSequentialName({
-        base: selectedModel,
+        base: modelDisplayName || selectedModel,
         items: existingRuns,
         getName: (run) => run.name,
         filter: (run) => run.model_name === selectedModel,
@@ -124,7 +128,7 @@ function AddModelDialog({
         setName(generated.defaultName);
       }
     }
-  }, [open, selectedModel, existingRuns, hasUserTouchedName]);
+  }, [open, selectedModel, modelDisplayName, existingRuns, hasUserTouchedName]);
 
   const hasOptimizableParams = useMemo(() => {
     return checkIfHaveOptimazers(modelParameters);
@@ -579,6 +583,7 @@ AddModelDialog.propTypes = {
   preselectedModel: PropTypes.string,
   preselectedModelObject: PropTypes.shape({
     name: PropTypes.string,
+    display_name: PropTypes.string,
     downloaded: PropTypes.bool,
     metadata: PropTypes.object,
   }),
