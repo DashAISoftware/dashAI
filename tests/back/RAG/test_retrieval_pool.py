@@ -7,7 +7,10 @@ from typing import Dict, List
 import pytest
 
 from DashAI.back.models.RAG.documents import Chunk
-from DashAI.back.models.RAG.exceptions.retriever import RAGRetrieverEvaluationError
+from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
+    DISCARD_KEY,
+    REQUEST_CHUNKS_KEY,
+)
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
 )
@@ -62,12 +65,19 @@ def test_request_includes_a_chunk_no_retriever_returned():
     assert _positions(pool) == [4, 0, 1]
 
 
-def test_request_unknown_position_raises_actionable_error():
-    """A requested position absent from the corpus fails loudly."""
-    pool = RetrievalPool(10, _context(_chunks(2)))
+def test_request_skips_unknown_position_and_reports_it():
+    """A requested position absent from the corpus is skipped and reported."""
+    chunks = _chunks(5)
+    pool = RetrievalPool(10, _context(chunks))
+    pool.add(chunks[:2])
 
-    with pytest.raises(RAGRetrieverEvaluationError, match="document 1"):
-        pool.request({1: [9]})
+    drops = pool.request({1: [4, 9]})
+
+    assert _positions(pool) == [4, 0, 1]
+    assert len(drops) == 1
+    assert REQUEST_CHUNKS_KEY in drops[0]
+    assert "does not exist in the retrieval corpus" in drops[0]
+    assert "document 1" in drops[0]
 
 
 def test_discard_filters_later_returns():
@@ -86,12 +96,28 @@ def test_discard_filters_later_returns():
     "mapping",
     [{1: [999]}, {424242: [0]}],
 )
-def test_discard_unknown_chunk_raises(mapping):
-    """Discarding a non-existent position or document fails loudly."""
+def test_discard_unknown_chunk_is_skipped(mapping):
+    """Discarding a non-existent position or document is skipped and reported."""
     pool = RetrievalPool(10, _context(_chunks(3)))
 
-    with pytest.raises(RAGRetrieverEvaluationError, match="does not exist"):
-        pool.discard(mapping)
+    drops = pool.discard(mapping)
+
+    assert len(drops) == 1
+    assert DISCARD_KEY in drops[0]
+    assert "does not exist in the retrieval corpus" in drops[0]
+
+
+def test_discard_applies_valid_positions_and_reports_unknown_ones():
+    """A mixed discard mapping drops the bad position and applies the good one."""
+    chunks = _chunks(5)
+    pool = RetrievalPool(10, _context(chunks))
+    pool.add(chunks)
+
+    drops = pool.discard({1: [1, 99]})
+
+    assert _positions(pool) == [0, 2, 3, 4]
+    assert len(drops) == 1
+    assert "99" in drops[0]
 
 
 def test_newest_request_batch_is_not_starved_by_the_cap():

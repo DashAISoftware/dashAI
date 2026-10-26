@@ -22,9 +22,11 @@ from DashAI.back.models.RAG.prompts.evaluation import (
 )
 
 OPTIONAL_PLACEHOLDERS = [
-    "{children_catalog}",
     "{pool_size}",
     "{topk}",
+    "{round}",
+    "{max_rounds}",
+    "{remaining}",
     "{retriever.description}",
     "{documents.names}",
     "{documents.description}",
@@ -75,8 +77,8 @@ class TestDefaultTemplates:
         for template in sufficiency_mod.TEMPLATES.values():
             assert '"sufficient"' in template
             assert '"call_retrievers"' in template
-            assert '"request_chunks"' in template
-            assert '"discard"' in template
+            assert '"request_specific_chunks"' in template
+            assert '"discard_specific_chunks"' in template
             assert "evaluate_retrieval_sufficiency" in template
             assert "```" not in template
 
@@ -86,6 +88,9 @@ class TestDefaultTemplates:
                 "{input}",
                 "{chunks}",
                 "{topk}",
+                "{round}",
+                "{max_rounds}",
+                "{remaining}",
                 "{retriever.description}",
                 "{documents.names}",
                 "{documents.description}",
@@ -93,10 +98,55 @@ class TestDefaultTemplates:
             ):
                 assert placeholder in template
 
-    def test_templates_drop_legacy_verdict_fields(self):
-        for template in sufficiency_mod.TEMPLATES.values():
-            assert '"top_k":' not in template
-            assert '"children":' not in template
+    @pytest.mark.parametrize(
+        ("lang", "mandatory", "exclusive", "omit"),
+        [
+            (
+                "en",
+                "NOT mandatory every round",
+                "mutually exclusive",
+                "omit all actions",
+            ),
+            (
+                "es",
+                "NO es obligatorio en cada ronda",
+                "mutuamente excluyentes",
+                "omite todas las acciones",
+            ),
+            (
+                "pt",
+                "NÃO é obrigatório em cada rodada",
+                "mutuamente exclusivos",
+                "omita todas as ações",
+            ),
+        ],
+    )
+    def test_templates_explain_optional_actions_and_round_budget(
+        self, lang, mandatory, exclusive, omit
+    ):
+        template = sufficiency_mod.TEMPLATES[lang]
+        assert mandatory in template
+        assert exclusive in template
+        assert omit in template
+
+    @pytest.mark.parametrize(
+        ("lang", "phrase"),
+        [
+            ("en", "Chunks not mentioned in the two chunk fields stay in the pool"),
+            (
+                "es",
+                "Los fragmentos no mencionados en los dos campos de fragmentos "
+                "permanecen en el conjunto",
+            ),
+            (
+                "pt",
+                "Os trechos não mencionados nos dois campos de trechos "
+                "permanecem no conjunto",
+            ),
+        ],
+    )
+    def test_templates_state_unmentioned_chunks_are_preserved(self, lang, phrase):
+        assert phrase in sufficiency_mod.TEMPLATES[lang]
 
     def test_templates_request_progress_narrative(self):
         """Every default template asks for an optional message and justification."""
@@ -136,22 +186,62 @@ class TestFormatRendering:
         rendered = prompt.format(
             input="What is DashAI?",
             chunks=_chunks(),
-            children_catalog=_catalog(),
             pool_size=5,
             top_k=10,
             retrievers=_catalog(),
             documents=_documents(),
+            round_number=2,
+            max_rounds=4,
         )
         assert "What is DashAI?" in rendered
         assert "[1] (document_id=1, position=0) first chunk" in rendered
         assert "[2] (document_id=2, position=3) second chunk" in rendered
-        assert "Candidate pool size: 5 chunks" in rendered
-        assert "Maximum retrievable chunks: 10" in rendered
+        assert "evaluation round 2 of at most 4" in rendered
+        assert "Current pool size: 5 chunks." in rendered
+        assert "Maximum retrievable chunks: 10." in rendered
+        assert "Free pool slots left: 5." in rendered
         assert "alpha.pdf" in rendered
         assert '"class": "BM25Retriever"' in rendered
         assert '"document_id": 1' in rendered
         for token in OPTIONAL_PLACEHOLDERS:
             assert token not in rendered
+
+    def test_round_budget_lines_render(self):
+        prompt = DefaultRetrievalSufficiencyPrompt(language="en")
+        rendered = prompt.format(
+            input="Q?",
+            chunks="some chunk",
+            pool_size=3,
+            top_k=8,
+            round_number=1,
+            max_rounds=3,
+        )
+        assert "evaluation round 1 of at most 3" in rendered
+        assert "Current pool size: 3 chunks." in rendered
+        assert "Maximum retrievable chunks: 8." in rendered
+        assert "Free pool slots left: 5." in rendered
+
+    def test_explicit_remaining_override_is_used(self):
+        prompt = DefaultRetrievalSufficiencyPrompt(language="en")
+        rendered = prompt.format(
+            input="Q?",
+            chunks="some chunk",
+            pool_size=3,
+            top_k=8,
+            round_number=1,
+            max_rounds=3,
+            remaining=2,
+        )
+        assert "Free pool slots left: 2." in rendered
+
+    def test_round_budget_lines_drop_when_none(self):
+        prompt = DefaultRetrievalSufficiencyPrompt(language="en")
+        rendered = prompt.format(input="Q?", chunks="some chunk")
+        assert "evaluation round" not in rendered
+        assert "Free pool slots left" not in rendered
+        assert "{round}" not in rendered
+        assert "{max_rounds}" not in rendered
+        assert "{remaining}" not in rendered
 
     def test_dict_values_render_as_indented_json(self):
         prompt = DefaultRetrievalSufficiencyPrompt(language="en")
@@ -222,14 +312,6 @@ class TestFormatRendering:
         rendered = prompt.format(input="q", chunks="c", retrievers="1: BM25Retriever")
         assert rendered == "q|c|1: BM25Retriever"
 
-    def test_children_catalog_is_an_alias_for_the_retriever_description(self):
-        prompt = CustomRetrievalSufficiencyPrompt(
-            template="{input}|{chunks}|{children_catalog}|{retriever.description}"
-        )
-        rendered = prompt.format(input="q", chunks="c", retrievers={1: {"class": "R"}})
-        catalog_json = json.dumps({1: {"class": "R"}}, ensure_ascii=False, indent=2)
-        assert rendered == f"q|c|{catalog_json}|{catalog_json}"
-
     def test_optional_lines_dropped_when_none(self):
         prompt = DefaultRetrievalSufficiencyPrompt(language="en")
         rendered = prompt.format(input="Q?", chunks="some chunk")
@@ -237,9 +319,10 @@ class TestFormatRendering:
             assert token not in rendered
         assert "Documents:" not in rendered
         assert "Document description" not in rendered
-        assert "Maximum retrievable chunks" not in rendered
+        assert "Current pool size" not in rendered
+        assert "evaluation round" not in rendered
         assert "Retriever catalog" not in rendered
-        assert "Candidate pool size" not in rendered
+        assert "free slots" not in rendered
 
     def test_default_prompt_picks_template_by_language(self):
         for lang in ("en", "es", "pt"):

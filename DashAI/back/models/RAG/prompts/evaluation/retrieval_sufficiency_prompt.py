@@ -46,9 +46,11 @@ class RetrievalSufficiencyPrompt(BasePrompt):
 
     required_placeholders = ["{input}", "{chunks}"]
     optional_placeholders = [
-        "{children_catalog}",
         "{pool_size}",
         "{topk}",
+        "{round}",
+        "{max_rounds}",
+        "{remaining}",
         "{retriever.description}",
         "{documents.names}",
         "{documents.description}",
@@ -66,10 +68,6 @@ class RetrievalSufficiencyPrompt(BasePrompt):
                 "document_id, position and text; a preformatted string is kept "
                 "verbatim."
             ),
-            "{children_catalog}": (
-                "Optional alias for the retriever catalog; the whole line "
-                "disappears when it is not provided."
-            ),
             "{pool_size}": (
                 "Optional total number of candidate chunks in the current pool; "
                 "the whole line disappears when it is not provided."
@@ -77,6 +75,18 @@ class RetrievalSufficiencyPrompt(BasePrompt):
             "{topk}": (
                 "Optional maximum number of chunks the retriever may return; "
                 "the whole line disappears when it is not provided."
+            ),
+            "{round}": (
+                "Optional 1-based evaluation round number; the whole line "
+                "disappears when it is not provided."
+            ),
+            "{max_rounds}": (
+                "Optional maximum number of evaluation rounds; the whole line "
+                "disappears when it is not provided."
+            ),
+            "{remaining}": (
+                "Optional number of free pool slots left; the whole line "
+                "disappears when it is not provided."
             ),
             "{retriever.description}": (
                 "Optional JSON catalog of the child retrievers and their "
@@ -233,11 +243,13 @@ class RetrievalSufficiencyPrompt(BasePrompt):
         self,
         input: str,
         chunks: str | Sequence[ChunkPayload],
-        children_catalog: str | RetrieverCatalog | None = None,
         pool_size: int | None = None,
         top_k: int | None = None,
         retrievers: str | RetrieverCatalog | None = None,
         documents: Sequence[DocumentSummary] | None = None,
+        round_number: int | None = None,
+        max_rounds: int | None = None,
+        remaining: int | None = None,
     ) -> str:
         """Render the prompt for the retrieval sufficiency stage.
 
@@ -251,9 +263,6 @@ class RetrievalSufficiencyPrompt(BasePrompt):
         chunks : str | Sequence[Mapping[str, Any]]
             Preformatted chunk text (kept verbatim) or structured chunk payloads
             with ``document_id``, ``position`` and ``text``.
-        children_catalog : str | Mapping | None
-            Legacy alias for ``retrievers``; ``retrievers`` wins when both are
-            supplied.
         pool_size : int | None
             Optional candidate pool size.
         top_k : int | None
@@ -262,6 +271,14 @@ class RetrievalSufficiencyPrompt(BasePrompt):
             Optional 1-based retriever catalog, JSON-rendered.
         documents : Sequence[DocumentSummary] | None
             Optional document summaries; names and JSON are derived from them.
+        round_number : int | None
+            Optional 1-based evaluation round number.
+        max_rounds : int | None
+            Optional maximum number of evaluation rounds.
+        remaining : int | None
+            Optional number of free pool slots. When omitted and both
+            ``pool_size`` and ``top_k`` are known, it is derived as
+            ``max(top_k - pool_size, 0)``.
 
         Returns
         -------
@@ -275,8 +292,9 @@ class RetrievalSufficiencyPrompt(BasePrompt):
             chunk payload is malformed.
         """
         self._validate()
-        catalog_value = retrievers if retrievers is not None else children_catalog
         documents_names, documents_description = self._format_documents(documents)
+        if remaining is None and pool_size is not None and top_k is not None:
+            remaining = max(top_k - pool_size, 0)
         return self._render(
             self.template,
             {
@@ -284,10 +302,12 @@ class RetrievalSufficiencyPrompt(BasePrompt):
                 "{chunks}": self._format_chunks(chunks),
             },
             {
-                "{children_catalog}": self._render_optional_value(catalog_value),
                 "{pool_size}": pool_size,
                 "{topk}": top_k,
-                "{retriever.description}": self._render_optional_value(catalog_value),
+                "{round}": round_number,
+                "{max_rounds}": max_rounds,
+                "{remaining}": remaining,
+                "{retriever.description}": self._render_optional_value(retrievers),
                 "{documents.names}": documents_names,
                 "{documents.description}": documents_description,
             },

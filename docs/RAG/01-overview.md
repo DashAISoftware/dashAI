@@ -184,19 +184,21 @@ final one, while the ensemble retriever also makes a planning call before the
 first round. When the model supports function calling, the verdict is obtained
 through `generate_function_call` using the retriever's function schema
 (constrained by the backend); otherwise the prompt is answered as text and
-parsed by the tolerant text parser. Both routes validate the same strict
-contract, so an unparseable verdict always raises. The next-step field (`top_k`
-for depth, `children` for ensemble) stays optional in the function schema; the
-runtime validator requires it whenever `sufficient` is false. llama.cpp's GBNF
-converter enforces `type`, `required` and `minItems` but not numeric `minimum`,
-so the runtime validator remains the authoritative guard for `top_k >= 1` and
-child indices `>= 0`.
+parsed by the tolerant text parser. Both routes share the same tolerant
+contract: an invalid operation inside a verdict is dropped individually, valid
+ones are preserved, and only a verdict with no usable operation left (or an
+invalid `sufficient` field) is rejected. An insufficient verdict has three
+optional action fields — `call_retrievers`, `request_specific_chunks` and
+`discard_specific_chunks` — and at least one valid operation must remain.
+llama.cpp's GBNF converter enforces `type`, `required` and
+`minItems` but not numeric `minimum`, so the runtime validator remains the
+authoritative guard for `top_k >= 1` and chunk positions `>= 0`.
 
 Both retrievers share the `function_call_max_trials` parameter (default `3`,
-capped at `10`), the maximum total number of function-call attempts including
-the first: on the function-calling route an unusable call or arguments that
-cannot be parsed are retried until the limit is reached, then the stage fails
-loudly. The text route is not retried.
+capped at `10`), the maximum number of evaluation attempts including the first.
+An unusable verdict with no valid operation left is retried on **both** the
+function-calling and text routes until the limit is reached, then the stage
+fails loudly.
 
 ### Model Type Classification
 

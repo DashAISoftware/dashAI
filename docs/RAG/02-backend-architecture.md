@@ -638,10 +638,20 @@ format that also keys the pipeline's `Dict` row. `children` is always a list
 (even for single-child composites) and is omitted for unit retrievers;
 techniques may add extras (the cross-encoder adds `scores` when it re-ranks).
 Composites capture their children's nodes while keeping their merge/rerank
-mathematics unchanged. The LLM-evaluated retrievers add a `rounds` list; each
-entry may carry the verdict's `message`/`justification`. The ensemble's
-planning verdict uses `planning_message`/`planning_justification` so a later
-post-round verdict cannot overwrite it.
+mathematics unchanged. The LLM-evaluated retrievers add a `rounds` list. A
+post-round verdict entry carries the canonical `call_retrievers`,
+`request_specific_chunks`, `discard_specific_chunks` and `dropped_operations`
+keys. The ensemble's first (planning-only) entry instead carries the consulted
+`calls` plus `planning_dropped_operations`; its `call_retrievers` map is empty
+unless a post-round verdict also exists in that round. `dropped_operations`
+lists the parser/evaluator drops followed by the pool's drops from applying the
+verdict, so a reviewer can see which invalid operations were discarded without
+aborting the round. Both drop lists are capped at 50 entries; excess drops
+collapse into a final `Dropped N more invalid operation(s).` summary. Entries
+may also carry the verdict's
+`message`/`justification`. The ensemble's planning verdict uses
+`planning_message`, `planning_justification` and `planning_dropped_operations`
+so a later post-round verdict cannot overwrite them.
 
 ### Dense Retriever Two-Layer Design
 
