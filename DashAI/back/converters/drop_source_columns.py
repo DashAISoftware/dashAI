@@ -8,7 +8,7 @@ the option; ``split_converter_params`` takes it out of the params before the
 converter class is instantiated.
 """
 
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from DashAI.back.core.schema_fields import bool_field, schema_field
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
@@ -77,3 +77,22 @@ def drops_source_columns(converter_class: Any, drop_source_columns: bool) -> boo
         drop_source_columns
         and getattr(converter_class, "COLUMN_OPERATION", None) == "add"
     )
+
+
+def reject_output_named_like_scope(output_name: str, scope_columns: List[str]) -> None:
+    """Refuse a new column named like one of the columns it is computed from.
+
+    A column-adding converter keeps its scope columns, so an output with a
+    scope column's name could not be told apart from the source: it would
+    overwrite it, and with the drop option on it would be deleted with it.
+
+    Raises
+    ------
+    ValueError
+        If ``output_name`` is one of ``scope_columns``.
+    """
+    if output_name in scope_columns:
+        raise ValueError(
+            f"The output column name '{output_name}' is one of the selected "
+            "columns. Choose a different name."
+        )

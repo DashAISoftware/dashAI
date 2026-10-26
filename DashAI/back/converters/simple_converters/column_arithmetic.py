@@ -5,7 +5,10 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.feature_engineering import (
     FeatureEngineeringConverter,
 )
-from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
+from DashAI.back.converters.drop_source_columns import (
+    AddColumnsConverterSchema,
+    reject_output_named_like_scope,
+)
 from DashAI.back.core.schema_fields import (
     bool_field,
     enum_field,
@@ -394,6 +397,7 @@ class ColumnArithmetic(FeatureEngineeringConverter, BaseConverter):
         result_column_name = self.output_column_name or (
             f"{column_a}_{self.operation}_{operand_b_label}"
         )
+        reject_output_named_like_scope(result_column_name, columns)
         output_is_integer = (
             self.operation != "divide"
             and types[column_a] == "Integer"

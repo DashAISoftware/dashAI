@@ -1,9 +1,14 @@
 import pandas as pd
 
 from DashAI.back.converters.imbalanced_learn.smote_converter import SMOTEConverter
+from DashAI.back.converters.scikit_learn.one_hot_encoder import OneHotEncoder
 from DashAI.back.converters.scikit_learn.pca import PCA
 from DashAI.back.converters.scikit_learn.select_k_best import SelectKBest
 from DashAI.back.converters.scikit_learn.standard_scaler import StandardScaler
+from DashAI.back.converters.simple_converters.column_arithmetic import (
+    ColumnArithmetic,
+)
+from DashAI.back.converters.simple_converters.column_concat import ColumnConcat
 from DashAI.back.converters.simple_converters.date_features import (
     DateFeaturesConverter,
 )
@@ -312,3 +317,70 @@ def test_dropping_source_columns_estimates_what_the_runtime_produces():
     assert added == resolved[0]
     assert "date" not in transformed["train"].column_names
     assert set(_names(estimated.final)) <= set(transformed["train"].column_names)
+
+
+def _infer_with(registry, steps):
+    return infer_structure(
+        dataset_types=_dataset().types,
+        candidates=["age", "height", "city", "date"],
+        target=["label"],
+        steps=steps,
+        component_registry=registry,
+    )
+
+
+ADD_REGISTRY = {
+    cls.__name__: {"class": cls}
+    for cls in (OneHotEncoder, ColumnArithmetic, ColumnConcat)
+}
+
+
+def test_a_name_freed_by_a_dropping_block_step_is_reused_like_the_runtime_does():
+    # One-hot outputs a block; with its source dropped, "city" is free again,
+    # so a later column named "city" keeps that name in the dataset.
+    steps = [
+        _step(
+            "OneHotEncoder",
+            [RawColumnRef(name="city")],
+            **{
+                **schema_placeholder_defaults(OneHotEncoder),
+                "drop_source_columns": True,
+            },
+        ),
+        _step(
+            "ColumnArithmetic",
+            [RawColumnRef(name="age"), RawColumnRef(name="height")],
+            operation="add",
+            output_column_name="city",
+        ),
+    ]
+
+    estimated = _infer_with(ADD_REGISTRY, steps)
+
+    preprocessor = SessionPreprocessor(ConverterSequence(steps=steps), ADD_REGISTRY)
+    _, resolved = preprocessor.fit_transform({"train": _dataset()})
+    assert estimated.valid
+    assert [item.name for item in estimated.steps[1].added] == resolved[1]
+
+
+def test_an_output_named_like_a_scope_column_is_rejected():
+    # Named after its own source, the result could not be told apart from the
+    # source column it keeps: dropping the source would delete the result.
+    for converter, scope, params in (
+        ("ColumnArithmetic", ["age", "height"], {"operation": "add"}),
+        ("ColumnConcat", ["city"], {"constant": "x"}),
+    ):
+        result = _infer_with(
+            ADD_REGISTRY,
+            [
+                _step(
+                    converter,
+                    [RawColumnRef(name=name) for name in scope],
+                    output_column_name=scope[0],
+                    **params,
+                )
+            ],
+        )
+
+        assert result.steps[0].status == "error", converter
+        assert result.steps[0].error.code == "converter_rejected", converter

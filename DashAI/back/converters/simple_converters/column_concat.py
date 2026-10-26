@@ -4,7 +4,10 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.feature_engineering import (
     FeatureEngineeringConverter,
 )
-from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
+from DashAI.back.converters.drop_source_columns import (
+    AddColumnsConverterSchema,
+    reject_output_named_like_scope,
+)
 from DashAI.back.core.schema_fields import (
     bool_field,
     none_type,
@@ -344,6 +347,7 @@ class ColumnConcat(FeatureEngineeringConverter, BaseConverter):
         result_column_name = self.output_column_name or (
             f"{column_a}_concat_{operand_b_label}"
         )
+        reject_output_named_like_scope(result_column_name, columns)
         return operand_b_mode, column_a, column_b, result_column_name
 
     def infer_output_columns(self, inputs: List[StateItem]) -> StructureDelta:

@@ -152,7 +152,10 @@ def _apply_step(
         warnings.append(
             StructureMessage(code="inference_fallback", params={"step": index})
         )
-    if drops_source_columns(converter_class, split_converter_params(step.params)[1]):
+    drops_source = drops_source_columns(
+        converter_class, split_converter_params(step.params)[1]
+    )
+    if drops_source:
         # The runtime removes the scope columns after the merge, so none of
         # them stays in the state, exactly as with an expand step.
         delta = delta.model_copy(update={"kept": []})
@@ -165,7 +168,9 @@ def _apply_step(
             )
         )
 
-    new_state, added = _apply_delta(index, state, scope, delta, taken)
+    new_state, added = _apply_delta(
+        index, state, scope, delta, taken, frees_scope_names=drops_source
+    )
     if delta.drops_unscoped:
         # The runtime replaces the dataset with the step's scope plus the
         # target, so only those names remain taken.
@@ -375,6 +380,7 @@ def _apply_delta(
     scope: List[StateItem],
     delta: StructureDelta,
     taken: Set[str],
+    frees_scope_names: bool = False,
 ) -> Tuple[List[StateItem], List[StateItem]]:
     """Apply a converter's delta to the state, as the runtime splices output.
 
@@ -405,8 +411,9 @@ def _apply_delta(
             removed_names.append(item.name)
 
     # A step that outputs blocks may keep some consumed columns under their
-    # own names (a selector keeps a subset), so their names stay taken.
-    if not blocks:
+    # own names (a selector keeps a subset), so their names stay taken,
+    # unless the step drops its source columns: the runtime removes them all.
+    if not blocks or frees_scope_names:
         taken.difference_update(removed_names)
 
     added: List[StateItem] = []
