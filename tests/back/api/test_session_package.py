@@ -442,6 +442,94 @@ def test_a_recipe_only_import_is_ready_to_train(client, classifier, tmp_path):
         assert (Path(session.preprocessing_artifacts_path) / "final.pkl").exists()
 
 
+# The one-hot and ordinal encoders treat a category unseen in fit by default
+# now; before, a step saved without ``handle_unknown`` meant sklearn's "error".
+# The migration that pinned it never sees a file exported back then.
+
+ENCODER_SCOPE = [{"kind": "raw", "name": RAW_INPUT_COLUMNS[0]}]
+
+
+def _encoder_steps(**params_by_converter):
+    return [
+        {"converter": converter, "params": dict(params), "scope": ENCODER_SCOPE}
+        for converter, params in params_by_converter.items()
+    ]
+
+
+def _imported_steps(client, result):
+    with client.app.container["session_factory"]() as db:
+        return db.get(ModelSession, result["session_id"]).preprocessing["steps"]
+
+
+def test_an_encoder_exported_without_handle_unknown_imports_with_error(
+    client, classifier, tmp_path
+):
+    def from_before_the_change(recipe):
+        recipe["session"]["preprocessing"]["steps"] += _encoder_steps(
+            OneHotEncoder={"dtype": "int64"}, OrdinalEncoder={}
+        )
+        return recipe
+
+    package = _rewrite(
+        _export_all(client, classifier, tmp_path / "original.dashai"),
+        tmp_path / "old.dashai",
+        recipe=from_before_the_change,
+    )
+
+    steps = _imported_steps(client, _import(client, package))
+
+    assert steps[0]["converter"] == "Binarizer"
+    assert "handle_unknown" not in steps[0]["params"]
+    assert [step["params"] for step in steps[1:]] == [
+        {"dtype": "int64", "handle_unknown": "error"},
+        {"handle_unknown": "error"},
+    ]
+
+
+def test_an_encoder_stored_without_handle_unknown_exports_the_one_it_uses(
+    client, classifier, tmp_path
+):
+    """A session an API client created after the change: the file says what
+    its encoders do, so importing it does not take it for an old one."""
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        original = db.get(ModelSession, classifier["session_id"])
+        preprocessing = dict(original.preprocessing)
+        preprocessing["steps"] = list(preprocessing["steps"]) + _encoder_steps(
+            OneHotEncoder={"dtype": "int64"}, OrdinalEncoder={}
+        )
+        copy = ModelSession(
+            **{field: getattr(original, field) for field in SESSION_FIELDS},
+            dataset_id=original.dataset_id,
+            preprocessing_status="ready",
+            preprocessing_artifacts_path=original.preprocessing_artifacts_path,
+        )
+        copy.name = f"{original.name} with encoders"
+        copy.preprocessing = preprocessing
+        db.add(copy)
+        db.commit()
+        session_id = copy.id
+    run_id = new_run(session_factory, session_id, "KNeighborsClassifier", {})
+    package = tmp_path / "new.dashai"
+    _build(client, session_id, [run_id], package)
+
+    _, _, recipe, _ = _read(package)
+    exported = [step["params"] for step in recipe["session"]["preprocessing"]["steps"]]
+    imported = [
+        step["params"] for step in _imported_steps(client, _import(client, package))
+    ]
+
+    encoders = [
+        {"dtype": "int64", "handle_unknown": "ignore"},
+        {"handle_unknown": "use_encoded_value"},
+    ]
+    assert exported[1:] == encoders
+    assert imported[1:] == encoders
+    with session_factory() as db:
+        # The session itself is left as it was stored.
+        assert db.get(ModelSession, session_id).preprocessing == preprocessing
+
+
 def _a_model_file(client, case, tmp_path):
     from DashAI.back.model_package.export import build_package
 
