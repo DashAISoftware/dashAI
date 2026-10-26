@@ -644,5 +644,19 @@
     "saveDocumentSuccess": "Document {{name}} saved",
     "saveDocumentError": "The document could not be saved",
     "saveDocumentWait": "Wait for the running converters to finish before saving"
+  },
+  "columnType": {
+    "Integer": "Integer",
+    "Float": "Float",
+    "Text": "Text",
+    "Time": "Time",
+    "Timestamp": "Timestamp",
+    "Duration": "Duration",
+    "Decimal": "Decimal",
+    "Date": "Date",
+    "Binary": "Binary",
+    "Boolean": "Boolean",
+    "Categorical": "Categorical",
+    "Image": "Image"
   }
 }

@@ -660,5 +660,19 @@
     "saveDocumentSuccess": "Documento {{name}} salvo",
     "saveDocumentError": "Não foi possível salvar o documento",
     "saveDocumentWait": "Aguarde os conversores em execução terminarem antes de salvar"
+  },
+  "columnType": {
+    "Integer": "Inteiro",
+    "Float": "Flutuante",
+    "Text": "Texto",
+    "Time": "Hora",
+    "Timestamp": "Carimbo de data/hora",
+    "Duration": "Duração",
+    "Decimal": "Decimal",
+    "Date": "Data",
+    "Binary": "Binário",
+    "Boolean": "Booleano",
+    "Categorical": "Categórica",
+    "Image": "Imagem"
   }
 }

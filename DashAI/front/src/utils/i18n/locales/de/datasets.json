@@ -644,5 +644,19 @@
     "saveDocumentSuccess": "Dokument {{name}} gespeichert",
     "saveDocumentError": "Das Dokument konnte nicht gespeichert werden",
     "saveDocumentWait": "Warte, bis die laufenden Konverter fertig sind, bevor du speicherst"
+  },
+  "columnType": {
+    "Integer": "Ganzzahl",
+    "Float": "Gleitkommazahl",
+    "Text": "Text",
+    "Time": "Uhrzeit",
+    "Timestamp": "Zeitstempel",
+    "Duration": "Dauer",
+    "Decimal": "Dezimalzahl",
+    "Date": "Datum",
+    "Binary": "Binär",
+    "Boolean": "Boolesch",
+    "Categorical": "Kategorisch",
+    "Image": "Bild"
   }
 }

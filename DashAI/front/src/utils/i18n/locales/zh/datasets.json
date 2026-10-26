@@ -640,5 +640,19 @@
     "saveDocumentSuccess": "文档 {{name}} 已保存",
     "saveDocumentError": "无法保存文档",
     "saveDocumentWait": "请等待正在运行的转换器完成后再保存"
+  },
+  "columnType": {
+    "Integer": "整数",
+    "Float": "浮点数",
+    "Text": "文本",
+    "Time": "时间",
+    "Timestamp": "时间戳",
+    "Duration": "时长",
+    "Decimal": "定点小数",
+    "Date": "日期",
+    "Binary": "二进制",
+    "Boolean": "布尔",
+    "Categorical": "分类",
+    "Image": "图像"
   }
 }
