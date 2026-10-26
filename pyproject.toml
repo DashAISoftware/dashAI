@@ -87,6 +87,8 @@ dependencies = [
     "pypdf",
     "pdfminer.six",
     "pdfplumber",
+    "python-docx>=1.2.0",
+    "unstructured[docx,md,pptx,xlsx]>=0.27.34",
 ]
 
 [project.optional-dependencies]
