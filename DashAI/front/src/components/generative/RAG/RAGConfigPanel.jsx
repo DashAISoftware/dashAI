@@ -3,24 +3,26 @@ import PropTypes from "prop-types";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Alert,
   Box,
   Button,
   CircularProgress,
-  Divider,
+  Collapse,
   IconButton,
   LinearProgress,
   Stack,
-  Tab,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import EditIcon from "@mui/icons-material/Edit";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SideBar from "../../threeSectionLayout/panelContainers/SideBar";
-import PillTabs from "../../shared/PillTabs";
 import PresetCardList from "./PresetCardList";
 import PromptEditor from "./PromptEditor";
 import GeneratorPicker from "./GeneratorPicker";
@@ -79,13 +81,14 @@ export default function RAGConfigPanel({
   onSessionRenamed,
   onGeneratorChange,
 }) {
-  const { t } = useTranslation(["generative", "common"]);
+  const { t, i18n } = useTranslation(["generative", "common"]);
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
 
   const [configuration, setConfiguration] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState(SECTIONS[0]);
+  const [expandedSection, setExpandedSection] = useState(SECTIONS[0]);
   const [promptValid, setPromptValid] = useState(true);
 
   // Editable working copy of the parameters, seeded from the session.
@@ -293,8 +296,15 @@ export default function RAGConfigPanel({
   if (loading || !configuration || !draft) {
     return (
       <SideBar>
-        <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-          <CircularProgress />
+        <Box
+          sx={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <CircularProgress size={32} />
         </Box>
       </SideBar>
     );
@@ -356,6 +366,18 @@ export default function RAGConfigPanel({
    * @param {string} key - The configuration section key.
    * @returns {string} The summary line.
    */
+  const retrieverDisplayName = (component) => {
+    if (!component) return null;
+    if (component === configuration.retriever_model?.component) {
+      return configuration.retriever_model.display_name || component;
+    }
+    const found = retrieverComponents.find((item) => item.name === component);
+    const displayName = found?.display_name;
+    if (!displayName) return component;
+    if (typeof displayName === "string") return displayName;
+    return displayName[i18n.language] || displayName.en || component;
+  };
+
   const sectionSummary = (key) => {
     const section = configuration[key];
     if (!section) return "";
@@ -365,27 +387,30 @@ export default function RAGConfigPanel({
       if (preset) {
         return [preset.display_name, preset.description]
           .filter(Boolean)
-          .join(" · ");
+          .join(", ");
       }
       return [section.preset_display_name, section.summary]
         .filter(Boolean)
-        .join(" · ");
+        .join(", ");
     }
 
     if (key === "retriever_model") {
+      const ref = draft.retriever_model;
+      const unchanged =
+        JSON.stringify(ref) === JSON.stringify(savedDraft?.retriever_model);
       const preset = matchedPreset(key, retrieverPresets);
-      const label =
+      const presetLabel =
         preset?.display_name ||
-        section.preset_display_name ||
-        section.display_name;
+        (unchanged ? section.preset_display_name : null);
+      const retrieverLabel = retrieverDisplayName(ref?.component);
+      const topK = ref?.params?.top_k ?? section.top_k;
       return [
-        label,
-        section.top_k
-          ? t("generative:rag.config.chunkCount", { count: section.top_k })
-          : null,
+        presetLabel,
+        retrieverLabel !== presetLabel ? retrieverLabel : null,
+        topK ? t("generative:rag.config.chunkCount", { count: topK }) : null,
       ]
         .filter(Boolean)
-        .join(" · ");
+        .join(", ");
     }
 
     return section.display_name || "";
@@ -408,7 +433,7 @@ export default function RAGConfigPanel({
           <Button
             variant="outlined"
             size="small"
-            sx={{ alignSelf: "flex-start" }}
+            fullWidth
             onClick={() => setShowChunkingAdvanced(true)}
           >
             {t("generative:rag.config.advanced")}
@@ -436,19 +461,19 @@ export default function RAGConfigPanel({
               })
             }
           />
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{ alignSelf: "flex-start" }}
-            onClick={() => setShowRetrieverAdvanced(true)}
-          >
-            {t("generative:rag.config.advanced")}
-          </Button>
           {retrieverDownloadMessage && (
             <Alert severity="warning" sx={{ py: 0.5 }}>
               {retrieverDownloadMessage}
             </Alert>
           )}
+          <Button
+            variant="outlined"
+            size="small"
+            fullWidth
+            onClick={() => setShowRetrieverAdvanced(true)}
+          >
+            {t("generative:rag.config.advanced")}
+          </Button>
           <RetrieverAdvancedModal
             open={showRetrieverAdvanced}
             onClose={() => setShowRetrieverAdvanced(false)}
@@ -483,247 +508,277 @@ export default function RAGConfigPanel({
     );
   };
 
+  const indexNotices = [];
+  if (indexStatus?.status === "indexing") {
+    indexNotices.push(
+      <Alert key="indexing" severity="info" sx={{ py: 0.5 }}>
+        {indexStatus.message}
+        <LinearProgress
+          variant={
+            typeof indexStatus.job?.progress === "number"
+              ? "determinate"
+              : "indeterminate"
+          }
+          value={indexStatus.job?.progress ?? 0}
+          sx={{ mt: 0.75, height: 4, borderRadius: 2 }}
+        />
+      </Alert>,
+    );
+  }
+  if (indexStatus?.status === "stale") {
+    indexNotices.push(
+      <Alert key="stale" severity="warning" sx={{ py: 0.5 }}>
+        {indexStatus.message}
+      </Alert>,
+    );
+  }
+  if (
+    ["error", "killed"].includes(indexStatus?.job?.status) &&
+    indexStatus?.status !== "indexing"
+  ) {
+    indexNotices.push(
+      <Alert
+        key="failed"
+        severity="error"
+        sx={{ py: 0.5 }}
+        action={
+          onRetryIndexing && (
+            <Button
+              size="small"
+              color="inherit"
+              onClick={() => onRetryIndexing()}
+            >
+              {t("generative:rag.index.retryIndexing")}
+            </Button>
+          )
+        }
+      >
+        {indexStatus.job.error || t("generative:rag.index.indexFailed")}
+      </Alert>,
+    );
+  }
+  if (
+    indexStatus?.job?.status === "cancelled" &&
+    ["not_indexed", "stale"].includes(indexStatus?.status)
+  ) {
+    indexNotices.push(
+      <Alert
+        key="cancelled"
+        severity="warning"
+        sx={{ py: 0.5 }}
+        action={
+          onRetryIndexing && (
+            <Button
+              size="small"
+              color="inherit"
+              onClick={() => onRetryIndexing()}
+            >
+              {t("generative:rag.index.retryIndexing")}
+            </Button>
+          )
+        }
+      >
+        {t("generative:rag.index.indexCancelled")}
+      </Alert>,
+    );
+  }
+
   return (
     <SideBar>
       <Box
         sx={{
-          p: 2,
-          height: "100%",
+          px: 4,
+          borderBottom: `1px solid ${theme.palette.ui.border}`,
+          flexShrink: 0,
           display: "flex",
-          flexDirection: "column",
+          alignItems: "center",
           gap: 1,
+          height: 64,
         }}
       >
-        {/* Session identity */}
-        {editingMetadata ? (
-          <Stack spacing={1}>
-            <TextField
-              size="small"
-              label={t("generative:rag.summary.sessionName")}
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-            <TextField
-              size="small"
-              multiline
-              rows={2}
-              label={t("generative:rag.summary.sessionDescription")}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-            />
-            <Stack direction="row" spacing={1} justifyContent="flex-end">
-              <Button size="small" onClick={() => setEditingMetadata(false)}>
-                {t("generative:rag.summary.cancel")}
-              </Button>
-              <Button
-                size="small"
-                variant="contained"
-                onClick={handleSaveMetadata}
-              >
-                {t("generative:rag.summary.save")}
-              </Button>
-            </Stack>
-          </Stack>
-        ) : (
-          <Stack direction="row" alignItems="center" spacing={0.5}>
-            <Typography variant="h6" noWrap sx={{ flex: 1, minWidth: 0 }}>
-              {name}
-            </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setEditingMetadata(true)}
-              aria-label={t("generative:rag.summary.edit")}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Stack>
-        )}
+        <Typography
+          variant="h6"
+          color="text.primary"
+          noWrap
+          sx={{ flex: 1, minWidth: 0 }}
+        >
+          {name}
+        </Typography>
+        <Tooltip title={t("generative:rag.summary.edit")}>
+          <IconButton
+            size="small"
+            onClick={() => setEditingMetadata((open) => !open)}
+            aria-label={t("generative:rag.summary.edit")}
+            color={editingMetadata ? "primary" : "default"}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Box>
 
-        {indexStatus?.status === "indexing" && (
-          <Alert severity="info" sx={{ py: 0.5 }}>
-            {indexStatus.message}
-            <LinearProgress
-              // Indeterminate until the job reports a fraction: a bar sitting
-              // at 0% reads as stalled rather than as starting up.
-              variant={
-                typeof indexStatus.job?.progress === "number"
-                  ? "determinate"
-                  : "indeterminate"
-              }
-              value={indexStatus.job?.progress ?? 0}
-              sx={{ mt: 0.75, height: 4, borderRadius: 2 }}
-            />
-          </Alert>
-        )}
-
-        {indexStatus?.status === "stale" && (
-          <Alert severity="warning" sx={{ py: 0.5 }}>
-            {indexStatus.message}
-          </Alert>
-        )}
-
-        {["error", "killed"].includes(indexStatus?.job?.status) &&
-          indexStatus?.status !== "indexing" && (
-            <Alert
-              severity="error"
-              sx={{ py: 0.5 }}
-              action={
-                onRetryIndexing && (
-                  <Button
-                    size="small"
-                    color="inherit"
-                    onClick={() => onRetryIndexing()}
-                  >
-                    {t("generative:rag.index.retryIndexing")}
-                  </Button>
-                )
-              }
-            >
-              {indexStatus.job.error || t("generative:rag.index.indexFailed")}
-            </Alert>
-          )}
-
-        {indexStatus?.job?.status === "cancelled" &&
-          ["not_indexed", "stale"].includes(indexStatus?.status) && (
-            <Alert
-              severity="warning"
-              sx={{ py: 0.5 }}
-              action={
-                onRetryIndexing && (
-                  <Button
-                    size="small"
-                    color="inherit"
-                    onClick={() => onRetryIndexing()}
-                  >
-                    {t("generative:rag.index.retryIndexing")}
-                  </Button>
-                )
-              }
-            >
-              {t("generative:rag.index.indexCancelled")}
-            </Alert>
-          )}
-
-        {/* Two by two rather than one scrolling row: the panel is 15-40% of
-            the viewport and the labels come from the backend, so four abreast
-            either wrap or hide half of themselves behind a scroll button. On
-            two rows all four sections are legible and reachable at once.
-            The indicator cannot follow a grid, so a selected tab is marked by
-            its own surface and underline instead. */}
-        <PillTabs
-          value={activeSection}
-          onChange={(_event, value) => setActiveSection(value)}
-          minHeight={36}
-          slotProps={{
-            // The grid goes on the list slot itself rather than through a
-            // descendant selector, so it beats the row MUI lays out there.
-            list: {
-              sx: {
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: 0.5,
-              },
-            },
-          }}
+      <Collapse in={editingMetadata} unmountOnExit sx={{ flexShrink: 0 }}>
+        <Stack
+          spacing={2}
           sx={{
-            p: 0.5,
-            "& .MuiTabs-indicator": { display: "none" },
-            "& .MuiTab-root": {
-              minWidth: 0,
-              px: 1,
-              maxWidth: "none",
-              "&.Mui-selected": {
-                bgcolor: "background.paper",
-                fontWeight: 600,
-                borderBottom: 2,
-                borderColor: "primary.main",
-              },
-            },
+            p: 4,
+            borderBottom: `1px solid ${theme.palette.ui.border}`,
           }}
         >
-          {SECTIONS.map((key) => (
-            <Tab
+          <TextField
+            size="small"
+            label={t("generative:rag.summary.sessionName")}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+          <TextField
+            size="small"
+            multiline
+            rows={2}
+            label={t("generative:rag.summary.sessionDescription")}
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+          />
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Button size="small" onClick={() => setEditingMetadata(false)}>
+              {t("generative:rag.summary.cancel")}
+            </Button>
+            <Button
+              size="small"
+              variant="contained"
+              onClick={handleSaveMetadata}
+            >
+              {t("generative:rag.summary.save")}
+            </Button>
+          </Stack>
+        </Stack>
+      </Collapse>
+
+      {indexNotices.length > 0 && (
+        <Stack spacing={1} sx={{ px: 4, pt: 3, flexShrink: 0 }}>
+          {indexNotices}
+        </Stack>
+      )}
+
+      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+        {SECTIONS.map((key) => {
+          const section = configuration[key];
+          const invalid = key === "prompt" && !promptValid;
+          return (
+            <Accordion
               key={key}
-              value={key}
-              sx={
-                key === "prompt" && !promptValid
-                  ? { color: "error.main" }
-                  : undefined
-              }
-              label={
-                <Stack direction="row" alignItems="center" spacing={0.5}>
-                  <span>{configuration[key].section_name}</span>
-                  {dirtySections.includes(key) && (
-                    <FiberManualRecordIcon
-                      sx={{ fontSize: 8 }}
-                      color="warning"
-                    />
-                  )}
-                </Stack>
-              }
-            />
-          ))}
-        </PillTabs>
-
-        <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, pt: 2 }}>
-          {/* Every section stays mounted, hidden rather than unrendered: the
-              generator reports whether its model is usable through a callback,
-              so a tab the user never opens would leave Save enabled for a
-              model that cannot run. */}
-          {SECTIONS.map((key) => (
-            <Box key={key} hidden={key !== activeSection}>
-              <Stack
-                direction="row"
-                spacing={0.5}
-                alignItems="center"
-                sx={{ mb: 1 }}
+              expanded={expandedSection === key}
+              onChange={(_event, open) => setExpandedSection(open ? key : null)}
+              disableGutters
+              square
+              elevation={0}
+              sx={{
+                bgcolor: "transparent",
+                borderBottom: `1px solid ${theme.palette.ui.border}`,
+                "&::before": { display: "none" },
+              }}
+            >
+              <AccordionSummary
+                expandIcon={<ExpandMoreIcon sx={{ color: "text.secondary" }} />}
+                sx={{
+                  px: 4,
+                  "& .MuiAccordionSummary-content": { my: 2, minWidth: 0 },
+                }}
               >
-                <Typography variant="caption" color="text.secondary" noWrap>
-                  {sectionSummary(key)}
-                </Typography>
-                {configuration[key].description && (
-                  <Tooltip title={configuration[key].description}>
-                    <InfoOutlinedIcon
-                      fontSize="inherit"
-                      sx={{ color: "text.secondary" }}
-                    />
-                  </Tooltip>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography
+                      variant="subtitle2"
+                      color={invalid ? "error.main" : "text.primary"}
+                      sx={{ fontWeight: 600 }}
+                    >
+                      {section.section_name}
+                    </Typography>
+                    {dirtySections.includes(key) && (
+                      <FiberManualRecordIcon
+                        sx={{ fontSize: 8 }}
+                        color="warning"
+                      />
+                    )}
+                  </Stack>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    noWrap
+                    sx={{ display: "block" }}
+                  >
+                    {sectionSummary(key)}
+                  </Typography>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails sx={{ px: 4, pt: 0, pb: 4 }}>
+                {section.description && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 3 }}
+                  >
+                    {section.description}
+                  </Typography>
                 )}
-              </Stack>
-              {sectionBody(key)}
-            </Box>
-          ))}
-        </Box>
+                {sectionBody(key)}
+              </AccordionDetails>
+            </Accordion>
+          );
+        })}
+      </Box>
 
-        <Divider />
-
-        {/* Context budget, computed by the backend from the live config. Every
-            section feeds into it, so it belongs beside Save rather than at the
-            end of one tab. */}
-        <Box sx={{ pt: 1 }}>
+      <Box
+        sx={{
+          flexShrink: 0,
+          px: 4,
+          py: 3,
+          borderTop: `1px solid ${theme.palette.ui.border}`,
+          bgcolor: "background.box",
+        }}
+      >
+        <Stack
+          direction="row"
+          alignItems="baseline"
+          justifyContent="space-between"
+          spacing={1}
+        >
           <Typography variant="subtitle2">
             {t("generative:rag.config.contextBudget")}
           </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={budgetUsed}
-            color={budget.is_valid ? "primary" : "error"}
-            sx={{ my: 1, borderRadius: 1, height: 6 }}
-          />
-          <Typography variant="caption" color="text.secondary">
-            {t("generative:validation.contextSpace", {
-              availableChars: budget.available.toLocaleString(),
-            })}
+          <Typography
+            variant="caption"
+            color={budget.is_valid ? "text.secondary" : "error.main"}
+          >
+            {budgetUsed}%
           </Typography>
-          {!budget.is_valid && (
-            <Alert severity="error" sx={{ mt: 1, py: 0.5 }}>
-              {t("generative:validation.insufficientContextDescription")}
-            </Alert>
-          )}
-        </Box>
+        </Stack>
+        <LinearProgress
+          variant="determinate"
+          value={budgetUsed}
+          color={budget.is_valid ? "primary" : "error"}
+          sx={{ mt: 1, borderRadius: 1, height: 6 }}
+        />
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{ display: "block", mt: 1 }}
+        >
+          {t("generative:validation.contextSpace", {
+            availableChars: budget.available.toLocaleString(),
+          })}
+        </Typography>
+        {!budget.is_valid && (
+          <Alert severity="error" sx={{ mt: 2, py: 0.5 }}>
+            {t("generative:validation.insufficientContextDescription")}
+          </Alert>
+        )}
 
-        {dirtySections.some((key) => key !== activeSection) && (
-          <Typography variant="caption" color="warning.main">
+        {dirtySections.some((key) => key !== expandedSection) && (
+          <Typography
+            variant="caption"
+            color="warning.main"
+            sx={{ display: "block", mt: 2 }}
+          >
             {t("generative:rag.config.unsavedIn", {
               sections: dirtySections
                 .map((key) => configuration[key].section_name)
@@ -732,20 +787,17 @@ export default function RAGConfigPanel({
           </Typography>
         )}
 
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 1,
-            pt: 1,
-          }}
+        <Stack
+          direction="row"
+          spacing={1}
+          justifyContent="flex-end"
+          sx={{ mt: 3 }}
         >
-          <Button size="small" onClick={handleDiscard} disabled={!dirty}>
+          <Button onClick={handleDiscard} disabled={!dirty}>
             {t("generative:rag.config.discard")}
           </Button>
           <Button
             variant="contained"
-            size="small"
             onClick={handleSave}
             disabled={
               !dirty ||
@@ -757,7 +809,7 @@ export default function RAGConfigPanel({
           >
             {t("generative:rag.paramsPanel.save")}
           </Button>
-        </Box>
+        </Stack>
       </Box>
     </SideBar>
   );
