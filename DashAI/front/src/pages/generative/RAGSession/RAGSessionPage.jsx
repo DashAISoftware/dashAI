@@ -10,7 +10,6 @@ import SessionBar from "../../../components/generative/SessionBar";
 import GenerativeHubHeader from "../../../components/generative/GenerativeHubHeader";
 import GenerativeChat from "../../../components/generative/GenerativeChat";
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
-import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import RAGConfigPanel from "../../../components/generative/RAG/RAGConfigPanel";
 import { getGenerativeSession } from "../../../api/generativeTask";
 import { getSessionIndexStatus, startSessionIndexing } from "../../../api/rag";
@@ -52,7 +51,6 @@ export default function RAGSessionPage() {
 
   const [notFound, setNotFound] = useState(false);
   const [indexStatus, setIndexStatus] = useState(null);
-  const [sessionName, setSessionName] = useState(null);
   const [generatorName, setGeneratorName] = useState(null);
 
   const sessionId = Number(urlSessionId);
@@ -70,7 +68,6 @@ export default function RAGSessionPage() {
     getGenerativeSession(sessionId)
       .then((session) => {
         if (cancelled || !session) return;
-        setSessionName(session.name ?? null);
         setSelectedSessionId?.(sessionId);
         setSelectedTaskName?.(session.task_name);
         setSelectedDisplayName?.(session.display_name ?? null);
@@ -158,14 +155,9 @@ export default function RAGSessionPage() {
     startIndexing();
   }, [setParamsVersion, startIndexing]);
 
-  const handleSessionRenamed = useCallback(
-    (newName) => {
-      // Keep the breadcrumb in step without waiting for a reload.
-      if (newName) setSessionName(newName);
-      fetchSessions?.();
-    },
-    [fetchSessions],
-  );
+  const handleSessionRenamed = useCallback(() => {
+    fetchSessions?.();
+  }, [fetchSessions]);
 
   if (notFound) {
     return (
@@ -243,28 +235,11 @@ export default function RAGSessionPage() {
           </LeftPanel>
 
           <CenterPanel>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-                minHeight: 0,
-              }}
-            >
-              {/* Page chrome, level with the other RAG tabs. It used to be
-                  rendered by the chat, which sits lower and is shared with
-                  every other generative task. */}
-              <Box sx={{ px: 4, pt: 4 }}>
-                <RAGBreadcrumbs sessionName={sessionName} />
-              </Box>
-              <Box sx={{ flex: 1, minHeight: 0 }}>
-                <GenerativeChat
-                  key={sessionId}
-                  indexStatus={indexStatus}
-                  generatorName={generatorName}
-                />
-              </Box>
-            </Box>
+            <GenerativeChat
+              key={sessionId}
+              indexStatus={indexStatus}
+              generatorName={generatorName}
+            />
           </CenterPanel>
 
           <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">
