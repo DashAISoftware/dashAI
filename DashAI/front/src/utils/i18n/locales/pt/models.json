@@ -328,7 +328,9 @@
     "importedNeedsDownloadUntrained": "Estes modelos chegaram sem treinar e precisam ser baixados antes de treinar: {{names}}",
     "importingSession": "Importando sessão...",
     "importingSessionHelp": "Pode demorar um pouco se a sessão incluir modelos treinados.",
-    "sessionImportedTitle": "Sessão importada"
+    "sessionImportedTitle": "Sessão importada",
+    "sessionFromDataset": "do conjunto de dados {{name}}",
+    "noDataset": "Sem conjunto de dados"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",
