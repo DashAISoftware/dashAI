@@ -22,6 +22,8 @@ TEMPLATES = {
         "Generation system. Decide whether the retrieved chunks are enough to "
         "answer the user message.\n"
         "\n"
+        "This is evaluation round {round} of at most {max_rounds}.\n"
+        "\n"
         "User message:\n"
         "{input}\n"
         "\n"
@@ -29,20 +31,26 @@ TEMPLATES = {
         "\n"
         "Document description: {documents.description}\n"
         "\n"
-        "Retrieved chunks (each line shows its document_id and position):\n"
+        "Current pool (each line shows its document_id and position):\n"
         "{chunks}\n"
         "\n"
-        "Candidate pool size: {pool_size} chunks.\n"
+        "Current pool size: {pool_size} chunks.\n"
         "\n"
         "Maximum retrievable chunks: {topk}.\n"
         "\n"
+        "Free pool slots left: {remaining}.\n"
+        "\n"
         "Retriever catalog: {retriever.description}\n"
+        "\n"
+        "The listed chunks ARE the current pool. Chunks not mentioned in the "
+        "two chunk fields stay in the pool exactly as they are. Use the "
+        "document chunk counts to choose valid positions.\n"
         "\n"
         "Respond by calling the function evaluate_retrieval_sufficiency with a "
         "single JSON object with this shape:\n"
         '{"sufficient": <true or false>, "call_retrievers": '
-        '{"<retriever index>": <top_k>}, "request_chunks": '
-        '{"<document id>": [<chunk positions>]}, "discard": '
+        '{"<retriever index>": <top_k>}, "request_specific_chunks": '
+        '{"<document id>": [<chunk positions>]}, "discard_specific_chunks": '
         '{"<document id>": [<chunk positions>]}, '
         '"message": "<one short user-facing sentence>", '
         '"justification": "<one short rationale>"}\n'
@@ -55,18 +63,21 @@ TEMPLATES = {
         "language as this prompt explaining why.\n"
         '- "call_retrievers" maps 1-based retriever indices from the retriever '
         "catalog to the number of chunks to retrieve from that retriever next. "
-        "Indices must be at least 1.\n"
-        '- "request_chunks" maps document ids to chunk positions (taken from '
-        "the retrieved chunk lines) to include in the pool, even if no "
-        "retriever returned them.\n"
-        '- "discard" maps document ids to chunk positions (taken from the '
-        "retrieved chunk lines) to exclude from the pool.\n"
-        "- Requests and discards persist across rounds and can override each "
-        "other: the last action applied to a chunk wins.\n"
-        '- When "sufficient" is true, omit "call_retrievers", '
-        '"request_chunks" and "discard".\n'
-        "- An insufficient verdict must request at least one retriever, chunk "
-        "or discard.\n"
+        "It is NOT mandatory every round. Indices must be at least 1.\n"
+        '- "request_specific_chunks" maps document ids to chunk positions to '
+        "ADD to the pool, even if no retriever returned them. Use the document "
+        "chunk counts to choose valid positions.\n"
+        '- "discard_specific_chunks" maps document ids to chunk positions to '
+        "REMOVE from the pool.\n"
+        '- "request_specific_chunks" and "discard_specific_chunks" are mutually '
+        "exclusive for the same chunk: never list the same chunk in both.\n"
+        "- Calling retrievers is NOT mandatory every round. Two valid cases:\n"
+        "  1. The pool already has enough information for an accurate answer: "
+        'set "sufficient": true and omit all actions.\n'
+        "  2. The pool is insufficient: set "
+        '"sufficient": false and request chunks, call retrievers, or both.\n'
+        "- When asking for more, respect the maximum {topk} chunks and the "
+        "{remaining} free slots.\n"
         "\n"
         "Respond with ONLY one JSON object, with no markdown fences and no "
         "extra text."
@@ -76,6 +87,8 @@ TEMPLATES = {
         "Generación Aumentada por Recuperación. Decide si los fragmentos "
         "recuperados son suficientes para responder al mensaje del usuario.\n"
         "\n"
+        "Esta es la ronda de evaluación {round} de como máximo {max_rounds}.\n"
+        "\n"
         "Mensaje del usuario:\n"
         "{input}\n"
         "\n"
@@ -83,20 +96,28 @@ TEMPLATES = {
         "\n"
         "Descripción de los documentos: {documents.description}\n"
         "\n"
-        "Fragmentos recuperados (cada línea muestra su document_id y posición):\n"
+        "Conjunto actual (cada línea muestra su document_id y posición):\n"
         "{chunks}\n"
         "\n"
-        "Tamaño del conjunto de candidatos: {pool_size} fragmentos.\n"
+        "Tamaño del conjunto actual: {pool_size} fragmentos.\n"
         "\n"
         "Máximo de fragmentos recuperables: {topk}.\n"
         "\n"
+        "Espacios libres restantes: {remaining}.\n"
+        "\n"
         "Catálogo de recuperadores: {retriever.description}\n"
+        "\n"
+        "Los fragmentos listados SON el conjunto actual. Los fragmentos no "
+        "mencionados en los dos campos de fragmentos permanecen en el conjunto "
+        "exactamente como están. Usa el número de fragmentos de cada documento "
+        "para elegir posiciones válidas.\n"
         "\n"
         "Responde llamando a la función evaluate_retrieval_sufficiency con un "
         "único objeto JSON con esta forma:\n"
         '{"sufficient": <true o false>, "call_retrievers": '
-        '{"<índice del recuperador>": <top_k>}, "request_chunks": '
-        '{"<id del documento>": [<posiciones de fragmentos>]}, "discard": '
+        '{"<índice del recuperador>": <top_k>}, "request_specific_chunks": '
+        '{"<id del documento>": [<posiciones de fragmentos>]}, '
+        '"discard_specific_chunks": '
         '{"<id del documento>": [<posiciones de fragmentos>]}, '
         '"message": "<una frase breve para el usuario>", '
         '"justification": "<una justificación breve>"}\n'
@@ -109,19 +130,26 @@ TEMPLATES = {
         "este prompt, explicando por qué.\n"
         '- "call_retrievers" asigna índices de recuperador basados en 1 del '
         "catálogo al número de fragmentos a recuperar de ese recuperador en la "
-        "siguiente ronda. Los índices deben ser al menos 1.\n"
-        '- "request_chunks" asigna ids de documento a posiciones de fragmento '
-        "(tomadas de las líneas de fragmentos recuperados) que se incluirán en "
-        "el conjunto, aunque ningún recuperador las haya devuelto.\n"
-        '- "discard" asigna ids de documento a posiciones de fragmento (tomadas '
-        "de las líneas de fragmentos recuperados) que se excluirán del "
-        "conjunto.\n"
-        "- Las solicitudes y descartes persisten entre rondas y pueden "
-        "sobrescribirse: la última acción aplicada a un fragmento prevalece.\n"
-        '- Cuando "sufficient" sea true, omite "call_retrievers", '
-        '"request_chunks" y "discard".\n'
-        "- Un veredicto insuficiente debe solicitar al menos un recuperador, "
-        "fragmento o descarte.\n"
+        "siguiente ronda. NO es obligatorio en cada ronda. Los índices deben "
+        "ser al menos 1.\n"
+        '- "request_specific_chunks" asigna ids de documento a posiciones de '
+        "fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las "
+        "haya devuelto. Usa el número de fragmentos de cada documento para "
+        "elegir posiciones válidas.\n"
+        '- "discard_specific_chunks" asigna ids de documento a posiciones de '
+        "fragmento para ELIMINARLAS del conjunto.\n"
+        '- "request_specific_chunks" y "discard_specific_chunks" son mutuamente '
+        "excluyentes para el mismo fragmento: nunca listes el mismo fragmento "
+        "en ambos.\n"
+        "- Llamar a los recuperadores NO es obligatorio en cada ronda. Dos "
+        "casos válidos:\n"
+        "  1. El conjunto ya tiene información suficiente para una respuesta "
+        'precisa: establece "sufficient": true y omite todas las acciones.\n'
+        "  2. El conjunto es insuficiente: establece "
+        '"sufficient": false y solicita fragmentos, llama a recuperadores, o '
+        "ambos.\n"
+        "- Cuando pidas más, respeta el máximo de {topk} fragmentos y los "
+        "{remaining} espacios libres.\n"
         "\n"
         "Responde ÚNICAMENTE con un objeto JSON, sin bloques de código ni "
         "texto adicional."
@@ -131,6 +159,8 @@ TEMPLATES = {
         "Geração Aumentada por Recuperação. Decida se os trechos recuperados "
         "são suficientes para responder à mensagem do usuário.\n"
         "\n"
+        "Esta é a rodada de avaliação {round} de no máximo {max_rounds}.\n"
+        "\n"
         "Mensagem do usuário:\n"
         "{input}\n"
         "\n"
@@ -138,20 +168,28 @@ TEMPLATES = {
         "\n"
         "Descrição dos documentos: {documents.description}\n"
         "\n"
-        "Trechos recuperados (cada linha mostra seu document_id e posição):\n"
+        "Conjunto atual (cada linha mostra seu document_id e posição):\n"
         "{chunks}\n"
         "\n"
-        "Tamanho do conjunto de candidatos: {pool_size} trechos.\n"
+        "Tamanho do conjunto atual: {pool_size} trechos.\n"
         "\n"
         "Máximo de trechos recuperáveis: {topk}.\n"
         "\n"
+        "Espaços livres restantes: {remaining}.\n"
+        "\n"
         "Catálogo de recuperadores: {retriever.description}\n"
+        "\n"
+        "Os trechos listados SÃO o conjunto atual. Os trechos não mencionados "
+        "nos dois campos de trechos permanecem no conjunto exatamente como "
+        "estão. Use o número de trechos de cada documento para escolher "
+        "posições válidas.\n"
         "\n"
         "Responda chamando a função evaluate_retrieval_sufficiency com um "
         "único objeto JSON com esta forma:\n"
         '{"sufficient": <true ou false>, "call_retrievers": '
-        '{"<índice do recuperador>": <top_k>}, "request_chunks": '
-        '{"<id do documento>": [<posições de trechos>]}, "discard": '
+        '{"<índice do recuperador>": <top_k>}, "request_specific_chunks": '
+        '{"<id do documento>": [<posições de trechos>]}, '
+        '"discard_specific_chunks": '
         '{"<id do documento>": [<posições de trechos>]}, '
         '"message": "<uma frase breve para o usuário>", '
         '"justification": "<uma justificativa breve>"}\n'
@@ -164,18 +202,25 @@ TEMPLATES = {
         "prompt, explicando por quê.\n"
         '- "call_retrievers" mapeia índices de recuperador baseados em 1 do '
         "catálogo para o número de trechos a recuperar desse recuperador na "
-        "próxima rodada. Os índices devem ser pelo menos 1.\n"
-        '- "request_chunks" mapeia ids de documento para posições de trecho '
-        "(obtidas das linhas de trechos recuperados) a incluir no conjunto, "
-        "mesmo que nenhum recuperador as tenha retornado.\n"
-        '- "discard" mapeia ids de documento para posições de trecho (obtidas '
-        "das linhas de trechos recuperados) a excluir do conjunto.\n"
-        "- Solicitações e descartes persistem entre rodadas e podem ser "
-        "sobrescritos: a última ação aplicada a um trecho prevalece.\n"
-        '- Quando "sufficient" for true, omita "call_retrievers", '
-        '"request_chunks" e "discard".\n'
-        "- Um veredicto insuficiente deve solicitar pelo menos um recuperador, "
-        "trecho ou descarte.\n"
+        "próxima rodada. NÃO é obrigatório em cada rodada. Os índices devem ser "
+        "pelo menos 1.\n"
+        '- "request_specific_chunks" mapeia ids de documento para posições de '
+        "trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha "
+        "retornado. Use o número de trechos de cada documento para escolher "
+        "posições válidas.\n"
+        '- "discard_specific_chunks" mapeia ids de documento para posições de '
+        "trecho a REMOVER do conjunto.\n"
+        '- "request_specific_chunks" e "discard_specific_chunks" são mutuamente '
+        "exclusivos para o mesmo trecho: nunca liste o mesmo trecho em ambos.\n"
+        "- Chamar os recuperadores NÃO é obrigatório em cada rodada. Dois casos "
+        "válidos:\n"
+        "  1. O conjunto já tem informação suficiente para uma resposta "
+        'precisa: defina "sufficient": true e omita todas as ações.\n'
+        "  2. O conjunto é insuficiente: defina "
+        '"sufficient": false e solicite trechos, chame recuperadores, ou '
+        "ambos.\n"
+        "- Ao pedir mais, respeite o máximo de {topk} trechos e os {remaining} "
+        "espaços livres.\n"
         "\n"
         "Responda APENAS com um objeto JSON, sem blocos de código e sem texto "
         "adicional."
@@ -250,16 +295,24 @@ class DefaultRetrievalSufficiencyPrompt(RetrievalSufficiencyPrompt):
                 "document_id, position and text; a preformatted string is kept "
                 "verbatim."
             ),
-            "{children_catalog}": (
-                "Optional alias for the retriever catalog; the whole line "
-                "disappears when it is not provided."
-            ),
             "{pool_size}": (
                 "Optional candidate pool size; the whole line disappears when "
                 "it is not provided."
             ),
             "{topk}": (
                 "Optional maximum number of retrievable chunks; the whole line "
+                "disappears when it is not provided."
+            ),
+            "{round}": (
+                "Optional 1-based evaluation round number; the whole line "
+                "disappears when it is not provided."
+            ),
+            "{max_rounds}": (
+                "Optional maximum number of evaluation rounds; the whole line "
+                "disappears when it is not provided."
+            ),
+            "{remaining}": (
+                "Optional number of free pool slots left; the whole line "
                 "disappears when it is not provided."
             ),
             "{retriever.description}": (

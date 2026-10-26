@@ -10,6 +10,9 @@ The evaluation has two routes. When the configured model supports function
 calling, the verdict is obtained through ``generate_function_call`` with the
 subclass's JSON schema, so the arguments shape is constrained by the backend.
 Otherwise the prompt is answered as text and parsed by the tolerant text parser.
+Invalid operations inside a verdict are dropped individually; when an
+insufficient verdict has no valid operation left, the attempt is retried on
+either route up to ``function_call_max_trials`` attempts.
 
 Subclasses differ only in how they choose the *next* retrieval: the depth
 retriever asks for a larger retrieval size from its single child, while the
@@ -43,6 +46,7 @@ from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
 )
 from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
     RetrievalVerdict,
+    cap_dropped_operations,
 )
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
@@ -78,9 +82,9 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
             the pool. Required — no artificial default is assumed.
         llm_model: The :class:`TextToTextGenerationTaskModel` used to judge the
             pool. Required — no artificial default is assumed.
-        function_call_max_trials: Maximum number of function-call attempts, the
-            first call included. Defaults to
-            :data:`DEFAULT_FUNCTION_CALL_MAX_TRIALS`.
+        function_call_max_trials: Maximum number of evaluation attempts, the
+            first call included. Both routes are retried on an unusable verdict.
+            Defaults to :data:`DEFAULT_FUNCTION_CALL_MAX_TRIALS`.
         EXPECTED_FUNCTION: The function name a function-calling model must call.
         FUNCTION_DESCRIPTION: Human-readable description of that function.
         FUNCTION_PARAMETERS: JSON schema of the function's arguments.
@@ -285,10 +289,54 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
         return child.retrieve(query, top_k=top_k)
 
     @staticmethod
-    def _apply_verdict_actions(pool: RetrievalPool, verdict: RetrievalVerdict) -> None:
-        """Apply a verdict's discard then request actions to the pool."""
-        pool.discard(verdict.discard)
-        pool.request(verdict.request_chunks)
+    def _apply_verdict_actions(
+        pool: RetrievalPool, verdict: RetrievalVerdict
+    ) -> List[str]:
+        """Apply a verdict's discard then request actions to the pool.
+
+        Parameters
+        ----------
+        pool : RetrievalPool
+            The pool to mutate.
+        verdict : RetrievalVerdict
+            The finalized verdict whose chunk actions are applied.
+
+        Returns
+        -------
+        List[str]
+            The pool's drop messages for positions that do not exist in the
+            retrieval corpus. Valid operations are still applied.
+        """
+        drops = pool.discard(verdict.discard_specific_chunks)
+        drops.extend(pool.request(verdict.request_specific_chunks))
+        drop_count = len(drops)
+        drops = cap_dropped_operations(drops)
+        if drops:
+            log.warning(
+                "Dropped %d invalid chunk operation(s) while updating the "
+                "retrieval pool: %s",
+                drop_count,
+                "; ".join(drops),
+            )
+        return drops
+
+    @staticmethod
+    def _merge_dropped_operations(existing: List[str], new: List[str]) -> List[str]:
+        """Return a bounded merge of two drop-message lists.
+
+        Parameters
+        ----------
+        existing : List[str]
+            Drop messages already recorded for the round.
+        new : List[str]
+            Additional drop messages produced by applying the verdict.
+
+        Returns
+        -------
+        List[str]
+            The combined list, capped at the shared bound.
+        """
+        return cap_dropped_operations(list(existing) + list(new))
 
     def _report_verdict_progress(self, verdict: RetrievalVerdict) -> None:
         """Report a verdict's optional narrative on the retrieving channel.
@@ -352,7 +400,14 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
             )
 
     def _evaluate(
-        self, query: str, pool: RetrievalPool, context: RetrievalContext
+        self,
+        query: str,
+        pool: RetrievalPool,
+        context: RetrievalContext,
+        *,
+        round_number: int,
+        max_rounds: int,
+        require_retriever_call: bool = False,
     ) -> RetrievalVerdict:
         """Delegate the prompt rendering and model call to the evaluator.
 
@@ -364,11 +419,18 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
             The currently accumulated chunk pool.
         context : RetrievalContext
             Document and corpus knowledge for the prompt.
+        round_number : int
+            The 1-based evaluation round number.
+        max_rounds : int
+            The maximum number of evaluation rounds.
+        require_retriever_call : bool, optional
+            Require an insufficient verdict with at least one valid retriever
+            call (ensemble planning).
 
         Returns
         -------
         RetrievalVerdict
-            The validated verdict.
+            The validated and finalized verdict.
         """
         chunks = pool.materialize()
         return self._evaluator.evaluate(
@@ -378,6 +440,9 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
             top_k=self.max_chunks,
             children=self.get_children(),
             context=context,
+            round_number=round_number,
+            max_rounds=max_rounds,
+            require_retriever_call=require_retriever_call,
         )
 
     def _build_trace(

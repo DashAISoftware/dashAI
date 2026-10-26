@@ -2,13 +2,14 @@
 
 Instances are constructed directly (no factory) with a scripted fake LLM, fake
 children and a recording prompt. These tests pin the round semantics, the
-retrieval-pool request/discard rules, the strict failure policy, the trace shape
-and the parser's tolerance/strictness.
+retrieval-pool request/discard rules, the tolerant per-operation failure policy,
+the trace shape and the parser's tolerance.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 from types import MappingProxyType
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -33,9 +34,11 @@ from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
     CALL_RETRIEVERS_KEY,
     DISCARD_KEY,
+    DROPPED_OPERATIONS_KEY,
     REQUEST_CHUNKS_KEY,
     SUFFICIENT_KEY,
     RetrievalVerdict,
+    cap_dropped_operations,
     parse_evaluation_arguments,
     parse_evaluation_output,
 )
@@ -216,11 +219,13 @@ class _RecordingPrompt:
         self,
         input: str,
         chunks: Any,
-        children_catalog: Any = None,
         pool_size: Optional[int] = None,
         top_k: Optional[int] = None,
         retrievers: Any = None,
         documents: Any = None,
+        round_number: Optional[int] = None,
+        max_rounds: Optional[int] = None,
+        remaining: Optional[int] = None,
         **kwargs: Any,
     ) -> str:
         """Record the structured arguments and return a stable placeholder."""
@@ -228,11 +233,13 @@ class _RecordingPrompt:
             {
                 "input": input,
                 "chunks": chunks,
-                "children_catalog": children_catalog,
                 "pool_size": pool_size,
                 "top_k": top_k,
                 "retrievers": retrievers,
                 "documents": documents,
+                "round_number": round_number,
+                "max_rounds": max_rounds,
+                "remaining": remaining,
             }
         )
         return f"EVAL pool={pool_size} catalog={retrievers}"
@@ -329,7 +336,7 @@ def test_depth_insufficient_with_only_requests_consumes_an_iteration():
     child = _FakeChild(_chunks(5), top_k=5, default_size=2, corpus=_chunks(5))
     llm = _ScriptedLLM(
         [
-            '{"sufficient": false, "request_chunks": {"1": [4]}}',
+            '{"sufficient": false, "request_specific_chunks": {"1": [4]}}',
             '{"sufficient": true}',
         ]
     )
@@ -385,7 +392,7 @@ def test_depth_insufficient_without_actions_raises():
 def test_depth_rejects_insufficient_verdict_with_empty_positions():
     """Empty position lists are not progress: the loop must fail loudly."""
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
-    llm = _ScriptedLLM(['{"sufficient": false, "request_chunks": {"1": []}}'])
+    llm = _ScriptedLLM(['{"sufficient": false, "request_specific_chunks": {"1": []}}'])
     retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=10)
 
     with pytest.raises(RAGRetrieverEvaluationError, match="at least one action"):
@@ -411,14 +418,50 @@ def test_depth_does_not_delegate_when_pool_is_full():
     assert len(pool) == 2
 
 
-def test_depth_rejects_out_of_range_retriever_index():
-    """The depth retriever only accepts retriever index 1."""
+def test_depth_out_of_range_only_action_fails_after_retries():
+    """An out-of-range index is dropped and only fails after all retries."""
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
-    llm = _ScriptedLLM(['{"sufficient": false, "call_retrievers": {"2": 3}}'])
-    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=10)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"2": 3}}',
+            '{"sufficient": false, "call_retrievers": {"2": 3}}',
+        ]
+    )
+    retriever = _depth(
+        child,
+        llm,
+        _RecordingPrompt(),
+        max_iters=2,
+        max_chunks=10,
+        function_call_max_trials=2,
+    )
 
     with pytest.raises(RAGRetrieverEvaluationError, match="out of range"):
         retriever.retrieve("q")
+
+    assert len(llm.calls) == 2
+
+
+def test_depth_drops_out_of_range_index_but_keeps_valid_call():
+    """A bad retriever index is dropped while the valid call still drives the run."""
+    child = _FakeChild(_chunks(10), top_k=10, default_size=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 4, "9": 3}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=3, max_chunks=10)
+
+    pool, trace = retriever.retrieve("q")
+
+    assert child.retrieve_calls == [None, 4]
+    assert len(pool) == 4
+    assert trace["rounds"][0][CALL_RETRIEVERS_KEY] == {1: 4}
+    assert any(
+        "out of range" in message
+        for message in trace["rounds"][0][DROPPED_OPERATIONS_KEY]
+    )
 
 
 def test_depth_requires_exactly_one_child():
@@ -459,9 +502,83 @@ def test_depth_prompt_receives_structured_catalog_and_documents():
     assert isinstance(call["documents"], list)
     assert call["documents"][0]["document_id"] == 1
     assert call["documents"][0]["name"] == "alpha"
-    assert call["children_catalog"] is None
     assert call["top_k"] == 10
     assert call["pool_size"] == 2
+
+
+def test_depth_forwards_round_budget_and_remaining_to_prompt():
+    """The depth retriever forwards round numbers and free slots to the prompt."""
+    child = _FakeChild(_chunks(10), top_k=10, default_size=3)
+    llm = _ScriptedLLM(['{"sufficient": true}'])
+    prompt = _RecordingPrompt()
+    retriever = _depth(child, llm, prompt, max_iters=3, max_chunks=10)
+
+    retriever.retrieve("q")
+
+    call = prompt.calls[0]
+    assert call["round_number"] == 1
+    assert call["max_rounds"] == 2
+    assert call["remaining"] == 7
+
+
+def test_ensemble_forwards_round_numbers_to_prompt():
+    """Planning is round 1 and post-round evaluations follow with round 2."""
+    child0 = _FakeChild(_chunks(10, document_id=1), top_k=2)
+    child1 = _FakeChild(_chunks(10, document_id=2), top_k=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": true}',
+        ]
+    )
+    prompt = _RecordingPrompt()
+    retriever = _ensemble([child0, child1], llm, prompt, max_iters=3, max_chunks=10)
+
+    retriever.retrieve("q")
+
+    assert [call["round_number"] for call in prompt.calls] == [1, 2]
+    assert all(call["max_rounds"] == 3 for call in prompt.calls)
+    assert prompt.calls[0]["remaining"] == 10
+    assert prompt.calls[1]["remaining"] == 8
+
+
+def test_depth_max_iters_two_renders_round_one_of_one():
+    """With two iterations there is a single evaluation: round 1 of 1."""
+    child = _FakeChild(_chunks(5), top_k=5, default_size=2)
+    llm = _ScriptedLLM(['{"sufficient": true}'])
+    prompt = _RecordingPrompt()
+    retriever = _depth(child, llm, prompt, max_iters=2, max_chunks=10)
+
+    retriever.retrieve("q")
+
+    assert prompt.calls[0]["round_number"] == 1
+    assert prompt.calls[0]["max_rounds"] == 1
+
+
+def test_ensemble_max_iters_one_renders_planning_round_one_of_one():
+    """A single-round ensemble renders the planning call as round 1 of 1."""
+    child0 = _FakeChild(_chunks(5), top_k=2)
+    child1 = _FakeChild(_chunks(5), top_k=2)
+    llm = _ScriptedLLM(['{"sufficient": false, "call_retrievers": {"1": 2}}'])
+    prompt = _RecordingPrompt()
+    retriever = _ensemble([child0, child1], llm, prompt, max_iters=1, max_chunks=10)
+
+    retriever.retrieve("q")
+
+    assert len(prompt.calls) == 1
+    assert prompt.calls[0]["round_number"] == 1
+    assert prompt.calls[0]["max_rounds"] == 1
+
+
+def test_depth_trace_round_includes_empty_dropped_operations():
+    """Every verdict-bearing round entry carries the dropped_operations key."""
+    child = _FakeChild(_chunks(5), top_k=5, default_size=2)
+    llm = _ScriptedLLM(['{"sufficient": true}'])
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=10)
+
+    _, trace = retriever.retrieve("q")
+
+    assert trace["rounds"][0][DROPPED_OPERATIONS_KEY] == []
 
 
 def test_depth_schema_summary_is_recursive():
@@ -486,13 +603,13 @@ def test_depth_schema_summary_is_recursive():
     assert json.dumps(summary)
 
 
-def test_depth_request_chunks_includes_unreturned_chunk():
+def test_depth_request_specific_chunks_includes_unreturned_chunk():
     """An insufficient request includes a chunk no retriever returned."""
     corpus = _chunks(5)
     child = _FakeChild(corpus[:2], top_k=5, default_size=2, corpus=corpus)
     llm = _ScriptedLLM(
         [
-            '{"sufficient": false, "request_chunks": {"1": [4]}}',
+            '{"sufficient": false, "request_specific_chunks": {"1": [4]}}',
             '{"sufficient": true}',
         ]
     )
@@ -503,13 +620,64 @@ def test_depth_request_chunks_includes_unreturned_chunk():
     assert [c.document_position for c in pool] == [4, 0, 1]
 
 
+def test_depth_evaluator_drops_unknown_position_but_keeps_valid_one():
+    """Corpus validation drops only the unknown position of a request."""
+    corpus = _chunks(5)
+    child = _FakeChild(corpus[:2], top_k=5, default_size=2, corpus=corpus)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "request_specific_chunks": {"1": [4, 99]}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=3, max_chunks=10)
+
+    pool, trace = retriever.retrieve("q")
+
+    assert [c.document_position for c in pool] == [4, 0, 1]
+    drops = trace["rounds"][0][DROPPED_OPERATIONS_KEY]
+    assert any(REQUEST_CHUNKS_KEY in message for message in drops)
+    assert any("does not exist in the retrieval corpus" in message for message in drops)
+
+
+def test_pool_drop_is_logged_and_empty_corpus_skip_is_reported(caplog):
+    """Empty-corpus chunk validation is skipped and the pool drop is logged."""
+    child = _FakeChild(_chunks(5), top_k=5, default_size=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "request_specific_chunks": {"1": [999]}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=10)
+    with (
+        caplog.at_level(
+            logging.WARNING,
+            logger="DashAI.back.models.RAG.retrievers.composite.retrieval_evaluator",
+        ),
+        caplog.at_level(
+            logging.WARNING,
+            logger="DashAI.back.models.RAG.retrievers.composite.llm_evaluated_retriever",
+        ),
+    ):
+        retriever.retrieve("q")
+
+    messages = [record.getMessage() for record in caplog.records]
+    assert any("range validation was skipped" in message for message in messages)
+    assert any(
+        "while updating the retrieval pool" in message and REQUEST_CHUNKS_KEY in message
+        for message in messages
+    )
+
+
 def test_depth_discard_persists_across_rounds():
     """A discarded chunk stays excluded even when a later round returns it."""
     corpus = _chunks(6)
     child = _FakeChild(corpus, top_k=6, default_size=3, corpus=corpus)
     llm = _ScriptedLLM(
         [
-            '{"sufficient": false, "call_retrievers": {"1": 5}, "discard": {"1": [1]}}',
+            '{"sufficient": false, "call_retrievers": {"1": 5}, '
+            '"discard_specific_chunks": {"1": [1]}}',
         ]
     )
     retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=10)
@@ -517,7 +685,7 @@ def test_depth_discard_persists_across_rounds():
     pool, trace = retriever.retrieve("q")
 
     assert sorted(c.document_position for c in pool) == [0, 2, 3, 4]
-    assert trace["rounds"][0]["discard"] == {1: [1]}
+    assert trace["rounds"][0][DISCARD_KEY] == {1: [1]}
 
 
 def test_depth_full_pool_discard_refills_on_next_round():
@@ -526,7 +694,8 @@ def test_depth_full_pool_discard_refills_on_next_round():
     child = _FakeChild(corpus, top_k=6, default_size=5, corpus=corpus)
     llm = _ScriptedLLM(
         [
-            '{"sufficient": false, "call_retrievers": {"1": 6}, "discard": {"1": [1]}}',
+            '{"sufficient": false, "call_retrievers": {"1": 6}, '
+            '"discard_specific_chunks": {"1": [1]}}',
             '{"sufficient": true}',
         ]
     )
@@ -548,9 +717,10 @@ def test_depth_request_discard_request_across_rounds():
     child = _FakeChild(corpus, top_k=5, default_size=2, corpus=corpus)
     llm = _ScriptedLLM(
         [
-            '{"sufficient": false, "request_chunks": {"1": [4]}}',
-            '{"sufficient": false, "discard": {"1": [4]}, "call_retrievers": {"1": 3}}',
-            '{"sufficient": false, "request_chunks": {"1": [4]}}',
+            '{"sufficient": false, "request_specific_chunks": {"1": [4]}}',
+            '{"sufficient": false, "discard_specific_chunks": {"1": [4]}, '
+            '"call_retrievers": {"1": 3}}',
+            '{"sufficient": false, "request_specific_chunks": {"1": [4]}}',
             '{"sufficient": true}',
         ]
     )
@@ -567,8 +737,8 @@ def test_depth_newest_request_batch_is_materialized():
     child = _FakeChild(corpus, top_k=6, default_size=2, corpus=corpus)
     llm = _ScriptedLLM(
         [
-            '{"sufficient": false, "request_chunks": {"1": [4, 5]}}',
-            '{"sufficient": false, "request_chunks": {"1": [3]}}',
+            '{"sufficient": false, "request_specific_chunks": {"1": [4, 5]}}',
+            '{"sufficient": false, "request_specific_chunks": {"1": [3]}}',
             '{"sufficient": true}',
         ]
     )
@@ -582,19 +752,21 @@ def test_depth_newest_request_batch_is_materialized():
 def test_depth_sufficient_discard_does_not_mutate_pool():
     """A sufficient verdict is terminal and ignores its discard action."""
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
-    llm = _ScriptedLLM(['{"sufficient": true, "discard": {"1": [0]}}'])
+    llm = _ScriptedLLM(['{"sufficient": true, "discard_specific_chunks": {"1": [0]}}'])
     retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=10)
 
     pool, trace = retriever.retrieve("q")
 
     assert [c.document_position for c in pool] == [0, 1]
-    assert trace["rounds"][0]["discard"] == {1: [0]}
+    assert trace["rounds"][0][DISCARD_KEY] == {1: [0]}
 
 
 def test_depth_sufficient_unknown_request_does_not_raise_or_mutate():
     """A sufficient verdict never resolves its requested chunk positions."""
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
-    llm = _ScriptedLLM(['{"sufficient": true, "request_chunks": {"1": [999]}}'])
+    llm = _ScriptedLLM(
+        ['{"sufficient": true, "request_specific_chunks": {"1": [999]}}']
+    )
     retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=10)
 
     pool, _ = retriever.retrieve("q")
@@ -602,14 +774,21 @@ def test_depth_sufficient_unknown_request_does_not_raise_or_mutate():
     assert [c.document_position for c in pool] == [0, 1]
 
 
-def test_depth_rejects_bad_call_indices_on_sufficient_verdict():
-    """Call indices are validated before the sufficient short-circuit."""
+def test_depth_sufficient_verdict_drops_bad_call_indices_without_raising():
+    """A sufficient verdict wins; the dropped index is recorded in the trace."""
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
     llm = _ScriptedLLM(['{"sufficient": true, "call_retrievers": {"7": 3}}'])
     retriever = _depth(child, llm, _RecordingPrompt(), max_iters=2, max_chunks=10)
 
-    with pytest.raises(RAGRetrieverEvaluationError, match="out of range"):
-        retriever.retrieve("q")
+    pool, trace = retriever.retrieve("q")
+
+    assert [c.document_position for c in pool] == [0, 1]
+    assert trace["rounds"][0]["verdict"] is True
+    assert trace["rounds"][0][CALL_RETRIEVERS_KEY] == {}
+    assert any(
+        "out of range" in message
+        for message in trace["rounds"][0][DROPPED_OPERATIONS_KEY]
+    )
 
 
 def test_depth_trace_includes_schema_summary():
@@ -752,6 +931,57 @@ def test_ensemble_planning_chooses_children_and_catalog_rendered():
     assert prompt.calls[0]["pool_size"] == 0
 
 
+def test_ensemble_planning_trace_records_planning_dropped_operations():
+    """The planning parser/evaluator drops reach the first round entry."""
+    child0 = _FakeChild(_chunks(5), top_k=2)
+    child1 = _FakeChild(_chunks(5), top_k=3)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 2, "9": 3}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _ensemble(
+        [child0, child1], llm, _RecordingPrompt(), max_iters=2, max_chunks=10
+    )
+
+    _, trace = retriever.retrieve("q")
+
+    planning_drops = trace["rounds"][0][f"planning_{DROPPED_OPERATIONS_KEY}"]
+    assert any("out of range" in message for message in planning_drops)
+    assert child0.retrieve_calls == [2]
+
+
+def test_ensemble_planning_with_only_chunk_actions_is_retried():
+    """A chunk-only planning verdict is retried before it can mutate the pool."""
+    corpus = _chunks(5)
+    child0 = _FakeChild(corpus[:2], top_k=5, corpus=corpus)
+    child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "request_specific_chunks": {"1": [4]}}',
+            '{"sufficient": false, "call_retrievers": {"1": 2}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _ensemble(
+        [child0, child1],
+        llm,
+        _RecordingPrompt(),
+        max_iters=2,
+        max_chunks=10,
+        function_call_max_trials=2,
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    assert len(llm.calls) == 3
+    assert child0.retrieve_calls == [2]
+    assert [c.document_position for c in pool] == [0, 1]
+    assert all(c.document_position != 4 for c in pool)
+    assert trace["rounds"][0]["verdict"] is True
+
+
 def test_ensemble_call_retrievers_sizes_are_explicit():
     """Each round consults the chosen children at the model-requested size."""
     child0 = _FakeChild(_chunks(10, document_id=1), top_k=2)
@@ -785,7 +1015,7 @@ def test_ensemble_call_retrievers_sizes_are_explicit():
         '{"sufficient": false}',
         '{"sufficient": false, "call_retrievers": {"1": 0}}',
         '{"sufficient": true}',
-        '{"sufficient": false, "discard": {"1": []}}',
+        '{"sufficient": false, "discard_specific_chunks": {"1": []}}',
     ],
 )
 def test_ensemble_rejects_bad_planning_verdict(planning: str):
@@ -825,7 +1055,8 @@ def test_ensemble_full_pool_discard_refills_on_next_round():
     llm = _ScriptedLLM(
         [
             '{"sufficient": false, "call_retrievers": {"1": 5}}',
-            '{"sufficient": false, "call_retrievers": {"1": 6}, "discard": {"1": [1]}}',
+            '{"sufficient": false, "call_retrievers": {"1": 6}, '
+            '"discard_specific_chunks": {"1": [1]}}',
             '{"sufficient": true}',
         ]
     )
@@ -851,7 +1082,7 @@ def test_ensemble_round_with_only_chunk_actions_skips_consultation():
     llm = _ScriptedLLM(
         [
             '{"sufficient": false, "call_retrievers": {"1": 2}}',
-            '{"sufficient": false, "request_chunks": {"1": [4]}}',
+            '{"sufficient": false, "request_specific_chunks": {"1": [4]}}',
             '{"sufficient": true}',
         ]
     )
@@ -912,8 +1143,8 @@ def test_ensemble_duplicate_return_does_not_exhaust_budget():
     assert len(pool) == 4
 
 
-def test_ensemble_rejects_bad_call_indices_on_sufficient_verdict():
-    """Post-round call indices are validated before the sufficient break."""
+def test_ensemble_sufficient_verdict_drops_bad_call_indices_without_raising():
+    """A sufficient post-round verdict wins; the dropped index is recorded."""
     child0 = _FakeChild(_chunks(5, document_id=1), top_k=2)
     child1 = _FakeChild(_chunks(5, document_id=2), top_k=2)
     llm = _ScriptedLLM(
@@ -926,8 +1157,15 @@ def test_ensemble_rejects_bad_call_indices_on_sufficient_verdict():
         [child0, child1], llm, _RecordingPrompt(), max_iters=2, max_chunks=10
     )
 
-    with pytest.raises(RAGRetrieverEvaluationError, match="out of range"):
-        retriever.retrieve("q")
+    pool, trace = retriever.retrieve("q")
+
+    assert len(pool) == 2
+    assert trace["rounds"][0]["verdict"] is True
+    assert trace["rounds"][0][CALL_RETRIEVERS_KEY] == {}
+    assert any(
+        "out of range" in message
+        for message in trace["rounds"][0][DROPPED_OPERATIONS_KEY]
+    )
 
 
 def test_ensemble_planning_actions_cannot_starve_retrievers():
@@ -937,7 +1175,7 @@ def test_ensemble_planning_actions_cannot_starve_retrievers():
     llm = _ScriptedLLM(
         [
             '{"sufficient": false, "call_retrievers": {"1": 1}, '
-            '"request_chunks": {"1": [0]}}',
+            '"request_specific_chunks": {"1": [0]}}',
         ]
     )
     retriever = _ensemble(
@@ -1135,9 +1373,13 @@ def test_function_calling_invalid_arguments_type_raises():
     [
         {"sufficient": "yes"},
         {"sufficient": False, "call_retrievers": {1: 0}},
-        {"sufficient": False, "request_chunks": {1: [-1]}},
+        {"sufficient": False, "request_specific_chunks": {1: [-1]}},
         {"sufficient": False, "call_retrievers": {"-1": 2}},
-        {"sufficient": False, "discard": {1: [2]}, "request_chunks": {1: [2]}},
+        {
+            "sufficient": False,
+            "discard_specific_chunks": {1: [2]},
+            "request_specific_chunks": {1: [2]},
+        },
         None,
     ],
 )
@@ -1360,6 +1602,34 @@ def test_depth_retries_function_call_after_malformed_arguments():
     assert len(llm.fc_calls) == 2
 
 
+def test_depth_retries_function_call_when_all_operations_are_invalid():
+    """An all-invalid insufficient verdict is retried and can then succeed."""
+    child = _FakeChild(_chunks(5), top_k=5, default_size=2)
+    llm = _FunctionCallingScriptedLLM(
+        [
+            FunctionCallResult(
+                "evaluate_retrieval_sufficiency",
+                {"sufficient": False, "call_retrievers": {9: 3}},
+            ),
+            FunctionCallResult("evaluate_retrieval_sufficiency", {"sufficient": True}),
+        ]
+    )
+    retriever = _depth(
+        child,
+        llm,
+        _RecordingPrompt(),
+        max_iters=2,
+        max_chunks=10,
+        function_call_max_trials=2,
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    assert len(pool) == 2
+    assert trace["rounds"][0]["verdict"] is True
+    assert len(llm.fc_calls) == 2
+
+
 def test_depth_exhausts_function_call_trials_and_raises():
     """All configured attempts are used before the last error is raised."""
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
@@ -1413,8 +1683,8 @@ def test_ensemble_retries_planning_function_call():
     assert len(llm.fc_calls) == 2
 
 
-def test_text_route_does_not_retry():
-    """The text route is single-shot even with trials left."""
+def test_text_route_retries_invalid_output():
+    """The text route now retries an unparseable verdict and succeeds."""
     child = _FakeChild(_chunks(5), top_k=5, default_size=2)
     llm = _ScriptedLLM(["not json at all", '{"sufficient": true}'])
     retriever = _depth(
@@ -1423,13 +1693,89 @@ def test_text_route_does_not_retry():
         _RecordingPrompt(),
         max_iters=2,
         max_chunks=10,
-        function_call_max_trials=3,
+        function_call_max_trials=2,
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    assert len(pool) == 2
+    assert trace["rounds"][0]["verdict"] is True
+    assert len(llm.calls) == 2
+
+
+def test_text_route_retries_all_invalid_operations():
+    """A parsed verdict whose operations are all invalid is retried too."""
+    child = _FakeChild(_chunks(5), top_k=5, default_size=2)
+    llm = _ScriptedLLM(
+        [
+            '{"sufficient": false, "call_retrievers": {"1": 0}}',
+            '{"sufficient": true}',
+        ]
+    )
+    retriever = _depth(
+        child,
+        llm,
+        _RecordingPrompt(),
+        max_iters=2,
+        max_chunks=10,
+        function_call_max_trials=2,
+    )
+
+    pool, trace = retriever.retrieve("q")
+
+    assert len(pool) == 2
+    assert trace["rounds"][0]["verdict"] is True
+    assert len(llm.calls) == 2
+
+
+def test_retry_warning_is_truncated_to_one_short_line(caplog):
+    """Retry warnings summarize the reason instead of echoing the full error."""
+    child = _FakeChild(_chunks(5), top_k=5, default_size=2)
+    long_output = "not json\n" + ("x" * 1000)
+    llm = _ScriptedLLM([long_output, '{"sufficient": true}'])
+    retriever = _depth(
+        child,
+        llm,
+        _RecordingPrompt(),
+        max_iters=2,
+        max_chunks=10,
+        function_call_max_trials=2,
+    )
+
+    with caplog.at_level(
+        "WARNING",
+        logger="DashAI.back.models.RAG.retrievers.composite.retrieval_evaluator",
+    ):
+        retriever.retrieve("q")
+
+    warnings = [
+        record.getMessage()
+        for record in caplog.records
+        if record.name.endswith("retrieval_evaluator")
+    ]
+    assert warnings
+    assert any("retrying:" in message for message in warnings)
+    assert all("\n" not in message for message in warnings)
+    assert all(len(message) < 600 for message in warnings)
+
+
+def test_text_route_exhausts_trials_and_raises():
+    """The text route raises the last error once all attempts are used."""
+    child = _FakeChild(_chunks(5), top_k=5, default_size=2)
+    llm = _ScriptedLLM(["not json at all", "still not json"])
+    retriever = _depth(
+        child,
+        llm,
+        _RecordingPrompt(),
+        max_iters=2,
+        max_chunks=10,
+        function_call_max_trials=2,
     )
 
     with pytest.raises(RAGRetrieverEvaluationError):
         retriever.retrieve("q")
 
-    assert len(llm.calls) == 1
+    assert len(llm.calls) == 2
 
 
 @pytest.mark.parametrize("value", [0, -1, True, "3", 3.5, MAX_FUNCTION_CALL_TRIALS + 1])
@@ -1533,9 +1879,9 @@ def test_parse_tolerates_fences_and_unknown_keys():
 def test_parse_coerces_digit_string_keys_and_deduplicates_positions():
     """Digit-string keys become ints and repeated positions collapse."""
     verdict = parse_evaluation_output(
-        '{"sufficient": true, "request_chunks": {"2": [1, 1, 3]}}'
+        '{"sufficient": true, "request_specific_chunks": {"2": [1, 1, 3]}}'
     )
-    assert verdict.request_chunks == {2: [1, 3]}
+    assert verdict.request_specific_chunks == {2: [1, 3]}
 
 
 @pytest.mark.parametrize(
@@ -1544,13 +1890,13 @@ def test_parse_coerces_digit_string_keys_and_deduplicates_positions():
         '{"sufficient": false, "call_retrievers": {"1": 0}}',
         '{"sufficient": false, "call_retrievers": {"0": 2}}',
         '{"sufficient": false, "call_retrievers": {"-1": 2}}',
-        '{"sufficient": false, "request_chunks": {"1": [-1]}}',
-        '{"sufficient": false, "request_chunks": {"-1": [0]}}',
+        '{"sufficient": false, "request_specific_chunks": {"1": [-1]}}',
+        '{"sufficient": false, "request_specific_chunks": {"-1": [0]}}',
         '{"sufficient": false, "call_retrievers": []}',
         '{"sufficient": false}',
-        '{"sufficient": false, "discard": {}}',
-        '{"sufficient": false, "request_chunks": {"1": []}}',
-        '{"sufficient": false, "discard": {"1": []}}',
+        '{"sufficient": false, "discard_specific_chunks": {}}',
+        '{"sufficient": false, "request_specific_chunks": {"1": []}}',
+        '{"sufficient": false, "discard_specific_chunks": {"1": []}}',
     ],
 )
 def test_parse_rejects_invalid_action_maps(bad: str):
@@ -1559,27 +1905,111 @@ def test_parse_rejects_invalid_action_maps(bad: str):
         parse_evaluation_output(bad)
 
 
+def test_parse_keeps_first_duplicate_coerced_call_key():
+    """Keys that collide after coercion keep the first and drop the later one."""
+    verdict = parse_evaluation_output(
+        '{"sufficient": false, "call_retrievers": {"1": 3, "01": 7}}'
+    )
+
+    assert verdict.call_retrievers == {1: 3}
+    assert len(verdict.dropped_operations) == 1
+
+
+def test_parse_keeps_later_valid_call_after_invalid_duplicate():
+    """An invalid first duplicate must not hide the later valid entry."""
+    verdict = parse_evaluation_output(
+        '{"sufficient": false, "call_retrievers": {"1": 0, "01": 3}}'
+    )
+
+    assert verdict.call_retrievers == {1: 3}
+    assert any("top_k" in message for message in verdict.dropped_operations)
+
+
+def test_cap_dropped_operations_stays_within_the_bound():
+    """The retained drop list is bounded overall and the tail is summarized."""
+    drops = [f"drop-{index}" for index in range(60)]
+
+    capped = cap_dropped_operations(drops)
+
+    assert capped[:49] == drops[:49]
+    assert len(capped) == 50
+    assert capped[-1] == "Dropped 11 more invalid operation(s)."
+
+
+def test_cap_dropped_operations_preserves_omitted_count_when_recapped():
+    """Re-capping absorbs the previous summary instead of counting it as a drop."""
+    drops = [f"drop-{index}" for index in range(60)]
+    first = cap_dropped_operations(drops)
+
+    merged = cap_dropped_operations(first + ["extra-0", "extra-1"])
+
+    assert len(merged) == 50
+    assert merged[-1] == "Dropped 13 more invalid operation(s)."
+
+
+def test_parse_truncates_huge_raw_values_in_drop_messages():
+    """A huge model-authored key is previewed instead of echoed verbatim."""
+    huge_key = "x" * 500
+    raw = json.dumps({"sufficient": False, "call_retrievers": {huge_key: 1, "1": 2}})
+    verdict = parse_evaluation_output(raw)
+
+    assert verdict.call_retrievers == {1: 2}
+    assert verdict.dropped_operations
+    assert all(len(message) < 400 for message in verdict.dropped_operations)
+
+
 @pytest.mark.parametrize(
-    "bad",
+    ("key", "expected"),
     [
-        '{"sufficient": false, "call_retrievers": {"1": 3, "01": 7}}',
-        '{"sufficient": true, "request_chunks": {"1": [0], "01": [1]}}',
-        '{"sufficient": true, "discard": {"2": [0], "02": [1]}}',
+        (REQUEST_CHUNKS_KEY, {1: [0, 1]}),
+        (DISCARD_KEY, {2: [0, 1]}),
     ],
 )
-def test_parse_rejects_duplicate_coerced_keys(bad: str):
-    """Keys that collide after integer coercion fail loudly."""
-    with pytest.raises(RAGRetrieverEvaluationError, match="duplicate key"):
-        parse_evaluation_output(bad)
+def test_parse_unions_duplicate_coerced_chunk_keys(key: str, expected):
+    """Duplicate coerced document ids union their positions instead of raising."""
+    document_id = "1" if key == REQUEST_CHUNKS_KEY else "2"
+    verdict = parse_evaluation_output(
+        f'{{"sufficient": true, "{key}": '
+        f'{{"{document_id}": [0], "0{document_id}": [1]}}}}'
+    )
+
+    if key == REQUEST_CHUNKS_KEY:
+        mapping = verdict.request_specific_chunks
+    else:
+        mapping = verdict.discard_specific_chunks
+    assert mapping == expected
 
 
-def test_parse_rejects_conflicting_request_and_discard():
-    """The same chunk cannot be requested and discarded in one verdict."""
-    with pytest.raises(RAGRetrieverEvaluationError, match="both requested"):
-        parse_evaluation_output(
-            '{"sufficient": true, "request_chunks": {"1": [2, 3]}, '
-            '"discard": {"1": [3]}}'
-        )
+def test_parse_drops_conflicting_chunk_from_both_fields():
+    """A chunk listed as both requested and discarded is removed from both."""
+    verdict = parse_evaluation_output(
+        '{"sufficient": true, "request_specific_chunks": {"1": [2, 3]}, '
+        '"discard_specific_chunks": {"1": [3, 4]}}'
+    )
+
+    assert verdict.request_specific_chunks == {1: [2]}
+    assert verdict.discard_specific_chunks == {1: [4]}
+    assert any("cannot be both" in message for message in verdict.dropped_operations)
+
+
+def test_parse_drops_one_bad_call_entry_but_keeps_the_valid_one():
+    """A malformed call entry is dropped individually, not the whole field."""
+    verdict = parse_evaluation_output(
+        '{"sufficient": false, "call_retrievers": {"1": 3, "not-an-index": 2, "2": 0}}'
+    )
+
+    assert verdict.call_retrievers == {1: 3}
+    assert len(verdict.dropped_operations) == 2
+
+
+def test_parse_drops_one_bad_request_position_but_keeps_the_valid_one():
+    """A malformed request position is dropped individually."""
+    verdict = parse_evaluation_output(
+        '{"sufficient": false, "request_specific_chunks": {"1": [1, "bad", true, 2]}}'
+    )
+
+    assert verdict.request_specific_chunks == {1: [1, 2]}
+    assert len(verdict.dropped_operations) == 2
 
 
 def test_parse_requires_boolean_sufficient():
@@ -1594,21 +2024,23 @@ def test_parse_arguments_accepts_dict_payload():
         {
             "sufficient": False,
             "call_retrievers": {"1": 4},
-            "request_chunks": {"2": [1]},
+            "request_specific_chunks": {"2": [1]},
             "x": 2,
         }
     )
     assert verdict == RetrievalVerdict(
-        sufficient=False, call_retrievers={1: 4}, request_chunks={2: [1]}
+        sufficient=False, call_retrievers={1: 4}, request_specific_chunks={2: [1]}
     )
 
 
 def test_parse_arguments_accepts_json_string_payload():
     """A JSON-encoded string payload delegates to the tolerant text parser."""
     verdict = parse_evaluation_arguments(
-        '```json\n{"sufficient": true, "discard": {"1": [2]}}\n```'
+        '```json\n{"sufficient": true, "discard_specific_chunks": {"1": [2]}}\n```'
     )
-    assert verdict == RetrievalVerdict(sufficient=True, discard={1: [2]})
+    assert verdict == RetrievalVerdict(
+        sufficient=True, discard_specific_chunks={1: [2]}
+    )
 
 
 def test_parse_arguments_accepts_non_dict_mapping():
