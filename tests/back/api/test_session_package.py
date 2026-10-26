@@ -466,7 +466,7 @@ def test_an_encoder_exported_without_handle_unknown_imports_with_error(
 ):
     def from_before_the_change(recipe):
         recipe["session"]["preprocessing"]["steps"] += _encoder_steps(
-            OneHotEncoder={"dtype": "int64"}, OrdinalEncoder={}
+            OneHotEncoder={"dtype": "int64"}, OrdinalEncoder={}, LabelEncoder={}
         )
         return recipe
 
@@ -483,6 +483,9 @@ def test_an_encoder_exported_without_handle_unknown_imports_with_error(
     assert [step["params"] for step in steps[1:]] == [
         {"dtype": "int64", "handle_unknown": "error"},
         {"handle_unknown": "error"},
+        # Not pinned: an old label encoder encodes an unseen label as -1 now,
+        # as its pickles do, so it takes the session's default.
+        {},
     ]
 
 
@@ -496,7 +499,7 @@ def test_an_encoder_stored_without_handle_unknown_exports_the_one_it_uses(
         original = db.get(ModelSession, classifier["session_id"])
         preprocessing = dict(original.preprocessing)
         preprocessing["steps"] = list(preprocessing["steps"]) + _encoder_steps(
-            OneHotEncoder={"dtype": "int64"}, OrdinalEncoder={}
+            OneHotEncoder={"dtype": "int64"}, OrdinalEncoder={}, LabelEncoder={}
         )
         copy = ModelSession(
             **{field: getattr(original, field) for field in SESSION_FIELDS},
@@ -519,8 +522,11 @@ def test_an_encoder_stored_without_handle_unknown_exports_the_one_it_uses(
         step["params"] for step in _imported_steps(client, _import(client, package))
     ]
 
+    # Every session default the step leaves out, not only handle_unknown: the
+    # file runs the same wherever it is imported, whatever defaults are there.
     encoders = [
         {"dtype": "int64", "handle_unknown": "ignore"},
+        {"handle_unknown": "use_encoded_value", "unknown_value": -1},
         {"handle_unknown": "use_encoded_value"},
     ]
     assert exported[1:] == encoders
