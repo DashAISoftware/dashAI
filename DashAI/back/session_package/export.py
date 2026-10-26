@@ -16,7 +16,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.model_package.export import _zip_directory
 from DashAI.back.model_package.manifest import (
     MANIFEST_ENTRY,
@@ -69,9 +68,12 @@ RUN_FIELDS = (
     "split_indexes",
     "artifacts",
 )
-# Encoders whose default ``handle_unknown`` changed from sklearn's "error" to
-# treating a category unseen in fit. A file always says which one a step uses,
-# so a step without it can only come from a file written before the change.
+# Encoders whose stored steps meant sklearn's "error" when they left
+# ``handle_unknown`` out, before sessions treated a category unseen in fit by
+# default. A file always says which one a step uses (``with_session_params``),
+# so importing a step without it reads it as one written before the change.
+# The label encoder is not here: an old one encodes an unseen label as -1, as
+# its pickles do.
 UNKNOWN_HANDLING_ENCODERS = ("OneHotEncoder", "OrdinalEncoder")
 
 
@@ -99,12 +101,29 @@ def with_unknown_handling(
     return {**preprocessing, "steps": steps}
 
 
-def _session_default(converter_class: Any, name: str) -> Any:
-    """The value a session step that leaves ``name`` out runs with."""
-    return {
-        **schema_placeholder_defaults(converter_class),
-        **converter_class.SESSION_PARAMS,
-    }[name]
+def with_session_params(
+    preprocessing: Optional[Dict[str, Any]], component_registry: Any
+) -> Optional[Dict[str, Any]]:
+    """A copy of the steps with the session defaults they leave out written in.
+
+    A step runs with its converter's ``session_params``, so the file writes
+    them down: it then runs the same wherever it is imported, whatever the
+    session defaults are there. A converter that is not registered is left
+    as it is. ``steps`` and ``params`` may be null, as an imported file
+    stores them; they mean no steps and no params.
+    """
+    if not preprocessing:
+        return preprocessing
+    steps = []
+    for step in preprocessing.get("steps") or []:
+        converter = step.get("converter")
+        if isinstance(converter, str) and converter in component_registry:
+            params = step.get("params") or {}
+            filled = component_registry[converter]["class"].session_params(params)
+            if filled != params:
+                step = {**step, "params": filled}
+        steps.append(step)
+    return {**preprocessing, "steps": steps}
 
 
 class SessionNotFoundError(ModelPackageError):
@@ -303,14 +322,11 @@ def build_session_package(
         dataset_dir = Path(dataset.file_path) / DATASET_ENTRY
         artifacts_path = session.preprocessing_artifacts_path
         recipe_session = {field: getattr(session, field) for field in SESSION_FIELDS}
-        # An encoder left without it uses the session's default, which the
-        # file writes down: importing reads a step without it as one from
-        # before that default changed.
-        recipe_session["preprocessing"] = with_unknown_handling(
-            recipe_session["preprocessing"],
-            lambda converter: _session_default(
-                component_registry[converter]["class"], "handle_unknown"
-            ),
+        # A step left without a session default runs with it, and the file
+        # writes it down: importing reads an encoder without handle_unknown
+        # as one from before that default changed.
+        recipe_session["preprocessing"] = with_session_params(
+            recipe_session["preprocessing"], component_registry
         )
         recipe_dataset = {
             "name": dataset.name,
