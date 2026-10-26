@@ -90,6 +90,23 @@ const CONVERTERS = {
     },
     session_params: { handle_unknown: "use_encoded_value", unknown_value: -1 },
   },
+  LabelEncoder: {
+    schema: {
+      type: "object",
+      title: "LabelEncoderSchema",
+      required: ["handle_unknown"],
+      properties: {
+        handle_unknown: {
+          enum: ["error", "use_encoded_value"],
+          enumNames: ["Raise an error", "Encode as -1"],
+          placeholder: "error",
+          title: "Handle Unknown",
+          type: "string",
+        },
+      },
+    },
+    session_params: { handle_unknown: "use_encoded_value" },
+  },
 };
 
 async function saveWithTheDefaults(name) {
@@ -132,6 +149,12 @@ describe("FormSessionConverterSection", () => {
       dtype: "int64",
       handle_unknown: "use_encoded_value",
       unknown_value: -1,
+    });
+  });
+
+  test("a label step is saved encoding an unseen label as -1", async () => {
+    expect(await saveWithTheDefaults("LabelEncoder")).toEqual({
+      handle_unknown: "use_encoded_value",
     });
   });
 });
