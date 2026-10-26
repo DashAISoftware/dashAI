@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import TuneIcon from "@mui/icons-material/Tune";
+import DescriptionText from "../../shared/DescriptionText";
 import Upload from "../../shared/Upload";
 import FormSchema from "../../shared/FormSchema";
 import FormSchemaContainer from "../../shared/FormSchemaContainer";
@@ -279,7 +280,7 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
                 color="text.secondary"
                 sx={{ mt: 0.5, whiteSpace: "pre-line" }}
               >
-                {selectedDescription}
+                <DescriptionText text={selectedDescription} />
               </Typography>
             </Box>
           )}
