@@ -3,7 +3,7 @@ dataset, used both by the Notebooks converter job and by session-level
 preprocessing (SessionPreprocessor).
 """
 
-from typing import TYPE_CHECKING, Dict, Iterable, List
+from typing import TYPE_CHECKING, Dict, Iterable, List, Sequence
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -49,6 +49,7 @@ def rebuild_dataset_with_transformed_columns(
     transformed: "DashAIDataset",
     scope_column_names: List[str],
     scope_column_indexes: List[int],
+    columns_to_drop: Sequence[str] = (),
 ) -> "DashAIDataset":
     """
     Replaces specific columns in the base dataset with columns from the transformed
@@ -72,6 +73,12 @@ def rebuild_dataset_with_transformed_columns(
         The indices of the columns in the base dataset that were replaced.
         Must match the order of scope_column_names.
 
+    columns_to_drop : Sequence[str], optional
+        Columns to remove from the result even if the transformer kept them,
+        e.g. the source columns of a column-adding converter whose drop
+        option is on. Names not in the dataset are ignored. New column names
+        are planned against the columns that remain.
+
     Returns
     -------
     DashAIDataset
@@ -86,11 +93,18 @@ def rebuild_dataset_with_transformed_columns(
     transformed_cols_set = set(transformed_cols)
     scope_column_names_set = set(scope_column_names)
 
+    columns_to_drop_set = set(columns_to_drop)
     removed_cols = [
         col for col in scope_column_names if col not in transformed_cols_set
+    ] + [
+        col
+        for col in original_columns
+        if col in columns_to_drop_set and col in transformed_cols_set
     ]
     replacement_cols = [
-        col for col in scope_column_names if col in transformed_cols_set
+        col
+        for col in scope_column_names
+        if col in transformed_cols_set and col not in columns_to_drop_set
     ]
     new_cols = [col for col in transformed_cols if col not in scope_column_names_set]
 
