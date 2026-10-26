@@ -45,6 +45,10 @@ ROWS = {
     5: _steps(("OrdinalEncoder", {"handle_unknown": "error", "unknown_value": None})),
     6: _steps(("LabelEncoder", {}), ("OneHotEncoder", {})),
     7: {"steps": []},
+    # Stored as an imported package carried them: the import does not
+    # validate the preprocessing, so null can stand for an empty list or dict.
+    8: {"steps": None},
+    9: {"steps": [{"converter": "OneHotEncoder", "params": None, "scope": SCOPE}]},
 }
 
 
@@ -112,6 +116,8 @@ def test_an_encoder_stored_without_handle_unknown_keeps_error(tmp_path):
         5: ROWS[5],
         6: _steps(("LabelEncoder", {}), ("OneHotEncoder", {"handle_unknown": "error"})),
         7: ROWS[7],
+        8: ROWS[8],
+        9: _steps(("OneHotEncoder", {"handle_unknown": "error"})),
     }
 
     # Writing down what the old code did changes nothing for it, so the

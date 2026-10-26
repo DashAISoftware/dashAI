@@ -39,10 +39,15 @@ def _load(value):
 def _pinned(preprocessing):
     """The steps with "error" written into encoders that left it out, or None."""
     changed = False
-    for step in (preprocessing or {}).get("steps", []):
-        params = step.setdefault("params", {})
-        if step.get("converter") in _ENCODERS and "handle_unknown" not in params:
+    # An imported package is stored as it came, so "steps" and "params" may be
+    # null; they mean no steps and no params.
+    for step in (preprocessing or {}).get("steps") or []:
+        if step.get("converter") not in _ENCODERS:
+            continue
+        params = step.get("params") or {}
+        if "handle_unknown" not in params:
             params["handle_unknown"] = "error"
+            step["params"] = params
             changed = True
     return preprocessing if changed else None
 
