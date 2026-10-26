@@ -16,6 +16,12 @@ from DashAI.back.dataloaders.classes.plain_text_document_dataloader import (
 from DashAI.back.dataloaders.classes.pypdf_document_dataloader import (
     PypdfDocumentDataLoader,
 )
+from DashAI.back.dataloaders.classes.python_docx_document_dataloader import (
+    PythonDocxDocumentDataLoader,
+)
+from DashAI.back.dataloaders.classes.unstructured_document_dataloader import (
+    UnstructuredDocumentDataLoader,
+)
 from DashAI.back.dependencies.config_builder import get_initial_components
 from DashAI.back.types.dashai_image import DashAIImage
 from DashAI.back.types.value_types import Text
@@ -33,7 +39,12 @@ PDF_LOADERS = [
     PdfMinerDocumentDataLoader,
 ]
 LAYOUT_LOADERS = [PdfPlumberDocumentDataLoader, PdfMinerDocumentDataLoader]
-ALL_LOADERS = [*PDF_LOADERS, PlainTextDocumentDataLoader]
+ALL_LOADERS = [
+    *PDF_LOADERS,
+    PlainTextDocumentDataLoader,
+    PythonDocxDocumentDataLoader,
+    UnstructuredDocumentDataLoader,
+]
 
 
 @pytest.mark.parametrize("loader_class", PDF_LOADERS)
