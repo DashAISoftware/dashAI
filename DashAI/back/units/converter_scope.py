@@ -113,6 +113,11 @@ def target_field():
     )
 
 
+def _adds_columns(converter_instance) -> bool:
+    """Whether the converter keeps its scope columns and appends new ones."""
+    return getattr(type(converter_instance), "COLUMN_OPERATION", None) == "add"
+
+
 class ConverterScopeMixin:
     """Scope handling shared by the converter units.
 
@@ -231,11 +236,18 @@ class ConverterScopeMixin:
         dataset: "DashAIDataset",
         transformed_dataset: "DashAIDataset",
         scope_column_names: List[str],
+        drop_source_columns: bool = False,
+        target_column_name: Optional[str] = None,
     ) -> "DashAIDataset":
         """Fold the transform output back into the dataset.
 
         A converter that changes the row count cannot have its columns merged
         back position by position, so its output replaces the dataset outright.
+
+        With ``drop_source_columns`` on, a column-adding converter's scope
+        columns are removed after the merge, except the target column, which
+        is never dropped. Other operations already decide what happens to
+        their scope, so the option only applies to ``"add"`` converters.
         """
         if type(converter_instance).CHANGES_ROW_COUNT:
             return transformed_dataset
@@ -248,12 +260,29 @@ class ConverterScopeMixin:
         column_names = dataset.column_names
         scope_column_indexes = [column_names.index(name) for name in scope_column_names]
 
+        columns_to_drop = []
+        if drop_source_columns and _adds_columns(converter_instance):
+            columns_to_drop = [
+                name for name in scope_column_names if name != target_column_name
+            ]
+
         return rebuild_dataset_with_transformed_columns(
             dataset,
             transformed_dataset,
             scope_column_names,
             scope_column_indexes,
+            columns_to_drop=columns_to_drop,
         )
+
+    def _check_drop_scope(self, drop_source_columns: bool) -> None:
+        """Refuse to drop the source columns of an implicit, all-columns scope.
+
+        An empty column scope means every column, so dropping it would empty
+        the dataset. The notebook form never sends one; the API and the DAG
+        units can.
+        """
+        if drop_source_columns and not self._scope()["columns"]:
+            raise JobError("Drop original columns needs an explicit column scope.")
 
     def _fit(self, converter_instance, x_dataset, y_dataset, converter_name):
         """Fit a converter, preserving the job's two error messages."""
