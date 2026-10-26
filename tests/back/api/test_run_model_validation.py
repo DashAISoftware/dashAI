@@ -26,8 +26,12 @@ def _create_session(client, dataset, name):
             "dataset_id": dataset.id,
             "task_name": "TabularClassificationTask",
             "name": name,
-            "input_columns": IRIS_FEATURES,
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": column} for column in IRIS_FEATURES
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],

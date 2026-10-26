@@ -16,6 +16,7 @@ from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 from DashAI.back.splitters.splits_payload import normalize_splits_payload
+from DashAI.back.tasks.session_roles import SessionIO, session_io
 from DashAI.back.units.build_model_unit import BuildModelUnit
 from DashAI.back.units.context import ExecutionContext
 from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
@@ -490,6 +491,17 @@ class ModelJob(BaseJob):
                 {model_session.evaluation_strategy} in registry.""",
             ) from e
 
+        # The session stores its columns by role; its task says which of them
+        # the model takes as inputs and which as outputs.
+        try:
+            task = component_registry[model_session.task_name]["class"]()
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Unable to find Task with name {model_session.task_name} in registry"
+            ) from e
+        io = session_io(model_session, task)
+
         # A strategy that carves nothing has no splitter and no splits payload
         # to read: its unit prepares the features over every row. The session
         # API only pairs such a strategy with a task without a target, which is
@@ -497,12 +509,12 @@ class ModelJob(BaseJob):
         if getattr(evaluation_strategy_class, "KIND", "holdout") == "full":
             prepare_unit = PrepareWithoutTargetUnit(
                 task_name=model_session.task_name,
-                input_columns=model_session.input_columns,
+                input_columns=io.inputs,
                 standardise=True,
             )
         else:
             prepare_unit = self._partitioning_unit(
-                run, model_session, component_registry
+                run, model_session, io, component_registry
             )
 
         try:
@@ -531,7 +543,9 @@ class ModelJob(BaseJob):
         }
 
     @staticmethod
-    def _partitioning_unit(run: Run, model_session: ModelSession, component_registry):
+    def _partitioning_unit(
+        run: Run, model_session: ModelSession, io: SessionIO, component_registry
+    ):
         """Build the unit that prepares the dataset and partitions it.
 
         Which unit it is follows from how the session's splitter carves the
@@ -578,8 +592,8 @@ class ModelJob(BaseJob):
         )
         prepare_config = {
             "task_name": model_session.task_name,
-            "input_columns": model_session.input_columns,
-            "output_columns": model_session.output_columns,
+            "input_columns": io.inputs,
+            "output_columns": io.outputs,
             "splitter": {"component": splitter_name, "params": splits_data},
         }
         if model_session.preprocessing and model_session.preprocessing.get("steps"):
@@ -588,7 +602,9 @@ class ModelJob(BaseJob):
             # and the unit resolves them against each entry's own fit. Passed
             # only when there are steps: the unit reads their absence as "no
             # preprocessing" and one without the other as a wiring mistake.
-            prepare_config["input_column_refs"] = model_session.input_column_refs or []
+            prepare_config["input_column_refs"] = [
+                ref.model_dump(mode="json") for ref in io.input_refs
+            ]
             prepare_config["preprocessing_artifacts_path"] = (
                 model_session.preprocessing_artifacts_path
             )

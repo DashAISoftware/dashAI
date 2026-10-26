@@ -46,6 +46,7 @@ from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.predict_job import PredictJob
 from DashAI.back.metrics.clustering.silhouette import Silhouette
 from DashAI.back.models.scikit_learn.kmeans_clustering import KMeansClustering
+from tests.back.session_columns import xy_roles
 
 BLOB_SIZE = 30
 N_ROWS = 3 * BLOB_SIZE
@@ -121,8 +122,11 @@ def _create_session(
             "dataset_id": dataset_id,
             "task_name": "ClusteringTask",
             "name": name,
-            "input_columns": input_columns,
-            "output_columns": [],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": column} for column in input_columns
+                ]
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -133,6 +137,33 @@ def _create_session(
     )
     assert response.status_code == 201, response.text
     return response.json()["id"]
+
+
+def _store_session(
+    client: TestClient, dataset_id: int, name: str, input_columns
+) -> int:
+    """Write a session the API refuses straight to the database.
+
+    The API checks a session's columns against its task, so a session the
+    task cannot take never reaches a run through it. The job keeps its own
+    check as a defence, and this is how it is reached.
+    """
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        session = ModelSession(
+            dataset_id=dataset_id,
+            name=name,
+            task_name="ClusteringTask",
+            column_roles=xy_roles(input_columns),
+            train_metrics=[],
+            validation_metrics=[],
+            test_metrics=[],
+            evaluation_strategy="FullDatasetEvaluationStrategy",
+            splits=json.dumps({}),
+        )
+        db.add(session)
+        db.commit()
+        return session.id
 
 
 def _create_run(client: TestClient, session_id: int, model: str, params) -> int:
@@ -252,8 +283,7 @@ def test_the_session_is_stored_as_the_front_sent_it(client, session_id):
     session = _get(client, ModelSession, session_id)
 
     assert session.task_name == "ClusteringTask"
-    assert session.input_columns == ["hours", "score"]
-    assert session.output_columns == []
+    assert session.column_roles == xy_roles(["hours", "score"])
     assert session.train_metrics == []
     assert session.validation_metrics == []
     assert session.test_metrics == []
@@ -314,8 +344,7 @@ def test_a_run_leaves_the_session_untouched(client, session_id):
     after = _get(client, ModelSession, session_id)
 
     for column in (
-        "input_columns",
-        "output_columns",
+        "column_roles",
         "train_metrics",
         "validation_metrics",
         "test_metrics",
@@ -539,7 +568,7 @@ def test_a_dataset_the_task_cannot_take_is_reported(client, csv_dir, statuses):
         "blobs with category",
         {**NUMERIC_SCHEMA, "group": {"type": "Categorical", "dtype": "string"}},
     )
-    session_id = _create_session(
+    session_id = _store_session(
         client, dataset_id, "clustering net, category", ["hours", "score", "group"]
     )
     run_id = _create_run(client, session_id, "KMeansClustering", {"n_clusters": 3})

@@ -6,7 +6,7 @@ import { CircularProgress } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 export default function ManualInput({
-  experiment,
+  inputColumns,
   loading,
   types,
   sample,
@@ -27,11 +27,13 @@ export default function ManualInput({
     <Box>
       {loading ? (
         <CircularProgress />
-      ) : experiment && Object.keys(types).length > 0 && sample ? (
+      ) : inputColumns?.length > 0 &&
+        Object.keys(types).length > 0 &&
+        sample ? (
         <ManualInputForm
           types={types}
           sample={sample}
-          inputColumns={experiment.input_columns}
+          inputColumns={inputColumns}
           onSubmit={(values) => console.log("Form submitted:", values)}
           manualInputData={manualInputData}
           setManualInputData={setManualInputData}

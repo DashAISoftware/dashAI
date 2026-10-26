@@ -2,6 +2,8 @@
 
 from kink import di
 
+from tests.back.session_columns import xy_roles
+
 _RUN_PAYLOAD_BASE = {
     "parameters": {},
     "optimizer_name": "OptunaOptimizer",
@@ -65,8 +67,7 @@ def _make_model_session(client, suffix=""):
             dataset_id=ds.id,
             name=f"__gate_test_ms_{unique}__",
             task_name="TabularClassificationTask",
-            input_columns=[],
-            output_columns=[],
+            column_roles=xy_roles([], []),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],

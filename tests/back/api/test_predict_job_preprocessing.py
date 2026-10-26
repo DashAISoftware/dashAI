@@ -63,8 +63,12 @@ def create_preprocessing_session(client: TestClient, dataset_1: Dataset):
             "dataset_id": dataset_1.id,
             "task_name": "TabularClassificationTask",
             "name": "predict-job-preprocessing-session",
-            "input_columns": [],
-            "output_columns": [OUTPUT_COLUMN],
+            "column_roles": {
+                "features": [{"kind": "group", "step": 0}],
+                "target": [
+                    {"kind": "raw", "name": column} for column in [OUTPUT_COLUMN]
+                ],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -88,7 +92,6 @@ def create_preprocessing_session(client: TestClient, dataset_1: Dataset):
                     "scope": [{"kind": "raw", "name": SCOPED_COLUMN}],
                 },
             ],
-            "input_column_refs": [{"kind": "group", "step": 0}],
         },
     )
     assert response.status_code == 201, response.text
@@ -98,7 +101,7 @@ def create_preprocessing_session(client: TestClient, dataset_1: Dataset):
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
         row = db.get(ModelSession, body["id"])
-        assert row.input_columns == [DERIVED_COLUMN]
+        assert row.column_roles["features"]["columns"] == [DERIVED_COLUMN]
         assert row.preprocessing_artifacts_path
         db.expunge(row)
         return row

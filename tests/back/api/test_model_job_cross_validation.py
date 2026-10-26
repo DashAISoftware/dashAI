@@ -42,6 +42,7 @@ from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.splitters.k_fold import KFoldSplitter
 from DashAI.back.splitters.stratified_k_fold import StratifiedKFoldSplitter
 from DashAI.back.tasks.base_task import BaseTask
+from tests.back.session_columns import xy_roles
 
 INPUT_COLUMNS = ["SepalLengthCm", "SepalWidthCm"]
 OUTPUT_COLUMNS = ["Species"]
@@ -200,8 +201,7 @@ def _make_session(
             dataset_id=dataset_id,
             name=name,
             task_name="CvTask",
-            input_columns=INPUT_COLUMNS,
-            output_columns=OUTPUT_COLUMNS,
+            column_roles=xy_roles(INPUT_COLUMNS, OUTPUT_COLUMNS),
             train_metrics=["MeanPredictionMetric"],
             validation_metrics=["MeanPredictionMetric"],
             test_metrics=["MeanPredictionMetric"],

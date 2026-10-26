@@ -95,8 +95,12 @@ def test_each_preprocessor_is_fitted_on_the_rows_its_entry_trains_on(
             "dataset_id": dataset_1.id,
             "task_name": reversing_task.__name__,
             "name": f"preprocessing-row-order-{strategy['evaluation_strategy']}",
-            "input_columns": [],
-            "output_columns": OUTPUT_COLUMNS,
+            "column_roles": {
+                "features": [{"kind": "group", "step": 0}],
+                "target": [
+                    {"kind": "raw", "name": column} for column in OUTPUT_COLUMNS
+                ],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -109,7 +113,6 @@ def test_each_preprocessor_is_fitted_on_the_rows_its_entry_trains_on(
                     "scope": [{"kind": "raw", "name": "SepalLengthCm"}],
                 },
             ],
-            "input_column_refs": [{"kind": "group", "step": 0}],
         },
     )
     assert response.status_code == 201, response.text

@@ -2,18 +2,25 @@ import React, { useEffect, useLayoutEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { Grid } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import DivideDatasetColumns from "./DivideDatasetColumns";
+import RoleColumnSelectors from "./RoleColumnSelectors";
+import {
+  defaultRoleSelection,
+  optionsForRole,
+  resolveSelection,
+  selectionReady,
+  shownRoles,
+} from "./columnRoles";
 
 /**
- * Step of the session wizard shown before preprocessing: pick the output
- * column and the candidate columns, all original dataset columns.
+ * Step of the session wizard shown before preprocessing: give every role the
+ * task declares its original dataset columns.
  *
- * The candidates are the columns the preprocessing chain may work on; the
- * model inputs are chosen from what the chain leaves, in the last step. The
- * output is never part of the candidates, so no converter can transform it.
- * Nothing is validated against the task here: a candidate may be of a type
- * the task rejects (e.g. text) precisely because a converter will turn it
- * into something it accepts.
+ * For a role the preprocessing may transform these are candidates, the
+ * columns the converter chain may work on; its final columns are picked from
+ * what the chain leaves, in the last step. A protected role (e.g. a target)
+ * gets its final columns here, and no converter can touch them. Nothing is
+ * validated against the task: a candidate may be of a type the task rejects
+ * (e.g. text) precisely because a converter will turn it into one it accepts.
  */
 function BaseColumnsStep({
   newExp,
@@ -21,64 +28,57 @@ function BaseColumnsStep({
   setNextEnabled,
   datasetInfo,
   datasetTypes,
+  taskMetadata,
 }) {
   const { t } = useTranslation(["models", "common"]);
   const rawColumnNames = datasetInfo.column_names || [];
+  const roles = shownRoles(taskMetadata);
 
-  const [outputColumnNames, setOutputColumnNames] = useState(
-    newExp.output_columns || [],
-  );
-  const [candidateSelection, setCandidateSelection] = useState(
-    newExp.candidate_columns || [],
+  const [selectionState, setSelection] = useState(
+    newExp.column_roles_stage1 || {},
   );
 
-  // The output is never a candidate, even if it was picked as one before.
-  const candidateOptions = rawColumnNames.filter(
-    (name) => !outputColumnNames.includes(name),
-  );
-  const candidates = candidateSelection.filter(
-    (name) => !outputColumnNames.includes(name),
-  );
+  // A column plays one role; a protected role keeps one two roles hold.
+  const selection = resolveSelection(roles, selectionState);
 
   useLayoutEffect(() => {
-    // Default the first time the dataset's columns load: the last column is
-    // the output and every other one is a candidate.
-    if (rawColumnNames.length === 0) return;
-    if (outputColumnNames.length === 0 && candidateSelection.length === 0) {
-      const output = rawColumnNames[rawColumnNames.length - 1];
-      setOutputColumnNames([output]);
-      setCandidateSelection(rawColumnNames.filter((name) => name !== output));
+    // The first time the dataset's columns and the task's roles are known.
+    if (rawColumnNames.length === 0 || roles.length === 0) return;
+    if (Object.values(selectionState).every((columns) => !columns?.length)) {
+      setSelection(defaultRoleSelection(roles, rawColumnNames));
     }
-  }, [rawColumnNames.join(",")]);
+  }, [rawColumnNames.join(","), roles.map((role) => role.name).join(",")]);
 
-  const ready = candidates.length >= 1 && outputColumnNames.length >= 1;
+  const ready = roles.length > 0 && selectionReady(roles, selection);
+  const selectionKey = JSON.stringify(selection);
 
   useEffect(() => {
-    setNewExp((prev) => ({
-      ...prev,
-      candidate_columns: candidates,
-      output_columns: outputColumnNames,
-    }));
+    setNewExp((prev) => ({ ...prev, column_roles_stage1: selection }));
     setNextEnabled(ready);
-  }, [candidates.join(","), outputColumnNames.join(",")]);
+  }, [selectionKey, ready]);
+
+  const missing = (role) =>
+    role.required && (selection[role.name] || []).length === 0;
 
   return (
     <Grid container spacing={2}>
-      <DivideDatasetColumns
-        allColumnNames={rawColumnNames}
-        columnTypes={datasetTypes}
-        inputOptionNames={candidateOptions}
-        inputLabel={t("models:label.candidateColumns")}
-        selectedInputColumnNames={candidates}
-        onInputColumnNamesChange={setCandidateSelection}
-        selectedOutputColumnNames={outputColumnNames}
-        onOutputColumnNamesChange={setOutputColumnNames}
-        inputError={candidates.length === 0}
-        inputHelperText={candidates.length === 0 ? t("common:required") : ""}
-        outputError={outputColumnNames.length === 0}
-        outputHelperText={
-          outputColumnNames.length === 0 ? t("common:required") : ""
+      <RoleColumnSelectors
+        roles={roles}
+        selection={selection}
+        onChange={(name, columns) =>
+          setSelection((prev) => ({ ...prev, [name]: columns }))
         }
+        optionsFor={(role) =>
+          optionsForRole(role, rawColumnNames, selection, roles)
+        }
+        labelFor={(role) =>
+          role.transformable
+            ? t("models:label.candidatesForRole", { role: role.label })
+            : role.label
+        }
+        columnTypes={datasetTypes}
+        errorFor={missing}
+        helperTextFor={(role) => (missing(role) ? t("common:required") : "")}
         disabled={rawColumnNames.length === 0}
       />
     </Grid>
@@ -91,6 +91,7 @@ BaseColumnsStep.propTypes = {
   setNextEnabled: PropTypes.func.isRequired,
   datasetInfo: PropTypes.object,
   datasetTypes: PropTypes.object,
+  taskMetadata: PropTypes.object,
 };
 
 export default BaseColumnsStep;

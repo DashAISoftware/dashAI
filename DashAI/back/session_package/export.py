@@ -28,7 +28,9 @@ if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
 SESSION_EXTENSION = ".dashai"
-SESSION_FORMAT_VERSION = 1
+# 2 stores the session's columns by role. Format 1, from before roles, stored
+# ``FORMAT_1_COLUMN_FIELDS`` instead; the importer still reads it.
+SESSION_FORMAT_VERSION = 2
 KIND_SESSION = "session"
 SESSION_ENTRY = "session.json"
 # Holds data.arrow and splits.json, like "<dataset>/dataset" on disk.
@@ -45,9 +47,7 @@ PLOT_FIELDS = (
 SESSION_FIELDS = (
     "name",
     "task_name",
-    "input_columns",
-    "output_columns",
-    "input_column_refs",
+    "column_roles",
     "splits",
     "evaluation_strategy",
     "preprocessing",
@@ -55,6 +55,7 @@ SESSION_FIELDS = (
     "validation_metrics",
     "test_metrics",
 )
+FORMAT_1_COLUMN_FIELDS = ("input_columns", "output_columns", "input_column_refs")
 RUN_FIELDS = (
     "name",
     "description",

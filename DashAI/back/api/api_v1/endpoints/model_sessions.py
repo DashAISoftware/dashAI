@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 from fastapi import APIRouter, Depends, File, Header, Response, UploadFile, status
 from fastapi.exceptions import HTTPException
@@ -18,7 +18,7 @@ from DashAI.back.api.utils import offered_components, remove_path
 from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.job.preprocessing_job import PreprocessingJob
-from DashAI.back.preprocessing.column_ref import ConverterSequence, RawColumnRef
+from DashAI.back.preprocessing.column_ref import ConverterSequence
 from DashAI.back.preprocessing.structure import (
     StructureError,
     infer_structure,
@@ -29,6 +29,7 @@ from DashAI.back.splitters.splits_payload import (
     META_KEYS,
     normalize_splits_payload,
 )
+from DashAI.back.tasks.session_roles import SessionColumnRoles, session_roles
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -42,22 +43,6 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 router = APIRouter()
-
-# Every concrete value type name that DashAIValue's wildcard covers (i.e. every
-# DashAIValue subclass in DashAI/back/types/value_types.py), used so a task
-# declaring the wildcard (e.g. ClassificationTask) still accepts a converter
-# group whose declared type is one of these, not just "DashAIValue" itself.
-_DASHAI_VALUE_TYPE_NAMES = {
-    "Integer",
-    "Float",
-    "Text",
-    "Time",
-    "Timestamp",
-    "Duration",
-    "Decimal",
-    "Date",
-    "Binary",
-}
 
 
 @router.get("/")
@@ -170,17 +155,107 @@ def _load_sample_dataset(db, dataset_id: int):
     return DashAIDataset(pa.Table.from_batches([sample_batch]))
 
 
-def _type_allowed(type_name, allowed_types) -> bool:
-    """Whether a column type is one of a task's allowed input types.
+def _roles_problem(
+    task: "BaseTask", roles, sample, steps, component_registry
+) -> Optional[str]:
+    """What is structurally wrong with a session's columns for its task.
 
-    A task declaring the DashAIValue wildcard accepts every concrete value
-    type; an unknown type (None) is let through, since only a fit can tell.
+    The roles are checked at the final stage, the one the model reads: a role
+    the preprocessing may transform is checked against the chain's estimated
+    structure when there are steps, every other role against the types of
+    the original columns.
+
+    Parameters
+    ----------
+    task : BaseTask
+        The session's task.
+    roles : mapping
+        Role name to the role's column refs.
+    sample : DashAIDataset
+        A few rows of the session's dataset, for its column names and types.
+    steps : list of ConverterStep
+        The session's preprocessing chain, possibly empty.
+    component_registry : ComponentRegistry
+        Resolves the chain's converters.
+
+    Returns
+    -------
+    str or None
+        The problem, worded for the user, or None when the columns fit.
     """
-    if not allowed_types or type_name is None:
-        return True
-    return type_name in allowed_types or (
-        "DashAIValue" in allowed_types and type_name in _DASHAI_VALUE_TYPE_NAMES
-    )
+    try:
+        task.check_role_names(roles)
+    except ValueError as e:
+        return str(e)
+
+    declared = task.column_roles()
+    for role in declared:
+        refs = roles.get(role.name) or []
+        if not role.transformable and any(ref.kind == "group" for ref in refs):
+            return (
+                f"The {role.name!r} role of {type(task).__name__} is protected "
+                "from the preprocessing: it takes original columns only."
+            )
+    if not steps and any(ref.kind == "group" for r in roles.values() for ref in r):
+        # A converter's output only has a type through the chain's estimated
+        # structure, which needs the preprocessing steps.
+        return "References to converter outputs need the preprocessing steps."
+
+    protected = [
+        ref.name
+        for role in declared
+        if not role.transformable
+        for ref in roles.get(role.name) or []
+    ]
+    structure = None
+    if steps:
+        structure = infer_structure(
+            dataset_types=sample.types,
+            candidates=list(sample.column_names),
+            target=protected,
+            steps=steps,
+            component_registry=component_registry,
+        )
+        if not structure.valid:
+            return "The preprocessing chain has an invalid step."
+
+    for role in declared:
+        refs = list(roles.get(role.name) or [])
+        try:
+            if structure is None or not role.transformable:
+                task.validate_role(role.name, [ref.name for ref in refs], sample.types)
+            else:
+                items = resolve_state_refs(refs, structure.final, set(protected))
+                task.validate_estimated_role(
+                    role.name,
+                    [
+                        (item.type, 1 if item.kind == "column" else item.count)
+                        for item in items
+                    ],
+                )
+        except StructureError as e:
+            return e.message.code
+        except KeyError as e:
+            return f"Column {e.args[0]!r} is not in the dataset."
+        except (TypeError, ValueError) as e:
+            return str(e)
+    return None
+
+
+def _task_or_404(task_name: str, component_registry) -> "BaseTask":
+    """The registered task by name; only it can read a session's roles.
+
+    Raises
+    ------
+    HTTPException
+        404 when no task of that name is registered.
+    """
+    if task_name not in component_registry:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Task {task_name} not found in the registry.",
+        )
+    return component_registry[task_name]["class"]()
 
 
 @router.post("/preprocessing/structure")
@@ -207,6 +282,7 @@ async def get_preprocessing_structure(
         The state after every step, their errors and warnings, and the final
         state.
     """
+    task = _task_or_404(params.task_name, component_registry)
     with session_factory() as db:
         try:
             sample = _load_sample_dataset(db, params.dataset_id)
@@ -216,10 +292,18 @@ async def get_preprocessing_structure(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+    # The roles the preprocessing may transform are what feeds the chain; the
+    # protected ones never enter it and no step may reference them.
+    candidates, protected = [], []
+    for role in task.column_roles():
+        side = candidates if role.transformable else protected
+        for name in params.column_roles.get(role.name, []):
+            if name not in side:
+                side.append(name)
     return infer_structure(
         dataset_types=sample.types,
-        candidates=params.candidates,
-        target=params.output_columns,
+        candidates=candidates,
+        target=protected,
         steps=params.steps,
         component_registry=component_registry,
     )
@@ -234,36 +318,15 @@ async def validate_columns(
 ):
     """Validate if dataset columns are compatible with a task.
 
-    With `preprocessing`, every input ref is resolved against the chain's
-    estimated final structure and its type checked against the task's input
-    types; the original columns among them also go through the task's own
-    validation, as without preprocessing.
+    The same structural check a new session goes through (``_roles_problem``):
+    every role is one the task declares and gets columns of its types and in
+    its number, at the final stage. With `preprocessing`, a role the
+    preprocessing may transform is checked against the chain's estimated
+    structure.
     """
     with session_factory() as db:
         try:
             minimal_dataset = _load_sample_dataset(db, params.dataset_id)
-
-            column_names = minimal_dataset.column_names
-
-            group_refs = [
-                ref for ref in (params.input_refs or []) if ref.kind == "group"
-            ]
-
-            if not group_refs and len(
-                params.inputs_columns + params.outputs_columns
-            ) > len(column_names):
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Column index out of range",
-                )
-
-            inputs_names = (
-                [r.name for r in params.input_refs if r.kind == "raw"]
-                if params.input_refs
-                else params.inputs_columns
-            )
-            outputs_names = params.outputs_columns
-
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
@@ -271,64 +334,31 @@ async def validate_columns(
                 detail="Internal database error",
             ) from e
 
-    if params.task_name not in component_registry:
+    task = _task_or_404(params.task_name, component_registry)
+
+    column_names = minimal_dataset.column_names
+    io = task.io_columns(params.column_roles)
+    input_refs = list(io.inputs)
+    group_refs = [ref for ref in input_refs if ref.kind == "group"]
+    inputs_names = [ref.name for ref in input_refs if ref.kind == "raw"]
+    outputs_names = [ref.name for ref in io.outputs]
+
+    if not group_refs and len(inputs_names + outputs_names) > len(column_names):
         raise HTTPException(
-            status_code=404,
-            detail=f"Task {params.task_name} not found in the registry.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Column index out of range",
         )
 
-    task: "BaseTask" = component_registry[params.task_name]["class"]()
-
-    if params.preprocessing:
-        allowed_input_types = set(task.get_metadata().get("inputs_types", []))
-        structure = infer_structure(
-            dataset_types=minimal_dataset.types,
-            candidates=list(column_names),
-            target=outputs_names,
-            steps=params.preprocessing,
-            component_registry=component_registry,
-        )
-        if not structure.valid:
-            return {
-                "dataset_status": "invalid",
-                "error": "The preprocessing chain has an invalid step.",
-            }
-        try:
-            items = resolve_state_refs(
-                params.input_refs or [], structure.final, set(outputs_names)
-            )
-        except StructureError as e:
-            return {"dataset_status": "invalid", "error": e.message.code}
-        for item in items:
-            if not _type_allowed(item.type, allowed_input_types):
-                return {
-                    "dataset_status": "invalid",
-                    "error": (
-                        f"Input of type '{item.type}' is not one of the task's "
-                        f"allowed input types {sorted(allowed_input_types)}."
-                    ),
-                }
-    elif group_refs:
-        # A ref to a converter's output only has a type through the chain's
-        # estimated structure, which needs the preprocessing steps.
-        return {
-            "dataset_status": "invalid",
-            "error": "References to converter outputs need the preprocessing steps.",
-        }
-
-    validation_response = {}
-
-    try:
-        task.prepare_for_task(
-            dataset=minimal_dataset,
-            input_columns=inputs_names,
-            output_columns=outputs_names,
-        )
-        validation_response["dataset_status"] = "valid"
-    except (TypeError, ValueError) as e:
-        validation_response["dataset_status"] = "invalid"
-        validation_response["error"] = str(e)
-    return validation_response
+    problem = _roles_problem(
+        task,
+        params.column_roles,
+        minimal_dataset,
+        params.preprocessing or [],
+        component_registry,
+    )
+    if problem is not None:
+        return {"dataset_status": "invalid", "error": problem}
+    return {"dataset_status": "valid"}
 
 
 def _validate_evaluation_strategy(
@@ -484,6 +514,35 @@ def _validate_splits(
         ) from e
 
 
+def _validate_roles_for_task(
+    db, model_session: ModelSession, task_name: str, component_registry
+) -> None:
+    """Check the session's stored columns against the task it is moving to.
+
+    Raises
+    ------
+    HTTPException
+        422 naming the task and what does not fit.
+    """
+    task = component_registry[task_name]["class"]()
+    roles = session_roles(model_session, task).refs()
+    steps = ConverterSequence.model_validate(
+        model_session.preprocessing or {"steps": []}
+    ).steps
+    problem = _roles_problem(
+        task,
+        roles,
+        _load_sample_dataset(db, model_session.dataset_id),
+        steps,
+        component_registry,
+    )
+    if problem is not None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"The session's columns do not fit task {task_name}: {problem}",
+        )
+
+
 def _validate_runs_for_task(
     db, model_session_id: int, task_name: str, component_registry: "ComponentRegistry"
 ) -> None:
@@ -614,7 +673,7 @@ def _with_resampling_seeds(steps, component_registry):
 
 
 def _check_preprocessing_structure(
-    db, params, sequence, input_column_refs, component_registry
+    db, params, sequence, input_column_refs, output_columns, component_registry
 ) -> None:
     """Reject a session whose chain or inputs cannot work, before creating it.
 
@@ -633,7 +692,7 @@ def _check_preprocessing_structure(
     structure = infer_structure(
         dataset_types=sample.types,
         candidates=list(sample.column_names),
-        target=params.output_columns,
+        target=output_columns,
         steps=sequence.steps,
         component_registry=component_registry,
     )
@@ -646,9 +705,7 @@ def _check_preprocessing_structure(
             },
         )
     try:
-        resolve_state_refs(
-            input_column_refs, structure.final, set(params.output_columns)
-        )
+        resolve_state_refs(input_column_refs, structure.final, set(output_columns))
     except StructureError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -730,17 +787,25 @@ async def create_model_session(
         ) from e
     has_preprocessing = len(sequence.steps) > 0
 
-    if has_preprocessing and not params.input_column_refs:
+    # The task translates the roles it was given into the model's inputs
+    # and outputs, which the checks below read.
+    task = component_registry[params.task_name]["class"]()
+    roles = {name: list(refs) for name, refs in params.column_roles.items() if refs}
+    io = task.io_columns(roles)
+    input_column_refs = list(io.inputs)
+    raw_inputs = [ref.name for ref in input_column_refs if ref.kind == "raw"]
+    output_columns = [ref.name for ref in io.outputs]
+
+    if has_preprocessing and not input_column_refs:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(
-                "input_column_refs is required when preprocessing steps are provided"
+                "column_roles has to give the model's inputs when preprocessing "
+                "steps are provided"
             ),
         )
 
-    input_column_refs = params.input_column_refs or [
-        RawColumnRef(name=name) for name in params.input_columns
-    ]
+    column_roles = SessionColumnRoles.from_refs(roles)
 
     with session_factory() as db:
         try:
@@ -759,35 +824,48 @@ async def create_model_session(
 
             if has_preprocessing:
                 _check_preprocessing_structure(
-                    db, params, sequence, input_column_refs, component_registry
+                    db,
+                    params,
+                    sequence,
+                    input_column_refs,
+                    output_columns,
+                    component_registry,
                 )
 
-            # When preprocessing is configured, input_columns is only a
-            # placeholder until PreprocessingJob resolves the real ones, so
-            # it cannot be checked against the raw dataset's column count.
-            if not has_preprocessing and len(
-                params.input_columns + params.output_columns
-            ) > len(column_names):
+            # When preprocessing is configured, some inputs are converter
+            # outputs that only exist once PreprocessingJob has fitted the
+            # chain, so they cannot be counted against the raw dataset.
+            if not has_preprocessing and len(raw_inputs + output_columns) > len(
+                column_names
+            ):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Column index out of range",
+                )
+
+            problem = _roles_problem(
+                task,
+                roles,
+                _load_sample_dataset(db, params.dataset_id),
+                sequence.steps,
+                component_registry,
+            )
+            if problem is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=problem
                 )
 
             model_session = ModelSession(
                 dataset_id=params.dataset_id,
                 task_name=params.task_name,
                 name=params.name,
-                input_columns=params.input_columns,
-                output_columns=params.output_columns,
                 train_metrics=params.train_metrics,
                 validation_metrics=params.validation_metrics,
                 test_metrics=params.test_metrics,
                 evaluation_strategy=params.evaluation_strategy,
                 splits=params.splits,
                 preprocessing=sequence.model_dump(mode="json"),
-                input_column_refs=[
-                    ref.model_dump(mode="json") for ref in input_column_refs
-                ],
+                column_roles=column_roles.to_stored(),
                 preprocessing_status="pending" if has_preprocessing else "ready",
             )
             db.add(model_session)
@@ -1005,6 +1083,9 @@ async def update_model_session(
                         )
                     _validate_runs_for_task(
                         db, model_session_id, task_name, component_registry
+                    )
+                    _validate_roles_for_task(
+                        db, model_session, task_name, component_registry
                     )
                 setattr(model_session, "task_name", task_name)
 

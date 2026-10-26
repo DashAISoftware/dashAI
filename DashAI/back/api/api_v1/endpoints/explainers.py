@@ -29,6 +29,7 @@ from DashAI.back.dependencies.database.models import (
     Run,
 )
 from DashAI.back.splitters.splits_payload import run_splits
+from DashAI.back.tasks.session_roles import SessionIO, session_io
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -980,6 +981,25 @@ async def update_explainer() -> None:
     )
 
 
+def _session_columns(model_session: ModelSession) -> SessionIO:
+    """The session's columns as the model's inputs and outputs.
+
+    Raises
+    ------
+    HTTPException
+        404 when the session's task is not registered: its columns are stored
+        by role, and only the task can say which feed the model.
+    """
+    try:
+        task = di["component_registry"][model_session.task_name]["class"]()
+    except KeyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Task {model_session.task_name} not found in the registry",
+        ) from e
+    return session_io(model_session, task)
+
+
 @router.post("/local/validate-dataset")
 @inject
 async def validate_dataset(
@@ -1025,8 +1045,9 @@ async def validate_dataset(
             ) from e
 
     validation_response = {}
-    input_columns = model_session.input_columns
-    output_columns = model_session.output_columns
+    io = _session_columns(model_session)
+    input_columns = io.inputs
+    output_columns = io.outputs
     required_columns = input_columns + output_columns
 
     instances_columns = list(instances.features)
@@ -1186,7 +1207,8 @@ async def valid_datasets(
                 detail="Internal database error",
             ) from e
 
-    required_columns = model_session.input_columns + model_session.output_columns
+    io = _session_columns(model_session)
+    required_columns = io.inputs + io.outputs
 
     training_types = {}
     if training_dataset:

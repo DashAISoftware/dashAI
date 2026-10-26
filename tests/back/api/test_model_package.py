@@ -39,6 +39,7 @@ from tests.back.api.trained_runs import (
     fit_regressor,
     predicted_in_app,
 )
+from tests.back.session_columns import xy_roles
 
 
 @pytest.fixture(scope="module", name="classifier_run_id")
@@ -106,8 +107,7 @@ def test_an_unfinished_run_cannot_be_exported(client, dataset_1, tmp_path):
             dataset_id=dataset_1.id,
             name="model-package-unfinished-session",
             task_name="TabularClassificationTask",
-            input_columns=RAW_INPUT_COLUMNS,
-            output_columns=[CLASS_COLUMN],
+            column_roles=xy_roles(RAW_INPUT_COLUMNS, [CLASS_COLUMN]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
@@ -230,8 +230,7 @@ def test_the_endpoint_answers_409_for_an_unfinished_run(client, dataset_1):
             dataset_id=dataset_1.id,
             name="model-package-endpoint-unfinished-session",
             task_name="TabularClassificationTask",
-            input_columns=RAW_INPUT_COLUMNS,
-            output_columns=[CLASS_COLUMN],
+            column_roles=xy_roles(RAW_INPUT_COLUMNS, [CLASS_COLUMN]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
