@@ -1,4 +1,4 @@
-"""PDF samples for the document loader tests."""
+"""File samples for the document loader tests."""
 
 import io
 from pathlib import Path
@@ -153,4 +153,66 @@ def write_mixed_pdf(path: Path) -> str:
     writer = PdfWriter(clone_from=str(text_path))
     writer.pages[0].merge_page(PdfReader(io.BytesIO(image_pdf_bytes())).pages[0])
     writer.write(str(path))
+    return str(path)
+
+
+def png_bytes() -> bytes:
+    """Return a 4x4 red PNG.
+
+    Returns
+    -------
+    bytes
+        The PNG file content.
+    """
+    from PIL import Image
+
+    buffer = io.BytesIO()
+    Image.new("RGB", (4, 4), "red").save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
+def write_docx(path: Path) -> str:
+    """Write a Word file with one paragraph of each style the loaders name.
+
+    The body reads: a Title, a Heading 1, a paragraph, a bullet with a
+    nested bullet at numbering level 1, a numbered item, a Heading 2, a
+    table whose first row repeats as a header, a picture with alt text, a
+    Caption, a Quote and a closing paragraph. The page header says "Top"
+    and the page footer says "Bottom".
+
+    Parameters
+    ----------
+    path : pathlib.Path
+        Destination file.
+
+    Returns
+    -------
+    str
+        The path written.
+    """
+    from docx import Document
+    from docx.oxml import OxmlElement
+
+    document = Document()
+    document.sections[0].header.paragraphs[0].text = "Top"
+    document.sections[0].footer.paragraphs[0].text = "Bottom"
+    document.add_paragraph("Report", style="Title")
+    document.add_heading("Introduction", level=1)
+    document.add_paragraph("Body text.")
+    document.add_paragraph("Bullet", style="List Bullet")
+    nested = document.add_paragraph("Nested bullet", style="List Bullet")
+    nested._p.get_or_add_pPr().get_or_add_numPr().get_or_add_ilvl().val = 1
+    document.add_paragraph("Numbered", style="List Number")
+    document.add_heading("Results", level=2)
+    table = document.add_table(rows=2, cols=2)
+    for row, values in zip(table.rows, [["Name", "Score"], ["Ada", ""]], strict=True):
+        for cell, value in zip(row.cells, values, strict=True):
+            cell.text = value
+    table.rows[0]._tr.get_or_add_trPr().append(OxmlElement("w:tblHeader"))
+    document.add_picture(io.BytesIO(png_bytes()))
+    document.inline_shapes[0]._inline.docPr.set("descr", "A red square")
+    document.add_paragraph("Figure 1", style="Caption")
+    document.add_paragraph("Quoted words.", style="Quote")
+    document.add_paragraph("The end.")
+    document.save(str(path))
     return str(path)
