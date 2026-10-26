@@ -14,6 +14,7 @@ from DashAI.back.converters.dataset_columns import (
     plan_new_column_names,
     rebuild_dataset_with_transformed_columns,
 )
+from DashAI.back.converters.drop_source_columns import split_converter_params
 from DashAI.back.preprocessing.column_ref import ConverterSequence, resolve_refs
 
 if TYPE_CHECKING:
@@ -86,7 +87,8 @@ class SessionPreprocessor:
                 f"{step.converter} only runs on documents, so it cannot "
                 "preprocess a model session."
             )
-        return converter_class(**step.params)
+        converter_params, _ = split_converter_params(step.params)
+        return converter_class(**converter_params)
 
     @staticmethod
     def _classify_by_type(

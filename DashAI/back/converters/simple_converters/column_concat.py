@@ -4,13 +4,13 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.feature_engineering import (
     FeatureEngineeringConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.core.schema_fields import (
     bool_field,
     none_type,
     schema_field,
     string_field,
 )
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.preprocessing.structure_types import (
     ColumnItem,
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class ColumnConcatSchema(BaseSchema):
+class ColumnConcatSchema(AddColumnsConverterSchema):
     """Schema for ColumnConcat hyperparameters."""
 
     constant: schema_field(

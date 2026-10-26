@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.converters.hugging_face.pretrained_tool import (
     PretrainedTool,
     batches,
@@ -20,7 +21,6 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.utils import DEVICE_PLACEHOLDER
 from DashAI.back.types.value_types import Text
@@ -163,7 +163,7 @@ def language_field(
     )
 
 
-class TranslationSchema(BaseSchema):
+class TranslationSchema(AddColumnsConverterSchema):
     """Options shared by every translation converter."""
 
     split_by: schema_field(

@@ -3,6 +3,7 @@
 import logging
 from typing import TYPE_CHECKING
 
+from DashAI.back.converters.drop_source_columns import split_converter_params
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.job.base_job import JobError
 from DashAI.back.units.base_unit import BaseUnit
@@ -93,9 +94,10 @@ class ApplyConverterUnit(BaseUnit, ConverterScopeMixin):
         converter_name = self._converter_name
 
         converter_constructor = self._resolve_converter()
-        converter_instance = converter_constructor(
-            **(self.config["converter"].get("params") or {})
+        converter_params, _ = split_converter_params(
+            self.config["converter"].get("params")
         )
+        converter_instance = converter_constructor(**converter_params)
 
         self._check_target_bounds(loaded_dataset)
         (

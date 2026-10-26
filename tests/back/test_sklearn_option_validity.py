@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pytest
 from sklearn.utils._param_validation import make_constraint
 
+from DashAI.back.converters.drop_source_columns import split_converter_params
 from DashAI.back.dependencies.config_builder import get_initial_components
 
 
@@ -128,6 +129,8 @@ def test_every_offered_option_is_one_sklearn_accepts(
     # Component-valued parameters carry a {component, params} placeholder that
     # only the registry can resolve; they are never enum options anyway.
     kwargs = {k: v for k, v in kwargs.items() if not isinstance(v, dict)}
+    # The drop option is read by the orchestration, never by the converter.
+    kwargs, _ = split_converter_params(kwargs)
 
     instance = component(**kwargs)
     reaching_sklearn = getattr(instance, parameter)

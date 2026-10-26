@@ -5,6 +5,7 @@ from kink import inject
 from sqlalchemy import exc
 
 from DashAI.back.converters.converter_report import save_converter_report
+from DashAI.back.converters.drop_source_columns import split_converter_params
 from DashAI.back.core.data_kinds import DOCUMENT
 from DashAI.back.dependencies.database.models import Converter
 from DashAI.back.dependencies.database.models import Dataset as DatasetModel
@@ -129,7 +130,11 @@ class ConverterJob(BaseJob):
 
             if converter.notebook.data_kind == DOCUMENT:
                 registry = di["component_registry"]
-                converter_params = (converter.parameters or {}).get("params") or {}
+                # Documents are rewritten in place: there are no columns to
+                # drop, so the option is only taken out of the params.
+                converter_params, _ = split_converter_params(
+                    (converter.parameters or {}).get("params")
+                )
                 self._run_on_document(
                     db,
                     converter,

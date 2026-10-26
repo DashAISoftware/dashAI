@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, Union
 
 from DashAI.back.converters.category.encoding import EncodingConverter
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from DashAI.back.preprocessing.structure_types import ColumnItem
 
 
-class LabelEncoderSchema(BaseSchema):
+class LabelEncoderSchema(AddColumnsConverterSchema):
     """Schema for LabelEncoder hyperparameters.
 
     Placeholder schema for sklearn's ``LabelEncoder``. The encoder has no

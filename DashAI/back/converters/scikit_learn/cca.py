@@ -3,6 +3,7 @@ from sklearn.cross_decomposition import CCA as CCAOPERATION
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -10,13 +11,12 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float, Integer
 
 
-class CCASchema(BaseSchema):
+class CCASchema(AddColumnsConverterSchema):
     """Configuration schema for the CCA converter.
 
     Defines and validates the hyperparameters passed to

@@ -2,6 +2,7 @@ from sklearn.preprocessing import OrdinalEncoder as OrdinalEncoderOperation
 
 from DashAI.back.api.utils import cast_string_to_type
 from DashAI.back.converters.category.encoding import EncodingConverter
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -12,14 +13,13 @@ from DashAI.back.core.schema_fields import (
     string_field,
     union_type,
 )
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Integer
 
 
-class OrdinalEncoderSchema(BaseSchema):
+class OrdinalEncoderSchema(AddColumnsConverterSchema):
     """Schema for OrdinalEncoder hyperparameters.
 
     Configures the category ordering, output dtype, unknown-value handling,

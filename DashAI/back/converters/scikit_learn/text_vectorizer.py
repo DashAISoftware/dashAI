@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     Check,
     Lte,
     bool_field,
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class TextVectorizerSchema(BaseSchema):
+class TextVectorizerSchema(AddColumnsConverterSchema):
     """Options shared by the TF-IDF and bag of words converters.
 
     They map to the arguments common to ``TfidfVectorizer`` and

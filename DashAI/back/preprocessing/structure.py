@@ -12,6 +12,7 @@ to reject a chain that would reference a column that no longer exists.
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from DashAI.back.converters.dataset_columns import plan_new_column_names
+from DashAI.back.converters.drop_source_columns import split_converter_params
 from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.preprocessing.column_ref import ConverterStep
 from DashAI.back.preprocessing.structure_types import (
@@ -206,7 +207,8 @@ def _instantiate(converter_class: Any, params: Dict[str, Any]) -> Any:
             schema.model_validate(
                 {**schema_placeholder_defaults(converter_class), **params}
             )
-        return converter_class(**params)
+        converter_params, _ = split_converter_params(params)
+        return converter_class(**converter_params)
     except Exception as e:
         raise StructureError("invalid_params", detail=str(e)) from e
 
