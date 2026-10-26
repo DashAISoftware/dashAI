@@ -154,28 +154,38 @@ class PypdfDocumentDataLoader(DocumentDataLoader):
             "text item per blank line separated block, or as a single item per "
             "page, always with its page number, and can also store the images "
             "embedded in each page."
+            " [https://github.com/py-pdf/pypdf]"
+            "(https://github.com/py-pdf/pypdf)"
         ),
         es=(
             "Lee archivos PDF con pypdf. Guarda el texto de cada página como un "
             "elemento de texto por cada bloque separado por líneas en blanco, o "
             "como un único elemento por página, siempre con su número de página, "
             "y también puede guardar las imágenes incrustadas en cada página."
+            " [https://github.com/py-pdf/pypdf]"
+            "(https://github.com/py-pdf/pypdf)"
         ),
         pt=(
             "Lê arquivos PDF com pypdf. Guarda o texto de cada página como um "
             "item de texto por bloco separado por linhas em branco, ou como um "
             "único item por página, sempre com o número da página, e também pode "
             "guardar as imagens incorporadas em cada página."
+            " [https://github.com/py-pdf/pypdf]"
+            "(https://github.com/py-pdf/pypdf)"
         ),
         de=(
             "Liest PDF-Dateien mit pypdf. Speichert den Text jeder Seite als ein "
             "Textelement pro durch Leerzeilen getrenntem Block oder als ein "
             "einziges Element pro Seite, immer mit Seitennummer, und kann auch "
             "die in jede Seite eingebetteten Bilder speichern."
+            " [https://github.com/py-pdf/pypdf]"
+            "(https://github.com/py-pdf/pypdf)"
         ),
         zh=(
             "使用 pypdf 读取 PDF 文件。将每一页的文本按空行分隔的块分别保存为"
             "文本项，或整页保存为一个文本项，均带页码；并可选择保存每页中嵌入的图像。"
+            "[https://github.com/py-pdf/pypdf]"
+            "(https://github.com/py-pdf/pypdf)"
         ),
     )
 
