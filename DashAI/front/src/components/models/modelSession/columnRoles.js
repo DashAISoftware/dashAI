@@ -169,14 +169,17 @@ export function sessionColumns(session, taskMetadata) {
   const inputs = gather(sides.inputs, "columns");
   const inputRefs = gather(sides.inputs, "refs");
   const outputs = gather(sides.outputs, "columns");
+  const steps = session?.preprocessing?.steps || [];
   return {
     inputs,
     inputRefs,
     // A converter's output (e.g. "bin_SepalLengthCm") is in no dataset: the
     // backend takes the raw values and runs its fitted preprocessor itself.
+    // Decided as the backend's session_raw_columns does: by the steps.
+    // Without a task declaration nothing is read.
     rawInputs:
-      inputRefs.length > 0
-        ? rawColumnsNeededFor(inputRefs, session?.preprocessing?.steps)
+      steps.length > 0 && taskMetadata?.io_roles
+        ? rawColumnsNeededFor(inputRefs, steps)
         : inputs,
     outputs,
     target: outputs[0],

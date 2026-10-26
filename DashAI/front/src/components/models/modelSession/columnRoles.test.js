@@ -164,6 +164,26 @@ describe("sessionColumns", () => {
     });
   });
 
+  test("with steps, the dataset columns are what the steps read, as in the backend", () => {
+    // session_raw_columns decides by the steps, not by the refs: refs are
+    // the only source of truth, and a role with columns but no refs feeds
+    // the model nothing the backend would ask a dataset for.
+    const withoutRefs = {
+      ...session,
+      column_roles: {
+        ...session.column_roles,
+        features: {
+          refs: [],
+          columns: ["SepalWidthCm", "bin_SepalLengthCm"],
+        },
+      },
+    };
+
+    expect(sessionColumns(withoutRefs, SUPERVISED).rawInputs).toEqual([
+      "SepalLengthCm",
+    ]);
+  });
+
   test("a session without a target has no target column", () => {
     const clustering = {
       column_roles: { features: { refs: [], columns: ["hours", "score"] } },
