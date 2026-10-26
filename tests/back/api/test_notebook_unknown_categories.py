@@ -29,6 +29,7 @@ SETOSA_ROWS = [1, 2, 3]
 HINTS = {
     "OneHotEncoder": 'set "handle_unknown" to "ignore"',
     "OrdinalEncoder": 'set "handle_unknown" to "use_encoded_value"',
+    "LabelEncoder": 'set "handle_unknown" to "use_encoded_value"',
 }
 
 
@@ -105,6 +106,24 @@ def test_ordinal_asked_to_encode_gives_its_unknown_value_outside_the_fitted_rows
         notebook,
         "OrdinalEncoder",
         {"handle_unknown": "use_encoded_value", "unknown_value": -1},
+        SETOSA_ROWS,
+    )
+
+    ConverterJob(converter_id=converter_id).run()
+
+    encoded = _added_column(notebook)
+    assert encoded[0] == 0
+    assert encoded[-1] == -1
+
+
+def test_label_asked_to_encode_gives_minus_one_outside_the_fitted_rows(
+    client, notebook
+):
+    converter_id = _converter(
+        client,
+        notebook,
+        "LabelEncoder",
+        {"handle_unknown": "use_encoded_value"},
         SETOSA_ROWS,
     )
 
