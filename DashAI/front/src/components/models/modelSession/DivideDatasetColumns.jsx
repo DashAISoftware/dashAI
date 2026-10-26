@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { getColorByColumnType } from "../../../utils";
+import { getColumnTypeLabel } from "../../../utils/typesLists";
 import { useTranslation } from "react-i18next";
 
 function DivideDatasetColumns({
@@ -67,7 +68,7 @@ function DivideDatasetColumns({
         <span>{getOptionLabel(option)}</span>
         {columnType && columnType.type && (
           <Chip
-            label={columnType.type}
+            label={getColumnTypeLabel(columnType.type, t)}
             size="small"
             sx={{
               backgroundColor: typeColor,
@@ -95,7 +96,7 @@ function DivideDatasetColumns({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <span>{getOptionLabel(option)}</span>
             <Chip
-              label={columnType.type}
+              label={getColumnTypeLabel(columnType.type, t)}
               size="small"
               sx={{
                 backgroundColor: typeColor,

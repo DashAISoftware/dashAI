@@ -1,6 +1,8 @@
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 
+import { getColumnTypeLabel } from "../../../utils/typesLists";
+
 import LeanColumnNameEditor from "./LeanColumnNameEditor";
 import LeanEncoderChip from "./LeanEncoderChip";
 
@@ -70,7 +72,7 @@ export default function LeanHeaderCell({
           </button>
         </div>
         <div className="lean-th-type">
-          <span>{type || null}</span>
+          <span>{getColumnTypeLabel(type, t) || null}</span>
           {type === "Categorical" && datasetId && (
             <LeanEncoderChip
               columnName={columnKey}

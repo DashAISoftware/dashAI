@@ -21,6 +21,7 @@ import Transform from "@mui/icons-material/Transform";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { getColorByColumnType } from "../../../utils";
+import { getColumnTypeLabel } from "../../../utils/typesLists";
 import { getComponents } from "../../../api/component";
 import { useTableLocalization } from "../../../utils/useTableLocalization";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
@@ -34,10 +35,11 @@ import {
 import { formatStructureMessage } from "./structureMessages";
 
 function TypeChip({ type }) {
+  const { t } = useTranslation(["datasets"]);
   if (!type) return null;
   return (
     <Chip
-      label={type}
+      label={getColumnTypeLabel(type, t)}
       size="small"
       sx={{
         backgroundColor: (theme) => getColorByColumnType(type, theme),

@@ -17,6 +17,8 @@
  * estimated structure (see usePreprocessingStructure and stateToOptions).
  */
 
+import { getColumnTypeLabel } from "../../../utils/typesLists";
+
 const GROUP_KEY_PREFIX = "__group__";
 const SLOT_SEPARATOR = "__slot__";
 const NAME_SEPARATOR = "__name__";
@@ -93,7 +95,9 @@ const englishLabels = (key, params = {}) =>
     "models:structure.unknownColumns": "N columns",
     "models:structure.columns":
       params.count === 1 ? "1 column" : `${params.count} columns`,
-  })[key] ?? key;
+  })[key] ??
+  params.defaultValue ??
+  key;
 
 const blockLabel = (block, stepName, t) => {
   const base =
@@ -157,7 +161,7 @@ export function labelForRef(ref, stepDisplayNames = [], t = englishLabels) {
   const output = t("models:structure.output");
   return ref.slot == null
     ? `${stepName}: ${output}`
-    : `${stepName}: ${output} (${ref.slot})`;
+    : `${stepName}: ${output} (${getColumnTypeLabel(ref.slot, t)})`;
 }
 
 /**

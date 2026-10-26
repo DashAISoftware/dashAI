@@ -9,6 +9,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import { getColumnTypeLabel } from "../../../utils/typesLists";
 
 const ENCODER_OPTIONS = ["one_hot", "label"];
 
@@ -169,7 +170,9 @@ export default function EditableColumnHeader({
           </Typography>
         )}
         <Typography variant="body2" color="text.secondary">
-          {isLoading ? t("common:loading") : columnType || t("common:unknown")}
+          {isLoading
+            ? t("common:loading")
+            : getColumnTypeLabel(columnType, t) || t("common:unknown")}
         </Typography>
       </Box>
     );
@@ -203,7 +206,7 @@ export default function EditableColumnHeader({
         </Typography>
       </Tooltip>
       <Typography variant="body2" color="text.secondary">
-        {columnType || t("common:unknown")}
+        {getColumnTypeLabel(columnType, t) || t("common:unknown")}
       </Typography>
 
       {/* Encoder chip - only for Categorical columns */}
