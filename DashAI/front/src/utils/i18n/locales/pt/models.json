@@ -337,6 +337,10 @@
     "newerFormat": "Este arquivo foi criado com uma versão mais nova do dashAI. Atualize o dashAI para importá-lo.",
     "missingPlugin": "Esta sessão precisa do plugin {{plugin}}. Instale-o pelo módulo de Plugins e importe a sessão novamente.",
     "missingPluginVersion": "Esta sessão precisa do plugin {{plugin}} (versão {{version}}). Instale-o pelo módulo de Plugins e importe a sessão novamente.",
+    "missingPluginPrivate": "Esta sessão precisa do plugin {{plugin}}, que não está publicado no catálogo de Plugins. Peça-o a quem compartilhou a sessão, instale-o e importe a sessão novamente.",
+    "missingPluginPrivateVersion": "Esta sessão precisa do plugin {{plugin}} (versão {{version}}), que não está publicado no catálogo de Plugins. Peça-o a quem compartilhou a sessão, instale-o e importe a sessão novamente.",
+    "missingPluginUnchecked": "Esta sessão precisa do plugin {{plugin}}. O dashAI não conseguiu verificar o catálogo de Plugins. Se o plugin for público, instale-o por lá; se não, peça-o a quem compartilhou a sessão.",
+    "missingPluginUncheckedVersion": "Esta sessão precisa do plugin {{plugin}} (versão {{version}}). O dashAI não conseguiu verificar o catálogo de Plugins. Se o plugin for público, instale-o por lá; se não, peça-o a quem compartilhou a sessão.",
     "missingComponent": "Esta sessão usa \"{{component}}\", que não está disponível neste dashAI. Provavelmente vem de um plugin: instale-o pelo módulo de Plugins e importe a sessão novamente.",
     "unsafeFile": "Este arquivo tem conteúdo que seria gravado fora da sua pasta, por isso não foi importado."
   },

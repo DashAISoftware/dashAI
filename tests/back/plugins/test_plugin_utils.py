@@ -14,6 +14,7 @@ from DashAI.back.plugins.utils import (
     get_plugin_by_name_from_pypi,
     get_plugins_from_pypi,
     install_plugin,
+    pypi_project_exists,
     uninstall_plugin,
     unregister_plugin_components,
 )
@@ -348,3 +349,17 @@ def test_get_plugins_from_pypi_skips_a_plugin_when_pypi_does_not_answer():
         plugins = get_plugins_from_pypi()
 
     assert plugins == [{"name": "dashai-second"}]
+
+
+@pytest.mark.parametrize(
+    ("status_code", "expected"),
+    [(200, True), (404, False), (503, None)],
+)
+def test_pypi_project_exists_reads_the_status_code(status_code, expected):
+    with patch("requests.get", return_value=Mock(status_code=status_code)):
+        assert pypi_project_exists("dashai-some-plugin") is expected
+
+
+def test_pypi_project_exists_is_unknown_without_a_connection():
+    with patch("requests.get", side_effect=requests.ConnectionError):
+        assert pypi_project_exists("dashai-some-plugin") is None

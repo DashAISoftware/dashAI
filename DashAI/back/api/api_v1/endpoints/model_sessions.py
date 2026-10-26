@@ -978,12 +978,12 @@ async def import_model_session(
     except (UnsupportedPackageFormatError, MissingPluginError) as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=_import_error_detail(e, session_factory),
+            detail=await run_in_threadpool(_import_error_detail, e, session_factory),
         ) from e
     except ModelPackageError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=_import_error_detail(e, session_factory),
+            detail=await run_in_threadpool(_import_error_detail, e, session_factory),
         ) from e
     except Exception as e:
         log.exception(e)
@@ -1001,16 +1001,32 @@ def _import_error_detail(
     """Describe a refused import so the app can say why in its own language.
 
     ``detail`` keeps the English message for API and Python callers. For a
-    missing plugin, ``plugin_id`` points to its entry in the plugins module
-    when the plugin index lists it, so the app can link straight to it.
+    missing plugin, ``plugin_id`` points to its entry in the plugins module so
+    the app can link straight to it, and ``published`` says whether PyPI has
+    it: ``False`` for a private plugin the plugins module will never list,
+    ``None`` when PyPI could not be asked.
     """
-    from DashAI.back.plugins.installer import canonical_name
-
     params = dict(error.params)
     if error.code == "missing_plugin" and params.get("plugin"):
-        wanted = canonical_name(params["plugin"])
+        params.update(_catalog_entry(params["plugin"], session_factory))
+    return {"code": error.code, "detail": str(error), "params": params}
+
+
+def _catalog_entry(plugin: str, session_factory: "sessionmaker") -> dict:
+    """Find a plugin in the plugins catalog, asking PyPI when it is not listed.
+
+    The catalog is filled only when the plugins module is opened, so a public
+    plugin may be missing from it; one found on PyPI is added to it.
+    """
+    from DashAI.back.api.api_v1.schemas.plugin_params import PluginParams
+    from DashAI.back.dependencies.database.utils import add_plugin_to_db
+    from DashAI.back.plugins import utils as plugin_utils
+    from DashAI.back.plugins.installer import canonical_name
+
+    def listed_id():
+        wanted = canonical_name(plugin)
         with session_factory() as db:
-            params["plugin_id"] = next(
+            return next(
                 (
                     plugin_id
                     for plugin_id, name in db.query(Plugin.id, Plugin.name)
@@ -1018,7 +1034,20 @@ def _import_error_detail(
                 ),
                 None,
             )
-    return {"code": error.code, "detail": str(error), "params": params}
+
+    plugin_id = listed_id()
+    if plugin_id is not None:
+        return {"plugin_id": plugin_id, "published": True}
+
+    published = plugin_utils.pypi_project_exists(plugin)
+    if published:
+        try:
+            raw = plugin_utils.get_plugin_by_name_from_pypi(plugin)
+            add_plugin_to_db(PluginParams.model_validate(raw), session_factory)
+            plugin_id = listed_id()
+        except Exception:
+            log.exception("Could not add the plugin %s to the catalog", plugin)
+    return {"plugin_id": plugin_id, "published": published}
 
 
 @router.get("/{model_session_id}/export/preview")

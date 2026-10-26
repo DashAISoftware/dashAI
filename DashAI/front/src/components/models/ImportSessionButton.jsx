@@ -93,16 +93,25 @@ export default function ImportSessionButton({ onImported }) {
     const code = detail?.code;
     const params = detail?.params || {};
     if (code === "missing_plugin") {
+      // published: false means PyPI does not have it (a private plugin the
+      // plugins module will never list); null means PyPI could not be asked.
+      const isPrivate = params.published === false;
+      const unchecked = params.published === null;
+      const key = isPrivate
+        ? "missingPluginPrivate"
+        : unchecked
+          ? "missingPluginUnchecked"
+          : "missingPlugin";
+      let pluginsLink = "/app/plugins/browse";
+      if (isPrivate) pluginsLink = null;
+      else if (params.plugin_id)
+        pluginsLink = `/app/plugins/browse/details/${params.plugin_id}`;
       return {
         message: t(
-          params.version
-            ? "models:importError.missingPluginVersion"
-            : "models:importError.missingPlugin",
+          `models:importError.${key}${params.version ? "Version" : ""}`,
           params,
         ),
-        pluginsLink: params.plugin_id
-          ? `/app/plugins/browse/details/${params.plugin_id}`
-          : "/app/plugins/browse",
+        pluginsLink,
       };
     }
     if (code === "missing_component") {

@@ -2,7 +2,7 @@ import importlib
 import json
 import logging
 import sys
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 
 import requests
 
@@ -124,6 +124,34 @@ def _get_all_plugins() -> List[str]:
         packages = []
 
     return packages
+
+
+def pypi_project_exists(plugin_name: str) -> Optional[bool]:
+    """Ask PyPI whether a project is published.
+
+    Parameters
+    ----------
+    plugin_name : str
+        The distribution name to look up.
+
+    Returns
+    -------
+    bool or None
+        ``True`` if PyPI has it, ``False`` if PyPI answers it does not exist,
+        and ``None`` when PyPI could not be asked (no connection, an error).
+    """
+    try:
+        response = requests.get(
+            f"https://pypi.org/pypi/{plugin_name}/json",
+            timeout=_REQUEST_TIMEOUT_SECONDS,
+        )
+    except requests.RequestException:
+        return None
+    if response.status_code == 200:
+        return True
+    if response.status_code == 404:
+        return False
+    return None
 
 
 def get_plugin_by_name_from_pypi(plugin_name: str) -> dict:

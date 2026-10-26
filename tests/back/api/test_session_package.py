@@ -706,7 +706,82 @@ def test_the_import_endpoint_links_a_missing_plugin_to_the_plugins_module(
         "plugin": plugin["name"],
         "version": "1.0",
         "plugin_id": plugin_id,
+        "published": True,
     }
+
+
+def _post_needing_plugin(client, regressor, tmp_path, name):
+    package = _export_all(client, regressor, tmp_path / "source.dashai")
+    needs_plugin = _rewrite(
+        package,
+        tmp_path / "plugin.dashai",
+        manifest=lambda m: {**m, "plugins": [{"name": name, "version": "0.1.0"}]},
+    )
+    with open(needs_plugin, "rb") as handle:
+        return client.post(
+            "/api/v1/model-session/import",
+            files={"file": ("plugin.dashai", handle, "application/zip")},
+        )
+
+
+@pytest.mark.parametrize(
+    ("on_pypi", "published"),
+    [(False, False), (None, None)],
+    ids=["private", "pypi_unreachable"],
+)
+def test_a_missing_plugin_outside_the_catalog_says_whether_pypi_has_it(
+    client, regressor, tmp_path, monkeypatch, on_pypi, published
+):
+    from DashAI.back.plugins import utils as plugin_utils
+
+    monkeypatch.setattr(plugin_utils, "pypi_project_exists", lambda name: on_pypi)
+
+    response = _post_needing_plugin(client, regressor, tmp_path, "dashai-privado")
+
+    assert response.status_code == 409
+    params = response.json()["detail"]["params"]
+    assert params["plugin_id"] is None
+    assert params["published"] is published
+
+
+def test_a_missing_plugin_found_on_pypi_joins_the_catalog_and_is_linked(
+    client, regressor, tmp_path, monkeypatch
+):
+    from DashAI.back.plugins import utils as plugin_utils
+
+    name = "dashai-public-but-not-listed"
+    monkeypatch.setattr(plugin_utils, "pypi_project_exists", lambda _: True)
+    monkeypatch.setattr(
+        plugin_utils,
+        "get_plugin_by_name_from_pypi",
+        lambda _: {
+            "name": name,
+            "author": "someone",
+            "verified": False,
+            "installed_version": "0.1.0",
+            "lastest_version": "0.1.0",
+            "tags": [],
+            "summary": "",
+            "description": "",
+            "description_content_type": "text/markdown",
+        },
+    )
+
+    try:
+        response = _post_needing_plugin(client, regressor, tmp_path, name)
+        params = response.json()["detail"]["params"]
+        with client.app.container["session_factory"]() as db:
+            listed = db.query(Plugin).filter(Plugin.name == name).one_or_none()
+            listed_id = listed.id if listed else None
+    finally:
+        with client.app.container["session_factory"]() as db:
+            db.query(Plugin).filter(Plugin.name == name).delete()
+            db.commit()
+
+    assert response.status_code == 409
+    assert listed_id is not None
+    assert params["plugin_id"] == listed_id
+    assert params["published"] is True
 
 
 def test_importing_again_after_deleting_an_import_works(client, classifier, tmp_path):

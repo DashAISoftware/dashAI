@@ -120,3 +120,46 @@ test("a missing plugin is explained in the app language and links to it", async 
   fireEvent.click(screen.getByRole("button", { name: /go to plugins/i }));
   expect(mockNavigate).toHaveBeenCalledWith("/app/plugins/browse/details/12");
 });
+
+const rejectWithMissingPlugin = (published) => {
+  importModelSession.mockRejectedValue({
+    response: {
+      status: 409,
+      data: {
+        detail: {
+          code: "missing_plugin",
+          detail: "This file needs the plugin 'dashai-x'.",
+          params: {
+            plugin: "dashai-x",
+            version: "0.1.0",
+            plugin_id: null,
+            published,
+          },
+        },
+      },
+    },
+  });
+  const { container } = renderWithProviders(<ImportSessionButton />);
+  fireEvent.change(container.querySelector('input[type="file"]'), {
+    target: { files: [new File(["zip"], "s.dashai")] },
+  });
+};
+
+test("a private plugin asks for it instead of pointing to the plugins module", async () => {
+  rejectWithMissingPlugin(false);
+
+  expect(
+    await screen.findByText(/is not published in the Plugins catalog/),
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /go to plugins/i })).toBeNull();
+});
+
+test("a plugin that could not be checked offers both ways", async () => {
+  rejectWithMissingPlugin(null);
+
+  expect(
+    await screen.findByText(/could not check the Plugins catalog/),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /go to plugins/i }));
+  expect(mockNavigate).toHaveBeenCalledWith("/app/plugins/browse");
+});

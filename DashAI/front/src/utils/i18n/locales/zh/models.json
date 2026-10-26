@@ -330,6 +330,10 @@
     "newerFormat": "此文件由更新版本的 dashAI 创建。请更新 dashAI 后再导入。",
     "missingPlugin": "此会话需要插件 {{plugin}}。请在插件模块中安装后重新导入会话。",
     "missingPluginVersion": "此会话需要插件 {{plugin}}（版本 {{version}}）。请在插件模块中安装后重新导入会话。",
+    "missingPluginPrivate": "此会话需要插件 {{plugin}}，该插件未在插件目录中发布。请向分享此会话的人索取并安装，然后重新导入会话。",
+    "missingPluginPrivateVersion": "此会话需要插件 {{plugin}}（版本 {{version}}），该插件未在插件目录中发布。请向分享此会话的人索取并安装，然后重新导入会话。",
+    "missingPluginUnchecked": "此会话需要插件 {{plugin}}。dashAI 无法检查插件目录。如果该插件是公开的，请从那里安装；否则请向分享此会话的人索取。",
+    "missingPluginUncheckedVersion": "此会话需要插件 {{plugin}}（版本 {{version}}）。dashAI 无法检查插件目录。如果该插件是公开的，请从那里安装；否则请向分享此会话的人索取。",
     "missingComponent": "此会话使用了“{{component}}”，但当前 dashAI 中不可用。它可能来自某个插件：请在插件模块中安装后重新导入会话。",
     "unsafeFile": "此文件包含会写入其文件夹之外的内容，因此未导入。"
   },
