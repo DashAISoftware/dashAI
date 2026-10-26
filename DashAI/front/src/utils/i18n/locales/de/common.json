@@ -278,5 +278,13 @@
   "viewLess": "Weniger anzeigen",
   "viewMore": "Mehr anzeigen",
   "yes": "Ja",
-  "data": "Daten"
+  "data": "Daten",
+  "defaultName": {
+    "dataset": "Datensatz",
+    "notebook": "Notizbuch",
+    "pipeline": "Pipeline",
+    "document": "Dokument",
+    "localExplainer": "Erklaerung_lokal",
+    "globalExplainer": "Erklaerung_global"
+  }
 }

@@ -29,9 +29,14 @@ export default function ConfigureAndUploadDatasetStep({
   computeMetadata = true,
   onPreviewMetrics,
 }) {
+  const { t } = useTranslation(["common", "datasets"]);
   const { defaultName } = useMemo(
-    () => generateSequentialName({ base: "Dataset", items: existingDatasets }),
-    [existingDatasets],
+    () =>
+      generateSequentialName({
+        base: t("common:defaultName.dataset"),
+        items: existingDatasets,
+      }),
+    [existingDatasets, t],
   );
   const [datasetName, setDatasetName] = useState("");
   const lastAutoFilledRef = useRef(null);
@@ -50,7 +55,6 @@ export default function ConfigureAndUploadDatasetStep({
   const tourContext = useTourContext();
 
   const { enqueueSnackbar } = useSnackbar();
-  const { t } = useTranslation(["common", "datasets"]);
   const theme = useTheme();
 
   useEffect(() => {

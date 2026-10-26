@@ -40,8 +40,11 @@ export default function ConfigureAndUploadDocumentStep({
   const { enqueueSnackbar } = useSnackbar();
   const { defaultName } = useMemo(
     () =>
-      generateSequentialName({ base: "Document", items: existingDocuments }),
-    [existingDocuments],
+      generateSequentialName({
+        base: t("common:defaultName.document"),
+        items: existingDocuments,
+      }),
+    [existingDocuments, t],
   );
   const [documentName, setDocumentName] = useState("");
   const [file, setFile] = useState(null);
