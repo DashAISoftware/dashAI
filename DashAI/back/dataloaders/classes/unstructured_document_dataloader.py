@@ -38,6 +38,16 @@ PRIVACY_ENVIRONMENT = {
     "SCARF_NO_ANALYTICS": "true",
     "UNSTRUCTURED_DISABLE_NOTICE": "1",
 }
+PARTITIONERS: Dict[str, Tuple[str, str]] = {
+    ".docx": ("unstructured.partition.docx", "partition_docx"),
+    ".pptx": ("unstructured.partition.pptx", "partition_pptx"),
+    ".xlsx": ("unstructured.partition.xlsx", "partition_xlsx"),
+    ".html": ("unstructured.partition.html", "partition_html"),
+    ".htm": ("unstructured.partition.html", "partition_html"),
+    ".md": ("unstructured.partition.md", "partition_md"),
+    ".eml": ("unstructured.partition.email", "partition_email"),
+    ".msg": ("unstructured.partition.msg", "partition_msg"),
+}
 CATEGORY_KINDS: Dict[str, str] = {
     "Header": "page_header",
     "Footer": "page_footer",
@@ -90,9 +100,7 @@ class UnstructuredDocumentDataLoader(DownloadableMixin, DocumentDataLoader):
 
     SCHEMA: ClassVar[BaseSchema] = UnstructuredDocumentSchema
     DOWNLOAD_SIZE_BYTES = 12806118
-    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset(
-        {".docx", ".pptx", ".xlsx", ".html", ".htm", ".md", ".eml", ".msg"}
-    )
+    SUPPORTED_EXTENSIONS: frozenset[str] = frozenset(PARTITIONERS)
     DISPLAY_NAME = MultilingualString(
         en="unstructured",
         es="unstructured",
@@ -302,8 +310,10 @@ class UnstructuredDocumentDataLoader(DownloadableMixin, DocumentDataLoader):
         """Run unstructured on a file with its analytics turned off.
 
         ``component_dir()`` joins ``sys.path`` so ``spacy.load`` finds the
-        downloaded model by name. The content type comes from the file
-        extension, so unstructured never needs libmagic. On Windows the
+        downloaded model by name. The partitioner is picked from the file
+        extension instead of unstructured's ``partition``, which sniffs the
+        content with libmagic when available and so parses a broken ``.docx``
+        as plain text on one machine and fails on another. On Windows the
         ``magic`` module is blocked before unstructured imports it:
         python-magic there only finds MSYS or Cygwin builds of libmagic on
         PATH (such as Git's ``msys-magic-1.dll``), and loading one into a
@@ -328,14 +338,9 @@ class UnstructuredDocumentDataLoader(DownloadableMixin, DocumentDataLoader):
             sys.path.append(model_path)
             importlib.invalidate_caches()
 
-        from unstructured.file_utils.model import FileType
-        from unstructured.partition.auto import partition
-
-        file_type = FileType.from_extension(Path(file_path).suffix.lower())
-        return partition(
-            filename=file_path,
-            content_type=file_type.mime_type if file_type else None,
-        )
+        module_name, function_name = PARTITIONERS[Path(file_path).suffix.lower()]
+        partitioner = getattr(importlib.import_module(module_name), function_name)
+        return partitioner(filename=file_path)
 
     def load_document(self, file_path: str, params: Dict[str, Any]) -> "DashAIDocument":
         """Parse a file with unstructured.

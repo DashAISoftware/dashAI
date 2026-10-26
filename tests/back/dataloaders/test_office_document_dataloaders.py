@@ -256,6 +256,27 @@ def test_unstructured_wraps_parse_errors(tmp_path, unstructured_loader):
         unstructured_loader.load_document(str(path), {})
 
 
+def test_unstructured_parses_by_extension_whatever_libmagic_guesses(
+    tmp_path, monkeypatch, unstructured_loader
+):
+    report = write_docx(tmp_path / "report.docx")
+    unstructured_loader.load_document(report, {})
+    from unstructured.file_utils import filetype
+    from unstructured.file_utils.model import FileType
+
+    monkeypatch.setattr(
+        filetype._FileTypeDetector,
+        "file_type",
+        classmethod(lambda cls, ctx: FileType.TXT),
+    )
+    elements = _elements(unstructured_loader.load_document(report, {}))
+    assert ("heading", "Introduction", {"level": 1}) in elements
+    broken = tmp_path / "broken.docx"
+    broken.write_bytes(b"not a zip")
+    with pytest.raises(DocumentLoaderError, match="unstructured"):
+        unstructured_loader.load_document(str(broken), {})
+
+
 def test_unstructured_table_rows_read_header_cells():
     rows, header = UnstructuredDocumentDataLoader.table_rows(
         "<table><tr><th>a</th><th>b</th></tr><tr><td> 1 </td><td/></tr></table>"
