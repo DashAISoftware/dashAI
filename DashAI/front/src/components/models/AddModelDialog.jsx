@@ -428,7 +428,11 @@ function AddModelDialog({
               fullWidth
               required
               placeholder={t("common:modelName")}
-              helperText={selectedModel ? `Model: ${selectedModel}` : ""}
+              helperText={
+                selectedModel
+                  ? `${t("common:model")}: ${modelDisplayName || selectedModel}`
+                  : ""
+              }
             />
 
             {selectedModel && (
