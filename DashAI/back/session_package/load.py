@@ -36,6 +36,7 @@ from DashAI.back.session_package.export import (
     SESSION_ENTRY,
     SESSION_FIELDS,
     SESSION_FORMAT_VERSION,
+    with_unknown_handling,
 )
 
 if TYPE_CHECKING:
@@ -289,6 +290,13 @@ def import_session_package(
         recipe, notes = _read_package(path, workdir)
         _check_components(recipe, component_registry)
         recipe_session = recipe["session"]
+        # A file always says how its encoders treat an unseen category, so
+        # one that does not was written before they treated it by default,
+        # when leaving it out meant sklearn's "error". The migration that
+        # wrote it into stored sessions (c3f1a8d2e6b4) never sees a file.
+        recipe_session["preprocessing"] = with_unknown_handling(
+            recipe_session["preprocessing"], lambda converter: "error"
+        )
         has_steps = bool((recipe_session["preprocessing"] or {}).get("steps"))
 
         try:

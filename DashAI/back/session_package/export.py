@@ -16,6 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
+from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.model_package.export import _zip_directory
 from DashAI.back.model_package.manifest import (
     MANIFEST_ENTRY,
@@ -68,6 +69,34 @@ RUN_FIELDS = (
     "split_indexes",
     "artifacts",
 )
+# Encoders whose default ``handle_unknown`` changed from sklearn's "error" to
+# treating a category unseen in fit. A file always says which one a step uses,
+# so a step without it can only come from a file written before the change.
+UNKNOWN_HANDLING_ENCODERS = ("OneHotEncoder", "OrdinalEncoder")
+
+
+def with_unknown_handling(
+    preprocessing: Optional[Dict[str, Any]], value_for: Any
+) -> Optional[Dict[str, Any]]:
+    """A copy of the steps with ``handle_unknown`` written into the encoders.
+
+    Only the encoder steps that leave it out are filled, with
+    ``value_for(converter_name)``. ``steps`` and ``params`` may be null, as an
+    imported file stores them; they mean no steps and no params.
+    """
+    if not preprocessing:
+        return preprocessing
+    steps = []
+    for step in preprocessing.get("steps") or []:
+        params = dict(step.get("params") or {})
+        if (
+            step.get("converter") in UNKNOWN_HANDLING_ENCODERS
+            and "handle_unknown" not in params
+        ):
+            params["handle_unknown"] = value_for(step["converter"])
+            step = {**step, "params": params}
+        steps.append(step)
+    return {**preprocessing, "steps": steps}
 
 
 class SessionNotFoundError(ModelPackageError):
@@ -266,6 +295,15 @@ def build_session_package(
         dataset_dir = Path(dataset.file_path) / DATASET_ENTRY
         artifacts_path = session.preprocessing_artifacts_path
         recipe_session = {field: getattr(session, field) for field in SESSION_FIELDS}
+        # An encoder left without it uses its schema default, which the file
+        # writes down: importing reads a step without it as one from before
+        # that default changed.
+        recipe_session["preprocessing"] = with_unknown_handling(
+            recipe_session["preprocessing"],
+            lambda converter: schema_placeholder_defaults(
+                component_registry[converter]["class"]
+            )["handle_unknown"],
+        )
         recipe_dataset = {
             "name": dataset.name,
             "total_rows": dataset.total_rows,
