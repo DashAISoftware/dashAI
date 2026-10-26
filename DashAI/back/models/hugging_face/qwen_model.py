@@ -152,7 +152,7 @@ class Qwen25_3BInstruct(GGUFTextGenerationModel):  # noqa: N801
 
     REPO_ID = "Qwen/Qwen2.5-3B-Instruct-GGUF"
     GGUF_PATTERN = "*8_0.gguf"
-    DOWNLOAD_SIZE_BYTES = 3789064256
+    DOWNLOAD_SIZE_BYTES = 3616088480
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#2e7d32"
     DISPLAY_NAME = MultilingualString(
@@ -210,8 +210,12 @@ class Qwen25_7BInstruct(GGUFTextGenerationModel):  # noqa: N801
     """
 
     REPO_ID = "Qwen/Qwen2.5-7B-Instruct-GGUF"
-    GGUF_PATTERN = "*8_0.gguf"
-    DOWNLOAD_SIZE_BYTES = 7578128512
+    # The 7B Q8_0 checkpoint ships split across three shards named
+    # ``qwen2.5-7b-instruct-q8_0-0000N-of-00003.gguf``; the leading ``*`` is
+    # required for the pattern to match the repo file names (and their local
+    # paths after ``snapshot_download``).
+    GGUF_PATTERN = "*-q8_0*.gguf"
+    DOWNLOAD_SIZE_BYTES = 8098525408
     SCHEMA = GGUFTextGenerationSchema
     COLOR: str = "#2e7d32"
     DISPLAY_NAME = MultilingualString(
