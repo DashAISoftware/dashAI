@@ -30,8 +30,11 @@ export default function SaveDocumentModal({
 
   const { defaultName } = useMemo(
     () =>
-      generateSequentialName({ base: "Document", items: existingDocuments }),
-    [existingDocuments, open],
+      generateSequentialName({
+        base: t("common:defaultName.document"),
+        items: existingDocuments,
+      }),
+    [existingDocuments, open, t],
   );
 
   useEffect(() => {

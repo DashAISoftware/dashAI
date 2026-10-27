@@ -278,5 +278,13 @@
   "viewLess": "View less",
   "viewMore": "View more",
   "yes": "Yes",
-  "data": "Data"
+  "data": "Data",
+  "defaultName": {
+    "dataset": "Dataset",
+    "notebook": "Notebook",
+    "pipeline": "Pipeline",
+    "document": "Document",
+    "localExplainer": "Explainer_local",
+    "globalExplainer": "Explainer_global"
+  }
 }

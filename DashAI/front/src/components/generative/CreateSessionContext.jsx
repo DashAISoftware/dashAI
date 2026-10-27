@@ -185,7 +185,9 @@ export function CreateSessionProvider({ children }) {
         return acc;
       }, {});
       const { defaultName } = generateSequentialName({
-        base: `${formatTaskNameForSession(model.task_name)}_Session`,
+        base: `${t("common:session")}_${
+          model.task_display_name || formatTaskNameForSession(model.task_name)
+        }`,
         items: existingSessions,
         getName: (session) => session.name,
         filter: (session) => session.task_name === model.task_name,
@@ -198,7 +200,7 @@ export function CreateSessionProvider({ children }) {
         },
       });
     },
-    [existingSessions],
+    [existingSessions, t],
   );
 
   // A model whose download was removed can no longer be used to create a

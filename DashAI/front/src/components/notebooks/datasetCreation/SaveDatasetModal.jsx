@@ -64,10 +64,10 @@ export function SaveDatasetModal({
       return { defaultName: "Clean_Personality_Dataset" };
     }
     return generateSequentialName({
-      base: "Dataset",
+      base: t("common:defaultName.dataset"),
       items: existingDatasets,
     });
-  }, [existingDatasets, open]);
+  }, [existingDatasets, open, t]);
 
   useEffect(() => {
     if (open && defaultName) {

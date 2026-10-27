@@ -26,10 +26,10 @@ function DataloaderConfiguration({
   const { defaultName } = useMemo(
     () =>
       generateSequentialName({
-        base: "Dataset",
+        base: t("common:defaultName.dataset"),
         items: existingDatasets,
       }),
-    [existingDatasets],
+    [existingDatasets, t],
   );
 
   return (
