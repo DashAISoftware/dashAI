@@ -378,7 +378,10 @@ class Metric(Base):
     level: Mapped[LevelEnum] = mapped_column(Enum(LevelEnum), nullable=False)
 
     name: Mapped[str] = mapped_column(String, nullable=False)
-    value: Mapped[float] = mapped_column(Float, nullable=False)
+    # NULL when the metric has no value on this data, and then
+    # unavailable_reason says why (MAPE on a series with a zero, say).
+    value: Mapped[float] = mapped_column(Float, nullable=True)
+    unavailable_reason: Mapped[str] = mapped_column(String, nullable=True)
     std_value: Mapped[float] = mapped_column(Float, nullable=True)
     step: Mapped[int] = mapped_column(Integer, nullable=False)
     fold_index: Mapped[int] = mapped_column(Integer, nullable=True)

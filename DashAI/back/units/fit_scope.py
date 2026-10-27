@@ -173,6 +173,40 @@ class ModelFitScopeMixin:
     _optimizer = None
     _goal_metric = None
 
+    @staticmethod
+    def _goal_score(metric, expected, predictions, where: str) -> float:
+        """Score the goal metric, or stop the run if it has no value here.
+
+        A metric that is unavailable on some data (MAPE on a series with a
+        zero) can still be recorded as such beside the others. It cannot be
+        optimized: there is no number to compare trials by. The error says so
+        and names the metric, so the user picks another.
+
+        Parameters
+        ----------
+        metric : type
+            The goal metric's class.
+        expected, predictions
+            What the metric's ``score`` takes.
+        where : str
+            The data being scored, as the message should name it.
+
+        Raises
+        ------
+        JobError
+            If the metric raises ``UndefinedMetricError``.
+        """
+        from DashAI.back.metrics.undefined_metric import UndefinedMetricError
+
+        try:
+            return metric.score(expected, predictions)
+        except UndefinedMetricError as undefined:
+            raise JobError(
+                f"The optimization metric {metric.__name__} has no value on "
+                f"{where}: {undefined.reason} Choose another optimization "
+                "metric."
+            ) from undefined
+
     def _resolve_search(self):
         """Resolve the optimizer and the goal metric, memoized on this unit.
 

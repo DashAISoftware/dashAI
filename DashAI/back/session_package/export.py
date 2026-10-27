@@ -30,7 +30,10 @@ if TYPE_CHECKING:
 SESSION_EXTENSION = ".dashai"
 # 2 stores the session's columns by role. Format 1, from before roles, stored
 # ``FORMAT_1_COLUMN_FIELDS`` instead; the importer still reads it.
-SESSION_FORMAT_VERSION = 2
+# 3 lets a metric row have no value, with ``unavailable_reason`` saying why. A
+# DashAI that reads format 2 would refuse the null at the database instead of
+# the file, so the version moves; formats 1 and 2 still import.
+SESSION_FORMAT_VERSION = 3
 KIND_SESSION = "session"
 SESSION_ENTRY = "session.json"
 # Holds data.arrow and splits.json, like "<dataset>/dataset" on disk.
@@ -192,6 +195,7 @@ def _metric_row(metric) -> Dict[str, Any]:
         "level": metric.level.name,
         "name": metric.name,
         "value": metric.value,
+        "unavailable_reason": metric.unavailable_reason,
         "std_value": metric.std_value,
         "step": metric.step,
         "fold_index": metric.fold_index,

@@ -399,38 +399,57 @@ class ModelJob(BaseJob):
         """
         import numpy as np
 
-        for split_name, by_metric in fold_metrics.items():
-            for metric_name, values in by_metric.items():
-                if not values:
-                    continue
-                existing = (
-                    db.query(Metric)
-                    .filter_by(
+        # A metric with no value on some fold has no mean over the folds
+        # either: averaging the others would summarise a different set of
+        # folds than every other metric of the run. The fold rows say why,
+        # and the summary repeats it.
+        fold_level = (
+            LevelEnum.OUTER_FOLD if level is LevelEnum.LAST_OUTER else LevelEnum.FOLD
+        )
+        unavailable: Dict[tuple, str] = {}
+        for row in (
+            db.query(Metric)
+            .filter_by(run_id=run_id, level=fold_level)
+            .filter(Metric.value.is_(None))
+            .order_by(Metric.fold_index)
+        ):
+            # The first fold that had no value is the one the summary names.
+            unavailable.setdefault((row.split, row.name), row.unavailable_reason)
+
+        def upsert(split, metric_name, value, deviation, reason):
+            existing = (
+                db.query(Metric)
+                .filter_by(run_id=run_id, split=split, level=level, name=metric_name)
+                .first()
+            )
+            if existing:
+                existing.value = value
+                existing.std_value = deviation
+                existing.unavailable_reason = reason
+            else:
+                db.add(
+                    Metric(
                         run_id=run_id,
-                        split=SplitEnum[split_name],
+                        split=split,
                         level=level,
                         name=metric_name,
+                        value=value,
+                        std_value=deviation,
+                        unavailable_reason=reason,
+                        step=0,
                     )
-                    .first()
                 )
+
+        for (split, metric_name), reason in unavailable.items():
+            upsert(split, metric_name, None, None, reason)
+
+        for split_name, by_metric in fold_metrics.items():
+            for metric_name, values in by_metric.items():
+                if not values or (SplitEnum[split_name], metric_name) in unavailable:
+                    continue
                 mean = float(np.mean(values))
                 deviation = float(np.std(values)) if len(values) > 1 else 0.0
-
-                if existing:
-                    existing.value = mean
-                    existing.std_value = deviation
-                else:
-                    db.add(
-                        Metric(
-                            run_id=run_id,
-                            split=SplitEnum[split_name],
-                            level=level,
-                            name=metric_name,
-                            value=mean,
-                            std_value=deviation,
-                            step=0,
-                        )
-                    )
+                upsert(SplitEnum[split_name], metric_name, mean, deviation, None)
         db.commit()
 
     def _prepare_dataset_and_components(

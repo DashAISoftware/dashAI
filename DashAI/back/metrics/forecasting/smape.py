@@ -3,7 +3,8 @@
 from typing import TYPE_CHECKING
 
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
+from DashAI.back.metrics.forecasting_metric import ForecastingMetric, PointMetricMixin
+from DashAI.back.metrics.regression_metric import prepare_to_metric
 
 if TYPE_CHECKING:
     import numpy as np
@@ -11,7 +12,7 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class SMAPE(RegressionMetric):
+class SMAPE(PointMetricMixin, ForecastingMetric):
     """Percentage error measured against the size of both values.
 
     Symmetric Mean Absolute Percentage Error divides each error by the average

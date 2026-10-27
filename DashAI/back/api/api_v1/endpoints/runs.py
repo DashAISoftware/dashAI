@@ -47,7 +47,9 @@ def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
     dict
         The train, validation and test metrics of the run, each paired with the
         standard deviation that fold aggregation produces for cross-validation
-        runs. A partition the run did not score comes back as ``None``.
+        runs, and with ``{split}_metrics_unavailable``: the metrics that have
+        no value on that partition, mapped to the reason. A partition the run
+        did not score comes back as ``None``.
     """
     metrics = (
         db.query(Metric)
@@ -55,15 +57,27 @@ def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
         .all()
     )
 
-    # One value entry and one standard deviation entry per split, derived from
-    # SplitEnum so a split cannot be silently left out of the response.
+    # One value entry, one standard deviation entry and one entry for the
+    # metrics with no value per split, derived from SplitEnum so a split cannot
+    # be silently left out of the response.
     response = {}
     for split in SplitEnum:
         response[f"{split.value}_metrics"] = None
         response[f"{split.value}_metrics_std"] = None
+        response[f"{split.value}_metrics_unavailable"] = None
 
     # Group metrics by split
     for metric in metrics:
+        # A metric with no value on this data keeps the values mapping
+        # numbers-only, which is what every reader of it formats; why it has
+        # no value travels beside it.
+        if metric.value is None:
+            unavailable_key = f"{metric.split.name.lower()}_metrics_unavailable"
+            if response[unavailable_key] is None:
+                response[unavailable_key] = {}
+            response[unavailable_key][metric.name] = metric.unavailable_reason
+            continue
+
         # Determine the key in the response dictionary
         split_key = f"{metric.split.name.lower()}_metrics"
 
@@ -836,6 +850,7 @@ def reset_run(run):
     for split in SplitEnum:
         setattr(run, f"{split.value}_metrics", None)
         setattr(run, f"{split.value}_metrics_std", None)
+        setattr(run, f"{split.value}_metrics_unavailable", None)
     setattr(run, "start_time", None)
     setattr(run, "delivery_time", None)
     setattr(run, "end_time", None)
@@ -899,6 +914,14 @@ def _group_fold_metrics(db, run_id: int, level, split_enum):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No fold metrics found for this run",
         )
+
+    # The lists are read by position: the paired tests line fold i of one run
+    # up with fold i of another. A metric with no value on some fold would
+    # leave a hole that shifts the folds after it, so it is left out whole.
+    # Its summary row is unavailable too, and says why in the run's
+    # ``{split}_metrics_unavailable``.
+    without_value = {metric.name for metric in fold_metrics if metric.value is None}
+    fold_metrics = [m for m in fold_metrics if m.name not in without_value]
 
     splits_data = json.loads(run.model_session.splits)
     repetitions = splits_data.get("n_repeats", 1)

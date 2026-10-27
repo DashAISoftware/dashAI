@@ -274,7 +274,6 @@ def test_nothing_registered_names_the_forecasting_family(client):
 # --------------------------------------------------------------------------- #
 
 
-@pending("slice 6a: MAPE is undefined, not partial, when an actual is zero")
 def test_mape_refuses_a_zero_actual_with_a_reason():
     from DashAI.back.metrics.forecasting.mape import MAPE
     from DashAI.back.metrics.undefined_metric import UndefinedMetricError

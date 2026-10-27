@@ -249,6 +249,10 @@ from DashAI.back.metrics.classification.roc_auc import ROCAUC
 from DashAI.back.metrics.clustering.calinski_harabasz import CalinskiHarabasz
 from DashAI.back.metrics.clustering.davies_bouldin import DaviesBouldin
 from DashAI.back.metrics.clustering.silhouette import Silhouette
+from DashAI.back.metrics.forecasting.interval_coverage import IntervalCoverage
+from DashAI.back.metrics.forecasting.mape import MAPE
+from DashAI.back.metrics.forecasting.mase import MASE
+from DashAI.back.metrics.forecasting.smape import SMAPE
 from DashAI.back.metrics.regression.explained_variance import ExplainedVariance
 from DashAI.back.metrics.regression.mae import MAE
 from DashAI.back.metrics.regression.median_absolute_error import MedianAbsoluteError
@@ -782,6 +786,10 @@ def get_initial_components():
         MSE,
         RMSE,
         MAE,
+        MAPE,
+        SMAPE,
+        MASE,
+        IntervalCoverage,
         R2,
         MedianAbsoluteError,
         ExplainedVariance,

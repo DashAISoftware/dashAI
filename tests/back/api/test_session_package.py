@@ -134,7 +134,7 @@ def test_a_session_package_carries_dataset_recipe_models_and_metrics(
 
     names, manifest, recipe, arrow = _read(package)
     assert manifest["kind"] == "session"
-    assert manifest["format_version"] == 2
+    assert manifest["format_version"] == 3
     assert manifest["includes_trained_models"] is True
     assert manifest["contents"] == ["dataset", "session", "runs", "metrics"]
     assert manifest["dataset_hash"] == hashlib.sha256(arrow).hexdigest()

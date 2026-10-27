@@ -400,6 +400,7 @@ def import_session_package(
                                 level=LevelEnum[metric["level"]],
                                 name=metric["name"],
                                 value=metric["value"],
+                                unavailable_reason=metric.get("unavailable_reason"),
                                 std_value=metric.get("std_value"),
                                 step=metric["step"],
                                 fold_index=metric.get("fold_index"),
