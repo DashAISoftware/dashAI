@@ -17,6 +17,7 @@ EXPECTED_UNITS = {
     "BacktestForecasterUnit",
     "ScoreForecastsUnit",
     "FitFinalForecasterUnit",
+    "SaveForecastsUnit",
     "FitModelOverFoldsUnit",
     "FitModelOverNestedFoldsUnit",
     "EvaluateModelUnit",
@@ -300,6 +301,7 @@ EXPECTED_RUNTIME_PARAMS = {
     ("BuildForecasterUnit", "run_id"),
     ("BacktestForecasterUnit", "run_id"),
     ("BacktestForecasterUnit", "artifact_prefix"),
+    ("SaveForecastsUnit", "artifact_prefix"),
 }
 
 

@@ -338,6 +338,57 @@ async def get_hyperparameter_optimization_plot(
     return normalize_artifacts(plot)[0]
 
 
+@router.get("/{run_id}/forecasts")
+@inject
+async def get_run_forecasts(
+    run_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the forecasts a backtest made from every origin.
+
+    The file ``SaveForecastsUnit`` wrote beside the run's model, as it is: the
+    frequency, the horizon, the interval levels, and per origin its partition,
+    its dates, what actually happened, the forecast and its bounds.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist, has not finished, or has no forecasts:
+        a run of a task that is not backtested, or one whose file is gone.
+    """
+    import json
+
+    from DashAI.back.units.forecast_scope import forecasts_file
+
+    with session_factory() as db:
+        try:
+            run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+                )
+            if run.status != RunStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="The run has not finished, so it has no forecasts yet.",
+                )
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    path = forecasts_file(di["config"]["RUNS_PATH"], str(run_id))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except OSError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The run has no forecasts.",
+        ) from e
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def upload_run(
@@ -513,6 +564,7 @@ async def delete_run(
                 and os.path.exists(run.run_path)
             ):
                 remove_path(run.run_path)
+            _remove_forecasts(run.id)
             db.commit()
             return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
@@ -835,6 +887,13 @@ async def delete_run_operations(
             ) from e
 
 
+def _remove_forecasts(run_id: int) -> None:
+    """Delete a run's backtest forecasts, if it has any."""
+    from DashAI.back.units.forecast_scope import forecasts_file
+
+    forecasts_file(di["config"]["RUNS_PATH"], str(run_id)).unlink(missing_ok=True)
+
+
 def reset_run(run):
     """
     Reset a run to NOT_STARTED status and delete associated files.
@@ -864,6 +923,7 @@ def reset_run(run):
     if run.run_path and os.path.exists(run.run_path):
         remove_path(run.run_path)
         setattr(run, "run_path", None)
+    _remove_forecasts(run.id)
     if run.plot_history_path and os.path.exists(run.plot_history_path):
         remove_path(run.plot_history_path)
         setattr(run, "plot_history_path", None)

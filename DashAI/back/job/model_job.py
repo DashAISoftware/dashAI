@@ -34,6 +34,7 @@ from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
 from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
 from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
+from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 from DashAI.back.units.score_clusters_unit import ScoreClustersUnit
 from DashAI.back.units.score_forecasts_unit import ScoreForecastsUnit
@@ -371,6 +372,10 @@ class ModelJob(BaseJob):
 
                 self.report_progress(0.95, "Saving model")
                 SaveModelUnit(artifact_prefix=str(run_id))(ctx)
+                if ctx.has("forecasts"):
+                    # A backtest's forecasts are kept beside its model; the
+                    # results and the reports read them, never the model.
+                    SaveForecastsUnit(artifact_prefix=str(run_id))(ctx)
 
                 try:
                     run.run_path = ctx.require("model_path")

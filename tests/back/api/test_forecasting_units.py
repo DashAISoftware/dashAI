@@ -270,3 +270,31 @@ def test_the_kept_model_is_fresh_and_has_seen_the_whole_series():
     assert kept is not backtested
     assert kept.predict(1).point[0] == pytest.approx(24.0)
     assert kept.time_grid == GRID.to_ref()
+
+
+# --- SaveForecastsUnit -------------------------------------------------------
+
+
+def test_the_forecasts_are_written_where_the_endpoint_reads_them(client):
+    import json
+
+    from DashAI.back.units.forecast_scope import forecasts_file
+    from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
+
+    ctx = _backtested()
+
+    SaveForecastsUnit(artifact_prefix="unit-test")(ctx)
+
+    path = forecasts_file(client.app.container["config"]["RUNS_PATH"], "unit-test")
+    assert ctx.require("forecasts_path") == str(path)
+    assert json.loads(path.read_text(encoding="utf-8")) == ctx.require("forecasts")
+    assert not path.with_suffix(".json.partial").exists()
+    path.unlink()
+
+
+@pytest.mark.parametrize("prefix", ["../outside", "", None])
+def test_a_prefix_that_leaves_the_runs_directory_is_refused(prefix):
+    from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
+
+    with pytest.raises(JobError, match="artifact prefix"):
+        SaveForecastsUnit(artifact_prefix=prefix)(_context(forecasts={}))

@@ -23,6 +23,19 @@ if TYPE_CHECKING:
 #: is what interval coverage measures, 80 what a plot shades inside it.
 LEVELS = [80, 95]
 
+
+def forecasts_file(runs_path, artifact_prefix: str):
+    """Where a run's backtest forecasts are kept: beside its model file.
+
+    Derived from the run, so no column has to store it, and the same function
+    is what the unit that writes it, the endpoint that reads it and the code
+    that deletes a run all ask.
+    """
+    from pathlib import Path
+
+    return Path(runs_path) / f"{artifact_prefix}_forecasts.json"
+
+
 #: Steps per season, by the kind of step a frequency names. A series whose
 #: step is not here has no season assumed (1).
 SEASON_BY_STEP = {

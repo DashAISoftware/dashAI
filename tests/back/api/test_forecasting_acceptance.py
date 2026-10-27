@@ -435,7 +435,6 @@ def test_mape_as_the_goal_metric_on_a_zero_fails_the_run(client, tmp_path):
 # --------------------------------------------------------------------------- #
 
 
-@pending("slice 6d: the forecasts of every origin are saved and readable")
 def test_the_forecasts_of_every_origin_can_be_read(client, tmp_path):
     frame = _monthly()
     session_id = _session(client, tmp_path, frame)
@@ -452,7 +451,9 @@ def test_the_forecasts_of_every_origin_can_be_read(client, tmp_path):
         "test",
     ]
     test = body["origins"][-1]
-    assert test["dates"] == list(frame["date"].iloc[45:])
+    assert test["dates"] == [
+        pd.Timestamp(date).isoformat() for date in frame["date"].iloc[45:]
+    ]
     assert test["actual"] == pytest.approx(list(frame["sales"].iloc[45:]))
     assert test["forecast"] == pytest.approx([frame["sales"].iloc[44]] * 3)
 
