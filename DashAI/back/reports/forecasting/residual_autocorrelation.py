@@ -1,12 +1,15 @@
 """Residual autocorrelation report."""
 
-from typing import List, Optional
+from typing import Any, Dict, List
 
 from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.schema_fields import BaseSchema, int_field, schema_field
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.reports.base_report import BaseReport, ReportError
-from DashAI.back.reports.regression.predicted_vs_actual import flat_predictions
+from DashAI.back.reports.base_report import ReportError
+from DashAI.back.reports.forecasting.forecasting_report import (
+    ForecastingReport,
+    residual_points,
+)
 
 
 class ResidualAutocorrelationSchema(BaseSchema):
@@ -32,7 +35,7 @@ class ResidualAutocorrelationSchema(BaseSchema):
     )  # type: ignore
 
 
-class ResidualAutocorrelation(BaseReport):
+class ResidualAutocorrelation(ForecastingReport):
     """Autocorrelation of the residuals against the number of lags.
 
     A good forecast leaves residuals that look like noise: each error carries
@@ -42,10 +45,13 @@ class ResidualAutocorrelation(BaseReport):
     model would have learned. Lags rising and falling smoothly usually mean
     a missed trend or seasonality, while a single spike means a specific
     lag that was never modelled.
+
+    The residuals are the backtest's, every forecast step in date order: the
+    windows of the origins tile the end of the series, so they follow one
+    another.
     """
 
     SCHEMA = ResidualAutocorrelationSchema
-    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     DISPLAY_NAME: str = MultilingualString(
         en="Residual Autocorrelation",
         es="Autocorrelación de Residuos",
@@ -75,22 +81,8 @@ class ResidualAutocorrelation(BaseReport):
         """
         self.max_lag = max_lag
 
-    def compute(
-        self,
-        y_true,
-        y_pred,
-        class_names: Optional[List[str]] = None,
-    ) -> List[Artifact]:
+    def compute_forecasts(self, forecasts: Dict[str, Any]) -> List[Artifact]:
         """Build the residual autocorrelation bar chart.
-
-        Parameters
-        ----------
-        y_true : ndarray
-            Ground truth values of the series.
-        y_pred : ndarray
-            The model's forecast for the same points.
-        class_names : Optional[List[str]]
-            Unused; always None for forecasting.
 
         Returns
         -------
@@ -106,12 +98,11 @@ class ResidualAutocorrelation(BaseReport):
         import numpy as np
         import plotly.graph_objects as go
 
-        truth, predictions = flat_predictions(y_true, y_pred)
-        residuals = truth - predictions
+        residuals = np.array([value for _, value, _ in residual_points(forecasts)])
 
         if len(residuals) < 2:
             raise ReportError(
-                "The partition holds too few rows to estimate autocorrelation."
+                "The backtest holds too few forecast steps to estimate autocorrelation."
             )
 
         centered = residuals - residuals.mean()

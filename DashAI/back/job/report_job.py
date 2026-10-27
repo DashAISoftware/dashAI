@@ -32,6 +32,7 @@ from DashAI.back.job.predict_job import (
     _preprocessing_artifacts_path,
 )
 from DashAI.back.models.base_model import BaseModel
+from DashAI.back.reports.forecasting.forecasting_report import ForecastingReport
 from DashAI.back.splitters.splits_payload import predictable_splits, run_split_indexes
 from DashAI.back.tasks.session_roles import session_io
 from DashAI.back.units.apply_session_preprocessing_unit import (
@@ -224,9 +225,6 @@ class ReportJob(BaseJob):
         JobError
             If any stage of the reconstruction or computation fails.
         """
-        import os
-        import pickle
-
         from kink import di
 
         from DashAI.back.core.artifacts import (
@@ -272,6 +270,27 @@ class ReportJob(BaseJob):
                     raise JobError("Connection with the database failed") from e
 
                 try:
+                    report_class = component_registry[report.report_name]["class"]
+                    instance = report_class(**(report.parameters or {}))
+                except Exception as e:
+                    log.exception(e)
+                    raise JobError(
+                        f"Unable to instantiate report {report.report_name}."
+                    ) from e
+
+                if isinstance(instance, ForecastingReport):
+                    # Drawn from the forecasts the backtest saved, never from
+                    # the model: the kept model was fitted on every date the
+                    # forecasts cover (D6).
+                    self._save(
+                        db,
+                        report,
+                        config,
+                        self._forecasting_artifacts(instance, run, config),
+                    )
+                    return
+
+                try:
                     model_class = component_registry[run.model_name]["class"]
                     model: BaseModel = model_class(**run.parameters)
                     trained_model = model.load(run.run_path)
@@ -279,15 +298,6 @@ class ReportJob(BaseJob):
                     log.exception(e)
                     raise JobError(
                         f"Can not load model {run.model_name} from {run.run_path}"
-                    ) from e
-
-                try:
-                    report_class = component_registry[report.report_name]["class"]
-                    instance = report_class(**(report.parameters or {}))
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError(
-                        f"Unable to instantiate report {report.report_name}."
                     ) from e
 
                 self.report_progress(0.3, "Resolving the run's partitions")
@@ -420,28 +430,74 @@ class ReportJob(BaseJob):
                             title="Partitions not shown",
                         )
                     )
-                artifacts = normalize_artifacts(items)
-
-                try:
-                    path = os.path.join(
-                        config["RUNS_PATH"], f"report_{report_id}.pickle"
-                    )
-                    with open(path, "wb") as file:
-                        pickle.dump(artifacts, file)
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError("Report file saving failed") from e
-
-                try:
-                    report.artifacts_path = path
-                    report.plot_overrides = None
-                    report.set_status_as_finished()
-                    db.commit()
-                except Exception as e:
-                    log.exception(e)
-                    raise JobError("Report path saving failed") from e
+                self._save(db, report, config, normalize_artifacts(items))
 
             except Exception as e:
                 report.set_status_as_error()
                 db.commit()
                 raise e
+
+    @staticmethod
+    def _save(db, report: Report, config, artifacts) -> None:
+        """Pickle the report's artifacts and mark it finished.
+
+        Raises
+        ------
+        JobError
+            If the file or the row cannot be written.
+        """
+        import os
+        import pickle
+
+        try:
+            path = os.path.join(config["RUNS_PATH"], f"report_{report.id}.pickle")
+            with open(path, "wb") as file:
+                pickle.dump(artifacts, file)
+        except Exception as e:
+            log.exception(e)
+            raise JobError("Report file saving failed") from e
+
+        try:
+            report.artifacts_path = path
+            report.plot_overrides = None
+            report.set_status_as_finished()
+            db.commit()
+        except Exception as e:
+            log.exception(e)
+            raise JobError("Report path saving failed") from e
+
+    @staticmethod
+    def _forecasting_artifacts(instance, run: Run, config) -> list:
+        """A forecasting report's artifacts, from the run's saved forecasts.
+
+        Raises
+        ------
+        JobError
+            If the run saved no forecasts, or the report cannot draw them.
+        """
+        import json
+
+        from DashAI.back.core.artifacts import (
+            ArtifactGroup,
+            GroupedArtifacts,
+            normalize_artifacts,
+        )
+        from DashAI.back.reports.base_report import ReportError
+        from DashAI.back.units.forecast_scope import forecasts_file
+
+        path = forecasts_file(config["RUNS_PATH"], str(run.id))
+        try:
+            forecasts = json.loads(path.read_text(encoding="utf-8"))
+        except OSError as e:
+            raise JobError("The run saved no forecasts to draw: train it again.") from e
+
+        try:
+            leaves = instance.compute_forecasts(forecasts)
+        except ReportError as e:
+            raise JobError(str(e)) from e
+        except Exception as e:
+            log.exception(e)
+            raise JobError("Failed to compute the report") from e
+
+        group = ArtifactGroup(title="Backtest", artifacts=leaves)
+        return normalize_artifacts([GroupedArtifacts(title=None, groups=[group])])

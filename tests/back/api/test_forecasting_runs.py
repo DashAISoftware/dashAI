@@ -10,6 +10,7 @@ Lives under ``tests/back/api`` to reuse the ``client`` fixture.
 """
 
 import json
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -162,3 +163,67 @@ def test_the_file_goes_with_the_run(client, tmp_path):
 
     assert not path_of(deleted).exists()
     assert not path_of(reset).exists()
+
+
+# --- the reports -------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "report_name",
+    [
+        "ForecastVsActual",
+        "ForecastErrorByStep",
+        "ResidualsOverTime",
+        "ResidualAutocorrelation",
+    ],
+)
+def test_a_report_of_a_forecasting_run_is_drawn_from_its_forecasts(
+    client, run_id, report_name
+):
+    from DashAI.back.job.report_job import ReportJob
+
+    response = client.post(
+        "/api/v1/report/",
+        json={"run_id": run_id, "report_name": report_name, "parameters": {}},
+    )
+    assert response.status_code == 201, response.text
+    report_id = response.json()["id"]
+
+    ReportJob(report_id=report_id).run()
+
+    artifacts = client.get(f"/api/v1/report/{report_id}/artifacts")
+    assert artifacts.status_code == 200, artifacts.text
+    assert artifacts.json()[0]["groups"][0]["title"] == "Backtest"
+
+
+def test_a_forecasting_report_never_loads_the_model(client, tmp_path):
+    from DashAI.back.job.report_job import ReportJob
+
+    session_id = _session(client, tmp_path, _monthly())
+    other = _train(client, session_id, "NaiveForecaster")
+    Path(_get(client, Run, other).run_path).unlink()
+    response = client.post(
+        "/api/v1/report/",
+        json={"run_id": other, "report_name": "ForecastVsActual", "parameters": {}},
+    )
+
+    ReportJob(report_id=response.json()["id"]).run()
+
+    artifacts = client.get(f"/api/v1/report/{response.json()['id']}/artifacts")
+    assert artifacts.status_code == 200, artifacts.text
+
+
+def test_a_run_without_its_forecasts_has_no_report(client, tmp_path):
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.job.report_job import ReportJob
+
+    session_id = _session(client, tmp_path, _monthly())
+    other = _train(client, session_id, "NaiveForecaster")
+    forecasts_file(client.app.container["config"]["RUNS_PATH"], str(other)).unlink()
+    response = client.post(
+        "/api/v1/report/",
+        json={"run_id": other, "report_name": "ForecastVsActual", "parameters": {}},
+    )
+
+    with pytest.raises(JobError, match="saved no forecasts"):
+        ReportJob(report_id=response.json()["id"]).run()

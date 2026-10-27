@@ -1,25 +1,28 @@
-"""Forecast against actual values over the observation index."""
+"""Each origin's forecast against what actually happened, over time."""
 
-from typing import List, Optional
+from typing import Any, Dict, List
 
 from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.reports.base_report import BaseReport
-from DashAI.back.reports.regression.predicted_vs_actual import flat_predictions
+from DashAI.back.reports.forecasting.forecasting_report import (
+    ForecastingReport,
+    origin_label,
+)
+
+#: The interval a plot shades around a forecast, when the model gave one.
+BAND_LEVEL = "95"
 
 
-class ForecastVsActual(BaseReport):
-    """Forecast and truth as two lines over the observation index.
+class ForecastVsActual(ForecastingReport):
+    """The actual series and every origin's forecast, against the dates.
 
-    An error scalar says how far off the forecast is on average; this says
-    *where*. A forecast that tracks well early and drifts later shows a model
-    whose error compounds over the horizon, while a line that runs parallel
-    but offset reveals a level bias that RMSE folds into the rest of the
-    error. Row order is time order for a forecasting run, because the task
-    sorts its rows by date before anything downstream reads them.
+    An error scalar says how far off the forecasts are on average; this says
+    *where*. A forecast that tracks well early in its window and drifts later
+    shows an error that compounds over the horizon, a line that runs parallel
+    but offset shows a level bias, and an actual value outside the shaded 95%
+    interval shows a model more confident than it had reason to be.
     """
 
-    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     DISPLAY_NAME: str = MultilingualString(
         en="Forecast vs Actual",
         es="Pronóstico vs Real",
@@ -28,14 +31,11 @@ class ForecastVsActual(BaseReport):
         zh="预测值与实际值",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Forecast and truth as lines over time; reveals drift and bias.",
-        es="Pronóstico y verdad como líneas en el tiempo; revela deriva y sesgo.",
-        pt=("Previsão e verdade como linhas ao longo do tempo; revela deriva e viés."),
-        de=(
-            "Prognose und Wahrheit als Linien über die Zeit; zeigt Drift und "
-            "Verzerrung."
-        ),
-        zh="随时间变化的预测值与真实值曲线；可揭示漂移和偏差。",
+        en="Each backtest forecast and its interval against the actual series.",
+        es="Cada pronóstico del backtest y su intervalo contra la serie real.",
+        pt="Cada previsão do backtest e o seu intervalo contra a série real.",
+        de="Jede Backtest-Prognose mit Intervall gegen die tatsächliche Reihe.",
+        zh="回测中每次预测及其区间与实际序列的对比。",
     )
     COLOR: str = "#42A5F5"
     ICON: str = "ShowChart"
@@ -43,55 +43,63 @@ class ForecastVsActual(BaseReport):
     def __init__(self, **kwargs) -> None:
         """Initialise the report. It takes no parameters."""
 
-    def compute(
-        self,
-        y_true,
-        y_pred,
-        class_names: Optional[List[str]] = None,
-    ) -> List[Artifact]:
-        """Build the forecast against actual line plot.
-
-        Parameters
-        ----------
-        y_true : ndarray
-            Ground truth values of the series.
-        y_pred : ndarray
-            The model's forecast for the same points.
-        class_names : Optional[List[str]]
-            Unused; always None for forecasting.
+    def compute_forecasts(self, forecasts: Dict[str, Any]) -> List[Artifact]:
+        """Draw the actual series, then each origin's forecast and band.
 
         Returns
         -------
         List[Artifact]
-            A single figure holding the truth and the forecast lines.
+            One figure: the actual values over every forecast date, and per
+            origin its forecast with its 95% interval shaded when it has one.
         """
         import plotly.graph_objects as go
 
-        truth, predictions = flat_predictions(y_true, y_pred)
-        observations = list(range(len(truth)))
-
+        actual = sorted(
+            {
+                date: value
+                for origin in forecasts["origins"]
+                for date, value in zip(origin["dates"], origin["actual"], strict=True)
+            }.items()
+        )
         figure = go.Figure()
         figure.add_trace(
             go.Scatter(
-                x=observations,
-                y=truth.tolist(),
-                mode="lines",
+                x=[date for date, _ in actual],
+                y=[value for _, value in actual],
+                mode="lines+markers",
                 name="Actual",
                 line={"width": 2, "color": "#42a5f5"},
             )
         )
-        figure.add_trace(
-            go.Scatter(
-                x=observations,
-                y=predictions.tolist(),
-                mode="lines",
-                name="Forecast",
-                line={"width": 2, "color": "#ffa726", "dash": "dash"},
+        for origin in forecasts["origins"]:
+            label = origin_label(origin)
+            lower = origin.get("lower", {}).get(BAND_LEVEL)
+            upper = origin.get("upper", {}).get(BAND_LEVEL)
+            if lower and upper:
+                figure.add_trace(
+                    go.Scatter(
+                        x=origin["dates"] + origin["dates"][::-1],
+                        y=upper + lower[::-1],
+                        fill="toself",
+                        fillcolor="rgba(255, 167, 38, 0.15)",
+                        line={"width": 0},
+                        hoverinfo="skip",
+                        name=f"{label}: {BAND_LEVEL}% interval",
+                        showlegend=False,
+                    )
+                )
+            figure.add_trace(
+                go.Scatter(
+                    x=origin["dates"],
+                    y=origin["forecast"],
+                    mode="lines",
+                    name=f"{label}: forecast",
+                    line={"width": 2, "color": "#ffa726", "dash": "dash"},
+                )
             )
-        )
         figure.update_layout(
             title="Forecast vs actual",
-            xaxis_title="Observation",
+            xaxis_title="Date",
             yaxis_title="Value",
             margin={"l": 20, "r": 20, "t": 50, "b": 40},
         )

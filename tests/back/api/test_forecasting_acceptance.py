@@ -485,7 +485,6 @@ def test_no_partition_of_a_forecasting_run_is_predictable(client, tmp_path):
 # --------------------------------------------------------------------------- #
 
 
-@pending("slice 8: reports draw the saved forecasts against their dates")
 def test_the_forecast_report_draws_against_dates(client, tmp_path):
     from DashAI.back.reports.forecasting.forecast_vs_actual import ForecastVsActual
 
@@ -497,4 +496,4 @@ def test_the_forecast_report_draws_against_dates(client, tmp_path):
     artifacts = ForecastVsActual().compute_forecasts(forecasts)
 
     figure = json.loads(artifacts[0].payload)
-    assert figure["data"][0]["x"][0] == frame["date"].iloc[36]
+    assert figure["data"][0]["x"][0] == pd.Timestamp(frame["date"].iloc[36]).isoformat()

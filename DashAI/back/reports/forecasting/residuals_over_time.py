@@ -1,25 +1,27 @@
-"""Residuals against the observation index report."""
+"""Residuals of the backtest's forecasts against time."""
 
-from typing import List, Optional
+from typing import Any, Dict, List
 
 from DashAI.back.core.artifacts import Artifact, PlotlyArtifact
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.reports.base_report import BaseReport
-from DashAI.back.reports.regression.predicted_vs_actual import flat_predictions
+from DashAI.back.reports.base_report import ReportError
+from DashAI.back.reports.forecasting.forecasting_report import (
+    ForecastingReport,
+    origin_label,
+    residual_points,
+)
 
 
-class ResidualsOverTime(BaseReport):
-    """Residual against observation index, with the zero line.
+class ResidualsOverTime(ForecastingReport):
+    """Residual against date, one marker series per origin, with the zero line.
 
     The residual plot used by regression scatters residuals against the
-    predicted value; forecasting keeps that diagnostic but plots against
-    time, because time is where the error pattern lives. A band that widens
-    to the right means the forecast error compounds over the horizon, a
-    band that drifts off zero means the model is systematically behind or
-    ahead of the series, and a repeating pattern means a missed seasonality.
+    predicted value; forecasting plots them against time, because time is
+    where the error pattern lives. Residuals that drift off zero mean the
+    model is systematically behind or ahead of the series, and a repeating
+    pattern means a missed seasonality.
     """
 
-    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     DISPLAY_NAME: str = MultilingualString(
         en="Residuals Over Time",
         es="Residuos en el Tiempo",
@@ -28,18 +30,11 @@ class ResidualsOverTime(BaseReport):
         zh="残差随时间变化",
     )
     DESCRIPTION: str = MultilingualString(
-        en="Residual against observation index; reveals drift and missed seasonality.",
-        es=(
-            "Residuo contra índice de observación; revela deriva y estacionalidad "
-            "omitida."
-        ),
-        pt=(
-            "Resíduo contra índice de observação; revela deriva e sazonalidade perdida."
-        ),
-        de=(
-            "Residuum gegen Beobachtungsindex; zeigt Drift und übersehene Saisonalität."
-        ),
-        zh="残差与观测序号的对应关系；可揭示漂移与遗漏的季节性。",
+        en="Residual of each backtest forecast against its date.",
+        es="Residuo de cada pronóstico del backtest contra su fecha.",
+        pt="Resíduo de cada previsão do backtest contra a sua data.",
+        de="Residuum jeder Backtest-Prognose gegen ihr Datum.",
+        zh="回测中每次预测的残差与其日期的对应关系。",
     )
     COLOR: str = "#EF5350"
     ICON: str = "Timeline"
@@ -47,58 +42,46 @@ class ResidualsOverTime(BaseReport):
     def __init__(self, **kwargs) -> None:
         """Initialise the report. It takes no parameters."""
 
-    def compute(
-        self,
-        y_true,
-        y_pred,
-        class_names: Optional[List[str]] = None,
-    ) -> List[Artifact]:
-        """Build the residuals against observation index scatter.
+    def compute_forecasts(self, forecasts: Dict[str, Any]) -> List[Artifact]:
+        """Draw the zero line and each origin's residuals against the date.
 
-        Parameters
-        ----------
-        y_true : ndarray
-            Ground truth values of the series.
-        y_pred : ndarray
-            The model's forecast for the same points.
-        class_names : Optional[List[str]]
-            Unused; always None for forecasting.
-
-        Returns
-        -------
-        List[Artifact]
-            A single scatter figure with the zero reference line.
+        Raises
+        ------
+        ReportError
+            If no forecast step has both an actual value and a forecast.
         """
         import plotly.graph_objects as go
 
-        truth, predictions = flat_predictions(y_true, y_pred)
-        residuals = truth - predictions
-        observations = list(range(len(truth)))
+        points = residual_points(forecasts)
+        if not points:
+            raise ReportError("No forecast step has a residual to draw.")
 
         figure = go.Figure()
         figure.add_trace(
             go.Scatter(
-                x=[observations[0], observations[-1]],
+                x=[points[0][0], points[-1][0]],
                 y=[0, 0],
                 mode="lines",
-                name="Zero error",
+                name="Zero",
                 line={"dash": "dash", "width": 1, "color": "#9e9e9e"},
                 hoverinfo="skip",
             )
         )
-        figure.add_trace(
-            go.Scatter(
-                x=observations,
-                y=residuals.tolist(),
-                mode="markers",
-                name="Residuals",
-                marker={"size": 6, "opacity": 0.7, "color": "#ef5350"},
-            )
-        )
+        for origin in forecasts["origins"]:
+            mine = [(date, value) for date, value, of in points if of is origin]
+            if mine:
+                figure.add_trace(
+                    go.Scatter(
+                        x=[date for date, _ in mine],
+                        y=[value for _, value in mine],
+                        mode="markers",
+                        name=origin_label(origin),
+                    )
+                )
         figure.update_layout(
             title="Residuals over time",
-            xaxis_title="Observation",
-            yaxis_title="Residual (actual minus forecast)",
+            xaxis_title="Date",
+            yaxis_title="Actual - forecast",
             margin={"l": 20, "r": 20, "t": 50, "b": 40},
         )
         return [PlotlyArtifact(payload=figure, title="Residuals over time")]
