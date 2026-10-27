@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Final, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -49,12 +49,17 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_PROGRESS_STAGE_RETRIEVING,
     RAG_PROGRESS_STAGE_TRANSFORMING,
 )
+from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import prefer_wider_chunk
 from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
 
 log = logging.getLogger(__name__)
+
+#: Separator between the first and last position of a covered range.
+_POSITION_RANGE_SEPARATOR: Final[str] = "–"
 
 if TYPE_CHECKING:
     from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
@@ -95,6 +100,9 @@ class ChunkReference:
         The chunk text.
     page : int or None
         Page the chunk starts in, None when the format has no pages.
+    source_positions : tuple of int or None
+        Document positions covered by a retrieve-then-expand unit. ``None``
+        for a stored chunk; the frontend uses it to render the covered range.
     """
 
     document_id: int
@@ -102,6 +110,7 @@ class ChunkReference:
     document_position: int
     text: str
     page: Optional[int] = None
+    source_positions: Optional[Tuple[int, ...]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a JSON serializable dict representation.
@@ -109,7 +118,9 @@ class ChunkReference:
         Returns
         -------
         dict
-            Every attribute, keyed by name.
+            Every attribute, keyed by name. ``source_positions`` is the covered
+            range of a retrieve-then-expand unit, or ``None`` for a stored
+            chunk.
         """
         return {
             "document_id": self.document_id,
@@ -117,6 +128,11 @@ class ChunkReference:
             "document_position": self.document_position,
             "text": self.text,
             "page": self.page,
+            "source_positions": (
+                list(self.source_positions)
+                if self.source_positions is not None
+                else None
+            ),
         }
 
 
@@ -125,10 +141,13 @@ def merge_round_robin(retrieved_lists: List[List[Chunk]]) -> List[Chunk]:
 
     Queries are retrieved independently and their ranked lists are merged
     fairly: the first result of every list, then the second of every list, and
-    so on. A chunk already seen is skipped, keyed by
+    so on. A chunk already seen is keyed by
     ``(document_id, document_position)`` — the same identity the rest of the
-    pipeline uses. The order of first appearance wins, and empty (or shorter)
-    lists are tolerated.
+    pipeline uses. On a repeated key the chunk covering more document positions
+    replaces the earlier one in place (a widened unit beats the plain chunk or
+    narrow window anchored on the same position), so the result keeps the widest
+    context and never grows beyond the number of distinct keys. Otherwise the
+    order of first appearance wins, and empty (or shorter) lists are tolerated.
 
     Parameters
     ----------
@@ -140,7 +159,7 @@ def merge_round_robin(retrieved_lists: List[List[Chunk]]) -> List[Chunk]:
     List[Chunk]
         The merged, de-duplicated chunks in round-robin order.
     """
-    seen: set[Tuple[int, int]] = set()
+    seen: Dict[Tuple[int, int], int] = {}
     merged: List[Chunk] = []
     max_length = max((len(chunks) for chunks in retrieved_lists), default=0)
     for index in range(max_length):
@@ -149,11 +168,45 @@ def merge_round_robin(retrieved_lists: List[List[Chunk]]) -> List[Chunk]:
                 continue
             chunk = chunks[index]
             key = (chunk.document_id, chunk.document_position)
-            if key in seen:
+            position = seen.get(key)
+            if position is None:
+                seen[key] = len(merged)
+                merged.append(chunk)
                 continue
-            seen.add(key)
-            merged.append(chunk)
+            merged[position] = prefer_wider_chunk(merged[position], chunk)
     return merged
+
+
+def _chunk_label(chunk: Chunk) -> str:
+    """Build the prompt label describing which chunk positions *chunk* covers.
+
+    A stored chunk is labelled by its own position. A chunk widened by
+    retrieve-then-expand covers several positions, so the whole covered range is
+    rendered instead of only the first position, which would hide the rest of
+    the window from the model.
+
+    Parameters
+    ----------
+    chunk : Chunk
+        Retrieved chunk, possibly expanded.
+
+    Returns
+    -------
+    str
+        ``"chunk nº <position>"`` for a stored chunk, or
+        ``"chunks nº <first>–<last>"`` for an expanded unit.
+    """
+    covered = getattr(chunk, "source_positions", None)
+    if not covered:
+        return f"chunk nº {chunk.document_position}"
+    positions = sorted(set(covered))
+    if len(positions) == 1:
+        return f"chunk nº {positions[0]}"
+    contiguous = positions == list(range(positions[0], positions[-1] + 1))
+    if contiguous:
+        return f"chunks nº {positions[0]}{_POSITION_RANGE_SEPARATOR}{positions[-1]}"
+    listed = ", ".join(str(position) for position in positions)
+    return f"chunks nº {listed}"
 
 
 @dataclass(frozen=True)
@@ -367,12 +420,25 @@ class RAGPipelineConfig:
                 "These keys are not recognized pipeline configuration parameters."
             )
 
+        raw_documents = kwargs["documents"]
+        if not isinstance(raw_documents, list):
+            raise RAGPipelineConfigError(
+                f"'documents' must be a list of integers, got "
+                f"{type(raw_documents).__name__}."
+            )
+        try:
+            documents = [int(document_id) for document_id in raw_documents]
+        except (TypeError, ValueError) as exc:
+            raise RAGPipelineConfigError(
+                f"'documents' must be a list of integers, got {raw_documents!r}."
+            ) from exc
+
         return cls(
             session_id=kwargs["session_id"],
             db=kwargs["db"],
             component_registry=kwargs["component_registry"],
             env_RAG_path=kwargs["env_RAG_path"],
-            documents=kwargs["documents"],
+            documents=documents,
             prompt=model_refs["prompt"],
             chunking_model=model_refs["chunking_model"],
             retriever_model=model_refs["retriever_model"],
@@ -597,6 +663,12 @@ class RAGPipeline(BaseGenerativeModel):
         n-element list is interleaved round-robin and de-duplicated by
         ``(document_id, document_position)``.
 
+        When the retriever expands its results, two queries can return expanded
+        windows that overlap without sharing a chunk key, so the merged list is
+        then collapsed again through
+        :meth:`BaseRetriever.merge_expanded_chunks`; the same happens for the
+        single-query case, where it is a no-op.
+
         Each query is retrieved independently. A failure on any query aborts
         the whole retrieval with a wrapped error, so callers see one consistent
         failure mode.
@@ -642,7 +714,10 @@ class RAGPipeline(BaseGenerativeModel):
                 ) from e
             retrieved_lists.append(query_chunks)
             trace.append({"query": query, "retriever": query_node})
-        return merge_round_robin(retrieved_lists), trace
+        merged = merge_round_robin(retrieved_lists)
+        if isinstance(self.retriever, BaseRetriever):
+            merged = self.retriever.merge_expanded_chunks(merged)
+        return merged, trace
 
     def _build_chunk_references(
         self,
@@ -676,11 +751,12 @@ class RAGPipeline(BaseGenerativeModel):
                 document_position=chunk_position,
                 text=chunk_text,
                 page=page,
+                source_positions=getattr(retrieved_chunk, "source_positions", None),
             )
             location = f", page {page}" if page is not None else ""
             chunks_texts.append(
                 f"Document {document.file_name}{location}, "
-                f"chunk nº {chunk_position}, text:\n {chunk_text}"
+                f"{_chunk_label(retrieved_chunk)}, text:\n {chunk_text}"
             )
         return "\n\n".join(chunks_texts), chunk_dict
 

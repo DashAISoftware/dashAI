@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, Dict, List
 import numpy as np
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     enum_field,
     int_field,
@@ -16,6 +15,9 @@ from DashAI.back.models.RAG.documents import Chunk, RAGDocument
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.retrievers.cross_encoder.cross_encoder_retriever import (
     CrossEncoderRetriever,
+)
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
 )
 
 if TYPE_CHECKING:
@@ -154,7 +156,7 @@ CROSS_ENCODER_MODEL_NAMES = list(CROSS_ENCODER_MODELS.keys())
 # ── Schema ────────────────────────────────────────────────────────────────────
 
 
-class SentenceTransformerCrossEncoderRetrieverSchema(BaseSchema):
+class SentenceTransformerCrossEncoderRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`SentenceTransformerCrossEncoderRetriever`.
 
     Attributes:

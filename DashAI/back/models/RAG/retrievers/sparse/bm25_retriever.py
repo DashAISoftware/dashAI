@@ -7,8 +7,8 @@ import numpy as np
 from scipy.sparse import lil_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 
+from DashAI.back.core.atomic import atomic_open
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     enum_field,
     float_field,
@@ -17,13 +17,16 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 log = logging.getLogger(__name__)
 
 
-class BM25RetrieverSchema(BaseSchema):
+class BM25RetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`BM25Retriever`.
 
     Attributes:
@@ -177,6 +180,10 @@ class BM25Retriever(SparseRetriever):
     def load(self) -> bool:
         """Load a previously saved BM25 state from disk.
 
+        The storage folder is content-addressed, so the state may have been
+        fitted by another session over the same corpus. The persisted row map is
+        rebound to this session's chunk objects before it is trusted.
+
         Returns:
             ``True`` if state was loaded successfully, ``False`` if
             no saved state exists or loading failed.
@@ -222,7 +229,7 @@ class BM25Retriever(SparseRetriever):
             "bm25_row_to_chunk_id.pkl": self.matrix_row_to_chunk_id,
         }
         for fname, obj in to_save.items():
-            with open(os.path.join(model_dir, fname), "wb") as f:
+            with atomic_open(os.path.join(model_dir, fname), "wb") as f:
                 pickle.dump(obj, f)
 
     def _fit(self):
@@ -297,6 +304,7 @@ class BM25Retriever(SparseRetriever):
         results = [
             self._chunk_lookup[self.matrix_row_to_chunk_id[idx]] for idx in top_indices
         ]
+        results = self._apply_retrieval_expansion(results)
         return results, retriever_trace(self, results)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:

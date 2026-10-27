@@ -169,18 +169,64 @@ class CrossEncoderRetriever(CompositeRetriever, ABC):
         candidates, child_node = child.retrieve(query)
 
         if len(candidates) <= effective_k:
-            return candidates, retriever_trace(self, candidates, children=[child_node])
+            results = self._apply_retrieval_expansion(candidates)
+            return results, retriever_trace(self, results, children=[child_node])
 
         scores = self._cross_score(query, candidates)
         scored = list(zip(candidates, scores, strict=True))
         scored.sort(key=lambda x: x[1], reverse=True)
         results = [chunk for chunk, _ in scored[:effective_k]]
-        score_trace = [
-            {"ref": chunk_ref(chunk), "score": score} for chunk, score in scored
-        ]
+        results = self._apply_retrieval_expansion(results)
+        score_trace = self._score_trace(results, scored)
         return results, retriever_trace(
             self, results, children=[child_node], scores=score_trace
         )
+
+    def _score_trace(
+        self, results: List[Chunk], scored: List[Tuple[Chunk, float]]
+    ) -> List[Dict[str, Any]]:
+        """Build the trace score entries for the returned chunks.
+
+        Every scored candidate is kept. Each returned chunk also gets an entry
+        under its own reference carrying the best (maximum) score among its
+        covered positions; a unit that shares the reference of a scored
+        candidate (its first covered chunk) therefore upgrades that entry
+        instead of leaving a score that describes only one of its chunks.
+        Without this the frontend could not label the units it renders.
+
+        Parameters
+        ----------
+        results : List[Chunk]
+            The chunks this retriever returns, after expansion.
+        scored : List[Tuple[Chunk, float]]
+            The re-scored candidates, best first.
+
+        Returns
+        -------
+        List[Dict[str, Any]]
+            ``{"ref", "score"}`` entries: the candidate entries in score order,
+            plus one entry per expanded unit whose reference had no candidate.
+        """
+        entries: Dict[str, float] = {}
+        by_position: Dict[Tuple[int, int], float] = {}
+        for chunk, score in scored:
+            entries[chunk_ref(chunk)] = score
+            by_position[(chunk.document_id, chunk.document_position)] = score
+        for chunk in results:
+            positions = getattr(chunk, "source_positions", None) or (
+                chunk.document_position,
+            )
+            covered: List[float] = []
+            for position in positions:
+                key = (chunk.document_id, position)
+                if key in by_position:
+                    covered.append(by_position[key])
+            ref = chunk_ref(chunk)
+            if ref in entries:
+                covered.append(entries[ref])
+            if covered:
+                entries[ref] = max(covered)
+        return [{"ref": ref, "score": score} for ref, score in entries.items()]
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Score a set of chunk IDs against the query with the cross-encoder.

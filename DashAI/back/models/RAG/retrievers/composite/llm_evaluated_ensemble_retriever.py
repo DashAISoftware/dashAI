@@ -16,7 +16,6 @@ from __future__ import annotations
 from typing import Any, ClassVar, Dict, List, Tuple
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     int_field,
     list_field,
@@ -55,12 +54,15 @@ from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     REQUEST_CHUNKS_KEY,
     SUFFICIENT_KEY,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 
 #: Prefix of the planning verdict's narrative keys in the trace round entry.
 _PLANNING_NARRATIVE_PREFIX = "planning_"
 
 
-class LLMEvaluatedEnsembleRetrieverSchema(BaseSchema):
+class LLMEvaluatedEnsembleRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`LLMEvaluatedEnsembleRetriever`.
 
     Attributes:
@@ -405,7 +407,7 @@ class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
             pool = prepared
             self._emit_verdict(entry, verdict)
 
-        pool_chunks = pool.materialize()
+        pool_chunks = self._apply_retrieval_expansion(pool.materialize())
         return pool_chunks, self._build_trace(pool_chunks, child_nodes, rounds)
 
     def _build_entry(

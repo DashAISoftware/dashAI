@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Tuple
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     list_field,
     schema_field,
@@ -13,10 +12,13 @@ from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
 from DashAI.back.models.RAG.retrievers.exceptions import CompositeValidationError
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 
-class SequentialRetrieverSchema(BaseSchema):
+class SequentialRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`SequentialRetriever`.
 
     Attributes:
@@ -146,6 +148,7 @@ class SequentialRetriever(CompositeRetriever):
             id_to_chunk = {c.id: c for c in results}
             results = [id_to_chunk[cid] for cid, _ in scored]
 
+        results = self._apply_retrieval_expansion(results)
         return results, retriever_trace(self, results, children=[first_node])
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:

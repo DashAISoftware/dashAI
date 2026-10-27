@@ -11,7 +11,6 @@ from DashAI.back.converters.hugging_face.text_embedding.base import (
 )
 from DashAI.back.core.atomic import atomic_open
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     enum_field,
     int_field,
@@ -19,13 +18,16 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 
 METRICS = ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
 
 
-class DenseEmbeddingRetrieverSchema(BaseSchema):
+class DenseEmbeddingRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`DenseEmbeddingRetriever`.
 
     Attributes:
