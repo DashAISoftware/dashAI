@@ -31,6 +31,7 @@ from DashAI.back.models.RAG.prompts.generation.default_RAG_generation_prompt imp
 )
 from DashAI.back.models.RAG.RAG_pipeline import RAGPipeline, RAGPipelineConfig
 from DashAI.back.models.text_to_text_generation_model import (
+    FunctionCallResult,
     TextToTextGenerationTaskModel,
 )
 from DashAI.back.services.RAG.setup_service import SetupService
@@ -70,6 +71,7 @@ class CountingLLMSetup(TextToTextGenerationTaskModel):
     """Counting stub that also answers an LLM-evaluated retriever's verdict."""
 
     SCHEMA = CountingLLMSetupSchema
+    SUPPORTS_FUNCTION_CALLING = True
     construction_count = 0
 
     def __init__(self, **kwargs):
@@ -77,7 +79,14 @@ class CountingLLMSetup(TextToTextGenerationTaskModel):
         self.parameters = {}
 
     def generate(self, prompt):
-        return ['{"sufficient": true}']
+        return ["setup stub answer"]
+
+    def generate_function_call(self, messages, functions):
+        """Return a sufficient retrieval verdict."""
+        return FunctionCallResult(
+            "evaluate_retrieval_sufficiency",
+            {"sufficient": True},
+        )
 
 
 @pytest.fixture(scope="module", autouse=True)

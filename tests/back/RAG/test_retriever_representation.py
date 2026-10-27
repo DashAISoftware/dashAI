@@ -27,6 +27,7 @@ REPRESENTATION_PLACEHOLDERS: Dict[str, Tuple[str, ...]] = {
     "ParallelRetriever": ("{merge_strategy}",),
     "LLMEvaluatedDepthRetriever": ("{max_iters}", "{max_chunks}", "{prompt}"),
     "LLMEvaluatedEnsembleRetriever": ("{max_iters}", "{max_chunks}", "{prompt}"),
+    "LLMFilterRetriever": ("{k1}", "{top_k}", "{prompt}"),
 }
 
 LANGUAGES = ("en", "es", "pt", "de", "zh")

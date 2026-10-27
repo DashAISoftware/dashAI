@@ -46,6 +46,7 @@ from DashAI.back.models.RAG.prompts.transformation.default_query_decomposition_p
     TEMPLATES as DECOMP_TEMPLATES,
 )
 from DashAI.back.models.text_to_text_generation_model import (
+    FunctionCallResult,
     TextToTextGenerationTaskModel,
 )
 from tests.back.RAG.conftest import (
@@ -133,6 +134,7 @@ class NarrativeVerdictLLM(TextToTextGenerationTaskModel):
     """Retrieval-sufficiency stub that returns a sufficient narrative verdict."""
 
     SCHEMA = _EmptySchema
+    SUPPORTS_FUNCTION_CALLING = True
 
     def __init__(self, **kwargs):
         self.parameters = dict(kwargs)
@@ -147,6 +149,17 @@ class NarrativeVerdictLLM(TextToTextGenerationTaskModel):
                 }
             )
         ]
+
+    def generate_function_call(self, messages, functions):
+        """Return a sufficient function-call verdict with narrative."""
+        return FunctionCallResult(
+            "evaluate_retrieval_sufficiency",
+            {
+                "sufficient": True,
+                "message": RETRIEVAL_MESSAGE,
+                "justification": RETRIEVAL_JUSTIFICATION,
+            },
+        )
 
 
 class ProgressGenerationLLM(TextToTextGenerationTaskModel):

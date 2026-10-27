@@ -20,6 +20,10 @@ from DashAI.back.models.RAG.RAG_constants import (
     LLM_EVALUATED_RETRIEVER_NAMES,
     RAG_PARAM_RETRIEVER_MODEL,
 )
+from DashAI.back.models.RAG.RAG_defaults import (
+    DEFAULT_LLM_FILTER_PROMPT_COMPONENT,
+    DEFAULT_SUFFICIENCY_PROMPT_COMPONENT,
+)
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
@@ -29,7 +33,15 @@ log = logging.getLogger(__name__)
 #: Default sufficiency prompts whose ``template`` may be injected from
 #: ``metadata["templates"]`` before schema validation, exactly like the default
 #: generation and transformation prompts.
-DEFAULT_SUFFICIENCY_PROMPT_NAMES = frozenset({"DefaultRetrievalSufficiencyPrompt"})
+DEFAULT_SUFFICIENCY_PROMPT_NAMES = frozenset({DEFAULT_SUFFICIENCY_PROMPT_COMPONENT})
+
+#: Default LLM filter prompts with the same blank-template tolerance.
+DEFAULT_FILTER_PROMPT_NAMES = frozenset({DEFAULT_LLM_FILTER_PROMPT_COMPONENT})
+
+#: Every default LLM-evaluated prompt; used for blank-template tolerance.
+DEFAULT_LLM_PROMPT_NAMES = (
+    DEFAULT_SUFFICIENCY_PROMPT_NAMES | DEFAULT_FILTER_PROMPT_NAMES
+)
 
 #: Nested retriever-parameter keys, hoisted to avoid magic strings.
 _PROMPT_KEY = "prompt"
@@ -102,7 +114,7 @@ class RetrieverEvaluationValidationService:
             )
         component_class = self._registry[component_name]["class"]
 
-        self._validate_prompt(component_class, component_name, params, where)
+        self._validate_prompt(component_class, params, where)
         self._validate_llm(params, where)
         log.debug("LLM-evaluated retriever enabled with %s", component_class.__name__)
 
@@ -188,7 +200,6 @@ class RetrieverEvaluationValidationService:
     def _validate_prompt(
         self,
         component_class: type,
-        component_name: str,
         params: Dict[str, Any],
         where: str,
     ) -> None:
@@ -197,9 +208,8 @@ class RetrieverEvaluationValidationService:
         Parameters
         ----------
         component_class : type
-            The resolved outer retriever class.
-        component_name : str
-            The outer retriever component name.
+            The resolved outer retriever class; its
+            ``EVALUATION_PROMPT_BASE`` selects the accepted prompt family.
         params : Dict[str, Any]
             The retriever params dict.
         where : str
@@ -224,17 +234,10 @@ class RetrieverEvaluationValidationService:
                 f"'component' of {prompt_where} must be a string, got "
                 f"{type(prompt_name).__name__}."
             )
-        prompt_class = self._resolve_subclass(
-            prompt_name, RetrievalSufficiencyPrompt, prompt_where
-        )
         prompt_base = getattr(
             component_class, "EVALUATION_PROMPT_BASE", RetrievalSufficiencyPrompt
         )
-        if not issubclass(prompt_class, prompt_base):
-            raise ValueError(
-                f"Retriever '{component_name}' requires a prompt of type "
-                f"{prompt_base.__name__} family, got {prompt_class.__name__}."
-            )
+        self._resolve_subclass(prompt_name, prompt_base, prompt_where)
 
         prompt_params = prompt_ref.get("params")
         if prompt_params is not None and not isinstance(prompt_params, dict):
@@ -260,8 +263,9 @@ class RetrieverEvaluationValidationService:
         Raises
         ------
         ValueError
-            If the LLM reference is missing, unregistered, of the wrong type
-            or carries a malformed params container.
+            If the LLM reference is missing, unregistered, of the wrong type,
+            does not support function calling, or carries a malformed params
+            container.
         """
         llm_where = f"{where}.params.{_LLM_MODEL_KEY}"
         llm_ref = params.get(_LLM_MODEL_KEY)
@@ -276,7 +280,15 @@ class RetrieverEvaluationValidationService:
                 f"'component' of {llm_where} must be a string, got "
                 f"{type(llm_name).__name__}."
             )
-        self._resolve_subclass(llm_name, TextToTextGenerationTaskModel, llm_where)
+        llm_class = self._resolve_subclass(
+            llm_name, TextToTextGenerationTaskModel, llm_where
+        )
+        if not llm_class.supports_function_calling():
+            raise ValueError(
+                f"Component '{llm_name}' at '{llm_where}' must support function "
+                "calling; the LLM-backed retrievers require a function-calling "
+                "model."
+            )
         llm_params = llm_ref.get("params")
         if llm_params is not None and not isinstance(llm_params, dict):
             raise ValueError(
@@ -285,11 +297,11 @@ class RetrieverEvaluationValidationService:
             )
 
     def _validate_nested_template(self, prompt_name: str, template: Any) -> None:
-        """Validate the nested sufficiency prompt's ``template`` value.
+        """Validate the nested LLM-evaluated prompt's ``template`` value.
 
-        Default sufficiency prompts may omit or blank their template: the
-        language-driven template is injected later by the component-params pass
-        (see ``SessionValidationService._validate_component_params``). Any
+        Default sufficiency and filter prompts may omit or blank their template:
+        the language-driven template is injected later by the component-params
+        pass (see ``SessionValidationService._validate_component_params``). Any
         other prompt must carry a non-blank string template with the required
         placeholders.
 
@@ -308,7 +320,7 @@ class RetrieverEvaluationValidationService:
             non-default prompt.
         """
         where = f"{RAG_PARAM_RETRIEVER_MODEL}.params.{_PROMPT_KEY}.params.template"
-        is_default = prompt_name in DEFAULT_SUFFICIENCY_PROMPT_NAMES
+        is_default = prompt_name in DEFAULT_LLM_PROMPT_NAMES
         is_blank = template is None or (
             isinstance(template, str) and not template.strip()
         )
@@ -358,6 +370,8 @@ class RetrieverEvaluationValidationService:
 
 
 __all__: List[str] = [
+    "DEFAULT_FILTER_PROMPT_NAMES",
+    "DEFAULT_LLM_PROMPT_NAMES",
     "DEFAULT_SUFFICIENCY_PROMPT_NAMES",
     "LLM_EVALUATED_RETRIEVER_NAMES",
     "RetrieverEvaluationValidationService",

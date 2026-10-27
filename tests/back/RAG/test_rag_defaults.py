@@ -16,7 +16,13 @@ from DashAI.back.models.hugging_face.qwen_model import Qwen25_15BInstruct
 from DashAI.back.models.RAG.embeddings.dense.sentence_transformer_embedding import (
     SentenceTransformerEmbedding,
 )
+from DashAI.back.models.RAG.RAG_constants import (
+    COMPOSITE_RETRIEVER_NAMES,
+    LLM_EVALUATED_RETRIEVER_NAMES,
+)
 from DashAI.back.models.RAG.RAG_defaults import (
+    DEFAULT_FILTER_K1,
+    DEFAULT_FILTER_TOP_K,
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
     DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW,
     DEFAULT_MAX_CHUNKS,
@@ -26,6 +32,7 @@ from DashAI.back.models.RAG.RAG_defaults import (
     default_function_calling_llm,
     default_hybrid_retriever,
     default_keyword_retriever,
+    default_llm_filter_prompt,
     default_retrieval_sufficiency_prompt,
     default_semantic_retriever,
 )
@@ -34,6 +41,9 @@ from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever i
 )
 from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_ensemble_retriever import (  # noqa: E501
     LLMEvaluatedEnsembleRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever import (
+    LLMFilterRetriever,
 )
 from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
     ParallelRetriever,
@@ -293,6 +303,53 @@ class TestLLMEvaluatedRetrieverPlaceholders:
             self._placeholder(LLMEvaluatedEnsembleRetriever, "function_call_max_trials")
             == DEFAULT_FUNCTION_CALL_MAX_TRIALS
         )
+
+    def test_filter_retriever_placeholders(self):
+        assert self._placeholder(LLMFilterRetriever, "children") == [
+            default_hybrid_retriever()
+        ]
+        assert self._placeholder(LLMFilterRetriever, "k1") == DEFAULT_FILTER_K1
+        assert self._placeholder(LLMFilterRetriever, "top_k") == DEFAULT_FILTER_TOP_K
+        assert (
+            self._placeholder(LLMFilterRetriever, "llm_model")
+            == default_function_calling_llm()
+        )
+        assert (
+            self._placeholder(LLMFilterRetriever, "prompt")
+            == default_llm_filter_prompt()
+        )
+        assert (
+            self._placeholder(LLMFilterRetriever, "function_call_max_trials")
+            == DEFAULT_FUNCTION_CALL_MAX_TRIALS
+        )
+
+    def test_default_llm_filter_prompt(self):
+        ref = default_llm_filter_prompt()
+
+        assert ref == {"component": "DefaultLLMFilterPrompt", "params": {}}
+
+    def test_default_llm_filter_prompt_is_fresh(self):
+        first = default_llm_filter_prompt()
+        first["params"]["language"] = "es"
+
+        assert default_llm_filter_prompt() == {
+            "component": "DefaultLLMFilterPrompt",
+            "params": {},
+        }
+
+    def test_filter_defaults_are_sane(self):
+        assert DEFAULT_FILTER_K1 >= 1
+        assert DEFAULT_FILTER_TOP_K >= 1
+        assert DEFAULT_FILTER_TOP_K <= DEFAULT_FILTER_K1
+
+    def test_filter_retriever_and_prompts_are_registered(self):
+        registered = {component.__name__ for component in get_initial_components()}
+
+        assert "LLMFilterRetriever" in registered
+        assert "DefaultLLMFilterPrompt" in registered
+        assert "CustomLLMFilterPrompt" in registered
+        assert "LLMFilterRetriever" in COMPOSITE_RETRIEVER_NAMES
+        assert "LLMFilterRetriever" in LLM_EVALUATED_RETRIEVER_NAMES
 
     def test_placeholders_are_independent_copies(self):
         depth_schema = LLMEvaluatedDepthRetriever.get_schema()

@@ -380,7 +380,9 @@ from DashAI.back.models.RAG.prompts import (
     DefaultRAGGenerationPrompt,
 )
 from DashAI.back.models.RAG.prompts.evaluation import (
+    CustomLLMFilterPrompt,
     CustomRetrievalSufficiencyPrompt,
+    DefaultLLMFilterPrompt,
     DefaultRetrievalSufficiencyPrompt,
 )
 from DashAI.back.models.RAG.prompts.transformation import (
@@ -396,6 +398,9 @@ from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever i
 )
 from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_ensemble_retriever import (  # noqa: E501
     LLMEvaluatedEnsembleRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever import (
+    LLMFilterRetriever,
 )
 from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
     MMRRerankerRetriever,
@@ -1021,6 +1026,9 @@ def get_initial_components():
         # Retrieval Sufficiency Prompts
         DefaultRetrievalSufficiencyPrompt,
         CustomRetrievalSufficiencyPrompt,
+        # LLM Filter Prompts
+        DefaultLLMFilterPrompt,
+        CustomLLMFilterPrompt,
         # Retrievers
         BM25Retriever,
         TFIDFRetriever,
@@ -1031,6 +1039,7 @@ def get_initial_components():
         ParallelRetriever,
         LLMEvaluatedDepthRetriever,
         LLMEvaluatedEnsembleRetriever,
+        LLMFilterRetriever,
         # Query Transformation
         LLMQueryRewriter,
         LLMQueryExpander,
