@@ -133,3 +133,45 @@ def test_a_save_that_dies_halfway_leaves_the_previous_artifact_alone(runs_path):
         assert file.read() == "the previous model"
     # And nothing half-written was left lying next to it.
     assert os.listdir(runs_path) == ["42"]
+
+
+def test_the_data_the_model_was_fitted_on_stays_out_of_the_artifact(runs_path):
+    """The fit units leave ``x_data`` / ``y_data`` on the model for the metric
+    methods to read. A model whose ``save`` pickles itself must not drag the
+    whole dataset into the artifact, and must get the data back once the write
+    is done, because whatever runs next may still score the live object.
+    """
+
+    class _PicklingModel(_RecordingModel):
+        def save(self, path):
+            self.saved_with = (self.x_data, self.y_data)
+            super().save(path)
+
+    model = _PicklingModel()
+    model.x_data = {"train": "x rows"}
+    model.y_data = {"train": "y rows"}
+    ctx = ExecutionContext()
+    ctx.put("model", model)
+
+    SaveModelUnit(artifact_prefix="7")(ctx)
+
+    assert model.saved_with == (None, None)
+    assert model.x_data == {"train": "x rows"}
+    assert model.y_data == {"train": "y rows"}
+
+
+def test_the_data_is_put_back_even_when_the_save_dies(runs_path):
+    class _DyingModel:
+        def save(self, path):
+            raise RuntimeError("out of disk")
+
+    model = _DyingModel()
+    model.x_data = "x rows"
+    model.y_data = "y rows"
+    ctx = ExecutionContext()
+    ctx.put("model", model)
+
+    with pytest.raises(JobError, match="Model saving failed"):
+        SaveModelUnit(artifact_prefix="8")(ctx)
+
+    assert (model.x_data, model.y_data) == ("x rows", "y rows")

@@ -54,6 +54,22 @@ class SaveModelUnit(BaseUnit):
 
         model = ctx.require("model")
 
+        # The fit units leave the model pointing at the partitions it was
+        # fitted on, because the metric methods read ``x_data`` / ``y_data``
+        # off the instance. A model whose ``save`` pickles ``self`` would then
+        # write the whole dataset into the artifact: a 2 KB decision tree came
+        # out as an 80 MB file that took 40 s to dump. Nothing reads these
+        # attributes back off a loaded model, so they are detached for the
+        # write only and put back right after -- the live object may still be
+        # scored by whatever runs next.
+        detached = {
+            name: vars(model)[name]
+            for name in ("x_data", "y_data")
+            if name in vars(model)
+        }
+        for name in detached:
+            setattr(model, name, None)
+
         try:
             model_path = os.path.join(
                 config["RUNS_PATH"], self.config["artifact_prefix"]
@@ -70,5 +86,8 @@ class SaveModelUnit(BaseUnit):
             raise JobError(
                 "Model saving failed",
             ) from e
+        finally:
+            for name, value in detached.items():
+                setattr(model, name, value)
 
         ctx.put_ref("model_path", model_path)
