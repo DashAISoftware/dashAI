@@ -45,7 +45,7 @@ class ResidualAutocorrelation(BaseReport):
     """
 
     SCHEMA = ResidualAutocorrelationSchema
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     DISPLAY_NAME: str = MultilingualString(
         en="Residual Autocorrelation",
         es="Autocorrelación de Residuos",

@@ -20,7 +20,9 @@ from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.splitters.rolling_origin import RollingOriginSplitter
 from DashAI.back.splitters.splits_payload import predictable_splits
 from DashAI.back.splitters.temporal_holdout import TemporalHoldoutSplitter
-from DashAI.back.tasks.forecasting_task import ForecastingTask
+from DashAI.back.tasks.single_series_forecasting_task import (
+    SingleSeriesForecastingTask,
+)
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 
 TEMPORAL_RUN = {
@@ -56,7 +58,7 @@ def registry_for(splitter, task, strategy):
 def test_forecasting_holdout_offers_every_partition_after_training():
     registry = registry_for(
         TemporalHoldoutSplitter,
-        ForecastingTask,
+        SingleSeriesForecastingTask,
         ForecastingHoldoutEvaluationStrategy,
     )
 
@@ -64,7 +66,7 @@ def test_forecasting_holdout_offers_every_partition_after_training():
         {"splitter_name": "TemporalHoldoutSplitter"},
         TEMPORAL_RUN,
         registry,
-        task_name="ForecastingTask",
+        task_name="SingleSeriesForecastingTask",
         evaluation_strategy="ForecastingHoldoutEvaluationStrategy",
     ) == [{"name": "test", "rows": 2}, {"name": "val", "rows": 2}]
 
@@ -72,7 +74,7 @@ def test_forecasting_holdout_offers_every_partition_after_training():
 def test_forecasting_holdout_without_rows_after_training_offers_nothing():
     registry = registry_for(
         TemporalHoldoutSplitter,
-        ForecastingTask,
+        SingleSeriesForecastingTask,
         ForecastingHoldoutEvaluationStrategy,
     )
 
@@ -81,7 +83,7 @@ def test_forecasting_holdout_without_rows_after_training_offers_nothing():
             {"splitter_name": "TemporalHoldoutSplitter"},
             {"train_indexes": [0, 1, 2, 3], "val_indexes": [], "test_indexes": []},
             registry,
-            task_name="ForecastingTask",
+            task_name="SingleSeriesForecastingTask",
             evaluation_strategy="ForecastingHoldoutEvaluationStrategy",
         )
         == []
@@ -91,7 +93,7 @@ def test_forecasting_holdout_without_rows_after_training_offers_nothing():
 def test_rolling_origin_offers_only_the_reserved_tail():
     registry = registry_for(
         RollingOriginSplitter,
-        ForecastingTask,
+        SingleSeriesForecastingTask,
         ForecastingCrossValidationEvaluationStrategy,
     )
 
@@ -99,7 +101,7 @@ def test_rolling_origin_offers_only_the_reserved_tail():
         {"splitter_name": "RollingOriginSplitter"},
         ROLLING_RUN,
         registry,
-        task_name="ForecastingTask",
+        task_name="SingleSeriesForecastingTask",
         evaluation_strategy="ForecastingCrossValidationEvaluationStrategy",
     ) == [{"name": "test", "rows": 2}]
 

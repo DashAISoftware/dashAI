@@ -164,7 +164,7 @@ class TemporalHoldoutSplitter(PartitionSplitter):
         ),
     )
     GEOMETRY: str = "sequential_partitions"
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     DISPLAY_NAME: str = MultilingualString(
         en="Temporal Holdout",
         es="Holdout Temporal",

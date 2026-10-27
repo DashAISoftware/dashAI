@@ -76,6 +76,15 @@ def test_both_metrics_serve_forecasting_and_regression():
         assert issubclass(metric, RegressionMetric)
 
 
-def test_regression_metrics_are_available_to_forecasting():
-    assert "ForecastingTask" in RegressionMetric.COMPATIBLE_COMPONENTS
-    assert "RegressionTask" in RegressionMetric.COMPATIBLE_COMPONENTS
+def test_regression_metrics_name_only_regression():
+    # A forecasting task lists the regression metrics it shares in its own
+    # COMPATIBLE_COMPONENTS: the metric never names it.
+    assert RegressionMetric.COMPATIBLE_COMPONENTS == ["RegressionTask"]
+
+
+def test_the_single_series_task_lists_the_shared_point_metrics():
+    from DashAI.back.tasks.single_series_forecasting_task import (
+        SingleSeriesForecastingTask,
+    )
+
+    assert SingleSeriesForecastingTask.COMPATIBLE_COMPONENTS == ["MAE", "RMSE"]

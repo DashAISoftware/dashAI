@@ -35,7 +35,7 @@ class ForecastingModel(SupervisedModel):
     real features, which is the only way an ordinary regressor can help.
     """
 
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
 
     def __init__(self, **kwargs):
         """Initialize the shared forecasting state."""

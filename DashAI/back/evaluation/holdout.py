@@ -20,7 +20,7 @@ class SinglePartitionEvaluationStrategy(BaseEvaluationStrategy):
 class HoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
     """Split once into train, validation and test, and score all three.
 
-    The ordinary holdout evaluation. Not offered for ``ForecastingTask``:
+    The ordinary holdout evaluation. Not offered for ``SingleSeriesForecastingTask``:
     scoring the training partition of a forecaster means predicting on dates
     it was fitted on, which is a fit statistic rather than a forecast and does
     not belong in the same results table as one.

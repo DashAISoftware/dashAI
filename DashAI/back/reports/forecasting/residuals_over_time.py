@@ -19,7 +19,7 @@ class ResidualsOverTime(BaseReport):
     ahead of the series, and a repeating pattern means a missed seasonality.
     """
 
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     DISPLAY_NAME: str = MultilingualString(
         en="Residuals Over Time",
         es="Residuos en el Tiempo",

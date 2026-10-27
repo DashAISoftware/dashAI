@@ -38,9 +38,9 @@ class SeriesOnlyTask(RegressionTask):
     """A task that only a splitter which never shuffles may partition.
 
     It stands in for forecasting, whose only holdout splitter is the temporal
-    one, without registering ``ForecastingTask`` itself: the default splitter
-    a payload falls back to when it names none is ``HoldoutSplitter``, which
-    shuffles, and this task does not offer it.
+    one, without registering ``SingleSeriesForecastingTask`` itself: the
+    default splitter a payload falls back to when it names none is
+    ``HoldoutSplitter``, which shuffles, and this task does not offer it.
     """
 
     COMPATIBLE_COMPONENTS = [

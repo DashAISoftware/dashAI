@@ -19,7 +19,7 @@ class ForecastVsActual(BaseReport):
     sorts its rows by date before anything downstream reads them.
     """
 
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     DISPLAY_NAME: str = MultilingualString(
         en="Forecast vs Actual",
         es="Pronóstico vs Real",

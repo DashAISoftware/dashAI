@@ -84,5 +84,5 @@ class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
         ),
     )
 
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     SCORED_SPLITS: tuple = (SplitEnum.VALIDATION, SplitEnum.TEST)

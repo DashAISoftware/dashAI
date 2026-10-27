@@ -224,7 +224,7 @@ class OptunaOptimizer(BaseOptimizer):
         "TextClassificationTask",
         "TranslationTask",
         "RegressionTask",
-        "ForecastingTask",
+        "SingleSeriesForecastingTask",
     ]
 
     def __init__(self, n_trials=None, sampler=None, pruner=None):

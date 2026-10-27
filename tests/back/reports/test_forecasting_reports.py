@@ -88,4 +88,4 @@ def test_forecasting_reports_are_registered_for_the_task():
     for report in (ForecastVsActual, ResidualsOverTime, ResidualAutocorrelation):
         assert report.TYPE == "Report"
         assert issubclass(report, BaseReport)
-        assert report.COMPATIBLE_COMPONENTS == ["ForecastingTask"]
+        assert report.COMPATIBLE_COMPONENTS == ["SingleSeriesForecastingTask"]

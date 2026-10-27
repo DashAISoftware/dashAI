@@ -369,9 +369,10 @@ class HoldoutSplitter(PartitionSplitter):
     optional shuffling, stratification and a seed to make the sample
     reproducible.
 
-    Not offered for ``ForecastingTask``. Sampling rows out of a series lets a
-    model train on its own future and report a score it could never reproduce
-    in use, and nothing about that failure raises an error. Forecasting uses
+    Not offered for ``SingleSeriesForecastingTask``. Sampling rows out of a
+    series lets a model train on its own future and report a score it could
+    never reproduce in use, and nothing about that failure raises an error.
+    Forecasting uses
     ``TemporalHoldoutSplitter``, which cuts the rows where they lie.
     """
 

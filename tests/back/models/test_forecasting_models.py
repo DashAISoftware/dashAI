@@ -68,7 +68,7 @@ def test_every_model_forecasts_one_value_per_requested_row(model_class):
 
 @pytest.mark.parametrize("model_class", ALL_MODELS)
 def test_every_model_is_declared_for_the_forecasting_task(model_class):
-    assert "ForecastingTask" in model_class.COMPATIBLE_COMPONENTS
+    assert "SingleSeriesForecastingTask" in model_class.COMPATIBLE_COMPONENTS
     assert issubclass(model_class, ForecastingModel)
 
 

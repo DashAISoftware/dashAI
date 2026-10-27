@@ -193,7 +193,7 @@ class RollingOriginSplitter(FoldSplitter):
     )
     GEOMETRY: str = "expanding_window"
     TEST_SPLIT_STRATEGY: str = "temporal"
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     COMPATIBLE_INNER_SPLITTERS = ["RollingOriginSplitter"]
     DISPLAY_NAME: str = MultilingualString(
         en="Rolling Origin",

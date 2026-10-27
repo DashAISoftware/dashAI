@@ -61,12 +61,12 @@ def _split(n=60):
 
 @pytest.mark.parametrize("strategy", FORECASTING_STRATEGIES)
 def test_forecasting_strategies_serve_forecasting(strategy):
-    assert strategy.COMPATIBLE_COMPONENTS == ["ForecastingTask"]
+    assert strategy.COMPATIBLE_COMPONENTS == ["SingleSeriesForecastingTask"]
 
 
 def test_the_ordinary_strategies_no_longer_serve_forecasting():
     for strategy in (HoldoutEvaluationStrategy, CrossValidationEvaluationStrategy):
-        assert "ForecastingTask" not in strategy.COMPATIBLE_COMPONENTS
+        assert "SingleSeriesForecastingTask" not in strategy.COMPATIBLE_COMPONENTS
         assert "RegressionTask" in strategy.COMPATIBLE_COMPONENTS
 
 
