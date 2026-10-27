@@ -76,17 +76,18 @@ def test_an_already_sorted_dataset_is_left_as_it_is():
 
 def test_sorting_reads_the_columns_declared_format():
     # Day first dates sort wrongly as text: "01/02/2020" precedes "31/01/2020"
-    # alphabetically while following it in time.
-    dates = ["31/01/2020", "01/02/2020", "15/01/2020"]
+    # alphabetically while following it in time. Three consecutive days, so
+    # the series also sits on its grid.
+    dates = ["31/01/2020", "01/02/2020", "30/01/2020"]
     prepared = SingleSeriesForecastingTask().prepare_for_task(
-        _dataset(dates, [31.0, 1.0, 15.0], date_format="%d/%m/%Y"),
+        _dataset(dates, [31.0, 1.0, 30.0], date_format="%d/%m/%Y"),
         ["date"],
         ["v"],
     )
 
     frame = prepared.to_pandas()
-    assert list(frame["date"]) == ["15/01/2020", "31/01/2020", "01/02/2020"]
-    assert list(frame["v"]) == [15.0, 31.0, 1.0]
+    assert list(frame["date"]) == ["30/01/2020", "31/01/2020", "01/02/2020"]
+    assert list(frame["v"]) == [30.0, 31.0, 1.0]
 
 
 def test_the_declared_types_survive_the_sort():

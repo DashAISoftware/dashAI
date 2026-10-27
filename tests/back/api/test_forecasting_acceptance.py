@@ -185,7 +185,6 @@ def _broken(case: str) -> pd.DataFrame:
     raise AssertionError(case)
 
 
-@pending("slice 3: the grid is validated before fitting")
 @pytest.mark.parametrize(
     "case", ["gap", "duplicate", "empty_date", "no_frequency", "empty_value"]
 )

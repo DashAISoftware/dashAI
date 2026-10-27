@@ -1,8 +1,10 @@
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Mapping, Sequence, Union
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.tasks.column_roles import ColumnRole, IOColumns
 from DashAI.back.tasks.forecasting_task import ForecastingTask
+from DashAI.back.tasks.time_grid import TimeGrid
 from DashAI.back.types.value_types import Date, Float, Integer
 
 if TYPE_CHECKING:
@@ -13,6 +15,25 @@ if TYPE_CHECKING:
 
 TIME_INDEX = "time_index"
 SERIES = "series"
+
+
+@dataclass(frozen=True)
+class PreparedSeries:
+    """A series ready for a forecaster.
+
+    Attributes
+    ----------
+    dataset : DashAIDataset
+        The validated rows, in date order.
+    values : numpy.ndarray
+        The series' values in time order, one per step of ``grid``.
+    grid : TimeGrid
+        The regular grid the series sits on.
+    """
+
+    dataset: "DashAIDataset"
+    values: "ndarray"
+    grid: TimeGrid
 
 
 class SingleSeriesForecastingTask(ForecastingTask):
@@ -135,21 +156,29 @@ class SingleSeriesForecastingTask(ForecastingTask):
         Returns
         -------
         DashAIDataset
-            Dataset with validated types, in date order.
+            Dataset with validated types, in date order, on a regular grid.
+
+        Raises
+        ------
+        ValueError
+            If the series does not sit on a regular grid (``validate_grid``).
         """
-        prepared = super().prepare_for_task(dataset, input_columns, output_columns)
-        return self._sort_by_date(prepared, input_columns[0])
+        return self.prepare_series(dataset, input_columns, output_columns).dataset
 
-    @staticmethod
-    def _sort_by_date(dataset: "DashAIDataset", date_column: str) -> "DashAIDataset":
-        """Put the rows in date order.
+    def prepare_series(
+        self,
+        dataset: Union["DatasetDict", "DashAIDataset"],
+        input_columns: List[str],
+        output_columns: List[str],
+    ) -> PreparedSeries:
+        """Validate the columns, put the rows in date order and check the grid.
 
-        Everything downstream reads row order as time order and none of it
-        checks: the temporal splitter carves its partitions by position, and
-        the models hand their values to statsmodels in the order they arrive.
-        A file that is not sorted by its date column therefore produces
-        partitions that are not periods of time and a model fitted on a
-        scrambled series, with nothing reporting a problem.
+        Everything downstream reads row order as time order: a step of the
+        series is a row, and a cut is a number of steps. A file that is not
+        sorted by its date column would give cuts that are not periods of
+        time and a model fitted on a scrambled series, and one off its grid
+        would shift every step after a gap. Both are refused or fixed here,
+        before anything is fitted, and never silently.
 
         This is the task's job rather than the splitter's. The splitter is
         handed the selected input columns, which on the windowed route through
@@ -157,35 +186,54 @@ class SingleSeriesForecastingTask(ForecastingTask):
 
         Sorting reads the format the column declares. Text order only matches
         time order for ISO layouts: as text, "01/02/2020" precedes
-        "31/01/2020" while following it in time.
+        "31/01/2020" while following it in time. The sort is stable.
 
         Parameters
         ----------
-        dataset : DashAIDataset
-            The validated dataset.
-        date_column : str
-            The single input column, which the task has already checked is a
-            ``Date``.
+        dataset : DatasetDict or DashAIDataset
+            Dataset to prepare.
+        input_columns : list of str
+            The single date column.
+        output_columns : list of str
+            The single numeric column holding the series.
 
         Returns
         -------
-        DashAIDataset
-            The same rows and types, ordered by date.
+        PreparedSeries
+            The ordered dataset, the series' values in time order, and the
+            grid they sit on.
+
+        Raises
+        ------
+        TypeError, ValueError
+            If the columns do not fit the roles, or the series does not sit on
+            a regular grid (``validate_grid``).
         """
+        import numpy as np
+
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
+        from DashAI.back.tasks.time_grid import time_order, validate_grid
         from DashAI.back.types.date_utils import DEFAULT_DATE_FORMAT, parse_date_column
 
+        prepared = super().prepare_for_task(dataset, input_columns, output_columns)
+        date_column, series_column = input_columns[0], output_columns[0]
+
         date_format = (
-            getattr(dataset.types[date_column], "format", None) or DEFAULT_DATE_FORMAT
+            getattr(prepared.types[date_column], "format", None) or DEFAULT_DATE_FORMAT
         )
-        frame = dataset.to_pandas()
-        order = parse_date_column(frame[date_column], date_format).sort_values().index
+        frame = prepared.to_pandas()
+        dates = parse_date_column(frame[date_column], date_format)
+        order = time_order(dates)
 
-        if list(order) == list(frame.index):
-            return dataset
+        if order != list(range(len(frame))):
+            frame = frame.iloc[order].reset_index(drop=True)
+            dates = dates.iloc[order].reset_index(drop=True)
+            prepared = to_dashai_dataset(frame, types=dict(prepared.types))
 
-        return to_dashai_dataset(
-            frame.loc[order].reset_index(drop=True), types=dict(dataset.types)
+        values = frame[series_column].astype("float64")
+        grid = validate_grid(dates, values)
+        return PreparedSeries(
+            dataset=prepared, values=np.asarray(values, dtype=float), grid=grid
         )
 
     # ``process_predictions`` and ``num_labels`` serve the x/y units, which
