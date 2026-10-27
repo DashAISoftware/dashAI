@@ -510,6 +510,7 @@ export default function GenerativeChat({ indexStatus, generatorName }) {
           justifyContent: "space-between",
           alignItems: "center",
           borderRadius: 1,
+          minHeight: 40,
           my: 2,
           px: 1,
         }}
