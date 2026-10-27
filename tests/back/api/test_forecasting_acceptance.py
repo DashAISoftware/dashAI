@@ -1,12 +1,10 @@
 """Acceptance cases for the forecasting core, written before the rewrite.
 
-Each case states what the rewrite has to deliver, from FORECASTING Â§7 and the
-decisions in RECONCILING_FORECASTING Â§2.13. Every one is a strict ``xfail``
-until the slice that delivers it, so a case that starts passing early fails
-the suite and its marker has to come off.
-
-Before a slice fixes a case, the case is made to fail for the reason it names:
-an ``ImportError`` or a 422 for an unregistered task does not count.
+Each case states what the rewrite had to deliver, from FORECASTING §7 and the
+decisions in RECONCILING_FORECASTING §2.13. Each was a strict ``xfail`` until
+the slice that delivered it, made to fail for the reason it names before the
+fix (an ``ImportError`` or a 422 for an unregistered task did not count), and
+its marker came off with the fix. None is pending now.
 
 Lives under ``tests/back/api`` to reuse the ``client`` fixture.
 """
@@ -30,10 +28,6 @@ from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
 
 TASK = "SingleSeriesForecastingTask"
-
-
-def pending(reason: str):
-    return pytest.mark.xfail(strict=True, reason=reason)
 
 
 # --------------------------------------------------------------------------- #
