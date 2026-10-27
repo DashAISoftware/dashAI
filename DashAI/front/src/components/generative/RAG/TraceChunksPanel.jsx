@@ -31,6 +31,7 @@ import {
   groupReferencesByDocument,
   getDocumentTitle,
   resolveChunkLabel,
+  describeChunkCount,
   collectTraceStats,
   computeDiscardedRefs,
   computeProvenance,
@@ -585,7 +586,7 @@ function DocumentGroup({
         </Stack>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="caption" color="text.secondary">
-            {t("traceChunks.chunksLabel", { count: group.chunks.length })}
+            {describeChunkCount(group.chunks, t)}
           </Typography>
           <Tooltip title={t("traceChunks.openDocument")}>
             <IconButton
