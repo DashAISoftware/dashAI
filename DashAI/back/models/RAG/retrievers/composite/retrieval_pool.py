@@ -15,11 +15,12 @@ from __future__ import annotations
 from typing import Dict, Iterable, List, Set, Tuple
 
 from DashAI.back.models.RAG.documents import Chunk
-from DashAI.back.models.RAG.exceptions.retriever import (
-    RAGRetrieverEvaluationError,
-)
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
+)
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    DISCARD_KEY,
+    REQUEST_CHUNKS_KEY,
 )
 
 #: Chunk identity used by the pool: ``(document_id, document_position)``.
@@ -87,63 +88,119 @@ class RetrievalPool:
         for chunk in chunks:
             self._remember(chunk)
 
-    def request(self, mapping: Dict[int, List[int]]) -> None:
+    def clone(self) -> "RetrievalPool":
+        """Return an isolated copy of the pool.
+
+        The clone shares only the immutable chunk instances and the retrieval
+        context. Every mutable container is copied, including each inner
+        requested batch, so a failed verdict attempt can be applied to the
+        clone without mutating the real pool.
+
+        Returns
+        -------
+        RetrievalPool
+            A clone with the same cap, context and chunks as the source.
+        """
+        clone = RetrievalPool(self._max_chunks, self._context)
+        clone._order = list(self._order)
+        clone._chunks = dict(self._chunks)
+        clone._requested = set(self._requested)
+        clone._requested_batches = [list(batch) for batch in self._requested_batches]
+        clone._discarded = set(self._discarded)
+        return clone
+
+    def _resolve(self, document_id: int, position: int) -> Chunk | None:
+        """Return a chunk from the pool or the corpus.
+
+        Parameters
+        ----------
+        document_id : int
+            Document id to look up.
+        position : int
+            Zero-based chunk position to look up.
+
+        Returns
+        -------
+        Chunk | None
+            The known chunk, or ``None`` when it does not exist.
+        """
+        key = (document_id, position)
+        chunk = self._chunks.get(key)
+        if chunk is not None:
+            return chunk
+        return self._context.get_chunk(document_id, position)
+
+    def request(self, mapping: Dict[int, List[int]]) -> List[str]:
         """Include explicitly requested chunks in the pool.
+
+        Unknown positions do not mutate the pool for those entries; they are
+        returned as drop messages so a transactional caller can reject the whole
+        decision.
 
         Parameters
         ----------
         mapping : Dict[int, List[int]]
             Document id to chunk positions requested by the model.
 
-        Raises
-        ------
-        RAGRetrieverEvaluationError
-            If a requested position does not exist in the corpus.
+        Returns
+        -------
+        List[str]
+            One human-readable message per requested position that does not
+            exist in the retrieval corpus.
         """
+        drops: List[str] = []
         batch: List[ChunkKey] = []
         for document_id, positions in mapping.items():
             for position in positions:
-                key = (document_id, position)
-                chunk = self._chunks.get(key)
+                chunk = self._resolve(document_id, position)
                 if chunk is None:
-                    chunk = self._context.get_chunk(document_id, position)
-                if chunk is None:
-                    raise RAGRetrieverEvaluationError(
-                        f"Requested chunk position {position} of document "
-                        f"{document_id} does not exist in the retrieval corpus."
+                    drops.append(
+                        f"Dropped '{REQUEST_CHUNKS_KEY}' position {position} of "
+                        f"document {document_id}: it does not exist in the "
+                        "retrieval corpus."
                     )
+                    continue
+                key = (document_id, position)
                 self._remember(chunk)
                 self._requested.add(key)
                 self._discarded.discard(key)
                 batch.append(key)
         self._requested_batches.append(batch)
+        return drops
 
-    def discard(self, mapping: Dict[int, List[int]]) -> None:
+    def discard(self, mapping: Dict[int, List[int]]) -> List[str]:
         """Exclude discarded chunks from the pool (last state wins).
+
+        Unknown positions do not mutate the pool for those entries; they are
+        returned as drop messages so a transactional caller can reject the whole
+        decision.
 
         Parameters
         ----------
         mapping : Dict[int, List[int]]
             Document id to chunk positions to exclude.
 
-        Raises
-        ------
-        RAGRetrieverEvaluationError
-            If a discarded position does not exist in the retrieval corpus.
+        Returns
+        -------
+        List[str]
+            One human-readable message per discarded position that does not
+            exist in the retrieval corpus.
         """
+        drops: List[str] = []
         for document_id, positions in mapping.items():
             for position in positions:
-                key = (document_id, position)
-                chunk = self._chunks.get(key)
+                chunk = self._resolve(document_id, position)
                 if chunk is None:
-                    chunk = self._context.get_chunk(document_id, position)
-                if chunk is None:
-                    raise RAGRetrieverEvaluationError(
-                        f"Discarded chunk position {position} of document "
-                        f"{document_id} does not exist in the retrieval corpus."
+                    drops.append(
+                        f"Dropped '{DISCARD_KEY}' position {position} of "
+                        f"document {document_id}: it does not exist in the "
+                        "retrieval corpus."
                     )
+                    continue
+                key = (document_id, position)
                 self._discarded.add(key)
                 self._requested.discard(key)
+        return drops
 
     def materialize(self) -> List[Chunk]:
         """Return the pool: newest requested chunks first, then the rest.
@@ -171,6 +228,16 @@ class RetrievalPool:
                 continue
             ordered.append(self._chunks[key])
         return ordered[: self._max_chunks]
+
+    def materialized_keys(self) -> Set[ChunkKey]:
+        """Return the keys of the chunks ``materialize()`` would return.
+
+        Returns
+        -------
+        Set[ChunkKey]
+            The identity keys of the ordered, capped pool.
+        """
+        return {self._key(chunk) for chunk in self.materialize()}
 
     def size(self) -> int:
         """Return the number of chunks ``materialize()`` would yield.

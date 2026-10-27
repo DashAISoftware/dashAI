@@ -28,6 +28,8 @@ from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import (
 )
 from DashAI.back.models.hugging_face.qwen_model import (
     Qwen25_05BInstruct,
+    Qwen25_3BInstruct,
+    Qwen25_7BInstruct,
     Qwen25_15BInstruct,
 )
 from DashAI.back.models.hugging_face.smol_lm_model import (
@@ -38,6 +40,8 @@ from DashAI.back.models.hugging_face.smol_lm_model import (
 ALL_CHECKPOINTS = [
     Qwen25_05BInstruct,
     Qwen25_15BInstruct,
+    Qwen25_3BInstruct,
+    Qwen25_7BInstruct,
     SmolLM2_360MInstruct,
     SmolLM2_17BInstruct,
     Llama31_8BInstruct,
@@ -140,6 +144,30 @@ def test_matching_gguf_is_downloaded_and_path_resolves(component_root):
 
     assert cls.is_downloaded() is True
     assert cls._local_gguf_path() == gguf_path
+
+
+def test_qwen_7b_split_shards_are_downloaded_and_first_shard_resolves(
+    component_root,
+):
+    """The 7B q8_0 checkpoint ships split in three shards that must match.
+
+    The shard names carry a ``qwen2.5-7b-instruct-`` prefix and a
+    ``-NNNNN-of-NNNNN`` suffix, so a pattern anchored at ``-q8_0`` matches
+    nothing: ``snapshot_download`` would fetch no files and the component would
+    stay permanently "not downloaded".
+    """
+    cls = Qwen25_7BInstruct
+    repo_dir = component_root / cls.__name__ / cls.REPO_ID.split("/")[-1]
+    repo_dir.mkdir(parents=True)
+    shards = [
+        repo_dir / f"qwen2.5-7b-instruct-q8_0-0000{index}-of-00003.gguf"
+        for index in (1, 2, 3)
+    ]
+    for shard in shards:
+        shard.write_text("weights")
+
+    assert cls.is_downloaded() is True
+    assert cls._local_gguf_path() == shards[0]
 
 
 class _FakeLlama:

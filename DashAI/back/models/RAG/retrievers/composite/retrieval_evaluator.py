@@ -1,15 +1,16 @@
 """Prompt + LLM evaluation collaborator for the LLM-evaluated retrievers.
 
 ``RetrievalEvaluator`` is the single place that turns structured retrieval data
-into a prompt, chooses the function-calling or text route, and parses the
-verdict. It performs no retrieval, pooling or trace work and never formats
-chunk/document text: the prompt component owns all rendering.
+into a prompt and obtains a function-calling verdict. It performs no retrieval,
+pooling or trace work and never formats chunk/document text: the prompt
+component owns all rendering.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Sequence
+from dataclasses import replace
+from typing import Any, Callable, Dict, List, Sequence, Set, Tuple
 
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions.retriever import (
@@ -17,20 +18,30 @@ from DashAI.back.models.RAG.exceptions.retriever import (
 )
 from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
     RetrievalVerdict,
+    has_actions,
     parse_evaluation_arguments,
-    parse_evaluation_output,
+    require_planning_calls,
+    validate_call_indices,
+)
+from DashAI.back.models.RAG.retrievers.composite.llm_route_runner import (
+    LLMRouteRunner,
 )
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
 )
+from DashAI.back.models.RAG.retrievers.composite.structured_output import (
+    cap_errors,
+)
 from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    CALL_RETRIEVERS_KEY,
     CHUNK_DOCUMENT_ID,
     CHUNK_POSITION,
     CHUNK_TEXT,
+    DISCARD_KEY,
+    REQUEST_CHUNKS_KEY,
     ChunkPayload,
     RetrieverCatalog,
 )
-from DashAI.back.models.text_to_text_generation_model import FunctionCallResult
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +62,8 @@ class RetrievalEvaluator:
     function_parameters : Dict[str, Any]
         JSON schema of the function's arguments.
     function_call_max_trials : int
-        Maximum number of function-call attempts, the first call included.
-        Only the function-calling route is retried; the text route is
-        single-shot.
+        Maximum number of evaluation attempts, the first call included. Unusable
+        verdicts are retried on the function-calling route.
     """
 
     def __init__(
@@ -71,6 +81,14 @@ class RetrievalEvaluator:
         self._function_description = function_description
         self._function_parameters = function_parameters
         self._function_call_max_trials = function_call_max_trials
+        self._runner = LLMRouteRunner(
+            llm_model,
+            expected_function,
+            function_description,
+            function_parameters,
+            function_call_max_trials,
+            logger,
+        )
 
     @staticmethod
     def _chunk_payload(chunks: Sequence[Chunk]) -> List[ChunkPayload]:
@@ -126,6 +144,10 @@ class RetrievalEvaluator:
         top_k: int,
         children: Sequence[Any],
         context: RetrievalContext,
+        round_number: int,
+        max_rounds: int,
+        require_retriever_call: bool = False,
+        apply_verdict: Callable[[RetrievalVerdict], None] | None = None,
     ) -> RetrievalVerdict:
         """Render the prompt and obtain the model's sufficiency verdict.
 
@@ -143,17 +165,33 @@ class RetrievalEvaluator:
             The retriever's direct children, catalogued by 1-based index.
         context : RetrievalContext
             Document and corpus knowledge for the prompt.
+        round_number : int
+            The 1-based evaluation round number.
+        max_rounds : int
+            The maximum number of evaluation rounds.
+        require_retriever_call : bool, optional
+            When ``True`` (ensemble planning over an empty pool), the verdict
+            must be insufficient and carry at least one valid retriever call.
+            The resulting error is retried on the function-calling route.
+        apply_verdict : Callable[[RetrievalVerdict], None] | None, optional
+            Transactional application callback run inside the retry loop. It
+            receives the finalized verdict and must raise
+            :class:`RAGRetrieverEvaluationError` for any decision that cannot be
+            applied (invalid references, no capacity, an empty pool without a
+            refill, ...). The whole model call + parse + validation + application
+            is then retried.
 
         Returns
         -------
         RetrievalVerdict
-            The validated verdict.
+            The validated, finalized and successfully applied verdict.
 
         Raises
         ------
         RAGRetrieverEvaluationError
-            If the model output is empty, not a string, malformed, or the
-            function-calling route fails validation.
+            If the model does not support function calling, the output is empty,
+            not a string, malformed, has no usable operation, fails finalization,
+            or the application callback rejects every attempt.
         """
         prompt_text = self._prompt.format(
             input=query,
@@ -162,196 +200,184 @@ class RetrievalEvaluator:
             top_k=top_k,
             retrievers=self._retriever_catalog(children),
             documents=context.document_payload(),
+            round_number=round_number,
+            max_rounds=max_rounds,
+            remaining=max(top_k - pool_size, 0),
         )
-        if self._llm_model.supports_function_calling():
-            return self._call_function_calling(prompt_text)
-        output = self._llm_model.generate([{"role": "user", "content": prompt_text}])
-        raw = self._extract_raw_output(output)
-        return parse_evaluation_output(raw)
-
-    def _call_function_calling(self, prompt_text: str) -> RetrievalVerdict:
-        """Call the model through its function-calling interface.
-
-        Parameters
-        ----------
-        prompt_text : str
-            The rendered evaluation prompt sent as the user message.
-
-        Returns
-        -------
-        RetrievalVerdict
-            The validated verdict carried by the function-call arguments.
-
-        Raises
-        ------
-        RAGRetrieverEvaluationError
-            If no function spec is declared, the backend fails, the model
-            reports support without implementing it, or the returned call
-            violates the contract. Retried up to
-            ``function_call_max_trials`` attempts; the last error is raised
-            once the attempts are exhausted.
-        """
-        spec = self._function_call_spec()
-        messages = [{"role": "user", "content": prompt_text}]
-        try:
-            for attempt in range(1, self._function_call_max_trials):
-                try:
-                    return self._attempt_function_call(messages, spec)
-                except RAGRetrieverEvaluationError as err:
-                    logger.warning(
-                        "Function-calling attempt %d of %d failed for %s; retrying: %s",
-                        attempt,
-                        self._function_call_max_trials,
-                        type(self._llm_model).__name__,
-                        err,
-                    )
-            return self._attempt_function_call(messages, spec)
-        except NotImplementedError as err:
-            # A model that claims function-calling support without implementing
-            # it is a configuration error, not a transient malformed response:
-            # never retry it.
-            raise RAGRetrieverEvaluationError(
-                f"{type(self._llm_model).__name__} reports function calling "
-                "support but does not implement generate_function_call."
-            ) from err
-
-    def _function_call_spec(self) -> Dict[str, Any]:
-        """Return the function spec exposed to the function-calling backend.
-
-        Returns
-        -------
-        Dict[str, Any]
-            The ``name``/``description``/``parameters`` specification.
-
-        Raises
-        ------
-        RAGRetrieverEvaluationError
-            If the evaluator declares no function spec.
-        """
-        if (
-            not self._expected_function
-            or not self._function_description
-            or not self._function_parameters
-        ):
-            raise RAGRetrieverEvaluationError(
-                "RetrievalEvaluator does not declare a function spec to use "
-                "function calling; declare the expected function, its "
-                "description and parameters or use a model without function "
-                "calling."
-            )
-        return {
-            "name": self._expected_function,
-            "description": self._function_description,
-            "parameters": self._function_parameters,
+        known_keys: Set[Tuple[int, int]] = {
+            (chunk.document_id, chunk.document_position) for chunk in chunks
         }
 
-    def _attempt_function_call(
-        self, messages: List[Dict[str, str]], spec: Dict[str, Any]
-    ) -> RetrievalVerdict:
-        """Perform one function-call attempt and validate its result.
-
-        Parameters
-        ----------
-        messages : List[Dict[str, str]]
-            The chat messages sent verbatim on every attempt.
-        spec : Dict[str, Any]
-            The evaluation function specification.
-
-        Returns
-        -------
-        RetrievalVerdict
-            The validated verdict.
-
-        Raises
-        ------
-        NotImplementedError
-            If the model reports support but implements no function-calling
-            method. Never retried; the caller converts it to a
-            ``RAGRetrieverEvaluationError``.
-        RAGRetrieverEvaluationError
-            If the backend reports a malformed call or the returned call
-            violates the contract.
-        """
-        try:
-            result = self._llm_model.generate_function_call(
-                messages=messages,
-                functions=[spec],
+        def finalize(verdict: RetrievalVerdict) -> RetrievalVerdict:
+            """Finalize and apply one parsed verdict inside the retry loop."""
+            finalized = self._finalize_verdict(
+                verdict,
+                children,
+                context,
+                pool_size=pool_size,
+                known_keys=known_keys,
+                require_retriever_call=require_retriever_call,
             )
-        except NotImplementedError:
-            # NotImplementedError subclasses RuntimeError; re-raise it so the
-            # caller can classify it as a non-retryable configuration error.
-            raise
-        except (ValueError, RuntimeError) as err:
-            raise RAGRetrieverEvaluationError(
-                f"Function calling failed: {err}"
-            ) from err
-        return self._validate_function_call_result(result)
+            if apply_verdict is not None:
+                apply_verdict(finalized)
+            return finalized
 
-    def _validate_function_call_result(self, result: Any) -> RetrievalVerdict:
-        """Validate a function-call response and resolve its arguments.
+        def parse_call(arguments: Any) -> RetrievalVerdict:
+            """Finalize and apply one function-call verdict."""
+            return finalize(parse_evaluation_arguments(arguments))
 
-        Parameters
-        ----------
-        result : Any
-            Raw return value of ``generate_function_call``.
-
-        Returns
-        -------
-        RetrievalVerdict
-            The validated verdict with decoded arguments.
-
-        Raises
-        ------
-        RAGRetrieverEvaluationError
-            If the result is not a :class:`FunctionCallResult`, has no name,
-            names a different function, or carries invalid arguments.
-        """
-        if not isinstance(result, FunctionCallResult):
-            raise RAGRetrieverEvaluationError(
-                "The function-calling model returned an unexpected output shape: "
-                f"{type(result).__name__}."
-            )
-        if not result.name:
-            raise RAGRetrieverEvaluationError(
-                "The function-calling model did not report a function name."
-            )
-        if result.name != self._expected_function:
-            raise RAGRetrieverEvaluationError(
-                f"The model called '{result.name}' instead of the expected "
-                f"'{self._expected_function}'."
-            )
-        return parse_evaluation_arguments(result.arguments)
+        return self._runner.run(
+            prompt_text,
+            parse_call=parse_call,
+            function_route_label="Function-calling evaluation",
+        )
 
     @staticmethod
-    def _extract_raw_output(output: Any) -> str:
-        """Extract the first string from the model output list.
+    def _validate_corpus_positions(
+        mapping: Dict[int, List[int]],
+        key: str,
+        context: RetrievalContext,
+        known_keys: Set[Tuple[int, int]],
+        has_corpus: bool,
+    ) -> Dict[int, List[int]]:
+        """Reject chunk positions unknown to the corpus or the materialized pool.
+
+        A reference is valid when it identifies a chunk already in the
+        materialized pool, or when corpus knowledge exists and the chunk resolves
+        from the corpus. This applies to sufficient and insufficient verdicts
+        alike, so a sufficient verdict cannot reference an unknown chunk.
 
         Parameters
         ----------
-        output : Any
-            Value returned by ``generate``.
+        mapping : Dict[int, List[int]]
+            Document id to chunk positions.
+        key : str
+            Canonical field name, echoed in error messages.
+        context : RetrievalContext
+            Document and corpus knowledge.
+        known_keys : Set[Tuple[int, int]]
+            ``(document_id, document_position)`` keys of the materialized pool.
+        has_corpus : bool
+            Whether ``context`` carries corpus knowledge. Computed once by the
+            caller to avoid re-freezing the corpus mapping per field.
 
         Returns
         -------
-        str
-            The raw output string. A plain string is returned directly; a
-            non-empty sequence yields its first element.
+        Dict[int, List[int]]
+            A copy of the mapping when every position is known.
 
         Raises
         ------
         RAGRetrieverEvaluationError
-            If the output is empty, not a string/sequence, or its first element
-            is not a string.
+            If any position is absent from both the pool and the corpus.
         """
-        if isinstance(output, str):
-            return output
-        if not isinstance(output, (list, tuple)) or not output:
+        errors: List[str] = []
+        for document_id, positions in mapping.items():
+            for position in positions:
+                if (document_id, position) in known_keys:
+                    continue
+                if has_corpus and context.get_chunk(document_id, position) is not None:
+                    continue
+                errors.append(
+                    f"'{key}' position {position} of document {document_id} does "
+                    "not exist in the retrieval pool or corpus"
+                )
+        if errors:
             raise RAGRetrieverEvaluationError(
-                "The evaluation model returned an empty or non-sequence output."
+                "Invalid chunk reference(s) in the decision: "
+                + "; ".join(cap_errors(errors))
+                + "."
             )
-        raw = output[0]
-        if not isinstance(raw, str):
+        return {
+            document_id: list(positions) for document_id, positions in mapping.items()
+        }
+
+    def _finalize_verdict(
+        self,
+        verdict: RetrievalVerdict,
+        children: Sequence[Any],
+        context: RetrievalContext,
+        *,
+        pool_size: int,
+        known_keys: Set[Tuple[int, int]],
+        require_retriever_call: bool = False,
+    ) -> RetrievalVerdict:
+        """Validate a parsed verdict against the concrete retrievers and pool.
+
+        Parameters
+        ----------
+        verdict : RetrievalVerdict
+            The verdict produced by the parser.
+        children : Sequence[Any]
+            The retriever's direct children, used to validate call indices.
+        context : RetrievalContext
+            Document and corpus knowledge used to validate chunk positions.
+        pool_size : int
+            Number of chunks in the materialized pool.
+        known_keys : Set[Tuple[int, int]]
+            ``(document_id, document_position)`` keys of the materialized pool.
+        require_retriever_call : bool, optional
+            Require an insufficient verdict with at least one valid retriever
+            call. Used by the ensemble planning step so a chunk-only or
+            sufficient planning verdict is retried instead of consuming a round.
+
+        Returns
+        -------
+        RetrievalVerdict
+            The verdict with ``dropped_operations`` empty, since any invalid
+            operation rejects the whole verdict.
+
+        Raises
+        ------
+        RAGRetrieverEvaluationError
+            If a retriever index or chunk position is invalid, if a required
+            retriever call is missing, if a sufficient verdict targets an empty
+            pool, or if an insufficient verdict has no action.
+        """
+        calls = validate_call_indices(verdict.call_retrievers, len(children))
+        has_corpus = bool(context.corpus())
+        if not has_corpus and (
+            verdict.request_specific_chunks or verdict.discard_specific_chunks
+        ):
+            logger.warning(
+                "The retriever has no corpus knowledge; chunk references are "
+                "validated against the materialized pool only."
+            )
+        requests = self._validate_corpus_positions(
+            verdict.request_specific_chunks,
+            REQUEST_CHUNKS_KEY,
+            context,
+            known_keys,
+            has_corpus,
+        )
+        discards = self._validate_corpus_positions(
+            verdict.discard_specific_chunks,
+            DISCARD_KEY,
+            context,
+            known_keys,
+            has_corpus,
+        )
+        finalized = replace(
+            verdict,
+            call_retrievers=calls,
+            request_specific_chunks=requests,
+            discard_specific_chunks=discards,
+            dropped_operations=(),
+        )
+        if require_retriever_call:
+            require_planning_calls(finalized, len(children))
+        elif finalized.sufficient and pool_size == 0:
             raise RAGRetrieverEvaluationError(
-                f"The evaluation model output is not a string: {type(raw).__name__}."
+                "A sufficient verdict cannot be returned over an empty pool."
             )
-        return raw
+        if not finalized.sufficient and not has_actions(
+            finalized.call_retrievers,
+            finalized.request_specific_chunks,
+            finalized.discard_specific_chunks,
+        ):
+            raise RAGRetrieverEvaluationError(
+                "An insufficient verdict must perform at least one action with "
+                f"at least one valid operation: '{CALL_RETRIEVERS_KEY}', "
+                f"'{REQUEST_CHUNKS_KEY}' or '{DISCARD_KEY}'."
+            )
+        return finalized

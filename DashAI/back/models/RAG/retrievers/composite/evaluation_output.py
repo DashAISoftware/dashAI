@@ -1,12 +1,12 @@
-"""Fence-tolerant parser for the retrieval-sufficiency evaluation contract.
+"""Strict parser for the retrieval-evaluation verdict contract.
 
 The LLM-evaluated retrievers ask their language model for a single JSON verdict
 that judges whether the retrieved pool is sufficient and, when it is not, how to
-proceed. In practice models wrap that object in prose or markdown fences, so
-this parser tolerates the *wrapping* but never the *payload*: a missing or
-mistyped field raises :class:`RAGRetrieverEvaluationError` instead of being
-silently defaulted, because falling back to a guessed verdict would let an
-unparseable model response drive retrieval without anyone noticing.
+proceed. The parser tolerates surrounding prose and markdown fences, but the
+verdict itself is strict: any invalid retriever index, chunk position, duplicate
+or contradictory operation rejects the whole verdict. The caller retries the
+entire model call + parse + validation, so a partially valid decision is never
+applied.
 
 Contract
 --------
@@ -15,12 +15,13 @@ Contract
 An insufficient verdict carries any combination of:
 
 * ``call_retrievers`` — ``{<1-based retriever index>: <top_k>}``;
-* ``request_chunks`` — ``{<document id>: [<chunk positions>]}``;
-* ``discard`` — ``{<document id>: [<chunk positions>]}``.
+* ``request_specific_chunks`` — ``{<document id>: [<chunk positions>]}``;
+* ``discard_specific_chunks`` — ``{<document id>: [<chunk positions>]}``.
 
 Requested and discarded chunks persist across rounds and can override each
-other (the last action wins). An insufficient verdict that performs no action at
-all is rejected: it cannot make progress.
+other (the last action wins). A chunk listed in both fields of one verdict is
+invalid and rejects the verdict. An insufficient verdict with no action is also
+invalid: it cannot make progress.
 
 A verdict may also carry two optional narrative fields:
 
@@ -29,40 +30,67 @@ A verdict may also carry two optional narrative fields:
 
 Both default to ``""`` when omitted. They are ancillary: a non-string value
 (including JSON ``null``) is ignored rather than rejected, because model drift
-in a cosmetic field must never abort retrieval. Strict validation applies only
-to the verdict-driving fields (``sufficient`` and the action maps).
+in a cosmetic field must never abort retrieval. ``sufficient`` remains strictly
+required.
 
 Unknown keys are tolerated; the contract fields are not.
 """
 
 from __future__ import annotations
 
-import json
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 from DashAI.back.models.RAG.exceptions.retriever import (
     RAGRetrieverEvaluationError,
 )
-from DashAI.back.models.RAG.progress_utils import normalize_progress_text
 from DashAI.back.models.RAG.RAG_constants import (
     RAG_PROGRESS_JUSTIFICATION_KEY,
     RAG_PROGRESS_MESSAGE_KEY,
 )
+from DashAI.back.models.RAG.retrievers.composite.structured_output import (
+    cap_errors,
+    coerce_int,
+    optional_text,
+    parse_json_object,
+    preview,
+    preview_value,
+)
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    CALL_RETRIEVERS_KEY,
+    DISCARD_KEY,
+    DROPPED_OPERATIONS_KEY,
+    REQUEST_CHUNKS_KEY,
+    SUFFICIENT_KEY,
+)
 
-#: Maximum number of characters of raw model output echoed in error messages.
-_PREVIEW_LIMIT = 200
+# Re-exported so existing imports keep working.
+__all__ = [
+    "CALL_RETRIEVERS_KEY",
+    "DISCARD_KEY",
+    "DROPPED_OPERATIONS_KEY",
+    "REQUEST_CHUNKS_KEY",
+    "SUFFICIENT_KEY",
+    "RetrievalVerdict",
+    "cap_dropped_operations",
+    "has_actions",
+    "parse_evaluation_arguments",
+    "parse_evaluation_output",
+    "require_planning_calls",
+    "validate_call_indices",
+]
 
-#: Matches opening and closing markdown code fences, with or without a language.
-_FENCE_RE = re.compile(r"```[a-zA-Z0-9_-]*")
+#: Maximum number of dropped-operation messages retained in a verdict/trace.
+_MAX_DROPPED_OPERATIONS = 50
 
-#: Canonical contract field names, shared with the retrievers consuming a verdict.
-SUFFICIENT_KEY = "sufficient"
-CALL_RETRIEVERS_KEY = "call_retrievers"
-REQUEST_CHUNKS_KEY = "request_chunks"
-DISCARD_KEY = "discard"
+#: Recognizes the synthetic summary produced when a drop list is capped.
+_DROPPED_SUMMARY_RE = re.compile(r"^Dropped (\d+) more invalid operation\(s\)\.$")
+
+#: Local aliases keep the parser's internal call sites terse.
+_preview = preview
+_preview_value = preview_value
 
 
 @dataclass(frozen=True)
@@ -76,10 +104,10 @@ class RetrievalVerdict:
     call_retrievers : Dict[int, int]
         Mapping of 1-based retriever index to the number of chunks to retrieve
         from it next. Empty when no retriever call is requested.
-    request_chunks : Dict[int, List[int]]
+    request_specific_chunks : Dict[int, List[int]]
         Mapping of document id to chunk positions to include in the pool. Empty
         when no chunk is explicitly requested.
-    discard : Dict[int, List[int]]
+    discard_specific_chunks : Dict[int, List[int]]
         Mapping of document id to chunk positions to exclude from the pool.
         Empty when no chunk is discarded.
     message : str
@@ -88,130 +116,79 @@ class RetrievalVerdict:
     justification : str
         Optional short rationale for the verdict. Empty when the model did not
         supply one.
+    dropped_operations : Tuple[str, ...]
+        Kept for trace compatibility. Always empty: an invalid operation rejects
+        the whole verdict and is retried instead of being dropped.
     """
 
     sufficient: bool
     call_retrievers: Dict[int, int] = field(default_factory=dict)
-    request_chunks: Dict[int, List[int]] = field(default_factory=dict)
-    discard: Dict[int, List[int]] = field(default_factory=dict)
+    request_specific_chunks: Dict[int, List[int]] = field(default_factory=dict)
+    discard_specific_chunks: Dict[int, List[int]] = field(default_factory=dict)
     message: str = ""
     justification: str = ""
+    dropped_operations: Tuple[str, ...] = ()
 
 
-def _preview(raw: Any) -> str:
-    """Return a short, truncated preview of the raw model output.
-
-    Parameters
-    ----------
-    raw : Any
-        Raw model output.
-
-    Returns
-    -------
-    str
-        The output truncated to at most ``_PREVIEW_LIMIT`` characters, with a
-        trailing ellipsis when truncation happened.
-    """
-    text = str(raw)
-    if len(text) <= _PREVIEW_LIMIT:
-        return text
-    return text[:_PREVIEW_LIMIT] + "..."
-
-
-def _extract_json_object(text: str) -> str:
-    """Extract the substring from the first ``{`` to the last ``}``.
+def cap_dropped_operations(drops: List[str]) -> List[str]:
+    """Bound the number of retained drop messages.
 
     Parameters
     ----------
-    text : str
-        Text to scan.
+    drops : List[str]
+        Raw drop messages in first-seen order.
 
     Returns
     -------
-    str
-        The candidate JSON object.
-
-    Raises
-    ------
-    RAGRetrieverEvaluationError
-        If no braces are present or their order is inverted.
+    List[str]
+        At most ``_MAX_DROPPED_OPERATIONS`` messages in total. When more were
+        supplied, the last retained entry is a summary of the omitted tail.
     """
-    start = text.find("{")
-    end = text.rfind("}")
-    if start == -1 or end == -1 or end < start:
-        raise RAGRetrieverEvaluationError(
-            "The evaluation model output does not contain a JSON object. "
-            f"Preview: {_preview(text)}"
-        )
-    return text[start : end + 1]
+    messages: List[str] = []
+    omitted = 0
+    for message in drops:
+        match = _DROPPED_SUMMARY_RE.match(message)
+        if match is None:
+            messages.append(message)
+            continue
+        omitted += int(match.group(1))
+    total = len(messages) + omitted
+    if total <= _MAX_DROPPED_OPERATIONS:
+        if omitted:
+            messages.append(f"Dropped {omitted} more invalid operation(s).")
+        return messages
+    capped = messages[: _MAX_DROPPED_OPERATIONS - 1]
+    capped.append(f"Dropped {total - len(capped)} more invalid operation(s).")
+    return capped
 
 
-def _coerce_key(value: Any, key: str, minimum: int, raw: Any) -> int:
-    """Coerce a mapping key to an integer honouring the contract bounds.
+def _drop_empty_documents(mapping: Dict[int, List[int]]) -> Dict[int, List[int]]:
+    """Return a copy without document entries that have no positions.
 
     Parameters
     ----------
-    value : Any
-        Raw mapping key (an integer or a digit string).
-    key : str
-        Contract field name, echoed in error messages.
-    minimum : int
-        Smallest accepted value.
-    raw : Any
-        Original payload, echoed in the error message.
+    mapping : Dict[int, List[int]]
+        Document id to chunk positions.
 
     Returns
     -------
-    int
-        The coerced key.
-
-    Raises
-    ------
-    RAGRetrieverEvaluationError
-        If the key is neither an integer nor a digit string, or is below
-        ``minimum``.
+    Dict[int, List[int]]
+        Only the document ids that still carry at least one position.
     """
-    if isinstance(value, bool):
-        raise RAGRetrieverEvaluationError(
-            f"'{key}' keys must be integers greater than or equal to {minimum}, "
-            f"got {value!r}. Preview: {_preview(raw)}"
-        )
-    if isinstance(value, int):
-        coerced = value
-    elif isinstance(value, str) and value.isdigit():
-        coerced = int(value)
-    else:
-        raise RAGRetrieverEvaluationError(
-            f"'{key}' keys must be integers greater than or equal to {minimum}, "
-            f"got {value!r}. Preview: {_preview(raw)}"
-        )
-    if coerced < minimum:
-        raise RAGRetrieverEvaluationError(
-            f"'{key}' keys must be integers greater than or equal to {minimum}, "
-            f"got {value!r}. Preview: {_preview(raw)}"
-        )
-    return coerced
+    cleaned: Dict[int, List[int]] = {}
+    for document_id, positions in mapping.items():
+        if positions:
+            cleaned[document_id] = positions
+    return cleaned
 
 
-def _coerce_value(value: Any, key: str, minimum: int, raw: Any) -> int:
-    """Coerce a mapping value to an integer honouring the contract bounds."""
-    if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
-        raise RAGRetrieverEvaluationError(
-            f"'{key}' values must be integers greater than or equal to {minimum}, "
-            f"got {value!r}. Preview: {_preview(raw)}"
-        )
-    return value
-
-
-def _validate_call_retrievers(value: Any, raw: Any) -> Dict[int, int]:
-    """Validate the ``call_retrievers`` mapping.
+def _validate_call_retrievers(value: Any) -> Dict[int, int]:
+    """Validate the ``call_retrievers`` mapping strictly.
 
     Parameters
     ----------
     value : Any
         Raw ``call_retrievers`` value from the parsed verdict.
-    raw : Any
-        Original payload, echoed in error messages.
 
     Returns
     -------
@@ -221,110 +198,206 @@ def _validate_call_retrievers(value: Any, raw: Any) -> Dict[int, int]:
     Raises
     ------
     RAGRetrieverEvaluationError
-        If the value is not a mapping, a key cannot be coerced to an index
-        ``>= 1``, two keys collide after coercion, or a value is not an integer
-        ``>= 1``.
+        If the value is not a mapping, or any index or top_k is invalid or
+        duplicated. No partial result is returned.
     """
     if not isinstance(value, Mapping):
         raise RAGRetrieverEvaluationError(
             f"'{CALL_RETRIEVERS_KEY}' must be a mapping of retriever index to "
-            f"top_k, got {type(value).__name__}. Preview: {_preview(raw)}"
+            f"top_k, got {type(value).__name__}."
         )
     calls: Dict[int, int] = {}
-    seen: set[int] = set()
+    errors: List[str] = []
     for raw_index, raw_top_k in value.items():
-        index = _coerce_key(raw_index, CALL_RETRIEVERS_KEY, 1, raw)
-        if index in seen:
-            raise RAGRetrieverEvaluationError(
-                f"'{CALL_RETRIEVERS_KEY}' contains duplicate key {index!r} "
-                f"after integer coercion. Preview: {_preview(raw)}"
+        index = coerce_int(raw_index, 1, allow_digit_string=True)
+        if index is None:
+            errors.append(
+                f"'{CALL_RETRIEVERS_KEY}' entry {_preview_value(raw_index)}: "
+                "retriever index must be an integer greater than or equal to 1."
             )
-        seen.add(index)
-        calls[index] = _coerce_value(raw_top_k, CALL_RETRIEVERS_KEY, 1, raw)
+            continue
+        if index in calls:
+            errors.append(
+                f"'{CALL_RETRIEVERS_KEY}' duplicate entry for retriever index {index}."
+            )
+            continue
+        top_k = coerce_int(raw_top_k, 1, allow_digit_string=False)
+        if top_k is None:
+            errors.append(
+                f"'{CALL_RETRIEVERS_KEY}' entry {index}: top_k must be an "
+                "integer greater than or equal to 1."
+            )
+            continue
+        calls[index] = top_k
+    if errors:
+        raise RAGRetrieverEvaluationError(
+            "Invalid retriever call(s) in the decision: "
+            + "; ".join(cap_errors(errors))
+        )
     return calls
 
 
-def _validate_chunk_map(value: Any, key: str, raw: Any) -> Dict[int, List[int]]:
-    """Validate a ``request_chunks``/``discard`` document-to-positions mapping.
+def _validate_chunk_map(value: Any, key: str) -> Dict[int, List[int]]:
+    """Validate one document-to-positions mapping strictly.
+
+    Repeated positions inside one document are deduplicated (not a semantic
+    failure), and document ids that collide after coercion union their
+    positions. Any malformed entry rejects the whole map.
 
     Parameters
     ----------
     value : Any
         Raw mapping from the parsed verdict.
     key : str
-        Contract field name, echoed in error messages.
-    raw : Any
-        Original payload, echoed in error messages.
+        Canonical contract field name, echoed in error messages.
 
     Returns
     -------
     Dict[int, List[int]]
-        Document id to chunk positions, deduplicated in first-seen order.
+        Document id to chunk positions in first-seen order.
 
     Raises
     ------
     RAGRetrieverEvaluationError
-        If the value is not a mapping, a document id cannot be coerced to an
-        id ``>= 0``, two ids collide after coercion, a value is not a list, or
-        a position is not an integer ``>= 0``.
+        If the value is not a mapping, or any document id or position is invalid.
     """
     if not isinstance(value, Mapping):
         raise RAGRetrieverEvaluationError(
             f"'{key}' must be a mapping of document id to chunk positions, got "
-            f"{type(value).__name__}. Preview: {_preview(raw)}"
+            f"{type(value).__name__}."
         )
     chunks: Dict[int, List[int]] = {}
-    seen: set[int] = set()
+    errors: List[str] = []
     for raw_document_id, raw_positions in value.items():
-        document_id = _coerce_key(raw_document_id, key, 0, raw)
-        if document_id in seen:
-            raise RAGRetrieverEvaluationError(
-                f"'{key}' contains duplicate key {document_id!r} after integer "
-                f"coercion. Preview: {_preview(raw)}"
+        document_id = coerce_int(raw_document_id, 0, allow_digit_string=True)
+        if document_id is None:
+            errors.append(
+                f"'{key}' entry {_preview_value(raw_document_id)}: document id "
+                "must be an integer greater than or equal to 0."
             )
-        seen.add(document_id)
+            continue
         if not isinstance(raw_positions, list):
-            raise RAGRetrieverEvaluationError(
-                f"'{key}' values must be lists of chunk positions, got "
-                f"{type(raw_positions).__name__}. Preview: {_preview(raw)}"
+            errors.append(
+                f"'{key}' document {document_id}: positions must be a list, got "
+                f"{type(raw_positions).__name__}."
             )
-        positions: List[int] = []
+            continue
+        positions = chunks.setdefault(document_id, [])
         for raw_position in raw_positions:
-            position = _coerce_value(raw_position, key, 0, raw)
+            position = coerce_int(raw_position, 0, allow_digit_string=False)
+            if position is None:
+                errors.append(
+                    f"'{key}' position {_preview_value(raw_position)} of "
+                    f"document {document_id}: chunk positions must be integers "
+                    "greater than or equal to 0."
+                )
+                continue
             if position not in positions:
                 positions.append(position)
-        chunks[document_id] = positions
-    return chunks
+    if errors:
+        raise RAGRetrieverEvaluationError(
+            "Invalid chunk reference(s) in the decision: "
+            + "; ".join(cap_errors(errors))
+        )
+    return _drop_empty_documents(chunks)
 
 
-def _validate_optional_text(parsed: Mapping[str, Any], key: str) -> str:
-    """Read one optional narrative field leniently.
-
-    Narrative fields are cosmetic: a missing key, ``None`` or any other
-    non-string value degrades to ``""`` instead of failing the retrieval. This
-    keeps model drift in an ancillary field from aborting a chat turn.
+def _resolve_chunk_conflicts(
+    requests: Dict[int, List[int]], discards: Dict[int, List[int]]
+) -> None:
+    """Reject chunks listed in both the request and discard fields.
 
     Parameters
     ----------
-    parsed : Mapping[str, Any]
-        The decoded verdict payload.
-    key : str
-        Contract field name (``message`` or ``justification``).
+    requests : Dict[int, List[int]]
+        Requested document positions.
+    discards : Dict[int, List[int]]
+        Discarded document positions.
 
     Returns
     -------
-    str
-        The normalized text (whitespace collapsed and capped), or ``""`` when
-        the key is absent or not a string.
+    None
+        Nothing when there is no conflict.
+
+    Raises
+    ------
+    RAGRetrieverEvaluationError
+        If any chunk is both requested and discarded in the same verdict.
     """
-    value = parsed.get(key)
-    if not isinstance(value, str):
-        return ""
-    return normalize_progress_text(value)
+    conflicts: List[str] = []
+    for document_id in sorted(set(requests) & set(discards)):
+        conflicting = []
+        discarded_positions = set(discards[document_id])
+        for position in requests[document_id]:
+            if position in discarded_positions:
+                conflicting.append(position)
+        if not conflicting:
+            continue
+        conflicts.append(
+            f"chunk position(s) {_preview_value(conflicting)} of document "
+            f"{document_id} cannot be both requested and discarded in the same "
+            "verdict"
+        )
+    if conflicts:
+        raise RAGRetrieverEvaluationError(
+            "Contradictory chunk operations in the decision: "
+            + "; ".join(cap_errors(conflicts))
+            + "."
+        )
+
+
+def _mapping_has_positions(mapping: Mapping[int, List[int]]) -> bool:
+    """Return whether any document entry carries at least one position.
+
+    Parameters
+    ----------
+    mapping : Mapping[int, List[int]]
+        Document id to chunk positions.
+
+    Returns
+    -------
+    bool
+        ``True`` as soon as a non-empty position list is found.
+    """
+    found = False
+    for positions in mapping.values():
+        if positions:
+            found = True
+            break
+    return found
+
+
+def has_actions(
+    calls: Mapping[int, int],
+    requests: Mapping[int, List[int]],
+    discards: Mapping[int, List[int]],
+) -> bool:
+    """Return whether a verdict carries at least one usable operation.
+
+    Parameters
+    ----------
+    calls : Mapping[int, int]
+        Retriever calls.
+    requests : Mapping[int, List[int]]
+        Requested chunk positions.
+    discards : Mapping[int, List[int]]
+        Discarded chunk positions.
+
+    Returns
+    -------
+    bool
+        ``True`` when at least one valid retriever call or chunk position
+        remains.
+    """
+    if calls:
+        return True
+    if _mapping_has_positions(requests):
+        return True
+    return _mapping_has_positions(discards)
 
 
 def _validate_verdict(parsed: Any, raw: Any) -> RetrievalVerdict:
-    """Validate a parsed verdict against the retrieval-sufficiency contract.
+    """Validate a parsed verdict against the strict evaluation contract.
 
     Parameters
     ----------
@@ -337,15 +410,16 @@ def _validate_verdict(parsed: Any, raw: Any) -> RetrievalVerdict:
     Returns
     -------
     RetrievalVerdict
-        The validated verdict.
+        The validated verdict. ``dropped_operations`` stays empty because any
+        invalid operation rejects the whole verdict.
 
     Raises
     ------
     RAGRetrieverEvaluationError
         If the payload is not a mapping, ``sufficient`` is missing or not a
-        boolean, an action map has the wrong type/shape, a chunk is both
-        requested and discarded, or an insufficient verdict performs no action.
-        Optional narrative fields never raise; non-string values are ignored.
+        boolean, any retriever call or chunk entry is invalid, a chunk is both
+        requested and discarded, or an insufficient verdict has no action.
+        Optional narrative fields never raise.
     """
     if not isinstance(parsed, Mapping):
         raise RAGRetrieverEvaluationError(
@@ -360,57 +434,36 @@ def _validate_verdict(parsed: Any, raw: Any) -> RetrievalVerdict:
 
     calls: Dict[int, int] = {}
     if CALL_RETRIEVERS_KEY in parsed:
-        calls = _validate_call_retrievers(parsed[CALL_RETRIEVERS_KEY], raw)
+        calls = _validate_call_retrievers(parsed[CALL_RETRIEVERS_KEY])
 
     requests: Dict[int, List[int]] = {}
     if REQUEST_CHUNKS_KEY in parsed:
-        requests = _validate_chunk_map(
-            parsed[REQUEST_CHUNKS_KEY], REQUEST_CHUNKS_KEY, raw
-        )
+        requests = _validate_chunk_map(parsed[REQUEST_CHUNKS_KEY], REQUEST_CHUNKS_KEY)
 
     discards: Dict[int, List[int]] = {}
     if DISCARD_KEY in parsed:
-        discards = _validate_chunk_map(parsed[DISCARD_KEY], DISCARD_KEY, raw)
+        discards = _validate_chunk_map(parsed[DISCARD_KEY], DISCARD_KEY)
 
-    for document_id, positions in requests.items():
-        conflicting = set(positions) & set(discards.get(document_id, []))
-        if conflicting:
-            raise RAGRetrieverEvaluationError(
-                f"Chunk positions {sorted(conflicting)} of document "
-                f"{document_id} cannot be both requested and discarded in the "
-                f"same verdict. Preview: {_preview(raw)}"
-            )
+    _resolve_chunk_conflicts(requests, discards)
+    requests = _drop_empty_documents(requests)
+    discards = _drop_empty_documents(discards)
 
-    if not sufficient and not calls:
-        has_requested_positions = False
-        for positions in requests.values():
-            if positions:
-                has_requested_positions = True
-                break
-        has_discarded_positions = False
-        if not has_requested_positions:
-            for positions in discards.values():
-                if positions:
-                    has_discarded_positions = True
-                    break
-        if not has_requested_positions and not has_discarded_positions:
-            raise RAGRetrieverEvaluationError(
-                "An insufficient verdict must perform at least one action with "
-                f"at least one chunk position: '{CALL_RETRIEVERS_KEY}', "
-                f"'{REQUEST_CHUNKS_KEY}' or '{DISCARD_KEY}'. "
-                f"Preview: {_preview(raw)}"
-            )
-
-    message = _validate_optional_text(parsed, RAG_PROGRESS_MESSAGE_KEY)
-    justification = _validate_optional_text(parsed, RAG_PROGRESS_JUSTIFICATION_KEY)
+    if not sufficient and not has_actions(calls, requests, discards):
+        raise RAGRetrieverEvaluationError(
+            "An insufficient verdict must perform at least one action with at "
+            f"least one valid operation: '{CALL_RETRIEVERS_KEY}', "
+            f"'{REQUEST_CHUNKS_KEY}' or '{DISCARD_KEY}'."
+            f" Preview: {_preview(raw)}"
+        )
 
     return RetrievalVerdict(
         sufficient=sufficient,
         call_retrievers=calls,
-        request_chunks=requests,
-        discard=discards,
-        message=message,
-        justification=justification,
+        request_specific_chunks=requests,
+        discard_specific_chunks=discards,
+        message=optional_text(parsed, RAG_PROGRESS_MESSAGE_KEY),
+        justification=optional_text(parsed, RAG_PROGRESS_JUSTIFICATION_KEY),
+        dropped_operations=(),
     )
 
 
@@ -419,8 +472,8 @@ def parse_evaluation_output(raw: str) -> RetrievalVerdict:
 
     Markdown fences are stripped, the substring from the first ``{`` to the last
     ``}`` is taken, and the result must be a JSON object carrying a boolean
-    ``sufficient`` field. The optional action maps are validated when present;
-    unknown keys are ignored.
+    ``sufficient`` field. Any invalid retriever call, chunk entry or conflicting
+    operation rejects the whole verdict; unknown keys are ignored.
 
     Parameters
     ----------
@@ -437,16 +490,15 @@ def parse_evaluation_output(raw: str) -> RetrievalVerdict:
     RAGRetrieverEvaluationError
         If the output contains no JSON object, the JSON is invalid, the parsed
         value is not a mapping, ``sufficient`` is missing or not a boolean, or
-        an action map violates the contract.
+        an insufficient verdict has no valid operation left.
     """
-    text = _FENCE_RE.sub("", str(raw)).strip()
-    candidate = _extract_json_object(text)
-    try:
-        parsed = json.loads(candidate)
-    except json.JSONDecodeError as err:
-        raise RAGRetrieverEvaluationError(
-            f"Failed to parse the evaluation output as JSON. Preview: {_preview(raw)}"
-        ) from err
+    parsed = parse_json_object(
+        raw,
+        no_object_message=(
+            "The evaluation model output does not contain a JSON object."
+        ),
+        parse_error_label="evaluation output",
+    )
     return _validate_verdict(parsed, raw)
 
 
@@ -455,8 +507,8 @@ def parse_evaluation_arguments(arguments: Any) -> RetrievalVerdict:
 
     Function-calling backends return arguments either already decoded as a
     mapping or as a JSON-encoded string emitted under constrained sampling. Both
-    are accepted here; the payload is validated against the same strict contract
-    as :func:`parse_evaluation_output`, so the two routes cannot diverge.
+    are accepted here and validated against the same strict contract as
+    :func:`parse_evaluation_output`, so the two routes cannot diverge.
 
     Parameters
     ----------
@@ -472,7 +524,7 @@ def parse_evaluation_arguments(arguments: Any) -> RetrievalVerdict:
     ------
     RAGRetrieverEvaluationError
         If the payload is a string that fails text parsing, is a mapping that
-        violates the contract, or is neither a mapping nor a string.
+        violates the required contract, or is neither a mapping nor a string.
     """
     if isinstance(arguments, Mapping):
         return _validate_verdict(arguments, arguments)
@@ -485,7 +537,8 @@ def parse_evaluation_arguments(arguments: Any) -> RetrievalVerdict:
 
 
 def validate_call_indices(
-    calls: Dict[int, int], retriever_count: int
+    calls: Dict[int, int],
+    retriever_count: int,
 ) -> Dict[int, int]:
     """Validate that every retriever index addresses a configured retriever.
 
@@ -504,15 +557,23 @@ def validate_call_indices(
     Raises
     ------
     RAGRetrieverEvaluationError
-        If any index is outside ``1..retriever_count``.
+        If any index is outside ``1..retriever_count``. No partial result is
+        returned.
     """
+    errors: List[str] = []
     for index in calls:
-        if index < 1 or index > retriever_count:
-            raise RAGRetrieverEvaluationError(
-                f"Retriever index {index} is out of range for "
-                f"{retriever_count} configured retriever(s); indices are "
-                "1-based."
-            )
+        if 1 <= index <= retriever_count:
+            continue
+        errors.append(
+            f"retriever index {index} is out of range for {retriever_count} "
+            "configured retriever(s); indices are 1-based"
+        )
+    if errors:
+        raise RAGRetrieverEvaluationError(
+            "Invalid retriever index in the decision: "
+            + "; ".join(cap_errors(errors))
+            + "."
+        )
     return calls
 
 
@@ -522,7 +583,7 @@ def require_planning_calls(
     """Return the retriever calls of an ensemble planning verdict.
 
     The planning evaluation runs over an empty pool, so it must be insufficient
-    and must request at least one retriever.
+    and must request at least one valid retriever.
 
     Parameters
     ----------
@@ -534,7 +595,7 @@ def require_planning_calls(
     Returns
     -------
     Dict[int, int]
-        The validated ``call_retrievers`` mapping.
+        The valid ``call_retrievers`` mapping.
 
     Raises
     ------
@@ -546,11 +607,31 @@ def require_planning_calls(
         raise RAGRetrieverEvaluationError(
             "An ensemble planning evaluation over an empty pool must be "
             "insufficient and request retrievers, but the verdict is marked "
-            "sufficient."
+            "sufficient." + _dropped_suffix(verdict)
         )
-    if not verdict.call_retrievers:
+    calls = validate_call_indices(verdict.call_retrievers, retriever_count)
+    if not calls:
         raise RAGRetrieverEvaluationError(
             "An insufficient ensemble planning evaluation must request at "
-            f"least one retriever via '{CALL_RETRIEVERS_KEY}'."
+            f"least one valid retriever via '{CALL_RETRIEVERS_KEY}'."
+            + _dropped_suffix(verdict)
         )
-    return validate_call_indices(verdict.call_retrievers, retriever_count)
+    return calls
+
+
+def _dropped_suffix(verdict: RetrievalVerdict) -> str:
+    """Return the dropped-operation suffix for an error message.
+
+    Parameters
+    ----------
+    verdict : RetrievalVerdict
+        Verdict whose drops are summarized.
+
+    Returns
+    -------
+    str
+        A leading-space sentence, or ``""`` when nothing was dropped.
+    """
+    if not verdict.dropped_operations:
+        return ""
+    return " Dropped operations: " + "; ".join(verdict.dropped_operations) + "."

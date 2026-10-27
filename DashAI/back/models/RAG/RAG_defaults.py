@@ -38,6 +38,10 @@ DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW = DEFAULT_RAG_CONTEXT_WINDOW
 DEFAULT_MAX_CHUNKS = 10
 DEFAULT_MAX_ITERS = 3
 
+#: Default candidate and final budgets for the LLM filter retriever.
+DEFAULT_FILTER_K1 = 10
+DEFAULT_FILTER_TOP_K = 5
+
 #: Default maximum number of function-call attempts (first call included).
 DEFAULT_FUNCTION_CALL_MAX_TRIALS = 3
 
@@ -47,6 +51,9 @@ MAX_FUNCTION_CALL_TRIALS = 10
 
 #: Default retrieval-sufficiency prompt component.
 DEFAULT_SUFFICIENCY_PROMPT_COMPONENT = "DefaultRetrievalSufficiencyPrompt"
+
+#: Default LLM filter prompt component.
+DEFAULT_LLM_FILTER_PROMPT_COMPONENT = "DefaultLLMFilterPrompt"
 
 #: Component names used by the recipes.
 KEYWORD_RETRIEVER_COMPONENT = "BM25Retriever"
@@ -192,6 +199,21 @@ def default_retrieval_sufficiency_prompt() -> Dict[str, Any]:
     """
     return {
         "component": DEFAULT_SUFFICIENCY_PROMPT_COMPONENT,
+        "params": {},
+    }
+
+
+def default_llm_filter_prompt() -> Dict[str, Any]:
+    """Return the default LLM filter prompt reference.
+
+    Returns
+    -------
+    Dict[str, Any]
+        A fresh ``{"component": "DefaultLLMFilterPrompt", "params": {}}``
+        reference. The backend injects the language template.
+    """
+    return {
+        "component": DEFAULT_LLM_FILTER_PROMPT_COMPONENT,
         "params": {},
     }
 

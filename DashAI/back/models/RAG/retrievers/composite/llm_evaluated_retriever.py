@@ -6,10 +6,14 @@ it is not — retrieve again according to the model's verdict. The language mode
 is a parameter *of the retriever itself* (not of the RAG pipeline). Any parse or
 validation failure of the verdict raises; there are no silent fallbacks.
 
-The evaluation has two routes. When the configured model supports function
-calling, the verdict is obtained through ``generate_function_call`` with the
-subclass's JSON schema, so the arguments shape is constrained by the backend.
-Otherwise the prompt is answered as text and parsed by the tolerant text parser.
+The verdict is obtained through ``generate_function_call`` with the subclass's
+JSON schema, so the arguments shape is constrained by the backend. The
+configured ``llm_model`` must support function calling.
+Any invalid retriever index, chunk reference, contradictory operation, capacity
+violation or empty-refill-less decision rejects the whole verdict and is retried
+on the function-calling route up to ``function_call_max_trials`` attempts.
+Verdict application is transactional: the pool is cloned, validated and only
+then adopted, so a failed attempt never mutates the real pool.
 
 Subclasses differ only in how they choose the *next* retrieval: the depth
 retriever asks for a larger retrieval size from its single child, while the
@@ -20,13 +24,13 @@ from __future__ import annotations
 
 import logging
 from abc import ABC
-from typing import Any, ClassVar, Dict, List, Tuple
+from typing import Any, Callable, ClassVar, Dict, List, Tuple
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverCompositeValidationError,
-    RAGRetrieverMissingParameterError,
+    RAGRetrieverEvaluationError,
 )
 from DashAI.back.models.RAG.progress_utils import report_progress
 from DashAI.back.models.RAG.RAG_constants import (
@@ -44,6 +48,11 @@ from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
 from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
     RetrievalVerdict,
 )
+from DashAI.back.models.RAG.retrievers.composite.llm_retriever_support import (
+    close_llm,
+    pop_positive_int,
+    pop_required,
+)
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
 )
@@ -51,6 +60,15 @@ from DashAI.back.models.RAG.retrievers.composite.retrieval_evaluator import (
     RetrievalEvaluator,
 )
 from DashAI.back.models.RAG.retrievers.composite.retrieval_pool import RetrievalPool
+from DashAI.back.models.RAG.retrievers.composite.structured_output import (
+    cap_errors,
+)
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    CALL_RETRIEVERS_KEY,
+    DISCARD_KEY,
+    DROPPED_OPERATIONS_KEY,
+    REQUEST_CHUNKS_KEY,
+)
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 log = logging.getLogger(__name__)
@@ -61,6 +79,10 @@ _PARAM_MAX_CHUNKS = "max_chunks"
 _PARAM_PROMPT = "prompt"
 _PARAM_LLM_MODEL = "llm_model"
 _PARAM_FUNCTION_CALL_MAX_TRIALS = "function_call_max_trials"
+
+#: Trace round-entry keys hoisted to avoid magic strings.
+_ENTRY_VERDICT_KEY = "verdict"
+_ENTRY_APPLIED_KEY = "applied"
 
 
 class LLMEvaluatedRetriever(CompositeRetriever, ABC):
@@ -77,10 +99,12 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
         prompt: The :class:`RetrievalSufficiencyPrompt` instance used to judge
             the pool. Required — no artificial default is assumed.
         llm_model: The :class:`TextToTextGenerationTaskModel` used to judge the
-            pool. Required — no artificial default is assumed.
-        function_call_max_trials: Maximum number of function-call attempts, the
-            first call included. Defaults to
-            :data:`DEFAULT_FUNCTION_CALL_MAX_TRIALS`.
+            pool. It must support function calling. Required — no artificial
+            default is assumed.
+        function_call_max_trials: Maximum number of evaluation attempts, the
+            first call included. Unusable verdicts are retried on the
+            function-calling route.
+            Defaults to :data:`DEFAULT_FUNCTION_CALL_MAX_TRIALS`.
         EXPECTED_FUNCTION: The function name a function-calling model must call.
         FUNCTION_DESCRIPTION: Human-readable description of that function.
         FUNCTION_PARAMETERS: JSON schema of the function's arguments.
@@ -113,18 +137,43 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
             absent.
         RAGRetrieverCompositeValidationError
             If ``max_iters``, ``max_chunks`` or ``function_call_max_trials`` is
-            not a positive integer.
+            not a positive integer, or if ``llm_model`` does not support
+            function calling.
         """
         super().__init__(**kwargs)
-        self.max_iters = self._pop_positive_int(_PARAM_MAX_ITERS)
-        self.max_chunks = self._pop_positive_int(_PARAM_MAX_CHUNKS)
-        self.function_call_max_trials = self._pop_positive_int(
+        self.max_iters = pop_positive_int(
+            self.params,
+            _PARAM_MAX_ITERS,
+            component_label="LLM-evaluated retriever",
+        )
+        self.max_chunks = pop_positive_int(
+            self.params,
+            _PARAM_MAX_CHUNKS,
+            component_label="LLM-evaluated retriever",
+        )
+        self.function_call_max_trials = pop_positive_int(
+            self.params,
             _PARAM_FUNCTION_CALL_MAX_TRIALS,
+            component_label="LLM-evaluated retriever",
             default=DEFAULT_FUNCTION_CALL_MAX_TRIALS,
             maximum=MAX_FUNCTION_CALL_TRIALS,
         )
-        self.prompt = self._pop_required(_PARAM_PROMPT)
-        self.llm_model = self._pop_required(_PARAM_LLM_MODEL)
+        self.prompt = pop_required(
+            self.params,
+            _PARAM_PROMPT,
+            component_label="LLM-evaluated retriever",
+        )
+        self.llm_model = pop_required(
+            self.params,
+            _PARAM_LLM_MODEL,
+            component_label="LLM-evaluated retriever",
+        )
+        if not self.llm_model.supports_function_calling():
+            raise RAGRetrieverCompositeValidationError(
+                f"{type(self).__name__} requires an llm_model with function "
+                f"calling support; {type(self.llm_model).__name__} does not "
+                "support function calling."
+            )
         self._evaluator = RetrievalEvaluator(
             self.prompt,
             self.llm_model,
@@ -160,98 +209,13 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
         None
             Nothing.
         """
-        close = getattr(self.llm_model, "close", None)
-        if callable(close):
-            try:
-                close()
-            except Exception:
-                log.warning(
-                    "Error closing %s's evaluation LLM.",
-                    type(self).__name__,
-                    exc_info=True,
-                )
+        close_llm(self.llm_model, type(self).__name__, "evaluation LLM", log)
         super().close()
 
     @property
     def retrieval_top_k(self) -> int:
         """Return the pool cap (``max_chunks``)."""
         return self.max_chunks
-
-    def _pop_positive_int(
-        self,
-        key: str,
-        *,
-        default: int | None = None,
-        maximum: int | None = None,
-    ) -> int:
-        """Pop a positive integer parameter from ``self.params``.
-
-        Parameters
-        ----------
-        key : str
-            Parameter name.
-        default : int | None, optional
-            Value used when the parameter is absent. ``None`` keeps the
-            parameter required and raises instead.
-        maximum : int | None, optional
-            Optional inclusive upper bound.
-
-        Returns
-        -------
-        int
-            The validated positive integer.
-
-        Raises
-        ------
-        RAGRetrieverMissingParameterError
-            If the parameter is absent and no default was given.
-        RAGRetrieverCompositeValidationError
-            If the value is not a positive integer within the optional bound.
-        """
-        if key not in self.params:
-            if default is None:
-                raise RAGRetrieverMissingParameterError(
-                    f"'{key}' is required to build an LLM-evaluated retriever."
-                )
-            value = default
-        else:
-            value = self.params.pop(key)
-        if (
-            isinstance(value, bool)
-            or not isinstance(value, int)
-            or value < 1
-            or (maximum is not None and value > maximum)
-        ):
-            bounds = ">= 1" if maximum is None else f"between 1 and {maximum}"
-            raise RAGRetrieverCompositeValidationError(
-                f"'{key}' must be an integer {bounds}, got {value!r}."
-            )
-        return value
-
-    def _pop_required(self, key: str) -> Any:
-        """Pop a required parameter from ``self.params`` without defaulting.
-
-        Parameters
-        ----------
-        key : str
-            Parameter name.
-
-        Returns
-        -------
-        Any
-            The parameter value.
-
-        Raises
-        ------
-        RAGRetrieverMissingParameterError
-            If the parameter is absent or ``None``.
-        """
-        if self.params.get(key) is None:
-            raise RAGRetrieverMissingParameterError(
-                f"'{key}' is required to build an LLM-evaluated retriever; no "
-                "default is assumed."
-            )
-        return self.params.pop(key)
 
     def _delegate(
         self, child: Any, query: str, top_k: int | None
@@ -284,11 +248,69 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
             return child.retrieve(query)
         return child.retrieve(query, top_k=top_k)
 
-    @staticmethod
-    def _apply_verdict_actions(pool: RetrievalPool, verdict: RetrievalVerdict) -> None:
-        """Apply a verdict's discard then request actions to the pool."""
-        pool.discard(verdict.discard)
-        pool.request(verdict.request_chunks)
+    def _prepare_insufficient_verdict(
+        self,
+        pool: RetrievalPool,
+        verdict: RetrievalVerdict,
+    ) -> RetrievalPool:
+        """Apply an insufficient verdict transactionally and validate capacity.
+
+        The actions are applied to an isolated clone, so a rejected decision
+        never mutates the real pool. Any invalid chunk reference, missing
+        capacity for the requested retrievers, requested chunk that does not fit
+        the cap, or empty-refill-less decision raises
+        :class:`RAGRetrieverEvaluationError`; the caller runs this inside the
+        evaluation retry loop.
+
+        Parameters
+        ----------
+        pool : RetrievalPool
+            The real pool to clone and leave untouched on failure.
+        verdict : RetrievalVerdict
+            The finalized insufficient verdict.
+
+        Returns
+        -------
+        RetrievalPool
+            The cloned and validated pool to use for the next round.
+
+        Raises
+        ------
+        RAGRetrieverEvaluationError
+            If the decision is invalid or cannot make progress.
+        """
+        candidate = pool.clone()
+        drops = candidate.discard(verdict.discard_specific_chunks)
+        drops.extend(candidate.request(verdict.request_specific_chunks))
+        if drops:
+            raise RAGRetrieverEvaluationError(
+                "Invalid chunk references in the decision: "
+                + "; ".join(cap_errors(drops))
+            )
+        if verdict.call_retrievers and candidate.size() >= self.max_chunks:
+            raise RAGRetrieverEvaluationError(
+                "The decision leaves no capacity to consult the requested "
+                f"retrievers: the pool already holds {candidate.size()} of "
+                f"{self.max_chunks} chunks."
+            )
+        materialized = candidate.materialized_keys()
+        for document_id, positions in verdict.request_specific_chunks.items():
+            for position in positions:
+                if (document_id, position) not in materialized:
+                    raise RAGRetrieverEvaluationError(
+                        "The decision requests more chunks than the maximum pool "
+                        f"capacity ({self.max_chunks}); requested chunk "
+                        f"{document_id}_{position} does not fit."
+                    )
+        if (
+            candidate.size() == 0
+            and not verdict.call_retrievers
+            and not verdict.request_specific_chunks
+        ):
+            raise RAGRetrieverEvaluationError(
+                "The decision leaves the pool empty and requests no retriever or chunk."
+            )
+        return candidate
 
     def _report_verdict_progress(self, verdict: RetrievalVerdict) -> None:
         """Report a verdict's optional narrative on the retrieving channel.
@@ -352,9 +374,17 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
             )
 
     def _evaluate(
-        self, query: str, pool: RetrievalPool, context: RetrievalContext
+        self,
+        query: str,
+        pool: RetrievalPool,
+        context: RetrievalContext,
+        *,
+        round_number: int,
+        max_rounds: int,
+        require_retriever_call: bool = False,
+        apply_verdict: Callable[[RetrievalVerdict], None] | None = None,
     ) -> RetrievalVerdict:
-        """Delegate the prompt rendering and model call to the evaluator.
+        """Delegate the prompt rendering, model call and application to the evaluator.
 
         Parameters
         ----------
@@ -364,11 +394,22 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
             The currently accumulated chunk pool.
         context : RetrievalContext
             Document and corpus knowledge for the prompt.
+        round_number : int
+            The 1-based evaluation round number.
+        max_rounds : int
+            The maximum number of evaluation rounds.
+        require_retriever_call : bool, optional
+            Require an insufficient verdict with at least one valid retriever
+            call (ensemble planning).
+        apply_verdict : Callable[[RetrievalVerdict], None] | None, optional
+            Transactional application callback run inside the retry loop. It must
+            raise :class:`RAGRetrieverEvaluationError` for any decision that
+            cannot be applied.
 
         Returns
         -------
         RetrievalVerdict
-            The validated verdict.
+            The validated, finalized and successfully applied verdict.
         """
         chunks = pool.materialize()
         return self._evaluator.evaluate(
@@ -378,7 +419,122 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
             top_k=self.max_chunks,
             children=self.get_children(),
             context=context,
+            round_number=round_number,
+            max_rounds=max_rounds,
+            require_retriever_call=require_retriever_call,
+            apply_verdict=apply_verdict,
         )
+
+    def _evaluate_with_pool(
+        self,
+        query: str,
+        pool: RetrievalPool,
+        context: RetrievalContext,
+        *,
+        round_number: int,
+        max_rounds: int,
+        require_retriever_call: bool = False,
+    ) -> Tuple[RetrievalVerdict, RetrievalPool | None]:
+        """Evaluate a round and transactionally prepare the insufficient pool.
+
+        Parameters
+        ----------
+        query : str
+            The user query under evaluation.
+        pool : RetrievalPool
+            The current real pool; it is never mutated by a failed attempt.
+        context : RetrievalContext
+            Document and corpus knowledge for the prompt.
+        round_number : int
+            The 1-based evaluation round number.
+        max_rounds : int
+            The maximum number of evaluation rounds.
+        require_retriever_call : bool, optional
+            Require an insufficient verdict with at least one valid retriever
+            call (ensemble planning).
+
+        Returns
+        -------
+        Tuple[RetrievalVerdict, RetrievalPool | None]
+            The successful verdict and the prepared clone for an insufficient
+            verdict, or ``None`` for a sufficient verdict.
+
+        Raises
+        ------
+        RAGRetrieverEvaluationError
+            If the decision stays unusable after the retry budget, or an
+            insufficient verdict produced no applied pool.
+        """
+        prepared: List[RetrievalPool] = []
+
+        def apply(verdict: RetrievalVerdict) -> None:
+            """Apply an insufficient verdict to an isolated clone."""
+            if verdict.sufficient:
+                return
+            prepared.append(self._prepare_insufficient_verdict(pool, verdict))
+
+        verdict = self._evaluate(
+            query,
+            pool,
+            context,
+            round_number=round_number,
+            max_rounds=max_rounds,
+            require_retriever_call=require_retriever_call,
+            apply_verdict=apply,
+        )
+        if verdict.sufficient:
+            return verdict, None
+        if not prepared:
+            raise RAGRetrieverEvaluationError(
+                "An insufficient verdict did not produce an applied pool."
+            )
+        return verdict, prepared[0]
+
+    @staticmethod
+    def _record_verdict(entry: Dict[str, Any], verdict: RetrievalVerdict) -> None:
+        """Record a finalized verdict's proposal and application state.
+
+        Parameters
+        ----------
+        entry : Dict[str, Any]
+            The JSON-serializable round summary.
+        verdict : RetrievalVerdict
+            The successfully finalized verdict.
+
+        Returns
+        -------
+        None
+            The action maps stay visible even for a sufficient verdict, while
+            ``applied`` records that they were not applied.
+        """
+        entry[_ENTRY_VERDICT_KEY] = verdict.sufficient
+        entry[CALL_RETRIEVERS_KEY] = dict(verdict.call_retrievers)
+        entry[REQUEST_CHUNKS_KEY] = dict(verdict.request_specific_chunks)
+        entry[DISCARD_KEY] = dict(verdict.discard_specific_chunks)
+        entry[DROPPED_OPERATIONS_KEY] = list(verdict.dropped_operations)
+        entry[_ENTRY_APPLIED_KEY] = not verdict.sufficient
+
+    def _emit_verdict(
+        self,
+        entry: Dict[str, Any],
+        verdict: RetrievalVerdict,
+    ) -> None:
+        """Report and record a finalized verdict's narrative.
+
+        Parameters
+        ----------
+        entry : Dict[str, Any]
+            The JSON-serializable round summary.
+        verdict : RetrievalVerdict
+            The successfully finalized verdict.
+
+        Returns
+        -------
+        None
+            Nothing is emitted when the verdict has no narrative.
+        """
+        self._report_verdict_progress(verdict)
+        self._record_round_narrative(entry, verdict)
 
     def _build_trace(
         self,

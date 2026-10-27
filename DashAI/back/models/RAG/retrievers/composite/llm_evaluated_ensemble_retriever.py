@@ -41,14 +41,6 @@ from DashAI.back.models.RAG.RAG_defaults import (
     default_retrieval_sufficiency_prompt,
     default_semantic_retriever,
 )
-from DashAI.back.models.RAG.retrievers.composite.evaluation_output import (
-    CALL_RETRIEVERS_KEY,
-    DISCARD_KEY,
-    REQUEST_CHUNKS_KEY,
-    SUFFICIENT_KEY,
-    require_planning_calls,
-    validate_call_indices,
-)
 from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_retriever import (
     LLMEvaluatedRetriever,
 )
@@ -56,6 +48,13 @@ from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
 )
 from DashAI.back.models.RAG.retrievers.composite.retrieval_pool import RetrievalPool
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    CALL_RETRIEVERS_KEY,
+    DISCARD_KEY,
+    DROPPED_OPERATIONS_KEY,
+    REQUEST_CHUNKS_KEY,
+    SUFFICIENT_KEY,
+)
 
 #: Prefix of the planning verdict's narrative keys in the trace round entry.
 _PLANNING_NARRATIVE_PREFIX = "planning_"
@@ -74,8 +73,8 @@ class LLMEvaluatedEnsembleRetrieverSchema(BaseSchema):
         llm_model: The text-to-text model that chooses children and judges.
             Defaults to the default RAG function-calling LLM; the value is
             fully modifiable.
-        function_call_max_trials: Maximum number of function-call attempts, the
-            first call included.
+        function_call_max_trials: Maximum number of evaluation attempts, the
+            first call included. Both routes are retried on an unusable verdict.
     """
 
     children: schema_field(
@@ -139,27 +138,24 @@ class LLMEvaluatedEnsembleRetrieverSchema(BaseSchema):
         int_field(ge=1, le=MAX_FUNCTION_CALL_TRIALS, strict=True),
         placeholder=DEFAULT_FUNCTION_CALL_MAX_TRIALS,
         description=MultilingualString(
-            en="Maximum number of function-call attempts, including the first."
-            " When the model returns an unusable call or unparseable JSON"
-            " arguments, the call is retried until this limit is reached."
-            " Only applies to models with function calling.",
-            es="Número máximo de intentos de llamada a funciones, incluido el"
-            " primero. Cuando el modelo devuelve una llamada inutilizable o"
-            " argumentos JSON no analizables, la llamada se reintenta hasta"
-            " alcanzar este límite. Solo se aplica a modelos con llamada a"
-            " funciones.",
-            pt="Número máximo de tentativas de chamada de função, incluindo a"
-            " primeira. Quando o modelo retorna uma chamada inutilizável ou"
-            " argumentos JSON não analisáveis, a chamada é repetida até atingir"
-            " esse limite. Aplica-se apenas a modelos com chamada de função.",
-            de="Maximale Anzahl von Funktionsaufrufversuchen, einschließlich des"
-            " ersten. Wenn das Modell einen unbrauchbaren Aufruf oder nicht"
-            " analysierbare JSON-Argumente liefert, wird der Aufruf bis zu"
-            " diesem Limit wiederholt. Gilt nur für Modelle mit"
-            " Funktionsaufrufen.",
-            zh="函数调用尝试的最大次数，包括首次调用。当模型返回不可用的调用"
-            "或无法解析的 JSON 参数时，会重试调用直到达到此限制。仅适用于"
-            "支持函数调用的模型。",
+            en="Maximum number of function-calling evaluation attempts,"
+            " including the first. When the verdict is unusable or has no valid"
+            " operation left, the evaluation is retried until this limit is"
+            " reached.",
+            es="Número máximo de intentos de evaluación mediante llamada a"
+            " funciones, incluido el primero. Cuando el veredicto es inutilizable"
+            " o no queda ninguna operación válida, la evaluación se reintenta"
+            " hasta alcanzar este límite.",
+            pt="Número máximo de tentativas de avaliação por chamada de função,"
+            " incluindo a primeira. Quando o veredicto é inutilizável ou não resta"
+            " nenhuma operação válida, a avaliação é repetida até atingir esse"
+            " limite.",
+            de="Maximale Anzahl von Bewertungsversuchen über Funktionsaufrufe,"
+            " einschließlich des ersten. Wenn das Urteil unbrauchbar ist oder keine"
+            " gültige Operation übrig bleibt, wird die Bewertung bis zu diesem"
+            " Limit wiederholt.",
+            zh="通过函数调用进行评估的最大尝试次数，包括首次尝试。当判定不可用或没有剩余"
+            "有效操作时，会重试评估直到达到此限制。",
         ),
         alias=MultilingualString(
             en="Function call max trials",
@@ -244,12 +240,23 @@ class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
     EXPECTED_FUNCTION: ClassVar[str] = "evaluate_retrieval_sufficiency"
     FUNCTION_DESCRIPTION: ClassVar[str] = (
         "Decide whether the retrieved chunks are sufficient to answer the user "
-        "message. Use call_retrievers with 1-based retriever indices mapped to "
-        "the number of chunks to retrieve from that retriever next (indices "
-        "range from 1 to the number of retrievers). Use request_chunks and "
-        "discard to include or exclude specific chunk positions by document id. "
-        "Requested and discarded chunks persist across rounds and can override "
-        "each other (the last action wins)."
+        "message. Calling retrievers is not mandatory every round: when the "
+        "pool suffices, set sufficient to true and omit all actions; when it "
+        "does not, request chunks, call retrievers, or both. "
+        "request_specific_chunks adds specific chunks to the pool even if no "
+        "retriever returned them, discard_specific_chunks removes them, the two "
+        "are mutually exclusive for the same chunk, and every chunk not "
+        "mentioned is preserved. call_retrievers maps 1-based retriever indices "
+        "(1 to the number of retrievers) to the number of chunks to retrieve "
+        "next. Respect the maximum pool size and the remaining free slots. The "
+        "per-retriever top_k is a size hint; the retriever enforces the hard pool "
+        "cap. Every retriever index and chunk position must be valid, never "
+        "request and discard the same chunk, leave free capacity when calling "
+        "retrievers, and do not leave the pool empty without a retriever call or "
+        "chunk request. Chunks not mentioned stay in the pool exactly as they "
+        "are, except when the maximum capacity forces out older non-requested "
+        "chunks; requested chunks take priority. Invalid decisions are rejected "
+        "and must be retried."
     )
     FUNCTION_PARAMETERS: ClassVar[Dict[str, Any]] = {
         "type": "object",
@@ -257,15 +264,17 @@ class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
             SUFFICIENT_KEY: {
                 "type": "boolean",
                 "description": (
-                    "Whether the retrieved chunks suffice to answer the user message."
+                    "Whether the retrieved chunks suffice to answer the user "
+                    "message. When true, omit all actions."
                 ),
             },
             CALL_RETRIEVERS_KEY: {
                 "type": "object",
                 "additionalProperties": {"type": "integer", "minimum": 1},
                 "description": (
-                    "When insufficient, maps 1-based retriever indices to the "
-                    "number of chunks to retrieve from them next."
+                    "Optional when insufficient: maps 1-based retriever indices "
+                    "(1 to the number of retrievers) to the number of chunks to "
+                    "retrieve from them next. Not required every round."
                 ),
             },
             REQUEST_CHUNKS_KEY: {
@@ -275,8 +284,9 @@ class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
                     "items": {"type": "integer", "minimum": 0},
                 },
                 "description": (
-                    "Maps document ids to chunk positions to include in the pool "
-                    "even if no retriever returned them."
+                    "Maps document ids to chunk positions to add to the pool "
+                    "even if no retriever returned them. Mutually exclusive with "
+                    f"'{DISCARD_KEY}' for the same chunk."
                 ),
             },
             DISCARD_KEY: {
@@ -286,8 +296,9 @@ class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
                     "items": {"type": "integer", "minimum": 0},
                 },
                 "description": (
-                    "Maps document ids to chunk positions to exclude from the "
-                    "pool even if a retriever returns them."
+                    "Maps document ids to chunk positions to remove from the "
+                    "pool even if a retriever returned them. Mutually exclusive "
+                    f"with '{REQUEST_CHUNKS_KEY}' for the same chunk."
                 ),
             },
             RAG_PROGRESS_MESSAGE_KEY: {
@@ -328,23 +339,32 @@ class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
         Raises
         ------
         RAGRetrieverEvaluationError
-            If a verdict is malformed, requests no retriever while planning, or
-            names an out-of-range retriever index.
+            If a verdict stays unusable after retries, or planning keeps
+            returning no valid retriever call. Any invalid retriever index, chunk
+            reference, contradictory action, capacity violation or
+            empty-refill-less decision rejects the whole verdict and is retried.
         """
         context = RetrievalContext.from_retriever(self)
         pool = RetrievalPool(self.max_chunks, context)
         child_nodes: List[Dict[str, Any]] = []
         rounds: List[Dict[str, Any]] = []
 
-        planning = self._evaluate(query, pool, context)
-        self._apply_verdict_actions(pool, planning)
-        calls = require_planning_calls(planning, len(self._children))
-        if pool.size() >= self.max_chunks:
+        planning, prepared = self._evaluate_with_pool(
+            query,
+            pool,
+            context,
+            round_number=1,
+            max_rounds=self.max_iters,
+            require_retriever_call=True,
+        )
+        if prepared is None:
             raise RAGRetrieverEvaluationError(
-                "The planning chunk actions left no capacity to consult the "
-                f"requested retrievers: the pool already holds {pool.size()} "
-                f"of {self.max_chunks} chunks."
+                "The planning evaluation did not produce an applied pool."
             )
+        pool = prepared
+        planning_drops = list(planning.dropped_operations)
+        # The evaluator already guarantees a valid planning retriever call.
+        calls = planning.call_retrievers
         self._report_verdict_progress(planning)
 
         for round_index in range(self.max_iters):
@@ -353,42 +373,68 @@ class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
             if calls and remaining > 0:
                 call_entries, nodes = self._consult(query, calls, pool, remaining)
                 child_nodes.extend(nodes)
-            entry: Dict[str, Any] = {
-                "round": round_index + 1,
-                "calls": call_entries,
-                "verdict": None,
-                "call_retrievers": {},
-                "request_chunks": {},
-                "discard": {},
-            }
+            entry = self._build_entry(round_index, call_entries)
             if round_index == 0:
                 self._record_round_narrative(
                     entry, planning, key_prefix=_PLANNING_NARRATIVE_PREFIX
+                )
+                entry[f"{_PLANNING_NARRATIVE_PREFIX}{DROPPED_OPERATIONS_KEY}"] = (
+                    planning_drops
                 )
             rounds.append(entry)
 
             if round_index == self.max_iters - 1:
                 break
 
-            verdict = self._evaluate(query, pool, context)
-            calls = validate_call_indices(verdict.call_retrievers, len(self._children))
-            entry["verdict"] = verdict.sufficient
-            entry["call_retrievers"] = dict(verdict.call_retrievers)
-            entry["request_chunks"] = dict(verdict.request_chunks)
-            entry["discard"] = dict(verdict.discard)
+            verdict, prepared = self._evaluate_with_pool(
+                query,
+                pool,
+                context,
+                round_number=round_index + 2,
+                max_rounds=self.max_iters,
+            )
+            calls = verdict.call_retrievers
+            self._record_verdict(entry, verdict)
             if verdict.sufficient:
-                # A sufficient verdict is terminal: chunk actions are not
-                # applied and unknown positions are never resolved. Report the
-                # verdict's narrative before leaving the loop.
-                self._report_verdict_progress(verdict)
-                self._record_round_narrative(entry, verdict)
+                self._emit_verdict(entry, verdict)
                 break
-            self._apply_verdict_actions(pool, verdict)
-            self._report_verdict_progress(verdict)
-            self._record_round_narrative(entry, verdict)
+            if prepared is None:
+                raise RAGRetrieverEvaluationError(
+                    "An insufficient verdict did not produce an applied pool."
+                )
+            pool = prepared
+            self._emit_verdict(entry, verdict)
 
         pool_chunks = pool.materialize()
         return pool_chunks, self._build_trace(pool_chunks, child_nodes, rounds)
+
+    def _build_entry(
+        self,
+        round_index: int,
+        call_entries: List[Dict[str, Any]],
+    ) -> Dict[str, Any]:
+        """Build the trace entry for one ensemble round.
+
+        Parameters
+        ----------
+        round_index : int
+            Zero-based round index.
+        call_entries : List[Dict[str, Any]]
+            Per-child consultation summaries for this round.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A JSON-serializable round summary with the action maps initialized.
+        """
+        return {
+            "round": round_index + 1,
+            "calls": call_entries,
+            "verdict": None,
+            CALL_RETRIEVERS_KEY: {},
+            REQUEST_CHUNKS_KEY: {},
+            DISCARD_KEY: {},
+        }
 
     def _consult(
         self,
@@ -469,10 +515,10 @@ class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
             for cid, distance in child.score_chunks(chunk_ids, query):
                 accumulator[cid].append(distance)
 
-        merged = [
-            (cid, sum(distances) / len(distances))
-            for cid, distances in accumulator.items()
-            if distances
-        ]
+        merged: List[Tuple[int, float]] = []
+        for cid, distances in accumulator.items():
+            if not distances:
+                continue
+            merged.append((cid, sum(distances) / len(distances)))
         merged.sort(key=lambda pair: pair[1])
         return merged

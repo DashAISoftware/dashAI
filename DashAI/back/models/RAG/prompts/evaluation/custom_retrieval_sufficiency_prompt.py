@@ -27,10 +27,6 @@ class CustomRetrievalSufficiencyPrompt(RetrievalSufficiencyPrompt):
                 "document_id, position and text; a preformatted string is kept "
                 "verbatim."
             ),
-            "{children_catalog}": (
-                "Optional alias for the retriever catalog; the whole line "
-                "disappears when it is not provided."
-            ),
             "{pool_size}": (
                 "Optional candidate pool size; the whole line disappears when "
                 "it is not provided."

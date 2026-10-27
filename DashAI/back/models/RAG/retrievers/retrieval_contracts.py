@@ -24,6 +24,18 @@ SCHEMA_CLASS = "class"
 SCHEMA_PARAMS = "params"
 SCHEMA_CHILDREN = "children"
 
+#: Canonical retrieval-evaluation verdict field names.
+SUFFICIENT_KEY = "sufficient"
+CALL_RETRIEVERS_KEY = "call_retrievers"
+REQUEST_CHUNKS_KEY = "request_specific_chunks"
+DISCARD_KEY = "discard_specific_chunks"
+
+#: Canonical LLM filter selection field name.
+SELECTED_CHUNKS_KEY = "selected_chunks"
+
+#: Key carrying the human-readable operations dropped while evaluating.
+DROPPED_OPERATIONS_KEY = "dropped_operations"
+
 
 class ChunkPayload(TypedDict):
     """One chunk as shown to the evaluation prompt."""
