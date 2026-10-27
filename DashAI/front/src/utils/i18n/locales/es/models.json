@@ -32,7 +32,8 @@
     "selectAll": "Seleccionar todos",
     "selectNone": "Ninguno",
     "chooseFile": "Elegir archivo",
-    "gotIt": "Entendido"
+    "gotIt": "Entendido",
+    "goToPlugins": "Ir a Plugins"
   },
   "error": {
     "exportModel": "No se pudo exportar el modelo",
@@ -329,6 +330,19 @@
     "importingSession": "Importando sesión...",
     "importingSessionHelp": "Puede tardar un poco si la sesión trae modelos entrenados.",
     "sessionImportedTitle": "Sesión importada"
+  },
+  "importError": {
+    "invalidFile": "Este archivo no es una sesión de dashAI válida.",
+    "wrongKind": "Este archivo es un modelo exportado, no una sesión. Elige un archivo de sesión .dashai.",
+    "newerFormat": "Este archivo se creó con una versión más nueva de dashAI. Actualiza dashAI para importarlo.",
+    "missingPlugin": "Esta sesión necesita el plugin {{plugin}}. Instálalo desde el módulo de Plugins y vuelve a importar la sesión.",
+    "missingPluginVersion": "Esta sesión necesita el plugin {{plugin}} (versión {{version}}). Instálalo desde el módulo de Plugins y vuelve a importar la sesión.",
+    "missingPluginPrivate": "Esta sesión necesita el plugin {{plugin}}, que no está publicado en el catálogo de Plugins. Pídeselo a quien te compartió la sesión, instálalo y vuelve a importarla.",
+    "missingPluginPrivateVersion": "Esta sesión necesita el plugin {{plugin}} (versión {{version}}), que no está publicado en el catálogo de Plugins. Pídeselo a quien te compartió la sesión, instálalo y vuelve a importarla.",
+    "missingPluginUnchecked": "Esta sesión necesita el plugin {{plugin}}. dashAI no pudo revisar el catálogo de Plugins. Si el plugin es público, instálalo desde ahí; si no, pídeselo a quien te compartió la sesión.",
+    "missingPluginUncheckedVersion": "Esta sesión necesita el plugin {{plugin}} (versión {{version}}). dashAI no pudo revisar el catálogo de Plugins. Si el plugin es público, instálalo desde ahí; si no, pídeselo a quien te compartió la sesión.",
+    "missingComponent": "Esta sesión usa \"{{component}}\", que no está disponible en este dashAI. Probablemente viene de un plugin: instálalo desde el módulo de Plugins y vuelve a importar la sesión.",
+    "unsafeFile": "Este archivo tiene contenido que se escribiría fuera de su carpeta, así que no se importó."
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",

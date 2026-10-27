@@ -32,7 +32,8 @@
     "selectAll": "Select all",
     "selectNone": "None",
     "chooseFile": "Choose file",
-    "gotIt": "Got it"
+    "gotIt": "Got it",
+    "goToPlugins": "Go to Plugins"
   },
   "error": {
     "exportModel": "Could not export the model",
@@ -323,6 +324,19 @@
     "importingSession": "Importing session...",
     "importingSessionHelp": "This can take a while if the session includes trained models.",
     "sessionImportedTitle": "Session imported"
+  },
+  "importError": {
+    "invalidFile": "This file is not a valid dashAI session.",
+    "wrongKind": "This file is an exported model, not a session. Choose a .dashai session file.",
+    "newerFormat": "This file was created with a newer version of dashAI. Update dashAI to import it.",
+    "missingPlugin": "This session needs the plugin {{plugin}}. Install it from the Plugins module and import the session again.",
+    "missingPluginVersion": "This session needs the plugin {{plugin}} (version {{version}}). Install it from the Plugins module and import the session again.",
+    "missingPluginPrivate": "This session needs the plugin {{plugin}}, which is not published in the Plugins catalog. Ask whoever shared the session for it, install it and import the session again.",
+    "missingPluginPrivateVersion": "This session needs the plugin {{plugin}} (version {{version}}), which is not published in the Plugins catalog. Ask whoever shared the session for it, install it and import the session again.",
+    "missingPluginUnchecked": "This session needs the plugin {{plugin}}. dashAI could not check the Plugins catalog. If the plugin is public, install it from there; if not, ask whoever shared the session for it.",
+    "missingPluginUncheckedVersion": "This session needs the plugin {{plugin}} (version {{version}}). dashAI could not check the Plugins catalog. If the plugin is public, install it from there; if not, ask whoever shared the session for it.",
+    "missingComponent": "This session uses \"{{component}}\", which is not available in this dashAI. It probably comes from a plugin: install it from the Plugins module and import the session again.",
+    "unsafeFile": "This file has content that would be written outside its folder, so it was not imported."
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

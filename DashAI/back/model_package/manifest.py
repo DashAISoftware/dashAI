@@ -29,19 +29,46 @@ TRACKED_LIBRARIES = ("scikit-learn", "torch", "transformers")
 
 
 class ModelPackageError(Exception):
-    """A file cannot be used as a DashAI model package."""
+    """A file cannot be used as a DashAI model package.
+
+    Besides its English message, every error carries a ``code`` and the
+    ``params`` that message was built from, so the app can show it in the
+    user's language instead of the English text.
+    """
+
+    code = "invalid_file"
+
+    def __init__(self, message: str = "", **params: Any):
+        super().__init__(message)
+        self.params = params
 
 
 class WrongPackageKindError(ModelPackageError):
     """The file is a DashAI file of another kind (a session, not a model)."""
 
+    code = "wrong_kind"
+
 
 class UnsupportedPackageFormatError(ModelPackageError):
     """The package was written by a newer DashAI than the installed one."""
 
+    code = "newer_format"
+
 
 class MissingPluginError(ModelPackageError):
     """The package needs a plugin distribution that is not installed."""
+
+    code = "missing_plugin"
+
+
+class MissingComponentError(MissingPluginError):
+    """The file uses a component this DashAI does not have.
+
+    Unlike ``MissingPluginError``, the plugin that provides it is unknown:
+    only the component's name is recorded.
+    """
+
+    code = "missing_component"
 
 
 def installed_version(distribution: str) -> Optional[str]:
@@ -113,14 +140,18 @@ def check_manifest(
     found = manifest.get("kind", KIND_MODEL)
     if found != kind:
         raise WrongPackageKindError(
-            f"This file is a DashAI {found} file, not a {kind} file."
+            f"This file is a DashAI {found} file, not a {kind} file.",
+            found=found,
+            expected=kind,
         )
 
     version = manifest.get("format_version")
     if not isinstance(version, int) or version > format_version:
         raise UnsupportedPackageFormatError(
             f"This file uses format {version!r}, which is newer than the one "
-            f"this DashAI reads ({format_version}). Update DashAI to load it."
+            f"this DashAI reads ({format_version}). Update DashAI to load it.",
+            version=version,
+            supported=format_version,
         )
 
     for plugin in manifest.get("plugins", []):
@@ -130,7 +161,9 @@ def check_manifest(
                 requirement += f"=={plugin['version']}"
             raise MissingPluginError(
                 f"This file needs the plugin '{plugin['name']}'. "
-                f"Install it with: pip install {requirement}"
+                f"Install it with: pip install {requirement}",
+                plugin=plugin["name"],
+                version=plugin.get("version"),
             )
 
     for name, expected in manifest.get("versions", {}).items():
