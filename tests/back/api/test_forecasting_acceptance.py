@@ -85,8 +85,12 @@ def _upload(client: TestClient, frame: pd.DataFrame, directory: Path, name: str)
                     "dataloader": "CSVDataLoader",
                     "separator": ",",
                     "inferred_types": {
-                        "date": {"type": "Date", "dtype": "%Y-%m-%d"},
-                        "sales": {"type": "Float", "dtype": "float64"},
+                        column: (
+                            {"type": "Date", "dtype": "%Y-%m-%d"}
+                            if column == "date"
+                            else {"type": "Float", "dtype": "float64"}
+                        )
+                        for column in frame.columns
                     },
                 },
                 "file_path": path,
@@ -255,7 +259,6 @@ def test_a_model_gives_nested_prediction_intervals(name):
 # --------------------------------------------------------------------------- #
 
 
-@pending("slice 5: the concrete task is registered and nothing names the family")
 def test_nothing_registered_names_the_forecasting_family(client):
     registry = client.app.container["component_registry"]
 
@@ -298,19 +301,22 @@ def test_a_series_too_short_for_its_cuts_is_refused(client, tmp_path):
 
 @pending("slice 6b: a forecasting session takes no preprocessing until PR 5")
 def test_a_forecasting_session_with_preprocessing_is_refused(client, tmp_path):
-    dataset_id = _upload(client, _monthly(), tmp_path, "acc-preprocessing")
+    # The step scales a column outside every role, so neither an unregistered
+    # task nor a protected role is what refuses it: only the rule that a
+    # forecasting session takes no preprocessing yet.
+    frame = _monthly().assign(promo=np.arange(48, dtype=float))
+    dataset_id = _upload(client, frame, tmp_path, "acc-preprocessing")
     step = {
         "converter": "StandardScaler",
         "params": {},
-        "scope": [{"kind": "raw", "name": "sales"}],
+        "scope": [{"kind": "raw", "name": "promo"}],
     }
     body = _session_body(dataset_id, strategy=CV, splits=ROLLING, preprocessing=[step])
 
     response = client.post("/api/v1/model-session/", json=body)
 
-    # The status alone would also be the 422 of an unregistered task.
     assert response.status_code == 422
-    assert "preprocessing" in response.text
+    assert "takes no preprocessing" in response.text
 
 
 # --------------------------------------------------------------------------- #

@@ -86,3 +86,6 @@ class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
 
     COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     SCORED_SPLITS: tuple = (SplitEnum.VALIDATION, SplitEnum.TEST)
+    # A holdout is a backtest with one origin, so both forecasting strategies
+    # run the same units: ModelJob dispatches them on this one KIND.
+    KIND = "backtest"

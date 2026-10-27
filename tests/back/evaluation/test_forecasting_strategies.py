@@ -71,10 +71,15 @@ def test_the_ordinary_strategies_no_longer_serve_forecasting():
 def test_each_strategy_declares_the_shape_of_its_splits():
     # The frontend renders holdout controls or fold controls from this rather
     # than from the strategy's class name, which it used to compare against.
-    assert ForecastingHoldoutEvaluationStrategy.get_metadata()["kind"] == "holdout"
     assert HoldoutEvaluationStrategy.get_metadata()["kind"] == "holdout"
-    assert ForecastingCrossValidationEvaluationStrategy.get_metadata()["kind"] == "cv"
     assert CrossValidationEvaluationStrategy.get_metadata()["kind"] == "cv"
+
+
+@pytest.mark.parametrize("strategy", FORECASTING_STRATEGIES)
+def test_both_forecasting_strategies_run_the_one_backtest(strategy):
+    # A holdout is a backtest with one origin: one KIND for both strategies,
+    # which differ only in their label and their splitter.
+    assert strategy.get_metadata()["kind"] == "backtest"
 
 
 # --- which partitions get scored ---------------------------------------------

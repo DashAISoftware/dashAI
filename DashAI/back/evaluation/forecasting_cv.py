@@ -61,3 +61,6 @@ class ForecastingCrossValidationEvaluationStrategy(FoldEvaluationStrategy):
 
     COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     SCORED_SPLITS: tuple = (SplitEnum.VALIDATION, SplitEnum.TEST)
+    # The same backtest as the forecasting holdout, with more than one origin:
+    # ModelJob dispatches both on this one KIND.
+    KIND = "backtest"

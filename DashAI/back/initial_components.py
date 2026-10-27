@@ -130,6 +130,12 @@ from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSourc
 
 # Evaluation Strategies
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
+from DashAI.back.evaluation.forecasting_cv import (
+    ForecastingCrossValidationEvaluationStrategy,
+)
+from DashAI.back.evaluation.forecasting_holdout import (
+    ForecastingHoldoutEvaluationStrategy,
+)
 from DashAI.back.evaluation.full_dataset import FullDatasetEvaluationStrategy
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 
@@ -260,6 +266,10 @@ from DashAI.back.models.efficientnet_b0_image_classifier import (
 # Models
 from DashAI.back.models.faiss.faiss_dbscan_clustering import FaissDBSCANClustering
 from DashAI.back.models.faiss.faiss_kmeans_clustering import FaissKMeansClustering
+from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
+from DashAI.back.models.forecasting.naive import NaiveForecaster
+from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
 from DashAI.back.models.hugging_face.bert_transformer import BertTransformer
 from DashAI.back.models.hugging_face.bertin_transformer import BertinTransformer
@@ -539,6 +549,9 @@ from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 # Tasks
 from DashAI.back.tasks.RAG_task import RAGTask
 from DashAI.back.tasks.regression_task import RegressionTask
+from DashAI.back.tasks.single_series_forecasting_task import (
+    SingleSeriesForecastingTask,
+)
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
@@ -629,7 +642,12 @@ def get_initial_components():
         RAGTask,
         ImageClassificationTask,
         ClusteringTask,
+        SingleSeriesForecastingTask,
         # Models
+        NaiveForecaster,
+        SeasonalNaiveForecaster,
+        ARIMA,
+        ExponentialSmoothing,
         FaissDBSCANClustering,
         FaissKMeansClustering,
         AdaBoostClassifier,
@@ -962,6 +980,8 @@ def get_initial_components():
         CrossValidationEvaluationStrategy,
         HoldoutEvaluationStrategy,
         FullDatasetEvaluationStrategy,
+        ForecastingHoldoutEvaluationStrategy,
+        ForecastingCrossValidationEvaluationStrategy,
         # Statistical tests
         AnovaTest,
         FriedmanTest,
