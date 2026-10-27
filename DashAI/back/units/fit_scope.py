@@ -156,6 +156,14 @@ def validation_during_fit_field():
     )
 
 
+def _undefined_goal(metric, where: str, undefined) -> JobError:
+    """The error of a goal metric that has no value on the data it scores."""
+    return JobError(
+        f"The optimization metric {metric.__name__} has no value on {where}: "
+        f"{undefined.reason} Choose another optimization metric."
+    )
+
+
 class ModelFitScopeMixin:
     """Everything around a fit that does not depend on how the data is shaped.
 
@@ -201,11 +209,23 @@ class ModelFitScopeMixin:
         try:
             return metric.score(expected, predictions)
         except UndefinedMetricError as undefined:
-            raise JobError(
-                f"The optimization metric {metric.__name__} has no value on "
-                f"{where}: {undefined.reason} Choose another optimization "
-                "metric."
-            ) from undefined
+            raise _undefined_goal(metric, where, undefined) from undefined
+
+    @staticmethod
+    def _goal_score_forecast(metric, forecast, where: str) -> float:
+        """``_goal_score`` for a forecast, scored through ``score_forecast``.
+
+        Raises
+        ------
+        JobError
+            If the metric raises ``UndefinedMetricError``.
+        """
+        from DashAI.back.metrics.undefined_metric import UndefinedMetricError
+
+        try:
+            return metric.score_forecast(forecast)
+        except UndefinedMetricError as undefined:
+            raise _undefined_goal(metric, where, undefined) from undefined
 
     def _resolve_search(self):
         """Resolve the optimizer and the goal metric, memoized on this unit.

@@ -15,11 +15,14 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
-from DashAI.back.splitters.splits_payload import normalize_splits_payload
+from DashAI.back.splitters.splits_payload import META_KEYS, normalize_splits_payload
 from DashAI.back.tasks.session_roles import SessionIO, session_io
+from DashAI.back.units.backtest_forecaster_unit import BacktestForecasterUnit
+from DashAI.back.units.build_forecaster_unit import BuildForecasterUnit
 from DashAI.back.units.build_model_unit import BuildModelUnit
 from DashAI.back.units.context import ExecutionContext
 from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
+from DashAI.back.units.fit_final_forecaster_unit import FitFinalForecasterUnit
 from DashAI.back.units.fit_model_over_folds_unit import FitModelOverFoldsUnit
 from DashAI.back.units.fit_model_over_nested_folds_unit import (
     FitModelOverNestedFoldsUnit,
@@ -29,9 +32,11 @@ from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
 from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
 from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
+from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
 from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 from DashAI.back.units.score_clusters_unit import ScoreClustersUnit
+from DashAI.back.units.score_forecasts_unit import ScoreForecastsUnit
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -143,16 +148,19 @@ class ModelJob(BaseJob):
 
                     LoadDatasetUnit(dataset_id=model_session.dataset_id)(ctx)
 
-                    build_model = BuildModelUnit(
-                        model={
-                            "component": run.model_name,
-                            "params": run.parameters,
-                        },
-                        train_metrics=model_session.train_metrics,
-                        validation_metrics=model_session.validation_metrics,
-                        test_metrics=model_session.test_metrics,
-                        run_id=run_id,
-                    )
+                    model = {"component": run.model_name, "params": run.parameters}
+                    if isinstance(prepare, PrepareSeriesUnit):
+                        # A forecaster is sized by its series' grid, and its
+                        # metrics are scored on the backtest's forecasts.
+                        build_model = BuildForecasterUnit(model=model, run_id=run_id)
+                    else:
+                        build_model = BuildModelUnit(
+                            model=model,
+                            train_metrics=model_session.train_metrics,
+                            validation_metrics=model_session.validation_metrics,
+                            test_metrics=model_session.test_metrics,
+                            run_id=run_id,
+                        )
                     # The download gate lives in validate(), and running it here
                     # keeps a model that cannot be trained from being reported
                     # as a preparation failure further down.
@@ -226,6 +234,30 @@ class ModelJob(BaseJob):
                         self._write_full_metrics(
                             db, run_id, ctx.require("metrics")["full"]
                         )
+                    elif kind == "backtest":
+                        BacktestForecasterUnit(
+                            optimizer={
+                                "component": run.optimizer_name,
+                                "params": run.optimizer_parameters,
+                            },
+                            goal_metric=run.goal_metric,
+                            run_id=run_id,
+                            artifact_prefix=str(run_id),
+                        )(ctx)
+                        plot_paths = ctx.require("plot_paths")
+                        run.parameters = ctx.require("best_parameters")
+                        flag_modified(run, "parameters")
+                        db.commit()
+
+                        self.report_progress(0.85, "Computing metrics")
+                        ScoreForecastsUnit(
+                            validation_metrics=model_session.validation_metrics,
+                            test_metrics=model_session.test_metrics,
+                        )(ctx)
+                        self._write_forecast_metrics(
+                            db, run_id, ctx.require("forecast_metrics")
+                        )
+                        FitFinalForecasterUnit()(ctx)
                     elif kind == "holdout":
                         fit_model = FitModelUnit(
                             optimizer={
@@ -366,6 +398,30 @@ class ModelJob(BaseJob):
             finally:
                 ctx.clear_cache()
                 gc.collect()
+
+    @staticmethod
+    def _write_forecast_metrics(db, run_id: int, rows: List[Dict[str, Any]]) -> None:
+        """Persist the metric rows a backtest's scoring produced.
+
+        The unit computes every row, the summaries included, and publishes
+        them as plain values; writing them is the job's, like every other row
+        this job persists.
+        """
+        db.add_all(
+            Metric(
+                run_id=run_id,
+                split=SplitEnum[row["split"]],
+                level=LevelEnum[row["level"]],
+                name=row["name"],
+                value=row["value"],
+                unavailable_reason=row["unavailable_reason"],
+                std_value=row["std_value"],
+                fold_index=row["fold_index"],
+                step=0,
+            )
+            for row in rows
+        )
+        db.commit()
 
     @staticmethod
     def _aggregate_fold_metrics(
@@ -525,12 +581,17 @@ class ModelJob(BaseJob):
         # to read: its unit prepares the features over every row. The session
         # API only pairs such a strategy with a task without a target, which is
         # what lets that unit leave the target out.
-        if getattr(evaluation_strategy_class, "KIND", "holdout") == "full":
+        kind = getattr(evaluation_strategy_class, "KIND", "holdout")
+        if kind == "full":
             prepare_unit = PrepareWithoutTargetUnit(
                 task_name=model_session.task_name,
                 input_columns=io.inputs,
                 standardise=True,
             )
+        elif kind == "backtest":
+            # A backtest recomputes its cuts from the session every time: they
+            # are steps of the prepared series, not rows a re-train reuses.
+            prepare_unit = self._series_unit(model_session, io)
         else:
             prepare_unit = self._partitioning_unit(
                 run, model_session, io, component_registry
@@ -560,6 +621,38 @@ class ModelJob(BaseJob):
             "optimizer": optimizer,
             "goal_metric": goal_metric,
         }
+
+    @staticmethod
+    def _series_unit(model_session: ModelSession, io: SessionIO):
+        """Build the unit that prepares a series and cuts it into origins.
+
+        Raises
+        ------
+        JobError
+            If the session's splits payload cannot be read.
+        """
+        import json
+
+        try:
+            splits_data = normalize_splits_payload(json.loads(model_session.splits))
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Can not load splits data from model session {model_session.id}",
+            ) from e
+        return PrepareSeriesUnit(
+            task_name=model_session.task_name,
+            input_columns=io.inputs,
+            output_columns=io.outputs,
+            splitter={
+                "component": splits_data.get("splitter_name"),
+                "params": {
+                    key: value
+                    for key, value in splits_data.items()
+                    if key not in META_KEYS
+                },
+            },
+        )
 
     @staticmethod
     def _partitioning_unit(

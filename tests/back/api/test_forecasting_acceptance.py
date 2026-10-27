@@ -1,7 +1,7 @@
 """Acceptance cases for the forecasting core, written before the rewrite.
 
-Each case states what the rewrite has to deliver, from FORECASTING §7 and the
-decisions in RECONCILING_FORECASTING §2.13. Every one is a strict ``xfail``
+Each case states what the rewrite has to deliver, from FORECASTING Â§7 and the
+decisions in RECONCILING_FORECASTING Â§2.13. Every one is a strict ``xfail``
 until the slice that delivers it, so a case that starts passing early fails
 the suite and its marker has to come off.
 
@@ -126,7 +126,7 @@ CV = "ForecastingCrossValidationEvaluationStrategy"
 HOLDOUT_STRATEGY = "ForecastingHoldoutEvaluationStrategy"
 
 
-def _train(client, session_id: int, model: str, params=None, goal_metric=""):
+def _create_run(client, session_id, model, params=None, goal_metric="", optimizer=""):
     response = client.post(
         "/api/v1/run/",
         json={
@@ -134,8 +134,12 @@ def _train(client, session_id: int, model: str, params=None, goal_metric=""):
             "model_name": model,
             "name": f"{model} acceptance",
             "parameters": params or {},
-            "optimizer_name": "",
-            "optimizer_parameters": {},
+            "optimizer_name": optimizer,
+            "optimizer_parameters": (
+                {"n_trials": 2, "sampler": "TPESampler", "pruner": "None"}
+                if optimizer
+                else {}
+            ),
             "plot_history_path": "",
             "plot_slice_path": "",
             "plot_contour_path": "",
@@ -146,7 +150,11 @@ def _train(client, session_id: int, model: str, params=None, goal_metric=""):
         },
     )
     assert response.status_code == 201, response.text
-    run_id = response.json()["id"]
+    return response.json()["id"]
+
+
+def _train(client, session_id: int, model: str, params=None, goal_metric=""):
+    run_id = _create_run(client, session_id, model, params, goal_metric)
     ModelJob(run_id=run_id).run()
     return run_id
 
@@ -321,7 +329,6 @@ def test_a_forecasting_session_with_preprocessing_is_refused(client, tmp_path):
 # --------------------------------------------------------------------------- #
 
 
-@pending("slice 6c: one backtest, scored per origin, h steps each")
 def test_rolling_origin_scores_every_origin_over_the_horizon(client, tmp_path):
     shuffled = _monthly().sample(frac=1.0, random_state=0).reset_index(drop=True)
     session_id = _session(client, tmp_path, shuffled)
@@ -346,7 +353,6 @@ def test_rolling_origin_scores_every_origin_over_the_horizon(client, tmp_path):
     assert sorted({row.fold_index for row in folds}) == [0, 1, 2]
 
 
-@pending("slice 6c: the holdout is a backtest with one origin")
 def test_holdout_scores_validation_and_test_over_the_same_horizon(client, tmp_path):
     session_id = _session(
         client, tmp_path, _monthly(), strategy=HOLDOUT_STRATEGY, splits=HOLDOUT
@@ -359,7 +365,6 @@ def test_holdout_scores_validation_and_test_over_the_same_horizon(client, tmp_pa
     assert cuts["test_origin"] == 45
 
 
-@pending("slice 6c: the season length defaults from the frequency")
 def test_the_season_length_defaults_to_twelve_on_a_monthly_series(client, tmp_path):
     from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 
@@ -371,7 +376,6 @@ def test_the_season_length_defaults_to_twelve_on_a_monthly_series(client, tmp_pa
     assert model.season_length == 12
 
 
-@pending("slice 6c: the kept model is fitted on the whole series")
 def test_the_kept_model_has_seen_the_whole_series(client, tmp_path):
     from DashAI.back.models.forecasting.naive import NaiveForecaster
 
@@ -384,7 +388,6 @@ def test_the_kept_model_has_seen_the_whole_series(client, tmp_path):
     assert model.predict(1).point[0] == pytest.approx(frame["sales"].iloc[-1])
 
 
-@pending("slice 6a and 6c: MAPE with a zero actual is unavailable, with a reason")
 def test_mape_on_a_series_with_a_zero_is_unavailable(client, tmp_path):
     session_id = _session(
         client, tmp_path, _monthly(zero_at=40), metrics=["MAE", "MAPE"]
@@ -397,13 +400,32 @@ def test_mape_on_a_series_with_a_zero_is_unavailable(client, tmp_path):
     assert "zero" in run["validation_metrics_unavailable"]["MAPE"]
 
 
-@pending("slice 6c: MAPE as the goal metric on a zero is a clear error")
 def test_mape_as_the_goal_metric_on_a_zero_fails_the_run(client, tmp_path):
+    from DashAI.back.job.base_job import JobError
+
     session_id = _session(
         client, tmp_path, _monthly(zero_at=40), metrics=["MAE", "MAPE"]
     )
+    # A search, so the goal metric is what the trials are measured by.
+    searched = {
+        "season_length": {
+            "optimize": True,
+            "fixed_value": 12,
+            "lower_bound": 2,
+            "upper_bound": 12,
+        }
+    }
+    run_id = _create_run(
+        client,
+        session_id,
+        "SeasonalNaiveForecaster",
+        searched,
+        goal_metric="MAPE",
+        optimizer="OptunaOptimizer",
+    )
 
-    run_id = _train(client, session_id, "NaiveForecaster", goal_metric="MAPE")
+    with pytest.raises(JobError, match="optimization metric MAPE has no value"):
+        ModelJob(run_id=run_id).run()
 
     assert _get(client, Run, run_id).status == RunStatus.ERROR
 

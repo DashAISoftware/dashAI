@@ -568,6 +568,8 @@ from DashAI.back.units.apply_dataset_schema_unit import ApplyDatasetSchemaUnit
 from DashAI.back.units.apply_session_preprocessing_unit import (
     ApplySessionPreprocessingUnit,
 )
+from DashAI.back.units.backtest_forecaster_unit import BacktestForecasterUnit
+from DashAI.back.units.build_forecaster_unit import BuildForecasterUnit
 from DashAI.back.units.build_global_explainer_unit import BuildGlobalExplainerUnit
 from DashAI.back.units.build_local_explainer_unit import BuildLocalExplainerUnit
 from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
@@ -578,6 +580,7 @@ from DashAI.back.units.evaluate_model_to_artifact_unit import (
 )
 from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
 from DashAI.back.units.fit_converter_unit import FitConverterUnit
+from DashAI.back.units.fit_final_forecaster_unit import FitFinalForecasterUnit
 from DashAI.back.units.fit_model_over_folds_unit import FitModelOverFoldsUnit
 from DashAI.back.units.fit_model_over_nested_folds_unit import (
     FitModelOverNestedFoldsUnit,
@@ -602,6 +605,7 @@ from DashAI.back.units.predict_unit import PredictUnit
 from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
 from DashAI.back.units.prepare_explanation_data_unit import PrepareExplanationDataUnit
+from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
 from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
 from DashAI.back.units.run_exploration_unit import RunExplorationUnit
 from DashAI.back.units.save_dataset_to_path_unit import SaveDatasetToPathUnit
@@ -611,6 +615,7 @@ from DashAI.back.units.save_exploration_unit import SaveExplorationUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 from DashAI.back.units.save_prediction_unit import SavePredictionUnit
 from DashAI.back.units.score_clusters_unit import ScoreClustersUnit
+from DashAI.back.units.score_forecasts_unit import ScoreForecastsUnit
 from DashAI.back.units.store_datafile_document_source_unit import (
     StoreDatafileDocumentSourceUnit,
 )
@@ -823,6 +828,11 @@ def get_initial_components():
         FitModelUnit,
         FitWithoutTargetUnit,
         ScoreClustersUnit,
+        PrepareSeriesUnit,
+        BuildForecasterUnit,
+        BacktestForecasterUnit,
+        ScoreForecastsUnit,
+        FitFinalForecasterUnit,
         FitModelOverFoldsUnit,
         FitModelOverNestedFoldsUnit,
         EvaluateModelUnit,

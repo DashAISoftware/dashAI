@@ -6,43 +6,20 @@ from DashAI.back.evaluation.holdout import SinglePartitionEvaluationStrategy
 
 
 class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
-    """Holdout evaluation that records no in-sample metrics.
+    """A backtest with one validation origin, then the test.
 
-    One thing the ordinary holdout strategy assumes is wrong for a forecaster,
-    and it is a decision about evaluation rather than about any model.
+    Pair it with ``TemporalHoldoutSplitter``. The model is fitted on the steps
+    before the validation window and scored on its ``horizon`` steps, then
+    refitted on everything before the test and scored on the last ``horizon``
+    steps. Validation and test measure the same horizon, so the two columns of
+    the results compare like with like.
 
-    **The training partition is not scored.** Scoring it would mean asking the
-    model about dates it was fitted on. That is an in-sample fit statistic,
-    which is a real diagnostic but is not comparable with a forecast made
-    several steps out; showing the two side by side in one results table
-    invites exactly that comparison. Only validation and test are recorded.
-
-    **The kept model is fitted on the training partition alone**, like every
-    other holdout run, and nothing is fed to it afterwards. Two approaches that
-    would have changed that were tried and dropped, both because they hand the
-    model data from a partition it was meant to be held out from:
-
-        refitting through validation before scoring test, which overwrote the
-        fit the validation metrics came from, so the saved model could not
-        reproduce its own results table;
-
-        advancing the model through the observed validation rows at predict
-        time, which re-estimates nothing but still lets a held out partition
-        reach the model, which no other task in DashAI does.
-
-    So the two columns describe different horizons, and deliberately:
-
-        validation metrics  <- forecasting 1..len(val) past the fit
-        test metrics        <- forecasting len(val)+1..len(val)+len(test),
-                               its own forecasts standing in for validation
-
-    The test column is therefore the harder question, not the same one further
-    along. Comparing like with like over a chosen horizon is what
-    ``RollingOriginSplitter`` is for, since its ``horizon`` says outright how
-    many steps ahead each refit is scored on.
-
-    Hyperparameter search is untouched. Its trials are scored on validation, so
-    they must not be fitted on it.
+    It runs the same units as the rolling origin (``KIND = "backtest"``): a
+    holdout is a backtest with one origin. The training steps are never
+    scored, since a forecaster asked about steps it was fitted on reports a
+    fit, not a forecast. A search measures its trials on validation only. The
+    kept model is fitted on the whole series, and the metrics are the
+    backtest's (RECONCILING_FORECASTING §2.13).
     """
 
     DESCRIPTION = MultilingualString(

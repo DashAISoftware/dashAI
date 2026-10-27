@@ -65,6 +65,12 @@ class SingleSeriesForecastingModel(BaseModel):
     EXOGENOUS: str = EXOGENOUS_NONE
     SUPPORTS_INTERVALS: bool = False
 
+    #: The grid of the series a kept model was fitted on, as
+    #: ``TimeGrid.to_ref`` gives it: its frequency and its last date turn the
+    #: steps of a forecast into dates. The final fit of a run sets it; the
+    #: model never reads it.
+    time_grid = None
+
     def __init__(self, **kwargs):
         """Initialise the forecaster with no history."""
         super().__init__(**kwargs)
