@@ -31,6 +31,7 @@ from DashAI.back.services.RAG.retriever_setup_service import (
     RetrieverSetupResult,
     RetrieverSetupService,
 )
+from DashAI.back.services.RAG.utils import build_parameters_hash
 
 if TYPE_CHECKING:
     from DashAI.back.models.RAG.transformation.base_query_transformation import (
@@ -166,6 +167,12 @@ class SetupService:
         )
 
         report(0.45, "Building the retriever")
+        chunking_key = build_parameters_hash(
+            {
+                "component": config.chunking_model.component,
+                "params": config.chunking_model.params,
+            }
+        )
         retriever_service = RetrieverSetupService(
             self._db,
             self._registry,
@@ -173,7 +180,8 @@ class SetupService:
             chunking_result.chunks,
             chunk_set.id,
             pipeline_id,
-            documents,
+            chunking_key,
+            documents=documents,
         )
         retriever_result = retriever_service.setup(
             config.retriever_model.component,

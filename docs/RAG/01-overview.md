@@ -41,7 +41,9 @@ User query
 │     • TokenChunkModel        — token-aware splitting     │
 │     • RecursiveCharacterChunk — separator-priority split │
 │   Chunks are persisted to the DB and cached by SHA-256   │
-│   signature for reuse within the session.                │
+│   signature for reuse within the session. Fitted state   │
+│   (sparse matrices, embedding matrices) is content-      │
+│   addressed and reused across sessions.                  │
 └──────────────────────────────────────────────────────────┘
      │
      ▼
@@ -199,6 +201,71 @@ capped at `10`), the maximum number of evaluation attempts including the first.
 An unusable verdict with no valid operation left is retried on **both** the
 function-calling and text routes until the limit is reached, then the stage
 fails loudly.
+
+#### Retrieve then expand
+
+Every retriever schema inherits two fields from `RetrievalExpansionSchema`
+(`DashAI/back/models/RAG/retrievers/retrieval_expansion.py`):
+`enable_retrieve_then_expand` (default `false`) and `expand_window` (default
+`3`, accepted range `1..32`). When enabled, the retriever keeps its retrieval
+and — in a composite — its merge/re-rank untouched and widens only its **final**
+output: each plain retrieved chunk is replaced by a window of `expand_window`
+stored chunks centred on it. Odd values are centred exactly on the retrieved
+chunk; even values keep the extra chunk after it; the window start is clamped to
+the document so a document with enough chunks always yields a full window. The
+window is resolved in document-position space, so a chunker whose positions are
+not `0..n-1` never drags in chunks from outside the window. Both fields are
+strictly validated (`bool` and real `int`), in the schema *and* in the retriever
+constructor, because composites are built without schema validation.
+
+Windows that overlap are merged into one unit whose text concatenates the
+covered chunks; the unit keeps the `id`, `page` and `document_position` of its
+first covered chunk and records every covered position in
+`Chunk.source_positions`, so the trace references the window's first
+`"<document_id>_<document_position>"` key. A chunk that already carries
+`source_positions` — one that a child retriever expanded — is a **fixed** window:
+it is never widened again, but it is merged with every unit it overlaps, so a
+mix of plain and expanded chunks collapses correctly. A *plain* chunk whose
+position is covered by an expanded unit is absorbed by it instead of being
+repeated next to it, which is what keeps `merge_expanded_chunks` free of
+duplicated text.
+
+Expansion runs one last time over the merged results of all queries in
+`RAGPipeline.multi_query_retrieval` (`BaseRetriever.merge_expanded_chunks`),
+because two queries can return overlapping expanded windows that share no chunk
+key and would otherwise repeat text in the prompt. The overlap merge also runs
+in a composite whose own flag is off, so expanded children never hand
+overlapping units to a nested re-ranker; only the widening step is gated by the
+option. When two units share an anchor position, the one covering more chunks
+wins, in the pipeline merge and in `ParallelRetriever`.
+
+The options are **post-processing only**, so they are excluded from every
+identity: the content-addressed sparse folder, the retriever table's natural key,
+the index-status "already fitted" check, the cleanup decision and the preset
+match all ignore them (recursively, children included). Toggling expansion
+therefore reuses the existing index instead of re-embedding or re-fitting it, and
+a legacy session without the fields still matches its preset. Retriever rows
+written before this separation still store the old option keys inside their
+parameters, so such a session may re-fit once after the upgrade; no migration is
+performed. The context budget does account for the options: a capped retriever
+is priced with the widest window in its subtree, and a composite without a cap
+sums its expansion-aware children.
+
+Two sessions indexing the same documents the same way also share the *fitted*
+state: `services/RAG/utils.build_corpus_content_hash` hashes the corpus content
+(document ids, chunk positions and chunk text hashes — never chunk database ids)
+and the sparse folder and embedding-matrix folder names are derived from it plus
+the chunking configuration and the parameters that shape them. `chunk_set_id`
+and `session_id` are not part of those paths, so the second session loads the
+first one's sparse matrix (rebound to its own chunk ids) and its
+`embeddings.npy` instead of recomputing them. Cleanup deletes such a folder only
+when the last row referencing it goes away.
+
+Note that an expanded unit's `id` identifies its **first** covered chunk. When a
+re-ranker (cross-encoder, MMR, sequential cascade) receives expanded candidates,
+its per-chunk scoring therefore applies to that first chunk. **Recommended:**
+enable expansion on the outermost retriever only — re-ranking then works on real
+chunks and expansion stays final.
 
 ### Model Type Classification
 

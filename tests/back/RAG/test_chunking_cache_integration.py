@@ -243,6 +243,7 @@ def test_second_document_set_builds_similarity_matrix(client: TestClient):
                 result_a.chunks,
                 chunk_set_a.id,
                 pipeline_a.id,
+                "test-chunking",
             )
             res_a = svc_a.setup("DenseEmbeddingRetriever", DENSE_PARAMS)
             assert res_a.model.similarity_matrix is not None, (
@@ -258,6 +259,7 @@ def test_second_document_set_builds_similarity_matrix(client: TestClient):
                 result_b.chunks,
                 chunk_set_b.id,
                 pipeline_b.id,
+                "test-chunking",
             )
             res_b = svc_b.setup("DenseEmbeddingRetriever", DENSE_PARAMS)
 
