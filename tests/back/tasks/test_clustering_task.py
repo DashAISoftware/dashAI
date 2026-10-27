@@ -56,9 +56,9 @@ def test_the_metadata_sent_to_the_frontend_says_there_is_no_target():
 def test_clustering_declares_no_output_columns():
     metadata = ClusteringTask.get_metadata()
 
-    assert metadata["outputs_cardinality"] == 0
-    assert metadata["outputs_types"] == []
-    assert metadata["inputs_cardinality"] == "n"
+    assert metadata["io_roles"] == {"inputs": ["features"], "outputs": []}
+    assert [role["name"] for role in metadata["column_roles"]] == ["features"]
+    assert ClusteringTask.inputs_cardinality() == "n"
 
 
 def test_clustering_is_an_unsupervised_task():

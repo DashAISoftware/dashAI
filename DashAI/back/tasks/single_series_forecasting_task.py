@@ -118,6 +118,11 @@ class SingleSeriesForecastingTask(ForecastingTask):
     # the metric: ``RegressionMetric`` names only ``RegressionTask``.
     COMPATIBLE_COMPONENTS = ["MAE", "RMSE"]
 
+    # A trained model forecasts a number of steps past the end of its series;
+    # there are no rows to hand it. A kind of forecasting whose dates are not
+    # on a grid could predict otherwise, so this is the concrete task's to say.
+    PREDICTION_MODE = "horizon"
+
     @classmethod
     def io_roles(cls) -> Dict[str, List[str]]:
         """The time index feeds a model's inputs and the series its outputs."""
@@ -235,47 +240,3 @@ class SingleSeriesForecastingTask(ForecastingTask):
         return PreparedSeries(
             dataset=prepared, values=np.asarray(values, dtype=float), grid=grid
         )
-
-    # ``process_predictions`` and ``num_labels`` serve the x/y units, which
-    # still train and predict this task until the backtest and the horizon
-    # prediction replace them (RECONCILING_FORECASTING §5). They go then.
-
-    def process_predictions(
-        self, dataset: "DashAIDataset", predictions: "ndarray", output_column: str
-    ):
-        """Return the forecast values unchanged.
-
-        Parameters
-        ----------
-        dataset : DashAIDataset
-            Dataset used for training.
-        predictions : np.ndarray
-            Predictions from the model.
-        output_column : str
-            Output column.
-
-        Returns
-        -------
-        np.ndarray
-            The predictions as they were produced. A forecast is already a
-            number on the scale of the series, so there is nothing to decode.
-        """
-        return predictions
-
-    def num_labels(self, dataset: "DashAIDataset", output_column: str) -> int | None:
-        """Report that this task has no labels.
-
-        Parameters
-        ----------
-        dataset : DashAIDataset
-            Dataset used for training.
-        output_column : str
-            Output column.
-
-        Returns
-        -------
-        int | None
-            Always ``None``: the output is continuous, so there is no class
-            count for a model to size itself against.
-        """
-        return None

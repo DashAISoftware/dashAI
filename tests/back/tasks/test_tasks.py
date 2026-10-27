@@ -135,13 +135,16 @@ def test_get_tabular_class_task_metadata():
     tabular_class_task = TabularClassificationTask()
     metadata = tabular_class_task.get_metadata()
 
-    # The flat view, column_roles, io_roles and requires_target.
-    assert len(metadata.keys()) == 7
+    # column_roles, io_roles, prediction_mode and requires_target: the flat
+    # view of the x/y short form is no longer emitted.
+    assert set(metadata) == {
+        "column_roles",
+        "io_roles",
+        "prediction_mode",
+        "requires_target",
+    }
+    assert metadata["prediction_mode"] == "rows"
     assert metadata["io_roles"] == {"inputs": ["features"], "outputs": ["target"]}
-    assert metadata["inputs_types"] == ["Float", "Integer", "Categorical"]
-    assert metadata["outputs_types"] == ["Categorical"]
-    assert metadata["inputs_cardinality"] == "n"
-    assert metadata["outputs_cardinality"] == 1
     assert [
         (role["name"], role["types"], role["min"], role["max"])
         for role in metadata["column_roles"]
@@ -206,13 +209,16 @@ def test_get_text_class_task_metadata():
     text_class_task = TextClassificationTask()
     metadata = text_class_task.get_metadata()
 
-    # The flat view, column_roles, io_roles and requires_target.
-    assert len(metadata.keys()) == 7
+    # column_roles, io_roles, prediction_mode and requires_target: the flat
+    # view of the x/y short form is no longer emitted.
+    assert set(metadata) == {
+        "column_roles",
+        "io_roles",
+        "prediction_mode",
+        "requires_target",
+    }
+    assert metadata["prediction_mode"] == "rows"
     assert metadata["io_roles"] == {"inputs": ["features"], "outputs": ["target"]}
-    assert metadata["inputs_types"] == ["Text"]
-    assert metadata["outputs_types"] == ["Categorical"]
-    assert metadata["inputs_cardinality"] == 1
-    assert metadata["outputs_cardinality"] == 1
     assert [
         (role["name"], role["types"], role["min"], role["max"])
         for role in metadata["column_roles"]
@@ -274,13 +280,16 @@ def test_get_translation_task_metadata():
     translation_task = TranslationTask()
     metadata = translation_task.get_metadata()
 
-    # The flat view, column_roles, io_roles and requires_target.
-    assert len(metadata.keys()) == 7
+    # column_roles, io_roles, prediction_mode and requires_target: the flat
+    # view of the x/y short form is no longer emitted.
+    assert set(metadata) == {
+        "column_roles",
+        "io_roles",
+        "prediction_mode",
+        "requires_target",
+    }
+    assert metadata["prediction_mode"] == "rows"
     assert metadata["io_roles"] == {"inputs": ["features"], "outputs": ["target"]}
-    assert metadata["inputs_types"] == ["Text"]
-    assert metadata["outputs_types"] == ["Text"]
-    assert metadata["inputs_cardinality"] == 1
-    assert metadata["outputs_cardinality"] == 1
     assert [
         (role["name"], role["types"], role["min"], role["max"])
         for role in metadata["column_roles"]

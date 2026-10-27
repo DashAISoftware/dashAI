@@ -463,7 +463,6 @@ def test_the_forecasts_of_every_origin_can_be_read(client, tmp_path):
 # --------------------------------------------------------------------------- #
 
 
-@pending("slice 7: a forecasting task predicts by horizon, not by rows")
 def test_the_task_declares_it_predicts_by_horizon(client):
     registry = client.app.container["component_registry"]
 
@@ -471,7 +470,6 @@ def test_the_task_declares_it_predicts_by_horizon(client):
     assert registry["RegressionTask"]["metadata"]["prediction_mode"] == "rows"
 
 
-@pending("slice 7: no partition of a forecasting run is offered for prediction")
 def test_no_partition_of_a_forecasting_run_is_predictable(client, tmp_path):
     session_id = _session(client, tmp_path, _monthly())
     run_id = _train(client, session_id, "NaiveForecaster")
@@ -479,7 +477,7 @@ def test_no_partition_of_a_forecasting_run_is_predictable(client, tmp_path):
     response = client.get(f"/api/v1/predict/splits/{run_id}")
 
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json()["splits"] == []
 
 
 # --------------------------------------------------------------------------- #

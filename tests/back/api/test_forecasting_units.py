@@ -298,3 +298,36 @@ def test_a_prefix_that_leaves_the_runs_directory_is_refused(prefix):
 
     with pytest.raises(JobError, match="artifact prefix"):
         SaveForecastsUnit(artifact_prefix=prefix)(_context(forecasts={}))
+
+
+# --- ForecastHorizonUnit -----------------------------------------------------
+
+
+def test_the_horizon_is_dated_after_the_kept_models_last_step():
+    from DashAI.back.units.forecast_horizon_unit import ForecastHorizonUnit
+
+    ctx = _backtested()
+    FitFinalForecasterUnit()(ctx)
+    ctx.put_ref(
+        "train_dataset_types",
+        {"date": {"type": "Date", "dtype": "date32", "format": "%Y-%m-%d"}},
+    )
+
+    ForecastHorizonUnit(horizon=2, input_columns=["date"])(ctx)
+
+    assert list(ctx.require("dataset").to_pandas()["date"]) == [
+        "2022-01-01",
+        "2022-02-01",
+    ]
+    assert list(ctx.require("y_pred")) == pytest.approx([24.0, 24.0])
+
+
+def test_a_model_without_a_grid_cannot_date_its_forecast():
+    from DashAI.back.models.forecasting.naive import NaiveForecaster
+    from DashAI.back.units.forecast_horizon_unit import ForecastHorizonUnit
+
+    ctx = _context(model=NaiveForecaster().fit(SERIES))
+    ctx.put_ref("train_dataset_types", {})
+
+    with pytest.raises(JobError, match="no grid to name the dates"):
+        ForecastHorizonUnit(horizon=2, input_columns=["date"])(ctx)

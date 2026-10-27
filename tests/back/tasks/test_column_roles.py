@@ -167,8 +167,8 @@ def test_declared_roles_win_over_the_short_form():
         "series",
         "extra",
     ]
-    assert metadata["inputs_types"] == ["Float", "Integer"]
-    assert metadata["outputs_types"] == ["Float", "Integer"]
+    assert metadata["prediction_mode"] == "rows"
+    assert "inputs_types" not in metadata
 
 
 def test_a_task_that_declares_nothing_says_what_to_declare():
@@ -540,11 +540,11 @@ def test_the_single_series_task_validates_what_its_short_form_did(dataset):
 
 
 @pytest.mark.parametrize("task", TASKS, ids=lambda t: t.__name__)
-def test_the_flat_metadata_is_what_it_was_before_roles(task):
-    metadata = task.get_metadata()
-    old = _old_flat_metadata(task)
-
-    assert {key: metadata[key] for key in old} == old
+def test_the_input_cardinality_is_what_the_flat_metadata_said(task):
+    # The flat view is no longer emitted. What still reads it, the check on a
+    # manual prediction's columns, reads the same value from the roles.
+    assert task.inputs_cardinality() == _old_flat_metadata(task)["inputs_cardinality"]
+    assert "inputs_types" not in task.get_metadata()
 
 
 def test_the_supervised_base_needs_no_declaration_of_its_own():

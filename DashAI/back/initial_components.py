@@ -587,6 +587,7 @@ from DashAI.back.units.fit_model_over_nested_folds_unit import (
 )
 from DashAI.back.units.fit_model_unit import FitModelUnit
 from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
+from DashAI.back.units.forecast_horizon_unit import ForecastHorizonUnit
 from DashAI.back.units.generate_global_explanation_unit import (
     GenerateGlobalExplanationUnit,
 )
@@ -835,6 +836,7 @@ def get_initial_components():
         ScoreForecastsUnit,
         FitFinalForecasterUnit,
         SaveForecastsUnit,
+        ForecastHorizonUnit,
         FitModelOverFoldsUnit,
         FitModelOverNestedFoldsUnit,
         EvaluateModelUnit,

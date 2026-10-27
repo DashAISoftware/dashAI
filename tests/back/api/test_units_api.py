@@ -18,6 +18,7 @@ EXPECTED_UNITS = {
     "ScoreForecastsUnit",
     "FitFinalForecasterUnit",
     "SaveForecastsUnit",
+    "ForecastHorizonUnit",
     "FitModelOverFoldsUnit",
     "FitModelOverNestedFoldsUnit",
     "EvaluateModelUnit",

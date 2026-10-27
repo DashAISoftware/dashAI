@@ -80,23 +80,11 @@ def test_two_output_columns_are_rejected():
         )
 
 
-def test_it_reports_no_labels():
-    dataset = _dataset(date=DATES, sales=[1.0, 2.0, 3.0, 4.0])
-
-    assert SingleSeriesForecastingTask().num_labels(dataset, "sales") is None
-
-
-def test_predictions_pass_through_unchanged():
-    import numpy as np
-
-    dataset = _dataset(date=DATES, sales=[1.0, 2.0, 3.0, 4.0])
-    predictions = np.array([1.5, 2.5])
-
-    processed = SingleSeriesForecastingTask().process_predictions(
-        dataset, predictions, "sales"
-    )
-
-    assert list(processed) == [1.5, 2.5]
+def test_it_has_no_labels_to_count_nor_predictions_to_decode():
+    # Those serve the x/y units, which never train nor predict a series: the
+    # backtest and the prediction by horizon read the values directly.
+    assert not hasattr(SingleSeriesForecastingTask, "num_labels")
+    assert not hasattr(SingleSeriesForecastingTask, "process_predictions")
 
 
 def test_the_metadata_the_frontend_reads():
@@ -107,10 +95,10 @@ def test_the_metadata_the_frontend_reads():
         "series",
     ]
     assert metadata["io_roles"] == {"inputs": ["time_index"], "outputs": ["series"]}
-    assert metadata["inputs_types"] == ["Date"]
-    assert set(metadata["outputs_types"]) == {"Float", "Integer"}
-    assert metadata["inputs_cardinality"] == 1
-    assert metadata["outputs_cardinality"] == 1
+    assert metadata["prediction_mode"] == "horizon"
+    # The flat view of the x/y short form is not emitted any more.
+    assert "inputs_types" not in metadata
+    assert SingleSeriesForecastingTask.inputs_cardinality() == 1
 
 
 def test_the_family_only_says_it_forecasts_forward():
