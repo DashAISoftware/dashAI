@@ -73,12 +73,49 @@ export function getDocumentTitle(info, docId, t) {
 }
 
 /**
- * Builds the human label for a resolved chunk ("Chunk N" or "Chunk N, page P").
+ * Returns the covered document positions of an expanded unit, if any.
+ * @param {object} [info] - A resolved reference entry.
+ * @returns {number[]|null} Sorted, de-duplicated positions, or null.
+ */
+export function getSourcePositions(info) {
+  const raw = info?.source_positions;
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const positions = [...new Set(raw)].filter((position) =>
+    Number.isFinite(position),
+  );
+  if (positions.length === 0) return null;
+  return positions.sort((a, b) => a - b);
+}
+
+/**
+ * Builds the human label for a resolved chunk ("Chunk N" / "Chunks 3–5").
  * @param {object} info - A resolved reference entry.
  * @param {Function} t - i18n translate function.
  * @returns {string} The translated chunk label.
  */
 export function resolveChunkLabel(info, t) {
+  const positions = getSourcePositions(info);
+  if (positions && positions.length > 1) {
+    const first = positions[0];
+    const last = positions[positions.length - 1];
+    const contiguous = positions.length === last - first + 1;
+    if (!contiguous) {
+      const args = { positions: positions.join(", ") };
+      return info.page != null
+        ? t("traceChunks.chunkListLabelWithPage", {
+            ...args,
+            page: info.page,
+          })
+        : t("traceChunks.chunkListLabel", args);
+    }
+    return info.page != null
+      ? t("traceChunks.chunkRangeLabelWithPage", {
+          first,
+          last,
+          page: info.page,
+        })
+      : t("traceChunks.chunkRangeLabel", { first, last });
+  }
   if (info.page != null) {
     return t("traceChunks.chunkLabelWithPage", {
       position: info.document_position,
@@ -86,6 +123,35 @@ export function resolveChunkLabel(info, t) {
     });
   }
   return t("traceChunks.chunkLabel", { position: info.document_position });
+}
+
+/**
+ * Counts the stored chunks a list of references covers, counting an expanded
+ * unit as its whole window and a stored chunk as one.
+ * @param {Array<object>} [chunks] - Reference entries.
+ * @returns {number} The number of covered stored chunks.
+ */
+export function countCoveredChunks(chunks) {
+  return asArray(chunks).reduce((total, chunk) => {
+    const positions = getSourcePositions(chunk);
+    return total + (positions ? positions.length : 1);
+  }, 0);
+}
+
+/**
+ * Describes a group of references as units, or as units plus covered chunks
+ * when retrieve-then-expand widened them.
+ * @param {Array<object>} [chunks] - Reference entries.
+ * @param {Function} t - i18n translate function.
+ * @returns {string} The translated count label.
+ */
+export function describeChunkCount(chunks, t) {
+  const units = asArray(chunks).length;
+  const covered = countCoveredChunks(chunks);
+  if (covered === units) {
+    return t("traceChunks.chunksLabel", { count: units });
+  }
+  return t("traceChunks.unitsAndChunksLabel", { units, chunks: covered });
 }
 
 /**

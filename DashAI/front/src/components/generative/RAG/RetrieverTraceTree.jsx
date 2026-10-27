@@ -10,7 +10,12 @@ import {
   renderSchemaSummaryText,
   resolveRetrieverSchemaSummary,
 } from "./schemaSummary";
-import { asArray, isPlainObject, resolveChunkLabel } from "./traceUtils";
+import {
+  asArray,
+  describeChunkCount,
+  isPlainObject,
+  resolveChunkLabel,
+} from "./traceUtils";
 
 // Base horizontal unit (px) for the tree indentation, mirroring the geometry
 // used by CompositeRetrieverBuilder: a card at depth d is indented d*INDENT px
@@ -322,7 +327,10 @@ function RetrieverTraceTree({
             )}
           </Box>
           <Typography variant="caption" color="text.secondary">
-            {t("traceChunks.chunksLabel", { count: chunks.length })}
+            {describeChunkCount(
+              chunks.map((chunkRef) => resolveChunkInfo(references, chunkRef)),
+              t,
+            )}
           </Typography>
         </Box>
       </Box>
