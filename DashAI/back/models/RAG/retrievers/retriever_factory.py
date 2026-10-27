@@ -19,6 +19,7 @@ from DashAI.back.models.RAG.exceptions import (
 )
 from DashAI.back.models.RAG.exceptions.retriever import RAGRetrieverEvaluationError
 from DashAI.back.models.RAG.llm_factory import LLMFactory
+from DashAI.back.models.RAG.prompts.base_prompt import BasePrompt
 from DashAI.back.models.RAG.prompts.evaluation import RetrievalSufficiencyPrompt
 from DashAI.back.models.RAG.prompts.prompt_factory import PromptFactory
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
@@ -86,8 +87,11 @@ def _resolve_llm(
 
 
 def _resolve_prompt(
-    component: str, params: dict[str, Any], registry: ComponentRegistry
-) -> RetrievalSufficiencyPrompt:
+    component: str,
+    params: dict[str, Any],
+    registry: ComponentRegistry,
+    prompt_base: type = RetrievalSufficiencyPrompt,
+) -> BasePrompt:
     """Instantiate a nested ``prompt`` reference and type-check it.
 
     Parameters
@@ -98,22 +102,27 @@ def _resolve_prompt(
         Prompt constructor parameters.
     registry : ComponentRegistry
         Application component registry.
+    prompt_base : type, optional
+        Required prompt family. Defaults to
+        :class:`RetrievalSufficiencyPrompt`; a retriever that declares
+        ``EVALUATION_PROMPT_BASE`` (for example the LLM filter retriever) is
+        checked against its own family instead.
 
     Returns
     -------
-    RetrievalSufficiencyPrompt
+    BasePrompt
         The instantiated prompt.
 
     Raises
     ------
     RAGRetrieverEvaluationError
-        If the resolved object is not a retrieval-sufficiency prompt.
+        If the resolved object is not a prompt of the required family.
     """
     model = PromptFactory(registry).create(component, params).model
-    if not isinstance(model, RetrievalSufficiencyPrompt):
+    if not isinstance(model, prompt_base):
         raise RAGRetrieverEvaluationError(
             f"Component '{component}' for '{_PROMPT_KEY}' must be a "
-            "RetrievalSufficiencyPrompt."
+            f"{prompt_base.__name__}."
         )
     return model
 
@@ -151,6 +160,9 @@ def resolve_component_params(
         A new params mapping with resolved component instances.
     """
     resolved = dict(params)
+    prompt_base = getattr(
+        model_class, "EVALUATION_PROMPT_BASE", RetrievalSufficiencyPrompt
+    )
     for key in getattr(model_class, "COMPONENT_PARAMS", ()):
         value = resolved.get(key)
         if not _is_component_ref(value):
@@ -160,7 +172,9 @@ def resolve_component_params(
         if key == _LLM_MODEL_KEY:
             resolved[key] = _resolve_llm(component, sub_params, registry, llm_resolver)
         elif key == _PROMPT_KEY:
-            resolved[key] = _resolve_prompt(component, sub_params, registry)
+            resolved[key] = _resolve_prompt(
+                component, sub_params, registry, prompt_base
+            )
     return resolved
 
 

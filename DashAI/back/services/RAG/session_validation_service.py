@@ -45,7 +45,7 @@ from DashAI.back.services.RAG.query_transformation_validation import (
     QueryTransformationValidationService,
 )
 from DashAI.back.services.RAG.retriever_evaluation_validation import (
-    DEFAULT_SUFFICIENCY_PROMPT_NAMES,
+    DEFAULT_LLM_PROMPT_NAMES,
     LLM_EVALUATED_RETRIEVER_NAMES,
     RetrieverEvaluationValidationService,
 )
@@ -397,12 +397,13 @@ class SessionValidationService:
         generation pair (``DefaultRAGGenerationPrompt`` /
         ``DefaultQARAGGenerationPrompt``), the transformation trio
         (``DefaultQueryRewritingPrompt`` / ``DefaultQueryExpansionPrompt`` /
-        ``DefaultQueryDecompositionPrompt``) or the sufficiency prompt
-        (``DefaultRetrievalSufficiencyPrompt``) — with a language-only
-        ``{"language": ...}`` body: the template is injected from the
-        component's ``metadata["templates"]`` *before* validation and written
-        back into ``normalized`` so the session stores the resolved template.
-        No other component may rely on backend-provided defaults.
+        ``DefaultQueryDecompositionPrompt``) or an LLM-evaluated prompt
+        (``DefaultRetrievalSufficiencyPrompt`` / ``DefaultLLMFilterPrompt``) —
+        with a language-only ``{"language": ...}`` body: the template is
+        injected from the component's ``metadata["templates"]`` *before*
+        validation and written back into ``normalized`` so the session stores
+        the resolved template. No other component may rely on backend-provided
+        defaults.
 
         Parameters
         ----------
@@ -433,7 +434,7 @@ class SessionValidationService:
             is_default_prompt = (
                 name in DEFAULT_PROMPT_NAMES
                 or name in DEFAULT_TRANSFORMATION_PROMPT_NAMES
-                or name in DEFAULT_SUFFICIENCY_PROMPT_NAMES
+                or name in DEFAULT_LLM_PROMPT_NAMES
             )
             if is_default_prompt and not (
                 isinstance(template, str) and template.strip()

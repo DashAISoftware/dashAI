@@ -88,6 +88,27 @@ class RetrievalPool:
         for chunk in chunks:
             self._remember(chunk)
 
+    def clone(self) -> "RetrievalPool":
+        """Return an isolated copy of the pool.
+
+        The clone shares only the immutable chunk instances and the retrieval
+        context. Every mutable container is copied, including each inner
+        requested batch, so a failed verdict attempt can be applied to the
+        clone without mutating the real pool.
+
+        Returns
+        -------
+        RetrievalPool
+            A clone with the same cap, context and chunks as the source.
+        """
+        clone = RetrievalPool(self._max_chunks, self._context)
+        clone._order = list(self._order)
+        clone._chunks = dict(self._chunks)
+        clone._requested = set(self._requested)
+        clone._requested_batches = [list(batch) for batch in self._requested_batches]
+        clone._discarded = set(self._discarded)
+        return clone
+
     def _resolve(self, document_id: int, position: int) -> Chunk | None:
         """Return a chunk from the pool or the corpus.
 
@@ -112,9 +133,9 @@ class RetrievalPool:
     def request(self, mapping: Dict[int, List[int]]) -> List[str]:
         """Include explicitly requested chunks in the pool.
 
-        Unknown positions are skipped instead of aborting the whole request: the
-        model may hallucinate a position, but the valid operations must still be
-        applied. The invalid ones are reported as drop messages.
+        Unknown positions do not mutate the pool for those entries; they are
+        returned as drop messages so a transactional caller can reject the whole
+        decision.
 
         Parameters
         ----------
@@ -150,9 +171,9 @@ class RetrievalPool:
     def discard(self, mapping: Dict[int, List[int]]) -> List[str]:
         """Exclude discarded chunks from the pool (last state wins).
 
-        Unknown positions are skipped instead of aborting the whole discard: the
-        model may hallucinate a position, but the valid operations must still be
-        applied. The invalid ones are reported as drop messages.
+        Unknown positions do not mutate the pool for those entries; they are
+        returned as drop messages so a transactional caller can reject the whole
+        decision.
 
         Parameters
         ----------
@@ -207,6 +228,16 @@ class RetrievalPool:
                 continue
             ordered.append(self._chunks[key])
         return ordered[: self._max_chunks]
+
+    def materialized_keys(self) -> Set[ChunkKey]:
+        """Return the keys of the chunks ``materialize()`` would return.
+
+        Returns
+        -------
+        Set[ChunkKey]
+            The identity keys of the ordered, capped pool.
+        """
+        return {self._key(chunk) for chunk in self.materialize()}
 
     def size(self) -> int:
         """Return the number of chunks ``materialize()`` would yield.

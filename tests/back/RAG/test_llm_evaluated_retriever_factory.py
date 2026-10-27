@@ -14,6 +14,7 @@ import copy
 import uuid
 from typing import Any, Dict, List, Tuple
 
+import pytest
 from fastapi.testclient import TestClient
 
 from DashAI.back.core.schema_fields import (
@@ -29,10 +30,16 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.lazy_llm import LazyLLM
 from DashAI.back.models.RAG.documents import Chunk, RAGDocument
+from DashAI.back.models.RAG.exceptions import RAGRetrieverEvaluationError
 from DashAI.back.models.RAG.prompts.evaluation import (
     CustomRetrievalSufficiencyPrompt,
+    DefaultLLMFilterPrompt,
     DefaultRetrievalSufficiencyPrompt,
+    LLMFilterPrompt,
     RetrievalSufficiencyPrompt,
+)
+from DashAI.back.models.RAG.prompts.evaluation.default_llm_filter_prompt import (
+    TEMPLATES as FILTER_TEMPLATES,
 )
 from DashAI.back.models.RAG.prompts.evaluation.default_retrieval_sufficiency_prompt import (  # noqa: E501
     TEMPLATES as SUFFICIENCY_TEMPLATES,
@@ -46,6 +53,9 @@ from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever i
 from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_ensemble_retriever import (  # noqa: E501
     LLMEvaluatedEnsembleRetriever,
 )
+from DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever import (
+    LLMFilterRetriever,
+)
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
 )
@@ -53,6 +63,7 @@ from DashAI.back.models.RAG.retrievers.retriever_factory import RetrieverFactory
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 from DashAI.back.models.text_to_text_generation_model import (
+    FunctionCallResult,
     TextToTextGenerationTaskModel,
 )
 from DashAI.back.services.RAG.retriever_setup_service import RetrieverSetupService
@@ -62,14 +73,25 @@ from DashAI.back.services.RAG.retriever_setup_service import RetrieverSetupServi
 # ---------------------------------------------------------------------------
 
 
+def _stub_chunk() -> Chunk:
+    """Return a deterministic chunk for stubs that must produce a pool."""
+    return Chunk(
+        id=101,
+        document_id=1,
+        document_position=0,
+        text="stub-chunk",
+    )
+
+
 class _EmptyLLMSchema(BaseSchema):
     """Empty schema for the stub LLM."""
 
 
 class StubFactoryLLM(TextToTextGenerationTaskModel):
-    """Minimal text-to-text model used as a resolvable ``llm_model``."""
+    """Minimal function-calling model used as a resolvable ``llm_model``."""
 
     SCHEMA = _EmptyLLMSchema
+    SUPPORTS_FUNCTION_CALLING = True
     construction_count = 0
 
     def __init__(self, **kwargs: Any) -> None:
@@ -78,8 +100,19 @@ class StubFactoryLLM(TextToTextGenerationTaskModel):
         self.parameters: Dict[str, Any] = {}
 
     def generate(self, input: Any) -> List[Any]:
+        """Fail: the retriever must use the function-calling route."""
+        raise AssertionError("generate() must not be called")
+
+    def generate_function_call(
+        self,
+        messages: List[Dict[str, str]],
+        functions: List[Dict[str, Any]],
+    ) -> FunctionCallResult:
         """Return a fixed sufficient verdict."""
-        return ['{"sufficient": true}']
+        return FunctionCallResult(
+            "evaluate_retrieval_sufficiency",
+            {"sufficient": True},
+        )
 
 
 class _LeafRetriever(CompositeRetriever):
@@ -88,8 +121,9 @@ class _LeafRetriever(CompositeRetriever):
     SCHEMA = BaseSchema
 
     def retrieve(self, query: str, **kwargs: Any) -> Tuple[List[Chunk], Dict[str, Any]]:
-        """Return no chunks."""
-        return [], retriever_trace(self, [])
+        """Return one deterministic chunk so the pool is valid."""
+        chunks = [_stub_chunk()]
+        return chunks, retriever_trace(self, chunks)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Return no scores."""
@@ -157,8 +191,9 @@ class _StubSparseRetriever(SparseRetriever):
         """No-op: the stub persists no state."""
 
     def retrieve(self, query: str, **kwargs: Any) -> Tuple[List[Chunk], Dict[str, Any]]:
-        """Return no chunks."""
-        return [], retriever_trace(self, [])
+        """Return one deterministic chunk so the pool is valid."""
+        chunks = [_stub_chunk()]
+        return chunks, retriever_trace(self, chunks)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Return no scores."""
@@ -181,12 +216,14 @@ def _pure_registry() -> ComponentRegistry:
         StubFactoryLLM,
         DefaultRetrievalSufficiencyPrompt,
         CustomRetrievalSufficiencyPrompt,
+        DefaultLLMFilterPrompt,
         _LeafRetriever,
         _DocumentedLeafRetriever,
         _FactoryRecordingPrompt,
         ParallelRetriever,
         LLMEvaluatedDepthRetriever,
         LLMEvaluatedEnsembleRetriever,
+        LLMFilterRetriever,
     ):
         registry.register_component(component)
     return registry
@@ -210,6 +247,14 @@ def _leaf_ref(pure: bool) -> Dict[str, Any]:
     if pure:
         return {"component": "_LeafRetriever", "params": {"children": []}}
     return {"component": "_StubSparseRetriever", "params": {"top_k": 3}}
+
+
+def _filter_prompt_ref() -> Dict[str, Any]:
+    """Return a nested filter ``prompt`` reference with a concrete template."""
+    return {
+        "component": "DefaultLLMFilterPrompt",
+        "params": {"language": "en", "template": FILTER_TEMPLATES["en"]},
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -319,6 +364,45 @@ def test_pure_factory_builds_ensemble_retriever_with_resolved_refs():
     assert isinstance(model.llm_model, StubFactoryLLM)
     assert isinstance(model.prompt, RetrievalSufficiencyPrompt)
     assert len(model.get_children()) == 2
+
+
+def test_pure_factory_builds_filter_retriever_with_resolved_refs():
+    """The filter retriever resolves llm_model/prompt refs and nests its child."""
+    registry = _pure_registry()
+    factory = RetrieverFactory(registry, "C:/tmp/rag", {})
+    params = {
+        "children": [_leaf_ref(pure=True)],
+        "k1": 6,
+        "top_k": 2,
+        "llm_model": _llm_ref(),
+        "prompt": _filter_prompt_ref(),
+    }
+
+    model = factory.create("LLMFilterRetriever", copy.deepcopy(params)).model
+
+    assert isinstance(model, LLMFilterRetriever)
+    assert isinstance(model.llm_model, StubFactoryLLM)
+    assert isinstance(model.prompt, LLMFilterPrompt)
+    assert len(model.get_children()) == 1
+    assert isinstance(model.get_children()[0], _LeafRetriever)
+    summary = model.get_schema_summary()
+    assert summary["params"] == {"k1": 6, "top_k": 2}
+
+
+def test_pure_factory_rejects_sufficiency_prompt_for_filter_retriever():
+    """The filter retriever only accepts its own prompt family."""
+    registry = _pure_registry()
+    factory = RetrieverFactory(registry, "C:/tmp/rag", {})
+    params = {
+        "children": [_leaf_ref(pure=True)],
+        "k1": 6,
+        "top_k": 2,
+        "llm_model": _llm_ref(),
+        "prompt": _prompt_ref(),
+    }
+
+    with pytest.raises(RAGRetrieverEvaluationError, match="LLMFilterPrompt"):
+        factory.create("LLMFilterRetriever", copy.deepcopy(params))
 
 
 def test_pure_factory_stores_raw_trace_params():

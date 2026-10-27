@@ -207,3 +207,40 @@ def test_materialize_truncates_to_max_chunks_after_prioritizing_requests():
 
     assert _positions(pool) == [5, 0, 1]
     assert pool.size() == 3
+
+
+def test_clone_is_isolated_from_the_original():
+    """A clone can be mutated without touching the source pool."""
+    chunks = _chunks(5)
+    pool = RetrievalPool(10, _context(chunks))
+    pool.add(chunks[:2])
+    pool.request({1: [4]})
+
+    clone = pool.clone()
+    clone.discard({1: [0]})
+    clone.request({1: [3]})
+    clone.add(chunks[2:])
+
+    assert _positions(pool) == [4, 0, 1]
+    assert (1, 2) not in pool._chunks
+    assert _positions(clone) == [3, 4, 1, 2]
+    assert clone._requested_batches is not pool._requested_batches
+    assert clone._requested_batches[0] is not pool._requested_batches[0]
+
+    clone._requested_batches[0].append((1, 0))
+    assert pool._requested_batches[0] == [(1, 4)]
+
+
+def test_materialized_keys_match_the_materialized_chunks():
+    """Returned keys belong exactly to the chunks materialize() yields."""
+    chunks = _chunks(5)
+    pool = RetrievalPool(2, _context(chunks))
+    pool.add(chunks)
+    pool.request({1: [4]})
+
+    keys = pool.materialized_keys()
+
+    assert keys == {(1, 4), (1, 0)}
+    assert keys == {
+        (chunk.document_id, chunk.document_position) for chunk in pool.materialize()
+    }

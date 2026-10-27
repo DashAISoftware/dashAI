@@ -154,6 +154,54 @@ class TestDefaultTemplates:
             assert '"message"' in template
             assert '"justification"' in template
 
+    @pytest.mark.parametrize(
+        ("lang", "phrase"),
+        [
+            ("en", "Invalid decisions are rejected"),
+            ("es", "Las decisiones inválidas se rechazan"),
+            ("pt", "Decisões inválidas são rejeitadas"),
+        ],
+    )
+    def test_templates_state_invalid_decisions_are_rejected(self, lang, phrase):
+        """The model is told that invalid decisions are retried, not applied."""
+        assert phrase in sufficiency_mod.TEMPLATES[lang]
+
+    @pytest.mark.parametrize(
+        ("lang", "hint", "preference", "capacity", "priority"),
+        [
+            (
+                "en",
+                "per-retriever top_k is a size hint",
+                "prefer requests within the remaining slots",
+                "enforces the hard pool cap",
+                "requested chunks take priority",
+            ),
+            (
+                "es",
+                "top_k por recuperador es una sugerencia de tamaño",
+                "prefiere solicitudes dentro de los espacios restantes",
+                "impone el límite máximo del conjunto",
+                "los fragmentos solicitados tienen prioridad",
+            ),
+            (
+                "pt",
+                "top_k por recuperador é uma sugestão de tamanho",
+                "prefira solicitações dentro dos espaços restantes",
+                "impõe o limite máximo do conjunto",
+                "os trechos solicitados têm prioridade",
+            ),
+        ],
+    )
+    def test_templates_document_hints_capacity_and_priority(
+        self, lang, hint, preference, capacity, priority
+    ):
+        """The templates document size hints, capacity capping and priority."""
+        template = sufficiency_mod.TEMPLATES[lang]
+        assert hint in template
+        assert preference in template
+        assert capacity in template
+        assert priority in template
+
 
 # ===================================================================
 # format rendering

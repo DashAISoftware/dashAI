@@ -16,8 +16,11 @@ import pytest
 
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.models.RAG.prompts.evaluation import (
+    CustomLLMFilterPrompt,
     CustomRetrievalSufficiencyPrompt,
+    DefaultLLMFilterPrompt,
     DefaultRetrievalSufficiencyPrompt,
+    LLMFilterPrompt,
     RetrievalSufficiencyPrompt,
 )
 from DashAI.back.models.RAG.prompts.transformation import DefaultQueryRewritingPrompt
@@ -25,6 +28,8 @@ from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
 from DashAI.back.services.RAG.retriever_evaluation_validation import (
+    DEFAULT_FILTER_PROMPT_NAMES,
+    DEFAULT_LLM_PROMPT_NAMES,
     DEFAULT_SUFFICIENCY_PROMPT_NAMES,
     LLM_EVALUATED_RETRIEVER_NAMES,
     RetrieverEvaluationValidationService,
@@ -40,7 +45,20 @@ class _EmptySchema(BaseSchema):
 
 
 class StubEvaluationLLM(TextToTextGenerationTaskModel):
-    """Minimal registered LLM used in the fake registry."""
+    """Minimal registered function-calling LLM used in the fake registry."""
+
+    SCHEMA = _EmptySchema
+    SUPPORTS_FUNCTION_CALLING = True
+
+    def __init__(self, **kwargs):
+        self.parameters = {}
+
+    def generate(self, prompt):
+        return ["stub"]
+
+
+class StubNonFunctionCallingLLM(TextToTextGenerationTaskModel):
+    """Minimal registered LLM without function-calling support."""
 
     SCHEMA = _EmptySchema
 
@@ -57,6 +75,12 @@ class StubDepthRetriever:
 
 class StubEnsembleRetriever:
     """Stand-in for ``LLMEvaluatedEnsembleRetriever`` (owned by workstream B)."""
+
+
+class StubFilterRetriever:
+    """Stand-in for ``LLMFilterRetriever`` with its prompt-family marker."""
+
+    EVALUATION_PROMPT_BASE = LLMFilterPrompt
 
 
 _RETRIEVER_SCHEMA = {
@@ -95,6 +119,23 @@ _CUSTOM_PROMPT_SCHEMA = {
     }
 }
 
+_FILTER_RETRIEVER_SCHEMA = {
+    "properties": {
+        "k1": {"placeholder": 10},
+        "top_k": {"placeholder": 5},
+        "function_call_max_trials": {"placeholder": 3},
+        "prompt": {
+            "placeholder": {
+                "component": "DefaultLLMFilterPrompt",
+                "params": {},
+            },
+        },
+        "llm_model": {
+            "placeholder": {"component": "StubEvaluationLLM", "params": {}},
+        },
+    }
+}
+
 
 class _FakeRegistry(dict):
     """Minimal registry mapping names to ``{"class", "schema"}`` dicts."""
@@ -110,8 +151,16 @@ class _FakeRegistry(dict):
                     "class": StubEnsembleRetriever,
                     "schema": _RETRIEVER_SCHEMA,
                 },
+                "LLMFilterRetriever": {
+                    "class": StubFilterRetriever,
+                    "schema": _FILTER_RETRIEVER_SCHEMA,
+                },
                 "StubEvaluationLLM": {
                     "class": StubEvaluationLLM,
+                    "schema": _LLM_SCHEMA,
+                },
+                "StubNonFunctionCallingLLM": {
+                    "class": StubNonFunctionCallingLLM,
                     "schema": _LLM_SCHEMA,
                 },
                 "DefaultRetrievalSufficiencyPrompt": {
@@ -120,6 +169,14 @@ class _FakeRegistry(dict):
                 },
                 "CustomRetrievalSufficiencyPrompt": {
                     "class": CustomRetrievalSufficiencyPrompt,
+                    "schema": _CUSTOM_PROMPT_SCHEMA,
+                },
+                "DefaultLLMFilterPrompt": {
+                    "class": DefaultLLMFilterPrompt,
+                    "schema": _DEFAULT_PROMPT_SCHEMA,
+                },
+                "CustomLLMFilterPrompt": {
+                    "class": CustomLLMFilterPrompt,
                     "schema": _CUSTOM_PROMPT_SCHEMA,
                 },
                 "DefaultQueryRewritingPrompt": {
@@ -170,7 +227,13 @@ class TestConstants:
 
     def test_retriever_names(self):
         assert (
-            frozenset({"LLMEvaluatedDepthRetriever", "LLMEvaluatedEnsembleRetriever"})
+            frozenset(
+                {
+                    "LLMEvaluatedDepthRetriever",
+                    "LLMEvaluatedEnsembleRetriever",
+                    "LLMFilterRetriever",
+                }
+            )
             == LLM_EVALUATED_RETRIEVER_NAMES
         )
 
@@ -178,6 +241,14 @@ class TestConstants:
         assert (
             frozenset({"DefaultRetrievalSufficiencyPrompt"})
             == DEFAULT_SUFFICIENCY_PROMPT_NAMES
+        )
+
+    def test_filter_prompt_names(self):
+        assert frozenset({"DefaultLLMFilterPrompt"}) == DEFAULT_FILTER_PROMPT_NAMES
+
+    def test_combined_default_llm_prompt_names(self):
+        assert DEFAULT_LLM_PROMPT_NAMES == (
+            DEFAULT_SUFFICIENCY_PROMPT_NAMES | DEFAULT_FILTER_PROMPT_NAMES
         )
 
     def test_anchor_is_subclass_target(self):
@@ -255,6 +326,10 @@ class TestValidate:
         with pytest.raises(ValueError, match="not registered"):
             _service().validate(_ref(llm_component="NonexistentLLM"))
 
+    def test_non_function_calling_llm_rejected(self):
+        with pytest.raises(ValueError, match="function calling"):
+            _service().validate(_ref(llm_component="StubNonFunctionCallingLLM"))
+
     def test_llm_params_wrong_type_rejected(self):
         ref = _ref()
         ref["params"]["llm_model"]["params"] = "not a dict"
@@ -280,6 +355,37 @@ class TestValidate:
         _service().validate(
             _ref(
                 prompt_component="DefaultRetrievalSufficiencyPrompt",
+                prompt_params={"template": ""},
+            )
+        )
+
+    def test_filter_retriever_accepts_filter_prompt(self):
+        _service().validate(
+            _ref(
+                retriever="LLMFilterRetriever",
+                prompt_component="DefaultLLMFilterPrompt",
+            )
+        )
+
+    def test_filter_retriever_rejects_sufficiency_prompt(self):
+        with pytest.raises(ValueError, match="LLMFilterPrompt"):
+            _service().validate(_ref(retriever="LLMFilterRetriever"))
+
+    def test_filter_custom_blank_template_rejected(self):
+        with pytest.raises(ValueError, match="blank"):
+            _service().validate(
+                _ref(
+                    retriever="LLMFilterRetriever",
+                    prompt_component="CustomLLMFilterPrompt",
+                    prompt_params={"template": "   "},
+                )
+            )
+
+    def test_filter_default_blank_template_allowed(self):
+        _service().validate(
+            _ref(
+                retriever="LLMFilterRetriever",
+                prompt_component="DefaultLLMFilterPrompt",
                 prompt_params={"template": ""},
             )
         )
@@ -339,3 +445,33 @@ class TestApplyDefaults:
         assert nested["params"]["function_call_max_trials"] == 3
         assert nested["params"]["top_k"] == 5
         assert nested["params"]["llm_model"]["params"]["max_tokens"] == 100
+
+    def test_filter_retriever_fills_nested_defaults(self):
+        ref = _ref(
+            retriever="LLMFilterRetriever",
+            prompt_component="DefaultLLMFilterPrompt",
+        )
+
+        _service().apply_defaults(ref)
+
+        params = ref["params"]
+        assert params["k1"] == 10
+        assert params["top_k"] == 5
+        assert params["function_call_max_trials"] == 3
+        assert params["prompt"]["params"]["language"] == "en"
+        assert params["llm_model"]["params"]["max_tokens"] == 100
+
+    def test_recursive_defaults_fill_nested_filter_children(self):
+        nested = _ref(
+            retriever="LLMFilterRetriever",
+            prompt_component="DefaultLLMFilterPrompt",
+        )
+        parent = {
+            "component": "ParallelRetriever",
+            "params": {"merge_strategy": "round_robin", "children": [nested]},
+        }
+
+        _service().apply_defaults_recursive(parent)
+
+        assert nested["params"]["k1"] == 10
+        assert nested["params"]["function_call_max_trials"] == 3
