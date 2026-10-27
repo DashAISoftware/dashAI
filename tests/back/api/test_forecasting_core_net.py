@@ -168,16 +168,8 @@ def _dataset(frame: pd.DataFrame, value_type=("Float", "float64")):
 
 def _forecast(model_class, params: dict, frame: pd.DataFrame, horizon: int):
     """Fit on the whole series and forecast ``horizon`` steps past its end."""
-    dataset = _dataset(frame)
-    model = model_class(**params)
-    model.train(dataset.select_columns(["date"]), dataset.select_columns(["sales"]))
-
-    last = pd.Timestamp(frame["date"].iloc[-1])
-    step = pd.Timestamp(frame["date"].iloc[1]) - pd.Timestamp(frame["date"].iloc[0])
-    freq = "MS" if step.days > 27 else "D"
-    future = pd.date_range(last, periods=horizon + 1, freq=freq)[1:]
-    future_x = _dataset(pd.DataFrame({"date": future.strftime("%Y-%m-%d")}))
-    return np.asarray(model.predict(future_x), dtype=float)
+    model = model_class(**params).fit(frame["sales"].to_numpy(dtype=float))
+    return np.asarray(model.predict(horizon).point, dtype=float)
 
 
 def _model_classes():
@@ -216,11 +208,23 @@ MODEL_CASES = {
 }
 
 
+# Exponential smoothing moved from statsmodels' holtwinters to ETSModel, which
+# gives intervals and estimates the smoothing parameters by maximum likelihood.
+# On these series the point forecast moved by at most 8e-4, a relative 1e-5
+# (RECONCILING_FORECASTING §5.6, slice 4). The golden values are the ones
+# recorded on the base; only the tolerance for these cases changed.
+ETS_RELATIVE_TOLERANCE = 1e-4
+
+
 @pytest.mark.parametrize("key", list(MODEL_CASES))
 def test_a_model_forecasts_a_clean_series_the_same(golden, key):
     series, _ = key.split("/")
     model, params = MODEL_CASES[key]
     forecast = _forecast(_model_classes()[model], params, SERIES[series](), HORIZON)
+    if model == "ets" and not RECORDING:
+        recorded = golden[f"forecast/{key}"]
+        assert list(forecast) == pytest.approx(recorded, rel=ETS_RELATIVE_TOLERANCE)
+        return
     _pin(golden, f"forecast/{key}", forecast)
 
 

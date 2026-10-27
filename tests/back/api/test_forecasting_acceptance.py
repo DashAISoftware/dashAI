@@ -213,7 +213,6 @@ def _models():
     return [NaiveForecaster, SeasonalNaiveForecaster, ARIMA, ExponentialSmoothing]
 
 
-@pending("slice 4: a model forecasts steps, never dates")
 @pytest.mark.parametrize("index", range(4))
 def test_a_model_forecasts_steps_from_values_alone(index):
     model = _models()[index]()
@@ -226,18 +225,18 @@ def test_a_model_forecasts_steps_from_values_alone(index):
         model.predict(_dataset(_monthly(3)).select_columns(["date"]))
 
 
-@pending("slice 4: ARIMA exposes its seasonal part")
 def test_arima_forecasts_a_seasonal_series_with_its_seasonal_part():
     from DashAI.back.models.forecasting.arima import ARIMA
 
     season = [10.0, 20.0, 15.0, 30.0, 25.0, 5.0, 12.0, 18.0, 22.0, 28.0, 8.0, 16.0]
-    model = ARIMA(p=0, d=0, q=0, P=0, D=1, Q=0, season_length=12)
+    model = ARIMA(
+        p=0, d=0, q=0, seasonal_p=0, seasonal_d=1, seasonal_q=0, season_length=12
+    )
     model.fit(np.asarray(season * 4))
 
     assert model.predict(12).point == pytest.approx(season, abs=1e-6)
 
 
-@pending("slice 4: ARIMA and ETS give prediction intervals")
 @pytest.mark.parametrize("name", ["ARIMA", "ExponentialSmoothing"])
 def test_a_model_gives_nested_prediction_intervals(name):
     model = {cls.__name__: cls for cls in _models()}[name]()
