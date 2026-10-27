@@ -1,7 +1,6 @@
 from typing import Dict
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     enum_field,
     int_field,
@@ -9,11 +8,14 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.retrievers.dense.dense_retriever import DenseRetriever
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 
 METRICS = ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
 
 
-class DenseEmbeddingRetrieverSchema(BaseSchema):
+class DenseEmbeddingRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`DenseEmbeddingRetriever`.
 
     Attributes:

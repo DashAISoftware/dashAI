@@ -17,7 +17,6 @@ import logging
 from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     int_field,
     list_field,
@@ -66,6 +65,9 @@ from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     DROPPED_OPERATIONS_KEY,
     SELECTED_CHUNKS_KEY,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 #: Schema/param key names hoisted to avoid magic strings.
@@ -88,7 +90,7 @@ _SELECTION_SELECTED_KEY = "selected"
 _SELECTION_LLM_USED_KEY = "llm_used"
 
 
-class LLMFilterRetrieverSchema(BaseSchema):
+class LLMFilterRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`LLMFilterRetriever`.
 
     Attributes:
@@ -434,9 +436,10 @@ class LLMFilterRetriever(CompositeRetriever):
             selected = [candidates[index - 1] for index in selection.selected_indices]
 
         summary = self._selection_summary(candidates, selected, selection)
-        return selected, retriever_trace(
+        results = self._apply_retrieval_expansion(selected)
+        return results, retriever_trace(
             self,
-            selected,
+            results,
             children=[child_node],
             **{_SELECTION_TRACE_KEY: summary},
         )

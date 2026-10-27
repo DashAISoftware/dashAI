@@ -6,7 +6,6 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 from DashAI.back.core.atomic import atomic_open
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     enum_field,
     int_field,
     schema_field,
@@ -15,6 +14,9 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.embeddings import BaseDenseEmbedding
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 
@@ -23,7 +25,7 @@ from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 # may be a bottleneck for very large collections.
 
 
-class DenseRetrieverSchema(BaseSchema):
+class DenseRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`DenseRetriever`.
 
     Attributes:
@@ -136,7 +138,10 @@ class DenseRetriever(UnitRetriever):
             matrix_path = os.path.join(matrix_dir, "embeddings.npy")
             if os.path.exists(matrix_path):
                 continue
-            chunk_texts = [chunk.text for chunk in doc_chunks.values()]
+            ordered_chunks = sorted(
+                doc_chunks.values(), key=lambda chunk: chunk.document_position
+            )
+            chunk_texts = [chunk.text for chunk in ordered_chunks]
             if not chunk_texts:
                 raise RAGRetrieverError(f"No chunks found for document ID {doc_id}.")
             embeddings = self.embedding_model.batch_encode(chunk_texts)
@@ -173,7 +178,10 @@ class DenseRetriever(UnitRetriever):
             matrix_path = os.path.join(matrix_dir, "embeddings.npy")
             if not os.path.exists(matrix_path):
                 continue
-            for chunk_key, chunk in chunks.items():
+            ordered_chunks = sorted(
+                chunks.items(), key=lambda item: item[1].document_position
+            )
+            for chunk_key, chunk in ordered_chunks:
                 chunk_id = chunk.id
                 self.matrix_row_to_chunk_id[row_index] = chunk_id
                 self.chunk_id_to_doc_id[chunk_id] = doc_id
@@ -227,6 +235,7 @@ class DenseRetriever(UnitRetriever):
             chunk_id = self.matrix_row_to_chunk_id[idx]
             doc_id, chunk_key = self._chunk_key_by_id[chunk_id]
             results.append(self.chunks[doc_id][chunk_key])
+        results = self._apply_retrieval_expansion(results)
         return results, retriever_trace(self, results)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:

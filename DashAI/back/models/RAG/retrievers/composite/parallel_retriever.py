@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Tuple
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     enum_field,
     list_field,
@@ -13,10 +12,14 @@ from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
 from DashAI.back.models.RAG.retrievers.enums import MergeStrategy
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+    prefer_wider_chunk,
+)
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 
-class ParallelRetrieverSchema(BaseSchema):
+class ParallelRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`ParallelRetriever`.
 
     Attributes:
@@ -137,6 +140,7 @@ class ParallelRetriever(CompositeRetriever):
             merged = self._merge_round_robin(all_child_results, total_k)
         else:
             merged = self._merge_interleave(all_child_results, total_k)
+        merged = self._apply_retrieval_expansion(merged)
         return merged, retriever_trace(self, merged, children=child_nodes)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
@@ -189,8 +193,11 @@ class ParallelRetriever(CompositeRetriever):
     ) -> List[Chunk]:
         """Merge results using round-robin alternation.
 
-        Takes turns picking from each child's result list, skipping
-        duplicates.
+        Takes turns picking from each child's result list. A repeated
+        ``(document_id, document_position)`` key does not add a new entry: the
+        chunk covering more document positions replaces the earlier one in
+        place, so a widened window is never dropped in favour of the plain chunk
+        or narrower window anchored on the same position.
 
         Args:
             child_results_list: Results from each child retriever.
@@ -199,8 +206,8 @@ class ParallelRetriever(CompositeRetriever):
         Returns:
             A deduplicated list of up to *total_k* chunks.
         """
-        results = []
-        seen_keys: set[Tuple[int, int]] = set()
+        results: List[Chunk] = []
+        seen_positions: Dict[Tuple[int, int], int] = {}
         max_len = max(len(r) for r in child_results_list) if child_results_list else 0
 
         for i in range(max_len):
@@ -208,11 +215,14 @@ class ParallelRetriever(CompositeRetriever):
                 if i < len(child_results):
                     chunk = child_results[i]
                     key = self._chunk_key(chunk)
-                    if key not in seen_keys:
-                        seen_keys.add(key)
-                        results.append(chunk)
-                        if len(results) >= total_k:
-                            return results
+                    position = seen_positions.get(key)
+                    if position is not None:
+                        results[position] = prefer_wider_chunk(results[position], chunk)
+                        continue
+                    seen_positions[key] = len(results)
+                    results.append(chunk)
+                    if len(results) >= total_k:
+                        return results
         return results
 
     def _merge_interleave(
@@ -220,7 +230,10 @@ class ParallelRetriever(CompositeRetriever):
     ) -> List[Chunk]:
         """Merge results by interleaving in child order.
 
-        Concatenates each child's list in order, skipping duplicates.
+        Concatenates each child's list in order. A repeated
+        ``(document_id, document_position)`` key replaces the earlier entry in
+        place with the chunk covering more document positions, exactly like
+        :meth:`_merge_round_robin`.
 
         Args:
             child_results_list: Results from each child retriever.
@@ -229,15 +242,18 @@ class ParallelRetriever(CompositeRetriever):
         Returns:
             A deduplicated list of up to *total_k* chunks.
         """
-        results = []
-        seen_keys: set[Tuple[int, int]] = set()
+        results: List[Chunk] = []
+        seen_positions: Dict[Tuple[int, int], int] = {}
 
         for child_results in child_results_list:
             for chunk in child_results:
                 key = self._chunk_key(chunk)
-                if key not in seen_keys:
-                    seen_keys.add(key)
-                    results.append(chunk)
-                    if len(results) >= total_k:
-                        return results
+                position = seen_positions.get(key)
+                if position is not None:
+                    results[position] = prefer_wider_chunk(results[position], chunk)
+                    continue
+                seen_positions[key] = len(results)
+                results.append(chunk)
+                if len(results) >= total_k:
+                    return results
         return results

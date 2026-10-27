@@ -32,6 +32,7 @@ from DashAI.back.models.RAG.RAG_pipeline import (
     RAGGenerationOutput,
     RAGPipeline,
     RAGPipelineConfig,
+    _chunk_label,
 )
 from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref
 
@@ -279,6 +280,23 @@ class TestRAGPipelineConfigValid:
         assert config.session_id == 1
         assert config.documents == [10, 20]
         assert config.env_RAG_path == "/tmp/rag"
+
+    def test_documents_are_normalized_to_integers(self):
+        """String document ids are coerced so they match Chunk.document_id."""
+        kwargs = _valid_kwargs()
+        kwargs["documents"] = ["10", "20"]
+
+        config = RAGPipelineConfig.from_kwargs(**kwargs)
+
+        assert config.documents == [10, 20]
+
+    def test_invalid_documents_raise(self):
+        """A non-integer document id is a configuration error."""
+        kwargs = _valid_kwargs()
+        kwargs["documents"] = ["not-an-id"]
+
+        with pytest.raises(RAGPipelineConfigError, match="list of integers"):
+            RAGPipelineConfig.from_kwargs(**kwargs)
 
     def test_model_refs_parsed_correctly(self):
         """Model refs are parsed into ModelRef dataclass instances."""
@@ -590,6 +608,7 @@ class TestChunkReferenceToDict:
             "document_position": 3,
             "text": "some text",
             "page": None,
+            "source_positions": None,
         }
 
     def test_page_is_carried_into_the_reference(self):
@@ -601,3 +620,48 @@ class TestChunkReferenceToDict:
         result = pipeline.generate(({"role": "user", "content": "q"},))
 
         assert result.chunks["1_0"].page == 3
+
+    def test_expanded_range_is_carried_into_the_reference(self):
+        """An expanded unit exposes its covered positions to the frontend."""
+        chunk = Chunk(
+            id=1,
+            document_id=1,
+            document_position=3,
+            text="c3 c4 c5",
+            page=4,
+            source_positions=(3, 4, 5),
+        )
+        pipeline = _make_pipeline()
+        pipeline.retriever.retrieve.return_value = _retriever_stub([chunk])
+
+        result = pipeline.generate(({"role": "user", "content": "q"},))
+
+        reference = result.chunks["1_3"]
+        assert reference.source_positions == (3, 4, 5)
+        assert reference.to_dict()["source_positions"] == [3, 4, 5]
+
+
+def test_chunk_label_renders_a_contiguous_range():
+    """A contiguous window is labelled as a range in the prompt."""
+    chunk = Chunk(
+        id=1,
+        document_id=1,
+        document_position=3,
+        text="c3 c4 c5",
+        source_positions=(3, 4, 5),
+    )
+
+    assert _chunk_label(chunk) == "chunks nº 3–5"
+
+
+def test_chunk_label_lists_non_contiguous_positions():
+    """A gapped window lists its positions instead of inventing a range."""
+    chunk = Chunk(
+        id=1,
+        document_id=1,
+        document_position=1,
+        text="c1 c2 c10",
+        source_positions=(1, 2, 10),
+    )
+
+    assert _chunk_label(chunk) == "chunks nº 1, 2, 10"

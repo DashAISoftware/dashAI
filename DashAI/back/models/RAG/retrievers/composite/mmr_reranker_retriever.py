@@ -5,7 +5,6 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     float_field,
     int_field,
@@ -18,12 +17,15 @@ from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 log = logging.getLogger(__name__)
 
 
-class MMRRerankerRetrieverSchema(BaseSchema):
+class MMRRerankerRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`MMRRerankerRetriever`.
 
     Attributes:
@@ -160,7 +162,8 @@ class MMRRerankerRetriever(CompositeRetriever):
         child = self._children[0]
         candidates, child_node = child.retrieve(query)
         if len(candidates) <= self._top_k:
-            return candidates, retriever_trace(self, candidates, children=[child_node])
+            results = self._apply_retrieval_expansion(candidates)
+            return results, retriever_trace(self, results, children=[child_node])
 
         chunk_ids: List[int] = [c.id for c in candidates]
         scored: List[Tuple[int, float]] = child.score_chunks(chunk_ids, query)
@@ -171,7 +174,7 @@ class MMRRerankerRetriever(CompositeRetriever):
             if c.id in id_to_dist:
                 ordered.append(c)
         if len(ordered) <= self._top_k:
-            selected = ordered[: self._top_k]
+            selected = self._apply_retrieval_expansion(ordered[: self._top_k])
             return selected, retriever_trace(self, selected, children=[child_node])
 
         relevance = np.array([1.0 - id_to_dist[c.id] for c in ordered])
@@ -179,7 +182,7 @@ class MMRRerankerRetriever(CompositeRetriever):
         try:
             vectors = child.get_chunk_vectors(ordered_ids)
         except (ValueError, RAGRetrieverError):
-            selected = ordered[: self._top_k]
+            selected = self._apply_retrieval_expansion(ordered[: self._top_k])
             return selected, retriever_trace(self, selected, children=[child_node])
 
         if len(vectors) != len(ordered):
@@ -189,12 +192,13 @@ class MMRRerankerRetriever(CompositeRetriever):
                 len(vectors),
                 len(ordered),
             )
-            selected = ordered[: self._top_k]
+            selected = self._apply_retrieval_expansion(ordered[: self._top_k])
             return selected, retriever_trace(self, selected, children=[child_node])
 
         pairwise = cosine_similarity(vectors)
         selected_indices = self._mmr_select(relevance, pairwise)
         results = [ordered[i] for i in selected_indices]
+        results = self._apply_retrieval_expansion(results)
         return results, retriever_trace(self, results, children=[child_node])
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:

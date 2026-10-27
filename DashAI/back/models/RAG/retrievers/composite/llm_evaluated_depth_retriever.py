@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import Any, ClassVar, Dict, List, Tuple
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     int_field,
     list_field,
@@ -58,9 +57,12 @@ from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     REQUEST_CHUNKS_KEY,
     SUFFICIENT_KEY,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 
 
-class LLMEvaluatedDepthRetrieverSchema(BaseSchema):
+class LLMEvaluatedDepthRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`LLMEvaluatedDepthRetriever`.
 
     Attributes:
@@ -415,7 +417,7 @@ class LLMEvaluatedDepthRetriever(LLMEvaluatedRetriever):
                 verdict, pool, max_requested
             )
 
-        pool_chunks = pool.materialize()
+        pool_chunks = self._apply_retrieval_expansion(pool.materialize())
         return pool_chunks, self._build_trace(pool_chunks, child_nodes, rounds)
 
     def _delegate_round(
