@@ -542,6 +542,47 @@ def _validate_splits(
         ) from e
 
 
+def _validate_splits_size(
+    splits: str, n_rows: int, component_registry: "ComponentRegistry"
+) -> None:
+    """Refuse a dataset too short for the session's splitter.
+
+    Runs after ``_validate_splits``, so the payload parses and names a
+    registered splitter. Most splitters carve any number of rows; a backtest
+    needs enough steps for its windows, and saying so here beats a run that
+    fails on it.
+
+    Raises
+    ------
+    HTTPException
+        422 with the splitter's explanation.
+    """
+    import json
+
+    from DashAI.back.splitters.base_splitter import BaseSplitter
+
+    splits_data = normalize_splits_payload(json.loads(splits))
+    splitter_class = component_registry[splits_data["splitter_name"]]["class"]
+    # Only a splitter that has a size to check is built here: the others
+    # accept any count, and building them would only risk a constructor that
+    # needs what a run gives it.
+    if splitter_class.validate_size is BaseSplitter.validate_size:
+        return
+    parameters = {
+        key: value for key, value in splits_data.items() if key not in META_KEYS
+    }
+    splitter = splitter_class(
+        {**schema_placeholder_defaults(splitter_class), **parameters}
+    )
+    try:
+        splitter.validate_size(n_rows)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from e
+
+
 def _validate_roles_for_task(
     db, model_session: ModelSession, task_name: str, component_registry
 ) -> None:
@@ -818,6 +859,21 @@ async def create_model_session(
     # The task translates the roles it was given into the model's inputs
     # and outputs, which the checks below read.
     task = task_or_http_error(params.task_name, component_registry)
+    if has_preprocessing and not any(
+        role.transformable for role in task.column_roles()
+    ):
+        # Session preprocessing transforms the columns of the roles that
+        # allow it, and fits once per partition. A task none of whose roles
+        # allow it has nothing for the steps to feed, and partitions that are
+        # not rows: single-series forecasting until its exogenous role.
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"{params.task_name} takes no preprocessing: none of its column "
+                "roles can be transformed. Transform the dataset in a notebook "
+                "instead."
+            ),
+        )
     roles = {name: list(refs) for name, refs in params.column_roles.items() if refs}
     io = task.io_columns(roles)
     input_column_refs = list(io.inputs)
@@ -849,6 +905,13 @@ async def create_model_session(
                 reader = ipc.open_file(source)
                 schema = reader.schema
                 column_names = schema.names
+                n_rows = sum(
+                    reader.get_batch(i).num_rows
+                    for i in range(reader.num_record_batches)
+                )
+
+            if getattr(strategy_class, "KIND", "holdout") != "full":
+                _validate_splits_size(params.splits, n_rows, component_registry)
 
             if has_preprocessing:
                 _check_preprocessing_structure(

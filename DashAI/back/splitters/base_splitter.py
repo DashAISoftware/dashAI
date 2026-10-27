@@ -126,6 +126,24 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
         )
         return splits
 
+    def validate_size(self, n_rows: int) -> None:
+        """Refuse a dataset this splitter cannot carve, before any run.
+
+        The session API calls it with the dataset's row count. Most splitters
+        carve any count and accept every one; a backtest needs enough steps for
+        its windows (``OriginSplitter``).
+
+        Parameters
+        ----------
+        n_rows : int
+            The rows in the session's dataset.
+
+        Raises
+        ------
+        ValueError
+            If the dataset is too short, saying what to change.
+        """
+
     def __init__(self, splits_data):
         """Initialize the common splitter configuration.
 

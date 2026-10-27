@@ -41,9 +41,13 @@ class SeriesOnlyTask(RegressionTask):
     one, without registering ``SingleSeriesForecastingTask`` itself: the
     default splitter a payload falls back to when it names none is
     ``HoldoutSplitter``, which shuffles, and this task does not offer it.
+
+    It offers the forecasting holdout strategy, which takes the temporal
+    splitter: that splitter cuts origins, and a holdout strategy of rows would
+    refuse it before the default could be checked.
     """
 
     COMPATIBLE_COMPONENTS = [
-        "HoldoutEvaluationStrategy",
+        "ForecastingHoldoutEvaluationStrategy",
         "TemporalHoldoutSplitter",
     ]

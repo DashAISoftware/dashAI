@@ -29,7 +29,6 @@ from DashAI.back.evaluation.forecasting_holdout import (
     ForecastingHoldoutEvaluationStrategy,
 )
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
-from DashAI.back.splitters.temporal_holdout import TemporalHoldoutSplitter
 
 FORECASTING_STRATEGIES = [
     ForecastingHoldoutEvaluationStrategy,
@@ -49,9 +48,12 @@ def _split(n=60):
         },
     )
     x, y = select_columns(dataset, ["date"], ["v"])
-    return TemporalHoldoutSplitter(
-        {"train": 0.6, "validation": 0.2, "test": 0.2}
-    ).split(x, y)
+    # Partitions of rows, cut by hand: the trials below only need some, and
+    # the temporal splitters cut steps now, not rows.
+    cut = {"train": range(36), "validation": range(36, 48), "test": range(48, n)}
+    xs = {name: x.select(rows) for name, rows in cut.items()}
+    ys = {name: y.select(rows) for name, rows in cut.items()}
+    return xs, ys, None
 
 
 # --- what each strategy declares ---------------------------------------------

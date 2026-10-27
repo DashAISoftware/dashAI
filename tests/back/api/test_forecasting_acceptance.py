@@ -287,7 +287,6 @@ def test_mape_refuses_a_zero_actual_with_a_reason():
 # --------------------------------------------------------------------------- #
 
 
-@pending("slice 6b: a series too short for h and the origins is refused")
 def test_a_series_too_short_for_its_cuts_is_refused(client, tmp_path):
     dataset_id = _upload(client, _monthly(8), tmp_path, "acc-short")
     body = _session_body(dataset_id, strategy=CV, splits=ROLLING)
@@ -298,7 +297,6 @@ def test_a_series_too_short_for_its_cuts_is_refused(client, tmp_path):
     assert "horizon" in response.text
 
 
-@pending("slice 6b: a forecasting session takes no preprocessing until PR 5")
 def test_a_forecasting_session_with_preprocessing_is_refused(client, tmp_path):
     # The step scales a column outside every role, so neither an unregistered
     # task nor a protected role is what refuses it: only the rule that a

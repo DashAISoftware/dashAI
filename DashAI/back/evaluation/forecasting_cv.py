@@ -64,3 +64,5 @@ class ForecastingCrossValidationEvaluationStrategy(FoldEvaluationStrategy):
     # The same backtest as the forecasting holdout, with more than one origin:
     # ModelJob dispatches both on this one KIND.
     KIND = "backtest"
+    # Both take a splitter that cuts the series into origins, in steps.
+    SPLITTER_PARTITIONING = "origins"

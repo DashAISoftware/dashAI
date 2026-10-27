@@ -89,3 +89,5 @@ class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
     # A holdout is a backtest with one origin, so both forecasting strategies
     # run the same units: ModelJob dispatches them on this one KIND.
     KIND = "backtest"
+    # Both take a splitter that cuts the series into origins, in steps.
+    SPLITTER_PARTITIONING = "origins"
