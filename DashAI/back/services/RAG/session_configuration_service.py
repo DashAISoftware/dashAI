@@ -382,6 +382,12 @@ class SessionConfigurationService:
         The frontend used to do this arithmetic in two duplicated components, one
         of which was fed zeroes and so always reported "valid". Computing it here
         means the session view and the creation flow agree by construction.
+
+        Chunks are counted with
+        :func:`~DashAI.back.services.RAG.retriever_presets.effective_chunk_count`,
+        which multiplies by the expansion window: an expanded unit carries the
+        text of every chunk it covers, so retrieve-then-expand costs more context
+        than its ``top_k`` alone suggests.
         """
         generation_params = generation.get("params") or {}
         context_window = generation_params.get("context_window")
@@ -391,10 +397,10 @@ class SessionConfigurationService:
         if not isinstance(max_tokens, int):
             max_tokens = RAG_MAX_TOKENS
 
-        top_k = retriever_presets.effective_top_k(
+        chunk_count = retriever_presets.effective_chunk_count(
             retriever.get("component") or "", retriever.get("params") or {}
         )
-        used_by_chunks = self._chunk_tokens(chunking) * top_k
+        used_by_chunks = self._chunk_tokens(chunking) * chunk_count
 
         template = (prompt.get("params") or {}).get("template") or ""
         used_by_prompt = len(template) // CHARS_PER_TOKEN

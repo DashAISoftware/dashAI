@@ -22,8 +22,12 @@ class EmbeddingStorageService:
     """Manages embedding matrix persistence: numpy .npy files on disk + DB records.
 
     Embedding matrices are stored as .npy files in directories like:
-    ``{env_RAG_path}/embeddings/doc_id-{doc_id}__chunk_set_id-{chunk_set_id}__
+    ``{env_RAG_path}/embeddings/doc_id-{doc_id}__content-{content_key}__
     embedding_model_id-{embedding_model_id}/embeddings.npy``
+
+    The path is addressed by the document's *content*, not by the chunk set: two
+    sessions that chunk the same document the same way share one matrix, while
+    each keeps its own ``RAGEmbeddingMatrix`` row pointing at it.
     """
 
     def __init__(self, env_RAG_path: str, db_service: RetrieverDBService):  # noqa: N803
@@ -45,36 +49,53 @@ class EmbeddingStorageService:
 
     @staticmethod
     def build_matrix_dir_name(
-        doc_id: int, chunk_set_id: int, embedding_model_id: int
+        doc_id: int, content_key: str, embedding_model_id: int
     ) -> str:
+        """Build the content-addressed folder name of one document's matrix.
+
+        Parameters
+        ----------
+        doc_id : int
+            Owning document id.
+        content_key : str
+            Content hash of the document's chunks, independent of any database
+            id, so the same content resolves to the same folder across sessions.
+        embedding_model_id : int
+            Embedding model identifier.
+
+        Returns
+        -------
+        str
+            ``doc_id-{doc_id}__content-{content_key}__embedding_model_id-{id}``.
+        """
         return (
-            f"doc_id-{doc_id}__chunk_set_id-{chunk_set_id}__"
+            f"doc_id-{doc_id}__content-{content_key}__"
             f"embedding_model_id-{embedding_model_id}"
         )
 
     def _matrix_dir(
-        self, doc_id: int, chunk_set_id: int, embedding_model_id: int
+        self, doc_id: int, content_key: str, embedding_model_id: int
     ) -> str:
         """Build the directory path for a specific embedding matrix.
 
         Format: ``{env_RAG_path}/embeddings/doc_id-{doc_id}__
-        chunk_set_id-{chunk_set_id}__embedding_model_id-{embedding_model_id}``
+        content-{content_key}__embedding_model_id-{embedding_model_id}``
         """
         return os.path.join(
             self._env_RAG_path,
             EMBEDDINGS_DIRNAME,
-            self.build_matrix_dir_name(doc_id, chunk_set_id, embedding_model_id),
+            self.build_matrix_dir_name(doc_id, content_key, embedding_model_id),
         )
 
     def _matrix_path(
-        self, doc_id: int, chunk_set_id: int, embedding_model_id: int
+        self, doc_id: int, content_key: str, embedding_model_id: int
     ) -> str:
         """Full path to the ``embeddings.npy`` file.
 
         Delegates to :meth:`_matrix_dir` and appends the filename.
         """
         return os.path.join(
-            self._matrix_dir(doc_id, chunk_set_id, embedding_model_id),
+            self._matrix_dir(doc_id, content_key, embedding_model_id),
             EMBEDDINGS_FILENAME,
         )
 
@@ -85,6 +106,7 @@ class EmbeddingStorageService:
     def save_embeddings(
         self,
         doc_id: int,
+        content_key: str,
         chunk_set_id: int,
         embedding_model_id: int,
         embeddings: np.ndarray,
@@ -99,12 +121,18 @@ class EmbeddingStorageService:
         3. Persist a matching ``RAGEmbeddingMatrix`` record through
            :meth:`RetrieverDBService.save_embedding_matrix`.
 
+        The directory is keyed by *content_key*, while the record keeps the
+        owning ``chunk_set_id``: the file is shared between sessions, the row is
+        not.
+
         Parameters
         ----------
         doc_id : int
             Owning document id.
+        content_key : str
+            Content hash of the document's chunks.
         chunk_set_id : int
-            Chunk set identifier.
+            Chunk set identifier, stored on the DB row only.
         embedding_model_id : int
             Embedding model identifier.
         embeddings : np.ndarray
@@ -115,10 +143,10 @@ class EmbeddingStorageService:
         RAGEmbeddingMatrix
             The newly persisted database record.
         """
-        matrix_dir = self._matrix_dir(doc_id, chunk_set_id, embedding_model_id)
+        matrix_dir = self._matrix_dir(doc_id, content_key, embedding_model_id)
         os.makedirs(matrix_dir, exist_ok=True)
 
-        matrix_path = self._matrix_path(doc_id, chunk_set_id, embedding_model_id)
+        matrix_path = self._matrix_path(doc_id, content_key, embedding_model_id)
         # np.save appends '.npy' to a path but not to a file object, which is
         # what keeps the temp file and the final name in agreement.
         with atomic_open(matrix_path, "wb") as f:
@@ -134,7 +162,7 @@ class EmbeddingStorageService:
         return record
 
     def load_embeddings(
-        self, doc_id: int, chunk_set_id: int, embedding_model_id: int
+        self, doc_id: int, content_key: str, embedding_model_id: int
     ) -> np.ndarray | None:
         """Load an embedding matrix from disk as a numpy array.
 
@@ -144,8 +172,8 @@ class EmbeddingStorageService:
         ----------
         doc_id : int
             Owning document id.
-        chunk_set_id : int
-            Chunk set identifier.
+        content_key : str
+            Content hash of the document's chunks.
         embedding_model_id : int
             Embedding model identifier.
 
@@ -154,7 +182,7 @@ class EmbeddingStorageService:
         np.ndarray or None
             The loaded embedding matrix, or ``None`` if not found.
         """
-        matrix_path = self._matrix_path(doc_id, chunk_set_id, embedding_model_id)
+        matrix_path = self._matrix_path(doc_id, content_key, embedding_model_id)
         if not os.path.isfile(matrix_path):
             return None
         try:
@@ -165,15 +193,15 @@ class EmbeddingStorageService:
                 f"Failed to load embeddings from {matrix_path}: {exc}"
             ) from exc
 
-    def exists(self, doc_id: int, chunk_set_id: int, embedding_model_id: int) -> bool:
+    def exists(self, doc_id: int, content_key: str, embedding_model_id: int) -> bool:
         """Check whether an ``embeddings.npy`` file exists on disk.
 
         Parameters
         ----------
         doc_id : int
             Owning document id.
-        chunk_set_id : int
-            Chunk set identifier.
+        content_key : str
+            Content hash of the document's chunks.
         embedding_model_id : int
             Embedding model identifier.
 
@@ -183,7 +211,7 @@ class EmbeddingStorageService:
             ``True`` if the file exists, ``False`` otherwise.
         """
         return os.path.isfile(
-            self._matrix_path(doc_id, chunk_set_id, embedding_model_id)
+            self._matrix_path(doc_id, content_key, embedding_model_id)
         )
 
     def delete_all_for_document(
@@ -194,6 +222,10 @@ class EmbeddingStorageService:
         For each provided matrix record, the corresponding on-disk directory
         is removed recursively.  DB records are bulk-deleted via
         :meth:`RetrieverDBService.delete_embedding_matrices_by_ids`.
+
+        Callers that must keep folders shared with another session should use
+        :meth:`CleanupService._embedding_folder_in_use` first; this method is
+        the unconditional document-level variant.
 
         Parameters
         ----------

@@ -488,7 +488,13 @@ def test_setup_service_builds_depth_retriever_and_persists_bridge(client: TestCl
     with session_factory() as db:
         pipeline = _create_pipeline(db)
         service = RetrieverSetupService(
-            db, registry, rag_path, {}, chunk_set_id=1, pipeline_id=pipeline.id
+            db,
+            registry,
+            rag_path,
+            {},
+            chunk_set_id=1,
+            pipeline_id=pipeline.id,
+            chunking_key="test-chunking",
         )
         params = {
             "children": [_leaf_ref(pure=False)],
@@ -535,7 +541,13 @@ def test_setup_service_parallel_retriever_unchanged(client: TestClient):
     with session_factory() as db:
         pipeline = _create_pipeline(db)
         service = RetrieverSetupService(
-            db, registry, rag_path, {}, chunk_set_id=1, pipeline_id=pipeline.id
+            db,
+            registry,
+            rag_path,
+            {},
+            chunk_set_id=1,
+            pipeline_id=pipeline.id,
+            chunking_key="test-chunking",
         )
         params = {
             "children": [_leaf_ref(pure=False), _leaf_ref(pure=False)],

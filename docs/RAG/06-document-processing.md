@@ -28,8 +28,15 @@ Two consequences worth knowing:
 - **Chunk sets are not shared between sessions.**
   `ChunkingService.build_chunk_set_signature` hashes the owning `session_id`, the
   document ids and the chunking configuration, so two sessions over the same Data
-  documents each chunk and fit their own retriever. That costs CPU and disk in
-  exchange for isolation.
+  documents each get their own chunk set (and their own chunk rows). Ownership
+  stays per session, but the *fitted artifacts* are content-addressed and shared:
+  a sparse retriever's fitted state and a document's embedding matrix are stored
+  under a hash of the corpus content (document ids, chunk positions and chunk
+  text hashes) plus the chunking configuration and the parameters that shape
+  them, so the second session loads what the first one fitted instead of
+  re-fitting or re-embedding. Different chunking always gets its own folder,
+  even if it happens to produce identical chunks. Cleanup keeps a shared folder
+  until the last row referencing it is deleted.
 - **A document cannot be deleted while a RAG session uses it.**
   `DELETE /api/v1/documents/{id}` returns `409` and lists the sessions (and the
   notebooks deleted with it). The `data_document_id` foreign key's

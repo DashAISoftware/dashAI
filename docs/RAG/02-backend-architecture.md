@@ -239,8 +239,11 @@ about what was safe to delete. Which rows are actually shared decides the
 guard:
 
 - **Per chunk set** — retrievers, embedding matrices, chunks. A chunk set
-  belongs to one session now, so nothing else can be using them and they are
-  deleted outright.
+  belongs to one session, so its *rows* are deleted outright. The storage
+  folders behind them are no longer per chunk set: sparse state and embedding
+  matrices are content-addressed and shared, so `_sparse_folder_in_use()` /
+  `_embedding_folder_in_use()` keep a folder while any other row still points at
+  it and delete it with the last reference.
 - **Per configuration** — `rag_chunking_model` and `rag_embedding_model` are
   matched by `(class_name, parameters)` alone, so every session that settled on
   the same components shares one row. A new session takes the backend defaults,
@@ -700,6 +703,34 @@ sessions over the same Data documents still get separate chunk sets.
 **Note:** `get_or_create_chunk_set()` uses SELECT-then-INSERT without a lock.
 A concurrent race cannot persist duplicate signatures; the losing request
 surfaces a database error instead.
+
+### Artifact identity (fitted state)
+
+The chunk-set signature identifies *rows* (it includes `session_id`, so two
+sessions never share a chunk set). Fitted artifacts use a different, content-only
+identity so they *are* shared:
+
+- `services/RAG/utils.build_corpus_content_hash` hashes the corpus content:
+  documents sorted by id, chunks sorted by position, each contributing its
+  `document_id`, `document_position` and text hash. Chunk database ids are
+  excluded on purpose — they are per-session rowids.
+- **Sparse state** (`sparse_retrievers/sparse_retriever_id-<hash>`) hashes the
+  retriever class, the corpus hash, the chunking configuration and the parameters
+  that shape the fitted matrix (vectorizer settings, `k1`/`b`/`delta`, the TF-IDF
+  settings). `top_k`, `similarity_function` and the retrieve-then-expand options
+  are query-time only and therefore excluded. Different chunking always yields a
+  different folder, even if it happens to produce identical chunks.
+- **Embedding matrices** (`embeddings/doc_id-<id>__content-<hash>__embedding_model_id-<id>`)
+  hash one document's chunks, the chunking configuration and the embedding model.
+  The second session finds `embeddings.npy` already there and
+  `compute_missing_embeddings` skips it.
+
+Neither path contains a `chunk_set_id` or a `session_id`. Each session still owns
+its own `rag_sparse_retriever` / `rag_embedding_matrix` row pointing at the shared
+folder, and cleanup only deletes a folder when no other row references it. A
+sparse retriever loading another session's state rebinds the persisted row→chunk
+map to its own `Chunk` objects, so retrieval returns the current session's chunk
+ids; a map whose positions or text hashes differ is rejected and refitted.
 
 ## Document Loaders
 

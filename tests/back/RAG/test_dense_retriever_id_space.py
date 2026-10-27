@@ -76,6 +76,59 @@ def _build_dense_retriever(n_chunks: int):
         os.rmdir(matrix_dir)
 
 
+class _KeywordEmbedding:
+    """Deterministic one-hot embedding model used to check row alignment."""
+
+    def __init__(self, words):
+        self.words = list(words)
+        self.params = {"model_name": "keyword", "device": "cpu"}
+
+    def encode(self, text):
+        vector = np.zeros(len(self.words))
+        for index, word in enumerate(self.words):
+            if word in text:
+                vector[index] = 1.0
+                break
+        return vector
+
+    def batch_encode(self, texts):
+        return np.array([self.encode(text) for text in texts])
+
+
+def test_dense_rows_follow_document_position_not_dict_order(tmp_path):
+    """Shared embedding files align with chunks by position, not dict order."""
+    chunks = {
+        1: {
+            2: Chunk(102, 1, 2, "two"),
+            1: Chunk(101, 1, 1, "one"),
+            0: Chunk(100, 1, 0, "zero"),
+        }
+    }
+    embedding = _KeywordEmbedding(["zero", "one", "two"])
+    matrix_dir = tmp_path / "dense_matrix"
+    matrix_dir.mkdir()
+    np.save(
+        matrix_dir / "embeddings.npy",
+        embedding.batch_encode(["zero", "one", "two"]),
+    )
+    persistence = DensePersistence(
+        matrix_dirs={1: str(matrix_dir)}, embedding_model_id=1
+    )
+    retriever = DenseEmbeddingRetriever(
+        embedding_model=embedding,
+        similarity_metric="cosine",
+        top_k=1,
+    )
+    retriever.inject_infra(str(tmp_path), chunks, persistence)
+    retriever.embedding_model = embedding
+    retriever.init_similarity_matrix()
+
+    results, _trace = retriever.retrieve("two")
+
+    assert results[0].text == "two"
+    assert results[0].id == 102
+
+
 def test_dense_retriever_scores_chunks_by_db_id():
     """``score_chunks`` resolves chunk DB ids even when they differ from indices.
 
