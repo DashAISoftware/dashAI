@@ -85,3 +85,62 @@ def test_the_shortest_series_for_the_cuts_is_accepted(client, tmp_path):
     )
 
     assert response.status_code == 201, response.text
+
+
+@pytest.mark.parametrize(
+    ("strategy", "splits", "extra"),
+    [
+        (
+            "ForecastingHoldoutEvaluationStrategy",
+            {
+                "splitter_name": "TemporalHoldoutSplitter",
+                "train": 0.6,
+                "validation": 0.2,
+                "test": 0.2,
+            },
+            "train",
+        ),
+        (
+            "ForecastingCrossValidationEvaluationStrategy",
+            {
+                "splitter_name": "RollingOriginSplitter",
+                "n_splits": 3,
+                "horizon": 6,
+                "step": 1,
+                "test_size": 6,
+            },
+            "n_splits",
+        ),
+    ],
+    ids=["holdout", "rolling"],
+)
+def test_a_payload_from_before_the_cuts_in_steps_is_refused(
+    client, tmp_path, strategy, splits, extra
+):
+    # The keys the splitters took before they cut in steps would otherwise be
+    # dropped without a word, and the session would run on the defaults.
+    dataset_id = _upload(client, _monthly(), tmp_path, f"old-payload-{extra}")
+
+    response = client.post(
+        "/api/v1/model-session/",
+        json=_session_body(dataset_id, strategy=strategy, splits=splits),
+    )
+
+    assert response.status_code == 422, response.text
+    assert extra in response.text
+
+
+def test_a_seed_in_the_payload_is_not_a_parameter_the_splitter_refuses(
+    client, tmp_path
+):
+    # ``seed`` is a meta key, and the legacy translation to ``random_state``
+    # only applies to a splitter whose schema has one.
+    dataset_id = _upload(client, _monthly(), tmp_path, "seeded")
+    splits = {**PAIRS[0][1], "seed": 42}
+
+    response = client.post(
+        "/api/v1/model-session/",
+        json=_session_body(dataset_id, strategy=PAIRS[0][0], splits=splits),
+    )
+
+    assert response.status_code == 201, response.text

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pydantic import ConfigDict
+
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 
@@ -8,6 +10,12 @@ from .origin_splitter import OriginSplitter, horizon_field
 
 class TemporalHoldoutSplitterSchema(BaseSchema):
     """Schema that configures the temporal holdout splitter."""
+
+    # A key it does not know is refused rather than dropped: the parameters
+    # these splitters took before they cut in steps (train, validation and
+    # test proportions; n_splits, step, test_size) would otherwise leave a
+    # session running on the defaults without a word.
+    model_config = ConfigDict(extra="forbid")
 
     horizon: horizon_field()  # type: ignore
 
