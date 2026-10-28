@@ -230,6 +230,17 @@
         "template": "模板",
         "templatePlaceholder": "每条用户消息以 {input} 传入\n检索到的片段以 {chunks} 传入"
       },
+      "field": {
+        "edit": "编辑模板",
+        "editTitle": "编辑提示词模板",
+        "empty": "此提示词还没有模板。",
+        "languageHelp": "切换语言只会更改标签；使用“加载内置模板”替换模板。",
+        "loadBuiltin": "加载内置模板",
+        "loadError": "无法加载提示词模板。",
+        "new": "新建提示词",
+        "newTitle": "新建提示词模板",
+        "select": "选择提示词"
+      },
       "languages": {
         "en": "English",
         "es": "Español",

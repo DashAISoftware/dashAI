@@ -232,6 +232,17 @@
         "template": "Template",
         "templatePlaceholder": "Each user message arrives as {input}\nThe retrieved passages arrive as {chunks}"
       },
+      "field": {
+        "edit": "Edit template",
+        "editTitle": "Edit prompt template",
+        "empty": "This prompt has no template yet.",
+        "languageHelp": "Changing the language only changes the label; use Load built-in to replace the template.",
+        "loadBuiltin": "Load built-in",
+        "loadError": "Could not load prompt templates.",
+        "new": "New prompt",
+        "newTitle": "New prompt template",
+        "select": "Select prompt"
+      },
       "languages": {
         "en": "English",
         "es": "Español",

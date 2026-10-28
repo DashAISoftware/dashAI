@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Button,
@@ -16,17 +16,16 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useTranslation } from "react-i18next";
 import { resolveLabel } from "../../../../components/generative/RAG/QueryTransformationPicker";
 import FormSchema from "../../../../components/shared/FormSchema";
+import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import { resolveDefaults } from "../../../../utils/schema";
 
-/** Languages the default transformation prompts can render instructions in. */
-const LANGUAGES = ["en", "es", "pt"];
-
 /**
- * Transformer params that keep their specialized controls instead of being
- * rendered by the generic schema form: the prompt and the nested LLM model.
+ * Transformer params that keep their specialized control instead of being
+ * rendered by the generic schema form: the nested LLM model. The prompt is a
+ * schema field now, drawn as a prompt card by `FormSchemaWithPrompts`.
  */
-const TRANSFORMER_EXCLUDED_FIELDS = ["prompt", "llm_model"];
+const TRANSFORMER_EXCLUDED_FIELDS = ["llm_model"];
 
 /**
  * Decide which of the transformation LLM's parameter values a form submission
@@ -75,12 +74,11 @@ function llmParamsToPersist(carriedParams, seedDefaults, values) {
  *
  * Mirrors `RetrieverAdvancedModal`'s dialog conventions. Both the transformer's
  * own scalar parameters and the nested LLM's parameters are rendered from the
- * backend schema by `FormSchema`, exactly like the generator's advanced
- * configuration, so no parameter is hand-rolled and every field the schema
- * declares stays in sync with the server. The prompt and the LLM model keep
- * their specialized select controls and are excluded from the generic form.
- * The option lists are loaded by the picker and passed down, so this stays
- * presentational.
+ * backend schema, exactly like the generator's advanced configuration, so no
+ * parameter is hand-rolled and every field the schema declares stays in sync
+ * with the server. The transformer form uses `FormSchemaWithPrompts`, so its
+ * prompt field is a prompt card; only the nested LLM keeps a specialized
+ * select and is excluded from the generic form.
  *
  * @param {object}   props
  * @param {boolean}  props.open - Whether the dialog is open.
@@ -90,8 +88,6 @@ function llmParamsToPersist(carriedParams, seedDefaults, values) {
  * @param {string}   [props.technique] - The transformer's technique, deciding
  *   which parameters apply.
  * @param {Array}    [props.generators] - Generator models for the model select.
- * @param {Array}    [props.prompts] - Transformation prompts for the prompt
- *   select.
  * @returns {JSX.Element} The advanced query transformation modal.
  */
 export default function QueryTransformationAdvancedModal({
@@ -101,7 +97,6 @@ export default function QueryTransformationAdvancedModal({
   setModel,
   technique,
   generators,
-  prompts,
 }) {
   const { t } = useTranslation(["generative"]);
   const [params, setParams] = useState(model?.params || {});
@@ -120,20 +115,18 @@ export default function QueryTransformationAdvancedModal({
     if (open) setParams(model?.params || {});
   }, [open, model]);
 
-  const promptOptions = useMemo(
-    () =>
-      (prompts || []).filter(
-        (prompt) =>
-          prompt.metadata?.variant === "default" &&
-          (!technique || prompt.metadata?.technique === technique),
-      ),
-    [prompts, technique],
+  const promptOptionsFilter = useCallback(
+    (_fieldName, option) =>
+      !technique || option.metadata?.technique === technique,
+    [technique],
   );
 
   /**
-   * Merges the transformer's scalar schema values into the stage params.
-   * `prompt` and `llm_model` are edited by their own controls, so they are left
-   * untouched; a cleared scalar is dropped so the backend re-resolves it.
+   * Merges the transformer's schema values into the stage params.
+   * `llm_model` is edited by its own control, so it is left untouched; a
+   * cleared scalar is dropped so the backend re-resolves it. The prompt now
+   * arrives as the canonical `{component, params}` reference and is stored as
+   * such.
    */
   const handleTransformerFormSubmit = (values) =>
     setParams((prev) => {
@@ -329,61 +322,15 @@ export default function QueryTransformationAdvancedModal({
             </FormSchemaContainer>
           )}
 
-          <TextField
-            select
-            size="small"
-            label={t("generative:rag.config.queryTransformation.prompt")}
-            value={params.prompt?.component || ""}
-            onChange={(event) =>
-              setComponent("prompt", event.target.value, { language: "en" })
-            }
-          >
-            {promptOptions.map((prompt) => (
-              <MenuItem key={prompt.name} value={prompt.name}>
-                {resolveLabel(prompt.display_name, prompt.name)}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          {params.prompt?.component && (
-            <TextField
-              select
-              size="small"
-              label={t("generative:rag.config.queryTransformation.language")}
-              value={params.prompt?.params?.language || "en"}
-              onChange={(event) =>
-                setParams((prev) =>
-                  prev.prompt
-                    ? {
-                        ...prev,
-                        prompt: {
-                          ...prev.prompt,
-                          params: {
-                            ...prev.prompt.params,
-                            language: event.target.value,
-                          },
-                        },
-                      }
-                    : prev,
-                )
-              }
-            >
-              {LANGUAGES.map((language) => (
-                <MenuItem key={language} value={language}>
-                  {language}
-                </MenuItem>
-              ))}
-            </TextField>
-          )}
-
           {model?.component && (
             <FormSchemaContainer key={`transformer-form-${model.component}`}>
-              <FormSchema
+              <FormSchemaWithPrompts
                 autoSave
                 hideButtons
                 model={model.component}
                 initialValues={model?.params || {}}
                 excludeFields={TRANSFORMER_EXCLUDED_FIELDS}
+                promptFilter={promptOptionsFilter}
                 onFormSubmit={handleTransformerFormSubmit}
               />
             </FormSchemaContainer>
@@ -410,5 +357,4 @@ QueryTransformationAdvancedModal.propTypes = {
   setModel: PropTypes.func.isRequired,
   technique: PropTypes.string,
   generators: PropTypes.array,
-  prompts: PropTypes.array,
 };

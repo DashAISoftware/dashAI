@@ -236,6 +236,17 @@
         "template": "Plantilla",
         "templatePlaceholder": "Cada mensaje del usuario llega como {input}\nLos fragmentos recuperados llegan como {chunks}"
       },
+      "field": {
+        "edit": "Editar plantilla",
+        "editTitle": "Editar plantilla del prompt",
+        "empty": "Este prompt todavía no tiene plantilla.",
+        "languageHelp": "Cambiar el idioma solo cambia la etiqueta; usa Cargar plantilla integrada para reemplazar la plantilla.",
+        "loadBuiltin": "Cargar plantilla integrada",
+        "loadError": "No se pudieron cargar las plantillas de prompt.",
+        "new": "Nuevo prompt",
+        "newTitle": "Nueva plantilla de prompt",
+        "select": "Seleccionar prompt"
+      },
       "languages": {
         "en": "English",
         "es": "Español",

@@ -15,7 +15,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import FormSchema from "../../../../components/shared/FormSchema";
+import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
 import { resolveRetrieverDefaults } from "./resolveRetrieverDefaults";
 import {
@@ -23,6 +23,9 @@ import {
   isComposite as isCompositeKind,
   isEmbedding as isEmbeddingKind,
 } from "../retrieverKinds";
+
+/** Shared empty exclusion list, so the non-composite branch passes no new array. */
+const NO_EXCLUDED_FIELDS = [];
 
 /**
  * Dialog for configuring a single node in the composite retriever tree.
@@ -205,13 +208,15 @@ export default function RetrieverNodeConfig({
               <FormSchemaContainer
                 key={`node-config-${nodeId}-${selectedModel.name}`}
               >
-                <FormSchema
+                <FormSchemaWithPrompts
                   model={selectedModel.name}
                   initialValues={initialParams}
                   autoSave
                   onFormSubmit={(values) => setParams(values)}
                   hideButtons
-                  excludeFields={isComposite ? ["children"] : []}
+                  excludeFields={
+                    isComposite ? ["children"] : NO_EXCLUDED_FIELDS
+                  }
                 />
               </FormSchemaContainer>
             </>

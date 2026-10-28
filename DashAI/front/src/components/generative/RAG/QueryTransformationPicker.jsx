@@ -258,7 +258,6 @@ export default function QueryTransformationPicker({
         setModel={onChange}
         technique={technique}
         generators={generators}
-        prompts={prompts}
       />
     </Stack>
   );
