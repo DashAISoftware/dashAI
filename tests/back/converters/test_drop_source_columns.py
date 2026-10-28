@@ -52,3 +52,12 @@ def test_params_saved_before_the_option_still_validate_as_off():
     }
     validated = OneHotEncoder.SCHEMA.model_validate(saved)
     assert validated.drop_source_columns is False
+
+
+def test_encoders_filling_schema_defaults_do_not_forward_the_flag():
+    # The encoders fill missing kwargs from the schema placeholders, which
+    # include the drop option; sklearn must never receive it.
+    from DashAI.back.converters.scikit_learn.ordinal_encoder import OrdinalEncoder
+
+    OneHotEncoder()
+    OrdinalEncoder()
