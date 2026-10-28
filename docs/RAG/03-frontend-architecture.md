@@ -128,8 +128,9 @@ own option loading, so the panel only wires the section.
   the remaining technique cards stay available to pick a replacement.
 - The Advanced button (disabled while the stage is off) opens
   `QueryTransformationAdvancedModal`, which renders the nested LLM parameters
-  from the backend schema through `FormSchema` and offers the technique's
-  default prompts.
+  from the backend schema through `FormSchema`, and the transformer's own
+  parameters — prompt included — through `FormSchemaWithPrompts`, whose prompt
+  selector only offers the technique's prompts.
 - The section summary shows the backend's `display_name` when the draft is
   enabled and the "off" label when it is `null`.
 
@@ -220,9 +221,34 @@ In `pages/generative/RAGSession/advanced/`:
 - `RetrieverAdvancedModal` / `RetrieverConfigurationStep`
 - `GeneratorAdvancedModal` / `GeneratorConfigurationStep`
 - `QueryTransformationAdvancedModal` — the nested LLM parameters, rendered from
-  the transformer schema, and the technique's default prompts
+  the transformer schema, and the transformer's own parameters (prompt
+  included)
 - `CompositeRetrieverBuilder` / `RetrieverNodeConfig` — the composite retriever
   tree, with a vertical spine and clickable operation nodes.
+
+### Prompt-typed schema fields
+
+Schemas that declare prompt properties — the LLM function-calling retrievers
+(`LLMFilterPrompt`, `RetrievalSufficiencyPrompt`) and the query transformers
+(`QueryTransformationPrompt` and its techniques) — are rendered by
+`components/generative/RAG/FormSchemaWithPrompts.jsx` instead of `FormSchema`.
+It is a drop-in alternative with the same props: it walks the schema in
+declaration order, draws each prompt key as a same-level card (component
+selector, highlighted template preview, create/edit actions) at the position
+that key declares, and delegates every other run of fields to
+`FormSchemaRenderFields`, so optimizers, unions, nested component references,
+relevance rules and autosave behave exactly as before. Prompt cards honour the
+schema's relevance rules too: a hidden prompt is not rendered and a disabled one
+keeps its card but cannot be edited.
+
+`PromptFieldCard` reads the current selection from the field value (canonical
+`{component, params}` or the legacy subform shape) through `promptSchema.js`,
+which also resolves built-in templates per language, required placeholders and
+the custom prompt components. `PromptTemplateDialog` writes the template that
+is stored in that same ref: it edits the session's own parameters and never a
+prompt library row, because there is no shared prompt library.
+`usePromptOptions` loads the children of the declared parent, so a schema gains
+the richer prompt editor without per-schema prompt code.
 
 ## API layer
 
@@ -249,14 +275,6 @@ In `pages/generative/RAGSession/advanced/`:
 real theme, needed because `PillTabs` reads `theme.palette.ui.box` and a bare
 `createTheme()` does not have it.
 
-- `RAGConfigPanel.test.jsx` — five tabs including Transform, an edit made on a
-  hidden tab is still reported and saved, one Save carries every section, every
-  section stays mounted, and enabling a transformation seeds the
-  schema-declared default generator and PUTs the component reference (while
-  switching it off sends `null`).
-- `QueryTransformationAdvancedModal.test.jsx` — every schema parameter is
-  rendered, and only the LLM keys the user actually set are persisted, so a
-  fresh ref does not overwrite backend defaults.
 - `SourcesDisplay.test.jsx` — the document count, the Chunks/Pipeline toggles,
   the inline panel props, switching views, closing, and the disabled Pipeline
   state.
@@ -265,6 +283,7 @@ real theme, needed because `PillTabs` reads `theme.palette.ui.box` and a bare
 - `GenerativeChat.test.jsx` — an in-flight RAG message shows the live stage
   line when the payload resolves and falls back to the waiting bubble when it
   does not.
-- `PromptEditor.test.jsx` — placeholder validation, that edits are written back
-  as a self-contained component ref, and that changing the language leaves the
-  template alone.
+
+`PromptFieldCard`, `PromptTemplateDialog`, `FormSchemaWithPrompts` and
+`usePromptOptions` have no automated coverage; the behaviour described above was
+verified with `yarn build` and Prettier rather than tests.
