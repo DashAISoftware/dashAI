@@ -31,6 +31,10 @@ TEMPLATES = {
         "\n"
         "Document description: {documents.description}\n"
         "\n"
+        "Chunk positions are ZERO-BASED: a document with C chunks has valid "
+        "positions 0 through C-1. Never use C or a larger number as a "
+        "position.\n"
+        "\n"
         "Current pool (each line shows its document_id and position):\n"
         "{chunks}\n"
         "\n"
@@ -46,7 +50,7 @@ TEMPLATES = {
         "two chunk fields stay in the pool exactly as they are, except when the "
         "maximum capacity forces out older non-requested chunks; requested "
         "chunks take priority. Use the document chunk counts to choose valid "
-        "positions.\n"
+        "positions in 0..C-1.\n"
         "\n"
         "Respond by calling the function evaluate_retrieval_sufficiency with a "
         "single JSON object with this shape:\n"
@@ -70,7 +74,7 @@ TEMPLATES = {
         "cap.\n"
         '- "request_specific_chunks" maps document ids to chunk positions to '
         "ADD to the pool, even if no retriever returned them. Use the document "
-        "chunk counts to choose valid positions.\n"
+        "chunk counts to choose valid positions in 0..C-1.\n"
         '- "discard_specific_chunks" maps document ids to chunk positions to '
         "REMOVE from the pool.\n"
         '- "request_specific_chunks" and "discard_specific_chunks" are mutually '
@@ -106,6 +110,10 @@ TEMPLATES = {
         "\n"
         "Descripción de los documentos: {documents.description}\n"
         "\n"
+        "Las posiciones de los fragmentos empiezan en 0: un documento con C "
+        "fragmentos tiene posiciones válidas de 0 a C-1. Nunca uses C ni un "
+        "número mayor como posición.\n"
+        "\n"
         "Conjunto actual (cada línea muestra su document_id y posición):\n"
         "{chunks}\n"
         "\n"
@@ -122,7 +130,7 @@ TEMPLATES = {
         "exactamente como están, salvo que la capacidad máxima expulse "
         "fragmentos antiguos no solicitados; los fragmentos solicitados tienen "
         "prioridad. Usa el número de fragmentos de cada documento para elegir "
-        "posiciones válidas.\n"
+        "posiciones válidas en 0..C-1.\n"
         "\n"
         "Responde llamando a la función evaluate_retrieval_sufficiency con un "
         "único objeto JSON con esta forma:\n"
@@ -148,7 +156,7 @@ TEMPLATES = {
         '- "request_specific_chunks" asigna ids de documento a posiciones de '
         "fragmento para AÑADIRLAS al conjunto, aunque ningún recuperador las "
         "haya devuelto. Usa el número de fragmentos de cada documento para "
-        "elegir posiciones válidas.\n"
+        "elegir posiciones válidas en 0..C-1.\n"
         '- "discard_specific_chunks" asigna ids de documento a posiciones de '
         "fragmento para ELIMINARLAS del conjunto.\n"
         '- "request_specific_chunks" y "discard_specific_chunks" son mutuamente '
@@ -187,6 +195,10 @@ TEMPLATES = {
         "\n"
         "Descrição dos documentos: {documents.description}\n"
         "\n"
+        "As posições dos trechos começam em 0: um documento com C trechos "
+        "tem posições válidas de 0 a C-1. Nunca use C ou um número maior como "
+        "posição.\n"
+        "\n"
         "Conjunto atual (cada linha mostra seu document_id e posição):\n"
         "{chunks}\n"
         "\n"
@@ -202,7 +214,7 @@ TEMPLATES = {
         "nos dois campos de trechos permanecem no conjunto exatamente como "
         "estão, exceto quando a capacidade máxima expulsa trechos antigos não "
         "solicitados; os trechos solicitados têm prioridade. Use o número de "
-        "trechos de cada documento para escolher posições válidas.\n"
+        "trechos de cada documento para escolher posições válidas em 0..C-1.\n"
         "\n"
         "Responda chamando a função evaluate_retrieval_sufficiency com um "
         "único objeto JSON com esta forma:\n"
@@ -228,7 +240,7 @@ TEMPLATES = {
         '- "request_specific_chunks" mapeia ids de documento para posições de '
         "trecho a ADICIONAR ao conjunto, mesmo que nenhum recuperador as tenha "
         "retornado. Use o número de trechos de cada documento para escolher "
-        "posições válidas.\n"
+        "posições válidas em 0..C-1.\n"
         '- "discard_specific_chunks" mapeia ids de documento para posições de '
         "trecho a REMOVER do conjunto.\n"
         '- "request_specific_chunks" e "discard_specific_chunks" são mutuamente '
