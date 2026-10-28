@@ -52,9 +52,6 @@ from DashAI.back.models.RAG.retrievers.cross_encoder.sentence_transformer_cross_
 from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
     DenseEmbeddingRetrieverSchema,
 )
-from DashAI.back.models.RAG.retrievers.dense.dense_retriever import (
-    DenseRetrieverSchema,
-)
 from DashAI.back.models.RAG.retrievers.enums import MergeStrategy
 from DashAI.back.models.RAG.retrievers.persistence import SparsePersistence
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
@@ -655,7 +652,6 @@ def test_invalid_expand_window_is_rejected(window):
 # ── Schema contract ──────────────────────────────────────────────────────────
 
 EXPANSION_SCHEMAS = [
-    DenseRetrieverSchema,
     DenseEmbeddingRetrieverSchema,
     BM25RetrieverSchema,
     TFIDFRetrieverSchema,

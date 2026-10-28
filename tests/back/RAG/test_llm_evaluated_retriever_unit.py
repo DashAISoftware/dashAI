@@ -16,7 +16,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import pytest
 from pydantic import ValidationError
 
-from DashAI.back.models.RAG.documents import Chunk, RAGDocument, TextSegment
+from DashAI.back.models.RAG.documents import Chunk, RAGDocument
+from DashAI.back.models.RAG.documents.rag_document import TextSegment
 from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverCompositeValidationError,
     RAGRetrieverEvaluationError,
