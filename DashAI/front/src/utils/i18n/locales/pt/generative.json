@@ -227,6 +227,17 @@
         "template": "Modelo",
         "templatePlaceholder": "Cada mensagem do usuário chega como {input}\nOs trechos recuperados chegam como {chunks}"
       },
+      "field": {
+        "edit": "Editar modelo",
+        "editTitle": "Editar modelo do prompt",
+        "empty": "Este prompt ainda não tem modelo.",
+        "languageHelp": "Mudar o idioma só altera o rótulo; use Carregar modelo integrado para substituir o modelo.",
+        "loadBuiltin": "Carregar modelo integrado",
+        "loadError": "Não foi possível carregar os modelos de prompt.",
+        "new": "Novo prompt",
+        "newTitle": "Novo modelo de prompt",
+        "select": "Selecionar prompt"
+      },
       "languages": {
         "en": "English",
         "es": "Español",

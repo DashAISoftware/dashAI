@@ -224,6 +224,17 @@
         "template": "Vorlage",
         "templatePlaceholder": "Jede Nutzernachricht kommt als {input} an\nDie gefundenen Textabschnitte als {chunks}"
       },
+      "field": {
+        "edit": "Vorlage bearbeiten",
+        "editTitle": "Prompt-Vorlage bearbeiten",
+        "empty": "Für diesen Prompt gibt es noch keine Vorlage.",
+        "languageHelp": "Der Sprachwechsel ändert nur die Bezeichnung; mit „Integrierte Vorlage laden“ wird die Vorlage ersetzt.",
+        "loadBuiltin": "Integrierte Vorlage laden",
+        "loadError": "Prompt-Vorlagen konnten nicht geladen werden.",
+        "new": "Neuer Prompt",
+        "newTitle": "Neue Prompt-Vorlage",
+        "select": "Prompt auswählen"
+      },
       "languages": {
         "en": "English",
         "es": "Español",

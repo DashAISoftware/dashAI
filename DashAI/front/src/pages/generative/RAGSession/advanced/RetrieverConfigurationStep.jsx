@@ -18,7 +18,7 @@ import {
   loadRetrieverKinds,
   isComposite as isCompositeKind,
 } from "../retrieverKinds";
-import FormSchema from "../../../../components/shared/FormSchema";
+import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import CompositeRetrieverBuilder from "./CompositeRetrieverBuilder";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import { resolveDefaults } from "../../../../utils/schema";
@@ -100,10 +100,10 @@ function AutoSaveFormSchema({
   );
 
   return (
-    <FormSchema
+    <FormSchemaWithPrompts
       model={selectedRetriever.name}
       initialValues={initialValues}
-      autoSave={true}
+      autoSave
       onFormSubmit={handleFormSubmit}
       formSubmitRef={formikRef}
       hideButtons
