@@ -102,27 +102,29 @@ export function resolveChunkLabel(info, t) {
     if (!contiguous) {
       const args = { positions: positions.join(", ") };
       return info.page != null
-        ? t("traceChunks.chunkListLabelWithPage", {
+        ? t("generative:traceChunks.chunkListLabelWithPage", {
             ...args,
             page: info.page,
           })
-        : t("traceChunks.chunkListLabel", args);
+        : t("generative:traceChunks.chunkListLabel", args);
     }
     return info.page != null
-      ? t("traceChunks.chunkRangeLabelWithPage", {
+      ? t("generative:traceChunks.chunkRangeLabelWithPage", {
           first,
           last,
           page: info.page,
         })
-      : t("traceChunks.chunkRangeLabel", { first, last });
+      : t("generative:traceChunks.chunkRangeLabel", { first, last });
   }
   if (info.page != null) {
-    return t("traceChunks.chunkLabelWithPage", {
+    return t("generative:traceChunks.chunkLabelWithPage", {
       position: info.document_position,
       page: info.page,
     });
   }
-  return t("traceChunks.chunkLabel", { position: info.document_position });
+  return t("generative:traceChunks.chunkLabel", {
+    position: info.document_position,
+  });
 }
 
 /**
@@ -149,9 +151,12 @@ export function describeChunkCount(chunks, t) {
   const units = asArray(chunks).length;
   const covered = countCoveredChunks(chunks);
   if (covered === units) {
-    return t("traceChunks.chunksLabel", { count: units });
+    return t("generative:traceChunks.chunksLabel", { count: units });
   }
-  return t("traceChunks.unitsAndChunksLabel", { units, chunks: covered });
+  return t("generative:traceChunks.unitsAndChunksLabel", {
+    units,
+    chunks: covered,
+  });
 }
 
 /**

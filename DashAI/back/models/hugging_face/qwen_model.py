@@ -192,6 +192,12 @@ class Qwen25_3BInstruct(GGUFTextGenerationModel):  # noqa: N801
             "Generierungsqualität als die 1,5B-Variante, benötigt jedoch "
             "etwas mehr Speicher."
         ),
+        zh=(
+            "Qwen 2.5 3B Instruct 是阿里云推出的 30 亿参数指令微调语言模型，"
+            "以 Q8_0 GGUF 格式加载，支持高效 CPU 推理。"
+            "与 1.5B 变体相比，它具有更强的推理能力和生成质量，但需要稍多的内存。"
+            "模型地址：https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF。"
+        ),
     )
 
 

@@ -110,11 +110,13 @@ function buildProvenanceText(entries, t) {
   const labels = (entries ?? []).flatMap(({ queryIndex, names }) =>
     names.map(
       (name) =>
-        `${name} (${t("traceChunks.foundByQuery", { index: queryIndex })})`,
+        `${name} (${t("generative:traceChunks.foundByQuery", {
+          index: queryIndex,
+        })})`,
     ),
   );
   if (labels.length === 0) return null;
-  return t("traceChunks.foundBy", { retrievers: labels.join(", ") });
+  return t("generative:traceChunks.foundBy", { retrievers: labels.join(", ") });
 }
 
 /**
@@ -229,7 +231,7 @@ function YourMessageLabel() {
       data-testid="your-message-label"
       sx={{ display: "block", mb: 0.5 }}
     >
-      {t("traceChunks.yourMessage")}
+      {t("generative:traceChunks.yourMessage")}
     </Typography>
   );
 }
@@ -273,15 +275,15 @@ function StoryStrip({ transformed, queryCount, kept, total }) {
   const { t } = useTranslation("generative");
   let intro;
   if (transformed) {
-    intro = t("traceChunks.storyRewritten", { count: queryCount });
+    intro = t("generative:traceChunks.storyRewritten", { count: queryCount });
   } else {
-    intro = t("traceChunks.storyDirect");
+    intro = t("generative:traceChunks.storyDirect");
   }
   let counts;
   if (kept < total) {
-    counts = t("traceChunks.storyKept", { kept, total });
+    counts = t("generative:traceChunks.storyKept", { kept, total });
   } else {
-    counts = t("traceChunks.storyKeptAll", { count: kept });
+    counts = t("generative:traceChunks.storyKeptAll", { count: kept });
   }
   return (
     <Typography
@@ -377,9 +379,9 @@ ChunkCardHeader.propTypes = {
 function ToggleLabel({ expanded }) {
   const { t } = useTranslation("generative");
   if (expanded) {
-    return <>{t("traceChunks.showLess")}</>;
+    return <>{t("generative:traceChunks.showLess")}</>;
   }
-  return <>{t("traceChunks.showMore")}</>;
+  return <>{t("generative:traceChunks.showMore")}</>;
 }
 
 ToggleLabel.propTypes = {
@@ -588,10 +590,10 @@ function DocumentGroup({
           <Typography variant="caption" color="text.secondary">
             {describeChunkCount(group.chunks, t)}
           </Typography>
-          <Tooltip title={t("traceChunks.openDocument")}>
+          <Tooltip title={t("generative:traceChunks.openDocument")}>
             <IconButton
               size="small"
-              aria-label={t("traceChunks.openDocument")}
+              aria-label={t("generative:traceChunks.openDocument")}
               onClick={() => onOpenDocument(group.docId)}
             >
               <OpenInNewIcon fontSize="small" />
@@ -664,14 +666,14 @@ function ChunksSection({
           sx={{ fontWeight: 600 }}
           data-testid="received-title"
         >
-          {t("traceChunks.receivedTitle")}
+          {t("generative:traceChunks.receivedTitle")}
         </Typography>
         <Typography
           variant="caption"
           color="text.secondary"
           data-testid="received-count"
         >
-          {t("traceChunks.receivedCount", {
+          {t("generative:traceChunks.receivedCount", {
             count: totalChunks,
             chunks: totalChunks,
             documents: groups.length,
@@ -746,7 +748,7 @@ function FinalChunksPanel({
         />
       ) : (
         <Typography variant="body2" color="text.secondary">
-          {t("traceChunks.emptyState")}
+          {t("generative:traceChunks.emptyState")}
         </Typography>
       )}
     </Box>
@@ -779,7 +781,7 @@ function QuerySummaryRow({ entry, index, count }) {
       <Chip
         size="small"
         variant="outlined"
-        label={t("traceChunks.queryTooltip", { index: index + 1 })}
+        label={t("generative:traceChunks.queryTooltip", { index: index + 1 })}
         sx={{
           borderColor: "accent.purple",
           color: "accent.purple",
@@ -800,7 +802,7 @@ function QuerySummaryRow({ entry, index, count }) {
         color="text.secondary"
         sx={{ flexShrink: 0, pt: 0.5, ml: "auto" }}
       >
-        {t("traceChunks.queryCandidates", { count })}
+        {t("generative:traceChunks.queryCandidates", { count })}
       </Typography>
     </Stack>
   );
@@ -831,7 +833,7 @@ function QuerySelectorChips({ entries, selectedQuery, onSelect }) {
         <Chip
           data-testid="query-chip"
           size="small"
-          label={t("traceChunks.allQueriesChip")}
+          label={t("generative:traceChunks.allQueriesChip")}
           color={selectedQuery === null ? "primary" : "default"}
           variant={selectedQuery === null ? "filled" : "outlined"}
           aria-pressed={selectedQuery === null}
@@ -846,7 +848,9 @@ function QuerySelectorChips({ entries, selectedQuery, onSelect }) {
           <Chip
             data-testid="query-chip"
             size="small"
-            label={t("traceChunks.queryTooltip", { index: index + 1 })}
+            label={t("generative:traceChunks.queryTooltip", {
+              index: index + 1,
+            })}
             color={selectedQuery === index ? "primary" : "default"}
             variant={selectedQuery === index ? "filled" : "outlined"}
             aria-pressed={selectedQuery === index}
@@ -898,7 +902,7 @@ function TraceTrees({
   const renderTree = (entry, index, isLast) => (
     <Box key={index} sx={{ mb: isLast ? 0 : 2 }}>
       <Typography variant="body2" sx={{ fontWeight: "bold", mb: 0.5 }}>
-        {t("traceChunks.queryTooltip", { index: index + 1 })}
+        {t("generative:traceChunks.queryTooltip", { index: index + 1 })}
       </Typography>
       <RetrieverTraceTree
         node={entry.retriever}
@@ -957,10 +961,10 @@ function DiscardedBlock({ refs, onDiscardedClick }) {
         color="text.secondary"
         sx={{ fontWeight: "medium" }}
       >
-        {t("traceChunks.discardedTitle")}
+        {t("generative:traceChunks.discardedTitle")}
       </Typography>
       <Typography variant="caption" color="text.secondary">
-        {t("traceChunks.discardedCaption")}
+        {t("generative:traceChunks.discardedCaption")}
       </Typography>
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1 }}>
         {refs.map((ref) => (

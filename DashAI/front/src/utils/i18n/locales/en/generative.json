@@ -140,8 +140,11 @@
       "addChild": "Add retriever node",
       "allChunks": "All chunks",
       "chunkFusion": "Chunk fusion",
+      "compositeGroup": "Composite retrievers",
       "compositeInstructions": "Click the + button to add a child retriever to this composite. Click on a retriever card to edit its parameters or choose another model.",
       "configureNode": "Configure node",
+      "denseGroup": "Dense retrievers",
+      "keywordGroup": "Keyword retrievers",
       "mergeStrategyInterleave": "Interleave",
       "mergeStrategyRoundRobin": "Round robin",
       "nestedCompositeNote": "This is a composite retriever. Its children can be configured in the tree below.",
@@ -150,7 +153,8 @@
       "reranking": "Reranking",
       "retrieverDescription": "Choose a retriever to configure its parameters. Keyword retrievers (BM25, TF-IDF) find documents by term frequency. Embedding retrievers capture semantic meaning with dense vectors. Composite retrievers chain multiple retrievers together, sequentially or in parallel.",
       "selectModel": "Select retriever model",
-      "selectedChunks": "Selected chunks"
+      "selectedChunks": "Selected chunks",
+      "simpleGroup": "Simple retrievers"
     },
     "config": {
       "advanced": "Advanced configuration",
