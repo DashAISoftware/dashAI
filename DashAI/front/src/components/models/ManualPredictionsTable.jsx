@@ -25,6 +25,9 @@ import { useSnackbar } from "notistack";
 import DatasetTable from "../notebooks/dataset/DatasetTable";
 import DeleteConfirmationModal from "../threeSectionLayout/DeleteConfirmationModal";
 import InputField from "../predictions/InputField";
+import UnseenCategoriesAlert, {
+  mergeUnseen,
+} from "../predictions/UnseenCategoriesAlert";
 import {
   getDatasetFile,
   getDatasetTypesByFilePath,
@@ -38,13 +41,13 @@ import {
 } from "../../api/predict";
 import { enqueuePredictionJob } from "../../api/job";
 import { getModelSessionById } from "../../api/modelSession";
-import { rawColumnsNeededFor } from "./modelSession/sessionColumnRefs";
 import { startJobPolling } from "../../utils/jobPoller";
 import {
   getTargetDecimals,
   formatPredictionRows,
 } from "../../utils/predictionFormat";
 import "../shared/leanDatasetTable/leanDatasetTable.css";
+import { useSessionColumns } from "../../hooks/useTaskMetadata";
 
 // Manual predictions are entered by hand, so each one only ever produces a
 // handful of rows — fetching the full result in one call (instead of the
@@ -250,15 +253,13 @@ export default function ManualPredictionsTable({
   // session's persisted preprocessor before predicting — it only ever
   // accepts real dataset columns (BaseTask.process_manual_input rejects
   // anything else), never a converter's already-resolved output name like
-  // "pca_1". A session with no preprocessing has input_column_refs already
-  // wrapping input_columns 1:1, so this resolves to the same thing then.
-  const inputColumns = useMemo(() => {
-    if (!modelSession) return EMPTY_ARRAY;
-    const refs = modelSession.input_column_refs;
-    if (!refs || refs.length === 0)
-      return modelSession.input_columns ?? EMPTY_ARRAY;
-    return rawColumnsNeededFor(refs, modelSession.preprocessing?.steps || []);
-  }, [modelSession]);
+  // "pca_1". A session with no preprocessing has input refs already
+  // wrapping its input columns 1:1, so this resolves to the same thing then.
+  const sessionInputs = useSessionColumns(modelSession);
+  const inputColumns = useMemo(
+    () => sessionInputs?.rawInputs ?? EMPTY_ARRAY,
+    [sessionInputs],
+  );
 
   const createEmptyRow = useCallback(() => {
     if (!inputSample || inputColumns.length === 0) return {};
@@ -632,6 +633,7 @@ export default function ManualPredictionsTable({
 
   return (
     <Box>
+      <UnseenCategoriesAlert unseen={mergeUnseen(finishedPredictions)} />
       <DatasetTable
         fetchPage={fetchPage}
         initialPageSize={25}

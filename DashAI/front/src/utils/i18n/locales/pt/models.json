@@ -144,7 +144,7 @@
     "inputColumns": "Colunas de entrada",
     "baseColumnsTitle": "Coluna de saída e colunas candidatas",
     "baseColumnsDescription": "Escolha a coluna de saída (a que o modelo aprende a prever) e as colunas candidatas que podem alimentar o modelo. O pré-processamento só atua sobre as candidatas e a saída nunca é transformada.",
-    "candidateColumns": "Colunas candidatas",
+    "candidatesForRole": "{{role}} (colunas candidatas)",
     "less": "Menor (Modelo 1 < Modelo 2)",
     "lines": "Linhas",
     "liveMetrics": "Métricas ao Vivo",

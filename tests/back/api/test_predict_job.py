@@ -40,6 +40,7 @@ from DashAI.back.job.base_job import JobError
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.predict_job import PredictJob
+from tests.back.session_columns import xy_roles
 
 INPUT_COLUMNS = [
     "SepalLengthCm",
@@ -78,8 +79,7 @@ def create_model_session(client: TestClient, dataset_1: Dataset):
             dataset_id=dataset_1.id,
             name="PredictJobSession",
             task_name="TabularClassificationTask",
-            input_columns=INPUT_COLUMNS,
-            output_columns=[OUTPUT_COLUMN],
+            column_roles=xy_roles(INPUT_COLUMNS, [OUTPUT_COLUMN]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
@@ -202,8 +202,7 @@ def fixture_restore_model_session(client: TestClient, model_session_id: int):
         original = {
             "dataset_id": session_row.dataset_id,
             "task_name": session_row.task_name,
-            "input_columns": list(session_row.input_columns),
-            "output_columns": list(session_row.output_columns),
+            "column_roles": dict(session_row.column_roles),
         }
 
     yield
@@ -355,8 +354,7 @@ def create_regression_run(client: TestClient, integer_target_dataset: Dataset):
             dataset_id=integer_target_dataset.id,
             name="PredictJobRegressionSession",
             task_name="RegressionTask",
-            input_columns=REGRESSION_INPUTS,
-            output_columns=[REGRESSION_TARGET],
+            column_roles=xy_roles(REGRESSION_INPUTS, [REGRESSION_TARGET]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
@@ -461,6 +459,49 @@ def test_a_prediction_on_a_partition_covers_exactly_its_rows(
     original = load_dataset(str(Path(dataset_1.file_path) / "dataset"))
     expected = original.select(test_indexes).select_columns(INPUT_COLUMNS)
     assert saved.select_columns(INPUT_COLUMNS).to_dict() == expected.to_dict()
+
+
+def test_a_prediction_on_a_partition_saves_what_the_whole_dataset_saves_for_it(
+    client, trained_run_id, dataset_1
+):
+    """Narrowing to a partition changes which rows are saved, and nothing else.
+
+    The rows of a partition are read from the dataset the task prepared, which
+    is where the run's indexes point. That is only safe if preparing keeps
+    every column, value and declared type of the loaded rows, and with a task
+    that does not reorder the file, the saved prediction is then the one a
+    prediction on the whole dataset saves for those rows. The whole dataset is
+    never prepared, so anything the preparation converted, a label type or a
+    column, shows up here as a difference.
+    """
+    whole_id = _create_prediction(client, trained_run_id, dataset_1.id)
+    PredictJob(prediction_id=whole_id).run()
+    partition_id = _create_prediction(
+        client, trained_run_id, dataset_1.id, split="test"
+    )
+    PredictJob(prediction_id=partition_id).run()
+
+    stored = {
+        name: _stored_prediction(client, prediction_id)
+        for name, prediction_id in (("whole", whole_id), ("partition", partition_id))
+    }
+    assert all(s["status"] == PredictionStatus.FINISHED for s in stored.values())
+    whole, partition = (
+        load_dataset(str(Path(stored[name]["results_path"]) / "dataset"))
+        for name in ("whole", "partition")
+    )
+
+    test_indexes = _run_split_indexes(client, trained_run_id)["test_indexes"]
+    assert partition.column_names == whole.column_names
+    assert {name: kind.to_string() for name, kind in partition.types.items()} == {
+        name: kind.to_string() for name, kind in whole.types.items()
+    }
+    assert partition.arrow_table.schema.equals(
+        whole.arrow_table.schema, check_metadata=True
+    )
+    assert partition.to_dict() == whole.select(test_indexes).to_dict()
+    # The labels are decoded to the species names, not left as class indexes.
+    assert all(isinstance(label, str) for label in partition[OUTPUT_COLUMN])
 
 
 def test_a_partition_the_run_does_not_have_ends_the_prediction_in_error(
@@ -574,7 +615,10 @@ def test_a_model_session_without_input_columns_is_a_422(
 
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
-        db.get(ModelSession, model_session_id).input_columns = []
+        row = db.get(ModelSession, model_session_id)
+        row.column_roles = {
+            k: v for k, v in row.column_roles.items() if k != "features"
+        }
         db.commit()
 
     with pytest.raises(HTTPException) as excinfo:

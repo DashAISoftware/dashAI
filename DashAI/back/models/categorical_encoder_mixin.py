@@ -11,7 +11,7 @@ to each concrete model (``SklearnLikeModel`` pickles the whole instance via
 joblib; the MLP serialises the fields explicitly through ``torch.save``).
 """
 
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -28,7 +28,15 @@ class CategoricalEncoderMixin:
     current ``encoder`` metadata, which can drift between training and prediction
     (e.g. a round-trip through Arrow metadata resets the preference to its
     default).
+
+    A feature value outside what the encoders were fitted on is treated, not
+    refused: label encoding gives it -1 and one-hot a row of zeros, the same
+    as the session encoders by default. ``unseen_categories`` reports those
+    values. The target is never treated (``prepare_output``).
     """
+
+    #: The label code of a feature value the stored encoding does not have.
+    UNKNOWN_LABEL = -1
 
     def _setup_categorical_encoders(self) -> None:
         """Initialise the fitted-encoder state.
@@ -166,7 +174,9 @@ class CategoricalEncoderMixin:
                 for k, v in self.encodings.items()
                 if columns is None or k in columns
             }
-            prepared = apply_categorical_label_encoder(dataset, relevant_encodings)
+            prepared = apply_categorical_label_encoder(
+                dataset, relevant_encodings, unknown_value=self.UNKNOWN_LABEL
+            )
         return prepared
 
     def _prepare_one_hot(
@@ -206,3 +216,41 @@ class CategoricalEncoderMixin:
         else:
             prepared = dataset
         return prepared
+
+    def unseen_categories(self, dataset: "DashAIDataset") -> List[Dict]:
+        """The feature values the fitted encoders will treat as unknown.
+
+        Parameters
+        ----------
+        dataset : DashAIDataset
+            The rows about to be predicted, with the model's input columns.
+
+        Returns
+        -------
+        list of dict
+            One ``unseen_record`` per encoded column with values the encoders
+            were not fitted on. Missing values are not reported.
+        """
+        from DashAI.back.preprocessing.unseen_categories import unseen_record
+
+        source = f"{type(self).__name__} (model)"
+        records = []
+        columns = set(dataset.column_names)
+        for col, encoding in (getattr(self, "encodings", None) or {}).items():
+            if col not in columns:
+                continue
+            values = {v for v in dataset[col] if v is not None and v not in encoding}
+            if values:
+                records.append(unseen_record(source, col, values))
+        encoder = getattr(self, "one_hot_encoder", None)
+        if encoder is not None:
+            for col, known in zip(
+                self.categorical_columns, encoder.categories_, strict=False
+            ):
+                if col not in columns:
+                    continue
+                known = set(known)
+                values = {str(v) for v in dataset[col] if v is not None} - known
+                if values:
+                    records.append(unseen_record(source, col, values))
+        return records

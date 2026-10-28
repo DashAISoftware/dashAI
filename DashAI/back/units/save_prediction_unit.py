@@ -60,19 +60,25 @@ class SavePredictionSchema(BaseSchema):
             zh="输入列",
         ),
         description=MultilingualString(
-            en="Names of the model input columns. Together with the output "
-            "column they decide which declared types are kept in the schema "
-            "written next to the result.",
-            es="Nombres de las columnas de entrada del modelo. Junto con la "
-            "columna de salida deciden qué tipos declarados se conservan en el "
-            "esquema que se escribe junto al resultado.",
-            pt="Nomes das colunas de entrada do modelo. Juntamente com a coluna "
-            "de saída decidem que tipos declarados são mantidos no esquema "
-            "escrito junto ao resultado.",
-            de="Namen der Modelleingabespalten. Zusammen mit der Ausgabespalte "
-            "bestimmen sie, welche deklarierten Typen im Schema neben dem "
-            "Ergebnis erhalten bleiben.",
-            zh="模型输入列的列名。它们与输出列共同决定结果旁写入的模式中保留哪些声明类型。",
+            en="Names of the dataset columns the prediction read: the model's "
+            "inputs, or the columns its preprocessing reads. Together with "
+            "the output column they decide which declared types are kept in "
+            "the schema written next to the result.",
+            es="Nombres de las columnas del dataset que leyó la predicción: "
+            "las entradas del modelo, o las columnas que lee su "
+            "preprocesamiento. Junto con la columna de salida deciden qué "
+            "tipos declarados se conservan en el esquema que se escribe junto "
+            "al resultado.",
+            pt="Nomes das colunas do conjunto de dados que a previsão leu: as "
+            "entradas do modelo, ou as colunas que o seu pré-processamento lê. "
+            "Juntamente com a coluna de saída decidem que tipos declarados são "
+            "mantidos no esquema escrito junto ao resultado.",
+            de="Namen der Datensatzspalten, die die Vorhersage gelesen hat: "
+            "die Modelleingaben oder die Spalten, die seine Vorverarbeitung "
+            "liest. Zusammen mit der Ausgabespalte bestimmen sie, welche "
+            "deklarierten Typen im Schema neben dem Ergebnis erhalten bleiben.",
+            zh="预测读取的数据集列名：模型的输入列，或其预处理读取的列。"
+            "它们与输出列共同决定结果旁写入的模式中保留哪些声明类型。",
         ),
     )  # type: ignore
     output_columns: _columns_field(

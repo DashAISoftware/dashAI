@@ -38,6 +38,7 @@ from DashAI.back.reports.regression.residual_plot import ResidualPlot
 from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.splitters.k_fold import KFoldSplitter
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
+from tests.back.session_columns import xy_roles
 
 INPUT_COLUMNS = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 OUTPUT_COLUMNS = ["Species"]
@@ -84,8 +85,7 @@ def create_model_session(client: TestClient, dataset_1: Dataset, test_registry):
             dataset_id=dataset_1.id,
             name="ReportsSession",
             task_name="TabularClassificationTask",
-            input_columns=INPUT_COLUMNS,
-            output_columns=OUTPUT_COLUMNS,
+            column_roles=xy_roles(INPUT_COLUMNS, OUTPUT_COLUMNS),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
@@ -347,8 +347,7 @@ def train_a_cross_validated_model(
             dataset_id=dataset_1.id,
             name="ReportsCVSession",
             task_name="TabularClassificationTask",
-            input_columns=INPUT_COLUMNS,
-            output_columns=OUTPUT_COLUMNS,
+            column_roles=xy_roles(INPUT_COLUMNS, OUTPUT_COLUMNS),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],

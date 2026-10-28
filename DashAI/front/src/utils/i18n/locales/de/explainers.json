@@ -29,7 +29,8 @@
     "nameTooShort": "Der Name des Erklärungsmodells muss mindestens 4 alphanumerische Zeichen enthalten.",
     "noData": "Keine Daten verfügbar",
     "nameAlreadyExists": "Name existiert bereits",
-    "validateDataset": "Fehler beim Validieren des ausgewählten Datensatzes."
+    "validateDataset": "Fehler beim Validieren des ausgewählten Datensatzes.",
+    "taskNotAvailable": "Die Aufgabe {{task}} dieser Sitzung ist nicht verfügbar, daher können die zu erklärenden Spalten nicht gelesen werden. Sie gehört möglicherweise zu einem Plugin, das nicht mehr installiert ist."
   },
   "label": {
     "configureExplainer": "Erklärungsmodell konfigurieren",

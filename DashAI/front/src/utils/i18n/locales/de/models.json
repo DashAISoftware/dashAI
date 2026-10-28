@@ -142,7 +142,7 @@
     "inputColumns": "Eingabespalten",
     "baseColumnsTitle": "Ausgabe- und Kandidatenspalten",
     "baseColumnsDescription": "Wählen Sie die Ausgabespalte (die das Modell vorherzusagen lernt) und die Kandidatenspalten, die in das Modell einfließen können. Die Vorverarbeitung arbeitet nur mit den Kandidatenspalten, die Ausgabe wird nie transformiert.",
-    "candidateColumns": "Kandidatenspalten",
+    "candidatesForRole": "{{role}} (Kandidatenspalten)",
     "less": "Kleiner (Modell 1 < Modell 2)",
     "lines": "Linien",
     "liveMetrics": "Live-Metriken",

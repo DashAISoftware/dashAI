@@ -9,6 +9,7 @@ import {
   buildStepDisplayNames,
   labelForRef,
 } from "./modelSession/sessionColumnRefs";
+import { useSessionColumns } from "../../hooks/useTaskMetadata";
 
 const SPLIT_TYPE_LABEL_KEYS = {
   random: "experiments:label.random",
@@ -29,6 +30,7 @@ export default function SessionInfoContent({
   tasks = [],
 }) {
   const { t } = useTranslation(["common", "experiments", "models"]);
+  const columns = useSessionColumns(session);
   const [convertersMeta, setConvertersMeta] = useState({});
 
   useEffect(() => {
@@ -94,11 +96,8 @@ export default function SessionInfoContent({
   const yesNo = (value) => t(value ? "common:yes" : "common:no");
 
   const configRows = [
-    [t("models:label.inputColumns"), (session.input_columns || []).join(", ")],
-    [
-      t("models:label.outputColumns"),
-      (session.output_columns || []).join(", "),
-    ],
+    [t("models:label.inputColumns"), (columns?.inputs || []).join(", ")],
+    [t("models:label.outputColumns"), (columns?.outputs || []).join(", ")],
   ];
 
   if (splits?.splitType) {
@@ -214,8 +213,8 @@ SessionInfoContent.propTypes = {
     name: PropTypes.string,
     dataset_id: PropTypes.number,
     task_name: PropTypes.string,
-    input_columns: PropTypes.array,
-    output_columns: PropTypes.array,
+    task_name: PropTypes.string,
+    column_roles: PropTypes.object,
     splits: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     created: PropTypes.string,
     last_modified: PropTypes.string,
