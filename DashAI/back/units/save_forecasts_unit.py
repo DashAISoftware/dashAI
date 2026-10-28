@@ -54,9 +54,19 @@ class SaveForecastsUnit(BaseUnit):
 
         forecasts = ctx.require("forecasts")
         path = forecasts_file(di["config"]["RUNS_PATH"], self.config["artifact_prefix"])
+        try:
+            # NaN and infinity are not JSON, and a file holding them could not
+            # be read by the frontend: the forecasts write None for a value
+            # that is not finite, so one that reaches here is an error.
+            text = json.dumps(forecasts, allow_nan=False)
+        except ValueError as e:
+            raise JobError(
+                "The forecasts hold a value that is not a number, which the "
+                f"forecasts file cannot store: {e}"
+            ) from e
         partial = path.with_suffix(".json.partial")
         try:
-            partial.write_text(json.dumps(forecasts), encoding="utf-8")
+            partial.write_text(text, encoding="utf-8")
             os.replace(partial, path)
         except OSError as e:
             log.exception(e)

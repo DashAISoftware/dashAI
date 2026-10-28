@@ -302,6 +302,26 @@ def test_the_forecasts_are_written_where_the_endpoint_reads_them(client):
     path.unlink()
 
 
+def test_a_forecast_that_is_not_a_number_is_not_written(client):
+    # NaN is not JSON: the file would hold a bare NaN that the frontend
+    # cannot parse. The origins carry None where a value is not finite, so a
+    # NaN here came from somewhere else, and is an error to say, not to save.
+    from DashAI.back.units.forecast_scope import forecasts_file
+    from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
+
+    ctx = _backtested()
+    forecasts = ctx.require("forecasts")
+    forecasts["origins"][0]["forecast"][0] = float("nan")
+    ctx.put_ref("forecasts", forecasts)
+
+    with pytest.raises(JobError, match="not a number"):
+        SaveForecastsUnit(artifact_prefix="nan-test")(ctx)
+
+    path = forecasts_file(client.app.container["config"]["RUNS_PATH"], "nan-test")
+    assert not path.exists()
+    assert not path.with_suffix(".json.partial").exists()
+
+
 @pytest.mark.parametrize("prefix", ["../outside", "", None])
 def test_a_prefix_that_leaves_the_runs_directory_is_refused(prefix):
     from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
