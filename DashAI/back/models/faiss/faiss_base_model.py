@@ -135,7 +135,8 @@ class FaissBaseModel:
 
     def __getstate__(self) -> dict:
         """Serialise the FAISS index as raw bytes before pickling."""
-        state = self.__dict__.copy()
+        # Through super() so BaseModel can leave the training data out too.
+        state = dict(super().__getstate__() or {})
         if state.get("_index") is not None:
             faiss = self._import_faiss()
 

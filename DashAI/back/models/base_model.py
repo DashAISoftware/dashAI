@@ -46,6 +46,12 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     # `level=EPOCH`, so for them this stays None and nothing changes.
     _epoch_reporter = None
 
+    # The splits a model is scored on, pointed at by whoever fits it so that
+    # `calculate_metrics` can read them. None until then, and again once the
+    # model is pickled: they are the run's data, never part of the model.
+    x_data = None
+    y_data = None
+
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         """Get metadata values for the current model.
@@ -61,6 +67,31 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         metadata["requires_download"] = bool(getattr(cls, "REQUIRES_DOWNLOAD", False))
         metadata["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
         return metadata
+
+    def __getstate__(self) -> Dict[str, Any]:
+        """Leave the data the model was scored on out of its pickled state.
+
+        Whoever fits a model points ``x_data`` and ``y_data`` at the splits it
+        trains on, so ``calculate_metrics`` can read them. Every model that
+        saves itself by pickling (``joblib.dump(self)``) would otherwise write
+        the whole dataset into its artifact: a copy of the data on every run,
+        and a save that grows with the dataset instead of with the model.
+
+        Dropping them lets the class defaults answer, so a loaded model scores
+        nothing on its own, the same as a model never pointed at any data.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A copy of the instance state, without the training data.
+        """
+        # A copy, because further up the MRO the state may be the live
+        # ``__dict__``; and ``or {}``, because ``object`` gives None for an
+        # instance that has no attributes yet.
+        state = dict(super().__getstate__() or {})
+        state.pop("x_data", None)
+        state.pop("y_data", None)
+        return state
 
     @abstractmethod
     def save(self, filename: str) -> None:
