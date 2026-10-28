@@ -156,23 +156,43 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
 
         The optimizer has set this trial's parameters on ``model``; it is
         fitted once per origin, on the steps before it, and never on the test.
+
+        A window with no number to compare stops the run, the same as a fold
+        in ``FitModelOverFoldsUnit``: skipped, the objective would be the
+        mean of a different set of windows on each trial; averaged, NaN can
+        neither win nor lose. ``RuntimeError`` and not ``ValueError``, which
+        the optimizer swallows into "every trial failed, narrow the ranges",
+        the wrong advice for a model that forecast no number.
         """
+        import math
+
         import numpy as np
 
         horizon = cuts["horizon"]
         levels = [95] if model.SUPPORTS_INTERVALS else []
         scores = []
         for index, origin in enumerate(cuts["validation_origins"]):
+            where = f"the validation window at step {origin}"
             # No grid: a score never reads the dates.
             record = forecast_origin(
                 model, series, origin, horizon, None, "validation", index, levels
             )
+            if any(value is None for value in record["forecast"]):
+                raise RuntimeError(
+                    f"The model forecast values that are not numbers on {where}, "
+                    f"so the optimization metric {metric.__name__} has nothing to "
+                    "score. Check that the series suits the model, or search "
+                    "other ranges."
+                )
             forecast = scored_forecast(
                 record, series, getattr(model, "season_length", 1) or 1
             )
-            scores.append(
-                self._goal_score_forecast(
-                    metric, forecast, f"the validation window at step {origin}"
+            score = self._goal_score_forecast(metric, forecast, where)
+            if not math.isfinite(score):
+                raise RuntimeError(
+                    f"The optimization metric {metric.__name__} scored a value "
+                    f"that is not a number ({score}) on {where}. Check that the "
+                    "metric is defined on the window's values."
                 )
-            )
+            scores.append(score)
         return float(np.mean(scores))

@@ -172,6 +172,58 @@ def test_training_a_run_again_replaces_its_metrics(client, tmp_path):
     }
 
 
+@pytest.mark.parametrize("broken", ["forecast", "score"])
+def test_a_trial_that_scores_no_number_stops_the_search_and_says_where(
+    client, tmp_path, monkeypatch, broken
+):
+    """A trial with no number to compare is neither skipped nor averaged.
+
+    A NaN forecast makes sklearn's MAE raise ``ValueError``, and a NaN score
+    makes Optuna mark the trial failed; either way, with every trial like it,
+    the run ended in "every trial failed, narrow the ranges", which names no
+    metric and no window and gives the wrong advice.
+    """
+    import numpy as np
+
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.job.model_job import ModelJob
+    from DashAI.back.metrics.regression.mae import MAE
+    from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
+    from tests.back.api.test_forecasting_acceptance import _create_run
+
+    if broken == "forecast":
+        monkeypatch.setattr(
+            SeasonalNaiveForecaster,
+            "_forecast",
+            lambda self, h, x=None: np.full(h, np.nan),
+        )
+    else:
+        monkeypatch.setattr(
+            MAE, "score_forecast", classmethod(lambda cls, forecast: float("nan"))
+        )
+    session_id = _session(client, tmp_path, _monthly())
+    searched = {
+        "season_length": {
+            "optimize": True,
+            "fixed_value": 12,
+            "lower_bound": 2,
+            "upper_bound": 12,
+        }
+    }
+    other = _create_run(
+        client,
+        session_id,
+        "SeasonalNaiveForecaster",
+        searched,
+        goal_metric="MAE",
+        optimizer="OptunaOptimizer",
+    )
+
+    # Names the metric and the window, in whichever order.
+    with pytest.raises(JobError, match=r"(?=.*\bMAE\b)(?=.*validation window)"):
+        ModelJob(run_id=other).run()
+
+
 # --- the forecasts file ------------------------------------------------------
 
 
