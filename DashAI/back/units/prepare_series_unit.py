@@ -39,19 +39,32 @@ class PrepareSeriesUnit(BaseUnit, SplitterScopeMixin):
 
     The sibling for the x/y tasks is ``PrepareAndSplitUnit``. A series is not
     an ``x`` and a ``y``, and a backtest's cuts are not partitions of rows, so
-    this publishes different keys. Session preprocessing has no field here:
-    a forecasting session takes none yet.
+    this publishes different keys. A forecasting session takes no session
+    preprocessing yet (RECONCILING_FORECASTING 2.13, decision 8), so a
+    ``preprocessing_artifacts_path`` is a wiring error: the API refuses the
+    steps, and a session that carries the artifacts anyway is refused here
+    rather than trained on the raw series without a word.
     """
 
     SCHEMA = PrepareSeriesSchema
 
     REQUIRES = ("dataset", "dataset_id")
     PROVIDES = ("series", "grid", "task", "task_name", "split_indexes")
+    RUNTIME_PARAMS = ("preprocessing_artifacts_path",)
 
     def __init__(self, **config) -> None:
         super().__init__(**config)
         self._task = None
         self._splitter_class = None
+
+    def validate(self, ctx: ExecutionContext) -> None:
+        if self.config.get("preprocessing_artifacts_path"):
+            raise JobError(
+                f"Task {self.config['task_name']} takes no session preprocessing "
+                "yet, and this session has fitted preprocessing. Create the "
+                "session again without preprocessing steps, or transform the "
+                "dataset in a notebook."
+            )
 
     def execute(self, ctx: ExecutionContext) -> None:
         dataset = ctx.require("dataset")

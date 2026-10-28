@@ -303,6 +303,7 @@ EXPECTED_RUNTIME_PARAMS = {
     ("BacktestForecasterUnit", "run_id"),
     ("BacktestForecasterUnit", "artifact_prefix"),
     ("SaveForecastsUnit", "artifact_prefix"),
+    ("PrepareSeriesUnit", "preprocessing_artifacts_path"),
 }
 
 

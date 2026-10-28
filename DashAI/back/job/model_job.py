@@ -665,6 +665,7 @@ class ModelJob(BaseJob):
                     if key not in META_KEYS
                 },
             },
+            preprocessing_artifacts_path=model_session.preprocessing_artifacts_path,
         )
 
     @staticmethod

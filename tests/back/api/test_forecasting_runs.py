@@ -281,6 +281,31 @@ def test_an_undefined_goal_metric_names_the_window_and_the_dates(client, tmp_pat
     assert message.endswith("Choose another optimization metric.")
 
 
+def test_a_backtest_refuses_a_session_with_fitted_preprocessing(client, tmp_path):
+    """Forecasting takes no session preprocessing yet (2.13, decision 8).
+
+    The API refuses the steps, but a session can still carry the artifacts
+    (a package put together by hand, a database edited). Training on the raw
+    series without a word would be a run that is not what its session says.
+    """
+    from DashAI.back.core.enums.status import RunStatus
+    from DashAI.back.dependencies.database.models import ModelSession
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.job.model_job import ModelJob
+    from tests.back.api.test_forecasting_acceptance import _create_run
+
+    session_id = _session(client, tmp_path, _monthly())
+    with client.app.container["session_factory"]() as db:
+        db.get(ModelSession, session_id).preprocessing_artifacts_path = str(tmp_path)
+        db.commit()
+    other = _create_run(client, session_id, "NaiveForecaster")
+
+    with pytest.raises(JobError, match="takes no session preprocessing"):
+        ModelJob(run_id=other).run()
+
+    assert _get(client, Run, other).status == RunStatus.ERROR
+
+
 def test_coverage_as_the_goal_metric_fails_the_run(client, tmp_path):
     """Searched for, coverage picks the widest intervals, not a better model."""
     from DashAI.back.core.enums.status import RunStatus
