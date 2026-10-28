@@ -321,7 +321,9 @@
     "importedNeedsDownloadUntrained": "这些模型未经训练，训练前必须先下载：{{names}}",
     "importingSession": "正在导入会话...",
     "importingSessionHelp": "如果会话包含已训练的模型，可能需要一些时间。",
-    "sessionImportedTitle": "会话已导入"
+    "sessionImportedTitle": "会话已导入",
+    "sessionFromDataset": "来自数据集 {{name}}",
+    "noDataset": "无数据集"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} 已完成所有运行。",

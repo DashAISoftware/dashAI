@@ -12,6 +12,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { getColorByColumnType } from "../../../../utils";
+import { getColumnTypeLabel } from "../../../../utils/typesLists";
 import { kindLabel } from "../../../documents/documentKinds";
 
 function Columns({ data }) {
@@ -86,7 +87,7 @@ function Columns({ data }) {
               >
                 {type ? (
                   <Chip
-                    label={type}
+                    label={getColumnTypeLabel(type, t)}
                     size="small"
                     sx={{
                       backgroundColor: getColorByColumnType(type, theme),

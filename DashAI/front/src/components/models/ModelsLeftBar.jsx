@@ -193,8 +193,10 @@ export default function ModelsLeftBar({ onToggle }) {
       );
 
       return associatedDataset?.name
-        ? `from ${associatedDataset.name} dataset`
-        : "No dataset";
+        ? t("models:label.sessionFromDataset", {
+            name: associatedDataset.name,
+          })
+        : t("models:label.noDataset");
     }
     return session.description || "";
   };

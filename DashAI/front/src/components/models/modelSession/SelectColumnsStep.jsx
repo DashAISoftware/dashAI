@@ -7,6 +7,7 @@ import { getComponents as getComponentsRequest } from "../../../api/component";
 import { validateColumns as validateColumnsRequest } from "../../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { getColorByColumnType } from "../../../utils";
+import { getColumnTypeLabel } from "../../../utils/typesLists";
 import { useTranslation, Trans } from "react-i18next";
 import {
   refToKey,
@@ -275,7 +276,7 @@ function SelectColumnsStep({
         {typesList.map((type, index) => (
           <React.Fragment key={type}>
             <Chip
-              label={type}
+              label={getColumnTypeLabel(type, t)}
               size="small"
               sx={{
                 backgroundColor: getColorByColumnType(type),
