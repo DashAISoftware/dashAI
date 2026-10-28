@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Callable, Dict, List, Optional
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.converters.hugging_face_wrapper import HuggingFaceWrapper
 from DashAI.back.core.schema_fields import (
     bool_field,
@@ -12,7 +13,6 @@ from DashAI.back.core.schema_fields import (
     int_field,
     schema_field,
 )
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.utils import (
     DEVICE_ENUM,
@@ -42,7 +42,7 @@ IMAGE_ENCODERS: Dict[str, str] = {
 DEFAULT_IMAGE_ENCODER: str = "DINOv2 small"
 
 
-class ImageEmbeddingSchema(BaseSchema):
+class ImageEmbeddingSchema(AddColumnsConverterSchema):
     """Schema for ImageEmbedding converter hyperparameters."""
 
     model_name: schema_field(

@@ -4,8 +4,8 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.feature_engineering import (
     FeatureEngineeringConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.core.schema_fields import enum_field, schema_field
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.preprocessing.structure_types import (
     ColumnItem,
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 OPERATIONS = ["log1p", "square", "sqrt"]
 
 
-class NumericExpansionSchema(BaseSchema):
+class NumericExpansionSchema(AddColumnsConverterSchema):
     """Schema for NumericExpansion hyperparameters."""
 
     operation: schema_field(

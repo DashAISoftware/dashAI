@@ -276,3 +276,48 @@ def test_one_fitted_converter_feeds_several_transforms(registry):
         ctx.put("dataset", _dataset(a=[value]))
         TransformDatasetUnit(scope=FULL_SCOPE, target=None)(ctx)
         assert _values(ctx.require("dataset")) == [expected]
+
+
+class _AddShifted:
+    """Column-adding converter that learns a shift from the data it is fitted on."""
+
+    CHANGES_ROW_COUNT = False
+    COLUMN_OPERATION = "add"
+
+    def __init__(self, **params):
+        assert "drop_source_columns" not in params
+        self.shift = None
+
+    def fit(self, x, y=None):
+        self.shift = float(x.to_pandas().iloc[:, 0].max())
+        return self
+
+    def transform(self, x, y=None):
+        frame = x.to_pandas()
+        for name in list(frame.columns):
+            frame[f"{name}_shifted"] = frame[name] + self.shift
+        types = {name: Float(arrow_type=pa.float64()) for name in frame.columns}
+        return to_dashai_dataset(frame, types=types)
+
+
+def test_fit_then_transform_drops_the_same_columns(registry):
+    registry["AddShifted"] = {"class": _AddShifted}
+    scope = {"columns": [{"idx": 1}], "rows": []}
+    ctx = ExecutionContext()
+
+    ctx.put("dataset", _dataset(a=[1.0, 2.0], b=[0.0, 0.0]))
+    FitConverterUnit(
+        converter={
+            "component": "AddShifted",
+            "params": {"drop_source_columns": True},
+        },
+        scope=scope,
+        target=None,
+    )(ctx)
+
+    ctx.put("dataset", _dataset(a=[10.0], b=[5.0]))
+    TransformDatasetUnit(scope=scope, target=None)(ctx)
+
+    dataset = ctx.require("dataset")
+    assert dataset.column_names == ["b", "a_shifted"]
+    assert _values(dataset, "a_shifted") == [12.0]

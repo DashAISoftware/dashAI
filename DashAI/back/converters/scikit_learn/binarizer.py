@@ -1,15 +1,15 @@
 from sklearn.preprocessing import Binarizer as BinarizerOperation
 
 from DashAI.back.converters.category.encoding import EncodingConverter
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import float_field, schema_field
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.value_types import Float, Integer
 
 
-class BinarizerSchema(BaseSchema):
+class BinarizerSchema(AddColumnsConverterSchema):
     """Schema for Binarizer hyperparameters."""
 
     threshold: schema_field(

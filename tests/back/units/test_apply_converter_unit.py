@@ -386,3 +386,76 @@ def test_a_changes_row_count_converter_replaces_the_whole_dataset(registry):
     _unit("ReplaceWithScope", scope={"columns": [{"idx": 2}], "rows": []})(ctx)
 
     assert ctx.require("dataset").column_names == ["b"]
+
+
+class _AddDoubled:
+    """Column-adding converter: returns its scope plus one doubled column each."""
+
+    CHANGES_ROW_COUNT = False
+    COLUMN_OPERATION = "add"
+    received_params = None
+
+    def __init__(self, **params):
+        type(self).received_params = params
+
+    def fit(self, x, y=None):
+        return self
+
+    def transform(self, x, y=None):
+        frame = x.to_pandas()
+        for name in list(frame.columns):
+            frame[f"{name}_x2"] = frame[name] * 2
+        types = {name: Integer(arrow_type=pa.int64()) for name in frame.columns}
+        return to_dashai_dataset(frame, types=types)
+
+
+def _drop_unit(registry, scope, target=None, drop=True):
+    registry["AddDoubled"] = {"class": _AddDoubled}
+    params = {"drop_source_columns": True} if drop else {}
+    return _unit("AddDoubled", scope=scope, target=target, params=params)
+
+
+B_SCOPE = {"columns": [{"idx": 2}], "rows": []}
+
+
+def test_drop_source_columns_removes_the_scope_columns(registry):
+    ctx = _ctx(_dataset(a=[1, 2], b=[3, 4]))
+
+    _drop_unit(registry, B_SCOPE)(ctx)
+
+    dataset = ctx.require("dataset")
+    assert dataset.column_names == ["a", "b_x2"]
+    assert "b" not in dataset.types
+    assert list(dataset.to_pandas()["b_x2"]) == [6, 8]
+
+
+def test_drop_source_columns_off_keeps_today_behavior(registry):
+    ctx = _ctx(_dataset(a=[1, 2], b=[3, 4]))
+
+    _drop_unit(registry, B_SCOPE, drop=False)(ctx)
+
+    assert ctx.require("dataset").column_names == ["a", "b", "b_x2"]
+
+
+def test_drop_source_columns_is_never_passed_to_the_converter(registry):
+    ctx = _ctx(_dataset(a=[1, 2], b=[3, 4]))
+
+    _drop_unit(registry, B_SCOPE)(ctx)
+
+    assert "drop_source_columns" not in _AddDoubled.received_params
+
+
+def test_drop_source_columns_never_drops_the_target(registry):
+    ctx = _ctx(_dataset(a=[1, 2], b=[3, 4]))
+    scope = {"columns": [{"idx": 1}, {"idx": 2}], "rows": []}
+
+    _drop_unit(registry, scope, target={"idx": 2})(ctx)
+
+    assert ctx.require("dataset").column_names == ["b", "a_x2", "b_x2"]
+
+
+def test_drop_source_columns_with_an_empty_scope_is_refused(registry):
+    ctx = _ctx(_dataset(a=[1, 2], b=[3, 4]))
+
+    with pytest.raises(JobError, match="explicit column scope"):
+        _drop_unit(registry, {"columns": [], "rows": []})(ctx)

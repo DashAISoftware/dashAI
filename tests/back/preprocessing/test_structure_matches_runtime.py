@@ -14,6 +14,7 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.dataset_columns import (
     rebuild_dataset_with_transformed_columns,
 )
+from DashAI.back.converters.drop_source_columns import split_converter_params
 from DashAI.back.converters.hugging_face.text_embedding import (
     TEXT_EMBEDDING_CONVERTERS,
 )
@@ -217,7 +218,10 @@ def _dataset():
 
 
 def _build(cls, params):
-    return cls(**{**schema_placeholder_defaults(cls), **params})
+    converter_params, _ = split_converter_params(
+        {**schema_placeholder_defaults(cls), **params}
+    )
+    return cls(**converter_params)
 
 
 def _scope_items(dataset, scope):

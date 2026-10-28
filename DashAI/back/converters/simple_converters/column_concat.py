@@ -4,13 +4,16 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.feature_engineering import (
     FeatureEngineeringConverter,
 )
+from DashAI.back.converters.drop_source_columns import (
+    AddColumnsConverterSchema,
+    reject_output_named_like_scope,
+)
 from DashAI.back.core.schema_fields import (
     bool_field,
     none_type,
     schema_field,
     string_field,
 )
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.preprocessing.structure_types import (
     ColumnItem,
@@ -26,7 +29,7 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class ColumnConcatSchema(BaseSchema):
+class ColumnConcatSchema(AddColumnsConverterSchema):
     """Schema for ColumnConcat hyperparameters."""
 
     constant: schema_field(
@@ -344,6 +347,7 @@ class ColumnConcat(FeatureEngineeringConverter, BaseConverter):
         result_column_name = self.output_column_name or (
             f"{column_a}_concat_{operand_b_label}"
         )
+        reject_output_named_like_scope(result_column_name, columns)
         return operand_b_mode, column_a, column_b, result_column_name
 
     def infer_output_columns(self, inputs: List[StateItem]) -> StructureDelta:
