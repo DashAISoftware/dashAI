@@ -144,3 +144,34 @@ def test_a_seed_in_the_payload_is_not_a_parameter_the_splitter_refuses(
     )
 
     assert response.status_code == 201, response.text
+
+
+@pytest.mark.parametrize("total_rows", ["recorded", "missing"])
+def test_a_short_series_is_refused_by_its_row_count(
+    client, tmp_path, monkeypatch, total_rows
+):
+    # The count is the dataset's own, when it has one, so no batch is read;
+    # a dataset without it (from before the column was backfilled) is
+    # counted from the file.
+    from DashAI.back.dependencies.database.models import Dataset
+    from tests.back.api.test_model_session_api import count_batch_reads
+
+    dataset_id = _upload(client, _monthly(20), tmp_path, f"short-{total_rows}")
+    with client.app.container["session_factory"]() as db:
+        dataset = db.get(Dataset, dataset_id)
+        assert dataset.total_rows == 20
+        if total_rows == "missing":
+            dataset.total_rows = None
+        db.commit()
+    reads = count_batch_reads(monkeypatch)
+
+    response = client.post(
+        "/api/v1/model-session/",
+        json=_session_body(dataset_id, strategy=PAIRS[1][0], splits=PAIRS[1][1]),
+    )
+
+    assert response.status_code == 422, response.text
+    assert "needs a series of at least 25 steps" in response.text
+    # The size is checked before anything else reads the file, so the only
+    # batch read is the count's, and only where the dataset has no total.
+    assert reads == ([] if total_rows == "recorded" else [0])

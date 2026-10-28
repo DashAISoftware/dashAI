@@ -371,3 +371,52 @@ def test_validate_columns_with_preprocessing_rejects_an_input_cast_to_text(
     )
     assert response.status_code == 200, response.text
     assert response.json()["dataset_status"] == "invalid"
+
+
+class _CountingReader:
+    """An arrow file reader that records which record batches were read."""
+
+    reads: list = []
+
+    def __init__(self, reader):
+        self._reader = reader
+
+    def __getattr__(self, name):
+        return getattr(self._reader, name)
+
+    def get_batch(self, index):
+        _CountingReader.reads.append(index)
+        return self._reader.get_batch(index)
+
+
+def count_batch_reads(monkeypatch) -> list:
+    """Record every record batch a request reads from a dataset file."""
+    import pyarrow.ipc as ipc
+
+    open_file = ipc.open_file
+    reads = []
+    monkeypatch.setattr(_CountingReader, "reads", reads)
+    monkeypatch.setattr(
+        ipc,
+        "open_file",
+        lambda source, *a, **k: _CountingReader(open_file(source, *a, **k)),
+    )
+    return reads
+
+
+def test_creating_a_session_reads_no_rows_its_splitter_does_not_need(
+    client: TestClient, dataset_1: Dataset, monkeypatch
+) -> None:
+    # A holdout carves any number of rows; counting them would read every
+    # batch of the dataset, which on a dataset of gigabytes is the whole file.
+    # The one batch read is the first, for the sample the role checks type.
+    reads = count_batch_reads(monkeypatch)
+
+    response = client.post(
+        "/api/v1/model-session/",
+        json={**SESSION_PARAMS, "dataset_id": dataset_1.id, "name": "no-rows-read"},
+    )
+
+    assert response.status_code == 201, response.text
+    assert reads == [0]
+    client.delete(f"/api/v1/model-session/{response.json()['id']}")

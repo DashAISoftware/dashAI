@@ -544,7 +544,7 @@ def _validate_splits(
 
 
 def _validate_splits_size(
-    splits: str, n_rows: int, component_registry: "ComponentRegistry"
+    splits: str, count_rows, component_registry: "ComponentRegistry"
 ) -> None:
     """Refuse a dataset too short for the session's splitter.
 
@@ -552,6 +552,16 @@ def _validate_splits_size(
     registered splitter. Most splitters carve any number of rows; a backtest
     needs enough steps for its windows, and saying so here beats a run that
     fails on it.
+
+    Parameters
+    ----------
+    splits : str
+        The splits payload, serialized as JSON.
+    count_rows : Callable[[], int]
+        How many rows the dataset has. Called only for a splitter that has a
+        size to check, because counting may read the dataset.
+    component_registry : ComponentRegistry
+        Registry used to resolve the splitter.
 
     Raises
     ------
@@ -576,12 +586,33 @@ def _validate_splits_size(
         {**schema_placeholder_defaults(splitter_class), **parameters}
     )
     try:
-        splitter.validate_size(n_rows)
+        splitter.validate_size(count_rows())
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from e
+
+
+def _row_count(dataset: Dataset, data_filepath: str) -> int:
+    """How many rows a dataset has, without reading them if it can.
+
+    The dataset's own ``total_rows`` when it has one: the dataset job writes
+    it and every edit of the data rewrites it. A dataset from before the
+    column was filled is counted from the file, memory mapped, so only the
+    headers of its batches are read.
+    """
+    if dataset.total_rows is not None:
+        return dataset.total_rows
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    with pa.memory_map(data_filepath, "r") as source:
+        reader = ipc.open_file(source)
+        return sum(
+            reader.get_batch(i).num_rows for i in range(reader.num_record_batches)
+        )
 
 
 def _validate_roles_for_task(
@@ -906,13 +937,13 @@ async def create_model_session(
                 reader = ipc.open_file(source)
                 schema = reader.schema
                 column_names = schema.names
-                n_rows = sum(
-                    reader.get_batch(i).num_rows
-                    for i in range(reader.num_record_batches)
-                )
 
             if getattr(strategy_class, "KIND", "holdout") != "full":
-                _validate_splits_size(params.splits, n_rows, component_registry)
+                _validate_splits_size(
+                    params.splits,
+                    lambda: _row_count(dataset, data_filepath),
+                    component_registry,
+                )
 
             if has_preprocessing:
                 _check_preprocessing_structure(
