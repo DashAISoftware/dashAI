@@ -114,22 +114,23 @@ class DenseEmbeddingRetriever(UnitRetriever):
     )
 
     REPRESENTATION = MultilingualString(
-        en="{embedding_model.model_name} · similarity {similarity_metric}"
-        " · top-k {top_k}",
-        es="{embedding_model.model_name} · similitud {similarity_metric}"
-        " · top-k {top_k}",
-        pt="{embedding_model.model_name} · similaridade {similarity_metric}"
-        " · top-k {top_k}",
-        de="{embedding_model.model_name} · Ähnlichkeit {similarity_metric}"
-        " · top-k {top_k}",
-        zh="{embedding_model.model_name} · 相似度 {similarity_metric} · top-k {top_k}",
+        en="{embedding_model} · similarity {similarity_metric} · top-k {top_k}",
+        es="{embedding_model} · similitud {similarity_metric} · top-k {top_k}",
+        pt="{embedding_model} · similaridade {similarity_metric} · top-k {top_k}",
+        de="{embedding_model} · Ähnlichkeit {similarity_metric} · top-k {top_k}",
+        zh="{embedding_model} · 相似度 {similarity_metric} · top-k {top_k}",
     )
 
     @classmethod
     def _get_main_parameters(cls) -> Dict[str, str]:
-        """Return the embedding model, similarity metric and top-k paths."""
+        """Return the embedding model, similarity metric and top-k paths.
+
+        The embedding model path is bare on purpose: an embedding converter is
+        the model, so a direct component reference renders its class name (see
+        :meth:`BaseRetriever.get_representation` for the placeholder contract).
+        """
         return {
-            "embedding_model": "embedding_model.model_name",
+            "embedding_model": "embedding_model",
             "similarity_metric": "similarity_metric",
             "top_k": "top_k",
         }

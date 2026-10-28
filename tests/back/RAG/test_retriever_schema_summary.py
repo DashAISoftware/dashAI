@@ -6,6 +6,9 @@ import json
 from types import SimpleNamespace
 from typing import Dict, List, Tuple
 
+from DashAI.back.converters.hugging_face.text_embedding import (
+    ParaphraseMultilingualMiniLML12V2Embedding,
+)
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
@@ -36,7 +39,7 @@ def test_bm25_metadata_exposes_schema_summary_parameters():
 def test_dense_embedding_metadata_exposes_nested_parameter_path():
     """The dense embedding retriever points at the nested embedding model."""
     assert DenseEmbeddingRetriever.get_metadata()["schema_summary_parameters"] == {
-        "embedding_model": "embedding_model.model_name",
+        "embedding_model": "embedding_model",
         "similarity_metric": "similarity_metric",
         "top_k": "top_k",
     }
@@ -76,7 +79,7 @@ def test_nested_component_path_is_resolved():
     class _Nested(BaseRetriever):
         @classmethod
         def _get_main_parameters(cls) -> Dict[str, str]:
-            return {"embedding_model": "embedding_model.model_name"}
+            return {"embedding_model": "embedding_model.batch_size"}
 
         def retrieve(self, query, **kwargs):
             return [], {}
@@ -86,12 +89,12 @@ def test_nested_component_path_is_resolved():
 
     retriever = _Nested(
         embedding_model={
-            "component": "SentenceTransformerEmbedding",
-            "params": {"model_name": "demo-model"},
+            "component": "ParaphraseMultilingualMiniLML12V2Embedding",
+            "params": {"batch_size": 16},
         }
     )
 
-    assert retriever.get_schema_summary()["params"] == {"embedding_model": "demo-model"}
+    assert retriever.get_schema_summary()["params"] == {"embedding_model": 16}
 
 
 def test_nested_path_resolves_from_factory_trace_params():
@@ -100,7 +103,7 @@ def test_nested_path_resolves_from_factory_trace_params():
     class _FactoryNested(BaseRetriever):
         @classmethod
         def _get_main_parameters(cls) -> Dict[str, str]:
-            return {"embedding_model": "embedding_model.model_name"}
+            return {"embedding_model": "embedding_model.batch_size"}
 
         def retrieve(self, query, **kwargs):
             return [], {}
@@ -112,14 +115,42 @@ def test_nested_path_resolves_from_factory_trace_params():
     retriever.set_trace_params(
         {
             "embedding_model": {
-                "component": "SentenceTransformerEmbedding",
-                "params": {"model_name": "trace-model"},
+                "component": "ParaphraseMultilingualMiniLML12V2Embedding",
+                "params": {"batch_size": 64},
             }
         }
     )
 
+    assert retriever.get_schema_summary()["params"] == {"embedding_model": 64}
+
+
+def test_component_ref_path_renders_the_nested_class_name():
+    """A path ending on a component reference summarizes its class name.
+
+    This mirrors the ``{component_param}`` placeholder contract of the
+    representation and the frontend's ``resolveParamValue``.
+    """
+
+    class _Ref(BaseRetriever):
+        @classmethod
+        def _get_main_parameters(cls) -> Dict[str, str]:
+            return {"embedding_model": "embedding_model"}
+
+        def retrieve(self, query, **kwargs):
+            return [], {}
+
+        def score_chunks(self, chunk_ids, query):
+            return []
+
+    retriever = _Ref(
+        embedding_model={
+            "component": "BagOfWordsConverter",
+            "params": {"max_features": None},
+        }
+    )
+
     assert retriever.get_schema_summary()["params"] == {
-        "embedding_model": "trace-model"
+        "embedding_model": "BagOfWordsConverter"
     }
 
 
@@ -145,7 +176,7 @@ def test_unresolvable_path_is_omitted():
 def test_direct_bm25_summary_includes_top_k():
     """Directly constructed BM25 resolves its weighting and top-k paths."""
     retriever = BM25Retriever(
-        BM25Vectorizer=SimpleNamespace(vectorizer=object()),
+        vectorizer=SimpleNamespace(vectorizer=object()),
         k1=1.5,
         b=0.75,
         delta=0.0,
@@ -162,7 +193,7 @@ def test_direct_tfidf_summary_resolves_similarity_and_top_k():
     """Directly constructed TF-IDF resolves both summary paths."""
     vectorizer = SimpleNamespace(model=object())
     retriever = TFIDFRetriever(
-        TFIDFVectorizer=vectorizer,
+        vectorizer=vectorizer,
         similarity_function="cosine",
         top_k=7,
     )
@@ -173,10 +204,13 @@ def test_direct_tfidf_summary_resolves_similarity_and_top_k():
 
 
 def test_direct_dense_embedding_summary_resolves_nested_and_top_k():
-    """Directly constructed dense embedding resolves the nested model path."""
-    embedding = SimpleNamespace(params={"model_name": "demo-model"})
+    """Directly constructed dense embedding resolves the nested model path.
+
+    The embedding converter *is* the model, so the summary shows its class name
+    rather than a parameter of an obsolete ``model_name`` field.
+    """
     retriever = DenseEmbeddingRetriever(
-        embedding_model=embedding,
+        embedding_model=ParaphraseMultilingualMiniLML12V2Embedding(),
         similarity_metric="cosine",
         top_k=3,
     )
@@ -184,7 +218,7 @@ def test_direct_dense_embedding_summary_resolves_nested_and_top_k():
     summary = retriever.get_schema_summary()
 
     assert summary["params"] == {
-        "embedding_model": "demo-model",
+        "embedding_model": "ParaphraseMultilingualMiniLML12V2Embedding",
         "similarity_metric": "cosine",
         "top_k": 3,
     }

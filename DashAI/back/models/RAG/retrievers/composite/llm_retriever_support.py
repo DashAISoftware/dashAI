@@ -12,9 +12,21 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict
 
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverCompositeValidationError,
     RAGRetrieverMissingParameterError,
+)
+
+#: Category that groups the retrievers whose behaviour is decided by a language
+#: model. Declared by each of them as ``CATEGORY`` so the retriever pickers show
+#: the LLM family as one group instead of the generic "Other retrievers".
+LLM_RETRIEVER_CATEGORY = MultilingualString(
+    en="LLM retrievers",
+    es="Recuperadores LLM",
+    pt="Recuperadores LLM",
+    de="LLM-Retriever",
+    zh="LLM 检索器",
 )
 
 

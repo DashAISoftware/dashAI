@@ -40,8 +40,10 @@ def _chunk_set_with_sparse_index(db, session_id, document_id, storage) -> int:
     )
     db.add(chunk_set)
     db.flush()
+    # Two sessions may reference the same content-addressed folder, so the
+    # second call finds this one already created: sharing must be idempotent.
     chunk_folder = storage.parent / f"{storage.name}_chunks" / str(document_id)
-    chunk_folder.mkdir(parents=True)
+    chunk_folder.mkdir(parents=True, exist_ok=True)
     db.add(
         RAGChunkSetDocument(
             chunk_set_id=chunk_set.id,

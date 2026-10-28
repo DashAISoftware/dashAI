@@ -54,6 +54,7 @@ from DashAI.back.models.RAG.retrievers.composite.filter_selection import (
     ChunkSelection,
 )
 from DashAI.back.models.RAG.retrievers.composite.llm_retriever_support import (
+    LLM_RETRIEVER_CATEGORY,
     close_llm,
     pop_positive_int,
     pop_required,
@@ -237,6 +238,7 @@ class LLMFilterRetriever(CompositeRetriever):
     """
 
     SCHEMA = LLMFilterRetrieverSchema
+    CATEGORY: MultilingualString = LLM_RETRIEVER_CATEGORY
     DISPLAY_NAME: str = MultilingualString(
         en="LLM Filter Retriever",
         es="Recuperador de Filtro LLM",

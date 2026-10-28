@@ -8,9 +8,12 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
+from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever import (
+    LLMEvaluatedDepthRetriever,
+)
 
 #: Matches a representation placeholder such as ``{top_k}`` or
-#: ``{embedding_model.model_name}``.
+#: ``{embedding_model}``.
 PLACEHOLDER_PATTERN = re.compile(r"\{([^{}]+)\}")
 
 #: Expected placeholders in each concrete retriever's English template.
@@ -18,7 +21,7 @@ REPRESENTATION_PLACEHOLDERS: Dict[str, Tuple[str, ...]] = {
     "BM25Retriever": ("{k1}", "{b}", "{top_k}"),
     "TFIDFRetriever": ("{similarity_function}", "{top_k}"),
     "DenseEmbeddingRetriever": (
-        "{embedding_model.model_name}",
+        "{embedding_model}",
         "{similarity_metric}",
         "{top_k}",
     ),
@@ -123,7 +126,12 @@ def test_llm_representation_labels_are_translated(client: TestClient):
 
 
 def test_children_endpoint_serializes_the_representation(client: TestClient):
-    """The endpoint consumed by the frontend returns a language map."""
+    """The endpoint consumed by the frontend returns the localized template.
+
+    ``localize`` collapses every metadata ``MultilingualString`` into the
+    request's language, so the frontend receives the template as a plain string
+    instead of a language map.
+    """
     response = client.get(
         "/api/v1/component/BaseRetriever/children", params={"recursive": True}
     )
@@ -132,9 +140,11 @@ def test_children_endpoint_serializes_the_representation(client: TestClient):
     entries = {entry["name"]: entry for entry in response.json()}
     metadata = entries["LLMEvaluatedDepthRetriever"]["metadata"]
     representation = metadata["representation"]
+    declared = LLMEvaluatedDepthRetriever.get_representation()
 
-    assert set(representation) == set(LANGUAGES)
-    assert representation["en"] == (
+    assert isinstance(declared, MultilingualString)
+    assert representation == declared.en
+    assert representation == (
         "max_iters {max_iters} · max_chunks {max_chunks} · {prompt}"
     )
     assert "operation_summary" not in metadata

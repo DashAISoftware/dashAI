@@ -55,15 +55,19 @@ def _base_session_params() -> dict:
             "retriever_model": {
                 "component": "BM25Retriever",
                 "params": {
-                    "BM25Vectorizer": {
-                        "component": "BM25VectorizerModel",
+                    "vectorizer": {
+                        "component": "BagOfWordsConverter",
                         "params": {
-                            "strip_accents": None,
-                            "lowercase": True,
-                            "stop_words": None,
-                            "max_df": 1.0,
-                            "min_df": 0.0,
                             "max_features": None,
+                            "lowercase": True,
+                            "strip_accents": None,
+                            "analyzer": "word",
+                            "stop_words": None,
+                            "custom_stop_words": None,
+                            "lower_bound_ngrams": 1,
+                            "upper_bound_ngrams": 1,
+                            "min_df": 0.0,
+                            "max_df": 1.0,
                         },
                     },
                     "k1": 1.5,

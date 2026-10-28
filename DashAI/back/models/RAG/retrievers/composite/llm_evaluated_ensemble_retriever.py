@@ -43,6 +43,9 @@ from DashAI.back.models.RAG.RAG_defaults import (
 from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_retriever import (
     LLMEvaluatedRetriever,
 )
+from DashAI.back.models.RAG.retrievers.composite.llm_retriever_support import (
+    LLM_RETRIEVER_CATEGORY,
+)
 from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
     RetrievalContext,
 )
@@ -214,6 +217,7 @@ class LLMEvaluatedEnsembleRetriever(LLMEvaluatedRetriever):
     """
 
     SCHEMA = LLMEvaluatedEnsembleRetrieverSchema
+    CATEGORY: MultilingualString = LLM_RETRIEVER_CATEGORY
     DISPLAY_NAME: str = MultilingualString(
         en="LLM-Evaluated Ensemble Retriever",
         es="Recuperador Conjunto Evaluado por LLM",

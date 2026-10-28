@@ -4,8 +4,9 @@ This module is the single source of truth for the backend defaults shared by
 the retriever presets, the RAG session defaults and the placeholders of the
 LLM-evaluated composite retrievers:
 
-* the default keyword, semantic and hybrid retrievers,
-* the default semantic embedding model,
+* the default keyword, semantic and hybrid retrievers (and the converters they
+  nest: the bag-of-words word counter and the multilingual embedding model),
+* the default semantic embedding checkpoint,
 * the default RAG function-calling LLM (the registered Qwen 2.5 1.5B, with
   the sampling parameters and context window the RAG helper stages need),
 * the RAG *LLM parameter overrides* shared by the query-transformation stage
@@ -26,10 +27,24 @@ from typing import Any, Dict
 #: Number of chunks the default retrievers select.
 DEFAULT_TOP_K = 10
 
-#: Small multilingual Sentence Transformer used by the semantic default.
+#: Small multilingual Sentence Transformer wrapped by the default semantic
+#: embedding converter. The converter itself names the checkpoint it loads, so
+#: this constant is only used for display and documentation.
 DEFAULT_SEMANTIC_MODEL_NAME = (
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 )
+
+#: Device label the schema of the text embedding converters declares. The field
+#: is an enum of the available GPU labels plus ``"CPU"``, so a lowercase
+#: ``"cpu"`` would not validate.
+DEFAULT_EMBEDDING_DEVICE = "CPU"
+
+#: Number of texts the default embedding converter encodes together.
+DEFAULT_EMBEDDING_BATCH_SIZE = 32
+
+#: Strategy the default embedding converter applies to an over-long text:
+#: keep its first tokens instead of averaging windows.
+DEFAULT_EMBEDDING_OVERFLOW_STRATEGY = "truncate"
 
 #: Context window the default RAG function-calling LLM needs to judge a
 #: retrieval pool together with the sufficiency prompt. Shared with the
@@ -73,24 +88,31 @@ KEYWORD_RETRIEVER_COMPONENT = "BM25Retriever"
 SEMANTIC_RETRIEVER_COMPONENT = "DenseEmbeddingRetriever"
 HYBRID_RETRIEVER_COMPONENT = "ParallelRetriever"
 FUNCTION_CALLING_LLM_COMPONENT = "Qwen25_15BInstruct"
-BM25_VECTORIZER_COMPONENT = "BM25VectorizerModel"
-SENTENCE_TRANSFORMER_EMBEDDING_COMPONENT = "SentenceTransformerEmbedding"
+BAG_OF_WORDS_CONVERTER_COMPONENT = "BagOfWordsConverter"
+PARAPHRASE_MULTILINGUAL_EMBEDDING_COMPONENT = (
+    "ParaphraseMultilingualMiniLML12V2Embedding"
+)
 
-#: Complete BM25 vectorizer parameters (the schema fills no missing values).
-_BM25_VECTORIZER_PARAMS: Dict[str, Any] = {
-    "strip_accents": None,
-    "lowercase": True,
-    "stop_words": None,
-    "max_df": 1.0,
-    "min_df": 0.0,
+#: Complete bag-of-words parameters (the schema fills no missing values).
+#: ``max_features`` stays unset so BM25 weights the whole vocabulary.
+_BAG_OF_WORDS_PARAMS: Dict[str, Any] = {
     "max_features": None,
+    "lowercase": True,
+    "strip_accents": None,
+    "analyzer": "word",
+    "stop_words": None,
+    "custom_stop_words": None,
+    "lower_bound_ngrams": 1,
+    "upper_bound_ngrams": 1,
+    "min_df": 0.0,
+    "max_df": 1.0,
 }
 
 #: Complete keyword retriever parameters, before applying ``top_k``.
 _KEYWORD_PARAMS: Dict[str, Any] = {
-    "BM25Vectorizer": {
-        "component": BM25_VECTORIZER_COMPONENT,
-        "params": _BM25_VECTORIZER_PARAMS,
+    "vectorizer": {
+        "component": BAG_OF_WORDS_CONVERTER_COMPONENT,
+        "params": _BAG_OF_WORDS_PARAMS,
     },
     "k1": 1.5,
     "b": 0.75,
@@ -99,16 +121,19 @@ _KEYWORD_PARAMS: Dict[str, Any] = {
     "top_k": DEFAULT_TOP_K,
 }
 
+#: Complete text embedding parameters (the schema fills no missing values).
+_SEMANTIC_EMBEDDING_PARAMS: Dict[str, Any] = {
+    "device": DEFAULT_EMBEDDING_DEVICE,
+    "batch_size": DEFAULT_EMBEDDING_BATCH_SIZE,
+    "normalize": True,
+    "overflow_strategy": DEFAULT_EMBEDDING_OVERFLOW_STRATEGY,
+}
+
 #: Complete semantic retriever parameters, before applying ``top_k``.
 _SEMANTIC_PARAMS: Dict[str, Any] = {
     "embedding_model": {
-        "component": SENTENCE_TRANSFORMER_EMBEDDING_COMPONENT,
-        "params": {
-            "model_name": DEFAULT_SEMANTIC_MODEL_NAME,
-            "overflow_strategy": "truncate",
-            "normalize": True,
-            "device": "cpu",
-        },
+        "component": PARAPHRASE_MULTILINGUAL_EMBEDDING_COMPONENT,
+        "params": _SEMANTIC_EMBEDDING_PARAMS,
     },
     "similarity_metric": "cosine",
     "top_k": DEFAULT_TOP_K,
@@ -137,7 +162,8 @@ def default_keyword_retriever(top_k: int = DEFAULT_TOP_K) -> Dict[str, Any]:
     -------
     Dict[str, Any]
         A fresh ``{"component": "BM25Retriever", "params": {...}}`` reference
-        with every schema parameter populated.
+        whose ``vectorizer`` is the bag-of-words converter and whose every
+        schema parameter is populated.
     """
     params = copy.deepcopy(_KEYWORD_PARAMS)
     params["top_k"] = top_k
@@ -157,7 +183,8 @@ def default_semantic_retriever(top_k: int = DEFAULT_TOP_K) -> Dict[str, Any]:
     -------
     Dict[str, Any]
         A fresh ``{"component": "DenseEmbeddingRetriever", "params": {...}}``
-        reference using :data:`DEFAULT_SEMANTIC_MODEL_NAME`.
+        reference using the paraphrase-multilingual MiniLM embedding converter
+        (:data:`DEFAULT_SEMANTIC_MODEL_NAME`).
     """
     params = copy.deepcopy(_SEMANTIC_PARAMS)
     params["top_k"] = top_k

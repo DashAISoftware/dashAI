@@ -13,16 +13,20 @@ from typing import Any, Dict
 
 import pytest
 
+from DashAI.back.converters.hugging_face.text_embedding import (
+    ParaphraseMultilingualMiniLML12V2Embedding,
+)
+from DashAI.back.converters.scikit_learn.bag_of_words import BagOfWordsConverter
 from DashAI.back.initial_components import get_initial_components
 from DashAI.back.models.hugging_face.qwen_model import Qwen25_15BInstruct
-from DashAI.back.models.RAG.embeddings.dense.sentence_transformer_embedding import (
-    SentenceTransformerEmbedding,
-)
 from DashAI.back.models.RAG.RAG_constants import (
     COMPOSITE_RETRIEVER_NAMES,
     LLM_EVALUATED_RETRIEVER_NAMES,
 )
 from DashAI.back.models.RAG.RAG_defaults import (
+    DEFAULT_EMBEDDING_BATCH_SIZE,
+    DEFAULT_EMBEDDING_DEVICE,
+    DEFAULT_EMBEDDING_OVERFLOW_STRATEGY,
     DEFAULT_FILTER_K1,
     DEFAULT_FILTER_TOP_K,
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
@@ -57,10 +61,30 @@ from DashAI.back.models.RAG.retrievers.composite.parallel_retriever import (
 from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
     DenseEmbeddingRetriever,
 )
-from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import (
-    BM25Retriever,
-    BM25VectorizerModel,
-)
+from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import BM25Retriever
+
+#: Bag-of-words parameters the keyword default ships: the schema placeholders,
+#: with ``max_features`` unset so BM25 weights the whole vocabulary.
+BAG_OF_WORDS_DEFAULTS = {
+    "max_features": None,
+    "lowercase": True,
+    "strip_accents": None,
+    "analyzer": "word",
+    "stop_words": None,
+    "custom_stop_words": None,
+    "lower_bound_ngrams": 1,
+    "upper_bound_ngrams": 1,
+    "min_df": 0.0,
+    "max_df": 1.0,
+}
+
+#: Embedding parameters the semantic default ships: the schema placeholders.
+EMBEDDING_DEFAULTS = {
+    "device": DEFAULT_EMBEDDING_DEVICE,
+    "batch_size": DEFAULT_EMBEDDING_BATCH_SIZE,
+    "normalize": True,
+    "overflow_strategy": DEFAULT_EMBEDDING_OVERFLOW_STRATEGY,
+}
 
 # ---------------------------------------------------------------------------
 # retriever factories
@@ -81,16 +105,9 @@ class TestRetrieverFactories:
         assert params["delta"] == 0.0
         assert params["similarity_function"] == "cosine"
 
-        vectorizer = params["BM25Vectorizer"]
-        assert vectorizer["component"] == "BM25VectorizerModel"
-        assert vectorizer["params"] == {
-            "strip_accents": None,
-            "lowercase": True,
-            "stop_words": None,
-            "max_df": 1.0,
-            "min_df": 0.0,
-            "max_features": None,
-        }
+        vectorizer = params["vectorizer"]
+        assert vectorizer["component"] == "BagOfWordsConverter"
+        assert vectorizer["params"] == BAG_OF_WORDS_DEFAULTS
 
     def test_default_keyword_retriever_custom_top_k(self):
         ref = default_keyword_retriever(top_k=3)
@@ -106,15 +123,40 @@ class TestRetrieverFactories:
         assert params["similarity_metric"] == "cosine"
 
         embedding = params["embedding_model"]
-        assert embedding["component"] == "SentenceTransformerEmbedding"
-        assert embedding["params"] == {
-            "model_name": DEFAULT_SEMANTIC_MODEL_NAME,
-            "overflow_strategy": "truncate",
-            "normalize": True,
-            "device": "cpu",
-        }
+        assert embedding["component"] == "ParaphraseMultilingualMiniLML12V2Embedding"
+        assert embedding["params"] == EMBEDDING_DEFAULTS
+        assert ParaphraseMultilingualMiniLML12V2Embedding.MODEL_NAME == (
+            DEFAULT_SEMANTIC_MODEL_NAME
+        )
         assert DEFAULT_SEMANTIC_MODEL_NAME == (
             "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        )
+
+    def test_default_recipes_name_registered_components(self):
+        registered = {component.__name__ for component in get_initial_components()}
+        keyword = default_keyword_retriever()
+        semantic = default_semantic_retriever()
+
+        assert keyword["component"] in registered
+        assert keyword["params"]["vectorizer"]["component"] in registered
+        assert semantic["component"] in registered
+        assert semantic["params"]["embedding_model"]["component"] in registered
+
+    def test_nested_component_params_cover_every_schema_field(self):
+        """A nested recipe must be complete: it replaces the resolved defaults.
+
+        The preset builders merge ``{**resolve_component_defaults(...), **ref}``,
+        so a nested ``params`` mapping that omits a field would drop that field
+        instead of inheriting its placeholder.
+        """
+        keyword = default_keyword_retriever()
+        semantic = default_semantic_retriever()
+
+        assert set(keyword["params"]["vectorizer"]["params"]) == set(
+            BagOfWordsConverter.get_schema()["properties"]
+        )
+        assert set(semantic["params"]["embedding_model"]["params"]) == set(
+            ParaphraseMultilingualMiniLML12V2Embedding.get_schema()["properties"]
         )
 
     def test_default_hybrid_retriever_splits_top_k(self):
@@ -147,12 +189,10 @@ class TestRetrieverFactories:
     def test_factories_return_fresh_dicts(self):
         first = default_keyword_retriever()
         first["params"]["top_k"] = 999
-        first["params"]["BM25Vectorizer"]["params"]["lowercase"] = False
+        first["params"]["vectorizer"]["params"]["lowercase"] = False
         assert default_keyword_retriever()["params"]["top_k"] == DEFAULT_TOP_K
         assert (
-            default_keyword_retriever()["params"]["BM25Vectorizer"]["params"][
-                "lowercase"
-            ]
+            default_keyword_retriever()["params"]["vectorizer"]["params"]["lowercase"]
             is True
         )
 
@@ -162,7 +202,7 @@ class TestRetrieverFactories:
             default_semantic_retriever()["params"]["embedding_model"]["params"][
                 "device"
             ]
-            == "cpu"
+            == DEFAULT_EMBEDDING_DEVICE
         )
 
         hybrid = default_hybrid_retriever()
@@ -226,10 +266,10 @@ class TestDefaultFunctionCallingLLM:
 
         # component_field only validates the {component, params} container, so
         # the nested schemas need their own check.
-        BM25VectorizerModel.SCHEMA.model_validate(
-            keyword["params"]["BM25Vectorizer"]["params"]
+        BagOfWordsConverter.SCHEMA.model_validate(
+            keyword["params"]["vectorizer"]["params"]
         )
-        SentenceTransformerEmbedding.SCHEMA.model_validate(
+        ParaphraseMultilingualMiniLML12V2Embedding.SCHEMA.model_validate(
             semantic["params"]["embedding_model"]["params"]
         )
 

@@ -260,8 +260,7 @@ class BaseRetriever(ConfigObject, ABC):
         Parameters
         ----------
         path : str
-            Dotted configuration path (for example
-            ``"embedding_model.model_name"``).
+            Dotted configuration path (for example ``"prompt.language"``).
 
         Returns
         -------
@@ -287,6 +286,10 @@ class BaseRetriever(ConfigObject, ABC):
         This is the protected recursion hook: nested composites call it
         directly with ``depth + 1`` instead of restarting at zero.
 
+        A path that ends on a component reference is rendered as the nested
+        component's class name, matching the ``{component_param}`` placeholder
+        contract of :meth:`get_representation` and the frontend resolver.
+
         Parameters
         ----------
         depth : int
@@ -301,6 +304,8 @@ class BaseRetriever(ConfigObject, ABC):
         params: Dict[str, Any] = {}
         for label, path in type(self).get_schema_summary_parameters().items():
             value = self._resolve_parameter(path)
+            if is_component_ref(value):
+                value = value["component"]
             if value is _UNRESOLVED or value is None:
                 continue
             params[label] = _json_safe(value)
