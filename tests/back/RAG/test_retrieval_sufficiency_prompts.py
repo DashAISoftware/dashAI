@@ -148,6 +148,35 @@ class TestDefaultTemplates:
     def test_templates_state_unmentioned_chunks_are_preserved(self, lang, phrase):
         assert phrase in sufficiency_mod.TEMPLATES[lang]
 
+    @pytest.mark.parametrize(
+        ("lang", "zero_based", "range_statement"),
+        [
+            (
+                "en",
+                "Chunk positions are ZERO-BASED",
+                "a document with C chunks has valid positions 0 through C-1",
+            ),
+            (
+                "es",
+                "Las posiciones de los fragmentos empiezan en 0",
+                "un documento con C fragmentos tiene posiciones válidas de 0 a C-1",
+            ),
+            (
+                "pt",
+                "As posições dos trechos começam em 0",
+                "um documento com C trechos tem posições válidas de 0 a C-1",
+            ),
+        ],
+    )
+    def test_templates_state_chunk_positions_are_zero_based(
+        self, lang, zero_based, range_statement
+    ):
+        """A document with C chunks exposes positions 0 through C-1, not C."""
+        template = sufficiency_mod.TEMPLATES[lang]
+        assert zero_based in template
+        assert range_statement in template
+        assert "0..C-1" in template
+
     def test_templates_request_progress_narrative(self):
         """Every default template asks for an optional message and justification."""
         for template in sufficiency_mod.TEMPLATES.values():
