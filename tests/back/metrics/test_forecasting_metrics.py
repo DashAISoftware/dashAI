@@ -95,6 +95,19 @@ def test_both_metrics_are_minimised():
     assert SMAPE.MAXIMIZE is False
 
 
+def test_coverage_cannot_be_optimized():
+    # Higher coverage means more actuals inside the interval, which is the
+    # axis MAXIMIZE describes; better is near 0.95, which no direction is. So
+    # it says it cannot be optimized, and nothing picks a best run by it.
+    assert IntervalCoverage.MAXIMIZE is True
+    assert IntervalCoverage.get_metadata()["optimizable"] is False
+
+
+@pytest.mark.parametrize("metric", [MAE, RMSE, MAPE, SMAPE, MASE])
+def test_an_error_metric_can_be_optimized(metric):
+    assert metric.get_metadata()["optimizable"] is True
+
+
 # --- who offers what ---------------------------------------------------------
 
 

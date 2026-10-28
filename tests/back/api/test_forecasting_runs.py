@@ -224,6 +224,37 @@ def test_a_trial_that_scores_no_number_stops_the_search_and_says_where(
         ModelJob(run_id=other).run()
 
 
+def test_coverage_as_the_goal_metric_fails_the_run(client, tmp_path):
+    """Searched for, coverage picks the widest intervals, not a better model."""
+    from DashAI.back.core.enums.status import RunStatus
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.job.model_job import ModelJob
+    from tests.back.api.test_forecasting_acceptance import _create_run
+
+    session_id = _session(client, tmp_path, _monthly())
+    searched = {
+        "season_length": {
+            "optimize": True,
+            "fixed_value": 12,
+            "lower_bound": 2,
+            "upper_bound": 12,
+        }
+    }
+    other = _create_run(
+        client,
+        session_id,
+        "SeasonalNaiveForecaster",
+        searched,
+        goal_metric="IntervalCoverage",
+        optimizer="OptunaOptimizer",
+    )
+
+    with pytest.raises(JobError, match="IntervalCoverage cannot be optimized"):
+        ModelJob(run_id=other).run()
+
+    assert _get(client, Run, other).status == RunStatus.ERROR
+
+
 # --- the forecasts file ------------------------------------------------------
 
 

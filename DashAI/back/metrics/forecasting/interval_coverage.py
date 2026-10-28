@@ -15,12 +15,15 @@ class IntervalCoverage(ForecastingMetric):
     metric rather than in place of one.
 
     Range: [0, 1]. Higher means more of the actual values were bounded, which
-    is not the same as better: a model is well calibrated near 0.95. It is not
-    meant to be optimized, since the widest intervals would win.
+    is not the same as better: a model is well calibrated near 0.95.
+    ``MAXIMIZE`` says which way the axis runs, and no more. It cannot be
+    optimized (``OPTIMIZABLE = False``), since the widest intervals would win,
+    so a run that searches for it fails and no run is the best by it.
     """
 
     LEVEL = 95
     MAXIMIZE: bool = True
+    OPTIMIZABLE: bool = False
 
     DESCRIPTION = MultilingualString(
         en=(

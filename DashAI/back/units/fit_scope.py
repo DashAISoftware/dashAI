@@ -254,6 +254,13 @@ class ModelFitScopeMixin:
             raise JobError(
                 f"Metric is not compatible with the Task. {e}",
             ) from e
+        if not goal_metric["metadata"].get("optimizable", True):
+            raise JobError(
+                f"The optimization metric {goal_metric_name} cannot be optimized: "
+                "no direction makes it better, and searching for it would pick "
+                "the parameters it rewards for the wrong reason (interval "
+                "coverage rewards the widest intervals). Choose an error metric."
+            )
 
         try:
             optimizer_class = component_registry[optimizer_name]["class"]

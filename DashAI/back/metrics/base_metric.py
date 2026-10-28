@@ -19,6 +19,10 @@ class BaseMetric:
     MAXIMIZE : bool
         ``True`` if higher values are better (e.g. accuracy, R²),
         ``False`` if lower values are better (e.g. MAE, RMSE).
+    OPTIMIZABLE : bool
+        ``False`` for a metric that no direction makes better, so a search
+        cannot be run for it and no run is the best by it (interval coverage,
+        good near its nominal level). ``True`` by default.
     metadata : dict
         Optional extra metadata surfaced to the frontend via
         :meth:`get_metadata`.
@@ -26,6 +30,7 @@ class BaseMetric:
 
     TYPE: Final[str] = "Metric"
     MAXIMIZE: Final[bool] = False
+    OPTIMIZABLE: bool = True
     metadata: Dict[str, Any] = {}
 
     @classmethod
@@ -40,5 +45,6 @@ class BaseMetric:
         """
         meta: Dict[str, Any] = dict(getattr(cls, "metadata", {}) or {})
         meta["maximize"] = cls.MAXIMIZE
+        meta["optimizable"] = cls.OPTIMIZABLE
 
         return meta
