@@ -90,7 +90,7 @@ User query
 | Chunking                        | `DashAI/back/models/RAG/chunking_models/`                                                                                                                                                        |
 | Prompts                         | `DashAI/back/models/RAG/prompts/` (subdirs: `generation/`, `augmentation/`, `transformation/`)                                                                                                   |
 | Documents                       | `DashAI/back/models/RAG/documents/`                                                                                                                                                              |
-| Embeddings                      | `DashAI/back/models/RAG/embeddings/` (subdirs: `dense/`, `sparse/`)                                                                                                                              |
+| Embeddings                      | `DashAI/back/converters/hugging_face/text_embedding/` (dense vectors) and `DashAI/back/converters/scikit_learn/` (`bag_of_words.py`, `tf_idf.py`)                                                |
 | Jobs                            | `DashAI/back/job/RAG_job.py`                                                                                                                                                                     |
 | Task                            | `DashAI/back/tasks/RAG_task.py`                                                                                                                                                                  |
 | Core                            | `DashAI/back/core/component_validation.py`                                                                                                                                                       |
@@ -124,9 +124,9 @@ Browser / PyWebView
 - **Chunking models** — Character, Token, Recursive character (all implement
   `BaseChunkingModel`)
 - **Retrievers** — `BaseRetriever` base; Sparse (TF-IDF, BM25), Dense (via
-  `DenseEmbedding` subclasses), Cross-Encoder (SentenceTransformer re-rankers),
-  Composite (Sequential, Parallel, MMR Reranker, LLM-evaluated depth and
-  ensemble)
+  `TextEmbeddingConverter` subclasses), Cross-Encoder (SentenceTransformer
+  re-rankers), Composite (Sequential, Parallel, MMR Reranker, LLM-evaluated
+  depth and ensemble)
 - **Query transformations** — `BaseQueryTransformation` base; LLM-backed
   transformers (`LLMQueryRewriter`, `LLMQueryExpander`, `LLMQueryDecomposer`)
   that turn the user message into one or more search queries before retrieval
@@ -137,9 +137,12 @@ Browser / PyWebView
 - **LLMs** — GGUF chat checkpoints (Llama, Mistral, Mixtral, Qwen, SmolLM,
   Phi-4) plus any other `TextToTextGenerationTaskModel` registered in the
   component registry
-- **Embeddings** — Registered `DenseEmbedding` subclasses: BERT, DistilBERT,
-  E5, Instructor, LaBSE, RoBERTa, SentenceTransformer. `HuggingFaceEmbedding` is
-  the abstract base, and `FastTextEmbedding` exists but is not registered.
+- **Embeddings** — Registered `TextEmbeddingConverter` converters (Advanced
+  Preprocessing), one per checkpoint: MiniLM, mpnet, multi-qa MiniLM/mpnet,
+  paraphrase-multilingual MiniLM/mpnet, LaBSE, multilingual E5 (small, base,
+  large), Qwen3-Embedding 0.6B, harrier-oss-v1 (270m, 0.6b) and
+  instructor-large. `TextEmbeddingConverter` is the shared base class. The sparse
+  side uses `BagOfWordsConverter` / `TFIDFConverter` (`SparseTextVectorizer`).
 
 ## Available Models
 
@@ -153,15 +156,39 @@ Browser / PyWebView
 
 ### Embedding Models
 
-| Class                          | Model names                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | File                                                                        |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `BERTEmbedding`                | `google-bert/bert-base-cased`, `google-bert/bert-base-uncased`, `google-bert/bert-large-cased`, `google-bert/bert-large-uncased`, `google-bert/bert-base-multilingual-cased`, `google-bert/bert-base-multilingual-uncased` (6)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `DashAI/back/models/RAG/embeddings/dense/bert_embedding.py`                 |
-| `DistilBERTEmbedding`          | `distilbert/distilbert-base-cased`, `distilbert/distilbert-base-uncased`, `distilbert/distilbert-base-multilingual-cased`, `distilbert/distilbert-roberta-base` (4)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `DashAI/back/models/RAG/embeddings/dense/distilbert_embedding.py`           |
-| `E5Embedding`                  | `intfloat/e5-small-v2`, `intfloat/e5-large-v2`, `intfloat/multilingual-e5-large`, `intfloat/multilingual-e5-base`, `intfloat/multilingual-e5-small`, `intfloat/e5-mistral-7b-instruct` (6)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | `DashAI/back/models/RAG/embeddings/dense/e5_embedding.py`                   |
-| `InstructorEmbedding`          | `hkunlp/instructor-base`, `hkunlp/instructor-large`, `hkunlp/instructor-xl` (3)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `DashAI/back/models/RAG/embeddings/dense/instructor_embedding.py`           |
-| `LaBSEmbedding`                | `sentence-transformers/LaBSE` (1)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | `DashAI/back/models/RAG/embeddings/dense/labse_embedding.py`                |
-| `RoBERTaEmbedding`             | `FacebookAI/roberta-base`, `FacebookAI/roberta-large`, `FacebookAI/xlm-roberta-base`, `FacebookAI/xlm-roberta-large` (4)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | `DashAI/back/models/RAG/embeddings/dense/roberta_embedding.py`              |
-| `SentenceTransformerEmbedding` | `microsoft/harrier-oss-v1-270m`, `microsoft/harrier-oss-v1-0.6b`, `microsoft/harrier-oss-v1-27b`, `Qwen/Qwen3-Embedding-0.6B`, `Qwen/Qwen3-Embedding-4B`, `Qwen/Qwen3-Embedding-8B`, `sentence-transformers/all-MiniLM-L6-v2`, `sentence-transformers/all-MiniLM-L12-v2`, `sentence-transformers/all-mpnet-base-v2`, `sentence-transformers/all-distilroberta-v1`, `sentence-transformers/multi-qa-mpnet-base-dot-v1`, `sentence-transformers/multi-qa-mpnet-base-cos-v1`, `sentence-transformers/multi-qa-distilbert-dot-v1`, `sentence-transformers/multi-qa-distilbert-cos-v1`, `sentence-transformers/multi-qa-MiniLM-L6-dot-v1`, `sentence-transformers/multi-qa-MiniLM-L6-cos-v1`, `sentence-transformers/msmarco-bert-base-dot-v5`, `sentence-transformers/msmarco-distilbert-dot-v5`, `sentence-transformers/msmarco-distilbert-base-tas-b`, `sentence-transformers/msmarco-distilbert-cos-v5`, `sentence-transformers/msmarco-MiniLM-L12-cos-v5`, `sentence-transformers/msmarco-MiniLM-L6-cos-v5`, `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2`, `sentence-transformers/paraphrase-multilingual-mpnet-base-v2`, `sentence-transformers/distiluse-base-multilingual-cased-v2`, `sentence-transformers/distiluse-base-multilingual-cased-v1`, `sentence-transformers/allenai-specter` (27) | `DashAI/back/models/RAG/embeddings/dense/sentence_transformer_embedding.py` |
+Every embedding model is a `TextEmbeddingConverter` converter under
+`DashAI/back/converters/hugging_face/text_embedding/`, one subclass per
+checkpoint. All of them are registered in `initial_components.py` through
+`TEXT_EMBEDDING_CONVERTERS`
+(`converters/hugging_face/text_embedding/__init__.py`).
+
+| Class                                        | Model name                                                    | File                                                                         |
+| -------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `AllMiniLML6V2Embedding`                     | `sentence-transformers/all-MiniLM-L6-v2`                      | `DashAI/back/converters/hugging_face/text_embedding/sentence_transformer.py` |
+| `AllMpnetBaseV2Embedding`                    | `sentence-transformers/all-mpnet-base-v2`                     | `DashAI/back/converters/hugging_face/text_embedding/sentence_transformer.py` |
+| `MultiQAMiniLML6CosV1Embedding`              | `sentence-transformers/multi-qa-MiniLM-L6-cos-v1`             | `DashAI/back/converters/hugging_face/text_embedding/sentence_transformer.py` |
+| `MultiQAMpnetBaseCosV1Embedding`             | `sentence-transformers/multi-qa-mpnet-base-cos-v1`            | `DashAI/back/converters/hugging_face/text_embedding/sentence_transformer.py` |
+| `ParaphraseMultilingualMiniLML12V2Embedding` | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | `DashAI/back/converters/hugging_face/text_embedding/sentence_transformer.py` |
+| `ParaphraseMultilingualMpnetBaseV2Embedding` | `sentence-transformers/paraphrase-multilingual-mpnet-base-v2` | `DashAI/back/converters/hugging_face/text_embedding/sentence_transformer.py` |
+| `LaBSEEmbedding`                             | `sentence-transformers/LaBSE`                                 | `DashAI/back/converters/hugging_face/text_embedding/sentence_transformer.py` |
+| `MultilingualE5SmallEmbedding`               | `intfloat/multilingual-e5-small`                              | `DashAI/back/converters/hugging_face/text_embedding/e5.py`                   |
+| `MultilingualE5BaseEmbedding`                | `intfloat/multilingual-e5-base`                               | `DashAI/back/converters/hugging_face/text_embedding/e5.py`                   |
+| `MultilingualE5LargeEmbedding`               | `intfloat/multilingual-e5-large`                              | `DashAI/back/converters/hugging_face/text_embedding/e5.py`                   |
+| `InstructorLargeEmbedding`                   | `hkunlp/instructor-large`                                     | `DashAI/back/converters/hugging_face/text_embedding/instructor.py`           |
+| `Qwen3Embedding06B`                          | `Qwen/Qwen3-Embedding-0.6B`                                   | `DashAI/back/converters/hugging_face/text_embedding/sentence_transformer.py` |
+| `HarrierOSS270MEmbedding`                    | `microsoft/harrier-oss-v1-270m`                               | `DashAI/back/converters/hugging_face/text_embedding/sentence_transformer.py` |
+| `HarrierOSS06BEmbedding`                     | `microsoft/harrier-oss-v1-0.6b`                               | `DashAI/back/converters/hugging_face/text_embedding/sentence_transformer.py` |
+
+`TextEmbeddingConverter` is the shared base; `SentenceTransformerTextEmbedding`,
+`E5TextEmbedding` and `InstructorTextEmbedding` sit between it and the
+checkpoint subclasses and supply the query/passage prompts (E5 prepends
+`query:`/`passage:`, instructor applies its `instruction`, Qwen3 and harrier
+prepend a query-only instruction).
+
+The two sparse vectorizers the sparse retrievers nest are converters as well:
+`BagOfWordsConverter` (`converters/scikit_learn/bag_of_words.py`) and
+`TFIDFConverter` (`converters/scikit_learn/tf_idf.py`), both subclasses of
+`SparseTextVectorizer` (`converters/scikit_learn/text_vectorizer.py`).
 
 ### Retriever Models
 
@@ -169,7 +196,7 @@ Browser / PyWebView
 | ------------------------------------------ | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | `BM25Retriever`                            | — (BM25 algorithm)                                               | `DashAI/back/models/RAG/retrievers/sparse/bm25_retriever.py`                            |
 | `TFIDFRetriever`                           | — (TF-IDF algorithm)                                             | `DashAI/back/models/RAG/retrievers/sparse/tfidf_retriever.py`                           |
-| `DenseEmbeddingRetriever`                  | Uses any `DenseEmbedding` configured via `ComponentField`        | `DashAI/back/models/RAG/retrievers/dense/dense_embedding_retriever.py`                  |
+| `DenseEmbeddingRetriever`                  | Uses any `TextEmbeddingConverter` from above                     | `DashAI/back/models/RAG/retrievers/dense/dense_embedding_retriever.py`                  |
 | `MMRRerankerRetriever`                     | — (MMR reranker over nested retrievers)                          | `DashAI/back/models/RAG/retrievers/composite/mmr_reranker_retriever.py`                 |
 | `SequentialRetriever`                      | — (executes retrievers sequentially)                             | `DashAI/back/models/RAG/retrievers/composite/sequential_retriever.py`                   |
 | `ParallelRetriever`                        | — (executes retrievers in parallel and merges)                   | `DashAI/back/models/RAG/retrievers/composite/parallel_retriever.py`                     |
@@ -177,8 +204,9 @@ Browser / PyWebView
 | `LLMEvaluatedEnsembleRetriever`            | — (LLM-chosen children across rounds)                            | `DashAI/back/models/RAG/retrievers/composite/llm_evaluated_ensemble_retriever.py`       |
 | `SentenceTransformerCrossEncoderRetriever` | 17 cross-encoder models from `cross-encoder/*` (see table below) | `DashAI/back/models/RAG/retrievers/cross_encoder/sentence_transformer_cross_encoder.py` |
 
-Both sparse retrievers take a nested vectorizer component
-(`BM25VectorizerModel` / `TFIDFVectorizerModel`) selected in their params.
+Both sparse retrievers take a nested `vectorizer` component selected in their
+params: `BM25Retriever` requires a `BagOfWordsConverter` and `TFIDFRetriever` a
+`TFIDFConverter` (`component_field` restricts each to its own parent).
 
 The two `LLMEvaluated*` retrievers ask their configured model for a structured
 sufficiency verdict: the depth retriever evaluates after every round except the
@@ -287,73 +315,28 @@ they have no `retrieval_factor`.
 
 | Model Name                                                    | Type                           | Reference                                                                            |
 | ------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------ |
-| **BERT family**                                               |                                |                                                                                      |
-| `google-bert/bert-base-cased`                                 | Bi-encoder                     | https://huggingface.co/google-bert/bert-base-cased                                   |
-| `google-bert/bert-base-uncased`                               | Bi-encoder                     | https://huggingface.co/google-bert/bert-base-uncased                                 |
-| `google-bert/bert-large-cased`                                | Bi-encoder                     | https://huggingface.co/google-bert/bert-large-cased                                  |
-| `google-bert/bert-large-uncased`                              | Bi-encoder                     | https://huggingface.co/google-bert/bert-large-uncased                                |
-| `google-bert/bert-base-multilingual-cased`                    | Bi-encoder                     | https://huggingface.co/google-bert/bert-base-multilingual-cased                      |
-| `google-bert/bert-base-multilingual-uncased`                  | Bi-encoder                     | https://huggingface.co/google-bert/bert-base-multilingual-uncased                    |
-| **DistilBERT family**                                         |                                |                                                                                      |
-| `distilbert/distilbert-base-cased`                            | Bi-encoder                     | https://huggingface.co/distilbert/distilbert-base-cased                              |
-| `distilbert/distilbert-base-uncased`                          | Bi-encoder                     | https://huggingface.co/distilbert/distilbert-base-uncased                            |
-| `distilbert/distilbert-base-multilingual-cased`               | Bi-encoder                     | https://huggingface.co/distilbert/distilbert-base-multilingual-cased                 |
-| `distilbert/distilbert-roberta-base`                          | Bi-encoder                     | https://huggingface.co/distilbert/distilbert-roberta-base                            |
-| **RoBERTa family**                                            |                                |                                                                                      |
-| `FacebookAI/roberta-base`                                     | Bi-encoder                     | https://huggingface.co/FacebookAI/roberta-base                                       |
-| `FacebookAI/roberta-large`                                    | Bi-encoder                     | https://huggingface.co/FacebookAI/roberta-large                                      |
-| `FacebookAI/xlm-roberta-base`                                 | Bi-encoder                     | https://huggingface.co/FacebookAI/xlm-roberta-base                                   |
-| `FacebookAI/xlm-roberta-large`                                | Bi-encoder                     | https://huggingface.co/FacebookAI/xlm-roberta-large                                  |
 | **E5 family**                                                 |                                |                                                                                      |
-| `intfloat/e5-small-v2`                                        | Bi-encoder                     | https://huggingface.co/intfloat/e5-small-v2                                          |
-| `intfloat/e5-large-v2`                                        | Bi-encoder                     | https://huggingface.co/intfloat/e5-large-v2                                          |
 | `intfloat/multilingual-e5-large`                              | Bi-encoder                     | https://huggingface.co/intfloat/multilingual-e5-large                                |
 | `intfloat/multilingual-e5-base`                               | Bi-encoder                     | https://huggingface.co/intfloat/multilingual-e5-base                                 |
 | `intfloat/multilingual-e5-small`                              | Bi-encoder                     | https://huggingface.co/intfloat/multilingual-e5-small                                |
-| `intfloat/e5-mistral-7b-instruct`                             | Bi-encoder (decoder-based)     | https://huggingface.co/intfloat/e5-mistral-7b-instruct                               |
 | **Instructor family**                                         |                                |                                                                                      |
-| `hkunlp/instructor-base`                                      | Bi-encoder (instruction-tuned) | https://huggingface.co/hkunlp/instructor-base                                        |
 | `hkunlp/instructor-large`                                     | Bi-encoder (instruction-tuned) | https://huggingface.co/hkunlp/instructor-large                                       |
-| `hkunlp/instructor-xl`                                        | Bi-encoder (instruction-tuned) | https://huggingface.co/hkunlp/instructor-xl                                          |
 | **LaBSE**                                                     |                                |                                                                                      |
 | `sentence-transformers/LaBSE`                                 | Bi-encoder                     | https://huggingface.co/sentence-transformers/LaBSE                                   |
 | **Microsoft Harrier**                                         |                                |                                                                                      |
 | `microsoft/harrier-oss-v1-270m`                               | Bi-encoder                     | https://huggingface.co/microsoft/harrier-oss-v1-270m                                 |
 | `microsoft/harrier-oss-v1-0.6b`                               | Bi-encoder                     | https://huggingface.co/microsoft/harrier-oss-v1-0.6b                                 |
-| `microsoft/harrier-oss-v1-27b`                                | Bi-encoder                     | https://huggingface.co/microsoft/harrier-oss-v1-27b                                  |
 | **Qwen3 Embedding**                                           |                                |                                                                                      |
 | `Qwen/Qwen3-Embedding-0.6B`                                   | Bi-encoder                     | https://huggingface.co/Qwen/Qwen3-Embedding-0.6B                                     |
-| `Qwen/Qwen3-Embedding-4B`                                     | Bi-encoder                     | https://huggingface.co/Qwen/Qwen3-Embedding-4B                                       |
-| `Qwen/Qwen3-Embedding-8B`                                     | Bi-encoder                     | https://huggingface.co/Qwen/Qwen3-Embedding-8B                                       |
 | **Sentence-Transformers (general)**                           |                                |                                                                                      |
 | `sentence-transformers/all-MiniLM-L6-v2`                      | Bi-encoder                     | https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2                        |
-| `sentence-transformers/all-MiniLM-L12-v2`                     | Bi-encoder                     | https://huggingface.co/sentence-transformers/all-MiniLM-L12-v2                       |
 | `sentence-transformers/all-mpnet-base-v2`                     | Bi-encoder                     | https://huggingface.co/sentence-transformers/all-mpnet-base-v2                       |
-| `sentence-transformers/all-distilroberta-v1`                  | Bi-encoder                     | https://huggingface.co/sentence-transformers/all-distilroberta-v1                    |
 | **Sentence-Transformers (multi-qa)**                          |                                |                                                                                      |
-| `sentence-transformers/multi-qa-mpnet-base-dot-v1`            | Bi-encoder                     | https://huggingface.co/sentence-transformers/multi-qa-mpnet-base-dot-v1              |
 | `sentence-transformers/multi-qa-mpnet-base-cos-v1`            | Bi-encoder                     | https://huggingface.co/sentence-transformers/multi-qa-mpnet-base-cos-v1              |
-| `sentence-transformers/multi-qa-distilbert-dot-v1`            | Bi-encoder                     | https://huggingface.co/sentence-transformers/multi-qa-distilbert-dot-v1              |
-| `sentence-transformers/multi-qa-distilbert-cos-v1`            | Bi-encoder                     | https://huggingface.co/sentence-transformers/multi-qa-distilbert-cos-v1              |
-| `sentence-transformers/multi-qa-MiniLM-L6-dot-v1`             | Bi-encoder                     | https://huggingface.co/sentence-transformers/multi-qa-MiniLM-L6-dot-v1               |
 | `sentence-transformers/multi-qa-MiniLM-L6-cos-v1`             | Bi-encoder                     | https://huggingface.co/sentence-transformers/multi-qa-MiniLM-L6-cos-v1               |
-| **Sentence-Transformers (MS MARCO)**                          |                                |                                                                                      |
-| `sentence-transformers/msmarco-bert-base-dot-v5`              | Bi-encoder                     | https://huggingface.co/sentence-transformers/msmarco-bert-base-dot-v5                |
-| `sentence-transformers/msmarco-distilbert-dot-v5`             | Bi-encoder                     | https://huggingface.co/sentence-transformers/msmarco-distilbert-dot-v5               |
-| `sentence-transformers/msmarco-distilbert-base-tas-b`         | Bi-encoder                     | https://huggingface.co/sentence-transformers/msmarco-distilbert-base-tas-b           |
-| `sentence-transformers/msmarco-distilbert-cos-v5`             | Bi-encoder                     | https://huggingface.co/sentence-transformers/msmarco-distilbert-cos-v5               |
-| `sentence-transformers/msmarco-MiniLM-L12-cos-v5`             | Bi-encoder                     | https://huggingface.co/sentence-transformers/msmarco-MiniLM-L12-cos-v5               |
-| `sentence-transformers/msmarco-MiniLM-L6-cos-v5`              | Bi-encoder                     | https://huggingface.co/sentence-transformers/msmarco-MiniLM-L6-cos-v5                |
 | **Sentence-Transformers (multilingual)**                      |                                |                                                                                      |
 | `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` | Bi-encoder                     | https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2   |
 | `sentence-transformers/paraphrase-multilingual-mpnet-base-v2` | Bi-encoder                     | https://huggingface.co/sentence-transformers/paraphrase-multilingual-mpnet-base-v2   |
-| `sentence-transformers/distiluse-base-multilingual-cased-v2`  | Bi-encoder                     | https://huggingface.co/sentence-transformers/distiluse-base-multilingual-cased-v2    |
-| `sentence-transformers/distiluse-base-multilingual-cased-v1`  | Bi-encoder                     | https://huggingface.co/sentence-transformers/distiluse-base-multilingual-cased-v1    |
-| **Sentence-Transformers (other)**                             |                                |                                                                                      |
-| `sentence-transformers/allenai-specter`                       | Bi-encoder                     | https://huggingface.co/sentence-transformers/allenai-specter                         |
-| **FastText (exists but not registered)**                      |                                |                                                                                      |
-| `facebook/fasttext-en-vectors`                                | Static embedding               | https://huggingface.co/facebook/fasttext-en-vectors                                  |
-| `facebook/fasttext-es-vectors`                                | Static embedding               | https://huggingface.co/facebook/fasttext-es-vectors                                  |
 | **SentenceTransformers Cross-Encoders (re-rankers)**          |                                |                                                                                      |
 | `cross-encoder/ms-marco-MiniLM-L-6-v2`                        | Cross-encoder                  | https://huggingface.co/cross-encoder/ms-marco-MiniLM-L-6-v2                          |
 | `cross-encoder/ms-marco-MiniLM-L-12-v2`                       | Cross-encoder                  | https://huggingface.co/cross-encoder/ms-marco-MiniLM-L-12-v2                         |
@@ -383,7 +366,7 @@ they have no `retrieval_factor`.
 | `LLMEvaluatedDepthRetriever`                                  | Adaptive depth (composite)     | Uses any `TextToTextGenerationTaskModel` from above                                  |
 | `LLMEvaluatedEnsembleRetriever`                               | Adaptive ensemble (composite)  | Uses any `TextToTextGenerationTaskModel` from above                                  |
 | **Dense Retriever**                                           |                                |                                                                                      |
-| `DenseEmbeddingRetriever`                                     | Bi-encoder + search index      | Uses any `DenseEmbedding` from above                                                 |
+| `DenseEmbeddingRetriever`                                     | Bi-encoder + search index      | Uses any text embedding converter from above                                         |
 
 ### Query Transformation Models
 

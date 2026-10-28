@@ -60,12 +60,15 @@ or hierarchical retrieval.
 
 When chatting, the user might want a given response to use only a specific subset of their uploaded documents (e.g., "use only the documents I referenced in my previous message"). Currently the retriever always searches across all documents assigned to the session. A document-level filter per message would enable more fine-grained control.
 
-## FastTextEmbedding Registration
+## Static (FastText) Embeddings
 
-`FastTextEmbedding` exists in the codebase at
-`models/RAG/embeddings/dense/fasttext_embedding.py` but is not exposed through
-the `embeddings/dense/__init__.py` public API. It needs to be added to
-`__all__` and registered in `get_initial_components()`.
+The old `FastTextEmbedding` (in the now removed
+`models/RAG/embeddings/dense/fasttext_embedding.py`) has **no equivalent** among
+the current embedding converters: every registered one loads a Sentence
+Transformers checkpoint. Supporting static word vectors would need a new
+`TextEmbeddingConverter` subclass for a `facebook/fasttext-*-vectors` checkpoint,
+added to `TEXT_EMBEDDING_CONVERTERS` in
+`converters/hugging_face/text_embedding/__init__.py`.
 
 ## Multi-Modal Document Support
 

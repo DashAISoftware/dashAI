@@ -85,9 +85,10 @@ Centralized validation for RAG session creation (POST) and parameter updates
   endpoints keep the session's list in step with them.
 
 Both methods use `_validate_component_params()` which **recursively** validates
-every `{component, params}` reference (including nested sub-components like
-`BM25Vectorizer` inside `BM25Retriever`) against its own `SCHEMA`. If any fails
-→ HTTP 400. The only tolerated incomplete payloads are the default prompts:
+every `{component, params}` reference (including nested sub-components like the
+`vectorizer` converter inside `BM25Retriever`) against its own `SCHEMA`. If any
+fails → HTTP 400. The only tolerated incomplete payloads are the default
+prompts:
 `DefaultRAGGenerationPrompt` / `DefaultQARAGenerationPrompt`, and the
 transformation trio `DefaultQueryRewritingPrompt` /
 `DefaultQueryExpansionPrompt` / `DefaultQueryDecompositionPrompt`. Each
@@ -374,11 +375,12 @@ check happens first, in the endpoint):
    resolved from the picked classes' schemas (the transformation LLM gets the
    shared RAG 10000/300/0.1 override).
 9. **Recursive schema validation** — every `{component, params}` ref (including
-   nested sub-components like `BM25Vectorizer` inside `BM25Retriever`) is
-   validated against its own `SCHEMA`. If any fails → HTTP 400. On this pass the
-   default generation and transformation prompts auto-inject `template` from a
-   language-based `TEMPLATES` dict, so an absent or blank default template is
-   never persisted. No other component auto-fills missing parameters.
+   nested sub-components like the `vectorizer` converter inside
+   `BM25Retriever`) is validated against its own `SCHEMA`. If any fails →
+   HTTP 400. On this pass the default generation and transformation prompts
+   auto-inject `template` from a language-based `TEMPLATES` dict, so an absent
+   or blank default template is never persisted. No other component auto-fills
+   missing parameters.
 10. `documents` is forced to `[]`; sending a non-empty list is an error.
 11. Prompt template placeholders validated when an explicit template is
     provided.
@@ -607,9 +609,7 @@ BaseRetriever (ABC, DashAI Component)
   │     ├── SparseRetriever (ABC)
   │     │     ├── TFIDFRetriever
   │     │     └── BM25Retriever
-  │     └── DenseRetriever (ABC)
-  │           └── DenseEmbeddingRetriever
-  │                 └── HuggingFaceDenseRetriever (HF-specific retrieval)
+  │     └── DenseEmbeddingRetriever (any TextEmbeddingConverter)
   └── CompositeRetriever (ABC, composite node)
         ├── SequentialRetriever
         ├── ParallelRetriever
@@ -663,22 +663,32 @@ so a later post-round verdict cannot overwrite them.
 
 The dense retriever separates concerns into two layers:
 
-1. **Embedding layer** (`DenseEmbedding` subclasses) — Handle model loading,
-   tokenization, pooling, and vector generation. These are DashAI Components
-   registered in the component registry. Registered today:
-   `SentenceTransformerEmbedding`, `BERTEmbedding`, `DistilBERTEmbedding`,
-   `RoBERTaEmbedding`, `E5Embedding`, `InstructorEmbedding`, `LaBSEmbedding`.
-   `HuggingFaceEmbedding` is the abstract base of the HF-backed family, and
-   `FastTextEmbedding` exists in the package but is not registered.
-2. **Retriever layer** (shared `DenseEmbeddingRetriever` class) — Accepts any
-   `DenseEmbedding` via a `component_field` schema parameter. The embedding
-   family is selected at configuration time.
-   - `DenseRetriever` (in `dense/dense_retriever.py`) is the abstract base.
-   - `DenseEmbeddingRetriever` (in `dense/dense_embedding_retriever.py`) is the
-     generic implementation.
-   - `HuggingFaceDenseRetriever` (in `dense/huggingface_dense_retriever.py`)
-     adds HF-specific utilities via `_hf_language_utils.py` and
-     `_hf_metadata_utils.py`.
+1. **Embedding layer** (`TextEmbeddingConverter` subclasses, in
+   `converters/hugging_face/text_embedding/`) — Handle model loading,
+   tokenization, pooling, and vector generation. They are converters
+   (Advanced Preprocessing, not document converters) registered in the component
+   registry through `TEXT_EMBEDDING_CONVERTERS`, one subclass per Hugging Face
+   checkpoint. Registered today:
+   `AllMiniLML6V2Embedding`, `AllMpnetBaseV2Embedding`,
+   `MultiQAMiniLML6CosV1Embedding`, `MultiQAMpnetBaseCosV1Embedding`,
+   `ParaphraseMultilingualMiniLML12V2Embedding`,
+   `ParaphraseMultilingualMpnetBaseV2Embedding`, `LaBSEEmbedding`,
+   `MultilingualE5SmallEmbedding`, `MultilingualE5BaseEmbedding`,
+   `MultilingualE5LargeEmbedding`, `Qwen3Embedding06B`,
+   `HarrierOSS270MEmbedding`, `HarrierOSS06BEmbedding` and
+   `InstructorLargeEmbedding`. `TextEmbeddingConverter` is the shared base
+   class; `SentenceTransformerTextEmbedding`, `E5TextEmbedding` and
+   `InstructorTextEmbedding` sit between it and the checkpoint subclasses and
+   supply the query/passage prompts.
+2. **Retriever layer** (`DenseEmbeddingRetriever`, a `UnitRetriever` in
+   `dense/dense_embedding_retriever.py`) — Accepts any
+   `TextEmbeddingConverter` through the `embedding_model` schema parameter
+   (`component_field(parent="TextEmbeddingConverter")`), so the embedding model
+   is selected at configuration time. It encodes chunks with the `passage` role
+   and queries with the `query` role. There is no separate dense base class:
+   `DenseRetriever` and `HuggingFaceDenseRetriever` were removed together with
+   the embedding classes. `dense/_hf_language_utils.py` and
+   `dense/_hf_metadata_utils.py` still exist but nothing imports them.
 
 ### Retriever Persistence
 

@@ -158,9 +158,9 @@
   tokenizer from HuggingFace Hub lazily (on first `chunk_text()` call), but
   this still requires network access. Pre-download tokenizers for offline use.
 
-- **Embedding models downloaded on first use.** Each `DenseEmbedding` subclass
-  downloads its model from HuggingFace Hub on first instantiation. Pre-download
-  for offline environments.
+- **Embedding models downloaded on first use.** Each `TextEmbeddingConverter`
+  subclass downloads its checkpoint from HuggingFace Hub when the converter is
+  first asked to encode text. Pre-download for offline environments.
 
 ## Code Duplication
 
@@ -172,15 +172,20 @@
   logic is copied rather than inherited. This is accepted technical debt; a
   future refactor should extract a shared mixin or base class.
 
-- **`FastTextEmbedding`** is defined in
-  `models/RAG/embeddings/dense/fasttext_embedding.py` but is **not exposed**
-  through `embeddings/dense/__init__.py`. It must be explicitly imported and
-  registered if needed.
-
 ## Deprecated Patterns
 
 - The old `notebooks/`, `images/`, `explanations/` directories listed in the
   runtime data layout are no longer actively used by the RAG module.
+
+- **The RAG embedding classes are gone (historical note).**
+  `models/RAG/embeddings/` and its `DenseEmbedding` subclasses (`BERTEmbedding`,
+  `DistilBERTEmbedding`, `E5Embedding`, `InstructorEmbedding`, `LaBSEmbedding`,
+  `RoBERTaEmbedding`, `SentenceTransformerEmbedding`, `FastTextEmbedding`) were
+  replaced by the text embedding converters in
+  `converters/hugging_face/text_embedding/`. Dense retrieval now takes a
+  `TextEmbeddingConverter` through `DenseEmbeddingRetriever.embedding_model`, and
+  the sparse retrievers take a `BagOfWordsConverter` / `TFIDFConverter` through
+  their `vectorizer` field. FastText/static embeddings have no replacement.
 
 ## Document Loaders
 

@@ -45,15 +45,15 @@ Frontend calls `POST /api/v1/generative-session/`. The endpoint delegates to
    customized"; a stored `2048` from an older release is preserved as an
    explicit value (clear the field to upgrade).
 9. **Recursive schema validation** — every `{component, params}` ref (including
-   nested sub-components like `BM25Vectorizer` inside `BM25Retriever`) is
-   validated against its own `SCHEMA`. If any fails → HTTP 400. On this pass the
-   default generation pair (`DefaultRAGGenerationPrompt`,
-   `DefaultQARAGGenerationPrompt`) and the transformation trio
-   (`DefaultQueryRewritingPrompt`, `DefaultQueryExpansionPrompt`,
-   `DefaultQueryDecompositionPrompt`) auto-inject `template` from a
-   language-based `TEMPLATES` dict before being validated, so an absent or blank
-   default template is never persisted. No other component auto-fills missing
-   parameters.
+   nested sub-components like the `vectorizer` converter inside
+   `BM25Retriever`) is validated against its own `SCHEMA`. If any fails →
+   HTTP 400. On this pass the default generation pair
+   (`DefaultRAGGenerationPrompt`, `DefaultQARAGenerationPrompt`) and the
+   transformation trio (`DefaultQueryRewritingPrompt`,
+   `DefaultQueryExpansionPrompt`, `DefaultQueryDecompositionPrompt`) auto-inject
+   `template` from a language-based `TEMPLATES` dict before being validated, so
+   an absent or blank default template is never persisted. No other component
+   auto-fills missing parameters.
 10. **Documents** — a non-empty list is rejected; `documents` is set to `[]`.
     There is no session id to attach documents to yet.
 11. **Prompt template validation** — validates the template against the
