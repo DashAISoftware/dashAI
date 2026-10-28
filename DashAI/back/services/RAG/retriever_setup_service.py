@@ -651,11 +651,7 @@ class RetrieverSetupService:
             IOError: If the model cannot be saved to disk.
         """
         model_dir = model.persistence.model_dir
-        if (
-            not getattr(model, "_state_loaded", False)
-            or not model_dir
-            or not os.path.isdir(model_dir)
-        ):
+        if model.needs_save() or not model_dir or not os.path.isdir(model_dir):
             model.save()
 
         try:

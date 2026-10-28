@@ -188,7 +188,8 @@ class DenseEmbeddingRetriever(UnitRetriever):
         ``np.save`` writes to the open temporary file, so it does not append
         a second ``.npy`` suffix to the final name.
         """
-        for doc_id, doc_chunks in self.chunks.items():
+        for doc_id in sorted(self.chunks):
+            doc_chunks = self.chunks[doc_id]
             matrix_dir = self._persistence.matrix_dirs.get(doc_id)
             if matrix_dir is None or not doc_chunks:
                 continue
@@ -226,7 +227,8 @@ class DenseEmbeddingRetriever(UnitRetriever):
 
         all_embeddings = []
         row_index = 0
-        for doc_id, chunks in self.chunks.items():
+        for doc_id in sorted(self.chunks):
+            chunks = self.chunks[doc_id]
             matrix_dir = self._persistence.matrix_dirs.get(doc_id)
             if matrix_dir is None or not chunks:
                 continue

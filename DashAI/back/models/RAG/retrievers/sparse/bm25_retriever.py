@@ -201,7 +201,7 @@ class BM25Retriever(SparseRetriever):
                 bm25_matrix = pickle.load(f)
             with open(os.path.join(model_dir, "bm25_row_to_chunk_id.pkl"), "rb") as f:
                 matrix_row_to_chunk_id = pickle.load(f)
-            if not self._row_map_matches_chunks(matrix_row_to_chunk_id):
+            if not self._row_map_matches_corpus(matrix_row_to_chunk_id):
                 log.warning(
                     "Persisted BM25 state does not describe the current corpus; "
                     "refitting from the injected chunks."
@@ -243,16 +243,8 @@ class BM25Retriever(SparseRetriever):
     def _fit(self):
         """Count the words of every chunk and compute the BM25-weighted matrix."""
         self._state_loaded = False
-        chunk_texts = []
-        current_idx = 0
-        self.matrix_row_to_chunk_id: Dict[int, int] = {}
-
-        for doc_chunks in self.chunks.values():
-            for chunk in doc_chunks.values():
-                chunk_texts.append(chunk.text)
-                self.matrix_row_to_chunk_id[current_idx] = chunk.id
-                current_idx += 1
-
+        self.matrix_row_to_chunk_id: Dict[int, int] = self.row_map_for_corpus()
+        chunk_texts = [chunk.text for chunk in self._ordered_chunks()]
         self._tf_matrix = self._converter.fit_matrix(chunk_texts)
 
         tf = self._tf_matrix.copy()

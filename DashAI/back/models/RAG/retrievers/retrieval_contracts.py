@@ -100,8 +100,12 @@ def unpack_retrieval_result(result: Any) -> Tuple[List[Chunk], Dict[str, Any]]:
         or not isinstance(result[0], list)
         or not isinstance(result[1], dict)
     ):
+        shape = (
+            f"a {len(result)}-tuple"
+            if isinstance(result, tuple)
+            else type(result).__name__
+        )
         raise RAGRetrieverError(
-            "retrieve() must return a (List[Chunk], Dict) tuple, got "
-            f"{type(result).__name__}."
+            f"retrieve() must return a (List[Chunk], Dict) tuple, got {shape}."
         )
     return result

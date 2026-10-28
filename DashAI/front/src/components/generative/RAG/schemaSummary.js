@@ -129,7 +129,10 @@ function buildSchemaSummaryNode(component, params, resolveComponent, depth) {
  * @param {function(string): (object|null|undefined)} [resolveComponent] -
  *   Lookup for child component definitions by class name.
  * @returns {{class: string, params: object, children?: object[]}|null} The
- *   summary, or null when the component has no (usable) summary spec.
+ *   summary, or null when the component cannot be summarised (invalid
+ *   definition or nesting beyond the depth guard). A component that declares
+ *   no summary spec still yields a node with an empty `params` map, so its
+ *   children stay visible.
  */
 export function buildSchemaSummary(component, params, resolveComponent) {
   try {

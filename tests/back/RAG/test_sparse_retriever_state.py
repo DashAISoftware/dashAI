@@ -239,10 +239,8 @@ def test_a_reload_returns_the_current_sessions_chunk_objects(builder, tmp_path) 
 
 
 @pytest.mark.parametrize("builder", [_bm25, _tfidf], ids=BUILDER_IDS)
-def test_rows_are_resolved_by_chunk_id_not_by_insertion_order(
-    builder, tmp_path
-) -> None:
-    """The row map follows ``Chunk.id`` even when the chunks arrive unordered."""
+def test_rows_follow_document_position_not_insertion_order(builder, tmp_path) -> None:
+    """The row map is ordered by position, whatever order the dict has."""
     corpus = {
         1: {
             1: _chunk(OFFSET_CHUNK_ID + 1, 1, "gamma delta", position=1),
@@ -253,8 +251,8 @@ def test_rows_are_resolved_by_chunk_id_not_by_insertion_order(
     retriever = builder(corpus, tmp_path)
 
     assert retriever.matrix_row_to_chunk_id == {
-        0: OFFSET_CHUNK_ID + 1,
-        1: OFFSET_CHUNK_ID,
+        0: OFFSET_CHUNK_ID,
+        1: OFFSET_CHUNK_ID + 1,
     }
     results, _ = retriever.retrieve("gamma")
     assert results[0] is corpus[1][1]
@@ -275,28 +273,40 @@ def test_a_folder_without_state_is_fitted_from_scratch(
 
 
 @pytest.mark.parametrize(("builder", "retriever_class"), BUILDERS, ids=BUILDER_IDS)
-def test_a_reused_folder_is_not_rewritten(
-    builder, retriever_class, monkeypatch, tmp_path
-) -> None:
-    """A folder that was loaded already holds the state, so it is not re-saved."""
+def test_a_reused_folder_is_not_rewritten(builder, retriever_class, tmp_path) -> None:
+    """A loaded folder reports that it needs no save; a fitted one does.
+
+    ``RetrieverSetupService._save_sparse`` persists only when ``needs_save()``
+    is true, so this predicate is what keeps a shared folder from being rewritten
+    on every session that reuses it.
+    """
     corpus = _session_corpus("alpha beta", "gamma delta")
     first = builder(corpus, tmp_path)
     first.save()
 
-    saves: List[int] = []
-    monkeypatch.setattr(retriever_class, "save", lambda self: saves.append(1))
-
     reloaded = builder(corpus, tmp_path)
+    fitted = builder(_session_corpus("gamma delta"), tmp_path / "unsaved")
 
-    assert saves == []
-    assert reloaded._state_loaded is True
+    assert reloaded.needs_save() is False
+    assert fitted.needs_save() is True
 
 
 @pytest.mark.parametrize(("builder", "retriever_class"), BUILDERS, ids=BUILDER_IDS)
-def test_a_fitted_retriever_asks_to_be_saved(
-    builder, retriever_class, tmp_path
+def test_a_row_map_from_another_corpus_is_rejected(
+    builder, retriever_class, monkeypatch, tmp_path
 ) -> None:
-    """A corpus fitted from scratch has no persisted state yet."""
-    retriever = builder(_session_corpus("alpha beta"), tmp_path / "unsaved")
+    """A folder whose row map does not fit the corpus is refitted, not trusted."""
+    first = builder(_session_corpus("alpha beta", "gamma delta"), tmp_path)
+    first.save()
 
-    assert retriever._state_loaded is False
+    stale = {0: OFFSET_CHUNK_ID, 1: OFFSET_CHUNK_ID + 99}
+    with open(tmp_path / ROW_MAP_FILE[retriever_class], "wb") as f:
+        pickle.dump(stale, f)
+
+    refits = _count_refits(monkeypatch, retriever_class)
+    retriever = builder(_session_corpus("alpha beta", "gamma delta"), tmp_path)
+
+    assert refits == [1]
+    assert retriever.matrix_row_to_chunk_id == {0: 0, 1: 1}
+    results, _ = retriever.retrieve("gamma")
+    assert results[0].text == "gamma delta"

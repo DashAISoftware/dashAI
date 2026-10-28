@@ -509,3 +509,38 @@ class TestApplyDefaults:
 
         assert nested["params"]["k1"] == 10
         assert nested["params"]["function_call_max_trials"] == 3
+
+
+class TestValidateRecursive:
+    """Nested LLM-evaluated retrievers are validated like top-level ones."""
+
+    def test_recursive_validation_checks_a_nested_child(self):
+        nested = _ref(prompt_component="DefaultQueryRewritingPrompt")
+        parent = {
+            "component": "SequentialRetriever",
+            "params": {"children": [nested]},
+        }
+
+        with pytest.raises(ValueError, match="prompt"):
+            _service().validate_recursive(parent)
+
+    def test_recursive_validation_accepts_a_valid_nested_child(self):
+        parent = {
+            "component": "SequentialRetriever",
+            "params": {"children": [_ref()]},
+        }
+
+        _service().validate_recursive(parent)
+
+    def test_recursive_validation_ignores_plain_retrievers(self):
+        parent = {
+            "component": "ParallelRetriever",
+            "params": {
+                "merge_strategy": "round_robin",
+                "children": [
+                    {"component": "BM25Retriever", "params": {"top_k": 5}},
+                ],
+            },
+        }
+
+        _service().validate_recursive(parent)
