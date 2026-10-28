@@ -155,9 +155,7 @@ class TestCreateWithTransformation:
         assert stored["params"]["history_window"] == 2
         assert stored["params"]["function_call_max_trials"] == 3
 
-    def test_create_defaults_transformation_llm_context_window(
-        self, client: TestClient
-    ):
+    def test_create_defaults_transformation_llm_params(self, client: TestClient):
         params = _base_session_params()
         params["parameters"]["query_transformation"] = _qwen_rewriter_ref()
 
@@ -165,22 +163,41 @@ class TestCreateWithTransformation:
         assert response.status_code == 201, response.text
         stored = response.json()["parameters"]["query_transformation"]
         llm_params = stored["params"]["llm_model"]["params"]
-        assert llm_params["context_window"] == 2048
-        assert llm_params["max_tokens"] == 100
+        assert llm_params["context_window"] == 10_000
+        assert llm_params["max_tokens"] == 300
+        assert llm_params["temperature"] == 0.1
 
         fetched = client.get("/api/v1/generative-session/" + str(response.json()["id"]))
         assert fetched.status_code == 200, fetched.text
         fetched_llm = fetched.json()["parameters"]["query_transformation"]["params"][
             "llm_model"
         ]["params"]
-        assert fetched_llm["context_window"] == 2048
+        assert fetched_llm["context_window"] == 10_000
+        assert fetched_llm["max_tokens"] == 300
+        assert fetched_llm["temperature"] == 0.1
 
-    def test_create_explicit_transformation_llm_context_window_wins(
+    def test_create_schema_placeholder_llm_params_get_rag_defaults(
         self, client: TestClient
     ):
+        """The shared RAG UI writes the LLM schema placeholders by default."""
         params = _base_session_params()
         params["parameters"]["query_transformation"] = _qwen_rewriter_ref(
-            {"context_window": 4096}
+            {"context_window": 512, "max_tokens": 100, "temperature": 0.7}
+        )
+
+        response = client.post("/api/v1/generative-session/", json=params)
+        assert response.status_code == 201, response.text
+        llm_params = response.json()["parameters"]["query_transformation"]["params"][
+            "llm_model"
+        ]["params"]
+        assert llm_params["context_window"] == 10_000
+        assert llm_params["max_tokens"] == 300
+        assert llm_params["temperature"] == 0.1
+
+    def test_create_explicit_transformation_llm_params_win(self, client: TestClient):
+        params = _base_session_params()
+        params["parameters"]["query_transformation"] = _qwen_rewriter_ref(
+            {"context_window": 4096, "max_tokens": 500, "temperature": 0.3}
         )
 
         response = client.post("/api/v1/generative-session/", json=params)
@@ -189,6 +206,8 @@ class TestCreateWithTransformation:
             "llm_model"
         ]["params"]
         assert llm_params["context_window"] == 4096
+        assert llm_params["max_tokens"] == 500
+        assert llm_params["temperature"] == 0.3
 
     def test_create_without_transformation_omits_key(self, client: TestClient):
         params = _base_session_params()
@@ -417,13 +436,26 @@ class TestUpdateTransformation:
         assert stored["component"] == "LLMQueryRewriter"
         assert "rewrite_query" in stored["params"]["prompt"]["params"]["template"]
 
-    def test_enable_defaults_transformation_llm_context_window(
-        self, client: TestClient
-    ):
+    def test_enable_defaults_transformation_llm_params(self, client: TestClient):
         session_id = self._create_session(client)
         response = client.put(
             f"/api/v1/generative-session/{session_id}/parameters",
             json={"query_transformation": _qwen_rewriter_ref()},
+        )
+        assert response.status_code == 200, response.text
+        llm_params = response.json()["parameters"]["query_transformation"]["params"][
+            "llm_model"
+        ]["params"]
+        assert llm_params["context_window"] == 10_000
+        assert llm_params["max_tokens"] == 300
+        assert llm_params["temperature"] == 0.1
+
+    def test_update_explicit_2048_context_window_survives(self, client: TestClient):
+        """An explicit non-placeholder value is not a legacy 2048 default."""
+        session_id = self._create_session(client)
+        response = client.put(
+            f"/api/v1/generative-session/{session_id}/parameters",
+            json={"query_transformation": _qwen_rewriter_ref({"context_window": 2048})},
         )
         assert response.status_code == 200, response.text
         llm_params = response.json()["parameters"]["query_transformation"]["params"][

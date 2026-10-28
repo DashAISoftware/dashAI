@@ -23,6 +23,8 @@ from DashAI.back.models.RAG.RAG_constants import (
 from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_LLM_FILTER_PROMPT_COMPONENT,
     DEFAULT_SUFFICIENCY_PROMPT_COMPONENT,
+    merge_rag_llm_params,
+    rag_llm_param_overrides,
 )
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
@@ -54,7 +56,8 @@ class RetrieverEvaluationValidationService:
     ``validate`` performs the full structural plus class check (prompt family
     and ``llm_model`` subclass enforcement, plus template validation through the
     injected callable). ``apply_defaults`` resolves the nested LLM's and
-    prompt's omitted parameters from their schemas.
+    prompt's omitted parameters from their schemas, applying the shared RAG LLM
+    overrides to the nested LLM.
     """
 
     def __init__(
@@ -123,9 +126,13 @@ class RetrieverEvaluationValidationService:
 
         The retriever's own schema placeholders plus the nested LLM's and
         prompt's placeholders are resolved server-side, sitting *under*
-        whatever the caller sent. The resolved default prompt template is later
-        injected from its language-driven defaults by the component-params
-        pass.
+        whatever the caller sent. The nested LLM additionally receives the RAG
+        LLM overrides (see
+        :func:`~DashAI.back.models.RAG.RAG_defaults.merge_rag_llm_params`):
+        a value equal to the model schema's placeholder counts as "not
+        customized" and is replaced, while an explicit non-default value wins.
+        The resolved default prompt template is later injected from its
+        language-driven defaults by the component-params pass.
 
         Parameters
         ----------
@@ -148,22 +155,10 @@ class RetrieverEvaluationValidationService:
         merged = {**defaults, **params}
         llm_ref = merged.get(_LLM_MODEL_KEY)
         if isinstance(llm_ref, dict):
-            llm_name = llm_ref.get("component")
-            llm_params = llm_ref.get("params")
-            if llm_name and isinstance(llm_params, dict):
-                llm_defaults = copy.deepcopy(
-                    resolve_component_defaults(llm_name, self._registry)
-                )
-                llm_ref["params"] = {**llm_defaults, **llm_params}
+            self._apply_llm_defaults(llm_ref)
         prompt_ref = merged.get(_PROMPT_KEY)
         if isinstance(prompt_ref, dict):
-            prompt_name = prompt_ref.get("component")
-            prompt_params = prompt_ref.get("params")
-            if prompt_name and isinstance(prompt_params, dict):
-                prompt_defaults = copy.deepcopy(
-                    resolve_component_defaults(prompt_name, self._registry)
-                )
-                prompt_ref["params"] = {**prompt_defaults, **prompt_params}
+            self._apply_prompt_defaults(prompt_ref)
         retriever_ref["params"] = merged
 
     def apply_defaults_recursive(self, value: Any) -> None:
@@ -196,6 +191,46 @@ class RetrieverEvaluationValidationService:
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
+
+    def _apply_llm_defaults(self, llm_ref: Dict[str, Any]) -> None:
+        """Resolve the nested LLM's params with the RAG overrides on top.
+
+        Parameters
+        ----------
+        llm_ref : Dict[str, Any]
+            A ``{component, params}`` reference, mutated in place. A missing or
+            malformed ``params`` container counts as empty, so the reference is
+            normalized to the full schema defaults plus the RAG overrides.
+        """
+        llm_name = llm_ref.get("component")
+        if not llm_name:
+            return
+        llm_params = llm_ref.get("params")
+        caller_params = llm_params if isinstance(llm_params, dict) else {}
+        llm_defaults = copy.deepcopy(
+            resolve_component_defaults(llm_name, self._registry)
+        )
+        llm_ref["params"] = merge_rag_llm_params(
+            llm_defaults, caller_params, rag_llm_param_overrides()
+        )
+
+    def _apply_prompt_defaults(self, prompt_ref: Dict[str, Any]) -> None:
+        """Resolve the nested prompt's placeholders under the caller values.
+
+        Parameters
+        ----------
+        prompt_ref : Dict[str, Any]
+            A ``{component, params}`` reference, mutated in place when its
+            ``params`` is a dict. Left untouched otherwise.
+        """
+        prompt_name = prompt_ref.get("component")
+        prompt_params = prompt_ref.get("params")
+        if not prompt_name or not isinstance(prompt_params, dict):
+            return
+        prompt_defaults = copy.deepcopy(
+            resolve_component_defaults(prompt_name, self._registry)
+        )
+        prompt_ref["params"] = {**prompt_defaults, **prompt_params}
 
     def _validate_prompt(
         self,

@@ -57,6 +57,36 @@ const SECTIONS = [
 ];
 
 /**
+ * Merge the parameters a save returned into the draft the panel keeps.
+ *
+ * Saving normalizes the payload backend-side -- nested LLM params the user
+ * left untouched are written with the RAG defaults, for instance -- so the
+ * response, not the request, is what the panel must display afterwards.
+ * Only the five RAG sections are taken from it; a key the response omits
+ * keeps the draft's current value.
+ *
+ * `query_transformation` is copied even when it is null: an absent optional
+ * stage is a value the endpoint round-trips, not a missing key, so it must be
+ * able to clear whatever the draft held.
+ *
+ * @param {object} current - The current draft.
+ * @param {object} [parameters] - The `parameters` returned by the update.
+ * @returns {object} The draft to treat as saved.
+ */
+function mergeSavedParameters(current, parameters) {
+  if (!parameters) return current;
+
+  const next = { ...current };
+  for (const key of SECTIONS) {
+    if (!Object.prototype.hasOwnProperty.call(parameters, key)) continue;
+    // The presence check already decided the key is part of the response, so
+    // copy the value verbatim: a falsy value is a real value, not "missing".
+    next[key] = parameters[key];
+  }
+  return next;
+}
+
+/**
  * The single place a RAG session is configured.
  *
  * Replaces the split between a read-only summary in the centre and an editable
@@ -247,9 +277,31 @@ export default function RAGConfigPanel({
   const handleSave = async () => {
     if (!dirty || saving) return;
     setSaving(true);
+    const requestDraft = draft;
     try {
-      await updateGenerativeSessionParams(sessionId, draft);
-      setSavedDraft(draft);
+      const updated = await updateGenerativeSessionParams(
+        sessionId,
+        requestDraft,
+      );
+      // Show what was stored rather than what was sent: the endpoint fills in
+      // the RAG defaults for untouched nested params, so keeping the request
+      // would leave the forms displaying values the backend just replaced.
+      const saved = mergeSavedParameters(requestDraft, updated?.parameters);
+      // Edits made while the PUT was pending must survive. For sections the
+      // user did not touch, adopt the normalized stored value; for the ones
+      // they did touch, keep the newer draft and leave it dirty for the next
+      // save (which will normalize it in turn). The functional updater reads
+      // the latest state atomically, without a ref that can lag a render.
+      setDraft((prev) => {
+        const next = { ...prev };
+        for (const key of SECTIONS) {
+          const unchangedWhileSaving =
+            JSON.stringify(prev?.[key]) === JSON.stringify(requestDraft?.[key]);
+          if (unchangedWhileSaving) next[key] = saved[key];
+        }
+        return next;
+      });
+      setSavedDraft(saved);
       const resolved = await getSessionConfiguration(sessionId);
       setConfiguration(resolved);
       enqueueSnackbar(t("generative:rag.paramsPanel.updated"), {

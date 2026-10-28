@@ -9,8 +9,10 @@ const COMPONENT_REF_TYPE = "object";
  *
  * The shared formatter builds a component field's defaults from the *nested*
  * component's schema and ignores the placeholder `params`. That is fine for
- * most fields, but RAG uses the placeholder to override one nested value (the
- * retrieval LLM's context window). This RAG-local step restores that intent
+ * most fields, but RAG uses the placeholder to override nested values: the
+ * retrieval LLM's full recipe (temperature, context window, max tokens,
+ * frequency penalty and device), declared through
+ * `default_function_calling_llm()`. This RAG-local step restores that intent
  * without changing the shared formatter.
  *
  * The merge is schema-driven: any component field with a resolvable default

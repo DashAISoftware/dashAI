@@ -40,6 +40,7 @@ from DashAI.back.models.RAG.RAG_constants import (
 from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
     MAX_FUNCTION_CALL_TRIALS,
+    default_function_calling_llm,
 )
 from DashAI.back.models.RAG.transformation.base_query_transformation import (
     BaseQueryTransformation,
@@ -137,7 +138,7 @@ class LLMQueryTransformationSchema(BaseSchema):
     )
     llm_model: schema_field(
         component_field(parent="TextToTextGenerationTaskModel"),
-        placeholder={"component": "Qwen25_15BInstruct", "params": {}},
+        placeholder=default_function_calling_llm(),
         description=MultilingualString(
             en="The language model that transforms the user message.",
             es="El modelo de lenguaje que transforma el mensaje del usuario.",

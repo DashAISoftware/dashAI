@@ -18,7 +18,10 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_PARAM_PROMPT,
     RAG_PARAM_RETRIEVER_MODEL,
 )
-from DashAI.back.models.RAG.RAG_defaults import DEFAULT_RAG_CONTEXT_WINDOW
+from DashAI.back.models.RAG.RAG_defaults import (
+    DEFAULT_RAG_CONTEXT_WINDOW,
+    rag_llm_param_overrides,
+)
 from DashAI.back.services.RAG.chunking_presets import get_default_chunking
 from DashAI.back.services.RAG.retriever_presets import get_default_retriever
 
@@ -37,16 +40,6 @@ RAG_CONTEXT_WINDOW = DEFAULT_RAG_CONTEXT_WINDOW
 
 #: Room a RAG session reserves for the answer itself, for the same reason.
 RAG_MAX_TOKENS = 1000
-
-#: Context window for the query-transformation stage's nested LLM.
-#:
-#: Model schemas ship a conservative 512 placeholder that cannot hold the
-#: technique prompt plus the stage's own default two-message history. A
-#: transformation call carries only that history block and the instructions —
-#: never retrieved chunks — so it does not need the generation 10000 window,
-#: but it needs far more than 512. Resolved server-side so every client sees
-#: the value in the stored configuration.
-RAG_TRANSFORMATION_LLM_CONTEXT_WINDOW = 2048
 
 #: Languages the default prompt ships templates for.
 _PROMPT_LANGUAGES = ("en", "es", "pt")
@@ -112,20 +105,21 @@ def generation_model_overrides() -> Dict[str, Any]:
 
 
 def transformation_llm_overrides() -> Dict[str, Any]:
-    """Return the context window the query-transformation LLM needs.
+    """Return the parameters the query-transformation LLM needs.
 
     Applied under anything the caller sends explicitly, so a user who sets
-    their own ``context_window`` keeps it. The window only has to cover the
-    technique prompt plus the stage's history block, never retrieved chunks,
-    hence 2048 rather than the generation 10000 window.
+    their own ``context_window``, ``max_tokens`` or ``temperature`` keeps it.
+    The values come from :func:`rag_llm_param_overrides` so the stage shares
+    one source of truth with the LLM-evaluated retrievers: a 10000-token
+    context window, a 300-token budget and a 0.1 temperature, instead of the
+    shared schema placeholders (512/100/0.7) that cannot hold the technique
+    prompt plus the stage's history nor keep the function call deterministic.
 
     Returns
     -------
     dict
-        ``{context_window}``. Models without a ``context_window``-shaped
-        parameter (for example DeepSeek's ``n_ctx``) ignore the extra key, the
-        same way the generation overrides do.
+        ``{temperature, context_window, max_tokens}``. Models without one of
+        those parameters (for example DeepSeek's ``n_ctx``) ignore the extra
+        key, the same way the generation overrides do.
     """
-    return {
-        "context_window": RAG_TRANSFORMATION_LLM_CONTEXT_WINDOW,
-    }
+    return rag_llm_param_overrides()

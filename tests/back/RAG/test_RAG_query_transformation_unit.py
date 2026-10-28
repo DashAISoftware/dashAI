@@ -34,6 +34,7 @@ from DashAI.back.models.RAG.prompts.transformation import (
 from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_FUNCTION_CALL_MAX_TRIALS,
     MAX_FUNCTION_CALL_TRIALS,
+    default_function_calling_llm,
 )
 from DashAI.back.models.RAG.transformation import (
     BaseQueryTransformation,
@@ -1380,8 +1381,9 @@ class TestTechniqueDefaultPromptPlaceholders:
         }
 
     def test_transformation_llm_defaults_to_qwen_15b(self):
-        """The shared schema's model placeholder names the 1.5B Qwen."""
-        expected = {"component": "Qwen25_15BInstruct", "params": {}}
+        """The shared schema's model placeholder carries the RAG LLM recipe."""
+        expected = default_function_calling_llm()
+        assert expected["component"] == "Qwen25_15BInstruct"
         for technique in (LLMQueryRewriter, LLMQueryExpander, LLMQueryDecomposer):
             schema = technique.get_schema()
             assert schema["properties"]["llm_model"]["placeholder"] == expected
@@ -1398,8 +1400,10 @@ class TestTechniqueDefaultPromptPlaceholders:
         }
         resolved = resolve_component_defaults("LLMQueryRewriter", registry)
         assert resolved["llm_model"]["component"] == "Qwen25_15BInstruct"
-        # The GGUF schema placeholders are inherited through the nested ref.
-        assert resolved["llm_model"]["params"]["max_tokens"] == 100
+        # The RAG recipe in the placeholder overrides the GGUF schema values.
+        assert resolved["llm_model"]["params"]["max_tokens"] == 300
+        assert resolved["llm_model"]["params"]["temperature"] == 0.1
+        assert resolved["llm_model"]["params"]["context_window"] == 10_000
 
 
 # ===================================================================
@@ -1490,8 +1494,8 @@ def _transformation_defaults_registry() -> dict:
     """Registry carrying real schemas for the transformation-default tests.
 
     ``Qwen25_15BTest`` is mapped to the real GGUF model so its schema ships the
-    conservative ``context_window`` (512) and ``max_tokens`` (100) placeholders
-    the override is meant to sit above.
+    conservative ``context_window`` (512), ``max_tokens`` (100) and
+    ``temperature`` (0.7) placeholders the RAG overrides are meant to sit above.
     """
     classes = {
         "LLMQueryRewriter": LLMQueryRewriter,
@@ -1514,8 +1518,8 @@ def _rewriter_ref_with_llm(llm_model: dict) -> dict:
     }
 
 
-class TestApplyDefaultsTransformationLLMContext:
-    """The transformation LLM is defaulted to a 2048 context window."""
+class TestApplyDefaultsTransformationLLM:
+    """The transformation LLM gets the RAG defaults, not the schema placeholders."""
 
     def _apply(self, ref: dict) -> dict:
         service = QueryTransformationValidationService(
@@ -1525,28 +1529,57 @@ class TestApplyDefaultsTransformationLLMContext:
         service.apply_defaults(normalized)
         return normalized["query_transformation"]
 
-    def test_omitted_context_window_defaults_to_2048(self):
+    def test_omitted_llm_params_get_the_rag_defaults(self):
         ref = _rewriter_ref_with_llm({"component": "Qwen25_15BTest", "params": {}})
 
         stored = self._apply(ref)
 
         llm_params = stored["params"]["llm_model"]["params"]
-        assert llm_params["context_window"] == 2048
-        assert llm_params["max_tokens"] == 100
+        assert llm_params["context_window"] == 10_000
+        assert llm_params["max_tokens"] == 300
+        assert llm_params["temperature"] == 0.1
         assert stored["params"]["history_window"] == 2
-        # The override is stage-scoped: the transformer itself never carries it.
+        # The overrides are stage-scoped: the transformer itself never carries them.
         assert "context_window" not in stored["params"]
 
-    def test_caller_context_window_wins(self):
+    def test_schema_placeholders_are_replaced_by_the_rag_defaults(self):
+        """The shared UI writes the GGUF placeholders; RAG overrides them."""
         ref = _rewriter_ref_with_llm(
-            {"component": "Qwen25_15BTest", "params": {"context_window": 4096}}
+            {
+                "component": "Qwen25_15BTest",
+                "params": {
+                    "context_window": 512,
+                    "max_tokens": 100,
+                    "temperature": 0.7,
+                },
+            }
+        )
+
+        stored = self._apply(ref)
+
+        llm_params = stored["params"]["llm_model"]["params"]
+        assert llm_params["context_window"] == 10_000
+        assert llm_params["max_tokens"] == 300
+        assert llm_params["temperature"] == 0.1
+
+    def test_explicit_caller_values_win(self):
+        ref = _rewriter_ref_with_llm(
+            {
+                "component": "Qwen25_15BTest",
+                "params": {
+                    "context_window": 4096,
+                    "max_tokens": 500,
+                    "temperature": 0.3,
+                },
+            }
         )
 
         stored = self._apply(ref)
 
         llm_params = stored["params"]["llm_model"]["params"]
         assert llm_params["context_window"] == 4096
-        assert llm_params["max_tokens"] == 100
+        assert llm_params["max_tokens"] == 500
+        assert llm_params["temperature"] == 0.3
 
     def test_absent_llm_params_normalized_to_schema_and_override(self):
         ref = _rewriter_ref_with_llm({"component": "Qwen25_15BTest"})
@@ -1554,8 +1587,22 @@ class TestApplyDefaultsTransformationLLMContext:
         stored = self._apply(ref)
 
         llm_params = stored["params"]["llm_model"]["params"]
+        assert llm_params["context_window"] == 10_000
+        assert llm_params["max_tokens"] == 300
+        assert llm_params["temperature"] == 0.1
+        assert llm_params["frequency_penalty"] == 0.1
+        assert llm_params["device"]
+
+    def test_explicit_2048_context_window_is_preserved(self):
+        """A legal non-placeholder value is an explicit choice, not legacy."""
+        ref = _rewriter_ref_with_llm(
+            {"component": "Qwen25_15BTest", "params": {"context_window": 2048}}
+        )
+
+        stored = self._apply(ref)
+
+        llm_params = stored["params"]["llm_model"]["params"]
         assert llm_params["context_window"] == 2048
-        assert llm_params["max_tokens"] == 100
 
     def test_absent_stage_is_untouched(self):
         normalized: dict = {}

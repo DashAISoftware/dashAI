@@ -11,6 +11,8 @@ import ast
 import inspect
 from typing import Any, Dict
 
+import pytest
+
 from DashAI.back.initial_components import get_initial_components
 from DashAI.back.models.hugging_face.qwen_model import Qwen25_15BInstruct
 from DashAI.back.models.RAG.embeddings.dense.sentence_transformer_embedding import (
@@ -27,6 +29,8 @@ from DashAI.back.models.RAG.RAG_defaults import (
     DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW,
     DEFAULT_MAX_CHUNKS,
     DEFAULT_MAX_ITERS,
+    DEFAULT_RAG_LLM_MAX_TOKENS,
+    DEFAULT_RAG_LLM_TEMPERATURE,
     DEFAULT_SEMANTIC_MODEL_NAME,
     DEFAULT_TOP_K,
     default_function_calling_llm,
@@ -35,6 +39,8 @@ from DashAI.back.models.RAG.RAG_defaults import (
     default_llm_filter_prompt,
     default_retrieval_sufficiency_prompt,
     default_semantic_retriever,
+    merge_rag_llm_params,
+    rag_llm_param_overrides,
 )
 from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever import (
     LLMEvaluatedDepthRetriever,
@@ -186,13 +192,15 @@ class TestDefaultFunctionCallingLLM:
 
         assert ref["component"] == "Qwen25_15BInstruct"
         assert ref["params"] == {
-            "max_tokens": 100,
-            "temperature": 0.7,
+            "max_tokens": 300,
+            "temperature": 0.1,
             "frequency_penalty": 0.1,
             "context_window": DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW,
             "device": "CPU",
         }
         assert DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW == 10_000
+        assert DEFAULT_RAG_LLM_MAX_TOKENS == 300
+        assert DEFAULT_RAG_LLM_TEMPERATURE == 0.1
 
     def test_default_llm_overrides_the_qwen_context_window(self):
         """The registered Qwen keeps its schema default; RAG overrides it."""
@@ -240,6 +248,145 @@ class TestDefaultFunctionCallingLLM:
             "context_window",
             "device",
         }
+
+
+# ---------------------------------------------------------------------------
+# RAG LLM overrides and their merge rule
+# ---------------------------------------------------------------------------
+
+
+class TestRagLLMParamOverrides:
+    """The three RAG-owned LLM params are exposed as one override mapping."""
+
+    def test_overrides_are_the_three_rag_params(self):
+        assert rag_llm_param_overrides() == {
+            "temperature": 0.1,
+            "context_window": 10_000,
+            "max_tokens": 300,
+        }
+
+    def test_overrides_match_the_default_llm_recipe(self):
+        overrides = rag_llm_param_overrides()
+        params = default_function_calling_llm()["params"]
+
+        assert {key: params[key] for key in overrides} == overrides
+
+    def test_overrides_return_a_fresh_dict(self):
+        first = rag_llm_param_overrides()
+        first["max_tokens"] = 1
+
+        assert rag_llm_param_overrides()["max_tokens"] == 300
+
+
+class TestMergeRagLLMParams:
+    """Schema placeholders mean "not customized"; explicit values win."""
+
+    #: Mirrors the shared GGUF text-generation placeholders.
+    SCHEMA: Dict[str, Any] = {
+        "max_tokens": 100,
+        "temperature": 0.7,
+        "context_window": 512,
+        "device": "CPU",
+    }
+
+    def test_schema_placeholders_are_replaced_by_the_overrides(self):
+        merged = merge_rag_llm_params(
+            self.SCHEMA,
+            {"max_tokens": 100, "temperature": 0.7, "context_window": 512},
+        )
+
+        assert merged["max_tokens"] == 300
+        assert merged["temperature"] == 0.1
+        assert merged["context_window"] == 10_000
+        assert merged["device"] == "CPU"
+
+    def test_explicit_non_default_values_win(self):
+        merged = merge_rag_llm_params(
+            self.SCHEMA,
+            {"max_tokens": 500, "temperature": 0.3, "context_window": 4096},
+        )
+
+        assert merged["max_tokens"] == 500
+        assert merged["temperature"] == 0.3
+        assert merged["context_window"] == 4096
+
+    def test_untracked_caller_keys_are_preserved(self):
+        merged = merge_rag_llm_params(
+            self.SCHEMA,
+            {"frequency_penalty": 0.4, "device": "GPU"},
+        )
+
+        assert merged["frequency_penalty"] == 0.4
+        assert merged["device"] == "GPU"
+
+    def test_only_the_customized_values_survive_a_mixed_payload(self):
+        merged = merge_rag_llm_params(
+            self.SCHEMA,
+            {"max_tokens": 100, "temperature": 0.3},
+        )
+
+        assert merged["max_tokens"] == 300
+        assert merged["temperature"] == 0.3
+
+    def test_absent_caller_params_resolve_schema_and_overrides(self):
+        merged = merge_rag_llm_params(self.SCHEMA, None)
+
+        assert merged == {
+            "max_tokens": 300,
+            "temperature": 0.1,
+            "context_window": 10_000,
+            "device": "CPU",
+        }
+
+    def test_caller_params_are_not_mutated(self):
+        caller = {"max_tokens": 100, "temperature": 0.7}
+
+        merge_rag_llm_params(self.SCHEMA, caller)
+
+        assert caller == {"max_tokens": 100, "temperature": 0.7}
+
+    def test_non_mapping_caller_params_raise_type_error(self):
+        with pytest.raises(TypeError, match="caller_params must be a mapping"):
+            merge_rag_llm_params(self.SCHEMA, ["max_tokens"])
+
+    def test_non_mapping_schema_defaults_raise_type_error(self):
+        with pytest.raises(TypeError, match="schema_defaults must be a mapping"):
+            merge_rag_llm_params(None, {})
+
+    def test_non_mapping_overrides_raise_type_error(self):
+        with pytest.raises(TypeError, match="overrides must be a mapping"):
+            merge_rag_llm_params(self.SCHEMA, {}, ["max_tokens"])
+
+    def test_numeric_strings_compare_like_numbers(self):
+        merged = merge_rag_llm_params(
+            self.SCHEMA,
+            {"max_tokens": "100", "temperature": "0.7", "context_window": "512"},
+        )
+
+        assert merged["max_tokens"] == 300
+        assert merged["temperature"] == 0.1
+        assert merged["context_window"] == 10_000
+
+    def test_override_keys_missing_from_the_schema_are_skipped(self):
+        """A model with ``n_ctx`` instead of ``context_window`` keeps n_ctx."""
+        schema = {"max_tokens": 100, "temperature": 0.7, "n_ctx": 4096}
+
+        merged = merge_rag_llm_params(
+            schema, {"max_tokens": 100, "temperature": 0.7, "n_ctx": 4096}
+        )
+
+        assert merged == {"max_tokens": 300, "temperature": 0.1, "n_ctx": 4096}
+
+    def test_explicit_overrides_argument_replaces_the_rag_defaults(self):
+        merged = merge_rag_llm_params(
+            self.SCHEMA,
+            {"max_tokens": 100, "temperature": 0.7},
+            {"max_tokens": 42},
+        )
+
+        assert merged["max_tokens"] == 42
+        assert merged["temperature"] == 0.7
+        assert merged["context_window"] == 512
 
 
 # ---------------------------------------------------------------------------

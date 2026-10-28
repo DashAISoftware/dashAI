@@ -129,10 +129,20 @@
   wrong function, or the backend raises, the pipeline raises and the chat turn
   errors out.
 
-- **The nested transformation LLM defaults to a 2048-token context window.**
-  The server-side default (`RAG_TRANSFORMATION_LLM_CONTEXT_WINDOW`) covers the
-  technique prompt plus the stage's history block, never retrieved chunks. A
-  caller-supplied `context_window` wins.
+- **The nested transformation and retrieval LLMs share the RAG LLM defaults.**
+  The server-side override is `context_window=10000`, `max_tokens=300` and
+  `temperature=0.1` (see `rag_llm_param_overrides()`). A value equal to the
+  model schema's placeholder is treated as "not customized" and replaced; an
+  explicit non-default value wins. LLMs that name the context window
+  differently (for example DeepSeek's `n_ctx`) keep their own value.
+  Sessions created before this default changed keep their stored parameters:
+  clear the `context_window` field to pick up the new value.
+
+- **Sessions created before the sufficiency prompt changed keep their stored
+  template.** The zero-based chunk-position rule is part of the default
+  template; an existing session that already stores the previous template must
+  clear the prompt template (or reselect the default sufficiency prompt) to
+  receive it.
 
 - **`prompt` and `llm_model` refs are mandatory.** A transformer is built only
   from an explicit prompt component and an explicit text-to-text model

@@ -18,7 +18,7 @@ import { resolveLabel } from "../../../../components/generative/RAG/QueryTransfo
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
-import { resolveDefaults } from "../../../../utils/schema";
+import { resolveRagLlmDefaults } from "./resolveRagLlmDefaults";
 
 /**
  * Transformer params that keep their specialized control instead of being
@@ -32,20 +32,22 @@ const TRANSFORMER_EXCLUDED_FIELDS = ["llm_model"];
  * must persist.
  *
  * The stage's nested LLM params are merged backend-side as
- * `{...schema_defaults, ...overrides, ...caller_params}`, where `overrides`
- * pins a `context_window` larger than the schema's placeholder. So the form
- * must only ever send the keys the user actually meant to set:
+ * `{...schema_defaults, ...rag_overrides, ...caller_params}`, where
+ * `rag_overrides` are the RAG defaults the transformer schema pins in
+ * `llm_model.placeholder.params` (a tight context window and temperature).
+ * So the form must only ever send the keys the user actually meant to set:
  *
  *  - A cleared field is dropped, so the backend re-resolves it.
  *  - A key that was already in the carried ref is always echoed, even when it
- *    equals the schema default: it is a user choice this edit must not lose.
- *  - Any other key still equal to its schema placeholder is left out, so a
- *    freshly enabled stage does not smuggle the 512 placeholder over the
- *    backend's 2048 override.
+ *    equals the seed value: it is a user choice this edit must not lose.
+ *  - Any other key still equal to its seed value is left out, so a freshly
+ *    enabled stage does not smuggle the seed over the backend's own
+ *    resolution of the same RAG defaults.
  *
  * @param {object} carriedParams The ref's params captured when the form was
  *   seeded, i.e. what the user had stored before this edit.
- * @param {object} seedDefaults The schema's placeholder defaults.
+ * @param {object} seedDefaults The seed values: the LLM's schema defaults with
+ *   the transformer's RAG overrides applied.
  * @param {object} values The complete values FormSchema hands back.
  * @returns {object} The params to persist for `llm_model`.
  */
@@ -154,7 +156,7 @@ export default function QueryTransformationAdvancedModal({
       // A -> B -> A must not lose A's saved params: switching away replaced the
       // live map, so restore the original component's carried values when the
       // user returns to it. A different model starts empty and lets the
-      // backend resolve its own defaults.
+      // backend resolve the RAG defaults for it.
       const originalLlmParams =
         key === "llm_model" && model?.params?.llm_model?.component === name
           ? model.params.llm_model.params
@@ -171,14 +173,17 @@ export default function QueryTransformationAdvancedModal({
 
   const llmComponent = params.llm_model?.component;
 
-  // Seed the schema form for the selected LLM. What the ref carried at this
-  // instant decides the emission mode for the whole editing session: an empty
-  // map means the backend must keep re-resolving the defaults it owns. The
-  // baseline is read from the `model` prop (the pre-edit source of truth) and
-  // re-captured on every dialog open, so a previously saved empty ref can
+  // Seed the schema form for the selected LLM with the RAG defaults the
+  // transformer schema declares, not the LLM's generic placeholders: that is
+  // the budget the backend actually resolves, so showing anything else would
+  // both mislead and be persisted on the next edit. What the ref carried at
+  // this instant decides the emission mode for the whole editing session: an
+  // empty map means the backend must keep re-resolving the defaults it owns.
+  // The baseline is read from the `model` prop (the pre-edit source of truth)
+  // and re-captured on every dialog open, so a previously saved empty ref can
   // never be misremembered as a carried one. If the user switched to a
-  // different LLM, nothing is carried for it: its untouched placeholders must
-  // not be pinned over the backend's own overrides.
+  // different LLM, nothing is carried for it: its untouched values must not be
+  // pinned over the backend's own RAG overrides.
   useEffect(() => {
     if (!llmComponent) {
       carriedParamsRef.current = {};
@@ -199,7 +204,7 @@ export default function QueryTransformationAdvancedModal({
     setSeedDefaults(null);
 
     let cancelled = false;
-    resolveDefaults(llmComponent).then((defaults) => {
+    resolveRagLlmDefaults(model?.component, llmComponent).then((defaults) => {
       if (cancelled) return;
       const resolved = defaults || {};
       seedDefaultsRef.current = resolved;
@@ -214,32 +219,24 @@ export default function QueryTransformationAdvancedModal({
     // rewrites the modal's live params.
   }, [open, model, llmComponent]);
 
-  const hasCarriedParams = Boolean(
-    seededCarried && Object.keys(seededCarried).length > 0,
-  );
-
-  // Prefer the ref's own values when it carried any (so a saved
-  // context_window is never lost); otherwise the schema placeholders. The
-  // carried baseline is used rather than only the live params because
-  // switching away and back resets the live map, while the original values
-  // must still be restored. The form waits for those defaults so the first
-  // render already shows real values.
+  // Start from the RAG seed, then let carried/live values win. A partially
+  // saved ref (for example only `temperature`) must not fall back to the
+  // model's generic placeholders for the keys it does not carry: those keys
+  // still need the RAG 10K/300 defaults. The carried baseline is used rather
+  // than only the live params because switching away and back resets the live
+  // map, while the original values must still be restored.
   const llmInitialValues = useMemo(() => {
     if (!llmComponent) return {};
-    if (hasCarriedParams) {
-      return { ...seededCarried, ...(params.llm_model?.params || {}) };
-    }
-    return seedDefaults || {};
-  }, [
-    llmComponent,
-    hasCarriedParams,
-    seededCarried,
-    params.llm_model?.params,
-    seedDefaults,
-  ]);
+    return {
+      ...(seedDefaults || {}),
+      ...(seededCarried || {}),
+      ...(params.llm_model?.params || {}),
+    };
+  }, [llmComponent, seededCarried, params.llm_model?.params, seedDefaults]);
 
-  const llmFormReady =
-    Boolean(llmComponent) && (hasCarriedParams || seedDefaults !== null);
+  // Always wait for the RAG seed: a carried partial map is not enough to fill
+  // the keys it omits.
+  const llmFormReady = Boolean(llmComponent) && seedDefaults !== null;
 
   /** Maps the schema form's full value set onto the params to persist. */
   const handleLlmFormSubmit = (values) =>
