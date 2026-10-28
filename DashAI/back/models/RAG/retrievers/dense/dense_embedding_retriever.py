@@ -195,7 +195,7 @@ class DenseEmbeddingRetriever(UnitRetriever):
             matrix_path = os.path.join(matrix_dir, "embeddings.npy")
             if os.path.exists(matrix_path):
                 continue
-            chunk_texts = [chunk.text for chunk in doc_chunks.values()]
+            chunk_texts = [chunk.text for _, chunk in sorted(doc_chunks.items())]
             embeddings = self.embedding_model.encode(chunk_texts, role=PASSAGE)
             os.makedirs(matrix_dir, exist_ok=True)
             with atomic_open(matrix_path, "wb") as f:
@@ -214,6 +214,10 @@ class DenseEmbeddingRetriever(UnitRetriever):
         which is what composite retrievers (MMR reranker, sequential,
         parallel, cross-encoder) pass to ``score_chunks`` /
         ``get_chunk_vectors``.
+
+        Rows follow ``(document id ascending, document position ascending)``
+        rather than dict insertion order, so a matrix written by another
+        session over the same corpus lines up with this one row for row.
         """
         self.similarity_matrix = None
         self.matrix_row_to_chunk_id = {}
@@ -229,7 +233,7 @@ class DenseEmbeddingRetriever(UnitRetriever):
             matrix_path = os.path.join(matrix_dir, "embeddings.npy")
             if not os.path.exists(matrix_path):
                 continue
-            for chunk_key, chunk in chunks.items():
+            for chunk_key, chunk in sorted(chunks.items()):
                 chunk_id = chunk.id
                 self.matrix_row_to_chunk_id[row_index] = chunk_id
                 self.chunk_id_to_doc_id[chunk_id] = doc_id
@@ -260,7 +264,10 @@ class DenseEmbeddingRetriever(UnitRetriever):
                 configured value if ``None``.
 
         Returns:
-            A list of :class:`Chunk` instances ordered by distance.
+            A ``(chunks, trace)`` tuple. ``chunks`` is the list of retrieved
+            :class:`Chunk` instances ordered by distance, widened when
+            retrieve-then-expand is enabled; ``trace`` is the retriever's trace
+            node.
 
         Raises:
             ValueError: If the similarity matrix has not been
@@ -282,6 +289,7 @@ class DenseEmbeddingRetriever(UnitRetriever):
             chunk_id = self.matrix_row_to_chunk_id[idx]
             doc_id, chunk_key = self._chunk_key_by_id[chunk_id]
             results.append(self.chunks[doc_id][chunk_key])
+        results = self._apply_retrieval_expansion(results)
         return results, retriever_trace(self, results)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:

@@ -12,6 +12,9 @@ from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
 from DashAI.back.models.RAG.retrievers.enums import MergeStrategy
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    unpack_retrieval_result,
+)
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     RetrievalExpansionSchema,
     prefer_wider_chunk,
@@ -130,7 +133,9 @@ class ParallelRetriever(CompositeRetriever):
         all_child_results = []
         child_nodes = []
         for child in self._children:
-            child_chunks, child_node = child.retrieve(query, **kwargs)
+            child_chunks, child_node = unpack_retrieval_result(
+                child.retrieve(query, **kwargs)
+            )
             all_child_results.append(child_chunks)
             child_nodes.append(child_node)
 

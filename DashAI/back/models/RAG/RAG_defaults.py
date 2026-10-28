@@ -34,10 +34,11 @@ DEFAULT_SEMANTIC_MODEL_NAME = (
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 )
 
-#: Device label the schema of the text embedding converters declares. The field
-#: is an enum of the available GPU labels plus ``"CPU"``, so a lowercase
-#: ``"cpu"`` would not validate.
-DEFAULT_EMBEDDING_DEVICE = "CPU"
+#: Device label shared by the default embedding converter and the RAG LLM. Both
+#: schemas declare an enum of the machine's GPU labels plus ``"CPU"``, so a
+#: lowercase ``"cpu"`` would not validate and a GPU label would differ per
+#: machine (breaking preset equality); ``"CPU"`` is the only portable value.
+DEFAULT_DEVICE = "CPU"
 
 #: Number of texts the default embedding converter encodes together.
 DEFAULT_EMBEDDING_BATCH_SIZE = 32
@@ -123,7 +124,7 @@ _KEYWORD_PARAMS: Dict[str, Any] = {
 
 #: Complete text embedding parameters (the schema fills no missing values).
 _SEMANTIC_EMBEDDING_PARAMS: Dict[str, Any] = {
-    "device": DEFAULT_EMBEDDING_DEVICE,
+    "device": DEFAULT_DEVICE,
     "batch_size": DEFAULT_EMBEDDING_BATCH_SIZE,
     "normalize": True,
     "overflow_strategy": DEFAULT_EMBEDDING_OVERFLOW_STRATEGY,
@@ -145,7 +146,7 @@ _FUNCTION_CALLING_LLM_PARAMS: Dict[str, Any] = {
     "temperature": DEFAULT_RAG_LLM_TEMPERATURE,
     "frequency_penalty": 0.1,
     "context_window": DEFAULT_FUNCTION_CALLING_LLM_CONTEXT_WINDOW,
-    "device": "CPU",
+    "device": DEFAULT_DEVICE,
 }
 
 
@@ -162,8 +163,9 @@ def default_keyword_retriever(top_k: int = DEFAULT_TOP_K) -> Dict[str, Any]:
     -------
     Dict[str, Any]
         A fresh ``{"component": "BM25Retriever", "params": {...}}`` reference
-        whose ``vectorizer`` is the bag-of-words converter and whose every
-        schema parameter is populated.
+        whose ``vectorizer`` is the bag-of-words converter and every parameter
+        that shapes the fitted matrix is populated (the retrieve-then-expand
+        options keep their schema defaults).
     """
     params = copy.deepcopy(_KEYWORD_PARAMS)
     params["top_k"] = top_k

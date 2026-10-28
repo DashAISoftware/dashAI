@@ -123,19 +123,20 @@ class _KeywordEmbedding(TextEmbeddingConverter):
         return vectors
 
 
-def test_dense_rows_align_with_the_chunks_the_corpus_was_read_in(tmp_path):
-    """A shared matrix aligns with the chunks by id, never by their dict key.
+def test_dense_rows_follow_document_position_not_dict_order(tmp_path):
+    """A shared matrix aligns by position, never by the chunks' dict order.
 
-    ``ChunkingService.read_chunks`` hands every session its chunks in position
-    order, so the matrix another session wrote is in the order this one reads.
-    The ids are offset from the positions here, so resolving a row through the
-    dict key instead of ``Chunk.id`` cannot pass.
+    The chunks arrive in an order unrelated to their positions, while the matrix
+    another session wrote is in position order. Resolving rows by dict order
+    instead of ``document_position`` would answer the ``two`` query with
+    ``zero``. The ids are offset from the positions too, so resolving a row
+    through the dict key rather than ``Chunk.id`` cannot pass either.
     """
     chunks = {
         1: {
+            2: Chunk(102, 1, 2, "two"),
             0: Chunk(100, 1, 0, "zero"),
             1: Chunk(101, 1, 1, "one"),
-            2: Chunk(102, 1, 2, "two"),
         }
     }
     embedding = _KeywordEmbedding(["zero", "one", "two"])

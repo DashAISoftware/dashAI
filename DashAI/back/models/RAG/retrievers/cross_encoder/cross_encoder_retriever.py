@@ -12,6 +12,9 @@ from DashAI.back.models.RAG.exceptions import (
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    unpack_retrieval_result,
+)
 from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref, retriever_trace
 
 
@@ -166,7 +169,7 @@ class CrossEncoderRetriever(CompositeRetriever, ABC):
             raise RAGRetrieverError(
                 f"top_k must be an integer >= 1, got {effective_k!r}."
             )
-        candidates, child_node = child.retrieve(query)
+        candidates, child_node = unpack_retrieval_result(child.retrieve(query))
 
         if len(candidates) <= effective_k:
             results = self._apply_retrieval_expansion(candidates)

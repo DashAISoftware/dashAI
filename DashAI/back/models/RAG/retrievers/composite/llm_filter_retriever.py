@@ -65,6 +65,7 @@ from DashAI.back.models.RAG.retrievers.composite.retrieval_context import (
 from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     DROPPED_OPERATIONS_KEY,
     SELECTED_CHUNKS_KEY,
+    unpack_retrieval_result,
 )
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     RetrievalExpansionSchema,
@@ -419,7 +420,9 @@ class LLMFilterRetriever(CompositeRetriever):
             retried; no partial selection is ever applied.
         """
         child = self._single_child()
-        child_chunks, child_node = child.retrieve(query, top_k=self._k1)
+        child_chunks, child_node = unpack_retrieval_result(
+            child.retrieve(query, top_k=self._k1)
+        )
         candidates = self._dedupe_candidates(child_chunks)
         selection: Optional[ChunkSelection] = None
         if not candidates:

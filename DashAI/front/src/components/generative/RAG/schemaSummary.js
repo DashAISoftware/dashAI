@@ -35,6 +35,10 @@ function toPathSegments(path) {
  * Recursively build the schema-summary representation of a retriever component
  * from its `metadata.schema_summary_parameters` spec.
  *
+ * A component that declares no summary spec still gets a node with an empty
+ * `params` map: composites such as `SequentialRetriever` declare none of their
+ * own, and dropping the node would hide their children from the trace view.
+ *
  * @param {object|null|undefined} component - Retriever component definition.
  * @param {*} params - Current parameters of the retriever node.
  * @param {function(string): (object|null|undefined)} [resolveComponent] -
@@ -51,29 +55,29 @@ function buildSchemaSummaryNode(component, params, resolveComponent, depth) {
   }
 
   const spec = component.metadata?.schema_summary_parameters;
-  if (!isPlainObject(spec) || Object.keys(spec).length === 0) return null;
-
   const summaryParams = {};
-  Object.entries(spec).forEach(([label, path]) => {
-    if (typeof label !== "string" || label.length === 0) return;
+  if (isPlainObject(spec)) {
+    Object.entries(spec).forEach(([label, path]) => {
+      if (typeof label !== "string" || label.length === 0) return;
 
-    const segments = toPathSegments(path);
-    if (!segments) return;
+      const segments = toPathSegments(path);
+      if (!segments) return;
 
-    let value;
-    try {
-      value = resolveParamValue(params, segments);
-    } catch {
-      return;
-    }
-    if (value === MISSING_VALUE) return;
+      let value;
+      try {
+        value = resolveParamValue(params, segments);
+      } catch {
+        return;
+      }
+      if (value === MISSING_VALUE) return;
 
-    const isPrimitive =
-      typeof value === "string" ||
-      typeof value === "number" ||
-      typeof value === "boolean";
-    if (isPrimitive) summaryParams[label] = value;
-  });
+      const isPrimitive =
+        typeof value === "string" ||
+        typeof value === "number" ||
+        typeof value === "boolean";
+      if (isPrimitive) summaryParams[label] = value;
+    });
+  }
 
   const summary = { class: component.name, params: summaryParams };
 

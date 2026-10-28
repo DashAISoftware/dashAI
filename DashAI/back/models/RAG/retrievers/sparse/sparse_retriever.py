@@ -58,3 +58,23 @@ class SparseRetriever(UnitRetriever):
             for document_chunks in self.chunks.values()
             for chunk in document_chunks.values()
         }
+
+    def _row_map_matches_chunks(self, row_map: Dict[int, int]) -> bool:
+        """Return whether a persisted ``row -> chunk id`` map fits the corpus.
+
+        The storage folder is content-addressed, so a map written by another
+        session over the same corpus is valid here. A folder wired by hand to a
+        different corpus would otherwise load a map whose ids are missing from
+        ``_chunk_lookup`` and fail later with a bare ``KeyError`` at query time.
+
+        Parameters
+        ----------
+        row_map : Dict[int, int]
+            The persisted ``row -> chunk id`` mapping.
+
+        Returns
+        -------
+        bool
+            ``True`` when the map covers exactly the injected chunks.
+        """
+        return set(row_map.values()) == set(self._chunks_by_id())

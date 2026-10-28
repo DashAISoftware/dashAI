@@ -24,8 +24,8 @@ from DashAI.back.models.RAG.RAG_constants import (
     LLM_EVALUATED_RETRIEVER_NAMES,
 )
 from DashAI.back.models.RAG.RAG_defaults import (
+    DEFAULT_DEVICE,
     DEFAULT_EMBEDDING_BATCH_SIZE,
-    DEFAULT_EMBEDDING_DEVICE,
     DEFAULT_EMBEDDING_OVERFLOW_STRATEGY,
     DEFAULT_FILTER_K1,
     DEFAULT_FILTER_TOP_K,
@@ -80,7 +80,7 @@ BAG_OF_WORDS_DEFAULTS = {
 
 #: Embedding parameters the semantic default ships: the schema placeholders.
 EMBEDDING_DEFAULTS = {
-    "device": DEFAULT_EMBEDDING_DEVICE,
+    "device": DEFAULT_DEVICE,
     "batch_size": DEFAULT_EMBEDDING_BATCH_SIZE,
     "normalize": True,
     "overflow_strategy": DEFAULT_EMBEDDING_OVERFLOW_STRATEGY,
@@ -202,7 +202,7 @@ class TestRetrieverFactories:
             default_semantic_retriever()["params"]["embedding_model"]["params"][
                 "device"
             ]
-            == DEFAULT_EMBEDDING_DEVICE
+            == DEFAULT_DEVICE
         )
 
         hybrid = default_hybrid_retriever()

@@ -48,7 +48,6 @@ from DashAI.back.services.RAG.query_transformation_validation import (
 )
 from DashAI.back.services.RAG.retriever_evaluation_validation import (
     DEFAULT_LLM_PROMPT_NAMES,
-    LLM_EVALUATED_RETRIEVER_NAMES,
     RetrieverEvaluationValidationService,
 )
 from DashAI.back.services.RAG.session_defaults_service import (
@@ -384,11 +383,12 @@ class SessionValidationService:
         ref["params"] = {**defaults, **generation_model_overrides(), **params}
 
     def _validate_retriever_evaluation(self, normalized: dict[str, Any]) -> None:
-        """Validate the nested refs of an LLM-evaluated retriever, when used.
+        """Validate the nested refs of every LLM-evaluated retriever, when used.
 
-        The check only applies when ``retriever_model`` names one of the
-        LLM-evaluated retrievers; any other retriever is left to the generic
-        component validation.
+        The retriever does not have to be the top-level ``retriever_model``: it
+        can be nested inside another composite, so the walk mirrors
+        ``_apply_retriever_evaluation_defaults``. Any other retriever is left to
+        the generic component validation.
 
         Parameters
         ----------
@@ -398,14 +398,12 @@ class SessionValidationService:
         Raises
         ------
         ValueError
-            If the retriever's nested ``prompt``/``llm_model`` refs are
-            malformed.
+            If an LLM-evaluated retriever's nested ``prompt``/``llm_model``
+            refs are malformed.
         """
-        ref = normalized.get(RAG_PARAM_RETRIEVER_MODEL)
-        if isinstance(ref, dict) and ref.get("component") in (
-            LLM_EVALUATED_RETRIEVER_NAMES
-        ):
-            self._retriever_evaluation_validator.validate(ref)
+        self._retriever_evaluation_validator.validate_recursive(
+            normalized.get(RAG_PARAM_RETRIEVER_MODEL)
+        )
 
     def _apply_retriever_evaluation_defaults(self, normalized: dict[str, Any]) -> None:
         """Fill every LLM-evaluated retriever's omitted nested params.

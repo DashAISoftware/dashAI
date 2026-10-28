@@ -68,6 +68,7 @@ from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
     DISCARD_KEY,
     DROPPED_OPERATIONS_KEY,
     REQUEST_CHUNKS_KEY,
+    unpack_retrieval_result,
 )
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
@@ -245,8 +246,8 @@ class LLMEvaluatedRetriever(CompositeRetriever, ABC):
             The child's ``(chunks, trace node)``.
         """
         if top_k is None:
-            return child.retrieve(query)
-        return child.retrieve(query, top_k=top_k)
+            return unpack_retrieval_result(child.retrieve(query))
+        return unpack_retrieval_result(child.retrieve(query, top_k=top_k))
 
     def _prepare_insufficient_verdict(
         self,

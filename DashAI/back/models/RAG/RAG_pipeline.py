@@ -31,7 +31,6 @@ from DashAI.back.models.RAG.exceptions import (
     RAGPipelineConfigError,
     RAGPipelineInputError,
     RAGPipelineRuntimeError,
-    RAGRetrieverError,
 )
 from DashAI.back.models.RAG.progress_utils import (
     normalize_progress_text,
@@ -50,6 +49,9 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_PROGRESS_STAGE_TRANSFORMING,
 )
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    unpack_retrieval_result,
+)
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import prefer_wider_chunk
 from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref
 from DashAI.back.models.text_to_text_generation_model import (
@@ -694,20 +696,12 @@ class RAGPipeline(BaseGenerativeModel):
         trace: List[Dict[str, Any]] = []
         for query in queries:
             try:
-                result = self.retriever.retrieve(query)
                 # A legacy or plugin retriever returning a bare list instead
                 # of the (chunks, trace) tuple must fail loudly instead of
                 # silently mis-unpacking chunk data as the trace node.
-                if (
-                    not isinstance(result, tuple)
-                    or len(result) != 2
-                    or not isinstance(result[1], dict)
-                ):
-                    raise RAGRetrieverError(
-                        "retrieve() must return a (List[Chunk], Dict) tuple, "
-                        f"got {type(result).__name__}."
-                    )
-                query_chunks, query_node = result
+                query_chunks, query_node = unpack_retrieval_result(
+                    self.retriever.retrieve(query)
+                )
             except Exception as e:
                 raise RAGPipelineRuntimeError(
                     f"Document retrieval failed: {str(e)}"

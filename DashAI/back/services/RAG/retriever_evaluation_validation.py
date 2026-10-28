@@ -161,6 +161,38 @@ class RetrieverEvaluationValidationService:
             self._apply_prompt_defaults(prompt_ref)
         retriever_ref["params"] = merged
 
+    def validate_recursive(self, value: Any) -> None:
+        """Validate every LLM-evaluated retriever found in ``value``.
+
+        Mirrors :meth:`apply_defaults_recursive`: a composite can nest an
+        LLM-evaluated retriever as one of its children, so validating only the
+        top-level ``retriever_model`` would let a malformed nested prompt or LLM
+        family reach the retriever constructor instead of failing at save time.
+
+        Parameters
+        ----------
+        value : Any
+            A ``{component, params}`` reference, a params container, or a list
+            of either, read-only here.
+
+        Raises
+        ------
+        ValueError
+            If any nested LLM-evaluated reference is malformed.
+        """
+        if isinstance(value, dict):
+            component = value.get("component")
+            if (
+                isinstance(component, str)
+                and component in LLM_EVALUATED_RETRIEVER_NAMES
+            ):
+                self.validate(value)
+            for child in value.values():
+                self.validate_recursive(child)
+        elif isinstance(value, list):
+            for child in value:
+                self.validate_recursive(child)
+
     def apply_defaults_recursive(self, value: Any) -> None:
         """Apply defaults to every LLM-evaluated retriever found in ``value``.
 

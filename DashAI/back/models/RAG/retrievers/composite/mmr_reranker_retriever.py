@@ -17,6 +17,9 @@ from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    unpack_retrieval_result,
+)
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     RetrievalExpansionSchema,
 )
@@ -160,7 +163,7 @@ class MMRRerankerRetriever(CompositeRetriever):
                 the candidate chunks.
         """
         child = self._children[0]
-        candidates, child_node = child.retrieve(query)
+        candidates, child_node = unpack_retrieval_result(child.retrieve(query))
         if len(candidates) <= self._top_k:
             results = self._apply_retrieval_expansion(candidates)
             return results, retriever_trace(self, results, children=[child_node])

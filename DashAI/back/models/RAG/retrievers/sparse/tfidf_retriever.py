@@ -153,6 +153,12 @@ class TFIDFRetriever(SparseRetriever):
                 tf_idf_matrix = pickle.load(f)
             with open(os.path.join(model_dir, "matrix_row_to_chunk_id.pkl"), "rb") as f:
                 matrix_row_to_chunk_id = pickle.load(f)
+            if not self._row_map_matches_chunks(matrix_row_to_chunk_id):
+                log.warning(
+                    "Persisted TF-IDF state does not describe the current corpus; "
+                    "refitting from the injected chunks."
+                )
+                return False
             self._converter.vectorizer = vectorizer
             self._converter.fitted = True
             self._tf_idf_matrix = tf_idf_matrix

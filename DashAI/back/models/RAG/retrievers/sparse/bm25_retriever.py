@@ -201,6 +201,12 @@ class BM25Retriever(SparseRetriever):
                 bm25_matrix = pickle.load(f)
             with open(os.path.join(model_dir, "bm25_row_to_chunk_id.pkl"), "rb") as f:
                 matrix_row_to_chunk_id = pickle.load(f)
+            if not self._row_map_matches_chunks(matrix_row_to_chunk_id):
+                log.warning(
+                    "Persisted BM25 state does not describe the current corpus; "
+                    "refitting from the injected chunks."
+                )
+                return False
             self._converter.vectorizer = vectorizer
             self._converter.fitted = True
             self._tf_matrix = tf_matrix

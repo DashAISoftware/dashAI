@@ -384,7 +384,7 @@ export default function RAGConfigPanel({
    * The preset recipe the unsaved draft currently matches, if any.
    *
    * Clicking a chip applies that recipe verbatim, so an exact comparison
-   * against the recipe is enough to keep the panel in step with the draft ΓÇö no
+   * against the recipe is enough to keep the panel in step with the draft — no
    * waiting for a save round-trip, and no domain knowledge here.
    *
    * @param {string} key - The configuration section key.

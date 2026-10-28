@@ -12,6 +12,9 @@ from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
 from DashAI.back.models.RAG.retrievers.exceptions import CompositeValidationError
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    unpack_retrieval_result,
+)
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     RetrievalExpansionSchema,
 )
@@ -132,7 +135,7 @@ class SequentialRetriever(CompositeRetriever):
             RAGRetrieverError: If any chunk has a ``None`` ID.
         """
         first = self._children[0]
-        results, first_node = first.retrieve(query, **kwargs)
+        results, first_node = unpack_retrieval_result(first.retrieve(query, **kwargs))
 
         for c in results:
             if c.id is None:

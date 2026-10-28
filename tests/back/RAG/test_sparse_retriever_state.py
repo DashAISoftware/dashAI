@@ -272,3 +272,31 @@ def test_a_folder_without_state_is_fitted_from_scratch(
     assert refits == [1]
     results, _ = retriever.retrieve("gamma")
     assert results[0].text == "gamma delta"
+
+
+@pytest.mark.parametrize(("builder", "retriever_class"), BUILDERS, ids=BUILDER_IDS)
+def test_a_reused_folder_is_not_rewritten(
+    builder, retriever_class, monkeypatch, tmp_path
+) -> None:
+    """A folder that was loaded already holds the state, so it is not re-saved."""
+    corpus = _session_corpus("alpha beta", "gamma delta")
+    first = builder(corpus, tmp_path)
+    first.save()
+
+    saves: List[int] = []
+    monkeypatch.setattr(retriever_class, "save", lambda self: saves.append(1))
+
+    reloaded = builder(corpus, tmp_path)
+
+    assert saves == []
+    assert reloaded._state_loaded is True
+
+
+@pytest.mark.parametrize(("builder", "retriever_class"), BUILDERS, ids=BUILDER_IDS)
+def test_a_fitted_retriever_asks_to_be_saved(
+    builder, retriever_class, tmp_path
+) -> None:
+    """A corpus fitted from scratch has no persisted state yet."""
+    retriever = builder(_session_corpus("alpha beta"), tmp_path / "unsaved")
+
+    assert retriever._state_loaded is False

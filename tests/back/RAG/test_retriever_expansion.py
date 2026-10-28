@@ -15,11 +15,15 @@ whose score trace must label expanded units).
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import pytest
 from pydantic import ValidationError
 
+from DashAI.back.converters.hugging_face.text_embedding import (
+    MultilingualE5SmallEmbedding,
+)
 from DashAI.back.converters.scikit_learn.bag_of_words import BagOfWordsConverter
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
@@ -51,10 +55,14 @@ from DashAI.back.models.RAG.retrievers.cross_encoder.sentence_transformer_cross_
     SentenceTransformerCrossEncoderRetrieverSchema,
 )
 from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
+    DenseEmbeddingRetriever,
     DenseEmbeddingRetrieverSchema,
 )
 from DashAI.back.models.RAG.retrievers.enums import MergeStrategy
-from DashAI.back.models.RAG.retrievers.persistence import SparsePersistence
+from DashAI.back.models.RAG.retrievers.persistence import (
+    DensePersistence,
+    SparsePersistence,
+)
 from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
     DEFAULT_ENABLE_RETRIEVE_THEN_EXPAND,
     DEFAULT_EXPAND_WINDOW,
@@ -71,6 +79,7 @@ from DashAI.back.models.RAG.retrievers.sparse.tfidf_retriever import (
     TFIDFRetrieverSchema,
 )
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
+from tests.back.converters.text_embedding_stub import with_fake_model
 from tests.back.RAG.conftest import BOW_PARAMS
 
 DOCUMENT_ID = 1
@@ -842,3 +851,89 @@ def test_cross_encoder_score_trace_upgrades_a_colliding_reference():
     assert len(trace["scores"]) == 4
     assert by_ref[f"{DOCUMENT_ID}_2"] == 5.0
     assert {f"{DOCUMENT_ID}_{position}" for position in (2, 3, 4, 5)} == set(by_ref)
+
+
+# -- Dense integration -------------------------------------------------------
+
+#: Vector size of the fake sentence model, so no download happens.
+FAKE_EMBEDDING_DIM = 8
+
+#: Chunks in the dense corpus, enough for a centred window.
+DENSE_CORPUS_SIZE = 5
+
+#: Query the fake model scores; any chunk is a valid answer.
+DENSE_QUERY = "passage number 2"
+
+
+def _dense_retriever(
+    model_dir: Path, *, enabled: bool, window: int
+) -> DenseEmbeddingRetriever:
+    """Build a fitted dense retriever over a five-chunk corpus.
+
+    Parameters
+    ----------
+    model_dir : Path
+        Directory the per-document embedding matrix is written to.
+    enabled : bool
+        Whether retrieve-then-expand is on.
+    window : int
+        Width of the expansion window.
+
+    Returns
+    -------
+    DenseEmbeddingRetriever
+        The fitted retriever.
+    """
+    embedding = MultilingualE5SmallEmbedding()
+    with_fake_model(embedding, dim=FAKE_EMBEDDING_DIM)
+    chunks = {
+        DOCUMENT_ID: {
+            position: Chunk(
+                id=DOCUMENT_ID * 100 + position,
+                document_id=DOCUMENT_ID,
+                document_position=position,
+                text=f"passage number {position}",
+            )
+            for position in range(DENSE_CORPUS_SIZE)
+        }
+    }
+    persistence = DensePersistence(
+        matrix_dirs={DOCUMENT_ID: str(model_dir)}, embedding_model_id=1
+    )
+    retriever = DenseEmbeddingRetriever(
+        embedding_model=embedding,
+        similarity_metric="cosine",
+        top_k=1,
+        enable_retrieve_then_expand=enabled,
+        expand_window=window,
+    )
+    retriever.inject_infra(str(model_dir), chunks, persistence)
+    retriever.init_model()
+    return retriever
+
+
+def test_dense_retriever_widens_its_chunks_when_expansion_is_on(tmp_path):
+    """The dense retriever applies retrieve-then-expand like every other leaf."""
+    plain = _dense_retriever(tmp_path / "plain", enabled=False, window=3)
+    plain_chunks, _ = plain.retrieve(DENSE_QUERY)
+    centre = plain_chunks[0].document_position
+
+    expanded = _dense_retriever(tmp_path / "expanded", enabled=True, window=3)
+    chunks, trace = expanded.retrieve(DENSE_QUERY)
+
+    assert len(chunks) == 1
+    covered = chunks[0].source_positions
+    assert covered is not None
+    assert centre in covered
+    assert len(covered) > 1
+    assert trace["chunks"] == [f"{DOCUMENT_ID}_{chunks[0].document_position}"]
+
+
+def test_dense_retriever_returns_the_stored_chunk_when_expansion_is_off(tmp_path):
+    """With the stage off the dense retriever keeps the stored chunk whole."""
+    retriever = _dense_retriever(tmp_path, enabled=False, window=3)
+
+    chunks, _ = retriever.retrieve(DENSE_QUERY)
+
+    assert len(chunks) == 1
+    assert chunks[0].source_positions is None
