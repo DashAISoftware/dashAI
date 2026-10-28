@@ -70,5 +70,12 @@
     "predictionJobSubmitted": "Prediction job submitted successfully",
     "predictionsDeleted_one": "{{count}} prediction deleted successfully",
     "predictionsDeleted_other": "{{count}} predictions deleted successfully"
+  },
+  "unseen": {
+    "title": "Categories the model never saw in training",
+    "description": "They were encoded as unknown (a row of zeros, or -1), so the predictions for the rows that have them are less reliable.",
+    "line": "{{column}} ({{source}}): {{values}}",
+    "more_one": "and {{count}} more",
+    "more_other": "and {{count}} more"
   }
 }

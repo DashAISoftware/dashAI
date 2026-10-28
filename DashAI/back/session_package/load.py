@@ -28,6 +28,7 @@ from DashAI.back.model_package.manifest import (
 from DashAI.back.session_package.export import (
     CONTENTS,
     DATASET_ENTRY,
+    FORMAT_1_COLUMN_FIELDS,
     KIND_SESSION,
     PLOT_FIELDS,
     PREPROCESSING_ENTRY,
@@ -35,6 +36,7 @@ from DashAI.back.session_package.export import (
     SESSION_ENTRY,
     SESSION_FIELDS,
     SESSION_FORMAT_VERSION,
+    with_unknown_handling,
 )
 
 if TYPE_CHECKING:
@@ -126,7 +128,7 @@ def _read_package(path: Union[str, Path], workdir: Path):
         session = recipe["session"]
         dataset = recipe["dataset"]
         runs = recipe["runs"]
-        missing = [field for field in SESSION_FIELDS if field not in session]
+        missing = [field for field in _session_fields(manifest) if field not in session]
         missing += [
             field
             for run in runs
@@ -140,6 +142,47 @@ def _read_package(path: Union[str, Path], workdir: Path):
     if not (workdir / DATASET_ENTRY / "data.arrow").is_file():
         raise ModelPackageError(NOT_A_SESSION.format(path=path))
     return recipe, notes
+
+
+def _session_fields(manifest: Dict[str, Any]) -> tuple:
+    """The session fields a file of this format has to carry."""
+    if manifest.get("format_version") == 1:
+        return tuple(f for f in SESSION_FIELDS if f != "column_roles") + (
+            FORMAT_1_COLUMN_FIELDS
+        )
+    return SESSION_FIELDS
+
+
+def _column_roles(session: Dict[str, Any], component_registry: Any) -> Dict:
+    """The column roles to store for the session a file describes.
+
+    A file of format 1, written before roles existed, gives the columns as a
+    model's inputs and outputs; the session's task reads them back as roles,
+    the same translation the migration that introduced roles made.
+    """
+    from pydantic import TypeAdapter
+
+    from DashAI.back.preprocessing.column_ref import ColumnRef
+    from DashAI.back.tasks.session_roles import SessionColumnRoles
+
+    if "column_roles" in session:
+        return session["column_roles"]
+    task = component_registry[session["task_name"]]["class"]()
+    inputs = list(session["input_columns"] or [])
+    outputs = list(session["output_columns"] or [])
+    refs = session.get("input_column_refs")
+    if refs is None:
+        refs = [{"kind": "raw", "name": name} for name in inputs]
+    adapter = TypeAdapter(List[ColumnRef])
+    chosen = task.roles_from_io(
+        adapter.validate_python(refs),
+        adapter.validate_python([{"kind": "raw", "name": n} for n in outputs]),
+    )
+    return (
+        SessionColumnRoles.from_refs(chosen)
+        .with_columns(task.roles_from_io(inputs, outputs))
+        .to_stored()
+    )
 
 
 def _check_components(recipe: Dict[str, Any], component_registry: Any) -> None:
@@ -247,6 +290,13 @@ def import_session_package(
         recipe, notes = _read_package(path, workdir)
         _check_components(recipe, component_registry)
         recipe_session = recipe["session"]
+        # A file always says how its encoders treat an unseen category, so
+        # one that does not was written before they treated it by default,
+        # when leaving it out meant sklearn's "error". The migration that
+        # wrote it into stored sessions (c3f1a8d2e6b4) never sees a file.
+        recipe_session["preprocessing"] = with_unknown_handling(
+            recipe_session["preprocessing"], lambda converter: "error"
+        )
         has_steps = bool((recipe_session["preprocessing"] or {}).get("steps"))
 
         try:
@@ -307,8 +357,9 @@ def import_session_package(
                         **{
                             field: recipe_session[field]
                             for field in SESSION_FIELDS
-                            if field != "name"
+                            if field not in ("name", "column_roles")
                         },
+                        column_roles=_column_roles(recipe_session, component_registry),
                         name=session_name,
                         dataset_id=dataset.id,
                         preprocessing_status="pending" if has_steps else "ready",

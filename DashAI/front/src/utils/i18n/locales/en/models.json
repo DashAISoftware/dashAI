@@ -201,7 +201,7 @@
     "inputColumns": "Input columns",
     "baseColumnsTitle": "Output and candidate columns",
     "baseColumnsDescription": "Choose the output column (the one the model learns to predict) and the candidate columns that could feed the model. Preprocessing only works on the candidate columns, and the output is never transformed.",
-    "candidateColumns": "Candidate columns",
+    "candidatesForRole": "{{role}} (candidate columns)",
     "liveMetrics": "Live Metrics",
     "localExplainer": "Local Explainer",
     "localExplainers": "Local Explainers",

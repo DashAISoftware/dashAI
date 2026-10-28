@@ -246,8 +246,11 @@ def vectorizer_options(params: Dict[str, Any]) -> Dict[str, Any]:
             params.get("lower_bound_ngrams", 1),
             params.get("upper_bound_ngrams", 1),
         ),
-        "min_df": params.get("min_df", 0.0),
-        "max_df": params.get("max_df", 1.0),
+        # A form sends 0 and 1 as JSON integers, and scikit-learn reads an
+        # integer as a document count: max_df=1 would keep only the terms
+        # found in at most one document, and min_df=0 is rejected outright.
+        "min_df": float(params.get("min_df", 0.0)),
+        "max_df": float(params.get("max_df", 1.0)),
     }
 
 

@@ -20,6 +20,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.job.base_job import JobError
+from DashAI.back.preprocessing.unseen_categories import check_unseen
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -292,8 +293,20 @@ class ConverterScopeMixin:
             raise JobError(f"Error fitting converter {converter_name}: {e}") from e
 
     def _transform(self, converter_instance, x_dataset, y_dataset, converter_name):
-        """Transform with a fitted converter, preserving the job's message."""
+        """Transform with a fitted converter, preserving the job's message.
+
+        A row scope fits the converter on some rows and transforms them all,
+        so an encoder can meet a category it did not see. One set to raise on
+        it (the default here, unlike in a session) is refused with a message
+        that names the converter, the column and the values.
+        """
         try:
+            check_unseen(
+                converter_instance,
+                x_dataset,
+                converter_name,
+                "were not in the rows it was fitted on",
+            )
             return converter_instance.transform(x_dataset, y_dataset)
         except Exception as e:
             log.exception(e)

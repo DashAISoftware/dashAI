@@ -205,7 +205,7 @@
     "inputColumns": "Columnas de entrada",
     "baseColumnsTitle": "Columna de salida y candidatas",
     "baseColumnsDescription": "Elige la columna de salida (la que el modelo aprende a predecir) y las columnas candidatas que podrían llegar al modelo. El preprocesamiento solo trabaja sobre las candidatas y la salida nunca se transforma.",
-    "candidateColumns": "Columnas candidatas",
+    "candidatesForRole": "{{role}} (columnas candidatas)",
     "liveMetrics": "Métricas en Vivo",
     "localExplainer": "Explicador Local",
     "localExplainers": "Explicadores Locales",

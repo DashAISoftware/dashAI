@@ -5,6 +5,32 @@ import useSchema from "./useSchema";
 import { updateRunParameters, getRunOperationsCount } from "../api/run";
 import { checkIfHaveOptimazers } from "../utils/schema";
 
+// A copy of `value` with every object's keys sorted, so two that only differ
+// in key order stringify the same.
+function withSortedKeys(value) {
+  if (Array.isArray(value)) return value.map(withSortedKeys);
+  if (value && typeof value === "object") {
+    return Object.keys(value)
+      .sort()
+      .reduce((sorted, key) => {
+        sorted[key] = withSortedKeys(value[key]);
+        return sorted;
+      }, {});
+  }
+  return value;
+}
+
+// Whether two sets of parameters run the same. The parameters form seeds
+// itself with the schema defaults under the saved values, in the schema's
+// order, and hands that back: a run saved without a field, or with its fields
+// in another order, must not read as edited before the user changes anything.
+function sameParams(edited, saved, defaults) {
+  return (
+    JSON.stringify(withSortedKeys({ ...defaults, ...edited })) ===
+    JSON.stringify(withSortedKeys({ ...defaults, ...saved }))
+  );
+}
+
 /**
  * Shared editable-parameters state/logic for a run's "Edit Run" dialog
  * (RunEditDialog), used from the compact model card, RunCard, and the model
@@ -58,6 +84,10 @@ export default function useRunEditForm({
   const { defaultValues: defaultOptimizerParams } = useSchema({
     modelName: enabled ? editedOptimizer : null,
   });
+  // The same schema the parameters form fetches, so it shares that request.
+  const { defaultValues: defaultModelParams } = useSchema({
+    modelName: enabled ? run.model_name : null,
+  });
 
   const runId = run.id;
 
@@ -92,14 +122,15 @@ export default function useRunEditForm({
 
   const isDirty = useMemo(() => {
     if (editedName.trim() !== (run.name || "")) return true;
-    if (
-      JSON.stringify(editedParameters) !== JSON.stringify(run.parameters || {})
-    )
+    if (!sameParams(editedParameters, run.parameters || {}, defaultModelParams))
       return true;
     if (editedOptimizer !== (run.optimizer_name || "")) return true;
     if (
-      JSON.stringify(editedOptimizerParams) !==
-      JSON.stringify(run.optimizer_parameters || {})
+      !sameParams(
+        editedOptimizerParams,
+        run.optimizer_parameters || {},
+        defaultOptimizerParams,
+      )
     )
       return true;
     if (editedGoalMetric !== (run.goal_metric || "")) return true;
@@ -114,8 +145,10 @@ export default function useRunEditForm({
   }, [
     editedName,
     editedParameters,
+    defaultModelParams,
     editedOptimizer,
     editedOptimizerParams,
+    defaultOptimizerParams,
     editedGoalMetric,
     editedUseNestedCV,
     editedInnerConfig,

@@ -871,3 +871,25 @@ def test_a_preprocessor_pickled_without_the_flag_does_not_drop():
     single = _dataset({"age": [5]}, {"age": {"type": "Integer", "dtype": "int64"}})
 
     assert restored.transform_dataset(single).column_names == ["age", "derived"]
+
+
+def test_transforming_rows_without_a_column_a_step_reads_names_it():
+    """What the preprocessor reads is ``ConverterSequence.raw_columns_read``,
+    the same list the endpoints use to decide which datasets can be
+    predicted on, so a dataset they offer never fails here."""
+    registry = _FakeRegistry({"Doubler": _DoublingConverter})
+    sequence = ConverterSequence(
+        steps=[
+            ConverterStep(
+                converter="Doubler", params={}, scope=[RawColumnRef(name="age")]
+            )
+        ]
+    )
+    preprocessor = SessionPreprocessor(sequence, registry)
+    preprocessor.fit_transform(_split(train_ages=[1, 2, 3]))
+    rows = _dataset(
+        {"height": [1.5]}, {"height": {"type": "Float", "dtype": "float64"}}
+    )
+
+    with pytest.raises(ValueError, match="the preprocessing reads: 'age'"):
+        preprocessor.transform_dataset(rows)

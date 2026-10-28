@@ -35,21 +35,28 @@ class ApplySessionPreprocessingUnit(BaseUnit):
     unchanged. That is what keeps the graph one shape whether or not a session
     preprocesses: the prediction step reads ``model_input`` in both cases, and
     what varies is this unit's configuration, not which units are wired.
+
+    The categories the session's encoders met without having seen them in
+    training, and treated, are published under ``unseen_categories`` (one
+    ``unseen_record`` per encoder and column; empty without a preprocessor),
+    so the prediction can say it predicted on something the model never saw.
     """
 
     REQUIRES = ("dataset",)
-    PROVIDES = ("model_input",)
+    PROVIDES = ("model_input", "unseen_categories")
     RUNTIME_PARAMS = ("preprocessing_artifacts_path",)
 
     def execute(self, ctx: ExecutionContext) -> None:
         dataset = ctx.require("dataset")
 
+        unseen = []
         artifacts_path = self.config.get("preprocessing_artifacts_path")
         if artifacts_path:
             preprocessor = self._load_final_preprocessor(artifacts_path)
-            dataset = preprocessor.transform_dataset(dataset)
+            dataset = preprocessor.transform_dataset(dataset, unseen=unseen)
 
         ctx.put("model_input", dataset)
+        ctx.put("unseen_categories", unseen)
 
     @staticmethod
     def _load_final_preprocessor(artifacts_path: str) -> "SessionPreprocessor":

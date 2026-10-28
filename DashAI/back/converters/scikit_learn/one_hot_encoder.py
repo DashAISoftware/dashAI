@@ -2,7 +2,10 @@ from sklearn.preprocessing import OneHotEncoder as OneHotEncoderOperation
 
 from DashAI.back.api.utils import cast_string_to_type, parse_string_to_list
 from DashAI.back.converters.category.encoding import EncodingConverter
-from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
+from DashAI.back.converters.drop_source_columns import (
+    AddColumnsConverterSchema,
+    split_converter_params,
+)
 from DashAI.back.converters.sklearn_wrapper import SklearnWrapper
 from DashAI.back.core.schema_fields import (
     enum_field,
@@ -13,6 +16,7 @@ from DashAI.back.core.schema_fields import (
     string_field,
     union_type,
 )
+from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -73,6 +77,9 @@ class OneHotEncoderSchema(AddColumnsConverterSchema):
     )  # type: ignore
     handle_unknown: schema_field(
         enum_field(["error", "ignore", "infrequent_if_exist"]),
+        # Strict, as the notebook uses it: there it may be fitted on a subset
+        # of rows and applied to all of them, and what it writes is saved. A
+        # session treats an unseen category instead (``SESSION_PARAMS``).
         "error",
         description=MultilingualString(
             en=("How to handle unknown categories during transform."),
@@ -168,6 +175,13 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
 
     PREFIX = "ohe_"
 
+    UNKNOWN_HINT = 'set "handle_unknown" to "ignore" to encode them as a row of zeros'
+
+    # A session fits its converters on the training rows only, so a category
+    # seen only in validation, test or the rows to predict is the normal
+    # case, not an accident: it gets a row of zeros.
+    SESSION_PARAMS = {"handle_unknown": "ignore"}
+
     metadata = {
         "allowed_types": [Categorical],
         "allowed_dtypes": [],
@@ -180,12 +194,19 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
         ----------
         **kwargs
             Configuration keyword arguments matching the converter's
-            schema fields. String representations of ``categories`` and
-            ``drop`` are parsed into lists when they are not sentinel values;
-            ``dtype`` strings are cast to NumPy types; ``sparse_output`` is
-            forced to ``False`` for pandas compatibility. Remaining kwargs
-            are forwarded to the underlying scikit-learn class.
+            schema fields. A field left out takes its schema default, as
+            the form would have sent it. String representations of
+            ``categories`` and ``drop`` are parsed into lists when they are
+            not sentinel values; ``dtype`` strings are cast to NumPy types;
+            ``sparse_output`` is forced to ``False`` for pandas compatibility.
+            Remaining kwargs are forwarded to the underlying scikit-learn
+            class.
         """
+        # The placeholders include the drop option, which is not sklearn's.
+        kwargs, _ = split_converter_params(
+            {**schema_placeholder_defaults(type(self)), **kwargs}
+        )
+
         self.categories = kwargs.pop("categories", "auto")
         if self.categories != "auto":
             self.categories = [parse_string_to_list(self.categories)]
@@ -196,8 +217,7 @@ class OneHotEncoder(EncodingConverter, SklearnWrapper, OneHotEncoderOperation):
             self.drop = [parse_string_to_list(self.drop)]
         kwargs["drop"] = self.drop
 
-        self.dtype = kwargs.pop("dtype", "np.float64")
-        self.dtype = cast_string_to_type(self.dtype)
+        self.dtype = cast_string_to_type(kwargs.pop("dtype"))
         kwargs["dtype"] = self.dtype
 
         # Pandas output does not support sparse data. Set sparse_output=False

@@ -21,6 +21,7 @@ import {
 import { getPredictionSplits } from "../../api/predict";
 import { formatDate } from "../../pages/results/constants/formatDate";
 import { useTranslation } from "react-i18next";
+import { useSessionColumns } from "../../hooks/useTaskMetadata";
 
 function DatasetSelector({
   experiment,
@@ -32,6 +33,7 @@ function DatasetSelector({
   onSplitChange = null,
 }) {
   const { t } = useTranslation(["prediction", "common", "datasets"]);
+  const columns = useSessionColumns(experiment);
   const [columnTypes, setColumnTypes] = useState({});
   const [splits, setSplits] = useState([]);
   const [trainingDatasetId, setTrainingDatasetId] = useState(null);
@@ -188,7 +190,7 @@ function DatasetSelector({
             <Box sx={{ mb: 2 }}>
               <strong>{t("prediction:label.inputColumns")}:</strong>
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mt: 1 }}>
-                {experiment.input_columns.map((col) => (
+                {(columns?.inputs ?? []).map((col) => (
                   <Chip
                     key={col}
                     label={col}
@@ -203,7 +205,7 @@ function DatasetSelector({
             <Box sx={{ display: "flex", alignItems: "center" }}>
               <strong>{t("prediction:label.targetColumn")}:</strong>
               <Chip
-                label={experiment.output_columns[0]}
+                label={columns?.target}
                 size="small"
                 color="primary"
                 sx={{ ml: 2, fontSize: "0.75rem" }}

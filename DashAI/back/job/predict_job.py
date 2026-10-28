@@ -10,6 +10,13 @@ from sqlalchemy import exc
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.splitters.splits_payload import run_split_indexes
+from DashAI.back.tasks.session_roles import (
+    SessionIO,
+    TaskUnavailableError,
+    session_io,
+    session_raw_columns,
+    session_task,
+)
 from DashAI.back.units.apply_session_preprocessing_unit import (
     ApplySessionPreprocessingUnit,
 )
@@ -52,6 +59,70 @@ def _preprocessing_artifacts_path(model_session: ModelSession) -> Optional[str]:
     return artifacts_path
 
 
+def _session_columns(
+    model_session: ModelSession,
+) -> Tuple[Optional[SessionIO], Optional[str]]:
+    """The session's columns as the model's inputs and outputs, or why not.
+
+    The session stores its columns by role and its task translates them, so a
+    session whose task cannot be built cannot be read. ``(None, reason)`` is
+    returned then, with the text ``session_task`` gives (not registered, or
+    its constructor raised), and the caller reports it where it always has:
+    when the prediction unit would resolve the task, ahead of the model.
+    """
+    try:
+        task = session_task(model_session.task_name, di["component_registry"])
+    except TaskUnavailableError as e:
+        return None, str(e)
+    return session_io(model_session, task), None
+
+
+def _no_outputs_problem(model_session: ModelSession) -> str:
+    """Why a session with no output columns cannot predict.
+
+    A task that declares no output role (clustering) does not predict at all,
+    so the message says that rather than blaming the session's configuration.
+    Called only once the task has been built, so it is registered.
+    """
+    task_class = di["component_registry"][model_session.task_name]["class"]
+    if not task_class.io_roles()["outputs"]:
+        return (
+            f"{model_session.task_name} does not predict: it declares no "
+            "output columns."
+        )
+    return "Model session has no output columns configured"
+
+
+def _input_columns_training_prepared_with(
+    model_session: ModelSession, io: SessionIO
+) -> List[str]:
+    """The input columns the task was handed when the run's rows were carved.
+
+    A session that preprocesses has among its inputs the columns its
+    converters produce, which the loaded rows do not have, so training
+    prepares with the raw refs instead (``SplitterScopeMixin._prepare``,
+    ``PreprocessingJob``). Without steps, the session's inputs are the raw
+    columns themselves.
+    """
+    if not (model_session.preprocessing and model_session.preprocessing.get("steps")):
+        return io.inputs
+    return io.raw_inputs
+
+
+def _unseen_categories(ctx: ExecutionContext, input_columns: List[str]) -> List[dict]:
+    """The categories of the rows just predicted that training never saw.
+
+    Two encoders may have treated them: the session's, whose records
+    ``ApplySessionPreprocessingUnit`` publishes, and the model's own, which
+    the model reports for the columns it reads.
+    """
+    unseen = list(ctx.require("unseen_categories"))
+    reader = getattr(ctx.require("model"), "unseen_categories", None)
+    if reader is not None:
+        unseen.extend(reader(ctx.require("model_input").select_columns(input_columns)))
+    return unseen
+
+
 def _build_preview_rows(
     prepared_dataset: "DashAIDataset",
     input_columns: List[str],
@@ -91,6 +162,7 @@ def run_manual_prediction(
     run_id: int,
     manual_input_data: List[Dict],
     session_factory: "sessionmaker",
+    unseen: Optional[List[dict]] = None,
 ) -> Tuple[List[str], List[List]]:
     """Execute a manual prediction synchronously without persisting results.
 
@@ -115,6 +187,9 @@ def run_manual_prediction(
         must be the container's: the units resolve ``session_factory`` and
         ``component_registry`` from the DI container themselves, so a different
         one passed here would leave the two halves reading different databases.
+    unseen : list, optional
+        When given, the categories of the rows that training never saw are
+        appended to it, one ``unseen_record`` per encoder and column.
 
     Returns
     -------
@@ -153,21 +228,23 @@ def run_manual_prediction(
                 detail="Training dataset not found",
             )
 
-        if not model_session.input_columns:
+        # Without its task the session's roles cannot be read; the missing
+        # task is reported below, where the units resolve it.
+        io, task_problem = _session_columns(model_session)
+
+        if io is not None and not io.inputs:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Model session has no input columns configured",
             )
 
-        if not model_session.output_columns:
+        if io is not None and not io.outputs:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Model session has no output columns configured",
+                detail=_no_outputs_problem(model_session),
             )
 
         task_name = model_session.task_name
-        input_columns = list(model_session.input_columns)
-        output_columns = list(model_session.output_columns)
         train_dataset_file_path = dataset_trained.file_path
         try:
             preprocessing_artifacts_path = _preprocessing_artifacts_path(model_session)
@@ -175,6 +252,14 @@ def run_manual_prediction(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT, detail=str(e)
             ) from e
+
+    if io is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=task_problem,
+        )
+    input_columns = list(io.inputs)
+    output_columns = list(io.outputs)
 
     ctx = ExecutionContext()
 
@@ -239,6 +324,8 @@ def run_manual_prediction(
             # exactly the kind of derived value that must not cross a unit
             # boundary, since anything upstream may reshape it.
             prepared_dataset = ctx.require("model_input").select_columns(input_columns)
+            if unseen is not None:
+                unseen.extend(_unseen_categories(ctx, input_columns))
         except (ValueError, TypeError) as e:
             logging.exception("Manual prediction input error: %s", e)
             raise HTTPException(
@@ -382,7 +469,12 @@ class PredictJob(BaseJob):
                         detail="Training dataset not found",
                     )
 
-                if not model_session.input_columns:
+                # Without its task the session's roles cannot be read; the
+                # missing task is reported below, where the prediction unit
+                # resolves it.
+                io, task_problem = _session_columns(model_session)
+
+                if io is not None and not io.inputs:
                     prediction.set_status_as_error()
                     db.commit()
                     raise HTTPException(
@@ -390,13 +482,12 @@ class PredictJob(BaseJob):
                         detail="Model session has no input columns configured",
                     )
 
-                if not model_session.output_columns:
+                if io is not None and not io.outputs:
                     prediction.set_status_as_error()
                     db.commit()
-                    raise HTTPException(
-                        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                        detail="Model session has no output columns configured",
-                    )
+                    # JobError, not HTTPException: this runs in the Huey
+                    # worker, where an HTTPException does not survive dill.
+                    raise JobError(_no_outputs_problem(model_session))
 
             except exc.SQLAlchemyError as e:
                 log.exception(e)
@@ -410,12 +501,14 @@ class PredictJob(BaseJob):
             # reported as a task problem instead of being overtaken by
             # whatever fails next. Same shape as ModelJob validating the fit
             # unit ahead of the status change.
-            predict = PredictUnit(
-                task_name=model_session.task_name,
-                input_columns=model_session.input_columns,
-                output_columns=model_session.output_columns,
-            )
             try:
+                if io is None:
+                    raise JobError(task_problem)
+                predict = PredictUnit(
+                    task_name=model_session.task_name,
+                    input_columns=io.inputs,
+                    output_columns=io.outputs,
+                )
                 predict.validate(ctx)
             except Exception as e:
                 prediction.set_status_as_error()
@@ -491,12 +584,25 @@ class PredictJob(BaseJob):
                 # dataset read from disk from one typed in by hand.
                 if dataset_id:
                     LoadDatasetUnit(dataset_id=dataset_id)(ctx)
-                    # Narrowed on the raw rows, straight after the load and
-                    # before anything downstream reshapes them, and written
-                    # back under the same key: the saved prediction has to
-                    # cover the rows that were asked for and no others.
+                    # Narrowed straight after the load and before anything
+                    # downstream reshapes the rows, and written back under the
+                    # same key: the saved prediction has to cover the rows
+                    # that were asked for and no others. The run's indexes are
+                    # positions in the dataset the task prepared, which a task
+                    # may reorder (forecasting sorts by date), so they select
+                    # from that dataset and not from the loaded one. Preparing
+                    # keeps every column and value of the loaded rows, so what
+                    # follows still reads raw rows.
                     if row_indexes is not None:
-                        ctx.put("dataset", ctx.require("dataset").select(row_indexes))
+                        task = component_registry[model_session.task_name]["class"]()
+                        prepared = task.prepare_for_task(
+                            dataset=ctx.require("dataset"),
+                            input_columns=_input_columns_training_prepared_with(
+                                model_session, io
+                            ),
+                            output_columns=io.outputs,
+                        )
+                        ctx.put("dataset", prepared.select(row_indexes))
                 else:
                     BuildManualInputUnit(
                         task_name=model_session.task_name,
@@ -514,6 +620,7 @@ class PredictJob(BaseJob):
 
                 self.report_progress(0.4, "Running prediction")
                 predict(ctx)
+                prediction.unseen_categories = _unseen_categories(ctx, io.inputs)
 
             except ValueError as ve:
                 prediction.set_status_as_error()
@@ -547,8 +654,11 @@ class PredictJob(BaseJob):
             try:
                 SavePredictionUnit(
                     task_name=model_session.task_name,
-                    input_columns=model_session.input_columns,
-                    output_columns=model_session.output_columns,
+                    # The saved rows are the raw ones, so what keeps a type is
+                    # what the prediction read from them, not the columns a
+                    # preprocessor produced from it.
+                    input_columns=session_raw_columns(model_session, io),
+                    output_columns=io.outputs,
                 )(ctx)
 
                 # Update Prediction record
