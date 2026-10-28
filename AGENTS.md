@@ -107,6 +107,7 @@ DashAI includes a **Retrieval-Augmented Generation (RAG)** module — a 4-stage 
 - Job queue tests: `test_job_queue.set_test_mode(immediate=True)` runs tasks synchronously.
 - API tests use FastAPI `TestClient` defined in `tests/back/api/conftest.py` (module-scoped).
 - Frontend test command passes `--passWithNoTests` in CI.
+- **Never run two test processes against the same worktree.** `tests/back/conftest.py` pins `TEST_PATH` to a *relative* `tmp/`, and each client fixture deletes it, so a second suite (or a live `python -m DashAI` started from the same directory) wipes the first one's database mid-run. The symptoms are phantom failures: `WinError 32` on `tmp/db.sqlite`, `table dataset already exists`, `Online migration expected to match one row ... 0 found`, and 409 "must be downloaded first". Run suites one at a time; to run one while another process may be using `tmp/`, start it from an isolated directory with `PYTHONPATH` pointing at the repo root.
 
 ## Adding new things
 
