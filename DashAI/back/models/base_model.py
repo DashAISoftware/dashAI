@@ -10,7 +10,11 @@ from kink import di
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Metric
-from DashAI.back.metrics.undefined_metric import Unavailable, UndefinedMetricError
+from DashAI.back.metrics.undefined_metric import (
+    Unavailable,
+    UndefinedMetricError,
+    describe_undefined,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -318,7 +322,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             try:
                 score = metric.score(y_transformed, y_pred)
             except UndefinedMetricError as undefined:
-                results[metric.__name__] = Unavailable(undefined.reason)
+                results[metric.__name__] = Unavailable(describe_undefined(undefined))
                 continue
             if not math.isfinite(score):
                 logger.warning(

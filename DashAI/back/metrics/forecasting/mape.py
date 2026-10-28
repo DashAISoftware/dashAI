@@ -101,11 +101,12 @@ class MAPE(PointMetricMixin, ForecastingMetric):
 
         true_values, pred_values = prepare_to_metric(true_values, pred_values)
 
-        zeros = int((true_values == 0).sum())
-        if zeros:
+        zeros = np.flatnonzero(true_values == 0)
+        if len(zeros):
             raise UndefinedMetricError(
-                f"MAPE divides by each actual value, and {zeros} of them are "
-                "zero. Use SMAPE or MASE for a series that reaches zero."
+                "MAPE divides by each actual value, and the actual value is zero",
+                positions=zeros,
+                hint="Use SMAPE or MASE for a series that reaches zero.",
             )
 
         errors = np.abs(true_values - pred_values)

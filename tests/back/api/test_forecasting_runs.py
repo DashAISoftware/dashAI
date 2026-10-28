@@ -246,6 +246,41 @@ def test_a_trial_that_scores_no_number_stops_the_search_and_says_where(
         ModelJob(run_id=other).run()
 
 
+def test_an_undefined_goal_metric_names_the_window_and_the_dates(client, tmp_path):
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.job.model_job import ModelJob
+    from tests.back.api.test_forecasting_acceptance import _create_run
+
+    # Step 40 is 2023-05-01, in the validation window that starts at step 39.
+    session_id = _session(
+        client, tmp_path, _monthly(zero_at=40), metrics=["MAE", "MAPE"]
+    )
+    searched = {
+        "season_length": {
+            "optimize": True,
+            "fixed_value": 12,
+            "lower_bound": 2,
+            "upper_bound": 12,
+        }
+    }
+    other = _create_run(
+        client,
+        session_id,
+        "SeasonalNaiveForecaster",
+        searched,
+        goal_metric="MAPE",
+        optimizer="OptunaOptimizer",
+    )
+
+    with pytest.raises(JobError) as raised:
+        ModelJob(run_id=other).run()
+
+    message = str(raised.value)
+    assert "the validation window from 2023-04-01 to 2023-06-01" in message
+    assert "the actual value is zero on 2023-05-01." in message
+    assert message.endswith("Choose another optimization metric.")
+
+
 def test_coverage_as_the_goal_metric_fails_the_run(client, tmp_path):
     """Searched for, coverage picks the widest intervals, not a better model."""
     from DashAI.back.core.enums.status import RunStatus

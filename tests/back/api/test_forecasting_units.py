@@ -251,6 +251,16 @@ def test_a_metric_with_no_value_on_one_origin_has_no_summary():
     assert test["value"] is not None
 
 
+def test_an_unavailable_reason_names_the_dates_that_leave_it_undefined():
+    series = SERIES.copy()
+    series[19] = 0.0  # 2021-08-01, inside the second validation window
+
+    rows = _scored(["MAPE"], [], series)
+
+    fold = next(r for r in rows if r["level"] == "FOLD" and r["fold_index"] == 1)
+    assert "the actual value is zero on 2021-08-01." in fold["unavailable_reason"]
+
+
 def test_coverage_is_scored_on_the_intervals():
     rows = _scored(["IntervalCoverage"], [])
 

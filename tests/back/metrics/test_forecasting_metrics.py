@@ -20,7 +20,10 @@ from DashAI.back.metrics.forecasting_metric import ForecastingMetric, ScoredFore
 from DashAI.back.metrics.regression.mae import MAE
 from DashAI.back.metrics.regression.rmse import RMSE
 from DashAI.back.metrics.regression_metric import RegressionMetric
-from DashAI.back.metrics.undefined_metric import UndefinedMetricError
+from DashAI.back.metrics.undefined_metric import (
+    UndefinedMetricError,
+    describe_undefined,
+)
 
 
 def _true(values):
@@ -54,10 +57,36 @@ def test_mape_is_zero_for_a_perfect_forecast():
 def test_mape_is_undefined_when_any_actual_is_zero():
     # Leaving the zero row out would report the error of a different series,
     # which is what MAPE used to do.
-    with pytest.raises(UndefinedMetricError, match="1 of them are zero") as raised:
+    with pytest.raises(UndefinedMetricError, match="is zero") as raised:
         MAPE.score(_true([0.0, 100.0]), np.array([5.0, 110.0]))
 
-    assert "SMAPE or MASE" in raised.value.reason
+    assert "SMAPE or MASE" in str(raised.value)
+
+
+def test_an_undefined_metric_says_where_it_is_undefined():
+    # The metric knows which values leave it undefined, and not what they
+    # are called: positions here, which the caller names as dates or rows.
+    with pytest.raises(UndefinedMetricError) as raised:
+        MAPE.score(_true([0.0, 100.0, 0.0]), np.array([5.0, 110.0, 1.0]))
+
+    assert raised.value.positions == (0, 2)
+    assert describe_undefined(raised.value) == (
+        "MAPE divides by each actual value, and the actual value is zero on 2 "
+        "rows. Use SMAPE or MASE for a series that reaches zero."
+    )
+
+
+def test_the_dates_of_an_undefined_metric_are_named_up_to_five():
+    actual = np.zeros(7)
+    dates = pd.date_range("2023-01-01", periods=7, freq="MS")
+    with pytest.raises(UndefinedMetricError) as raised:
+        MAPE.score(_true(list(actual)), np.ones(7))
+
+    assert describe_undefined(raised.value, dates) == (
+        "MAPE divides by each actual value, and the actual value is zero on "
+        "2023-01-01, 2023-02-01, 2023-03-01, 2023-04-01, 2023-05-01 and 2 more "
+        "dates. Use SMAPE or MASE for a series that reaches zero."
+    )
 
 
 def test_an_undefined_metric_is_not_an_error_optuna_swallows():

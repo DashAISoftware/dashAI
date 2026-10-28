@@ -102,14 +102,21 @@ class ScoreForecastsUnit(BaseUnit):
             raise JobError(f"Unable to find the metrics {names} in registry") from e
 
     @staticmethod
-    def _score(metric, forecast) -> Tuple[Optional[float], Optional[str]]:
-        """A metric's value on a forecast, or None and the reason it has none."""
-        from DashAI.back.metrics.undefined_metric import UndefinedMetricError
+    def _score(metric, forecast, dates) -> Tuple[Optional[float], Optional[str]]:
+        """A metric's value on a forecast, or None and the reason it has none.
+
+        The reason names the dates of the values that leave the metric
+        undefined, from the forecast's own window.
+        """
+        from DashAI.back.metrics.undefined_metric import (
+            UndefinedMetricError,
+            describe_undefined,
+        )
 
         try:
             value = float(metric.score_forecast(forecast))
         except UndefinedMetricError as undefined:
-            return None, undefined.reason
+            return None, describe_undefined(undefined, dates)
         if not math.isfinite(value):
             return None, f"{metric.__name__} returned {value}, which is not a number."
         return value, None
@@ -142,7 +149,9 @@ class ScoreForecastsUnit(BaseUnit):
         for metric in self._metric_classes(self.config["validation_metrics"]):
             scores: Dict[int, Tuple[Optional[float], Optional[str]]] = {
                 origin["index"]: self._score(
-                    metric, scored_forecast(origin, series, season_length)
+                    metric,
+                    scored_forecast(origin, series, season_length),
+                    origin["dates"],
                 )
                 for origin in validation
             }
@@ -178,7 +187,9 @@ class ScoreForecastsUnit(BaseUnit):
         for metric in self._metric_classes(self.config["test_metrics"]):
             for origin in test:
                 value, reason = self._score(
-                    metric, scored_forecast(origin, series, season_length)
+                    metric,
+                    scored_forecast(origin, series, season_length),
+                    origin["dates"],
                 )
                 row("TEST", "LAST", metric.__name__, value, reason)
 

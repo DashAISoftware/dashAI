@@ -156,11 +156,18 @@ def validation_during_fit_field():
     )
 
 
-def _undefined_goal(metric, where: str, undefined) -> JobError:
-    """The error of a goal metric that has no value on the data it scores."""
+def _undefined_goal(metric, where: str, undefined, dates=None) -> JobError:
+    """The error of a goal metric that has no value on the data it scores.
+
+    Says why in the words a metric row's ``unavailable_reason`` would, with
+    the values that leave it undefined named by date where there are dates.
+    """
+    from DashAI.back.metrics.undefined_metric import describe_undefined
+
     return JobError(
         f"The optimization metric {metric.__name__} has no value on {where}: "
-        f"{undefined.reason} Choose another optimization metric."
+        f"{describe_undefined(undefined, dates)} Choose another optimization "
+        "metric."
     )
 
 
@@ -212,8 +219,11 @@ class ModelFitScopeMixin:
             raise _undefined_goal(metric, where, undefined) from undefined
 
     @staticmethod
-    def _goal_score_forecast(metric, forecast, where: str) -> float:
+    def _goal_score_forecast(metric, forecast, where: str, dates=None) -> float:
         """``_goal_score`` for a forecast, scored through ``score_forecast``.
+
+        ``dates`` are the forecast window's, so the error names the dates of
+        the values that leave the metric undefined.
 
         Raises
         ------
@@ -225,7 +235,7 @@ class ModelFitScopeMixin:
         try:
             return metric.score_forecast(forecast)
         except UndefinedMetricError as undefined:
-            raise _undefined_goal(metric, where, undefined) from undefined
+            raise _undefined_goal(metric, where, undefined, dates) from undefined
 
     def _resolve_search(self):
         """Resolve the optimizer and the goal metric, memoized on this unit.

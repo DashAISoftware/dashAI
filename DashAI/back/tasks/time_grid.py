@@ -102,14 +102,18 @@ def time_order(dates: "pd.Series") -> List[int]:
     return list(dates.reset_index(drop=True).sort_values(kind="mergesort").index)
 
 
-def _sample(dates) -> str:
-    """Name up to ``SAMPLE_SIZE`` dates, and how many more there are."""
+def sample_dates(dates, more: str = "more") -> str:
+    """Name up to ``SAMPLE_SIZE`` dates, and how many more there are.
+
+    ``more`` is what the count is followed by: "and 3 more", or "and 3 more
+    dates" where the sentence has not said they are dates yet.
+    """
     named = [
         date.strftime("%Y-%m-%d %H:%M:%S").removesuffix(" 00:00:00") for date in dates
     ]
     shown = ", ".join(named[:SAMPLE_SIZE])
     rest = len(named) - SAMPLE_SIZE
-    return f"{shown} and {rest} more" if rest > 0 else shown
+    return f"{shown} and {rest} {more}" if rest > 0 else shown
 
 
 def infer_grid_frequency(index: "pd.DatetimeIndex") -> Optional[str]:
@@ -202,7 +206,7 @@ def validate_grid(dates: "pd.Series", values: "pd.Series") -> TimeGrid:
     repeated = dates[dates.duplicated(keep=False)]
     if not repeated.empty:
         counts = repeated.value_counts().sort_index()
-        named = _sample(counts.index)
+        named = sample_dates(counts.index)
         raise ValueError(
             f"The time index repeats {len(counts)} date(s): {named}. A series "
             f"holds one value per period, so each date can appear only once. "
@@ -212,8 +216,9 @@ def validate_grid(dates: "pd.Series", values: "pd.Series") -> TimeGrid:
     index = pd.DatetimeIndex(dates)
     freq = infer_grid_frequency(index)
     if freq is None:
+        first, last = sample_dates([index[0]]), sample_dates([index[-1]])
         raise ValueError(
-            f"The dates from {_sample([index[0]])} to {_sample([index[-1]])} do "
+            f"The dates from {first} to {last} do "
             "not follow a regular frequency, so the steps of a forecast cannot "
             f"be counted. {FIX_HINT}"
         )
@@ -222,7 +227,7 @@ def validate_grid(dates: "pd.Series", values: "pd.Series") -> TimeGrid:
     if not missing.empty:
         raise ValueError(
             f"The series misses {len(missing)} period(s) of its {freq} grid: "
-            f"{_sample(missing)}. A forecaster reads the series by position, so "
+            f"{sample_dates(missing)}. A forecaster reads the series by position, so "
             f"a missing period would shift every step after it. {FIX_HINT}"
         )
 
@@ -230,7 +235,7 @@ def validate_grid(dates: "pd.Series", values: "pd.Series") -> TimeGrid:
     if blank.any():
         raise ValueError(
             f"The series has {int(blank.sum())} empty value(s), at "
-            f"{_sample(index[blank.to_numpy()])}. {FIX_HINT}"
+            f"{sample_dates(index[blank.to_numpy()])}. {FIX_HINT}"
         )
 
     return TimeGrid(freq=freq, first=index[0], last=index[-1], n_steps=len(index))

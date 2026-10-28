@@ -97,7 +97,11 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
                     best_parameters,
                     self.config["run_id"],
                     self.config["artifact_prefix"],
-                    self._score_one_trial,
+                    lambda trial_model, values, trial_cuts, metric: (
+                        self._score_one_trial(
+                            trial_model, values, trial_cuts, metric, grid
+                        )
+                    ),
                 )
 
             model_class = type(model)
@@ -151,11 +155,12 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
         ctx.put_ref("plot_paths", plot_paths)
         ctx.put_ref("best_parameters", best_parameters)
 
-    def _score_one_trial(self, model, series, cuts, metric) -> float:
+    def _score_one_trial(self, model, series, cuts, metric, grid) -> float:
         """The mean of the goal metric over the validation origins.
 
         The optimizer has set this trial's parameters on ``model``; it is
         fitted once per origin, on the steps before it, and never on the test.
+        The grid dates each window, so an error names it by its dates.
 
         A window with no number to compare stops the run, the same as a fold
         in ``FitModelOverFoldsUnit``: skipped, the objective would be the
@@ -167,16 +172,22 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
         import math
 
         import numpy as np
+        import pandas as pd
+
+        from DashAI.back.tasks.time_grid import sample_dates
 
         horizon = cuts["horizon"]
         levels = [95] if model.SUPPORTS_INTERVALS else []
         scores = []
         for index, origin in enumerate(cuts["validation_origins"]):
-            where = f"the validation window at step {origin}"
-            # No grid: a score never reads the dates.
             record = forecast_origin(
-                model, series, origin, horizon, None, "validation", index, levels
+                model, series, origin, horizon, grid, "validation", index, levels
             )
+            dates = record["dates"]
+            first, last = (
+                sample_dates(pd.to_datetime([d])) for d in (dates[0], dates[-1])
+            )
+            where = f"the validation window from {first} to {last}"
             if any(value is None for value in record["forecast"]):
                 raise RuntimeError(
                     f"The model forecast values that are not numbers on {where}, "
@@ -187,7 +198,7 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
             forecast = scored_forecast(
                 record, series, getattr(model, "season_length", 1) or 1
             )
-            score = self._goal_score_forecast(metric, forecast, where)
+            score = self._goal_score_forecast(metric, forecast, where, dates)
             if not math.isfinite(score):
                 raise RuntimeError(
                     f"The optimization metric {metric.__name__} scored a value "

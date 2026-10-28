@@ -13,6 +13,7 @@ it means:
 """
 
 from dataclasses import dataclass
+from typing import Optional
 
 
 class UndefinedMetricError(Exception):
@@ -26,12 +27,62 @@ class UndefinedMetricError(Exception):
     Attributes
     ----------
     reason : str
-        Why the metric is undefined, in a sentence a user can act on.
+        Why the metric is undefined, in a sentence a user can act on. With
+        ``positions``, the sentence ends where they are named: "and the
+        actual value is zero" reads on into "on 2023-05-01.".
+    positions : tuple of int, optional
+        Where, among the values scored, the ones that leave the metric
+        undefined are. The metric knows positions and not what they are
+        called; ``describe_undefined`` names them as dates or as rows.
+    hint : str, optional
+        What to do about it, said after the positions are named.
     """
 
-    def __init__(self, reason: str):
-        super().__init__(reason)
+    def __init__(self, reason: str, positions=None, hint: Optional[str] = None):
         self.reason = reason
+        self.positions = (
+            tuple(int(p) for p in positions) if positions is not None else None
+        )
+        self.hint = hint
+        super().__init__(describe_undefined(self))
+
+
+def describe_undefined(undefined: UndefinedMetricError, dates=None) -> str:
+    """The reason a metric is undefined, with the values that make it so.
+
+    The same text goes in a metric row's ``unavailable_reason`` and in the
+    error of a run that tried to optimize for it. Without positions, the
+    reason as the metric gave it.
+
+    Parameters
+    ----------
+    undefined : UndefinedMetricError
+        What the metric raised.
+    dates : sequence of datetime-like, optional
+        The date of each value scored, in the order the positions count. A
+        forecast has them, and the values are named by date, up to five;
+        rows scored without dates are counted.
+
+    Returns
+    -------
+    str
+        A sentence, or two with the hint.
+    """
+    text = undefined.reason
+    if undefined.positions:
+        if dates is not None:
+            import pandas as pd
+
+            from DashAI.back.tasks.time_grid import sample_dates
+
+            at = pd.to_datetime([dates[p] for p in undefined.positions])
+            text += f" on {sample_dates(at, more='more dates')}."
+        else:
+            count = len(undefined.positions)
+            text += f" on {count} row{'s' if count != 1 else ''}."
+    if undefined.hint:
+        text += f" {undefined.hint}"
+    return text
 
 
 @dataclass(frozen=True)
