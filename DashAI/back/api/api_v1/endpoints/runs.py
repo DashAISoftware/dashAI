@@ -8,7 +8,12 @@ from kink import di, inject
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
-from DashAI.back.api.utils import offered_components, remove_path
+from DashAI.back.api.utils import (
+    offered_components,
+    remove_path,
+    remove_run_files,
+    run_file_paths,
+)
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import (
     GlobalExplainer,
@@ -546,10 +551,8 @@ async def delete_run(
     HTTPException
         If the run is not registered in the DB.
     HTTPException
-        If the run was trained but the run_path does not exists.
+        If the database fails to delete it; the run's files are then kept.
     """
-    import os
-
     with session_factory() as db:
         try:
             run = db.get(Run, run_id)
@@ -557,28 +560,18 @@ async def delete_run(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
+            paths = run_file_paths([run])
             db.delete(run)
-            if (
-                run.status == RunStatus.FINISHED
-                and run.run_path
-                and os.path.exists(run.run_path)
-            ):
-                remove_path(run.run_path)
-            _remove_forecasts(run.id)
             db.commit()
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
-        except (OSError, ValueError) as e:
-            log.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to delete directory",
-            ) from e
+
+    remove_run_files(paths)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch("/{run_id}")
@@ -631,19 +624,20 @@ async def update_run(
                 )
 
             # apply updates
+            stale_files = []
             if params.run_name is not None:
                 run.name = params.run_name
             if params.run_description is not None:
                 run.description = params.run_description
             if params.parameters is not None:
                 run.parameters = params.parameters
-                reset_run(run)
+                stale_files += reset_run(run)
             if params.optimizer is not None:
                 run.optimizer_name = params.optimizer
-                reset_run(run)
+                stale_files += reset_run(run)
             if params.optimizer_parameters is not None:
                 run.optimizer_parameters = params.optimizer_parameters
-                reset_run(run)
+                stale_files += reset_run(run)
             if params.goal_metric is not None:
                 run.goal_metric = params.goal_metric
             # `nested` is nullable, so None is also how the client asks to drop
@@ -657,6 +651,7 @@ async def update_run(
             if params.model_fields_set:
                 db.commit()
                 db.refresh(run)
+                remove_run_files(stale_files)
                 return run
             else:
                 raise HTTPException(
@@ -684,9 +679,10 @@ async def reset_run_by_id(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
-            reset_run(run)
+            stale_files = reset_run(run)
             db.commit()
             db.refresh(run)
+            remove_run_files(stale_files)
             return run
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -887,23 +883,25 @@ async def delete_run_operations(
             ) from e
 
 
-def _remove_forecasts(run_id: int) -> None:
-    """Delete a run's backtest forecasts, if it has any."""
-    from DashAI.back.units.forecast_scope import forecasts_file
-
-    forecasts_file(di["config"]["RUNS_PATH"], str(run_id)).unlink(missing_ok=True)
-
-
-def reset_run(run):
+def reset_run(run) -> list:
     """
-    Reset a run to NOT_STARTED status and delete associated files.
+    Reset a run to NOT_STARTED status and let go of its files.
+
+    The files are not removed here: the caller removes them with
+    ``remove_run_files`` once it has committed the reset, so a reset that
+    fails to commit keeps the files of the run it left as it was.
 
     Parameters
     ----------
     run : Run
         The run object to reset.
+
+    Returns
+    -------
+    list[str]
+        The paths of the files the run had, for ``remove_run_files``.
     """
-    import os
+    paths = run_file_paths([run])
 
     setattr(run, "status", RunStatus.NOT_STARTED)
     for split in SplitEnum:
@@ -919,23 +917,16 @@ def reset_run(run):
         db.query(Metric).filter(Metric.run_id == run.id).delete()
         db.commit()
 
-    # Delete files
-    if run.run_path and os.path.exists(run.run_path):
-        remove_path(run.run_path)
-        setattr(run, "run_path", None)
-    _remove_forecasts(run.id)
-    if run.plot_history_path and os.path.exists(run.plot_history_path):
-        remove_path(run.plot_history_path)
-        setattr(run, "plot_history_path", None)
-    if run.plot_slice_path and os.path.exists(run.plot_slice_path):
-        remove_path(run.plot_slice_path)
-        setattr(run, "plot_slice_path", None)
-    if run.plot_contour_path and os.path.exists(run.plot_contour_path):
-        remove_path(run.plot_contour_path)
-        setattr(run, "plot_contour_path", None)
-    if run.plot_importance_path and os.path.exists(run.plot_importance_path):
-        remove_path(run.plot_importance_path)
-        setattr(run, "plot_importance_path", None)
+    for field in (
+        "run_path",
+        "plot_history_path",
+        "plot_slice_path",
+        "plot_contour_path",
+        "plot_importance_path",
+    ):
+        if getattr(run, field):
+            setattr(run, field, None)
+    return paths
 
 
 # ─── Fold metrics ─────────────────────────────────────────────

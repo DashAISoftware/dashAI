@@ -25,7 +25,8 @@ from DashAI.back.api.api_v1.schemas.model_sessions_params import (
 )
 from DashAI.back.api.utils import (
     offered_components,
-    remove_path,
+    remove_run_files,
+    run_file_paths,
     task_or_http_error,
 )
 from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
@@ -1010,20 +1011,25 @@ async def delete_model_sessions(
     """
     with session_factory() as db:
         try:
+            paths_to_clean = []
             for model_session_id in params.ids:
                 model_session = db.get(ModelSession, model_session_id)
                 if not model_session:
                     continue
+                paths_to_clean += run_file_paths(model_session.runs)
                 db.delete(model_session)
 
             db.commit()
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+    # The files of the runs the cascade deleted, once the delete committed.
+    remove_run_files(paths_to_clean)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete("/{model_session_id}")
@@ -1046,8 +1052,6 @@ async def delete_model_session(
     -------
     Response with code 204 NO_CONTENT
     """
-    import os
-
     with session_factory() as db:
         try:
             model_session = db.get(ModelSession, model_session_id)
@@ -1060,17 +1064,7 @@ async def delete_model_session(
             # Snapshot the on-disk paths of the runs that the FK cascade is
             # about to delete, so they can be cleaned up after the commit.
             runs = db.query(Run).filter(Run.model_session_id == model_session_id).all()
-            paths_to_clean = [
-                path
-                for run in runs
-                for path in (
-                    run.run_path,
-                    run.plot_history_path,
-                    run.plot_slice_path,
-                    run.plot_contour_path,
-                    run.plot_importance_path,
-                )
-            ]
+            paths_to_clean = run_file_paths(runs)
 
             db.delete(model_session)
             db.commit()
@@ -1083,12 +1077,7 @@ async def delete_model_session(
 
     # Best-effort disk cleanup, done only once the DB delete has committed:
     # a cleanup failure here must not undo an otherwise-successful deletion.
-    for path in paths_to_clean:
-        if path and os.path.exists(path):
-            try:
-                remove_path(path)
-            except (OSError, ValueError) as e:
-                log.warning(f"Failed to delete path {path}: {e}")
+    remove_run_files(paths_to_clean)
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

@@ -132,6 +132,62 @@ def remove_path(path):
         raise ValueError("file {} is not a file or dir.".format(path))
 
 
+def run_file_paths(runs) -> list:
+    """Every file a run leaves in ``RUNS_PATH``: its model, plots and forecasts.
+
+    Read off the rows before they are deleted, because once the delete has
+    committed the rows are gone and the files are only found by these paths.
+    The forecasts file is named after the run's id rather than stored on it,
+    and SQLite hands a deleted id to the next run, so a forecasts file left
+    behind would be read as the next run's own.
+
+    Parameters
+    ----------
+    runs : Iterable[Run]
+        The runs about to be deleted or reset.
+
+    Returns
+    -------
+    list[str]
+        The paths, set or not; ``remove_run_files`` skips what is not there.
+    """
+    from kink import di
+
+    from DashAI.back.units.forecast_scope import forecasts_file
+
+    runs_path = di["config"]["RUNS_PATH"]
+    return [
+        path
+        for run in runs
+        for path in (
+            run.run_path,
+            run.plot_history_path,
+            run.plot_slice_path,
+            run.plot_contour_path,
+            run.plot_importance_path,
+            str(forecasts_file(runs_path, str(run.id))),
+        )
+    ]
+
+
+def remove_run_files(paths) -> None:
+    """Remove the files ``run_file_paths`` listed, once the delete committed.
+
+    Best effort: a file that cannot be removed is logged and left, because a
+    cleanup failure must not undo a deletion the database already made. Done
+    after the commit, so a delete that fails keeps the files of the runs it
+    did not delete.
+    """
+    import os
+
+    for path in paths:
+        if path and os.path.exists(path):
+            try:
+                remove_path(path)
+            except (OSError, ValueError) as e:
+                log.warning(f"Failed to delete path {path}: {e}")
+
+
 def offered_components(component_registry, task_name: str, component_type: str):
     """Name the components of one type that the registry offers a task.
 
