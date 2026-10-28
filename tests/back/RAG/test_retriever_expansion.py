@@ -20,6 +20,7 @@ from typing import Dict, List, Tuple
 import pytest
 from pydantic import ValidationError
 
+from DashAI.back.converters.scikit_learn.bag_of_words import BagOfWordsConverter
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.RAG_pipeline import _chunk_label, merge_round_robin
@@ -65,12 +66,12 @@ from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
 from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import (
     BM25Retriever,
     BM25RetrieverSchema,
-    BM25VectorizerModel,
 )
 from DashAI.back.models.RAG.retrievers.sparse.tfidf_retriever import (
     TFIDFRetrieverSchema,
 )
 from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
+from tests.back.RAG.conftest import BOW_PARAMS
 
 DOCUMENT_ID = 1
 OTHER_DOCUMENT_ID = 2
@@ -732,14 +733,7 @@ def test_expand_retrieved_chunks_rejects_an_invalid_window(window):
 def _bm25_retriever(corpus: Dict[int, Dict[int, Chunk]], **overrides) -> BM25Retriever:
     """Build a fitted BM25 retriever over *corpus*."""
     params = {
-        "BM25Vectorizer": BM25VectorizerModel(
-            strip_accents=None,
-            lowercase=True,
-            stop_words=None,
-            max_df=1.0,
-            min_df=0.0,
-            max_features=None,
-        ),
+        "vectorizer": BagOfWordsConverter(**BOW_PARAMS),
         "k1": 1.5,
         "b": 0.75,
         "delta": 0.0,
