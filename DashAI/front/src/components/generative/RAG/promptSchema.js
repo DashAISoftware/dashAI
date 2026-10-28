@@ -21,12 +21,6 @@ const PROMPT_FIELD_TYPE = "object";
 /** Suffix every prompt parent class ends with (`LLMFilterPrompt`, ...). */
 const PROMPT_PARENT_SUFFIX = "Prompt";
 
-/** `metadata.variant` value of a hand-written prompt component. */
-const CUSTOM_PROMPT_VARIANT = "custom";
-
-/** Name prefix of hand-written prompt components. */
-const CUSTOM_PROMPT_PREFIX = "Custom";
-
 /**
  * Whether a schema property describes a prompt component reference.
  *
@@ -117,43 +111,58 @@ export function promptTemplateLanguages(component) {
 }
 
 /**
- * Whether a prompt component holds a hand-written template.
+ * Whether a prompt component is a concrete default implementation.
  *
- * Custom prompts are the ones a user's text can be stored under, so they are
- * the target of the "new prompt" action.
+ * The base prompt schema only declares ``template``. Default prompt classes
+ * extend it with a ``language`` parameter; the generic custom prompt classes
+ * keep the base schema. The component schema is therefore the API-provided
+ * distinction between a concrete default prompt and a container for a
+ * user-written template.
  *
  * @param {object} [component] - The prompt component definition.
- * @returns {boolean} True for a custom prompt component.
+ * @returns {boolean} True for a concrete default prompt.
  */
-export function isCustomPromptComponent(component) {
-  if (!component) return false;
-  if (component.metadata?.variant === CUSTOM_PROMPT_VARIANT) return true;
+export function isDefaultPromptComponent(component) {
+  return Boolean(component?.schema?.properties?.language);
+}
+
+/**
+ * Read a localized string out of an API text value.
+ *
+ * The API localizes `display_name`, so a plain string is already localized;
+ * legacy multilingual objects fall back to their first non-blank string.
+ *
+ * @param {*} value - A plain or multilingual text value.
+ * @returns {string} The text, or an empty string when it holds none.
+ */
+function readLocalizedText(value) {
+  if (typeof value === "string") return value.trim() ? value : "";
+  if (!value || typeof value !== "object") return "";
   return (
-    typeof component.name === "string" &&
-    component.name.startsWith(CUSTOM_PROMPT_PREFIX)
+    Object.values(value).find(
+      (candidate) => typeof candidate === "string" && candidate.trim(),
+    ) ?? ""
   );
 }
 
 /**
  * Resolve a prompt component's label.
  *
- * The API localizes `display_name` for the request's `Accept-Language`, so a
- * plain string is already localized; legacy multilingual objects fall back to
- * their first string.
+ * Default prompt implementations have a localized `display_name` from the API.
+ * Generic custom prompt classes inherit the base `display_name`; for those, the
+ * component's own metadata name is the specific label (for example
+ * "Custom Query Rewriting Prompt") and is used instead.
  *
  * @param {object} [component] - The prompt component definition.
  * @returns {string} The display name, or the component name when it has none.
  */
 export function getPromptDisplayName(component) {
-  const displayName = component?.display_name;
-  if (typeof displayName === "string" && displayName.trim()) return displayName;
-  if (displayName && typeof displayName === "object") {
-    const localized = Object.values(displayName).find(
-      (candidate) => typeof candidate === "string" && candidate.trim(),
-    );
-    if (localized) return localized;
+  const displayName = readLocalizedText(component?.display_name);
+  const metadataName = readLocalizedText(component?.metadata?.name);
+  if (isDefaultPromptComponent(component)) {
+    return displayName || metadataName || component?.name || "";
   }
-  return component?.name ?? "";
+  return metadataName || displayName || component?.name || "";
 }
 
 /**

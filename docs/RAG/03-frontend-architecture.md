@@ -244,7 +244,10 @@ keeps its card but cannot be edited.
 `PromptFieldCard` reads the current selection from the field value (canonical
 `{component, params}` or the legacy subform shape) through `promptSchema.js`,
 which also resolves built-in templates per language, required placeholders and
-the custom prompt components. `PromptTemplateDialog` writes the template that
+the concrete default prompts. Only prompts with built-in templates populate the
+selector; the generic custom classes are reached through the **New prompt**
+action instead of being listed as if they were implementations.
+`PromptTemplateDialog` writes the template that
 is stored in that same ref: it edits the session's own parameters and never a
 prompt library row, because there is no shared prompt library.
 `usePromptOptions` loads the children of the declared parent, so a schema gains

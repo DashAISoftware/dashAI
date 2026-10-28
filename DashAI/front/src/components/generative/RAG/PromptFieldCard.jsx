@@ -27,7 +27,7 @@ import {
   buildPromptRef,
   getMissingPromptPlaceholders,
   getPromptDisplayName,
-  isCustomPromptComponent,
+  isDefaultPromptComponent,
   promptTemplateLanguages,
   readPromptSelection,
   resolvePromptTemplate,
@@ -77,10 +77,19 @@ export default function PromptFieldCard({
 
   // Filtering happens here, not in the loader: the loaded list is also what
   // lets a stored prompt stay readable when this technique no longer offers it.
-  const filteredOptions = useMemo(
+  const stageOptions = useMemo(
     () =>
       options.filter((option) => !promptFilter || promptFilter(name, option)),
     [options, name, promptFilter],
+  );
+
+  // The schema's `language` parameter identifies a concrete default prompt.
+  // Generic custom classes keep the base template-only schema and are only a
+  // container for a user-written template, so they do not populate the
+  // selector. The New prompt action creates one instead.
+  const selectableOptions = useMemo(
+    () => stageOptions.filter(isDefaultPromptComponent),
+    [stageOptions],
   );
 
   const selection = readPromptSelection(field.value);
@@ -104,10 +113,10 @@ export default function PromptFieldCard({
   // or the Autocomplete cannot render the value it is given.
   const autocompleteOptions = useMemo(
     () =>
-      selectedComponent && !filteredOptions.includes(selectedComponent)
-        ? [selectedComponent, ...filteredOptions]
-        : filteredOptions,
-    [filteredOptions, selectedComponent],
+      selectedComponent && !selectableOptions.includes(selectedComponent)
+        ? [selectedComponent, ...selectableOptions]
+        : selectableOptions,
+    [selectableOptions, selectedComponent],
   );
 
   const language =
@@ -122,8 +131,8 @@ export default function PromptFieldCard({
   // here would let a user write a template this stage never runs.
   const customOption = useMemo(
     () =>
-      filteredOptions.find((option) => isCustomPromptComponent(option)) ?? null,
-    [filteredOptions],
+      stageOptions.find((option) => !isDefaultPromptComponent(option)) ?? null,
+    [stageOptions],
   );
 
   const errorMessage =
@@ -273,7 +282,9 @@ export default function PromptFieldCard({
               // The stored value is prepended even when the technique filter
               // rejects it, so it stays readable; it must not be re-selectable
               // as a valid option for this stage.
-              getOptionDisabled={(option) => !filteredOptions.includes(option)}
+              getOptionDisabled={(option) =>
+                !selectableOptions.includes(option)
+              }
               onChange={handleSelect}
               renderInput={(params) => (
                 <TextField
