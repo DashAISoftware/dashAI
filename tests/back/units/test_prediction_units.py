@@ -122,7 +122,7 @@ class _FittedPreprocessor:
         self.source = source
         self.derived = derived
 
-    def transform_dataset(self, dataset):
+    def transform_dataset(self, dataset, unseen=None):
         frame = dataset.to_pandas()
         frame[self.derived] = frame[self.source] * 10
         return _dataset(**{name: frame[name].tolist() for name in frame.columns})
@@ -424,6 +424,7 @@ def test_without_a_fitted_preprocessor_the_rows_go_through_as_they_are():
 
     assert ctx.require("model_input") is dataset
     assert ctx.require("dataset") is dataset
+    assert ctx.require("unseen_categories") == []
 
 
 def test_the_persisted_preprocessor_is_applied_and_the_raw_rows_are_kept(

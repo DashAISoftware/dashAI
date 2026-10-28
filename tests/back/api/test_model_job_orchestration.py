@@ -33,6 +33,7 @@ from DashAI.back.models.base_model import BaseModel
 from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.tasks.base_task import BaseTask
+from tests.back.session_columns import xy_roles
 
 
 class OrchestrationTask(BaseTask):
@@ -171,8 +172,7 @@ def create_model_session(
             dataset_id=dataset_1.id,
             name="OrchestrationSession",
             task_name="OrchestrationTask",
-            input_columns=["SepalLengthCm", "SepalWidthCm"],
-            output_columns=["Species"],
+            column_roles=xy_roles(["SepalLengthCm", "SepalWidthCm"], ["Species"]),
             train_metrics=["OrchestrationMetric"],
             validation_metrics=["OrchestrationMetric"],
             test_metrics=["OrchestrationMetric"],

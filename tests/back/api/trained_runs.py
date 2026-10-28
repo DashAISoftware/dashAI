@@ -17,6 +17,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import Metric, ModelSession, Run
 from DashAI.back.job.predict_job import run_manual_prediction
 from DashAI.back.preprocessing.session_preprocessor import load_final_preprocessor
+from tests.back.session_columns import xy_roles
 
 RAW_INPUT_COLUMNS = [
     "SepalLengthCm",
@@ -93,15 +94,16 @@ def fit_classifier_behind_preprocessing(client, dataset, model_dir, session_name
             "dataset_id": dataset.id,
             "task_name": "TabularClassificationTask",
             "name": session_name,
-            "input_columns": [],
-            "output_columns": [CLASS_COLUMN],
+            "column_roles": {
+                "features": [{"kind": "group", "step": 0}],
+                "target": [{"kind": "raw", "name": CLASS_COLUMN}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
             "evaluation_strategy": "HoldoutEvaluationStrategy",
             "splits": json.dumps(SPLITS),
             "preprocessing": [BINARIZER_STEP],
-            "input_column_refs": [{"kind": "group", "step": 0}],
         },
     )
     assert response.status_code == 201, response.text
@@ -140,8 +142,7 @@ def new_regression_session(client, dataset, session_name):
             dataset_id=dataset.id,
             name=session_name,
             task_name="RegressionTask",
-            input_columns=REGRESSION_INPUTS,
-            output_columns=[REGRESSION_TARGET],
+            column_roles=xy_roles(REGRESSION_INPUTS, [REGRESSION_TARGET]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],

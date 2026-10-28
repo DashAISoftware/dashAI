@@ -25,6 +25,7 @@ from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.tasks.supervised_task import SupervisedTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
+from tests.back.session_columns import xy_roles
 
 
 class DummyTask(SupervisedTask):
@@ -214,8 +215,9 @@ def create_model_session(client: TestClient, dataset: Dataset):
             dataset_id=dataset["id"],
             name="Experiment",
             task_name="TabularClassificationTask",
-            input_columns=["feature_0", "feature_1", "feature_2", "feature_3"],
-            output_columns=["class"],
+            column_roles=xy_roles(
+                ["feature_0", "feature_1", "feature_2", "feature_3"], ["class"]
+            ),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],

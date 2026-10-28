@@ -10,6 +10,8 @@ import {
   explainerCacheKey,
   mergeExplainers,
 } from "../../explainers/explainerCache";
+import { fetchTaskMetadata } from "../../../hooks/useTaskMetadata";
+import { sessionColumns } from "../modelSession/columnRoles";
 
 /**
  * Owns everything data related for a run's results: the explainer and
@@ -165,10 +167,16 @@ export default function useRunResultsData({
     if (!sessionId) return;
     let cancelled = false;
     getModelSessionById(sessionId)
-      .then((sessionData) => {
+      .then(async (sessionData) => {
         if (cancelled) return null;
         setModelSessionDetail(sessionData);
-        setOutputColumn(sessionData.output_columns?.[0] ?? null);
+        // Without its task's metadata the target is unknown, but the
+        // training sample is still worth loading.
+        const metadata = await fetchTaskMetadata(sessionData.task_name).catch(
+          () => ({}),
+        );
+        if (cancelled) return null;
+        setOutputColumn(sessionColumns(sessionData, metadata).target ?? null);
         return getDatasetSample(sessionData.dataset_id);
       })
       .then((sample) => {

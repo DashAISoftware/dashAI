@@ -8,6 +8,7 @@ from fastapi.exceptions import HTTPException
 from kink import di, inject
 
 from DashAI.back.api.api_v1.schemas.prediction_params import PredictionCreationParams
+from DashAI.back.api.utils import task_or_http_error
 from DashAI.back.dependencies.database.models import (
     Dataset,
     ModelSession,
@@ -16,6 +17,7 @@ from DashAI.back.dependencies.database.models import (
 )
 from DashAI.back.job.predict_job import run_manual_prediction
 from DashAI.back.splitters.splits_payload import predictable_splits
+from DashAI.back.tasks.session_roles import session_io, session_raw_columns
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session, sessionmaker
@@ -209,6 +211,7 @@ async def get_prediction_splits(
 async def filter_datasets_endpoint(
     run_id: int = Query(..., description="The ID of the trained model/run"),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
 ):
     """
     Return the ids of every dataset that has all the run model's input columns.
@@ -247,7 +250,10 @@ async def filter_datasets_endpoint(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Model session not found",
                 )
-            input_columns = list(model_session.input_columns)
+            task = task_or_http_error(model_session.task_name, component_registry)
+            input_columns = session_raw_columns(
+                model_session, session_io(model_session, task)
+            )
 
             datasets = db.query(Dataset).all()
             valid_dataset_ids = []
@@ -408,10 +414,17 @@ async def preview_manual_prediction(
         if rows_data[row_index].get(column_name) == field_name:
             rows_data[row_index][column_name] = value
 
+    unseen = []
     columns, rows = await run_in_threadpool(
         run_manual_prediction,
         run_id=run_id_int,
         manual_input_data=rows_data,
         session_factory=session_factory,
+        unseen=unseen,
     )
-    return {"columns": columns, "rows": rows}
+    response = {"columns": columns, "rows": rows}
+    # Only when there is something to say, so a preview of categories the
+    # model saw answers exactly as it always has.
+    if unseen:
+        response["unseen_categories"] = unseen
+    return response

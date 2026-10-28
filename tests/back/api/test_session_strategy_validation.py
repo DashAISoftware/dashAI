@@ -12,6 +12,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import Dataset
+from tests.back.api.row_order_tasks import ReversingTask
 
 IRIS_FEATURES = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 HOLDOUT_SPLITS = {
@@ -28,8 +29,13 @@ def _payload(dataset_id: int, task: str, strategy: str, name: str, **overrides):
         "dataset_id": dataset_id,
         "task_name": task,
         "name": name,
-        "input_columns": IRIS_FEATURES,
-        "output_columns": [] if without_target else ["Species"],
+        "column_roles": {
+            "features": [{"kind": "raw", "name": column} for column in IRIS_FEATURES],
+            "target": [
+                {"kind": "raw", "name": column}
+                for column in ([] if without_target else ["Species"])
+            ],
+        },
         "train_metrics": [],
         "validation_metrics": [],
         "test_metrics": [],
@@ -158,7 +164,7 @@ def test_a_strategy_that_carves_nothing_refuses_session_preprocessing(
                     "scope": [{"kind": "raw", "name": "SepalLengthCm"}],
                 }
             ],
-            input_column_refs=[{"kind": "group", "step": 0}],
+            column_roles={"features": [{"kind": "group", "step": 0}]},
         ),
     )
 
@@ -188,8 +194,15 @@ def test_a_change_of_task_must_keep_the_strategy_available(
     stored = client.get(f"/api/v1/model-session/{session_id}").json()
     assert stored["task_name"] == "TabularClassificationTask"
 
-    accepted = client.patch(
-        f"/api/v1/model-session/{session_id}?task_name=RegressionTask"
-    )
+    # ReversingTask offers the strategy and takes the session's columns
+    # (RegressionTask would refuse its categorical target).
+    registry = client.app.container["component_registry"]
+    registry.register_component(ReversingTask)
+    try:
+        accepted = client.patch(
+            f"/api/v1/model-session/{session_id}?task_name=ReversingTask"
+        )
+    finally:
+        registry.unregister_component(ReversingTask)
     assert accepted.status_code == 200, accepted.text
-    assert accepted.json()["task_name"] == "RegressionTask"
+    assert accepted.json()["task_name"] == "ReversingTask"

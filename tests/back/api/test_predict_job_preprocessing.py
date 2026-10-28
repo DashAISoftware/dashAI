@@ -63,8 +63,12 @@ def create_preprocessing_session(client: TestClient, dataset_1: Dataset):
             "dataset_id": dataset_1.id,
             "task_name": "TabularClassificationTask",
             "name": "predict-job-preprocessing-session",
-            "input_columns": [],
-            "output_columns": [OUTPUT_COLUMN],
+            "column_roles": {
+                "features": [{"kind": "group", "step": 0}],
+                "target": [
+                    {"kind": "raw", "name": column} for column in [OUTPUT_COLUMN]
+                ],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -88,7 +92,6 @@ def create_preprocessing_session(client: TestClient, dataset_1: Dataset):
                     "scope": [{"kind": "raw", "name": SCOPED_COLUMN}],
                 },
             ],
-            "input_column_refs": [{"kind": "group", "step": 0}],
         },
     )
     assert response.status_code == 201, response.text
@@ -98,7 +101,7 @@ def create_preprocessing_session(client: TestClient, dataset_1: Dataset):
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
         row = db.get(ModelSession, body["id"])
-        assert row.input_columns == [DERIVED_COLUMN]
+        assert row.column_roles["features"]["columns"] == [DERIVED_COLUMN]
         assert row.preprocessing_artifacts_path
         db.expunge(row)
         return row
@@ -257,6 +260,42 @@ def test_a_prediction_on_a_partition_transforms_exactly_its_rows(
         == partition.select_columns(RAW_INPUT_COLUMNS).to_dict()
     )
     assert saved[OUTPUT_COLUMN] == _expected_labels(fitted, partition)
+
+
+def test_a_prediction_on_a_partition_saves_what_the_whole_dataset_saves_for_it(
+    client, dataset_1, fitted
+):
+    """Narrowing to a partition changes which rows are saved, and nothing else.
+
+    The rows of a partition are read from the dataset the task prepared, with
+    the raw refs training prepared with. With a task that does not reorder,
+    the saved prediction is the one a prediction on the whole dataset saves
+    for those rows: the same raw columns, values and declared types. The whole
+    dataset is never prepared, so anything the preparation converted shows up
+    here as a difference.
+    """
+    whole = _saved_dataset(
+        client, _run_prediction(client, fitted["run_id"], dataset_1.id)
+    )
+    partition = _saved_dataset(
+        client, _run_prediction(client, fitted["run_id"], dataset_1.id, "test")
+    )
+
+    test_indexes = fitted["split_indexes"]["test_indexes"]
+    assert partition.column_names == whole.column_names
+    assert {name: kind.to_string() for name, kind in partition.types.items()} == {
+        name: kind.to_string() for name, kind in whole.types.items()
+    }
+    assert partition.arrow_table.schema.equals(
+        whole.arrow_table.schema, check_metadata=True
+    )
+    assert partition.to_dict() == whole.select(test_indexes).to_dict()
+
+
+def _run_prediction(client, run_id, dataset_id, split=None):
+    prediction_id = _create_prediction(client, run_id, dataset_id, split=split)
+    PredictJob(prediction_id=prediction_id).run()
+    return prediction_id
 
 
 def test_a_manual_prediction_through_the_job_applies_the_persisted_preprocessor(
