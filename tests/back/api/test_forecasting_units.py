@@ -167,6 +167,19 @@ def _backtested(model="NaiveForecaster", params=None, series=SERIES):
     return ctx
 
 
+def test_the_model_published_is_the_factorys_own():
+    # ATOMIZING 5.7: the backtest searches on ``model`` and writes the values
+    # it finds back through ``factory``; a copy in between would search one
+    # object and report the parameters of another.
+    ctx = _context(task_name=TASK, grid=GRID.to_ref())
+
+    BuildForecasterUnit(
+        model={"component": "NaiveForecaster", "params": {}}, run_id=None
+    )(ctx)
+
+    assert ctx.require("model") is ctx.require("factory").model
+
+
 def test_every_origin_is_forecast_from_the_steps_before_it():
     forecasts = _backtested().require("forecasts")
 

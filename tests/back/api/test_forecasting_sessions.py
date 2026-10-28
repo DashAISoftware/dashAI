@@ -71,6 +71,29 @@ def test_a_splitter_of_rows_is_refused_by_a_forecasting_strategy(client, tmp_pat
     assert "is not available for task SingleSeriesForecastingTask" in response.text
 
 
+def test_the_default_splitter_is_refused_for_the_forecasting_task(client, tmp_path):
+    # U7 on the task itself, now that it is registered: a payload that names
+    # no splitter falls back to HoldoutSplitter, which shuffles rows, and the
+    # single-series task does not offer it. SeriesOnlyTask stands in for it in
+    # test_session_splitter_validation.py, from before it was registered.
+    dataset_id = _upload(client, _monthly(), tmp_path, "default-splitter")
+
+    response = client.post(
+        "/api/v1/model-session/",
+        json=_session_body(
+            dataset_id,
+            strategy="ForecastingHoldoutEvaluationStrategy",
+            splits={"horizon": 6},
+        ),
+    )
+
+    assert response.status_code == 422, response.text
+    assert (
+        "splits names no splitter, and the default, HoldoutSplitter, is not "
+        "available for task SingleSeriesForecastingTask"
+    ) in response.json()["detail"]
+
+
 def test_the_shortest_series_for_the_cuts_is_accepted(client, tmp_path):
     # Three origins and the test, six steps each, after one step to fit on.
     dataset_id = _upload(client, _monthly(25), tmp_path, "shortest")

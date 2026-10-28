@@ -126,6 +126,62 @@ def test_a_run_with_no_fold_value_has_no_fold_metrics(
     assert response.json()["detail"] == "No fold metrics found for this run"
 
 
+def test_the_outer_averages_carry_the_reason_beside_their_numbers(
+    client, dataset_1, tmp_path_factory
+):
+    # The same reader as the run's own metrics, at the outer level of a nested
+    # cross-validation.
+    other = fit_regressor(
+        client,
+        dataset_1,
+        tmp_path_factory.mktemp("outer-averages"),
+        "outer-averages-session",
+    )
+    with _session_factory(client)() as db:
+        db.get(Run, other).nested = {"splitter_name": "KFoldSplitter", "n_splits": 3}
+        db.commit()
+    _add(
+        client,
+        other,
+        [
+            (SplitEnum.TEST, LevelEnum.LAST_OUTER, "MAE", 0.5, None),
+            (SplitEnum.TEST, LevelEnum.LAST_OUTER, "MAPE", None, None),
+        ],
+    )
+
+    response = client.get(f"/api/v1/run/{other}/outer-averaged-metrics")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["test_metrics"] == {"MAE": 0.5}
+    assert response.json()["test_metrics_unavailable"] == {"MAPE": REASON}
+
+
+def test_the_export_preview_has_no_goal_value_for_a_goal_without_one(
+    client, dataset_1, tmp_path_factory
+):
+    from DashAI.back.session_package.export import export_preview
+
+    other = fit_regressor(
+        client,
+        dataset_1,
+        tmp_path_factory.mktemp("preview-goal"),
+        "preview-goal-session",
+    )
+    with _session_factory(client)() as db:
+        run = db.get(Run, other)
+        run.goal_metric = "MAPE"
+        run.status = RunStatus.FINISHED
+        session_id = run.model_session_id
+        db.commit()
+    _add(client, other, [(SplitEnum.TEST, LevelEnum.LAST, "MAPE", None, None)])
+
+    preview = export_preview(session_id, _session_factory(client))
+
+    (entry,) = [r for r in preview["runs"] if r["id"] == other]
+    assert entry["goal_metric"] == "MAPE"
+    assert entry["goal_metric_value"] is None
+
+
 def test_the_live_metrics_send_no_row_without_a_value(client, run_id):
     with client.websocket_connect(f"/api/v1/metrics/ws/{run_id}") as websocket:
         payload = json.loads(websocket.receive_text())
