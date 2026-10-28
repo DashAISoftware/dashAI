@@ -96,6 +96,52 @@ def test_a_session_package_carries_the_cuts_and_the_metrics(client, run_id, tmp_
         assert len(folds) == 2 * 3  # MAE and RMSE on three origins
 
 
+def test_a_session_package_carries_the_forecasts_under_the_new_run(
+    client, run_id, tmp_path
+):
+    from DashAI.back.job.report_job import ReportJob
+
+    container = client.app.container
+    package = tmp_path / "forecasting.dashai"
+    build_session_package(
+        _get(client, Run, run_id).model_session_id,
+        [run_id],
+        True,
+        package,
+        container["session_factory"],
+        container["component_registry"],
+    )
+
+    result = import_session_package(
+        package,
+        container["session_factory"],
+        container["component_registry"],
+        container["config"],
+        container["job_queue"],
+    )
+
+    with container["session_factory"]() as db:
+        (imported,) = db.query(Run).filter(Run.model_session_id == result["session_id"])
+        imported_id = imported.id
+    # The original stays, so the import cannot have reused its id.
+    assert imported_id != run_id
+    response = client.get(f"/api/v1/run/{imported_id}/forecasts")
+    assert response.status_code == 200, response.text
+    assert response.json() == client.get(f"/api/v1/run/{run_id}/forecasts").json()
+
+    report = client.post(
+        "/api/v1/report/",
+        json={
+            "run_id": imported_id,
+            "report_name": "ForecastVsActual",
+            "parameters": {},
+        },
+    )
+    ReportJob(report_id=report.json()["id"]).run()
+    artifacts = client.get(f"/api/v1/report/{report.json()['id']}/artifacts")
+    assert artifacts.status_code == 200, artifacts.text
+
+
 # --- the forecasts file ------------------------------------------------------
 
 
