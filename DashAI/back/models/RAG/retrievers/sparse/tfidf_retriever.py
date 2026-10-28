@@ -135,8 +135,9 @@ class TFIDFRetriever(SparseRetriever):
         """Load a previously saved TF-IDF state from disk.
 
         The storage folder is content-addressed, so the state may have been
-        fitted by another session over the same corpus. The persisted row map is
-        rebound to this session's chunk objects before it is trusted.
+        fitted by another session over the same corpus. The persisted map holds
+        chunk ids, which this session resolves through its own chunks, so the
+        state is reused as-is.
 
         Returns:
             ``True`` if state was loaded successfully, ``False`` if
@@ -156,6 +157,7 @@ class TFIDFRetriever(SparseRetriever):
             self._converter.fitted = True
             self._tf_idf_matrix = tf_idf_matrix
             self.matrix_row_to_chunk_id = matrix_row_to_chunk_id
+            self._state_loaded = True
             return True
         except Exception as e:
             log.error("Error loading TFIDF state: %s", e)

@@ -181,8 +181,9 @@ class BM25Retriever(SparseRetriever):
         """Load a previously saved BM25 state from disk.
 
         The storage folder is content-addressed, so the state may have been
-        fitted by another session over the same corpus. The persisted row map is
-        rebound to this session's chunk objects before it is trusted.
+        fitted by another session over the same corpus. The persisted map holds
+        chunk ids, which this session resolves through its own chunks, so the
+        state is reused as-is.
 
         Returns:
             ``True`` if state was loaded successfully, ``False`` if
@@ -205,6 +206,7 @@ class BM25Retriever(SparseRetriever):
             self._tf_matrix = tf_matrix
             self._bm25_matrix = bm25_matrix
             self.matrix_row_to_chunk_id = matrix_row_to_chunk_id
+            self._state_loaded = True
             return True
         except Exception as e:
             log.error("Error loading BM25 state: %s", e)
@@ -234,6 +236,7 @@ class BM25Retriever(SparseRetriever):
 
     def _fit(self):
         """Count the words of every chunk and compute the BM25-weighted matrix."""
+        self._state_loaded = False
         chunk_texts = []
         current_idx = 0
         self.matrix_row_to_chunk_id: Dict[int, int] = {}
