@@ -99,6 +99,33 @@ def test_the_fold_lists_leave_out_a_metric_with_a_hole(client, run_id):
     assert response.json() == {"MAE": [0.4, 0.6]}
 
 
+def test_a_run_with_no_fold_value_has_no_fold_metrics(
+    client, dataset_1, tmp_path_factory
+):
+    # MAPE alone, on a series with a zero in every fold: the lists would all
+    # be left out, and an empty answer reads as "no metric" to a client that
+    # then pairs nothing. It is the documented 404, as for a run with no rows.
+    other = fit_regressor(
+        client,
+        dataset_1,
+        tmp_path_factory.mktemp("no-fold-value"),
+        "no-fold-value-session",
+    )
+    _add(
+        client,
+        other,
+        [
+            (SplitEnum.VALIDATION, LevelEnum.FOLD, "MAPE", None, 0),
+            (SplitEnum.VALIDATION, LevelEnum.FOLD, "MAPE", None, 1),
+        ],
+    )
+
+    response = client.get(f"/api/v1/run/{other}/fold-metrics")
+
+    assert response.status_code == 404, response.text
+    assert response.json()["detail"] == "No fold metrics found for this run"
+
+
 def test_the_live_metrics_send_no_row_without_a_value(client, run_id):
     with client.websocket_connect(f"/api/v1/metrics/ws/{run_id}") as websocket:
         payload = json.loads(websocket.receive_text())

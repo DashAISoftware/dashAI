@@ -973,6 +973,13 @@ def _group_fold_metrics(db, run_id: int, level, split_enum):
     # ``{split}_metrics_unavailable``.
     without_value = {metric.name for metric in fold_metrics if metric.value is None}
     fold_metrics = [m for m in fold_metrics if m.name not in without_value]
+    # Nothing left is the same answer as nothing stored: an empty mapping
+    # would read as a run whose metrics all agree on zero folds.
+    if not fold_metrics:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No fold metrics found for this run",
+        )
 
     splits_data = json.loads(run.model_session.splits)
     repetitions = splits_data.get("n_repeats", 1)
