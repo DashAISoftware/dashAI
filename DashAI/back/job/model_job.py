@@ -411,7 +411,15 @@ class ModelJob(BaseJob):
         The unit computes every row, the summaries included, and publishes
         them as plain values; writing them is the job's, like every other row
         this job persists.
+
+        They replace the rows a previous training of the same run left at
+        those splits and levels: a run trained again without a reset would
+        otherwise hold every origin twice, and the paired tests read the fold
+        rows by position.
         """
+        written = {(SplitEnum[row["split"]], LevelEnum[row["level"]]) for row in rows}
+        for split, level in written:
+            db.query(Metric).filter_by(run_id=run_id, split=split, level=level).delete()
         db.add_all(
             Metric(
                 run_id=run_id,

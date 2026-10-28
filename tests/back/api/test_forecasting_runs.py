@@ -142,6 +142,36 @@ def test_a_session_package_carries_the_forecasts_under_the_new_run(
     assert artifacts.status_code == 200, artifacts.text
 
 
+def test_training_a_run_again_replaces_its_metrics(client, tmp_path):
+    """A run trained again without a reset, as ``/jobs`` does, keeps one set.
+
+    A summary row twice would make ``get_metrics_for_run`` keep whichever came
+    last, and a fold row twice would pair the wrong origins in the paired
+    tests that read ``/fold-metrics`` by position.
+    """
+    from DashAI.back.job.model_job import ModelJob
+
+    session_id = _session(client, tmp_path, _monthly())
+    other = _train(client, session_id, "NaiveForecaster")
+
+    def rows():
+        with client.app.container["session_factory"]() as db:
+            return sorted(
+                (m.split.name, m.level.name, m.name, m.fold_index)
+                for m in db.query(Metric).filter(Metric.run_id == other)
+            )
+
+    first = rows()
+    ModelJob(run_id=other).run()
+
+    assert rows() == first
+    folds = client.get(f"/api/v1/run/{other}/fold-metrics").json()
+    assert {name: len(values) for name, values in folds.items()} == {
+        "MAE": 3,
+        "RMSE": 3,
+    }
+
+
 # --- the forecasts file ------------------------------------------------------
 
 
