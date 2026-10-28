@@ -162,8 +162,11 @@ def explainable_indexes(
     Raises
     ------
     ValueError
-        If the run has no rows in the partition explanations are measured on.
+        If the run has no rows in the partition explanations are measured on,
+        or its splitter makes no partitions of rows at all.
     """
+    if splitter_class.NO_ROW_PARTITIONS:
+        raise ValueError(splitter_class.NO_ROW_PARTITIONS)
     try:
         partitions = splitter_class.explainable_partitions(split_indexes)
     except (KeyError, NotImplementedError, TypeError) as e:
@@ -273,8 +276,8 @@ def run_split_indexes(
     Raises
     ------
     ValueError
-        If the splitter is not registered, or if it declares no partition by
-        that name.
+        If the splitter is not registered, if it declares no partition by
+        that name, or if it makes no partitions of rows at all.
     """
     if not split or split == "all":
         return None
@@ -282,6 +285,8 @@ def run_split_indexes(
     splitter_class = splitter_class_for(
         _parse_payload(session_splits), component_registry
     )
+    if splitter_class.NO_ROW_PARTITIONS:
+        raise ValueError(splitter_class.NO_ROW_PARTITIONS)
     try:
         partitions = splitter_class.explainable_partitions(
             _parse_payload(split_indexes)

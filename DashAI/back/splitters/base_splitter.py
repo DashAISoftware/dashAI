@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Final, List
+from typing import TYPE_CHECKING, Any, Dict, Final, List, Optional
 
 from sklearn.preprocessing import LabelEncoder
 
@@ -30,6 +30,12 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
     TRAINING_PARTITION: str = "train"
 
     GEOMETRY: str = "unknown"
+
+    # Why a run of this splitter has no partitions of rows at all, for a
+    # splitter that cuts something else (a backtest cuts steps). None for a
+    # splitter of rows. Said in place of "this partition is empty", which
+    # would send the user looking for rows the run never had.
+    NO_ROW_PARTITIONS: Optional[str] = None
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:

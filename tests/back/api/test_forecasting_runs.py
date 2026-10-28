@@ -58,6 +58,28 @@ def test_the_run_has_no_partition_to_explain(client, run_id):
     assert response.json() == {"splits": []}
 
 
+def test_explaining_a_backtest_says_it_has_no_partitions_of_rows(client, run_id):
+    # Forecasting declares no explainers, but the job is reachable with one
+    # named by hand; a backtest's test is measured in steps, not rows.
+    from DashAI.back.dependencies.database.models import GlobalExplainer
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.job.explainer_job import ExplainerJob
+
+    with client.app.container["session_factory"]() as db:
+        explainer = GlobalExplainer(
+            name="backtest-explainer",
+            run_id=run_id,
+            explainer_name="RegressionPermutationFeatureImportance",
+            parameters={},
+        )
+        db.add(explainer)
+        db.commit()
+        explainer_id = explainer.id
+
+    with pytest.raises(JobError, match="A backtest cuts the series in steps"):
+        ExplainerJob(explainer_id=explainer_id, explainer_scope="global").run()
+
+
 def test_a_session_package_carries_the_cuts_and_the_metrics(client, run_id, tmp_path):
     container = client.app.container
     run = _get(client, Run, run_id)

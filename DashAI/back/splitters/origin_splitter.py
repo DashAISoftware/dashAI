@@ -79,6 +79,11 @@ class OriginSplitter(BaseSplitter):
     # No preview draws this shape yet; the frontend leaves it blank rather
     # than drawing proportions that the cuts no longer are.
     GEOMETRY: str = "backtest_origins"
+    NO_ROW_PARTITIONS = (
+        "A backtest cuts the series in steps of its grid, so its run has no "
+        "partitions of rows to explain or to predict on: its validation and "
+        "test are windows of steps. Forecast by horizon instead."
+    )
 
     def __init__(self, splits_data: Dict[str, Any]):
         """Read the horizon and the number of validation origins.
