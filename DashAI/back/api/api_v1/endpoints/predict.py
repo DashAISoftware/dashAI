@@ -9,6 +9,7 @@ from kink import di, inject
 
 from DashAI.back.api.api_v1.schemas.prediction_params import PredictionCreationParams
 from DashAI.back.api.utils import task_or_http_error
+from DashAI.back.core.enums.status import RunStatus
 from DashAI.back.dependencies.database.models import (
     Dataset,
     ModelSession,
@@ -92,7 +93,7 @@ async def create_prediction(
             if model_session.task_name in component_registry
             else None
         )
-        unevaluated_steps = _check_prediction_mode(params, model_session, task)
+        unevaluated_steps = _check_prediction_mode(params, run, model_session, task)
 
         prediction = Prediction(
             run_id=run.id,
@@ -110,19 +111,23 @@ async def create_prediction(
         return prediction
 
 
-def _check_prediction_mode(params, model_session, task) -> int:
+def _check_prediction_mode(params, run, model_session, task) -> int:
     """Refuse a request for a kind of prediction the task does not make.
 
     Returns
     -------
     int
         For a horizon longer than the run's backtest measured, how many of
-        its steps were never evaluated; 0 otherwise.
+        its steps were never evaluated; 0 otherwise. The horizon measured is
+        the one the run was cut with, which is in its cuts: the session's
+        payload may leave it out and let the splitter fall back to its own.
 
     Raises
     ------
     HTTPException
-        422 naming the task and what it takes instead.
+        422 naming the task and what it takes instead. 500 for a finished run
+        of a task that predicts by horizon with no horizon in its cuts, which
+        a backtest always writes.
     """
     task_name = model_session.task_name
     if getattr(task, "PREDICTION_MODE", "rows") != "horizon":
@@ -149,11 +154,20 @@ def _check_prediction_mode(params, model_session, task) -> int:
                 "give the horizon, the number of steps to forecast."
             ),
         )
+    if run.status != RunStatus.FINISHED:
+        # Nothing was measured yet; the job reports the run that cannot predict.
+        return 0
     try:
-        evaluated = int(json.loads(model_session.splits).get("horizon") or 0)
-    except (TypeError, ValueError):
-        evaluated = 0
-    return max(0, params.horizon - evaluated) if evaluated else 0
+        evaluated = int(json.loads(run.split_indexes)["horizon"])
+    except (TypeError, ValueError, KeyError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=(
+                f"Run {run.id} finished without the cuts of its backtest, so the "
+                "horizon it was measured on is unknown: train it again."
+            ),
+        ) from e
+    return max(0, params.horizon - evaluated)
 
 
 @router.get("/")

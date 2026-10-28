@@ -134,6 +134,49 @@ def test_a_horizon_past_the_evaluated_one_says_how_many_steps_were_not(client, t
     assert response.json()["unevaluated_steps"] == 2
 
 
+@pytest.fixture(scope="module", name="default_horizon_run")
+def a_run_whose_session_left_the_horizon_out(client, trained):
+    # The splitter falls back to its default horizon, 6, and the run's cuts
+    # say so; the session's payload says nothing.
+    body = _session_body(
+        trained["dataset_id"],
+        strategy="ForecastingHoldoutEvaluationStrategy",
+        splits={"splitter_name": "TemporalHoldoutSplitter"},
+    )
+    response = client.post(
+        "/api/v1/model-session/", json={**body, "name": "default-horizon"}
+    )
+    assert response.status_code == 201, response.text
+    return _train(client, response.json()["id"], "NaiveForecaster")
+
+
+def test_the_evaluated_horizon_is_the_one_the_run_was_cut_with(
+    client, default_horizon_run
+):
+    response = _predict(client, run_id=default_horizon_run, horizon=24)
+
+    assert response.status_code == 200, response.text
+    assert response.json()["unevaluated_steps"] == 18
+
+
+def test_a_backtest_run_without_its_cuts_is_an_error_not_a_silence(
+    client, default_horizon_run
+):
+    with client.app.container["session_factory"]() as db:
+        run = db.get(Run, default_horizon_run)
+        cuts, run.split_indexes = run.split_indexes, None
+        db.commit()
+    try:
+        response = _predict(client, run_id=default_horizon_run, horizon=24)
+    finally:
+        with client.app.container["session_factory"]() as db:
+            db.get(Run, default_horizon_run).split_indexes = cuts
+            db.commit()
+
+    assert response.status_code == 500, response.text
+    assert "train it again" in response.json()["detail"]
+
+
 def test_a_horizon_within_the_evaluated_one_has_no_warning(client, trained):
     response = _predict(client, run_id=trained["run_id"], horizon=3)
 
