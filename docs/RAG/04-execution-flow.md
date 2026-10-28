@@ -38,10 +38,12 @@ Frontend calls `POST /api/v1/generative-session/`. The endpoint delegates to
 8. **Model defaults** — the picked generation model's omitted parameters are
    resolved from its schema, and the same happens for the transformation stage
    when enabled: the transformer's own placeholders plus its nested prompt's and
-   nested LLM's. The nested LLM's `context_window` defaults to `2048`
-   (`transformation_llm_overrides()`), sitting under any caller-sent value: a
-   transformation call carries only the technique prompt and the stage history,
-   never retrieved chunks.
+   nested LLM's. The nested LLM gets the shared RAG overrides
+   (`transformation_llm_overrides()`): `context_window=10000`,
+   `max_tokens=300`, `temperature=0.1`, sitting under any explicit caller value.
+   A caller value equal to the LLM schema placeholder counts as "not
+   customized"; a stored `2048` from an older release is preserved as an
+   explicit value (clear the field to upgrade).
 9. **Recursive schema validation** — every `{component, params}` ref (including
    nested sub-components like `BM25Vectorizer` inside `BM25Retriever`) is
    validated against its own `SCHEMA`. If any fails → HTTP 400. On this pass the

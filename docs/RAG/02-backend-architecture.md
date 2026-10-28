@@ -118,10 +118,13 @@ callable, so it never reaches into prompt internals.
   omit or blank theirs.
 - `apply_defaults(normalized)` — resolves the transformer's own schema
   defaults plus the nested prompt's and LLM's placeholders, sitting under
-  whatever the caller sent. The nested LLM's `context_window` is defaulted to
-  2048 via `transformation_llm_overrides()` — between the model schema's
-  conservative 512 and the generation window — while a caller-sent value always
-  wins.
+  whatever the caller sent. The nested LLM receives the shared RAG overrides
+  via `transformation_llm_overrides()`: 10000 context window, 300 max tokens
+  and 0.1 temperature, replacing the model schema's conservative 512/100/0.7
+  placeholders. A caller value equal to the schema placeholder is treated as
+  "not customized"; an explicit non-default value wins. A session that stores
+  the old stage-scoped 2048 from a previous release keeps it as an explicit
+  value; clear the field to pick up the new default.
 
 `SessionValidationService` calls `validate()` after model-key structure
 validation and `apply_defaults()` alongside the generation-model defaults, on
@@ -368,8 +371,8 @@ check happens first, in the endpoint):
    `QueryTransformationValidationService` (structure plus class checks).
 7. Component refs checked against the registry (`validate_component_refs()`).
 8. Generation-model and transformation defaults — omitted parameters are
-   resolved from the picked classes' schemas (the transformation LLM's
-   `context_window` defaults to 2048).
+   resolved from the picked classes' schemas (the transformation LLM gets the
+   shared RAG 10000/300/0.1 override).
 9. **Recursive schema validation** — every `{component, params}` ref (including
    nested sub-components like `BM25Vectorizer` inside `BM25Retriever`) is
    validated against its own `SCHEMA`. If any fails → HTTP 400. On this pass the

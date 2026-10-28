@@ -21,6 +21,7 @@ from DashAI.back.models.RAG.prompts.transformation import (
     QueryTransformationPrompt,
 )
 from DashAI.back.models.RAG.RAG_constants import RAG_PARAM_QUERY_TRANSFORMATION
+from DashAI.back.models.RAG.RAG_defaults import merge_rag_llm_params
 from DashAI.back.models.RAG.transformation import BaseQueryTransformation
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
@@ -30,6 +31,10 @@ from DashAI.back.services.RAG.session_defaults_service import (
 )
 
 log = logging.getLogger(__name__)
+
+#: Nested transformation-parameter keys, hoisted to avoid magic strings.
+_PROMPT_KEY = "prompt"
+_LLM_MODEL_KEY = "llm_model"
 
 #: Default transformation prompts whose ``template`` may be injected from
 #: ``metadata["templates"]`` before schema validation, exactly like the default
@@ -50,9 +55,9 @@ class QueryTransformationValidationService:
     ``validate`` performs the full structural plus class check (prompt and
     ``llm_model`` subclass enforcement, plus template validation through the
     injected callable). ``apply_defaults`` resolves the transformer's and the
-    nested LLM's omitted parameters from their schemas, with a server-side
-    ``context_window`` default for the transformation LLM sitting between those
-    schema placeholders and any caller-sent value.
+    nested LLM's omitted parameters from their schemas, with the shared RAG LLM
+    overrides (10000 context window, 300 max tokens, 0.1 temperature) sitting
+    between those schema placeholders and any caller-sent value.
     """
 
     def __init__(
@@ -200,14 +205,12 @@ class QueryTransformationValidationService:
         prompt template is later injected from its language-driven defaults by
         the component-params pass.
 
-        The nested LLM's ``context_window`` is defaulted to 2048, sitting
-        between the schema placeholder and any caller-sent value: the model
-        schemas ship a conservative 512 that cannot fit the technique prompt
-        plus the stage's history, while a transformation call carries only that
-        history and the instructions (never retrieved chunks), so it needs far
-        less than the generation 10000 window but far more than 512. A caller
-        who sends ``context_window`` always wins; the schema's ``max_tokens``
-        and the other placeholders are still filled underneath it.
+        The nested LLM receives the shared RAG overrides: ``context_window``
+        10000, ``max_tokens`` 300 and ``temperature`` 0.1, instead of the model
+        schema's 512/100/0.7 placeholders. A caller value equal to the schema
+        placeholder is treated as "not customized" and replaced by the override
+        (the shared frontend writes those placeholders when another LLM is
+        selected); an explicit non-default value always wins.
 
         Parameters
         ----------
@@ -224,27 +227,52 @@ class QueryTransformationValidationService:
             return
 
         merged = {**resolve_component_defaults(name, self._registry), **params}
-        llm_ref = merged.get("llm_model")
+        llm_ref = merged.get(_LLM_MODEL_KEY)
         if isinstance(llm_ref, dict):
-            llm_name = llm_ref.get("component")
-            if llm_name:
-                llm_params = llm_ref.get("params")
-                caller_params = llm_params if isinstance(llm_params, dict) else {}
-                llm_ref["params"] = {
-                    **resolve_component_defaults(llm_name, self._registry),
-                    **transformation_llm_overrides(),
-                    **caller_params,
-                }
-        prompt_ref = merged.get("prompt")
+            self._apply_llm_defaults(llm_ref)
+        prompt_ref = merged.get(_PROMPT_KEY)
         if isinstance(prompt_ref, dict):
-            prompt_name = prompt_ref.get("component")
-            prompt_params = prompt_ref.get("params")
-            if prompt_name and isinstance(prompt_params, dict):
-                prompt_ref["params"] = {
-                    **resolve_component_defaults(prompt_name, self._registry),
-                    **prompt_params,
-                }
+            self._apply_prompt_defaults(prompt_ref)
         ref["params"] = merged
+
+    def _apply_llm_defaults(self, llm_ref: Dict[str, Any]) -> None:
+        """Resolve the nested transformation LLM's params with the RAG overrides.
+
+        Parameters
+        ----------
+        llm_ref : Dict[str, Any]
+            The nested ``llm_model`` reference, mutated in place. A missing or
+            malformed ``params`` container counts as empty, so the reference is
+            normalized to the full schema defaults plus the overrides.
+        """
+        llm_name = llm_ref.get("component")
+        llm_params = llm_ref.get("params")
+        if not llm_name:
+            return
+        caller_params = llm_params if isinstance(llm_params, dict) else {}
+        llm_ref["params"] = merge_rag_llm_params(
+            resolve_component_defaults(llm_name, self._registry),
+            caller_params,
+            transformation_llm_overrides(),
+        )
+
+    def _apply_prompt_defaults(self, prompt_ref: Dict[str, Any]) -> None:
+        """Resolve the nested prompt's placeholders under the caller values.
+
+        Parameters
+        ----------
+        prompt_ref : Dict[str, Any]
+            The nested ``prompt`` reference, mutated in place when its
+            ``params`` is a dict. Left untouched otherwise.
+        """
+        prompt_name = prompt_ref.get("component")
+        prompt_params = prompt_ref.get("params")
+        if not prompt_name or not isinstance(prompt_params, dict):
+            return
+        prompt_ref["params"] = {
+            **resolve_component_defaults(prompt_name, self._registry),
+            **prompt_params,
+        }
 
     def _validate_nested_template(self, prompt_name: str, template: Any) -> None:
         """Validate the nested transformation prompt's ``template`` value.

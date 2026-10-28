@@ -103,6 +103,7 @@ _LLM_SCHEMA = {
     "properties": {
         "max_tokens": {"placeholder": 100},
         "temperature": {"placeholder": 0.7},
+        "context_window": {"placeholder": 512},
     }
 }
 
@@ -404,24 +405,57 @@ class TestApplyDefaults:
         _service().apply_defaults(ref)
         params = ref["params"]
         assert params["top_k"] == 5
-        assert params["llm_model"]["params"]["max_tokens"] == 100
-        assert params["llm_model"]["params"]["temperature"] == 0.7
+        assert params["llm_model"]["params"]["max_tokens"] == 300
+        assert params["llm_model"]["params"]["temperature"] == 0.1
+        assert params["llm_model"]["params"]["context_window"] == 10_000
         assert params["prompt"]["params"]["language"] == "en"
 
     def test_preserves_user_values(self):
         ref = _ref(
             prompt_component="CustomRetrievalSufficiencyPrompt",
             prompt_params={"template": "Q:{input} C:{chunks}"},
-            llm_params={"temperature": 0.1},
+            llm_params={"temperature": 0.35},
         )
         _service().apply_defaults(ref)
         params = ref["params"]
-        assert params["llm_model"]["params"]["temperature"] == 0.1
-        assert params["llm_model"]["params"]["max_tokens"] == 100
+        assert params["llm_model"]["params"]["temperature"] == 0.35
+        assert params["llm_model"]["params"]["max_tokens"] == 300
         assert params["prompt"]["params"]["template"] == "Q:{input} C:{chunks}"
+
+    def test_schema_placeholders_are_replaced_by_the_rag_defaults(self):
+        """The shared UI writes schema placeholders; RAG must override them."""
+        ref = _ref(
+            llm_params={"max_tokens": 100, "temperature": 0.7, "context_window": 512}
+        )
+        _service().apply_defaults(ref)
+        llm_params = ref["params"]["llm_model"]["params"]
+        assert llm_params["max_tokens"] == 300
+        assert llm_params["temperature"] == 0.1
+        assert llm_params["context_window"] == 10_000
+
+    def test_explicit_non_default_values_are_preserved(self):
+        ref = _ref(
+            llm_params={"max_tokens": 500, "temperature": 0.3, "context_window": 4096}
+        )
+        _service().apply_defaults(ref)
+        llm_params = ref["params"]["llm_model"]["params"]
+        assert llm_params["max_tokens"] == 500
+        assert llm_params["temperature"] == 0.3
+        assert llm_params["context_window"] == 4096
 
     def test_absent_ref_is_noop(self):
         _service().apply_defaults({})
+
+    def test_absent_llm_params_normalized_to_schema_and_override(self):
+        ref = _ref()
+        del ref["params"]["llm_model"]["params"]
+
+        _service().apply_defaults(ref)
+
+        llm_params = ref["params"]["llm_model"]["params"]
+        assert llm_params["context_window"] == 10_000
+        assert llm_params["max_tokens"] == 300
+        assert llm_params["temperature"] == 0.1
 
     @pytest.mark.parametrize(
         "retriever",
@@ -444,7 +478,7 @@ class TestApplyDefaults:
 
         assert nested["params"]["function_call_max_trials"] == 3
         assert nested["params"]["top_k"] == 5
-        assert nested["params"]["llm_model"]["params"]["max_tokens"] == 100
+        assert nested["params"]["llm_model"]["params"]["max_tokens"] == 300
 
     def test_filter_retriever_fills_nested_defaults(self):
         ref = _ref(
@@ -459,7 +493,7 @@ class TestApplyDefaults:
         assert params["top_k"] == 5
         assert params["function_call_max_trials"] == 3
         assert params["prompt"]["params"]["language"] == "en"
-        assert params["llm_model"]["params"]["max_tokens"] == 100
+        assert params["llm_model"]["params"]["max_tokens"] == 300
 
     def test_recursive_defaults_fill_nested_filter_children(self):
         nested = _ref(
