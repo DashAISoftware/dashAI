@@ -26,6 +26,7 @@ from DashAI.back.dependencies.database.models import (
     RunStatus,
 )
 from DashAI.back.dependencies.downloads.nested import missing_downloads
+from DashAI.back.metrics.base_metric import cannot_be_optimized
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -499,6 +500,12 @@ async def upload_run(
                         f"{task_name}."
                     ),
                 )
+            _check_goal_metric(
+                component_registry,
+                task_name,
+                params.goal_metric,
+                params.optimizer_name,
+            )
             run = Run(
                 model_session_id=params.model_session_id,
                 model_name=params.model_name,
@@ -524,6 +531,43 @@ async def upload_run(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+def _check_goal_metric(component_registry, task_name, goal_metric, optimizer_name):
+    """Refuse a goal metric the run dialog would not have offered.
+
+    The dialog lists the metrics the task offers, and offers to optimize only
+    those that can be. A run without a search may keep any offered metric, or
+    none, as its goal.
+
+    Raises
+    ------
+    HTTPException
+        422 for a metric the task does not offer, for a search without a goal
+        metric and for a search for a metric that cannot be optimized.
+    """
+    if goal_metric and goal_metric not in offered_components(
+        component_registry, task_name, "Metric"
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Metric {goal_metric!r} is not available for task {task_name}.",
+        )
+    if not optimizer_name:
+        return
+    if not goal_metric:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"A run that searches with {optimizer_name} needs a goal metric "
+                "to optimize."
+            ),
+        )
+    if not component_registry[goal_metric]["metadata"].get("optimizable", True):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=cannot_be_optimized(goal_metric),
+        )
 
 
 @router.delete("/{run_id}")
@@ -580,6 +624,7 @@ async def update_run(
     run_id: int,
     params: UpdateRunParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry=Depends(lambda: di["component_registry"]),
 ):
     """Updates the run with the provided ID.
 
@@ -645,6 +690,19 @@ async def update_run(
             # value, or clearing it would be indistinguishable from omitting it.
             if "nested" in params.model_fields_set:
                 run.nested = params.nested
+
+            # The run the patch leaves is checked, so a goal and an optimizer
+            # sent apart cannot add up to a search the API would refuse whole.
+            # A task missing from the registry is the job's to report.
+            if {"goal_metric", "optimizer"} & params.model_fields_set:
+                model_session = db.get(ModelSession, run.model_session_id)
+                if model_session and model_session.task_name in component_registry:
+                    _check_goal_metric(
+                        component_registry,
+                        model_session.task_name,
+                        run.goal_metric,
+                        run.optimizer_name,
+                    )
 
             # Truthiness would read a cleared optimizer ("" / {}) as "nothing
             # changed" and skip the commit, so go by which fields were sent.

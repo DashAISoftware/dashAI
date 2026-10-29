@@ -3,6 +3,20 @@
 from typing import Any, Dict, Final
 
 
+def cannot_be_optimized(metric_name: str) -> str:
+    """Why a search cannot be run for a metric that is not ``OPTIMIZABLE``.
+
+    Said by the run API, which refuses such a goal metric, and by the job,
+    which guards the runs that do not come through the API.
+    """
+    return (
+        f"The optimization metric {metric_name} cannot be optimized: no "
+        "direction makes it better, and searching for it would pick the "
+        "parameters it rewards for the wrong reason (interval coverage rewards "
+        "the widest intervals). Choose an error metric."
+    )
+
+
 class BaseMetric:
     """Abstract base class for all DashAI evaluation metrics.
 

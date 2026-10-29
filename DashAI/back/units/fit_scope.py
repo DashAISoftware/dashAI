@@ -30,6 +30,7 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.job.base_job import JobError
+from DashAI.back.metrics.base_metric import cannot_be_optimized
 
 if TYPE_CHECKING:
     from DashAI.back.optimizers.base_optimizer import BaseOptimizer
@@ -265,12 +266,7 @@ class ModelFitScopeMixin:
                 f"Metric is not compatible with the Task. {e}",
             ) from e
         if not goal_metric["metadata"].get("optimizable", True):
-            raise JobError(
-                f"The optimization metric {goal_metric_name} cannot be optimized: "
-                "no direction makes it better, and searching for it would pick "
-                "the parameters it rewards for the wrong reason (interval "
-                "coverage rewards the widest intervals). Choose an error metric."
-            )
+            raise JobError(cannot_be_optimized(goal_metric_name))
 
         try:
             optimizer_class = component_registry[optimizer_name]["class"]
