@@ -1,7 +1,8 @@
 /**
- * The task selection grid of the models module: each task card's icon comes
- * from a map keyed by the task's name (anything else gets the default icon),
- * and its badge from `metadata.requires_target`.
+ * The task selection grid of the models module: each task card's icon is the
+ * one the task declares in `metadata.icon` (the default icon when it declares
+ * none, or one Material UI does not have), and its badge comes from
+ * `metadata.requires_target`.
  */
 
 import React from "react";
@@ -40,27 +41,27 @@ const TASKS = [
   {
     name: "TabularClassificationTask",
     display_name: "Tabular Classification",
-    metadata: { requires_target: true },
+    metadata: { requires_target: true, icon: "TableChart" },
   },
   {
     name: "RegressionTask",
     display_name: "Regression",
-    metadata: {},
+    metadata: { icon: "ShowChart" },
   },
   {
     name: "TranslationTask",
     display_name: "Translation",
-    metadata: { requires_target: true },
+    metadata: { requires_target: true, icon: "Translate" },
   },
   {
     name: "ClassificationTask",
     display_name: "Classification",
-    metadata: { requires_target: true },
+    metadata: { requires_target: true, icon: "NoSuchIcon" },
   },
   {
     name: "PluginTask",
     display_name: "Plugin",
-    metadata: { requires_target: false },
+    metadata: { requires_target: false, icon: "Timeline" },
   },
   // No display name: derived from the class name.
   { name: "ClusteringTask", metadata: { requires_target: false } },
@@ -88,14 +89,16 @@ const iconOf = (displayName) =>
   );
 
 describe("ModelsCenterContent task grid", () => {
-  test("icon per task name, default for names not in the map", () => {
+  test("the icon the task declares, the default otherwise", () => {
     renderGrid();
 
     expect(iconOf("Tabular Classification")).toEqual(["TableChartIcon"]);
     expect(iconOf("Regression")).toEqual(["ShowChartIcon"]);
     expect(iconOf("Translation")).toEqual(["TranslateIcon"]);
-    expect(iconOf("Classification")).toEqual(["CategoryIcon"]);
-    expect(iconOf("Plugin")).toEqual(["ScienceIcon"]);
+    // A task the frontend never heard of draws the icon it declares.
+    expect(iconOf("Plugin")).toEqual(["TimelineIcon"]);
+    // An icon Material UI does not have, or none at all.
+    expect(iconOf("Classification")).toEqual(["ScienceIcon"]);
     expect(iconOf("Clustering")).toEqual(["ScienceIcon"]);
   });
 
@@ -114,7 +117,9 @@ describe("ModelsCenterContent task grid", () => {
   });
 
   test("a task without display_name is labeled from its class name", () => {
-    renderGrid([{ name: "TextClassificationTask", metadata: {} }]);
+    renderGrid([
+      { name: "TextClassificationTask", metadata: { icon: "TextFields" } },
+    ]);
 
     expect(iconOf("Text Classification")).toEqual(["TextFieldsIcon"]);
   });
