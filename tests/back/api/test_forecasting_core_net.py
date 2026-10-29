@@ -215,15 +215,24 @@ MODEL_CASES = {
 # recorded on the base; only the tolerance for these cases changed.
 ETS_RELATIVE_TOLERANCE = 1e-4
 
+# ARIMA is fitted by numerical maximum likelihood, and where the optimizer
+# stops depends on the platform's BLAS and libm: the golden values were
+# recorded on Windows, and on the Linux runner the monthly cases moved by up to
+# a relative 3.3e-9, past the 1e-9 of every other value here. A changed order
+# or a lost seasonal part moves the forecast by whole units, far beyond this.
+ARIMA_RELATIVE_TOLERANCE = 1e-6
+
+MODEL_TOLERANCES = {"ets": ETS_RELATIVE_TOLERANCE, "arima": ARIMA_RELATIVE_TOLERANCE}
+
 
 @pytest.mark.parametrize("key", list(MODEL_CASES))
 def test_a_model_forecasts_a_clean_series_the_same(golden, key):
     series, _ = key.split("/")
     model, params = MODEL_CASES[key]
     forecast = _forecast(_model_classes()[model], params, SERIES[series](), HORIZON)
-    if model == "ets" and not RECORDING:
+    if model in MODEL_TOLERANCES and not RECORDING:
         recorded = golden[f"forecast/{key}"]
-        assert list(forecast) == pytest.approx(recorded, rel=ETS_RELATIVE_TOLERANCE)
+        assert list(forecast) == pytest.approx(recorded, rel=MODEL_TOLERANCES[model])
         return
     _pin(golden, f"forecast/{key}", forecast)
 
