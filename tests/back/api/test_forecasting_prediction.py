@@ -159,6 +159,21 @@ def test_the_evaluated_horizon_is_the_one_the_run_was_cut_with(
     assert response.json()["unevaluated_steps"] == 18
 
 
+def test_the_prediction_options_give_the_horizon_the_run_measured(
+    client, trained, default_horizon_run
+):
+    # The form starts on the horizon the run was evaluated on; the frontend
+    # reads it here instead of from the run's cuts, whose format it would
+    # otherwise have to know.
+    measured = client.get(f"/api/v1/predict/splits/{trained['run_id']}")
+    defaulted = client.get(f"/api/v1/predict/splits/{default_horizon_run}")
+
+    assert measured.status_code == 200, measured.text
+    assert measured.json()["horizon"] == 3
+    assert measured.json()["splits"] == []
+    assert defaulted.json()["horizon"] == 6
+
+
 def test_a_backtest_run_without_its_cuts_is_an_error_not_a_silence(
     client, default_horizon_run
 ):
