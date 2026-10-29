@@ -119,7 +119,7 @@ export const getSavedStatisticalTests = async (
 };
 
 /**
- * Delete a saved statistical test result by id.
+ * Delete a saved statistical test result by id
  */
 export const deleteSavedStatisticalTest = async (
   resultId: number,
