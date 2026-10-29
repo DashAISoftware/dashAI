@@ -117,7 +117,7 @@ class SingleSeriesForecastingTask(ForecastingTask):
 
     # The shared point metrics, listed here rather than naming this task from
     # the metric: ``RegressionMetric`` names only ``RegressionTask``.
-    COMPATIBLE_COMPONENTS = ["MAE", "RMSE"]
+    COMPATIBLE_COMPONENTS = ["MAE", "RMSE", "MAPE", "SMAPE"]
 
     # A trained model forecasts a number of steps past the end of its series;
     # there are no rows to hand it. A kind of forecasting whose dates are not

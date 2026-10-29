@@ -1,10 +1,9 @@
-"""DashAI MAPE forecasting metric implementation."""
+"""DashAI MAPE regression metric implementation."""
 
 from typing import TYPE_CHECKING
 
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.metrics.forecasting_metric import ForecastingMetric, PointMetricMixin
-from DashAI.back.metrics.regression_metric import prepare_to_metric
+from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 from DashAI.back.metrics.undefined_metric import UndefinedMetricError
 
 if TYPE_CHECKING:
@@ -13,7 +12,7 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class MAPE(PointMetricMixin, ForecastingMetric):
+class MAPE(RegressionMetric):
     """Average error as a percentage of the true value.
 
     Mean Absolute Percentage Error expresses each error relative to the value
