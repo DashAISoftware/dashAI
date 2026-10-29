@@ -1,5 +1,6 @@
 {
   "button": {
+    "exportModel": "Exportar modelo",
     "addConverter": "Agregar Converter",
     "createExplainer": "Crear Explicador",
     "createGlobalExplainer": "Nuevo Explicador Global",
@@ -25,9 +26,16 @@
     "saveAndRunModel": "Guardar y Ejecutar Modelo",
     "showOperations": "Mostrar Operaciones",
     "showParameters": "Mostrar Parámetros",
-    "updateAndRetrain": "Actualizar y Re-entrenar"
+    "updateAndRetrain": "Actualizar y Re-entrenar",
+    "exportSession": "Exportar sesión",
+    "importSession": "Importar sesión",
+    "selectAll": "Seleccionar todos",
+    "selectNone": "Ninguno",
+    "chooseFile": "Elegir archivo",
+    "gotIt": "Entendido"
   },
   "error": {
+    "exportModel": "No se pudo exportar el modelo",
     "completeRequiredFields": "Por favor complete todos los campos requeridos",
     "createRun": "Error al intentar crear una nueva ejecución: {{name}}",
     "createRunReason": "Error al intentar crear una nueva ejecución \"{{name}}\": {{reason}}",
@@ -68,7 +76,10 @@
     "failedToLoadTests": "No se pudieron cargar los tests guardados.",
     "failedToDeleteTest": "No se pudo eliminar el test.",
     "failedToSaveTest": "No se pudieron guardar los resultados del test.",
-    "fetchingInnerSplitters": "No se pudieron cargar los splitters internos para validación cruzada anidada"
+    "fetchingInnerSplitters": "No se pudieron cargar los splitters internos para validación cruzada anidada",
+    "exportSession": "No se pudo exportar la sesión",
+    "importSession": "No se pudo importar la sesión",
+    "loadExportPreview": "No se pudieron cargar los runs de la sesión"
   },
   "label": {
     "addModelToSession": "Agregar Modelo a la Sesión",
@@ -196,7 +207,7 @@
     "inputColumns": "Columnas de entrada",
     "baseColumnsTitle": "Columna de salida y candidatas",
     "baseColumnsDescription": "Elige la columna de salida (la que el modelo aprende a predecir) y las columnas candidatas que podrían llegar al modelo. El preprocesamiento solo trabaja sobre las candidatas y la salida nunca se transforma.",
-    "candidateColumns": "Columnas candidatas",
+    "candidatesForRole": "{{role}} (columnas candidatas)",
     "liveMetrics": "Métricas en Vivo",
     "localExplainer": "Explicador Local",
     "localExplainers": "Explicadores Locales",
@@ -301,7 +312,25 @@
     "validationMetrics": "Métricas de Validación",
     "validationSet": "conjunto de validación",
     "viewResultsAs": "Ver resultados como columnas o gráficos",
-    "reports": "Reportes"
+    "last": "Final",
+    "supervisedBadge": "Supervisado",
+    "unsupervisedBadge": "No supervisado",
+    "reports": "Reportes",
+    "exportSessionTitle": "Exportar \"{{name}}\"",
+    "includeTrainedModels": "Incluir modelos entrenados",
+    "includeTrainedModelsHelp": "Desmárcalo para exportar solo la configuración, sin modelos entrenados: el archivo pesa menos y quien lo importe tendrá que entrenar los modelos.",
+    "recipeOnly": "llegará sin entrenar",
+    "waitUntilFinished": "espera a que termine",
+    "approxSize": "Tamaño aproximado: {{size}}",
+    "includesDataset": "El archivo incluye el dataset \"{{name}}\". No lo compartas si los datos son privados.",
+    "importSessionWarning": "Una sesión contiene modelos que ejecutan código al usarse. Importa solo sesiones de personas en las que confíes.",
+    "sessionImported": "Sesión importada como \"{{session}}\" con el dataset \"{{dataset}}\"",
+    "importedRecipeRuns": "Estos runs llegaron sin entrenar: {{names}}",
+    "importedNeedsDownloadTrained": "Puedes predecir con estos modelos, pero para re-entrenarlos primero descárgalos desde Modelos Disponibles: {{names}}",
+    "importedNeedsDownloadUntrained": "Estos modelos llegaron sin entrenar y deben descargarse antes de entrenar: {{names}}",
+    "importingSession": "Importando sesión...",
+    "importingSessionHelp": "Puede tardar un poco si la sesión trae modelos entrenados.",
+    "sessionImportedTitle": "Sesión importada"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",

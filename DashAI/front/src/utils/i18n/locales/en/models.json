@@ -1,5 +1,6 @@
 {
   "button": {
+    "exportModel": "Export model",
     "addConverter": "Add Converter",
     "createExplainer": "Create Explainer",
     "createGlobalExplainer": "New Global Explainer",
@@ -25,9 +26,16 @@
     "saveAndRunModel": "Save and Run Model",
     "showOperations": "Show Operations",
     "showParameters": "Show Parameters",
-    "updateAndRetrain": "Update & Retrain"
+    "updateAndRetrain": "Update & Retrain",
+    "exportSession": "Export session",
+    "importSession": "Import session",
+    "selectAll": "Select all",
+    "selectNone": "None",
+    "chooseFile": "Choose file",
+    "gotIt": "Got it"
   },
   "error": {
+    "exportModel": "Could not export the model",
     "completeRequiredFields": "Please complete all required fields",
     "createRun": "Error while trying to create a new run: {{name}}",
     "createRunReason": "Error while trying to create a new run \"{{name}}\": {{reason}}",
@@ -68,7 +76,10 @@
     "failedToLoadTests": "Could not load saved tests.",
     "failedToDeleteTest": "Could not delete the test.",
     "failedToSaveTest": "Failed to save the test results.",
-    "fetchingInnerSplitters": "Failed to load inner splitters for nested cross validaiton"
+    "fetchingInnerSplitters": "Failed to load inner splitters for nested cross validaiton",
+    "exportSession": "Could not export the session",
+    "importSession": "Could not import the session",
+    "loadExportPreview": "Could not load the session runs"
   },
   "label": {
     "addModelToSession": "Add Model to Session",
@@ -192,7 +203,7 @@
     "inputColumns": "Input columns",
     "baseColumnsTitle": "Output and candidate columns",
     "baseColumnsDescription": "Choose the output column (the one the model learns to predict) and the candidate columns that could feed the model. Preprocessing only works on the candidate columns, and the output is never transformed.",
-    "candidateColumns": "Candidate columns",
+    "candidatesForRole": "{{role}} (candidate columns)",
     "liveMetrics": "Live Metrics",
     "localExplainer": "Local Explainer",
     "localExplainers": "Local Explainers",
@@ -295,7 +306,25 @@
     "validationMetrics": "Validation Metrics",
     "validationSet": "validation set",
     "viewResultsAs": "View results as columns or graphs",
-    "reports": "Reports"
+    "last": "Final",
+    "supervisedBadge": "Supervised",
+    "unsupervisedBadge": "Unsupervised",
+    "reports": "Reports",
+    "exportSessionTitle": "Export \"{{name}}\"",
+    "includeTrainedModels": "Include trained models",
+    "includeTrainedModelsHelp": "Uncheck it to export only the configuration, without trained models: the file is smaller, and whoever imports it has to train the models.",
+    "recipeOnly": "will arrive untrained",
+    "waitUntilFinished": "wait until it finishes",
+    "approxSize": "Approximate size: {{size}}",
+    "includesDataset": "The file includes the dataset \"{{name}}\". Do not share it if the data is private.",
+    "importSessionWarning": "A session contains models that run code when they are used. Import only sessions from people you trust.",
+    "sessionImported": "Session imported as \"{{session}}\" with the dataset \"{{dataset}}\"",
+    "importedRecipeRuns": "These runs arrived untrained: {{names}}",
+    "importedNeedsDownloadTrained": "You can predict with these models, but to retrain them download them first from Available Models: {{names}}",
+    "importedNeedsDownloadUntrained": "These models arrived untrained and must be downloaded before training: {{names}}",
+    "importingSession": "Importing session...",
+    "importingSessionHelp": "This can take a while if the session includes trained models.",
+    "sessionImportedTitle": "Session imported"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

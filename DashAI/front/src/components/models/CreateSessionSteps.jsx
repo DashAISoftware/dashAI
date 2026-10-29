@@ -59,8 +59,6 @@ function CreateSessionSteps({
     name: "",
     dataset: null,
     task_name: selectedTask?.name || "",
-    input_columns: [],
-    output_columns: [],
     train_metrics: [],
     validation_metrics: [],
     test_metrics: [],
@@ -68,11 +66,13 @@ function CreateSessionSteps({
     splits: {},
     runs: [],
     applyPreprocessing: false,
-    // Original columns the preprocessing chain may work on (see
-    // BaseColumnsStep); only used when applyPreprocessing is on.
-    candidate_columns: [],
+    // Role name to the original columns given to it (see BaseColumnsStep);
+    // only used when applyPreprocessing is on.
+    column_roles_stage1: {},
     preprocessing: [],
-    input_column_refs: [],
+    // Role name to the column refs of its final columns (see
+    // SelectColumnsStep): what the session is created with.
+    column_roles: {},
   });
 
   const [nextEnabled, setNextEnabled] = useState(false);
@@ -136,10 +136,8 @@ function CreateSessionSteps({
     setNewExp((prev) => ({
       ...prev,
       dataset: newDataset,
-      input_columns: [],
-      output_columns: [],
-      candidate_columns: [],
-      input_column_refs: [],
+      column_roles_stage1: {},
+      column_roles: {},
       splits: {},
     }));
   };
@@ -274,6 +272,10 @@ function CreateSessionSteps({
         ? newExp.preprocessing
         : [];
 
+      // The session is created with its columns by role, as the column
+      // step left them.
+      const columnRoles = newExp.column_roles;
+
       let effectiveName = sessionName;
       let response;
       try {
@@ -281,15 +283,13 @@ function CreateSessionSteps({
           selectedDataset.id,
           selectedTask?.name || newExp.task_name,
           effectiveName,
-          newExp.input_columns,
-          newExp.output_columns,
+          columnRoles,
           hasTrain ? allMetricNames : [],
           hasValidation ? allMetricNames : [],
           hasTest ? allMetricNames : [],
           newExp.evaluation_strategy,
           JSON.stringify(newExp.splits),
           preprocessing,
-          newExp.input_column_refs,
         );
       } catch (createError) {
         if (createError?.response?.status === 409) {
@@ -299,15 +299,13 @@ function CreateSessionSteps({
             selectedDataset.id,
             selectedTask?.name || newExp.task_name,
             effectiveName,
-            newExp.input_columns,
-            newExp.output_columns,
+            columnRoles,
             hasTrain ? allMetricNames : [],
             hasValidation ? allMetricNames : [],
             hasTest ? allMetricNames : [],
             newExp.evaluation_strategy,
             JSON.stringify(newExp.splits),
             preprocessing,
-            newExp.input_column_refs,
           );
         } else {
           throw createError;
@@ -423,6 +421,7 @@ function CreateSessionSteps({
                 setNextEnabled={setNextEnabled}
                 datasetInfo={datasetInfo}
                 datasetTypes={datasetTypes}
+                taskMetadata={selectedTask?.metadata}
               />
             )}
           </>
@@ -451,6 +450,8 @@ function CreateSessionSteps({
                 dataset={selectedDataset}
                 datasetInfo={datasetInfo}
                 datasetTypes={datasetTypes}
+                taskMetadata={selectedTask?.metadata}
+                taskDisplayName={selectedTask?.display_name}
               />
             )}
           </>

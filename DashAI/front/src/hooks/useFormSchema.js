@@ -55,10 +55,14 @@ function useFormSchema({
   );
   const hasPendingSeed =
     formValuesEmpty && (hasInitialValues || hasDefaultValues);
+  // A schema still being fetched has no placeholders yet. Seeding the
+  // initial values alone would leave the store without the fields they do
+  // not name, and the form would submit only those, so the seed waits for it.
+  const awaitingSchema = Boolean(model) && !modelSchema;
 
   // Updates the formik schema with the merged initial values if the formValues is empty
   useEffect(() => {
-    if (!formValuesEmpty) return;
+    if (!formValuesEmpty || awaitingSchema) return;
     if (hasInitialValues) {
       handleUpdateSchema({ ...defaultValues, ...initialValues });
     } else if (hasDefaultValues) {
@@ -66,6 +70,7 @@ function useFormSchema({
     }
   }, [
     formValuesEmpty,
+    awaitingSchema,
     hasInitialValues,
     hasDefaultValues,
     initialValues,

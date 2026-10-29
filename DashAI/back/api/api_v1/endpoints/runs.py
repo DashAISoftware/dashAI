@@ -8,7 +8,7 @@ from kink import di, inject
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
-from DashAI.back.api.utils import remove_path
+from DashAI.back.api.utils import offered_components, remove_path
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import (
     GlobalExplainer,
@@ -202,6 +202,70 @@ async def get_run_by_id(
         return run
 
 
+@router.get("/{run_id}/export")
+@inject
+async def export_run_model(
+    run_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry=Depends(lambda: di["component_registry"]),
+):
+    """Download a finished run as a ``.dashai-model`` package.
+
+    The package holds the trained model, the session's fitted preprocessor and
+    the training column types, so it predicts outside the app with
+    ``DashAI.load_model``.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist, 409 if it has no usable trained model,
+        500 on any other failure.
+    """
+    import shutil
+    import tempfile
+    from pathlib import Path
+
+    from fastapi.concurrency import run_in_threadpool
+    from fastapi.responses import FileResponse
+    from starlette.background import BackgroundTask
+
+    from DashAI.back.model_package.export import (
+        RunNotExportableError,
+        RunNotFoundError,
+        build_package,
+        package_filename,
+    )
+
+    workdir = Path(tempfile.mkdtemp(prefix="dashai-export-"))
+    destination = workdir / "package.dashai-model"
+    try:
+        manifest = await run_in_threadpool(
+            build_package, run_id, destination, session_factory, component_registry
+        )
+    except RunNotFoundError as e:
+        shutil.rmtree(workdir, ignore_errors=True)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+        ) from e
+    except RunNotExportableError as e:
+        shutil.rmtree(workdir, ignore_errors=True)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+    except Exception as e:
+        shutil.rmtree(workdir, ignore_errors=True)
+        log.exception(e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error exporting the model",
+        ) from e
+
+    return FileResponse(
+        destination,
+        media_type="application/zip",
+        filename=package_filename(manifest["info"]["run_name"]),
+        background=BackgroundTask(shutil.rmtree, workdir, ignore_errors=True),
+    )
+
+
 @router.get("/plot/{run_id}/{plot_type}")
 @inject
 async def get_hyperparameter_optimization_plot(
@@ -292,6 +356,8 @@ async def upload_run(
         If the model session with id model_session_id is not registered in the DB.
     HTTPException
         If the model requires a download but has not been downloaded yet (HTTP 409).
+    HTTPException
+        If the session's task does not offer the model (HTTP 422).
     """
     with session_factory() as db:
         try:
@@ -341,6 +407,26 @@ async def upload_run(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=(
                         f"These components must be downloaded before use: {names}."
+                    ),
+                )
+            # After the download checks, which keep their 409 for a model that
+            # is both missing and of the wrong family. The wizard lists only
+            # the models the task offers; this refuses the rest, a component
+            # of another type included, instead of failing inside the fit.
+            task_name = model_session.task_name
+            if task_name not in component_registry:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=f"Task {task_name} does not exist in the registry.",
+                )
+            if params.model_name not in offered_components(
+                component_registry, task_name, "Model"
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail=(
+                        f"Model {params.model_name!r} is not available for task "
+                        f"{task_name}."
                     ),
                 )
             run = Run(

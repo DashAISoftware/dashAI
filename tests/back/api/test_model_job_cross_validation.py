@@ -42,6 +42,7 @@ from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.splitters.k_fold import KFoldSplitter
 from DashAI.back.splitters.stratified_k_fold import StratifiedKFoldSplitter
 from DashAI.back.tasks.base_task import BaseTask
+from tests.back.session_columns import xy_roles
 
 INPUT_COLUMNS = ["SepalLengthCm", "SepalWidthCm"]
 OUTPUT_COLUMNS = ["Species"]
@@ -200,8 +201,7 @@ def _make_session(
             dataset_id=dataset_id,
             name=name,
             task_name="CvTask",
-            input_columns=INPUT_COLUMNS,
-            output_columns=OUTPUT_COLUMNS,
+            column_roles=xy_roles(INPUT_COLUMNS, OUTPUT_COLUMNS),
             train_metrics=["MeanPredictionMetric"],
             validation_metrics=["MeanPredictionMetric"],
             test_metrics=["MeanPredictionMetric"],
@@ -824,7 +824,7 @@ def test_more_folds_than_rows_is_reported_as_a_splitting_failure(
         ModelJob(run_id=run_id).run()
 
     assert _squash(str(error.value)) == _squash(
-        f"Error splitting the dataset for run {run_id}: "
+        f"Error preparing the dataset for run {run_id}: "
         f"Number of splits (n_splits={DATASET_ROWS + 1}) cannot be greater "
         f"than the number of samples ({DATASET_ROWS})."
     )
@@ -845,7 +845,7 @@ def test_reserving_almost_everything_is_reported_as_a_splitting_failure(
         ModelJob(run_id=run_id).run()
 
     message = _squash(str(error.value))
-    assert message.startswith(f"Error splitting the dataset for run {run_id}: ")
+    assert message.startswith(f"Error preparing the dataset for run {run_id}: ")
     assert "leaves too few rows" in message
     assert _reload(client, run_id).status == RunStatus.ERROR
 

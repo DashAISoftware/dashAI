@@ -17,6 +17,16 @@ export interface IGroupColumnRef {
 
 export type IColumnRef = IRawColumnRef | IGroupColumnRef;
 
+// Role name to the role's column refs, as the task declares its roles.
+export type IColumnRoles = Record<string, IColumnRef[]>;
+
+// What a session stores per role: the refs chosen and the column names they
+// resolve to once the preprocessing is fitted.
+export interface IRoleColumns {
+  refs: IColumnRef[];
+  columns: string[];
+}
+
 export interface IConverterStep {
   converter: string;
   params: Record<string, unknown>;
@@ -73,16 +83,49 @@ export interface IModelSession {
   id: string;
   dataset: IDataset;
   task_name: string;
-  input_columns: string;
-  output_columns: string;
   splits: string;
   step: string;
   created: Date;
   last_modified: Date;
   runs: IRun[];
   preprocessing?: IConverterStep[];
-  input_column_refs?: IColumnRef[];
+  column_roles: Record<string, IRoleColumns>;
   preprocessing_status?: IPreprocessingStatus;
   preprocessing_error?: string | null;
   preprocessing_job_id?: string | null;
+}
+
+export interface IExportPreviewRun {
+  id: number;
+  name: string;
+  status: string;
+  goal_metric: string;
+  goal_metric_value: number | null;
+  in_progress: boolean;
+  with_model: boolean;
+  missing_model_file: boolean;
+}
+
+export interface IExportPreview {
+  session_name: string;
+  dataset_name: string;
+  runs: IExportPreviewRun[];
+  size_bytes: { with_models: number; recipe_only: number };
+}
+
+export interface ISessionImportResult {
+  session_id: number;
+  dataset_id: number;
+  session_name: string;
+  dataset_name: string;
+  renamed: { session: boolean; dataset: boolean };
+  warnings: string[];
+  recipe_runs: string[];
+  needs_download_trained: IMissingDownload[];
+  needs_download_untrained: IMissingDownload[];
+}
+
+export interface IMissingDownload {
+  name: string;
+  display_name: string;
 }

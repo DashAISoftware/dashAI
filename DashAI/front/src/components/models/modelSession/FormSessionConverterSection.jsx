@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { Box } from "@mui/material";
 import ScopeStepSessionConverter from "./ScopeStepSessionConverter";
@@ -13,6 +13,11 @@ import ParameterStepConverter from "../../notebooks/converterCreation/ParameterS
  * What the step produces is estimated by the backend afterwards (see
  * usePreprocessingStructure), and the actual fit happens once, when the
  * session is created (see the backend's PreprocessingJob).
+ *
+ * The form starts from the session's own defaults, which the backend sends
+ * as `metadata.session_params`: a session fits on the training rows only, so
+ * an encoder there treats a category it did not see, while its schema stays
+ * strict for the notebook.
  */
 export default function FormSessionConverterSection({
   step,
@@ -27,6 +32,10 @@ export default function FormSessionConverterSection({
   hideButtons = false,
 }) {
   const [scope, setScope] = useState([]);
+  const sessionParams = useMemo(
+    () => tool.metadata?.session_params || {},
+    [tool.metadata?.session_params],
+  );
 
   const handleSaveConverter = async (params) => {
     const newStep = {
@@ -73,7 +82,7 @@ export default function FormSessionConverterSection({
           converter={tool.name}
           tool={tool}
           selectedColumns={scope}
-          initialParams={{}}
+          initialParams={sessionParams}
           handleSaveConverter={handleSaveConverter}
           setStep={setStep}
           hideButtons={hideButtons}

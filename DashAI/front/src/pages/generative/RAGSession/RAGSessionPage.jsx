@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Box, CircularProgress, Divider, Typography } from "@mui/material";
@@ -10,7 +10,6 @@ import SessionBar from "../../../components/generative/SessionBar";
 import GenerativeHubHeader from "../../../components/generative/GenerativeHubHeader";
 import GenerativeChat from "../../../components/generative/GenerativeChat";
 import DocumentsBar from "../../../components/generative/RAG/DocumentsBar";
-import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
 import RAGConfigPanel from "../../../components/generative/RAG/RAGConfigPanel";
 import { getGenerativeSession } from "../../../api/generativeTask";
 import { getSessionIndexStatus, startSessionIndexing } from "../../../api/rag";
@@ -45,13 +44,14 @@ export default function RAGSessionPage() {
     setSelectedDisplayName,
     deleteSessionById,
     fetchSessions,
+    setParamsVersion,
   } = useGenerative();
 
   const ragTitle = useTaskDisplayName(RAG_TASK_NAME);
 
   const [notFound, setNotFound] = useState(false);
   const [indexStatus, setIndexStatus] = useState(null);
-  const [sessionName, setSessionName] = useState(null);
+  const [generatorName, setGeneratorName] = useState(null);
 
   const sessionId = Number(urlSessionId);
   const isValidId = Number.isFinite(sessionId) && sessionId > 0;
@@ -68,7 +68,6 @@ export default function RAGSessionPage() {
     getGenerativeSession(sessionId)
       .then((session) => {
         if (cancelled || !session) return;
-        setSessionName(session.name ?? null);
         setSelectedSessionId?.(sessionId);
         setSelectedTaskName?.(session.task_name);
         setSelectedDisplayName?.(session.display_name ?? null);
@@ -115,6 +114,20 @@ export default function RAGSessionPage() {
       });
   }, [sessionId, isValidId, refreshIndexStatus]);
 
+  const reindexRequested = useRef(false);
+
+  useEffect(() => {
+    reindexRequested.current = false;
+    setGeneratorName(null);
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!indexStatus?.needs_reindex || reindexRequested.current) return;
+    if (["indexing", "no_documents"].includes(indexStatus.status)) return;
+    reindexRequested.current = true;
+    startIndexing();
+  }, [indexStatus, startIndexing]);
+
   // Poll only while a job is actually running, so this stops on its own. The
   // status is recomputed against the queue on every call, which is what lets
   // it recover from a job that was cancelled or killed.
@@ -137,14 +150,14 @@ export default function RAGSessionPage() {
     [deleteSessionById, navigate, sessionId],
   );
 
-  const handleSessionRenamed = useCallback(
-    (newName) => {
-      // Keep the breadcrumb in step without waiting for a reload.
-      if (newName) setSessionName(newName);
-      fetchSessions?.();
-    },
-    [fetchSessions],
-  );
+  const handleConfigurationSaved = useCallback(() => {
+    setParamsVersion?.((version) => version + 1);
+    startIndexing();
+  }, [setParamsVersion, startIndexing]);
+
+  const handleSessionRenamed = useCallback(() => {
+    fetchSessions?.();
+  }, [fetchSessions]);
 
   if (notFound) {
     return (
@@ -194,7 +207,7 @@ export default function RAGSessionPage() {
                 showHubButton
                 onHubClick={() => navigate("/app/generative")}
               />
-              <Divider />
+              <Divider sx={{ width: "90%", bgcolor: "divider", mx: "auto" }} />
               {/* Both halves may shrink, and each scrolls its own content:
                   a fixed basis with an outer scroll pushed the header out of
                   view as the lists grew. */}
@@ -206,7 +219,6 @@ export default function RAGSessionPage() {
                   showSearch
                 />
               </Box>
-              <Divider />
               <Box sx={{ flex: "1 1 45%", minHeight: 0, display: "flex" }}>
                 <SessionBar
                   sessions={sessions}
@@ -223,33 +235,21 @@ export default function RAGSessionPage() {
           </LeftPanel>
 
           <CenterPanel>
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                height: "100%",
-                minHeight: 0,
-              }}
-            >
-              {/* Page chrome, level with the other RAG tabs. It used to be
-                  rendered by the chat, which sits lower and is shared with
-                  every other generative task. */}
-              <Box sx={{ px: 4, pt: 4 }}>
-                <RAGBreadcrumbs sessionName={sessionName} />
-              </Box>
-              <Box sx={{ flex: 1, minHeight: 0 }}>
-                <GenerativeChat key={sessionId} indexStatus={indexStatus} />
-              </Box>
-            </Box>
+            <GenerativeChat
+              key={sessionId}
+              indexStatus={indexStatus}
+              generatorName={generatorName}
+            />
           </CenterPanel>
 
           <RightPanel toggleButtonTop="50%" data-tour="parameters-right-panel">
             <RAGConfigPanel
               sessionId={sessionId}
               indexStatus={indexStatus}
-              onSaved={startIndexing}
+              onSaved={handleConfigurationSaved}
               onRetryIndexing={startIndexing}
               onSessionRenamed={handleSessionRenamed}
+              onGeneratorChange={setGeneratorName}
             />
           </RightPanel>
         </ModuleContainer>

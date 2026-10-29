@@ -13,6 +13,7 @@ from DashAI.back.core.schema_fields import (
     union_type,
 )
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
+from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
@@ -53,6 +54,9 @@ class OrdinalEncoderSchema(BaseSchema):
     )  # type: ignore
     handle_unknown: schema_field(
         enum_field(["error", "use_encoded_value"]),
+        # Strict, as the notebook uses it: there it may be fitted on a subset
+        # of rows and applied to all of them, and what it writes is saved. A
+        # session treats an unseen category instead (``SESSION_PARAMS``).
         "error",
         description=MultilingualString(
             en=(
@@ -163,6 +167,17 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
     PREFIX = "oe_"
     ONE_COLUMN_PER_INPUT = True
 
+    UNKNOWN_HINT = (
+        'set "handle_unknown" to "use_encoded_value" to encode them as its '
+        '"unknown_value"'
+    )
+
+    # A session fits its converters on the training rows only, so a category
+    # seen only in validation, test or the rows to predict is the normal
+    # case, not an accident: it gets -1. Not nan: the output dtype is an
+    # integer one.
+    SESSION_PARAMS = {"handle_unknown": "use_encoded_value", "unknown_value": -1}
+
     metadata = {
         "allowed_types": [Categorical],
         "allowed_dtypes": [],
@@ -175,16 +190,22 @@ class OrdinalEncoder(EncodingConverter, SklearnWrapper, OrdinalEncoderOperation)
         ----------
         **kwargs
             Configuration keyword arguments matching the converter's
-            schema fields. ``dtype``, ``unknown_value``, and
+            schema fields. A field left out takes its schema default, as
+            the form would have sent it. ``dtype``, ``unknown_value``, and
             ``min_frequency`` string values are cast to their corresponding
             NumPy or Python types before being forwarded to the underlying
             scikit-learn class.
         """
-        self.dtype = kwargs.pop("dtype", "np.float64")
-        self.dtype = cast_string_to_type(self.dtype)
+        kwargs = {**schema_placeholder_defaults(type(self)), **kwargs}
+
+        self.dtype = cast_string_to_type(kwargs.pop("dtype"))
         kwargs["dtype"] = self.dtype
 
-        self.unknown_value = kwargs.pop("unknown_value", None)
+        self.unknown_value = kwargs.pop("unknown_value")
+        # sklearn refuses an unknown value unless it is used, and the form
+        # sends the default one along with "error".
+        if kwargs.get("handle_unknown") == "error":
+            self.unknown_value = None
         if self.unknown_value is not None:
             self.unknown_value = cast_string_to_type(self.unknown_value)
         kwargs["unknown_value"] = self.unknown_value

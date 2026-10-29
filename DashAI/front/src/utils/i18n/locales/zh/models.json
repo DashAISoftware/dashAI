@@ -1,5 +1,6 @@
 {
   "button": {
+    "exportModel": "导出模型",
     "addConverter": "添加转换器",
     "addNewPrediction": "添加新预测",
     "createExplainer": "创建解释器",
@@ -25,9 +26,16 @@
     "showOperations": "显示操作",
     "showParameters": "显示参数",
     "updateAndRetrain": "更新并重新训练",
-    "uploadNewDataset": "上传新数据集"
+    "uploadNewDataset": "上传新数据集",
+    "exportSession": "导出会话",
+    "importSession": "导入会话",
+    "selectAll": "全选",
+    "selectNone": "全不选",
+    "chooseFile": "选择文件",
+    "gotIt": "知道了"
   },
   "error": {
+    "exportModel": "无法导出模型",
     "completeRequiredFields": "请填写所有必填字段",
     "createRun": "创建新运行时出错：{{name}}",
     "createRunReason": "创建新运行 \"{{name}}\" 时出错：{{reason}}",
@@ -68,7 +76,10 @@
     "failedToLoadTests": "无法加载已保存的检验。",
     "failedToDeleteTest": "无法删除该检验。",
     "failedToSaveTest": "无法保存检验结果。",
-    "fetchingInnerSplitters": "无法加载用于嵌套交叉验证的内部划分器"
+    "fetchingInnerSplitters": "无法加载用于嵌套交叉验证的内部划分器",
+    "exportSession": "无法导出会话",
+    "importSession": "无法导入会话",
+    "loadExportPreview": "无法加载会话的运行"
   },
   "label": {
     "addModelToSession": "将模型添加到会话",
@@ -131,7 +142,7 @@
     "inputColumns": "输入列",
     "baseColumnsTitle": "输出列与候选列",
     "baseColumnsDescription": "选择输出列（模型学习预测的列）以及可能输入模型的候选列。预处理只作用于候选列，输出列永远不会被转换。",
-    "candidateColumns": "候选列",
+    "candidatesForRole": "{{role}}（候选列）",
     "less": "更小（模型 1 < 模型 2）",
     "lines": "折线",
     "liveMetrics": "实时指标",
@@ -292,9 +303,27 @@
     "validationMetrics": "验证集指标",
     "validationSet": "验证集",
     "viewResultsAs": "以列或图表方式查看结果",
+    "last": "终值",
+    "supervisedBadge": "有监督",
+    "unsupervisedBadge": "无监督",
     "wilcoxonPairwiseComparisons": "带 Holm 校正的成对 Wilcoxon 检验",
     "withHpo": "含 HPO",
-    "withoutHpo": "不含 HPO"
+    "withoutHpo": "不含 HPO",
+    "exportSessionTitle": "导出“{{name}}”",
+    "includeTrainedModels": "包含已训练的模型",
+    "includeTrainedModelsHelp": "取消勾选则只导出配置，不含已训练的模型：文件更小，导入者需要自行训练模型。",
+    "recipeOnly": "将以未训练状态导入",
+    "waitUntilFinished": "请等待其完成",
+    "approxSize": "大约大小：{{size}}",
+    "includesDataset": "该文件包含数据集“{{name}}”。如果数据是私密的，请不要分享。",
+    "importSessionWarning": "会话中包含的模型在使用时会执行代码。请只导入你信任的人的会话。",
+    "sessionImported": "会话已导入为“{{session}}”，数据集为“{{dataset}}”",
+    "importedRecipeRuns": "这些运行未经训练：{{names}}",
+    "importedNeedsDownloadTrained": "你可以用这些模型进行预测，但要重新训练，请先在可用模型中下载它们：{{names}}",
+    "importedNeedsDownloadUntrained": "这些模型未经训练，训练前必须先下载：{{names}}",
+    "importingSession": "正在导入会话...",
+    "importingSessionHelp": "如果会话包含已训练的模型，可能需要一些时间。",
+    "sessionImportedTitle": "会话已导入"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} 已完成所有运行。",

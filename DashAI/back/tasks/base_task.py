@@ -1,8 +1,19 @@
-from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Final, List, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Final,
+    List,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 from starlette.datastructures import UploadFile
 
+from DashAI.back.tasks.column_roles import ColumnRole, IOColumns, type_name
 from DashAI.back.tasks.utils import get_bytes_with_type_filetype
 
 if TYPE_CHECKING:
@@ -15,186 +26,178 @@ class BaseTask:
     """Base class for DashAI compatible tasks."""
 
     TYPE: Final[str] = "Task"
+    REQUIRES_TARGET: bool = True
 
     PREDICTS_FORWARD_ONLY: bool = False
 
-    @property
-    @abstractmethod
-    def schema(self) -> Dict[str, Any]:
-        """Return the schema of components compatible with this task.
+    # The roles this task's columns can play. Left as None, the roles come
+    # from the x/y short form of ``metadata`` (see ``_role_delegate``).
+    COLUMN_ROLES: Optional[Tuple[ColumnRole, ...]] = None
 
-        Concrete subclasses must implement this property to return a mapping
-        that describes which models, metrics, and other components are compatible
-        with the task.
+    @property
+    def schema(self) -> Dict[str, Any]:
+        """Return optional task-specific configuration schema.
+
+        Most modeling tasks do not need an additional schema beyond their
+        metadata and compatible components, so the default is an empty mapping.
+        Concrete tasks can override this property when they require extra
+        task-level parameters.
 
         Returns
         -------
         Dict[str, Any]
-            A dictionary whose keys are component category names (e.g.
-            ``"models"``, ``"metrics"``) and whose values are lists or
-            mappings of the compatible component classes or identifiers.
+            Task-specific schema, or an empty dictionary when not applicable.
+        """
+        return {}
+
+    @classmethod
+    def _role_delegate(cls) -> Optional[type]:
+        """Decide, in this one place, who declares and translates the roles.
+
+        - A task that declares ``COLUMN_ROLES`` wins: the roles are its own,
+          the flat metadata is not read for them, and the task translates
+          them itself (``io_roles``, ``io_columns`` and ``roles_from_io``).
+        - A task that declares only the x/y short form (``inputs_types``
+          beside ``outputs_types`` and their cardinalities) is handed to the
+          x/y family, which reads that form as roles. This is how every
+          built-in task, every test task and every plugin written before
+          roles existed keep working unchanged.
+        - A task that declares neither cannot be used: there is no way to
+          know what its columns are for.
+
+        Returns
+        -------
+        type or None
+            The class whose methods declare and translate the roles, or
+            ``None`` when the task does it itself.
 
         Raises
         ------
         NotImplementedError
-            If the subclass does not provide an implementation.
+            If the task declares neither roles nor the x/y short form.
         """
-        raise NotImplementedError
+        if cls.COLUMN_ROLES is not None:
+            return None
+        metadata = getattr(cls, "metadata", None) or {}
+        if "inputs_types" in metadata and "outputs_types" in metadata:
+            from DashAI.back.tasks.xy_roles import XYRoles
+
+            return XYRoles
+        raise NotImplementedError(
+            f"{cls.__name__} declares no column roles. Declare COLUMN_ROLES "
+            "(and override io_roles, io_columns and roles_from_io), or the "
+            "short form of a task that maps inputs to outputs: inputs_types, "
+            "inputs_cardinality, outputs_types and outputs_cardinality in "
+            "its metadata."
+        )
 
     @classmethod
-    def _column_groups(cls, side: str) -> List[Dict[str, Any]]:
-        """Read one side of the contract as a list of type groups.
+    def _own_translation_missing(cls) -> NotImplementedError:
+        """The error for a task with its own roles but no translation."""
+        return NotImplementedError(
+            f"{cls.__name__} declares its own COLUMN_ROLES, so it has to say "
+            "how they feed a model: override io_roles, io_columns and "
+            "roles_from_io."
+        )
 
-        A task says what its columns may be as a list of groups, each naming a
-        set of interchangeable types and how many columns of that set it takes:
-
-        .. code-block:: python
-
-            "inputs": [
-                {"types": [Date], "cardinality": 1},
-                {"types": [Float, Integer], "cardinality": {"min": 1, "max": "n"}},
-            ]
-
-        Grouping is what lets a task ask for one date column and any number of
-        numeric ones at the same time. A single cardinality for the whole side
-        cannot say that: it can only demand a total, so it would accept two
-        dates and no numbers as readily as the intended shape.
-
-        The older flat spelling, ``inputs_types`` alongside
-        ``inputs_cardinality``, is still read and means a single group, so
-        tasks and plugins written against it keep working unchanged.
-
-        Parameters
-        ----------
-        side : str
-            Either ``"inputs"`` or ``"outputs"``.
+    @classmethod
+    def column_roles(cls) -> Tuple[ColumnRole, ...]:
+        """The roles this task's columns can play, in the order it declares.
 
         Returns
         -------
-        list of dict
-            One entry per group, each with ``"types"`` (a tuple of type
-            classes), ``"min"`` (an int) and ``"max"`` (an int or ``"n"``).
+        tuple of ColumnRole
+            The declared roles.
         """
-        metadata = cls.metadata
+        delegate = cls._role_delegate()
+        if delegate is None:
+            return tuple(cls.COLUMN_ROLES)
+        return delegate.column_roles(cls)
 
-        if side in metadata:
-            declared = metadata[side]
-        else:
-            declared = [
-                {
-                    "types": metadata[f"{side}_types"],
-                    "cardinality": metadata[f"{side}_cardinality"],
-                }
-            ]
-
-        return [
-            {
-                "types": tuple(group["types"]),
-                **cls._bounds(group.get("cardinality", "n")),
-            }
-            for group in declared
-        ]
-
-    @staticmethod
-    def _bounds(cardinality: Any) -> Dict[str, Any]:
-        """Read a declared cardinality as a minimum and a maximum.
-
-        Parameters
-        ----------
-        cardinality : Any
-            An int for an exact count, ``"n"`` for any number, or a mapping
-            with ``"min"`` and ``"max"`` for a range whose ``"max"`` may itself
-            be ``"n"``.
+    @classmethod
+    def io_roles(cls) -> Dict[str, List[str]]:
+        """Which roles feed a model's inputs and which its outputs.
 
         Returns
         -------
         dict
-            A mapping with keys ``"min"`` and ``"max"``.
+            ``{"inputs": [role names], "outputs": [role names]}``.
         """
-        if isinstance(cardinality, dict):
-            return {
-                "min": cardinality.get("min", 0),
-                "max": cardinality.get("max", "n"),
-            }
-        if cardinality == "n":
-            return {"min": 0, "max": "n"}
-        return {"min": cardinality, "max": cardinality}
+        delegate = cls._role_delegate()
+        if delegate is None:
+            raise cls._own_translation_missing()
+        return delegate.io_roles(cls)
 
-    @staticmethod
-    def _total_cardinality(groups: List[Dict[str, Any]]) -> Any:
-        """State a whole side's cardinality the way the flat contract did.
-
-        Kept so every consumer of the two-key metadata, the column picker
-        among them, reads the same value it always did for the tasks that
-        declare a single group.
+    def io_columns(self, roles: Mapping[str, Sequence]) -> IOColumns:
+        """Translate a session's roles into a model's inputs and outputs.
 
         Parameters
         ----------
-        groups : list of dict
-            The normalised groups of one side.
+        roles : mapping
+            Role name to the role's columns, as names or as column refs.
+
+        Returns
+        -------
+        IOColumns
+            The entries that feed the model as ``x`` and as ``y``.
+        """
+        delegate = self._role_delegate()
+        if delegate is None:
+            raise self._own_translation_missing()
+        return delegate.io_columns(type(self), roles)
+
+    def roles_from_io(
+        self, input_columns: Sequence, output_columns: Sequence
+    ) -> Dict[str, list]:
+        """Translate a model's inputs and outputs back into roles.
+
+        The units still hand tasks the columns as inputs and outputs, so
+        ``validate_dataset_for_task`` reads them as roles through this.
+
+        Parameters
+        ----------
+        input_columns, output_columns : sequence
+            The columns fed to the model as ``x`` and as ``y``.
+
+        Returns
+        -------
+        dict
+            Role name to the role's columns.
+        """
+        delegate = self._role_delegate()
+        if delegate is None:
+            raise self._own_translation_missing()
+        return delegate.roles_from_io(type(self), input_columns, output_columns)
+
+    @staticmethod
+    def _total_cardinality(roles: List[ColumnRole]) -> Any:
+        """State a whole side's cardinality the way the flat contract did.
+
+        Kept so every consumer of the flat metadata, the column picker among
+        them, reads the same value it always did.
+
+        Parameters
+        ----------
+        roles : list of ColumnRole
+            The roles of one side.
 
         Returns
         -------
         int or str
-            The exact total when every group is exact, otherwise ``"n"``.
+            The exact total when every role is exact, otherwise ``"n"``.
         """
-        if all(group["min"] == group["max"] for group in groups):
-            return sum(group["min"] for group in groups)
+        if all(role.min == role.max for role in roles):
+            return sum(role.min for role in roles)
         return "n"
-
-    @staticmethod
-    def _type_name(dashai_type) -> str:
-        """Name a type the way the frontend and the columns themselves do.
-
-        A DashAI type reports its own name through ``display_name()``, which
-        matches what a column emits via ``to_string()``. These lists may also
-        hold foreign classes, for example HuggingFace dataset features or a
-        plugin's own types, so those fall back to the class name.
-
-        Parameters
-        ----------
-        dashai_type : type
-            One of the declared type classes.
-
-        Returns
-        -------
-        str
-            The name to show for it.
-        """
-        getter = getattr(dashai_type, "display_name", None)
-        return getter() if callable(getter) else dashai_type.__name__
-
-    @staticmethod
-    def _cardinality_text(group: Dict[str, Any]) -> str:
-        """Say a group's cardinality the way an error message should read it.
-
-        Parameters
-        ----------
-        group : dict
-            A normalised group.
-
-        Returns
-        -------
-        str
-            For example ``"1"``, ``"n"``, ``"at least 1"`` or ``"1 to 3"``.
-        """
-        minimum, maximum = group["min"], group["max"]
-        if maximum == "n":
-            return "n" if minimum == 0 else f"at least {minimum}"
-        if minimum == maximum:
-            return str(minimum)
-        return f"{minimum} to {maximum}"
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         """Return serialisable metadata for the current task.
 
-        The contract is reported twice. ``"inputs"`` and ``"outputs"`` carry
-        the per-group form, which is the only one that can tell "one date and
-        any number of numbers" apart from "any number of dates or numbers".
-        ``"inputs_types"`` and the three keys beside it carry the flattened
-        view every existing consumer already reads, unchanged for the tasks
-        that declare a single group.
+        ``"column_roles"`` lists the roles and ``"io_roles"`` which of them
+        feed a model's inputs and outputs. ``"inputs_types"`` and the three
+        keys beside it are the flat view the remaining consumers read,
+        computed from the roles of each side.
 
         Type classes become their string names throughout so the result can be
         JSON-serialised by the DashAI frontend.
@@ -208,107 +211,187 @@ class BaseTask:
         -------
         Dict[str, Any]
             Dictionary with keys ``"inputs_types"``, ``"outputs_types"``,
-            ``"inputs_cardinality"``, ``"outputs_cardinality"``, ``"inputs"``
-            and ``"outputs"``.
+            ``"inputs_cardinality"``, ``"outputs_cardinality"``,
+            ``"column_roles"``, ``"io_roles"`` and ``"requires_target"``.
         """
+        roles = cls.column_roles()
+        sides = cls.io_roles()
+        by_name = {role.name: role for role in roles}
         parsed_metadata: dict = {}
 
         for side in ("inputs", "outputs"):
-            groups = cls._column_groups(side)
+            side_roles = [by_name[name] for name in sides[side] if name in by_name]
 
             names: List[str] = []
-            for group in groups:
-                for dashai_type in group["types"]:
-                    name = cls._type_name(dashai_type)
+            for role in side_roles:
+                for dashai_type in role.types:
+                    name = type_name(dashai_type)
                     if name not in names:
                         names.append(name)
 
             parsed_metadata[f"{side}_types"] = names
-            parsed_metadata[f"{side}_cardinality"] = cls._total_cardinality(groups)
-            parsed_metadata[side] = [
-                {
-                    "types": [cls._type_name(t) for t in group["types"]],
-                    "min": group["min"],
-                    "max": group["max"],
-                }
-                for group in groups
-            ]
+            parsed_metadata[f"{side}_cardinality"] = cls._total_cardinality(side_roles)
+
+        parsed_metadata["column_roles"] = [role.to_metadata() for role in roles]
+        parsed_metadata["io_roles"] = sides
+        parsed_metadata["requires_target"] = cls.REQUIRES_TARGET
 
         return parsed_metadata
 
-    def _validate_side(
-        self,
-        columns: List[str],
-        types: Dict[str, Any],
-        side: str,
-    ) -> None:
-        """Check one side's columns against the groups the task declares.
+    @staticmethod
+    def _role_noun(role_name: str, sides: Dict[str, List[str]]) -> str:
+        """What an error message calls a role's columns.
 
-        Each column is charged to the first group that accepts its type and
-        still has room, so a task asking for one date and any number of
-        numbers reads a date, a number and a number as a full match rather
-        than as three columns competing for one slot.
+        Columns that feed a model are its input or output columns; any other
+        role is named after itself.
+        """
+        if role_name in sides["inputs"]:
+            return "input"
+        if role_name in sides["outputs"]:
+            return "output"
+        return role_name
+
+    def check_role_names(self, roles: Mapping[str, Any]) -> None:
+        """Refuse columns for a role this task does not declare.
+
+        A role given no columns asks for nothing, so it passes whatever its
+        name: a session never stores an empty role.
+
+        Raises
+        ------
+        ValueError
+            Naming the first undeclared role given columns and the task's
+            roles.
+        """
+        names = [role.name for role in self.column_roles()]
+        for name, columns in roles.items():
+            if columns and name not in names:
+                raise ValueError(
+                    f"{type(self).__name__} has no column role {name!r}. Its "
+                    f"roles are: {', '.join(names)}."
+                )
+
+    def _declared_role(self, role_name: str) -> ColumnRole:
+        for role in self.column_roles():
+            if role.name == role_name:
+                return role
+        raise ValueError(f"{type(self).__name__} has no column role {role_name!r}.")
+
+    def validate_role(
+        self, role_name: str, columns: Sequence[str], types: Mapping[str, Any]
+    ) -> None:
+        """Check one role's columns against its types and cardinality.
 
         Parameters
         ----------
-        columns : list of str
-            The selected column names.
-        types : dict
+        role_name : str
+            A declared role.
+        columns : sequence of str
+            The names of the role's columns.
+        types : mapping
             The dataset's column types, keyed by column name.
-        side : str
-            Either ``"inputs"`` or ``"outputs"``.
 
         Raises
         ------
         TypeError
-            If a column's type belongs to none of the groups.
+            If a column's type is not one the role accepts.
         ValueError
-            If a group ends up with a number of columns outside its bounds.
+            If the role gets a number of columns outside its cardinality.
         """
-        groups = self._column_groups(side)
-        counts = [0] * len(groups)
-        label = "Input" if side == "inputs" else "Output"
-
+        role = self._declared_role(role_name)
+        noun = self._role_noun(role.name, self.io_roles())
         for column in columns:
             column_type = types[column]
-            matching = [
-                index
-                for index, group in enumerate(groups)
-                if isinstance(column_type, group["types"])
-            ]
-            if not matching:
+            if not isinstance(column_type, role.types):
                 raise TypeError(
-                    f"{column_type} is not an allowed type for {side[:-1]} columns."
+                    f"{column_type} is not an allowed type for {noun} columns."
                 )
+        if not role.admits(len(columns)):
+            raise ValueError(
+                f"{noun.capitalize()} cardinality ({len(columns)}) does not "
+                f"match task cardinality ({role.cardinality_text()})"
+            )
 
-            with_room = [
-                index
-                for index in matching
-                if groups[index]["max"] == "n" or counts[index] < groups[index]["max"]
-            ]
-            counts[(with_room or matching)[0]] += 1
+    def validate_estimated_role(
+        self, role_name: str, columns: Sequence[Tuple[Optional[str], Optional[int]]]
+    ) -> None:
+        """Check one role against the columns a preprocessing chain will give it.
 
-        for group, count in zip(groups, counts, strict=True):
-            if count < group["min"] or (group["max"] != "n" and count > group["max"]):
-                of_types = (
-                    ""
-                    if len(groups) == 1
-                    else " for columns of type "
-                    + ", ".join(self._type_name(t) for t in group["types"])
+        Before the chain is fitted, its estimated structure only names the
+        type of each output and may not know how many columns a block holds.
+
+        Parameters
+        ----------
+        role_name : str
+            A declared role.
+        columns : sequence of (type name, count)
+            One entry per estimated output: the name of its type, or None when
+            unknown, and how many columns it holds, or None when unknown. An
+            unknown count is taken as at least one, and only the role's
+            minimum is checked then.
+
+        Raises
+        ------
+        TypeError
+            If an output's type is not one the role accepts.
+        ValueError
+            If the role gets a number of columns outside its cardinality.
+        """
+        role = self._declared_role(role_name)
+        noun = self._role_noun(role.name, self.io_roles())
+        for column_type, _ in columns:
+            if not role.accepts_type_name(column_type):
+                raise TypeError(
+                    f"{column_type} is not an allowed type for {noun} columns."
                 )
-                raise ValueError(
-                    f"{label} cardinality ({count}) does not match task "
-                    f"cardinality ({self._cardinality_text(group)}){of_types}"
-                )
+        known = sum(count for _, count in columns if count is not None)
+        unknown = sum(1 for _, count in columns if count is None)
+        fits = known + unknown >= role.min if unknown else role.admits(known)
+        if not fits:
+            raise ValueError(
+                f"{noun.capitalize()} cardinality ({known + unknown}) does not "
+                f"match task cardinality ({role.cardinality_text()})"
+            )
+
+    def validate_roles(
+        self, roles: Mapping[str, Sequence[str]], types: Mapping[str, Any]
+    ) -> None:
+        """Check a session's columns, role by role, against the declaration.
+
+        Columns for a role the task does not declare are refused first; then
+        the declared roles are checked in the order the task declares them. A
+        role the mapping leaves out counts as given no columns.
+
+        Parameters
+        ----------
+        roles : mapping
+            Role name to the names of the role's columns.
+        types : mapping
+            The dataset's column types, keyed by column name.
+
+        Raises
+        ------
+        ValueError
+            If a role the task does not declare is given columns, or a role
+            gets a number of columns outside its cardinality.
+        TypeError
+            If a column's type is not one its role accepts.
+        """
+        self.check_role_names(roles)
+        for role in self.column_roles():
+            self.validate_role(role.name, list(roles.get(role.name) or []), types)
 
     def validate_dataset_for_task(
         self,
         dataset: "DashAIDataset",
         dataset_name: str,
         input_columns: List[str],
-        output_columns: List[str],
+        output_columns: List[str] | None,
     ) -> None:
         """Validate a dataset for the current task.
+
+        The columns arrive as a model's inputs and outputs, the way the units
+        hand them over, and are checked as the roles they came from.
 
         Parameters
         ----------
@@ -321,15 +404,14 @@ class BaseTask:
         output_columns : list of str
             Names of the columns selected as outputs.
         """
-        types = dataset._types
-        self._validate_side(input_columns, types, "inputs")
-        self._validate_side(output_columns, types, "outputs")
+        roles = self.roles_from_io(input_columns, output_columns or [])
+        self.validate_roles(roles, dataset._types)
 
     def prepare_for_task(
         self,
         dataset: Union["DatasetDict", "DashAIDataset"],
         input_columns: List[str],
-        output_columns: List[str],
+        output_columns: List[str] | None = None,
     ) -> "DashAIDataset":
         """Prepare and validate a dataset for this task.
 
@@ -344,8 +426,9 @@ class BaseTask:
             converted to ``DashAIDataset`` automatically.
         input_columns : list of str
             Names of columns to use as model inputs.
-        output_columns : list of str
-            Names of columns to use as model outputs/targets.
+        output_columns : list of str, optional
+            Names of columns to use as model outputs/targets. Tasks without
+            targets, such as clustering, can omit this argument.
 
         Returns
         -------
@@ -363,6 +446,7 @@ class BaseTask:
         from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 
         dashai_dataset = to_dashai_dataset(dataset)
+        output_columns = output_columns or []
         self.validate_dataset_for_task(
             dashai_dataset,
             dataset_name=getattr(dashai_dataset, "name", "dataset"),
@@ -370,24 +454,6 @@ class BaseTask:
             output_columns=output_columns,
         )
         return dashai_dataset
-
-    @abstractmethod
-    def num_labels(self, dataset: "DashAIDataset", output_column: str) -> int | None:
-        """Get the number of unique labels in the output column.
-
-        Parameters
-        ----------
-        dataset : DashAIDataset
-            Dataset used for training
-        output_column : str
-            Output column
-
-        Returns
-        -------
-        int | None
-            Number of unique labels or None if not applicable
-        """
-        raise NotImplementedError
 
     def _validate_and_normalize_value(
         self,
@@ -412,7 +478,7 @@ class BaseTask:
         Returns
         -------
         Any
-            Normalized value
+            Normalized value, or None for a missing cell (None or NaN).
 
         Raises
         ------
@@ -422,6 +488,12 @@ class BaseTask:
             If value doesn't match expected type
         """
         import numpy as np
+
+        # A missing cell is not a wrong type: a session may impute it, and a
+        # model that cannot handle it is reported by the prediction step,
+        # which names the rows and columns.
+        if value is None or (isinstance(value, float) and np.isnan(value)):
+            return None
 
         col_type = column_spec.get("type")
         dtype = column_spec.get("dtype")

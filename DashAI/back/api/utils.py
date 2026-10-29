@@ -9,6 +9,28 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
+def task_or_http_error(task_name: str, component_registry):
+    """The task a session names, or the HTTP error that says why there is none.
+
+    404 when the task is not registered, 500 when its constructor raised
+    (``session_task``).
+    """
+    from DashAI.back.tasks.session_roles import (
+        TaskNotRegisteredError,
+        TaskUnavailableError,
+        session_task,
+    )
+
+    try:
+        return session_task(task_name, component_registry)
+    except TaskNotRegisteredError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except TaskUnavailableError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from e
+
+
 def parse_params(model_class, params):
     """
     Parse JSON from string to pydantic model.
@@ -108,3 +130,32 @@ def remove_path(path):
         shutil.rmtree(path)
     else:
         raise ValueError("file {} is not a file or dir.".format(path))
+
+
+def offered_components(component_registry, task_name: str, component_type: str):
+    """Name the components of one type that the registry offers a task.
+
+    The wizard builds every selector of a session from the same relation
+    (``GET /component/?related_component=<task>``), so asking it here is how an
+    endpoint refuses what the front would never have offered: a strategy, a
+    splitter or a model put together by hand for a task it does not serve.
+
+    Parameters
+    ----------
+    component_registry : ComponentRegistry
+        Registry that relates components to the tasks they serve.
+    task_name : str
+        The task, which must be registered.
+    component_type : str
+        The registry type to keep, such as ``"Splitter"`` or ``"Model"``.
+
+    Returns
+    -------
+    list of str
+        The names, sorted.
+    """
+    return sorted(
+        component["name"]
+        for component in component_registry.get_related_components(task_name)
+        if component.get("type") == component_type
+    )

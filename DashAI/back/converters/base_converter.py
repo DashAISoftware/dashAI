@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, Final, List, Optional, Type, Union
 
 from DashAI.back.config_object import ConfigObject
+from DashAI.back.core.data_kinds import normalize_data_kinds, type_names
 from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.preprocessing.structure_types import (
     BlockItem,
@@ -35,9 +36,14 @@ class BaseConverter(ConfigObject, ABC):
     Converters modify dataset columns in a supervised or unsupervised way.
     Operations include scaling, encoding, dimensionality reduction, imputation,
     and feature engineering. Converters do not add or remove rows unless
-    `changes_row_count` returns True (e.g. samplers).
+    `CHANGES_ROW_COUNT` is True (e.g. samplers).
 
     All converters must implement `fit`, `transform`, and `get_output_type`.
+
+    On documents, a converter whose output type is the other document
+    content type (such as an OCR turning images into text) moves each item
+    to that type. `OUTPUT_KIND` names the element kind the moved items get;
+    when None they get the default kind of their new type.
     """
 
     TYPE: Final[str] = "Converter"
@@ -69,6 +75,7 @@ class BaseConverter(ConfigObject, ABC):
     # which — called on a bare unfitted instance — has no idea what column
     # it will actually run on.
     PRESERVES_INPUT_TYPE: bool = False
+    OUTPUT_KIND: Optional[str] = None
     # What the converter does to the columns in its scope, used to estimate
     # the dataset structure of a session's converter chain before any fit
     # (see infer_output_columns):
@@ -76,7 +83,8 @@ class BaseConverter(ConfigObject, ABC):
     # - "add": keeps its scope columns and adds new ones
     # - "expand": consumes its scope columns and outputs new ones
     # - "select": keeps a subset of its scope columns, unchanged
-    # - "rows": changes the row count (not supported in sessions yet)
+    # - "rows": changes the row count, keeping its scope columns; sessions
+    #   support it only when ROWS_APPLY_TO is set (see below)
     # None (e.g. an older plugin) is treated as "expand" with an unknown
     # column count, which never promises a column that may not exist.
     COLUMN_OPERATION: Optional[str] = None
@@ -87,7 +95,32 @@ class BaseConverter(ConfigObject, ABC):
     #   (row removal; the converter must implement rows_to_keep).
     # None means sessions do not support it yet.
     ROWS_APPLY_TO: Optional[str] = None
+    # Defaults a model session uses instead of the schema's, for parameters
+    # whose right value depends on where the converter runs. A session fits on
+    # the training rows only, so an encoder there treats a category it did
+    # not see, while the schema keeps it strict for the notebook, whose
+    # output is saved. The session wizard seeds its form with them
+    # (``session_params`` in the metadata), and the backend fills them into a
+    # session step that leaves them out (``session_params``).
+    SESSION_PARAMS: Dict[str, Any] = {}
     SCHEMA: BaseConverterSchema
+
+    @classmethod
+    def session_params(cls, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """A session step's params, with the session defaults under them.
+
+        Parameters
+        ----------
+        params : dict or None
+            The params the step stores.
+
+        Returns
+        -------
+        dict
+            ``SESSION_PARAMS`` updated with ``params``: what the step gives
+            wins.
+        """
+        return {**cls.SESSION_PARAMS, **(params or {})}
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -123,9 +156,13 @@ class BaseConverter(ConfigObject, ABC):
         meta["learns_from_data"] = cls.LEARNS_FROM_DATA
         meta["column_operation"] = cls.COLUMN_OPERATION
         meta["rows_apply_to"] = cls.ROWS_APPLY_TO
+        meta["session_params"] = dict(cls.SESSION_PARAMS)
         meta["n_components_features_bounded"] = getattr(
             cls, "N_COMPONENTS_FEATURES_BOUNDED", False
         )
+        meta["data_kinds"] = normalize_data_kinds(meta.get("data_kinds"))
+        if meta.get("document_allowed_types"):
+            meta["document_allowed_types"] = type_names(meta["document_allowed_types"])
 
         # Serialize allowed_types to the names the frontend compares against.
         # A DashAI type reports its own name via display_name(), which is the
@@ -174,6 +211,32 @@ class BaseConverter(ConfigObject, ABC):
             meta["output_dtype"] = None
 
         return meta
+
+    def get_report(self) -> Union[Dict[str, Any], None]:
+        """Return the converter report produced after execution, if any.
+
+        The report complements the transformed dataset with information that
+        helps downstream tools (explorers, visualisations) interpret what the
+        converter did during its pipeline step. Persisted to disk per converter
+        execution. Optional — converters that produce no supplementary
+        information return ``None``.
+
+        Returns
+        -------
+        Dict[str, Any] or None
+            JSON-serializable report dict, or ``None`` when the converter does
+            not produce one.
+        """
+        return None
+
+    def build_report(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Wrap converter-specific data with the producer converter name.
+
+        Subclasses pass only information that is useful after the conversion
+        has finished. Configuration parameters are already persisted with the
+        converter DB row.
+        """
+        return {"converter": self.__class__.__name__, **data}
 
     def infer_output_columns(self, inputs: List[StateItem]) -> StructureDelta:
         """Estimate what this converter does to its scope, without any data.

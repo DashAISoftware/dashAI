@@ -282,10 +282,16 @@ def test_a_unit_does_not_write_domain_rows(name, cls):
     do open a session, always read-only (``db.get`` / ``db.query``); the ones
     whose verb is "save" write to disk and publish the path.
 
-    The one place a unit reaches a write is indirect and named:
-    ``EvaluateModelUnit`` calls ``BaseModel.calculate_metrics``, which persists
-    through a session of its own. That is why that unit needs a real ``Run``
-    row and refuses to run without one.
+    What this cannot see is a write made on a unit's behalf. Four units reach
+    ``Metric`` rows through ``BaseModel``, which persists through a session of
+    its own: ``EvaluateModelUnit`` (LAST), ``FitModelUnit`` (TRIAL, and the
+    per-epoch rows of models that log while training), ``FitModelOverFoldsUnit``
+    (FOLD and TRIAL) and ``FitModelOverNestedFoldsUnit`` (OUTER_FOLD). Every one
+    of those writes is gated on the model's ``run_id``, which is what keeps a
+    pipeline -- where it is always None -- from writing any. Nor does it see a
+    module-level helper the unit hands a session to. ``EvaluateModelUnit`` is
+    the one that refuses to run without a ``Run`` row, because writing is all
+    it does. See DAG_ENGINE.md, section 15.1.
     """
     # Whatever the unit bound its session to, rather than a fixed list of
     # names: a unit that writes through ``as s:`` would otherwise slip past.
@@ -334,6 +340,10 @@ NEEDS_A_WIDGET = {
     ("load_dataset_unit.py", "dataset_id"): "dataset selector",
     ("load_dataset_unit.py", "notebook_id"): "notebook selector",
     ("load_datafile_dataset_unit.py", "datafile_id"): "datafile selector",
+    ("store_datafile_document_source_unit.py", "datafile_id"): "datafile selector",
+    ("store_datafile_document_source_unit.py", "path"): "directory picker",
+    ("store_uploaded_document_source_unit.py", "path"): "directory picker",
+    ("save_document_to_path_unit.py", "path"): "directory picker",
     ("load_run_model_unit.py", "run_id"): "run selector",
     ("load_trained_model_unit.py", "run_id"): "run selector",
     ("run_exploration_unit.py", "explorer_id"): "exploration selector",

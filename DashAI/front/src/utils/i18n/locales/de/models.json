@@ -1,5 +1,6 @@
 {
   "button": {
+    "exportModel": "Modell exportieren",
     "addConverter": "Converter hinzufügen",
     "addNewPrediction": "Neue Vorhersage hinzufügen",
     "createExplainer": "Erklärungsmodell erstellen",
@@ -25,9 +26,16 @@
     "showOperations": "Operationen anzeigen",
     "showParameters": "Parameter anzeigen",
     "updateAndRetrain": "Aktualisieren und neu trainieren",
-    "uploadNewDataset": "Neuen Datensatz hochladen"
+    "uploadNewDataset": "Neuen Datensatz hochladen",
+    "exportSession": "Sitzung exportieren",
+    "importSession": "Sitzung importieren",
+    "selectAll": "Alle auswählen",
+    "selectNone": "Keine",
+    "chooseFile": "Datei auswählen",
+    "gotIt": "Verstanden"
   },
   "error": {
+    "exportModel": "Das Modell konnte nicht exportiert werden",
     "completeRequiredFields": "Bitte füllen Sie alle Pflichtfelder aus",
     "createRun": "Fehler beim Erstellen eines neuen Durchlaufs: {{name}}",
     "createRunReason": "Fehler beim Erstellen eines neuen Durchlaufs \"{{name}}\": {{reason}}",
@@ -68,7 +76,10 @@
     "failedToLoadTests": "Die gespeicherten Tests konnten nicht geladen werden.",
     "failedToDeleteTest": "Der Test konnte nicht gelöscht werden.",
     "failedToSaveTest": "Die Testergebnisse konnten nicht gespeichert werden.",
-    "fetchingInnerSplitters": "Die inneren Splitter für die verschachtelte Kreuzvalidierung konnten nicht geladen werden"
+    "fetchingInnerSplitters": "Die inneren Splitter für die verschachtelte Kreuzvalidierung konnten nicht geladen werden",
+    "exportSession": "Die Sitzung konnte nicht exportiert werden",
+    "importSession": "Die Sitzung konnte nicht importiert werden",
+    "loadExportPreview": "Die Läufe der Sitzung konnten nicht geladen werden"
   },
   "label": {
     "addModelToSession": "Modell zur Sitzung hinzufügen",
@@ -131,7 +142,7 @@
     "inputColumns": "Eingabespalten",
     "baseColumnsTitle": "Ausgabe- und Kandidatenspalten",
     "baseColumnsDescription": "Wählen Sie die Ausgabespalte (die das Modell vorherzusagen lernt) und die Kandidatenspalten, die in das Modell einfließen können. Die Vorverarbeitung arbeitet nur mit den Kandidatenspalten, die Ausgabe wird nie transformiert.",
-    "candidateColumns": "Kandidatenspalten",
+    "candidatesForRole": "{{role}} (Kandidatenspalten)",
     "less": "Kleiner (Modell 1 < Modell 2)",
     "lines": "Linien",
     "liveMetrics": "Live-Metriken",
@@ -293,9 +304,27 @@
     "validationMetrics": "Validierungsmetriken",
     "validationSet": "Validierungsmenge",
     "viewResultsAs": "Ergebnisse als Spalten oder Graphen anzeigen",
+    "last": "Ergebnis",
+    "supervisedBadge": "Überwacht",
+    "unsupervisedBadge": "Unüberwacht",
     "wilcoxonPairwiseComparisons": "Paarweise Wilcoxon-Tests mit Holm-Korrektur",
     "withHpo": "Mit HPO",
-    "withoutHpo": "Ohne HPO"
+    "withoutHpo": "Ohne HPO",
+    "exportSessionTitle": "\"{{name}}\" exportieren",
+    "includeTrainedModels": "Trainierte Modelle einschließen",
+    "includeTrainedModelsHelp": "Deaktivieren, um nur die Konfiguration ohne trainierte Modelle zu exportieren: Die Datei ist kleiner, und wer sie importiert, muss die Modelle trainieren.",
+    "recipeOnly": "kommt untrainiert an",
+    "waitUntilFinished": "warten, bis es fertig ist",
+    "approxSize": "Ungefähre Größe: {{size}}",
+    "includesDataset": "Die Datei enthält den Datensatz \"{{name}}\". Teile sie nicht, wenn die Daten privat sind.",
+    "importSessionWarning": "Eine Sitzung enthält Modelle, die beim Verwenden Code ausführen. Importiere nur Sitzungen von Personen, denen du vertraust.",
+    "sessionImported": "Sitzung als \"{{session}}\" mit dem Datensatz \"{{dataset}}\" importiert",
+    "importedRecipeRuns": "Diese Läufe kamen untrainiert an: {{names}}",
+    "importedNeedsDownloadTrained": "Mit diesen Modellen kannst du Vorhersagen machen, aber um sie neu zu trainieren, lade sie zuerst unter Verfügbare Modelle herunter: {{names}}",
+    "importedNeedsDownloadUntrained": "Diese Modelle kamen untrainiert an und müssen vor dem Training heruntergeladen werden: {{names}}",
+    "importingSession": "Sitzung wird importiert...",
+    "importingSessionHelp": "Das kann etwas dauern, wenn die Sitzung trainierte Modelle enthält.",
+    "sessionImportedTitle": "Sitzung importiert"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} hat alle Durchläufe abgeschlossen.",

@@ -757,3 +757,50 @@ def test_transform_by_split_removes_rows_per_split_and_reindexes():
 
     assert dataset.to_pandas()["age"].tolist() == [1, 3, 4]
     assert (train_idx, test_idx, val_idx) == ([0, 1], [2], [])
+
+
+class _DocumentOnlyConverter(_DoublingConverter):
+    """A converter that declares documents only."""
+
+    metadata = {
+        "allowed_types": [Integer],
+        "allowed_dtypes": [],
+        "data_kinds": ["document"],
+    }
+
+
+def test_a_document_only_converter_cannot_preprocess_a_session():
+    registry = _FakeRegistry({"DocOnly": _DocumentOnlyConverter})
+    sequence = ConverterSequence(
+        steps=[
+            ConverterStep(
+                converter="DocOnly", params={}, scope=[RawColumnRef(name="age")]
+            )
+        ]
+    )
+    preprocessor = SessionPreprocessor(sequence, registry)
+
+    with pytest.raises(ValueError, match="only runs on documents"):
+        preprocessor.fit_transform(_split(train_ages=[1, 2]))
+
+
+def test_transforming_rows_without_a_column_a_step_reads_names_it():
+    """What the preprocessor reads is ``ConverterSequence.raw_columns_read``,
+    the same list the endpoints use to decide which datasets can be
+    predicted on, so a dataset they offer never fails here."""
+    registry = _FakeRegistry({"Doubler": _DoublingConverter})
+    sequence = ConverterSequence(
+        steps=[
+            ConverterStep(
+                converter="Doubler", params={}, scope=[RawColumnRef(name="age")]
+            )
+        ]
+    )
+    preprocessor = SessionPreprocessor(sequence, registry)
+    preprocessor.fit_transform(_split(train_ages=[1, 2, 3]))
+    rows = _dataset(
+        {"height": [1.5]}, {"height": {"type": "Float", "dtype": "float64"}}
+    )
+
+    with pytest.raises(ValueError, match="the preprocessing reads: 'age'"):
+        preprocessor.transform_dataset(rows)

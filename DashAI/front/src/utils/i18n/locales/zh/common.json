@@ -80,6 +80,7 @@
   "finish": "完成",
   "finished": "已完成",
   "from": "从",
+  "full": "完整",
   "generative": "生成式",
   "graphs": "图表",
   "hardwareMonitor": {
@@ -266,5 +267,6 @@
   "viewDetails": "查看详情",
   "viewLess": "查看更少",
   "viewMore": "查看更多",
-  "yes": "是"
+  "yes": "是",
+  "data": "数据"
 }

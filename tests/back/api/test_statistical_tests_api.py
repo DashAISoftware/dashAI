@@ -4,6 +4,7 @@ from scipy.stats import ttest_rel
 from statsmodels.stats.multitest import multipletests
 
 from DashAI.back.dependencies.database.models import Dataset, ModelSession
+from tests.back.session_columns import xy_roles
 
 
 @pytest.fixture(name="model_session_id")
@@ -16,8 +17,7 @@ def create_model_session_id(client: TestClient, dataset_1: Dataset):
             dataset_id=dataset_1.id,
             name="statistical-tests-session",
             task_name="TabularClassificationTask",
-            input_columns=["SepalLengthCm", "SepalWidthCm"],
-            output_columns=["Species"],
+            column_roles=xy_roles(["SepalLengthCm", "SepalWidthCm"], ["Species"]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],

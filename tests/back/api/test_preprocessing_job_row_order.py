@@ -10,10 +10,10 @@ not: the entries still come in the same number, and ``zip(strict=True)`` in
 the prepare units only checks that. A fold fitted on the wrong rows is also a
 leak, since those rows may be the ones that fold is scored on.
 
-The task here reverses the rows, which is the smallest reordering that tells
-the two datasets apart. What each preprocessor must have been fitted on is
-asked of the splitter itself, over the prepared dataset, which is what the
-prepare units hand it.
+The task here reverses the rows (``row_order_tasks.ReversingTask``), which is
+the smallest reordering that tells the two datasets apart. What each
+preprocessor must have been fitted on is asked of the splitter itself, over
+the prepared dataset, which is what the prepare units hand it.
 
 Lives under ``tests/back/api`` to reuse the ``client`` and ``dataset_1``
 fixtures from this package's ``conftest.py``.
@@ -28,7 +28,7 @@ from DashAI.back.dataloaders.classes.dashai_dataset import load_dataset
 from DashAI.back.dependencies.database.models import Dataset
 from DashAI.back.preprocessing.session_preprocessor import SessionPreprocessor
 from DashAI.back.splitters.splits_payload import normalize_splits_payload
-from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
+from tests.back.api.row_order_tasks import ReversingTask
 
 OUTPUT_COLUMNS = ["Species"]
 
@@ -53,14 +53,6 @@ KFOLD = {
         "seed": 42,
     },
 }
-
-
-class ReversingTask(TabularClassificationTask):
-    """A task whose preparation hands the rows back in reverse order."""
-
-    def prepare_for_task(self, dataset, input_columns, output_columns):
-        prepared = super().prepare_for_task(dataset, input_columns, output_columns)
-        return prepared.select(range(len(prepared) - 1, -1, -1))
 
 
 @pytest.fixture(name="reversing_task", scope="module")
@@ -103,8 +95,12 @@ def test_each_preprocessor_is_fitted_on_the_rows_its_entry_trains_on(
             "dataset_id": dataset_1.id,
             "task_name": reversing_task.__name__,
             "name": f"preprocessing-row-order-{strategy['evaluation_strategy']}",
-            "input_columns": [],
-            "output_columns": OUTPUT_COLUMNS,
+            "column_roles": {
+                "features": [{"kind": "group", "step": 0}],
+                "target": [
+                    {"kind": "raw", "name": column} for column in OUTPUT_COLUMNS
+                ],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -117,7 +113,6 @@ def test_each_preprocessor_is_fitted_on_the_rows_its_entry_trains_on(
                     "scope": [{"kind": "raw", "name": "SepalLengthCm"}],
                 },
             ],
-            "input_column_refs": [{"kind": "group", "step": 0}],
         },
     )
     assert response.status_code == 201, response.text

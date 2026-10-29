@@ -7,8 +7,11 @@ EXPECTED_UNITS = {
     "LoadDatasetUnit",
     "PrepareAndSplitUnit",
     "PrepareAndFoldUnit",
+    "PrepareWithoutTargetUnit",
     "BuildModelUnit",
     "FitModelUnit",
+    "FitWithoutTargetUnit",
+    "ScoreClustersUnit",
     "FitModelOverFoldsUnit",
     "FitModelOverNestedFoldsUnit",
     "EvaluateModelUnit",
@@ -38,6 +41,10 @@ EXPECTED_UNITS = {
     "ApplyDatasetSchemaUnit",
     "ComputeDatasetMetadataUnit",
     "SaveDatasetToPathUnit",
+    "StoreUploadedDocumentSourceUnit",
+    "StoreDatafileDocumentSourceUnit",
+    "ParseDocumentUnit",
+    "SaveDocumentToPathUnit",
 }
 
 
@@ -91,6 +98,25 @@ def test_unit_schemas_describe_their_configuration(units):
         units["PrepareAndFoldUnit"]["schema"]["properties"]["splitter"]["parent"]
         == "FoldSplitter"
     )
+    # Rebuilding a run's data for an explanation reads the same refs, to
+    # prepare the task with the raw columns training prepared with. Its
+    # artifacts path is a runtime param, so it stays out of the form.
+    assert set(units["PrepareExplanationDataUnit"]["schema"]["properties"]) == {
+        "task_name",
+        "input_columns",
+        "output_columns",
+        "input_column_refs",
+    }
+    # The target-free counterparts. Preparing has no output columns and no
+    # splitter to pick, fitting has nothing to configure, and scoring only
+    # names the metrics: the labels come from the model it is handed.
+    assert set(units["PrepareWithoutTargetUnit"]["schema"]["properties"]) == {
+        "task_name",
+        "input_columns",
+        "standardise",
+    }
+    assert units["FitWithoutTargetUnit"]["schema"]["properties"] == {}
+    assert set(units["ScoreClustersUnit"]["schema"]["properties"]) == {"metrics"}
     assert "model" in units["BuildModelUnit"]["schema"]["properties"]
     assert "optimizer" in units["FitModelUnit"]["schema"]["properties"]
     assert set(units["ApplyConverterUnit"]["schema"]["properties"]) == {
@@ -166,6 +192,16 @@ def test_unit_schemas_describe_their_configuration(units):
     # happens to compute it, but on a canvas picking where to store a dataset
     # is a decision, and a value a user can know while filling the form in.
     assert set(units["SaveDatasetToPathUnit"]["schema"]["properties"]) == {"path"}
+    assert set(units["StoreUploadedDocumentSourceUnit"]["schema"]["properties"]) == {
+        "path"
+    }
+    assert set(units["StoreDatafileDocumentSourceUnit"]["schema"]["properties"]) == {
+        "datafile_id",
+        "selected_file",
+        "path",
+    }
+    assert set(units["ParseDocumentUnit"]["schema"]["properties"]) == {"dataloader"}
+    assert set(units["SaveDocumentToPathUnit"]["schema"]["properties"]) == {"path"}
 
 
 def test_component_fields_tell_the_front_which_components_to_offer(units):
@@ -238,6 +274,8 @@ def get_unit_classes(client: TestClient):
 EXPECTED_RUNTIME_PARAMS = {
     ("LoadUploadedDatasetUnit", "temp_path"),
     ("LoadDatafileDatasetUnit", "temp_path"),
+    ("StoreUploadedDocumentSourceUnit", "upload_path"),
+    ("StoreUploadedDocumentSourceUnit", "file_name"),
     ("LoadTrainingDatasetUnit", "train_dataset_file_path"),
     ("BuildManualInputUnit", "train_dataset_file_path"),
     ("ApplySessionPreprocessingUnit", "preprocessing_artifacts_path"),

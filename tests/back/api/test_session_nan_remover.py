@@ -81,8 +81,10 @@ def test_a_session_with_nan_remover_trains_and_explains(
             "dataset_id": incomplete_dataset.id,
             "task_name": "TabularClassificationTask",
             "name": "nan-remover-session",
-            "input_columns": ["age", "height"],
-            "output_columns": ["label"],
+            "column_roles": {
+                "features": raw,
+                "target": [{"kind": "raw", "name": "label"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -100,7 +102,6 @@ def test_a_session_with_nan_remover_trains_and_explains(
                 }
             ),
             "preprocessing": [{"converter": "NanRemover", "params": {}, "scope": raw}],
-            "input_column_refs": raw,
         },
     )
     assert session.status_code == 201, session.text

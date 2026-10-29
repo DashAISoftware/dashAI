@@ -17,17 +17,18 @@ from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
 from DashAI.back.job.predict_job import PredictJob
 from DashAI.back.metrics.base_metric import BaseMetric
-from DashAI.back.models.base_model import BaseModel
 from DashAI.back.models.scikit_learn.k_neighbors_classifier import (
     KNeighborsClassifier,
 )
+from DashAI.back.models.supervised_model import SupervisedModel
 from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 from DashAI.back.splitters.holdout import HoldoutSplitter
-from DashAI.back.tasks.base_task import BaseTask
+from DashAI.back.tasks.supervised_task import SupervisedTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
+from tests.back.session_columns import xy_roles
 
 
-class DummyTask(BaseTask):
+class DummyTask(SupervisedTask):
     name: str = "DummyTask"
     metadata: dict = {
         "inputs_types": [ClassLabel, Value],
@@ -36,11 +37,11 @@ class DummyTask(BaseTask):
         "outputs_cardinality": 1,
     }
 
-    def prepare_for_task(self, dataset, output_columns):
+    def prepare_for_task(self, dataset, input_columns=None, output_columns=None):
         return dataset
 
 
-class DummyModel(BaseModel):
+class DummyModel(SupervisedModel):
     COMPATIBLE_COMPONENTS = ["DummyTask"]
 
     def save(self, filename):
@@ -214,8 +215,9 @@ def create_model_session(client: TestClient, dataset: Dataset):
             dataset_id=dataset["id"],
             name="Experiment",
             task_name="TabularClassificationTask",
-            input_columns=["feature_0", "feature_1", "feature_2", "feature_3"],
-            output_columns=["class"],
+            column_roles=xy_roles(
+                ["feature_0", "feature_1", "feature_2", "feature_3"], ["class"]
+            ),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],

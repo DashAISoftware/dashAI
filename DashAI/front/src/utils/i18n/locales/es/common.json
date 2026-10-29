@@ -84,6 +84,7 @@
   "finish": "Finalizar",
   "finished": "Finalizado",
   "from": "Desde",
+  "full": "Completo",
   "generative": "Generativo",
   "graphs": "Gráficos",
   "hardwareMonitor": {
@@ -288,5 +289,6 @@
   "viewDetails": "Ver Detalles",
   "viewLess": "Ver menos",
   "viewMore": "Ver más",
-  "yes": "Sí"
+  "yes": "Sí",
+  "data": "Datos"
 }

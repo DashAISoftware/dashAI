@@ -21,17 +21,19 @@ def create_model_session(client: TestClient, dataset_id):
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "Test Experiment",
-            "input_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
-            "evaluation_strategy": "holdout",
+            "evaluation_strategy": "HoldoutEvaluationStrategy",
             "splits": json.dumps(
                 {
                     "train": 0.5,
@@ -137,13 +139,15 @@ def test_create_run_with_cross_validation_strategy(client: TestClient, dataset_i
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "CV Session",
-            "input_columns": [
-                "SepalLengthCm",
-                "SepalWidthCm",
-                "PetalLengthCm",
-                "PetalWidthCm",
-            ],
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [
+                    {"kind": "raw", "name": "SepalLengthCm"},
+                    {"kind": "raw", "name": "SepalWidthCm"},
+                    {"kind": "raw", "name": "PetalLengthCm"},
+                    {"kind": "raw", "name": "PetalWidthCm"},
+                ],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
