@@ -18,7 +18,9 @@ from DashAI.back.dataloaders.classes.dashai_dataset import (
     to_dashai_dataset,
     transform_dataset_with_schema,
 )
-from DashAI.back.tasks.forecasting_task import ForecastingTask
+from DashAI.back.tasks.single_series_forecasting_task import (
+    SingleSeriesForecastingTask,
+)
 
 SHUFFLED = ["2020-03-01", "2020-01-01", "2020-04-01", "2020-02-01"]
 VALUES = [30.0, 10.0, 40.0, 20.0]
@@ -35,7 +37,7 @@ def _dataset(dates, values, date_format="%Y-%m-%d"):
 
 
 def test_rows_come_back_in_date_order():
-    prepared = ForecastingTask().prepare_for_task(
+    prepared = SingleSeriesForecastingTask().prepare_for_task(
         _dataset(SHUFFLED, VALUES), ["date"], ["v"]
     )
 
@@ -51,7 +53,7 @@ def test_rows_come_back_in_date_order():
 def test_the_target_travels_with_its_own_date():
     # The failure that matters: a sort that moved the dates but not the values
     # would silently pair every observation with the wrong day.
-    prepared = ForecastingTask().prepare_for_task(
+    prepared = SingleSeriesForecastingTask().prepare_for_task(
         _dataset(SHUFFLED, VALUES), ["date"], ["v"]
     )
 
@@ -63,7 +65,7 @@ def test_an_already_sorted_dataset_is_left_as_it_is():
     ordered = ["2020-01-01", "2020-02-01", "2020-03-01", "2020-04-01"]
     values = [10.0, 20.0, 30.0, 40.0]
 
-    prepared = ForecastingTask().prepare_for_task(
+    prepared = SingleSeriesForecastingTask().prepare_for_task(
         _dataset(ordered, values), ["date"], ["v"]
     )
 
@@ -74,23 +76,24 @@ def test_an_already_sorted_dataset_is_left_as_it_is():
 
 def test_sorting_reads_the_columns_declared_format():
     # Day first dates sort wrongly as text: "01/02/2020" precedes "31/01/2020"
-    # alphabetically while following it in time.
-    dates = ["31/01/2020", "01/02/2020", "15/01/2020"]
-    prepared = ForecastingTask().prepare_for_task(
-        _dataset(dates, [31.0, 1.0, 15.0], date_format="%d/%m/%Y"),
+    # alphabetically while following it in time. Three consecutive days, so
+    # the series also sits on its grid.
+    dates = ["31/01/2020", "01/02/2020", "30/01/2020"]
+    prepared = SingleSeriesForecastingTask().prepare_for_task(
+        _dataset(dates, [31.0, 1.0, 30.0], date_format="%d/%m/%Y"),
         ["date"],
         ["v"],
     )
 
     frame = prepared.to_pandas()
-    assert list(frame["date"]) == ["15/01/2020", "31/01/2020", "01/02/2020"]
-    assert list(frame["v"]) == [15.0, 31.0, 1.0]
+    assert list(frame["date"]) == ["30/01/2020", "31/01/2020", "01/02/2020"]
+    assert list(frame["v"]) == [30.0, 31.0, 1.0]
 
 
 def test_the_declared_types_survive_the_sort():
     from DashAI.back.types.value_types import Date
 
-    prepared = ForecastingTask().prepare_for_task(
+    prepared = SingleSeriesForecastingTask().prepare_for_task(
         _dataset(SHUFFLED, VALUES), ["date"], ["v"]
     )
 
@@ -109,4 +112,4 @@ def test_an_unreadable_date_is_still_rejected_by_validation():
     )
 
     with pytest.raises(TypeError):
-        ForecastingTask().prepare_for_task(dataset, ["note"], ["v"])
+        SingleSeriesForecastingTask().prepare_for_task(dataset, ["note"], ["v"])

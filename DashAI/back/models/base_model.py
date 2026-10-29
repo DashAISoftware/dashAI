@@ -10,11 +10,34 @@ from kink import di
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Metric
+from DashAI.back.metrics.undefined_metric import (
+    Unavailable,
+    UndefinedMetricError,
+    describe_undefined,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logger = logging.getLogger(__name__)
+
+
+def _value_and_reason(result: Any) -> tuple:
+    """A metric result as the value and the reason a ``Metric`` row holds."""
+    if isinstance(result, Unavailable):
+        return None, result.reason
+    return result, None
+
+
+def _scores_only(results: Optional[Dict[str, Any]]) -> Optional[Dict[str, float]]:
+    """The scored metrics alone, without the ones that had no value."""
+    if results is None:
+        return None
+    return {
+        name: value
+        for name, value in results.items()
+        if not isinstance(value, Unavailable)
+    }
 
 
 class BaseModel(ConfigObject, metaclass=ABCMeta):
@@ -186,6 +209,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             # 2. Handle 'LAST' level replacement logic
             if level == LevelEnum.LAST:
                 for name, value in results.items():
+                    score, reason = _value_and_reason(value)
                     existing = (
                         db.query(Metric)
                         .filter_by(
@@ -195,7 +219,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                     )
 
                     if existing:
-                        existing.value = value
+                        existing.value = score
+                        existing.unavailable_reason = reason
                         existing.step = log_index
                     else:
                         db.add(
@@ -204,7 +229,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                                 split=split,
                                 level=level,
                                 name=name,
-                                value=value,
+                                value=score,
+                                unavailable_reason=reason,
                                 step=log_index,
                             )
                         )
@@ -217,12 +243,13 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                         split=split,
                         level=level,
                         name=name,
-                        value=score,
+                        value=_value_and_reason(value)[0],
+                        unavailable_reason=_value_and_reason(value)[1],
                         step=log_index,
                         fold_index=fold_index,
                         inner_fold_index=inner_fold_index,
                     )
-                    for name, score in results.items()
+                    for name, value in results.items()
                 ]
                 db.add_all(metric_entries)
 
@@ -256,12 +283,17 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
 
         Returns
         -------
-        Optional[Dict[str, float]]
+        Optional[Dict[str, float or Unavailable]]
             The finite scores keyed by metric name, or None when there was
             nothing to score: no metrics declared for the split, or no data
             available for it. None and an empty dict are different answers --
             the first says the question could not be asked, the second that
             every metric was asked and none returned a usable number.
+
+            A metric that raised ``UndefinedMetricError`` maps to an
+            ``Unavailable`` holding its reason. ``calculate_metrics`` records
+            it, so the run says why; ``compute_metrics`` leaves it out, as it
+            leaves out a non-finite score.
         """
         metrics = getattr(self, f"{split.value}_metrics", None)
 
@@ -287,7 +319,11 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         # Calculate metric scores
         results = {}
         for metric in metrics:
-            score = metric.score(y_transformed, y_pred)
+            try:
+                score = metric.score(y_transformed, y_pred)
+            except UndefinedMetricError as undefined:
+                results[metric.__name__] = Unavailable(describe_undefined(undefined))
+                continue
             if not math.isfinite(score):
                 logger.warning(
                     "Metric %s returned a non-finite value (%s) for split %s "
@@ -337,9 +373,10 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             mapping is empty when every metric returned one. ``None`` when
             there is nothing to score at all: no metrics configured, or no
             data for this split. Callers that need a particular metric must
-            therefore check that it is there.
+            therefore check that it is there. A metric with no value on the
+            data (``UndefinedMetricError``) is absent the same way.
         """
-        return self._score_split(split, x_data=x_data, y_data=y_data)
+        return _scores_only(self._score_split(split, x_data=x_data, y_data=y_data))
 
     @final
     def calculate_metrics(
@@ -404,19 +441,20 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         if not getattr(self, "run_id", None):
             return None
 
-        results = self._score_split(split, x_data=x_data, y_data=y_data)
-        if results is None:
+        recorded = self._score_split(split, x_data=x_data, y_data=y_data)
+        if recorded is None:
             return None
 
-        # Save to database
+        # Save to database, the unavailable metrics with their reason.
         self._save_metrics(
             split=split,
             level=level,
-            results=results,
+            results=recorded,
             log_index=log_index,
             fold_index=fold_index,
             inner_fold_index=inner_fold_index,
         )
+        results = _scores_only(recorded)
 
         # Report the epoch to whoever is watching, AFTER persisting: the reporter
         # is allowed to raise (Optuna prunes that way), and the metrics of the

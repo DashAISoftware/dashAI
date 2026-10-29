@@ -187,7 +187,10 @@ class SavePredictionUnit(BaseUnit):
         ctx.put_ref("results_path", str(full_path))
 
     def _predicts_continuous_values(self) -> bool:
-        """Whether the configured task is a regression, by its class.
+        """Whether the configured task is a regression or a forecast, by its class.
+
+        A forecast is a number on the scale of the series, as continuous as a
+        regression's: an Integer series forecast at 10.4 is not 10.
 
         Resolved from the registry by name rather than instantiated: nothing
         here calls the task, so its class is all that is needed, and the check
@@ -195,6 +198,7 @@ class SavePredictionUnit(BaseUnit):
         """
         from kink import di
 
+        from DashAI.back.tasks.forecasting_task import ForecastingTask
         from DashAI.back.tasks.regression_task import RegressionTask
 
         task_name = self.config["task_name"]
@@ -204,4 +208,4 @@ class SavePredictionUnit(BaseUnit):
             log.exception(e)
             raise JobError(f"Task {task_name} not found in the registry") from e
 
-        return issubclass(task_class, RegressionTask)
+        return issubclass(task_class, (RegressionTask, ForecastingTask))

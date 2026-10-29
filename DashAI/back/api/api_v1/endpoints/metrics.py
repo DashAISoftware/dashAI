@@ -59,6 +59,10 @@ async def live_metrics_websocket(
             # metric_name -> list of {step, value, timestamp}
             payload: dict[str, dict[str, dict[str, list]]] = {}
             for metric in metrics:
+                # The live charts plot numbers; a metric with no value on
+                # this data has none to plot, and the run's results say why.
+                if metric.value is None:
+                    continue
                 split = metric.split.name
                 level = metric.level.name
                 name = metric.name

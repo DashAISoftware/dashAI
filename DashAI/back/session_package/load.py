@@ -38,6 +38,7 @@ from DashAI.back.session_package.export import (
     SESSION_FORMAT_VERSION,
     with_unknown_handling,
 )
+from DashAI.back.units.forecast_scope import forecasts_file
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -393,6 +394,14 @@ def import_session_package(
                         run.end_time = _date(entry.get("end_time"))
                         db.add(run)
                         db.flush()
+                        if entry.get("forecasts_entry"):
+                            # Named after the run's id, which only exists now.
+                            # Small, unlike a model, so it is copied inside
+                            # the transaction, and removed with the rest if
+                            # the import fails.
+                            forecasts = forecasts_file(runs_dir, str(run.id))
+                            created.append(forecasts)
+                            shutil.copy2(workdir / entry["forecasts_entry"], forecasts)
                         db.add_all(
                             Metric(
                                 run_id=run.id,
@@ -400,6 +409,7 @@ def import_session_package(
                                 level=LevelEnum[metric["level"]],
                                 name=metric["name"],
                                 value=metric["value"],
+                                unavailable_reason=metric.get("unavailable_reason"),
                                 std_value=metric.get("std_value"),
                                 step=metric["step"],
                                 fold_index=metric.get("fold_index"),

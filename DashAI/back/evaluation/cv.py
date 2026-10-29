@@ -33,7 +33,7 @@ class CrossValidationEvaluationStrategy(FoldEvaluationStrategy):
     """Score a model across folds, recording train and validation for each.
 
     The ordinary cross-validation evaluation. Not offered for
-    ``ForecastingTask``, whose folds have no in-sample score to report;
+    ``SingleSeriesForecastingTask``, whose folds have no in-sample score to report;
     ``ForecastingCrossValidationEvaluationStrategy`` handles that.
     """
 

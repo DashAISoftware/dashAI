@@ -3,7 +3,9 @@
 from typing import TYPE_CHECKING
 
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
+from DashAI.back.metrics.forecasting_metric import ForecastingMetric, PointMetricMixin
+from DashAI.back.metrics.regression_metric import prepare_to_metric
+from DashAI.back.metrics.undefined_metric import UndefinedMetricError
 
 if TYPE_CHECKING:
     import numpy as np
@@ -11,7 +13,7 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class MAPE(RegressionMetric):
+class MAPE(PointMetricMixin, ForecastingMetric):
     """Average error as a percentage of the true value.
 
     Mean Absolute Percentage Error expresses each error relative to the value
@@ -27,10 +29,11 @@ class MAPE(RegressionMetric):
     Range: [0, +inf), lower is better.
 
     The formula divides by the true value, so it is undefined wherever that
-    value is zero. Those rows are left out of the average rather than being
-    allowed to produce an infinity that would swallow the whole score, and a
-    series that is zero throughout has no defined MAPE at all, which is
-    reported as ``nan``. Prefer :class:`SMAPE` on series that reach zero.
+    value is zero, and then the whole score is undefined: averaging only the
+    other rows would report the error of a different series, and an infinity
+    says nothing. It raises ``UndefinedMetricError``, which a run records as
+    "not available" with the reason. Prefer :class:`SMAPE` or :class:`MASE`
+    on series that reach zero.
 
     MAPE is also asymmetric: it penalises a forecast that is too high more
     heavily than one that is too low by the same amount, since the denominator
@@ -44,28 +47,28 @@ class MAPE(RegressionMetric):
     DESCRIPTION = MultilingualString(
         en=(
             "Average error as a percentage of the true value, so forecasts can "
-            "be compared across series of different sizes. Undefined where the "
-            "true value is zero, and those rows are skipped."
+            "be compared across series of different sizes. Not available when "
+            "any true value is zero."
         ),
         es=(
             "Error promedio como porcentaje del valor real, lo que permite "
             "comparar pronosticos entre series de distinta magnitud. No esta "
-            "definido cuando el valor real es cero, y esas filas se omiten."
+            "disponible si algun valor real es cero."
         ),
         pt=(
             "Erro medio como porcentagem do valor real, permitindo comparar "
-            "previsoes entre series de magnitudes diferentes. Indefinido "
-            "quando o valor real e zero, e essas linhas sao ignoradas."
+            "previsoes entre series de magnitudes diferentes. Nao esta "
+            "disponivel se algum valor real for zero."
         ),
         de=(
             "Durchschnittlicher Fehler als Prozentsatz des wahren Wertes, "
             "sodass Prognosen ueber unterschiedlich grosse Reihen hinweg "
-            "vergleichbar sind. Undefiniert, wo der wahre Wert null ist; "
-            "solche Zeilen werden uebersprungen."
+            "vergleichbar sind. Nicht verfuegbar, wenn ein wahrer Wert null "
+            "ist."
         ),
         zh=(
             "以真实值的百分比表示的平均误差，便于比较不同量级序列的预测效果。"
-            "当真实值为零时无定义，这些行会被跳过。"
+            "任一真实值为零时不可用。"
         ),
     )
 
@@ -87,16 +90,24 @@ class MAPE(RegressionMetric):
         Returns
         -------
         float
-            MAPE as a percentage. ``nan`` when every true value is zero, since
-            no row of such a series has a defined percentage error.
+            MAPE as a percentage.
+
+        Raises
+        ------
+        UndefinedMetricError
+            If any true value is zero.
         """
         import numpy as np
 
         true_values, pred_values = prepare_to_metric(true_values, pred_values)
 
-        defined = true_values != 0
-        if not defined.any():
-            return float("nan")
+        zeros = np.flatnonzero(true_values == 0)
+        if len(zeros):
+            raise UndefinedMetricError(
+                "MAPE divides by each actual value, and the actual value is zero",
+                positions=zeros,
+                hint="Use SMAPE or MASE for a series that reaches zero.",
+            )
 
-        errors = np.abs(true_values[defined] - pred_values[defined])
-        return float(100 * np.mean(errors / np.abs(true_values[defined])))
+        errors = np.abs(true_values - pred_values)
+        return float(100 * np.mean(errors / np.abs(true_values)))

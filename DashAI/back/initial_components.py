@@ -130,6 +130,12 @@ from DashAI.back.dataset_sources.zenodo_dataset_source import ZenodoDatasetSourc
 
 # Evaluation Strategies
 from DashAI.back.evaluation.cv import CrossValidationEvaluationStrategy
+from DashAI.back.evaluation.forecasting_cv import (
+    ForecastingCrossValidationEvaluationStrategy,
+)
+from DashAI.back.evaluation.forecasting_holdout import (
+    ForecastingHoldoutEvaluationStrategy,
+)
 from DashAI.back.evaluation.full_dataset import FullDatasetEvaluationStrategy
 from DashAI.back.evaluation.holdout import HoldoutEvaluationStrategy
 
@@ -243,6 +249,10 @@ from DashAI.back.metrics.classification.roc_auc import ROCAUC
 from DashAI.back.metrics.clustering.calinski_harabasz import CalinskiHarabasz
 from DashAI.back.metrics.clustering.davies_bouldin import DaviesBouldin
 from DashAI.back.metrics.clustering.silhouette import Silhouette
+from DashAI.back.metrics.forecasting.interval_coverage import IntervalCoverage
+from DashAI.back.metrics.forecasting.mape import MAPE
+from DashAI.back.metrics.forecasting.mase import MASE
+from DashAI.back.metrics.forecasting.smape import SMAPE
 from DashAI.back.metrics.regression.explained_variance import ExplainedVariance
 from DashAI.back.metrics.regression.mae import MAE
 from DashAI.back.metrics.regression.median_absolute_error import MedianAbsoluteError
@@ -260,6 +270,10 @@ from DashAI.back.models.efficientnet_b0_image_classifier import (
 # Models
 from DashAI.back.models.faiss.faiss_dbscan_clustering import FaissDBSCANClustering
 from DashAI.back.models.faiss.faiss_kmeans_clustering import FaissKMeansClustering
+from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
+from DashAI.back.models.forecasting.naive import NaiveForecaster
+from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
 from DashAI.back.models.hugging_face.bert_transformer import BertTransformer
 from DashAI.back.models.hugging_face.bertin_transformer import BertinTransformer
@@ -488,6 +502,12 @@ from DashAI.back.reports.classification.precision_recall_curve import (
     PrecisionRecallCurve,
 )
 from DashAI.back.reports.classification.roc_curve import RocCurve
+from DashAI.back.reports.forecasting.forecast_error_by_step import ForecastErrorByStep
+from DashAI.back.reports.forecasting.forecast_vs_actual import ForecastVsActual
+from DashAI.back.reports.forecasting.residual_autocorrelation import (
+    ResidualAutocorrelation,
+)
+from DashAI.back.reports.forecasting.residuals_over_time import ResidualsOverTime
 from DashAI.back.reports.regression.predicted_vs_actual import PredictedVsActual
 from DashAI.back.reports.regression.residual_histogram import ResidualHistogram
 from DashAI.back.reports.regression.residual_plot import ResidualPlot
@@ -539,6 +559,9 @@ from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 # Tasks
 from DashAI.back.tasks.RAG_task import RAGTask
 from DashAI.back.tasks.regression_task import RegressionTask
+from DashAI.back.tasks.single_series_forecasting_task import (
+    SingleSeriesForecastingTask,
+)
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
 from DashAI.back.tasks.text_to_image_generation_task import TextToImageGenerationTask
@@ -551,6 +574,8 @@ from DashAI.back.units.apply_dataset_schema_unit import ApplyDatasetSchemaUnit
 from DashAI.back.units.apply_session_preprocessing_unit import (
     ApplySessionPreprocessingUnit,
 )
+from DashAI.back.units.backtest_forecaster_unit import BacktestForecasterUnit
+from DashAI.back.units.build_forecaster_unit import BuildForecasterUnit
 from DashAI.back.units.build_global_explainer_unit import BuildGlobalExplainerUnit
 from DashAI.back.units.build_local_explainer_unit import BuildLocalExplainerUnit
 from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
@@ -561,12 +586,14 @@ from DashAI.back.units.evaluate_model_to_artifact_unit import (
 )
 from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
 from DashAI.back.units.fit_converter_unit import FitConverterUnit
+from DashAI.back.units.fit_final_forecaster_unit import FitFinalForecasterUnit
 from DashAI.back.units.fit_model_over_folds_unit import FitModelOverFoldsUnit
 from DashAI.back.units.fit_model_over_nested_folds_unit import (
     FitModelOverNestedFoldsUnit,
 )
 from DashAI.back.units.fit_model_unit import FitModelUnit
 from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
+from DashAI.back.units.forecast_horizon_unit import ForecastHorizonUnit
 from DashAI.back.units.generate_global_explanation_unit import (
     GenerateGlobalExplanationUnit,
 )
@@ -585,15 +612,18 @@ from DashAI.back.units.predict_unit import PredictUnit
 from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
 from DashAI.back.units.prepare_explanation_data_unit import PrepareExplanationDataUnit
+from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
 from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
 from DashAI.back.units.run_exploration_unit import RunExplorationUnit
 from DashAI.back.units.save_dataset_to_path_unit import SaveDatasetToPathUnit
 from DashAI.back.units.save_dataset_unit import SaveDatasetUnit
 from DashAI.back.units.save_document_to_path_unit import SaveDocumentToPathUnit
 from DashAI.back.units.save_exploration_unit import SaveExplorationUnit
+from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 from DashAI.back.units.save_prediction_unit import SavePredictionUnit
 from DashAI.back.units.score_clusters_unit import ScoreClustersUnit
+from DashAI.back.units.score_forecasts_unit import ScoreForecastsUnit
 from DashAI.back.units.store_datafile_document_source_unit import (
     StoreDatafileDocumentSourceUnit,
 )
@@ -629,7 +659,12 @@ def get_initial_components():
         RAGTask,
         ImageClassificationTask,
         ClusteringTask,
+        SingleSeriesForecastingTask,
         # Models
+        NaiveForecaster,
+        SeasonalNaiveForecaster,
+        ARIMA,
+        ExponentialSmoothing,
         FaissDBSCANClustering,
         FaissKMeansClustering,
         AdaBoostClassifier,
@@ -764,6 +799,10 @@ def get_initial_components():
         MSE,
         RMSE,
         MAE,
+        MAPE,
+        SMAPE,
+        MASE,
+        IntervalCoverage,
         R2,
         MedianAbsoluteError,
         ExplainedVariance,
@@ -797,6 +836,13 @@ def get_initial_components():
         FitModelUnit,
         FitWithoutTargetUnit,
         ScoreClustersUnit,
+        PrepareSeriesUnit,
+        BuildForecasterUnit,
+        BacktestForecasterUnit,
+        ScoreForecastsUnit,
+        FitFinalForecasterUnit,
+        SaveForecastsUnit,
+        ForecastHorizonUnit,
         FitModelOverFoldsUnit,
         FitModelOverNestedFoldsUnit,
         EvaluateModelUnit,
@@ -838,6 +884,10 @@ def get_initial_components():
         PerClassBreakdown,
         PredictedVsActual,
         ResidualPlot,
+        ForecastVsActual,
+        ForecastErrorByStep,
+        ResidualsOverTime,
+        ResidualAutocorrelation,
         ResidualHistogram,
         PerSegmentComparison,
         SegmentScoreDistribution,
@@ -962,6 +1012,8 @@ def get_initial_components():
         CrossValidationEvaluationStrategy,
         HoldoutEvaluationStrategy,
         FullDatasetEvaluationStrategy,
+        ForecastingHoldoutEvaluationStrategy,
+        ForecastingCrossValidationEvaluationStrategy,
         # Statistical tests
         AnovaTest,
         FriedmanTest,

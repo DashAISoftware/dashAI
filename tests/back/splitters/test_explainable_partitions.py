@@ -13,7 +13,12 @@ import pytest
 
 from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.splitters.k_fold import KFoldSplitter
-from DashAI.back.splitters.splits_payload import explainable_indexes
+from DashAI.back.splitters.rolling_origin import RollingOriginSplitter
+from DashAI.back.splitters.splits_payload import (
+    explainable_indexes,
+    run_split_indexes,
+)
+from DashAI.back.splitters.temporal_holdout import TemporalHoldoutSplitter
 
 HOLDOUT_RUN = {
     "train_indexes": [0, 1, 2, 3, 4, 5],
@@ -116,3 +121,30 @@ def test_a_holdout_run_without_a_test_partition_is_explained_on_validation():
     # an empty dataset.
     assert evaluation == [8, 9]
     assert validation == [8, 9]
+
+
+BACKTEST_CUTS = {
+    "horizon": 3,
+    "validation_origins": [36, 39, 42],
+    "test_origin": 45,
+    "n_steps": 48,
+}
+NO_ROW_PARTITIONS = "A backtest cuts the series in steps"
+
+
+@pytest.mark.parametrize(
+    "splitter_class", [TemporalHoldoutSplitter, RollingOriginSplitter]
+)
+def test_a_backtest_says_it_has_no_partitions_of_rows_to_explain(splitter_class):
+    # It has a test, measured in steps: "its test partition is empty" would
+    # send the user looking for a test the run does have.
+    with pytest.raises(ValueError, match=NO_ROW_PARTITIONS):
+        explainable_indexes(splitter_class, BACKTEST_CUTS)
+
+
+def test_a_backtest_says_it_has_no_partitions_of_rows_to_predict_on():
+    payload = {"splitter_name": "RollingOriginSplitter", "horizon": 3, "n_origins": 3}
+    registry = {"RollingOriginSplitter": {"class": RollingOriginSplitter}}
+
+    with pytest.raises(ValueError, match=NO_ROW_PARTITIONS):
+        run_split_indexes(payload, BACKTEST_CUTS, registry, "test")

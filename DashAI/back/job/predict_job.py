@@ -22,6 +22,7 @@ from DashAI.back.units.apply_session_preprocessing_unit import (
 )
 from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
 from DashAI.back.units.context import ExecutionContext
+from DashAI.back.units.forecast_horizon_unit import ForecastHorizonUnit
 from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
 from DashAI.back.units.load_trained_model_unit import LoadTrainedModelUnit
 from DashAI.back.units.load_training_dataset_unit import LoadTrainingDatasetUnit
@@ -407,6 +408,63 @@ class PredictJob(BaseJob):
 
         return f"Prediction (Prediction:{prediction_id}, Dataset:{dataset_id})"
 
+    @staticmethod
+    def _predicts_by_horizon(task_name: str, component_registry) -> bool:
+        """Whether the task forecasts a horizon rather than predicting rows."""
+        if task_name not in component_registry:
+            return False
+        task_class = component_registry[task_name]["class"]
+        return getattr(task_class, "PREDICTION_MODE", "rows") == "horizon"
+
+    def _forecast_horizon(
+        self, db, ctx: ExecutionContext, prediction, model_session, io, dataset_trained
+    ) -> None:
+        """Forecast the prediction's horizon past the end of the run's series.
+
+        No dataset is read: the kept model was fitted on the whole series and
+        knows its grid, so the dates follow its last one. The forecast is saved
+        beside those dates as any prediction is, its column a float.
+
+        Raises
+        ------
+        JobError
+            If the request names rows to predict, which a forecast has none
+            of (the API refuses it first), or a step of the forecast fails.
+        """
+        try:
+            if prediction.dataset_id or prediction.split or not prediction.horizon:
+                raise JobError(
+                    f"{model_session.task_name} forecasts past the end of its "
+                    "training series, so it takes a horizon, not rows to predict."
+                )
+            LoadTrainedModelUnit(run_id=prediction.run_id)(ctx)
+            LoadTrainingDatasetUnit(train_dataset_file_path=dataset_trained.file_path)(
+                ctx
+            )
+
+            self.report_progress(0.4, "Forecasting")
+            ForecastHorizonUnit(horizon=prediction.horizon, input_columns=io.inputs)(
+                ctx
+            )
+
+            self.report_progress(0.9, "Saving predictions")
+            SavePredictionUnit(
+                task_name=model_session.task_name,
+                input_columns=io.inputs,
+                output_columns=io.outputs,
+            )(ctx)
+
+            prediction.results_path = ctx.require("results_path")
+            prediction.set_status_as_finished()
+            db.commit()
+        except Exception as e:
+            prediction.set_status_as_error()
+            db.commit()
+            log.exception(e)
+            raise
+        finally:
+            ctx.clear_cache()
+
     @inject
     def run(
         self,
@@ -438,8 +496,9 @@ class PredictJob(BaseJob):
 
                 dataset_id = prediction.dataset_id
 
-                # Validate input data
-                if not manual_input_data and not dataset_id:
+                # Validate input data. A forecast by horizon has neither: it
+                # reaches past the end of the data.
+                if not manual_input_data and not dataset_id and not prediction.horizon:
                     prediction.set_status_as_error()
                     db.commit()
                     raise JobError(
@@ -495,6 +554,21 @@ class PredictJob(BaseJob):
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal database error",
                 ) from e
+
+            if io is not None and self._predicts_by_horizon(
+                model_session.task_name, component_registry
+            ):
+                self._forecast_horizon(
+                    db, ctx, prediction, model_session, io, dataset_trained
+                )
+                return
+
+            if prediction.horizon:
+                prediction.set_status_as_error()
+                db.commit()
+                raise JobError(
+                    f"{model_session.task_name} predicts rows, not a horizon."
+                )
 
             # The prediction step owns the task, and resolving it here — before
             # the model is even looked up — is what keeps a missing task

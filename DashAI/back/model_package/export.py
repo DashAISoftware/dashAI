@@ -115,12 +115,15 @@ def build_package(
             artifacts_path = _preprocessing_artifacts_path(session)
         except JobError as e:
             raise RunNotExportableError(str(e)) from e
+        # A metric with no value on the test rows has no number to put in
+        # the manifest, which lists scores.
         test_metrics = {
             metric.name: metric.value
             for metric in db.query(Metric).filter(
                 Metric.run_id == run_id,
                 Metric.level == LevelEnum.LAST,
                 Metric.split == SplitEnum.TEST,
+                Metric.value.is_not(None),
             )
         }
         model_name = run.model_name

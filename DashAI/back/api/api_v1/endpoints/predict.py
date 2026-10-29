@@ -9,6 +9,7 @@ from kink import di, inject
 
 from DashAI.back.api.api_v1.schemas.prediction_params import PredictionCreationParams
 from DashAI.back.api.utils import task_or_http_error
+from DashAI.back.core.enums.status import RunStatus
 from DashAI.back.dependencies.database.models import (
     Dataset,
     ModelSession,
@@ -51,6 +52,10 @@ async def create_prediction(
         The partition of that dataset to predict on (optional). Only applies
         when the dataset is the one the model was trained on; ``None`` and
         ``"all"`` both mean every row.
+    horizon : int | None
+        How many steps past the end of the training series to forecast, for a
+        task whose ``PREDICTION_MODE`` is ``"horizon"``. Such a task takes no
+        dataset nor partition, and a task that predicts rows takes no horizon.
     session_factory : Callable[..., ContextManager[Session]]
         A factory that creates a context manager that handles a SQLAlchemy session.
         The generated session can be used to access and query the database.
@@ -58,12 +63,15 @@ async def create_prediction(
     Returns
     -------
     dict
-        A dictionary containing the prediction result.
+        The prediction created. For a horizon longer than the one the run was
+        evaluated on, ``unevaluated_steps`` says how many of its steps no
+        backtest measured.
 
     Raises
     ------
     HTTPException
-        If the run or model session is not found.
+        404 if the run or its session is not found; 422 if the request asks a
+        task for the kind of prediction it does not make.
     """
     db: Session
     with session_factory() as db:
@@ -72,16 +80,94 @@ async def create_prediction(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
             )
+        model_session = db.get(ModelSession, run.model_session_id)
+        if not model_session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Model session not found",
+            )
+        # A task missing from the registry is the prediction job's to report,
+        # as it always was; only a registered one says how it predicts.
+        task = (
+            component_registry[model_session.task_name]["class"]
+            if model_session.task_name in component_registry
+            else None
+        )
+        unevaluated_steps = _check_prediction_mode(params, run, model_session, task)
 
         prediction = Prediction(
             run_id=run.id,
             dataset_id=params.dataset_id,
             split=params.split,
+            horizon=params.horizon,
         )
         db.add(prediction)
         db.commit()
         db.refresh(prediction)
+        if unevaluated_steps:
+            # Not a column: a warning about this request, for the form that
+            # sent it.
+            prediction.unevaluated_steps = unevaluated_steps
         return prediction
+
+
+def _check_prediction_mode(params, run, model_session, task) -> int:
+    """Refuse a request for a kind of prediction the task does not make.
+
+    Returns
+    -------
+    int
+        For a horizon longer than the run's backtest measured, how many of
+        its steps were never evaluated; 0 otherwise. The horizon measured is
+        the one the run was cut with, which is in its cuts: the session's
+        payload may leave it out and let the splitter fall back to its own.
+
+    Raises
+    ------
+    HTTPException
+        422 naming the task and what it takes instead. 500 for a finished run
+        of a task that predicts by horizon with no horizon in its cuts, which
+        a backtest always writes.
+    """
+    task_name = model_session.task_name
+    if getattr(task, "PREDICTION_MODE", "rows") != "horizon":
+        if params.horizon is not None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"{task_name} predicts rows, not a horizon: give a dataset.",
+            )
+        return 0
+
+    if params.dataset_id is not None or params.split is not None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"{task_name} forecasts past the end of its training series, so "
+                "it takes a horizon, not a dataset nor a partition to predict."
+            ),
+        )
+    if params.horizon is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"{task_name} forecasts past the end of its training series: "
+                "give the horizon, the number of steps to forecast."
+            ),
+        )
+    if run.status != RunStatus.FINISHED:
+        # Nothing was measured yet; the job reports the run that cannot predict.
+        return 0
+    try:
+        evaluated = int(json.loads(run.split_indexes)["horizon"])
+    except (TypeError, ValueError, KeyError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=(
+                f"Run {run.id} finished without the cuts of its backtest, so the "
+                "horizon it was measured on is unknown: train it again."
+            ),
+        ) from e
+    return max(0, params.horizon - evaluated)
 
 
 @router.get("/")

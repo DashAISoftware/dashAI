@@ -1,13 +1,13 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 from DashAI.back.core.schema_fields import BaseSchema, int_field, search_space
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.forecasting.base_forecasting_model import ForecastingModel
+from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    SingleSeriesForecastingModel,
+)
 
 if TYPE_CHECKING:
     import numpy as np
-
-    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class SeasonalNaiveForecasterSchema(BaseSchema):
@@ -60,7 +60,7 @@ class SeasonalNaiveForecasterSchema(BaseSchema):
     )  # type: ignore
 
 
-class SeasonalNaiveForecaster(ForecastingModel):
+class SeasonalNaiveForecaster(SingleSeriesForecastingModel):
     """Predict that each season repeats the one before it.
 
     Every future value is forecast as the value one full season earlier, so a
@@ -141,31 +141,17 @@ class SeasonalNaiveForecaster(ForecastingModel):
             )
         self.season_length = season_length
 
-    def train(
-        self,
-        x_train: "DashAIDataset",
-        y_train: "DashAIDataset",
-        x_validation: "DashAIDataset" = None,
-        y_validation: "DashAIDataset" = None,
-    ) -> "SeasonalNaiveForecaster":
-        """Remember the most recent full season of the series.
+    SUPPORTS_INTERVALS = True
+
+    def _fit(self, y: "np.ndarray", x: Optional[Any]) -> None:
+        """Remember the most recent full season, and the seasonal spread.
 
         Parameters
         ----------
-        x_train : DashAIDataset
-            The date column, used to record where the training data ends so a
-            later partition can be forecast at its own dates.
-        y_train : DashAIDataset
-            The series to forecast.
-        x_validation : DashAIDataset, optional
-            Unused.
-        y_validation : DashAIDataset, optional
-            Unused.
-
-        Returns
-        -------
-        SeasonalNaiveForecaster
-            The fitted model.
+        y : np.ndarray
+            The series, in time order.
+        X : None
+            The model uses no exogenous variables.
 
         Raises
         ------
@@ -173,27 +159,33 @@ class SeasonalNaiveForecaster(ForecastingModel):
             If the series is shorter than one season, since there would be no
             complete cycle to repeat.
         """
-        series = self._series(y_train)
-        if len(series) < self.season_length:
+        import numpy as np
+
+        m = self.season_length
+        if len(y) < m:
             raise ValueError(
-                f"A season of {self.season_length} needs at least that many "
-                f"observations to repeat, but the series has {len(series)}. "
-                "Shorten the season length or supply more history."
+                f"A season of {m} needs at least that many observations to "
+                f"repeat, but the series has {len(y)}. Shorten the season "
+                "length or supply more history."
             )
 
-        self._history = list(series)
-        self._last_season = [float(v) for v in series[-self.season_length :]]
-        self._remember_dates(x_train)
-        self._fitted = True
-        return self
+        self._last_season = [float(v) for v in y[-m:]]
+        # The residual is the change from the same step a season earlier, and
+        # the first season has none: fpp3 estimates over the T - m there are.
+        changes = y[m:] - y[:-m]
+        self._sigma = (
+            float(np.sqrt(np.mean(changes**2))) if len(changes) else float("nan")
+        )
 
-    def _forecast(self, steps: int) -> "np.ndarray":
+    def _forecast(self, h: int, x_future: Optional[Any]) -> "np.ndarray":
         """Repeat the last full season out to the requested length.
 
         Parameters
         ----------
-        steps : int
-            How many periods to forecast.
+        h : int
+            How many steps to forecast.
+        x_future : None
+            The model uses no exogenous variables.
 
         Returns
         -------
@@ -203,6 +195,20 @@ class SeasonalNaiveForecaster(ForecastingModel):
         import numpy as np
 
         return np.array(
-            [self._last_season[i % self.season_length] for i in range(steps)],
+            [self._last_season[i % self.season_length] for i in range(h)],
             dtype=float,
         )
+
+    def _intervals(self, h: int, levels, x_future: Optional[Any]):
+        """Normal intervals that widen once per completed season.
+
+        fpp3 §5.5: the h-step standard deviation is the one-step one times
+        sqrt(k + 1), where k is the number of complete seasons before step h.
+        A series of one season has no seasonal change to measure, so its
+        bounds are not a number.
+        """
+        import numpy as np
+
+        k = (np.arange(1, h + 1) - 1) // self.season_length
+        sd = self._sigma * np.sqrt(k + 1)
+        return self._normal_bounds(self._forecast(h, None), sd, levels)

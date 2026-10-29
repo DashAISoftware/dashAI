@@ -30,12 +30,7 @@ HOLDOUT = {
 }
 KFOLD = {"splitter_name": "KFoldSplitter", "n_splits": 3, "test_size": 0.2}
 STRATIFIED_KFOLD = {"splitter_name": "StratifiedKFoldSplitter", "n_splits": 3}
-TEMPORAL = {
-    "splitter_name": "TemporalHoldoutSplitter",
-    "train": 0.6,
-    "validation": 0.2,
-    "test": 0.2,
-}
+TEMPORAL = {"splitter_name": "TemporalHoldoutSplitter", "horizon": 3}
 
 
 def _payload(dataset_id, name, splits, task="TabularClassificationTask", **overrides):
@@ -149,6 +144,7 @@ def test_the_default_splitter_is_refused_where_the_task_does_not_offer_it(
                 "features": [{"kind": "raw", "name": "SepalWidthCm"}],
                 "target": [{"kind": "raw", "name": "SepalLengthCm"}],
             },
+            evaluation_strategy="ForecastingHoldoutEvaluationStrategy",
         ),
     )
 
@@ -174,6 +170,7 @@ def test_the_splitter_the_task_offers_is_accepted(
                 "features": [{"kind": "raw", "name": "SepalWidthCm"}],
                 "target": [{"kind": "raw", "name": "SepalLengthCm"}],
             },
+            evaluation_strategy="ForecastingHoldoutEvaluationStrategy",
         ),
     )
 
