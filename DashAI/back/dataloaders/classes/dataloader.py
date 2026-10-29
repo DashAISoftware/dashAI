@@ -49,8 +49,10 @@ class BaseDataLoader(ConfigObject):
         -------
         Dict[str, Any]
             ``category``, ``supported_extensions``, ``tags`` (those extensions
-            as upper case file formats), ``supports_native_types`` and
-            ``data_kinds``, the list of data kinds the loader produces.
+            as upper case file formats), ``supports_native_types``,
+            ``data_kinds``, the list of data kinds the loader produces, and
+            ``requires_download`` with ``download_size_bytes`` for loaders
+            that must download artifacts before use.
         """
         extensions = sorted(cls.SUPPORTED_EXTENSIONS)
         return {
@@ -59,6 +61,8 @@ class BaseDataLoader(ConfigObject):
             "tags": [extension.lstrip(".").upper() for extension in extensions],
             "supports_native_types": cls.SUPPORTS_NATIVE_TYPES,
             "data_kinds": [cls.DATA_KIND],
+            "requires_download": bool(getattr(cls, "REQUIRES_DOWNLOAD", False)),
+            "download_size_bytes": getattr(cls, "DOWNLOAD_SIZE_BYTES", None),
         }
 
     def extract_native_types(

@@ -290,6 +290,8 @@ class PdfMinerDocumentDataLoader(DocumentDataLoader):
             "layout block it finds, such as a paragraph or a heading, as one "
             "text item with its page number, or the whole text of a page as a "
             "single item."
+            " [https://github.com/pdfminer/pdfminer.six]"
+            "(https://github.com/pdfminer/pdfminer.six)"
         ),
         es=(
             "Lee archivos PDF con pdfminer.six y su análisis de diseño ajustable, "
@@ -297,6 +299,8 @@ class PdfMinerDocumentDataLoader(DocumentDataLoader):
             "diseño que encuentra, como un párrafo o un título, como un "
             "elemento de texto con su número de página, o todo el texto de la "
             "página como un único elemento."
+            " [https://github.com/pdfminer/pdfminer.six]"
+            "(https://github.com/pdfminer/pdfminer.six)"
         ),
         pt=(
             "Lê arquivos PDF com pdfminer.six e sua análise de layout ajustável, "
@@ -304,6 +308,8 @@ class PdfMinerDocumentDataLoader(DocumentDataLoader):
             "que encontra, como um parágrafo ou um título, como um item de texto "
             "com o número da página, ou todo o texto da página como um único "
             "item."
+            " [https://github.com/pdfminer/pdfminer.six]"
+            "(https://github.com/pdfminer/pdfminer.six)"
         ),
         de=(
             "Liest PDF-Dateien mit pdfminer.six und seiner einstellbaren "
@@ -311,11 +317,15 @@ class PdfMinerDocumentDataLoader(DocumentDataLoader):
             "jeden gefundenen Layoutblock, etwa einen Absatz oder eine "
             "Überschrift, als ein Textelement mit Seitennummer, oder den ganzen "
             "Text einer Seite als ein einziges Element."
+            " [https://github.com/pdfminer/pdfminer.six]"
+            "(https://github.com/pdfminer/pdfminer.six)"
         ),
         zh=(
             "使用 pdfminer.six 及其可调的版面分析读取 PDF 文件，适用于多栏文档。"
             "将识别出的每个版面块（如段落或标题）保存为带页码的文本项，"
             "或将整页文本保存为一个文本项。"
+            "[https://github.com/pdfminer/pdfminer.six]"
+            "(https://github.com/pdfminer/pdfminer.six)"
         ),
     )
 
