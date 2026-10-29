@@ -42,6 +42,7 @@ class ImageClassificationTask(ClassificationTask):
             "从而实现对新实例的精确分类。"
         ),
     )
+    ICON: str = "ImageSearch"
     DISPLAY_NAME: str = MultilingualString(
         en="Image Classification",
         es="Clasificación de Imágenes",

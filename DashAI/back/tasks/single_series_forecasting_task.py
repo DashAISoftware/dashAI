@@ -75,6 +75,7 @@ class SingleSeriesForecastingTask(ForecastingTask):
             "接受一个日期列和一个数值列，不使用其他变量。"
         ),
     )
+    ICON: str = "Timeline"
     DISPLAY_NAME: str = MultilingualString(
         en="Forecasting",
         es="Pronostico",
