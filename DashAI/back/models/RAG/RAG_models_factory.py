@@ -12,6 +12,7 @@ from DashAI.back.models.RAG.chunking_models.chunking_model_factory import (
     ChunkingModelFactory,
 )
 from DashAI.back.models.RAG.documents.chunk import Chunk
+from DashAI.back.models.RAG.documents.rag_document import RAGDocument
 from DashAI.back.models.RAG.llm_factory import LLMFactory, LLMFactoryResult
 from DashAI.back.models.RAG.prompts.prompt_factory import (
     PromptFactory,
@@ -24,6 +25,10 @@ from DashAI.back.models.RAG.retrievers.persistence import (
 from DashAI.back.models.RAG.retrievers.retriever_factory import (
     RetrieverFactory,
     RetrieverFactoryResult,
+)
+from DashAI.back.models.RAG.transformation import (
+    TransformationFactory,
+    TransformationFactoryResult,
 )
 
 
@@ -56,9 +61,32 @@ class RAGModelsFactory:
         RAG_path: str,  # noqa: N803
         chunks: dict[int, dict[int, Chunk]],
         persistence: DensePersistence | SparsePersistence | None = None,
+        documents: dict[int, RAGDocument] | None = None,
     ) -> RetrieverFactoryResult:
-        """Build a retriever via RetrieverFactory. Phase 1 only."""
-        factory = RetrieverFactory(self._registry, RAG_path, chunks)
+        """Build a retriever via RetrieverFactory. Phase 1 only.
+
+        Parameters
+        ----------
+        component : str
+            Registered retriever component name.
+        params : dict
+            Raw construction parameters.
+        RAG_path : str
+            Root path for RAG data.
+        chunks : dict[int, dict[int, Chunk]]
+            Chunk corpus keyed by document id and chunk id.
+        persistence : DensePersistence | SparsePersistence | None
+            Persistence object required by unit retrievers.
+        documents : dict[int, RAGDocument] | None
+            Optional document mapping injected into unit retrievers so the
+            LLM-evaluated retrievers can describe the corpus in their prompts.
+
+        Returns
+        -------
+        RetrieverFactoryResult
+            The constructed retriever model.
+        """
+        factory = RetrieverFactory(self._registry, RAG_path, chunks, documents)
         return factory.create(component, params, persistence)
 
     def create_prompt(self, component: str, params: dict) -> PromptFactoryResult:
@@ -68,3 +96,9 @@ class RAGModelsFactory:
     def create_llm(self, component: str, params: dict) -> LLMFactoryResult:
         """Build an LLM via LLMFactory. Phase 1 only."""
         return LLMFactory(self._registry).create(component, params)
+
+    def create_query_transformation(
+        self, component: str, params: dict
+    ) -> TransformationFactoryResult:
+        """Build a query transformer via TransformationFactory. Phase 1 only."""
+        return TransformationFactory(self._registry).create(component, params)

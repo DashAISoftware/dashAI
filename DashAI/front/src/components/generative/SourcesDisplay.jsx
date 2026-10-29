@@ -1,100 +1,146 @@
-import React, { useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
+import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
+import { Box, Typography, Button, Stack, Tooltip } from "@mui/material";
 import {
-  Box,
-  Typography,
-  Collapse,
-  IconButton,
-  List,
-  ListItem,
-  Divider,
-  Button,
-} from "@mui/material";
-import {
-  ExpandMore,
-  ExpandLess,
+  AccountTree as AccountTreeIcon,
   Source as SourceIcon,
-  Description as DescriptionIcon,
-  Visibility as VisibilityIcon,
+  ViewList as ViewListIcon,
 } from "@mui/icons-material";
-import DocumentReferencesModal from "./DocumentReferencesModal";
+import TraceChunksPanel from "./RAG/TraceChunksPanel";
+import { filterRenderableEntries } from "./RAG/traceUtils";
+import { TRACE_VIEW_CHUNKS, TRACE_VIEW_PIPELINE } from "../../constants/rag";
 
-const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
-  const { t } = useTranslation("generative");
-  const [expanded, setExpanded] = useState(false);
-  const [documentModalOpen, setDocumentModalOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState(null);
-  const [selectedChunks, setSelectedChunks] = useState([]);
-  const referenceEntries = references ? Object.entries(references) : [];
-  const sourceCount = referenceEntries.length;
-
-  const handleToggleExpanded = () => {
-    setExpanded(!expanded);
-  };
-
-  const handleOpenDocumentModal = (docId, chunks) => {
-    setSelectedDocument({ id: docId });
-    setSelectedChunks(chunks);
-    setDocumentModalOpen(true);
-  };
-
-  const handleCloseDocumentModal = () => {
-    setDocumentModalOpen(false);
-    setSelectedDocument(null);
-    setSelectedChunks([]);
-  };
-
-  // Group references by document ID. A citation of a document that no longer
-  // exists has no ID, so it is grouped by its document name instead.
-  const groupedReferences = referenceEntries.reduce((acc, [key, ref]) => {
-    const groupKey =
-      ref.document_id != null
-        ? String(ref.document_id)
-        : `name:${ref.document_name ?? key}`;
-    if (!acc[groupKey]) {
-      acc[groupKey] = [];
-    }
-    acc[groupKey].push({ key, ...ref });
-    return acc;
-  }, {});
-
-  const pagesByDocument = Object.fromEntries(
-    Object.entries(groupedReferences).map(([docId, chunks]) => [
-      docId,
-      [
-        ...new Set(
-          chunks.map((chunk) => chunk.page).filter((page) => page != null),
-        ),
-      ].sort((a, b) => a - b),
-    ]),
+/**
+ * Counts the distinct documents referenced by a chunk reference map.
+ *
+ * Chunks repeat the same `document_id` several times, so the header badge
+ * reports documents, not chunks.
+ *
+ * @param {object|null|undefined} references - Chunk reference map by ref key.
+ * @returns {number} The number of distinct document ids.
+ */
+const countDocuments = (references) => {
+  if (!references) return 0;
+  const ids = new Set(
+    Object.values(references)
+      .map((ref) => ref?.document_id)
+      .filter((id) => id != null),
   );
+  return ids.size;
+};
 
-  // Get document title - fallback to "Document X" if no title available
-  const getDocumentTitle = (docId, chunks) => {
-    const firstChunk = chunks[0];
-    if (firstChunk.document_title) return firstChunk.document_title;
-    if (firstChunk.document_name) return firstChunk.document_name;
-    if (firstChunk.title) return firstChunk.title;
-    if (firstChunk.name) return firstChunk.name;
+const toggleButtonSx = {
+  fontSize: "0.75rem",
+  py: 0.5,
+  px: 1,
+  whiteSpace: "nowrap",
+};
 
-    return t("sourcesDisplay.fallbackTitle", {
-      id: docId,
-      defaultValue: `Document ${docId}`,
-    });
+const disabledToggleButtonSx = {
+  ...toggleButtonSx,
+  color: "text.disabled",
+  borderColor: "divider",
+  cursor: "not-allowed",
+  "&:hover": { backgroundColor: "transparent" },
+};
+
+/**
+ * Compact summary of the sources backing a RAG answer.
+ *
+ * Shows the document count and two toggle buttons that expand an inline panel
+ * below the header: one for the final chunks and one for the retrieval
+ * pipeline. The Chunks view is always available, so legacy answers (references
+ * only, no trace) still work: the panel degrades to rendering just the
+ * retrieved chunks. The Pipeline toggle is disabled when no trace is
+ * renderable.
+ *
+ * @param {object} props
+ * @param {object|null} [props.references] - Chunk reference map by ref key.
+ * @param {Array|null} [props.trace] - Parsed retrieval trace entries.
+ * @param {string} [props.userMessage] - The user message that produced them.
+ * @param {number|string} [props.sessionId] - The session that produced them.
+ * @returns {JSX.Element} The sources summary card.
+ */
+const SourcesDisplay = ({ references, trace, userMessage, sessionId }) => {
+  const { t } = useTranslation("generative");
+  const [activeView, setActiveView] = useState(null);
+  const detailsId = useId();
+  const pipelineHintId = useId();
+  const chunksButtonRef = useRef(null);
+  const pipelineButtonRef = useRef(null);
+  const lastActiveViewRef = useRef(null);
+  const documentCount = countDocuments(references);
+  const hasPipeline = filterRenderableEntries(trace).length > 0;
+  const pipelineActive = activeView === TRACE_VIEW_PIPELINE && hasPipeline;
+  const chunksActive = activeView !== null && !pipelineActive;
+  let pipelineHint;
+  if (!hasPipeline) {
+    pipelineHint = t("sourcesDisplay.noPipelineTrace");
+  }
+
+  /**
+   * Opens the requested view, or closes the panel when it is already active.
+   * @param {string} view - The view to toggle (chunks or pipeline).
+   */
+  const handleToggle = (view) => {
+    if (view === TRACE_VIEW_PIPELINE && !hasPipeline) return;
+    if (view === TRACE_VIEW_PIPELINE ? pipelineActive : chunksActive) {
+      setActiveView(null);
+      return;
+    }
+    setActiveView(view);
+  };
+
+  useEffect(() => {
+    if (activeView) {
+      lastActiveViewRef.current = pipelineActive
+        ? TRACE_VIEW_PIPELINE
+        : TRACE_VIEW_CHUNKS;
+      return;
+    }
+    // The panel has unmounted; return focus to the toggle that was active.
+    const lastActiveView = lastActiveViewRef.current;
+    if (!lastActiveView) return;
+    lastActiveViewRef.current = null;
+    const button =
+      lastActiveView === TRACE_VIEW_PIPELINE
+        ? pipelineButtonRef.current
+        : chunksButtonRef.current;
+    if (button) button.focus();
+  }, [activeView, pipelineActive]);
+
+  useEffect(() => {
+    if (activeView === TRACE_VIEW_PIPELINE && !hasPipeline) {
+      setActiveView(TRACE_VIEW_CHUNKS);
+      if (chunksButtonRef.current) chunksButtonRef.current.focus();
+    }
+  }, [activeView, hasPipeline]);
+
+  /**
+   * Closes the panel when Escape is pressed inside the sources card.
+   * @param {React.KeyboardEvent} event - The keydown event.
+   */
+  const handleKeyDown = (event) => {
+    if (!activeView || event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    setActiveView(null);
   };
 
   return (
     <Box
+      onKeyDown={handleKeyDown}
       sx={{
         mt: 1,
-        ml: isUser ? 0 : "40px",
-        mr: isUser ? "40px" : 0,
-        maxWidth: isUser ? "calc(80% - 40px)" : "calc(80% - 40px)",
+        ml: "40px",
+        maxWidth: "calc(80% - 40px)",
         border: 1,
         borderColor: "divider",
         borderRadius: 1,
         backgroundColor: "background.box",
         overflow: "hidden",
+        scrollMarginTop: "8px",
       }}
     >
       {/* Header */}
@@ -103,17 +149,28 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          flexWrap: "wrap",
           p: 1.5,
           backgroundColor: "action.hover",
-          cursor: "pointer",
+          gap: 2,
         }}
-        onClick={handleToggleExpanded}
       >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            minWidth: 0,
+          }}
+        >
           <SourceIcon fontSize="small" color="primary" sx={{ flexShrink: 0 }} />
           <Typography
             variant="body2"
-            sx={{ fontWeight: "medium", flexShrink: 0 }}
+            sx={{
+              fontWeight: "medium",
+              minWidth: 0,
+              overflowWrap: "anywhere",
+            }}
           >
             {t("sourcesDisplay.viewSources")}
           </Typography>
@@ -133,140 +190,89 @@ const SourcesDisplay = ({ references, onOpenReference, isUser = false }) => {
               flexShrink: 0,
             }}
           >
-            {sourceCount}
+            {documentCount}
           </Box>
         </Box>
 
-        <IconButton size="small">
-          {expanded ? <ExpandLess /> : <ExpandMore />}
-        </IconButton>
+        <Stack
+          direction="row"
+          spacing={1}
+          role="group"
+          aria-label={t("traceChunks.sectionsLabel")}
+        >
+          <Button
+            ref={chunksButtonRef}
+            size="small"
+            variant={chunksActive ? "contained" : "outlined"}
+            startIcon={<ViewListIcon />}
+            aria-expanded={chunksActive}
+            aria-controls={chunksActive ? detailsId : undefined}
+            onClick={() => handleToggle(TRACE_VIEW_CHUNKS)}
+            sx={toggleButtonSx}
+          >
+            {t("sourcesDisplay.chunks")}
+          </Button>
+
+          <Tooltip title={pipelineHint}>
+            <span>
+              <Button
+                ref={pipelineButtonRef}
+                size="small"
+                variant={pipelineActive ? "contained" : "outlined"}
+                startIcon={<AccountTreeIcon />}
+                aria-disabled={!hasPipeline}
+                aria-expanded={pipelineActive}
+                aria-controls={pipelineActive ? detailsId : undefined}
+                aria-describedby={!hasPipeline ? pipelineHintId : undefined}
+                onClick={() => handleToggle(TRACE_VIEW_PIPELINE)}
+                sx={hasPipeline ? toggleButtonSx : disabledToggleButtonSx}
+              >
+                {t("sourcesDisplay.pipeline")}
+              </Button>
+            </span>
+          </Tooltip>
+          {!hasPipeline && (
+            <Box
+              component="span"
+              id={pipelineHintId}
+              sx={{
+                position: "absolute",
+                width: 1,
+                height: 1,
+                overflow: "hidden",
+                clip: "rect(0 0 0 0)",
+                whiteSpace: "nowrap",
+                m: -1,
+                p: 0,
+                border: 0,
+              }}
+            >
+              {pipelineHint}
+            </Box>
+          )}
+        </Stack>
       </Box>
 
-      {/* Sources List */}
-      <Collapse in={expanded} timeout="auto">
-        <List dense disablePadding>
-          {Object.entries(groupedReferences).map(
-            ([docId, chunks], index, array) => (
-              <React.Fragment key={docId}>
-                <ListItem disablePadding>
-                  <Box
-                    sx={{
-                      width: "100%",
-                      p: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      backgroundColor: "background.box",
-                      gap: 2,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        minWidth: 0,
-                        flex: 1,
-                      }}
-                    >
-                      <DescriptionIcon
-                        fontSize="small"
-                        color="primary"
-                        sx={{ flexShrink: 0 }}
-                      />
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          minWidth: 0,
-                          flex: 1,
-                          gap: 0.5,
-                        }}
-                      >
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          sx={{
-                            fontWeight: "bold",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            flexShrink: 1,
-                            minWidth: 0,
-                          }}
-                        >
-                          {getDocumentTitle(docId, chunks)}
-                        </Typography>
-                        <Typography
-                          component="span"
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            flexShrink: 0,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {t("sourcesDisplay.provided")}{" "}
-                          <strong>{chunks.length}</strong>{" "}
-                          {t("sourcesDisplay.chunk", { count: chunks.length })}
-                        </Typography>
-                        {pagesByDocument[docId].length > 0 && (
-                          <Typography
-                            component="span"
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ flexShrink: 0, whiteSpace: "nowrap" }}
-                          >
-                            {t("sourcesDisplay.pages", {
-                              count: pagesByDocument[docId].length,
-                              pages: pagesByDocument[docId].join(", "),
-                            })}
-                          </Typography>
-                        )}
-                      </Box>
-                    </Box>
-
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      startIcon={<VisibilityIcon />}
-                      onClick={() =>
-                        handleOpenDocumentModal(
-                          chunks[0].document_id ?? null,
-                          chunks,
-                        )
-                      }
-                      sx={{
-                        fontSize: "0.75rem",
-                        py: 0.5,
-                        px: 1,
-                        whiteSpace: "nowrap",
-                        minWidth: "140px",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {t("sourcesDisplay.viewChunks")}
-                    </Button>
-                  </Box>
-                </ListItem>
-
-                {index < array.length - 1 && <Divider />}
-              </React.Fragment>
-            ),
-          )}
-        </List>
-      </Collapse>
-
-      <DocumentReferencesModal
-        open={documentModalOpen}
-        onClose={handleCloseDocumentModal}
-        document={selectedDocument}
-        chunks={selectedChunks}
-        onOpenReference={onOpenReference}
-      />
+      {activeView && (
+        <TraceChunksPanel
+          id={detailsId}
+          activeView={activeView}
+          onClose={() => setActiveView(null)}
+          userMessage={userMessage}
+          trace={trace}
+          references={references}
+          sessionId={sessionId}
+        />
+      )}
     </Box>
   );
+};
+
+SourcesDisplay.propTypes = {
+  references: PropTypes.object,
+  trace: PropTypes.array,
+  userMessage: PropTypes.string,
+  sessionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
 };
 
 export default SourcesDisplay;

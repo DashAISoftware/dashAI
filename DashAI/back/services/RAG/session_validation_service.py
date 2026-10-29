@@ -39,8 +39,17 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_MODEL_KEYS,
     RAG_PARAM_DOCUMENTS,
     RAG_PARAM_GENERATION_MODEL,
+    RAG_PARAM_RETRIEVER_MODEL,
 )
 from DashAI.back.services.RAG.prompt_service import PromptService
+from DashAI.back.services.RAG.query_transformation_validation import (
+    DEFAULT_TRANSFORMATION_PROMPT_NAMES,
+    QueryTransformationValidationService,
+)
+from DashAI.back.services.RAG.retriever_evaluation_validation import (
+    DEFAULT_LLM_PROMPT_NAMES,
+    RetrieverEvaluationValidationService,
+)
 from DashAI.back.services.RAG.session_defaults_service import (
     build_default_parameters,
     generation_model_overrides,
@@ -98,6 +107,12 @@ class SessionValidationService:
         self._db = db
         self._registry = registry
         self._prompt_service = PromptService(db, registry)
+        self._transformation_validator = QueryTransformationValidationService(
+            registry, self._prompt_service.validate_prompt_template
+        )
+        self._retriever_evaluation_validator = RetrieverEvaluationValidationService(
+            registry, self._prompt_service.validate_prompt_template
+        )
 
     # ------------------------------------------------------------------
     # Public API
@@ -157,6 +172,12 @@ class SessionValidationService:
         # ── 1. Validate structure of every model key (defaults applied) ──
         self._validate_model_keys(normalized, require_all=True)
 
+        # Validate the optional query transformation stage.
+        self._transformation_validator.validate(normalized)
+
+        # Validate the LLM-evaluated retriever's nested refs.
+        self._validate_retriever_evaluation(normalized)
+
         # ── 2. Validate components exist in registry ──
         component_errors = validate_component_refs(normalized, self._registry)
         if component_errors:
@@ -164,6 +185,9 @@ class SessionValidationService:
 
         # ── 2b. Fill in the picked generation model's parameters ──
         self._apply_generation_model_defaults(normalized)
+
+        self._transformation_validator.apply_defaults(normalized)
+        self._apply_retriever_evaluation_defaults(normalized)
 
         # ── 3. Strictly validate every component's params against its schema ──
         param_errors = self._validate_component_params(normalized)
@@ -224,6 +248,12 @@ class SessionValidationService:
         # ── 1. Validate structure of provided model keys ──
         self._validate_model_keys(normalized, require_all=False)
 
+        # Validate the optional query transformation stage.
+        self._transformation_validator.validate(normalized)
+
+        # Validate the LLM-evaluated retriever's nested refs.
+        self._validate_retriever_evaluation(normalized)
+
         # ── 2. Validate components exist in registry ──
         component_errors = validate_component_refs(normalized, self._registry)
         if component_errors:
@@ -231,6 +261,9 @@ class SessionValidationService:
 
         # ── 2b. Fill in the picked generation model's parameters ──
         self._apply_generation_model_defaults(normalized)
+
+        self._transformation_validator.apply_defaults(normalized)
+        self._apply_retriever_evaluation_defaults(normalized)
 
         # ── 3. Strictly validate every component's params against its schema ──
         param_errors = self._validate_component_params(normalized)
@@ -349,6 +382,45 @@ class SessionValidationService:
         # without overriding a value the caller chose.
         ref["params"] = {**defaults, **generation_model_overrides(), **params}
 
+    def _validate_retriever_evaluation(self, normalized: dict[str, Any]) -> None:
+        """Validate the nested refs of every LLM-evaluated retriever, when used.
+
+        The retriever does not have to be the top-level ``retriever_model``: it
+        can be nested inside another composite, so the walk mirrors
+        ``_apply_retriever_evaluation_defaults``. Any other retriever is left to
+        the generic component validation.
+
+        Parameters
+        ----------
+        normalized : dict
+            Normalised parameters dict, read-only here.
+
+        Raises
+        ------
+        ValueError
+            If an LLM-evaluated retriever's nested ``prompt``/``llm_model``
+            refs are malformed.
+        """
+        self._retriever_evaluation_validator.validate_recursive(
+            normalized.get(RAG_PARAM_RETRIEVER_MODEL)
+        )
+
+    def _apply_retriever_evaluation_defaults(self, normalized: dict[str, Any]) -> None:
+        """Fill every LLM-evaluated retriever's omitted nested params.
+
+        The LLM-evaluated retriever does not have to be the top-level
+        ``retriever_model``: it can be nested inside another composite, so the
+        defaults pass walks the whole retriever tree.
+
+        Parameters
+        ----------
+        normalized : dict
+            Normalised parameters dict, mutated in place when applicable.
+        """
+        ref = normalized.get(RAG_PARAM_RETRIEVER_MODEL)
+        if isinstance(ref, dict):
+            self._retriever_evaluation_validator.apply_defaults_recursive(ref)
+
     def _validate_component_params(self, normalized: dict[str, Any]) -> list[str]:
         """Validate every ``{component, params}`` against its own schema.
 
@@ -356,13 +428,17 @@ class SessionValidationService:
         nested sub-components such as the ``BagOfWordsConverter`` inside a
         ``BM25Retriever`` are also validated.
 
-        The only tolerated incomplete payload is the default prompts
-        (``DefaultRAGGenerationPrompt`` / ``DefaultQARAGGenerationPrompt``)
+        The only tolerated incomplete payload is a default prompt — the
+        generation pair (``DefaultRAGGenerationPrompt`` /
+        ``DefaultQARAGGenerationPrompt``), the transformation trio
+        (``DefaultQueryRewritingPrompt`` / ``DefaultQueryExpansionPrompt`` /
+        ``DefaultQueryDecompositionPrompt``) or an LLM-evaluated prompt
+        (``DefaultRetrievalSufficiencyPrompt`` / ``DefaultLLMFilterPrompt``) —
         with a language-only ``{"language": ...}`` body: the template is
         injected from the component's ``metadata["templates"]`` *before*
-        validation and written back into ``normalized`` so the session
-        stores the resolved template. No other component may rely on
-        backend-provided defaults.
+        validation and written back into ``normalized`` so the session stores
+        the resolved template. No other component may rely on backend-provided
+        defaults.
 
         Parameters
         ----------
@@ -390,7 +466,12 @@ class SessionValidationService:
                 continue
             candidate = dict(params)
             template = candidate.get("template")
-            if name in DEFAULT_PROMPT_NAMES and not (
+            is_default_prompt = (
+                name in DEFAULT_PROMPT_NAMES
+                or name in DEFAULT_TRANSFORMATION_PROMPT_NAMES
+                or name in DEFAULT_LLM_PROMPT_NAMES
+            )
+            if is_default_prompt and not (
                 isinstance(template, str) and template.strip()
             ):
                 # Default prompts are the ONLY tolerated incomplete payload:

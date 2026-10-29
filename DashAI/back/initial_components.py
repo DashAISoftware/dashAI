@@ -314,6 +314,8 @@ from DashAI.back.models.hugging_face.phi_4_mini_instruct_model import (
 from DashAI.back.models.hugging_face.pixart_sigma_model import PixArtSigma
 from DashAI.back.models.hugging_face.qwen_model import (
     Qwen25_05BInstruct,
+    Qwen25_3BInstruct,
+    Qwen25_7BInstruct,
     Qwen25_15BInstruct,
 )
 from DashAI.back.models.hugging_face.roberta_transformer import RobertaTransformer
@@ -377,6 +379,29 @@ from DashAI.back.models.RAG.prompts import (
     DefaultQARAGGenerationPrompt,
     DefaultRAGGenerationPrompt,
 )
+from DashAI.back.models.RAG.prompts.evaluation import (
+    CustomLLMFilterPrompt,
+    CustomRetrievalSufficiencyPrompt,
+    DefaultLLMFilterPrompt,
+    DefaultRetrievalSufficiencyPrompt,
+)
+from DashAI.back.models.RAG.prompts.transformation import (
+    CustomQueryDecompositionPrompt,
+    CustomQueryExpansionPrompt,
+    CustomQueryRewritingPrompt,
+    DefaultQueryDecompositionPrompt,
+    DefaultQueryExpansionPrompt,
+    DefaultQueryRewritingPrompt,
+)
+from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_depth_retriever import (
+    LLMEvaluatedDepthRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.llm_evaluated_ensemble_retriever import (  # noqa: E501
+    LLMEvaluatedEnsembleRetriever,
+)
+from DashAI.back.models.RAG.retrievers.composite.llm_filter_retriever import (
+    LLMFilterRetriever,
+)
 from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
     MMRRerankerRetriever,
 )
@@ -397,6 +422,11 @@ from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import (
 )
 from DashAI.back.models.RAG.retrievers.sparse.tfidf_retriever import (
     TFIDFRetriever,
+)
+from DashAI.back.models.RAG.transformation import (
+    LLMQueryDecomposer,
+    LLMQueryExpander,
+    LLMQueryRewriter,
 )
 from DashAI.back.models.resnet18_image_classifier import ResNet18ImageClassifier
 from DashAI.back.models.resnet50_image_classifier import ResNet50ImageClassifier
@@ -692,6 +722,8 @@ def get_initial_components():
         PixArtSigma,
         Qwen25_05BInstruct,
         Qwen25_15BInstruct,
+        Qwen25_3BInstruct,
+        Qwen25_7BInstruct,
         OpusMtRoaEnTransformer,
         RandomForestClassifier,
         RobertaTransformer,
@@ -984,6 +1016,19 @@ def get_initial_components():
         DefaultQARAGGenerationPrompt,
         DefaultAugmentationPrompt,
         CustomAugmentationPrompt,
+        # Query Transformation Prompts
+        DefaultQueryRewritingPrompt,
+        CustomQueryRewritingPrompt,
+        DefaultQueryExpansionPrompt,
+        CustomQueryExpansionPrompt,
+        DefaultQueryDecompositionPrompt,
+        CustomQueryDecompositionPrompt,
+        # Retrieval Sufficiency Prompts
+        DefaultRetrievalSufficiencyPrompt,
+        CustomRetrievalSufficiencyPrompt,
+        # LLM Filter Prompts
+        DefaultLLMFilterPrompt,
+        CustomLLMFilterPrompt,
         # Retrievers
         BM25Retriever,
         TFIDFRetriever,
@@ -992,6 +1037,13 @@ def get_initial_components():
         MMRRerankerRetriever,
         SequentialRetriever,
         ParallelRetriever,
+        LLMEvaluatedDepthRetriever,
+        LLMEvaluatedEnsembleRetriever,
+        LLMFilterRetriever,
+        # Query Transformation
+        LLMQueryRewriter,
+        LLMQueryExpander,
+        LLMQueryDecomposer,
     ]
 
     # Obtener plugins instalados

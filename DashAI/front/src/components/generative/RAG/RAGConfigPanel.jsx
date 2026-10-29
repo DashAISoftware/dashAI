@@ -26,6 +26,7 @@ import SideBar from "../../threeSectionLayout/panelContainers/SideBar";
 import PresetCardList from "./PresetCardList";
 import PromptEditor from "./PromptEditor";
 import GeneratorPicker from "./GeneratorPicker";
+import QueryTransformationPicker from "./QueryTransformationPicker";
 import ChunkingAdvancedModal from "../../../pages/generative/RAGSession/advanced/ChunkingAdvancedModal";
 import RetrieverAdvancedModal from "../../../pages/generative/RAGSession/advanced/RetrieverAdvancedModal";
 import { loadRetrieverKinds } from "../../../pages/generative/RAGSession/retrieverKinds";
@@ -44,15 +45,46 @@ import { getApiErrorMessage } from "../../../utils/apiError";
 
 /**
  * Section keys, matching the RAG parameter keys the backend uses, in the order
- * the pipeline applies them: split the documents, retrieve from them, answer
- * with a model, phrase it with a prompt.
+ * the pipeline applies them: split the documents, transform the query, retrieve
+ * from them, answer with a model, phrase it with a prompt.
  */
 const SECTIONS = [
   "chunking_model",
+  "query_transformation",
   "retriever_model",
   "generation_model",
   "prompt",
 ];
+
+/**
+ * Merge the parameters a save returned into the draft the panel keeps.
+ *
+ * Saving normalizes the payload backend-side -- nested LLM params the user
+ * left untouched are written with the RAG defaults, for instance -- so the
+ * response, not the request, is what the panel must display afterwards.
+ * Only the five RAG sections are taken from it; a key the response omits
+ * keeps the draft's current value.
+ *
+ * `query_transformation` is copied even when it is null: an absent optional
+ * stage is a value the endpoint round-trips, not a missing key, so it must be
+ * able to clear whatever the draft held.
+ *
+ * @param {object} current - The current draft.
+ * @param {object} [parameters] - The `parameters` returned by the update.
+ * @returns {object} The draft to treat as saved.
+ */
+function mergeSavedParameters(current, parameters) {
+  if (!parameters) return current;
+
+  const next = { ...current };
+  for (const key of SECTIONS) {
+    if (!Object.prototype.hasOwnProperty.call(parameters, key)) continue;
+    // The presence check already decided the key is part of the response, so
+    // copy the value verbatim: a falsy value is a real value, not "missing".
+    next[key] = parameters[key];
+  }
+  return next;
+}
 
 /**
  * The single place a RAG session is configured.
@@ -120,6 +152,9 @@ export default function RAGConfigPanel({
           component: "",
           params: {},
         },
+        // Null, not `{component: ""}`: the stage is optional and its absent
+        // form is the null the endpoint expects back.
+        query_transformation: parameters.query_transformation ?? null,
         retriever_model: parameters.retriever_model || {
           component: "",
           params: {},
@@ -242,9 +277,31 @@ export default function RAGConfigPanel({
   const handleSave = async () => {
     if (!dirty || saving) return;
     setSaving(true);
+    const requestDraft = draft;
     try {
-      await updateGenerativeSessionParams(sessionId, draft);
-      setSavedDraft(draft);
+      const updated = await updateGenerativeSessionParams(
+        sessionId,
+        requestDraft,
+      );
+      // Show what was stored rather than what was sent: the endpoint fills in
+      // the RAG defaults for untouched nested params, so keeping the request
+      // would leave the forms displaying values the backend just replaced.
+      const saved = mergeSavedParameters(requestDraft, updated?.parameters);
+      // Edits made while the PUT was pending must survive. For sections the
+      // user did not touch, adopt the normalized stored value; for the ones
+      // they did touch, keep the newer draft and leave it dirty for the next
+      // save (which will normalize it in turn). The functional updater reads
+      // the latest state atomically, without a ref that can lag a render.
+      setDraft((prev) => {
+        const next = { ...prev };
+        for (const key of SECTIONS) {
+          const unchangedWhileSaving =
+            JSON.stringify(prev?.[key]) === JSON.stringify(requestDraft?.[key]);
+          if (unchangedWhileSaving) next[key] = saved[key];
+        }
+        return next;
+      });
+      setSavedDraft(saved);
       const resolved = await getSessionConfiguration(sessionId);
       setConfiguration(resolved);
       enqueueSnackbar(t("generative:rag.paramsPanel.updated"), {
@@ -413,6 +470,13 @@ export default function RAGConfigPanel({
         .join(", ");
     }
 
+    if (key === "query_transformation") {
+      if (!draft.query_transformation) {
+        return t("generative:rag.config.queryTransformation.off");
+      }
+      return section.display_name || "";
+    }
+
     return section.display_name || "";
   };
 
@@ -486,6 +550,16 @@ export default function RAGConfigPanel({
             downloadMessage={retrieverDownloadMessage}
           />
         </Stack>
+      );
+    }
+
+    if (key === "query_transformation") {
+      return (
+        <QueryTransformationPicker
+          value={draft.query_transformation}
+          onChange={(value) => updateSection("query_transformation", value)}
+          section={configuration.query_transformation}
+        />
       );
     }
 

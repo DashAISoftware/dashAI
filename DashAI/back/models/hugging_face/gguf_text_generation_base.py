@@ -1,6 +1,8 @@
 """Shared base for GGUF-backed text-generation models loaded via llama.cpp."""
 
-from typing import List, Optional, Union
+import gc
+import logging
+from typing import Any, ClassVar, Dict, List, Optional, Tuple
 
 from DashAI.back.core.schema_fields import (
     BaseSchema,
@@ -11,7 +13,9 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.downloads.downloadable import HFDownloadableMixin
+from DashAI.back.models.hugging_face.llama_utils import load_llama_or_raise
 from DashAI.back.models.text_to_text_generation_model import (
+    FunctionCallResult,
     TextToTextGenerationTaskModel,
 )
 from DashAI.back.models.utils import (
@@ -19,6 +23,128 @@ from DashAI.back.models.utils import (
     LLAMA_DEVICE_PLACEHOLDER,
     LLAMA_DEVICE_TO_IDX,
 )
+
+log = logging.getLogger(__name__)
+
+#: ``type`` discriminator of the OpenAI-style ``tools`` / ``tool_choice`` envelope.
+_TOOL_TYPE = "function"
+
+#: Legacy single-call field of a llama.cpp chat response message.
+_FUNCTION_CALL_KEY = "function_call"
+
+#: Modern multi-call envelope of a llama.cpp chat response message.
+_TOOL_CALLS_KEY = "tool_calls"
+
+
+def _extract_function_call(message: Any, function_name: str) -> Dict[str, Any]:
+    """Extract the forced call from a llama.cpp chat response message.
+
+    Reads the legacy ``function_call`` field or the modern ``tool_calls``
+    envelope, both produced by llama.cpp's generic chat handler. Every
+    malformed envelope shape (``None``/non-mapping message, non-mapping call
+    payloads, malformed ``tool_calls`` entries) normalizes to the same
+    ``RuntimeError`` instead of leaking low-level exceptions past the
+    pipeline boundary.
+
+    Parameters
+    ----------
+    message : Any
+        The ``choices[0]["message"]`` value of the llama.cpp response.
+    function_name : str
+        The function the model was forced to call; used in the error message.
+
+    Returns
+    -------
+    Dict[str, Any]
+        The ``{"name", "arguments"}`` mapping emitted by llama.cpp.
+
+    Raises
+    ------
+    RuntimeError
+        If no function call carrying a name was emitted, or the response
+        envelope is malformed.
+    """
+    function_call = _read_function_call(message)
+    if not isinstance(function_call, dict) or not function_call.get("name"):
+        raise RuntimeError(
+            "The function calling model did not emit a call for "
+            f"'{function_name}'. Response message: {message}"
+        )
+    return function_call
+
+
+def _read_function_call(message: Any) -> Any:
+    """Return the raw call payload of a llama.cpp message, or ``None``.
+
+    Parameters
+    ----------
+    message : Any
+        The ``choices[0]["message"]`` value of the llama.cpp response.
+
+    Returns
+    -------
+    Any
+        The legacy ``function_call`` payload or the first well-formed
+        ``tool_calls`` entry's ``function`` payload; ``None`` when the
+        message carries no usable call (malformed shapes included).
+    """
+    if not isinstance(message, dict):
+        return None
+    function_call = message.get(_FUNCTION_CALL_KEY)
+    if function_call is not None:
+        return function_call
+    tool_calls = message.get(_TOOL_CALLS_KEY)
+    if isinstance(tool_calls, list) and tool_calls:
+        first_entry = tool_calls[0]
+        if isinstance(first_entry, dict):
+            return first_entry.get("function")
+    return None
+
+
+def _clear_accelerator_cache() -> None:
+    """Ask PyTorch to return freed CUDA blocks to the driver when available."""
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:
+        log.warning(
+            "Could not clear the CUDA cache after closing a llama model.",
+            exc_info=True,
+        )
+
+
+def _release_llama_model(model: Any, label: str) -> None:
+    """Close a llama.cpp backend and drop every reference that pins it.
+
+    Parameters
+    ----------
+    model : Any
+        The llama.cpp backend instance. It may or may not expose ``close``.
+    label : str
+        Component name used in the warning when the backend fails to close.
+
+    Notes
+    -----
+    A close failure is logged at warning level and swallowed: cleanup must
+    never mask the failure that ended the stage. The reference is dropped and
+    the accelerator cache cleared even when the backend's own ``close`` raises.
+    """
+    close_method = None
+    try:
+        close_method = getattr(model, "close", None)
+        if callable(close_method):
+            close_method()
+    except Exception:
+        log.warning("Error closing %s backend.", label, exc_info=True)
+    finally:
+        # The bound method would keep the backend alive through gc.collect().
+        close_method = None
+        del model
+        gc.collect()
+
+    _clear_accelerator_cache()
 
 
 class GGUFTextGenerationSchema(BaseSchema):
@@ -281,11 +407,12 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
     DOWNLOAD_SIZE_BYTES: Optional[int] = None
     COMPATIBLE_COMPONENTS = ["TextToTextGenerationTask"]
     SCHEMA = GGUFTextGenerationSchema
+    SUPPORTS_FUNCTION_CALLING: ClassVar[bool] = True
 
     @classmethod
     def hf_repos(
         cls,
-    ) -> List[Union[tuple, tuple]]:
+    ) -> List[Tuple[str, str, List[str]]]:
         """Return the single HuggingFace repo entry for this checkpoint.
 
         Returns
@@ -305,15 +432,53 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
         Returns
         -------
         pathlib.Path
-            Absolute path to the first ``*.gguf`` file found under the repo
-            directory for ``REPO_ID``.
+            Absolute path to the first file matching ``GGUF_PATTERN`` under the
+            repo directory for ``REPO_ID``.
 
         Raises
         ------
-        StopIteration
-            If no ``*.gguf`` file exists inside the repo directory.
+        RuntimeError
+            If no matching file exists because the download is missing or
+            incomplete. The message names the component, repo directory and
+            expected pattern, and asks the user to re-download.
         """
-        return next(iter(cls._repo_dir(cls.REPO_ID).glob("*.gguf")))
+        repo_dir = cls._repo_dir(cls.REPO_ID)
+        pattern = cls.GGUF_PATTERN or "*.gguf"
+        matches = sorted(path for path in repo_dir.glob(pattern) if path.is_file())
+        if not matches:
+            raise RuntimeError(
+                f"{cls.__name__} could not find a downloaded GGUF file for repo "
+                f"{cls.REPO_ID!r} in '{repo_dir}' matching GGUF_PATTERN "
+                f"{pattern!r}. The download is missing or incomplete; "
+                "re-download the component before using it."
+            )
+        return matches[0]
+
+    @classmethod
+    def is_downloaded(cls) -> bool:
+        """Return whether a GGUF file matching the checkpoint pattern exists.
+
+        Unlike the generic HuggingFace check, a non-empty repo directory is not
+        enough: a folder holding only a README, a cache or an ``.incomplete``
+        file must not be treated as a finished download.
+
+        Returns
+        -------
+        bool
+            ``True`` when every repo in ``hf_repos()`` contains at least one
+            file matching ``GGUF_PATTERN``; ``False`` otherwise.
+        """
+        repos = cls.hf_repos()
+        if not repos:
+            return False
+        pattern = cls.GGUF_PATTERN or "*.gguf"
+        for repo_id, *_ in repos:
+            repo_dir = cls._repo_dir(repo_id)
+            if not repo_dir.is_dir():
+                return False
+            if not any(path.is_file() for path in repo_dir.glob(pattern)):
+                return False
+        return True
 
     def __init__(self, **kwargs):
         """Load a GGUF checkpoint from disk and initialise the llama.cpp model.
@@ -336,7 +501,9 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
         Raises
         ------
         RuntimeError
-            If ``llama-cpp-python`` is not installed.
+            If ``llama-cpp-python`` is not installed, or if llama.cpp fails to
+            load the checkpoint. The latter carries the model path, device,
+            context window, a device-specific hint and the captured log excerpt.
         """
         try:
             from llama_cpp import Llama
@@ -355,16 +522,43 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
         device_val = kwargs.get("device")
         use_gpu = LLAMA_DEVICE_TO_IDX.get(device_val, -1) >= 0
         main_gpu = LLAMA_DEVICE_TO_IDX.get(device_val, 0) if use_gpu else 0
+        model_path = str(self._local_gguf_path())
 
-        self.model = Llama(
-            model_path=str(self._local_gguf_path()),
-            verbose=True,
-            n_ctx=self.n_ctx,
-            n_gpu_layers=-1 if use_gpu else 0,
-            main_gpu=main_gpu,
+        self.model = load_llama_or_raise(
+            lambda: Llama(
+                model_path=model_path,
+                verbose=True,
+                n_ctx=self.n_ctx,
+                n_gpu_layers=-1 if use_gpu else 0,
+                main_gpu=main_gpu,
+            ),
+            model_label=type(self).__name__,
+            model_path=model_path,
+            device=device_val,
+            context_window=self.n_ctx,
         )
 
-    def generate(self, prompt: list) -> List[str]:
+    def close(self) -> None:
+        """Release the llama.cpp backend and reclaim its accelerator memory.
+
+        The backend is closed explicitly (instead of waiting for garbage
+        collection), its reference is dropped, and the CUDA cache is cleared
+        when available. The call is idempotent: a second call is a no-op. A
+        failure while closing the backend is logged as a warning and never
+        propagated, so cleanup cannot mask the failure that ended the stage.
+
+        Returns
+        -------
+        None
+            Nothing.
+        """
+        model = getattr(self, "model", None)
+        self.model = None
+        if model is None:
+            return
+        _release_llama_model(model, type(self).__name__)
+
+    def generate(self, prompt: List[Dict[str, str]]) -> List[str]:
         """Generate a reply for the given chat prompt.
 
         Parameters
@@ -387,3 +581,63 @@ class GGUFTextGenerationModel(HFDownloadableMixin, TextToTextGenerationTaskModel
             frequency_penalty=self.frequency_penalty,
         )
         return [output["choices"][0]["message"]["content"]]
+
+    def generate_function_call(
+        self,
+        messages: List[Dict[str, str]],
+        functions: List[Dict[str, Any]],
+    ) -> FunctionCallResult:
+        """Produce a named function call via constrained sampling.
+
+        The notebook's pattern (llama-cpp-python ``Functions.ipynb``) is used:
+        the first function is forced through ``tool_choice`` so llama.cpp
+        derives a GBNF grammar from the function's JSON ``parameters`` schema
+        and the emitted arguments shape is deterministic rather than
+        prompt-based. The generation parameters (``max_tokens``,
+        ``temperature``, ``frequency_penalty``) are reused from ``generate``.
+
+        Parameters
+        ----------
+        messages : List[Dict[str, str]]
+            Chat messages (OpenAI format) as passed to ``generate``.
+        functions : List[Dict[str, Any]]
+            OpenAI-style function specs. The first spec is the one the model is
+            forced to call.
+
+        Returns
+        -------
+        FunctionCallResult
+            The called function name and its raw ``arguments`` payload (the
+            JSON-encoded string emitted by llama.cpp, left unresolved for the
+            caller).
+
+        Raises
+        ------
+        ValueError
+            If no function spec carrying a ``name`` is provided.
+        RuntimeError
+            If the model did not emit a function call for the forced function.
+        """
+        if not functions or "name" not in functions[0]:
+            raise ValueError(
+                "generate_function_call requires at least one function spec "
+                "carrying a 'name'."
+            )
+        function_name = functions[0]["name"]
+        response = self.model.create_chat_completion(
+            messages=messages,
+            tools=[{"type": _TOOL_TYPE, "function": functions[0]}],
+            tool_choice={
+                "type": _TOOL_TYPE,
+                "function": {"name": function_name},
+            },
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            frequency_penalty=self.frequency_penalty,
+        )
+        message = response["choices"][0]["message"]
+        function_call = _extract_function_call(message, function_name)
+        return FunctionCallResult(
+            name=function_call["name"],
+            arguments=function_call.get("arguments"),
+        )

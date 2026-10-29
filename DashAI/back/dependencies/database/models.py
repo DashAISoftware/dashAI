@@ -585,6 +585,9 @@ class GenerativeProcess(Base):
     delivery_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     start_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
     end_time: Mapped[DateTime] = mapped_column(DateTime, nullable=True)
+    # Live pipeline stage payload while the process runs (see RAG_constants);
+    # set back to None when the process finishes or errors.
+    progress: Mapped[JSON] = mapped_column(JSON, nullable=True)
 
     session = relationship("GenerativeSession", back_populates="processes")
     input = relationship(
@@ -631,6 +634,18 @@ class GenerativeProcess(Base):
     def set_status_as_error(self) -> None:
         """Update the status of the process to error."""
         self.status = RunStatus.ERROR
+
+    def set_progress(self, progress: Optional[Dict[str, Any]]) -> None:
+        """Set the live pipeline stage payload on the process.
+
+        Parameters
+        ----------
+        progress : dict or None
+            The current stage payload (see ``RAG_constants`` for the exact
+            shapes) while the process runs, or None to clear it once the
+            process finishes or errors.
+        """
+        self.progress = progress
 
 
 class ProcessData(Base):
@@ -1306,6 +1321,24 @@ class RAGGenerationModel(Base):
 
     __table_args__ = (
         UniqueConstraint("parameters_hash", name="uq_rag_gen_model_params_hash"),
+    )
+
+
+class RAGRetrievalModel(Base):
+    __tablename__ = "rag_retrieval_model"
+    """
+    Table to store the LLM used by the LLM-evaluated composite retrievers to
+    judge retrieval sufficiency. Kept separate from the generation model table:
+    a retrieval-evaluation model is a distinct role and must be deduplicated on
+    its own.
+    """
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    class_name: Mapped[str] = mapped_column(String, nullable=False)
+    parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
+    parameters_hash: Mapped[str] = mapped_column(String, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("parameters_hash", name="uq_rag_retrieval_model_params_hash"),
     )
 
 

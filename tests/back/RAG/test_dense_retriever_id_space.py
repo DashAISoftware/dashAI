@@ -17,6 +17,10 @@ import os
 import numpy as np
 
 from DashAI.back.converters.hugging_face.text_embedding import AllMiniLML6V2Embedding
+from DashAI.back.converters.hugging_face.text_embedding.base import (
+    PASSAGE,
+    TextEmbeddingConverter,
+)
 from DashAI.back.models.RAG.documents import Chunk
 from DashAI.back.models.RAG.retrievers.composite.mmr_reranker_retriever import (
     MMRRerankerRetriever,
@@ -76,6 +80,92 @@ def _build_dense_retriever(n_chunks: int):
         os.rmdir(matrix_dir)
 
 
+class _KeywordEmbedding(TextEmbeddingConverter):
+    """Deterministic one-hot embedding converter used to check row alignment.
+
+    It subclasses the real converter because :class:`DenseEmbeddingRetriever`
+    accepts nothing else. The pretrained model is never loaded: :meth:`encode`
+    is the only surface the retriever calls.
+    """
+
+    def __init__(self, words):
+        """Store the vocabulary the one-hot vectors are built from.
+
+        Parameters
+        ----------
+        words : list of str
+            One keyword per vector position, in that order.
+        """
+        super().__init__()
+        self.words = list(words)
+
+    def encode(self, texts, role=PASSAGE):
+        """Return a one-hot vector per text, keyed on the first matching word.
+
+        Parameters
+        ----------
+        texts : list of str
+            Texts to encode.
+        role : str, optional
+            ``"passage"`` or ``"query"``; both encode identically here.
+
+        Returns
+        -------
+        np.ndarray
+            ``(len(texts), len(words))`` float array.
+        """
+        vectors = np.zeros((len(texts), len(self.words)))
+        for row, text in enumerate(texts):
+            for index, word in enumerate(self.words):
+                if word in text:
+                    vectors[row, index] = 1.0
+                    break
+        return vectors
+
+
+def test_dense_rows_follow_document_position_not_dict_order(tmp_path):
+    """A shared matrix aligns by position, never by the chunks' dict order.
+
+    The chunks arrive in an order unrelated to their positions, while the matrix
+    another session wrote is in position order. Resolving rows by dict order
+    instead of ``document_position`` would answer the ``two`` query with
+    ``zero``. The ids are offset from the positions too, so resolving a row
+    through the dict key rather than ``Chunk.id`` cannot pass either.
+    """
+    chunks = {
+        1: {
+            2: Chunk(102, 1, 2, "two"),
+            0: Chunk(100, 1, 0, "zero"),
+            1: Chunk(101, 1, 1, "one"),
+        }
+    }
+    embedding = _KeywordEmbedding(["zero", "one", "two"])
+    matrix_dir = tmp_path / "dense_matrix"
+    matrix_dir.mkdir()
+    np.save(
+        matrix_dir / "embeddings.npy",
+        embedding.encode(["zero", "one", "two"]),
+    )
+    persistence = DensePersistence(
+        matrix_dirs={1: str(matrix_dir)}, embedding_model_id=1
+    )
+    retriever = DenseEmbeddingRetriever(
+        embedding_model=embedding,
+        similarity_metric="cosine",
+        top_k=1,
+    )
+    retriever.inject_infra(str(tmp_path), chunks, persistence)
+    retriever.embedding_model = embedding
+    retriever.init_similarity_matrix()
+
+    results, trace = retriever.retrieve("two")
+
+    assert retriever.matrix_row_to_chunk_id == {0: 100, 1: 101, 2: 102}
+    assert results[0].text == "two"
+    assert results[0].id == 102
+    assert trace["chunks"] == ["1_2"]
+
+
 def test_dense_retriever_scores_chunks_by_db_id():
     """``score_chunks`` resolves chunk DB ids even when they differ from indices.
 
@@ -86,7 +176,7 @@ def test_dense_retriever_scores_chunks_by_db_id():
     """
     retriever, _ = _build_dense_retriever(n_chunks=30)
 
-    candidates = retriever.retrieve("what is machine learning?")
+    candidates, _trace = retriever.retrieve("what is machine learning?")
     assert candidates, "retrieve returned no chunks"
 
     ids = [c.id for c in candidates]
@@ -106,7 +196,7 @@ def test_mmr_reranker_returns_chunks_with_dense_child():
     mmr = MMRRerankerRetriever(children=[child], mmr_lambda=0.5, top_k=5)
     mmr.inject_infra(os.getcwd(), chunks, None)
 
-    result = mmr.retrieve("what is machine learning?")
+    result, _trace = mmr.retrieve("what is machine learning?")
 
     assert len(result) == 5
     assert all(c.id is not None for c in result)

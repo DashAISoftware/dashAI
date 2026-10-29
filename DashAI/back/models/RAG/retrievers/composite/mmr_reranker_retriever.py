@@ -5,7 +5,6 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     float_field,
     int_field,
@@ -18,11 +17,18 @@ from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    unpack_retrieval_result,
+)
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
+from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 log = logging.getLogger(__name__)
 
 
-class MMRRerankerRetrieverSchema(BaseSchema):
+class MMRRerankerRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`MMRRerankerRetriever`.
 
     Attributes:
@@ -102,19 +108,18 @@ class MMRRerankerRetriever(CompositeRetriever):
         zh="使用最大边际相关性（MMR）对检索结果重新排序以提升多样性。",
     )
 
+    REPRESENTATION = MultilingualString(
+        en="MMR λ {mmr_lambda} · top-k {top_k}",
+        es="MMR λ {mmr_lambda} · top-k {top_k}",
+        pt="MMR λ {mmr_lambda} · top-k {top_k}",
+        de="MMR λ {mmr_lambda} · top-k {top_k}",
+        zh="MMR λ {mmr_lambda} · top-k {top_k}",
+    )
+
     @classmethod
-    def get_metadata(cls) -> Dict[str, Any]:
-        """Return UI metadata including the declarative operation summary."""
-        return {
-            **super().get_metadata(),
-            "operation_summary": {
-                "kind": "rerank",
-                "fields": [
-                    {"param": "mmr_lambda", "label": "Lambda"},
-                    {"param": "top_k", "label": "Top K"},
-                ],
-            },
-        }
+    def _get_main_parameters(cls) -> Dict[str, str]:
+        """Return the MMR trade-off and final top-k paths."""
+        return {"mmr_lambda": "mmr_lambda", "top_k": "top_k"}
 
     def __init__(self, **kwargs):
         """Initialize the MMR reranker.
@@ -136,7 +141,7 @@ class MMRRerankerRetriever(CompositeRetriever):
         """
         return self._top_k
 
-    def retrieve(self, query: str, **kwargs) -> List[Chunk]:
+    def retrieve(self, query: str, **kwargs) -> Tuple[List[Chunk], Dict[str, Any]]:
         """Retrieve and re-rank chunks using MMR diversity.
 
         Fetches the candidate set from the child retriever (whose own
@@ -149,17 +154,19 @@ class MMRRerankerRetriever(CompositeRetriever):
             **kwargs: Additional retrieval parameters.
 
         Returns:
-            A list of :class:`Chunk` instances selected for relevance
-            and diversity.
+            A ``(chunks, trace)`` tuple of the chunks selected for relevance
+            and diversity and this reranker's trace node. The node's
+            ``children`` list holds the single child retriever's trace node.
 
         Raises:
             RAGRetrieverError: If the child retriever raises while scoring
                 the candidate chunks.
         """
         child = self._children[0]
-        candidates = child.retrieve(query)
+        candidates, child_node = unpack_retrieval_result(child.retrieve(query))
         if len(candidates) <= self._top_k:
-            return candidates
+            results = self._apply_retrieval_expansion(candidates)
+            return results, retriever_trace(self, results, children=[child_node])
 
         chunk_ids: List[int] = [c.id for c in candidates]
         scored: List[Tuple[int, float]] = child.score_chunks(chunk_ids, query)
@@ -170,14 +177,16 @@ class MMRRerankerRetriever(CompositeRetriever):
             if c.id in id_to_dist:
                 ordered.append(c)
         if len(ordered) <= self._top_k:
-            return ordered[: self._top_k]
+            selected = self._apply_retrieval_expansion(ordered[: self._top_k])
+            return selected, retriever_trace(self, selected, children=[child_node])
 
         relevance = np.array([1.0 - id_to_dist[c.id] for c in ordered])
         ordered_ids: List[int] = [c.id for c in ordered]
         try:
             vectors = child.get_chunk_vectors(ordered_ids)
         except (ValueError, RAGRetrieverError):
-            return ordered[: self._top_k]
+            selected = self._apply_retrieval_expansion(ordered[: self._top_k])
+            return selected, retriever_trace(self, selected, children=[child_node])
 
         if len(vectors) != len(ordered):
             log.warning(
@@ -186,11 +195,14 @@ class MMRRerankerRetriever(CompositeRetriever):
                 len(vectors),
                 len(ordered),
             )
-            return ordered[: self._top_k]
+            selected = self._apply_retrieval_expansion(ordered[: self._top_k])
+            return selected, retriever_trace(self, selected, children=[child_node])
 
         pairwise = cosine_similarity(vectors)
-        selected = self._mmr_select(relevance, pairwise)
-        return [ordered[i] for i in selected]
+        selected_indices = self._mmr_select(relevance, pairwise)
+        results = [ordered[i] for i in selected_indices]
+        results = self._apply_retrieval_expansion(results)
+        return results, retriever_trace(self, results, children=[child_node])
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Score chunks by delegating to the child retriever.

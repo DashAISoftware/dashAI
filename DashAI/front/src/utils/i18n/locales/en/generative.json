@@ -4,15 +4,6 @@
     "createSession": "Create a session",
     "generativeHub": "Generative Hub"
   },
-  "documentReferences": {
-    "chunkLabel": "Chunk {{position}}",
-    "chunkLabelWithPage": "Chunk {{position}}, page {{page}}",
-    "chunksCount_one": "This document provided {{count}} chunk for this response:",
-    "chunksCount_other": "This document provided {{count}} chunks for this response:",
-    "close": "Close",
-    "fallbackTitle": "Document {{id}}",
-    "openDocument": "Open document"
-  },
   "documentsBar": {
     "addFromData": "Add from Data",
     "addFromDataTitle": "Add documents from Data",
@@ -130,6 +121,11 @@
       "rag": "RAG",
       "sessionSuffix": "session"
     },
+    "chatProgress": {
+      "generatingAnswer": "Using sources to generate the answer",
+      "searchingSources": "Searching sources with query: {{queries}}",
+      "transformingQuery": "Transforming query…"
+    },
     "chunking": {
       "advancedButton": "Open advanced configuration"
     },
@@ -144,8 +140,11 @@
       "addChild": "Add retriever node",
       "allChunks": "All chunks",
       "chunkFusion": "Chunk fusion",
+      "compositeGroup": "Composite retrievers",
       "compositeInstructions": "Click the + button to add a child retriever to this composite. Click on a retriever card to edit its parameters or choose another model.",
       "configureNode": "Configure node",
+      "denseGroup": "Dense retrievers",
+      "keywordGroup": "Keyword retrievers",
       "mergeStrategyInterleave": "Interleave",
       "mergeStrategyRoundRobin": "Round robin",
       "nestedCompositeNote": "This is a composite retriever. Its children can be configured in the tree below.",
@@ -154,7 +153,8 @@
       "reranking": "Reranking",
       "retrieverDescription": "Choose a retriever to configure its parameters. Keyword retrievers (BM25, TF-IDF) find documents by term frequency. Embedding retrievers capture semantic meaning with dense vectors. Composite retrievers chain multiple retrievers together, sequentially or in parallel.",
       "selectModel": "Select retriever model",
-      "selectedChunks": "Selected chunks"
+      "selectedChunks": "Selected chunks",
+      "simpleGroup": "Simple retrievers"
     },
     "config": {
       "advanced": "Advanced configuration",
@@ -162,6 +162,18 @@
       "chunkCount_other": "{{count}} chunks",
       "contextBudget": "Context budget",
       "discard": "Discard",
+      "queryTransformation": {
+        "advanced": "Advanced configuration",
+        "enable": "Enable query transformation",
+        "historyWindow": "History window",
+        "language": "Language",
+        "llm": "Language model",
+        "maxSubqueries": "Max sub-queries",
+        "nQueries": "Number of queries",
+        "off": "Off",
+        "prompt": "Prompt",
+        "unknownComponent": "this transformer is not registered; choose a prompt and a model to continue."
+      },
       "unsavedIn": "Unsaved changes in: {{sections}}"
     },
     "create": {
@@ -216,6 +228,17 @@
         "template": "Template",
         "templatePlaceholder": "Each user message arrives as {input}\nThe retrieved passages arrive as {chunks}"
       },
+      "field": {
+        "edit": "Edit template",
+        "editTitle": "Edit prompt template",
+        "empty": "This prompt has no template yet.",
+        "languageHelp": "Changing the language only changes the label; use Load built-in to replace the template.",
+        "loadBuiltin": "Load built-in",
+        "loadError": "Could not load prompt templates.",
+        "new": "New prompt",
+        "newTitle": "New prompt template",
+        "select": "Select prompt"
+      },
       "languages": {
         "en": "English",
         "es": "Español",
@@ -224,6 +247,21 @@
     },
     "retrieverConfig": {
       "modelLabel": "Retriever model"
+    },
+    "schemaSummary": {
+      "labels": {
+        "b": "b",
+        "embedding_model": "embedding model",
+        "k1": "k1",
+        "max_chunks": "max chunks",
+        "max_iters": "max iterations",
+        "merge_strategy": "merge",
+        "mmr_lambda": "MMR λ",
+        "model_name": "model",
+        "similarity_function": "similarity",
+        "similarity_metric": "similarity",
+        "top_k": "top-k"
+      }
     },
     "session": {
       "notFound": "Session not found"
@@ -245,14 +283,50 @@
     }
   },
   "sourcesDisplay": {
-    "chunk_one": "chunk",
-    "chunk_other": "chunks",
-    "fallbackTitle": "sourcesDisplay.fallbackTitle",
-    "pages_one": "page {{pages}}",
-    "pages_other": "pages {{pages}}",
-    "provided": "provided",
-    "viewChunks": "View chunks",
+    "chunks": "Chunks",
+    "noPipelineTrace": "No pipeline trace is available for this answer.",
+    "pipeline": "Pipeline",
     "viewSources": "View message sources"
+  },
+  "traceChunks": {
+    "allQueriesChip": "All",
+    "chunkLabel": "Chunk {{position}}",
+    "chunkLabelWithPage": "Chunk {{position}}, page {{page}}",
+    "chunkRangeLabel": "Chunks {{first}}–{{last}}",
+    "chunkRangeLabelWithPage": "Chunks {{first}}–{{last}}, page {{page}}",
+    "chunkListLabel": "Chunks {{positions}}",
+    "chunkListLabelWithPage": "Chunks {{positions}}, page {{page}}",
+    "unitsAndChunksLabel": "{{units}} units · {{chunks}} chunks",
+    "chunksLabel_one": "{{count}} chunk",
+    "chunksLabel_other": "{{count}} chunks",
+    "chunksTab": "Chunks",
+    "discarded": "This chunk was discarded: it did not reach the end of the pipeline.",
+    "discardedCaption": "These candidates were retrieved but did not reach the final set.",
+    "discardedTitle": "Discarded during selection",
+    "emptyState": "No chunks were retrieved for this response.",
+    "fallbackTitle": "Document {{id}}",
+    "foundBy": "Found by {{retrievers}}",
+    "foundByQuery": "query {{index}}",
+    "openDocument": "Open document",
+    "queryCandidates_one": "{{count}} candidate",
+    "queryCandidates_other": "{{count}} candidates",
+    "queryTooltip": "Query {{index}}",
+    "receivedCount_one": "{{chunks}} chunk from {{documents}} document",
+    "receivedCount_other": "{{chunks}} chunks from {{documents}} documents",
+    "receivedTitle": "Chunks used for this answer",
+    "pipelineTab": "Pipeline",
+    "sectionsLabel": "Message source sections",
+    "selectedChunkHint": "Select a chunk from the tree to see its content here.",
+    "showLess": "Show less",
+    "showMore": "Show more",
+    "storyDirect": "The retriever searched with your message directly.",
+    "storyKept": "{{kept}} of {{total}} retrieved chunks reached the answer.",
+    "storyKeptAll_one": "The {{count}} retrieved chunk reached the answer.",
+    "storyKeptAll_other": "All {{count}} retrieved chunks reached the answer.",
+    "storyRewritten_one": "Your message was rewritten into {{count}} search query.",
+    "storyRewritten_other": "Your message was rewritten into {{count}} search queries.",
+    "title": "Message sources",
+    "yourMessage": "Your message was"
   },
   "validation": {
     "apiKeyMissingDescription": "This model requires an API key to function. Open Advanced Configuration to add your API key.",

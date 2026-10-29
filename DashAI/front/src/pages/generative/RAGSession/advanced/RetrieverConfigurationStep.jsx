@@ -10,17 +10,25 @@ import {
 import PropTypes from "prop-types";
 import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { getRetrievalParadigm } from "../../../../api/rag";
+import {
+  getRetrievalParadigm,
+  getRetrieverComponents,
+} from "../../../../api/rag";
 import {
   loadRetrieverKinds,
   isComposite as isCompositeKind,
-  retrieverCategory,
-  sortByCategory,
 } from "../retrieverKinds";
-import FormSchema from "../../../../components/shared/FormSchema";
+import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import CompositeRetrieverBuilder from "./CompositeRetrieverBuilder";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import { resolveDefaults } from "../../../../utils/schema";
+import { resolveRetrieverDefaults } from "./resolveRetrieverDefaults";
+
+/** Parent class name for all dense embedding components in the backend ComponentRegistry. */
+const DENSE_EMBEDDING_PARENT = "BaseDenseEmbedding";
+
+const SPARSE_RETRIEVER_PARENT = "SparseRetriever";
+const COMPOSITE_RETRIEVER_PARENT = "CompositeRetriever";
 
 /**
  * Resolves a component's display name from its display_name field (string or multilingual).
@@ -65,7 +73,7 @@ function AutoSaveFormSchema({
     if (!selectedRetriever) return;
     let cancelled = false;
     (async () => {
-      const d = await resolveDefaults(selectedRetriever.name);
+      const d = await resolveRetrieverDefaults(selectedRetriever.name);
       if (!cancelled) setFetchedDefaults(d);
     })();
     return () => {
@@ -92,10 +100,10 @@ function AutoSaveFormSchema({
   );
 
   return (
-    <FormSchema
+    <FormSchemaWithPrompts
       model={selectedRetriever.name}
       initialValues={initialValues}
-      autoSave={true}
+      autoSave
       onFormSubmit={handleFormSubmit}
       formSubmitRef={formikRef}
       hideButtons
@@ -120,11 +128,12 @@ const RetrieverConfigurationStep = forwardRef(
     { allParadigms, retrieverModel, setRetrieverModel, setNextEnabled },
     ref,
   ) {
-    const { t } = useTranslation(["generative", "common"]);
+    const { t } = useTranslation(["generative"]);
     const [allOptions, setAllOptions] = useState([]);
     const [selectedRetriever, setSelectedRetriever] = useState(null);
     const [openConfig, setOpenConfig] = useState(false);
     const savedParamsRef = useRef(null);
+    const retrieversRef = useRef([]);
 
     /**
      * Persists the current form parameter values into the retriever model state.
@@ -156,24 +165,70 @@ const RetrieverConfigurationStep = forwardRef(
       const load = async () => {
         await loadRetrieverKinds();
         let retrievers = [];
+        let concreteEmbeddings = [];
+        let keywordRetrievers = [];
+        let compositeRetrievers = [];
         try {
-          retrievers = await getRetrievalParadigm();
+          const results = await Promise.all([
+            getRetrievalParadigm(),
+            getRetrieverComponents(DENSE_EMBEDDING_PARENT),
+            getRetrieverComponents(SPARSE_RETRIEVER_PARENT),
+            getRetrieverComponents(COMPOSITE_RETRIEVER_PARENT),
+          ]);
+          retrievers = results[0] || [];
+          concreteEmbeddings = results[1] || [];
+          keywordRetrievers = results[2] || [];
+          compositeRetrievers = results[3] || [];
         } catch (e) {
-          retrievers = allParadigms || [];
+          retrievers = await getRetrievalParadigm();
         }
-        const options = sortByCategory(
-          (retrievers || []).filter(
-            (retriever) => retriever.configurable_object !== false,
-          ),
-          t("common:other"),
-        );
-        setAllOptions(options);
+        retrieversRef.current = retrievers;
+
+        const keywordOptions = keywordRetrievers.map((c) => ({
+          ...c,
+          _type: "retriever",
+          _group: "keyword",
+        }));
+        const denseOptions = concreteEmbeddings.map((c) => ({
+          ...c,
+          _type: "embedding",
+          _group: "embedding",
+        }));
+        const compositeOptions = compositeRetrievers.map((c) => ({
+          ...c,
+          _type: "retriever",
+          _group: "composite",
+        }));
+        const merged = [
+          ...keywordOptions,
+          ...denseOptions,
+          ...compositeOptions,
+        ];
+        setAllOptions(merged);
 
         if (retrieverModel?.component) {
-          const found =
-            options.find((c) => c.name === retrieverModel.component) ||
-            allParadigms?.find((c) => c.name === retrieverModel.component) ||
-            null;
+          let found = null;
+          if (retrieverModel.component === "DenseEmbeddingRetriever") {
+            // Always set selectedRetriever to the DenseEmbeddingRetriever paradigm,
+            // never to the embedding model. The embedding model is stored in params
+            // and handled by the sub-form, not the top-level selector.
+            found =
+              retrievers.find((c) => c.name === "DenseEmbeddingRetriever") ||
+              null;
+            if (!found) {
+              found =
+                allParadigms?.find(
+                  (c) => c.name === "DenseEmbeddingRetriever",
+                ) || null;
+            }
+          } else {
+            found = merged.find((c) => c.name === retrieverModel.component);
+            if (!found && allParadigms) {
+              found = allParadigms.find(
+                (c) => c.name === retrieverModel.component,
+              );
+            }
+          }
           if (found) {
             setSelectedRetriever(found);
             setOpenConfig(true);
@@ -185,10 +240,11 @@ const RetrieverConfigurationStep = forwardRef(
     }, []);
 
     /**
-     * Handles selection of a new retriever from the autocomplete and resets
-     * its parameters to the retriever's defaults.
+     * Handles selection of a new retriever or embedding from the autocomplete.
+     * Resolves defaults and builds the appropriate model structure (wrapping
+     * embeddings inside DenseEmbeddingRetriever if needed).
      * @param {object} _event - The autocomplete event.
-     * @param {object|null} newValue - The selected retriever option.
+     * @param {object|null} newValue - The selected component option.
      */
     const handleRetrieverChange = useCallback(
       async (_event, newValue) => {
@@ -202,11 +258,43 @@ const RetrieverConfigurationStep = forwardRef(
           return;
         }
 
-        const defaults = await resolveDefaults(newValue.name);
-        setSelectedRetriever(newValue);
-        setRetrieverModel({ component: newValue.name, params: defaults });
-        setOpenConfig(Boolean(newValue?.schema?.properties));
-        setNextEnabled(true);
+        if (newValue._type === "embedding") {
+          const embeddingDefaults = await resolveDefaults(newValue.name);
+          const denseRetrieverDefaults = await resolveRetrieverDefaults(
+            "DenseEmbeddingRetriever",
+          );
+          const model = {
+            component: "DenseEmbeddingRetriever",
+            params: {
+              ...denseRetrieverDefaults,
+              embedding_model: {
+                component: newValue.name,
+                params: embeddingDefaults,
+              },
+            },
+          };
+          const found = retrieversRef.current.find(
+            (c) => c.name === "DenseEmbeddingRetriever",
+          );
+          setSelectedRetriever(
+            found
+              ? { ...found, _type: "retriever" }
+              : {
+                  ...newValue,
+                  _type: "retriever",
+                  name: "DenseEmbeddingRetriever",
+                },
+          );
+          setRetrieverModel(model);
+          setOpenConfig(Boolean(found?.schema?.properties));
+          setNextEnabled(true);
+        } else {
+          const defaults = await resolveRetrieverDefaults(newValue.name);
+          setSelectedRetriever(newValue);
+          setRetrieverModel({ component: newValue.name, params: defaults });
+          setOpenConfig(Boolean(newValue?.schema?.properties));
+          setNextEnabled(true);
+        }
       },
       [setRetrieverModel, setNextEnabled],
     );
@@ -258,7 +346,15 @@ const RetrieverConfigurationStep = forwardRef(
         <Autocomplete
           options={allOptions}
           getOptionLabel={(opt) => getDisplayName(opt)}
-          groupBy={(opt) => retrieverCategory(opt, t("common:other"))}
+          groupBy={(opt) => {
+            if (opt._group === "embedding")
+              return t("generative:rag.composite.denseGroup");
+            if (opt._group === "composite")
+              return t("generative:rag.composite.compositeGroup");
+            if (opt._group === "keyword")
+              return t("generative:rag.composite.keywordGroup");
+            return t("generative:rag.composite.simpleGroup");
+          }}
           value={selectedRetriever}
           onChange={handleRetrieverChange}
           isOptionEqualToValue={(a, b) => a.name === b.name}

@@ -134,3 +134,100 @@ class Qwen25_15BInstruct(GGUFTextGenerationModel):  # noqa: N801
             "与 0.5B 变体相比，它具有更强的推理能力和生成质量，但需要稍多的内存。"
         ),
     )
+
+
+class Qwen25_3BInstruct(GGUFTextGenerationModel):  # noqa: N801
+    """Qwen 2.5 3B Instruct GGUF checkpoint (Q8_0 quantization).
+
+    A 3B-parameter instruction-tuned model from Alibaba Cloud that offers
+    higher response quality than the 1.5B variant while still running on CPU.
+    Weights are stored locally after a one-time download from HuggingFace.
+
+    References
+    ----------
+    - Qwen Team (2024). "Qwen2.5 Technical Report."
+      https://arxiv.org/abs/2412.15115
+    - https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF
+    """
+
+    REPO_ID = "Qwen/Qwen2.5-3B-Instruct-GGUF"
+    GGUF_PATTERN = "*8_0.gguf"
+    DOWNLOAD_SIZE_BYTES = 3616088480
+    SCHEMA = GGUFTextGenerationSchema
+    COLOR: str = "#2e7d32"
+    DISPLAY_NAME = MultilingualString(
+        en="Qwen2.5 3B Instruct",
+        es="Qwen2.5 3B Instruct",
+        pt="Qwen2.5 3B Instruct",
+        de="Qwen2.5 3B Instruct",
+        zh="Qwen2.5 3B Instruct",
+    )
+    DESCRIPTION = MultilingualString(
+        en=(
+            "Qwen 2.5 3B Instruct is a 3B-parameter instruction-tuned "
+            "language model by Alibaba Cloud, loaded as a Q8_0 GGUF for "
+            "efficient CPU inference. It provides stronger reasoning and "
+            "generation quality than the 1.5B variant at the cost of slightly "
+            "more memory. Model available at "
+            "https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF."
+        ),
+        es=(
+            "Qwen 2.5 3B Instruct es un modelo de 3B parámetros ajustado "
+            "para instrucciones por Alibaba Cloud, cargado como GGUF Q8_0 "
+            "para inferencia eficiente en CPU. Ofrece mayor capacidad de "
+            "razonamiento y calidad de generación que la variante de 1.5B a "
+            "costa de un poco más de memoria."
+        ),
+        pt=(
+            "Qwen 2.5 3B Instruct é um modelo de 3B parâmetros ajustado "
+            "para instruções pela Alibaba Cloud, carregado como GGUF Q8_0 "
+            "para inferência eficiente em CPU. Oferece melhor raciocínio e "
+            "qualidade de geração que a variante de 1.5B ao custo de um pouco "
+            "mais de memória."
+        ),
+        de=(
+            "Qwen 2.5 3B Instruct ist ein 3B-Parameter-Instruktionsmodell "
+            "von Alibaba Cloud, als Q8_0-GGUF für effiziente CPU-Inferenz "
+            "geladen. Es bietet besseres Schlussfolgern und "
+            "Generierungsqualität als die 1,5B-Variante, benötigt jedoch "
+            "etwas mehr Speicher."
+        ),
+        zh=(
+            "Qwen 2.5 3B Instruct 是阿里云推出的 30 亿参数指令微调语言模型，"
+            "以 Q8_0 GGUF 格式加载，支持高效 CPU 推理。"
+            "与 1.5B 变体相比，它具有更强的推理能力和生成质量，但需要稍多的内存。"
+            "模型地址：https://huggingface.co/Qwen/Qwen2.5-3B-Instruct-GGUF。"
+        ),
+    )
+
+
+class Qwen25_7BInstruct(GGUFTextGenerationModel):  # noqa: N801
+    """Qwen 2.5 7B Instruct GGUF checkpoint (Q8_0 quantization).
+
+    A 7B-parameter instruction-tuned model from Alibaba Cloud that offers
+    higher response quality than the 3B variant while still running on CPU.
+    Weights are stored locally after a one-time download from HuggingFace.
+
+    References
+    ----------
+    - Qwen Team (2024). "Qwen2.5 Technical Report."
+      https://arxiv.org/abs/2412.15115
+    - https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF
+    """
+
+    REPO_ID = "Qwen/Qwen2.5-7B-Instruct-GGUF"
+    # The 7B Q8_0 checkpoint ships split across three shards named
+    # ``qwen2.5-7b-instruct-q8_0-0000N-of-00003.gguf``; the leading ``*`` is
+    # required for the pattern to match the repo file names (and their local
+    # paths after ``snapshot_download``).
+    GGUF_PATTERN = "*-q8_0*.gguf"
+    DOWNLOAD_SIZE_BYTES = 8098525408
+    SCHEMA = GGUFTextGenerationSchema
+    COLOR: str = "#2e7d32"
+    DISPLAY_NAME = MultilingualString(
+        en="Qwen2.5 7B Instruct",
+        es="Qwen2.5 7B Instruct",
+        pt="Qwen2.5 7B Instruct",
+        de="Qwen2.5 7B Instruct",
+        zh="Qwen2.5 7B Instruct",
+    )

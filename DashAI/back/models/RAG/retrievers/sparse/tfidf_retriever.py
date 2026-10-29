@@ -1,13 +1,13 @@
 import logging
 import os
 import pickle
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
 
+from DashAI.back.core.atomic import atomic_open
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     enum_field,
     int_field,
@@ -15,12 +15,16 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
+from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 log = logging.getLogger(__name__)
 
 
-class TFIDFRetrieverSchema(BaseSchema):
+class TFIDFRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`TFIDFRetriever`.
 
     Attributes:
@@ -90,7 +94,23 @@ class TFIDFRetriever(SparseRetriever):
         zh="使用 TF-IDF 向量化进行文档检索的稀疏检索器。",
     )
 
+    REPRESENTATION = MultilingualString(
+        en="similarity {similarity_function} · top-k {top_k}",
+        es="similitud {similarity_function} · top-k {top_k}",
+        pt="similaridade {similarity_function} · top-k {top_k}",
+        de="Ähnlichkeit {similarity_function} · top-k {top_k}",
+        zh="相似度 {similarity_function} · top-k {top_k}",
+    )
+
     SCHEMA = TFIDFRetrieverSchema
+
+    @classmethod
+    def _get_main_parameters(cls) -> Dict[str, str]:
+        """Return the TF-IDF similarity function and top-k paths."""
+        return {
+            "similarity_function": "similarity_function",
+            "top_k": "top_k",
+        }
 
     def __init__(self, **kwargs):
         """Initialize the TF-IDF retriever.
@@ -114,6 +134,11 @@ class TFIDFRetriever(SparseRetriever):
     def load(self) -> bool:
         """Load a previously saved TF-IDF state from disk.
 
+        The storage folder is content-addressed, so the state may have been
+        fitted by another session over the same corpus. The persisted map holds
+        chunk ids, which this session resolves through its own chunks, so the
+        state is reused as-is.
+
         Returns:
             ``True`` if state was loaded successfully, ``False`` if
             no saved state exists or loading failed.
@@ -128,10 +153,17 @@ class TFIDFRetriever(SparseRetriever):
                 tf_idf_matrix = pickle.load(f)
             with open(os.path.join(model_dir, "matrix_row_to_chunk_id.pkl"), "rb") as f:
                 matrix_row_to_chunk_id = pickle.load(f)
+            if not self._row_map_matches_corpus(matrix_row_to_chunk_id):
+                log.warning(
+                    "Persisted TF-IDF state does not describe the current corpus; "
+                    "refitting from the injected chunks."
+                )
+                return False
             self._converter.vectorizer = vectorizer
             self._converter.fitted = True
             self._tf_idf_matrix = tf_idf_matrix
             self.matrix_row_to_chunk_id = matrix_row_to_chunk_id
+            self._state_loaded = True
             return True
         except Exception as e:
             log.error("Error loading TFIDF state: %s", e)
@@ -155,22 +187,29 @@ class TFIDFRetriever(SparseRetriever):
             "matrix_row_to_chunk_id.pkl": self.matrix_row_to_chunk_id,
         }
         for fname, obj in to_save.items():
-            with open(os.path.join(model_dir, fname), "wb") as f:
+            with atomic_open(os.path.join(model_dir, fname), "wb") as f:
                 pickle.dump(obj, f)
 
     def _fit(self):
         """Fit the TF-IDF vectorizer on all chunk texts and build the matrix."""
-        chunk_texts = []
-        current_idx = 0
-        self.matrix_row_to_chunk_id: Dict[int, int] = {}
-
-        for doc_chunks in self.chunks.values():
-            for chunk in doc_chunks.values():
-                chunk_texts.append(chunk.text)
-                self.matrix_row_to_chunk_id[current_idx] = chunk.id
-                current_idx += 1
-
+        self._state_loaded = False
+        self.matrix_row_to_chunk_id: Dict[int, int] = self.row_map_for_corpus()
+        chunk_texts = [chunk.text for chunk in self._ordered_chunks()]
         self._tf_idf_matrix = self._converter.fit_matrix(chunk_texts)
+
+    @property
+    def similarity_function(self) -> str:
+        """Return the configured similarity function.
+
+        The raw configuration key is ``similarity_function``; the live value is
+        stored as ``similarity_function_name`` during construction. Exposing it
+        under the configuration name lets the schema-summary resolver find it on
+        directly constructed instances.
+
+        Returns:
+            The configured distance metric name.
+        """
+        return self.similarity_function_name
 
     @property
     def retrieval_top_k(self) -> int:
@@ -181,7 +220,9 @@ class TFIDFRetriever(SparseRetriever):
         """
         return self._top_k
 
-    def retrieve(self, query: str, top_k: int | None = None) -> List[Chunk]:
+    def retrieve(
+        self, query: str, top_k: int | None = None
+    ) -> Tuple[List[Chunk], Dict[str, Any]]:
         """Retrieve the top-k chunks by TF-IDF similarity.
 
         Args:
@@ -190,7 +231,8 @@ class TFIDFRetriever(SparseRetriever):
                 configured value if ``None``.
 
         Returns:
-            A list of :class:`Chunk` instances ordered by distance.
+            A ``(chunks, trace)`` tuple, where ``chunks`` is ordered by
+            distance and ``trace`` is this retriever's trace node.
         """
         self._check_infra()
         k = top_k if top_k is not None else self._top_k
@@ -201,9 +243,11 @@ class TFIDFRetriever(SparseRetriever):
             metric=self.similarity_function_name,
         ).flatten()
         top_indices = np.argsort(distances)[:k]
-        return [
+        results = [
             self._chunk_lookup[self.matrix_row_to_chunk_id[idx]] for idx in top_indices
         ]
+        results = self._apply_retrieval_expansion(results)
+        return results, retriever_trace(self, results)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Score a set of chunk IDs against the query.

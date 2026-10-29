@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING, Any, Dict, List
 import numpy as np
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     enum_field,
     int_field,
@@ -12,10 +11,13 @@ from DashAI.back.core.schema_fields import (
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.documents import Chunk, RAGDocument
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError
 from DashAI.back.models.RAG.retrievers.cross_encoder.cross_encoder_retriever import (
     CrossEncoderRetriever,
+)
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
 )
 
 if TYPE_CHECKING:
@@ -154,7 +156,7 @@ CROSS_ENCODER_MODEL_NAMES = list(CROSS_ENCODER_MODELS.keys())
 # ── Schema ────────────────────────────────────────────────────────────────────
 
 
-class SentenceTransformerCrossEncoderRetrieverSchema(BaseSchema):
+class SentenceTransformerCrossEncoderRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`SentenceTransformerCrossEncoderRetriever`.
 
     Attributes:
@@ -266,17 +268,18 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
     )
     COLOR: str = "#FF5722"
     ICON: str = "Shuffle"
+    REPRESENTATION = MultilingualString(
+        en="model {model_name} · top-k {top_k}",
+        es="modelo {model_name} · top-k {top_k}",
+        pt="modelo {model_name} · top-k {top_k}",
+        de="Modell {model_name} · top-k {top_k}",
+        zh="模型 {model_name} · top-k {top_k}",
+    )
 
     @classmethod
-    def get_metadata(cls) -> Dict[str, Any]:
-        """Return UI metadata including the declarative operation summary."""
-        return {
-            **super().get_metadata(),
-            "operation_summary": {
-                "kind": "rerank",
-                "fields": [{"param": "model_name", "label": ""}],
-            },
-        }
+    def _get_main_parameters(cls) -> Dict[str, str]:
+        """Return the cross-encoder model name and final top-k paths."""
+        return {"model_name": "model_name", "top_k": "top_k"}
 
     def __init__(self, **kwargs):
         """Initialize the SentenceTransformer cross-encoder retriever.
@@ -380,6 +383,7 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
         env_RAG_path: str,  # noqa: N803
         chunks: Dict[int, Dict[int, Chunk]],
         persistence: Any,
+        documents: Dict[int, RAGDocument] | None = None,
     ) -> None:
         """Inject runtime infrastructure and load the cross-encoder model.
 
@@ -392,6 +396,7 @@ class SentenceTransformerCrossEncoderRetriever(CrossEncoderRetriever):
             chunks: Nested dictionary mapping document IDs to chunk IDs to
                 :class:`Chunk` instances.
             persistence: Persistence object.
+            documents: Optional document mapping forwarded to the base.
         """
-        super().inject_infra(env_RAG_path, chunks, persistence)
+        super().inject_infra(env_RAG_path, chunks, persistence, documents)
         self.load()

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from scipy.special import expit
@@ -12,6 +12,10 @@ from DashAI.back.models.RAG.exceptions import (
 from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    unpack_retrieval_result,
+)
+from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref, retriever_trace
 
 
 class CrossEncoderRetriever(CompositeRetriever, ABC):
@@ -41,6 +45,11 @@ class CrossEncoderRetriever(CompositeRetriever, ABC):
         "Abstract re-ranker that uses a cross-encoder model to re-score "
         "candidates retrieved by a child retriever."
     )
+
+    @classmethod
+    def _get_main_parameters(cls) -> Dict[str, str]:
+        """Return the final top-k path."""
+        return {"top_k": "top_k"}
 
     def __init__(self, **kwargs):
         """Initialize the cross-encoder retriever.
@@ -118,7 +127,9 @@ class CrossEncoderRetriever(CompositeRetriever, ABC):
         """
         raise NotImplementedError
 
-    def retrieve(self, query: str, top_k: int | None = None, **kwargs) -> List[Chunk]:
+    def retrieve(
+        self, query: str, top_k: int | None = None, **kwargs
+    ) -> Tuple[List[Chunk], Dict[str, Any]]:
         """Retrieve and re-rank chunks using the cross-encoder.
 
         Fetches a candidate set from the single child retriever (whose own
@@ -134,10 +145,14 @@ class CrossEncoderRetriever(CompositeRetriever, ABC):
             **kwargs: Additional retrieval parameters.
 
         Returns:
-            A list of :class:`Chunk` instances re-ranked by cross-encoder
-            relevance (up to ``top_k`` items). When the candidate count
-            does not exceed the effective top-k, the chunks are returned
-            in child order without re-scoring.
+            A ``(chunks, trace)`` tuple of the chunks re-ranked by
+            cross-encoder relevance (up to ``top_k`` items) and this
+            reranker's trace node. When the candidate count does not exceed
+            the effective top-k, the chunks are returned in child order
+            without re-scoring (and the node carries no ``scores``). When
+            re-scoring runs, the node adds ``scores`` — a list of
+            ``{"ref", "score"}`` entries. The node's ``children`` list holds
+            the child retriever's trace node.
 
         Raises:
             RAGRetrieverEmptyChildrenError: If no child retriever is
@@ -154,15 +169,67 @@ class CrossEncoderRetriever(CompositeRetriever, ABC):
             raise RAGRetrieverError(
                 f"top_k must be an integer >= 1, got {effective_k!r}."
             )
-        candidates = child.retrieve(query)
+        candidates, child_node = unpack_retrieval_result(child.retrieve(query))
 
         if len(candidates) <= effective_k:
-            return candidates
+            results = self._apply_retrieval_expansion(candidates)
+            return results, retriever_trace(self, results, children=[child_node])
 
         scores = self._cross_score(query, candidates)
         scored = list(zip(candidates, scores, strict=True))
         scored.sort(key=lambda x: x[1], reverse=True)
-        return [chunk for chunk, _ in scored[:effective_k]]
+        results = [chunk for chunk, _ in scored[:effective_k]]
+        results = self._apply_retrieval_expansion(results)
+        score_trace = self._score_trace(results, scored)
+        return results, retriever_trace(
+            self, results, children=[child_node], scores=score_trace
+        )
+
+    def _score_trace(
+        self, results: List[Chunk], scored: List[Tuple[Chunk, float]]
+    ) -> List[Dict[str, Any]]:
+        """Build the trace score entries for the returned chunks.
+
+        Every scored candidate is kept. Each returned chunk also gets an entry
+        under its own reference carrying the best (maximum) score among its
+        covered positions; a unit that shares the reference of a scored
+        candidate (its first covered chunk) therefore upgrades that entry
+        instead of leaving a score that describes only one of its chunks.
+        Without this the frontend could not label the units it renders.
+
+        Parameters
+        ----------
+        results : List[Chunk]
+            The chunks this retriever returns, after expansion.
+        scored : List[Tuple[Chunk, float]]
+            The re-scored candidates, best first.
+
+        Returns
+        -------
+        List[Dict[str, Any]]
+            ``{"ref", "score"}`` entries: the candidate entries in score order,
+            plus one entry per expanded unit whose reference had no candidate.
+        """
+        entries: Dict[str, float] = {}
+        by_position: Dict[Tuple[int, int], float] = {}
+        for chunk, score in scored:
+            entries[chunk_ref(chunk)] = score
+            by_position[(chunk.document_id, chunk.document_position)] = score
+        for chunk in results:
+            positions = getattr(chunk, "source_positions", None) or (
+                chunk.document_position,
+            )
+            covered: List[float] = []
+            for position in positions:
+                key = (chunk.document_id, position)
+                if key in by_position:
+                    covered.append(by_position[key])
+            ref = chunk_ref(chunk)
+            if ref in entries:
+                covered.append(entries[ref])
+            if covered:
+                entries[ref] = max(covered)
+        return [{"ref": ref, "score": score} for ref, score in entries.items()]
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Score a set of chunk IDs against the query with the cross-encoder.

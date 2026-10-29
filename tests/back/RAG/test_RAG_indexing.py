@@ -312,7 +312,12 @@ def test_index_endpoint_short_circuits_when_already_indexed(
 
 
 def _store_pre_branch_retriever(client: TestClient, session_id: int) -> None:
-    """Overwrite a session's retriever with the shape older versions stored."""
+    """Overwrite a session's retriever with an incomplete, pre-branch shape.
+
+    The vectorizer field and component are current, and the BM25 weighting and
+    similarity parameters are missing: such a configuration no longer validates,
+    which is what the index endpoint has to reject.
+    """
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
         session = db.get(GenerativeSession, session_id)
@@ -320,7 +325,7 @@ def _store_pre_branch_retriever(client: TestClient, session_id: int) -> None:
         parameters["retriever_model"] = {
             "component": "BM25Retriever",
             "params": {
-                "BM25Vectorizer": {"component": "BM25VectorizerModel", "params": {}},
+                "vectorizer": {"component": "BagOfWordsConverter", "params": {}},
                 "top_k": 5,
             },
         }

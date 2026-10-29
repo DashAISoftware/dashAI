@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Dict, Optional
 
 from sqlalchemy.orm import Session
 
@@ -29,6 +31,12 @@ from DashAI.back.services.RAG.retriever_setup_service import (
     RetrieverSetupResult,
     RetrieverSetupService,
 )
+from DashAI.back.services.RAG.utils import build_parameters_hash
+
+if TYPE_CHECKING:
+    from DashAI.back.models.RAG.transformation.base_query_transformation import (
+        BaseQueryTransformation,
+    )
 
 log = logging.getLogger(__name__)
 
@@ -59,7 +67,9 @@ class SetupService:
 
     Does NOT execute ``generate()`` — only assembly.  Each sub-component
     is built via the corresponding service class so that DB persistence
-    and model instantiation are handled consistently.
+    and model instantiation are handled consistently. LLMs are the
+    exception: they are configured as lazy proxies and only instantiated
+    when their stage first needs them.
 
     This service receives **pre-validated** configuration (use
     :class:`RAGSessionValidationService` for parameter validation).
@@ -102,9 +112,9 @@ class SetupService:
         4. Create the chunking model and persist chunks
         5. Setup the retriever (dense embedding / sparse / composite)
 
-        This stops short of the generation model on purpose:
-        :meth:`LLMService.get_or_create` *instantiates* the LLM, and indexing
-        must never load model weights it will not use.
+        This stops short of the generation model on purpose: indexing must
+        never load model weights it will not use. Every LLM built by the
+        pipeline is lazy, so even the full assembly never loads one.
 
         Every step is content-addressed, so calling this when nothing changed
         is a cheap no-op that reuses the cached chunk set and retriever.
@@ -157,6 +167,12 @@ class SetupService:
         )
 
         report(0.45, "Building the retriever")
+        chunking_key = build_parameters_hash(
+            {
+                "component": config.chunking_model.component,
+                "params": config.chunking_model.params,
+            }
+        )
         retriever_service = RetrieverSetupService(
             self._db,
             self._registry,
@@ -164,6 +180,8 @@ class SetupService:
             chunking_result.chunks,
             chunk_set.id,
             pipeline_id,
+            chunking_key,
+            documents=documents,
         )
         retriever_result = retriever_service.setup(
             config.retriever_model.component,
@@ -188,10 +206,15 @@ class SetupService:
         Sequence
         --------
         1-5. Build the index (delegated to :meth:`build_index`)
-        6. Get or create the LLM record
+        6. Get or create the LLM record and a lazy proxy for it
         7. Resolve the prompt component and persist it
         8. Update the pipeline DB record with FK component IDs
         9. Build and return the ``RAGPipeline`` instance
+
+        The generation and transformation models are lazy proxies: their
+        configuration (including the DB row) is resolved here, but the real
+        weights are constructed on first use and released at the end of their
+        pipeline stage.
 
         Parameters
         ----------
@@ -212,7 +235,7 @@ class SetupService:
         """
         index = self.build_index(config)
 
-        llm_result = self._llm.get_or_create(
+        llm_result = self._llm.get_or_create_lazy(
             config.generation_model.component,
             config.generation_model.params,
         )
@@ -228,6 +251,14 @@ class SetupService:
             name=f"pipeline_{config.session_id}_{config.prompt.component}",
             parameters=config.prompt.params,
         )
+
+        transformation_model: Optional[BaseQueryTransformation] = None
+        if config.query_transformation is not None:
+            transformation_result = models_factory.create_query_transformation(
+                config.query_transformation.component,
+                config.query_transformation.params,
+            )
+            transformation_model = transformation_result.model
 
         self._update_db_record(
             config.session_id,
@@ -246,6 +277,7 @@ class SetupService:
             chunks=index.chunking.chunks,
             retriever=index.retriever.model,
             llm_model=llm_result.model,
+            query_transformation=transformation_model,
         )
         return pipeline
 
@@ -333,6 +365,7 @@ class SetupService:
         chunks: Dict[int, Dict[int, Chunk]],
         retriever: BaseRetriever,
         llm_model: TextToTextGenerationTaskModel,
+        query_transformation: Optional[BaseQueryTransformation] = None,
     ) -> RAGPipeline:
         """Build a ``RAGPipeline`` from pre-assembled components.
 
@@ -347,6 +380,8 @@ class SetupService:
         chunks : Dict[int, Dict[int, Chunk]]
         retriever : BaseRetriever
         llm_model : TextToTextGenerationTaskModel
+        query_transformation : Optional[BaseQueryTransformation]
+            Optional query transformation stage; disabled when None.
 
         Returns
         -------
@@ -362,6 +397,7 @@ class SetupService:
             chunking_model=chunking_model,
             retriever=retriever,
             llm_model=llm_model,
+            query_transformation=query_transformation,
         )
 
     def _clear_reindex_flag(self, session_id: int) -> None:

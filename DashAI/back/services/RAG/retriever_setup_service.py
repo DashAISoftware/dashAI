@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from DashAI.back.core.schema_fields.utils import normalize_payload
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.documents.chunk import Chunk
+from DashAI.back.models.RAG.documents.rag_document import RAGDocument
 from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverEmptyChildrenError,
     RAGRetrieverError,
@@ -39,13 +40,19 @@ from DashAI.back.models.RAG.retrievers.persistence import (
     DensePersistence,
     SparsePersistence,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    strip_expansion_options,
+)
 from DashAI.back.models.RAG.retrievers.retriever_factory import (
     RetrieverFactory,
+    resolve_component_params,
 )
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.models.RAG.utils import hash_function
 from DashAI.back.services.RAG.embedding_storage_service import EmbeddingStorageService
+from DashAI.back.services.RAG.retrieval_llm_service import RetrievalLLMService
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
+from DashAI.back.services.RAG.utils import build_corpus_content_hash
 
 log = logging.getLogger(__name__)
 
@@ -84,6 +91,8 @@ class RetrieverSetupService:
         chunks: dict[int, dict[int, Chunk]],
         chunk_set_id: int,
         pipeline_id: int,
+        chunking_key: str,
+        documents: dict[int, RAGDocument] | None = None,
     ):
         """Initialize the retriever setup service.
 
@@ -95,8 +104,16 @@ class RetrieverSetupService:
             registry: Application component registry.
             env_RAG_path: Base RAG data directory path.
             chunks: Nested dict of chunks keyed by document_id and index.
-            chunk_set_id: FK to the owning chunk set.
+            chunk_set_id: FK to the owning chunk set. It keys this session's DB
+                rows only; fitted artifacts are addressed by content, so the
+                same corpus and configuration share them across chunk sets.
             pipeline_id: FK to the owning pipeline.
+            chunking_key: Session-independent hash of the chunking
+                configuration. Different chunking always resolves to different
+                artifact folders, even if it happens to produce identical
+                chunks. Required: the chunking configuration is part of every
+                artifact identity.
+            documents: Optional document mapping injected into the retrievers.
         """
         self._db = db
         self._registry = registry
@@ -104,6 +121,8 @@ class RetrieverSetupService:
         self._chunks = chunks
         self._chunk_set_id = chunk_set_id
         self._pipeline_id = pipeline_id
+        self._documents = documents
+        self._chunking_key = chunking_key
         self._db_service = RetrieverDBService(db)
         self._embedding_service = EmbeddingStorageService(
             env_RAG_path, self._db_service
@@ -118,7 +137,9 @@ class RetrieverSetupService:
         persistence: DensePersistence | SparsePersistence | None = None,
     ) -> BaseRetriever:
         """Phase 1: Build model in memory. No I/O, no DB."""
-        factory = RetrieverFactory(self._registry, self._env_RAG_path, self._chunks)
+        factory = RetrieverFactory(
+            self._registry, self._env_RAG_path, self._chunks, self._documents
+        )
         result = factory.create(component_name, params, persistence)
         return result.model
 
@@ -139,6 +160,11 @@ class RetrieverSetupService:
     ) -> RetrieverSetupResult:
         """Complete retriever setup: build -> initialize -> persist.
 
+        The retrieve-then-expand options are post-processing knobs, so they are
+        removed from the configuration used as the *identity* (cache lookup and
+        persistence) while the live model is still built from the full
+        parameters. Toggling them therefore never forces a re-index.
+
         Parameters
         ----------
         component_name : str
@@ -157,9 +183,9 @@ class RetrieverSetupService:
         if issubclass(model_class, CompositeRetriever):
             return self._setup_composite(model_class, params)
 
-        sorted_params = dict(sorted(params.items()))
+        identity_params = dict(sorted(strip_expansion_options(params).items()))
         loaded = self._load_unit_from_db(
-            model_class, model_class.__name__, sorted_params
+            model_class, model_class.__name__, identity_params, params
         )
         if loaded is not None:
             return RetrieverSetupResult(db_record_id=loaded.get_id(), model=loaded)
@@ -169,7 +195,7 @@ class RetrieverSetupService:
 
         self.initialize_model(model)
 
-        bridge_id = self.persist_model(model, component_name, sorted_params)
+        bridge_id = self.persist_model(model, component_name, identity_params)
         return RetrieverSetupResult(db_record_id=bridge_id, model=model)
 
     # ── Private: Composite ─────────────────────────────────────────────
@@ -198,11 +224,17 @@ class RetrieverSetupService:
                 "Composite retriever must have at least one child"
             )
         children = [self._setup_child(c) for c in children_configs]
+        resolved_params = resolve_component_params(
+            model_class,
+            {k: v for k, v in params.items() if k != "children"},
+            self._registry,
+            llm_resolver=self._resolve_retrieval_llm,
+        )
         model = model_class(
             children=[c.model for c in children],
-            **{k: v for k, v in params.items() if k != "children"},
+            **resolved_params,
         )
-        model.inject_infra(self._env_RAG_path, self._chunks, None)
+        model.inject_infra(self._env_RAG_path, self._chunks, None, self._documents)
 
         try:
             bridge = self._db_service.save_composite(
@@ -228,35 +260,67 @@ class RetrieverSetupService:
             params=child_config["params"],
         )
 
+    def _resolve_retrieval_llm(self, component_name: str, params: dict):
+        """Resolve a nested ``llm_model`` reference through the DB-backed service.
+
+        Parameters
+        ----------
+        component_name : str
+            Registered LLM component name.
+        params : dict
+            LLM constructor parameters.
+
+        Returns
+        -------
+        RetrievalLLMServiceResult
+            The lookup-or-create result exposing ``db_record_id`` and a lazy
+            proxy for ``model``. The real backend is constructed on first use
+            and released when the retriever's stage ends.
+        """
+        service = RetrievalLLMService(self._db, self._registry)
+        return service.get_or_create_lazy(component_name, params)
+
     # ── Private: Unit ──────────────────────────────────────────────────
 
     def _load_unit_from_db(
-        self, model_class: type, class_name: str, sorted_params: dict[str, Any]
+        self,
+        model_class: type,
+        class_name: str,
+        identity_params: dict[str, Any],
+        model_params: dict[str, Any],
     ) -> BaseRetriever | None:
         """Load a unit retriever (dense or sparse) from the DB cache.
 
         Args:
             model_class: Retriever model class.
             class_name: Component class name string.
-            sorted_params: Deterministically sorted parameters.
+            identity_params: Deterministically sorted parameters without the
+                retrieve-then-expand options; this is the cache key.
+            model_params: Full configuration, used to build the live model so it
+                keeps its expansion options.
 
         Returns:
             Initialized retriever model, or ``None`` if not cached.
         """
         if issubclass(model_class, DenseEmbeddingRetriever):
-            return self._load_dense(class_name, sorted_params)
+            return self._load_dense(class_name, identity_params, model_params)
         if issubclass(model_class, SparseRetriever):
-            return self._load_sparse(class_name, sorted_params)
+            return self._load_sparse(class_name, identity_params, model_params)
         return None
 
     def _load_dense(
-        self, class_name: str, sorted_params: dict[str, Any]
+        self,
+        class_name: str,
+        identity_params: dict[str, Any],
+        model_params: dict[str, Any],
     ) -> BaseRetriever | None:
         """Load a dense retriever from the DB cache by its natural key.
 
         Args:
             class_name: Component class name string.
-            sorted_params: Deterministically sorted parameters.
+            identity_params: Deterministically sorted parameters without the
+                retrieve-then-expand options; this is the cache key.
+            model_params: Full configuration used to build the live model.
 
         Returns:
             Fully initialized DenseEmbeddingRetriever, or ``None`` if not cached.
@@ -266,7 +330,7 @@ class RetrieverSetupService:
         """
         try:
             record = self._db_service.find_dense(
-                class_name, sorted_params, self._chunk_set_id
+                class_name, identity_params, self._chunk_set_id
             )
         except SQLAlchemyError:
             log.exception("Database error during dense retriever lookup.")
@@ -274,10 +338,10 @@ class RetrieverSetupService:
         if record is None:
             return None
         persistence = self._build_dense_persistence(record.embedding_model_id)
-        factory = RetrieverFactory(self._registry, self._env_RAG_path, self._chunks)
-        result = factory.create(
-            class_name, dict(sorted_params), persistence=persistence
+        factory = RetrieverFactory(
+            self._registry, self._env_RAG_path, self._chunks, self._documents
         )
+        result = factory.create(class_name, dict(model_params), persistence=persistence)
         model = result.model
         model.init_model()
         bridge = self._db_service.find_bridge_for_sub_table(record, class_name)
@@ -286,13 +350,18 @@ class RetrieverSetupService:
         return model
 
     def _load_sparse(
-        self, class_name: str, sorted_params: dict[str, Any]
+        self,
+        class_name: str,
+        identity_params: dict[str, Any],
+        model_params: dict[str, Any],
     ) -> BaseRetriever | None:
         """Load a sparse retriever from the DB cache by its natural key.
 
         Args:
             class_name: Component class name string.
-            sorted_params: Deterministically sorted parameters.
+            identity_params: Deterministically sorted parameters without the
+                retrieve-then-expand options; this is the cache key.
+            model_params: Full configuration used to build the live model.
 
         Returns:
             Fully initialized SparseRetriever, or ``None`` if not cached.
@@ -302,7 +371,7 @@ class RetrieverSetupService:
         """
         try:
             record = self._db_service.find_sparse(
-                class_name, sorted_params, self._chunk_set_id
+                class_name, identity_params, self._chunk_set_id
             )
         except SQLAlchemyError:
             log.exception("Database error during sparse retriever lookup.")
@@ -310,10 +379,10 @@ class RetrieverSetupService:
         if record is None:
             return None
         persistence = SparsePersistence(model_dir=record.storage_folder)
-        factory = RetrieverFactory(self._registry, self._env_RAG_path, self._chunks)
-        result = factory.create(
-            class_name, dict(sorted_params), persistence=persistence
+        factory = RetrieverFactory(
+            self._registry, self._env_RAG_path, self._chunks, self._documents
         )
+        result = factory.create(class_name, dict(model_params), persistence=persistence)
         model = result.model
         model.init_model()
         bridge = self._db_service.find_bridge_for_sub_table(record, class_name)
@@ -386,10 +455,19 @@ class RetrieverSetupService:
     def _build_sparse_persistence_for(
         self, model_class: type, params: dict
     ) -> SparsePersistence:
-        """Build a SparsePersistence object with a deterministic storage folder.
+        """Build a SparsePersistence object with a content-addressed folder.
 
-        The folder path is derived from a hash of class name, params, and
-        chunk set id to support idempotent lookups.
+        The folder is derived from the retriever class, the parameters that
+        actually shape the fitted matrix, and a hash of the corpus content. No
+        session id, chunk-set id or chunk-set signature participates: two
+        sessions over the same corpus with the same configuration share one
+        fitted state, while a different corpus produces a different folder.
+
+        Parameters excluded from the identity: the retrieve-then-expand options
+        (post-processing), ``top_k`` (how many rows are returned, not how they
+        are scored) and ``similarity_function`` (the distance used at query
+        time). Vectorizer, ``k1``/``b``/``delta`` and the TF-IDF settings all
+        stay, because changing them changes the fitted matrix.
 
         Args:
             model_class: Retriever model class.
@@ -398,12 +476,16 @@ class RetrieverSetupService:
         Returns:
             A SparsePersistence instance pointing to the computed folder.
         """
+        artifact_params = strip_expansion_options(params)
+        artifact_params.pop("top_k", None)
+        artifact_params.pop("similarity_function", None)
         identity = hash_function(
             json.dumps(
                 {
                     "class_name": model_class.__name__,
-                    "params": dict(sorted(params.items())),
-                    "chunk_set_id": self._chunk_set_id,
+                    "params": dict(sorted(artifact_params.items())),
+                    "corpus": build_corpus_content_hash(self._chunks),
+                    "chunking": self._chunking_key,
                 },
                 sort_keys=True,
             )
@@ -418,6 +500,10 @@ class RetrieverSetupService:
     def _build_dense_persistence(self, embedding_model_id: int) -> DensePersistence:
         """Build a DensePersistence with matrix directories for every document.
 
+        Each folder is addressed by the document's own content, so the same
+        document and embedding model reuse one ``embeddings.npy`` across
+        sessions and ``compute_missing_embeddings`` skips re-embedding it.
+
         Args:
             embedding_model_id: FK to the embedding model record.
 
@@ -425,10 +511,19 @@ class RetrieverSetupService:
             A DensePersistence instance with per-document matrix dirs.
         """
         matrix_dirs: dict[int, str] = {}
-        for doc_id in self._chunks:
+        for doc_id, document_chunks in self._chunks.items():
+            content_key = hash_function(
+                json.dumps(
+                    {
+                        "corpus": build_corpus_content_hash({doc_id: document_chunks}),
+                        "chunking": self._chunking_key,
+                    },
+                    sort_keys=True,
+                )
+            )[:16]
             folder = EmbeddingStorageService.build_matrix_dir_name(
                 doc_id,
-                self._chunk_set_id,
+                content_key,
                 embedding_model_id,
             )
             matrix_dirs[doc_id] = os.path.join(
@@ -555,7 +650,9 @@ class RetrieverSetupService:
             SQLAlchemyError: On any DB persistence failure.
             IOError: If the model cannot be saved to disk.
         """
-        model.save()
+        model_dir = model.persistence.model_dir
+        if model.needs_save() or not model_dir or not os.path.isdir(model_dir):
+            model.save()
 
         try:
             bridge = self._db_service.create_bridge(

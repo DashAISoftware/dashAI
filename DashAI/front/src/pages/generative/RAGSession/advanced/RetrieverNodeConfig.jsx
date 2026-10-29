@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -15,9 +15,9 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import FormSchema from "../../../../components/shared/FormSchema";
+import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
-import { resolveDefaults } from "../../../../utils/schema";
+import { resolveRetrieverDefaults } from "./resolveRetrieverDefaults";
 import {
   loadRetrieverKinds,
   isComposite as isCompositeKind,
@@ -25,6 +25,9 @@ import {
   retrieverCategory,
   sortByCategory,
 } from "../retrieverKinds";
+
+/** Shared empty exclusion list, so the non-composite branch passes no new array. */
+const NO_EXCLUDED_FIELDS = [];
 
 /**
  * Dialog for configuring a single node in the composite retriever tree.
@@ -75,6 +78,11 @@ export default function RetrieverNodeConfig({
   const [selectedModel, setSelectedModel] = useState(null);
   const [params, setParams] = useState({});
   const [initialParams, setInitialParams] = useState({});
+  // Resolving a component's defaults is asynchronous. Saving while they are
+  // still loading would persist an empty or previous component's payload, so
+  // the Save action waits for the requested component's defaults.
+  const [loadingDefaults, setLoadingDefaults] = useState(false);
+  const defaultsRequestRef = useRef(0);
 
   useEffect(() => {
     loadRetrieverKinds().then(() => setKindsLoaded(true));
@@ -111,18 +119,33 @@ export default function RetrieverNodeConfig({
   };
 
   /**
-   * Handles selection of a new retriever component and loads its default parameters.
+   * Handles selection of a new retriever component and loads its default
+   * parameters. Only the latest request may write the form state, so quickly
+   * switching components cannot apply a stale response.
    * @param {object} _e - The autocomplete event.
    * @param {object|null} newVal - The newly selected component option.
    */
   const handleModelChange = async (_e, newVal) => {
+    const requestId = defaultsRequestRef.current + 1;
+    defaultsRequestRef.current = requestId;
     setSelectedModel(newVal);
-    if (newVal) {
-      const defaults = await resolveDefaults(newVal.name);
+
+    if (!newVal) {
+      setParams({});
+      setLoadingDefaults(false);
+      return;
+    }
+
+    setLoadingDefaults(true);
+    try {
+      const defaults = await resolveRetrieverDefaults(newVal.name);
+      if (requestId !== defaultsRequestRef.current) return;
       setParams(defaults);
       setInitialParams(defaults);
-    } else {
-      setParams({});
+    } finally {
+      if (requestId === defaultsRequestRef.current) {
+        setLoadingDefaults(false);
+      }
     }
   };
 
@@ -186,13 +209,15 @@ export default function RetrieverNodeConfig({
               <FormSchemaContainer
                 key={`node-config-${nodeId}-${selectedModel.name}`}
               >
-                <FormSchema
+                <FormSchemaWithPrompts
                   model={selectedModel.name}
                   initialValues={initialParams}
                   autoSave
                   onFormSubmit={(values) => setParams(values)}
                   hideButtons
-                  excludeFields={isComposite ? ["children"] : []}
+                  excludeFields={
+                    isComposite ? ["children"] : NO_EXCLUDED_FIELDS
+                  }
                 />
               </FormSchemaContainer>
             </>
@@ -207,7 +232,7 @@ export default function RetrieverNodeConfig({
         <Button
           onClick={handleSave}
           variant="contained"
-          disabled={!selectedModel}
+          disabled={!selectedModel || loadingDefaults}
         >
           {t("common:save")}
         </Button>

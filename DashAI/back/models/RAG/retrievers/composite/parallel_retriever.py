@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Tuple
 
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     enum_field,
     list_field,
@@ -13,9 +12,17 @@ from DashAI.back.models.RAG.retrievers.composite.composite_retriever import (
     CompositeRetriever,
 )
 from DashAI.back.models.RAG.retrievers.enums import MergeStrategy
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    unpack_retrieval_result,
+)
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+    prefer_wider_chunk,
+)
+from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 
-class ParallelRetrieverSchema(BaseSchema):
+class ParallelRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`ParallelRetriever`.
 
     Attributes:
@@ -78,16 +85,18 @@ class ParallelRetriever(CompositeRetriever):
         zh="并行查询多个检索器并合并其结果。",
     )
 
+    REPRESENTATION = MultilingualString(
+        en="merge {merge_strategy}",
+        es="fusión {merge_strategy}",
+        pt="mesclagem {merge_strategy}",
+        de="Zusammenführung {merge_strategy}",
+        zh="合并 {merge_strategy}",
+    )
+
     @classmethod
-    def get_metadata(cls) -> Dict[str, Any]:
-        """Return UI metadata including the declarative operation summary."""
-        return {
-            **super().get_metadata(),
-            "operation_summary": {
-                "kind": "fusion",
-                "fields": [{"param": "merge_strategy", "label": ""}],
-            },
-        }
+    def _get_main_parameters(cls) -> Dict[str, str]:
+        """Return the merge-strategy path."""
+        return {"merge_strategy": "merge_strategy"}
 
     def __init__(self, **kwargs):
         """Initialize the parallel retriever with a merge strategy.
@@ -108,7 +117,7 @@ class ParallelRetriever(CompositeRetriever):
         """
         return sum(c.retrieval_top_k for c in self._children)
 
-    def retrieve(self, query, **kwargs) -> List[Chunk]:
+    def retrieve(self, query, **kwargs) -> Tuple[List[Chunk], Dict[str, Any]]:
         """Retrieve chunks from all children in parallel and merge.
 
         Args:
@@ -117,17 +126,27 @@ class ParallelRetriever(CompositeRetriever):
                 child.
 
         Returns:
-            A deduplicated, merged list of :class:`Chunk` instances.
+            A ``(chunks, trace)`` tuple: the deduplicated, merged list of
+            :class:`Chunk` instances and a trace node whose ``children`` list
+            holds each child's own trace node, in child order.
         """
         all_child_results = []
+        child_nodes = []
         for child in self._children:
-            all_child_results.append(child.retrieve(query, **kwargs))
+            child_chunks, child_node = unpack_retrieval_result(
+                child.retrieve(query, **kwargs)
+            )
+            all_child_results.append(child_chunks)
+            child_nodes.append(child_node)
 
         total_k = sum(c.retrieval_top_k for c in self._children)
 
         if self.merge_strategy == MergeStrategy.ROUND_ROBIN:
-            return self._merge_round_robin(all_child_results, total_k)
-        return self._merge_interleave(all_child_results, total_k)
+            merged = self._merge_round_robin(all_child_results, total_k)
+        else:
+            merged = self._merge_interleave(all_child_results, total_k)
+        merged = self._apply_retrieval_expansion(merged)
+        return merged, retriever_trace(self, merged, children=child_nodes)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Aggregate chunk scores across all children.
@@ -179,8 +198,11 @@ class ParallelRetriever(CompositeRetriever):
     ) -> List[Chunk]:
         """Merge results using round-robin alternation.
 
-        Takes turns picking from each child's result list, skipping
-        duplicates.
+        Takes turns picking from each child's result list. A repeated
+        ``(document_id, document_position)`` key does not add a new entry: the
+        chunk covering more document positions replaces the earlier one in
+        place, so a widened window is never dropped in favour of the plain chunk
+        or narrower window anchored on the same position.
 
         Args:
             child_results_list: Results from each child retriever.
@@ -189,8 +211,8 @@ class ParallelRetriever(CompositeRetriever):
         Returns:
             A deduplicated list of up to *total_k* chunks.
         """
-        results = []
-        seen_keys: set[Tuple[int, int]] = set()
+        results: List[Chunk] = []
+        seen_positions: Dict[Tuple[int, int], int] = {}
         max_len = max(len(r) for r in child_results_list) if child_results_list else 0
 
         for i in range(max_len):
@@ -198,11 +220,14 @@ class ParallelRetriever(CompositeRetriever):
                 if i < len(child_results):
                     chunk = child_results[i]
                     key = self._chunk_key(chunk)
-                    if key not in seen_keys:
-                        seen_keys.add(key)
-                        results.append(chunk)
-                        if len(results) >= total_k:
-                            return results
+                    position = seen_positions.get(key)
+                    if position is not None:
+                        results[position] = prefer_wider_chunk(results[position], chunk)
+                        continue
+                    seen_positions[key] = len(results)
+                    results.append(chunk)
+                    if len(results) >= total_k:
+                        return results
         return results
 
     def _merge_interleave(
@@ -210,7 +235,10 @@ class ParallelRetriever(CompositeRetriever):
     ) -> List[Chunk]:
         """Merge results by interleaving in child order.
 
-        Concatenates each child's list in order, skipping duplicates.
+        Concatenates each child's list in order. A repeated
+        ``(document_id, document_position)`` key replaces the earlier entry in
+        place with the chunk covering more document positions, exactly like
+        :meth:`_merge_round_robin`.
 
         Args:
             child_results_list: Results from each child retriever.
@@ -219,15 +247,18 @@ class ParallelRetriever(CompositeRetriever):
         Returns:
             A deduplicated list of up to *total_k* chunks.
         """
-        results = []
-        seen_keys: set[Tuple[int, int]] = set()
+        results: List[Chunk] = []
+        seen_positions: Dict[Tuple[int, int], int] = {}
 
         for child_results in child_results_list:
             for chunk in child_results:
                 key = self._chunk_key(chunk)
-                if key not in seen_keys:
-                    seen_keys.add(key)
-                    results.append(chunk)
-                    if len(results) >= total_k:
-                        return results
+                position = seen_positions.get(key)
+                if position is not None:
+                    results[position] = prefer_wider_chunk(results[position], chunk)
+                    continue
+                seen_positions[key] = len(results)
+                results.append(chunk)
+                if len(results) >= total_k:
+                    return results
         return results
