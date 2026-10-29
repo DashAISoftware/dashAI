@@ -20,6 +20,7 @@ from DashAI.back.dependencies.database.models import StatisticalTest
 from DashAI.back.dependencies.registry import ComponentRegistry
 from DashAI.back.statistical_tests.base_statistical_test import BaseStatisticalTest
 from DashAI.back.statistical_tests.statistical_test_result import StatisticalTestResult
+from DashAI.back.statistical_tests.utils import UndefinedTestError
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -110,7 +111,8 @@ async def run_statistical_test(
     Raises
     ------
     HTTPException
-        400 if the test name is unknown or inputs are invalid.
+        400 if the test name is unknown, inputs are invalid, or the test is
+        undefined for the given scores (e.g. zero variance).
         500 on internal error.
     """
     try:
@@ -138,6 +140,22 @@ async def run_statistical_test(
             for run_id in request.run_ids
             if str(run_id) in request.fold_metrics
         }
+
+        # A metric that is not finite on a fold (e.g. ROC AUC on a fold with a
+        # single class) is not stored for that fold, so a run can arrive with
+        # too few scores, or none if that happened on every fold
+        for run_id, run_scores in scores.items():
+            if len(run_scores) < 2:
+                run_name = request.run_names.get(str(run_id), run_id)
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=(
+                        f"Run {run_name} has {len(run_scores)} valid "
+                        f"'{request.metric_name}' fold scores, but at least 2 "
+                        "are needed. The metric may not be computable on its "
+                        "folds (e.g. ROC AUC on a fold with a single class)."
+                    ),
+                )
 
         # Run the primary test, forwarding any extra params
         result: StatisticalTestResult = test_instance.run(
@@ -171,6 +189,7 @@ async def run_statistical_test(
                         run_2_name=request.run_names.get(str(pr.run_2), None),
                         p_value=pr.p_value,
                         significant=pr.significant,
+                        error=pr.error,
                     )
                     for pr in posthoc_result.posthoc
                 ]
@@ -187,6 +206,7 @@ async def run_statistical_test(
                     run_2_name=request.run_names.get(str(pr.run_2), None),
                     p_value=pr.p_value,
                     significant=pr.significant,
+                    error=pr.error,
                 )
                 for pr in result.posthoc
             ]
@@ -227,6 +247,12 @@ async def run_statistical_test(
 
     except HTTPException:
         raise
+    except UndefinedTestError as e:
+        # Degenerate scores (e.g. zero variance): a data problem, not a fault
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        ) from e
     except Exception as e:
         log.error(f"Error running statistical test: {str(e)}")
         raise HTTPException(
