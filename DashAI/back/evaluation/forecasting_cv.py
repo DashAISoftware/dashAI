@@ -62,3 +62,6 @@ class ForecastingCrossValidationEvaluationStrategy(FoldEvaluationStrategy):
     KIND = "backtest"
     # Both take a splitter that cuts the series into origins, in steps.
     SPLITTER_PARTITIONING = "origins"
+    DEFAULT_SPLITTER = "RollingOriginSplitter"
+    # One score per origin, and the forecasts of every origin.
+    RESULT_VIEWS: tuple = ("fold_metrics", "forecasts")

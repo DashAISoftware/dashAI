@@ -27,6 +27,7 @@ class FoldEvaluationStrategy(BaseEvaluationStrategy):
 
     KIND: str = "cv"
     SPLITTER_PARTITIONING = "folds"
+    RESULT_VIEWS: tuple = ("fold_metrics",)
 
 
 class CrossValidationEvaluationStrategy(FoldEvaluationStrategy):
