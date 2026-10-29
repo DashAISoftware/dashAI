@@ -180,8 +180,16 @@ def test_failed_backend_close_is_logged_and_does_not_raise(caplog):
     proxy = LazyLLM(lambda: _FailingCloseLLM(), label="broken-close")
     proxy.generate([{"role": "user", "content": "hi"}])
 
-    with caplog.at_level(logging.WARNING, logger="DashAI.back.models.lazy_llm"):
-        proxy.close()
+    # Other suites (for example the Alembic migration tests) reconfigure global
+    # logging and can leave this logger disabled, so re-enable it for the test.
+    logger = logging.getLogger("DashAI.back.models.lazy_llm")
+    was_disabled = logger.disabled
+    logger.disabled = False
+    try:
+        with caplog.at_level(logging.WARNING, logger="DashAI.back.models.lazy_llm"):
+            proxy.close()
+    finally:
+        logger.disabled = was_disabled
 
     assert proxy.is_loaded is False
     assert any(
