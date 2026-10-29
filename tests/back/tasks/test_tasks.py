@@ -135,13 +135,16 @@ def test_get_tabular_class_task_metadata():
     tabular_class_task = TabularClassificationTask()
     metadata = tabular_class_task.get_metadata()
 
-    # column_roles, io_roles, prediction_mode and requires_target: the flat
-    # view of the x/y short form is no longer emitted.
+    # column_roles, io_roles, prediction_mode, requires_target,
+    # takes_preprocessing and icon: the flat view of the x/y short form is no
+    # longer emitted.
     assert set(metadata) == {
         "column_roles",
         "io_roles",
         "prediction_mode",
         "requires_target",
+        "takes_preprocessing",
+        "icon",
     }
     assert metadata["prediction_mode"] == "rows"
     assert metadata["io_roles"] == {"inputs": ["features"], "outputs": ["target"]}
@@ -209,13 +212,16 @@ def test_get_text_class_task_metadata():
     text_class_task = TextClassificationTask()
     metadata = text_class_task.get_metadata()
 
-    # column_roles, io_roles, prediction_mode and requires_target: the flat
-    # view of the x/y short form is no longer emitted.
+    # column_roles, io_roles, prediction_mode, requires_target,
+    # takes_preprocessing and icon: the flat view of the x/y short form is no
+    # longer emitted.
     assert set(metadata) == {
         "column_roles",
         "io_roles",
         "prediction_mode",
         "requires_target",
+        "takes_preprocessing",
+        "icon",
     }
     assert metadata["prediction_mode"] == "rows"
     assert metadata["io_roles"] == {"inputs": ["features"], "outputs": ["target"]}
@@ -280,13 +286,16 @@ def test_get_translation_task_metadata():
     translation_task = TranslationTask()
     metadata = translation_task.get_metadata()
 
-    # column_roles, io_roles, prediction_mode and requires_target: the flat
-    # view of the x/y short form is no longer emitted.
+    # column_roles, io_roles, prediction_mode, requires_target,
+    # takes_preprocessing and icon: the flat view of the x/y short form is no
+    # longer emitted.
     assert set(metadata) == {
         "column_roles",
         "io_roles",
         "prediction_mode",
         "requires_target",
+        "takes_preprocessing",
+        "icon",
     }
     assert metadata["prediction_mode"] == "rows"
     assert metadata["io_roles"] == {"inputs": ["features"], "outputs": ["target"]}

@@ -36,6 +36,10 @@ class BaseTask:
     #: forecast a number of steps past the end of the training data.
     PREDICTION_MODE: str = "rows"
 
+    #: The task's icon in the task list: the name of a Material UI icon, as a
+    #: model declares its own.
+    ICON: str = "Science"
+
     # The roles this task's columns can play. Left as None, the roles come
     # from the x/y short form of ``metadata`` (see ``_role_delegate``).
     COLUMN_ROLES: Optional[Tuple[ColumnRole, ...]] = None
@@ -202,8 +206,10 @@ class BaseTask:
         """Return serialisable metadata for the current task.
 
         ``"column_roles"`` lists the roles, ``"io_roles"`` which of them feed
-        a model's inputs and outputs, and ``"prediction_mode"`` how a trained
-        model is asked for predictions. The flat view of the x/y short form
+        a model's inputs and outputs, ``"prediction_mode"`` how a trained
+        model is asked for predictions, ``"takes_preprocessing"`` whether a
+        session may preprocess its columns (:meth:`takes_preprocessing`) and
+        ``"icon"`` how the task list shows it. The flat view of the x/y short form
         (``inputs_types`` and the three keys beside it) is no longer emitted:
         its last reader moved to the roles. A task still declares it, as the
         short form of its roles (``XYRoles``).
@@ -217,14 +223,33 @@ class BaseTask:
         -------
         Dict[str, Any]
             Dictionary with keys ``"column_roles"``, ``"io_roles"``,
-            ``"prediction_mode"`` and ``"requires_target"``.
+            ``"prediction_mode"``, ``"requires_target"``,
+            ``"takes_preprocessing"`` and ``"icon"``.
         """
         return {
             "column_roles": [role.to_metadata() for role in cls.column_roles()],
             "io_roles": cls.io_roles(),
             "prediction_mode": cls.PREDICTION_MODE,
             "requires_target": cls.REQUIRES_TARGET,
+            "takes_preprocessing": cls.takes_preprocessing(),
+            "icon": cls.ICON,
         }
+
+    @classmethod
+    def takes_preprocessing(cls) -> bool:
+        """Whether a session of this task may preprocess its columns.
+
+        Session preprocessing transforms the columns of the roles that allow
+        it, so a task none of whose roles can be transformed has nothing for
+        the steps to feed. The session API refuses its steps, and the wizard
+        does not offer them.
+
+        Returns
+        -------
+        bool
+            True when at least one role is transformable.
+        """
+        return any(role.transformable for role in cls.column_roles())
 
     @classmethod
     def inputs_cardinality(cls) -> Any:

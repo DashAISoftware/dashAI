@@ -41,6 +41,7 @@ class TextClassificationTask(ClassificationTask):
         ),
         zh="将文本分类到预定义类别。例如：情感分析、垃圾邮件检测、意图识别。",
     )
+    ICON: str = "TextFields"
     DISPLAY_NAME: str = MultilingualString(
         en="Text Classification",
         es="Clasificación de Texto",

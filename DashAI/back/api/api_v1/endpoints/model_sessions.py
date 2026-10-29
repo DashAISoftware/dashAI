@@ -891,13 +891,12 @@ async def create_model_session(
     # The task translates the roles it was given into the model's inputs
     # and outputs, which the checks below read.
     task = task_or_http_error(params.task_name, component_registry)
-    if has_preprocessing and not any(
-        role.transformable for role in task.column_roles()
-    ):
+    if has_preprocessing and not task.takes_preprocessing():
         # Session preprocessing transforms the columns of the roles that
         # allow it, and fits once per partition. A task none of whose roles
         # allow it has nothing for the steps to feed, and partitions that are
-        # not rows: single-series forecasting until its exogenous role.
+        # not rows: single-series forecasting until its exogenous role. The
+        # wizard reads the same answer from the task's metadata.
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(
