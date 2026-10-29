@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, List
 
 from DashAI.back.core.schema_fields import int_field, schema_field
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.splitters.split_preview import backtest_preview
 
 from .base_splitter import BaseSplitter
 
@@ -76,8 +77,7 @@ class OriginSplitter(BaseSplitter):
     """
 
     PARTITIONING: str = "origins"
-    # No preview draws this shape yet; the frontend leaves it blank rather
-    # than drawing proportions that the cuts no longer are.
+    # Drawn by ``preview``: one bar per origin, the test and the kept model.
     GEOMETRY: str = "backtest_origins"
     NO_ROW_PARTITIONS = (
         "A backtest cuts the series in steps of its grid, so its run has no "
@@ -139,6 +139,11 @@ class OriginSplitter(BaseSplitter):
     def validate_size(self, n_rows: int) -> None:
         """Refuse a dataset too short for these cuts (see ``cuts``)."""
         self.cuts(n_rows)
+
+    @classmethod
+    def preview(cls, params, dataset, split_type=None, indexes=None):
+        """One bar per origin and the test (see ``BaseSplitter.preview``)."""
+        return backtest_preview(cls(params), dataset)
 
     @classmethod
     def explainable_partitions(cls, split_indexes: Dict[str, Any]) -> Dict:

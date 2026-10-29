@@ -29,6 +29,7 @@ from DashAI.back.api.api_v1.endpoints.prompts import router as prompts
 from DashAI.back.api.api_v1.endpoints.rag import router as rag
 from DashAI.back.api.api_v1.endpoints.reports import router as reports
 from DashAI.back.api.api_v1.endpoints.runs import router as runs
+from DashAI.back.api.api_v1.endpoints.splitters import router as splitters
 from DashAI.back.api.api_v1.endpoints.statistical_tests import (
     router as statistical_tests,
 )
@@ -46,6 +47,7 @@ api_router_v1.include_router(explorers, prefix="/explorer")
 api_router_v1.include_router(jobs, prefix="/job")
 api_router_v1.include_router(runs, prefix="/run")
 api_router_v1.include_router(predict, prefix="/predict")
+api_router_v1.include_router(splitters, prefix="/splitter")
 api_router_v1.include_router(generative_session, prefix="/generative-session")
 api_router_v1.include_router(generative_process, prefix="/generative-process")
 api_router_v1.include_router(pipelines, prefix="/pipelines")

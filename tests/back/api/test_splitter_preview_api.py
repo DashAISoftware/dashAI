@@ -1,0 +1,138 @@
+"""POST /splitter/preview: the split preview the session wizard draws.
+
+The splitter computes it (``BaseSplitter.preview``, checked on the wizard's own
+cases in ``tests/back/splitters/test_split_preview.py``); the endpoint reads the
+dataset the wizard is splitting, so the wizard counts no rows itself.
+"""
+
+import json
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+
+CASES = {
+    case["name"]: case
+    for case in json.loads(
+        (
+            Path(__file__).parents[3]
+            / "DashAI"
+            / "front"
+            / "src"
+            / "components"
+            / "models"
+            / "modelSession"
+            / "__fixtures__"
+            / "splitPreviewCases.json"
+        ).read_text(encoding="utf-8")
+    )
+}
+
+
+def _preview(client: TestClient, dataset_id, splitter_name, params, **extra):
+    return client.post(
+        "/api/v1/splitter/preview",
+        json={
+            "dataset_id": dataset_id,
+            "splitter_name": splitter_name,
+            "params": params,
+            **extra,
+        },
+    )
+
+
+def test_a_random_holdout_is_previewed_on_the_dataset_rows(client, dataset_1):
+    case = CASES["random holdout, three partitions"]
+
+    response = _preview(
+        client, dataset_1.id, "HoldoutSplitter", case["params"], split_type="random"
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    for key in ("rows", "notes", "shares", "errors", "partitions"):
+        assert body[key] == case["expected"][key], key
+
+
+def test_more_folds_than_rows_is_an_error_of_the_preview(client, dataset_1):
+    response = _preview(client, dataset_1.id, "KFoldSplitter", {"n_splits": 200})
+
+    assert response.status_code == 200, response.text
+    assert response.json()["errors"] == [
+        {"key": "foldsMustBeLessThanDatasetSize", "values": {"datasetSize": 150}}
+    ]
+
+
+def test_a_predefined_split_reads_the_dataset_own_partitions(client, dataset_1):
+    # The iris dataset carries no partitions of its own, so a predefined split
+    # gives none, whatever indexes the request sends.
+    response = _preview(
+        client,
+        dataset_1.id,
+        "HoldoutSplitter",
+        {},
+        split_type="predefined",
+        indexes={"train": [0, 1], "validation": [], "test": [2]},
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["partitions"] == []
+
+
+def test_a_backtest_is_previewed_on_the_dataset_steps(client, dataset_1):
+    response = _preview(
+        client, dataset_1.id, "RollingOriginSplitter", {"horizon": 6, "n_origins": 3}
+    )
+
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["errors"] == []
+    assert body["partitions"] == ["validation", "test"]
+    assert body["shares"] == {
+        "train": 126 / 150,
+        "validation": 18 / 150,
+        "test": 6 / 150,
+    }
+
+
+def test_a_series_too_short_is_an_error_of_the_preview(client, dataset_1):
+    response = _preview(
+        client, dataset_1.id, "RollingOriginSplitter", {"horizon": 50, "n_origins": 2}
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["errors"] == [
+        {
+            "key": "seriesTooShort",
+            "values": {"needed": 151, "rows": 150, "horizon": 50, "origins": 2},
+        }
+    ]
+
+
+@pytest.mark.parametrize(
+    ("splitter_name", "detail"),
+    [
+        ("NoSuchSplitter", "Splitter NoSuchSplitter not found"),
+        ("HoldoutEvaluationStrategy", "Splitter HoldoutEvaluationStrategy not found"),
+    ],
+)
+def test_an_unknown_splitter_is_not_found(client, dataset_1, splitter_name, detail):
+    response = _preview(client, dataset_1.id, splitter_name, {})
+
+    assert response.status_code == 404, response.text
+    assert response.json()["detail"] == detail
+
+
+def test_an_unknown_dataset_is_not_found(client):
+    response = _preview(client, 99999, "HoldoutSplitter", {"train": 1})
+
+    assert response.status_code == 404, response.text
+    assert response.json()["detail"] == "Dataset not found"
+
+
+def test_parameters_the_splitter_cannot_read_are_refused(client, dataset_1):
+    response = _preview(
+        client, dataset_1.id, "RollingOriginSplitter", {"horizon": "six"}
+    )
+
+    assert response.status_code == 422, response.text
