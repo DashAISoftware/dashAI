@@ -32,6 +32,8 @@ class HoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
     given it to watch is not the same as being fitted on it.
     """
 
+    DEFAULT_SPLITTER = "HoldoutSplitter"
+
     DESCRIPTION = MultilingualString(
         en=(
             "Holdout cuts the dataset once. The model trains on one part and is "

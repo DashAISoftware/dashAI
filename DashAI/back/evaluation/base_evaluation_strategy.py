@@ -62,6 +62,18 @@ class BaseEvaluationStrategy:
     #: partitions of a finished run can still be predicted.
     FINAL_FIT_PARTITIONS: tuple = ("train",)
 
+    #: The splitter a new session starts on, or None for the first one the
+    #: task offers among those of ``SPLITTER_PARTITIONING``. Declared so the
+    #: wizard does not pick one by name.
+    DEFAULT_SPLITTER: Optional[str] = None
+
+    #: The views of a finished run beyond its metrics, which the run screens
+    #: show as tabs. ``"fold_metrics"``: a score per fold or origin, served by
+    #: ``/fold-metrics``. ``"forecasts"``: the forecasts of every origin,
+    #: served by ``/run/{id}/forecasts``. Declared so the frontend does not
+    #: infer from ``KIND`` what a run kept.
+    RESULT_VIEWS: tuple = ()
+
     @classmethod
     def get_metadata(cls) -> dict:
         """Describe the strategy for the frontend.
@@ -70,10 +82,16 @@ class BaseEvaluationStrategy:
         -------
         dict
             Mapping with ``kind``, which says whether this strategy splits the
-            dataset once or into folds, and ``scored_splits``, the partitions
-            it writes metrics for.
+            dataset once or into folds; ``scored_splits``, the partitions it
+            writes metrics for; ``splitter_partitioning`` and
+            ``default_splitter``, which splitters it takes and which one a
+            session starts on; and ``result_views``, the views a finished run
+            offers.
         """
         return {
             "kind": cls.KIND,
             "scored_splits": [split.value for split in cls.SCORED_SPLITS],
+            "splitter_partitioning": cls.SPLITTER_PARTITIONING,
+            "default_splitter": cls.DEFAULT_SPLITTER,
+            "result_views": list(cls.RESULT_VIEWS),
         }
