@@ -67,9 +67,9 @@ class ForecastingMetric(BaseMetric):
 
     MASE needs the history a model was fitted on and the season length, and
     interval coverage the bounds of the forecast: neither has a value on a
-    run's rows alone. MAPE and SMAPE live here too for now, so that forecasting
-    offers them and regression does not until its results show why a metric
-    is unavailable (RECONCILING_FORECASTING §2.13).
+    run's rows alone. The point metrics forecasting shares with regression
+    (MAE, RMSE, MAPE, SMAPE) are regression metrics, which the forecasting
+    task lists in its own ``COMPATIBLE_COMPONENTS``.
     """
 
     MAXIMIZE: bool = False

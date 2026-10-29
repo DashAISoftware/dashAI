@@ -342,6 +342,8 @@
    "MSE",
    "RMSE",
    "MAE",
+   "MAPE",
+   "SMAPE",
    "R2",
    "MedianAbsoluteError",
    "ExplainedVariance"

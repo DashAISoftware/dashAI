@@ -13,12 +13,12 @@ import pytest
 
 from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.metrics.forecasting.interval_coverage import IntervalCoverage
-from DashAI.back.metrics.forecasting.mape import MAPE
 from DashAI.back.metrics.forecasting.mase import MASE
-from DashAI.back.metrics.forecasting.smape import SMAPE
 from DashAI.back.metrics.forecasting_metric import ForecastingMetric, ScoredForecast
 from DashAI.back.metrics.regression.mae import MAE
+from DashAI.back.metrics.regression.mape import MAPE
 from DashAI.back.metrics.regression.rmse import RMSE
+from DashAI.back.metrics.regression.smape import SMAPE
 from DashAI.back.metrics.regression_metric import RegressionMetric
 from DashAI.back.metrics.undefined_metric import (
     UndefinedMetricError,
@@ -140,11 +140,18 @@ def test_an_error_metric_can_be_optimized(metric):
 # --- who offers what ---------------------------------------------------------
 
 
-def test_the_percentage_metrics_are_offered_to_forecasting_alone_for_now():
+def test_the_percentage_metrics_are_regression_metrics():
+    # Regression offers them since its results show why a metric has no
+    # value (PR 4); forecasting lists them as it lists MAE and RMSE.
     for metric in (MAPE, SMAPE):
-        assert issubclass(metric, ForecastingMetric)
-        assert not issubclass(metric, RegressionMetric)
+        assert issubclass(metric, RegressionMetric)
+        assert not issubclass(metric, ForecastingMetric)
     assert ForecastingMetric.COMPATIBLE_COMPONENTS == ["SingleSeriesForecastingTask"]
+
+
+def test_only_the_metrics_that_need_a_forecast_are_forecasting_metrics():
+    assert issubclass(MASE, ForecastingMetric)
+    assert issubclass(IntervalCoverage, ForecastingMetric)
 
 
 def test_regression_metrics_name_only_regression():
@@ -158,7 +165,12 @@ def test_the_single_series_task_lists_the_shared_point_metrics():
         SingleSeriesForecastingTask,
     )
 
-    assert SingleSeriesForecastingTask.COMPATIBLE_COMPONENTS == ["MAE", "RMSE"]
+    assert SingleSeriesForecastingTask.COMPATIBLE_COMPONENTS == [
+        "MAE",
+        "RMSE",
+        "MAPE",
+        "SMAPE",
+    ]
 
 
 # --- scoring a forecast ------------------------------------------------------
