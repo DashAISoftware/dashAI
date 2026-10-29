@@ -1,0 +1,379 @@
+{
+ "metadata": {
+  "EvaluationStrategy": {
+   "CrossValidationEvaluationStrategy": {
+    "kind": "cv",
+    "scored_splits": [
+     "train",
+     "validation",
+     "test"
+    ]
+   },
+   "ForecastingCrossValidationEvaluationStrategy": {
+    "kind": "backtest",
+    "scored_splits": [
+     "validation",
+     "test"
+    ]
+   },
+   "ForecastingHoldoutEvaluationStrategy": {
+    "kind": "backtest",
+    "scored_splits": [
+     "validation",
+     "test"
+    ]
+   },
+   "FullDatasetEvaluationStrategy": {
+    "kind": "full",
+    "scored_splits": [
+     "full"
+    ]
+   },
+   "HoldoutEvaluationStrategy": {
+    "kind": "holdout",
+    "scored_splits": [
+     "train",
+     "validation",
+     "test"
+    ]
+   }
+  },
+  "Splitter": {
+   "GroupKFoldSplitter": {
+    "compatibleInnerSplitters": [
+     "GroupKFoldSplitter",
+     "StratifiedGroupKFoldSplitter"
+    ],
+    "geometry": "blocked_folds",
+    "partitioning": "folds"
+   },
+   "HoldoutSplitter": {
+    "geometry": "partitions",
+    "partitioning": "holdout"
+   },
+   "KFoldSplitter": {
+    "compatibleInnerSplitters": [
+     "KFoldSplitter",
+     "StratifiedKFoldSplitter"
+    ],
+    "geometry": "blocked_folds",
+    "partitioning": "folds"
+   },
+   "LeaveOneOutSplitter": {
+    "compatibleInnerSplitters": [
+     "KFoldSplitter",
+     "StratifiedKFoldSplitter"
+    ],
+    "geometry": "blocked_folds",
+    "partitioning": "folds"
+   },
+   "RepeatedKFoldSplitter": {
+    "compatibleInnerSplitters": [
+     "KFoldSplitter",
+     "StratifiedKFoldSplitter"
+    ],
+    "geometry": "blocked_folds",
+    "partitioning": "folds"
+   },
+   "RepeatedStratifiedKFoldSplitter": {
+    "compatibleInnerSplitters": [
+     "KFoldSplitter",
+     "StratifiedKFoldSplitter"
+    ],
+    "geometry": "blocked_folds",
+    "partitioning": "folds"
+   },
+   "RollingOriginSplitter": {
+    "geometry": "backtest_origins",
+    "partitioning": "origins"
+   },
+   "StratifiedGroupKFoldSplitter": {
+    "compatibleInnerSplitters": [
+     "GroupKFoldSplitter",
+     "StratifiedGroupKFoldSplitter"
+    ],
+    "geometry": "blocked_folds",
+    "partitioning": "folds"
+   },
+   "StratifiedKFoldSplitter": {
+    "compatibleInnerSplitters": [
+     "KFoldSplitter",
+     "StratifiedKFoldSplitter"
+    ],
+    "geometry": "blocked_folds",
+    "partitioning": "folds"
+   },
+   "TemporalHoldoutSplitter": {
+    "geometry": "backtest_origins",
+    "partitioning": "origins"
+   }
+  },
+  "Task": {
+   "ClusteringTask": {
+    "column_roles": [
+     {
+      "label": "Features",
+      "max": "n",
+      "min": 0,
+      "name": "features",
+      "required": false,
+      "transformable": true,
+      "types": [
+       "Float",
+       "Integer"
+      ]
+     }
+    ],
+    "io_roles": {
+     "inputs": [
+      "features"
+     ],
+     "outputs": []
+    },
+    "prediction_mode": "rows",
+    "requires_target": false
+   },
+   "ImageClassificationTask": {
+    "column_roles": [
+     {
+      "label": "Features",
+      "max": 1,
+      "min": 1,
+      "name": "features",
+      "required": true,
+      "transformable": true,
+      "types": [
+       "Image"
+      ]
+     },
+     {
+      "label": "Target",
+      "max": 1,
+      "min": 1,
+      "name": "target",
+      "required": true,
+      "transformable": false,
+      "types": [
+       "Categorical"
+      ]
+     }
+    ],
+    "io_roles": {
+     "inputs": [
+      "features"
+     ],
+     "outputs": [
+      "target"
+     ]
+    },
+    "prediction_mode": "rows",
+    "requires_target": true
+   },
+   "RegressionTask": {
+    "column_roles": [
+     {
+      "label": "Features",
+      "max": "n",
+      "min": 0,
+      "name": "features",
+      "required": false,
+      "transformable": true,
+      "types": [
+       "Float",
+       "Integer",
+       "Categorical"
+      ]
+     },
+     {
+      "label": "Target",
+      "max": 1,
+      "min": 1,
+      "name": "target",
+      "required": true,
+      "transformable": false,
+      "types": [
+       "Float",
+       "Integer"
+      ]
+     }
+    ],
+    "io_roles": {
+     "inputs": [
+      "features"
+     ],
+     "outputs": [
+      "target"
+     ]
+    },
+    "prediction_mode": "rows",
+    "requires_target": true
+   },
+   "TabularClassificationTask": {
+    "column_roles": [
+     {
+      "label": "Features",
+      "max": "n",
+      "min": 0,
+      "name": "features",
+      "required": false,
+      "transformable": true,
+      "types": [
+       "Float",
+       "Integer",
+       "Categorical"
+      ]
+     },
+     {
+      "label": "Target",
+      "max": 1,
+      "min": 1,
+      "name": "target",
+      "required": true,
+      "transformable": false,
+      "types": [
+       "Categorical"
+      ]
+     }
+    ],
+    "io_roles": {
+     "inputs": [
+      "features"
+     ],
+     "outputs": [
+      "target"
+     ]
+    },
+    "prediction_mode": "rows",
+    "requires_target": true
+   },
+   "TextClassificationTask": {
+    "column_roles": [
+     {
+      "label": "Features",
+      "max": 1,
+      "min": 1,
+      "name": "features",
+      "required": true,
+      "transformable": true,
+      "types": [
+       "Text"
+      ]
+     },
+     {
+      "label": "Target",
+      "max": 1,
+      "min": 1,
+      "name": "target",
+      "required": true,
+      "transformable": false,
+      "types": [
+       "Categorical"
+      ]
+     }
+    ],
+    "io_roles": {
+     "inputs": [
+      "features"
+     ],
+     "outputs": [
+      "target"
+     ]
+    },
+    "prediction_mode": "rows",
+    "requires_target": true
+   },
+   "TranslationTask": {
+    "column_roles": [
+     {
+      "label": "Features",
+      "max": 1,
+      "min": 1,
+      "name": "features",
+      "required": true,
+      "transformable": true,
+      "types": [
+       "Text"
+      ]
+     },
+     {
+      "label": "Target",
+      "max": 1,
+      "min": 1,
+      "name": "target",
+      "required": true,
+      "transformable": false,
+      "types": [
+       "Text"
+      ]
+     }
+    ],
+    "io_roles": {
+     "inputs": [
+      "features"
+     ],
+     "outputs": [
+      "target"
+     ]
+    },
+    "prediction_mode": "rows",
+    "requires_target": true
+   }
+  }
+ },
+ "metrics": {
+  "ClusteringTask": [
+   "Silhouette",
+   "DaviesBouldin",
+   "CalinskiHarabasz"
+  ],
+  "ImageClassificationTask": [
+   "Accuracy",
+   "BalancedAccuracy",
+   "Precision",
+   "Recall",
+   "F1",
+   "CohenKappa",
+   "HammingDistance",
+   "LogLoss",
+   "ROCAUC",
+   "MatthewsCorrCoef"
+  ],
+  "RegressionTask": [
+   "MSE",
+   "RMSE",
+   "MAE",
+   "R2",
+   "MedianAbsoluteError",
+   "ExplainedVariance"
+  ],
+  "TabularClassificationTask": [
+   "Accuracy",
+   "BalancedAccuracy",
+   "Precision",
+   "Recall",
+   "F1",
+   "CohenKappa",
+   "HammingDistance",
+   "LogLoss",
+   "ROCAUC",
+   "MatthewsCorrCoef"
+  ],
+  "TextClassificationTask": [
+   "Accuracy",
+   "BalancedAccuracy",
+   "Precision",
+   "Recall",
+   "F1",
+   "CohenKappa",
+   "HammingDistance",
+   "LogLoss",
+   "ROCAUC",
+   "MatthewsCorrCoef"
+  ],
+  "TranslationTask": [
+   "Bleu",
+   "Chrf",
+   "Ter"
+  ]
+ }
+}
