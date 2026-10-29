@@ -307,11 +307,15 @@ def test_a_backtest_refuses_a_session_with_fitted_preprocessing(client, tmp_path
 
 
 def test_coverage_as_the_goal_metric_fails_the_run(client, tmp_path):
-    """Searched for, coverage picks the widest intervals, not a better model."""
+    """Searched for, coverage picks the widest intervals, not a better model.
+
+    The run API refuses this goal (``test_run_goal_metric_api.py``), so the
+    run is written straight to the database: the job keeps its own guard for
+    runs that do not come through the API.
+    """
     from DashAI.back.core.enums.status import RunStatus
     from DashAI.back.job.base_job import JobError
     from DashAI.back.job.model_job import ModelJob
-    from tests.back.api.test_forecasting_acceptance import _create_run
 
     session_id = _session(client, tmp_path, _monthly())
     searched = {
@@ -322,14 +326,27 @@ def test_coverage_as_the_goal_metric_fails_the_run(client, tmp_path):
             "upper_bound": 12,
         }
     }
-    other = _create_run(
-        client,
-        session_id,
-        "SeasonalNaiveForecaster",
-        searched,
-        goal_metric="IntervalCoverage",
-        optimizer="OptunaOptimizer",
-    )
+    with client.app.container["session_factory"]() as db:
+        run = Run(
+            model_session_id=session_id,
+            model_name="SeasonalNaiveForecaster",
+            name="coverage as the goal",
+            parameters=searched,
+            optimizer_name="OptunaOptimizer",
+            optimizer_parameters={
+                "n_trials": 2,
+                "sampler": "TPESampler",
+                "pruner": "None",
+            },
+            goal_metric="IntervalCoverage",
+            plot_history_path="",
+            plot_slice_path="",
+            plot_contour_path="",
+            plot_importance_path="",
+        )
+        db.add(run)
+        db.commit()
+        other = run.id
 
     with pytest.raises(JobError, match="IntervalCoverage cannot be optimized"):
         ModelJob(run_id=other).run()
