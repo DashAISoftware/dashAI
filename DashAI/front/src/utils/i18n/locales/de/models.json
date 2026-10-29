@@ -197,6 +197,8 @@
     "notNormal": "Nicht normal",
     "notEvaluable": "Nicht auswertbar",
     "runsNotEvaluated": "{{count}} von {{total}} Durchläufen konnten nicht ausgewertet werden.",
+    "runsNotEvaluated_one": "{{count}} von {{total}} Durchlauf konnte nicht ausgewertet werden.",
+    "runsNotEvaluated_other": "{{count}} von {{total}} Durchläufen konnten nicht ausgewertet werden.",
     "notSignificant": "Nicht Signifikant",
     "operations": "Vorgänge",
     "operationsWillBeDeletedWarning": "Diese Operationen werden dauerhaft gelöscht und können nicht wiederhergestellt werden. Sind Sie sicher?",

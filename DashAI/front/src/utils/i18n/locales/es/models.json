@@ -151,6 +151,8 @@
     "notNormal": "No normal",
     "notEvaluable": "No evaluable",
     "runsNotEvaluated": "{{count}} de {{total}} ejecuciones no se pudieron evaluar.",
+    "runsNotEvaluated_one": "{{count}} de {{total}} ejecución no se pudo evaluar.",
+    "runsNotEvaluated_other": "{{count}} de {{total}} ejecuciones no se pudieron evaluar.",
     "normal": "Normal",
     "selectBetweenRuns": "Seleccione entre {{min}} y {{max}} modelos",
     "saveDetails": "Detalles para guardar",

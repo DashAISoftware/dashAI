@@ -200,6 +200,8 @@
     "notNormal": "Não normal",
     "notEvaluable": "Não avaliável",
     "runsNotEvaluated": "{{count}} de {{total}} execuções não puderam ser avaliadas.",
+    "runsNotEvaluated_one": "{{count}} de {{total}} execução não pôde ser avaliada.",
+    "runsNotEvaluated_other": "{{count}} de {{total}} execuções não puderam ser avaliadas.",
     "notSignificant": "Não Significativo",
     "operations": "Operações",
     "operationsWillBeDeletedWarning": "Estas operações serão excluídas permanentemente e não podem ser recuperadas. Tem certeza de que deseja continuar?",

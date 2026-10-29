@@ -149,6 +149,8 @@
     "notNormal": "Not normal",
     "notEvaluable": "Not evaluable",
     "runsNotEvaluated": "{{count}} of {{total}} runs could not be evaluated.",
+    "runsNotEvaluated_one": "{{count}} of {{total}} run could not be evaluated.",
+    "runsNotEvaluated_other": "{{count}} of {{total}} runs could not be evaluated.",
     "normal": "Normal",
     "selectBetweenRuns": "Select between {{min}} and {{max}} models",
     "saveDetails": "Save Details",
