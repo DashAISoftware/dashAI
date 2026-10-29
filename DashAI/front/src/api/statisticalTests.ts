@@ -9,8 +9,7 @@ import {
 } from "../types/statisticalTests";
 
 type FoldMetricsResponse =
-  | Record<string, number[]>
-  | Record<string, Record<string, number[]>>;
+  Record<string, number[]> | Record<string, Record<string, number[]>>;
 
 /** Fold scores of a run, flattened over repetitions when CV was repeated. */
 export interface RunFoldMetrics {
