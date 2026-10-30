@@ -250,11 +250,11 @@
     "applyPreprocessing": "Prepare columns before training (preprocessing)",
     "applyPreprocessingDescription": "Fills missing values, turns text into numbers, scales values and more.",
     "preprocessingOptional": "Preprocessing (optional)",
-    "preprocessingOptionalDescription": "Selected converters are fit only on training data and applied to the rest, to avoid data leakage.",
+    "preprocessingOptionalDescription": "Add converters that transform the candidate features. They are computed from the training data only and applied to the rest.",
     "preprocessingInProgress": "Preprocessing in progress...",
     "preprocessingFailed": "Preprocessing failed",
     "selectColumnsTitle": "Select Columns",
-    "selectColumnsDescription": "Choose which columns are inputs and which one is the output for this session.",
+    "selectColumnsDescription": "Choose the features and the target for this session.",
     "retrainConfirmDetails": "Are you sure you want to re-train run \"<1>{{runName}}</1>\"?",
     "retrainModel": "Re-train Model?",
     "retrainWillDeleteOperations": "This run has existing operations that will be deleted",
@@ -325,7 +325,8 @@
     "sessionImportedTitle": "Session imported",
     "targetHelp": "What the model learns to predict. Preprocessing never changes it.",
     "protectedRoleHelp": "Preprocessing never changes these columns.",
-    "candidatesHelp": "The columns the model uses to predict the target, which preprocessing can use or transform. They can be of any type, even text. At the end you choose which go into the model."
+    "candidatesHelp": "The columns the model uses to predict the target, which preprocessing can use or transform. They can be of any type, even text. At the end you choose which go into the model.",
+    "selectColumnsAfterPreprocessingDescription": "Choose which of the preprocessed columns go into the model. The target is already set."
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
@@ -387,7 +388,7 @@
     "blocked": "Fix the previous step to check this one.",
     "loadError": "Could not estimate the preprocessing result.",
     "missing_ref": "\"{{ref}}\" does not exist at this point of the chain: an earlier step may have consumed it.",
-    "target_in_scope": "\"{{column}}\" is the output column, and the output is never transformed.",
+    "target_in_scope": "\"{{column}}\" is the target, and preprocessing never transforms it.",
     "type_not_allowed": "\"{{column}}\" is {{type}}, which this converter does not accept (accepts: {{allowed}}).",
     "cardinalityMin": "This converter needs at least {{min}} columns, but {{selected}} are selected.",
     "cardinalityMax": "This converter accepts at most {{max}} columns, but {{selected}} are selected.",

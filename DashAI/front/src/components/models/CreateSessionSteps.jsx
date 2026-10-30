@@ -352,7 +352,11 @@ function CreateSessionSteps({
     [STEP_PREPARE_DATASET]: t("models:label.selectDatasetAndPrepare"),
     [STEP_BASE_COLUMNS]: t("models:label.baseColumnsDescription"),
     [STEP_PREPROCESSING]: t("models:label.preprocessingOptionalDescription"),
-    [STEP_SELECT_COLUMNS]: t("models:label.selectColumnsDescription"),
+    // With preprocessing the target was fixed two steps back, so only the
+    // features are left to choose.
+    [STEP_SELECT_COLUMNS]: newExp.applyPreprocessing
+      ? t("models:label.selectColumnsAfterPreprocessingDescription")
+      : t("models:label.selectColumnsDescription"),
   }[currentStep];
 
   return (
