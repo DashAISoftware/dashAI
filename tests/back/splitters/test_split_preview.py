@@ -157,7 +157,17 @@ def test_more_origins_than_are_drawn_leave_a_note():
     ]
     assert preview["rows"][3] == {
         "key": "ellipsis",
+        "label": "moreOrigins",
         "ellipsis": True,
         "hidden_count": 8,
     }
     assert preview["notes"] == [{"key": "originsHidden", "values": {"total": 12}}]
+
+
+def test_proportions_not_given_yet_keep_the_wizard_from_going_on():
+    # The wizard did not go on while the form had not given the three
+    # proportions; it said nothing either, since the form fills them at once.
+    preview = HoldoutSplitter.preview({}, {"total_rows": 10}, "random")
+
+    assert preview["errors"] == [{"key": "splitsMustSumToOne", "values": {}}]
+    assert preview["partitions"] == []

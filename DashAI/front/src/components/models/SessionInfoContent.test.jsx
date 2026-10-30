@@ -255,4 +255,39 @@ describe("SessionInfoContent split summary", () => {
   it("splits that are not valid JSON: no split rows at all", async () => {
     expect(await renderInfo("{not json")).toEqual(COLUMN_ROWS);
   });
+
+  it("a strategy without a form of its own: the splitter and its parameters, as its schema names them", async () => {
+    getComponents.mockImplementation(async (args) => {
+      if (args.model === "RollingOriginSplitter") {
+        return {
+          name: "RollingOriginSplitter",
+          display_name: "Rolling origin",
+          schema: {
+            properties: {
+              horizon: { title: "Horizon" },
+              n_origins: { title: "Validation origins" },
+            },
+          },
+        };
+      }
+      if (args.model) return { metadata: TASK_METADATA };
+      return [];
+    });
+
+    const rows = await renderInfo({
+      splitter_name: "RollingOriginSplitter",
+      horizon: 3,
+      n_origins: 4,
+    });
+
+    await waitFor(() =>
+      expect(configRows()).toEqual([
+        ...COLUMN_ROWS,
+        ["Splitter", "Rolling origin"],
+        ["Horizon", "3"],
+        ["Validation origins", "4"],
+      ]),
+    );
+    expect(rows.slice(0, 2)).toEqual(COLUMN_ROWS);
+  });
 });

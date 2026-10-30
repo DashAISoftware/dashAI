@@ -1,10 +1,10 @@
-import React, { useMemo } from "react";
+import React from "react";
 import PropTypes from "prop-types";
 import { Box, Stack, Tooltip, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import SplitsCard from "./SplitsCard";
-import { buildSplitPreview, SPLIT_ROLES } from "../../../utils/splitPreview";
+import { SPLIT_ROLES } from "../../../utils/splitPreview";
 
 const LEGEND_ORDER = [
   SPLIT_ROLES.TRAIN,
@@ -25,29 +25,14 @@ const roleColors = (theme) => {
 
 const asPercent = (fraction) => Math.round((fraction ?? 0) * 100);
 
-function SplitPreview({
-  geometry,
-  description,
-  splitterDescription,
-  splitType,
-  params,
-  indexes,
-  datasetInfo,
-}) {
+/**
+ * Draw the preview of a split, as the splitter computed it on the dataset
+ * (POST /splitter/preview). Nothing here is computed: the bars, their labels,
+ * the shares and the notes all come with the preview.
+ */
+function SplitPreview({ preview, loading, description, splitterDescription }) {
   const theme = useTheme();
   const { t } = useTranslation(["experiments", "common"]);
-
-  const preview = useMemo(
-    () =>
-      buildSplitPreview({
-        geometry,
-        splitType,
-        params,
-        indexes,
-        datasetInfo,
-      }),
-    [geometry, splitType, params, indexes, datasetInfo],
-  );
 
   const explainers = [description, splitterDescription].filter(Boolean);
 
@@ -72,14 +57,16 @@ function SplitPreview({
             </Typography>
           ))}
           <Typography variant="caption" color="text.secondary">
-            {t("experiments:splitPreview.unavailable")}
+            {loading
+              ? t("experiments:splitPreview.loading")
+              : t("experiments:splitPreview.unavailable")}
           </Typography>
         </Stack>
       </SplitsCard>
     );
   }
 
-  const { rows, notes, error, shares } = preview;
+  const { rows, notes, shares } = preview;
   const legendRoles = LEGEND_ORDER.filter(
     (role) => (shares[role] ?? 0) > 0.0001,
   );
@@ -101,11 +88,7 @@ function SplitPreview({
           </Stack>
         )}
 
-        {error ? (
-          <Typography variant="caption" color="error.main">
-            {t(`experiments:splitPreview.error.${error.key}`, error.values)}
-          </Typography>
-        ) : (
+        {rows.length > 0 && (
           <Stack spacing={1}>
             {rows.map((row) =>
               row.ellipsis ? (
@@ -119,8 +102,8 @@ function SplitPreview({
                     color="text.secondary"
                     sx={{ lineHeight: 1 }}
                   >
-                    {t("experiments:splitPreview.moreFolds", {
-                      hidden: row.hiddenCount,
+                    {t(`experiments:splitPreview.${row.label}`, {
+                      hidden: row.hidden_count,
                     })}
                   </Typography>
                 </Box>
@@ -135,7 +118,10 @@ function SplitPreview({
                     noWrap
                     sx={{ width: 58, flexShrink: 0, fontSize: "0.68rem" }}
                   >
-                    {t(row.labelKey, row.labelValues)}
+                    {t(
+                      `experiments:splitPreview.${row.label}`,
+                      row.label_values,
+                    )}
                   </Typography>
                   <Box
                     sx={{
@@ -175,7 +161,7 @@ function SplitPreview({
           </Stack>
         )}
 
-        {!error && legendRoles.length > 0 && (
+        {legendRoles.length > 0 && (
           <Stack direction="row" flexWrap="wrap" sx={{ gap: 3 }}>
             {legendRoles.map((role) => (
               <Box
@@ -222,13 +208,14 @@ function SplitPreview({
 }
 
 SplitPreview.propTypes = {
-  geometry: PropTypes.string,
+  preview: PropTypes.shape({
+    rows: PropTypes.array.isRequired,
+    notes: PropTypes.array.isRequired,
+    shares: PropTypes.object.isRequired,
+  }),
+  loading: PropTypes.bool,
   description: PropTypes.string,
   splitterDescription: PropTypes.string,
-  splitType: PropTypes.string,
-  params: PropTypes.object,
-  indexes: PropTypes.object,
-  datasetInfo: PropTypes.object,
 };
 
 export default SplitPreview;

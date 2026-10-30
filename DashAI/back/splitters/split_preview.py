@@ -13,7 +13,7 @@ where Python's ``round`` rounds them to even.
 
 A row is ``{key, label, label_values, segments}``, each segment
 ``{role, fraction}`` of the dataset; an ellipsis row ``{key, ellipsis,
-hidden_count}`` stands for rows left out. Labels, notes and errors are
+label, hidden_count}`` stands for rows left out. Labels, notes and errors are
 ``{key, values}`` the frontend translates.
 """
 
@@ -92,10 +92,11 @@ def _drawn_indexes(count: int) -> List[Optional[int]]:
     return [*range(LEADING_DRAWN), None, count - 1]
 
 
-def _rows_drawn(count: int, build_row) -> List[Dict[str, Any]]:
+def _rows_drawn(count: int, build_row, more_label: str) -> List[Dict[str, Any]]:
     return [
         {
             "key": "ellipsis",
+            "label": more_label,
             "ellipsis": True,
             "hidden_count": count - LEADING_DRAWN - 1,
         }
@@ -171,7 +172,9 @@ def _partition_errors(params, split_type, indexes) -> List[Dict[str, Any]]:
         isinstance(value, (int, float)) and not isinstance(value, bool)
         for value in proportions
     )
-    if are_numbers and abs(sum(proportions) - 1) >= SUM_TOLERANCE:
+    # Proportions not given yet do not sum to one either: the wizard did not
+    # go on with them.
+    if not are_numbers or abs(sum(proportions) - 1) >= SUM_TOLERANCE:
         return [_error("splitsMustSumToOne")]
     return []
 
@@ -276,7 +279,7 @@ def blocked_folds_preview(params, dataset) -> Dict[str, Any]:
     has_reserved = reserved > NEGLIGIBLE
     rows = [
         *([_reserved_row(pool, reserved)] if has_reserved else []),
-        *_rows_drawn(fold_count, fold_row),
+        *_rows_drawn(fold_count, fold_row, "moreFolds"),
         *([_final_fit_row(pool, reserved)] if has_reserved else []),
     ]
 
@@ -365,7 +368,7 @@ def backtest_preview(splitter, dataset) -> Dict[str, Any]:
 
     test_origin = cuts["test_origin"]
     rows = [
-        *_rows_drawn(len(origins), origin_row),
+        *_rows_drawn(len(origins), origin_row, "moreOrigins"),
         _row(
             "test",
             "testOrigin",

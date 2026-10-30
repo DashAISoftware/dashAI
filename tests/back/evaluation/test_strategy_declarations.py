@@ -75,3 +75,20 @@ def test_a_default_splitter_carves_the_way_its_strategy_takes(
     offered = splitters[default_splitter]
 
     assert partitioning == offered.PARTITIONING
+
+
+@pytest.mark.parametrize(
+    ("strategy", "label"),
+    [
+        (HoldoutEvaluationStrategy, "Holdout"),
+        (ForecastingHoldoutEvaluationStrategy, "Holdout"),
+        (CrossValidationEvaluationStrategy, "Cross-Validation"),
+        (ForecastingCrossValidationEvaluationStrategy, "Cross-Validation"),
+    ],
+)
+def test_a_strategy_names_itself_for_the_wizard_toggle(strategy, label):
+    # The wizard labelled the toggle by kind, from texts of its own.
+    display_name = getattr(strategy, "DISPLAY_NAME", None)
+
+    assert display_name is not None
+    assert display_name.get("en") == label

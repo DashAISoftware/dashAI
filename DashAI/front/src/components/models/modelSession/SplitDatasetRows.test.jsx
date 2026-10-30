@@ -3,16 +3,19 @@ import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { renderWithProviders } from "../../../test-utils/renderWithProviders";
 import i18n from "../../../utils/i18n";
 import { getComponents } from "../../../api/component";
+import { previewSplit } from "../../../api/splitter";
 import { parseIndexToRange } from "../../../utils/parseRange";
 import { SPLIT_TYPES } from "../../../utils/splitsPayload";
 import splitPreviewCases from "./__fixtures__/splitPreviewCases.json";
 import SplitDatasetRows from "./SplitDatasetRows";
 
 /*
- * The splits step of the session wizard, pinned before its arithmetic and
- * validations move to the backend. The preview drawing itself is pinned by
- * src/utils/splitPreview.test.js on the same shared cases; here the cases pin
- * which messages the step shows and whether it lets the wizard go on.
+ * The splits step of the session wizard. The splitter computes the preview on
+ * the backend (POST /splitter/preview), and with it whether the configuration
+ * can be used and which partitions receive rows; tests/back/splitters/
+ * test_split_preview.py checks the backend answers the shared cases with their
+ * `expected`. Here the cases pin the request the step sends, which messages it
+ * shows and whether it lets the wizard go on.
  */
 
 jest.mock("react-markdown", () => ({
@@ -26,6 +29,8 @@ jest.mock("notistack", () => {
 });
 
 jest.mock("../../../api/component", () => ({ getComponents: jest.fn() }));
+
+jest.mock("../../../api/splitter", () => ({ previewSplit: jest.fn() }));
 
 // What the stub form submits on mount. Undefined means it submits nothing,
 // which is what the generated form does until the user edits a field.
@@ -49,11 +54,11 @@ jest.mock("../../shared/FormSchema", () => {
 
 jest.mock("./SplitPreview", () => ({
   __esModule: true,
-  default: ({ geometry, splitType }) => (
+  default: ({ preview, loading }) => (
     <div
       data-testid="split-preview"
-      data-geometry={String(geometry)}
-      data-split-type={String(splitType)}
+      data-preview={JSON.stringify(preview ?? null)}
+      data-loading={String(loading)}
     />
   ),
 }));
@@ -62,13 +67,38 @@ const HOLDOUT_STRATEGY = {
   name: "HoldoutEvaluationStrategy",
   display_name: "Holdout",
   type: "EvaluationStrategy",
-  metadata: { kind: "holdout", scored_splits: ["train", "validation", "test"] },
+  metadata: {
+    kind: "holdout",
+    scored_splits: ["train", "validation", "test"],
+    splitter_partitioning: "holdout",
+    default_splitter: "HoldoutSplitter",
+    result_views: [],
+  },
 };
 const CV_STRATEGY = {
   name: "CrossValidationEvaluationStrategy",
-  display_name: "Cross validation",
+  display_name: "Cross-Validation",
   type: "EvaluationStrategy",
-  metadata: { kind: "cv" },
+  metadata: {
+    kind: "cv",
+    scored_splits: ["train", "validation", "test"],
+    splitter_partitioning: "folds",
+    default_splitter: null,
+    result_views: ["fold_metrics"],
+  },
+};
+// A strategy of a kind the step has no section of its own for.
+const BACKTEST_STRATEGY = {
+  name: "ForecastingCrossValidationEvaluationStrategy",
+  display_name: "Rolling origin",
+  type: "EvaluationStrategy",
+  metadata: {
+    kind: "backtest",
+    scored_splits: ["validation", "test"],
+    splitter_partitioning: "origins",
+    default_splitter: "RollingOriginSplitter",
+    result_views: ["fold_metrics", "forecasts"],
+  },
 };
 
 const splitter = (name, displayName, metadata, properties = {}) => ({
@@ -80,7 +110,7 @@ const splitter = (name, displayName, metadata, properties = {}) => ({
 });
 
 // Listed before HoldoutSplitter on purpose: the default holdout splitter is
-// chosen by name, not by position.
+// the one the strategy declares, not the first one listed.
 const TEMPORAL_HOLDOUT = splitter("TemporalHoldoutSplitter", "Temporal", {
   partitioning: "holdout",
   geometry: "partitions",
@@ -103,6 +133,17 @@ const GROUP_KFOLD = splitter(
   { partitioning: "folds", geometry: "blocked_folds" },
   { group_column: { type: "string" }, n_splits: { type: "integer" } },
 );
+// The origin splitters of a forecasting task. The temporal holdout is listed
+// first, so the declared default is not merely the first one.
+const ORIGIN_TEMPORAL_HOLDOUT = splitter(
+  "TemporalHoldoutSplitter",
+  "Temporal holdout",
+  { partitioning: "origins", geometry: "backtest_origins" },
+);
+const ROLLING_ORIGIN = splitter("RollingOriginSplitter", "Rolling origin", {
+  partitioning: "origins",
+  geometry: "backtest_origins",
+});
 
 const SPLITTERS = [
   TEMPORAL_HOLDOUT,
@@ -127,6 +168,20 @@ const mockComponents = ({ splitters = SPLITTERS, strategies = STRATEGIES }) =>
     return [];
   });
 
+// A preview the backend could answer for a usable configuration.
+const previewAnswer = ({
+  errors = [],
+  partitions = ["train", "validation", "test"],
+} = {}) => ({
+  rows: [],
+  notes: [],
+  shares: {},
+  errors,
+  partitions,
+});
+
+const DATASET_ID = 7;
+
 const NO_PREDEFINED = {
   total_rows: 150,
   train_size: 0,
@@ -142,8 +197,8 @@ const spies = {};
 function Harness({ datasetInfo, taskName, inputColumnNames }) {
   const [splitterParams, setSplitterParams] = useState(null);
   const [paramsError, setParamsError] = useState(false);
-  const [cvType, setCvTypeState] = useState(null);
-  const [holdoutType, setHoldoutTypeState] = useState(null);
+  const [splitter, setSplitterState] = useState(null);
+  const [splitPartitions, setSplitPartitionsState] = useState(null);
   const [strategyKind, setStrategyKind] = useState(null);
   const [groupColumn, setGroupColumn] = useState("");
   const [rowsPartitionsIndex, setRowsPartitionsIndex] = useState({
@@ -159,19 +214,19 @@ function Harness({ datasetInfo, taskName, inputColumnNames }) {
     spies.setSplitsReady(value);
     setSplitsReadyState(value);
   }, []);
-  const setHoldoutType = useCallback((value) => {
-    spies.setHoldoutType(value);
-    setHoldoutTypeState(value);
+  const setSplitter = useCallback((value) => {
+    spies.setSplitter(value);
+    setSplitterState(value);
   }, []);
-  const setCvType = useCallback((value) => {
-    spies.setCvType(value);
-    setCvTypeState(value);
+  const setSplitPartitions = useCallback((value) => {
+    spies.setSplitPartitions(value);
+    setSplitPartitionsState(value);
   }, []);
 
   harness = {
     splitterParams,
-    cvType,
-    holdoutType,
+    splitter,
+    splitPartitions,
     strategyKind,
     groupColumn,
     rowsPartitionsIndex,
@@ -182,10 +237,12 @@ function Harness({ datasetInfo, taskName, inputColumnNames }) {
 
   return (
     <SplitDatasetRows
+      datasetId={DATASET_ID}
       datasetInfo={datasetInfo}
       rowsPartitionsIndex={rowsPartitionsIndex}
       setRowsPartitionsIndex={setRowsPartitionsIndex}
       setSplitsReady={setSplitsReady}
+      setSplitPartitions={setSplitPartitions}
       splitType={splitType}
       setSplitType={setSplitType}
       SPLIT_TYPES={SPLIT_TYPES}
@@ -195,10 +252,8 @@ function Harness({ datasetInfo, taskName, inputColumnNames }) {
       setParamsError={setParamsError}
       evaluationStrategy={evaluationStrategy}
       setEvaluationStrategy={setEvaluationStrategy}
-      cvType={cvType}
-      setCvType={setCvType}
-      holdoutType={holdoutType}
-      setHoldoutType={setHoldoutType}
+      splitter={splitter}
+      setSplitter={setSplitter}
       strategyKind={strategyKind}
       setStrategyKind={setStrategyKind}
       groupColumn={groupColumn}
@@ -212,11 +267,12 @@ function Harness({ datasetInfo, taskName, inputColumnNames }) {
 const renderStep = ({
   datasetInfo = NO_PREDEFINED,
   inputColumnNames = ["a", "b", "group"],
+  taskName = "TabularClassificationTask",
 } = {}) =>
   renderWithProviders(
     <Harness
       datasetInfo={datasetInfo}
-      taskName="TabularClassificationTask"
+      taskName={taskName}
       inputColumnNames={inputColumnNames}
     />,
   );
@@ -224,6 +280,11 @@ const renderStep = ({
 const lastReady = () => {
   const { calls } = spies.setSplitsReady.mock;
   return calls.length ? calls[calls.length - 1][0] : undefined;
+};
+
+const lastPreviewRequest = () => {
+  const { calls } = previewSplit.mock.calls.length ? previewSplit.mock : {};
+  return calls ? calls[calls.length - 1][0] : undefined;
 };
 
 const ERROR_KEYS = [
@@ -241,19 +302,20 @@ const visibleErrorKeys = (datasetSize) =>
     screen.queryByText(errorText(key, { datasetSize })),
   );
 
-const toggle = (label) => screen.getByRole("button", { name: label });
+// Whether a message is shown under the splitter's form rather than in a card.
+const isUnderForm = (element) =>
+  element.closest(".MuiFormHelperText-root") !== null;
 
-const holdoutLabel = () => i18n.t("experiments:label.holdout");
-const cvLabel = () => i18n.t("experiments:label.crossValidation");
+const toggle = (label) => screen.getByRole("button", { name: label });
 
 const waitForSplitter = (name) => screen.findByTestId(`form-schema-${name}`);
 
 const switchToCv = async () => {
-  fireEvent.click(toggle(cvLabel()));
+  fireEvent.click(toggle("Cross-Validation"));
   await waitForSplitter(KFOLD.name);
 };
 
-const chooseCvType = async (displayName) => {
+const chooseSplitter = async (displayName) => {
   fireEvent.mouseDown(screen.getAllByRole("combobox")[0]);
   const listbox = await screen.findByRole("listbox");
   fireEvent.click(within(listbox).getByRole("option", { name: displayName }));
@@ -263,10 +325,12 @@ beforeEach(() => {
   mockFormParams = undefined;
   mockSchemasByName = {};
   spies.setSplitsReady = jest.fn();
-  spies.setHoldoutType = jest.fn();
-  spies.setCvType = jest.fn();
+  spies.setSplitter = jest.fn();
+  spies.setSplitPartitions = jest.fn();
   getComponents.mockReset();
   mockComponents({});
+  previewSplit.mockReset();
+  previewSplit.mockResolvedValue(previewAnswer());
 });
 
 describe("SplitDatasetRows: evaluation strategy", () => {
@@ -284,17 +348,30 @@ describe("SplitDatasetRows: evaluation strategy", () => {
     });
   });
 
-  it("selects the holdout strategy by default and labels the toggles by kind, not by display name", async () => {
+  it("selects the holdout strategy by default and labels the toggles with the strategies' display names", async () => {
     renderStep();
     await waitForSplitter(HOLDOUT.name);
 
     expect(harness.evaluationStrategy).toBe("HoldoutEvaluationStrategy");
     expect(harness.strategyKind).toBe("holdout");
-    expect(holdoutLabel()).toBe("Holdout");
-    expect(cvLabel()).toBe("Cross-Validation");
     expect(toggle("Holdout")).toHaveAttribute("aria-pressed", "true");
     expect(toggle("Cross-Validation")).toHaveAttribute("aria-pressed", "false");
-    expect(screen.queryByText("Cross validation")).not.toBeInTheDocument();
+  });
+
+  it("labels a toggle with the strategy name when the strategy has no display name", async () => {
+    mockComponents({
+      strategies: [
+        HOLDOUT_STRATEGY,
+        { ...CV_STRATEGY, display_name: undefined },
+      ],
+    });
+    renderStep();
+    await waitForSplitter(HOLDOUT.name);
+
+    expect(toggle("CrossValidationEvaluationStrategy")).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
   });
 
   it("selects the first holdout kind strategy even when a cv strategy is listed first", async () => {
@@ -381,30 +458,52 @@ describe("SplitDatasetRows: holdout", () => {
     await waitFor(() => expect(lastReady()).toBe(true));
   });
 
-  it("starts on HoldoutSplitter even when another holdout splitter is listed first, and never offers fold splitters for holdout", async () => {
+  it("starts on the strategy's declared default splitter (HoldoutSplitter) even when another holdout splitter is listed first, and never offers fold splitters for holdout", async () => {
     renderStep();
     await waitForSplitter(HOLDOUT.name);
 
-    expect(spies.setHoldoutType).toHaveBeenLastCalledWith(HOLDOUT);
-    expect(harness.holdoutType).toBe(HOLDOUT);
+    expect(spies.setSplitter).toHaveBeenLastCalledWith(HOLDOUT);
+    expect(harness.splitter).toBe(HOLDOUT);
     expect(
       screen.getByTestId("form-schema-HoldoutSplitter"),
     ).toBeInTheDocument();
     expect(
       screen.queryByTestId("form-schema-TemporalHoldoutSplitter"),
     ).not.toBeInTheDocument();
-    expect(screen.getByTestId("split-preview")).toHaveAttribute(
-      "data-geometry",
-      "partitions",
+    // Holdout offers no splitter select at all.
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(lastPreviewRequest()).toMatchObject({
+        datasetId: DATASET_ID,
+        splitterName: "HoldoutSplitter",
+        splitType: "random",
+        indexes: null,
+      }),
     );
   });
 
-  it("starts on the first holdout splitter when HoldoutSplitter is not offered", async () => {
+  it("starts on the first holdout splitter when the declared default is not offered", async () => {
     mockComponents({ splitters: [TEMPORAL_HOLDOUT, KFOLD] });
     renderStep();
     await waitForSplitter(TEMPORAL_HOLDOUT.name);
 
-    expect(spies.setHoldoutType).toHaveBeenLastCalledWith(TEMPORAL_HOLDOUT);
+    expect(spies.setSplitter).toHaveBeenLastCalledWith(TEMPORAL_HOLDOUT);
+  });
+
+  it("starts on the first holdout splitter when the strategy declares no default", async () => {
+    mockComponents({
+      strategies: [
+        {
+          ...HOLDOUT_STRATEGY,
+          metadata: { ...HOLDOUT_STRATEGY.metadata, default_splitter: null },
+        },
+        CV_STRATEGY,
+      ],
+    });
+    renderStep();
+    await waitForSplitter(TEMPORAL_HOLDOUT.name);
+
+    expect(spies.setSplitter).toHaveBeenLastCalledWith(TEMPORAL_HOLDOUT);
   });
 
   it("hides only group_column from the generated form on a random split, and the proportions too on an index split", async () => {
@@ -449,19 +548,69 @@ describe("SplitDatasetRows: holdout", () => {
     );
     expect(getComponents).toHaveBeenCalledWith({ model: "HoldoutSplitter" });
     await waitFor(() => expect(lastReady()).toBe(true));
+    expect(lastPreviewRequest().params).toEqual({
+      train: 0.6,
+      validation: 0.2,
+      test: 0.2,
+      shuffle: true,
+    });
   });
 
-  it("is not ready on a random split before any parameter reaches it", async () => {
+  it("asks for the preview with empty params on a random split before any parameter reaches it, and is not ready while the preview is pending", async () => {
+    previewSplit.mockImplementation(() => new Promise(() => {}));
     renderStep();
     await waitForSplitter(HOLDOUT.name);
     await waitFor(() => expect(harness.splitType).toBe("random"));
+    await waitFor(() =>
+      expect(lastPreviewRequest()).toEqual({
+        datasetId: DATASET_ID,
+        splitterName: "HoldoutSplitter",
+        params: {},
+        splitType: "random",
+        indexes: null,
+      }),
+    );
 
     expect(harness.splitterParams).toBeNull();
     expect(lastReady()).toBe(false);
     expect(visibleErrorKeys(150)).toEqual([]);
   });
 
-  it("shows the empty train error and is not ready right after clicking Manual", async () => {
+  it("is not ready while the preview answers errors, and shows them under the form", async () => {
+    previewSplit.mockResolvedValue(
+      previewAnswer({ errors: [{ key: "splitsMustSumToOne", values: {} }] }),
+    );
+    mockFormParams = { train: 0.8, validation: 0.2, test: 0.2 };
+    renderStep();
+    await waitForSplitter(HOLDOUT.name);
+
+    const message = await screen.findByText(errorText("splitsMustSumToOne"));
+    expect(isUnderForm(message)).toBe(true);
+    expect(lastReady()).toBe(false);
+  });
+
+  it("is not ready when the preview request fails", async () => {
+    previewSplit.mockRejectedValue(new Error("boom"));
+    mockFormParams = { train: 0.6, validation: 0.2, test: 0.2 };
+    renderStep();
+    await waitForSplitter(HOLDOUT.name);
+    await waitFor(() => expect(previewSplit).toHaveBeenCalled());
+    await waitFor(() =>
+      expect(spies.setSplitPartitions).toHaveBeenLastCalledWith(null),
+    );
+
+    expect(lastReady()).toBe(false);
+  });
+
+  it("shows the preview's empty train error in the manual card and is not ready right after clicking Manual", async () => {
+    previewSplit.mockImplementation(async ({ splitType, indexes }) =>
+      splitType === "manual" && !indexes?.train?.length
+        ? previewAnswer({
+            errors: [{ key: "trainSplitMustHaveAtLeastOneRow", values: {} }],
+            partitions: [],
+          })
+        : previewAnswer(),
+    );
     mockFormParams = { train: 0.6, validation: 0.2, test: 0.2 };
     renderStep();
     await waitForSplitter(HOLDOUT.name);
@@ -469,14 +618,19 @@ describe("SplitDatasetRows: holdout", () => {
 
     fireEvent.click(toggle("Manual"));
 
-    expect(
-      await screen.findByText(errorText("trainSplitMustHaveAtLeastOneRow")),
-    ).toBeInTheDocument();
+    const message = await screen.findByText(
+      errorText("trainSplitMustHaveAtLeastOneRow"),
+    );
+    expect(isUnderForm(message)).toBe(false);
     expect(harness.splitType).toBe("manual");
     expect(harness.rowsPartitionsIndex).toEqual({
       train: [],
       test: [],
       validation: [],
+    });
+    expect(lastPreviewRequest()).toMatchObject({
+      splitType: "manual",
+      indexes: { train: [], test: [], validation: [] },
     });
     await waitFor(() => expect(lastReady()).toBe(false));
   });
@@ -497,6 +651,32 @@ describe("SplitDatasetRows: holdout", () => {
     ).toBeInTheDocument();
     expect(lastReady()).toBe(false);
   });
+
+  it("shows the typed range parse error over the preview's error in the manual card", async () => {
+    previewSplit.mockResolvedValue(
+      previewAnswer({
+        errors: [{ key: "trainSplitMustHaveAtLeastOneRow", values: {} }],
+      }),
+    );
+    renderStep({ datasetInfo: { ...NO_PREDEFINED, total_rows: 10 } });
+    await waitForSplitter(HOLDOUT.name);
+    fireEvent.click(toggle("Manual"));
+    await screen.findByText(errorText("trainSplitMustHaveAtLeastOneRow"));
+
+    fireEvent.change(document.getElementById("train"), {
+      target: { value: "0-50" },
+    });
+
+    expect(
+      await screen.findByText(
+        "The indexes should be minor than the total of columns or rows",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(errorText("trainSplitMustHaveAtLeastOneRow")),
+    ).not.toBeInTheDocument();
+    expect(lastReady()).toBe(false);
+  });
 });
 
 describe("SplitDatasetRows: cross-validation", () => {
@@ -505,14 +685,18 @@ describe("SplitDatasetRows: cross-validation", () => {
     await waitForSplitter(HOLDOUT.name);
     await switchToCv();
 
-    expect(spies.setCvType).toHaveBeenCalledWith(KFOLD);
-    expect(harness.cvType).toBe(KFOLD);
+    expect(spies.setSplitter).toHaveBeenCalledWith(KFOLD);
+    expect(harness.splitter).toBe(KFOLD);
     expect(
       screen.getByText(i18n.t("experiments:label.cvType")),
     ).toBeInTheDocument();
-    expect(screen.getByTestId("split-preview")).toHaveAttribute(
-      "data-geometry",
-      "blocked_folds",
+    await waitFor(() =>
+      expect(lastPreviewRequest()).toMatchObject({
+        datasetId: DATASET_ID,
+        splitterName: "KFoldSplitter",
+        splitType: null,
+        indexes: null,
+      }),
     );
 
     fireEvent.mouseDown(screen.getAllByRole("combobox")[0]);
@@ -533,11 +717,11 @@ describe("SplitDatasetRows: cross-validation", () => {
     expect(screen.queryByText(groupLabel)).not.toBeInTheDocument();
     await waitFor(() => expect(lastReady()).toBe(true));
 
-    await chooseCvType("Stratified");
+    await chooseSplitter("Stratified");
     await waitForSplitter(STRATIFIED_KFOLD.name);
     expect(screen.queryByText(groupLabel)).not.toBeInTheDocument();
 
-    await chooseCvType("Group K-Fold");
+    await chooseSplitter("Group K-Fold");
     await waitForSplitter(GROUP_KFOLD.name);
     expect(screen.getByText(groupLabel)).toBeInTheDocument();
   });
@@ -546,7 +730,7 @@ describe("SplitDatasetRows: cross-validation", () => {
     renderStep();
     await waitForSplitter(HOLDOUT.name);
     await switchToCv();
-    await chooseCvType("Group K-Fold");
+    await chooseSplitter("Group K-Fold");
     await waitForSplitter(GROUP_KFOLD.name);
 
     await waitFor(() => expect(lastReady()).toBe(false));
@@ -574,14 +758,121 @@ describe("SplitDatasetRows: cross-validation", () => {
     fireEvent.click(toggle("Cross-Validation"));
 
     await waitFor(() => expect(harness.strategyKind).toBe("cv"));
-    expect(harness.cvType).toBeNull();
+    await waitFor(() => expect(harness.splitter).toBeNull());
     await waitFor(() => expect(lastReady()).toBe(false));
     expect(screen.queryByTestId(/^form-schema-/)).not.toBeInTheDocument();
   });
 });
 
-// The same cases the preview net and the backend run: the step must show the
-// errors they record, and be ready exactly when they record none.
+describe("SplitDatasetRows: a strategy of any other kind", () => {
+  const ORIGIN_SPLITTERS = [ORIGIN_TEMPORAL_HOLDOUT, ROLLING_ORIGIN, HOLDOUT];
+  const ORIGIN_PARAMS = { horizon: 6, n_origins: 3, step: 1 };
+
+  const renderBacktest = ({ splitters = ORIGIN_SPLITTERS } = {}) => {
+    mockComponents({ splitters, strategies: [BACKTEST_STRATEGY] });
+    mockFormParams = ORIGIN_PARAMS;
+    return renderStep({ taskName: "SingleSeriesForecastingTask" });
+  };
+
+  it("starts on the splitter the strategy declares, and offers only its splitters in a splitter select", async () => {
+    previewSplit.mockResolvedValue(
+      previewAnswer({ partitions: ["validation", "test"] }),
+    );
+    renderBacktest();
+    await waitForSplitter(ROLLING_ORIGIN.name);
+
+    expect(harness.strategyKind).toBe("backtest");
+    expect(spies.setSplitter).toHaveBeenLastCalledWith(ROLLING_ORIGIN);
+    expect(
+      screen.getByText(i18n.t("experiments:label.splitter")),
+    ).toBeInTheDocument();
+    // No holdout or cross-validation controls.
+    expect(
+      screen.queryByText(i18n.t("experiments:label.splitType")),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(i18n.t("experiments:label.cvType")),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId("split-preview")).toBeInTheDocument();
+
+    expect(screen.getAllByRole("combobox")).toHaveLength(1);
+    fireEvent.mouseDown(screen.getByRole("combobox"));
+    const listbox = await screen.findByRole("listbox");
+    expect(
+      within(listbox)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Temporal holdout", "Rolling origin"]);
+  });
+
+  it("asks for the preview with no split type and no indexes, and is ready when it answers no errors", async () => {
+    previewSplit.mockResolvedValue(
+      previewAnswer({ partitions: ["validation", "test"] }),
+    );
+    renderBacktest();
+    await waitForSplitter(ROLLING_ORIGIN.name);
+
+    await waitFor(() => expect(lastReady()).toBe(true));
+    expect(lastPreviewRequest()).toEqual({
+      datasetId: DATASET_ID,
+      splitterName: "RollingOriginSplitter",
+      params: ORIGIN_PARAMS,
+      splitType: null,
+      indexes: null,
+    });
+    await waitFor(() =>
+      expect(spies.setSplitPartitions).toHaveBeenLastCalledWith([
+        "validation",
+        "test",
+      ]),
+    );
+    expect(harness.splitPartitions).toEqual(["validation", "test"]);
+  });
+
+  it("shows the preview's seriesTooShort error under the form and is not ready", async () => {
+    const values = { needed: 25, rows: 24, horizon: 6, origins: 3 };
+    previewSplit.mockResolvedValue(
+      previewAnswer({
+        errors: [{ key: "seriesTooShort", values }],
+        partitions: ["validation", "test"],
+      }),
+    );
+    renderBacktest();
+    await waitForSplitter(ROLLING_ORIGIN.name);
+
+    const message = await screen.findByText(
+      errorText("seriesTooShort", values),
+    );
+    expect(message).toHaveTextContent(
+      "A horizon of 6 with 3 validation origin(s) needs at least 25 rows; the dataset has 24.",
+    );
+    expect(isUnderForm(message)).toBe(true);
+    expect(lastReady()).toBe(false);
+    await waitFor(() =>
+      expect(spies.setSplitPartitions).toHaveBeenLastCalledWith([
+        "validation",
+        "test",
+      ]),
+    );
+  });
+
+  it("shows no splitter select when the strategy takes a single offered splitter", async () => {
+    renderBacktest({ splitters: [ROLLING_ORIGIN, HOLDOUT] });
+    await waitForSplitter(ROLLING_ORIGIN.name);
+
+    expect(harness.splitter).toBe(ROLLING_ORIGIN);
+    expect(
+      screen.queryByText(i18n.t("experiments:label.splitter")),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    await waitFor(() => expect(lastReady()).toBe(true));
+  });
+});
+
+// The same cases the backend runs (tests/back/splitters/test_split_preview.py):
+// the preview answers each case's `expected`, and the step must send the case's
+// request, show the errors it records, be ready exactly when it records none
+// and pass on the partitions it reports.
 describe("SplitDatasetRows: readiness and messages on the shared split cases", () => {
   const idsOf = (indexes) =>
     Object.entries(indexes).filter(([, rows]) => rows.length > 0);
@@ -590,19 +881,23 @@ describe("SplitDatasetRows: readiness and messages on the shared split cases", (
     const datasetSize = c.dataset.total_rows;
     const expectedErrors = c.expected.errors.map((error) => error.key);
     const expectedReady = expectedErrors.length === 0;
+    const isCv = c.split_type === "cv";
+    const isManual = c.split_type === "manual";
+    previewSplit.mockResolvedValue(c.expected);
 
     if (c.split_type === "random") {
       mockFormParams = c.params;
       renderStep({ datasetInfo: c.dataset });
       await waitForSplitter(HOLDOUT.name);
       await waitFor(() => expect(harness.splitterParams).toEqual(c.params));
-    } else if (c.split_type === "cv") {
+    } else if (isCv) {
       renderStep({ datasetInfo: c.dataset });
       await waitForSplitter(HOLDOUT.name);
       mockFormParams = c.params;
       await switchToCv();
       await waitFor(() => expect(harness.splitterParams).toEqual(c.params));
-    } else if (c.split_type === "manual") {
+    } else if (isManual) {
+      mockFormParams = c.params;
       renderStep({ datasetInfo: c.dataset });
       await waitForSplitter(HOLDOUT.name);
       fireEvent.click(toggle("Manual"));
@@ -616,6 +911,7 @@ describe("SplitDatasetRows: readiness and messages on the shared split cases", (
         expect(harness.rowsPartitionsIndex).toEqual(c.indexes),
       );
     } else if (c.split_type === "predefined") {
+      mockFormParams = c.params;
       renderStep({ datasetInfo: c.dataset });
       await waitForSplitter(HOLDOUT.name);
       await waitFor(() => expect(harness.splitType).toBe("predefined"));
@@ -623,12 +919,28 @@ describe("SplitDatasetRows: readiness and messages on the shared split cases", (
       throw new Error(`No driver for split type ${c.split_type}`);
     }
 
-    await waitFor(() => expect(lastReady()).toBe(expectedReady));
-    expect(visibleErrorKeys(datasetSize)).toEqual(expectedErrors);
-    c.expected.errors.forEach((error) => {
-      expect(
-        screen.getByText(errorText(error.key, error.values)),
-      ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(lastPreviewRequest()).toEqual({
+        datasetId: DATASET_ID,
+        splitterName: isCv ? KFOLD.name : HOLDOUT.name,
+        params: c.params,
+        splitType: isCv ? null : c.split_type,
+        indexes: isManual ? c.indexes : null,
+      }),
+    );
+    await waitFor(() => {
+      expect(lastReady()).toBe(expectedReady);
+      expect(visibleErrorKeys(datasetSize)).toEqual(expectedErrors);
     });
+    c.expected.errors.forEach((error) => {
+      const message = screen.getByText(errorText(error.key, error.values));
+      expect(isUnderForm(message)).toBe(!isManual);
+    });
+    // Passive effects run after the commit that drew the messages.
+    await waitFor(() =>
+      expect(spies.setSplitPartitions).toHaveBeenLastCalledWith(
+        c.expected.partitions,
+      ),
+    );
   });
 });

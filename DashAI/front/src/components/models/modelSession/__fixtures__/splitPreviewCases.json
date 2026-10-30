@@ -876,6 +876,7 @@
         },
         {
           "key": "ellipsis",
+          "label": "moreFolds",
           "ellipsis": true,
           "hidden_count": 8
         },
@@ -1016,6 +1017,7 @@
         },
         {
           "key": "ellipsis",
+          "label": "moreFolds",
           "ellipsis": true,
           "hidden_count": 196
         },
