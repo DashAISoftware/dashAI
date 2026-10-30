@@ -45,7 +45,7 @@ function BaseColumnsStep({
     // The first time the dataset's columns and the task's roles are known.
     if (rawColumnNames.length === 0 || roles.length === 0) return;
     if (Object.values(selectionState).every((columns) => !columns?.length)) {
-      setSelection(defaultRoleSelection(roles, rawColumnNames));
+      setSelection(defaultRoleSelection(roles, rawColumnNames, datasetTypes));
     }
   }, [rawColumnNames.join(","), roles.map((role) => role.name).join(",")]);
 

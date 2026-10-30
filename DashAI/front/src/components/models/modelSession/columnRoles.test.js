@@ -210,6 +210,64 @@ describe("sessionColumns", () => {
   });
 });
 
+describe("defaultRoleSelection, by the types the roles declare", () => {
+  const typed = (role, types) => ({ ...role, types });
+  const TYPES = {
+    date: { type: "Date" },
+    promo: { type: "Float" },
+    sales: { type: "Float" },
+    label: { type: "Categorical" },
+    width: { type: "Float" },
+  };
+
+  test("a protected role takes, from the end, the last column of a type it accepts", () => {
+    expect(
+      defaultRoleSelection(
+        [
+          typed(INDEX, ["Date"]),
+          typed(SERIES, ["Float", "Integer"]),
+          typed(EXOGENOUS, ["Float", "Integer"]),
+        ],
+        ["date", "promo", "sales"],
+        TYPES,
+      ),
+    ).toEqual({ index: ["date"], series: ["sales"], exogenous: ["promo"] });
+  });
+
+  test("an x/y target that is not the last column is found by its type", () => {
+    expect(
+      defaultRoleSelection(
+        [
+          typed(FEATURES, ["Float", "Integer", "Categorical"]),
+          typed(TARGET, ["Categorical"]),
+        ],
+        ["sales", "label", "width"],
+        TYPES,
+      ),
+    ).toEqual({ features: ["sales", "width"], target: ["label"] });
+  });
+
+  test("an x/y target that is the last column stays the last column", () => {
+    expect(
+      defaultRoleSelection(
+        [typed(FEATURES, ["Float"]), typed(TARGET, ["Categorical"])],
+        ["sales", "width", "label"],
+        TYPES,
+      ),
+    ).toEqual({ features: ["sales", "width"], target: ["label"] });
+  });
+
+  test("no column of an accepted type: the last one, as without types", () => {
+    expect(
+      defaultRoleSelection(
+        [typed(FEATURES, ["Float"]), typed(TARGET, ["Categorical"])],
+        ["sales", "width"],
+        TYPES,
+      ),
+    ).toEqual({ features: ["sales"], target: ["width"] });
+  });
+});
+
 describe("columnsByRole", () => {
   test("each role the task declares with the columns the session gave it, labelled as the task labels it", () => {
     const session = {
