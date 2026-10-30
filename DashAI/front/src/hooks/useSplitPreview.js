@@ -64,7 +64,6 @@ export default function useSplitPreview({
       clearTimeout(timer);
     };
     // The key stands for every value the request is made of.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestKey]);
 
   const current = requestKey !== null && answer.key === requestKey;
