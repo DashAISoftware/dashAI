@@ -144,4 +144,40 @@ describe("ModelsTableSelectMetric", () => {
     userEvent.click(await screen.findByRole("option", { name: "LogLoss" }));
     expect(handleSelectedMetric).toHaveBeenCalledWith("LogLoss");
   });
+
+  describe("a metric the backend declares not optimizable", () => {
+    // Interval coverage: no direction makes it better, so a search cannot be
+    // run for it. The run API refuses it as the goal of a search.
+    const WITH_COVERAGE = [
+      { name: "IntervalCoverage", metadata: { optimizable: false } },
+      ...METRICS,
+    ];
+
+    test("is not offered as the goal metric", async () => {
+      loaded(WITH_COVERAGE);
+      renderWithProviders(
+        <ModelsTableSelectMetric
+          taskName="T"
+          handleSelectedMetric={jest.fn()}
+        />,
+      );
+      expect(await options()).toEqual(["F1", "Accuracy", "LogLoss"]);
+    });
+
+    test("is never the default, even listed first", async () => {
+      loaded(WITH_COVERAGE);
+      const handleSelectedMetric = jest.fn();
+      renderWithProviders(
+        <ModelsTableSelectMetric
+          taskName="T"
+          handleSelectedMetric={handleSelectedMetric}
+          autoSelectDefault
+        />,
+      );
+      await waitFor(() =>
+        expect(handleSelectedMetric).toHaveBeenCalledWith("F1"),
+      );
+      expect(handleSelectedMetric).toHaveBeenCalledTimes(1);
+    });
+  });
 });
