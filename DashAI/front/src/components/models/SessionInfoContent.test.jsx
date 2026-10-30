@@ -13,6 +13,10 @@ import SessionInfoContent from "./SessionInfoContent";
 jest.mock("../../api/component", () => ({ getComponents: jest.fn() }));
 
 const TASK_METADATA = {
+  column_roles: [
+    { name: "features", label: "Features" },
+    { name: "target", label: "Target" },
+  ],
   io_roles: { inputs: ["features"], outputs: ["target"] },
 };
 
@@ -51,16 +55,15 @@ const renderInfo = async (splits) => {
       tasks={[]}
     />,
   );
-  // The input columns arrive with the task metadata.
-  await waitFor(() =>
-    expect(configRows()[0]).toEqual([t("models:label.inputColumns"), "a, b"]),
-  );
+  // The columns of each role arrive with the task metadata.
+  await waitFor(() => expect(configRows()[0]).toEqual(["Features", "a, b"]));
   return configRows();
 };
 
+// One row per role, labelled as the task labels it.
 const COLUMN_ROWS = [
-  ["Input columns", "a, b"],
-  ["Output columns", "y"],
+  ["Features", "a, b"],
+  ["Target", "y"],
 ];
 
 beforeEach(() => {
@@ -73,8 +76,6 @@ beforeEach(() => {
 
 describe("SessionInfoContent split summary", () => {
   it("uses the English texts the rows below are written with", () => {
-    expect(t("models:label.inputColumns")).toBe("Input columns");
-    expect(t("models:label.outputColumns")).toBe("Output columns");
     expect(t("experiments:label.splitType")).toBe("Split type");
   });
 

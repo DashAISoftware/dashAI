@@ -18,8 +18,15 @@ jest.mock("../../api/datasets", () => ({
   getDatasetFileFiltered: jest.fn(),
   getDatasetTypesByFilePath: jest.fn(),
 }));
+// The session's columns by role, labelled as the task labels its roles.
+const mockRoleColumns = [
+  { name: "features", label: "Features", columns: ["age", "income"] },
+  { name: "target", label: "Target", columns: ["label"] },
+];
+
 jest.mock("../../hooks/useTaskMetadata", () => ({
   useSessionColumns: () => mockColumns,
+  useSessionRoleColumns: () => mockRoleColumns,
 }));
 jest.mock("../notebooks/dataset/DatasetTable", () => () => (
   <div data-testid="dataset-table" />
@@ -62,15 +69,15 @@ describe("DatasetSelector (x/y run)", () => {
   });
 
   describe("prediction info", () => {
-    it("lists the input columns and the target column", async () => {
+    it("lists the columns of each role, labelled as the task labels it", async () => {
       renderSelector();
 
       const info = screen.getByRole("alert");
       expect(within(info).getByText("Prediction Info")).toBeInTheDocument();
-      expect(within(info).getByText("Input Columns:")).toBeInTheDocument();
+      expect(within(info).getByText("Features:")).toBeInTheDocument();
       expect(within(info).getByText("age")).toBeInTheDocument();
       expect(within(info).getByText("income")).toBeInTheDocument();
-      expect(within(info).getByText("Target Column:")).toBeInTheDocument();
+      expect(within(info).getByText("Target:")).toBeInTheDocument();
       expect(within(info).getByText("label")).toBeInTheDocument();
       await screen.findByRole("radiogroup");
     });
@@ -88,8 +95,8 @@ describe("DatasetSelector (x/y run)", () => {
       renderSelector({ selectedDataset: null });
 
       await waitFor(() => expect(getPredictionSplits).toHaveBeenCalledWith(3));
-      expect(screen.queryByText("Input Columns:")).not.toBeInTheDocument();
-      expect(screen.queryByText("Target Column:")).not.toBeInTheDocument();
+      expect(screen.queryByText("Features:")).not.toBeInTheDocument();
+      expect(screen.queryByText("Target:")).not.toBeInTheDocument();
       expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
     });
   });
@@ -137,7 +144,7 @@ describe("DatasetSelector (x/y run)", () => {
       const { onSplitChange } = renderSelector({ selectedDataset: other });
 
       await waitFor(() => expect(getPredictionSplits).toHaveBeenCalledWith(3));
-      await screen.findByText("Input Columns:");
+      await screen.findByText("Features:");
       expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
       expect(screen.queryByText("Dataset Split")).not.toBeInTheDocument();
       expect(onSplitChange).toHaveBeenLastCalledWith("all");
@@ -152,7 +159,7 @@ describe("DatasetSelector (x/y run)", () => {
       const { onSplitChange } = renderSelector();
 
       await waitFor(() => expect(getPredictionSplits).toHaveBeenCalledWith(3));
-      await screen.findByText("Input Columns:");
+      await screen.findByText("Features:");
       expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
       expect(onSplitChange).toHaveBeenLastCalledWith("all");
     });
@@ -180,7 +187,7 @@ describe("DatasetSelector (x/y run)", () => {
     it("does not ask for partitions without a run", async () => {
       renderSelector({ runId: null });
 
-      await screen.findByText("Input Columns:");
+      await screen.findByText("Features:");
       expect(getPredictionSplits).not.toHaveBeenCalled();
       expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
     });
