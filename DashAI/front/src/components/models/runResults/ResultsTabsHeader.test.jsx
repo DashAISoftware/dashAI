@@ -1,7 +1,8 @@
 /**
- * Which result tabs a finished run offers, by the session's evaluation
- * strategy kind. The cross validation row (fold graphs, nested results) is
- * keyed on the kind being "cv"; nested results on the run's `nested` flag.
+ * Which result tabs a finished run offers, by what the session's evaluation
+ * strategy declares. The fold graphs and the forecasts tabs follow its
+ * `result_views`; nested results stay a cross-validation feature, keyed on
+ * the kind being "cv" and on the run's `nested` flag.
  * RunResults hides predictions and reports for the "full" kind by passing
  * `supportsPredictions = kind !== "full"`, mirrored here.
  */
@@ -10,6 +11,7 @@ import React from "react";
 import { screen } from "@testing-library/react";
 
 let mockKind = null;
+let mockResultViews = [];
 let mockSession = null;
 
 jest.mock("../ModelsContext", () => ({
@@ -18,19 +20,28 @@ jest.mock("../ModelsContext", () => ({
 
 jest.mock("../../../hooks/useStrategyKind", () => ({
   useStrategyKind: () => mockKind,
+  useStrategyMetadata: () =>
+    mockKind === null
+      ? null
+      : { kind: mockKind, result_views: mockResultViews },
 }));
+
+// What each built-in strategy kind declares (BaseEvaluationStrategy).
+const RESULT_VIEWS_BY_KIND = { cv: ["fold_metrics"] };
 
 import { renderWithProviders } from "../../../test-utils/renderWithProviders";
 import ResultsTabsHeader from "./ResultsTabsHeader";
 
 const renderHeader = ({
   kind,
+  resultViews = RESULT_VIEWS_BY_KIND[kind] ?? [],
   splits = { test_size: 0.2 },
   run = { id: 1, nested: false },
   isFinished = true,
   optimizables = 2,
 } = {}) => {
   mockKind = kind;
+  mockResultViews = resultViews;
   mockSession = {
     evaluation_strategy: "SomeStrategy",
     splits: JSON.stringify(splits),
@@ -132,6 +143,40 @@ describe("ResultsTabsHeader for a finished run", () => {
   test("holdout explains regardless of the splits", () => {
     renderHeader({ kind: "holdout", splits: { test_size: 0 } });
     expect(tabs()).toContainEqual(["Explainability", true]);
+  });
+
+  test("a backtest with several origins: fold graphs and forecasts, no nested results", () => {
+    renderHeader({
+      kind: "backtest",
+      resultViews: ["fold_metrics", "forecasts"],
+      splits: { horizon: 3, n_origins: 3 },
+    });
+    expect(tabs()).toEqual([
+      ["Live Metrics", true],
+      ["Hyperparameters", true],
+      ["Fold Graphs", true],
+      ["Forecasts", true],
+      ["Explainability", true],
+      ["Predictions", true],
+      ["Reports", true],
+    ]);
+  });
+
+  test("a backtest with one origin: forecasts only", () => {
+    renderHeader({
+      kind: "backtest",
+      resultViews: ["forecasts"],
+      splits: { horizon: 3 },
+    });
+    const labels = tabs().map(([label]) => label);
+    expect(labels).toContain("Forecasts");
+    expect(labels).not.toContain("Fold Graphs");
+    expect(labels).not.toContain("Nested results");
+  });
+
+  test("the fold graphs follow the declaration, not the kind", () => {
+    renderHeader({ kind: "cv", resultViews: [] });
+    expect(tabs().map(([label]) => label)).not.toContain("Fold Graphs");
   });
 
   test("no optimizable parameters: hyperparameters disabled", () => {

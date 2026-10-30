@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useStrategyKind } from "../../hooks/useStrategyKind";
+import {
+  useStrategyKind,
+  useStrategyMetadata,
+} from "../../hooks/useStrategyKind";
 import { STRATEGY_KINDS } from "../../utils/splitsPayload";
 import {
   Box,
@@ -75,7 +78,11 @@ export default function SessionVisualization() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const strategyKind = useStrategyKind(session?.evaluation_strategy);
-  const isCrossValidation = strategyKind === STRATEGY_KINDS.CV;
+  // The statistical tests compare runs fold by fold, so they are offered when
+  // the strategy declares a score per fold or origin.
+  const comparesFolds = (
+    useStrategyMetadata(session?.evaluation_strategy)?.result_views ?? []
+  ).includes("fold_metrics");
   // A strategy that carves nothing records a single full-dataset score per
   // metric, so there is no split to switch between.
   const usesFullMetrics = strategyKind === STRATEGY_KINDS.FULL;
@@ -123,10 +130,10 @@ export default function SessionVisualization() {
   }, [sessionTourContext]);
 
   useEffect(() => {
-    if (!isCrossValidation) {
+    if (!comparesFolds) {
       setView("graphs");
     }
-  }, [isCrossValidation, session?.id]);
+  }, [comparesFolds, session?.id]);
 
   // Scroll to a newly added run card and mark it to be highlighted
   useEffect(() => {
@@ -738,8 +745,8 @@ export default function SessionVisualization() {
                     metricSplit={effectiveSplit}
                   />
 
-                  {/* Graphs and statistical tests button toggle just when cross validation is being used */}
-                  {isCrossValidation ? (
+                  {/* Graphs and statistical tests button toggle just when the runs have fold scores to compare */}
+                  {comparesFolds ? (
                     <Box
                       sx={{
                         display: "flex",
