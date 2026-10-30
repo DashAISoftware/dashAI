@@ -5,6 +5,7 @@ import {
   resolveSelection,
   selectionReady,
   selectionToRefs,
+  columnsByRole,
   sessionColumns,
   shownRoles,
 } from "./columnRoles";
@@ -206,5 +207,41 @@ describe("sessionColumns", () => {
       outputs: [],
       target: undefined,
     });
+  });
+});
+
+describe("columnsByRole", () => {
+  test("each role the task declares with the columns the session gave it, labelled as the task labels it", () => {
+    const session = {
+      column_roles: {
+        target: { columns: ["Species"] },
+        features: { columns: ["a", "b"] },
+      },
+    };
+
+    expect(columnsByRole(session, SUPERVISED)).toEqual([
+      { name: "features", label: "Features", columns: ["a", "b"] },
+      { name: "target", label: "Target", columns: ["Species"] },
+    ]);
+  });
+
+  test("a task with roles of its own: no input nor output, its roles", () => {
+    const session = {
+      column_roles: {
+        index: { columns: ["date"] },
+        series: { columns: ["sales"] },
+      },
+    };
+
+    expect(
+      columnsByRole(session, { column_roles: [INDEX, SERIES, EXOGENOUS] }),
+    ).toEqual([
+      { name: "index", label: "Index", columns: ["date"] },
+      { name: "series", label: "Series", columns: ["sales"] },
+    ]);
+  });
+
+  test("nothing without the task's declaration", () => {
+    expect(columnsByRole({ column_roles: {} }, undefined)).toEqual([]);
   });
 });

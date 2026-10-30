@@ -185,3 +185,27 @@ export function sessionColumns(session, taskMetadata) {
     target: outputs[0],
   };
 }
+
+/**
+ * A session's columns by role, as the task declares and labels its roles.
+ *
+ * What a screen lists to say which columns a session uses, without naming
+ * them inputs and outputs: a task's roles need not be either (a time index,
+ * a series).
+ *
+ * @param {object} session a model session, with `column_roles`
+ * @param {object} taskMetadata the session's task metadata, with
+ *   `column_roles`
+ * @returns {{name: string, label: string, columns: string[]}[]} the roles
+ *   that have columns, in the order the task declares them
+ */
+export function columnsByRole(session, taskMetadata) {
+  const stored = session?.column_roles || {};
+  return (taskMetadata?.column_roles || [])
+    .map((role) => ({
+      name: role.name,
+      label: role.label ?? role.name,
+      columns: stored[role.name]?.columns || [],
+    }))
+    .filter((role) => role.columns.length > 0);
+}
