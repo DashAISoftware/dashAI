@@ -175,6 +175,7 @@
     "chartType": "Chart type",
     "savedTests": "Saved Tests",
     "foldGraphs": "Fold Graphs",
+    "forecasts": "Forecasts",
     "nestedCvResults": "Nested results",
     "outerFoldFetch": "Outer Folds",
     "finalFoldFetch": "Final Folds",
