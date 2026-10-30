@@ -20,6 +20,8 @@
     "updatingPredictionStatus": "Error updating prediction status."
   },
   "label": {
+    "horizon": "Horizon",
+    "horizonDescription": "How many steps past the end of the series to forecast.",
     "basedOnDataset": "Based on dataset: {{datasetName}}",
     "changeImage": "Change image",
     "chooseInputMethod": "Choose Input Method",
@@ -64,6 +66,7 @@
     "useExistingDataset": "Use Existing Dataset"
   },
   "message": {
+    "unevaluatedSteps": "The last {{count}} steps go beyond the {{evaluated}} the backtest measured: their error was never evaluated.",
     "deletedSuccessfully": "Prediction deleted successfully",
     "downloadedSuccessfully": "Prediction downloaded successfully",
     "predictionCompleted": "Prediction completed successfully",
