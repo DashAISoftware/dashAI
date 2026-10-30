@@ -80,7 +80,11 @@ function smallMultiplesMaking(
   const visibleColors = visible.map(({ idx }) => runColors[idx]);
 
   const panels = metrics.map((metric) => {
-    const isInverse = metricsMetadata[metric]?.maximize === false;
+    // A metric the backend declares not optimizable has no direction to
+    // point an arrow at.
+    const isInverse =
+      metricsMetadata[metric]?.maximize === false &&
+      metricsMetadata[metric]?.optimizable !== false;
     const values = visible.map(({ run }) => {
       const metricsObj = run[metricsKey] ?? {};
       const v = metricsObj[metric];
@@ -174,10 +178,13 @@ function heatmapMaking(
     const colMax = colVals.length ? Math.max(...colVals) : 1;
     const range = colMax - colMin;
     const isInverse = metricsMetadata[m]?.maximize === false;
+    // A metric the backend declares not optimizable makes no run better or
+    // worse than another: every value sits at the middle of the scale.
+    const isRanked = metricsMetadata[m]?.optimizable !== false;
     return zRaw.map((row) => {
       const v = row[mIdx];
       if (v === null) return null;
-      const norm = range === 0 ? 0.5 : (v - colMin) / range;
+      const norm = range === 0 || !isRanked ? 0.5 : (v - colMin) / range;
       return isInverse ? 1 - norm : norm;
     });
   });
@@ -189,10 +196,21 @@ function heatmapMaking(
   const annotationText = zRaw.map((row) =>
     row.map((v) => (v !== null ? v.toFixed(4) : "N/A")),
   );
+  // A value the run could not compute says why on hover, as the run reports
+  // it under {split}_metrics_unavailable.
+  const hoverText = visibleRuns.map((run, rIdx) =>
+    metrics.map(
+      (m, mIdx) =>
+        run[`${metricsKey}_unavailable`]?.[m] ?? annotationText[rIdx][mIdx],
+    ),
+  );
 
   // X-axis labels: add ↓ arrow for lower-is-better metrics
   const xLabels = metrics.map((m) =>
-    metricsMetadata[m]?.maximize === false ? `${m} ↓` : m,
+    metricsMetadata[m]?.maximize === false &&
+    metricsMetadata[m]?.optimizable !== false
+      ? `${m} ↓`
+      : m,
   );
 
   // error.main dark (#ff8383) / light (#d32f2f); primary.light is #A7C7FF in both modes
@@ -209,6 +227,8 @@ function heatmapMaking(
       z: zNorm,
       text: annotationText,
       texttemplate: "%{text}",
+      hovertext: hoverText,
+      hovertemplate: "%{y}<br>%{x}: %{hovertext}<extra></extra>",
       textfont: { size: 11, weight: 700, color: theme.palette.text.primary },
       // amber (accent) = min/worst, teal/blue (accent) = max/best
       colorscale: [

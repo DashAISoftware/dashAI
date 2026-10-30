@@ -193,3 +193,52 @@ describe("smallMultiplesMaking", () => {
     expect(yaxis).toEqual({ tickvals: [0, 1], ticktext: ["run_a", "run_c"] });
   });
 });
+
+describe("what the backend declares about a metric's value", () => {
+  const REASON = "MAPE divides by each actual value, and it is zero on 1 row.";
+  const FORECAST_RUNS = [
+    {
+      id: 1,
+      name: "run_a",
+      test_metrics: { IntervalCoverage: 0.6 },
+      test_metrics_unavailable: { MAPE: REASON },
+    },
+    { id: 2, name: "run_b", test_metrics: { IntervalCoverage: 0.9, MAPE: 12 } },
+  ];
+  const FORECAST_METADATA = {
+    IntervalCoverage: { maximize: true, optimizable: false },
+    MAPE: { maximize: false },
+  };
+  const [trace] = heatmapMaking(
+    FORECAST_RUNS,
+    new Set(),
+    ["IntervalCoverage", "MAPE"],
+    "test_metrics",
+    theme(),
+    FORECAST_METADATA,
+  );
+
+  test("a metric that cannot be optimized is neither best nor worst on any run", () => {
+    expect(trace.x[0]).toBe("IntervalCoverage");
+    expect(trace.z.map((row) => row[0])).toEqual([0.5, 0.5]);
+    expect(trace.text.map((row) => row[0])).toEqual(["0.6000", "0.9000"]);
+  });
+
+  test("a value the run could not compute reads N/A, and its reason on hover", () => {
+    expect(trace.text.map((row) => row[1])).toEqual(["N/A", "12.0000"]);
+    expect(trace.hovertext[0][1]).toBe(REASON);
+    expect(trace.hovertext[1][1]).toBe("12.0000");
+  });
+
+  test("the bar panels draw no arrow for a metric that cannot be optimized", () => {
+    const { panels } = smallMultiplesMaking(
+      FORECAST_RUNS,
+      new Set(),
+      ["IntervalCoverage", "MAPE"],
+      "test_metrics",
+      theme(),
+      FORECAST_METADATA,
+    );
+    expect(panels.map((p) => p.title)).toEqual(["IntervalCoverage", "MAPE ↓"]);
+  });
+});
