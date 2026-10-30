@@ -83,7 +83,7 @@
     "seed": "Semente",
     "selectAColumn": "Selecione uma coluna",
     "selectDataset": "Selecionar conjunto de dados",
-    "selectDatasetColumns": "Indique quais colunas do conjunto de dados serão usadas como entrada e saída.",
+    "selectDatasetColumns": "Indique quais colunas do conjunto de dados cada papel da tarefa recebe.",
     "selectDatasetTitle": "Selecione um conjunto de dados para a tarefa selecionada",
     "selectEvaluationStrategy": "Estratégia de avaliação",
     "selectHowToDivideDataset": "Selecione como dividir o conjunto de dados em subconjuntos de treinamento, validação e teste.",

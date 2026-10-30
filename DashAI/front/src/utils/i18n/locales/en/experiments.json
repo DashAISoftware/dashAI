@@ -71,7 +71,7 @@
     "rowIndexes": "Row Indexes",
     "rowIndexesDescription": "Specify row ranges for each split using comma-separated values or ranges (e.g. 0-100, 200).",
     "seed": "Seed",
-    "selectDatasetColumns": "Indicate which columns of the dataset will be used as input and output.",
+    "selectDatasetColumns": "Indicate which dataset columns each role of the task takes.",
     "selectDatasetTitle": "Select a dataset for the selected task",
     "selectHowToDivideDataset": "Select how to divide the dataset into training, validation and test subsets.",
     "selectEvaluationStrategy": "Evaluation strategy",

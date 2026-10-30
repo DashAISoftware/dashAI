@@ -83,7 +83,7 @@
     "seed": "随机种子",
     "selectAColumn": "选择一列",
     "selectDataset": "选择数据集",
-    "selectDatasetColumns": "指定数据集中用作输入和输出的列。",
+    "selectDatasetColumns": "指定任务的每个角色使用数据集中的哪些列。",
     "selectDatasetTitle": "为所选任务选择数据集",
     "selectEvaluationStrategy": "评估策略",
     "selectHowToDivideDataset": "选择如何将数据集划分为训练集、验证集和测试集。",

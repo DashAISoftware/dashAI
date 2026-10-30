@@ -28,28 +28,46 @@ export function shownRoles(taskMetadata) {
  * The selection a column step starts from, over a list of columns.
  *
  * The protected roles take columns from the end, each as many as its
- * minimum (at least one), in the order the task declares them; the first
- * role the preprocessing may transform takes every other column. For a
- * supervised task, the last column is the target and the rest are features;
- * for clustering, every column is a feature.
+ * minimum (at least one), in the order the task declares them: the last
+ * columns of a type the role accepts, when the column types are known, and
+ * otherwise the last ones left. The first role the preprocessing may
+ * transform takes every other column, in order. For a supervised task, the
+ * target is the last column of a target type and the rest are features; for
+ * clustering, every column is a feature. Only two declarations are crossed:
+ * the types each role accepts and the types of the columns.
  *
  * @param {Array<object>} roles the shown roles
  * @param {string[]} columns the columns to share out
+ * @param {Object<string, {type: string}>} [columnTypes] the type of each
+ *   column, when known
  * @returns {Object<string, string[]>} role name to its columns
  */
-export function defaultRoleSelection(roles, columns) {
+export function defaultRoleSelection(roles, columns, columnTypes = {}) {
   const selection = Object.fromEntries(roles.map((role) => [role.name, []]));
-  let end = columns.length;
+  const left = [...columns];
+  const accepts = (role, column) => {
+    const type = columnTypes?.[column]?.type;
+    return !type || !role.types || role.types.includes(type);
+  };
   roles
     .filter((role) => !role.transformable)
     .forEach((role) => {
-      const count = Math.min(Math.max(role.min || 0, 1), end);
-      selection[role.name] = columns.slice(end - count, end);
-      end -= count;
+      const count = Math.min(Math.max(role.min || 0, 1), left.length);
+      const taken = [];
+      // From the end: the last columns of a type the role accepts...
+      for (let i = left.length - 1; i >= 0 && taken.length < count; i -= 1) {
+        if (accepts(role, left[i])) taken.unshift(left[i]);
+      }
+      // ...and, when there are not enough of them, the last ones left.
+      for (let i = left.length - 1; i >= 0 && taken.length < count; i -= 1) {
+        if (!taken.includes(left[i])) taken.unshift(left[i]);
+      }
+      selection[role.name] = left.filter((column) => taken.includes(column));
+      taken.forEach((column) => left.splice(left.indexOf(column), 1));
     });
   const first = roles.find((role) => role.transformable);
   if (first) {
-    selection[first.name] = columns.slice(0, end);
+    selection[first.name] = left;
   }
   return selection;
 }

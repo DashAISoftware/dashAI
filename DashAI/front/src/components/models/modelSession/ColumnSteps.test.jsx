@@ -205,8 +205,10 @@ describe("SelectColumnsStep", () => {
     renderSelect(THREE_ROLES, {}, TYPES);
     await waitFor(() => expect(validateColumns).toHaveBeenCalled());
 
+    // No Date column: the index takes the last one, as without types. The
+    // series takes the last column of a type it accepts (Float).
     expect(heldType("index", "c")).toBe("cCategorical");
-    expect(heldType("series", "b")).toBe("bInteger");
+    expect(heldType("series", "a")).toBe("aFloat");
   });
 
   it("with preprocessing, the fixed target still shows its type", async () => {

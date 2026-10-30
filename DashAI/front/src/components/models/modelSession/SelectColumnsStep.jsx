@@ -154,7 +154,7 @@ function SelectColumnsStep({
       return;
     }
     if (Object.values(selectionState).every((keys) => !keys?.length)) {
-      setSelection(defaultRoleSelection(roles, rawColumnNames));
+      setSelection(defaultRoleSelection(roles, rawColumnNames, datasetTypes));
     }
   }, [rawColumnNames.join(","), roles.map((role) => role.name).join(",")]);
 
