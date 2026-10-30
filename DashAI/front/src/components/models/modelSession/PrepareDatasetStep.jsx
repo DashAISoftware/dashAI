@@ -15,10 +15,10 @@ import { useTranslation } from "react-i18next";
 import { useModels } from "../ModelsContext";
 import {
   buildSplitsPayload,
-  resolveSplitterName,
   STRATEGY_KINDS,
   SPLIT_TYPES,
 } from "../../../utils/splitsPayload";
+import { useTaskMetadata } from "../../../hooks/useTaskMetadata";
 /**
  * Step of the session wizard: configure the evaluation strategy, partitions,
  * and whether preprocessing converters should be applied before column
@@ -54,11 +54,13 @@ function PrepareDatasetStep({
   const [splitterParams, setSplitterParams] = useState(null);
   const [paramsError, setParamsError] = useState(false);
 
-  // Cross-Validation configuration states
-  const [cvType, setCvType] = useState(null);
-  // Which holdout splitter this task uses. Resolved from the task rather
-  // than hardcoded, so a time series cannot be handed a shuffling one.
-  const [holdoutType, setHoldoutType] = useState(null);
+  // The splitter of the selected strategy, among those it takes. Resolved
+  // from what the strategy and the task declare, so a time series cannot be
+  // handed a shuffling one.
+  const [splitter, setSplitter] = useState(null);
+  // The partitions that receive rows, as the splitter's preview says. They
+  // decide the metrics the session records.
+  const [splitPartitions, setSplitPartitions] = useState(null);
   // The split shape of the selected strategy, reported by the backend. The
   // screens used to compare strategy names, which is why a new strategy
   // rendered nothing at all.
@@ -81,9 +83,13 @@ function PrepareDatasetStep({
 
   // Session preprocessing is fitted once per partition, so it is offered only
   // once the strategy is known to carve some. One that carves nothing (the
-  // only one a task without a target offers) leaves nothing to fit it on.
+  // only one a task without a target offers) leaves nothing to fit it on, and
+  // a task none of whose columns may be transformed says it takes none.
+  const taskMetadata = useTaskMetadata(newExp.task_name);
   const offersPreprocessing =
-    Boolean(strategyKind) && strategyKind !== STRATEGY_KINDS.FULL;
+    Boolean(strategyKind) &&
+    strategyKind !== STRATEGY_KINDS.FULL &&
+    taskMetadata?.takes_preprocessing !== false;
 
   useEffect(() => {
     if (
@@ -105,21 +111,30 @@ function PrepareDatasetStep({
       ...newExp,
       evaluation_strategy: evaluationStrategy,
       applyPreprocessing: applyPreprocessing,
+      splitPartitions,
     };
 
     // A strategy that carves nothing resolves no splitter, so the session
     // keeps the empty splits payload it started with.
-    const splitterName = resolveSplitterName(strategyKind, cvType, holdoutType);
+    const splitterName =
+      strategyKind && strategyKind !== STRATEGY_KINDS.FULL
+        ? splitter?.name
+        : null;
     if (splitterName) {
+      // Holdout and cross-validation keep the shape their screens read back;
+      // any other strategy stores its splitter's parameters alone.
+      const splitTypeOf = {
+        [STRATEGY_KINDS.HOLDOUT]: splitType,
+        [STRATEGY_KINDS.CV]: SPLIT_TYPES.CV,
+      };
       updatedExpData.splits = buildSplitsPayload({
         splitterName,
-        splitType:
-          strategyKind === STRATEGY_KINDS.HOLDOUT ? splitType : SPLIT_TYPES.CV,
+        splitType: splitTypeOf[strategyKind],
         params: {
           ...(splitterParams ?? {}),
           // The group column select is rendered by hand, so its value is not
           // part of the generated form's values.
-          ...(cvType?.schema?.properties?.group_column
+          ...(splitter?.schema?.properties?.group_column
             ? { group_column: groupColumn }
             : {}),
         },
@@ -144,8 +159,8 @@ function PrepareDatasetStep({
     splitsReady,
     splitType,
     splitterParams,
-    cvType,
-    holdoutType,
+    splitter,
+    splitPartitions,
     strategyKind,
     groupColumn,
     evaluationStrategy,
@@ -162,10 +177,12 @@ function PrepareDatasetStep({
     }
     setSessionRightContent(
       <SplitDatasetRows
+        datasetId={dataset?.id}
         datasetInfo={datasetInfo}
         rowsPartitionsIndex={rowsPartitionsIndex}
         setRowsPartitionsIndex={setRowsPartitionsIndex}
         setSplitsReady={setSplitsReady}
+        setSplitPartitions={setSplitPartitions}
         splitType={splitType}
         setSplitType={setSplitType}
         SPLIT_TYPES={SPLIT_TYPES}
@@ -175,10 +192,8 @@ function PrepareDatasetStep({
         setParamsError={setParamsError}
         evaluationStrategy={evaluationStrategy}
         setEvaluationStrategy={setEvaluationStrategy}
-        cvType={cvType}
-        setCvType={setCvType}
-        holdoutType={holdoutType}
-        setHoldoutType={setHoldoutType}
+        splitter={splitter}
+        setSplitter={setSplitter}
         strategyKind={strategyKind}
         setStrategyKind={setStrategyKind}
         groupColumn={groupColumn}
@@ -196,10 +211,10 @@ function PrepareDatasetStep({
     splitterParams,
     paramsError,
     evaluationStrategy,
-    cvType,
-    holdoutType,
+    splitter,
     strategyKind,
     groupColumn,
+    dataset?.id,
   ]);
 
   return (

@@ -27,6 +27,14 @@ class FoldEvaluationStrategy(BaseEvaluationStrategy):
 
     KIND: str = "cv"
     SPLITTER_PARTITIONING = "folds"
+    # The label of the session wizard's strategy toggle.
+    DISPLAY_NAME = MultilingualString(
+        en="Cross-Validation",
+        es="Validación Cruzada",
+        pt="Validação Cruzada",
+        de="Kreuzvalidierung",
+        zh="交叉验证",
+    )
     RESULT_VIEWS: tuple = ("fold_metrics",)
 
 

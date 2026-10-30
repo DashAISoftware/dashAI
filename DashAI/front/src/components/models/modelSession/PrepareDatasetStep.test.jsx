@@ -3,6 +3,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../../../test-utils/renderWithProviders";
 import i18n from "../../../utils/i18n";
 import { getComponents } from "../../../api/component";
+import { previewSplit } from "../../../api/splitter";
 import PrepareDatasetStep from "./PrepareDatasetStep";
 
 /*
@@ -22,6 +23,33 @@ jest.mock("notistack", () => {
 });
 
 jest.mock("../../../api/component", () => ({ getComponents: jest.fn() }));
+jest.mock("../../../api/splitter", () => ({ previewSplit: jest.fn() }));
+
+// A stand-in for POST /splitter/preview. What the splitter answers is pinned
+// by the backend's tests on the shared cases; here it only has to say which
+// partitions receive rows and whether the proportions sum to one.
+const fakePreview = async ({ params, splitType, indexes }) => {
+  const answer = { rows: [], notes: [], shares: {}, errors: [] };
+  const partitions = ["train", "validation", "test"];
+  if (splitType === "random") {
+    const sum = params.train + params.validation + params.test;
+    if (Math.abs(sum - 1) >= 0.0001) {
+      answer.errors = [{ key: "splitsMustSumToOne", values: {} }];
+    }
+    answer.partitions = partitions.filter((name) => params[name]);
+  } else if (splitType === "manual") {
+    answer.partitions = partitions.filter((name) => indexes?.[name]?.length);
+  } else if (splitType === "predefined") {
+    answer.partitions = ["train", "test"];
+  } else if (params.n_splits !== undefined) {
+    answer.partitions = ["train", "validation"].concat(
+      params.test_size ? ["test"] : [],
+    );
+  } else {
+    answer.partitions = ["validation", "test"];
+  }
+  return answer;
+};
 
 let mockSetSessionRightContent;
 jest.mock("../ModelsContext", () => ({
@@ -52,12 +80,20 @@ const STRATEGIES = [
     metadata: {
       kind: "holdout",
       scored_splits: ["train", "validation", "test"],
+      splitter_partitioning: "holdout",
+      default_splitter: "HoldoutSplitter",
+      result_views: [],
     },
   },
   {
     name: "CrossValidationEvaluationStrategy",
-    display_name: "Cross validation",
-    metadata: { kind: "cv" },
+    display_name: "Cross-Validation",
+    metadata: {
+      kind: "cv",
+      splitter_partitioning: "folds",
+      default_splitter: null,
+      result_views: ["fold_metrics"],
+    },
   },
 ];
 const SPLITTERS = [
@@ -85,12 +121,12 @@ const NO_PREDEFINED = {
 
 const spies = {};
 
-function Host({ datasetInfo }) {
+function Host({ datasetInfo, taskName = "TabularClassificationTask" }) {
   const [rightContent, setRightContent] = useState(null);
   mockSetSessionRightContent = setRightContent;
   const [evaluationStrategy, setEvaluationStrategy] = useState(null);
   const [newExp, setNewExpState] = useState({
-    task_name: "TabularClassificationTask",
+    task_name: taskName,
     splits: {},
   });
   const setNewExp = useCallback((value) => {
@@ -115,8 +151,8 @@ function Host({ datasetInfo }) {
   );
 }
 
-const renderStep = (datasetInfo = NO_PREDEFINED) =>
-  renderWithProviders(<Host datasetInfo={datasetInfo} />);
+const renderStep = (datasetInfo = NO_PREDEFINED, taskName = undefined) =>
+  renderWithProviders(<Host datasetInfo={datasetInfo} taskName={taskName} />);
 
 const lastNewExp = () => {
   const { calls } = spies.setNewExp.mock;
@@ -133,6 +169,8 @@ beforeEach(() => {
   mockFormParams = undefined;
   spies.setNewExp = jest.fn();
   spies.setNextEnabled = jest.fn();
+  previewSplit.mockReset();
+  previewSplit.mockImplementation(fakePreview);
   getComponents.mockReset();
   getComponents.mockImplementation(async (args) => {
     if (args.model) return { schema: { properties: {} } };
@@ -169,6 +207,8 @@ describe("PrepareDatasetStep writes newExp.splits", () => {
       task_name: "TabularClassificationTask",
       evaluation_strategy: "HoldoutEvaluationStrategy",
       applyPreprocessing: false,
+      // As the splitter's preview answered: they pick the session's metrics.
+      splitPartitions: ["train", "validation", "test"],
     });
     expect(lastNextEnabled()).toBe(true);
   });
@@ -258,6 +298,7 @@ describe("PrepareDatasetStep writes newExp.splits", () => {
     expect(lastNewExp().evaluation_strategy).toBe(
       "CrossValidationEvaluationStrategy",
     );
+    expect(lastNewExp().splitPartitions).toEqual(["train", "validation"]);
     expect(lastNextEnabled()).toBe(true);
   });
 
@@ -277,5 +318,86 @@ describe("PrepareDatasetStep writes newExp.splits", () => {
         test_size: 0.2,
       }),
     );
+  });
+
+  it("a strategy without a form of its own: the splitter's parameters alone, with no split type", async () => {
+    getComponents.mockImplementation(async (args) => {
+      if (args.model) return { schema: { properties: {} } };
+      if (args.selectTypes?.[0] === "Splitter") {
+        return [
+          {
+            name: "RollingOriginSplitter",
+            display_name: "Rolling origin",
+            metadata: { partitioning: "origins" },
+            schema: { properties: {} },
+          },
+        ];
+      }
+      if (args.selectTypes?.[0] === "EvaluationStrategy") {
+        return [
+          {
+            name: "ForecastingCrossValidationEvaluationStrategy",
+            display_name: "Cross-Validation",
+            metadata: {
+              kind: "backtest",
+              splitter_partitioning: "origins",
+              default_splitter: "RollingOriginSplitter",
+              result_views: ["fold_metrics", "forecasts"],
+            },
+          },
+        ];
+      }
+      return [];
+    });
+    mockFormParams = { horizon: 3, n_origins: 4 };
+    renderStep();
+    await screen.findByTestId("form-schema-RollingOriginSplitter");
+
+    await waitFor(() =>
+      expect(JSON.parse(JSON.stringify(lastNewExp()?.splits))).toEqual({
+        splitter_name: "RollingOriginSplitter",
+        horizon: 3,
+        n_origins: 4,
+      }),
+    );
+    expect(lastNewExp().splitPartitions).toEqual(["validation", "test"]);
+    expect(lastNextEnabled()).toBe(true);
+  });
+});
+
+describe("PrepareDatasetStep offers session preprocessing as the task says", () => {
+  const withTaskMetadata = (metadata) => {
+    const fallback = getComponents.getMockImplementation();
+    getComponents.mockImplementation(async (args) => {
+      if (args.model?.endsWith("Task")) return { name: args.model, metadata };
+      return fallback(args);
+    });
+  };
+
+  it("hides the switch for a task that takes no preprocessing", async () => {
+    withTaskMetadata({ takes_preprocessing: false });
+    mockFormParams = { train: 0.6, validation: 0.2, test: 0.2 };
+    renderStep(NO_PREDEFINED, "NoPreprocessingTask");
+    await screen.findByTestId("form-schema-HoldoutSplitter");
+    await waitFor(() => expect(lastNextEnabled()).toBe(true));
+    await waitFor(() =>
+      expect(getComponents).toHaveBeenCalledWith({
+        model: "NoPreprocessingTask",
+      }),
+    );
+
+    expect(
+      screen.queryByText(i18n.t("models:label.applyPreprocessing")),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows it for a task that takes preprocessing", async () => {
+    withTaskMetadata({ takes_preprocessing: true });
+    mockFormParams = { train: 0.6, validation: 0.2, test: 0.2 };
+    renderStep(NO_PREDEFINED, "PreprocessingTask");
+
+    expect(
+      await screen.findByText(i18n.t("models:label.applyPreprocessing")),
+    ).toBeInTheDocument();
   });
 });

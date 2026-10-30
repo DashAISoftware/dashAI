@@ -24,7 +24,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { useModels } from "./ModelsContext";
 import StepperNavigationFooter from "../shared/StepperNavigationFooter";
-import { hasPartition } from "../../utils/splitsPayload";
+import { metricsByPartition } from "../../utils/splitsPayload";
 
 const STEP_PREPARE_DATASET = "prepareDataset";
 const STEP_BASE_COLUMNS = "baseColumns";
@@ -262,9 +262,11 @@ function CreateSessionSteps({
         console.warn("Could not fetch metrics:", error);
       }
 
-      const hasTrain = hasPartition(newExp.splits, "train");
-      const hasValidation = hasPartition(newExp.splits, "validation");
-      const hasTest = hasPartition(newExp.splits, "test");
+      // The partitions that receive rows, as the splitter's preview said.
+      const metrics = metricsByPartition(
+        newExp.splitPartitions,
+        allMetricNames,
+      );
 
       // Steps added while the switch was on and then abandoned by turning
       // it off must not be sent: the session would still preprocess.
@@ -284,9 +286,9 @@ function CreateSessionSteps({
           selectedTask?.name || newExp.task_name,
           effectiveName,
           columnRoles,
-          hasTrain ? allMetricNames : [],
-          hasValidation ? allMetricNames : [],
-          hasTest ? allMetricNames : [],
+          metrics.train,
+          metrics.validation,
+          metrics.test,
           newExp.evaluation_strategy,
           JSON.stringify(newExp.splits),
           preprocessing,
@@ -300,9 +302,9 @@ function CreateSessionSteps({
             selectedTask?.name || newExp.task_name,
             effectiveName,
             columnRoles,
-            hasTrain ? allMetricNames : [],
-            hasValidation ? allMetricNames : [],
-            hasTest ? allMetricNames : [],
+            metrics.train,
+            metrics.validation,
+            metrics.test,
             newExp.evaluation_strategy,
             JSON.stringify(newExp.splits),
             preprocessing,

@@ -1,19 +1,20 @@
 import {
   buildSplitsPayload,
-  hasPartition,
-  resolveSplitterName,
+  defaultSplitterOf,
+  metricsByPartition,
+  splittersOf,
   SPLIT_TYPES,
   STRATEGY_KINDS,
 } from "./splitsPayload";
 
 /*
- * The splits payload the session wizard stores, and the metric lists sent per
- * partition when the session is created, pinned before the partitions with
- * rows are decided by the backend.
+ * The splits payload the session wizard stores, the splitters a strategy
+ * takes, and the metric lists sent per partition when the session is created.
  *
  * splitsOf repeats what PrepareDatasetStep.updateExperiment passes to
- * buildSplitsPayload, and metricListsOf what CreateSessionSteps.createSession
- * sends to createModelSession for each partition.
+ * buildSplitsPayload. Which partitions receive rows is the splitter's preview
+ * to say (POST /splitter/preview, on the shared splitPreviewCases.json); the
+ * wizard only turns them into metric lists.
  */
 
 const HOLDOUT = {
@@ -32,27 +33,43 @@ const GROUP_KFOLD = {
   schema: { properties: { n_splits: {}, group_column: {} } },
 };
 
+const TEMPORAL = {
+  name: "TemporalHoldoutSplitter",
+  metadata: { partitioning: "holdout", geometry: "partitions" },
+  schema: { properties: {} },
+};
+const ROLLING = {
+  name: "RollingOriginSplitter",
+  metadata: { partitioning: "origins", geometry: "backtest_origins" },
+  schema: { properties: { horizon: {}, n_origins: {} } },
+};
+
 const EMPTY_INDEXES = { train: [], validation: [], test: [] };
 
 const splitsOf = ({
   strategyKind,
   splitType,
   splitterParams = null,
-  cvType = null,
-  holdoutType = null,
+  splitter = null,
   groupColumn = "",
   datasetPartitionsIndex = {},
   rowsPartitionsIndex = EMPTY_INDEXES,
 }) => {
-  const splitterName = resolveSplitterName(strategyKind, cvType, holdoutType);
+  const splitterName =
+    strategyKind && strategyKind !== STRATEGY_KINDS.FULL
+      ? splitter?.name
+      : null;
   if (!splitterName) return {};
+  const splitTypeOf = {
+    [STRATEGY_KINDS.HOLDOUT]: splitType,
+    [STRATEGY_KINDS.CV]: SPLIT_TYPES.CV,
+  };
   return buildSplitsPayload({
     splitterName,
-    splitType:
-      strategyKind === STRATEGY_KINDS.HOLDOUT ? splitType : SPLIT_TYPES.CV,
+    splitType: splitTypeOf[strategyKind],
     params: {
       ...(splitterParams ?? {}),
-      ...(cvType?.schema?.properties?.group_column
+      ...(splitter?.schema?.properties?.group_column
         ? { group_column: groupColumn }
         : {}),
     },
@@ -76,7 +93,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
     const splits = splitsOf({
       strategyKind: STRATEGY_KINDS.HOLDOUT,
       splitType: SPLIT_TYPES.RANDOM,
-      holdoutType: HOLDOUT,
+      splitter: HOLDOUT,
       splitterParams: {
         train: 0.6,
         validation: 0.2,
@@ -104,7 +121,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
     const splits = splitsOf({
       strategyKind: STRATEGY_KINDS.HOLDOUT,
       splitType: SPLIT_TYPES.RANDOM,
-      holdoutType: HOLDOUT,
+      splitter: HOLDOUT,
       splitterParams: { train: 0.7, validation: 0, test: 0.3, seed: undefined },
     });
 
@@ -121,7 +138,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
     const splits = splitsOf({
       strategyKind: STRATEGY_KINDS.HOLDOUT,
       splitType: SPLIT_TYPES.MANUAL,
-      holdoutType: HOLDOUT,
+      splitter: HOLDOUT,
       splitterParams: { train: 0.6, validation: 0.2, test: 0.2, shuffle: true },
       datasetPartitionsIndex: { train: [9], validation: [], test: [] },
       rowsPartitionsIndex: {
@@ -147,7 +164,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
     const splits = splitsOf({
       strategyKind: STRATEGY_KINDS.HOLDOUT,
       splitType: SPLIT_TYPES.PREDEFINED,
-      holdoutType: HOLDOUT,
+      splitter: HOLDOUT,
       splitterParams: { train: 0.6, validation: 0.2, test: 0.2 },
       datasetPartitionsIndex: {
         train: [0, 1, 2, 3, 4, 5, 6],
@@ -172,8 +189,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
     const splits = splitsOf({
       strategyKind: STRATEGY_KINDS.CV,
       splitType: SPLIT_TYPES.RANDOM,
-      cvType: KFOLD,
-      holdoutType: HOLDOUT,
+      splitter: KFOLD,
       splitterParams: { n_splits: 5, shuffle: true, random_state: 0 },
     });
 
@@ -190,7 +206,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
     const splits = splitsOf({
       strategyKind: STRATEGY_KINDS.CV,
       splitType: SPLIT_TYPES.RANDOM,
-      cvType: KFOLD,
+      splitter: KFOLD,
       splitterParams: { n_splits: 5, test_size: 0.2 },
     });
 
@@ -206,7 +222,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
     const splits = splitsOf({
       strategyKind: STRATEGY_KINDS.CV,
       splitType: SPLIT_TYPES.PREDEFINED,
-      cvType: KFOLD,
+      splitter: KFOLD,
       splitterParams: { n_splits: 3 },
       datasetPartitionsIndex: { train: [0], validation: [], test: [1] },
     });
@@ -223,7 +239,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
       splitsOf({
         strategyKind: STRATEGY_KINDS.CV,
         splitType: SPLIT_TYPES.RANDOM,
-        cvType: GROUP_KFOLD,
+        splitter: GROUP_KFOLD,
         splitterParams: { n_splits: 4 },
         groupColumn: "patient",
       }),
@@ -238,7 +254,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
       splitsOf({
         strategyKind: STRATEGY_KINDS.CV,
         splitType: SPLIT_TYPES.RANDOM,
-        cvType: GROUP_KFOLD,
+        splitter: GROUP_KFOLD,
         splitterParams: { n_splits: 4 },
       }),
     ).toEqual({
@@ -253,7 +269,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
     const splits = splitsOf({
       strategyKind: STRATEGY_KINDS.CV,
       splitType: SPLIT_TYPES.RANDOM,
-      cvType: KFOLD,
+      splitter: KFOLD,
       splitterParams: { n_splits: 5 },
       groupColumn: "patient",
     });
@@ -266,8 +282,7 @@ describe("splits payload written by PrepareDatasetStep", () => {
       splitsOf({
         strategyKind: STRATEGY_KINDS.FULL,
         splitType: SPLIT_TYPES.RANDOM,
-        cvType: KFOLD,
-        holdoutType: HOLDOUT,
+        splitter: KFOLD,
       }),
     ).toEqual({});
     expect(
@@ -283,149 +298,87 @@ describe("splits payload written by PrepareDatasetStep", () => {
       splitsOf({
         strategyKind: STRATEGY_KINDS.HOLDOUT,
         splitType: SPLIT_TYPES.RANDOM,
-        holdoutType: HOLDOUT,
+        splitter: HOLDOUT,
       }),
     ).toEqual({ splitter_name: "HoldoutSplitter", splitType: "random" });
   });
 });
 
-describe("metric lists CreateSessionSteps sends per partition", () => {
-  const holdoutRandom = (train, validation, test) =>
-    splitsOf({
-      strategyKind: STRATEGY_KINDS.HOLDOUT,
-      splitType: SPLIT_TYPES.RANDOM,
-      holdoutType: HOLDOUT,
-      splitterParams: { train, validation, test },
-    });
-  const holdoutManual = (rowsPartitionsIndex) =>
-    splitsOf({
-      strategyKind: STRATEGY_KINDS.HOLDOUT,
-      splitType: SPLIT_TYPES.MANUAL,
-      holdoutType: HOLDOUT,
-      splitterParams: { train: 0.6, validation: 0.2, test: 0.2 },
-      rowsPartitionsIndex,
-    });
-  const holdoutPredefined = (datasetPartitionsIndex) =>
-    splitsOf({
-      strategyKind: STRATEGY_KINDS.HOLDOUT,
-      splitType: SPLIT_TYPES.PREDEFINED,
-      holdoutType: HOLDOUT,
-      datasetPartitionsIndex,
-    });
-  const cv = (splitterParams) =>
-    splitsOf({
-      strategyKind: STRATEGY_KINDS.CV,
-      splitType: SPLIT_TYPES.RANDOM,
-      cvType: KFOLD,
-      splitterParams,
-    });
+it("any other strategy: the splitter's parameters alone, with no split type", () => {
+  expect(
+    JSON.parse(
+      JSON.stringify(
+        splitsOf({
+          strategyKind: "backtest",
+          splitType: SPLIT_TYPES.RANDOM,
+          splitter: ROLLING,
+          splitterParams: { horizon: 3, n_origins: 4 },
+        }),
+      ),
+    ),
+  ).toEqual({
+    splitter_name: "RollingOriginSplitter",
+    horizon: 3,
+    n_origins: 4,
+  });
+});
 
-  it("holdout random with three non zero proportions: metrics on train, validation and test", () => {
-    expect(metricListsOf(holdoutRandom(0.6, 0.2, 0.2))).toEqual({
-      train: ALL_METRICS,
-      validation: ALL_METRICS,
-      test: ALL_METRICS,
-    });
+describe("the splitters a strategy takes", () => {
+  const SPLITTERS = [TEMPORAL, HOLDOUT, KFOLD, GROUP_KFOLD, ROLLING];
+  const strategy = (splitter_partitioning, default_splitter = null) => ({
+    metadata: { splitter_partitioning, default_splitter },
   });
 
-  it("holdout random with validation 0: no validation metrics", () => {
-    expect(metricListsOf(holdoutRandom(0.7, 0, 0.3))).toEqual({
+  it("are the ones that carve the way the strategy declares, in order", () => {
+    expect(splittersOf(strategy("holdout"), SPLITTERS)).toEqual([
+      TEMPORAL,
+      HOLDOUT,
+    ]);
+    expect(splittersOf(strategy("folds"), SPLITTERS)).toEqual([
+      KFOLD,
+      GROUP_KFOLD,
+    ]);
+    expect(splittersOf(strategy("origins"), SPLITTERS)).toEqual([ROLLING]);
+    expect(splittersOf(strategy(null), SPLITTERS)).toEqual([]);
+    expect(splittersOf(null, SPLITTERS)).toEqual([]);
+  });
+
+  it("start on the one the strategy declares, else on the first", () => {
+    expect(
+      defaultSplitterOf(strategy("holdout", "HoldoutSplitter"), [
+        TEMPORAL,
+        HOLDOUT,
+      ]),
+    ).toBe(HOLDOUT);
+    expect(defaultSplitterOf(strategy("folds"), [KFOLD, GROUP_KFOLD])).toBe(
+      KFOLD,
+    );
+    // A default the task does not offer falls back to the first.
+    expect(
+      defaultSplitterOf(strategy("holdout", "HoldoutSplitter"), [TEMPORAL]),
+    ).toBe(TEMPORAL);
+    expect(defaultSplitterOf(strategy("holdout"), [])).toBeNull();
+  });
+});
+
+describe("metric lists CreateSessionSteps sends per partition", () => {
+  const ALL_METRICS = ["Accuracy", "F1", "Precision"];
+
+  it("every metric on each partition with rows, none on the others", () => {
+    expect(metricsByPartition(["train", "test"], ALL_METRICS)).toEqual({
       train: ALL_METRICS,
       validation: [],
       test: ALL_METRICS,
     });
-  });
-
-  it("holdout random with train 0: no train metrics", () => {
-    expect(metricListsOf(holdoutRandom(0, 0.5, 0.5))).toEqual({
+    expect(metricsByPartition(["validation", "test"], ALL_METRICS)).toEqual({
       train: [],
       validation: ALL_METRICS,
       test: ALL_METRICS,
     });
   });
 
-  it("holdout random with no proportion submitted: no metrics on any partition", () => {
-    expect(
-      metricListsOf(
-        splitsOf({
-          strategyKind: STRATEGY_KINDS.HOLDOUT,
-          splitType: SPLIT_TYPES.RANDOM,
-          holdoutType: HOLDOUT,
-        }),
-      ),
-    ).toEqual({ train: [], validation: [], test: [] });
-  });
-
-  it("holdout manual: metrics only on the partitions given rows", () => {
-    expect(
-      metricListsOf(
-        holdoutManual({ train: [0, 1, 2], validation: [], test: [3, 4] }),
-      ),
-    ).toEqual({ train: ALL_METRICS, validation: [], test: ALL_METRICS });
-    expect(
-      metricListsOf(
-        holdoutManual({ train: [0, 1], validation: [2], test: [3] }),
-      ),
-    ).toEqual({
-      train: ALL_METRICS,
-      validation: ALL_METRICS,
-      test: ALL_METRICS,
-    });
-  });
-
-  it("holdout manual: the proportions the form still holds do not count", () => {
-    expect(
-      metricListsOf(holdoutManual({ train: [0, 1], validation: [], test: [] })),
-    ).toEqual({ train: ALL_METRICS, validation: [], test: [] });
-  });
-
-  it("holdout predefined: metrics only on the dataset's non empty partitions", () => {
-    expect(
-      metricListsOf(
-        holdoutPredefined({ train: [0, 1, 2], validation: [], test: [3] }),
-      ),
-    ).toEqual({ train: ALL_METRICS, validation: [], test: ALL_METRICS });
-  });
-
-  it("cv without test_size: metrics on train and validation, none on test", () => {
-    expect(metricListsOf(cv({ n_splits: 5 }))).toEqual({
-      train: ALL_METRICS,
-      validation: ALL_METRICS,
-      test: [],
-    });
-    expect(metricListsOf(cv({ n_splits: 5, test_size: 0 }))).toEqual({
-      train: ALL_METRICS,
-      validation: ALL_METRICS,
-      test: [],
-    });
-  });
-
-  it("cv with test_size: metrics on train, validation and test", () => {
-    expect(metricListsOf(cv({ n_splits: 5, test_size: 0.2 }))).toEqual({
-      train: ALL_METRICS,
-      validation: ALL_METRICS,
-      test: ALL_METRICS,
-    });
-  });
-
-  it("cv stored with the old holdout key: test metrics when holdout > 0", () => {
-    expect(
-      metricListsOf({
-        splitter_name: "KFoldSplitter",
-        splitType: "cv",
-        n_splits: 5,
-        holdout: 0.1,
-      }),
-    ).toEqual({
-      train: ALL_METRICS,
-      validation: ALL_METRICS,
-      test: ALL_METRICS,
-    });
-  });
-
-  it("empty splits (full strategy): no metrics on any partition", () => {
-    expect(metricListsOf({})).toEqual({ train: [], validation: [], test: [] });
-    expect(metricListsOf(undefined)).toEqual({
+  it("no partitions known (full strategy): no metrics on any partition", () => {
+    expect(metricsByPartition(null, ALL_METRICS)).toEqual({
       train: [],
       validation: [],
       test: [],
@@ -433,21 +386,10 @@ describe("metric lists CreateSessionSteps sends per partition", () => {
   });
 
   it("metrics fetch failed: every list is empty whatever the partitions", () => {
-    expect(metricListsOf(holdoutRandom(0.6, 0.2, 0.2), [])).toEqual({
+    expect(metricsByPartition(["train", "validation", "test"], [])).toEqual({
       train: [],
       validation: [],
       test: [],
     });
-  });
-
-  it("legacy payloads with indexes under the partition names", () => {
-    expect(
-      metricListsOf({
-        splitType: "manual",
-        train: [0, 1],
-        validation: [],
-        test: [2],
-      }),
-    ).toEqual({ train: ALL_METRICS, validation: [], test: ALL_METRICS });
   });
 });

@@ -29,6 +29,7 @@
     "trainSplitMustBeGreaterThanZero": "Train split must be greater than zero",
     "trainSplitMustHaveAtLeastOneRow": "Train split must have at least one row",
     "foldsMustBeLessThanDatasetSize": "Number of folds must be less than or equal to the number of samples in the dataset ({{datasetSize}})",
+    "seriesTooShort": "A horizon of {{horizon}} with {{origins}} validation origin(s) needs at least {{needed}} rows; the dataset has {{rows}}. Shorten the horizon, use fewer origins, or bring more history.",
     "groupColumnMustBeSelected": "A group column must be selected"
   },
   "label": {
@@ -77,6 +78,7 @@
     "holdout": "Holdout",
     "crossValidation": "Cross-Validation",
     "cvType": "Cross-Validation Type",
+    "splitter": "Splitter",
     "numFolds": "Number of Folds (k)",
     "numFoldsDescription": "Number of folds to use for cross-validation. A higher number of folds can improve the stability of the evaluation, but increases the processing time. Must be an integer greater than 1.",
     "numRepeats": "Number of Repeats",
@@ -134,17 +136,19 @@
   "splitPreview": {
     "title": "Split preview",
     "unavailable": "This splitter does not describe its shape yet, so there is nothing to draw.",
+    "loading": "Drawing the split…",
     "wholeDataset": "Dataset",
     "reservedTest": "Held out",
     "finalFit": "Final fit",
     "fold": "Fold {{index}}",
+    "origin": "Origin {{index}}",
+    "testOrigin": "Test",
     "moreFolds": "+{{hidden}} more folds",
+    "moreOrigins": "+{{hidden}} more origins",
     "unused": "Unused",
     "notes": {
-      "foldsHidden": "{{total}} folds in total; only the first ones and the last are drawn."
-    },
-    "error": {
-      "notEnoughRows": "{{folds}} origins with a horizon of {{horizon}} and a step of {{step}} do not fit in {{rows}} rows. Lower one of them, or hold out less."
+      "foldsHidden": "{{total}} folds in total; only the first ones and the last are drawn.",
+      "originsHidden": "{{total}} origins in total; only the first ones and the last are drawn."
     }
   }
 }
