@@ -245,10 +245,7 @@ describe("BaseColumnsStep", () => {
     );
 
     await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
-    expect(selectorLabels()).toEqual([
-      "Features (candidate columns)",
-      "Target",
-    ]);
+    expect(selectorLabels()).toEqual(["Target", "Candidate Features"]);
     const update = setNewExp.mock.calls.at(-1)[0];
     expect(update({}).column_roles_stage1).toEqual({
       features: ["a", "b"],

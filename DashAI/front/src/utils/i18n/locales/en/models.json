@@ -199,9 +199,9 @@
     "hyperparameterOptimizerConfiguration": "Hyperparameter Optimizer Configuration",
     "hyperparameters": "Hyperparameters",
     "inputColumns": "Input columns",
-    "baseColumnsTitle": "Output and candidate columns",
-    "baseColumnsDescription": "Choose the output column (the one the model learns to predict) and the candidate columns that could feed the model. Preprocessing only works on the candidate columns, and the output is never transformed.",
-    "candidatesForRole": "{{role}} (candidate columns)",
+    "baseColumnsTitle": "What do you want to predict, and with which data?",
+    "baseColumnsDescription": "Choose the target and the candidate features. Preprocessing only works on the candidates; in the last step you choose which of the resulting columns go into the model.",
+    "candidatesForRole": "Candidate {{role}}",
     "liveMetrics": "Live Metrics",
     "localExplainer": "Local Explainer",
     "localExplainers": "Local Explainers",
@@ -322,7 +322,10 @@
     "importedNeedsDownloadUntrained": "These models arrived untrained and must be downloaded before training: {{names}}",
     "importingSession": "Importing session...",
     "importingSessionHelp": "This can take a while if the session includes trained models.",
-    "sessionImportedTitle": "Session imported"
+    "sessionImportedTitle": "Session imported",
+    "targetHelp": "What the model learns to predict. Preprocessing never changes it.",
+    "protectedRoleHelp": "Preprocessing never changes these columns.",
+    "candidatesHelp": "The columns the model uses to predict the target, which preprocessing can use or transform. They can be of any type, even text. At the end you choose which go into the model."
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",

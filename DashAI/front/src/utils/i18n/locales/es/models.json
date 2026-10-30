@@ -203,9 +203,9 @@
     "hyperparameterOptimizerConfiguration": "Configuración del Optimizador de Hiperparámetros",
     "hyperparameters": "Hiperparámetros",
     "inputColumns": "Columnas de entrada",
-    "baseColumnsTitle": "Columna de salida y candidatas",
-    "baseColumnsDescription": "Elige la columna de salida (la que el modelo aprende a predecir) y las columnas candidatas que podrían llegar al modelo. El preprocesamiento solo trabaja sobre las candidatas y la salida nunca se transforma.",
-    "candidatesForRole": "{{role}} (columnas candidatas)",
+    "baseColumnsTitle": "¿Qué quieres predecir y con qué datos?",
+    "baseColumnsDescription": "Elige el objetivo y las características candidatas. El preprocesamiento solo trabaja sobre las candidatas; en el último paso eliges cuáles de las columnas resultantes entran al modelo.",
+    "candidatesForRole": "{{role}} candidatas",
     "liveMetrics": "Métricas en Vivo",
     "localExplainer": "Explicador Local",
     "localExplainers": "Explicadores Locales",
@@ -328,7 +328,10 @@
     "importedNeedsDownloadUntrained": "Estos modelos llegaron sin entrenar y deben descargarse antes de entrenar: {{names}}",
     "importingSession": "Importando sesión...",
     "importingSessionHelp": "Puede tardar un poco si la sesión trae modelos entrenados.",
-    "sessionImportedTitle": "Sesión importada"
+    "sessionImportedTitle": "Sesión importada",
+    "targetHelp": "Lo que el modelo aprende a predecir. El preprocesamiento nunca lo modifica.",
+    "protectedRoleHelp": "El preprocesamiento nunca modifica estas columnas.",
+    "candidatesHelp": "Las columnas que el modelo usa para predecir el objetivo, que el preprocesamiento puede usar o transformar. Pueden ser de cualquier tipo, incluso texto. Al final eliges cuáles entran al modelo."
   },
   "message": {
     "allRunsCompleted": "{{experiment}} ha completado todas sus ejecuciones.",
