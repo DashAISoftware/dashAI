@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import SplitDatasetRows from "./SplitDatasetRows";
+import PreprocessingPurpose from "./PreprocessingPurpose";
 import { useTranslation } from "react-i18next";
 import { useModels } from "../ModelsContext";
 import {
@@ -256,6 +257,7 @@ function PrepareDatasetStep({
           <Typography variant="caption" component="p" sx={{ color: "grey" }}>
             {t("models:label.applyPreprocessingDescription")}
           </Typography>
+          <PreprocessingPurpose strategyKind={strategyKind} />
         </Box>
       )}
     </React.Fragment>

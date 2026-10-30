@@ -253,8 +253,8 @@
     "divideColumnsAndSplits": "Divide columnas y configura las particiones del dataset",
     "prepareDataset": "Preparar Dataset",
     "appliedConverters": "Converters Aplicados",
-    "applyPreprocessing": "Aplicar preprocesamiento (avanzado)",
-    "applyPreprocessingDescription": "Los converters seleccionados se ajustan solo sobre los datos de entrenamiento y se aplican al resto, para evitar fuga de datos. Si no se aplica, el modelo se entrena con los datos tal como están.",
+    "applyPreprocessing": "Preparar las columnas antes de entrenar (preprocesamiento)",
+    "applyPreprocessingDescription": "Rellena vacíos, convierte texto a números, escala valores y más.",
     "preprocessingOptional": "Preprocesamiento (opcional)",
     "preprocessingOptionalDescription": "Los converters seleccionados se ajustan solo sobre los datos de entrenamiento y se aplican al resto, para evitar fuga de datos.",
     "preprocessingInProgress": "Procesando...",
@@ -412,5 +412,24 @@
     "columns_one": "{{count}} columna",
     "columns_other": "{{count}} columnas",
     "unknownColumns": "N columnas"
+  },
+  "preprocessingPurpose": {
+    "toggle": "¿Para qué sirve y cuándo conviene?",
+    "compatibilityTitle": "Dejar el dataset compatible con la tarea.",
+    "compatibility": "Cada tarea acepta ciertos tipos de columna. Si una columna que quieres usar es texto y la tarea pide números, un paso de preprocesamiento puede convertirla.",
+    "cleaningTitle": "Limpiar los datos.",
+    "cleaning": "Muchos modelos fallan con valores vacíos; se pueden rellenar o descartar.",
+    "honestMetricsTitle": "Métricas honestas.",
+    "honestMetrics": "El preprocesamiento se calcula solo con los datos de entrenamiento y después se aplica al resto:",
+    "diagramFits": "lo calcula (ej. el promedio para rellenar) →",
+    "diagramReceives": "solo lo reciben",
+    "diagramFoldEvaluation": "Evaluación",
+    "honestMetricsOutcome": "Así la prueba no \"ve\" información de antemano (esto se llama fuga de datos) y las métricas no quedan infladas.",
+    "honestMetricsCvOutcome": "Con validación cruzada esto ocurre en cada fold, cada una de las rondas en que los datos se reparten entre entrenar y evaluar. Así la evaluación no \"ve\" información de antemano (esto se llama fuga de datos) y las métricas no quedan infladas.",
+    "performanceTitle": "Mejorar el rendimiento.",
+    "performance": "Escalar valores o reducir columnas puede ayudar al modelo.",
+    "consistencyTitle": "Predicciones consistentes.",
+    "consistency": "Los datos nuevos que predigas reciben exactamente el mismo preprocesamiento.",
+    "diagramReceivesOne": "solo lo recibe"
   }
 }

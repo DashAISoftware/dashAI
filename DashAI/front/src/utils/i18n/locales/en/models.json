@@ -247,8 +247,8 @@
     "divideColumnsAndSplits": "Divide columns and configure dataset splits",
     "prepareDataset": "Prepare Dataset",
     "appliedConverters": "Applied Converters",
-    "applyPreprocessing": "Apply preprocessing (advanced)",
-    "applyPreprocessingDescription": "Selected converters are fit only on training data and applied to the rest, to avoid data leakage. If not applied, the model trains on the data as-is.",
+    "applyPreprocessing": "Prepare columns before training (preprocessing)",
+    "applyPreprocessingDescription": "Fills missing values, turns text into numbers, scales values and more.",
     "preprocessingOptional": "Preprocessing (optional)",
     "preprocessingOptionalDescription": "Selected converters are fit only on training data and applied to the rest, to avoid data leakage.",
     "preprocessingInProgress": "Preprocessing in progress...",
@@ -403,5 +403,24 @@
     "columns_one": "{{count}} column",
     "columns_other": "{{count}} columns",
     "unknownColumns": "N columns"
+  },
+  "preprocessingPurpose": {
+    "toggle": "What is it for and when does it help?",
+    "compatibilityTitle": "Make the dataset compatible with the task.",
+    "compatibility": "Each task accepts certain column types. If a column you want to use is text and the task needs numbers, a preprocessing step can convert it.",
+    "cleaningTitle": "Clean the data.",
+    "cleaning": "Many models fail on missing values; they can be filled in or dropped.",
+    "honestMetricsTitle": "Honest metrics.",
+    "honestMetrics": "Preprocessing is computed from the training data only and then applied to the rest:",
+    "diagramFits": "computes it (e.g. the average used to fill gaps) →",
+    "diagramReceives": "only receive it",
+    "diagramFoldEvaluation": "Evaluation",
+    "honestMetricsOutcome": "This way the test data does not \"see\" information in advance (this is called data leakage) and the metrics are not inflated.",
+    "honestMetricsCvOutcome": "With cross-validation this happens in every fold, each of the rounds in which the data is split between training and evaluation. This way the evaluation data does not \"see\" information in advance (this is called data leakage) and the metrics are not inflated.",
+    "performanceTitle": "Improve performance.",
+    "performance": "Scaling values or reducing columns can help the model.",
+    "consistencyTitle": "Consistent predictions.",
+    "consistency": "New data you predict on receives exactly the same preprocessing.",
+    "diagramReceivesOne": "only receives it"
   }
 }
