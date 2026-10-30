@@ -19,6 +19,8 @@
     "updatingPredictionStatus": "更新预测状态时出错。"
   },
   "label": {
+    "horizon": "预测步长",
+    "horizonDescription": "在序列末尾之后预测多少步。",
     "basedOnDataset": "基于数据集：{{datasetName}}",
     "changeImage": "更换图像",
     "chooseInputMethod": "选择输入方式",
@@ -61,6 +63,7 @@
     "useExistingDataset": "使用现有数据集"
   },
   "message": {
+    "unevaluatedSteps": "最后 {{count}} 步超出了回测衡量的 {{evaluated}} 步：它们的误差从未被评估。",
     "deletedSuccessfully": "预测删除成功",
     "downloadedSuccessfully": "预测下载成功",
     "predictionCompleted": "预测成功完成",

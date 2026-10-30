@@ -29,6 +29,22 @@ describe("predict api", () => {
       expect(result).toEqual({ id: 11 });
     });
 
+    it("posts a horizon, and no dataset nor split, for a forecast", async () => {
+      (api.post as jest.Mock).mockResolvedValue({
+        data: { id: 14, unevaluated_steps: 2 },
+      });
+
+      const result = await createPrediction(3, null, null, 5);
+
+      expect(api.post).toHaveBeenCalledWith("/v1/predict/", {
+        run_id: 3,
+        dataset_id: null,
+        split: null,
+        horizon: 5,
+      });
+      expect(result).toEqual({ id: 14, unevaluated_steps: 2 });
+    });
+
     it("posts the split the prediction targets", async () => {
       (api.post as jest.Mock).mockResolvedValue({ data: { id: 12 } });
 
@@ -82,6 +98,8 @@ describe("predict api", () => {
           { name: "test", rows: 20 },
         ],
         trainingDatasetId: 5,
+        // A run of a task that predicts rows measured no horizon.
+        horizon: null,
       });
     });
 
@@ -92,7 +110,23 @@ describe("predict api", () => {
 
       const result = await getPredictionSplits(9);
 
-      expect(result).toEqual({ splits: [], trainingDatasetId: null });
+      expect(result).toEqual({
+        splits: [],
+        trainingDatasetId: null,
+        horizon: null,
+      });
+    });
+  });
+
+  it("getPredictionSplits gives the horizon the run measured", async () => {
+    (api.get as jest.Mock).mockResolvedValue({
+      data: { splits: [], training_dataset_id: 2, horizon: 3 },
+    });
+
+    expect(await getPredictionSplits(9)).toEqual({
+      splits: [],
+      trainingDatasetId: 2,
+      horizon: 3,
     });
   });
 });

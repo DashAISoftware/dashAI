@@ -1,0 +1,108 @@
+import React, { useEffect, useState } from "react";
+import PropTypes from "prop-types";
+import { Alert, Box, TextField } from "@mui/material";
+import { LoadingButton } from "@mui/lab";
+import { PlayArrow as PlayArrowIcon } from "@mui/icons-material";
+import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
+import { createPrediction, getPredictionSplits } from "../../api/predict";
+import { enqueuePredictionJob } from "../../api/job";
+import { getApiErrorMessage } from "../../utils/apiError";
+
+/**
+ * Ask a run whose task predicts by horizon (`prediction_mode: "horizon"`) for
+ * a forecast of a number of steps past the end of its series.
+ *
+ * The field starts on the horizon the run's backtest measured, which the
+ * prediction options publish (GET /predict/splits/{run}). Asking for more is
+ * allowed; the answer says how many steps no backtest measured, and the panel
+ * shows it.
+ */
+export default function HorizonPredictionPanel({ run, onSaved }) {
+  const { t } = useTranslation(["prediction", "common"]);
+  const { enqueueSnackbar } = useSnackbar();
+  const [horizon, setHorizon] = useState("");
+  const [evaluated, setEvaluated] = useState(null);
+  const [unevaluatedSteps, setUnevaluatedSteps] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getPredictionSplits(run.id)
+      .then(({ horizon: measured }) => {
+        if (cancelled) return;
+        setEvaluated(measured);
+        if (measured) setHorizon((current) => current || String(measured));
+      })
+      .catch((error) =>
+        console.error("Error fetching the prediction options:", error),
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [run.id]);
+
+  const steps = Number(horizon);
+  const isValid = Number.isInteger(steps) && steps >= 1;
+
+  const handleRun = async () => {
+    setIsSubmitting(true);
+    try {
+      const prediction = await createPrediction(run.id, null, null, steps);
+      setUnevaluatedSteps(prediction.unevaluated_steps ?? 0);
+      await enqueuePredictionJob(prediction.id);
+      enqueueSnackbar(t("prediction:message.predictionJobSubmitted"), {
+        variant: "success",
+      });
+      onSaved(prediction);
+    } catch (error) {
+      enqueueSnackbar(getApiErrorMessage(error, t("common:unknownError")), {
+        variant: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+        <TextField
+          label={t("prediction:label.horizon")}
+          helperText={t("prediction:label.horizonDescription")}
+          type="number"
+          size="small"
+          value={horizon}
+          onChange={(event) => setHorizon(event.target.value)}
+          error={horizon !== "" && !isValid}
+          slotProps={{ htmlInput: { min: 1, step: 1 } }}
+          sx={{ width: 220 }}
+        />
+        <LoadingButton
+          variant="contained"
+          size="small"
+          startIcon={<PlayArrowIcon />}
+          onClick={handleRun}
+          disabled={!isValid}
+          loading={isSubmitting}
+          sx={{ textTransform: "none", fontWeight: 500, mt: 0.5 }}
+        >
+          {t("prediction:button.runPrediction")}
+        </LoadingButton>
+      </Box>
+      {unevaluatedSteps > 0 && (
+        <Alert severity="warning">
+          {t("prediction:message.unevaluatedSteps", {
+            count: unevaluatedSteps,
+            evaluated,
+          })}
+        </Alert>
+      )}
+    </Box>
+  );
+}
+
+HorizonPredictionPanel.propTypes = {
+  run: PropTypes.shape({ id: PropTypes.number.isRequired }).isRequired,
+  onSaved: PropTypes.func.isRequired,
+};

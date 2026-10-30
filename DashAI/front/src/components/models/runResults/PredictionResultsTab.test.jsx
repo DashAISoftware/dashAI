@@ -2,7 +2,23 @@ import React from "react";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../test-utils/renderWithProviders";
+import { fireEvent, waitFor } from "@testing-library/react";
+import { useTaskMetadata } from "../../../hooks/useTaskMetadata";
+import { createPrediction, getPredictionSplits } from "../../../api/predict";
+import { enqueuePredictionJob } from "../../../api/job";
 import PredictionResultsTab from "./PredictionResultsTab";
+
+jest.mock("../../../hooks/useTaskMetadata", () => ({
+  useTaskMetadata: jest.fn(() => null),
+}));
+jest.mock("../../../api/predict", () => ({
+  createPrediction: jest.fn(),
+  getPredictionSplits: jest.fn(),
+}));
+jest.mock("../../../api/job", () => ({ enqueuePredictionJob: jest.fn() }));
+jest.mock("notistack", () => ({
+  useSnackbar: () => ({ enqueueSnackbar: jest.fn() }),
+}));
 const mockProps = { card: [], manual: [], panel: [] };
 
 jest.mock("../PredictionCard", () => (props) => {
@@ -195,5 +211,67 @@ describe("PredictionResultsTab (x/y run)", () => {
 
     expect(props.onSaved).toHaveBeenCalledWith({ id: 99, dataset_id: 4 });
     expect(props.setShowDatasetPanel).toHaveBeenCalledWith(false);
+  });
+});
+
+describe("PredictionResultsTab (a task that predicts by horizon)", () => {
+  beforeEach(() => {
+    mockProps.card = [];
+    useTaskMetadata.mockReturnValue({ prediction_mode: "horizon" });
+    getPredictionSplits.mockResolvedValue({
+      splits: [],
+      trainingDatasetId: 2,
+      horizon: 3,
+    });
+    createPrediction.mockResolvedValue({ id: 20, unevaluated_steps: 2 });
+    enqueuePredictionJob.mockResolvedValue({ id: 99 });
+  });
+  afterEach(() => {
+    useTaskMetadata.mockReturnValue(null);
+  });
+
+  it("asks for a horizon instead of a dataset or rows, starting on the one the run measured", async () => {
+    renderTab();
+
+    const field = await screen.findByRole("spinbutton", { name: "Horizon" });
+    await waitFor(() => expect(field).toHaveValue(3));
+    expect(
+      screen.queryByRole("button", { name: "Dataset Predictions" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Manual Predictions" }),
+    ).not.toBeInTheDocument();
+    expect(getPredictionSplits).toHaveBeenCalledWith(3);
+  });
+
+  it("forecasts the horizon given, and warns about the steps no backtest measured", async () => {
+    const { props } = renderTab();
+    const field = await screen.findByRole("spinbutton", { name: "Horizon" });
+    await waitFor(() => expect(field).toHaveValue(3));
+
+    fireEvent.change(field, { target: { value: "5" } });
+    userEvent.click(screen.getByRole("button", { name: "Run Prediction" }));
+
+    await waitFor(() =>
+      expect(createPrediction).toHaveBeenCalledWith(3, null, null, 5),
+    );
+    await waitFor(() => expect(enqueuePredictionJob).toHaveBeenCalledWith(20));
+    expect(
+      await screen.findByText(
+        "The last 2 steps go beyond the 3 the backtest measured: their error was never evaluated.",
+      ),
+    ).toBeInTheDocument();
+    expect(props.onSaved).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 20 }),
+    );
+  });
+
+  it("lists every prediction of the run as a card", async () => {
+    renderTab();
+    await screen.findByRole("spinbutton", { name: "Horizon" });
+
+    expect(
+      screen.getAllByTestId("prediction-card").map((c) => c.textContent),
+    ).toEqual(["card 10 #1", "card 11 #2", "card 12 #3", "card 13 #4"]);
   });
 });
