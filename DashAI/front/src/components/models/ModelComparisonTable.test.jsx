@@ -196,4 +196,70 @@ describe("ModelComparisonTable", () => {
     expect(cellOf("run_a", "Accuracy↑")).toBe("0.9000");
     expect(cellOf("run_b", "Accuracy↑")).toBe("-");
   });
+
+  describe("what the backend declares about a metric's value", () => {
+    const WITH_FORECASTING_METRICS = [
+      ...METRICS,
+      { name: "MAPE", description: "MAPE", metadata: { maximize: false } },
+      {
+        name: "IntervalCoverage",
+        description: "Coverage",
+        metadata: { maximize: true, optimizable: false },
+      },
+    ];
+    const REASON =
+      "MAPE divides by each actual value, and it is zero on 2023-05-01.";
+    const FORECAST_RUNS = [
+      {
+        id: 1,
+        name: "run_a",
+        model_name: "ModelA",
+        status: FINISHED,
+        test_metrics: { MAE: 0.3, IntervalCoverage: 0.6 },
+        test_metrics_unavailable: { MAPE: REASON },
+      },
+      {
+        id: 2,
+        name: "run_b",
+        model_name: "ModelB",
+        status: FINISHED,
+        test_metrics: { MAE: 0.2, MAPE: 12.5, IntervalCoverage: 0.9 },
+      },
+    ];
+
+    const renderForecasts = () => {
+      useModels.mockReturnValue({
+        allModels: [],
+        allMetrics: WITH_FORECASTING_METRICS,
+        selectedSession: null,
+      });
+      return renderWithProviders(
+        <ModelComparisonTable
+          runs={FORECAST_RUNS}
+          onTrain={jest.fn()}
+          onViewDetails={jest.fn()}
+          onDelete={jest.fn()}
+        />,
+      );
+    };
+
+    test("a metric with no value on a run keeps its column, with the reason", async () => {
+      renderForecasts();
+
+      expect(headers()).toContain("MAPE↓");
+      expect(cellOf("run_a", "MAPE↓")).toBe("-");
+      expect(screen.getByLabelText(REASON)).toBeInTheDocument();
+      expect(cellOf("run_b", "MAPE↓")).toContain("12.5000");
+    });
+
+    test("a metric that cannot be optimized has no best run and no arrow", () => {
+      renderForecasts();
+
+      expect(headers()).toContain("IntervalCoverage");
+      expect(cellOf("run_a", "IntervalCoverage")).toBe("0.6000");
+      expect(cellOf("run_b", "IntervalCoverage")).toBe("0.9000");
+      // The error metrics still have a best run.
+      expect(cellOf("run_b", "MAE↓")).toContain("★");
+    });
+  });
 });

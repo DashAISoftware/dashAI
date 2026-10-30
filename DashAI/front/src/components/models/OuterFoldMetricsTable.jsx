@@ -10,6 +10,7 @@ import {
   TableRow,
   CircularProgress,
   Alert,
+  Tooltip,
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { getOuterAveragedMetrics } from "../../api/run";
@@ -19,6 +20,18 @@ const fmt = (mean, std) => {
   const m = mean.toFixed(4);
   return std != null ? `${m} ± ${std.toFixed(4)}` : m;
 };
+
+// A metric the run could not compute says why, as the run reports it.
+const valueCell = (mean, std, reason) =>
+  mean == null && reason ? (
+    <Tooltip title={reason} arrow>
+      <span aria-label={reason} style={{ cursor: "help" }}>
+        —
+      </span>
+    </Tooltip>
+  ) : (
+    fmt(mean, std)
+  );
 
 /**
  * Table with the averaged metrics across the outer folds of a nested-CV run
@@ -68,9 +81,16 @@ export default function OuterFoldMetricsTable({ run }) {
   const validation = metrics?.validation_metrics || {};
   const trainStd = metrics?.train_metrics_std || {};
   const validationStd = metrics?.validation_metrics_std || {};
+  const trainUnavailable = metrics?.train_metrics_unavailable || {};
+  const validationUnavailable = metrics?.validation_metrics_unavailable || {};
 
   const metricNames = Array.from(
-    new Set([...Object.keys(train), ...Object.keys(validation)]),
+    new Set([
+      ...Object.keys(train),
+      ...Object.keys(validation),
+      ...Object.keys(trainUnavailable),
+      ...Object.keys(validationUnavailable),
+    ]),
   ).sort();
 
   if (error || metricNames.length === 0) {
@@ -103,10 +123,18 @@ export default function OuterFoldMetricsTable({ run }) {
               <TableRow key={name} hover>
                 <TableCell>{name}</TableCell>
                 <TableCell align="right">
-                  {fmt(train[name], trainStd[name])}
+                  {valueCell(
+                    train[name],
+                    trainStd[name],
+                    trainUnavailable[name],
+                  )}
                 </TableCell>
                 <TableCell align="right">
-                  {fmt(validation[name], validationStd[name])}
+                  {valueCell(
+                    validation[name],
+                    validationStd[name],
+                    validationUnavailable[name],
+                  )}
                 </TableCell>
               </TableRow>
             ))}

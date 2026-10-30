@@ -195,24 +195,22 @@ export default function SessionVisualization() {
   // Check which metrics are available. This re-scan only needs to happen
   // when `runs` itself changes, not on every render (e.g. drag state, tour
   // steps, or the highlight timer toggling elsewhere in this component).
+  // A split whose metrics all have no value still has metrics to show, with
+  // the reason each run gives (under {split}_metrics_unavailable).
   const { hasTrainMetrics, hasValidationMetrics, hasTestMetrics } =
-    React.useMemo(
-      () => ({
-        hasTrainMetrics: runs.some(
-          (run) =>
-            run.train_metrics && Object.keys(run.train_metrics).length > 0,
-        ),
-        hasValidationMetrics: runs.some(
-          (run) =>
-            run.validation_metrics &&
-            Object.keys(run.validation_metrics).length > 0,
-        ),
-        hasTestMetrics: runs.some(
-          (run) => run.test_metrics && Object.keys(run.test_metrics).length > 0,
-        ),
-      }),
-      [runs],
-    );
+    React.useMemo(() => {
+      const hasMetrics = (split) =>
+        runs.some((run) =>
+          [run[`${split}_metrics`], run[`${split}_metrics_unavailable`]].some(
+            (values) => values && Object.keys(values).length > 0,
+          ),
+        );
+      return {
+        hasTrainMetrics: hasMetrics("train"),
+        hasValidationMetrics: hasMetrics("validation"),
+        hasTestMetrics: hasMetrics("test"),
+      };
+    }, [runs]);
 
   const availableSplits = React.useMemo(
     () =>
