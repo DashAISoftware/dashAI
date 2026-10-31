@@ -41,15 +41,25 @@ export interface ISplitPreviewRequest {
   indexes?: Record<string, number[]> | null;
 }
 
+export interface ISplitPreviewOptions {
+  // Aborts the request, for one a newer request supersedes.
+  signal?: AbortSignal;
+  // Milliseconds before a request that got no answer fails.
+  timeout?: number;
+}
+
 // How a splitter would carve a dataset, computed by the splitter itself. Null
 // for a splitter that does not describe its shape.
-export const previewSplit = async ({
-  datasetId,
-  splitterName,
-  params,
-  splitType = null,
-  indexes = null,
-}: ISplitPreviewRequest): Promise<ISplitPreview | null> => {
+export const previewSplit = async (
+  {
+    datasetId,
+    splitterName,
+    params,
+    splitType = null,
+    indexes = null,
+  }: ISplitPreviewRequest,
+  { signal, timeout }: ISplitPreviewOptions = {},
+): Promise<ISplitPreview | null> => {
   const response = await api.post<ISplitPreview | null>(
     `${splitterEndpoint}/preview`,
     {
@@ -59,6 +69,7 @@ export const previewSplit = async ({
       split_type: splitType,
       indexes,
     },
+    { signal, timeout },
   );
   return response.data;
 };
