@@ -263,6 +263,7 @@ describe("PrepareDatasetStep writes newExp.splits", () => {
       test_size: 3,
       train_indices: [0, 1, 2, 3, 4, 5, 6],
       test_indices: [7, 8, 9],
+      predefined_splits: { train: 0.7, validation: 0, test: 0.3 },
     });
     await screen.findByTestId("form-schema-HoldoutSplitter");
 
