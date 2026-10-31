@@ -1,5 +1,5 @@
 import React from "react";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../test-utils/renderWithProviders";
 import i18n from "../../../utils/i18n";
 import splitPreviewCases from "./__fixtures__/splitPreviewCases.json";
@@ -117,5 +117,45 @@ describe("SplitPreview draws the splitter's answer", () => {
     expect(
       screen.getByText(t("experiments:splitPreview.loading")),
     ).toBeInTheDocument();
+  });
+
+  it("a preview that could not be computed: says why, says the wizard can go on, and offers a retry", () => {
+    const onRetry = jest.fn();
+    renderWithProviders(
+      <SplitPreview
+        preview={null}
+        failure={{ reason: "Network Error", invalid: false }}
+        onRetry={onRetry}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        t("experiments:splitPreview.failed", { reason: "Network Error" }),
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(t("experiments:splitPreview.unavailable")),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: t("experiments:splitPreview.retry") }),
+    );
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it("parameters the splitter refuses: points to the message under the form, with no retry", () => {
+    renderWithProviders(
+      <SplitPreview
+        preview={null}
+        failure={{ reason: "horizon too small", invalid: true }}
+        onRetry={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByText(t("experiments:splitPreview.invalid")),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { parseRangeToIndex } from "../../../utils/parseRange";
 import {
@@ -78,6 +78,21 @@ function SplitDatasetRows({
       ? (splitter?.name ?? null)
       : null;
   const isHoldout = strategyKind === STRATEGY_KINDS.HOLDOUT;
+  // Which splitter the parameters in splitterParams were given for: its form
+  // or its schema defaults. Until they are this splitter's, they may still be
+  // the previous one's, and nothing is previewed or created with them.
+  const [paramsOwner, setParamsOwnerState] = useState(null);
+  // The same, for the seed that resolves between renders.
+  const paramsOwnerRef = useRef(null);
+  const setParamsOwner = (name) => {
+    paramsOwnerRef.current = name;
+    setParamsOwnerState(name);
+  };
+  const paramsOwned = Boolean(splitterName) && paramsOwner === splitterName;
+  const submitSplitterParams = (values) => {
+    setParamsOwner(splitterName);
+    setSplitterParams(values);
+  };
   const isIndexMode =
     isHoldout &&
     (splitType === SPLIT_TYPES.MANUAL || splitType === SPLIT_TYPES.PREDEFINED);
@@ -95,9 +110,15 @@ function SplitDatasetRows({
   // The splitter computes the preview, and with it whether the configuration
   // can be used and which partitions receive rows. A predefined split is read
   // from the dataset's own partitions by the backend.
-  const { preview, loading: previewLoading } = useSplitPreview({
+  const {
+    preview,
+    loading: previewLoading,
+    error: previewError,
+    errorStatus: previewErrorStatus,
+    retry: retryPreview,
+  } = useSplitPreview({
     datasetId,
-    splitterName,
+    splitterName: paramsOwned ? splitterName : null,
     params: splitterParams ?? {},
     splitType: isHoldout ? splitType : null,
     indexes:
@@ -105,10 +126,21 @@ function SplitDatasetRows({
         ? rowsPartitionsIndex
         : null,
   });
+  // A 422 is the backend's verdict on the configuration, the one creating
+  // the session would give; any other failure is the preview's own, and the
+  // session API still checks the configuration when it is created.
+  const previewFailed = previewError !== null || previewErrorStatus !== null;
+  const configurationRefused = previewErrorStatus === 422;
+  const previewFailure = previewFailed
+    ? { reason: previewError, invalid: configurationRefused }
+    : null;
   const previewErrors = preview?.errors ?? [];
-  const errorMessages = previewErrors.map((error) =>
-    t(`experiments:error.${error.key}`, error.values),
-  );
+  const errorMessages = [
+    ...previewErrors.map((error) =>
+      t(`experiments:error.${error.key}`, error.values),
+    ),
+    ...(configurationRefused && previewError ? [previewError] : []),
+  ];
 
   // The generated form reports its values only once the user edits a field, so
   // the schema placeholders are pushed up here: without them a session created
@@ -118,26 +150,34 @@ function SplitDatasetRows({
   // on purpose. That hook keeps the previous splitter's schema for one render
   // after the name changes, and seeding from it left the parameters of the
   // splitter that was selected a moment ago in place.
+  //
+  // The defaults always replace the previous splitter's parameters, even when
+  // there are none or the schema cannot be fetched; what the new splitter's
+  // form already sent is kept over them.
   useEffect(() => {
     if (!splitterName) return undefined;
     let cancelled = false;
 
     const seedSplitterParams = async () => {
+      let defaults = {};
       try {
         const component = await getComponents({ model: splitterName });
-        if (cancelled) return;
         const properties = component?.schema?.properties ?? {};
-        const defaults = Object.fromEntries(
+        defaults = Object.fromEntries(
           Object.entries(properties)
             .filter(([, property]) => "placeholder" in property)
             .map(([key, property]) => [key, property.placeholder]),
         );
-        if (Object.keys(defaults).length > 0) {
-          setSplitterParams(defaults);
-        }
       } catch (error) {
         console.error(`Error fetching the ${splitterName} schema`, error);
       }
+      if (cancelled) return;
+      const submitted = paramsOwnerRef.current === splitterName;
+      setSplitterParams((current) => ({
+        ...defaults,
+        ...(submitted ? (current ?? {}) : {}),
+      }));
+      setParamsOwner(splitterName);
     };
 
     seedSplitterParams();
@@ -214,10 +254,19 @@ function SplitDatasetRows({
     setEvaluationStrategy((holdout ?? allowedStrategies[0]).name);
   }, [allowedStrategies, selectedStrategy, setEvaluationStrategy]);
 
-  // The partitions with rows decide the metrics the session records.
+  // The partitions with rows decide the metrics the session records. Without
+  // a preview to say which (a splitter with none, or a preview that could not
+  // be computed), they are the ones the strategy scores.
+  const answered = paramsOwned && !previewLoading;
+  const withoutPreview = answered && !preview && !configurationRefused;
+  const splitPartitions = preview
+    ? preview.partitions
+    : withoutPreview
+      ? (selectedStrategy?.metadata?.scored_splits ?? null)
+      : null;
   useEffect(() => {
-    setSplitPartitions?.(preview?.partitions ?? null);
-  }, [preview]);
+    setSplitPartitions?.(splitPartitions);
+  }, [splitPartitions]);
 
   const handleSplitTypeChange = (_e, newType) => {
     if (!newType) return;
@@ -270,22 +319,26 @@ function SplitDatasetRows({
     } else if (
       !strategyKind ||
       !splitterName ||
+      !paramsOwned ||
       paramsError ||
       previewLoading ||
-      !preview ||
+      configurationRefused ||
       (isManual && manualParseError) ||
       (strategyKind === STRATEGY_KINDS.CV && groupColumnError)
     ) {
       setSplitsReady(false);
     } else {
+      // Without a preview, the session API checks the configuration.
       setSplitsReady(previewErrors.length === 0);
     }
   }, [
     strategyKind,
     splitterName,
+    paramsOwned,
     paramsError,
     previewLoading,
     preview,
+    configurationRefused,
     isManual,
     manualParseError,
     groupColumnError,
@@ -545,7 +598,9 @@ function SplitDatasetRows({
       ) : (
         <SplitPreview
           preview={preview}
-          loading={previewLoading}
+          loading={previewLoading || (Boolean(splitterName) && !paramsOwned)}
+          failure={previewFailure}
+          onRetry={retryPreview}
           description={selectedStrategy?.description}
           splitterDescription={splitter?.description}
         />
@@ -560,7 +615,7 @@ function SplitDatasetRows({
               hideButtons
               key={splitterName}
               model={splitterName}
-              onFormSubmit={setSplitterParams}
+              onFormSubmit={submitSplitterParams}
               setError={setParamsError}
               excludeFields={excludedFields}
             />
