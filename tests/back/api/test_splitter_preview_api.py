@@ -151,6 +151,89 @@ def test_a_backtest_the_session_would_refuse_is_refused_by_the_preview(
     assert field in response.json()["detail"]
 
 
+@pytest.fixture(name="dataset_info_reads")
+def count_dataset_info_reads(monkeypatch):
+    """Count the reads of the dataset's splits.json, every index list in it."""
+    from DashAI.back.dataloaders.classes import dashai_dataset
+
+    reads = []
+    real = dashai_dataset.get_dataset_info
+
+    def counted(path):
+        reads.append(path)
+        return real(path)
+
+    monkeypatch.setattr(dashai_dataset, "get_dataset_info", counted)
+    return reads
+
+
+@pytest.mark.parametrize(
+    ("splitter_name", "params", "extra"),
+    [
+        ("HoldoutSplitter", CASES["random holdout, three partitions"]["params"], {}),
+        ("KFoldSplitter", {"n_splits": 5}, {}),
+        ("RollingOriginSplitter", {"horizon": 6, "n_origins": 3}, {}),
+    ],
+    ids=["random", "folds", "backtest"],
+)
+def test_a_preview_counts_the_rows_without_reading_the_splits_file(
+    client, dataset_1, dataset_info_reads, splitter_name, params, extra
+):
+    split_type = "random" if splitter_name == "HoldoutSplitter" else None
+
+    response = _preview(
+        client, dataset_1.id, splitter_name, params, split_type=split_type
+    )
+
+    assert response.status_code == 200, response.text
+    assert dataset_info_reads == []
+
+
+def test_a_predefined_preview_reads_the_dataset_partitions_once(
+    client, dataset_1, dataset_info_reads
+):
+    response = _preview(
+        client, dataset_1.id, "HoldoutSplitter", {}, split_type="predefined"
+    )
+
+    assert response.status_code == 200, response.text
+    assert len(dataset_info_reads) == 1
+
+
+def test_a_dataset_without_a_row_count_is_counted_from_its_splits_file(
+    client, dataset_1, dataset_info_reads
+):
+    from DashAI.back.dependencies.database.models import Dataset
+
+    session_factory = client.app.container["session_factory"]
+    with session_factory() as db:
+        dataset = db.get(Dataset, dataset_1.id)
+        total_rows, dataset.total_rows = dataset.total_rows, None
+        db.commit()
+    try:
+        response = _preview(client, dataset_1.id, "KFoldSplitter", {"n_splits": 200})
+    finally:
+        with session_factory() as db:
+            db.get(Dataset, dataset_1.id).total_rows = total_rows
+            db.commit()
+
+    assert response.status_code == 200, response.text
+    assert len(dataset_info_reads) == 1
+    assert response.json()["errors"] == [
+        {"key": "foldsMustBeLessThanDatasetSize", "values": {"datasetSize": 150}}
+    ]
+
+
+def test_the_preview_does_not_block_the_event_loop():
+    # It reads the database and, for a predefined split, a file: run in the
+    # threadpool rather than on the event loop every other request waits on.
+    import inspect
+
+    from DashAI.back.api.api_v1.endpoints.splitters import preview_split
+
+    assert not inspect.iscoroutinefunction(preview_split)
+
+
 def test_parameters_the_splitter_cannot_read_are_refused(client, dataset_1):
     response = _preview(
         client, dataset_1.id, "RollingOriginSplitter", {"horizon": "six"}

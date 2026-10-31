@@ -29,7 +29,7 @@ class SplitPreviewParams(BaseModel):
 
 @router.post("/preview")
 @inject
-async def preview_split(
+def preview_split(
     params: SplitPreviewParams,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
     component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
@@ -38,6 +38,12 @@ async def preview_split(
 
     The wizard draws the answer and goes on only when it has no errors; the
     splitter computes it (``BaseSplitter.preview``) on the dataset's rows.
+
+    The wizard asks again as the form changes, so the rows are counted from
+    the dataset's ``total_rows``. Its ``splits.json``, which holds every index
+    list, is read only for a predefined split, which draws those partitions,
+    or for a dataset from before ``total_rows`` was filled. A plain ``def``:
+    FastAPI runs it in the threadpool, off the event loop.
 
     Parameters
     ----------
@@ -59,7 +65,7 @@ async def preview_split(
         is not ready or the parameters cannot be read by the splitter.
     """
     from DashAI.back.core.enums.status import DatasetStatus
-    from DashAI.back.dataloaders.classes.dashai_dataset import get_dataset_info
+    from DashAI.back.dataloaders.classes import dashai_dataset
 
     splitter_name = params.splitter_name
     if (
@@ -90,28 +96,28 @@ async def preview_split(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Dataset is not in finished state",
             )
-        info = get_dataset_info(f"{dataset.file_path}/dataset")
+        dataset_path = f"{dataset.file_path}/dataset"
+        total_rows = dataset.total_rows
 
     indexes = params.indexes
-    if params.split_type == "predefined":
-        indexes = {
-            "train": info.get("train_indices", []),
-            "validation": info.get("val_indices", []),
-            "test": info.get("test_indices", []),
+    sizes = {"total_rows": total_rows}
+    if params.split_type == "predefined" or total_rows is None:
+        info = dashai_dataset.get_dataset_info(dataset_path)
+        sizes = {
+            "total_rows": info.get("total_rows", 0),
+            "train_size": info.get("train_size", 0),
+            "val_size": info.get("val_size", 0),
+            "test_size": info.get("test_size", 0),
         }
+        if params.split_type == "predefined":
+            indexes = {
+                "train": info.get("train_indices", []),
+                "validation": info.get("val_indices", []),
+                "test": info.get("test_indices", []),
+            }
 
     try:
-        return splitter.preview(
-            params.params,
-            {
-                "total_rows": info.get("total_rows", 0),
-                "train_size": info.get("train_size", 0),
-                "val_size": info.get("val_size", 0),
-                "test_size": info.get("test_size", 0),
-            },
-            params.split_type,
-            indexes,
-        )
+        return splitter.preview(params.params, sizes, params.split_type, indexes)
     except (TypeError, ValueError) as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
