@@ -60,18 +60,12 @@ function SplitDatasetRows({
   const { t } = useTranslation(["experiments", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const totalRows = datasetInfo.total_rows;
-  const trainDatasetPercentage = (datasetInfo.train_size / totalRows).toFixed(
-    2,
-  );
-  const validationDatasetPercentage = (
-    datasetInfo.val_size / totalRows
-  ).toFixed(2);
-  const testDatasetPercentage = (datasetInfo.test_size / totalRows).toFixed(2);
-
-  const hasPredefinedSplits =
-    trainDatasetPercentage > 0 ||
-    validationDatasetPercentage > 0 ||
-    testDatasetPercentage > 0;
+  // The share of each partition the dataset carries of its own, as the
+  // dataset info declares it; none when it carries no partitions.
+  const predefinedSplits = datasetInfo.predefined_splits ?? null;
+  const hasPredefinedSplits = predefinedSplits !== null;
+  const predefinedShare = (partition) =>
+    Number(predefinedSplits?.[partition] ?? 0).toFixed(2);
 
   const splitterName =
     strategyKind && strategyKind !== STRATEGY_KINDS.FULL
@@ -489,15 +483,11 @@ function SplitDatasetRows({
               description={t("experiments:label.splitsDescription")}
             >
               <Grid container spacing={2}>
-                {[
-                  { id: "train", value: trainDatasetPercentage },
-                  { id: "validation", value: validationDatasetPercentage },
-                  { id: "test", value: testDatasetPercentage },
-                ].map(({ id, value }) => (
+                {["train", "validation", "test"].map((id) => (
                   <Grid key={id} size={{ xs: 4 }}>
                     <TextField
                       label={t(`common:${id}`)}
-                      value={value}
+                      value={predefinedShare(id)}
                       type="number"
                       size="small"
                       fullWidth
@@ -507,7 +497,9 @@ function SplitDatasetRows({
                         "& .MuiInputBase-input.Mui-disabled": {
                           WebkitTextFillColor: "#999",
                         },
-                        "& .MuiInputLabel-root.Mui-disabled": { color: "#bbb" },
+                        "& .MuiInputLabel-root.Mui-disabled": {
+                          color: "#bbb",
+                        },
                       }}
                     />
                   </Grid>

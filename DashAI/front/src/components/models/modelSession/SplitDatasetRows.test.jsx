@@ -193,7 +193,14 @@ const NO_PREDEFINED = {
   val_size: 0,
   test_size: 0,
 };
-const PREDEFINED = { total_rows: 10, train_size: 7, val_size: 0, test_size: 3 };
+// With the shares the dataset info declares for its own partitions.
+const PREDEFINED = {
+  total_rows: 10,
+  train_size: 7,
+  val_size: 0,
+  test_size: 3,
+  predefined_splits: { train: 0.7, validation: 0, test: 0.3 },
+};
 
 // Owns the state PrepareDatasetStep owns, wired the same way.
 let harness;
@@ -447,6 +454,34 @@ describe("SplitDatasetRows: holdout", () => {
     expect(i18n.t("experiments:label.predefined")).toBe("Predefined");
     expect(i18n.t("experiments:label.random")).toBe("Random");
     expect(i18n.t("experiments:label.manual")).toBe("Manual");
+  });
+
+  it("offers predefined as the dataset info declares it, and shows its shares, whatever the sizes would give", async () => {
+    // No row count: dividing the sizes by it gave NaN and hid the partitions.
+    renderStep({
+      datasetInfo: {
+        total_rows: 0,
+        train_size: 3,
+        val_size: 0,
+        test_size: 1,
+        predefined_splits: { train: 0.75, validation: 0, test: 0.25 },
+      },
+    });
+    await waitForSplitter(HOLDOUT.name);
+
+    expect(toggle("Predefined")).toBeEnabled();
+    await waitFor(() => expect(harness.splitType).toBe("predefined"));
+    expect(screen.getByDisplayValue("0.75")).toBeDisabled();
+    expect(screen.getByDisplayValue("0.00")).toBeDisabled();
+    expect(screen.getByDisplayValue("0.25")).toBeDisabled();
+  });
+
+  it("does not offer predefined when the dataset info declares none", async () => {
+    renderStep({ datasetInfo: { ...PREDEFINED, predefined_splits: null } });
+    await waitForSplitter(HOLDOUT.name);
+
+    expect(toggle("Predefined")).toBeDisabled();
+    expect(harness.splitType).toBe("random");
   });
 
   it("selects predefined when the dataset carries train, validation or test sizes", async () => {
@@ -1083,7 +1118,18 @@ describe("SplitDatasetRows: readiness and messages on the shared split cases", (
       );
     } else if (c.split_type === "predefined") {
       mockFormParams = c.params;
-      renderStep({ datasetInfo: c.dataset });
+      // The shares the dataset info declares for the case's own partitions.
+      const { total_rows: total, train_size, val_size, test_size } = c.dataset;
+      renderStep({
+        datasetInfo: {
+          ...c.dataset,
+          predefined_splits: {
+            train: train_size / total,
+            validation: val_size / total,
+            test: test_size / total,
+          },
+        },
+      });
       await waitForSplitter(HOLDOUT.name);
       await waitFor(() => expect(harness.splitType).toBe("predefined"));
     } else {
