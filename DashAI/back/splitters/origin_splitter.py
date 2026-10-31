@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from DashAI.back.core.schema_fields import int_field, schema_field
+from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.splitters.split_preview import backtest_preview
 
@@ -92,11 +93,24 @@ class OriginSplitter(BaseSplitter):
         ----------
         splits_data : dict
             The splitter's configuration.
+
+        Raises
+        ------
+        ValueError
+            If the horizon or the number of origins is below 1: there would be
+            no window to score, so no cuts. The schema refuses them for a
+            session; this is for a splitter built by hand.
         """
         super().__init__(splits_data)
         self.horizon = int(splits_data.get("horizon", 6))
         self.n_origins = int(splits_data.get("n_origins", 1))
         self.shuffle = False
+        if self.horizon < 1 or self.n_origins < 1:
+            raise ValueError(
+                f"A backtest needs a horizon and a number of origins of at "
+                f"least 1; got horizon={self.horizon}, "
+                f"n_origins={self.n_origins}."
+            )
 
     def needed_steps(self) -> int:
         """The fewest steps a series needs for these cuts.
@@ -151,7 +165,20 @@ class OriginSplitter(BaseSplitter):
 
     @classmethod
     def preview(cls, params, dataset, split_type=None, indexes=None):
-        """One bar per origin and the test (see ``BaseSplitter.preview``)."""
+        """One bar per origin and the test (see ``BaseSplitter.preview``).
+
+        The parameters are checked against the splitter's schema first, as the
+        session API checks them, so the preview never draws cuts the session
+        would refuse.
+
+        Raises
+        ------
+        ValueError
+            If the schema refuses the parameters (pydantic's error is one).
+        """
+        schema = getattr(cls, "SCHEMA", None)
+        if schema is not None:
+            schema.model_validate({**schema_placeholder_defaults(cls), **params})
         return backtest_preview(cls(params), dataset)
 
     @classmethod
