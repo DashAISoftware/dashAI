@@ -134,6 +134,15 @@ def test_a_horizon_past_the_evaluated_one_says_how_many_steps_were_not(client, t
     assert response.json()["unevaluated_steps"] == 2
 
 
+def test_the_warning_names_the_horizon_the_backtest_measured(client, trained):
+    # The form's warning says how far the backtest went, from this answer,
+    # without a second request that may fail.
+    response = _predict(client, run_id=trained["run_id"], horizon=5)
+
+    assert response.status_code == 200, response.text
+    assert response.json()["evaluated_horizon"] == 3
+
+
 @pytest.fixture(scope="module", name="default_horizon_run")
 def a_run_whose_session_left_the_horizon_out(client, trained):
     # The splitter falls back to its default horizon, 6, and the run's cuts
