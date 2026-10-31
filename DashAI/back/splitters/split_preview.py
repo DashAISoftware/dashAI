@@ -329,7 +329,7 @@ def backtest_preview(splitter, dataset) -> Dict[str, Any]:
     fitted on the whole series. Validation and test measure ``horizon`` steps
     each, and the history before the first origin is what is left: those are
     the shares. A series too short for the cuts is an error, with what
-    ``OriginSplitter.cuts`` needs.
+    the splitter needs (``OriginSplitter.needed_steps``).
     """
     n_steps = _rows_of(dataset)
     partitions = [VALIDATION, TEST]
@@ -340,7 +340,7 @@ def backtest_preview(splitter, dataset) -> Dict[str, Any]:
         preview["errors"] = [
             _error(
                 "seriesTooShort",
-                needed=(splitter.n_origins + 1) * splitter.horizon + 1,
+                needed=splitter.needed_steps(),
                 rows=n_steps,
                 horizon=splitter.horizon,
                 origins=splitter.n_origins,
