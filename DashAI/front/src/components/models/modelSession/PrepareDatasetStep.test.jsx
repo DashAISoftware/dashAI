@@ -123,7 +123,10 @@ const spies = {};
 
 function Host({ datasetInfo, taskName = "TabularClassificationTask" }) {
   const [rightContent, setRightContent] = useState(null);
-  mockSetSessionRightContent = setRightContent;
+  mockSetSessionRightContent = (content) => {
+    spies.pushedRightContent?.();
+    setRightContent(content);
+  };
   const [evaluationStrategy, setEvaluationStrategy] = useState(null);
   const [newExp, setNewExpState] = useState({
     task_name: taskName,
@@ -363,6 +366,32 @@ describe("PrepareDatasetStep writes newExp.splits", () => {
     );
     expect(lastNewExp().splitPartitions).toEqual(["validation", "test"]);
     expect(lastNextEnabled()).toBe(true);
+  });
+});
+
+describe("PrepareDatasetStep pushes the splits step into the right bar", () => {
+  it("settles, although the wizard hands it a new dataset object on every render", async () => {
+    // Host passes dataset={{ id: 1 }}, a new object each render, as the
+    // wizard does. Depending on the object rather than its id re-pushed the
+    // step, which re-rendered the host, without end.
+    // A loop starves the timers the test waits on, so it is cut short here,
+    // where it shows, instead of hanging the run.
+    let pushes = 0;
+    spies.pushedRightContent = () => {
+      pushes += 1;
+      if (pushes > 100) {
+        throw new Error(`The splits step was pushed ${pushes} times`);
+      }
+    };
+    renderStep();
+    await screen.findByTestId("form-schema-HoldoutSplitter");
+    await waitFor(() => expect(lastNextEnabled()).toBe(true));
+
+    const settled = pushes;
+    await new Promise((done) => setTimeout(done, 300));
+
+    expect(pushes).toBe(settled);
+    spies.pushedRightContent = undefined;
   });
 });
 
