@@ -1539,7 +1539,9 @@ def get_dataset_info(dataset_path: str) -> object:
     Returns
     -------
     object
-        Dictionary with the information of the dataset
+        Dictionary with the information of the dataset, including
+        ``predefined_splits``: the share of each partition the dataset carries
+        of its own, or None when it carries none.
     """
     import json
 
@@ -1557,6 +1559,20 @@ def get_dataset_info(dataset_path: str) -> object:
     total_rows = splits_data.get("total_rows", 0)
     column_names = splits_data.get("column_names", [])
 
+    # The share of each partition the dataset carries of its own, which the
+    # session wizard shows and offers as a predefined split; None when it
+    # carries none. Without a row count, the partitions share their own rows.
+    sizes = {
+        "train": len(train_indices),
+        "validation": len(val_indices),
+        "test": len(test_indices),
+    }
+    predefined_rows = sum(sizes.values())
+    predefined_splits = None
+    if predefined_rows > 0:
+        whole = total_rows or predefined_rows
+        predefined_splits = {name: size / whole for name, size in sizes.items()}
+
     return {
         "total_rows": total_rows,
         "total_columns": len(column_names),
@@ -1568,6 +1584,7 @@ def get_dataset_info(dataset_path: str) -> object:
         "train_indices": train_indices,
         "test_indices": test_indices,
         "val_indices": val_indices,
+        "predefined_splits": predefined_splits,
         **splits_data,
     }
 
