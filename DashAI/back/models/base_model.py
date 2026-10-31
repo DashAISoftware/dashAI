@@ -338,6 +338,11 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                 return None
             x_data = self.x_data[split.value]
             y_data = self.y_data[split.value]
+            # A partition the splitter left without rows (a holdout with no
+            # test) has nothing to score either: a model cannot predict zero
+            # rows, and its metrics have no value rather than failing the run.
+            if x_data is not None and len(x_data) == 0:
+                return None
 
         # If data is empty after retrieval, there is nothing to score
         if x_data is None or y_data is None:
