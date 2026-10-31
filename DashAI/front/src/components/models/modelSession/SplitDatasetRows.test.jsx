@@ -54,12 +54,17 @@ jest.mock("../../shared/FormSchema", () => {
 
 jest.mock("./SplitPreview", () => ({
   __esModule: true,
-  default: ({ preview, loading }) => (
+  default: ({ preview, loading, failure, onRetry }) => (
     <div
       data-testid="split-preview"
       data-preview={JSON.stringify(preview ?? null)}
       data-loading={String(loading)}
-    />
+      data-failure={JSON.stringify(failure ?? null)}
+    >
+      <button type="button" onClick={onRetry}>
+        retry-preview
+      </button>
+    </div>
   ),
 }));
 
@@ -556,7 +561,7 @@ describe("SplitDatasetRows: holdout", () => {
     });
   });
 
-  it("asks for the preview with empty params on a random split before any parameter reaches it, and is not ready while the preview is pending", async () => {
+  it("asks for the preview with the splitter's defaults (none here) on a random split before the form is edited, and is not ready while the preview is pending", async () => {
     previewSplit.mockImplementation(() => new Promise(() => {}));
     renderStep();
     await waitForSplitter(HOLDOUT.name);
@@ -571,7 +576,9 @@ describe("SplitDatasetRows: holdout", () => {
       }),
     );
 
-    expect(harness.splitterParams).toBeNull();
+    // The splitter's own defaults, even when it has none: never the previous
+    // splitter's parameters.
+    expect(harness.splitterParams).toEqual({});
     expect(lastReady()).toBe(false);
     expect(visibleErrorKeys(150)).toEqual([]);
   });
@@ -589,17 +596,93 @@ describe("SplitDatasetRows: holdout", () => {
     expect(lastReady()).toBe(false);
   });
 
-  it("is not ready when the preview request fails", async () => {
-    previewSplit.mockRejectedValue(new Error("boom"));
+  it("is not ready when the preview refuses the parameters (422), and shows the backend's reason under the form", async () => {
+    previewSplit.mockRejectedValue({
+      message: "Request failed with status code 422",
+      response: {
+        status: 422,
+        data: { detail: "HoldoutSplitter cannot read these parameters" },
+      },
+    });
+    mockFormParams = { train: 0.6, validation: 0.2, test: 0.2 };
+    renderStep();
+    await waitForSplitter(HOLDOUT.name);
+
+    const message = await screen.findByText(
+      "HoldoutSplitter cannot read these parameters",
+    );
+    expect(isUnderForm(message)).toBe(true);
+    expect(
+      JSON.parse(screen.getByTestId("split-preview").dataset.failure),
+    ).toEqual({
+      reason: "HoldoutSplitter cannot read these parameters",
+      invalid: true,
+    });
+    await waitFor(() =>
+      expect(spies.setSplitPartitions).toHaveBeenLastCalledWith(null),
+    );
+    expect(lastReady()).toBe(false);
+  });
+
+  it.each([
+    [
+      "a 500",
+      {
+        message: "Request failed with status code 500",
+        response: { status: 500, data: { detail: "Internal database error" } },
+      },
+      "Internal database error",
+    ],
+    ["a network error", { message: "Network Error" }, "Network Error"],
+  ])(
+    "goes on when the preview fails with %s, on the partitions the strategy scores, and asks again on retry",
+    async (_name, failure, reason) => {
+      previewSplit.mockRejectedValueOnce(failure);
+      mockFormParams = { train: 0.6, validation: 0.2, test: 0.2 };
+      renderStep();
+      await waitForSplitter(HOLDOUT.name);
+
+      await waitFor(() => expect(lastReady()).toBe(true));
+      expect(
+        JSON.parse(screen.getByTestId("split-preview").dataset.failure),
+      ).toEqual({ reason, invalid: false });
+      expect(screen.queryByText(reason)).not.toBeInTheDocument();
+      expect(spies.setSplitPartitions).toHaveBeenLastCalledWith(
+        HOLDOUT_STRATEGY.metadata.scored_splits,
+      );
+
+      previewSplit.mockResolvedValueOnce(
+        previewAnswer({ partitions: ["train", "test"] }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "retry-preview" }));
+
+      await waitFor(() => expect(previewSplit).toHaveBeenCalledTimes(2));
+      await waitFor(() =>
+        expect(spies.setSplitPartitions).toHaveBeenLastCalledWith([
+          "train",
+          "test",
+        ]),
+      );
+      expect(
+        JSON.parse(screen.getByTestId("split-preview").dataset.failure),
+      ).toBeNull();
+    },
+  );
+
+  it("goes on when the splitter has no preview, on the partitions the strategy scores", async () => {
+    previewSplit.mockResolvedValue(null);
     mockFormParams = { train: 0.6, validation: 0.2, test: 0.2 };
     renderStep();
     await waitForSplitter(HOLDOUT.name);
     await waitFor(() => expect(previewSplit).toHaveBeenCalled());
-    await waitFor(() =>
-      expect(spies.setSplitPartitions).toHaveBeenLastCalledWith(null),
-    );
 
-    expect(lastReady()).toBe(false);
+    await waitFor(() => expect(lastReady()).toBe(true));
+    expect(spies.setSplitPartitions).toHaveBeenLastCalledWith(
+      HOLDOUT_STRATEGY.metadata.scored_splits,
+    );
+    expect(
+      JSON.parse(screen.getByTestId("split-preview").dataset.failure),
+    ).toBeNull();
   });
 
   it("shows the preview's empty train error in the manual card and is not ready right after clicking Manual", async () => {
@@ -750,6 +833,94 @@ describe("SplitDatasetRows: cross-validation", () => {
     await waitFor(() => expect(harness.groupColumn).toBe("group"));
     await waitFor(() => expect(lastReady()).toBe(true));
   });
+
+  it("asks no preview with the previous splitter's parameters, and starts the new one on its own defaults", async () => {
+    let seedKFold;
+    const kfoldSchema = new Promise((resolve) => {
+      seedKFold = resolve;
+    });
+    getComponents.mockImplementation(async (args) => {
+      if (args.model === KFOLD.name) return kfoldSchema;
+      if (args.model) return { schema: { properties: {} } };
+      if (args.selectTypes?.[0] === "Splitter") return SPLITTERS;
+      if (args.selectTypes?.[0] === "EvaluationStrategy") return STRATEGIES;
+      return [];
+    });
+    mockFormParams = { train: 0.6, validation: 0.2, test: 0.2 };
+    renderStep();
+    await waitForSplitter(HOLDOUT.name);
+    await waitFor(() => expect(lastReady()).toBe(true));
+
+    // The new splitter's form reports nothing until it is edited.
+    mockFormParams = undefined;
+    await switchToCv();
+    await new Promise((done) => setTimeout(done, 400));
+
+    const kfoldRequests = () =>
+      previewSplit.mock.calls
+        .map(([request]) => request)
+        .filter((request) => request.splitterName === KFOLD.name);
+    expect(kfoldRequests()).toEqual([]);
+    expect(lastReady()).toBe(false);
+
+    seedKFold({
+      schema: {
+        properties: {
+          n_splits: { type: "integer", placeholder: 5 },
+          test_size: { type: "number", placeholder: 0 },
+        },
+      },
+    });
+
+    await waitFor(() => expect(kfoldRequests().length).toBeGreaterThan(0));
+    kfoldRequests().forEach((request) =>
+      expect(request.params).toEqual({ n_splits: 5, test_size: 0 }),
+    );
+    expect(harness.splitterParams).toEqual({ n_splits: 5, test_size: 0 });
+    await waitFor(() => expect(lastReady()).toBe(true));
+  });
+
+  it.each([
+    ["has no placeholders", async () => ({ schema: { properties: {} } })],
+    [
+      "cannot be fetched",
+      async () => {
+        throw new Error("Network Error");
+      },
+    ],
+  ])(
+    "drops the previous splitter's parameters when the new one's schema %s",
+    async (_name, kfoldSchema) => {
+      getComponents.mockImplementation(async (args) => {
+        if (args.model === KFOLD.name) return kfoldSchema();
+        if (args.model) return { schema: { properties: {} } };
+        if (args.selectTypes?.[0] === "Splitter") return SPLITTERS;
+        if (args.selectTypes?.[0] === "EvaluationStrategy") return STRATEGIES;
+        return [];
+      });
+      jest.spyOn(console, "error").mockImplementation(() => {});
+      mockFormParams = { train: 0.6, validation: 0.2, test: 0.2 };
+      renderStep();
+      await waitForSplitter(HOLDOUT.name);
+      await waitFor(() => expect(lastReady()).toBe(true));
+
+      mockFormParams = undefined;
+      await switchToCv();
+
+      await waitFor(() =>
+        expect(lastPreviewRequest()).toMatchObject({
+          splitterName: KFOLD.name,
+          params: {},
+        }),
+      );
+      previewSplit.mock.calls
+        .map(([request]) => request)
+        .filter((request) => request.splitterName === KFOLD.name)
+        .forEach((request) => expect(request.params).toEqual({}));
+      expect(harness.splitterParams).toEqual({});
+      console.error.mockRestore();
+    },
+  );
 
   it("is not ready when no fold splitter is offered", async () => {
     mockComponents({ splitters: [HOLDOUT] });

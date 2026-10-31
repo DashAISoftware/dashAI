@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Stack, Tooltip, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import SplitsCard from "./SplitsCard";
@@ -29,8 +29,20 @@ const asPercent = (fraction) => Math.round((fraction ?? 0) * 100);
  * Draw the preview of a split, as the splitter computed it on the dataset
  * (POST /splitter/preview). Nothing here is computed: the bars, their labels,
  * the shares and the notes all come with the preview.
+ *
+ * Without a preview it says why: it is being drawn, the splitter has none,
+ * the splitter refuses the parameters (`failure.invalid`, explained under its
+ * form), or the preview could not be computed, which can be retried and does
+ * not keep the wizard from going on.
  */
-function SplitPreview({ preview, loading, description, splitterDescription }) {
+function SplitPreview({
+  preview,
+  loading,
+  failure,
+  onRetry,
+  description,
+  splitterDescription,
+}) {
   const theme = useTheme();
   const { t } = useTranslation(["experiments", "common"]);
 
@@ -59,8 +71,21 @@ function SplitPreview({ preview, loading, description, splitterDescription }) {
           <Typography variant="caption" color="text.secondary">
             {loading
               ? t("experiments:splitPreview.loading")
-              : t("experiments:splitPreview.unavailable")}
+              : failure?.invalid
+                ? t("experiments:splitPreview.invalid")
+                : failure
+                  ? t("experiments:splitPreview.failed", {
+                      reason: failure.reason,
+                    })
+                  : t("experiments:splitPreview.unavailable")}
           </Typography>
+          {!loading && failure && !failure.invalid && onRetry && (
+            <Box>
+              <Button size="small" onClick={onRetry}>
+                {t("experiments:splitPreview.retry")}
+              </Button>
+            </Box>
+          )}
         </Stack>
       </SplitsCard>
     );
@@ -214,6 +239,13 @@ SplitPreview.propTypes = {
     shares: PropTypes.object.isRequired,
   }),
   loading: PropTypes.bool,
+  // Why there is no preview: the backend's reason, and whether it refused the
+  // parameters (a 422) rather than failing to compute the preview.
+  failure: PropTypes.shape({
+    reason: PropTypes.string,
+    invalid: PropTypes.bool,
+  }),
+  onRetry: PropTypes.func,
   description: PropTypes.string,
   splitterDescription: PropTypes.string,
 };
