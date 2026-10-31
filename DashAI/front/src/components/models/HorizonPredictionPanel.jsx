@@ -15,15 +15,16 @@ import { getApiErrorMessage } from "../../utils/apiError";
  *
  * The field starts on the horizon the run's backtest measured, which the
  * prediction options publish (GET /predict/splits/{run}). Asking for more is
- * allowed; the answer says how many steps no backtest measured, and the panel
- * shows it.
+ * allowed; the answer says how many steps no backtest measured and how many
+ * it did, and the panel shows that while the field holds the horizon asked.
  */
 export default function HorizonPredictionPanel({ run, onSaved }) {
   const { t } = useTranslation(["prediction", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const [horizon, setHorizon] = useState("");
-  const [evaluated, setEvaluated] = useState(null);
-  const [unevaluatedSteps, setUnevaluatedSteps] = useState(0);
+  // The warning of the last prediction asked for, with the horizon it was
+  // asked for: { horizon, unevaluated, evaluated }.
+  const [warning, setWarning] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -31,7 +32,6 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
     getPredictionSplits(run.id)
       .then(({ horizon: measured }) => {
         if (cancelled) return;
-        setEvaluated(measured);
         if (measured) setHorizon((current) => current || String(measured));
       })
       .catch((error) =>
@@ -49,7 +49,11 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
     setIsSubmitting(true);
     try {
       const prediction = await createPrediction(run.id, null, null, steps);
-      setUnevaluatedSteps(prediction.unevaluated_steps ?? 0);
+      setWarning({
+        horizon: steps,
+        unevaluated: prediction.unevaluated_steps ?? 0,
+        evaluated: prediction.evaluated_horizon ?? null,
+      });
       await enqueuePredictionJob(prediction.id);
       enqueueSnackbar(t("prediction:message.predictionJobSubmitted"), {
         variant: "success",
@@ -90,11 +94,11 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
           {t("prediction:button.runPrediction")}
         </LoadingButton>
       </Box>
-      {unevaluatedSteps > 0 && (
+      {warning && warning.horizon === steps && warning.unevaluated > 0 && (
         <Alert severity="warning">
           {t("prediction:message.unevaluatedSteps", {
-            count: unevaluatedSteps,
-            evaluated,
+            count: warning.unevaluated,
+            evaluated: warning.evaluated,
           })}
         </Alert>
       )}

@@ -223,7 +223,11 @@ describe("PredictionResultsTab (a task that predicts by horizon)", () => {
       trainingDatasetId: 2,
       horizon: 3,
     });
-    createPrediction.mockResolvedValue({ id: 20, unevaluated_steps: 2 });
+    createPrediction.mockResolvedValue({
+      id: 20,
+      unevaluated_steps: 2,
+      evaluated_horizon: 3,
+    });
     enqueuePredictionJob.mockResolvedValue({ id: 99 });
   });
   afterEach(() => {
