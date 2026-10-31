@@ -65,7 +65,7 @@ async def create_prediction(
     dict
         The prediction created. For a horizon longer than the one the run was
         evaluated on, ``unevaluated_steps`` says how many of its steps no
-        backtest measured.
+        backtest measured, and ``evaluated_horizon`` how many it did.
 
     Raises
     ------
@@ -105,9 +105,10 @@ async def create_prediction(
         db.commit()
         db.refresh(prediction)
         if unevaluated_steps:
-            # Not a column: a warning about this request, for the form that
-            # sent it.
+            # Not columns: a warning about this request, for the form that
+            # sent it, with the horizon the backtest measured.
             prediction.unevaluated_steps = unevaluated_steps
+            prediction.evaluated_horizon = _evaluated_horizon(run, task)
         return prediction
 
 
