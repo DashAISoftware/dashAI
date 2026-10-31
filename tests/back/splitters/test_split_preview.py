@@ -142,6 +142,27 @@ def test_a_series_too_short_for_the_cuts_is_an_error_of_the_preview():
     ]
 
 
+def test_a_series_too_short_says_what_the_splitter_itself_needs():
+    # A splitter that asks for more history than one step before the first
+    # origin: the preview has to report its minimum, not a copy of the base's.
+    class SeasonalOrigins(RollingOriginSplitter):
+        def needed_steps(self):
+            return super().needed_steps() + 12
+
+    splitter = SeasonalOrigins({"horizon": 6, "n_origins": 3})
+    with pytest.raises(ValueError, match="at least 37 steps"):
+        splitter.cuts(30)
+
+    preview = _origins(SeasonalOrigins, {"horizon": 6, "n_origins": 3}, 30)
+
+    assert preview["errors"] == [
+        {
+            "key": "seriesTooShort",
+            "values": {"needed": 37, "rows": 30, "horizon": 6, "origins": 3},
+        }
+    ]
+
+
 def test_more_origins_than_are_drawn_leave_a_note():
     preview = _origins(RollingOriginSplitter, {"horizon": 1, "n_origins": 12}, 48)
 

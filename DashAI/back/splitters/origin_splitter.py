@@ -98,6 +98,15 @@ class OriginSplitter(BaseSplitter):
         self.n_origins = int(splits_data.get("n_origins", 1))
         self.shuffle = False
 
+    def needed_steps(self) -> int:
+        """The fewest steps a series needs for these cuts.
+
+        The validation windows and the test, ``horizon`` steps each, after at
+        least one step to fit on. ``cuts`` refuses a shorter series, and the
+        preview reports this number, so the two cannot disagree.
+        """
+        return (self.n_origins + 1) * self.horizon + 1
+
     def cuts(self, n_steps: int) -> Dict[str, Any]:
         """Where a series of ``n_steps`` steps is cut.
 
@@ -119,7 +128,7 @@ class OriginSplitter(BaseSplitter):
             first origin.
         """
         h, k = self.horizon, self.n_origins
-        needed = (k + 1) * h + 1
+        needed = self.needed_steps()
         if n_steps < needed:
             raise ValueError(
                 f"A horizon of {h} step(s) with {k} validation origin(s) needs "
