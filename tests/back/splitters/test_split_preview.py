@@ -163,6 +163,20 @@ def test_a_series_too_short_says_what_the_splitter_itself_needs():
     ]
 
 
+@pytest.mark.parametrize(
+    "params",
+    [{"horizon": 0}, {"horizon": -1}, {"horizon": 6, "n_origins": 0}],
+    ids=["horizon 0", "negative horizon", "no origins"],
+)
+def test_an_origin_splitter_built_without_a_window_is_refused(params):
+    # Built by hand, past the schema: with no window to score there are no
+    # cuts, and a preview would draw negative shares or index no origin.
+    from DashAI.back.splitters.origin_splitter import OriginSplitter
+
+    with pytest.raises(ValueError, match="at least 1"):
+        OriginSplitter(params)
+
+
 def test_more_origins_than_are_drawn_leave_a_note():
     preview = _origins(RollingOriginSplitter, {"horizon": 1, "n_origins": 12}, 48)
 

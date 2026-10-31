@@ -130,6 +130,27 @@ def test_an_unknown_dataset_is_not_found(client):
     assert response.json()["detail"] == "Dataset not found"
 
 
+@pytest.mark.parametrize(
+    ("splitter_name", "params", "field"),
+    [
+        ("RollingOriginSplitter", {"horizon": 6, "n_origins": 0}, "n_origins"),
+        ("RollingOriginSplitter", {"horizon": 6, "n_origins": -1}, "n_origins"),
+        # One origin is the temporal holdout; the session refuses it here.
+        ("RollingOriginSplitter", {"horizon": 6, "n_origins": 1}, "n_origins"),
+        ("RollingOriginSplitter", {"horizon": 0, "n_origins": 3}, "horizon"),
+        ("TemporalHoldoutSplitter", {"horizon": 0}, "horizon"),
+        ("TemporalHoldoutSplitter", {"horizon": -2}, "horizon"),
+    ],
+)
+def test_a_backtest_the_session_would_refuse_is_refused_by_the_preview(
+    client, dataset_1, splitter_name, params, field
+):
+    response = _preview(client, dataset_1.id, splitter_name, params)
+
+    assert response.status_code == 422, response.text
+    assert field in response.json()["detail"]
+
+
 def test_parameters_the_splitter_cannot_read_are_refused(client, dataset_1):
     response = _preview(
         client, dataset_1.id, "RollingOriginSplitter", {"horizon": "six"}
