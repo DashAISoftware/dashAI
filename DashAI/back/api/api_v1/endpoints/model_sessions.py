@@ -42,6 +42,7 @@ from DashAI.back.splitters.splits_payload import (
     DEFAULT_SPLITTER_NAME,
     META_KEYS,
     normalize_splits_payload,
+    validate_splitter_parameters,
 )
 from DashAI.back.tasks.session_roles import SessionColumnRoles, session_roles
 
@@ -529,13 +530,8 @@ def _validate_splits(
                 f"splitter, but {splitter_name} is a {partitioning!r} splitter."
             ),
         )
-    parameters = {
-        key: value for key, value in splits_data.items() if key not in META_KEYS
-    }
     try:
-        splitter_class.SCHEMA.model_validate(
-            {**schema_placeholder_defaults(splitter_class), **parameters}
-        )
+        validate_splitter_parameters(splitter_class, splits_data)
     except ValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

@@ -240,3 +240,79 @@ def test_parameters_the_splitter_cannot_read_are_refused(client, dataset_1):
     )
 
     assert response.status_code == 422, response.text
+
+
+def _create_session(client: TestClient, dataset_id, strategy, splits):
+    return client.post(
+        "/api/v1/model-session/",
+        json={
+            "name": f"preview parity {strategy}",
+            "dataset_id": dataset_id,
+            "task_name": "TabularClassificationTask",
+            "column_roles": {
+                "features": [{"kind": "raw", "name": "SepalLengthCm"}],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
+            "train_metrics": [],
+            "validation_metrics": [],
+            "test_metrics": [],
+            "evaluation_strategy": strategy,
+            "splits": json.dumps(splits),
+        },
+    )
+
+
+def test_a_configuration_the_session_would_refuse_is_refused_by_the_preview(
+    client, dataset_1
+):
+    # 25 folds fit in 150 rows, so the preview draws them; the schema caps
+    # the folds at 20, so creating the session refuses them.
+    params = {"n_splits": 25, "shuffle": True, "random_state": 42}
+
+    created = _create_session(
+        client,
+        dataset_1.id,
+        "CrossValidationEvaluationStrategy",
+        {"splitter_name": "KFoldSplitter", "splitType": "cv", **params},
+    )
+    previewed = _preview(client, dataset_1.id, "KFoldSplitter", params)
+
+    assert created.status_code == 422, created.text
+    assert previewed.status_code == 422, previewed.text
+    assert "n_splits" in previewed.json()["detail"]
+
+
+def test_a_manual_split_is_checked_without_the_proportions_it_does_not_use(
+    client, dataset_1
+):
+    # The form keeps the proportions of the random mode, and the session
+    # payload of an index mode drops them, so they cannot refuse the preview.
+    params = {"train": 0.9, "validation": 0.5, "test": 0.5}
+    indexes = {"train": [0, 1, 2], "validation": [3], "test": [4]}
+
+    created = _create_session(
+        client,
+        dataset_1.id,
+        "HoldoutEvaluationStrategy",
+        {
+            "splitter_name": "HoldoutSplitter",
+            "splitType": "manual",
+            "splitted_indexes": {
+                "train_indexes": indexes["train"],
+                "val_indexes": indexes["validation"],
+                "test_indexes": indexes["test"],
+            },
+        },
+    )
+    previewed = _preview(
+        client,
+        dataset_1.id,
+        "HoldoutSplitter",
+        params,
+        split_type="manual",
+        indexes=indexes,
+    )
+
+    assert created.status_code == 201, created.text
+    assert previewed.status_code == 200, previewed.text
+    assert previewed.json()["errors"] == []
