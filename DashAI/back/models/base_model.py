@@ -286,14 +286,15 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         Optional[Dict[str, float or Unavailable]]
             The finite scores keyed by metric name, or None when there was
             nothing to score: no metrics declared for the split, or no data
-            available for it. None and an empty dict are different answers --
+            loaded for it. None and an empty dict are different answers --
             the first says the question could not be asked, the second that
             every metric was asked and none returned a usable number.
 
             A metric that raised ``UndefinedMetricError`` maps to an
-            ``Unavailable`` holding its reason. ``calculate_metrics`` records
-            it, so the run says why; ``compute_metrics`` leaves it out, as it
-            leaves out a non-finite score.
+            ``Unavailable`` holding its reason, and so does every metric of a
+            split whose stored partition has no rows. ``calculate_metrics``
+            records it, so the run says why; ``compute_metrics`` leaves it
+            out, as it leaves out a non-finite score.
         """
         metrics = getattr(self, f"{split.value}_metrics", None)
 
@@ -308,10 +309,15 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             x_data = self.x_data[split.value]
             y_data = self.y_data[split.value]
             # A partition the splitter left without rows (a holdout with no
-            # test) has nothing to score either: a model cannot predict zero
-            # rows, and its metrics have no value rather than failing the run.
+            # test) has nothing to score: a model cannot predict zero rows.
+            # Its metrics have no value rather than failing the run, and the
+            # run says why, as it does for a metric undefined on its data.
             if x_data is not None and len(x_data) == 0:
-                return None
+                reason = Unavailable(
+                    f"The {split.value} partition has no rows to score: the "
+                    "splitter left none in it."
+                )
+                return {metric.__name__: reason for metric in metrics}
 
         # If data is empty after retrieval, there is nothing to score
         if x_data is None or y_data is None:
