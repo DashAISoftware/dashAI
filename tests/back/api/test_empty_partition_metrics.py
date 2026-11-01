@@ -5,7 +5,10 @@ splitter's preview says receive rows. A splitter with no preview, or a preview
 that could not be computed, leaves the wizard on the partitions the strategy
 scores (``scored_splits``), so a session can ask for metrics on a partition
 the splitter leaves empty: a holdout with no test, folds with no reserved
-test. Neither the session API nor the run may fail on it.
+test. Neither the session API nor the run may fail on it. A holdout says why
+those metrics have no value, as it says it for a metric undefined on its data
+(MAPE on a series with a zero); folds that reserve nothing write no test
+metric at all.
 
 Lives under ``tests/back/api`` to reuse the ``client`` and ``dataset_1``
 fixtures.
@@ -102,5 +105,16 @@ def test_metrics_asked_for_an_empty_partition_have_no_value(
     run = client.get(f"/api/v1/run/{run_id}").json()
     assert run["status"] == RunStatus.FINISHED.value
     assert set(run["validation_metrics"]) == set(METRICS)
-    # The test partition has no rows, so its metrics have no value at all.
+    # The test partition has no rows, so its metrics have no value.
     assert not run["test_metrics"]
+    if strategy == "CrossValidationEvaluationStrategy":
+        # Folds that reserve nothing never score the test partition, and write
+        # no row for it (pinned by test_model_job_cross_validation.py).
+        assert not run["test_metrics_unavailable"]
+    else:
+        # A holdout scores it, and the run says why it has no value beside
+        # the metrics that have one.
+        unavailable = run["test_metrics_unavailable"] or {}
+        assert set(unavailable) == set(METRICS)
+        for reason in unavailable.values():
+            assert "test partition has no rows" in reason
