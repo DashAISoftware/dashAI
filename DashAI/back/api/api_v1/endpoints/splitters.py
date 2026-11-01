@@ -4,10 +4,15 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, status
 from fastapi.exceptions import HTTPException
 from kink import di, inject
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from sqlalchemy import exc
 
 from DashAI.back.dependencies.database.models import Dataset
+from DashAI.back.splitters.splits_payload import (
+    INDEX_KEY_BY_SPLIT,
+    INDEX_SPLIT_TYPES,
+    validate_splitter_parameters,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -38,6 +43,9 @@ def preview_split(
 
     The wizard draws the answer and goes on only when it has no errors; the
     splitter computes it (``BaseSplitter.preview``) on the dataset's rows.
+    A configuration the preview finds no fault with is then checked against
+    the splitter's schema, as creating the session checks it, so the wizard
+    does not go on with one the session would refuse.
 
     The wizard asks again as the form changes, so the rows are counted from
     the dataset's ``total_rows``. Its ``splits.json``, which holds every index
@@ -62,7 +70,8 @@ def preview_split(
     ------
     HTTPException
         404 if the splitter or the dataset does not exist; 422 if the dataset
-        is not ready or the parameters cannot be read by the splitter.
+        is not ready, the parameters cannot be read by the splitter, or its
+        schema refuses them.
     """
     from DashAI.back.core.enums.status import DatasetStatus
     from DashAI.back.dataloaders.classes import dashai_dataset
@@ -117,9 +126,27 @@ def preview_split(
             }
 
     try:
-        return splitter.preview(params.params, sizes, params.split_type, indexes)
+        preview = splitter.preview(params.params, sizes, params.split_type, indexes)
     except (TypeError, ValueError) as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"{splitter_name} cannot read these parameters: {e}",
         ) from e
+
+    # The preview's own errors speak first: they say what to change on this
+    # dataset, and a schema bound can hide them (more folds than rows is also
+    # more than the 20 the schema allows). With none left, the schema has the
+    # last word, as it does when the session is created.
+    if preview is None or not preview["errors"]:
+        parameters = dict(params.params)
+        if params.split_type in INDEX_SPLIT_TYPES:
+            for split in INDEX_KEY_BY_SPLIT:
+                parameters.pop(split, None)
+        try:
+            validate_splitter_parameters(splitter, parameters)
+        except ValidationError as e:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid configuration for splitter {splitter_name}: {e}",
+            ) from e
+    return preview

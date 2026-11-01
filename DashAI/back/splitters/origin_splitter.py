@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, List
 
 from DashAI.back.core.schema_fields import int_field, schema_field
-from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.splitters.split_preview import backtest_preview
 
@@ -167,18 +166,11 @@ class OriginSplitter(BaseSplitter):
     def preview(cls, params, dataset, split_type=None, indexes=None):
         """One bar per origin and the test (see ``BaseSplitter.preview``).
 
-        The parameters are checked against the splitter's schema first, as the
-        session API checks them, so the preview never draws cuts the session
-        would refuse.
-
         Raises
         ------
         ValueError
-            If the schema refuses the parameters (pydantic's error is one).
+            If the parameters leave no window to score (see ``__init__``).
         """
-        schema = getattr(cls, "SCHEMA", None)
-        if schema is not None:
-            schema.model_validate({**schema_placeholder_defaults(cls), **params})
         return backtest_preview(cls(params), dataset)
 
     @classmethod
