@@ -105,3 +105,16 @@ def test_a_date_without_a_resolvable_format_is_refused():
         transform_dataset_with_schema(
             to_dashai_dataset(frame), {"when": {"type": "Date", "dtype": None}}
         )
+
+
+def test_a_native_datetime_column_is_stored_in_its_declared_format():
+    frame = pd.DataFrame({"when": pd.to_datetime(["1990-01-01", None, "1990-01-03"])})
+    dataset = transform_dataset_with_schema(
+        to_dashai_dataset(frame), {"when": {"type": "Date", "dtype": "%d/%m/%Y"}}
+    )
+
+    assert dataset.arrow_table.column("when").to_pylist() == [
+        "01/01/1990",
+        None,
+        "03/01/1990",
+    ]
