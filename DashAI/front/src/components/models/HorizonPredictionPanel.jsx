@@ -5,8 +5,13 @@ import { LoadingButton } from "@mui/lab";
 import { PlayArrow as PlayArrowIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
-import { createPrediction, getPredictionSplits } from "../../api/predict";
+import {
+  createPrediction,
+  getPredictionSplits,
+  getPredictions,
+} from "../../api/predict";
 import { enqueuePredictionJob } from "../../api/job";
+import { startJobPolling } from "../../utils/jobPoller";
 import { getApiErrorMessage } from "../../utils/apiError";
 
 /**
@@ -54,11 +59,48 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
         unevaluated: prediction.unevaluated_steps ?? 0,
         evaluated: prediction.evaluated_horizon ?? null,
       });
-      await enqueuePredictionJob(prediction.id);
+      const jobResponse = await enqueuePredictionJob(prediction.id);
+      if (!jobResponse?.id) {
+        throw new Error("Failed to enqueue prediction job");
+      }
       enqueueSnackbar(t("prediction:message.predictionJobSubmitted"), {
         variant: "success",
       });
       onSaved(prediction);
+
+      // Watching the job is what keeps the job queue polling, so the queue
+      // lists it, and what tells the run's predictions it finished.
+      const refreshPrediction = async () => {
+        try {
+          const predictions = await getPredictions(run.id);
+          onSaved(
+            predictions.find((p) => p.id === prediction.id) ?? prediction,
+          );
+        } catch (refreshError) {
+          console.error("Error refreshing the prediction:", refreshError);
+        }
+      };
+      startJobPolling(
+        jobResponse.id,
+        async () => {
+          enqueueSnackbar(t("prediction:message.predictionCompleted"), {
+            variant: "success",
+          });
+          await refreshPrediction();
+        },
+        async (result) => {
+          const wasCancelled = result?.status === "cancelled";
+          enqueueSnackbar(
+            wasCancelled
+              ? t("common:jobQueue.jobCancelled")
+              : t("prediction:error.predictionFailed", {
+                  error: result?.error || t("common:unknownError"),
+                }),
+            { variant: wasCancelled ? "info" : "error" },
+          );
+          await refreshPrediction();
+        },
+      );
     } catch (error) {
       enqueueSnackbar(getApiErrorMessage(error, t("common:unknownError")), {
         variant: "error",

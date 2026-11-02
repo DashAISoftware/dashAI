@@ -16,6 +16,9 @@ jest.mock("../../../api/predict", () => ({
   getPredictionSplits: jest.fn(),
 }));
 jest.mock("../../../api/job", () => ({ enqueuePredictionJob: jest.fn() }));
+// The horizon panel watches the job it queues; the watcher's own behaviour is
+// HorizonPredictionPanel.test.jsx's.
+jest.mock("../../../utils/jobPoller", () => ({ startJobPolling: jest.fn() }));
 jest.mock("notistack", () => ({
   useSnackbar: () => ({ enqueueSnackbar: jest.fn() }),
 }));

@@ -2,8 +2,13 @@ import React from "react";
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../../test-utils/renderWithProviders";
 import i18n from "../../utils/i18n";
-import { createPrediction, getPredictionSplits } from "../../api/predict";
+import {
+  createPrediction,
+  getPredictionSplits,
+  getPredictions,
+} from "../../api/predict";
 import { enqueuePredictionJob } from "../../api/job";
+import { startJobPolling } from "../../utils/jobPoller";
 import HorizonPredictionPanel from "./HorizonPredictionPanel";
 
 /*
@@ -15,8 +20,10 @@ import HorizonPredictionPanel from "./HorizonPredictionPanel";
 jest.mock("../../api/predict", () => ({
   createPrediction: jest.fn(),
   getPredictionSplits: jest.fn(),
+  getPredictions: jest.fn(),
 }));
 jest.mock("../../api/job", () => ({ enqueuePredictionJob: jest.fn() }));
+jest.mock("../../utils/jobPoller", () => ({ startJobPolling: jest.fn() }));
 jest.mock("notistack", () => {
   const snackbar = { enqueueSnackbar: jest.fn(), closeSnackbar: jest.fn() };
   return { useSnackbar: () => snackbar };
@@ -42,7 +49,10 @@ beforeEach(() => {
   createPrediction.mockReset();
   getPredictionSplits.mockReset();
   enqueuePredictionJob.mockReset();
-  enqueuePredictionJob.mockResolvedValue({});
+  enqueuePredictionJob.mockResolvedValue({ id: 77 });
+  getPredictions.mockReset();
+  getPredictions.mockResolvedValue([]);
+  startJobPolling.mockReset();
 });
 
 describe("HorizonPredictionPanel", () => {
@@ -109,5 +119,55 @@ describe("HorizonPredictionPanel", () => {
     await run(6);
 
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("watches the job it queued, so the queue shows it and the panel learns it finished", async () => {
+    getPredictionSplits.mockResolvedValue({ splits: [], horizon: 6 });
+    createPrediction.mockResolvedValue({ id: 9, status: 1 });
+    const onSaved = jest.fn();
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={onSaved} />,
+    );
+    await waitFor(() => expect(horizonField()).toHaveValue(6));
+
+    await run(6);
+
+    await waitFor(() =>
+      expect(startJobPolling).toHaveBeenCalledWith(
+        77,
+        expect.any(Function),
+        expect.any(Function),
+      ),
+    );
+
+    const finished = { id: 9, status: 3 };
+    getPredictions.mockResolvedValue([{ id: 8, status: 3 }, finished]);
+    const [, onSuccess] = startJobPolling.mock.calls[0];
+    await onSuccess({ id: 77, status: "finished" });
+
+    expect(getPredictions).toHaveBeenCalledWith(1);
+    expect(onSaved).toHaveBeenLastCalledWith(finished);
+  });
+
+  it("refreshes the prediction when its job fails", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    getPredictionSplits.mockResolvedValue({ splits: [], horizon: 6 });
+    createPrediction.mockResolvedValue({ id: 9, status: 1 });
+    const onSaved = jest.fn();
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={onSaved} />,
+    );
+    await waitFor(() => expect(horizonField()).toHaveValue(6));
+
+    await run(6);
+    await waitFor(() => expect(startJobPolling).toHaveBeenCalled());
+
+    const failed = { id: 9, status: 4 };
+    getPredictions.mockResolvedValue([failed]);
+    const [, , onError] = startJobPolling.mock.calls[0];
+    await onError({ id: 77, status: "error", error: "boom" });
+
+    expect(onSaved).toHaveBeenLastCalledWith(failed);
+    console.error.mockRestore();
   });
 });
