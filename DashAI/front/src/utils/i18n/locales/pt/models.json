@@ -430,7 +430,7 @@
     "diagramReceivesOne": "apenas o recebe",
     "diagramFoldEvaluation": "Avaliação",
     "honestMetricsOutcome": "Assim o teste não \"vê\" informação de antemão (isso se chama vazamento de dados) e as métricas não ficam infladas.",
-    "honestMetricsCvOutcome": "Com validação cruzada isso acontece em cada fold, cada uma das rodadas em que os dados são divididos entre treinar e avaliar. Assim a avaliação não \"vê\" informação de antemão (isso se chama vazamento de dados) e as métricas não ficam infladas.",
+    "honestMetricsCvOutcome": "Com validação cruzada isso acontece em cada dobra, cada uma das rodadas em que os dados são divididos entre treinar e avaliar. Assim a avaliação não \"vê\" informação de antemão (isso se chama vazamento de dados) e as métricas não ficam infladas.",
     "performanceTitle": "Melhorar o desempenho.",
     "performance": "Escalar valores ou reduzir colunas pode ajudar o modelo.",
     "consistencyTitle": "Previsões consistentes.",

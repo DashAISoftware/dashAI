@@ -420,7 +420,7 @@
     "diagramReceivesOne": "只接收它",
     "diagramFoldEvaluation": "评估",
     "honestMetricsOutcome": "这样测试数据不会提前“看到”信息（这称为数据泄漏），指标也不会虚高。",
-    "honestMetricsCvOutcome": "在交叉验证中，这会在每个折（fold）中发生，即数据在训练和评估之间划分的每一轮。这样评估数据不会提前“看到”信息（这称为数据泄漏），指标也不会虚高。",
+    "honestMetricsCvOutcome": "在交叉验证中，这会在每一折中发生，即数据在训练和评估之间划分的每一轮。这样评估数据不会提前“看到”信息（这称为数据泄漏），指标也不会虚高。",
     "performanceTitle": "提升性能。",
     "performance": "缩放数值或减少列可能有助于模型。",
     "consistencyTitle": "一致的预测。",

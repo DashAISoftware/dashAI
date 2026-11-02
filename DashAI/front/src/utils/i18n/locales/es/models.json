@@ -429,7 +429,7 @@
     "diagramReceives": "solo lo reciben",
     "diagramFoldEvaluation": "Evaluación",
     "honestMetricsOutcome": "Así la prueba no \"ve\" información de antemano (esto se llama fuga de datos) y las métricas no quedan infladas.",
-    "honestMetricsCvOutcome": "Con validación cruzada esto ocurre en cada fold, cada una de las rondas en que los datos se reparten entre entrenar y evaluar. Así la evaluación no \"ve\" información de antemano (esto se llama fuga de datos) y las métricas no quedan infladas.",
+    "honestMetricsCvOutcome": "Con validación cruzada esto ocurre en cada pliegue, es decir, en cada ronda en que los datos se reparten entre entrenar y evaluar. Así la evaluación no \"ve\" información de antemano (esto se llama fuga de datos) y las métricas no quedan infladas.",
     "performanceTitle": "Mejorar el rendimiento.",
     "performance": "Escalar valores o reducir columnas puede ayudar al modelo.",
     "consistencyTitle": "Predicciones consistentes.",
