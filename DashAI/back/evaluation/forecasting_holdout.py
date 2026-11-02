@@ -69,6 +69,9 @@ class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
     # Both take a splitter that cuts the series into origins, in steps.
     SPLITTER_PARTITIONING = "origins"
     DEFAULT_SPLITTER = "TemporalHoldoutSplitter"
+    # Both splitters cut origins, so the partitioning alone would take the
+    # other strategy's: the same backtest under this strategy's label.
+    SPLITTERS: tuple = ("TemporalHoldoutSplitter",)
     # A single validation origin leaves nothing to compare across origins,
     # so the run offers its forecasts and no per-origin view.
     RESULT_VIEWS: tuple = ("forecasts",)

@@ -78,6 +78,34 @@ def test_a_default_splitter_carves_the_way_its_strategy_takes(
 
 
 @pytest.mark.parametrize(
+    ("strategy", "splitters"),
+    [
+        (HoldoutEvaluationStrategy, None),
+        (CrossValidationEvaluationStrategy, None),
+        (FullDatasetEvaluationStrategy, None),
+        (ForecastingHoldoutEvaluationStrategy, ["TemporalHoldoutSplitter"]),
+        (ForecastingCrossValidationEvaluationStrategy, ["RollingOriginSplitter"]),
+    ],
+)
+def test_a_strategy_declares_the_splitters_it_takes(strategy, splitters):
+    # None: every splitter of its partitioning that the task offers. A
+    # forecasting strategy takes one: a holdout is the backtest with one
+    # origin and the cross-validation the one with several, so a rolling
+    # origin under the holdout would be the same backtest with another label.
+    assert strategy.get_metadata()["splitters"] == splitters
+
+
+@pytest.mark.parametrize(
+    ("strategy", "_partitioning", "default_splitter", "_views"),
+    [row for row in DECLARED if row[0].get_metadata().get("splitters")],
+)
+def test_a_default_splitter_is_one_its_strategy_takes(
+    strategy, _partitioning, default_splitter, _views
+):
+    assert default_splitter in strategy.get_metadata()["splitters"]
+
+
+@pytest.mark.parametrize(
     ("strategy", "label"),
     [
         (HoldoutEvaluationStrategy, "Holdout"),

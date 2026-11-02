@@ -531,6 +531,15 @@ def _validate_splits(
                 f"splitter, but {splitter_name} is a {partitioning!r} splitter."
             ),
         )
+    taken_names = getattr(strategy_class, "SPLITTERS", None)
+    if taken_names is not None and splitter_name not in taken_names:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Evaluation strategy {strategy_class.__name__} takes only "
+                f"{', '.join(taken_names)}, not {splitter_name}."
+            ),
+        )
     try:
         validate_splitter_parameters(splitter_class, splits_data)
     except ValidationError as e:

@@ -67,6 +67,14 @@ class BaseEvaluationStrategy:
     #: wizard does not pick one by name.
     DEFAULT_SPLITTER: Optional[str] = None
 
+    #: The splitters this strategy takes, by name, or None for every one of
+    #: ``SPLITTER_PARTITIONING`` the task offers. A strategy names them when
+    #: the partitioning alone admits a splitter that would run it as another
+    #: strategy: both forecasting splitters cut origins, and a rolling origin
+    #: under the holdout is the cross-validation with the holdout's label. The
+    #: session API refuses any other, and the wizard offers only these.
+    SPLITTERS: Optional[tuple] = None
+
     #: The views of a finished run beyond its metrics, which the run screens
     #: show as tabs. ``"fold_metrics"``: a score per fold or origin, served by
     #: ``/fold-metrics``. ``"forecasts"``: the forecasts of every origin,
@@ -85,13 +93,14 @@ class BaseEvaluationStrategy:
             dataset once or into folds; ``scored_splits``, the partitions it
             writes metrics for; ``splitter_partitioning`` and
             ``default_splitter``, which splitters it takes and which one a
-            session starts on; and ``result_views``, the views a finished run
-            offers.
+            session starts on; ``splitters``, the names it is limited to, or
+            None; and ``result_views``, the views a finished run offers.
         """
         return {
             "kind": cls.KIND,
             "scored_splits": [split.value for split in cls.SCORED_SPLITS],
             "splitter_partitioning": cls.SPLITTER_PARTITIONING,
             "default_splitter": cls.DEFAULT_SPLITTER,
+            "splitters": list(cls.SPLITTERS) if cls.SPLITTERS is not None else None,
             "result_views": list(cls.RESULT_VIEWS),
         }

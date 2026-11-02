@@ -98,7 +98,8 @@ export const buildSplitsPayload = ({
  * The strategy declares the partitioning of the splitters it takes
  * (`splitter_partitioning`), and each splitter how it carves the dataset
  * (`partitioning`), so which splitter goes with which strategy is read from
- * both rather than inferred from a name or from the strategy's kind.
+ * both rather than inferred from a name or from the strategy's kind. A
+ * strategy that names the splitters it takes (`splitters`) takes only those.
  *
  * @param {object} strategy the selected EvaluationStrategy component
  * @param {Array} splitters splitter components compatible with the task
@@ -107,8 +108,11 @@ export const buildSplitsPayload = ({
 export const splittersOf = (strategy, splitters) => {
   const partitioning = strategy?.metadata?.splitter_partitioning;
   if (!partitioning) return [];
+  const named = strategy?.metadata?.splitters ?? null;
   return (splitters ?? []).filter(
-    (splitter) => splitter?.metadata?.partitioning === partitioning,
+    (splitter) =>
+      splitter?.metadata?.partitioning === partitioning &&
+      (named === null || named.includes(splitter?.name)),
   );
 };
 
