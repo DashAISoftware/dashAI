@@ -119,6 +119,12 @@ from DashAI.back.dataloaders.classes.plain_text_document_dataloader import (
 from DashAI.back.dataloaders.classes.pypdf_document_dataloader import (
     PypdfDocumentDataLoader,
 )
+from DashAI.back.dataloaders.classes.python_docx_document_dataloader import (
+    PythonDocxDocumentDataLoader,
+)
+from DashAI.back.dataloaders.classes.unstructured_document_dataloader import (
+    UnstructuredDocumentDataLoader,
+)
 
 # Dataset Sources
 from DashAI.back.dataset_sources.huggingface_dataset_source import (
@@ -741,6 +747,8 @@ def get_initial_components():
         PdfPlumberDocumentDataLoader,
         PdfMinerDocumentDataLoader,
         PlainTextDocumentDataLoader,
+        PythonDocxDocumentDataLoader,
+        UnstructuredDocumentDataLoader,
         # Dataset Sources
         HuggingFaceDatasetSource,
         KaggleDatasetSource,

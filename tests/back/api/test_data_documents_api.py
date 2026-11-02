@@ -1,5 +1,6 @@
 """Tests for the /api/v1/documents CRUD endpoints."""
 
+import shutil
 import uuid
 from pathlib import Path
 
@@ -11,6 +12,8 @@ DOCUMENT_LOADERS = {
     "PdfPlumberDocumentDataLoader",
     "PdfMinerDocumentDataLoader",
     "PlainTextDocumentDataLoader",
+    "PythonDocxDocumentDataLoader",
+    "UnstructuredDocumentDataLoader",
 }
 
 
@@ -51,6 +54,25 @@ def test_create_rejects_a_duplicate_name(client):
 
 def test_create_rejects_an_empty_name(client):
     assert _create(client, name="   ").status_code == 422
+
+
+def test_create_rejects_a_loader_still_to_be_downloaded(client):
+    config = client.app.container._services["config"]
+    model_dir = Path(config["COMPONENT_PATH"]) / "UnstructuredDocumentDataLoader"
+    shutil.rmtree(model_dir, ignore_errors=True)
+    response = _create(
+        client, file_name="report.docx", dataloader="UnstructuredDocumentDataLoader"
+    )
+    assert response.status_code == 409
+    assert "must be downloaded" in response.json()["detail"]
+    (model_dir / "en_core_web_sm").mkdir(parents=True)
+    (model_dir / "en_core_web_sm" / "__init__.py").write_text("", encoding="utf-8")
+    (model_dir / "en_core_web_sm-3.8.0.dist-info").mkdir()
+    response = _create(
+        client, file_name="report.docx", dataloader="UnstructuredDocumentDataLoader"
+    )
+    assert response.status_code == 201, response.text
+    shutil.rmtree(model_dir)
 
 
 def test_create_rejects_an_unknown_loader(client):
