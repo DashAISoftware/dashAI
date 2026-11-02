@@ -6,6 +6,7 @@ import RoleColumnSelectors from "./RoleColumnSelectors";
 import {
   defaultRoleSelection,
   optionsForRole,
+  protectedRolesFirst,
   resolveSelection,
   selectionReady,
   shownRoles,
@@ -70,17 +71,10 @@ function BaseColumnsStep({
     return t("models:label.protectedRoleHelp");
   };
 
-  // The protected roles first: what the model predicts is the simplest pick
-  // and gives the candidates their purpose.
-  const displayedRoles = [
-    ...roles.filter((role) => !role.transformable),
-    ...roles.filter((role) => role.transformable),
-  ];
-
   return (
     <Grid container spacing={2}>
       <RoleColumnSelectors
-        roles={displayedRoles}
+        roles={protectedRolesFirst(roles)}
         selection={selection}
         onChange={(name, columns) =>
           setSelection((prev) => ({ ...prev, [name]: columns }))

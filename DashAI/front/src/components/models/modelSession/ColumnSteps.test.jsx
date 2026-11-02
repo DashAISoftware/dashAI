@@ -107,7 +107,7 @@ describe("SelectColumnsStep", () => {
     renderSelect(SUPERVISED);
     await waitFor(() => expect(validateColumns).toHaveBeenCalled());
 
-    expect(selectorLabels()).toEqual(["Features", "Target"]);
+    expect(selectorLabels()).toEqual(["Target", "Features"]);
   });
 
   it("sends the default columns by role: the last one is the target", async () => {
