@@ -171,6 +171,7 @@ function CreateSessionSteps({
     }
 
     const taskDisplayName =
+      selectedTask.display_name ||
       selectedTask.metadata?.display_name ||
       selectedTask.name
         .replace("Task", "")
@@ -178,11 +179,11 @@ function CreateSessionSteps({
         .trim();
 
     return generateSequentialName({
-      base: `Session_${taskDisplayName}`,
+      base: `${t("common:session")}_${taskDisplayName}`,
       items: existingSessions,
       filter: (session) => session.task_name === selectedTask.name,
     });
-  }, [selectedTask, existingSessions]);
+  }, [selectedTask, existingSessions, t]);
 
   const formik = useFormik({
     initialValues: {
