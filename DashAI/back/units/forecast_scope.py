@@ -172,16 +172,19 @@ def origin_splitter_field():
         },
         description=MultilingualString(
             en="Splitter that cuts the series into backtest origins, in steps.",
-            es="Particionador que corta la serie en origenes de backtest, en pasos.",
-            pt="Divisor que corta a serie em origens de backtest, em passos.",
-            de="Splitter, der die Reihe in Backtest-Ursprunge schneidet, in Schritten.",
+            es="Divisor que corta la serie en orígenes de backtest, en pasos.",
+            pt="Divisor que corta a série em origens de backtest, em passos.",
+            de=(
+                "Aufteiler, der die Reihe in Backtest-Ursprünge schneidet, "
+                "in Schritten."
+            ),
             zh="以步为单位将序列切分为回测起点的划分器。",
         ),
         alias=MultilingualString(
             en="Splitter",
-            es="Particionador",
+            es="Divisor",
             pt="Divisor",
-            de="Splitter",
+            de="Aufteiler",
             zh="划分器",
         ),
     )

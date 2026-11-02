@@ -24,14 +24,14 @@ def horizon_field():
                 "monthly series."
             ),
             es=(
-                "Cuantos pasos hacia adelante se evalua el modelo, desde cada "
+                "Cuántos pasos hacia adelante se evalúa el modelo, desde cada "
                 "origen y en el test. Un paso es un periodo de la serie: un mes "
                 "en una serie mensual."
             ),
             pt=(
-                "Quantos passos a frente o modelo e avaliado, a partir de cada "
-                "origem e no teste. Um passo e um periodo da serie: um mes numa "
-                "serie mensal."
+                "Quantos passos à frente o modelo é avaliado, a partir de cada "
+                "origem e no teste. Um passo é um período da série: um mês numa "
+                "série mensal."
             ),
             de=(
                 "Wie viele Schritte voraus das Modell bewertet wird, von jedem "

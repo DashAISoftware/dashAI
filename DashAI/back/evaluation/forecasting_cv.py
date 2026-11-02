@@ -27,20 +27,20 @@ class ForecastingCrossValidationEvaluationStrategy(FoldEvaluationStrategy):
         ),
         es=(
             "Avanza el origen a lo largo de la serie. Cada pliegue entrena con "
-            "todo lo anterior a un punto y se evalua con las filas justo "
-            "posteriores; luego el origen avanza y el modelo se reajusta con mas "
-            "historia. Las particiones de entrenamiento no se evaluan."
+            "todo lo anterior a un punto y se evalúa con las filas justo "
+            "posteriores; luego el origen avanza y el modelo se reajusta con más "
+            "historia. Las particiones de entrenamiento no se evalúan."
         ),
         pt=(
-            "Avanca a origem ao longo da serie. Cada dobra treina com tudo o que "
-            "vem antes de um ponto e e avaliada nas linhas logo depois; entao a "
-            "origem avanca e o modelo e reajustado com mais historico. As "
-            "particoes de treino nao sao avaliadas."
+            "Avança a origem ao longo da série. Cada dobra treina com tudo o que "
+            "vem antes de um ponto e é avaliada nas linhas logo depois; então a "
+            "origem avança e o modelo é reajustado com mais histórico. As "
+            "partições de treino não são avaliadas."
         ),
         de=(
             "Schiebt den Ursprung durch die Zeitreihe. Jeder Fold trainiert auf "
             "allem bis zu einem Punkt und wird auf den unmittelbar folgenden "
-            "Zeilen bewertet, dann rueckt der Ursprung weiter und das Modell "
+            "Zeilen bewertet, dann rückt der Ursprung weiter und das Modell "
             "wird mit mehr Historie neu angepasst. Trainingspartitionen werden "
             "nicht bewertet."
         ),

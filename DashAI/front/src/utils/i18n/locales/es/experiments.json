@@ -71,7 +71,7 @@
     "rowIndexes": "Índices de filas",
     "rowIndexesDescription": "Especifica rangos de filas para cada partición usando valores separados por comas o rangos (ej. 0-100, 200).",
     "seed": "Semilla",
-    "selectDatasetColumns": "Indique qué columnas del dataset toma cada rol de la tarea.",
+    "selectDatasetColumns": "Indica qué columnas del dataset toma cada rol de la tarea.",
     "selectDatasetTitle": "Seleccione un dataset para la tarea seleccionada",
     "selectHowToDivideDataset": "Seleccione cómo dividir el dataset en subconjuntos de entrenamiento, validación y prueba.",
     "selectEvaluationStrategy": "Estrategia de evaluación",

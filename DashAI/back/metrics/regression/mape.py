@@ -51,18 +51,18 @@ class MAPE(RegressionMetric):
         ),
         es=(
             "Error promedio como porcentaje del valor real, lo que permite "
-            "comparar pronosticos entre series de distinta magnitud. No esta "
-            "disponible si algun valor real es cero."
+            "comparar pronósticos entre series de distinta magnitud. No está "
+            "disponible si algún valor real es cero."
         ),
         pt=(
-            "Erro medio como porcentagem do valor real, permitindo comparar "
-            "previsoes entre series de magnitudes diferentes. Nao esta "
-            "disponivel se algum valor real for zero."
+            "Erro médio como porcentagem do valor real, permitindo comparar "
+            "previsões entre séries de magnitudes diferentes. Não está "
+            "disponível se algum valor real for zero."
         ),
         de=(
             "Durchschnittlicher Fehler als Prozentsatz des wahren Wertes, "
-            "sodass Prognosen ueber unterschiedlich grosse Reihen hinweg "
-            "vergleichbar sind. Nicht verfuegbar, wenn ein wahrer Wert null "
+            "sodass Prognosen über unterschiedlich große Reihen hinweg "
+            "vergleichbar sind. Nicht verfügbar, wenn ein wahrer Wert null "
             "ist."
         ),
         zh=(

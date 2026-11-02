@@ -91,11 +91,11 @@ class ARIMASchema(BaseSchema):
                 "autoregressive order."
             ),
             es=(
-                "De cuantos valores pasados es suma ponderada el pronostico, "
+                "De cuántos valores pasados es suma ponderada el pronóstico, "
                 "el orden autorregresivo."
             ),
             pt=(
-                "De quantos valores passados a previsao e soma ponderada, a "
+                "De quantos valores passados a previsão é soma ponderada, a "
                 "ordem autorregressiva."
             ),
             de=(
@@ -115,14 +115,14 @@ class ARIMASchema(BaseSchema):
                 "hovers around a fixed level."
             ),
             es=(
-                "Cuantas veces diferenciar la serie antes de modelarla. 1 "
+                "Cuántas veces diferenciar la serie antes de modelarla. 1 "
                 "elimina una tendencia lineal, 0 sirve para una serie que ya "
                 "oscila alrededor de un nivel fijo."
             ),
             pt=(
-                "Quantas vezes diferenciar a serie antes de modela-la. 1 "
-                "remove uma tendencia linear, 0 serve para uma serie que ja "
-                "oscila em torno de um nivel fixo."
+                "Quantas vezes diferenciar a série antes de modelá-la. 1 "
+                "remove uma tendência linear, 0 serve para uma série que já "
+                "oscila em torno de um nível fixo."
             ),
             de=(
                 "Wie oft die Reihe vor der Modellierung differenziert wird. 1 "
@@ -144,16 +144,16 @@ class ARIMASchema(BaseSchema):
                 "the moving average order."
             ),
             es=(
-                "Cuantos errores de pronostico pasados alimentan el siguiente "
-                "pronostico, el orden de media movil."
+                "Cuántos errores de pronóstico pasados alimentan el siguiente "
+                "pronóstico, el orden de media móvil."
             ),
             pt=(
-                "Quantos erros de previsao passados alimentam a proxima "
-                "previsao, a ordem de media movel."
+                "Quantos erros de previsão passados alimentam a próxima "
+                "previsão, a ordem de média móvel."
             ),
             de=(
-                "Wie viele vergangene Prognosefehler in die naechste Prognose "
-                "einfliessen, die Ordnung des gleitenden Mittels."
+                "Wie viele vergangene Prognosefehler in die nächste Prognose "
+                "einfließen, die Ordnung des gleitenden Mittels."
             ),
             zh="有多少个过去的预测误差参与下一次预测，即移动平均阶数。",
         ),
@@ -167,17 +167,17 @@ class ARIMASchema(BaseSchema):
                 "seasons the forecast is a weighted sum of. 0 leaves it out."
             ),
             es=(
-                "El orden autorregresivo de la parte estacional: de cuantas "
-                "temporadas pasadas es suma ponderada el pronostico. 0 la omite."
+                "El orden autorregresivo de la parte estacional: de cuántas "
+                "temporadas pasadas es suma ponderada el pronóstico. 0 la omite."
             ),
             pt=(
                 "A ordem autorregressiva da parte sazonal: de quantas temporadas "
-                "passadas a previsao e soma ponderada. 0 a omite."
+                "passadas a previsão é soma ponderada. 0 a omite."
             ),
             de=(
                 "Die autoregressive Ordnung des saisonalen Teils: aus wie vielen "
                 "vergangenen Saisons die Prognose gewichtet gebildet wird. 0 "
-                "laesst ihn weg."
+                "lässt ihn weg."
             ),
             zh=(
                 "季节部分的自回归阶数：预测由多少个过去的季节加权求和得到。"
@@ -194,12 +194,12 @@ class ARIMASchema(BaseSchema):
                 "removes a pattern that repeats every season."
             ),
             es=(
-                "Cuantas veces diferenciar la serie con una temporada de "
-                "distancia. 1 elimina un patron que se repite cada temporada."
+                "Cuántas veces diferenciar la serie con una temporada de "
+                "distancia. 1 elimina un patrón que se repite cada temporada."
             ),
             pt=(
-                "Quantas vezes diferenciar a serie com uma temporada de "
-                "distancia. 1 remove um padrao que se repete a cada temporada."
+                "Quantas vezes diferenciar a série com uma temporada de "
+                "distância. 1 remove um padrão que se repete a cada temporada."
             ),
             de=(
                 "Wie oft die Reihe im Abstand einer Saison differenziert wird. "
@@ -217,17 +217,17 @@ class ARIMASchema(BaseSchema):
                 "seasonal errors feed into the next forecast."
             ),
             es=(
-                "El orden de media movil de la parte estacional: cuantos errores "
-                "estacionales pasados alimentan el siguiente pronostico."
+                "El orden de media móvil de la parte estacional: cuántos errores "
+                "estacionales pasados alimentan el siguiente pronóstico."
             ),
             pt=(
-                "A ordem de media movel da parte sazonal: quantos erros sazonais "
-                "passados alimentam a proxima previsao."
+                "A ordem de média móvel da parte sazonal: quantos erros sazonais "
+                "passados alimentam a próxima previsão."
             ),
             de=(
                 "Die Ordnung des gleitenden Mittels im saisonalen Teil: wie "
-                "viele vergangene saisonale Fehler in die naechste Prognose "
-                "einfliessen."
+                "viele vergangene saisonale Fehler in die nächste Prognose "
+                "einfließen."
             ),
             zh="季节部分的移动平均阶数：有多少个过去的季节误差参与下一次预测。",
         ),
@@ -246,23 +246,23 @@ class ARIMASchema(BaseSchema):
                 "seasonal order is above 0."
             ),
             es=(
-                "Cuantos pasos forman una temporada, en la que cuentan los "
-                "ordenes estacionales: 12 para datos mensuales que se repiten "
-                "cada ano, 7 para datos diarios que se repiten cada semana. "
-                "Tiene que ser al menos 2 si algun orden estacional es mayor "
+                "Cuántos pasos forman una temporada, en la que cuentan los "
+                "órdenes estacionales: 12 para datos mensuales que se repiten "
+                "cada año, 7 para datos diarios que se repiten cada semana. "
+                "Tiene que ser al menos 2 si algún orden estacional es mayor "
                 "que 0."
             ),
             pt=(
                 "Quantos passos formam uma temporada, na qual contam as ordens "
                 "sazonais: 12 para dados mensais que se repetem a cada ano, 7 "
-                "para dados diarios que se repetem a cada semana. Tem que ser "
+                "para dados diários que se repetem a cada semana. Tem que ser "
                 "pelo menos 2 se alguma ordem sazonal for maior que 0."
             ),
             de=(
                 "Wie viele Schritte eine Saison bilden, in der die saisonalen "
-                "Ordnungen zaehlen: 12 fuer monatliche Daten mit jaehrlicher "
-                "Wiederholung, 7 fuer taegliche Daten mit woechentlicher. "
-                "Mindestens 2, wenn eine saisonale Ordnung groesser als 0 ist."
+                "Ordnungen zählen: 12 für monatliche Daten mit jährlicher "
+                "Wiederholung, 7 für tägliche Daten mit wöchentlicher. "
+                "Mindestens 2, wenn eine saisonale Ordnung größer als 0 ist."
             ),
             zh=(
                 "一个季节包含多少步，季节阶数以此计数：按年重复的月度数据为 12，"
@@ -273,7 +273,7 @@ class ARIMASchema(BaseSchema):
             en="Season length",
             es="Largo de temporada",
             pt="Comprimento da temporada",
-            de="Saisonlaenge",
+            de="Saisonlänge",
             zh="季节长度",
         ),
     )  # type: ignore
@@ -315,18 +315,18 @@ class ARIMA(SingleSeriesForecastingModel):
         ),
         es=(
             "Modela una serie a partir de sus propios valores y errores "
-            "pasados, tras eliminar la tendencia por diferenciacion. El modelo "
-            "de referencia estandar para series sin estacionalidad marcada."
+            "pasados, tras eliminar la tendencia por diferenciación. El modelo "
+            "de referencia estándar para series sin estacionalidad marcada."
         ),
         pt=(
-            "Modela uma serie a partir dos seus proprios valores e erros "
-            "passados, apos remover a tendencia por diferenciacao. O modelo de "
-            "referencia padrao para series sem sazonalidade forte."
+            "Modela uma série a partir dos seus próprios valores e erros "
+            "passados, após remover a tendência por diferenciação. O modelo de "
+            "referência padrão para séries sem sazonalidade forte."
         ),
         de=(
             "Modelliert eine Reihe aus ihren eigenen vergangenen Werten und "
             "Fehlern, nachdem ein Trend wegdifferenziert wurde. Das "
-            "Standardreferenzmodell fuer Reihen ohne starke Saisonalitaet."
+            "Standardreferenzmodell für Reihen ohne starke Saisonalität."
         ),
         zh=(
             "在通过差分消除趋势后，用序列自身的历史值和历史误差建模。"
