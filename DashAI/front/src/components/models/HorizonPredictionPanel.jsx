@@ -111,7 +111,9 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    // The top padding leaves room for the outlined field's label, which sits
+    // above the field and was cut by the tab's scroll container.
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
       <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
         <TextField
           label={t("prediction:label.horizon")}
