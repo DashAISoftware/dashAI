@@ -56,6 +56,31 @@ def test_an_ordinary_strategy_is_not_offered_to_forecasting(client, tmp_path, st
     assert response.status_code == 422, response.text
 
 
+@pytest.mark.parametrize(
+    ("strategy", "splits"),
+    [(PAIRS[0][0], PAIRS[1][1]), (PAIRS[1][0], PAIRS[0][1])],
+    ids=["holdout-with-rolling", "cv-with-temporal-holdout"],
+)
+def test_a_forecasting_strategy_takes_only_its_own_splitter(
+    client, tmp_path, strategy, splits
+):
+    # Both splitters cut origins, so the partitioning alone let each strategy
+    # take the other's: the same backtest under the other strategy's label.
+    dataset_id = _upload(client, _monthly(), tmp_path, f"crossed-{strategy}")
+
+    response = client.post(
+        "/api/v1/model-session/",
+        json=_session_body(dataset_id, strategy=strategy, splits=splits),
+    )
+
+    assert response.status_code == 422, response.text
+    own = dict(PAIRS)[strategy]["splitter_name"]
+    assert response.json()["detail"] == (
+        f"Evaluation strategy {strategy} takes only {own}, "
+        f"not {splits['splitter_name']}."
+    )
+
+
 def test_a_splitter_of_rows_is_refused_by_a_forecasting_strategy(client, tmp_path):
     dataset_id = _upload(client, _monthly(), tmp_path, "rows-splitter")
     splits = {"splitter_name": "HoldoutSplitter", "train": 0.6, "test": 0.2}

@@ -40,6 +40,9 @@ export interface IEvaluationStrategyMetadata {
   splitter_partitioning: string | null;
   // The splitter a session starts on, or null for the first one offered.
   default_splitter: string | null;
+  // The splitters it is limited to, by name, or null for every one of its
+  // partitioning.
+  splitters: string[] | null;
   // The views of a finished run beyond its metrics.
   result_views: ("fold_metrics" | "forecasts")[];
 }

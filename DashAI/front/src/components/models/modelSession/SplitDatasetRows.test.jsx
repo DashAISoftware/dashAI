@@ -54,12 +54,21 @@ jest.mock("../../shared/FormSchema", () => {
 
 jest.mock("./SplitPreview", () => ({
   __esModule: true,
-  default: ({ preview, loading, failure, onRetry }) => (
+  default: ({
+    preview,
+    loading,
+    failure,
+    onRetry,
+    description,
+    splitterDescription,
+  }) => (
     <div
       data-testid="split-preview"
       data-preview={JSON.stringify(preview ?? null)}
       data-loading={String(loading)}
       data-failure={JSON.stringify(failure ?? null)}
+      data-description={description ?? ""}
+      data-splitter-description={splitterDescription ?? ""}
     >
       <button type="button" onClick={onRetry}>
         retry-preview
@@ -546,6 +555,29 @@ describe("SplitDatasetRows: holdout", () => {
     expect(spies.setSplitter).toHaveBeenLastCalledWith(TEMPORAL_HOLDOUT);
   });
 
+  it("keeps both descriptions though the holdout strategy takes a single splitter", async () => {
+    // The holdout section is a form of its own (§6.7): the rule of one
+    // description for a single splitter is for the sections that show it.
+    mockComponents({
+      splitters: [{ ...HOLDOUT, description: "Shuffles the rows." }],
+      strategies: [{ ...HOLDOUT_STRATEGY, description: "Cuts once." }],
+    });
+    renderStep();
+    await waitForSplitter(HOLDOUT.name);
+
+    const preview = screen.getByTestId("split-preview");
+    await waitFor(() =>
+      expect(preview).toHaveAttribute(
+        "data-splitter-description",
+        "Shuffles the rows.",
+      ),
+    );
+    expect(preview).toHaveAttribute("data-description", "Cuts once.");
+    expect(
+      screen.queryByText(i18n.t("experiments:label.splitter")),
+    ).not.toBeInTheDocument();
+  });
+
   it("hides only group_column from the generated form on a random split, and the proportions too on an index split", async () => {
     renderStep();
     const form = await waitForSplitter(HOLDOUT.name);
@@ -826,6 +858,21 @@ describe("SplitDatasetRows: cross-validation", () => {
     ).toEqual(["K-Fold", "Stratified", "Group K-Fold"]);
   });
 
+  it("shows the fold splitter as fixed text when the task offers only one", async () => {
+    mockComponents({ splitters: [HOLDOUT, KFOLD] });
+    renderStep();
+    await waitForSplitter(HOLDOUT.name);
+    await switchToCv();
+    await waitForSplitter(KFOLD.name);
+
+    expect(harness.splitter).toBe(KFOLD);
+    expect(
+      screen.getByText(i18n.t("experiments:label.cvType")),
+    ).toBeInTheDocument();
+    expect(screen.getByText("K-Fold")).toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
+
   it("shows the group column card only for the splitter whose schema has group_column", async () => {
     renderStep();
     await waitForSplitter(HOLDOUT.name);
@@ -1062,16 +1109,79 @@ describe("SplitDatasetRows: a strategy of any other kind", () => {
     );
   });
 
-  it("shows no splitter select when the strategy takes a single offered splitter", async () => {
+  it("shows the splitter as fixed text, with no select, when the strategy takes a single offered splitter", async () => {
     renderBacktest({ splitters: [ROLLING_ORIGIN, HOLDOUT] });
     await waitForSplitter(ROLLING_ORIGIN.name);
 
     expect(harness.splitter).toBe(ROLLING_ORIGIN);
     expect(
-      screen.queryByText(i18n.t("experiments:label.splitter")),
-    ).not.toBeInTheDocument();
+      screen.getByText(i18n.t("experiments:label.splitter")),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Rolling origin")).toBeInTheDocument();
     expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
     await waitFor(() => expect(lastReady()).toBe(true));
+  });
+
+  it("takes only the splitters the strategy names, though the task offers more of its partitioning", async () => {
+    mockComponents({
+      splitters: ORIGIN_SPLITTERS,
+      strategies: [
+        {
+          ...BACKTEST_STRATEGY,
+          metadata: {
+            ...BACKTEST_STRATEGY.metadata,
+            splitters: ["RollingOriginSplitter"],
+          },
+        },
+      ],
+    });
+    mockFormParams = ORIGIN_PARAMS;
+    renderStep({ taskName: "SingleSeriesForecastingTask" });
+    await waitForSplitter(ROLLING_ORIGIN.name);
+
+    expect(harness.splitter).toBe(ROLLING_ORIGIN);
+    expect(screen.getByText("Rolling origin")).toBeInTheDocument();
+    expect(screen.queryByText("Temporal holdout")).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+  });
+
+  it("describes a single splitter once, with the splitter's description", async () => {
+    const strategy = { ...BACKTEST_STRATEGY, description: "Walks the origin." };
+    const rolling = { ...ROLLING_ORIGIN, description: "Rolls the origin." };
+    mockComponents({ splitters: [rolling], strategies: [strategy] });
+    mockFormParams = ORIGIN_PARAMS;
+    renderStep({ taskName: "SingleSeriesForecastingTask" });
+    await waitForSplitter(ROLLING_ORIGIN.name);
+
+    const preview = screen.getByTestId("split-preview");
+    await waitFor(() =>
+      expect(preview).toHaveAttribute(
+        "data-splitter-description",
+        "Rolls the origin.",
+      ),
+    );
+    expect(preview).toHaveAttribute("data-description", "");
+  });
+
+  it("describes both the strategy and the splitter when the strategy offers a choice", async () => {
+    const strategy = { ...BACKTEST_STRATEGY, description: "Walks the origin." };
+    const rolling = { ...ROLLING_ORIGIN, description: "Rolls the origin." };
+    mockComponents({
+      splitters: [ORIGIN_TEMPORAL_HOLDOUT, rolling],
+      strategies: [strategy],
+    });
+    mockFormParams = ORIGIN_PARAMS;
+    renderStep({ taskName: "SingleSeriesForecastingTask" });
+    await waitForSplitter(ROLLING_ORIGIN.name);
+
+    const preview = screen.getByTestId("split-preview");
+    await waitFor(() =>
+      expect(preview).toHaveAttribute(
+        "data-splitter-description",
+        "Rolls the origin.",
+      ),
+    );
+    expect(preview).toHaveAttribute("data-description", "Walks the origin.");
   });
 });
 

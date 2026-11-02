@@ -369,22 +369,36 @@ function SplitDatasetRows({
   const manualMessage = manualParseError || (isManual && errorMessages[0]);
   const splitsMessage = isManual ? "" : errorMessages.join(" ");
 
+  // A strategy that takes a single splitter offers no choice: the splitter is
+  // named, not selected.
+  const singleSplitter = allowedSplitters.length === 1;
   const splitterSelect = (label) => (
     <SplitsCard label={label}>
-      <FormControl fullWidth size="small">
-        <Select
-          value={splitter ?? ""}
-          onChange={(e) => setSplitter(e.target.value)}
-        >
-          {allowedSplitters.map((type) => (
-            <MenuItem key={type.name} value={type}>
-              {type.display_name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      {singleSplitter ? (
+        <Typography variant="body2">
+          {allowedSplitters[0].display_name ?? allowedSplitters[0].name}
+        </Typography>
+      ) : (
+        <FormControl fullWidth size="small">
+          <Select
+            value={splitter ?? ""}
+            onChange={(e) => setSplitter(e.target.value)}
+          >
+            {allowedSplitters.map((type) => (
+              <MenuItem key={type.name} value={type}>
+                {type.display_name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
     </SplitsCard>
   );
+  // Where the splitter is shown, a single one is described by its own text
+  // alone: the strategy's would say the same. The holdout section shows no
+  // splitter and keeps both (§6.7).
+  const strategyDescription =
+    !isHoldout && singleSplitter ? null : selectedStrategy?.description;
 
   return (
     <Stack spacing={4} data-tour="exp-dataset-splits">
@@ -570,15 +584,15 @@ function SplitDatasetRows({
         </>
       )}
 
-      {/* ANY OTHER STRATEGY: its splitter's own form is all it needs, and the
-          splitter to use when it takes more than one */}
+      {/* ANY OTHER STRATEGY: its splitter, chosen or fixed, and the
+          splitter's own form */}
       {strategyKind &&
         ![
           STRATEGY_KINDS.HOLDOUT,
           STRATEGY_KINDS.CV,
           STRATEGY_KINDS.FULL,
         ].includes(strategyKind) &&
-        allowedSplitters.length > 1 &&
+        allowedSplitters.length > 0 &&
         splitterSelect(t("experiments:label.splitter"))}
 
       {/* FULL DATASET SECTION: nothing is carved, so there is no splitter to
@@ -593,7 +607,7 @@ function SplitDatasetRows({
           loading={previewLoading || (Boolean(splitterName) && !paramsOwned)}
           failure={previewFailure}
           onRetry={retryPreview}
-          description={selectedStrategy?.description}
+          description={strategyDescription}
           splitterDescription={splitter?.description}
         />
       )}

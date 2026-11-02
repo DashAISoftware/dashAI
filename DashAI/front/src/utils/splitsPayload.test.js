@@ -343,6 +343,35 @@ describe("the splitters a strategy takes", () => {
     expect(splittersOf(null, SPLITTERS)).toEqual([]);
   });
 
+  it("are only the ones it names, when it names them", () => {
+    const ORIGIN_TEMPORAL = {
+      name: "TemporalHoldoutSplitter",
+      metadata: { partitioning: "origins", geometry: "backtest_origins" },
+    };
+    const named = (splitters) => ({
+      metadata: { splitter_partitioning: "origins", splitters },
+    });
+
+    expect(
+      splittersOf(named(["RollingOriginSplitter"]), [ORIGIN_TEMPORAL, ROLLING]),
+    ).toEqual([ROLLING]);
+    expect(
+      splittersOf(named(["TemporalHoldoutSplitter"]), [
+        ORIGIN_TEMPORAL,
+        ROLLING,
+      ]),
+    ).toEqual([ORIGIN_TEMPORAL]);
+    // Named, but of another partitioning: still not taken.
+    expect(splittersOf(named(["HoldoutSplitter"]), [HOLDOUT, ROLLING])).toEqual(
+      [],
+    );
+    // Not named: every one of its partitioning.
+    expect(splittersOf(named(null), [ORIGIN_TEMPORAL, ROLLING])).toEqual([
+      ORIGIN_TEMPORAL,
+      ROLLING,
+    ]);
+  });
+
   it("start on the one the strategy declares, else on the first", () => {
     expect(
       defaultSplitterOf(strategy("holdout", "HoldoutSplitter"), [
