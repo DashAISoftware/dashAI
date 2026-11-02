@@ -145,9 +145,12 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
     def _process_batch(self, batch: "DashAIDataset") -> "DashAIDataset":
         """Tokenise a batch of text columns and store token IDs as integer columns.
 
-        Each text column is tokenised with the loaded HuggingFace tokenizer.
-        The resulting token-id sequence for each column is stored as a new
-        ``Integer``-typed column whose name matches the source column.
+        Each text column is tokenised with the loaded HuggingFace tokenizer
+        and padded to ``max_length``, so every batch and every partition
+        yields the same ``tok_{column}_0 .. tok_{column}_{max_length - 1}``
+        columns. Padding to the longest text of the batch instead would give
+        a test partition of shorter texts fewer columns than the training one
+        the steps after this were fitted on.
 
         Parameters
         ----------
@@ -171,7 +174,7 @@ class TokenizerConverter(AdvancedPreprocessingConverter, HuggingFaceWrapper):
 
             encoded = self.tokenizer(
                 texts,
-                padding=True,
+                padding="max_length",
                 truncation=True,
                 max_length=self.max_length,
                 return_tensors="pt",

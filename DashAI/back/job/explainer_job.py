@@ -16,6 +16,7 @@ from DashAI.back.splitters.splits_payload import (
     explainable_indexes,
     splitter_class_for,
 )
+from DashAI.back.tasks.session_roles import session_io
 from DashAI.back.units.build_global_explainer_unit import BuildGlobalExplainerUnit
 from DashAI.back.units.build_local_explainer_unit import BuildLocalExplainerUnit
 from DashAI.back.units.context import ExecutionContext
@@ -183,8 +184,21 @@ class ExplainerJob(BaseJob):
                 self.explainer_db.huey_id = self.kwargs.get("huey_id", None)
                 db.commit()
 
-                input_columns = model_session.input_columns
-                output_columns = model_session.output_columns
+                # The session stores its columns by role; its task says which
+                # are the model's inputs and outputs. A task that is not
+                # registered is reported by name, as the units do.
+                from kink import di
+
+                try:
+                    task = di["component_registry"][model_session.task_name]["class"]()
+                except Exception as e:
+                    raise JobError(
+                        f"Unable to find Task with name {model_session.task_name}"
+                        " in registry"
+                    ) from e
+                io = session_io(model_session, task)
+                input_columns = io.inputs
+                output_columns = io.outputs
 
                 # A session that preprocessed its data records the columns its
                 # converters produced, so the units that touch rows have to
@@ -237,7 +251,11 @@ class ExplainerJob(BaseJob):
                     output_columns=output_columns,
                     **preprocessing,
                     **(
-                        {"input_column_refs": model_session.input_column_refs or []}
+                        {
+                            "input_column_refs": [
+                                ref.model_dump(mode="json") for ref in io.input_refs
+                            ]
+                        }
                         if preprocessing
                         else {}
                     ),

@@ -11,6 +11,7 @@ import {
   stateToOptions,
   labelForRef,
 } from "./sessionColumnRefs";
+import rawColumnsCases from "./__fixtures__/rawColumnsCases.json";
 
 describe("sessionColumnRefs", () => {
   it("round-trips a raw ColumnRef through a key", () => {
@@ -314,5 +315,11 @@ describe("sessionColumnRefs", () => {
         "PCA: salida",
       );
     });
+  });
+});
+
+describe("rawColumnsNeededFor, on the cases the backend runs too", () => {
+  it.each(rawColumnsCases.map((c) => [c.name, c]))("%s", (_name, c) => {
+    expect(rawColumnsNeededFor(c.refs, c.steps)).toEqual(c.expected);
   });
 });

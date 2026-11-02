@@ -16,8 +16,10 @@ def _create_and_train_session_with_binarizer(client: TestClient, dataset_id: int
             "dataset_id": dataset_id,
             "task_name": "TabularClassificationTask",
             "name": "explainer-preprocessing-session",
-            "input_columns": [],
-            "output_columns": ["Species"],
+            "column_roles": {
+                "features": [{"kind": "group", "step": 0}],
+                "target": [{"kind": "raw", "name": "Species"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -41,7 +43,6 @@ def _create_and_train_session_with_binarizer(client: TestClient, dataset_id: int
                     "scope": [{"kind": "raw", "name": "SepalLengthCm"}],
                 },
             ],
-            "input_column_refs": [{"kind": "group", "step": 0}],
         },
     )
     assert session_response.status_code == 201, session_response.text

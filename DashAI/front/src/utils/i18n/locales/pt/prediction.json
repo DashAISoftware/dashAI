@@ -74,5 +74,12 @@
     "predictionsDeleted_one": "{{count}} previsão excluída com sucesso",
     "predictionsDeleted_many": "{{count}} previsões excluídas com sucesso",
     "predictionsDeleted_other": "{{count}} previsões excluídas com sucesso"
+  },
+  "unseen": {
+    "title": "Categorias que o modelo não viu no treinamento",
+    "description": "Foram codificadas como desconhecidas (uma linha de zeros, ou -1), então as previsões das linhas que as contêm são menos confiáveis.",
+    "line": "{{column}} ({{source}}): {{values}}",
+    "more_one": "e mais {{count}}",
+    "more_other": "e mais {{count}}"
   }
 }

@@ -12,11 +12,11 @@ from DashAI.back.dependencies.database.models import Dataset, ModelSession
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.preprocessing.column_ref import (
     ConverterSequence,
-    parse_column_refs,
     resolve_refs,
 )
 from DashAI.back.preprocessing.session_preprocessor import SessionPreprocessor
 from DashAI.back.splitters.splits_payload import normalize_splits_payload
+from DashAI.back.tasks.session_roles import session_io, session_roles
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -107,8 +107,9 @@ class PreprocessingJob(BaseJob):
                     model_session.preprocessing or {"steps": []}
                 )
                 sequence.validate_scopes()
-                input_refs = parse_column_refs(model_session.input_column_refs or [])
                 task = component_registry[model_session.task_name]["class"]()
+                io = session_io(model_session, task)
+                input_refs = io.input_refs
 
                 self.report_progress(0.05, "Splitting dataset")
                 splits_data = normalize_splits_payload(json.loads(model_session.splits))
@@ -128,12 +129,10 @@ class PreprocessingJob(BaseJob):
                 # ref names a column that exists once its converter has run.
                 prepared_dataset = task.prepare_for_task(
                     dataset=loaded_dataset,
-                    input_columns=[ref.name for ref in input_refs if ref.kind == "raw"],
-                    output_columns=model_session.output_columns,
+                    input_columns=io.raw_inputs,
+                    output_columns=io.outputs,
                 )
-                y_for_split = prepared_dataset.select_columns(
-                    model_session.output_columns
-                )
+                y_for_split = prepared_dataset.select_columns(io.outputs)
                 x, _, _ = splitter.split(prepared_dataset, y_for_split)
 
                 is_cv = isinstance(x, list)
@@ -155,7 +154,7 @@ class PreprocessingJob(BaseJob):
                         fold_preprocessor = SessionPreprocessor(
                             sequence,
                             component_registry,
-                            target_columns=model_session.output_columns,
+                            target_columns=io.outputs,
                         )
                         fold_preprocessor.fit_transform(x_folds[i])
                         with open(os.path.join(tmp_dir, f"fold_{i}.pkl"), "wb") as f:
@@ -165,7 +164,7 @@ class PreprocessingJob(BaseJob):
                     final_preprocessor = SessionPreprocessor(
                         sequence,
                         component_registry,
-                        target_columns=model_session.output_columns,
+                        target_columns=io.outputs,
                     )
                     final_transformed, final_resolved = (
                         final_preprocessor.fit_transform(x_folds[-1])
@@ -181,10 +180,16 @@ class PreprocessingJob(BaseJob):
                 task.prepare_for_task(
                     dataset=final_transformed["train"],
                     input_columns=resolved_input_columns,
-                    output_columns=model_session.output_columns,
+                    output_columns=io.outputs,
                 )
 
-                model_session.input_columns = resolved_input_columns
+                model_session.column_roles = (
+                    session_roles(model_session, task)
+                    .with_columns(
+                        task.roles_from_io(resolved_input_columns, io.outputs)
+                    )
+                    .to_stored()
+                )
                 model_session.preprocessing_artifacts_path = artifacts_dir
                 model_session.preprocessing_status = "ready"
                 model_session.preprocessing_error = None

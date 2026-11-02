@@ -1,7 +1,16 @@
 jest.mock("./api");
 
 import api from "./api";
-import { createModelSession } from "./modelSession";
+import {
+  createModelSession,
+  getPreprocessingStructure,
+  validateColumns,
+} from "./modelSession";
+
+const ROLES = {
+  features: [{ kind: "group" as const, step: 0 }],
+  target: [{ kind: "raw" as const, name: "label" }],
+};
 
 describe("createModelSession", () => {
   beforeEach(() => {
@@ -9,13 +18,12 @@ describe("createModelSession", () => {
     (api.post as jest.Mock).mockResolvedValue({ data: { id: "session-1" } });
   });
 
-  it("includes preprocessing and input_column_refs in the request body", async () => {
+  it("sends the columns by role and the preprocessing", async () => {
     await createModelSession(
       1,
       "TabularClassificationTask",
       "session-1",
-      [],
-      ["label"],
+      ROLES,
       [],
       [],
       [],
@@ -28,12 +36,12 @@ describe("createModelSession", () => {
           scope: [{ kind: "raw", name: "age" }],
         },
       ],
-      [{ kind: "group", step: 0 }],
     );
 
     expect(api.post).toHaveBeenCalledWith(
       "/v1/model-session/",
       expect.objectContaining({
+        column_roles: ROLES,
         preprocessing: [
           {
             converter: "Binarizer",
@@ -41,18 +49,16 @@ describe("createModelSession", () => {
             scope: [{ kind: "raw", name: "age" }],
           },
         ],
-        input_column_refs: [{ kind: "group", step: 0 }],
       }),
     );
   });
 
-  it("defaults preprocessing and input_column_refs to empty arrays", async () => {
+  it("sends none of the old column fields", async () => {
     await createModelSession(
       1,
       "TabularClassificationTask",
       "session-2",
-      ["age"],
-      ["label"],
+      ROLES,
       [],
       [],
       [],
@@ -60,9 +66,56 @@ describe("createModelSession", () => {
       JSON.parse("{}"),
     );
 
+    const body = (api.post as jest.Mock).mock.calls[0][1];
+    expect(body.preprocessing).toEqual([]);
+    expect(body).not.toHaveProperty("input_columns");
+    expect(body).not.toHaveProperty("output_columns");
+    expect(body).not.toHaveProperty("input_column_refs");
+  });
+});
+
+describe("validateColumns", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (api.post as jest.Mock).mockResolvedValue({ data: {} });
+  });
+
+  it("sends the columns by role", async () => {
+    await validateColumns("TabularClassificationTask", 1, ROLES);
+
     expect(api.post).toHaveBeenCalledWith(
-      "/v1/model-session/",
-      expect.objectContaining({ preprocessing: [], input_column_refs: [] }),
+      "/v1/model-session/validation",
+      expect.objectContaining({
+        task_name: "TabularClassificationTask",
+        dataset_id: 1,
+        column_roles: ROLES,
+      }),
+    );
+  });
+});
+
+describe("getPreprocessingStructure", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (api.post as jest.Mock).mockResolvedValue({ data: {} });
+  });
+
+  it("sends the task and the original columns by role", async () => {
+    await getPreprocessingStructure({
+      datasetId: 1,
+      taskName: "TabularClassificationTask",
+      columnRoles: { features: ["age"], target: ["label"] },
+      steps: [],
+    });
+
+    expect(api.post).toHaveBeenCalledWith(
+      "/v1/model-session/preprocessing/structure",
+      {
+        dataset_id: 1,
+        task_name: "TabularClassificationTask",
+        column_roles: { features: ["age"], target: ["label"] },
+        steps: [],
+      },
     );
   });
 });

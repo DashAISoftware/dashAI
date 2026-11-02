@@ -15,6 +15,7 @@ import { enqueuePredictionJob } from "../../api/job";
 import { getDatasets } from "../../api/datasets";
 import { getModelSessionById } from "../../api/modelSession";
 import { startJobPolling } from "../../utils/jobPoller";
+import { getApiDetail } from "../../utils/apiError";
 
 /**
  * DatasetPredictionPanel
@@ -76,9 +77,10 @@ export default function DatasetPredictionPanel({
         setModelSession(sessionData);
       } catch (error) {
         console.error("Error loading dataset prediction data:", error);
-        enqueueSnackbar(t("prediction:error.loadingPredictionData"), {
-          variant: "error",
-        });
+        enqueueSnackbar(
+          getApiDetail(error, t("prediction:error.loadingPredictionData")),
+          { variant: "error" },
+        );
       } finally {
         setLoading(false);
       }

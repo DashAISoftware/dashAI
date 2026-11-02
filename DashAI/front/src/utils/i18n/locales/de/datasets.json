@@ -198,6 +198,7 @@
     "datasetPreview": "Datensatzvorschau",
     "datasetPreviewFor": "Notizbuch: {{name}} Vorschau",
     "decreasingColor": "Farbe für Rückgang",
+    "applyingConverters": "Konverter werden angewendet...",
     "deleteConverterConfirmation": "Sind Sie sicher, dass Sie den Konverter \"{{converter}}\" löschen möchten? Das Löschen dieses Konverters entfernt auch alle nachfolgenden Konverter und Explorer. Diese Aktion kann nicht rückgängig gemacht werden.",
     "deleteExplorerConfirmation": "Sind Sie sicher, dass Sie den Explorer \"{{explorer}}\" löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
     "detailsForExplorer": "Details für Explorer: {{name}}",
@@ -644,5 +645,19 @@
     "saveDocumentSuccess": "Dokument {{name}} gespeichert",
     "saveDocumentError": "Das Dokument konnte nicht gespeichert werden",
     "saveDocumentWait": "Warte, bis die laufenden Konverter fertig sind, bevor du speicherst"
+  },
+  "columnType": {
+    "Integer": "Ganzzahl",
+    "Float": "Gleitkommazahl",
+    "Text": "Text",
+    "Time": "Uhrzeit",
+    "Timestamp": "Zeitstempel",
+    "Duration": "Dauer",
+    "Decimal": "Dezimalzahl",
+    "Date": "Datum",
+    "Binary": "Binär",
+    "Boolean": "Boolesch",
+    "Categorical": "Kategorisch",
+    "Image": "Bild"
   }
 }

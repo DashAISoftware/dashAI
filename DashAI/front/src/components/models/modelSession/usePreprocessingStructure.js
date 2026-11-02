@@ -15,15 +15,17 @@ const DEBOUNCE_MS = 300;
  * @param {object} args
  * @param {number} args.datasetId the session's dataset; nothing is fetched
  *   without one
- * @param {string[]} args.candidates original columns fed into the chain
- * @param {string[]} args.outputColumns the target columns
+ * @param {string} args.taskName the session's task, which says which of its
+ *   roles the preprocessing may transform
+ * @param {Object<string, string[]>} args.columnRoles role name to the
+ *   original columns given to it
  * @param {Array<object>} args.steps the chain's `{converter, params, scope}`
  * @returns {{structure: object|null, loading: boolean, error: Error|null}}
  */
 export default function usePreprocessingStructure({
   datasetId,
-  candidates,
-  outputColumns,
+  taskName,
+  columnRoles,
   steps,
 }) {
   const [structure, setStructure] = useState(null);
@@ -35,8 +37,8 @@ export default function usePreprocessingStructure({
   // every render, and a step may carry extra UI-only fields.
   const payloadKey = JSON.stringify({
     datasetId,
-    candidates: candidates || [],
-    outputColumns: outputColumns || [],
+    taskName,
+    columnRoles: columnRoles || {},
     steps: (steps || []).map(({ converter, params, scope }) => ({
       converter,
       params,

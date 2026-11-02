@@ -28,8 +28,8 @@ function PreprocessingStep({ newExp, setNewExp, setNextEnabled, dataset }) {
   const { setSessionRightContent } = useModels();
   const { structure, loading, error } = usePreprocessingStructure({
     datasetId: dataset?.id,
-    candidates: newExp.candidate_columns,
-    outputColumns: newExp.output_columns,
+    taskName: newExp.task_name,
+    columnRoles: newExp.column_roles_stage1 || {},
     steps: newExp.preprocessing,
   });
 

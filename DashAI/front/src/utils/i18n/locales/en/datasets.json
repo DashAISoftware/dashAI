@@ -205,6 +205,7 @@
     "aboutTool": "About {{toolName}}",
     "datasetPreviewFor": "Notebook: {{name}} Preview",
     "dataType": "Data Type",
+    "applyingConverters": "Applying converters...",
     "deleteConverterConfirmation": "Are you sure you want to delete the converter \"{{converter}}\"? Deleting this converter will also remove all subsequent converters and explorers applied after it. This action cannot be undone.",
     "deleteExplorerConfirmation": "Are you sure you want to delete the explorer \"{{explorer}}\"? This action cannot be undone.",
     "detailsForExplorer": "Details for Explorer: {{name}}",
@@ -644,5 +645,19 @@
     "saveDocumentSuccess": "Document {{name}} saved",
     "saveDocumentError": "The document could not be saved",
     "saveDocumentWait": "Wait for the running converters to finish before saving"
+  },
+  "columnType": {
+    "Integer": "Integer",
+    "Float": "Float",
+    "Text": "Text",
+    "Time": "Time",
+    "Timestamp": "Timestamp",
+    "Duration": "Duration",
+    "Decimal": "Decimal",
+    "Date": "Date",
+    "Binary": "Binary",
+    "Boolean": "Boolean",
+    "Categorical": "Categorical",
+    "Image": "Image"
   }
 }

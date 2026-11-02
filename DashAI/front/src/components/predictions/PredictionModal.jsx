@@ -37,6 +37,8 @@ import { getModelSessionById } from "../../api/modelSession";
 import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
+import { useSessionColumns } from "../../hooks/useTaskMetadata";
+import { getApiDetail } from "../../utils/apiError";
 
 export default function PredictionModal({ isOpen, onClose, run }) {
   const [activeTab, setActiveTab] = useState(0);
@@ -60,6 +62,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
 
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["prediction", "common"]);
+  const columns = useSessionColumns(experiment);
 
   // Reset state when modal is closed
   useEffect(() => {
@@ -92,9 +95,10 @@ export default function PredictionModal({ isOpen, onClose, run }) {
           );
         } catch (error) {
           console.error("Error fetching datasets:", error);
-          enqueueSnackbar(t("prediction:error.fetchingDatasets"), {
-            variant: "error",
-          });
+          enqueueSnackbar(
+            getApiDetail(error, t("prediction:error.fetchingDatasets")),
+            { variant: "error" },
+          );
         }
       }
     };
@@ -383,8 +387,8 @@ export default function PredictionModal({ isOpen, onClose, run }) {
                   />
                 ) : (
                   <ManualInput
-                    experiment={experiment}
-                    loading={loadingExperiment}
+                    inputColumns={columns?.rawInputs}
+                    loading={loadingExperiment || !columns}
                     types={types}
                     sample={sample}
                     manualInputData={manualRows}
@@ -396,7 +400,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
               <ResultsTable
                 selectedPrediction={selectedPrediction}
                 datasetSample={sample}
-                targetColumn={experiment?.output_columns?.[0]}
+                targetColumn={columns?.target}
               />
             )}
           </>
@@ -409,7 +413,7 @@ export default function PredictionModal({ isOpen, onClose, run }) {
                 <ResultsTable
                   selectedPrediction={selectedPrediction}
                   datasetSample={sample}
-                  targetColumn={experiment?.output_columns?.[0]}
+                  targetColumn={columns?.target}
                 />
               </Box>
             ) : (

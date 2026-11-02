@@ -89,6 +89,7 @@ dependencies = [
     "pdfplumber",
     "python-docx>=1.2.0",
     "unstructured[docx,md,pptx,xlsx]>=0.27.34",
+    "scikit-posthocs>=0.17.1",
 ]
 
 [project.optional-dependencies]

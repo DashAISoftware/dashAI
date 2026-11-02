@@ -66,5 +66,11 @@
     "predictionCompleted": "预测成功完成",
     "predictionJobSubmitted": "预测任务提交成功",
     "predictionsDeleted_other": "已成功删除 {{count}} 条预测"
+  },
+  "unseen": {
+    "title": "模型在训练中从未见过的类别",
+    "description": "它们被编码为未知（全零行或 -1），因此包含这些类别的行的预测可靠性较低。",
+    "line": "{{column}}（{{source}}）：{{values}}",
+    "more_other": "以及另外 {{count}} 个"
   }
 }

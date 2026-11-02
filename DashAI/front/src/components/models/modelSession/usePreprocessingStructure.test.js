@@ -16,8 +16,8 @@ const deferred = () => {
 
 const args = (steps) => ({
   datasetId: 1,
-  candidates: ["age"],
-  outputColumns: ["label"],
+  taskName: "TabularClassificationTask",
+  columnRoles: { features: ["age"], target: ["label"] },
   steps,
 });
 

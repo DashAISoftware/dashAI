@@ -33,6 +33,7 @@ from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 from DashAI.back.reports.forecasting.forecast_vs_actual import ForecastVsActual
 from DashAI.back.splitters.temporal_holdout import TemporalHoldoutSplitter
 from DashAI.back.tasks.forecasting_task import ForecastingTask
+from tests.back.session_columns import xy_roles
 
 
 @pytest.fixture(scope="module", name="test_registry", autouse=True)
@@ -112,8 +113,7 @@ def create_model_session(client: TestClient, forecasting_dataset: int):
             dataset_id=forecasting_dataset,
             name="ForecastingReportsSession",
             task_name="ForecastingTask",
-            input_columns=["date"],
-            output_columns=["value"],
+            column_roles=xy_roles(["date"], ["value"]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],

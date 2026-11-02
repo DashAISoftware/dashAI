@@ -9,6 +9,28 @@ logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger(__name__)
 
 
+def task_or_http_error(task_name: str, component_registry):
+    """The task a session names, or the HTTP error that says why there is none.
+
+    404 when the task is not registered, 500 when its constructor raised
+    (``session_task``).
+    """
+    from DashAI.back.tasks.session_roles import (
+        TaskNotRegisteredError,
+        TaskUnavailableError,
+        session_task,
+    )
+
+    try:
+        return session_task(task_name, component_registry)
+    except TaskNotRegisteredError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e)) from e
+    except TaskUnavailableError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        ) from e
+
+
 def parse_params(model_class, params):
     """
     Parse JSON from string to pydantic model.

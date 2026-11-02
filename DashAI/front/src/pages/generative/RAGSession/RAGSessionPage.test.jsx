@@ -71,11 +71,6 @@ jest.mock("../../../components/generative/SessionBar", () => {
   return MockSessionBar;
 });
 
-jest.mock("../../../components/generative/RAG/RAGBreadcrumbs", () => {
-  const MockBreadcrumbs = () => null;
-  return MockBreadcrumbs;
-});
-
 const api = require("../../../api/rag");
 const { getGenerativeSession } = require("../../../api/generativeTask");
 

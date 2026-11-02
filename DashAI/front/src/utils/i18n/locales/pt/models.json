@@ -32,7 +32,8 @@
     "selectAll": "Selecionar todos",
     "selectNone": "Nenhum",
     "chooseFile": "Escolher arquivo",
-    "gotIt": "Entendi"
+    "gotIt": "Entendi",
+    "goToPlugins": "Ir para Plugins"
   },
   "error": {
     "exportModel": "Não foi possível exportar o modelo",
@@ -144,7 +145,7 @@
     "inputColumns": "Colunas de entrada",
     "baseColumnsTitle": "Coluna de saída e colunas candidatas",
     "baseColumnsDescription": "Escolha a coluna de saída (a que o modelo aprende a prever) e as colunas candidatas que podem alimentar o modelo. O pré-processamento só atua sobre as candidatas e a saída nunca é transformada.",
-    "candidateColumns": "Colunas candidatas",
+    "candidatesForRole": "{{role}} (colunas candidatas)",
     "less": "Menor (Modelo 1 < Modelo 2)",
     "lines": "Linhas",
     "liveMetrics": "Métricas ao Vivo",
@@ -198,6 +199,10 @@
     "normal": "Normal",
     "normalityByRunSummary": "{{normal}} de {{total}} execuções parecem seguir uma distribuição normal (α = {{alpha}}).",
     "notNormal": "Não normal",
+    "notEvaluable": "Não avaliável",
+    "runsNotEvaluated": "{{count}} de {{total}} execuções não puderam ser avaliadas.",
+    "runsNotEvaluated_one": "{{count}} de {{total}} execução não pôde ser avaliada.",
+    "runsNotEvaluated_other": "{{count}} de {{total}} execuções não puderam ser avaliadas.",
     "notSignificant": "Não Significativo",
     "operations": "Operações",
     "operationsWillBeDeletedWarning": "Estas operações serão excluídas permanentemente e não podem ser recuperadas. Tem certeza de que deseja continuar?",
@@ -328,7 +333,22 @@
     "importedNeedsDownloadUntrained": "Estes modelos chegaram sem treinar e precisam ser baixados antes de treinar: {{names}}",
     "importingSession": "Importando sessão...",
     "importingSessionHelp": "Pode demorar um pouco se a sessão incluir modelos treinados.",
-    "sessionImportedTitle": "Sessão importada"
+    "sessionImportedTitle": "Sessão importada",
+    "sessionFromDataset": "do conjunto de dados {{name}}",
+    "noDataset": "Sem conjunto de dados"
+  },
+  "importError": {
+    "invalidFile": "Este arquivo não é uma sessão válida do dashAI.",
+    "wrongKind": "Este arquivo é um modelo exportado, não uma sessão. Escolha um arquivo de sessão .dashai.",
+    "newerFormat": "Este arquivo foi criado com uma versão mais nova do dashAI. Atualize o dashAI para importá-lo.",
+    "missingPlugin": "Esta sessão precisa do plugin {{plugin}}. Instale-o pelo módulo de Plugins e importe a sessão novamente.",
+    "missingPluginVersion": "Esta sessão precisa do plugin {{plugin}} (versão {{version}}). Instale-o pelo módulo de Plugins e importe a sessão novamente.",
+    "missingPluginPrivate": "Esta sessão precisa do plugin {{plugin}}, que não está publicado no catálogo de Plugins. Peça-o a quem compartilhou a sessão, instale-o e importe a sessão novamente.",
+    "missingPluginPrivateVersion": "Esta sessão precisa do plugin {{plugin}} (versão {{version}}), que não está publicado no catálogo de Plugins. Peça-o a quem compartilhou a sessão, instale-o e importe a sessão novamente.",
+    "missingPluginUnchecked": "Esta sessão precisa do plugin {{plugin}}. O dashAI não conseguiu verificar o catálogo de Plugins. Se o plugin for público, instale-o por lá; se não, peça-o a quem compartilhou a sessão.",
+    "missingPluginUncheckedVersion": "Esta sessão precisa do plugin {{plugin}} (versão {{version}}). O dashAI não conseguiu verificar o catálogo de Plugins. Se o plugin for público, instale-o por lá; se não, peça-o a quem compartilhou a sessão.",
+    "missingComponent": "Esta sessão usa \"{{component}}\", que não está disponível neste dashAI. Provavelmente vem de um plugin: instale-o pelo módulo de Plugins e importe a sessão novamente.",
+    "unsafeFile": "Este arquivo tem conteúdo que seria gravado fora da sua pasta, por isso não foi importado."
   },
   "message": {
     "allRunsCompleted": "{{experiment}} concluiu todas as suas execuções.",
@@ -338,6 +358,7 @@
     "hypothesis_reject": "rejeitamos",
     "hypothesis_failToReject": "falhamos em rejeitar",
     "hypothesisDecision": "Com um p-valor de {{pValue}}, {{decision}} a hipótese nula em um nível de significância de {{alpha}}.",
+    "repeatedCvIndependenceWarning": "Validação cruzada repetida ({{repeats}} repetições): os testes tratam os {{scores}} scores de cada modelo como observações independentes, embora as repetições reutilizem os mesmos dados. Por isso os p-valores podem ser otimistas e gerar mais falsos positivos.",
     "aboutToUpdateParameters": "Você está prestes a atualizar os parâmetros para a execução <strong>{{runName}}</strong>. Esta ação terá as seguintes consequências:",
     "dataWillBeDeleted": "Os seguintes dados serão excluídos permanentemente:",
     "metricsWillBeCleared": "Todas as métricas existentes serão excluídas",

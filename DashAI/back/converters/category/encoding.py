@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Final, List, Union
+from typing import TYPE_CHECKING, Dict, Final, List, Optional, Union
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.core.utils import MultilingualString
@@ -40,6 +40,47 @@ class EncodingConverter(BaseConverter):
     # scope column (ordinal, label, binarizer). One-hot appends one column
     # per category instead, a count only known after fit.
     ONE_COLUMN_PER_INPUT: bool = False
+    #: What to change so the converter treats a category it did not see in
+    #: fit instead of raising, for the message of one set to raise. None for
+    #: converters that always treat it.
+    UNKNOWN_HINT: Optional[str] = None
+
+    def raises_on_unseen(self) -> bool:
+        """Whether a category unseen in fit makes ``transform`` raise."""
+        return getattr(self, "handle_unknown", None) == "error"
+
+    def unseen_values(self, x: "DashAIDataset") -> Dict[str, List[str]]:
+        """The values of each column of ``x`` that the fit did not see.
+
+        Read from the categories the sklearn encoder learnt, so it only
+        answers for encoders that have them; the others report nothing.
+        Missing values are not categories and are never reported.
+
+        Parameters
+        ----------
+        x : DashAIDataset
+            Rows of the converter's scope, as ``transform`` would get them.
+
+        Returns
+        -------
+        dict
+            Column name to its unseen values as sorted strings, only for the
+            columns that have any.
+        """
+        categories = getattr(self, "categories_", None)
+        if categories is None:
+            return {}
+        names = getattr(self, "feature_names_in_", x.column_names)
+        frame = x.to_pandas()
+        unseen = {}
+        for name, known in zip(names, categories, strict=False):
+            if name not in frame.columns:
+                continue
+            values = frame[name].dropna()
+            new = sorted({str(v) for v in values[~values.isin(known)]})
+            if new:
+                unseen[name] = new
+        return unseen
 
     def _encodes(self, item: ColumnItem) -> bool:
         """Whether a scope column gets an encoded copy. Defaults to all."""

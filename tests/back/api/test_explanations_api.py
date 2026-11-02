@@ -10,6 +10,7 @@ from DashAI.back.dependencies.database.models import (
     ModelSession,
     Run,
 )
+from tests.back.session_columns import xy_roles
 
 input_columns = ["SepalLengthCm", "SepalWidthCm", "PetalLengthCm", "PetalWidthCm"]
 output_columns = ["Species"]
@@ -58,8 +59,7 @@ def create_model_session(client: TestClient, dataset_id: int):
             dataset_id=dataset_id,
             name="DummyExperiment",
             task_name="DummyTask",
-            input_columns=input_columns,
-            output_columns=output_columns,
+            column_roles=xy_roles(input_columns, output_columns),
             evaluation_strategy="holdout",
             splits=splits,
         )

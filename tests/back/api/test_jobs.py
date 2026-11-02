@@ -16,6 +16,7 @@ from DashAI.back.models.supervised_model import SupervisedModel
 from DashAI.back.optimizers.optuna_optimizer import OptunaOptimizer
 from DashAI.back.splitters.holdout import HoldoutSplitter
 from DashAI.back.tasks.supervised_task import SupervisedTask
+from tests.back.session_columns import xy_roles
 
 
 class DummyTask(SupervisedTask):
@@ -127,8 +128,7 @@ def create_model_session(client: TestClient, dataset_id: int, test_registry):
             dataset_id=dataset_id,
             name="DummyExperiment",
             task_name="DummyTask",
-            input_columns=["SepalLengthCm"],
-            output_columns=["Species"],
+            column_roles=xy_roles(["SepalLengthCm"], ["Species"]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
@@ -593,8 +593,7 @@ def test_delete_model_session_cleans_up_run_files(
             dataset_id=dataset_id,
             name="CleanupSession",
             task_name="DummyTask",
-            input_columns=["SepalLengthCm"],
-            output_columns=["Species"],
+            column_roles=xy_roles(["SepalLengthCm"], ["Species"]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],

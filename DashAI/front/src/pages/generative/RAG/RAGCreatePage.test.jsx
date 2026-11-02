@@ -106,7 +106,7 @@ test("suggests a session name so the form is ready to submit", async () => {
 
   const named = screen
     .getAllByRole("textbox")
-    .some((input) => /RAG_Session/.test(input.value));
+    .some((input) => /^\w+_RAG_1$/.test(input.value));
   expect(named).toBe(true);
 });
 

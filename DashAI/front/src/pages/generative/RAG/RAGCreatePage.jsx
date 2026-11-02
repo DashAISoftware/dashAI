@@ -71,12 +71,12 @@ export default function RAGCreatePage() {
   useEffect(() => {
     if (isNameTouched) return;
     const { defaultName } = generateSequentialName({
-      base: "RAG_Session",
+      base: `${t("common:session")}_RAG`,
       items: sessions ?? [],
       getName: (session) => session?.name,
     });
-    setName(defaultName || "RAG_Session_1");
-  }, [sessions, isNameTouched]);
+    setName(defaultName);
+  }, [sessions, isNameTouched, t]);
 
   useEffect(() => {
     let cancelled = false;

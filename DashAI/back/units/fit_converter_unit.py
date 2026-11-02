@@ -3,6 +3,7 @@
 import logging
 from typing import TYPE_CHECKING
 
+from DashAI.back.converters.drop_source_columns import split_converter_params
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.job.base_job import JobError
 from DashAI.back.units.base_unit import BaseUnit
@@ -43,7 +44,7 @@ class FitConverterUnit(BaseUnit, ConverterScopeMixin):
     SCHEMA = FitConverterSchema
 
     REQUIRES = ("dataset",)
-    PROVIDES = ("fitted_converter",)
+    PROVIDES = ("fitted_converter", "fitted_converter_options")
 
     def __init__(self, **config) -> None:
         super().__init__(**config)
@@ -82,10 +83,12 @@ class FitConverterUnit(BaseUnit, ConverterScopeMixin):
         converter_name = self._converter_name
 
         converter_constructor = self._resolve_converter()
-        converter_instance = converter_constructor(
-            **(self.config["converter"].get("params") or {})
+        converter_params, drop_source_columns = split_converter_params(
+            self.config["converter"].get("params")
         )
+        converter_instance = converter_constructor(**converter_params)
 
+        self._check_drop_scope(drop_source_columns)
         self._check_target_bounds(dataset)
         (
             scope_column_names,
@@ -105,3 +108,8 @@ class FitConverterUnit(BaseUnit, ConverterScopeMixin):
         fitted = self._fit(converter_instance, x_dataset, y_dataset, converter_name)
 
         ctx.put("fitted_converter", fitted)
+        # The drop option is not the converter's: it travels next to it so the
+        # transform units drop the same columns on every dataset.
+        ctx.put(
+            "fitted_converter_options", {"drop_source_columns": drop_source_columns}
+        )

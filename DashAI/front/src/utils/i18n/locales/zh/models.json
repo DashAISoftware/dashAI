@@ -32,7 +32,8 @@
     "selectAll": "全选",
     "selectNone": "全不选",
     "chooseFile": "选择文件",
-    "gotIt": "知道了"
+    "gotIt": "知道了",
+    "goToPlugins": "前往插件"
   },
   "error": {
     "exportModel": "无法导出模型",
@@ -142,7 +143,7 @@
     "inputColumns": "输入列",
     "baseColumnsTitle": "输出列与候选列",
     "baseColumnsDescription": "选择输出列（模型学习预测的列）以及可能输入模型的候选列。预处理只作用于候选列，输出列永远不会被转换。",
-    "candidateColumns": "候选列",
+    "candidatesForRole": "{{role}}（候选列）",
     "less": "更小（模型 1 < 模型 2）",
     "lines": "折线",
     "liveMetrics": "实时指标",
@@ -195,6 +196,9 @@
     "normal": "正态",
     "normalityByRunSummary": "{{total}} 个运行中有 {{normal}} 个似乎服从正态分布（α = {{alpha}}）。",
     "notNormal": "非正态",
+    "notEvaluable": "无法评估",
+    "runsNotEvaluated": "{{total}} 个运行中有 {{count}} 个无法评估。",
+    "runsNotEvaluated_other": "{{total}} 个运行中有 {{count}} 个无法评估。",
     "notSignificant": "不显著",
     "operations": "操作",
     "operationsWillBeDeletedWarning": "这些操作将被永久删除且无法恢复。确定要继续吗？",
@@ -321,7 +325,22 @@
     "importedNeedsDownloadUntrained": "这些模型未经训练，训练前必须先下载：{{names}}",
     "importingSession": "正在导入会话...",
     "importingSessionHelp": "如果会话包含已训练的模型，可能需要一些时间。",
-    "sessionImportedTitle": "会话已导入"
+    "sessionImportedTitle": "会话已导入",
+    "sessionFromDataset": "来自数据集 {{name}}",
+    "noDataset": "无数据集"
+  },
+  "importError": {
+    "invalidFile": "此文件不是有效的 dashAI 会话。",
+    "wrongKind": "此文件是导出的模型，而不是会话。请选择 .dashai 会话文件。",
+    "newerFormat": "此文件由更新版本的 dashAI 创建。请更新 dashAI 后再导入。",
+    "missingPlugin": "此会话需要插件 {{plugin}}。请在插件模块中安装后重新导入会话。",
+    "missingPluginVersion": "此会话需要插件 {{plugin}}（版本 {{version}}）。请在插件模块中安装后重新导入会话。",
+    "missingPluginPrivate": "此会话需要插件 {{plugin}}，该插件未在插件目录中发布。请向分享此会话的人索取并安装，然后重新导入会话。",
+    "missingPluginPrivateVersion": "此会话需要插件 {{plugin}}（版本 {{version}}），该插件未在插件目录中发布。请向分享此会话的人索取并安装，然后重新导入会话。",
+    "missingPluginUnchecked": "此会话需要插件 {{plugin}}。dashAI 无法检查插件目录。如果该插件是公开的，请从那里安装；否则请向分享此会话的人索取。",
+    "missingPluginUncheckedVersion": "此会话需要插件 {{plugin}}（版本 {{version}}）。dashAI 无法检查插件目录。如果该插件是公开的，请从那里安装；否则请向分享此会话的人索取。",
+    "missingComponent": "此会话使用了“{{component}}”，但当前 dashAI 中不可用。它可能来自某个插件：请在插件模块中安装后重新导入会话。",
+    "unsafeFile": "此文件包含会写入其文件夹之外的内容，因此未导入。"
   },
   "message": {
     "allRunsCompleted": "{{experiment}} 已完成所有运行。",
@@ -370,6 +389,7 @@
     "hypothesis_reject": "拒绝",
     "hypothesis_failToReject": "不拒绝",
     "hypothesisDecision": "在 p 值为 {{pValue}} 的情况下，在显著性水平 {{alpha}} 下我们{{decision}}原假设。",
+    "repeatedCvIndependenceWarning": "重复交叉验证（{{repeats}} 次重复）：检验将每个模型的 {{scores}} 个折分数视为独立观测，但各次重复复用了相同的数据。因此 p 值可能偏乐观，导致更多假阳性。",
     "noOuterMetrics": "此运行没有外层折的指标。",
     "nestedCvResultsOnlyForNestedCv": "只有在超参数优化配置中启用后，才能查看嵌套交叉验证结果。请编辑运行的配置以启用此功能。",
     "outerFoldFetch": "已获取嵌套交叉验证外层折的指标。",

@@ -95,7 +95,32 @@ class BaseConverter(ConfigObject, ABC):
     #   (row removal; the converter must implement rows_to_keep).
     # None means sessions do not support it yet.
     ROWS_APPLY_TO: Optional[str] = None
+    # Defaults a model session uses instead of the schema's, for parameters
+    # whose right value depends on where the converter runs. A session fits on
+    # the training rows only, so an encoder there treats a category it did
+    # not see, while the schema keeps it strict for the notebook, whose
+    # output is saved. The session wizard seeds its form with them
+    # (``session_params`` in the metadata), and the backend fills them into a
+    # session step that leaves them out (``session_params``).
+    SESSION_PARAMS: Dict[str, Any] = {}
     SCHEMA: BaseConverterSchema
+
+    @classmethod
+    def session_params(cls, params: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """A session step's params, with the session defaults under them.
+
+        Parameters
+        ----------
+        params : dict or None
+            The params the step stores.
+
+        Returns
+        -------
+        dict
+            ``SESSION_PARAMS`` updated with ``params``: what the step gives
+            wins.
+        """
+        return {**cls.SESSION_PARAMS, **(params or {})}
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -131,6 +156,7 @@ class BaseConverter(ConfigObject, ABC):
         meta["learns_from_data"] = cls.LEARNS_FROM_DATA
         meta["column_operation"] = cls.COLUMN_OPERATION
         meta["rows_apply_to"] = cls.ROWS_APPLY_TO
+        meta["session_params"] = dict(cls.SESSION_PARAMS)
         meta["n_components_features_bounded"] = getattr(
             cls, "N_COMPONENTS_FEATURES_BOUNDED", False
         )

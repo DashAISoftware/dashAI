@@ -166,15 +166,15 @@ async function renderPanel(props = {}) {
       {...props}
     />,
   );
-  await screen.findByRole("tab", { name: /Chunking/ });
+  await screen.findByRole("button", { name: /Chunking/ });
   return { onSaved, onRetryIndexing };
 }
 
-test("renders one tab per section, labelled by the backend", async () => {
+test("renders one section per part, labelled by the backend", async () => {
   await renderPanel();
   for (const label of ["Chunking", "Retrieval", "Model", "Prompt"]) {
     expect(
-      screen.getByRole("tab", { name: new RegExp(label) }),
+      screen.getByRole("button", { name: new RegExp(label) }),
     ).toBeInTheDocument();
   }
 });
@@ -188,17 +188,17 @@ test("saving is offered only once something changed", async () => {
   await waitFor(() => expect(save).toBeEnabled());
 });
 
-test("an edit on a hidden tab is still reported and still saved", async () => {
+test("an edit in a collapsed section is still reported and still saved", async () => {
   await renderPanel();
 
-  // Change chunking, then move to a different tab: the change is now off
-  // screen, which is exactly when the panel has to keep saying it exists.
+  // Change chunking, then open a different section: the change is now
+  // collapsed, which is exactly when the panel has to keep saying it exists.
   await userEvent.click(screen.getByText("Fine"));
-  await userEvent.click(screen.getByRole("tab", { name: /Model/ }));
+  await userEvent.click(screen.getByRole("button", { name: /Model/ }));
 
-  const chunkingTab = screen.getByRole("tab", { name: /Chunking/ });
+  const chunkingHeader = screen.getByRole("button", { name: /Chunking/ });
   expect(
-    within(chunkingTab).getByTestId("FiberManualRecordIcon"),
+    within(chunkingHeader).getByTestId("FiberManualRecordIcon"),
   ).toBeInTheDocument();
 
   const save = screen.getByRole("button", { name: /Save/i });
@@ -231,28 +231,11 @@ test("discarding puts every tab back to the saved configuration", async () => {
   expect(api.updateGenerativeSessionParams).not.toHaveBeenCalled();
 });
 
-test("the four sections sit two by two rather than in one scrolling row", async () => {
-  await renderPanel();
-
-  // The panel can be squeezed to 15% of the window and the labels come from the
-  // backend -- Spanish "Fragmentación"/"Recuperación" is the worst case at 37
-  // characters across four tabs. Four abreast either wrap or hide half of
-  // themselves behind a scroll button; two rows of two keep all four legible.
-  const tablist = screen.getByRole("tablist");
-  const style = getComputedStyle(tablist);
-  expect(style.display).toBe("grid");
-  expect(style.gridTemplateColumns).toBe("repeat(2, 1fr)");
-
-  expect(screen.getAllByRole("tab")).toHaveLength(4);
-  // Not the scrollable variant: nothing is parked off screen.
-  expect(tablist.parentElement.className).not.toMatch(/scrollableX/);
-});
-
-test("every section is mounted, so a tab never opened still validates", async () => {
+test("every section is mounted, so one never opened still validates", async () => {
   await renderPanel();
   // The generator reports whether its model can run through a callback. If it
-  // only mounted once its tab was opened, Save would stay enabled for a model
-  // that cannot answer.
+  // only mounted once its section was opened, Save would stay enabled for a
+  // model that cannot answer.
   expect(screen.getByTestId("generator-picker")).toBeInTheDocument();
 });
 

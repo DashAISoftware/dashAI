@@ -14,7 +14,12 @@ from DashAI.back.converters.dataset_columns import (
     plan_new_column_names,
     rebuild_dataset_with_transformed_columns,
 )
+from DashAI.back.converters.drop_source_columns import (
+    drops_source_columns,
+    split_converter_params,
+)
 from DashAI.back.preprocessing.column_ref import ConverterSequence, resolve_refs
+from DashAI.back.preprocessing.unseen_categories import check_unseen, unseen_record
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -44,7 +49,8 @@ class SessionPreprocessor:
 
     Supervised converters (e.g. feature selectors) are fit with the
     `target_columns` of the train split as `y`. The target is never part of
-    a step's scope, so no converter ever transforms it.
+    a step's scope, so no converter ever transforms it: ``fit_transform``
+    refuses a step whose scope takes it.
     """
 
     def __init__(
@@ -86,7 +92,13 @@ class SessionPreprocessor:
                 f"{step.converter} only runs on documents, so it cannot "
                 "preprocess a model session."
             )
-        return converter_class(**step.params)
+        # A step that leaves a parameter out takes the session's default for
+        # it (``SESSION_PARAMS``), not the schema's: an encoder treats a
+        # category it did not see, as the wizard's form would have sent it.
+        converter_params, _ = split_converter_params(
+            converter_class.session_params(step.params)
+        )
+        return converter_class(**converter_params)
 
     @staticmethod
     def _classify_by_type(
@@ -115,6 +127,17 @@ class SessionPreprocessor:
             slots.setdefault(type_name, []).append(name)
         return slots
 
+    @staticmethod
+    def _drops(converter: Any, step) -> bool:
+        """Whether a step removes its scope columns after transforming.
+
+        Read from the step's own params, which travel inside the pickle, so a
+        preprocessor fitted before the option existed never drops.
+        """
+        return drops_source_columns(
+            type(converter), split_converter_params(step.params)[1]
+        )
+
     def _fit(self, converter: Any, train: "DashAIDataset", train_scope) -> Any:
         """Fit a step's converter, passing the target to supervised ones."""
         # A preprocessor pickled before target_columns existed has no such
@@ -131,6 +154,7 @@ class SessionPreprocessor:
         train: "DashAIDataset",
         scope_names: List[str],
         output_names: List[str],
+        drop_source_columns: bool = False,
     ) -> None:
         """Record which real columns a step produced, and their slots.
 
@@ -147,16 +171,23 @@ class SessionPreprocessor:
         rebuild_dataset_with_transformed_columns (e.g. "derived_1"). Slots
         are classified with the names the converter itself produced, since
         that is what its get_output_type knows.
+
+        A step that drops its source columns removes its whole scope, so only
+        its new columns are its group, even when there are none.
         """
         new_columns = [name for name in output_names if name not in scope_names]
-        if not new_columns:
+        if not new_columns and not drop_source_columns:
             self.resolved_columns[index] = list(output_names)
             self.resolved_slots[index] = self._classify_by_type(
                 converter, self.resolved_columns[index]
             )
             return
 
-        removed = {name for name in scope_names if name not in output_names}
+        removed = {
+            name
+            for name in scope_names
+            if drop_source_columns or name not in output_names
+        }
         final_names = plan_new_column_names(
             [name for name in train.column_names if name not in removed],
             new_columns,
@@ -230,6 +261,47 @@ class SessionPreprocessor:
             new_current[split_name] = dataset.select(positions).select_columns(keep)
         return new_current
 
+    def _unseen(
+        self, index: int, converter: Any, scoped: "DashAIDataset", fitting: bool
+    ) -> Dict[str, List[str]]:
+        """The categories of a split that a fitted encoder step did not see.
+
+        An encoder set to raise on them raises here instead, with a message
+        that names the step, the column and the values, rather than letting
+        sklearn name the column by its position. ``fitting`` tells which of
+        the two cases it is: while the sequence is fit, the values only
+        appear in a split other than train; otherwise they were not in the
+        training data at all.
+        """
+        where = (
+            "only appear outside the training rows"
+            if fitting
+            else "were not in the training data"
+        )
+        return check_unseen(converter, scoped, self._step_label(index), where)
+
+    def _refuse_the_target(self, index: int, scope_names: List[str]) -> None:
+        """Refuse a step whose scope takes the target.
+
+        The API already refuses it when the session is created
+        (``target_in_scope``), but an imported session package is refitted
+        from its stored steps without that check. A converter that reached
+        the target could treat an unknown label of it, which would invent a
+        class, so the preprocessor holds the rule itself.
+        """
+        target_columns = getattr(self, "target_columns", None) or []
+        in_scope = [name for name in scope_names if name in target_columns]
+        if in_scope:
+            raise ValueError(
+                f"{self._step_label(index)} has the target column "
+                f"'{in_scope[0]}' in its scope: no converter transforms the "
+                "target."
+            )
+
+    def _step_label(self, index: int) -> str:
+        """How a step is named to the user: its converter and its position."""
+        return f"{self.sequence.steps[index].converter} (step {index + 1})"
+
     @staticmethod
     def _transform_split(converter, dataset, scope_names, train_transformed):
         """Transform one split's scoped columns, without crashing on 0 rows.
@@ -290,6 +362,7 @@ class SessionPreprocessor:
             scope_names = resolve_refs(
                 step.scope, self.resolved_columns, self.resolved_slots
             )
+            self._refuse_the_target(index, scope_names)
             converter = self._instantiate(step)
 
             rule = _row_rule(converter)
@@ -306,6 +379,7 @@ class SessionPreprocessor:
                 self.fitted_converters.append(converter)
                 continue
 
+            drop = self._drops(converter, step)
             train_scope = current["train"].select_columns(scope_names)
             converter = self._fit(converter, current["train"], train_scope)
 
@@ -314,6 +388,9 @@ class SessionPreprocessor:
             for split_name, dataset in current.items():
                 if split_name == "train":
                     continue
+                self._unseen(
+                    index, converter, dataset.select_columns(scope_names), True
+                )
                 transformed_by_split[split_name] = self._transform_split(
                     converter, dataset, scope_names, train_transformed
                 )
@@ -324,6 +401,7 @@ class SessionPreprocessor:
                 current["train"],
                 scope_names,
                 list(train_transformed.column_names),
+                drop_source_columns=drop,
             )
 
             new_current = {}
@@ -339,6 +417,7 @@ class SessionPreprocessor:
                         transformed_by_split[split_name],
                         scope_names,
                         scope_indexes,
+                        columns_to_drop=scope_names if drop else (),
                     )
             current = new_current
             self.fitted_converters.append(converter)
@@ -346,16 +425,36 @@ class SessionPreprocessor:
         return current, self.resolved_columns
 
     def transform_only(
-        self, split: Dict[str, "DashAIDataset"]
+        self,
+        split: Dict[str, "DashAIDataset"],
+        unseen: Optional[List[Dict]] = None,
     ) -> Dict[str, "DashAIDataset"]:
         """Apply already-fitted converters to new data, without fitting.
 
         Used after unpickling a SessionPreprocessor that was fit earlier (by
         PreprocessingJob), to transform fold data at training time, or a
         prediction/explanation input.
+
+        Parameters
+        ----------
+        split : dict
+            The datasets to transform, by split name.
+        unseen : list, optional
+            When given, one ``unseen_record`` is appended to it for each
+            column in which an encoder step met categories it did not see in
+            fit and treated them.
         """
         current: Dict[str, "DashAIDataset"] = dict(split)
+        reads = self.sequence.raw_columns_read()
+        for split_name, dataset in current.items():
+            missing = [name for name in reads if name not in dataset.column_names]
+            if missing:
+                raise ValueError(
+                    f"The '{split_name}' rows lack columns the preprocessing "
+                    f"reads: {', '.join(repr(name) for name in missing)}."
+                )
         for index, converter in enumerate(self.fitted_converters):
+            drop = self._drops(converter, self.sequence.steps[index])
             scope_names = resolve_refs(
                 self.sequence.steps[index].scope,
                 self.resolved_columns,
@@ -368,6 +467,16 @@ class SessionPreprocessor:
                     converter, current, scope_names, rule, fit=False
                 )
                 continue
+
+            for dataset in current.values():
+                found = self._unseen(
+                    index, converter, dataset.select_columns(scope_names), False
+                )
+                if unseen is not None:
+                    unseen.extend(
+                        unseen_record(self._step_label(index), column, values)
+                        for column, values in found.items()
+                    )
 
             train_transformed = None
             if "train" in current:
@@ -395,19 +504,26 @@ class SessionPreprocessor:
                         dataset.column_names.index(name) for name in scope_names
                     ]
                     new_current[split_name] = rebuild_dataset_with_transformed_columns(
-                        dataset, transformed, scope_names, scope_indexes
+                        dataset,
+                        transformed,
+                        scope_names,
+                        scope_indexes,
+                        columns_to_drop=scope_names if drop else (),
                     )
             current = new_current
         return current
 
-    def transform_dataset(self, dataset: "DashAIDataset") -> "DashAIDataset":
+    def transform_dataset(
+        self, dataset: "DashAIDataset", unseen: Optional[List[Dict]] = None
+    ) -> "DashAIDataset":
         """Transform a single dataset (predict/explain use).
 
         Wrapped under its own "predict" key, never "train", so no step adds
         or removes rows of it: neither resampling nor row removal
-        (NanRemover) touches prediction inputs.
+        (NanRemover) touches prediction inputs. ``unseen`` collects the
+        categories the encoder steps treated, as in ``transform_only``.
         """
-        return self.transform_only({"predict": dataset})["predict"]
+        return self.transform_only({"predict": dataset}, unseen=unseen)["predict"]
 
 
 def transform_by_split(

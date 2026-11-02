@@ -13,6 +13,7 @@ import { enqueuePredictionJob } from "../../api/job";
 import { getModelSessionById } from "../../api/modelSession";
 import { getDatasetTypes, getDatasetSample } from "../../api/datasets";
 import { startJobPolling } from "../../utils/jobPoller";
+import { useSessionColumns } from "../../hooks/useTaskMetadata";
 
 /**
  * ManualPredictionPanel – inline (no modal) panel for manual row-based predictions.
@@ -41,6 +42,7 @@ export default function ManualPredictionPanel({
 
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["prediction", "common"]);
+  const columns = useSessionColumns(modelSession);
 
   // Keep saveRef pointing to the latest handleSave
   const handleSaveRef = useRef(null);
@@ -276,14 +278,14 @@ export default function ManualPredictionPanel({
     <Box>
       {/* Row editor */}
       <ManualInput
-        experiment={modelSession}
-        loading={false}
+        inputColumns={columns?.inputs}
+        loading={!columns}
         types={types}
         sample={sample}
         manualInputData={manualRows}
         setManualInputData={handleRowsChange}
         predictionResults={previewResults}
-        targetColumn={modelSession?.output_columns?.[0]}
+        targetColumn={columns?.target}
         onRun={handleRunPrediction}
         isPreviewing={isPreviewing}
         isSaving={isSaving}

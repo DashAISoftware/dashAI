@@ -205,8 +205,7 @@ ModelsTable.propTypes = {
     name: PropTypes.string,
     dataset: PropTypes.object,
     task_name: PropTypes.string,
-    input_columns: PropTypes.arrayOf(PropTypes.string),
-    output_columns: PropTypes.arrayOf(PropTypes.string),
+    column_roles: PropTypes.object,
     splits: PropTypes.shape({
       training: PropTypes.number,
       validation: PropTypes.number,

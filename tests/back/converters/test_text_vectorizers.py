@@ -76,6 +76,22 @@ def test_the_rag_options_reach_scikit_learn():
     assert options["max_features"] is None
 
 
+@pytest.mark.parametrize(
+    ("converter", "params"),
+    [(BagOfWordsConverter, BASE_PARAMS), (TFIDFConverter, TFIDF_PARAMS)],
+)
+def test_integer_document_frequencies_are_read_as_proportions(converter, params):
+    # The form sends 0 and 1 as JSON integers; as integers scikit-learn would
+    # reject min_df=0 and read max_df=1 as "at most one document".
+    instance = converter(**{**params, "min_df": 0, "max_df": 1})
+
+    instance.fit(_dataset())
+
+    assert instance.vectorizer.min_df == 0.0
+    assert instance.vectorizer.max_df == 1.0
+    assert "cat" in instance.vectorizer.vocabulary_
+
+
 def test_english_and_custom_stop_words_are_merged():
     converter = BagOfWordsConverter(
         **{**BASE_PARAMS, "stop_words": "english", "custom_stop_words": ["cat"]}

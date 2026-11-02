@@ -70,8 +70,14 @@ def _create_session(client, dataset, preprocessing: bool) -> ModelSession:
         "dataset_id": dataset.id,
         "task_name": ReversingTask.__name__,
         "name": f"predict-row-order-{'preprocessing' if preprocessing else 'raw'}",
-        "input_columns": [] if preprocessing else INPUT_COLUMNS,
-        "output_columns": [OUTPUT_COLUMN],
+        "column_roles": {
+            "features": (
+                [{"kind": "group", "step": 0}]
+                if preprocessing
+                else [{"kind": "raw", "name": column} for column in INPUT_COLUMNS]
+            ),
+            "target": [{"kind": "raw", "name": OUTPUT_COLUMN}],
+        },
         "train_metrics": [],
         "validation_metrics": [],
         "test_metrics": [],
@@ -79,9 +85,6 @@ def _create_session(client, dataset, preprocessing: bool) -> ModelSession:
         "splits": json.dumps(SPLITS),
         "preprocessing": [BINARIZER] if preprocessing else [],
     }
-    if preprocessing:
-        body["input_column_refs"] = [{"kind": "group", "step": 0}]
-
     response = client.post("/api/v1/model-session/", json=body)
     assert response.status_code == 201, response.text
     assert response.json()["preprocessing_status"] in (None, "ready"), response.text

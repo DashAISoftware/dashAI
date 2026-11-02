@@ -100,8 +100,10 @@ def test_a_session_with_onehot_and_smote_trains_and_evaluates(
             "dataset_id": imbalanced_dataset.id,
             "task_name": "TabularClassificationTask",
             "name": "onehot-smote",
-            "input_columns": ["age", "height"],
-            "output_columns": ["label"],
+            "column_roles": {
+                "features": [_raw("age"), _raw("height"), onehot_output],
+                "target": [{"kind": "raw", "name": "label"}],
+            },
             "train_metrics": [],
             "validation_metrics": [],
             "test_metrics": [],
@@ -119,7 +121,6 @@ def test_a_session_with_onehot_and_smote_trains_and_evaluates(
                 }
             ),
             "preprocessing": steps,
-            "input_column_refs": [_raw("age"), _raw("height"), onehot_output],
         },
     )
     assert session.status_code == 201, session.text

@@ -27,6 +27,7 @@ from fastapi.testclient import TestClient
 
 from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
 from DashAI.back.job.model_job import ModelJob
+from tests.back.session_columns import xy_roles
 
 INPUT_COLUMNS = [
     "SepalLengthCm",
@@ -71,8 +72,7 @@ def create_model_session(client: TestClient, dataset_1: Dataset):
             dataset_id=dataset_1.id,
             name="PreviewSession",
             task_name="TabularClassificationTask",
-            input_columns=INPUT_COLUMNS,
-            output_columns=[OUTPUT_COLUMN],
+            column_roles=xy_roles(INPUT_COLUMNS, [OUTPUT_COLUMN]),
             train_metrics=[],
             validation_metrics=[],
             test_metrics=[],
@@ -160,8 +160,7 @@ def fixture_restore_model_session(client: TestClient, model_session_id: int):
         original = {
             "dataset_id": row.dataset_id,
             "task_name": row.task_name,
-            "input_columns": list(row.input_columns),
-            "output_columns": list(row.output_columns),
+            "column_roles": dict(row.column_roles),
         }
 
     yield
@@ -288,7 +287,10 @@ def test_no_input_columns_is_a_422(
 ):
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
-        db.get(ModelSession, model_session_id).input_columns = []
+        row = db.get(ModelSession, model_session_id)
+        row.column_roles = {
+            k: v for k, v in row.column_roles.items() if k != "features"
+        }
         db.commit()
 
     response = _preview(client, trained_run_id)
@@ -302,7 +304,8 @@ def test_no_output_columns_is_a_422(
 ):
     session_factory = client.app.container["session_factory"]
     with session_factory() as db:
-        db.get(ModelSession, model_session_id).output_columns = []
+        row = db.get(ModelSession, model_session_id)
+        row.column_roles = {k: v for k, v in row.column_roles.items() if k != "target"}
         db.commit()
 
     response = _preview(client, trained_run_id)
@@ -330,7 +333,7 @@ def test_an_unknown_task_is_a_500_naming_the_task(
     response = _preview(client, trained_run_id)
 
     assert response.status_code == 500
-    assert response.json()["detail"] == "Task NoSuchTask not found in the registry"
+    assert response.json()["detail"] == "Task NoSuchTask not found in the registry."
 
 
 def test_an_unknown_model_is_a_500_naming_the_model(

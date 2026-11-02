@@ -16,7 +16,7 @@ from DashAI.back.job.model_job import ModelJob
 from tests.back.api.test_model_job_clustering_net import (
     NUMERIC_SCHEMA,
     _create_dataset,
-    _create_session,
+    _store_session,
     fixture_csv_dir,  # noqa: F401
 )
 
@@ -30,7 +30,7 @@ def test_an_unknown_model_is_reported_before_a_dataset_the_task_cannot_take(
         "blobs with category, error order",
         {**NUMERIC_SCHEMA, "group": {"type": "Categorical", "dtype": "string"}},
     )
-    session_id = _create_session(
+    session_id = _store_session(
         client, dataset_id, "clustering error order", ["hours", "score", "group"]
     )
 
