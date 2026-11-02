@@ -58,15 +58,15 @@ class SingleSeriesForecastingTask(ForecastingTask):
         es=(
             "Predice los valores futuros de una serie temporal a partir de su "
             "propia historia. Toma una columna de fecha y una columna "
-            "numerica, sin ninguna otra variable."
+            "numérica, sin ninguna otra variable."
         ),
         pt=(
-            "Preve os valores futuros de uma serie temporal a partir da sua "
-            "propria historia. Recebe uma coluna de data e uma coluna "
-            "numerica, sem nenhuma outra variavel."
+            "Prevê os valores futuros de uma série temporal a partir da sua "
+            "própria história. Recebe uma coluna de data e uma coluna "
+            "numérica, sem nenhuma outra variável."
         ),
         de=(
-            "Sagt die zukuenftigen Werte einer Zeitreihe aus ihrer eigenen "
+            "Sagt die zukünftigen Werte einer Zeitreihe aus ihrer eigenen "
             "Vergangenheit voraus. Nimmt eine Datumsspalte und eine numerische "
             "Spalte, ohne weitere Variablen."
         ),
@@ -78,8 +78,8 @@ class SingleSeriesForecastingTask(ForecastingTask):
     ICON: str = "Timeline"
     DISPLAY_NAME: str = MultilingualString(
         en="Forecasting",
-        es="Pronostico",
-        pt="Previsao",
+        es="Pronóstico",
+        pt="Previsão",
         de="Zeitreihenprognose",
         zh="时间序列预测",
     )

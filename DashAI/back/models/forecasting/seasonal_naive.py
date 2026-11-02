@@ -26,21 +26,21 @@ class SeasonalNaiveForecasterSchema(BaseSchema):
                 "the plain naive forecast."
             ),
             es=(
-                "Cuantas observaciones forman un ciclo completo: 12 para datos "
-                "mensuales que se repiten cada ano, 7 para datos diarios que se "
+                "Cuántas observaciones forman un ciclo completo: 12 para datos "
+                "mensuales que se repiten cada año, 7 para datos diarios que se "
                 "repiten cada semana. Dejar en 1 cuando la serie no tiene "
-                "estacionalidad, lo que equivale al pronostico ingenuo simple."
+                "estacionalidad, lo que equivale al pronóstico ingenuo simple."
             ),
             pt=(
-                "Quantas observacoes formam um ciclo completo: 12 para dados "
-                "mensais que se repetem a cada ano, 7 para dados diarios que se "
-                "repetem a cada semana. Deixe em 1 quando a serie nao tem "
-                "sazonalidade, o que equivale a previsao ingenua simples."
+                "Quantas observações formam um ciclo completo: 12 para dados "
+                "mensais que se repetem a cada ano, 7 para dados diários que se "
+                "repetem a cada semana. Deixe em 1 quando a série não tem "
+                "sazonalidade, o que equivale à previsão ingênua simples."
             ),
             de=(
-                "Wie viele Beobachtungen einen vollen Zyklus bilden: 12 fuer "
-                "monatliche Daten mit jaehrlicher Wiederholung, 7 fuer "
-                "taegliche Daten mit woechentlicher. Bei 1 belassen, wenn die "
+                "Wie viele Beobachtungen einen vollen Zyklus bilden: 12 für "
+                "monatliche Daten mit jährlicher Wiederholung, 7 für "
+                "tägliche Daten mit wöchentlicher. Bei 1 belassen, wenn die "
                 "Reihe keine Saison hat, was der einfachen naiven Prognose "
                 "entspricht."
             ),
@@ -52,9 +52,9 @@ class SeasonalNaiveForecasterSchema(BaseSchema):
         ),
         alias=MultilingualString(
             en="Season length",
-            es="Longitud de estacion",
-            pt="Comprimento da estacao",
-            de="Saisonlaenge",
+            es="Longitud de estación",
+            pt="Comprimento da estação",
+            de="Saisonlänge",
             zh="季节长度",
         ),
     )  # type: ignore
@@ -89,21 +89,21 @@ class SeasonalNaiveForecaster(SingleSeriesForecastingModel):
             "than the naive forecast on any series with a repeating pattern."
         ),
         es=(
-            "Predice que cada valor repite el de una estacion completa antes, "
-            "por ejemplo el proximo enero a partir del enero anterior. Una "
-            "linea base mucho mas exigente que el pronostico ingenuo en "
-            "cualquier serie con un patron repetitivo."
+            "Predice que cada valor repite el de una estación completa antes, "
+            "por ejemplo el próximo enero a partir del enero anterior. Una "
+            "línea base mucho más exigente que el pronóstico ingenuo en "
+            "cualquier serie con un patrón repetitivo."
         ),
         pt=(
-            "Preve que cada valor repete o de uma estacao completa antes, por "
-            "exemplo o proximo janeiro a partir do janeiro anterior. Uma linha "
-            "de base bem mais exigente que a previsao ingenua em qualquer "
-            "serie com padrao repetitivo."
+            "Prevê que cada valor repete o de uma estação completa antes, por "
+            "exemplo o próximo janeiro a partir do janeiro anterior. Uma linha "
+            "de base bem mais exigente que a previsão ingênua em qualquer "
+            "série com padrão repetitivo."
         ),
         de=(
             "Sagt voraus, dass sich jeder Wert von vor einer vollen Saison "
-            "wiederholt, etwa der naechste Januar aus dem letzten Januar. Eine "
-            "deutlich haertere Grundlinie als die naive Prognose bei jeder "
+            "wiederholt, etwa der nächste Januar aus dem letzten Januar. Eine "
+            "deutlich härtere Grundlinie als die naive Prognose bei jeder "
             "Reihe mit wiederkehrendem Muster."
         ),
         zh=(
@@ -113,8 +113,8 @@ class SeasonalNaiveForecaster(SingleSeriesForecastingModel):
     )
     DISPLAY_NAME = MultilingualString(
         en="Seasonal Naive Forecaster",
-        es="Pronostico Ingenuo Estacional",
-        pt="Previsao Ingenua Sazonal",
+        es="Pronóstico Ingenuo Estacional",
+        pt="Previsão Ingênua Sazonal",
         de="Saisonale Naive Prognose",
         zh="季节性朴素预测",
     )

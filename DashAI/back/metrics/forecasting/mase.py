@@ -34,22 +34,22 @@ class MASE(ForecastingMetric):
             "naive forecast; comparable across series of any scale."
         ),
         es=(
-            "El error promedio del pronostico dividido por el cambio promedio "
+            "El error promedio del pronóstico dividido por el cambio promedio "
             "de una temporada a la siguiente en la historia. Bajo 1 supera al "
-            "pronostico ingenuo estacional; comparable entre series de "
+            "pronóstico ingenuo estacional; comparable entre series de "
             "cualquier escala."
         ),
         pt=(
-            "O erro medio da previsao dividido pela variacao media de uma "
-            "temporada para a seguinte no historico. Abaixo de 1 supera a "
-            "previsao ingenua sazonal; comparavel entre series de qualquer "
+            "O erro médio da previsão dividido pela variação média de uma "
+            "temporada para a seguinte no histórico. Abaixo de 1 supera a "
+            "previsão ingênua sazonal; comparável entre séries de qualquer "
             "escala."
         ),
         de=(
             "Der mittlere Fehler der Prognose geteilt durch die mittlere "
-            "Aenderung von einer Saison zur naechsten in der Historie. Unter 1 "
-            "schlaegt die saisonale naive Prognose; vergleichbar ueber Reihen "
-            "jeder Groessenordnung."
+            "Änderung von einer Saison zur nächsten in der Historie. Unter 1 "
+            "schlägt die saisonale naive Prognose; vergleichbar über Reihen "
+            "jeder Größenordnung."
         ),
         zh=(
             "预测的平均误差除以历史中相邻季节之间的平均变化。"
