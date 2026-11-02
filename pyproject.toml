@@ -49,8 +49,12 @@ dependencies = [
     "arviz<1.0.0",
     "typer",
     "rich",
-    "torch",
-    "torchvision",
+    # transformers 5.20 disables torch below 2.6 at import time, so every HF
+    # model stops working while the app still boots. Without a minimum,
+    # pip install -e . keeps an older torch that is already installed.
+    # uv sync is unaffected: the lock pins a compatible pair.
+    "torch>=2.6",
+    "torchvision>=0.21",
     "transformers>=5.0.0",
     "sentence-transformers",
     "controlnet_aux",
