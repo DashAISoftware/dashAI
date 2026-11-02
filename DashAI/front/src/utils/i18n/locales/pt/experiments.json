@@ -139,7 +139,7 @@
     "loading": "Desenhando a divisão…",
     "failed": "Não foi possível calcular a pré-visualização ({{reason}}). Você pode continuar: a sessão verifica estes parâmetros ao ser criada.",
     "retry": "Tentar novamente",
-    "invalid": "O divisor não pode usar estes parâmetros; veja a mensagem abaixo do formulário.",
+    "invalid": "O divisor não pode usar estes parâmetros; revise os campos marcados do formulário.",
     "wholeDataset": "Conjunto",
     "reservedTest": "Reservado",
     "finalFit": "Ajuste final",

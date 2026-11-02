@@ -103,7 +103,9 @@ function SplitDatasetRows({
 
   // The splitter computes the preview, and with it whether the configuration
   // can be used and which partitions receive rows. A predefined split is read
-  // from the dataset's own partitions by the backend.
+  // from the dataset's own partitions by the backend. Values the generated
+  // form marks as invalid (its schema's bounds) are not previewed: the form
+  // says what is wrong with them, and the backend would only refuse them.
   const {
     preview,
     loading: previewLoading,
@@ -112,7 +114,7 @@ function SplitDatasetRows({
     retry: retryPreview,
   } = useSplitPreview({
     datasetId,
-    splitterName: paramsOwned ? splitterName : null,
+    splitterName: paramsOwned && !paramsError ? splitterName : null,
     params: splitterParams ?? {},
     splitType: isHoldout ? splitType : null,
     indexes:
@@ -122,19 +124,18 @@ function SplitDatasetRows({
   });
   // A 422 is the backend's verdict on the configuration, the one creating
   // the session would give; any other failure is the preview's own, and the
-  // session API still checks the configuration when it is created.
+  // session API still checks the configuration when it is created. The
+  // verdict's text is the schema's, untranslated, so only the preview's own
+  // errors, which come as translation keys, are shown under the form.
   const previewFailed = previewError !== null || previewErrorStatus !== null;
   const configurationRefused = previewErrorStatus === 422;
   const previewFailure = previewFailed
     ? { reason: previewError, invalid: configurationRefused }
     : null;
   const previewErrors = preview?.errors ?? [];
-  const errorMessages = [
-    ...previewErrors.map((error) =>
-      t(`experiments:error.${error.key}`, error.values),
-    ),
-    ...(configurationRefused && previewError ? [previewError] : []),
-  ];
+  const errorMessages = previewErrors.map((error) =>
+    t(`experiments:error.${error.key}`, error.values),
+  );
 
   // The generated form reports its values only once the user edits a field, so
   // the schema placeholders are pushed up here: without them a session created
@@ -251,7 +252,7 @@ function SplitDatasetRows({
   // The partitions with rows decide the metrics the session records. Without
   // a preview to say which (a splitter with none, or a preview that could not
   // be computed), they are the ones the strategy scores.
-  const answered = paramsOwned && !previewLoading;
+  const answered = paramsOwned && !paramsError && !previewLoading;
   const withoutPreview = answered && !preview && !configurationRefused;
   const splitPartitions = preview
     ? preview.partitions

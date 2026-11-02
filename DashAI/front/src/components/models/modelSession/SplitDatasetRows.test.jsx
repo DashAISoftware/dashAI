@@ -35,12 +35,16 @@ jest.mock("../../../api/splitter", () => ({ previewSplit: jest.fn() }));
 // What the stub form submits on mount. Undefined means it submits nothing,
 // which is what the generated form does until the user edits a field.
 let mockFormParams;
+// Whether the stub form reports its values as invalid, as the generated form
+// does once its validation settles: it submits them all the same.
+let mockFormInvalid = false;
 
 jest.mock("../../shared/FormSchema", () => {
   const ReactInStub = require("react");
   function FormSchemaStub(props) {
     ReactInStub.useEffect(() => {
       if (mockFormParams !== undefined) props.onFormSubmit(mockFormParams);
+      if (mockFormInvalid) props.setError(true);
     }, []);
     return (
       <div
@@ -344,6 +348,7 @@ const chooseSplitter = async (displayName) => {
 
 beforeEach(() => {
   mockFormParams = undefined;
+  mockFormInvalid = false;
   mockSchemasByName = {};
   spies.setSplitsReady = jest.fn();
   spies.setSplitter = jest.fn();
@@ -663,7 +668,10 @@ describe("SplitDatasetRows: holdout", () => {
     expect(lastReady()).toBe(false);
   });
 
-  it("is not ready when the preview refuses the parameters (422), and shows the backend's reason under the form", async () => {
+  it("is not ready when the preview refuses the parameters (422), and does not show the backend's text", async () => {
+    // The detail is the schema's validation error, in English and in the
+    // schema's terms; the preview says the parameters were refused, and the
+    // generated form marks the fields.
     previewSplit.mockRejectedValue({
       message: "Request failed with status code 422",
       response: {
@@ -675,20 +683,35 @@ describe("SplitDatasetRows: holdout", () => {
     renderStep();
     await waitForSplitter(HOLDOUT.name);
 
-    const message = await screen.findByText(
-      "HoldoutSplitter cannot read these parameters",
+    await waitFor(() =>
+      expect(
+        JSON.parse(screen.getByTestId("split-preview").dataset.failure),
+      ).toMatchObject({ invalid: true }),
     );
-    expect(isUnderForm(message)).toBe(true);
     expect(
-      JSON.parse(screen.getByTestId("split-preview").dataset.failure),
-    ).toEqual({
-      reason: "HoldoutSplitter cannot read these parameters",
-      invalid: true,
-    });
+      screen.queryByText("HoldoutSplitter cannot read these parameters"),
+    ).not.toBeInTheDocument();
     await waitFor(() =>
       expect(spies.setSplitPartitions).toHaveBeenLastCalledWith(null),
     );
     expect(lastReady()).toBe(false);
+  });
+
+  it("asks for no preview while the form reports invalid values, and is not ready", async () => {
+    previewSplit.mockResolvedValue(previewAnswer());
+    mockFormParams = { train: 0.6, validation: 0.2, test: 0.2 };
+    mockFormInvalid = true;
+    renderStep();
+    await waitForSplitter(HOLDOUT.name);
+
+    await waitFor(() => expect(spies.setSplitsReady).toHaveBeenCalled());
+    // Past the preview's debounce.
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(previewSplit).not.toHaveBeenCalled();
+    expect(lastReady()).toBe(false);
+    expect(spies.setSplitPartitions).not.toHaveBeenCalledWith(
+      expect.arrayContaining(["train"]),
+    );
   });
 
   it.each([
