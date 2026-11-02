@@ -93,6 +93,11 @@ def test_a_backtest_is_previewed_on_the_dataset_steps(client, dataset_1):
         "validation": 18 / 150,
         "test": 6 / 150,
     }
+    assert body["legend"] == [
+        {"role": "train", "key": "steps", "values": {"count": 126}},
+        {"role": "validation", "key": "steps", "values": {"count": 18}},
+        {"role": "test", "key": "steps", "values": {"count": 6}},
+    ]
 
 
 def test_a_series_too_short_is_an_error_of_the_preview(client, dataset_1):

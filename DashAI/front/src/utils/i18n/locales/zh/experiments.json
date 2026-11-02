@@ -149,6 +149,10 @@
     "moreFolds": "另有 {{hidden}} 折",
     "moreOrigins": "+{{hidden}} 个其他起点",
     "unused": "未使用",
+    "legend": {
+      "steps_one": "{{role}}：{{count}} 步",
+      "steps_other": "{{role}}：{{count}} 步"
+    },
     "notes": {
       "foldsHidden": "共 {{total}} 折；只绘制最前面几折和最后一折。",
       "originsHidden": "共 {{total}} 个起点；只绘制前几个和最后一个。"

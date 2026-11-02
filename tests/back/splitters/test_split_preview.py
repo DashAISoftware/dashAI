@@ -123,6 +123,27 @@ def test_a_backtest_shares_are_the_history_the_validation_and_the_test():
     assert preview["partitions"] == ["validation", "test"]
 
 
+def test_a_backtest_legend_counts_steps_since_its_windows_are_steps():
+    # On a long series h steps are a share that rounds to 0 %; the horizon
+    # is set in steps, so that is what the legend says.
+    preview = _origins(RollingOriginSplitter, {"horizon": 6, "n_origins": 3}, 2000)
+
+    assert preview["legend"] == [
+        {"role": "train", "key": "steps", "values": {"count": 1976}},
+        {"role": "validation", "key": "steps", "values": {"count": 18}},
+        {"role": "test", "key": "steps", "values": {"count": 6}},
+    ]
+
+
+def test_a_preview_of_rows_has_no_legend_of_its_own():
+    # Its legend is the shares, as percentages.
+    preview = HoldoutSplitter.preview(
+        {"train": 0.6, "validation": 0.2, "test": 0.2}, {"total_rows": 100}
+    )
+
+    assert "legend" not in preview
+
+
 def test_a_temporal_holdout_previews_a_single_origin():
     preview = _origins(TemporalHoldoutSplitter, {"horizon": 3}, 24)
 

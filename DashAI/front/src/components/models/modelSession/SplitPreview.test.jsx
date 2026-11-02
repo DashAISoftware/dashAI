@@ -107,6 +107,32 @@ describe("SplitPreview draws the splitter's answer", () => {
     expect(screen.getByText("Validation 38%")).toBeInTheDocument();
   });
 
+  it("a legend the preview carries: drawn as it comes, not as percentages", () => {
+    // A backtest of 2000 steps with a horizon of 6: the test is 0.3 % of the
+    // series, which a percentage rounds to 0.
+    renderWithProviders(
+      <SplitPreview
+        preview={{
+          rows: [],
+          notes: [],
+          shares: { train: 0.988, validation: 0.009, test: 0.003 },
+          legend: [
+            { role: "train", key: "steps", values: { count: 1976 } },
+            { role: "validation", key: "steps", values: { count: 18 } },
+            { role: "test", key: "steps", values: { count: 1 } },
+          ],
+          errors: [],
+          partitions: ["validation", "test"],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Train: 1976 steps")).toBeInTheDocument();
+    expect(screen.getByText("Validation: 18 steps")).toBeInTheDocument();
+    expect(screen.getByText("Test: 1 step")).toBeInTheDocument();
+    expect(screen.queryByText("Test 0%")).not.toBeInTheDocument();
+  });
+
   it("no preview: says so, or that it is being drawn", () => {
     const { rerender } = renderWithProviders(<SplitPreview preview={null} />);
     expect(

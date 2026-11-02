@@ -149,6 +149,10 @@
     "moreFolds": "+{{hidden}} weitere Folds",
     "moreOrigins": "+{{hidden}} weitere Ursprünge",
     "unused": "Ungenutzt",
+    "legend": {
+      "steps_one": "{{role}}: {{count}} Schritt",
+      "steps_other": "{{role}}: {{count}} Schritte"
+    },
     "notes": {
       "foldsHidden": "Insgesamt {{total}} Folds; nur die ersten und der letzte werden gezeichnet.",
       "originsHidden": "{{total}} Ursprünge insgesamt; nur die ersten und der letzte werden gezeichnet."
