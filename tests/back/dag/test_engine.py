@@ -386,8 +386,11 @@ def test_the_bundling_rule_picks_the_keys_two_nodes_agree_on(stored_datasets):
     fit = Node("fit", "FitConverterUnit", {})
     tx = Node("tx", "TransformDatasetUnit", {})
 
+    # The drop option travels next to the converter, never inside it, so the
+    # transform drops the same columns on every branch.
     assert connect(fit, tx) == (
         Edge("fit", "fitted_converter", "tx", "fitted_converter"),
+        Edge("fit", "fitted_converter_options", "tx", "fitted_converter_options"),
     )
 
 
