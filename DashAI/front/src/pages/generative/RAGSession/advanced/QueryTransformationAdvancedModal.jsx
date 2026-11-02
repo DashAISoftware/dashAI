@@ -1,23 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { Button, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { resolveLabel } from "../../../../components/generative/RAG/QueryTransformationPicker";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
+import RAGAdvancedDialog from "./RAGAdvancedDialog";
 import { resolveRagLlmDefaults } from "./resolveRagLlmDefaults";
 
 /**
@@ -261,89 +250,68 @@ export default function QueryTransformationAdvancedModal({
   };
 
   return (
-    <Dialog
+    <RAGAdvancedDialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{ sx: { minHeight: "400px" } }}
+      title={t("generative:rag.config.queryTransformation.advanced")}
+      minHeight={400}
+      actions={
+        <>
+          <Button onClick={onClose} variant="outlined">
+            {t("generative:rag.advanced.close")}
+          </Button>
+          <Button onClick={handleDone} variant="contained" color="primary">
+            {t("generative:rag.advanced.done")}
+          </Button>
+        </>
+      }
     >
-      <DialogTitle
-        sx={{
-          bgcolor: "background.paper",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        {t("generative:rag.config.queryTransformation.advanced")}
-        <IconButton
-          onClick={onClose}
+      <Stack spacing={2} sx={{ pt: 1 }}>
+        <Typography variant="caption" color="text.secondary">
+          {model?.component}
+        </Typography>
+
+        <TextField
+          select
           size="small"
-          aria-label={t("generative:rag.advanced.close")}
-          sx={{ color: "text.secondary" }}
+          label={t("generative:rag.config.queryTransformation.llm")}
+          value={params.llm_model?.component || ""}
+          onChange={(event) => setComponent("llm_model", event.target.value)}
         >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
+          {(generators || []).map((generator) => (
+            <MenuItem key={generator.name} value={generator.name}>
+              {resolveLabel(generator.display_name, generator.name)}
+            </MenuItem>
+          ))}
+        </TextField>
 
-      <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
-        <Stack spacing={2} sx={{ pt: 1 }}>
-          <Typography variant="caption" color="text.secondary">
-            {model?.component}
-          </Typography>
+        {llmFormReady && (
+          <FormSchemaContainer key={`llm-form-${llmComponent}`}>
+            <FormSchema
+              autoSave
+              hideButtons
+              model={llmComponent}
+              initialValues={llmInitialValues}
+              onFormSubmit={handleLlmFormSubmit}
+            />
+          </FormSchemaContainer>
+        )}
 
-          <TextField
-            select
-            size="small"
-            label={t("generative:rag.config.queryTransformation.llm")}
-            value={params.llm_model?.component || ""}
-            onChange={(event) => setComponent("llm_model", event.target.value)}
-          >
-            {(generators || []).map((generator) => (
-              <MenuItem key={generator.name} value={generator.name}>
-                {resolveLabel(generator.display_name, generator.name)}
-              </MenuItem>
-            ))}
-          </TextField>
-
-          {llmFormReady && (
-            <FormSchemaContainer key={`llm-form-${llmComponent}`}>
-              <FormSchema
-                autoSave
-                hideButtons
-                model={llmComponent}
-                initialValues={llmInitialValues}
-                onFormSubmit={handleLlmFormSubmit}
-              />
-            </FormSchemaContainer>
-          )}
-
-          {model?.component && (
-            <FormSchemaContainer key={`transformer-form-${model.component}`}>
-              <FormSchemaWithPrompts
-                autoSave
-                hideButtons
-                model={model.component}
-                initialValues={model?.params || {}}
-                excludeFields={TRANSFORMER_EXCLUDED_FIELDS}
-                promptFilter={promptOptionsFilter}
-                onFormSubmit={handleTransformerFormSubmit}
-              />
-            </FormSchemaContainer>
-          )}
-        </Stack>
-      </DialogContent>
-
-      <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
-        <Button onClick={onClose} variant="outlined">
-          {t("generative:rag.advanced.close")}
-        </Button>
-        <Button onClick={handleDone} variant="contained" color="primary">
-          {t("generative:rag.advanced.done")}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        {model?.component && (
+          <FormSchemaContainer key={`transformer-form-${model.component}`}>
+            <FormSchemaWithPrompts
+              autoSave
+              hideButtons
+              model={model.component}
+              initialValues={model?.params || {}}
+              excludeFields={TRANSFORMER_EXCLUDED_FIELDS}
+              promptFilter={promptOptionsFilter}
+              onFormSubmit={handleTransformerFormSubmit}
+            />
+          </FormSchemaContainer>
+        )}
+      </Stack>
+    </RAGAdvancedDialog>
   );
 }
 

@@ -165,7 +165,8 @@ export default function RAGSessionPage() {
         display="flex"
         alignItems="center"
         justifyContent="center"
-        height="100vh"
+        height="100%"
+        minHeight="60vh"
       >
         <Typography variant="h6" color="text.secondary">
           {t("generative:rag.session.notFound")}
@@ -180,9 +181,10 @@ export default function RAGSessionPage() {
         display="flex"
         alignItems="center"
         justifyContent="center"
-        height="100vh"
+        height="100%"
+        minHeight="60vh"
       >
-        <CircularProgress />
+        <CircularProgress aria-label={t("generative:rag.common.loading")} />
       </Box>
     );
   }

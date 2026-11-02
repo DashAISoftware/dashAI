@@ -119,6 +119,7 @@ export default function RAGConfigPanel({
 
   const [configuration, setConfiguration] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expandedSection, setExpandedSection] = useState(SECTIONS[0]);
   const [promptValid, setPromptValid] = useState(true);
@@ -141,6 +142,7 @@ export default function RAGConfigPanel({
   const load = useCallback(async () => {
     if (!sessionId) return;
     setLoading(true);
+    setLoadFailed(false);
     try {
       const [session, resolved] = await Promise.all([
         getRAGSession(sessionId),
@@ -172,6 +174,7 @@ export default function RAGConfigPanel({
       setDescription(session.description || "");
     } catch (error) {
       console.error("Failed to load RAG configuration:", error);
+      setLoadFailed(true);
       enqueueSnackbar(t("generative:rag.paramsPanel.failedToLoad"), {
         variant: "error",
       });
@@ -350,7 +353,7 @@ export default function RAGConfigPanel({
     }
   };
 
-  if (loading || !configuration || !draft) {
+  if (loading) {
     return (
       <SideBar>
         <Box
@@ -361,7 +364,32 @@ export default function RAGConfigPanel({
             justifyContent: "center",
           }}
         >
-          <CircularProgress size={32} />
+          <CircularProgress
+            size={32}
+            aria-label={t("generative:rag.common.loading")}
+          />
+        </Box>
+      </SideBar>
+    );
+  }
+
+  // A failed load used to leave the spinner up forever: `configuration` stayed
+  // null and the guard below never let the panel through. Offer the one action
+  // that can still help instead of a permanent loading state.
+  if (loadFailed || !configuration || !draft) {
+    return (
+      <SideBar>
+        <Box sx={{ p: 4 }}>
+          <Alert
+            severity="error"
+            action={
+              <Button size="small" color="inherit" onClick={load}>
+                {t("generative:rag.index.retryIndexing")}
+              </Button>
+            }
+          >
+            {t("generative:rag.paramsPanel.failedToLoad")}
+          </Alert>
         </Box>
       </SideBar>
     );
@@ -699,6 +727,7 @@ export default function RAGConfigPanel({
           }}
         >
           <TextField
+            autoFocus
             size="small"
             label={t("generative:rag.summary.sessionName")}
             value={name}
@@ -733,7 +762,14 @@ export default function RAGConfigPanel({
         </Stack>
       )}
 
-      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          overscrollBehavior: "contain",
+          minHeight: 0,
+        }}
+      >
         {SECTIONS.map((key) => {
           const section = configuration[key];
           const invalid = key === "prompt" && !promptValid;
@@ -873,6 +909,7 @@ export default function RAGConfigPanel({
           <Button
             variant="contained"
             onClick={handleSave}
+            loading={saving}
             disabled={
               !dirty ||
               saving ||

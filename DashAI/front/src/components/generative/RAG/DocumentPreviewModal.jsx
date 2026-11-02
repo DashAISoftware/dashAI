@@ -4,10 +4,6 @@ import {
   Box,
   Button,
   CircularProgress,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Typography,
 } from "@mui/material";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -20,6 +16,7 @@ import {
   LoadMoreFooter,
   usePagedContent,
 } from "../../documents/DocumentReader";
+import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
 import { getDocument, getDocumentContent } from "../../../api/documents";
 import { DOCUMENT_STATUS } from "../../../hooks/datasets/useDocuments";
 
@@ -77,7 +74,15 @@ function DocumentPreviewBody({ dataDocument }) {
   }
 
   return (
-    <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", p: { xs: 2, md: 4 } }}>
+    <Box
+      sx={{
+        flex: 1,
+        minHeight: 0,
+        overflowY: "auto",
+        overscrollBehavior: "contain",
+        p: { xs: 2, md: 4 },
+      }}
+    >
       <Box
         sx={{
           maxWidth: 860,
@@ -107,19 +112,27 @@ export default function DocumentPreviewModal({ open, onClose, document }) {
   const { t } = useTranslation(["generative", "datasets", "common"]);
   const navigate = useNavigate();
   const [dataDocument, setDataDocument] = useState(null);
+  const [status, setStatus] = useState("loading");
 
   useEffect(() => {
     if (!open || !document) {
       setDataDocument(null);
+      setStatus("loading");
       return undefined;
     }
     let cancelled = false;
+    setStatus("loading");
     getDocument(document.id)
       .then((loaded) => {
-        if (!cancelled) setDataDocument(loaded);
+        if (cancelled) return;
+        setDataDocument(loaded);
+        setStatus("ready");
       })
       .catch(() => {
-        if (!cancelled) setDataDocument(null);
+        if (!cancelled) {
+          setDataDocument(null);
+          setStatus("error");
+        }
       });
     return () => {
       cancelled = true;
@@ -132,10 +145,18 @@ export default function DocumentPreviewModal({ open, onClose, document }) {
   };
 
   const renderContent = () => {
-    if (!dataDocument)
+    if (status === "loading")
       return (
         <CenteredState>
-          <CircularProgress />
+          <CircularProgress aria-label={t("common:loading")} />
+        </CenteredState>
+      );
+    if (status === "error")
+      return (
+        <CenteredState>
+          <Alert severity="error">
+            {t("generative:rag.documentPreview.loadFailed")}
+          </Alert>
         </CenteredState>
       );
     if (dataDocument.status === DOCUMENT_STATUS.ERROR)
@@ -157,49 +178,41 @@ export default function DocumentPreviewModal({ open, onClose, document }) {
   };
 
   const dialogContent = (
-    <Dialog
+    <RAGAdvancedDialog
       open={open}
       onClose={onClose}
+      title={document?.name ?? t("generative:rag.documentPreview.title")}
       maxWidth="lg"
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            height: "85vh",
-            bgcolor: "background.paper",
-            backgroundImage: "none",
-          },
-        },
+      minHeight={0}
+      paperSx={{
+        height: "85vh",
+        bgcolor: "background.paper",
+        backgroundImage: "none",
       }}
+      contentSx={{
+        p: 0,
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0,
+        overflow: "hidden",
+      }}
+      actions={
+        <>
+          <Button
+            startIcon={<OpenInNewIcon />}
+            disabled={!document}
+            onClick={openInData}
+          >
+            {t("generative:rag.documentPreview.openInData")}
+          </Button>
+          <Button variant="outlined" onClick={onClose}>
+            {t("common:close")}
+          </Button>
+        </>
+      }
     >
-      <DialogTitle>
-        {document?.name ?? t("generative:rag.documentPreview.title")}
-      </DialogTitle>
-      <DialogContent
-        dividers
-        sx={{
-          p: 0,
-          display: "flex",
-          flexDirection: "column",
-          minHeight: 0,
-          overflow: "hidden",
-        }}
-      >
-        {renderContent()}
-      </DialogContent>
-      <DialogActions>
-        <Button
-          startIcon={<OpenInNewIcon />}
-          disabled={!document}
-          onClick={openInData}
-        >
-          {t("generative:rag.documentPreview.openInData")}
-        </Button>
-        <Button variant="outlined" onClick={onClose}>
-          {t("common:close")}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      {renderContent()}
+    </RAGAdvancedDialog>
   );
 
   return createPortal(dialogContent, globalThis.document.body);

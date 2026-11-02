@@ -566,7 +566,15 @@ function TreeNodeView({
             borderRadius: 1,
             cursor: "pointer",
             backgroundColor: "background.paper",
-            "&:hover": { backgroundColor: "action.hover" },
+            transition: "background-color 150ms ease-out",
+            "&:focus-visible": {
+              outline: "2px solid",
+              outlineColor: "primary.main",
+              outlineOffset: 2,
+            },
+            "@media (hover: hover)": {
+              "&:hover": { backgroundColor: "action.hover" },
+            },
           }}
         >
           {isComposite ? (
@@ -578,7 +586,7 @@ function TreeNodeView({
             sx={{
               display: "flex",
               flexDirection: "column",
-              minWidth: "fit-content",
+              minWidth: 0,
               maxWidth: 480,
             }}
           >
@@ -588,7 +596,7 @@ function TreeNodeView({
                 variant="caption"
                 color="text.secondary"
                 sx={{
-                  maxWidth: 420,
+                  maxWidth: "100%",
                   overflowWrap: "anywhere",
                 }}
               >
@@ -602,6 +610,7 @@ function TreeNodeView({
           <Tooltip title={t("generative:rag.composite.addChild")}>
             <IconButton
               size="small"
+              aria-label={t("generative:rag.composite.addChild")}
               onClick={(e) => {
                 e.stopPropagation();
                 onAddChild(node.nodeId);
@@ -617,6 +626,7 @@ function TreeNodeView({
           <Tooltip title={t("generative:rag.composite.removeNode")}>
             <IconButton
               size="small"
+              aria-label={t("generative:rag.composite.removeNode")}
               onClick={(e) => {
                 e.stopPropagation();
                 onRemoveChild(parentId, node.nodeId);

@@ -133,9 +133,18 @@ function TreeChunkRow({ chunkRef, info, score, interactive, onClick }) {
         alignItems: "center",
         justifyContent: "space-between",
         gap: 2,
-        width: "fit-content",
-        minWidth: 220,
+        width: "100%",
+        minWidth: 0,
         cursor: interactive ? "pointer" : "default",
+        borderRadius: 1,
+        px: 1,
+        mx: -1,
+        transition: "background-color 150ms ease-out",
+        "@media (hover: hover)": {
+          ...(interactive
+            ? { "&:hover": { backgroundColor: "action.hover" } }
+            : {}),
+        },
         "&:focus-visible": {
           outline: "2px solid",
           outlineColor: "primary.main",
@@ -308,7 +317,7 @@ function RetrieverTraceTree({
             sx={{
               display: "flex",
               flexDirection: "column",
-              minWidth: "fit-content",
+              minWidth: 0,
               maxWidth: 480,
             }}
           >
@@ -318,7 +327,7 @@ function RetrieverTraceTree({
                 variant="caption"
                 color="text.secondary"
                 sx={{
-                  maxWidth: 420,
+                  maxWidth: "100%",
                   overflowWrap: "anywhere",
                 }}
               >

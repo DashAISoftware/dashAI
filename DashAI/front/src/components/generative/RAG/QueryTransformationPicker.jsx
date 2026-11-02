@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { Alert, Button, FormControlLabel, Stack, Switch } from "@mui/material";
+import {
+  Alert,
+  Button,
+  FormControlLabel,
+  Stack,
+  Switch,
+  Typography,
+} from "@mui/material";
 import { useTranslation } from "react-i18next";
 import PresetCardList from "./PresetCardList";
 import QueryTransformationAdvancedModal from "../../../pages/generative/RAGSession/advanced/QueryTransformationAdvancedModal";
@@ -120,6 +127,7 @@ export default function QueryTransformationPicker({
   const [transformers, setTransformers] = useState([]);
   const [generators, setGenerators] = useState([]);
   const [prompts, setPrompts] = useState([]);
+  const [loadingTransformers, setLoadingTransformers] = useState(true);
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
@@ -127,7 +135,8 @@ export default function QueryTransformationPicker({
       .then((data) => setTransformers(data || []))
       .catch((error) =>
         console.error("Failed to load query transformers:", error),
-      );
+      )
+      .finally(() => setLoadingTransformers(false));
     getQueryTransformationPrompts()
       .then((data) => setPrompts(data || []))
       .catch((error) =>
@@ -227,6 +236,12 @@ export default function QueryTransformationPicker({
         }
         label={t("generative:rag.config.queryTransformation.enable")}
       />
+
+      {!loadingTransformers && transformers.length === 0 && (
+        <Typography variant="caption" color="text.secondary">
+          {t("generative:rag.config.queryTransformation.noneAvailable")}
+        </Typography>
+      )}
 
       <PresetCardList
         presets={presets}

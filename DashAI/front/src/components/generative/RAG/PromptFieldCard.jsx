@@ -322,13 +322,17 @@ export default function PromptFieldCard({
               border: 1,
               borderColor: "divider",
               borderRadius: 1,
-              bgcolor: "action.hover",
+              bgcolor: "background.box",
               px: 2,
               py: 1.5,
               fontFamily: theme.typography.code.fontFamily,
               fontSize: theme.typography.body2.fontSize,
+              lineHeight: 1.6,
               whiteSpace: "pre-wrap",
               wordBreak: "break-word",
+              maxHeight: 220,
+              overflowY: "auto",
+              overscrollBehavior: "contain",
             }}
           >
             {template ? (

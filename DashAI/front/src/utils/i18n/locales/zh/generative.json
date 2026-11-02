@@ -131,7 +131,8 @@
     },
     "chunkingConfig": {
       "configureTitle": "配置分块模型",
-      "modelLabel": "分块模型"
+      "modelLabel": "分块模型",
+      "overlapError": "分块重叠 ({{overlap}}) 必须小于分块大小 ({{size}})。"
     },
     "common": {
       "loading": "加载中..."
@@ -169,6 +170,7 @@
         "llm": "语言模型",
         "maxSubqueries": "最大子查询数",
         "nQueries": "查询数量",
+        "noneAvailable": "未注册任何查询转换技术。",
         "off": "已关闭",
         "prompt": "提示词",
         "unknownComponent": "此转换器未注册；请选择提示词和模型以继续。"
@@ -183,7 +185,8 @@
     },
     "documentPreview": {
       "openInData": "在数据中打开",
-      "title": "文档预览"
+      "title": "文档预览",
+      "loadFailed": "无法加载此文档。"
     },
     "generator": {
       "advancedButton": "打开高级配置",

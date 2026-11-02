@@ -121,9 +121,12 @@ function RAGBreadcrumbs({ sessionName }) {
           size="small"
           sx={{
             color: "text.secondary",
-            "&:hover": {
-              color: "primary.main",
-              backgroundColor: "action.hover",
+            flexShrink: 0,
+            "@media (hover: hover)": {
+              "&:hover": {
+                color: "primary.main",
+                backgroundColor: "action.hover",
+              },
             },
           }}
           aria-label={t("generative:rag.breadcrumbs.goBack")}
@@ -134,15 +137,24 @@ function RAGBreadcrumbs({ sessionName }) {
       <Breadcrumbs
         aria-label="breadcrumb"
         sx={{
-          minHeight: "24px", // Ensure consistent height
+          minHeight: "24px",
+          minWidth: 0,
           display: "flex",
           alignItems: "center",
+          flexWrap: "nowrap",
+          overflow: "hidden",
         }}
       >
         {breadcrumbs.map((breadcrumb, index) => {
           if (breadcrumb.current) {
             return (
-              <Typography key={index} color="text.primary">
+              <Typography
+                key={index}
+                color="text.primary"
+                noWrap
+                aria-current="page"
+                sx={{ minWidth: 0 }}
+              >
                 {breadcrumb.isSession ? (
                   <>
                     <em>{breadcrumb.label}</em>{" "}
@@ -158,13 +170,19 @@ function RAGBreadcrumbs({ sessionName }) {
               <Link
                 key={index}
                 underline="hover"
-                color="inherit"
+                color="text.secondary"
                 href="#"
                 onClick={(e) => {
                   e.preventDefault();
                   handleNavigate(breadcrumb.path);
                 }}
-                sx={{ cursor: "pointer" }}
+                sx={{
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  "@media (hover: hover)": {
+                    "&:hover": { color: "primary.main" },
+                  },
+                }}
               >
                 {breadcrumb.label}
               </Link>

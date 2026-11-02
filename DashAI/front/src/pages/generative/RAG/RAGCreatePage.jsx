@@ -218,6 +218,7 @@ export default function RAGCreatePage() {
               >
                 <Stack spacing={4}>
                   <TextField
+                    autoFocus
                     fullWidth
                     label={t("generative:rag.setup.sessionName")}
                     value={name}
@@ -229,7 +230,11 @@ export default function RAGCreatePage() {
                   />
 
                   <Box>
-                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                    <Typography
+                      variant="subtitle2"
+                      component="h3"
+                      sx={{ mb: 1, fontWeight: 600 }}
+                    >
                       {t("generative:rag.create.selectModel")}
                     </Typography>
                     {loadingModels ? (

@@ -4,10 +4,6 @@ import {
   Alert,
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
   MenuItem,
   Stack,
@@ -15,11 +11,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import { useTranslation } from "react-i18next";
 import HighlightedTextarea from "./HighlightedTextarea";
 import PlaceholdersList from "./PlaceholdersList";
+import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
 import { getDefaultPrompts } from "../../../api/rag";
 import { LANGUAGE_CODES } from "../../../constants/languages";
 
@@ -240,70 +236,45 @@ export default function PromptEditor({
 
       {/* The same controlled state, with room to read: eight rows in a panel
           this narrow is not enough for a real prompt. Dressed like the
-          module's other dialogs -- titled row with a close affordance, divided
-          body, actions along the bottom. */}
-      <Dialog
+          module's other advanced editors through the shared RAG shell. */}
+      <RAGAdvancedDialog
         open={expanded}
         onClose={() => setExpanded(false)}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { minHeight: "500px" } }}
+        title={t("generative:rag.prompt.editor.template")}
+        contentSx={{ minHeight: 400 }}
+        actions={
+          <>
+            <Button onClick={() => setExpanded(false)} variant="outlined">
+              {t("generative:rag.advanced.close")}
+            </Button>
+            <Button
+              onClick={() => setExpanded(false)}
+              variant="contained"
+              color="primary"
+              disabled={missing.length > 0}
+            >
+              {t("generative:rag.advanced.done")}
+            </Button>
+          </>
+        }
       >
-        <DialogTitle
-          sx={{
-            bgcolor: "background.paper",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          {t("generative:rag.prompt.editor.template")}
-          <IconButton
-            onClick={() => setExpanded(false)}
-            size="small"
-            sx={{ color: "text.secondary" }}
-            aria-label={t("common:close")}
-          >
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-
-        <DialogContent
-          dividers
-          sx={{ bgcolor: "background.paper", minHeight: 400 }}
-        >
-          <Stack spacing={2}>
-            <PlaceholdersList
-              required={placeholderSpec.required}
-              descriptions={placeholderSpec.descriptions}
-              template={template}
-              onInsertPlaceholder={insertPlaceholder}
-            />
-            {editor(dialogTextareaRef, 18)}
-            {missing.length > 0 && (
-              <Alert severity="error" sx={{ py: 0.5 }}>
-                {t("generative:rag.prompt.editor.missingPlaceholder", {
-                  placeholders: missing.join(", "),
-                })}
-              </Alert>
-            )}
-          </Stack>
-        </DialogContent>
-
-        <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
-          <Button onClick={() => setExpanded(false)} variant="outlined">
-            {t("generative:rag.advanced.close")}
-          </Button>
-          <Button
-            onClick={() => setExpanded(false)}
-            variant="contained"
-            color="primary"
-            disabled={missing.length > 0}
-          >
-            {t("generative:rag.advanced.done")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Stack spacing={2}>
+          <PlaceholdersList
+            required={placeholderSpec.required}
+            descriptions={placeholderSpec.descriptions}
+            template={template}
+            onInsertPlaceholder={insertPlaceholder}
+          />
+          {editor(dialogTextareaRef, 18)}
+          {missing.length > 0 && (
+            <Alert severity="error" sx={{ py: 0.5 }}>
+              {t("generative:rag.prompt.editor.missingPlaceholder", {
+                placeholders: missing.join(", "),
+              })}
+            </Alert>
+          )}
+        </Stack>
+      </RAGAdvancedDialog>
     </Stack>
   );
 }

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { getChunkingComponents } from "../../../../api/rag";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
+import { resolveLabel } from "../../../../components/generative/RAG/QueryTransformationPicker";
 import {
   resolveDefaults,
   getModelFromSubform,
@@ -67,7 +68,6 @@ export default function ChunkingConfigurationStep({
       const data = await getChunkingComponents();
       if (isMounted) {
         setChunkingOptions(data || []);
-        console.log("[ChunkingConfigStep] Fetched chunking options:", data);
       }
     };
     fetchChunkingModels();
@@ -79,15 +79,9 @@ export default function ChunkingConfigurationStep({
   useEffect(() => {
     if (!chunkingOptions.length) return;
     const modelName = getModelFromSubform(chunkingModel);
-    console.log("[ChunkingConfigStep] Syncing selectedChunking:", {
-      modelName,
-      chunkingModel,
-      chunkingOptions: chunkingOptions.map((c) => c.name),
-    });
     if (modelName) {
       const found = chunkingOptions.find((c) => c.name === modelName);
       if (found) {
-        console.log("[ChunkingConfigStep] Found chunking model:", found.name);
         setSelectedChunking(found);
         setNextEnabled(true);
       }
@@ -130,9 +124,10 @@ export default function ChunkingConfigurationStep({
       values.chunk_overlap !== undefined &&
       values.chunk_overlap >= values.chunk_size
     ) {
-      const errorMsg =
-        "chunk_overlap must be less than chunk_size. " +
-        `Got chunk_overlap=${values.chunk_overlap} and chunk_size=${values.chunk_size}`;
+      const errorMsg = t("generative:rag.chunkingConfig.overlapError", {
+        overlap: values.chunk_overlap,
+        size: values.chunk_size,
+      });
       setError(errorMsg);
       setNextEnabled(false);
       return;
@@ -148,14 +143,19 @@ export default function ChunkingConfigurationStep({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Typography variant="subtitle2" sx={{ mb: 0 }}>
+      <Typography
+        variant="subtitle2"
+        component="h3"
+        sx={{ mb: 0, fontWeight: 600 }}
+      >
         {t("generative:rag.chunkingConfig.configureTitle")}
       </Typography>
 
       <Autocomplete
-        disablePortal
         options={chunkingOptions}
-        getOptionLabel={(option) => option.name}
+        getOptionLabel={(option) =>
+          resolveLabel(option.display_name, option.name)
+        }
         value={selectedChunking}
         onChange={handleChunkingSelectionChange}
         isOptionEqualToValue={(option, value) => option.name === value?.name}

@@ -67,7 +67,10 @@ export const renderTemplateWithHighlights = (
         sx={{
           backgroundColor: bg || "warning.light",
           color: text || "warning.dark",
-          padding: "2px 4px",
+          // No padding: the highlight also runs behind the transparent
+          // textarea, where extra spacing would push every later glyph out of
+          // step with the backdrop.
+          padding: 0,
           borderRadius: "3px",
           fontFamily,
         }}

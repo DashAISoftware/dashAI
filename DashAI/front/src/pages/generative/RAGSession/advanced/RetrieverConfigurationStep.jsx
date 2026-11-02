@@ -336,8 +336,12 @@ const RetrieverConfigurationStep = forwardRef(
       selectedRetriever && isCompositeKind(selectedRetriever.name);
 
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 0 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Typography
+          variant="subtitle2"
+          component="h3"
+          sx={{ mb: 0, fontWeight: 600 }}
+        >
           {t("generative:rag.composite.selectModel")}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>

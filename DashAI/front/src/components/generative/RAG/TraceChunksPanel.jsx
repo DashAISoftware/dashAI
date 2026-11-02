@@ -304,15 +304,23 @@ StoryStrip.propTypes = {
 };
 
 /**
- * The header row of a chunk card: label, provenance and copy action.
+ * The header row of a chunk card: label, provenance, copy and an optional
+ * dismiss action for a card that can be closed (the selected-chunk panel).
  * @param {object} props
  * @param {string} props.label - The localised chunk label.
  * @param {string|null} props.provenanceText - The localised provenance line.
  * @param {string} props.chunkText - The raw chunk text to copy.
  * @param {Function} props.onCopy - Copies the raw chunk text.
+ * @param {Function} [props.onClose] - Dismisses the card, when it is closable.
  * @returns {JSX.Element} The header row.
  */
-function ChunkCardHeader({ label, provenanceText, chunkText, onCopy }) {
+function ChunkCardHeader({
+  label,
+  provenanceText,
+  chunkText,
+  onCopy,
+  onClose,
+}) {
   const { t } = useTranslation(["generative", "common"]);
   return (
     <Stack
@@ -349,15 +357,41 @@ function ChunkCardHeader({ label, provenanceText, chunkText, onCopy }) {
             sx={{
               color: "text.secondary",
               flexShrink: 0,
-              "&:hover": {
-                color: "primary.main",
-                backgroundColor: "action.hover",
+              "@media (hover: hover)": {
+                "&:hover": {
+                  color: "primary.main",
+                  backgroundColor: "action.hover",
+                },
               },
             }}
           >
             <CopyIcon fontSize="small" />
           </IconButton>
         </Tooltip>
+        {onClose && (
+          <Tooltip title={t("common:close")}>
+            <IconButton
+              size="small"
+              aria-label={t("common:close")}
+              onClick={(event) => {
+                event.stopPropagation();
+                onClose();
+              }}
+              sx={{
+                color: "text.secondary",
+                flexShrink: 0,
+                "@media (hover: hover)": {
+                  "&:hover": {
+                    color: "text.primary",
+                    backgroundColor: "action.hover",
+                  },
+                },
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
       </Stack>
     </Stack>
   );
@@ -368,6 +402,7 @@ ChunkCardHeader.propTypes = {
   provenanceText: PropTypes.string,
   chunkText: PropTypes.string,
   onCopy: PropTypes.func.isRequired,
+  onClose: PropTypes.func,
 };
 
 /**
@@ -508,17 +543,24 @@ function ChunkCard({
         cursor: "pointer",
         // Keeps a card clear of the chat viewport edge.
         scrollMarginTop: "56px",
-        border: isHighlighted ? 2 : 1,
+        // The selected ring is drawn inside the existing border: growing the
+        // border from 1px to 2px would reflow the whole chunk list on select.
+        border: 1,
         borderColor: isHighlighted ? "primary.main" : "divider",
+        boxShadow: isHighlighted
+          ? (theme) => `inset 0 0 0 1px ${theme.palette.primary.main}`
+          : "none",
         bgcolor: isHighlighted ? "action.selected" : "background.paper",
         "&:focus-visible": {
           outline: "2px solid",
           outlineColor: "primary.main",
           outlineOffset: 2,
         },
-        ...(isHighlighted
-          ? {}
-          : { "&:hover": { backgroundColor: "action.hover" } }),
+        "@media (hover: hover)": {
+          ...(isHighlighted
+            ? {}
+            : { "&:hover": { backgroundColor: "action.hover" } }),
+        },
       }}
     >
       <ChunkCardHeader
@@ -581,7 +623,11 @@ function DocumentGroup({
         >
           <ArticleIcon color="primary" sx={{ fontSize: 18, flexShrink: 0 }} />
           <Tooltip title={title}>
-            <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600 }}>
+            <Typography
+              variant="subtitle1"
+              noWrap
+              sx={{ fontWeight: 600, minWidth: 0 }}
+            >
               {title}
             </Typography>
           </Tooltip>
@@ -1068,6 +1114,7 @@ SelectedQueryText.propTypes = {
  * @param {object} props.info - The resolved reference entry.
  * @param {Map} props.provenanceMap - Ref → per-query deepest retriever names.
  * @param {Function} props.onCopy - Copies the raw chunk text.
+ * @param {Function} props.onClear - Clears the selection, closing the panel.
  * @param {React.RefObject} props.panelRef - Ref to the panel root (scrolling).
  * @returns {JSX.Element} The selected chunk panel.
  */
@@ -1076,6 +1123,7 @@ function SelectedChunkPanel({
   info,
   provenanceMap,
   onCopy,
+  onClear,
   panelRef,
 }) {
   const { t } = useTranslation("generative");
@@ -1100,6 +1148,7 @@ function SelectedChunkPanel({
         provenanceText={provenanceText}
         chunkText={info.text}
         onCopy={onCopy}
+        onClose={onClear}
       />
       <ChunkText text={info.text} />
     </Paper>
@@ -1112,6 +1161,7 @@ SelectedChunkPanel.propTypes = {
   info: PropTypes.object.isRequired,
   provenanceMap: PropTypes.object.isRequired,
   onCopy: PropTypes.func.isRequired,
+  onClear: PropTypes.func.isRequired,
   panelRef: PropTypes.object.isRequired,
 };
 
@@ -1381,6 +1431,18 @@ const TraceChunksPanel = ({
   );
 
   /**
+   * Closes the selected-chunk panel by clearing the selection.
+   *
+   * The close button unmounts with the panel it belongs to, so focus moves to
+   * the panel body — a stable, focusable target — instead of falling back to
+   * the document body and losing the keyboard position.
+   */
+  const handleClearChunk = useCallback(() => {
+    setHighlightedRef(null);
+    bodyRef.current?.focus({ preventScroll: true });
+  }, []);
+
+  /**
    * Copies a chunk's text to the clipboard with escaped newlines restored and
    * confirms the outcome: clipboard denial in a webview is otherwise silent.
    * @param {string} chunkText - The raw chunk text.
@@ -1517,6 +1579,7 @@ const TraceChunksPanel = ({
                     info={selectedChunkInfo}
                     provenanceMap={provenanceMap}
                     onCopy={handleCopyChunk}
+                    onClear={handleClearChunk}
                     panelRef={selectedChunkRef}
                   />
                 ) : hasUsableReferences ? (

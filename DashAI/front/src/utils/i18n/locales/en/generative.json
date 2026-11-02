@@ -131,7 +131,8 @@
     },
     "chunkingConfig": {
       "configureTitle": "Configure Chunking Model",
-      "modelLabel": "Chunking Model"
+      "modelLabel": "Chunking Model",
+      "overlapError": "Chunk overlap ({{overlap}}) must be smaller than the chunk size ({{size}})."
     },
     "common": {
       "loading": "Loading..."
@@ -170,6 +171,7 @@
         "llm": "Language model",
         "maxSubqueries": "Max sub-queries",
         "nQueries": "Number of queries",
+        "noneAvailable": "No query transformation techniques are registered.",
         "off": "Off",
         "prompt": "Prompt",
         "unknownComponent": "this transformer is not registered; choose a prompt and a model to continue."
@@ -184,7 +186,8 @@
     },
     "documentPreview": {
       "openInData": "Open in Data",
-      "title": "Preview Document"
+      "title": "Preview Document",
+      "loadFailed": "Could not load this document."
     },
     "generator": {
       "advancedButton": "Open advanced configuration",

@@ -50,7 +50,7 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
   };
 
   return (
-    <Box sx={{ mt: 2, width: "100%", ...sx }}>
+    <Box sx={{ width: "100%", ...sx }}>
       {label && (
         <Typography variant="body2" sx={{ mb: 0.5, color: "text.secondary" }}>
           {label}
@@ -88,7 +88,7 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
                 },
                 theme.typography.code.fontFamily,
               )
-            : placeholder || ""}
+            : null}
         </Box>
 
         <Box
@@ -108,22 +108,28 @@ const HighlightedTextarea = forwardRef(function HighlightedTextarea(
             color: "transparent",
             caretColor: (t) => t.palette.text.primary,
             backgroundColor: "transparent",
-            resize: "vertical",
+            // The highlight backdrop is a separate layer and cannot follow a
+            // manual resize, so the editor grows through its own rows instead.
+            resize: "none",
             outline: "none",
             "&::placeholder": {
               color: (t) => t.palette.text.secondary,
               opacity: 1,
             },
             "&::selection": {
-              backgroundColor: "primary.light",
+              // Translucent: the glyphs themselves live on the backdrop, so an
+              // opaque selection colour would paint over the selected text.
+              backgroundColor: "rgba(44, 122, 255, 0.30)",
             },
             "&:focus": {
               borderColor: "primary.main",
               borderWidth: 2,
               p: "15.5px 13px",
             },
-            "&:hover": {
-              borderColor: (t) => t.palette.text.primary,
+            "@media (hover: hover)": {
+              "&:hover": {
+                borderColor: (t) => t.palette.text.primary,
+              },
             },
           }}
           {...textareaProps}

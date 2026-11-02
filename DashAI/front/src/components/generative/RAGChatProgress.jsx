@@ -68,6 +68,7 @@ export default function RAGChatProgress({ progress }) {
         <Paper
           role="status"
           aria-live="polite"
+          aria-atomic="true"
           sx={{
             backgroundColor: theme.palette.ui.box,
             color: "text.primary",
@@ -75,6 +76,8 @@ export default function RAGChatProgress({ progress }) {
             maxWidth: "100%",
             borderRadius: 2,
             borderTopLeftRadius: 0,
+            border: 1,
+            borderColor: "divider",
             display: "flex",
             alignItems: "flex-start",
             gap: 1.5,

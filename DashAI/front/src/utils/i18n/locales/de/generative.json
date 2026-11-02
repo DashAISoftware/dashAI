@@ -131,7 +131,8 @@
     },
     "chunkingConfig": {
       "configureTitle": "Chunking-Modell konfigurieren",
-      "modelLabel": "Chunking-Modell"
+      "modelLabel": "Chunking-Modell",
+      "overlapError": "Die Überlappung ({{overlap}}) muss kleiner als die Chunk-Größe ({{size}}) sein."
     },
     "common": {
       "loading": "Wird geladen..."
@@ -170,6 +171,7 @@
         "llm": "Sprachmodell",
         "maxSubqueries": "Maximale Teilfragen",
         "nQueries": "Anzahl der Anfragen",
+        "noneAvailable": "Es sind keine Techniken zur Abfrageumformung registriert.",
         "off": "Deaktiviert",
         "prompt": "Prompt",
         "unknownComponent": "dieser Transformierer ist nicht registriert; wählen Sie einen Prompt und ein Modell, um fortzufahren."
@@ -184,7 +186,8 @@
     },
     "documentPreview": {
       "openInData": "In Daten öffnen",
-      "title": "Dokumentvorschau"
+      "title": "Dokumentvorschau",
+      "loadFailed": "Dieses Dokument konnte nicht geladen werden."
     },
     "generator": {
       "advancedButton": "Erweiterte Konfiguration öffnen",

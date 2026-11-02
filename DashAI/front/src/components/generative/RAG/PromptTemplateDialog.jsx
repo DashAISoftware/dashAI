@@ -1,21 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import {
-  Alert,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  MenuItem,
-  Stack,
-  TextField,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { Alert, Button, MenuItem, Stack, TextField } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import HighlightedTextarea from "./HighlightedTextarea";
 import PlaceholdersList from "./PlaceholdersList";
+import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
 import {
   DEFAULT_PROMPT_LANGUAGE,
   getMissingPromptPlaceholders,
@@ -139,110 +128,90 @@ export default function PromptTemplateDialog({
   if (isCreate) title = t("generative:rag.prompt.field.newTitle");
 
   return (
-    <Dialog
+    <RAGAdvancedDialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{ sx: { maxHeight: "80vh", zIndex: 1400 } }}
-      BackdropProps={{ sx: { zIndex: 1399 } }}
-    >
-      <DialogTitle
-        sx={{
-          bgcolor: "background.paper",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        {title}
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{ color: "text.secondary" }}
-          aria-label={t("common:close")}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent dividers sx={{ bgcolor: "background.paper" }}>
-        <Stack spacing={2}>
-          <PlaceholdersList
-            required={requiredPlaceholders}
-            descriptions={placeholderDescriptions}
-            template={draft}
-            onInsertPlaceholder={insertPlaceholder}
-          />
-
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="flex-start"
-            useFlexGap
-            flexWrap="wrap"
+      title={title}
+      minHeight={0}
+      paperSx={{ maxHeight: "80vh", zIndex: 1400 }}
+      dialogProps={{ BackdropProps: { sx: { zIndex: 1399 } } }}
+      actions={
+        <>
+          <Button onClick={onClose} variant="outlined">
+            {t("common:cancel")}
+          </Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            color="primary"
+            disabled={!canSave}
           >
-            {availableLanguages.length > 0 && (
-              <TextField
-                select
-                size="small"
-                label={t("generative:rag.prompt.editor.seedLanguage")}
-                value={draftLanguage}
-                onChange={handleLanguageChange}
-                helperText={t("generative:rag.prompt.field.languageHelp")}
-                sx={{ minWidth: 260 }}
-              >
-                {availableLanguages.map((code) => (
-                  <MenuItem key={code} value={code}>
-                    {t(`generative:rag.prompt.languages.${code}`, code)}
-                  </MenuItem>
-                ))}
-              </TextField>
-            )}
+            {t("common:save")}
+          </Button>
+        </>
+      }
+    >
+      <Stack spacing={2}>
+        <PlaceholdersList
+          required={requiredPlaceholders}
+          descriptions={placeholderDescriptions}
+          template={draft}
+          onInsertPlaceholder={insertPlaceholder}
+        />
 
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleLoadBuiltin}
-              disabled={availableLanguages.length === 0}
-              sx={{ mt: 0.5 }}
-            >
-              {t("generative:rag.prompt.field.loadBuiltin")}
-            </Button>
-          </Stack>
-
-          <HighlightedTextarea
-            ref={textareaRef}
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            minRows={12}
-            placeholder={t("generative:rag.prompt.editor.templatePlaceholder")}
-          />
-
-          {missing.length > 0 && (
-            <Alert severity="error" sx={{ py: 0.5 }}>
-              {t("generative:rag.prompt.editor.missingPlaceholder", {
-                placeholders: missing.join(", "),
-              })}
-            </Alert>
-          )}
-        </Stack>
-      </DialogContent>
-
-      <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
-        <Button onClick={onClose} variant="outlined">
-          {t("common:cancel")}
-        </Button>
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          color="primary"
-          disabled={!canSave}
+        <Stack
+          direction="row"
+          spacing={1}
+          alignItems="flex-start"
+          useFlexGap
+          flexWrap="wrap"
         >
-          {t("common:save")}
-        </Button>
-      </DialogActions>
-    </Dialog>
+          {availableLanguages.length > 0 && (
+            <TextField
+              select
+              size="small"
+              label={t("generative:rag.prompt.editor.seedLanguage")}
+              value={draftLanguage}
+              onChange={handleLanguageChange}
+              helperText={t("generative:rag.prompt.field.languageHelp")}
+              sx={{ minWidth: 260 }}
+            >
+              {availableLanguages.map((code) => (
+                <MenuItem key={code} value={code}>
+                  {t(`generative:rag.prompt.languages.${code}`, code)}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={handleLoadBuiltin}
+            disabled={availableLanguages.length === 0}
+            sx={{ mt: 0.5 }}
+          >
+            {t("generative:rag.prompt.field.loadBuiltin")}
+          </Button>
+        </Stack>
+
+        <HighlightedTextarea
+          ref={textareaRef}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          minRows={12}
+          placeholder={t("generative:rag.prompt.editor.templatePlaceholder")}
+        />
+
+        {missing.length > 0 && (
+          <Alert severity="error" sx={{ py: 0.5 }}>
+            {t("generative:rag.prompt.editor.missingPlaceholder", {
+              placeholders: missing.join(", "),
+            })}
+          </Alert>
+        )}
+      </Stack>
+    </RAGAdvancedDialog>
   );
 }
 

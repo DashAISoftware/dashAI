@@ -134,7 +134,8 @@
     },
     "chunkingConfig": {
       "configureTitle": "Configurar modelo de chunking",
-      "modelLabel": "Modelo de chunking"
+      "modelLabel": "Modelo de chunking",
+      "overlapError": "El solapamiento ({{overlap}}) debe ser menor que el tamaño del chunk ({{size}})."
     },
     "common": {
       "loading": "Cargando..."
@@ -173,6 +174,7 @@
         "llm": "Modelo de lenguaje",
         "maxSubqueries": "Subconsultas máximas",
         "nQueries": "Número de consultas",
+        "noneAvailable": "No hay técnicas de transformación de consultas registradas.",
         "off": "Desactivada",
         "prompt": "Prompt",
         "unknownComponent": "este transformador no está registrado; elige un prompt y un modelo para continuar."
@@ -187,7 +189,8 @@
     },
     "documentPreview": {
       "openInData": "Abrir en Datos",
-      "title": "Vista previa del documento"
+      "title": "Vista previa del documento",
+      "loadFailed": "No se pudo cargar este documento."
     },
     "generator": {
       "advancedButton": "Abrir configuración avanzada",

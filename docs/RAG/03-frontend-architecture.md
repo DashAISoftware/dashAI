@@ -135,11 +135,12 @@ own option loading, so the panel only wires the section.
   enabled and the "off" label when it is `null`.
 
 `PresetCardList` renders the chunking and retrieval presets, and the query
-transformation techniques, as cards in `ComponentSelector`'s idiom — flat
-`Paper`, primary border when active, a tick. It does not reuse that component:
-the search field, category chips, download controls and viewport-breakpoint
-grid it also brings do not apply to a preset recipe, and two columns are
-unreadable at this width.
+transformation techniques, as cards in `ComponentSelector`'s idiom — a primary
+border and a tick when active. It is a `ButtonBase`, so a preset is reachable
+and operable from the keyboard rather than a click-only `Paper`. It does not
+reuse `ComponentSelector`: the search field, category chips, download controls
+and viewport-breakpoint grid it also brings do not apply to a preset recipe,
+and two columns are unreadable at this width.
 
 ## The prompt
 
@@ -154,8 +155,10 @@ used to overwrite whatever the user had written as a side effect. Nothing is
 sent while typing; the panel's Save writes the whole draft.
 
 `HighlightedTextarea`, `PlaceholdersList` and `renderTemplateWithHighlights` are
-reused unchanged. A template missing `{chunks}` or `{input}` marks its tab and
-blocks Save.
+reused. The textarea keeps its highlight backdrop aligned by sharing one grid
+cell with the input, and leaves the native placeholder visible rather than
+drawing a second copy over it. A template missing `{chunks}` or `{input}` marks
+its tab and blocks Save.
 
 ## Sources and the retrieval trace
 
@@ -183,7 +186,9 @@ both kept mounted so chunk expansion and query selection survive a view switch:
   per query when there are several), one `RetrieverTraceTree` per query, and
   the discarded candidates as chips. Clicking a surviving tree chunk
   highlights its final card and fills the selected-chunk panel; clicking a
-  discarded one raises a warning snackbar instead.
+  discarded one raises a warning snackbar instead. The selected-chunk panel
+  carries its own close action, which clears the selection and returns focus to
+  the panel body.
 
 `RetrieverTraceTree` mirrors `CompositeRetrieverBuilder`'s geometry: composite
 nodes in purple, leaves in amber, each node's own chunks indented beneath it
@@ -225,6 +230,11 @@ In `pages/generative/RAGSession/advanced/`:
   included)
 - `CompositeRetrieverBuilder` / `RetrieverNodeConfig` — the composite retriever
   tree, with a vertical spine and clickable operation nodes.
+
+The editors share `RAGAdvancedDialog`: one title row with a close control, one
+scrolling divided body and one action row, so moving between chunking,
+retriever, generator and query transformation never moves the controls. The
+prompt editor's expanded view and the nested prompt dialog use the same shell.
 
 ### Prompt-typed schema fields
 
