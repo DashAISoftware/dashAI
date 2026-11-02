@@ -129,9 +129,14 @@ function SplitDatasetRows({
   // errors, which come as translation keys, are shown under the form.
   const previewFailed = previewError !== null || previewErrorStatus !== null;
   const configurationRefused = previewErrorStatus === 422;
-  const previewFailure = previewFailed
-    ? { reason: previewError, invalid: configurationRefused }
-    : null;
+  // Values the form marks are as refused as a 422, without asking: the
+  // preview says the parameters cannot be used, and the form says why.
+  const formRefused = paramsOwned && Boolean(paramsError);
+  const previewFailure = formRefused
+    ? { reason: null, invalid: true }
+    : previewFailed
+      ? { reason: previewError, invalid: configurationRefused }
+      : null;
   const previewErrors = preview?.errors ?? [];
   const errorMessages = previewErrors.map((error) =>
     t(`experiments:error.${error.key}`, error.values),

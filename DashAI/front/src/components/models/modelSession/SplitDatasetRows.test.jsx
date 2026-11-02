@@ -709,6 +709,12 @@ describe("SplitDatasetRows: holdout", () => {
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(previewSplit).not.toHaveBeenCalled();
     expect(lastReady()).toBe(false);
+    // The preview says the parameters cannot be used, not that the splitter
+    // has no preview.
+    expect(
+      JSON.parse(screen.getByTestId("split-preview").dataset.failure),
+    ).toEqual({ reason: null, invalid: true });
+    expect(screen.getByTestId("split-preview").dataset.loading).toBe("false");
     expect(spies.setSplitPartitions).not.toHaveBeenCalledWith(
       expect.arrayContaining(["train"]),
     );
