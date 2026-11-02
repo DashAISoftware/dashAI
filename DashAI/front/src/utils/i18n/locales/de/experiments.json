@@ -139,7 +139,7 @@
     "loading": "Aufteilung wird gezeichnet…",
     "failed": "Die Vorschau konnte nicht berechnet werden ({{reason}}). Sie können fortfahren: Die Sitzung prüft diese Parameter beim Erstellen.",
     "retry": "Erneut versuchen",
-    "invalid": "Der Aufteiler kann diese Parameter nicht verwenden; siehe die Meldung unter seinem Formular.",
+    "invalid": "Der Aufteiler kann diese Parameter nicht verwenden; prüfe die markierten Felder seines Formulars.",
     "wholeDataset": "Datensatz",
     "reservedTest": "Zurückgelegt",
     "finalFit": "Finales Training",

@@ -139,7 +139,7 @@
     "loading": "Drawing the split…",
     "failed": "The preview could not be computed ({{reason}}). You can go on: the session checks these parameters when it is created.",
     "retry": "Retry",
-    "invalid": "The splitter cannot use these parameters; see the message under its form.",
+    "invalid": "The splitter cannot use these parameters; check the marked fields of its form.",
     "wholeDataset": "Dataset",
     "reservedTest": "Held out",
     "finalFit": "Final fit",
