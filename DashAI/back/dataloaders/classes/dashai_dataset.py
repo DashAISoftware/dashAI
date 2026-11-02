@@ -682,8 +682,20 @@ class DashAIDataset(Dataset, DashAIData):
         if isinstance(selected_dataset, DashAIDataset):
             return selected_dataset
         else:
-            # If the selected dataset is a Dataset, convert it to DashAIDataset
-            arrow_tbl = selected_dataset.with_format("arrow")[:]
+            # If the selected dataset is a Dataset, convert it to DashAIDataset.
+            # Rows that are not one contiguous range come back as the whole
+            # table plus an indices mapping, and reading that mapping with
+            # ``with_format("arrow")[:]`` gathers one record batch per row.
+            # The layout outlives the selection: a dataset saved from it keeps
+            # a chunk per row, and pickling such a table takes about a
+            # thousand times longer than a regular one. ``take`` gathers the
+            # same rows, in the same order, into regular chunks.
+            if selected_dataset._indices is not None:
+                arrow_tbl = selected_dataset.data.table.take(
+                    selected_dataset._indices.column(0)
+                )
+            else:
+                arrow_tbl = selected_dataset.with_format("arrow")[:]
             arrow_tblx = save_types_in_arrow_metadata(
                 arrow_tbl, {col: self._types[col].to_string() for col in self._types}
             )
