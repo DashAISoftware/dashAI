@@ -92,9 +92,21 @@ function SplitPreview({
   }
 
   const { rows, notes, shares } = preview;
-  const legendRoles = LEGEND_ORDER.filter(
-    (role) => (shares[role] ?? 0) > 0.0001,
-  );
+  // The legend the preview carries, when the shares would not say it (a
+  // backtest counts its windows in steps); otherwise each share as a
+  // percentage.
+  const legend =
+    preview.legend ??
+    LEGEND_ORDER.filter((role) => (shares[role] ?? 0) > 0.0001).map((role) => ({
+      role,
+      text: `${roleLabel(role)} ${asPercent(shares[role])}%`,
+    }));
+  const legendText = (entry) =>
+    entry.text ??
+    t(`experiments:splitPreview.legend.${entry.key}`, {
+      ...entry.values,
+      role: roleLabel(entry.role),
+    });
 
   return (
     <SplitsCard label={t("experiments:splitPreview.title")}>
@@ -186,11 +198,11 @@ function SplitPreview({
           </Stack>
         )}
 
-        {legendRoles.length > 0 && (
+        {legend.length > 0 && (
           <Stack direction="row" flexWrap="wrap" sx={{ gap: 3 }}>
-            {legendRoles.map((role) => (
+            {legend.map((entry) => (
               <Box
-                key={role}
+                key={entry.role}
                 sx={{ display: "flex", alignItems: "center", gap: 1 }}
               >
                 <Box
@@ -198,7 +210,7 @@ function SplitPreview({
                     width: 8,
                     height: 8,
                     borderRadius: "2px",
-                    backgroundColor: colors[role],
+                    backgroundColor: colors[entry.role],
                   }}
                 />
                 <Typography
@@ -206,7 +218,7 @@ function SplitPreview({
                   color="text.secondary"
                   sx={{ fontSize: "0.68rem" }}
                 >
-                  {`${roleLabel(role)} ${asPercent(shares[role])}%`}
+                  {legendText(entry)}
                 </Typography>
               </Box>
             ))}
@@ -237,6 +249,13 @@ SplitPreview.propTypes = {
     rows: PropTypes.array.isRequired,
     notes: PropTypes.array.isRequired,
     shares: PropTypes.object.isRequired,
+    legend: PropTypes.arrayOf(
+      PropTypes.shape({
+        role: PropTypes.string.isRequired,
+        key: PropTypes.string.isRequired,
+        values: PropTypes.object,
+      }),
+    ),
   }),
   loading: PropTypes.bool,
   // Why there is no preview: the backend's reason, and whether it refused the

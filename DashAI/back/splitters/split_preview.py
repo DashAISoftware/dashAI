@@ -14,7 +14,9 @@ where Python's ``round`` rounds them to even.
 A row is ``{key, label, label_values, segments}``, each segment
 ``{role, fraction}`` of the dataset; an ellipsis row ``{key, ellipsis,
 label, hidden_count}`` stands for rows left out. Labels, notes and errors are
-``{key, values}`` the frontend translates.
+``{key, values}`` the frontend translates. A preview may carry a ``legend``,
+``[{role, key, values}]``, when the shares do not say it: a backtest's
+windows are steps, and a few steps of a long series round to 0 %.
 """
 
 import math
@@ -76,6 +78,10 @@ def _row(key, label, segments, label_values=None) -> Dict[str, Any]:
         "label_values": label_values or {},
         "segments": segments,
     }
+
+
+def _steps(role: str, count: int) -> Dict[str, Any]:
+    return {"role": role, "key": "steps", "values": {"count": count}}
 
 
 def _error(key: str, **values) -> Dict[str, Any]:
@@ -328,8 +334,9 @@ def backtest_preview(splitter, dataset) -> Dict[str, Any]:
     ``horizon`` after it; the test is one more origin, and the kept model is
     fitted on the whole series. Validation and test measure ``horizon`` steps
     each, and the history before the first origin is what is left: those are
-    the shares. A series too short for the cuts is an error, with what
-    the splitter needs (``OriginSplitter.needed_steps``).
+    the shares. The legend counts them in steps, which is how the horizon is
+    set. A series too short for the cuts is an error, with what the splitter
+    needs (``OriginSplitter.needed_steps``).
     """
     n_steps = _rows_of(dataset)
     partitions = [VALIDATION, TEST]
@@ -393,6 +400,11 @@ def backtest_preview(splitter, dataset) -> Dict[str, Any]:
             VALIDATION: horizon * len(origins) / n_steps,
             TEST: horizon / n_steps,
         },
+        "legend": [
+            _steps(TRAIN, origins[0]),
+            _steps(VALIDATION, horizon * len(origins)),
+            _steps(TEST, horizon),
+        ],
         "errors": [],
         "partitions": partitions,
     }

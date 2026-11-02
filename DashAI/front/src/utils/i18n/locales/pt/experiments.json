@@ -149,6 +149,10 @@
     "moreFolds": "+{{hidden}} dobras a mais",
     "moreOrigins": "+{{hidden}} origens a mais",
     "unused": "Sem uso",
+    "legend": {
+      "steps_one": "{{role}}: {{count}} passo",
+      "steps_other": "{{role}}: {{count}} passos"
+    },
     "notes": {
       "foldsHidden": "{{total}} dobras no total; só as primeiras e a última são desenhadas.",
       "originsHidden": "{{total}} origens no total; só as primeiras e a última são desenhadas."

@@ -149,6 +149,10 @@
     "moreFolds": "+{{hidden}} pliegues más",
     "moreOrigins": "+{{hidden}} orígenes más",
     "unused": "Sin usar",
+    "legend": {
+      "steps_one": "{{role}}: {{count}} paso",
+      "steps_other": "{{role}}: {{count}} pasos"
+    },
     "notes": {
       "foldsHidden": "{{total}} pliegues en total; solo se dibujan los primeros y el último.",
       "originsHidden": "{{total}} orígenes en total; solo se dibujan los primeros y el último."
