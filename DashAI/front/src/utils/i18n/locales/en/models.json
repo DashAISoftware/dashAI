@@ -327,7 +327,9 @@
     "importedNeedsDownloadUntrained": "These models arrived untrained and must be downloaded before training: {{names}}",
     "importingSession": "Importing session...",
     "importingSessionHelp": "This can take a while if the session includes trained models.",
-    "sessionImportedTitle": "Session imported"
+    "sessionImportedTitle": "Session imported",
+    "sessionFromDataset": "from {{name}} dataset",
+    "noDataset": "No dataset"
   },
   "importError": {
     "invalidFile": "This file is not a valid dashAI session.",
