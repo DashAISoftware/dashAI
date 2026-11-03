@@ -3,6 +3,7 @@
 import logging
 from typing import TYPE_CHECKING
 
+from DashAI.back.converters.drop_source_columns import split_converter_params
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.job.base_job import JobError
 from DashAI.back.units.base_unit import BaseUnit
@@ -54,7 +55,7 @@ class ApplyConverterUnit(BaseUnit, ConverterScopeMixin):
     SCHEMA = ApplyConverterSchema
 
     REQUIRES = ("dataset",)
-    PROVIDES = ("dataset", "fitted_converter")
+    PROVIDES = ("dataset", "fitted_converter", "fitted_converter_options")
 
     def __init__(self, **config) -> None:
         super().__init__(**config)
@@ -93,10 +94,12 @@ class ApplyConverterUnit(BaseUnit, ConverterScopeMixin):
         converter_name = self._converter_name
 
         converter_constructor = self._resolve_converter()
-        converter_instance = converter_constructor(
-            **(self.config["converter"].get("params") or {})
+        converter_params, drop_source_columns = split_converter_params(
+            self.config["converter"].get("params")
         )
+        converter_instance = converter_constructor(**converter_params)
 
+        self._check_drop_scope(drop_source_columns)
         self._check_target_bounds(loaded_dataset)
         (
             scope_column_names,
@@ -140,6 +143,11 @@ class ApplyConverterUnit(BaseUnit, ConverterScopeMixin):
                 loaded_dataset,
                 transformed_dataset,
                 scope_column_names,
+                drop_source_columns=drop_source_columns,
+                target_column_name=target_column_name,
             ),
         )
         ctx.put("fitted_converter", converter_instance)
+        ctx.put(
+            "fitted_converter_options", {"drop_source_columns": drop_source_columns}
+        )

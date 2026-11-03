@@ -1,8 +1,9 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Box, Stack, Typography, Divider, Link } from "@mui/material";
+import { Box, Stack, Typography, Divider } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import SideBar from "../threeSectionLayout/panelContainers/SideBar";
+import DescriptionText from "../shared/DescriptionText";
 import TagBadges from "../shared/TagBadges";
 import { useTheme } from "@mui/material/styles";
 
@@ -12,52 +13,6 @@ function getLabel(component) {
 
 function getDescription(component) {
   return component.description ?? component.schema?.description ?? "";
-}
-
-const URL_PATTERN = /(\[([^\]]+)\]\((https?:\/\/[^)]+)\))|(https?:\/\/\S+)/g;
-const TRAILING_PUNCT = /[.,;:!?)\]>'"]+$/;
-
-function DescriptionText({ text }) {
-  if (!text) return null;
-  const parts = [];
-  let last = 0;
-  let match;
-  URL_PATTERN.lastIndex = 0;
-  while ((match = URL_PATTERN.exec(text)) !== null) {
-    if (match.index > last) parts.push(text.slice(last, match.index));
-    if (match[1]) {
-      // Markdown link [label](url) — closing ) already excluded by the pattern
-      parts.push(
-        <Link
-          key={match.index}
-          href={match[3]}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {match[2]}
-        </Link>,
-      );
-    } else {
-      // Bare URL — strip trailing punctuation that belongs to surrounding prose
-      const rawUrl = match[0];
-      const cleanUrl = rawUrl.replace(TRAILING_PUNCT, "");
-      const trailing = rawUrl.slice(cleanUrl.length);
-      parts.push(
-        <Link
-          key={match.index}
-          href={cleanUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {cleanUrl}
-        </Link>,
-      );
-      if (trailing) parts.push(trailing);
-    }
-    last = match.index + match[0].length;
-  }
-  if (last < text.length) parts.push(text.slice(last));
-  return parts;
 }
 
 function ComponentDetailsPanel({

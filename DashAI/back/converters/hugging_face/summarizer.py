@@ -6,6 +6,7 @@ from typing import Any, List, Optional, Tuple
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.converters.hugging_face.pretrained_tool import (
     PretrainedTool,
     batches,
@@ -16,7 +17,6 @@ from DashAI.back.converters.simple_converters.text_value_converter import (
 )
 from DashAI.back.core.data_kinds import DATASET, DOCUMENT
 from DashAI.back.core.schema_fields import int_field, schema_field
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.utils import DEVICE_PLACEHOLDER
 from DashAI.back.types.value_types import Text
@@ -26,7 +26,7 @@ BATCH_SIZE = 4
 MAX_INPUT_TOKENS = 512
 
 
-class SummarizerSchema(BaseSchema):
+class SummarizerSchema(AddColumnsConverterSchema):
     """Schema for the summarizer."""
 
     min_words: schema_field(

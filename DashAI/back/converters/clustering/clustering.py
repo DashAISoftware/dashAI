@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING, Any, Dict, Union
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.clustering import ClusteringConverter
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.core.schema_fields import (
     schema_field,
     string_field,
 )
 from DashAI.back.core.schema_fields.base_schema import (
-    BaseSchema,
     replace_defs_in_schema,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class ClusteringSchema(BaseSchema):
+class ClusteringSchema(AddColumnsConverterSchema):
     """Schema for the generic clustering converter."""
 
     algorithm: schema_field(

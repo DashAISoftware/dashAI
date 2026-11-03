@@ -7,7 +7,10 @@ import ParameterStepConverter from "./ParameterStepConverter";
 import ScopeStepConverter from "./ScopeStepConverter";
 import { startJobPolling } from "../../../utils/jobPoller";
 import { enqueueConverterJob } from "../../../api/job";
-import { fetchNotebookColumnTypes } from "../notebookColumns";
+import {
+  fetchNotebookColumnTypes,
+  isDocumentNotebook,
+} from "../notebookColumns";
 import { useTranslation } from "react-i18next";
 
 export default function FormConverterSection({
@@ -29,6 +32,15 @@ export default function FormConverterSection({
   } = useExplorersAndConverters();
   const { enqueueSnackbar } = useSnackbar();
   const { t } = useTranslation(["common", "datasets"]);
+
+  // A document is rewritten in place: there are no columns to drop, so the
+  // option is hidden there (the backend ignores it on documents anyway).
+  const excludeFields = isDocumentNotebook(notebook)
+    ? ["drop_source_columns"]
+    : [];
+  const hasVisibleParams = Object.keys(tool.schema.properties).some(
+    (name) => !excludeFields.includes(name),
+  );
 
   const handleSaveConverter = async (params) => {
     const data = {
@@ -158,7 +170,7 @@ export default function FormConverterSection({
           setColumns={setColumns}
           notebook={notebook}
           nextStep={
-            Object.values(tool.schema.properties).length > 0
+            hasVisibleParams
               ? () => setStep((s) => s + 1)
               : () => handleSaveConverter({})
           }
@@ -175,6 +187,7 @@ export default function FormConverterSection({
           handleSaveConverter={handleSaveConverter}
           setStep={setStep}
           hideButtons={hideButtons}
+          excludeFields={excludeFields}
         />
       )}
     </Box>

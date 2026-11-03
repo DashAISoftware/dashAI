@@ -21,8 +21,13 @@ class ConfigObject:
         dict
             Dictionary representing the Json Schema of the component.
         """
-        schema = cls.SCHEMA.model_json_schema()
-        return replace_defs_in_schema(schema)
+        schema = replace_defs_in_schema(cls.SCHEMA.model_json_schema())
+        # Base-class fields come first in pydantic; the converter-wide drop
+        # option reads best as the last parameter of the form.
+        properties = schema.get("properties")
+        if isinstance(properties, dict) and "drop_source_columns" in properties:
+            properties["drop_source_columns"] = properties.pop("drop_source_columns")
+        return schema
 
     def validate_and_transform(self, raw_data: dict) -> dict:
         """It takes the data given by the user to initialize the model and
