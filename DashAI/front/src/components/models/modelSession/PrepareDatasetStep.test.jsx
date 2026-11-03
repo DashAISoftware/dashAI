@@ -68,9 +68,12 @@ jest.mock("../../shared/FormSchema", () => {
   return { __esModule: true, default: FormSchemaStub };
 });
 
+// The preprocessing purpose under the switch draws with the preview's role
+// colors, so the stand-in keeps the real ones.
 jest.mock("./SplitPreview", () => ({
   __esModule: true,
   default: () => <div data-testid="split-preview" />,
+  roleColors: jest.requireActual("./SplitPreview").roleColors,
 }));
 
 const STRATEGIES = [
