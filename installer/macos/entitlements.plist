@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Hardened runtime entitlements for the signed dashAI.app.
+
+  - allow-jit / allow-unsigned-executable-memory: torch and llama.cpp generate
+    executable code at runtime.
+  - disable-library-validation: plugins are pip-installed at runtime into the
+    user's data dir and ship native extensions signed by other teams (or not
+    signed at all); without this the hardened runtime refuses to load them.
+-->
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>
