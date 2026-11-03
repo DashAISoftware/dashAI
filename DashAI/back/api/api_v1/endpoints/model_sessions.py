@@ -44,7 +44,11 @@ from DashAI.back.splitters.splits_payload import (
     normalize_splits_payload,
     validate_splitter_parameters,
 )
-from DashAI.back.tasks.session_roles import SessionColumnRoles, session_roles
+from DashAI.back.tasks.session_roles import (
+    SessionColumnRoles,
+    session_exogenous_refs,
+    session_roles,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -288,6 +292,74 @@ def _roles_problem(
         except (TypeError, ValueError) as e:
             return str(e)
     return None
+
+
+@router.get("/{model_session_id}/exogenous-use")
+@inject
+async def get_exogenous_use(
+    model_session_id: int,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Say, model by model, whether a run would read the exogenous variables.
+
+    The run dialog shows it before training (RECONCILING_FORECASTING §2.14,
+    detail 2): every model the task offers is offered, and the ones that will
+    not read the session's exogenous variables are marked, with the reason as
+    ``{key, values}`` for the app to say in its own language. The answer is
+    ``exogenous_usage``'s, the same the units act on and the run records.
+
+    ``switch`` names the parameter that turns the use off, for a model that
+    declares one, so the dialog can say the run will not read them while the
+    form has it off. A task without exogenous variables marks no model.
+
+    Returns
+    -------
+    dict
+        ``{"has_exogenous": bool, "models": [{"model", "uses", "reason",
+        "switch"}]}``, the models sorted by name.
+    """
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        exogenous_usage,
+    )
+
+    with session_factory() as db:
+        try:
+            model_session = db.get(ModelSession, model_session_id)
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        if not model_session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Model session not found",
+            )
+        task = task_or_http_error(model_session.task_name, component_registry)
+        has_exogenous = bool(session_exogenous_refs(model_session, task))
+        if not hasattr(task, "split_inputs"):
+            return {"has_exogenous": False, "models": []}
+
+        models = []
+        for name in offered_components(
+            component_registry, model_session.task_name, "Model"
+        ):
+            model_class = component_registry[name]["class"]
+            uses, reason = exogenous_usage(model_class, None, has_exogenous)
+            properties = model_class.get_schema().get("properties", {})
+            models.append(
+                {
+                    "model": name,
+                    "uses": uses,
+                    "reason": reason,
+                    "switch": "use_exogenous"
+                    if "use_exogenous" in properties
+                    else None,
+                }
+            )
+        return {"has_exogenous": has_exogenous, "models": models}
 
 
 @router.post("/preprocessing/structure")

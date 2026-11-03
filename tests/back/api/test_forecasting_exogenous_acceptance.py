@@ -355,7 +355,6 @@ def test_a_session_without_exogenous_records_none(client, tmp_path):
 # --------------------------------------------------------------------------- #
 
 
-@pending("7")
 def test_the_session_declares_which_models_will_use_the_exogenous(client, tmp_path):
     session_id = _session(client, tmp_path, exogenous=PROMO)
 

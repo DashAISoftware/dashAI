@@ -180,6 +180,20 @@ def session_raw_columns(model_session: Any, io: SessionIO) -> List[str]:
     return sequence.raw_columns_read(io.input_refs)
 
 
+def session_exogenous_refs(model_session: Any, task: "BaseTask") -> List[Any]:
+    """The refs of a session's exogenous variables, as the task tells them apart.
+
+    A task that has exogenous variables says which of a model's inputs they
+    are (``split_inputs``); every other task has none, so nothing here names a
+    role.
+    """
+    split_inputs = getattr(task, "split_inputs", None)
+    if split_inputs is None:
+        return []
+    _, exogenous = split_inputs(session_io(model_session, task).input_refs)
+    return list(exogenous)
+
+
 def session_roles(model_session: Any, task: "BaseTask") -> SessionColumnRoles:
     """The roles a session stores.
 

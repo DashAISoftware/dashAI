@@ -506,6 +506,11 @@ async def upload_run(
                 params.goal_metric,
                 params.optimizer_name,
             )
+            _check_exogenous_requirement(
+                component_registry[params.model_name]["class"],
+                model_session,
+                component_registry[task_name]["class"](),
+            )
             run = Run(
                 model_session_id=params.model_session_id,
                 model_name=params.model_name,
@@ -531,6 +536,33 @@ async def upload_run(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+def _check_exogenous_requirement(model_class, model_session, task) -> None:
+    """Refuse a model that cannot run without exogenous variables in a session
+    that has none, before it trains (RECONCILING_FORECASTING §2.14, detail 2).
+
+    Raises
+    ------
+    HTTPException
+        422 naming the model.
+    """
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        EXOGENOUS_REQUIRED,
+    )
+    from DashAI.back.tasks.session_roles import session_exogenous_refs
+
+    if getattr(model_class, "EXOGENOUS", None) != EXOGENOUS_REQUIRED:
+        return
+    if not session_exogenous_refs(model_session, task):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Model {model_class.__name__!r} requires exogenous variables, "
+                "and this session has none. Choose another model, or create a "
+                "session that gives the exogenous role its columns."
+            ),
+        )
 
 
 def _check_goal_metric(component_registry, task_name, goal_metric, optimizer_name):
