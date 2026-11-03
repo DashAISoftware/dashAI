@@ -162,6 +162,17 @@ def session_task(task_name: str, component_registry: Any) -> "BaseTask":
         raise TaskNotBuiltError(task_name, e) from e
 
 
+def session_has_steps(model_session: Any) -> bool:
+    """Whether the session preprocesses, so its fitted preprocessor is there.
+
+    A session preprocesses when it declares steps. Training, prediction and
+    the model package ask here, so they cannot disagree on it.
+    """
+    return bool(
+        model_session.preprocessing and model_session.preprocessing.get("steps")
+    )
+
+
 def session_raw_columns(model_session: Any, io: SessionIO) -> List[str]:
     """The dataset columns the session's model reads, through its preprocessing.
 

@@ -171,6 +171,26 @@ def test_whether_a_run_uses_the_exogenous_variables(
         assert why["values"] == {"model": model_class.__name__}
 
 
+@pytest.mark.parametrize(
+    ("record", "used"),
+    [
+        (None, False),
+        ({"used": False, "columns": [], "reason": None}, False),
+        ({"used": True, "columns": [{"name": "promo", "type": "Float"}]}, True),
+    ],
+)
+def test_what_a_run_recorded_says_whether_it_read_exogenous_variables(record, used):
+    """The one reader of ``Run.exogenous.used``: the prediction API and the
+    prediction job ask it, so the two cannot disagree."""
+    from types import SimpleNamespace
+
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        used_exogenous,
+    )
+
+    assert used_exogenous(SimpleNamespace(exogenous=record)) is used
+
+
 def test_a_model_without_exogenous_variables_refuses_them():
     with pytest.raises(ValueError, match="uses no exogenous variables"):
         NaiveForecaster().fit(SERIES, x=np.ones((len(SERIES), 1)))

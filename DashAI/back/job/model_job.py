@@ -16,7 +16,7 @@ from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 from DashAI.back.splitters.splits_payload import META_KEYS, normalize_splits_payload
-from DashAI.back.tasks.session_roles import SessionIO, session_io
+from DashAI.back.tasks.session_roles import SessionIO, session_has_steps, session_io
 from DashAI.back.units.apply_cut_preprocessing_unit import ApplyCutPreprocessingUnit
 from DashAI.back.units.backtest_forecaster_unit import BacktestForecasterUnit
 from DashAI.back.units.build_forecaster_unit import BuildForecasterUnit
@@ -670,7 +670,7 @@ class ModelJob(BaseJob):
                 f"Can not load splits data from model session {model_session.id}",
             ) from e
         input_columns = io.inputs
-        if _has_steps(model_session):
+        if session_has_steps(model_session):
             input_columns, _ = task.split_inputs(io.inputs)
         return PrepareSeriesUnit(
             task_name=model_session.task_name,
@@ -742,7 +742,7 @@ class ModelJob(BaseJob):
             ],
             preprocessing_artifacts_path=(
                 model_session.preprocessing_artifacts_path
-                if _has_steps(model_session)
+                if session_has_steps(model_session)
                 else None
             ),
         )
@@ -801,7 +801,7 @@ class ModelJob(BaseJob):
             "output_columns": io.outputs,
             "splitter": {"component": splitter_name, "params": splits_data},
         }
-        if _has_steps(model_session):
+        if session_has_steps(model_session):
             # PreprocessingJob fitted the sequence once per entry and left the
             # artifacts at this path; the refs are what the wizard stored,
             # and the unit resolves them against each entry's own fit. Passed
@@ -889,10 +889,3 @@ class ModelJob(BaseJob):
         except Exception as e:
             log.exception(e)
             raise JobError(f"Metric saving failed {e}") from e
-
-
-def _has_steps(model_session: ModelSession) -> bool:
-    """Whether the session preprocesses, so its fits are there to apply."""
-    return bool(
-        model_session.preprocessing and model_session.preprocessing.get("steps")
-    )

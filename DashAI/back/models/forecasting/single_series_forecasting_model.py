@@ -94,6 +94,16 @@ def exogenous_usage(
     return True, None
 
 
+def used_exogenous(run: Any) -> bool:
+    """Whether a run read exogenous variables, as its training recorded.
+
+    ``Run.exogenous`` keeps ``exogenous_usage``'s answer for the run, or None
+    for a session without them. The prediction API and the prediction job
+    read it here, so they cannot disagree on which future a run forecasts.
+    """
+    return bool(run.exogenous and run.exogenous.get("used"))
+
+
 @dataclass(frozen=True)
 class Forecast:
     """What a forecaster returns for the next ``h`` steps.

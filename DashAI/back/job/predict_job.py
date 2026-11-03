@@ -14,10 +14,14 @@ from DashAI.back.dependencies.database.models import (
     Run,
 )
 from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    used_exogenous,
+)
 from DashAI.back.splitters.splits_payload import run_split_indexes
 from DashAI.back.tasks.session_roles import (
     SessionIO,
     TaskUnavailableError,
+    session_has_steps,
     session_io,
     session_raw_columns,
     session_task,
@@ -52,7 +56,7 @@ def _preprocessing_artifacts_path(model_session: ModelSession) -> Optional[str]:
     artifacts path mean anything, so the two are read together and the path
     alone travels to the unit that applies it.
     """
-    if not (model_session.preprocessing and model_session.preprocessing.get("steps")):
+    if not session_has_steps(model_session):
         return None
     artifacts_path = model_session.preprocessing_artifacts_path
     if not artifacts_path:
@@ -112,7 +116,7 @@ def _input_columns_training_prepared_with(
     ``PreprocessingJob``). Without steps, the session's inputs are the raw
     columns themselves.
     """
-    if not (model_session.preprocessing and model_session.preprocessing.get("steps")):
+    if not session_has_steps(model_session):
         return io.inputs
     return io.raw_inputs
 
@@ -450,7 +454,7 @@ class PredictJob(BaseJob):
             of (the API refuses it first), or a step of the forecast fails.
         """
         run = db.get(Run, prediction.run_id)
-        if run is not None and run.exogenous and run.exogenous.get("used"):
+        if run is not None and used_exogenous(run):
             self._forecast_future(
                 db,
                 ctx,
@@ -521,8 +525,6 @@ class PredictJob(BaseJob):
             If the request names a partition or brings no rows, or a step of
             the forecast fails.
         """
-        from kink import di
-
         task = di["component_registry"][model_session.task_name]["class"]()
         (time_index,), model_exogenous = task.split_inputs(io.inputs)
         raw_columns = [column["name"] for column in exogenous["columns"]]

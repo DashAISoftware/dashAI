@@ -17,6 +17,9 @@ from DashAI.back.dependencies.database.models import (
     Run,
 )
 from DashAI.back.job.predict_job import run_manual_prediction
+from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    used_exogenous,
+)
 from DashAI.back.splitters.splits_payload import predictable_splits
 from DashAI.back.tasks.session_roles import session_io, session_raw_columns
 
@@ -94,7 +97,7 @@ async def create_prediction(
             else None
         )
         future_rows = None
-        if params.dataset_id is not None and _used_exogenous(run):
+        if params.dataset_id is not None and used_exogenous(run):
             future = db.get(Dataset, params.dataset_id)
             future_rows = getattr(future, "total_rows", None)
         unevaluated_steps = _check_prediction_mode(
@@ -116,11 +119,6 @@ async def create_prediction(
             prediction.unevaluated_steps = unevaluated_steps
             prediction.evaluated_horizon = _evaluated_horizon(run, task)
         return prediction
-
-
-def _used_exogenous(run) -> bool:
-    """Whether the run read exogenous variables, as its training recorded."""
-    return bool(run.exogenous and run.exogenous.get("used"))
 
 
 def _check_prediction_mode(params, run, model_session, task, future_rows=None) -> int:
@@ -156,7 +154,7 @@ def _check_prediction_mode(params, run, model_session, task, future_rows=None) -
             )
         return 0
 
-    if _used_exogenous(run):
+    if used_exogenous(run):
         if params.split is not None or params.horizon is not None:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -339,7 +337,7 @@ async def get_prediction_splits(
         )
         horizon = _evaluated_horizon(run, task)
         exogenous = (
-            {"columns": run.exogenous["columns"]} if _used_exogenous(run) else None
+            {"columns": run.exogenous["columns"]} if used_exogenous(run) else None
         )
 
     try:
@@ -473,7 +471,7 @@ async def filter_datasets_endpoint(
             task = task_or_http_error(model_session.task_name, component_registry)
             io = session_io(model_session, task)
             input_columns = session_raw_columns(model_session, io)
-            if _used_exogenous(run):
+            if used_exogenous(run):
                 # The future of a run that read exogenous variables: its dates
                 # and the raw columns it read, as it recorded them (§2.14,
                 # mismatch 7), not every input of the session.
