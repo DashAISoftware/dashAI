@@ -107,7 +107,7 @@ describe("SelectColumnsStep", () => {
     renderSelect(SUPERVISED);
     await waitFor(() => expect(validateColumns).toHaveBeenCalled());
 
-    expect(selectorLabels()).toEqual(["Features", "Target"]);
+    expect(selectorLabels()).toEqual(["Target", "Features"]);
   });
 
   it("sends the default columns by role: the last one is the target", async () => {
@@ -247,10 +247,7 @@ describe("BaseColumnsStep", () => {
     );
 
     await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
-    expect(selectorLabels()).toEqual([
-      "Features (candidate columns)",
-      "Target",
-    ]);
+    expect(selectorLabels()).toEqual(["Target", "Candidate Features"]);
     const update = setNewExp.mock.calls.at(-1)[0];
     expect(update({}).column_roles_stage1).toEqual({
       features: ["a", "b"],

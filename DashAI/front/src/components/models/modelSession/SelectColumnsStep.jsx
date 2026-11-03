@@ -19,6 +19,7 @@ import usePreprocessingStructure from "./usePreprocessingStructure";
 import {
   defaultRoleSelection,
   optionsForRole,
+  protectedRolesFirst,
   resolveSelection,
   selectionReady,
   selectionToRefs,
@@ -365,7 +366,7 @@ function SelectColumnsStep({
 
       <Grid container spacing={2}>
         <RoleColumnSelectors
-          roles={roles}
+          roles={protectedRolesFirst(roles)}
           selection={selection}
           onChange={(name, keys) =>
             setSelection((prev) => ({ ...prev, [name]: keys }))

@@ -13,7 +13,7 @@ const LEGEND_ORDER = [
   SPLIT_ROLES.UNUSED,
 ];
 
-const roleColors = (theme) => {
+export const roleColors = (theme) => {
   const [green, , orange] = theme.palette.chart?.palette ?? [];
   return {
     [SPLIT_ROLES.TRAIN]: theme.palette.primary.main,

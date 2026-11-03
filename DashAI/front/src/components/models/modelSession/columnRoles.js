@@ -25,6 +25,22 @@ export function shownRoles(taskMetadata) {
 }
 
 /**
+ * The shown roles in the order the column steps display them: the protected
+ * roles first, since what the model predicts is the simplest pick and gives
+ * the rest their purpose, then the roles the preprocessing may transform.
+ * Each group keeps the order the task declares.
+ *
+ * @param {Array<object>} roles the shown roles
+ * @returns {Array<object>} the same roles, protected ones first
+ */
+export function protectedRolesFirst(roles) {
+  return [
+    ...roles.filter((role) => !role.transformable),
+    ...roles.filter((role) => role.transformable),
+  ];
+}
+
+/**
  * The selection a column step starts from, over a list of columns.
  *
  * The protected roles take columns from the end, each as many as its
