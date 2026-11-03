@@ -90,6 +90,9 @@ class ColumnRole:
         Whether the session's preprocessing may transform the role's columns.
         A role that is not transformable is protected: converters never take
         it in their scope and the model reads its original columns.
+    description : MultilingualString, optional
+        What the wizard says under the role's selector, when the label alone
+        does not tell which columns belong in it.
     """
 
     name: str
@@ -98,6 +101,7 @@ class ColumnRole:
     min: int = 0
     max: Union[int, Literal["n"]] = "n"
     transformable: bool = False
+    description: Optional[MultilingualString] = None
 
     @property
     def required(self) -> bool:
@@ -135,8 +139,12 @@ class ColumnRole:
         return f"{self.min} to {self.max}"
 
     def to_metadata(self) -> Dict[str, Any]:
-        """The role as the frontend reads it, with types as their names."""
-        return {
+        """The role as the frontend reads it, with types as their names.
+
+        ``description`` is only there when the role has one, so a role that
+        never declared it reads as it always did.
+        """
+        metadata = {
             "name": self.name,
             "label": self.label,
             "types": [type_name(t) for t in self.types],
@@ -145,6 +153,9 @@ class ColumnRole:
             "required": self.required,
             "transformable": self.transformable,
         }
+        if self.description is not None:
+            metadata["description"] = self.description
+        return metadata
 
 
 @dataclass(frozen=True)

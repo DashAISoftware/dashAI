@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 TIME_INDEX = "time_index"
 SERIES = "series"
+EXOGENOUS = "exogenous"
 
 
 @dataclass(frozen=True)
@@ -39,10 +40,13 @@ class PreparedSeries:
 class SingleSeriesForecastingTask(ForecastingTask):
     """Forecast the future values of a single time series.
 
-    The session names two columns: the time index, a ``Date``, and the series,
-    a number. Both are protected from the session's preprocessing. Nothing else
-    is offered to the model, so the only information it has is the history of
-    the series itself. Exogenous variables arrive as a third role later.
+    The session names the time index, a ``Date``, and the series, a number.
+    Both are protected from the session's preprocessing. A third role takes
+    the exogenous variables: any number of columns known ahead of time, such
+    as the calendar, holidays or planned promotions. The session's
+    preprocessing may transform them, and the model reads them as numbers.
+    Every step of that preprocessing has to keep the rows, because the cuts
+    of a backtest are counted in steps (``PREPROCESSING_KEEPS_ROWS``).
 
     The name says the axis on which the kinds of forecasting differ: one series
     here, several in a panel task that would sit beside this one under
@@ -52,27 +56,29 @@ class SingleSeriesForecastingTask(ForecastingTask):
     DESCRIPTION: str = MultilingualString(
         en=(
             "Predict the future values of a time series from its own history. "
-            "Takes one date column and one numeric column, with no other "
-            "variables."
+            "Takes one date column and one numeric column, and optionally "
+            "exogenous variables known ahead of time."
         ),
         es=(
             "Predice los valores futuros de una serie temporal a partir de su "
             "propia historia. Toma una columna de fecha y una columna "
-            "numérica, sin ninguna otra variable."
+            "numérica, y opcionalmente variables exógenas conocidas de "
+            "antemano."
         ),
         pt=(
             "Prevê os valores futuros de uma série temporal a partir da sua "
             "própria história. Recebe uma coluna de data e uma coluna "
-            "numérica, sem nenhuma outra variável."
+            "numérica, e opcionalmente variáveis exógenas conhecidas de "
+            "antemão."
         ),
         de=(
             "Sagt die zukünftigen Werte einer Zeitreihe aus ihrer eigenen "
             "Vergangenheit voraus. Nimmt eine Datumsspalte und eine numerische "
-            "Spalte, ohne weitere Variablen."
+            "Spalte, und optional im Voraus bekannte exogene Variablen."
         ),
         zh=(
             "根据时间序列自身的历史预测其未来值。"
-            "接受一个日期列和一个数值列，不使用其他变量。"
+            "接受一个日期列和一个数值列，并可选择提前已知的外生变量。"
         ),
     )
     ICON: str = "Timeline"
@@ -113,7 +119,54 @@ class SingleSeriesForecastingTask(ForecastingTask):
             max=1,
             transformable=False,
         ),
+        ColumnRole(
+            name=EXOGENOUS,
+            label=MultilingualString(
+                en="Exogenous variables",
+                es="Variables exógenas",
+                pt="Variáveis exógenas",
+                de="Exogene Variablen",
+                zh="外生变量",
+            ),
+            description=MultilingualString(
+                en=(
+                    "Only variables known ahead of time, whose future values "
+                    "you will have when you predict: the calendar, holidays, "
+                    "planned promotions, prices already set."
+                ),
+                es=(
+                    "Solo variables conocidas de antemano, cuyos valores "
+                    "futuros tendrás al predecir: el calendario, los feriados, "
+                    "las promociones planificadas, los precios ya fijados."
+                ),
+                pt=(
+                    "Apenas variáveis conhecidas de antemão, cujos valores "
+                    "futuros você terá ao prever: o calendário, os feriados, "
+                    "as promoções planejadas, os preços já definidos."
+                ),
+                de=(
+                    "Nur im Voraus bekannte Variablen, deren zukünftige Werte "
+                    "Sie bei der Vorhersage haben: der Kalender, Feiertage, "
+                    "geplante Aktionen, bereits festgelegte Preise."
+                ),
+                zh=(
+                    "仅限提前已知、预测时已有未来值的变量：日历、节假日、"
+                    "计划中的促销、已确定的价格。"
+                ),
+            ),
+            # What the model reads, after the session's preprocessing: a
+            # Categorical reaches it through an encoder, a Date through
+            # ``DateFeaturesConverter``.
+            types=(Float, Integer),
+            min=0,
+            max="n",
+            transformable=True,
+        ),
     )
+
+    # A backtest's cuts are counted in steps, and a step is a row: a step of
+    # the preprocessing that dropped or added rows would shift every cut.
+    PREPROCESSING_KEEPS_ROWS = True
 
     # The shared point metrics, listed here rather than naming this task from
     # the metric: ``RegressionMetric`` names only ``RegressionTask``.
@@ -126,21 +179,31 @@ class SingleSeriesForecastingTask(ForecastingTask):
 
     @classmethod
     def io_roles(cls) -> Dict[str, List[str]]:
-        """The time index feeds a model's inputs and the series its outputs."""
-        return {"inputs": [TIME_INDEX], "outputs": [SERIES]}
+        """The time index and the exogenous variables feed a model's inputs."""
+        return {"inputs": [TIME_INDEX, EXOGENOUS], "outputs": [SERIES]}
 
     def io_columns(self, roles: Mapping[str, Sequence]) -> IOColumns:
-        """The time index as the model's input and the series as its output."""
+        """The time index first, then the exogenous variables, as the inputs."""
         return IOColumns(
-            inputs=list(roles.get(TIME_INDEX) or []),
+            inputs=list(roles.get(TIME_INDEX) or []) + list(roles.get(EXOGENOUS) or []),
             outputs=list(roles.get(SERIES) or []),
         )
 
     def roles_from_io(
         self, input_columns: Sequence, output_columns: Sequence
     ) -> Dict[str, list]:
-        """The roles that a model's input and output came from."""
-        return {TIME_INDEX: list(input_columns), SERIES: list(output_columns or [])}
+        """The roles that a model's input and output came from.
+
+        The time index is always one column and comes first, so every input
+        after it is an exogenous variable, however many columns a step of the
+        preprocessing resolved them to.
+        """
+        inputs = list(input_columns)
+        return {
+            TIME_INDEX: inputs[:1],
+            EXOGENOUS: inputs[1:],
+            SERIES: list(output_columns or []),
+        }
 
     def prepare_for_task(
         self,

@@ -299,10 +299,12 @@ def test_a_series_too_short_for_its_cuts_is_refused(client, tmp_path):
     assert "horizon" in response.text
 
 
-def test_a_forecasting_session_with_preprocessing_is_refused(client, tmp_path):
-    # The step scales a column outside every role, so neither an unregistered
-    # task nor a protected role is what refuses it: only the rule that a
-    # forecasting session takes no preprocessing yet.
+@pytest.mark.xfail(strict=True, reason="PR 5, slice 3: one fit per cut")
+def test_a_forecasting_session_takes_preprocessing(client, tmp_path):
+    # Until the exogenous role (RECONCILING_FORECASTING §7) this session was
+    # refused with "takes no preprocessing": no role of the task could be
+    # transformed. The exogenous role can, so the session is created, and its
+    # preprocessing is fitted once per cut of the backtest.
     frame = _monthly().assign(promo=np.arange(48, dtype=float))
     dataset_id = _upload(client, frame, tmp_path, "acc-preprocessing")
     step = {
@@ -314,8 +316,8 @@ def test_a_forecasting_session_with_preprocessing_is_refused(client, tmp_path):
 
     response = client.post("/api/v1/model-session/", json=body)
 
-    assert response.status_code == 422
-    assert "takes no preprocessing" in response.text
+    assert response.status_code == 201, response.text
+    assert response.json()["preprocessing_status"] == "ready"
 
 
 # --------------------------------------------------------------------------- #

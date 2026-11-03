@@ -427,6 +427,7 @@
     "cardinalityMin": "Este conversor precisa de pelo menos {{min}} colunas, mas há {{selected}} selecionadas.",
     "cardinalityMax": "Este conversor aceita no máximo {{max}} colunas, mas há {{selected}} selecionadas.",
     "rows_not_supported": "Conversores que alteram o número de linhas ainda não estão disponíveis em sessões.",
+    "changes_rows": "Esta tarefa lê as suas linhas em ordem temporal, então não aceita um conversor que remova ou adicione linhas. Preencha as lacunas com um imputador.",
     "n_components_exceeds": "Pede {{n_components}} componentes, mas há apenas {{columns}} colunas selecionadas.",
     "unknown_converter": "O conversor \"{{converter}}\" não está disponível.",
     "invalid_params": "Parâmetros inválidos: {{detail}}",

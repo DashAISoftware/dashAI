@@ -161,7 +161,6 @@ ARIMA_PARAMS = {"p": 1, "d": 0, "q": 0}
 # --------------------------------------------------------------------------- #
 
 
-@pending("2")
 def test_the_task_declares_an_exogenous_role(client):
     registry = client.app.container["component_registry"]
     roles = {r["name"]: r for r in registry[TASK]["metadata"]["column_roles"]}
@@ -173,7 +172,6 @@ def test_the_task_declares_an_exogenous_role(client):
     assert registry[TASK]["metadata"]["takes_preprocessing"] is True
 
 
-@pending("2")
 def test_a_second_column_feeds_the_exogenous_role_not_another_task():
     from DashAI.back.tasks.single_series_forecasting_task import (
         SingleSeriesForecastingTask,
@@ -192,7 +190,6 @@ def test_a_second_column_feeds_the_exogenous_role_not_another_task():
     }
 
 
-@pending("2")
 def test_a_step_that_changes_rows_is_refused_by_a_task_with_a_time_index(
     client, tmp_path
 ):

@@ -47,9 +47,11 @@ def test_a_task_takes_preprocessing_when_some_role_can_be_transformed(name):
     assert task.get_metadata()["takes_preprocessing"] is transformable
 
 
-def test_single_series_forecasting_takes_no_preprocessing_and_the_xy_tasks_do():
+def test_every_registered_task_takes_preprocessing():
+    # Single-series forecasting did not until its exogenous role, the first of
+    # its roles the preprocessing may transform (RECONCILING_FORECASTING §7).
     takes = {
         name: task.get_metadata()["takes_preprocessing"] for name, task in TASKS.items()
     }
 
-    assert takes == {name: name != "SingleSeriesForecastingTask" for name in TASKS}
+    assert takes == dict.fromkeys(TASKS, True)

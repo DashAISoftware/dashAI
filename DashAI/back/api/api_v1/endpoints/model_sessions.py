@@ -262,6 +262,7 @@ def _roles_problem(
             target=protected,
             steps=steps,
             component_registry=component_registry,
+            keeps_rows=task.PREPROCESSING_KEEPS_ROWS,
         )
         if not structure.valid:
             return "The preprocessing chain has an invalid step."
@@ -337,6 +338,7 @@ async def get_preprocessing_structure(
         target=protected,
         steps=params.steps,
         component_registry=component_registry,
+        keeps_rows=task.PREPROCESSING_KEEPS_ROWS,
     )
 
 
@@ -780,7 +782,13 @@ def _with_resampling_seeds(steps, component_registry):
 
 
 def _check_preprocessing_structure(
-    db, params, sequence, input_column_refs, output_columns, component_registry
+    db,
+    params,
+    sequence,
+    input_column_refs,
+    output_columns,
+    component_registry,
+    keeps_rows: bool = False,
 ) -> None:
     """Reject a session whose chain or inputs cannot work, before creating it.
 
@@ -802,6 +810,7 @@ def _check_preprocessing_structure(
         target=output_columns,
         steps=sequence.steps,
         component_registry=component_registry,
+        keeps_rows=keeps_rows,
     )
     if not structure.valid:
         raise HTTPException(
@@ -899,9 +908,8 @@ async def create_model_session(
     task = task_or_http_error(params.task_name, component_registry)
     if has_preprocessing and not task.takes_preprocessing():
         # Session preprocessing transforms the columns of the roles that
-        # allow it, and fits once per partition. A task none of whose roles
-        # allow it has nothing for the steps to feed, and partitions that are
-        # not rows: single-series forecasting until its exogenous role. The
+        # allow it. A task none of whose roles allow it has nothing for the
+        # steps to feed: a plugin task whose roles are all protected. The
         # wizard reads the same answer from the task's metadata.
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -958,6 +966,7 @@ async def create_model_session(
                     input_column_refs,
                     output_columns,
                     component_registry,
+                    keeps_rows=task.PREPROCESSING_KEEPS_ROWS,
                 )
 
             # When preprocessing is configured, some inputs are converter
