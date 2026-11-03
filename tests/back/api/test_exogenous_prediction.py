@@ -176,3 +176,12 @@ def test_a_run_whose_training_dataset_was_deleted_is_gone_with_it(
     )
     assert response.status_code == 404, response.text
     assert response.json()["detail"] == "Run not found"
+
+
+def test_it_offers_no_partition_to_predict(client, exogenous_run):
+    """Its partitions are past steps, and it forecasts the future rows: the
+    prediction form shows no partition to choose."""
+    response = client.get(f"/api/v1/predict/splits/{exogenous_run}")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["splits"] == []

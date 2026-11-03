@@ -177,9 +177,10 @@ export default function DatasetPredictionPanel({
       );
     } catch (error) {
       console.error("Error creating dataset prediction:", error);
-      enqueueSnackbar(t("prediction:error.creatingPrediction"), {
-        variant: "error",
-      });
+      enqueueSnackbar(
+        getApiDetail(error, t("prediction:error.creatingPrediction")),
+        { variant: "error" },
+      );
     } finally {
       setIsSubmitting(false);
     }
