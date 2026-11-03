@@ -351,11 +351,19 @@ class SingleSeriesForecastingModel(BaseModel):
 
     def _check_exogenous(self, x: Optional[Any], rows: int, name: str) -> None:
         """Refuse exogenous variables that do not match the declaration."""
+        # A model kept before it counted them was fitted without them.
+        fitted_on = getattr(self, "_n_exogenous", 0)
         if x is None:
             if self.EXOGENOUS == EXOGENOUS_REQUIRED:
                 raise ValueError(
                     f"{type(self).__name__} requires exogenous variables, but "
                     f"{name} is empty."
+                )
+            if name == "x_future" and fitted_on:
+                raise ValueError(
+                    f"{type(self).__name__} was fitted on {fitted_on} exogenous "
+                    f"variable(s), but {name} is empty: it needs their values "
+                    "on the steps it forecasts."
                 )
             return
         if self.EXOGENOUS == EXOGENOUS_NONE:
@@ -381,9 +389,9 @@ class SingleSeriesForecastingModel(BaseModel):
                 "are not finite. The unit that cuts the exogenous variables "
                 "refuses a gap first, so this is a wiring error."
             )
-        if name == "x_future" and values.shape[1] != self._n_exogenous:
+        if name == "x_future" and values.shape[1] != fitted_on:
             raise ValueError(
-                f"{type(self).__name__} was fitted on {self._n_exogenous} "
+                f"{type(self).__name__} was fitted on {fitted_on} "
                 f"exogenous variable(s), but {name} has {values.shape[1]}."
             )
 

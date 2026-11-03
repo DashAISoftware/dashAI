@@ -203,6 +203,23 @@ def test_exogenous_variables_need_one_row_per_step():
         model.predict(3, x_future=np.ones((2, 1)))
 
 
+def test_a_model_fitted_on_exogenous_variables_needs_their_future():
+    x = np.random.RandomState(1).normal(size=(len(SERIES), 1))
+    model = ARIMA(p=1, d=0, q=0).fit(SERIES, x=x)
+
+    with pytest.raises(ValueError, match="fitted on 1 exogenous variable"):
+        model.predict(3)
+
+
+def test_a_model_kept_before_exogenous_variables_still_forecasts():
+    """A model pickled before it counted its exogenous variables has no
+    ``_n_exogenous``; it was fitted without them, and forecasts as before."""
+    model = ARIMA(p=1, d=0, q=0).fit(SERIES)
+    del model._n_exogenous
+
+    assert len(model.predict(3).point) == 3
+
+
 def test_arima_uses_exogenous_variables_when_given():
     x = np.random.RandomState(1).normal(size=(40, 1))
     y = 5.0 + 3.0 * x[:, 0]
