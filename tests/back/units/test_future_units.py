@@ -55,7 +55,9 @@ def _prepared(dataset, model=None):
     ctx = ExecutionContext()
     ctx.put("dataset", dataset)
     ctx.put("model", model or _model())
-    PrepareFutureUnit(time_index="date", exogenous_columns=["promo"])(ctx)
+    PrepareFutureUnit(
+        time_index="date", exogenous_columns=[{"name": "promo", "type": "Float"}]
+    )(ctx)
     return ctx
 
 
@@ -97,6 +99,30 @@ def test_a_column_the_run_reads_has_to_be_there():
 def test_a_gap_names_the_column_and_the_date():
     with pytest.raises(JobError, match=r"'promo'.*2022-02-01"):
         _prepared(_rows(date=NEXT, promo=[1.0, np.nan, 0.0]))
+
+
+def test_a_number_recorded_as_integer_is_taken_as_float():
+    ctx = ExecutionContext()
+    ctx.put("dataset", _rows(date=NEXT, promo=[1.0, 0.0, 0.0]))
+    ctx.put("model", _model())
+
+    PrepareFutureUnit(
+        time_index="date", exogenous_columns=[{"name": "promo", "type": "Integer"}]
+    )(ctx)
+
+    assert list(ctx.require("dataset").to_pandas()["promo"]) == [1.0, 0.0, 0.0]
+
+
+def test_a_type_other_than_the_one_recorded_is_refused_naming_the_column():
+    ctx = ExecutionContext()
+    ctx.put("dataset", _rows(date=NEXT, promo=[1.0, 0.0, 0.0]))
+    ctx.put("model", _model())
+
+    with pytest.raises(JobError, match=r"'promo' is Float.*as Categorical"):
+        PrepareFutureUnit(
+            time_index="date",
+            exogenous_columns=[{"name": "promo", "type": "Categorical"}],
+        )(ctx)
 
 
 def test_the_steps_are_forecast_with_their_exogenous_values():

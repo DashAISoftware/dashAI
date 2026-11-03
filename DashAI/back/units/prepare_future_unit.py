@@ -1,11 +1,8 @@
 """Unit that checks the future rows a forecast with exogenous variables needs."""
 
-from DashAI.back.core.schema_fields import (
-    BaseSchema,
-    list_field,
-    schema_field,
-    string_field,
-)
+from typing import Optional
+
+from DashAI.back.core.schema_fields import BaseSchema, schema_field, string_field
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.job.base_job import JobError
 from DashAI.back.units.base_unit import BaseUnit
@@ -36,20 +33,25 @@ def time_index_field():
 
 
 def future_columns_field():
-    """The raw columns the run's exogenous variables are read from."""
+    """The raw columns the run's exogenous variables are read from, typed."""
     return schema_field(
-        list_field(string_field()),
+        list,
         placeholder=[],
         description=MultilingualString(
-            en="The columns the future rows have to bring: the raw columns "
-            "the run read its exogenous variables from.",
-            es="Las columnas que tienen que traer las filas futuras: las "
-            "columnas crudas de las que el run leyó sus variables exógenas.",
-            pt="As colunas que as linhas futuras têm de trazer: as colunas "
-            "brutas de onde o run leu as suas variáveis exógenas.",
-            de="Die Spalten, die die zukünftigen Zeilen mitbringen müssen: die "
-            "Rohspalten, aus denen der Lauf seine exogenen Variablen las.",
-            zh="未来行必须包含的列：运行读取外生变量所用的原始列。",
+            en="The columns the future rows have to bring, as the run recorded "
+            "them: {'name': ..., 'type': ...} for each raw column the run read "
+            "its exogenous variables from.",
+            es="Las columnas que tienen que traer las filas futuras, como las "
+            "registró el run: {'name': ..., 'type': ...} por cada columna cruda "
+            "de la que leyó sus variables exógenas.",
+            pt="As colunas que as linhas futuras têm de trazer, tal como o run "
+            "as registou: {'name': ..., 'type': ...} por cada coluna bruta de "
+            "onde leu as suas variáveis exógenas.",
+            de="Die Spalten, die die zukünftigen Zeilen mitbringen müssen, wie "
+            "der Lauf sie aufzeichnete: {'name': ..., 'type': ...} für jede "
+            "Rohspalte, aus der er seine exogenen Variablen las.",
+            zh="未来行必须包含的列，按运行记录的形式：每个读取外生变量的原始列"
+            "对应 {'name': ..., 'type': ...}。",
         ),
         alias=MultilingualString(
             en="Exogenous columns",
@@ -58,6 +60,25 @@ def future_columns_field():
             de="Exogene Spalten",
             zh="外生列",
         ),
+    )
+
+
+#: Types a forecaster reads as numbers: one of them recorded takes the other.
+NUMERIC_TYPES = {"Float", "Integer"}
+
+
+def type_problem(name: str, given: str, recorded: str) -> Optional[str]:
+    """Why a future column's type is not the one the run read, or None.
+
+    A number recorded as Integer and brought as Float (or the other way) is
+    still a number, and a forecaster reads both alike. Any other type has to
+    be the one the run read.
+    """
+    if given == recorded or {given, recorded} <= NUMERIC_TYPES:
+        return None
+    return (
+        f"The exogenous variable {name!r} is {given} in the future rows, but "
+        f"the run read it as {recorded}."
     )
 
 
@@ -78,7 +99,9 @@ class PrepareFutureUnit(BaseUnit):
     - their dates have to be exactly the next steps of the kept model's grid,
       as many as there are rows: that number is the horizon. A date repeated,
       off the grid or skipping a step is refused, naming it;
-    - every column the run read is there, and has a value on every row.
+    - every column the run read is there, of the type the run read it as
+      (``Run.exogenous.columns``), and has a value on every row: a number
+      that is not finite is refused like a gap, naming the column and dates.
 
     What comes out, as ``dataset`` again, is the date and those columns only.
     The series, if it came along, and any other column are left out, as an
@@ -98,8 +121,11 @@ class PrepareFutureUnit(BaseUnit):
 
         dataset = ctx.require("dataset")
         grid = model_grid(ctx.require("model"))
+        from DashAI.back.preprocessing.structure_types import type_fields
+
         time_index = self.config["time_index"]
-        columns = list(self.config["exogenous_columns"])
+        recorded = {c["name"]: c["type"] for c in self.config["exogenous_columns"]}
+        columns = list(recorded)
 
         missing = [c for c in [time_index, *columns] if c not in dataset.column_names]
         if missing:
@@ -109,6 +135,13 @@ class PrepareFutureUnit(BaseUnit):
             )
         if dataset.num_rows == 0:
             raise JobError("There are no future rows to forecast.")
+        for column in columns:
+            given = dataset.types.get(column)
+            if given is None:
+                continue
+            problem = type_problem(column, type_fields(given)[0], recorded[column])
+            if problem:
+                raise JobError(problem)
 
         date_format = (
             getattr(dataset.types.get(time_index), "format", None)
@@ -148,4 +181,13 @@ class PrepareFutureUnit(BaseUnit):
                     f"{sample_dates(expected[gaps])}. A forecast reads it on "
                     "every step it forecasts."
                 )
+            if recorded[column] in NUMERIC_TYPES:
+                numbers = values[column].to_numpy(dtype=float)
+                endless = np.flatnonzero(~np.isfinite(numbers))
+                if endless.size:
+                    raise JobError(
+                        f"The exogenous variable {column!r} is not a finite "
+                        f"number on {sample_dates(expected[endless])}. A "
+                        "forecast reads it on every step it forecasts."
+                    )
         ctx.put("dataset", future)

@@ -80,7 +80,8 @@ TYPES = {
 }
 
 
-def _upload(client, frame: pd.DataFrame, directory: Path, name: str) -> int:
+def _upload(client, frame: pd.DataFrame, directory: Path, name: str, types=None) -> int:
+    types = {**TYPES, **(types or {})}
     name = f"{name}-{next(_UPLOADS)}"
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"{name}.csv"
@@ -99,7 +100,7 @@ def _upload(client, frame: pd.DataFrame, directory: Path, name: str) -> int:
                     "name": name,
                     "dataloader": "CSVDataLoader",
                     "separator": ",",
-                    "inferred_types": {c: TYPES[c] for c in frame.columns},
+                    "inferred_types": {c: types[c] for c in frame.columns},
                 },
                 "file_path": path,
             },

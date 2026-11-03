@@ -548,7 +548,9 @@ class PredictJob(BaseJob):
                     train_dataset_file_path=dataset_trained.file_path,
                     manual_input_data=manual_input_data,
                 )(ctx)
-            PrepareFutureUnit(time_index=time_index, exogenous_columns=raw_columns)(ctx)
+            PrepareFutureUnit(
+                time_index=time_index, exogenous_columns=exogenous["columns"]
+            )(ctx)
             ApplySessionPreprocessingUnit(
                 preprocessing_artifacts_path=preprocessing_artifacts_path,
             )(ctx)
