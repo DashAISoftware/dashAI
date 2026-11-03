@@ -160,27 +160,46 @@ export function describeChunkCount(chunks, t) {
 }
 
 /**
+ * Returns the key a reference is grouped under: its document id, or, for a
+ * citation of a document that no longer exists (stored with no id), the
+ * document name, so citations of two deleted documents stay apart.
+ * @param {string} ref - The chunk's ref key.
+ * @param {object} info - The reference payload.
+ * @returns {string} The group key.
+ */
+export function referenceGroupKey(ref, info) {
+  return info?.document_id != null
+    ? String(info.document_id)
+    : `name:${info?.document_name ?? ref}`;
+}
+
+/**
  * Groups the final reference chunks by document, preserving first-appearance
  * order, and keeps each chunk's raw ref alongside its payload. Entries whose
  * value is not a plain object are dropped so a corrupt map can never reach the
- * rendering path.
+ * rendering path. Citations without a document id are grouped by document
+ * name and keep a null ``docId``, so nothing offers to open them.
  * @param {object|null} references - Chunk reference map by ref key.
- * @returns {Array<{docId: *, chunks: Array<object>}>} The ordered groups.
+ * @returns {Array<{key: string, docId: *, chunks: Array<object>}>} The ordered
+ *   groups.
  */
 export function groupReferencesByDocument(references) {
   if (!isPlainObject(references)) return [];
   const order = [];
-  const byDocument = new Map();
+  const byKey = new Map();
   Object.entries(references).forEach(([ref, info]) => {
     if (!isPlainObject(info)) return;
-    const docId = info?.document_id;
-    if (!byDocument.has(docId)) {
-      byDocument.set(docId, []);
-      order.push(docId);
+    const key = referenceGroupKey(ref, info);
+    if (!byKey.has(key)) {
+      byKey.set(key, []);
+      order.push(key);
     }
-    byDocument.get(docId).push({ ref, ...info });
+    byKey.get(key).push({ ref, ...info });
   });
-  return order.map((docId) => ({ docId, chunks: byDocument.get(docId) }));
+  return order.map((key) => {
+    const chunks = byKey.get(key);
+    return { key, docId: chunks[0].document_id ?? null, chunks };
+  });
 }
 
 /**
