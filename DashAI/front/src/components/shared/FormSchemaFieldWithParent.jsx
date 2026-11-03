@@ -165,14 +165,14 @@ function FormSchemaFieldWithParent({
       >
         <Input
           select
-          value={selectedModelName}
+          value={selectedModelName ?? ""}
           onChange={handleOnChange}
           size="small"
           sx={{ width: "100%" }}
         >
           {models?.map((model) => (
             <MenuItem key={model.name} value={model.name}>
-              {model.name}
+              {model.display_name || model.name}
             </MenuItem>
           ))}
         </Input>
