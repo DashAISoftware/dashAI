@@ -441,7 +441,10 @@ def test_a_manual_future_starts_from_the_next_dates_of_the_grid(client, exogenou
 
 
 def test_a_manual_future_is_forecast_through_the_job(client, exogenous_run):
-    response = client.post("/api/v1/predict/", json={"run_id": exogenous_run})
+    # The number of rows typed in is the horizon, said when asking.
+    response = client.post(
+        "/api/v1/predict/", json={"run_id": exogenous_run, "horizon": 2}
+    )
     assert response.status_code == 200, response.text
     rows = [
         {"date": "2024-01-01", "promo": 1.0},

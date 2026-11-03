@@ -522,8 +522,9 @@ class PredictJob(BaseJob):
         Raises
         ------
         JobError
-            If the request names a partition or brings no rows, or a step of
-            the forecast fails.
+            If the request names a partition or brings no rows, rows typed in
+            are not as many as the horizon asked for, or a step of the
+            forecast fails.
         """
         task = di["component_registry"][model_session.task_name]["class"]()
         (time_index,), model_exogenous = task.split_inputs(io.inputs)
@@ -543,6 +544,11 @@ class PredictJob(BaseJob):
             if prediction.dataset_id:
                 LoadDatasetUnit(dataset_id=prediction.dataset_id)(ctx)
             else:
+                if prediction.horizon and len(manual_input_data) != prediction.horizon:
+                    raise JobError(
+                        f"The prediction was asked for {prediction.horizon} "
+                        f"rows, and {len(manual_input_data)} were typed in."
+                    )
                 BuildManualInputUnit(
                     task_name=model_session.task_name,
                     train_dataset_file_path=dataset_trained.file_path,

@@ -38,13 +38,50 @@ def test_it_offers_the_datasets_that_bring_the_dates_and_what_it_read(
     assert without_promo not in offered
 
 
-def test_it_takes_no_horizon_apart_from_the_rows(client, exogenous_run):
+def test_a_dataset_of_future_rows_takes_no_horizon_apart(
+    client, tmp_path, exogenous_run
+):
+    dataset_id = _upload(client, _future(), tmp_path, "with-horizon")
     response = client.post(
-        "/api/v1/predict/", json={"run_id": exogenous_run, "horizon": 3}
+        "/api/v1/predict/",
+        json={"run_id": exogenous_run, "dataset_id": dataset_id, "horizon": 3},
     )
 
     assert response.status_code == 422, response.text
     assert "read exogenous variables" in response.json()["detail"]
+
+
+def test_rows_typed_in_say_how_many_they_are(client, exogenous_run):
+    response = client.post("/api/v1/predict/", json={"run_id": exogenous_run})
+
+    assert response.status_code == 422, response.text
+    assert "how many rows" in response.json()["detail"]
+
+
+def test_rows_typed_in_past_the_horizon_measured_are_warned_about(
+    client, exogenous_run
+):
+    response = client.post(
+        "/api/v1/predict/", json={"run_id": exogenous_run, "horizon": 5}
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["unevaluated_steps"] == 2
+    assert response.json()["evaluated_horizon"] == 3
+
+
+def test_the_rows_typed_in_are_as_many_as_were_asked_for(client, exogenous_run):
+    response = client.post(
+        "/api/v1/predict/", json={"run_id": exogenous_run, "horizon": 3}
+    )
+    assert response.status_code == 200, response.text
+    rows = [
+        {"date": "2024-01-01", "promo": 1.0},
+        {"date": "2024-02-01", "promo": 0.0},
+    ]
+
+    with pytest.raises(JobError, match="3 rows.*2 were typed in"):
+        PredictJob(prediction_id=response.json()["id"], manual_input_data=rows).run()
 
 
 def _predict(client, exogenous_run, dataset_id):
@@ -112,7 +149,7 @@ def test_the_next_dates_come_in_the_format_the_series_was_given_in(client, tmp_p
     dates = response.json()["dates"]
     assert dates == ["01/01/2024", "01/02/2024"]
 
-    response = client.post("/api/v1/predict/", json={"run_id": run_id})
+    response = client.post("/api/v1/predict/", json={"run_id": run_id, "horizon": 2})
     assert response.status_code == 200, response.text
     rows = [{"date": date, "promo": 0.0} for date in dates]
     PredictJob(prediction_id=response.json()["id"], manual_input_data=rows).run()

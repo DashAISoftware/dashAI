@@ -127,8 +127,9 @@ def _check_prediction_mode(params, run, model_session, task, future_rows=None) -
     A run that read exogenous variables forecasts with their future values
     (RECONCILING_FORECASTING §2.14, decision 5): it takes a dataset of the
     future rows, or no dataset for rows typed by hand, which reach the job
-    as ``manual_input_data``. The horizon is the number of those rows, so it
-    is not given apart. ``future_rows`` is that number for a dataset.
+    as ``manual_input_data``. The horizon is the number of those rows: a
+    dataset's own (``future_rows``), not given apart, and for rows typed in
+    the ``horizon`` the request gives, which the job holds them to.
 
     Returns
     -------
@@ -155,7 +156,9 @@ def _check_prediction_mode(params, run, model_session, task, future_rows=None) -
         return 0
 
     if used_exogenous(run):
-        if params.split is not None or params.horizon is not None:
+        if params.split is not None or (
+            params.dataset_id is not None and params.horizon is not None
+        ):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail=(
@@ -164,10 +167,20 @@ def _check_prediction_mode(params, run, model_session, task, future_rows=None) -
                     "them, or type them in. Their number is the horizon."
                 ),
             )
+        if params.dataset_id is None and params.horizon is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    f"Run {run.id} read exogenous variables: give a dataset of "
+                    "the future rows, or say how many rows you type in as the "
+                    "horizon."
+                ),
+            )
+        rows = future_rows if params.dataset_id is not None else params.horizon
         evaluated = _evaluated_horizon(run, task)
-        if evaluated is None or not future_rows:
+        if evaluated is None or not rows:
             return 0
-        return max(0, future_rows - evaluated)
+        return max(0, rows - evaluated)
 
     if params.dataset_id is not None or params.split is not None:
         raise HTTPException(
