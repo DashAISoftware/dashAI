@@ -148,9 +148,11 @@ def test_each_cut_reads_what_its_own_preprocessor_made(tmp_path):
     )(ctx)
 
     promo = _promo()
-    for cut, steps in zip(_cuts(ctx.require("exogenous")), FITS.values(), strict=True):
+    for cut, steps, reads in zip(
+        _cuts(ctx.require("exogenous")), FITS.values(), cut_lengths(CUTS), strict=True
+    ):
         fitted = promo[:steps]
-        expected = (promo - fitted.mean()) / fitted.std()
+        expected = (promo[:reads] - fitted.mean()) / fitted.std()
         np.testing.assert_allclose(cut["values"][:, 0], expected, rtol=1e-12)
 
 
@@ -209,7 +211,7 @@ def test_a_preprocessor_that_changes_the_rows_is_a_contract_error(tmp_path):
         exogenous_column_refs=PROMO, preprocessing_artifacts_path=str(tmp_path)
     )
 
-    with pytest.raises(JobError, match="24 rows"):
+    with pytest.raises(JobError, match="origin_0 turned 18 rows into 17"):
         unit(_context())
 
 
@@ -225,3 +227,150 @@ def test_the_dataset_is_left_as_it_was(tmp_path):
 
     assert ctx.require("dataset") is dataset
     pd.testing.assert_frame_equal(dataset.to_pandas(), before)
+
+
+class _RecordingPreprocessor:
+    """A preprocessor that keeps how many rows each cut handed it."""
+
+    handed = []
+    resolved_columns = {}
+    resolved_slots = {}
+
+    def __init__(self, name):
+        self.name = name
+
+    def transform_dataset(self, dataset, unseen=None):
+        _RecordingPreprocessor.handed.append((self.name, dataset.num_rows))
+        return dataset
+
+
+def test_each_cut_transforms_only_the_steps_it_reads(tmp_path):
+    for name in FITS:
+        with open(tmp_path / f"{name}.pkl", "wb") as f:
+            pickle.dump(_RecordingPreprocessor(name), f)
+    _RecordingPreprocessor.handed = []
+    ctx = _context()
+
+    ApplyCutPreprocessingUnit(
+        exogenous_column_refs=PROMO, preprocessing_artifacts_path=str(tmp_path)
+    )(ctx)
+
+    assert _RecordingPreprocessor.handed == list(
+        zip(FITS, cut_lengths(CUTS), strict=True)
+    )
+    for cut, steps in zip(
+        _cuts(ctx.require("exogenous")), cut_lengths(CUTS), strict=True
+    ):
+        assert cut["values"].shape == (steps, 1)
+
+
+def test_without_artifacts_the_raw_columns_are_read_once(monkeypatch):
+    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
+
+    read = []
+    original = DashAIDataset.select_columns
+
+    def recording(self, columns, *args, **kwargs):
+        read.append(list(columns))
+        return original(self, columns, *args, **kwargs)
+
+    monkeypatch.setattr(DashAIDataset, "select_columns", recording)
+
+    ApplyCutPreprocessingUnit(exogenous_column_refs=PROMO)(_context())
+
+    assert read == [["promo"]]
+
+
+def _chain_dataset():
+    frame = pd.DataFrame(
+        {
+            "date": pd.date_range("2020-01-01", periods=N_STEPS, freq="MS").strftime(
+                "%Y-%m-%d"
+            ),
+            "sales": np.arange(N_STEPS, dtype=float),
+            "promo": [np.nan if i == 20 else float(i % 5) for i in range(N_STEPS)],
+            "holiday": ["yes" if i % 12 == 11 else "no" for i in range(N_STEPS)],
+            "planned": pd.date_range("2021-03-07", periods=N_STEPS, freq="W").strftime(
+                "%Y-%m-%d"
+            ),
+        }
+    )
+    return transform_dataset_with_schema(
+        to_dashai_dataset(frame),
+        {
+            "date": {"type": "Date", "dtype": "%Y-%m-%d"},
+            "sales": {"type": "Float", "dtype": "float64"},
+            "promo": {"type": "Float", "dtype": "float64"},
+            "holiday": {"type": "Categorical", "dtype": "string"},
+            "planned": {"type": "Date", "dtype": "%Y-%m-%d"},
+        },
+    )
+
+
+def test_the_steps_a_cut_reads_are_what_the_whole_series_would_give(tmp_path):
+    """Transforming only a cut's steps changes nothing they hold: an imputer,
+    a scaler, a one-hot and the date features, as the session nets use them."""
+    from DashAI.back.converters.scikit_learn.one_hot_encoder import OneHotEncoder
+    from DashAI.back.converters.scikit_learn.simple_imputer import SimpleImputer
+    from DashAI.back.converters.simple_converters.date_features import (
+        DateFeaturesConverter,
+    )
+    from DashAI.back.preprocessing.column_ref import parse_column_refs, resolve_refs
+
+    registry = {
+        "SimpleImputer": {"class": SimpleImputer},
+        "StandardScaler": {"class": StandardScaler},
+        "OneHotEncoder": {"class": OneHotEncoder},
+        "DateFeaturesConverter": {"class": DateFeaturesConverter},
+    }
+    sequence = ConverterSequence(
+        steps=[
+            ConverterStep(
+                converter="SimpleImputer", params={"strategy": "mean"}, scope=PROMO
+            ),
+            ConverterStep(converter="StandardScaler", params={}, scope=PROMO),
+            ConverterStep(
+                converter="OneHotEncoder",
+                params={},
+                scope=[{"kind": "raw", "name": "holiday"}],
+            ),
+            ConverterStep(
+                converter="DateFeaturesConverter",
+                params={"drop_source_columns": True},
+                scope=[{"kind": "raw", "name": "planned"}],
+            ),
+        ]
+    )
+    refs = [*PROMO, {"kind": "group", "step": 2}, {"kind": "group", "step": 3}]
+    dataset = _chain_dataset()
+    preprocessors = {}
+    for name, steps in FITS.items():
+        preprocessor = SessionPreprocessor(sequence, registry, target_columns=["sales"])
+        preprocessor.fit_transform({"train": dataset.select(range(steps))})
+        preprocessors[name] = preprocessor
+        with open(tmp_path / f"{name}.pkl", "wb") as f:
+            pickle.dump(preprocessor, f)
+    ctx = _context(dataset)
+
+    ApplyCutPreprocessingUnit(
+        exogenous_column_refs=refs, preprocessing_artifacts_path=str(tmp_path)
+    )(ctx)
+
+    for cut, steps in zip(
+        _cuts(ctx.require("exogenous")), cut_lengths(CUTS), strict=True
+    ):
+        preprocessor = preprocessors[cut["name"]]
+        columns = resolve_refs(
+            parse_column_refs(refs),
+            preprocessor.resolved_columns,
+            preprocessor.resolved_slots,
+        )
+        whole = (
+            preprocessor.transform_dataset(dataset)
+            .select_columns(columns)
+            .to_pandas()
+            .to_numpy(dtype=float)
+        )
+        assert cut["columns"] == columns
+        assert len(columns) > 3
+        np.testing.assert_allclose(cut["values"], whole[:steps], rtol=1e-12)

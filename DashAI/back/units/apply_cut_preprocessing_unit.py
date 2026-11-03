@@ -89,36 +89,15 @@ def cut_lengths(cuts: Dict[str, Any]) -> List[int]:
     ]
 
 
-def exogenous_matrix(
-    dataset: "DashAIDataset", columns: List[str], steps: int, grid: "TimeGrid"
-) -> "ndarray":
-    """The exogenous columns as floats, refusing a gap in the steps a cut reads.
-
-    Parameters
-    ----------
-    dataset : DashAIDataset
-        The rows in date order, one per step of ``grid``, as the cut's
-        preprocessor left them.
-    columns : list of str
-        The columns the exogenous refs resolved to for this cut.
-    steps : int
-        How many steps from the start the cut reads (``cut_lengths``).
-    grid : TimeGrid
-        Dates the steps, for the message.
-
-    Returns
-    -------
-    numpy.ndarray
-        One row per step and one column per exogenous column.
+def exogenous_matrix(dataset: "DashAIDataset", columns: List[str]) -> "ndarray":
+    """The exogenous columns as floats, one row per row of ``dataset``.
 
     Raises
     ------
     JobError
-        If a column is not a number, or has no value on a step the cut reads.
+        If a column is not a number.
     """
     import numpy as np
-
-    from DashAI.back.tasks.time_grid import sample_dates
 
     if not columns:
         return np.empty((dataset.num_rows, 0))
@@ -129,7 +108,34 @@ def exogenous_matrix(
                 f"The exogenous variable {column!r} is not a number "
                 f"({frame[column].dtype}), and a forecaster reads numbers."
             )
-    values = frame.to_numpy(dtype=float)
+    return frame.to_numpy(dtype=float)
+
+
+def refuse_gaps(
+    values: "ndarray", columns: List[str], steps: int, grid: "TimeGrid"
+) -> None:
+    """Refuse a gap in the steps a cut reads, naming the column and dates.
+
+    Parameters
+    ----------
+    values : numpy.ndarray
+        The cut's matrix, from the first step of the series on.
+    columns : list of str
+        The columns the exogenous refs resolved to for this cut.
+    steps : int
+        How many steps from the start the cut reads (``cut_lengths``).
+    grid : TimeGrid
+        Dates the steps, for the message.
+
+    Raises
+    ------
+    JobError
+        If a column has no value on a step the cut reads.
+    """
+    import numpy as np
+
+    from DashAI.back.tasks.time_grid import sample_dates
+
     for index, column in enumerate(columns):
         gaps = np.flatnonzero(~np.isfinite(values[:steps, index]))
         if gaps.size:
@@ -141,7 +147,6 @@ def exogenous_matrix(
                 "the notebook, or add an imputer to the session's "
                 "preprocessing."
             )
-    return values
 
 
 class ApplyCutPreprocessingUnit(BaseUnit):
@@ -156,13 +161,14 @@ class ApplyCutPreprocessingUnit(BaseUnit):
     resolved, since a step may produce other columns on other steps.
 
     What comes out, under ``exogenous``, is one matrix per cut, with a row per
-    step of the series, so a forecaster fitted on the steps before origin
-    ``o`` reads its rows ``[:o]`` and forecasts with ``[o:o + h]``. Rows past
-    a cut's window are transformed too, which leaks nothing: the fit never
-    saw them. Each cut carries its ``name``, the artifact it came from, and
-    ``declared`` says whether the role has columns at all: that, and not the
-    columns one cut resolved, is what decides whether a run reads them
-    (``exogenous_for``).
+    step the cut reads (``cut_lengths``), from the first step of the series:
+    a forecaster fitted on the steps before origin ``o`` reads its rows
+    ``[:o]`` and forecasts with ``[o:o + h]``, and the test and the final fit
+    read every step. Without artifacts the raw columns are read once and
+    every cut shares them, whole. Each cut carries its ``name``, the artifact
+    it came from, and ``declared`` says whether the role has columns at all:
+    that, and not the columns one cut resolved, is what decides whether a run
+    reads them (``exogenous_for``).
 
     **It always runs,** as ``ApplySessionPreprocessingUnit`` does on the
     prediction side. Without artifacts every cut reads the raw columns, and
@@ -218,10 +224,16 @@ class ApplyCutPreprocessingUnit(BaseUnit):
         grid = TimeGrid.from_ref(ctx.require("grid"))
 
         artifacts_path = self.config.get("preprocessing_artifacts_path")
+        # Without artifacts every cut reads the same raw columns, so they are
+        # read once; each cut still refuses the gaps in its own steps.
+        raw = None
+        if not artifacts_path:
+            columns = [ref.name for ref in self._resolve_refs()]
+            raw = (columns, exogenous_matrix(dataset, columns))
         published = []
         for name, steps in zip(cut_names(cuts), cut_lengths(cuts), strict=True):
-            transformed, columns = self._apply(dataset, artifacts_path, name)
-            values = exogenous_matrix(transformed, columns, steps, grid)
+            columns, values = raw or self._apply(dataset, artifacts_path, name, steps)
+            refuse_gaps(values, columns, steps, grid)
             published.append({"name": name, "columns": columns, "values": values})
 
         ctx.put(
@@ -250,24 +262,27 @@ class ApplyCutPreprocessingUnit(BaseUnit):
                 ) from e
         return self._refs
 
-    def _apply(self, dataset, artifacts_path, name):
-        """One cut's rows and the columns its exogenous refs resolve to."""
+    def _apply(self, dataset, artifacts_path, name, steps):
+        """The columns a cut's exogenous refs resolve to, and their matrix.
+
+        Only the ``steps`` the cut reads are transformed: a step keeps the
+        rows, so the rows after them would be transformed for nothing.
+        """
         import os
         import pickle
 
         from DashAI.back.preprocessing.column_ref import resolve_refs
 
-        refs = self._resolve_refs()
-        if not artifacts_path:
-            return dataset, [ref.name for ref in refs]
-
+        rows = dataset.select(range(steps)) if steps < dataset.num_rows else dataset
         artifact = os.path.join(artifacts_path, f"{name}.pkl")
         try:
             with open(artifact, "rb") as f:
                 preprocessor = pickle.load(f)
-            transformed = preprocessor.transform_dataset(dataset)
+            transformed = preprocessor.transform_dataset(rows)
             columns = resolve_refs(
-                refs, preprocessor.resolved_columns, preprocessor.resolved_slots
+                self._resolve_refs(),
+                preprocessor.resolved_columns,
+                preprocessor.resolved_slots,
             )
         except Exception as e:
             log.exception(e)
@@ -275,10 +290,10 @@ class ApplyCutPreprocessingUnit(BaseUnit):
                 f"Error applying the preprocessing fitted for {name} from "
                 f"{artifact}: {e}"
             ) from e
-        if transformed.num_rows != dataset.num_rows:
+        if transformed.num_rows != rows.num_rows:
             raise JobError(
-                f"The preprocessing fitted for {name} turned {dataset.num_rows} "
+                f"The preprocessing fitted for {name} turned {rows.num_rows} "
                 f"rows into {transformed.num_rows}, and every step of a "
                 "forecasting session has to keep the rows."
             )
-        return transformed, columns
+        return columns, exogenous_matrix(transformed, columns)
