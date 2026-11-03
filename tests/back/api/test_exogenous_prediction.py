@@ -119,3 +119,23 @@ def test_the_next_dates_come_in_the_format_the_series_was_given_in(client, tmp_p
     with client.app.container["session_factory"]() as db:
         prediction = db.get(Prediction, response.json()["id"])
         assert prediction.status == PredictionStatus.FINISHED
+
+
+def test_a_run_whose_training_dataset_was_deleted_is_gone_with_it(
+    client, exogenous_run
+):
+    """Deleting a dataset takes its sessions and their runs with it, so the
+    next dates of a run never meet a missing training dataset."""
+    from DashAI.back.dependencies.database.models import ModelSession, Run
+
+    with client.app.container["session_factory"]() as db:
+        run = db.get(Run, exogenous_run)
+        dataset_id = db.get(ModelSession, run.model_session_id).dataset_id
+
+    assert client.delete(f"/api/v1/dataset/{dataset_id}").status_code == 204
+
+    response = client.get(
+        f"/api/v1/predict/future-dates/{exogenous_run}", params={"horizon": 2}
+    )
+    assert response.status_code == 404, response.text
+    assert response.json()["detail"] == "Run not found"
