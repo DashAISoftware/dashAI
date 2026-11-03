@@ -63,7 +63,7 @@
     "useExistingDataset": "使用现有数据集"
   },
   "message": {
-    "unevaluatedSteps": "最后 {{count}} 步超出了回测衡量的 {{evaluated}} 步：它们的误差从未被评估。",
+    "unevaluatedSteps_other": "最后 {{count}} 步超出了回测衡量的 {{evaluated}} 步：它们的误差从未被评估。",
     "deletedSuccessfully": "预测删除成功",
     "downloadedSuccessfully": "预测下载成功",
     "predictionCompleted": "预测成功完成",

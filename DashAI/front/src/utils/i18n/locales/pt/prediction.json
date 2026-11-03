@@ -69,7 +69,8 @@
     "useExistingDataset": "Usar Conjunto de Dados Existente"
   },
   "message": {
-    "unevaluatedSteps": "Os últimos {{count}} passos vão além dos {{evaluated}} que o backtest mediu: o erro deles nunca foi avaliado.",
+    "unevaluatedSteps_one": "O último passo vai além dos {{evaluated}} que o backtest mediu: o erro dele nunca foi avaliado.",
+    "unevaluatedSteps_other": "Os últimos {{count}} passos vão além dos {{evaluated}} que o backtest mediu: o erro deles nunca foi avaliado.",
     "deletedSuccessfully": "Previsão excluída com sucesso",
     "downloadedSuccessfully": "Previsão baixada com sucesso",
     "predictionCompleted": "Previsão concluída com sucesso",
