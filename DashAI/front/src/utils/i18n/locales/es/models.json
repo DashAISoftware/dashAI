@@ -427,7 +427,7 @@
     "cardinalityMin": "Este converter necesita al menos {{min}} columnas, pero hay {{selected}} seleccionadas.",
     "cardinalityMax": "Este converter acepta como máximo {{max}} columnas, pero hay {{selected}} seleccionadas.",
     "rows_not_supported": "Los converters que cambian la cantidad de filas todavía no están disponibles en sesiones.",
-    "changes_rows": "Esta tarea lee sus filas en orden temporal, así que no admite un converter que quite o agregue filas. Completa los vacíos con un imputador.",
+    "changes_rows": "Esta tarea lee sus filas en orden temporal, así que no admite un convertidor que quite o agregue filas. Completa los vacíos con un imputador.",
     "n_components_exceeds": "Pide {{n_components}} componentes, pero solo hay {{columns}} columnas seleccionadas.",
     "unknown_converter": "El converter \"{{converter}}\" no está disponible.",
     "invalid_params": "Parámetros inválidos: {{detail}}",
