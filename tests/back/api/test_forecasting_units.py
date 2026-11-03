@@ -93,6 +93,11 @@ def test_the_series_comes_out_in_time_order_with_its_grid_and_cuts():
     assert ctx.require("grid") == GRID.to_ref()
     assert ctx.require("split_indexes") == CUTS
     assert ctx.require("task_name") == TASK
+    # The rows too, in the same order, for the unit that reads the exogenous
+    # variables one step per row.
+    rows = ctx.require("dataset").to_pandas()
+    assert list(rows["date"]) == list(dates)
+    assert list(rows["v"]) == list(SERIES)
 
 
 def test_a_series_off_its_grid_is_a_job_error_with_the_tasks_message():

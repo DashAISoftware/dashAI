@@ -13,6 +13,7 @@ not.
 Lives under ``tests/back/api`` to reuse the ``client`` fixture.
 """
 
+import itertools
 import json
 from pathlib import Path
 
@@ -40,6 +41,8 @@ from tests.back.api.test_forecasting_acceptance import (
 
 N_STEPS = 48
 HORIZON = 3
+#: Dataset names are unique, and several tests upload more than one.
+_UPLOADS = itertools.count()
 
 
 def pending(slice_name: str):
@@ -78,6 +81,8 @@ TYPES = {
 
 
 def _upload(client, frame: pd.DataFrame, directory: Path, name: str) -> int:
+    name = f"{name}-{next(_UPLOADS)}"
+    directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"{name}.csv"
     frame.to_csv(path, index=False)
     with client.app.container["session_factory"]() as db:
@@ -248,7 +253,6 @@ def test_a_session_preprocesses_its_exogenous_columns_once_per_cut(client, tmp_p
 # --------------------------------------------------------------------------- #
 
 
-@pending("4")
 def test_a_gap_in_an_exogenous_column_fails_the_run_naming_column_and_date(
     client, tmp_path
 ):
@@ -263,7 +267,6 @@ def test_a_gap_in_an_exogenous_column_fails_the_run_naming_column_and_date(
         ModelJob(run_id=run_id).run()
 
 
-@pending("4")
 def test_an_imputer_in_the_session_fills_a_gap_in_the_history(client, tmp_path):
     frame = _frame()
     frame.loc[10, "promo"] = np.nan
@@ -276,7 +279,8 @@ def test_an_imputer_in_the_session_fills_a_gap_in_the_history(client, tmp_path):
         client,
         tmp_path,
         frame,
-        exogenous=[{"kind": "group", "step": 0}],
+        # The imputer fills in place, so the role reads the column itself.
+        exogenous=PROMO,
         preprocessing=[imputer],
     )
 

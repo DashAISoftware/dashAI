@@ -281,29 +281,64 @@ def test_an_undefined_goal_metric_names_the_window_and_the_dates(client, tmp_pat
     assert message.endswith("Choose another optimization metric.")
 
 
-def test_a_backtest_refuses_a_session_with_fitted_preprocessing(client, tmp_path):
-    """Forecasting takes no session preprocessing yet (2.13, decision 8).
+def test_a_backtest_reads_the_preprocessing_fitted_for_each_cut(
+    client, tmp_path, monkeypatch
+):
+    """A session that preprocesses its exogenous variables trains.
 
-    The API refuses the steps, but a session can still carry the artifacts
-    (a package put together by hand, a database edited). Training on the raw
-    series without a word would be a run that is not what its session says.
+    Until the exogenous role (RECONCILING_FORECASTING §7) forecasting took no
+    session preprocessing, and a run of a session that carried fitted
+    artifacts anyway failed with "takes no session preprocessing". Each cut
+    now reads its exogenous columns through the fit made for it.
     """
+    import numpy as np
+
     from DashAI.back.core.enums.status import RunStatus
-    from DashAI.back.dependencies.database.models import ModelSession
-    from DashAI.back.job.base_job import JobError
     from DashAI.back.job.model_job import ModelJob
-    from tests.back.api.test_forecasting_acceptance import _create_run
+    from DashAI.back.units.apply_cut_preprocessing_unit import (
+        ApplyCutPreprocessingUnit,
+    )
+    from tests.back.api.test_forecasting_acceptance import (
+        CV,
+        ROLLING,
+        _create_run,
+        _session_body,
+        _upload,
+    )
 
-    session_id = _session(client, tmp_path, _monthly())
-    with client.app.container["session_factory"]() as db:
-        db.get(ModelSession, session_id).preprocessing_artifacts_path = str(tmp_path)
-        db.commit()
-    other = _create_run(client, session_id, "NaiveForecaster")
+    frame = _monthly().assign(promo=np.arange(48, dtype=float))
+    body = _session_body(
+        _upload(client, frame, tmp_path, "fitted-preprocessing"),
+        strategy=CV,
+        splits=ROLLING,
+        preprocessing=[
+            {
+                "converter": "StandardScaler",
+                "params": {},
+                "scope": [{"kind": "raw", "name": "promo"}],
+            }
+        ],
+    )
+    body["column_roles"]["exogenous"] = [{"kind": "raw", "name": "promo"}]
+    response = client.post("/api/v1/model-session/", json=body)
+    assert response.status_code == 201, response.text
+    published = []
+    original_execute = ApplyCutPreprocessingUnit.execute
 
-    with pytest.raises(JobError, match="takes no session preprocessing"):
-        ModelJob(run_id=other).run()
+    def recording_execute(self, ctx):
+        original_execute(self, ctx)
+        published.append(ctx.require("exogenous"))
 
-    assert _get(client, Run, other).status == RunStatus.ERROR
+    monkeypatch.setattr(ApplyCutPreprocessingUnit, "execute", recording_execute)
+    run_id = _create_run(client, response.json()["id"], "NaiveForecaster")
+
+    ModelJob(run_id=run_id).run()
+
+    assert _get(client, Run, run_id).status == RunStatus.FINISHED
+    (exogenous,) = published
+    # Scaled on the steps before each cut, so each cut reads its own values.
+    firsts = [cut["values"][0, 0] for cut in exogenous["validation"]]
+    assert len(set(firsts)) == len(firsts)
 
 
 def test_coverage_as_the_goal_metric_fails_the_run(client, tmp_path):

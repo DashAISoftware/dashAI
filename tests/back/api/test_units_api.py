@@ -13,6 +13,7 @@ EXPECTED_UNITS = {
     "FitWithoutTargetUnit",
     "ScoreClustersUnit",
     "PrepareSeriesUnit",
+    "ApplyCutPreprocessingUnit",
     "BuildForecasterUnit",
     "BacktestForecasterUnit",
     "ScoreForecastsUnit",
@@ -303,7 +304,7 @@ EXPECTED_RUNTIME_PARAMS = {
     ("BacktestForecasterUnit", "run_id"),
     ("BacktestForecasterUnit", "artifact_prefix"),
     ("SaveForecastsUnit", "artifact_prefix"),
-    ("PrepareSeriesUnit", "preprocessing_artifacts_path"),
+    ("ApplyCutPreprocessingUnit", "preprocessing_artifacts_path"),
 }
 
 

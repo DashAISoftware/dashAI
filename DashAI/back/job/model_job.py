@@ -17,6 +17,7 @@ from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
 from DashAI.back.splitters.splits_payload import META_KEYS, normalize_splits_payload
 from DashAI.back.tasks.session_roles import SessionIO, session_io
+from DashAI.back.units.apply_cut_preprocessing_unit import ApplyCutPreprocessingUnit
 from DashAI.back.units.backtest_forecaster_unit import BacktestForecasterUnit
 from DashAI.back.units.build_forecaster_unit import BuildForecasterUnit
 from DashAI.back.units.build_model_unit import BuildModelUnit
@@ -146,6 +147,7 @@ class ModelJob(BaseJob):
                     )
                     model_session: ModelSession = preparation_results["model_session"]
                     prepare = preparation_results["prepare_unit"]
+                    cut_unit = preparation_results["cut_unit"]
 
                     LoadDatasetUnit(dataset_id=model_session.dataset_id)(ctx)
 
@@ -180,6 +182,10 @@ class ModelJob(BaseJob):
                     # strategy that carves nothing publishes no partitions, so
                     # there are no indexes to keep for a re-train.
                     prepare(ctx)
+                    # A backtest reads its exogenous variables per cut, each
+                    # as the preprocessing fitted for that cut made them.
+                    if cut_unit is not None:
+                        cut_unit(ctx)
 
                     # save the obtained splits into the database
                     if ctx.has("split_indexes"):
@@ -595,6 +601,7 @@ class ModelJob(BaseJob):
         # API only pairs such a strategy with a task without a target, which is
         # what lets that unit leave the target out.
         kind = getattr(evaluation_strategy_class, "KIND", "holdout")
+        cut_unit = None
         if kind == "full":
             prepare_unit = PrepareWithoutTargetUnit(
                 task_name=model_session.task_name,
@@ -604,7 +611,8 @@ class ModelJob(BaseJob):
         elif kind == "backtest":
             # A backtest recomputes its cuts from the session every time: they
             # are steps of the prepared series, not rows a re-train reuses.
-            prepare_unit = self._series_unit(model_session, io)
+            prepare_unit = self._series_unit(model_session, task, io)
+            cut_unit = self._cut_unit(model_session, task, io)
         else:
             prepare_unit = self._partitioning_unit(
                 run, model_session, io, component_registry
@@ -630,14 +638,19 @@ class ModelJob(BaseJob):
         return {
             "model_session": model_session,
             "prepare_unit": prepare_unit,
+            "cut_unit": cut_unit,
             "evaluation_strategy_class": evaluation_strategy_class,
             "optimizer": optimizer,
             "goal_metric": goal_metric,
         }
 
     @staticmethod
-    def _series_unit(model_session: ModelSession, io: SessionIO):
+    def _series_unit(model_session: ModelSession, task, io: SessionIO):
         """Build the unit that prepares a series and cuts it into origins.
+
+        With preprocessing, the unit gets only the time index as an input:
+        the exogenous columns the session stores are what each cut's fit
+        resolved, and they exist once ``ApplyCutPreprocessingUnit`` has run.
 
         Raises
         ------
@@ -653,9 +666,12 @@ class ModelJob(BaseJob):
             raise JobError(
                 f"Can not load splits data from model session {model_session.id}",
             ) from e
+        input_columns = io.inputs
+        if _has_steps(model_session):
+            input_columns, _ = task.split_inputs(io.inputs)
         return PrepareSeriesUnit(
             task_name=model_session.task_name,
-            input_columns=io.inputs,
+            input_columns=input_columns,
             output_columns=io.outputs,
             splitter={
                 "component": splits_data.get("splitter_name"),
@@ -665,7 +681,26 @@ class ModelJob(BaseJob):
                     if key not in META_KEYS
                 },
             },
-            preprocessing_artifacts_path=model_session.preprocessing_artifacts_path,
+        )
+
+    @staticmethod
+    def _cut_unit(model_session: ModelSession, task, io: SessionIO):
+        """Build the unit that gives each cut of a backtest its exogenous columns.
+
+        The refs are what the wizard stored for the exogenous role, and the
+        artifacts are passed only when there are steps, as for the x/y
+        partitioning units: without them every cut reads the raw columns.
+        """
+        _, exogenous_refs = task.split_inputs(io.input_refs)
+        return ApplyCutPreprocessingUnit(
+            exogenous_column_refs=[
+                ref.model_dump(mode="json") for ref in exogenous_refs
+            ],
+            preprocessing_artifacts_path=(
+                model_session.preprocessing_artifacts_path
+                if _has_steps(model_session)
+                else None
+            ),
         )
 
     @staticmethod
@@ -722,7 +757,7 @@ class ModelJob(BaseJob):
             "output_columns": io.outputs,
             "splitter": {"component": splitter_name, "params": splits_data},
         }
-        if model_session.preprocessing and model_session.preprocessing.get("steps"):
+        if _has_steps(model_session):
             # PreprocessingJob fitted the sequence once per entry and left the
             # artifacts at this path; the refs are what the wizard stored,
             # and the unit resolves them against each entry's own fit. Passed
@@ -810,3 +845,10 @@ class ModelJob(BaseJob):
         except Exception as e:
             log.exception(e)
             raise JobError(f"Metric saving failed {e}") from e
+
+
+def _has_steps(model_session: ModelSession) -> bool:
+    """Whether the session preprocesses, so its fits are there to apply."""
+    return bool(
+        model_session.preprocessing and model_session.preprocessing.get("steps")
+    )

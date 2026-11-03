@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, List, Mapping, Sequence, Union
+from typing import TYPE_CHECKING, Dict, List, Mapping, Sequence, Tuple, Union
 
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.tasks.column_roles import ColumnRole, IOColumns
@@ -192,18 +192,25 @@ class SingleSeriesForecastingTask(ForecastingTask):
     def roles_from_io(
         self, input_columns: Sequence, output_columns: Sequence
     ) -> Dict[str, list]:
-        """The roles that a model's input and output came from.
+        """The roles that a model's input and output came from."""
+        time_index, exogenous = self.split_inputs(input_columns)
+        return {
+            TIME_INDEX: time_index,
+            EXOGENOUS: exogenous,
+            SERIES: list(output_columns or []),
+        }
+
+    @staticmethod
+    def split_inputs(inputs: Sequence) -> Tuple[list, list]:
+        """The time index and the exogenous variables, out of a model's inputs.
 
         The time index is always one column and comes first, so every input
         after it is an exogenous variable, however many columns a step of the
-        preprocessing resolved them to.
+        preprocessing resolved them to. Works the same on column names and on
+        the refs a session stores.
         """
-        inputs = list(input_columns)
-        return {
-            TIME_INDEX: inputs[:1],
-            EXOGENOUS: inputs[1:],
-            SERIES: list(output_columns or []),
-        }
+        inputs = list(inputs)
+        return inputs[:1], inputs[1:]
 
     def prepare_for_task(
         self,
