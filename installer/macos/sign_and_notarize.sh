@@ -143,11 +143,17 @@ codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 # ------------------------------------------------------------------
 echo "==> Creating DMG"
 rm -f "$DMG_PATH"
+# Icon centers and window size must match make_dmg_background.py. The window
+# height adds 28pt for the title bar on top of the 720x360 background.
 create-dmg \
     --volname "dashAI Installer" \
+    --background "$SCRIPT_DIR/dmg-background.tiff" \
     --window-pos 200 120 \
-    --window-size 800 400 \
-    --app-drop-link 600 185 \
+    --window-size 720 388 \
+    --icon-size 128 \
+    --text-size 13 \
+    --icon "$(basename "$APP_PATH")" 200 210 \
+    --app-drop-link 520 210 \
     --hide-extension "$(basename "$APP_PATH")" \
     --no-internet-enable \
     "$DMG_PATH" \
