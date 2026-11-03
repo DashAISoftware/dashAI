@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import Any, Dict, List
 
-from DashAI.back.models.RAG.documents import Chunk, RAGDocument
+from DashAI.back.models.RAG.documents import Chunk, SourceDocument
 from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
 from DashAI.back.models.RAG.retrievers.persistence import (
     DensePersistence,
@@ -31,7 +31,7 @@ class UnitRetriever(BaseRetriever, ABC):
         env_RAG_path: str,  # noqa: N803
         chunks: Dict[int, Dict[int, Chunk]],
         persistence: Any,
-        documents: Dict[int, RAGDocument] | None = None,
+        documents: Dict[int, SourceDocument] | None = None,
     ) -> None:
         """Inject runtime infrastructure with type-checked persistence.
 

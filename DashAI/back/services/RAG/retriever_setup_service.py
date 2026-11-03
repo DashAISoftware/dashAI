@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 from DashAI.back.core.schema_fields.utils import normalize_payload
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.documents.chunk import Chunk
-from DashAI.back.models.RAG.documents.rag_document import RAGDocument
+from DashAI.back.models.RAG.documents.source_document import SourceDocument
 from DashAI.back.models.RAG.exceptions import (
     RAGRetrieverEmptyChildrenError,
     RAGRetrieverError,
@@ -92,7 +92,7 @@ class RetrieverSetupService:
         chunk_set_id: int,
         pipeline_id: int,
         chunking_key: str,
-        documents: dict[int, RAGDocument] | None = None,
+        documents: dict[int, SourceDocument] | None = None,
     ):
         """Initialize the retriever setup service.
 
