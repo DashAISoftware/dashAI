@@ -140,7 +140,9 @@ jobs:
   # ============================================================
   build-macos-arm64:
     needs: react-build
-    runs-on: macos-14
+    # macos-26 ships Xcode 26, whose notarytool is the first to accept
+    # individual App Store Connect API keys (no issuer ID).
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
       - name: Download React build artifact

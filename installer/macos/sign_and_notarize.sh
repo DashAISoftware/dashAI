@@ -153,14 +153,21 @@ if [ -n "${APPLE_ISSUER_ID:-}" ]; then
     NOTARY_AUTH+=(--issuer "$APPLE_ISSUER_ID")
 fi
 
+# Individual API keys (no issuer) need notarytool from Xcode 26 or later.
+echo "==> notarytool $(xcrun notarytool --version)"
 echo "==> Submitting DMG for notarization (this can take several minutes)"
 RESULT_JSON="$WORK_DIR/notary-result.json"
 xcrun notarytool submit "$DMG_PATH" "${NOTARY_AUTH[@]}" \
     --wait --timeout 2h --output-format json > "$RESULT_JSON" || true
 cat "$RESULT_JSON"; echo
 
-STATUS="$(plutil -extract status raw "$RESULT_JSON" 2>/dev/null || echo unknown)"
-SUBMISSION_ID="$(plutil -extract id raw "$RESULT_JSON" 2>/dev/null || echo "")"
+# plutil prints its parse errors on stdout, so discard the output on failure.
+if ! STATUS="$(plutil -extract status raw "$RESULT_JSON" 2>/dev/null)"; then
+    STATUS="unknown"
+fi
+if ! SUBMISSION_ID="$(plutil -extract id raw "$RESULT_JSON" 2>/dev/null)"; then
+    SUBMISSION_ID=""
+fi
 
 if [ "$STATUS" != "Accepted" ]; then
     echo "ERROR: notarization status is '$STATUS'" >&2
