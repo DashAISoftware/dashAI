@@ -8,7 +8,12 @@ from kink import di, inject
 from sqlalchemy import exc, select
 
 from DashAI.back.api.api_v1.schemas.runs_params import RunParams, UpdateRunParams
-from DashAI.back.api.utils import offered_components, remove_path
+from DashAI.back.api.utils import (
+    offered_components,
+    remove_path,
+    remove_run_files,
+    run_file_paths,
+)
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import (
     GlobalExplainer,
@@ -47,7 +52,9 @@ def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
     dict
         The train, validation and test metrics of the run, each paired with the
         standard deviation that fold aggregation produces for cross-validation
-        runs. A partition the run did not score comes back as ``None``.
+        runs, and with ``{split}_metrics_unavailable``: the metrics that have
+        no value on that partition, mapped to the reason. A partition the run
+        did not score comes back as ``None``.
     """
     metrics = (
         db.query(Metric)
@@ -55,15 +62,27 @@ def get_metrics_for_run(db, run_id: int, level_enum=LevelEnum.LAST):
         .all()
     )
 
-    # One value entry and one standard deviation entry per split, derived from
-    # SplitEnum so a split cannot be silently left out of the response.
+    # One value entry, one standard deviation entry and one entry for the
+    # metrics with no value per split, derived from SplitEnum so a split cannot
+    # be silently left out of the response.
     response = {}
     for split in SplitEnum:
         response[f"{split.value}_metrics"] = None
         response[f"{split.value}_metrics_std"] = None
+        response[f"{split.value}_metrics_unavailable"] = None
 
     # Group metrics by split
     for metric in metrics:
+        # A metric with no value on this data keeps the values mapping
+        # numbers-only, which is what every reader of it formats; why it has
+        # no value travels beside it.
+        if metric.value is None:
+            unavailable_key = f"{metric.split.name.lower()}_metrics_unavailable"
+            if response[unavailable_key] is None:
+                response[unavailable_key] = {}
+            response[unavailable_key][metric.name] = metric.unavailable_reason
+            continue
+
         # Determine the key in the response dictionary
         split_key = f"{metric.split.name.lower()}_metrics"
 
@@ -324,6 +343,57 @@ async def get_hyperparameter_optimization_plot(
     return normalize_artifacts(plot)[0]
 
 
+@router.get("/{run_id}/forecasts")
+@inject
+async def get_run_forecasts(
+    run_id: int,
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Return the forecasts a backtest made from every origin.
+
+    The file ``SaveForecastsUnit`` wrote beside the run's model, as it is: the
+    frequency, the horizon, the interval levels, and per origin its partition,
+    its dates, what actually happened, the forecast and its bounds.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run does not exist, has not finished, or has no forecasts:
+        a run of a task that is not backtested, or one whose file is gone.
+    """
+    import json
+
+    from DashAI.back.units.forecast_scope import forecasts_file
+
+    with session_factory() as db:
+        try:
+            run = db.get(Run, run_id)
+            if not run:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+                )
+            if run.status != RunStatus.FINISHED:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="The run has not finished, so it has no forecasts yet.",
+                )
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+
+    path = forecasts_file(di["config"]["RUNS_PATH"], str(run_id))
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except OSError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The run has no forecasts.",
+        ) from e
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 @inject
 async def upload_run(
@@ -481,10 +551,8 @@ async def delete_run(
     HTTPException
         If the run is not registered in the DB.
     HTTPException
-        If the run was trained but the run_path does not exists.
+        If the database fails to delete it; the run's files are then kept.
     """
-    import os
-
     with session_factory() as db:
         try:
             run = db.get(Run, run_id)
@@ -492,27 +560,18 @@ async def delete_run(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
+            paths = run_file_paths([run])
             db.delete(run)
-            if (
-                run.status == RunStatus.FINISHED
-                and run.run_path
-                and os.path.exists(run.run_path)
-            ):
-                remove_path(run.run_path)
             db.commit()
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
-        except (OSError, ValueError) as e:
-            log.exception(e)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to delete directory",
-            ) from e
+
+    remove_run_files(paths)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch("/{run_id}")
@@ -565,19 +624,20 @@ async def update_run(
                 )
 
             # apply updates
+            stale_files = []
             if params.run_name is not None:
                 run.name = params.run_name
             if params.run_description is not None:
                 run.description = params.run_description
             if params.parameters is not None:
                 run.parameters = params.parameters
-                reset_run(run)
+                stale_files += reset_run(run)
             if params.optimizer is not None:
                 run.optimizer_name = params.optimizer
-                reset_run(run)
+                stale_files += reset_run(run)
             if params.optimizer_parameters is not None:
                 run.optimizer_parameters = params.optimizer_parameters
-                reset_run(run)
+                stale_files += reset_run(run)
             if params.goal_metric is not None:
                 run.goal_metric = params.goal_metric
             # `nested` is nullable, so None is also how the client asks to drop
@@ -591,6 +651,7 @@ async def update_run(
             if params.model_fields_set:
                 db.commit()
                 db.refresh(run)
+                remove_run_files(stale_files)
                 return run
             else:
                 raise HTTPException(
@@ -618,9 +679,10 @@ async def reset_run_by_id(
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
                 )
-            reset_run(run)
+            stale_files = reset_run(run)
             db.commit()
             db.refresh(run)
+            remove_run_files(stale_files)
             return run
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -821,21 +883,31 @@ async def delete_run_operations(
             ) from e
 
 
-def reset_run(run):
+def reset_run(run) -> list:
     """
-    Reset a run to NOT_STARTED status and delete associated files.
+    Reset a run to NOT_STARTED status and let go of its files.
+
+    The files are not removed here: the caller removes them with
+    ``remove_run_files`` once it has committed the reset, so a reset that
+    fails to commit keeps the files of the run it left as it was.
 
     Parameters
     ----------
     run : Run
         The run object to reset.
+
+    Returns
+    -------
+    list[str]
+        The paths of the files the run had, for ``remove_run_files``.
     """
-    import os
+    paths = run_file_paths([run])
 
     setattr(run, "status", RunStatus.NOT_STARTED)
     for split in SplitEnum:
         setattr(run, f"{split.value}_metrics", None)
         setattr(run, f"{split.value}_metrics_std", None)
+        setattr(run, f"{split.value}_metrics_unavailable", None)
     setattr(run, "start_time", None)
     setattr(run, "delivery_time", None)
     setattr(run, "end_time", None)
@@ -845,22 +917,16 @@ def reset_run(run):
         db.query(Metric).filter(Metric.run_id == run.id).delete()
         db.commit()
 
-    # Delete files
-    if run.run_path and os.path.exists(run.run_path):
-        remove_path(run.run_path)
-        setattr(run, "run_path", None)
-    if run.plot_history_path and os.path.exists(run.plot_history_path):
-        remove_path(run.plot_history_path)
-        setattr(run, "plot_history_path", None)
-    if run.plot_slice_path and os.path.exists(run.plot_slice_path):
-        remove_path(run.plot_slice_path)
-        setattr(run, "plot_slice_path", None)
-    if run.plot_contour_path and os.path.exists(run.plot_contour_path):
-        remove_path(run.plot_contour_path)
-        setattr(run, "plot_contour_path", None)
-    if run.plot_importance_path and os.path.exists(run.plot_importance_path):
-        remove_path(run.plot_importance_path)
-        setattr(run, "plot_importance_path", None)
+    for field in (
+        "run_path",
+        "plot_history_path",
+        "plot_slice_path",
+        "plot_contour_path",
+        "plot_importance_path",
+    ):
+        if getattr(run, field):
+            setattr(run, field, None)
+    return paths
 
 
 # ─── Fold metrics ─────────────────────────────────────────────
@@ -894,6 +960,21 @@ def _group_fold_metrics(db, run_id: int, level, split_enum):
         .order_by(Metric.name, Metric.fold_index)
         .all()
     )
+    if not fold_metrics:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No fold metrics found for this run",
+        )
+
+    # The lists are read by position: the paired tests line fold i of one run
+    # up with fold i of another. A metric with no value on some fold would
+    # leave a hole that shifts the folds after it, so it is left out whole.
+    # Its summary row is unavailable too, and says why in the run's
+    # ``{split}_metrics_unavailable``.
+    without_value = {metric.name for metric in fold_metrics if metric.value is None}
+    fold_metrics = [m for m in fold_metrics if m.name not in without_value]
+    # Nothing left is the same answer as nothing stored: an empty mapping
+    # would read as a run whose metrics all agree on zero folds.
     if not fold_metrics:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

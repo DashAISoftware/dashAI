@@ -25,11 +25,12 @@ from DashAI.back.api.api_v1.schemas.model_sessions_params import (
 )
 from DashAI.back.api.utils import (
     offered_components,
-    remove_path,
+    remove_run_files,
+    run_file_paths,
     task_or_http_error,
 )
 from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
-from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Plugin, Run
 from DashAI.back.job.preprocessing_job import PreprocessingJob
 from DashAI.back.preprocessing.column_ref import ConverterSequence
 from DashAI.back.preprocessing.structure import (
@@ -49,6 +50,7 @@ if TYPE_CHECKING:
 
     from DashAI.back.dependencies.job_queues import BaseJobQueue
     from DashAI.back.dependencies.registry import ComponentRegistry
+    from DashAI.back.model_package.manifest import ModelPackageError
     from DashAI.back.tasks.base_task import BaseTask
 
 
@@ -542,6 +544,78 @@ def _validate_splits(
         ) from e
 
 
+def _validate_splits_size(
+    splits: str, count_rows, component_registry: "ComponentRegistry"
+) -> None:
+    """Refuse a dataset too short for the session's splitter.
+
+    Runs after ``_validate_splits``, so the payload parses and names a
+    registered splitter. Most splitters carve any number of rows; a backtest
+    needs enough steps for its windows, and saying so here beats a run that
+    fails on it.
+
+    Parameters
+    ----------
+    splits : str
+        The splits payload, serialized as JSON.
+    count_rows : Callable[[], int]
+        How many rows the dataset has. Called only for a splitter that has a
+        size to check, because counting may read the dataset.
+    component_registry : ComponentRegistry
+        Registry used to resolve the splitter.
+
+    Raises
+    ------
+    HTTPException
+        422 with the splitter's explanation.
+    """
+    import json
+
+    from DashAI.back.splitters.base_splitter import BaseSplitter
+
+    splits_data = normalize_splits_payload(json.loads(splits))
+    splitter_class = component_registry[splits_data["splitter_name"]]["class"]
+    # Only a splitter that has a size to check is built here: the others
+    # accept any count, and building them would only risk a constructor that
+    # needs what a run gives it.
+    if splitter_class.validate_size is BaseSplitter.validate_size:
+        return
+    parameters = {
+        key: value for key, value in splits_data.items() if key not in META_KEYS
+    }
+    splitter = splitter_class(
+        {**schema_placeholder_defaults(splitter_class), **parameters}
+    )
+    try:
+        splitter.validate_size(count_rows())
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from e
+
+
+def _row_count(dataset: Dataset, data_filepath: str) -> int:
+    """How many rows a dataset has, without reading them if it can.
+
+    The dataset's own ``total_rows`` when it has one: the dataset job writes
+    it and every edit of the data rewrites it. A dataset from before the
+    column was filled is counted from the file, memory mapped, so only the
+    headers of its batches are read.
+    """
+    if dataset.total_rows is not None:
+        return dataset.total_rows
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    with pa.memory_map(data_filepath, "r") as source:
+        reader = ipc.open_file(source)
+        return sum(
+            reader.get_batch(i).num_rows for i in range(reader.num_record_batches)
+        )
+
+
 def _validate_roles_for_task(
     db, model_session: ModelSession, task_name: str, component_registry
 ) -> None:
@@ -818,6 +892,21 @@ async def create_model_session(
     # The task translates the roles it was given into the model's inputs
     # and outputs, which the checks below read.
     task = task_or_http_error(params.task_name, component_registry)
+    if has_preprocessing and not any(
+        role.transformable for role in task.column_roles()
+    ):
+        # Session preprocessing transforms the columns of the roles that
+        # allow it, and fits once per partition. A task none of whose roles
+        # allow it has nothing for the steps to feed, and partitions that are
+        # not rows: single-series forecasting until its exogenous role.
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"{params.task_name} takes no preprocessing: none of its column "
+                "roles can be transformed. Transform the dataset in a notebook "
+                "instead."
+            ),
+        )
     roles = {name: list(refs) for name, refs in params.column_roles.items() if refs}
     io = task.io_columns(roles)
     input_column_refs = list(io.inputs)
@@ -849,6 +938,13 @@ async def create_model_session(
                 reader = ipc.open_file(source)
                 schema = reader.schema
                 column_names = schema.names
+
+            if getattr(strategy_class, "KIND", "holdout") != "full":
+                _validate_splits_size(
+                    params.splits,
+                    lambda: _row_count(dataset, data_filepath),
+                    component_registry,
+                )
 
             if has_preprocessing:
                 _check_preprocessing_structure(
@@ -947,20 +1043,25 @@ async def delete_model_sessions(
     """
     with session_factory() as db:
         try:
+            paths_to_clean = []
             for model_session_id in params.ids:
                 model_session = db.get(ModelSession, model_session_id)
                 if not model_session:
                     continue
+                paths_to_clean += run_file_paths(model_session.runs)
                 db.delete(model_session)
 
             db.commit()
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+    # The files of the runs the cascade deleted, once the delete committed.
+    remove_run_files(paths_to_clean)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete("/{model_session_id}")
@@ -983,8 +1084,6 @@ async def delete_model_session(
     -------
     Response with code 204 NO_CONTENT
     """
-    import os
-
     with session_factory() as db:
         try:
             model_session = db.get(ModelSession, model_session_id)
@@ -997,17 +1096,7 @@ async def delete_model_session(
             # Snapshot the on-disk paths of the runs that the FK cascade is
             # about to delete, so they can be cleaned up after the commit.
             runs = db.query(Run).filter(Run.model_session_id == model_session_id).all()
-            paths_to_clean = [
-                path
-                for run in runs
-                for path in (
-                    run.run_path,
-                    run.plot_history_path,
-                    run.plot_slice_path,
-                    run.plot_contour_path,
-                    run.plot_importance_path,
-                )
-            ]
+            paths_to_clean = run_file_paths(runs)
 
             db.delete(model_session)
             db.commit()
@@ -1020,12 +1109,7 @@ async def delete_model_session(
 
     # Best-effort disk cleanup, done only once the DB delete has committed:
     # a cleanup failure here must not undo an otherwise-successful deletion.
-    for path in paths_to_clean:
-        if path and os.path.exists(path):
-            try:
-                remove_path(path)
-            except (OSError, ValueError) as e:
-                log.warning(f"Failed to delete path {path}: {e}")
+    remove_run_files(paths_to_clean)
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -1203,10 +1287,14 @@ async def import_model_session(
             (accept_language or "en").split("-")[0].lower(),
         )
     except (UnsupportedPackageFormatError, MissingPluginError) as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=await run_in_threadpool(_import_error_detail, e, session_factory),
+        ) from e
     except ModelPackageError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=await run_in_threadpool(_import_error_detail, e, session_factory),
         ) from e
     except Exception as e:
         log.exception(e)
@@ -1216,6 +1304,61 @@ async def import_model_session(
         ) from e
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
+
+
+def _import_error_detail(
+    error: "ModelPackageError", session_factory: "sessionmaker"
+) -> dict:
+    """Describe a refused import so the app can say why in its own language.
+
+    ``detail`` keeps the English message for API and Python callers. For a
+    missing plugin, ``plugin_id`` points to its entry in the plugins module so
+    the app can link straight to it, and ``published`` says whether PyPI has
+    it: ``False`` for a private plugin the plugins module will never list,
+    ``None`` when PyPI could not be asked.
+    """
+    params = dict(error.params)
+    if error.code == "missing_plugin" and params.get("plugin"):
+        params.update(_catalog_entry(params["plugin"], session_factory))
+    return {"code": error.code, "detail": str(error), "params": params}
+
+
+def _catalog_entry(plugin: str, session_factory: "sessionmaker") -> dict:
+    """Find a plugin in the plugins catalog, asking PyPI when it is not listed.
+
+    The catalog is filled only when the plugins module is opened, so a public
+    plugin may be missing from it; one found on PyPI is added to it.
+    """
+    from DashAI.back.api.api_v1.schemas.plugin_params import PluginParams
+    from DashAI.back.dependencies.database.utils import add_plugin_to_db
+    from DashAI.back.plugins import utils as plugin_utils
+    from DashAI.back.plugins.installer import canonical_name
+
+    def listed_id():
+        wanted = canonical_name(plugin)
+        with session_factory() as db:
+            return next(
+                (
+                    plugin_id
+                    for plugin_id, name in db.query(Plugin.id, Plugin.name)
+                    if canonical_name(name) == wanted
+                ),
+                None,
+            )
+
+    plugin_id = listed_id()
+    if plugin_id is not None:
+        return {"plugin_id": plugin_id, "published": True}
+
+    published = plugin_utils.pypi_project_exists(plugin)
+    if published:
+        try:
+            raw = plugin_utils.get_plugin_by_name_from_pypi(plugin)
+            add_plugin_to_db(PluginParams.model_validate(raw), session_factory)
+            plugin_id = listed_id()
+        except Exception:
+            log.exception("Could not add the plugin %s to the catalog", plugin)
+    return {"plugin_id": plugin_id, "published": published}
 
 
 @router.get("/{model_session_id}/export/preview")

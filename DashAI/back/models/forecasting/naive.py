@@ -1,20 +1,20 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.forecasting.base_forecasting_model import ForecastingModel
+from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    SingleSeriesForecastingModel,
+)
 
 if TYPE_CHECKING:
     import numpy as np
-
-    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class NaiveForecasterSchema(BaseSchema):
     """Schema for NaiveForecaster. It has nothing to configure."""
 
 
-class NaiveForecaster(ForecastingModel):
+class NaiveForecaster(SingleSeriesForecastingModel):
     """Predict that the series stays where it last was.
 
     Every future value is forecast as the final observed value. There is
@@ -66,54 +66,38 @@ class NaiveForecaster(ForecastingModel):
         zh="朴素预测",
     )
 
-    def train(
-        self,
-        x_train: "DashAIDataset",
-        y_train: "DashAIDataset",
-        x_validation: "DashAIDataset" = None,
-        y_validation: "DashAIDataset" = None,
-    ) -> "NaiveForecaster":
-        """Remember the last value of the series.
+    SUPPORTS_INTERVALS = True
+
+    def _fit(self, y: "np.ndarray", x: Optional[Any]) -> None:
+        """Remember the last value, and the spread of the one-step changes.
 
         Parameters
         ----------
-        x_train : DashAIDataset
-            The date column, used to record where the training data ends so a
-            later partition can be forecast at its own dates.
-        y_train : DashAIDataset
-            The series to forecast.
-        x_validation : DashAIDataset, optional
-            Unused.
-        y_validation : DashAIDataset, optional
-            Unused.
-
-        Returns
-        -------
-        NaiveForecaster
-            The fitted model.
-
-        Raises
-        ------
-        ValueError
-            If the series is empty.
+        y : np.ndarray
+            The series, in time order.
+        X : None
+            The model uses no exogenous variables.
         """
-        series = self._series(y_train)
-        if len(series) == 0:
-            raise ValueError("NaiveForecaster needs at least one observation.")
+        import numpy as np
 
-        self._history = list(series)
-        self._last_value = float(series[-1])
-        self._remember_dates(x_train)
-        self._fitted = True
-        return self
+        self._last_value = float(y[-1])
+        # The residual of a naive forecast is the change from one step to the
+        # next. With K = 0 parameters and the first step lost, fpp3 estimates
+        # the spread over the T - 1 residuals there are.
+        changes = np.diff(y)
+        self._sigma = (
+            float(np.sqrt(np.mean(changes**2))) if len(changes) else float("nan")
+        )
 
-    def _forecast(self, steps: int) -> "np.ndarray":
+    def _forecast(self, h: int, x_future: Optional[Any]) -> "np.ndarray":
         """Repeat the last observed value for every requested step.
 
         Parameters
         ----------
-        steps : int
-            How many periods to forecast.
+        h : int
+            How many steps to forecast.
+        x_future : None
+            The model uses no exogenous variables.
 
         Returns
         -------
@@ -122,4 +106,16 @@ class NaiveForecaster(ForecastingModel):
         """
         import numpy as np
 
-        return np.full(steps, self._last_value, dtype=float)
+        return np.full(h, self._last_value, dtype=float)
+
+    def _intervals(self, h: int, levels, x_future: Optional[Any]):
+        """Normal intervals whose spread grows with the square root of the step.
+
+        fpp3 §5.5: the h-step standard deviation of a naive forecast is the
+        one-step one times sqrt(h). A series of one observation has no step to
+        measure, so its bounds are not a number.
+        """
+        import numpy as np
+
+        sd = self._sigma * np.sqrt(np.arange(1, h + 1))
+        return self._normal_bounds(self._forecast(h, None), sd, levels)

@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Autocomplete, TextField, Box, Chip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { getColorByColumnType } from "../../../utils";
+import { getColumnTypeLabel } from "../../../utils/typesLists";
 import { useTranslation } from "react-i18next";
 
 /**
@@ -48,7 +49,7 @@ function RoleColumnSelectors({
     if (!columnType?.type) return null;
     return (
       <Chip
-        label={columnType.type}
+        label={getColumnTypeLabel(columnType.type, t)}
         size="small"
         sx={{
           backgroundColor: getColorByColumnType(columnType.type, theme),

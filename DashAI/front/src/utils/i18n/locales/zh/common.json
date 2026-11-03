@@ -268,5 +268,13 @@
   "viewLess": "查看更少",
   "viewMore": "查看更多",
   "yes": "是",
-  "data": "数据"
+  "data": "数据",
+  "defaultName": {
+    "dataset": "数据集",
+    "notebook": "笔记本",
+    "pipeline": "流水线",
+    "document": "文档",
+    "localExplainer": "局部解释器",
+    "globalExplainer": "全局解释器"
+  }
 }

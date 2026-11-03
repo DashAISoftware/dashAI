@@ -32,7 +32,8 @@
     "selectAll": "Select all",
     "selectNone": "None",
     "chooseFile": "Choose file",
-    "gotIt": "Got it"
+    "gotIt": "Got it",
+    "goToPlugins": "Go to Plugins"
   },
   "error": {
     "exportModel": "Could not export the model",
@@ -147,6 +148,10 @@
     "selectExactlyRuns_other": "Select exactly {{count}} models",
     "normalityByRunSummary": "{{normal}} of {{total}} runs appear to follow a normal distribution (α = {{alpha}}).",
     "notNormal": "Not normal",
+    "notEvaluable": "Not evaluable",
+    "runsNotEvaluated": "{{count}} of {{total}} runs could not be evaluated.",
+    "runsNotEvaluated_one": "{{count}} of {{total}} run could not be evaluated.",
+    "runsNotEvaluated_other": "{{count}} of {{total}} runs could not be evaluated.",
     "normal": "Normal",
     "selectBetweenRuns": "Select between {{min}} and {{max}} models",
     "saveDetails": "Save Details",
@@ -326,7 +331,22 @@
     "targetHelp": "What the model learns to predict. Preprocessing never changes it.",
     "protectedRoleHelp": "Preprocessing never changes these columns.",
     "candidatesHelp": "The columns the model uses to predict the target, which preprocessing can use or transform. They can be of any type, even text. At the end you choose which go into the model.",
-    "selectColumnsAfterPreprocessingDescription": "Choose which of the preprocessed columns go into the model. The target is already set."
+    "selectColumnsAfterPreprocessingDescription": "Choose which of the preprocessed columns go into the model. The target is already set.",
+    "sessionFromDataset": "from {{name}} dataset",
+    "noDataset": "No dataset"
+  },
+  "importError": {
+    "invalidFile": "This file is not a valid dashAI session.",
+    "wrongKind": "This file is an exported model, not a session. Choose a .dashai session file.",
+    "newerFormat": "This file was created with a newer version of dashAI. Update dashAI to import it.",
+    "missingPlugin": "This session needs the plugin {{plugin}}. Install it from the Plugins module and import the session again.",
+    "missingPluginVersion": "This session needs the plugin {{plugin}} (version {{version}}). Install it from the Plugins module and import the session again.",
+    "missingPluginPrivate": "This session needs the plugin {{plugin}}, which is not published in the Plugins catalog. Ask whoever shared the session for it, install it and import the session again.",
+    "missingPluginPrivateVersion": "This session needs the plugin {{plugin}} (version {{version}}), which is not published in the Plugins catalog. Ask whoever shared the session for it, install it and import the session again.",
+    "missingPluginUnchecked": "This session needs the plugin {{plugin}}. dashAI could not check the Plugins catalog. If the plugin is public, install it from there; if not, ask whoever shared the session for it.",
+    "missingPluginUncheckedVersion": "This session needs the plugin {{plugin}} (version {{version}}). dashAI could not check the Plugins catalog. If the plugin is public, install it from there; if not, ask whoever shared the session for it.",
+    "missingComponent": "This session uses \"{{component}}\", which is not available in this dashAI. It probably comes from a plugin: install it from the Plugins module and import the session again.",
+    "unsafeFile": "This file has content that would be written outside its folder, so it was not imported."
   },
   "message": {
     "allRunsCompleted": "{{experiment}} has completed all its runs.",
@@ -375,6 +395,7 @@
     "hypothesis_reject": "reject",
     "hypothesis_failToReject": "fail to reject",
     "hypothesisDecision": "With a p-value of {{pValue}}, we {{decision}} the null hypothesis at the alpha level of {{alpha}}.",
+    "repeatedCvIndependenceWarning": "Repeated cross-validation ({{repeats}} repetitions): the tests treat each model's {{scores}} fold scores as independent observations, although the repetitions reuse the same data. P-values may therefore be optimistic, with more false positives.",
     "noOuterMetrics": "There are no outer fold metrics for this run.",
     "nestedCvResultsOnlyForNestedCv": "Nested cross validation results are only available when activated in the hyperparameter optimization configuration. Edit the run configuration to enable this.",
     "outerFoldFetch": "Metrics obtained from the outer folds of nested cross validation.",

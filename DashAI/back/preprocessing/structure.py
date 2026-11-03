@@ -12,6 +12,10 @@ to reject a chain that would reference a column that no longer exists.
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from DashAI.back.converters.dataset_columns import plan_new_column_names
+from DashAI.back.converters.drop_source_columns import (
+    drops_source_columns,
+    split_converter_params,
+)
 from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
 from DashAI.back.preprocessing.column_ref import ConverterStep
 from DashAI.back.preprocessing.structure_types import (
@@ -148,6 +152,13 @@ def _apply_step(
         warnings.append(
             StructureMessage(code="inference_fallback", params={"step": index})
         )
+    drops_source = drops_source_columns(
+        converter_class, split_converter_params(step.params)[1]
+    )
+    if drops_source:
+        # The runtime removes the scope columns after the merge, so none of
+        # them stays in the state, exactly as with an expand step.
+        delta = delta.model_copy(update={"kept": []})
     warnings.extend(delta.warnings)
     warnings.extend(_check_bounds(converter_class, converter, scope))
     if delta.drops_unscoped:
@@ -157,7 +168,9 @@ def _apply_step(
             )
         )
 
-    new_state, added = _apply_delta(index, state, scope, delta, taken)
+    new_state, added = _apply_delta(
+        index, state, scope, delta, taken, frees_scope_names=drops_source
+    )
     if delta.drops_unscoped:
         # The runtime replaces the dataset with the step's scope plus the
         # target, so only those names remain taken.
@@ -208,7 +221,8 @@ def _instantiate(converter_class: Any, params: Dict[str, Any]) -> Any:
             schema.model_validate(
                 {**schema_placeholder_defaults(converter_class), **session_params}
             )
-        return converter_class(**session_params)
+        converter_params, _ = split_converter_params(session_params)
+        return converter_class(**converter_params)
     except Exception as e:
         raise StructureError("invalid_params", detail=str(e)) from e
 
@@ -368,6 +382,7 @@ def _apply_delta(
     scope: List[StateItem],
     delta: StructureDelta,
     taken: Set[str],
+    frees_scope_names: bool = False,
 ) -> Tuple[List[StateItem], List[StateItem]]:
     """Apply a converter's delta to the state, as the runtime splices output.
 
@@ -398,8 +413,9 @@ def _apply_delta(
             removed_names.append(item.name)
 
     # A step that outputs blocks may keep some consumed columns under their
-    # own names (a selector keeps a subset), so their names stay taken.
-    if not blocks:
+    # own names (a selector keeps a subset), so their names stay taken,
+    # unless the step drops its source columns: the runtime removes them all.
+    if not blocks or frees_scope_names:
         taken.difference_update(removed_names)
 
     added: List[StateItem] = []
