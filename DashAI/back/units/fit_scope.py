@@ -156,6 +156,21 @@ def validation_during_fit_field():
     )
 
 
+def _undefined_goal(metric, where: str, undefined, dates=None) -> JobError:
+    """The error of a goal metric that has no value on the data it scores.
+
+    Says why in the words a metric row's ``unavailable_reason`` would, with
+    the values that leave it undefined named by date where there are dates.
+    """
+    from DashAI.back.metrics.undefined_metric import describe_undefined
+
+    return JobError(
+        f"The optimization metric {metric.__name__} has no value on {where}: "
+        f"{describe_undefined(undefined, dates)} Choose another optimization "
+        "metric."
+    )
+
+
 class ModelFitScopeMixin:
     """Everything around a fit that does not depend on how the data is shaped.
 
@@ -172,6 +187,55 @@ class ModelFitScopeMixin:
     #: comes first in the MRO and does not chain.
     _optimizer = None
     _goal_metric = None
+
+    @staticmethod
+    def _goal_score(metric, expected, predictions, where: str) -> float:
+        """Score the goal metric, or stop the run if it has no value here.
+
+        A metric that is unavailable on some data (MAPE on a series with a
+        zero) can still be recorded as such beside the others. It cannot be
+        optimized: there is no number to compare trials by. The error says so
+        and names the metric, so the user picks another.
+
+        Parameters
+        ----------
+        metric : type
+            The goal metric's class.
+        expected, predictions
+            What the metric's ``score`` takes.
+        where : str
+            The data being scored, as the message should name it.
+
+        Raises
+        ------
+        JobError
+            If the metric raises ``UndefinedMetricError``.
+        """
+        from DashAI.back.metrics.undefined_metric import UndefinedMetricError
+
+        try:
+            return metric.score(expected, predictions)
+        except UndefinedMetricError as undefined:
+            raise _undefined_goal(metric, where, undefined) from undefined
+
+    @staticmethod
+    def _goal_score_forecast(metric, forecast, where: str, dates=None) -> float:
+        """``_goal_score`` for a forecast, scored through ``score_forecast``.
+
+        ``dates`` are the forecast window's, so the error names the dates of
+        the values that leave the metric undefined.
+
+        Raises
+        ------
+        JobError
+            If the metric raises ``UndefinedMetricError``.
+        """
+        from DashAI.back.metrics.undefined_metric import UndefinedMetricError
+
+        try:
+            return metric.score_forecast(forecast)
+        except UndefinedMetricError as undefined:
+            raise _undefined_goal(metric, where, undefined, dates) from undefined
 
     def _resolve_search(self):
         """Resolve the optimizer and the goal metric, memoized on this unit.
@@ -200,6 +264,13 @@ class ModelFitScopeMixin:
             raise JobError(
                 f"Metric is not compatible with the Task. {e}",
             ) from e
+        if not goal_metric["metadata"].get("optimizable", True):
+            raise JobError(
+                f"The optimization metric {goal_metric_name} cannot be optimized: "
+                "no direction makes it better, and searching for it would pick "
+                "the parameters it rewards for the wrong reason (interval "
+                "coverage rewards the widest intervals). Choose an error metric."
+            )
 
         try:
             optimizer_class = component_registry[optimizer_name]["class"]

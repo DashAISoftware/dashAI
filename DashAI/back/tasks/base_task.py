@@ -13,7 +13,7 @@ from typing import (
 
 from starlette.datastructures import UploadFile
 
-from DashAI.back.tasks.column_roles import ColumnRole, IOColumns, type_name
+from DashAI.back.tasks.column_roles import ColumnRole, IOColumns
 from DashAI.back.tasks.utils import get_bytes_with_type_filetype
 
 if TYPE_CHECKING:
@@ -29,6 +29,12 @@ class BaseTask:
     REQUIRES_TARGET: bool = True
 
     PREDICTS_FORWARD_ONLY: bool = False
+
+    #: How a trained model of this task is asked for predictions, which is
+    #: what the prediction form reads to know what to ask for: ``"rows"`` to
+    #: predict the rows of a dataset or typed by hand, ``"horizon"`` to
+    #: forecast a number of steps past the end of the training data.
+    PREDICTION_MODE: str = "rows"
 
     # The roles this task's columns can play. Left as None, the roles come
     # from the x/y short form of ``metadata`` (see ``_role_delegate``).
@@ -173,8 +179,9 @@ class BaseTask:
     def _total_cardinality(roles: List[ColumnRole]) -> Any:
         """State a whole side's cardinality the way the flat contract did.
 
-        Kept so every consumer of the flat metadata, the column picker among
-        them, reads the same value it always did.
+        A manual prediction checks the columns typed in against it
+        (``inputs_cardinality``), with the value and the message it always
+        had.
 
         Parameters
         ----------
@@ -194,13 +201,12 @@ class BaseTask:
     def get_metadata(cls) -> Dict[str, Any]:
         """Return serialisable metadata for the current task.
 
-        ``"column_roles"`` lists the roles and ``"io_roles"`` which of them
-        feed a model's inputs and outputs. ``"inputs_types"`` and the three
-        keys beside it are the flat view the remaining consumers read,
-        computed from the roles of each side.
-
-        Type classes become their string names throughout so the result can be
-        JSON-serialised by the DashAI frontend.
+        ``"column_roles"`` lists the roles, ``"io_roles"`` which of them feed
+        a model's inputs and outputs, and ``"prediction_mode"`` how a trained
+        model is asked for predictions. The flat view of the x/y short form
+        (``inputs_types`` and the three keys beside it) is no longer emitted:
+        its last reader moved to the roles. A task still declares it, as the
+        short form of its roles (``XYRoles``).
 
         Parameters
         ----------
@@ -210,33 +216,28 @@ class BaseTask:
         Returns
         -------
         Dict[str, Any]
-            Dictionary with keys ``"inputs_types"``, ``"outputs_types"``,
-            ``"inputs_cardinality"``, ``"outputs_cardinality"``,
-            ``"column_roles"``, ``"io_roles"`` and ``"requires_target"``.
+            Dictionary with keys ``"column_roles"``, ``"io_roles"``,
+            ``"prediction_mode"`` and ``"requires_target"``.
         """
-        roles = cls.column_roles()
-        sides = cls.io_roles()
-        by_name = {role.name: role for role in roles}
-        parsed_metadata: dict = {}
+        return {
+            "column_roles": [role.to_metadata() for role in cls.column_roles()],
+            "io_roles": cls.io_roles(),
+            "prediction_mode": cls.PREDICTION_MODE,
+            "requires_target": cls.REQUIRES_TARGET,
+        }
 
-        for side in ("inputs", "outputs"):
-            side_roles = [by_name[name] for name in sides[side] if name in by_name]
+    @classmethod
+    def inputs_cardinality(cls) -> Any:
+        """How many columns a model of this task reads, as the roles say.
 
-            names: List[str] = []
-            for role in side_roles:
-                for dashai_type in role.types:
-                    name = type_name(dashai_type)
-                    if name not in names:
-                        names.append(name)
-
-            parsed_metadata[f"{side}_types"] = names
-            parsed_metadata[f"{side}_cardinality"] = cls._total_cardinality(side_roles)
-
-        parsed_metadata["column_roles"] = [role.to_metadata() for role in roles]
-        parsed_metadata["io_roles"] = sides
-        parsed_metadata["requires_target"] = cls.REQUIRES_TARGET
-
-        return parsed_metadata
+        Returns
+        -------
+        int or str
+            The exact total when every input role is exact, otherwise ``"n"``.
+        """
+        by_name = {role.name: role for role in cls.column_roles()}
+        inputs = [by_name[name] for name in cls.io_roles()["inputs"] if name in by_name]
+        return cls._total_cardinality(inputs)
 
     @staticmethod
     def _role_noun(role_name: str, sides: Dict[str, List[str]]) -> str:
@@ -634,7 +635,7 @@ class BaseTask:
         )
 
         columns_spec = get_columns_spec(dataset_path)
-        inputs_cardinality = self.get_metadata()["inputs_cardinality"]
+        inputs_cardinality = self.inputs_cardinality()
 
         if inputs_cardinality != "n" and len(manual_input[0]) != inputs_cardinality:
             raise ValueError(

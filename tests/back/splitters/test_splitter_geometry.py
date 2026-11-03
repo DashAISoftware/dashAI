@@ -51,8 +51,17 @@ def _offered_splitters():
     ]
 
 
+# The backtest splitters cut steps, not proportions of rows, and no renderer
+# draws their shape yet: the forecasting front (PR 4 of the forecasting stack)
+# adds one. Until then their geometry is one the frontend leaves blank.
+NOT_DRAWN_YET = {"TemporalHoldoutSplitter", "RollingOriginSplitter"}
+
+
 @pytest.mark.parametrize("splitter", _offered_splitters(), ids=lambda s: s.__name__)
 def test_every_splitter_declares_a_geometry_the_frontend_can_draw(splitter):
+    if splitter.__name__ in NOT_DRAWN_YET:
+        assert splitter.get_metadata()["geometry"] not in RENDERED_GEOMETRIES
+        return
     assert splitter.get_metadata()["geometry"] in RENDERED_GEOMETRIES
 
 
@@ -65,11 +74,11 @@ def test_a_splitter_that_declares_nothing_is_not_drawn():
     ("splitter", "geometry"),
     [
         (HoldoutSplitter, "partitions"),
-        (TemporalHoldoutSplitter, "sequential_partitions"),
+        (TemporalHoldoutSplitter, "backtest_origins"),
         (KFoldSplitter, "blocked_folds"),
         (LeaveOneOutSplitter, "blocked_folds"),
         (RepeatedKFoldSplitter, "blocked_folds"),
-        (RollingOriginSplitter, "expanding_window"),
+        (RollingOriginSplitter, "backtest_origins"),
     ],
 )
 def test_splitters_report_the_shape_they_actually_produce(splitter, geometry):

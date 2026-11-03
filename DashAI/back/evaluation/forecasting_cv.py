@@ -6,20 +6,16 @@ from DashAI.back.evaluation.cv import FoldEvaluationStrategy
 
 
 class ForecastingCrossValidationEvaluationStrategy(FoldEvaluationStrategy):
-    """Rolling origin cross-validation that records no in-sample metrics.
+    """A backtest over several validation origins, then the test.
 
-    Only one thing separates this from the ordinary cross-validation
-    strategy: the training partition of a fold is not scored. Scoring it would
-    mean asking the model about dates it was fitted on, which is a fit
-    statistic rather than a forecast and is not comparable with the validation
-    score of the same fold.
+    Pair it with ``RollingOriginSplitter``. Each origin fits on the steps before
+    it and is scored on the ``horizon`` steps after it; the validation score is
+    the mean over the origins, which is also what a search optimizes. The
+    test is one more origin, at the end.
 
-    Nothing else needs to change, and that is worth stating because it was not
-    obvious. Each fold already trains on everything before its own validation
-    window, and the final refit already uses the whole pool of rows outside
-    the reserved tail, so this strategy never had the horizon problem that
-    holdout did. Pair it with ``RollingOriginSplitter``, whose folds walk the
-    origin forward through time.
+    It runs the same units as the forecasting holdout (``KIND = "backtest"``).
+    The training steps are never scored, and the kept model is fitted on the
+    whole series (RECONCILING_FORECASTING §2.13).
     """
 
     DESCRIPTION = MultilingualString(
@@ -59,5 +55,10 @@ class ForecastingCrossValidationEvaluationStrategy(FoldEvaluationStrategy):
         ),
     )
 
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     SCORED_SPLITS: tuple = (SplitEnum.VALIDATION, SplitEnum.TEST)
+    # The same backtest as the forecasting holdout, with more than one origin:
+    # ModelJob dispatches both on this one KIND.
+    KIND = "backtest"
+    # Both take a splitter that cuts the series into origins, in steps.
+    SPLITTER_PARTITIONING = "origins"

@@ -20,7 +20,7 @@ class TimeIndexAuditSchema(BaseExplorerSchema):
 class TimeIndexAuditExplorer(StatisticalExplorer):
     """Report whether a date column can carry a forecast at all.
 
-    Every model in ``ForecastingTask`` reads the series by position and
+    Every model of ``SingleSeriesForecastingTask`` reads the series by position and
     assumes one value per period, no period missing and none repeated. A date
     column rarely says so out loud: a shop closed on Sundays, a sensor that
     dropped out for a week and two readings on the same afternoon all look

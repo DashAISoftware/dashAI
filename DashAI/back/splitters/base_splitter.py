@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, Final, List
+from typing import TYPE_CHECKING, Any, Dict, Final, List, Optional
 
 from sklearn.preprocessing import LabelEncoder
 
@@ -30,6 +30,12 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
     TRAINING_PARTITION: str = "train"
 
     GEOMETRY: str = "unknown"
+
+    # Why a run of this splitter has no partitions of rows at all, for a
+    # splitter that cuts something else (a backtest cuts steps). None for a
+    # splitter of rows. Said in place of "this partition is empty", which
+    # would send the user looking for rows the run never had.
+    NO_ROW_PARTITIONS: Optional[str] = None
 
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
@@ -125,6 +131,24 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
             }
         )
         return splits
+
+    def validate_size(self, n_rows: int) -> None:
+        """Refuse a dataset this splitter cannot carve, before any run.
+
+        The session API calls it with the dataset's row count. Most splitters
+        carve any count and accept every one; a backtest needs enough steps for
+        its windows (``OriginSplitter``).
+
+        Parameters
+        ----------
+        n_rows : int
+            The rows in the session's dataset.
+
+        Raises
+        ------
+        ValueError
+            If the dataset is too short, saying what to change.
+        """
 
     def __init__(self, splits_data):
         """Initialize the common splitter configuration.

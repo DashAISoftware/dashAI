@@ -149,7 +149,7 @@ class TimeResamplerConverter(BasicPreprocessingConverter, BaseConverter):
     events that simply did not happen.
 
     The date column keeps its name and its format, so the result is still a
-    dated table that ``ForecastingTask`` and the exploration side can read.
+    dated table that a forecasting task and the exploration side can read.
     Columns that are neither the date nor numeric are dropped, since there is
     no meaningful way to average a piece of text over a week.
     """
