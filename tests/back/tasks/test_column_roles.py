@@ -300,6 +300,25 @@ def test_the_built_in_tasks_get_the_roles_of_their_short_form(task, expected):
     assert task.io_roles() == {"inputs": ["features"], "outputs": outputs}
 
 
+@pytest.mark.parametrize(
+    "task",
+    [
+        TabularClassificationTask,
+        RegressionTask,
+        TextClassificationTask,
+        ImageClassificationTask,
+        TranslationTask,
+        ClusteringTask,
+    ],
+)
+def test_a_role_that_declares_no_description_publishes_none(task):
+    """``description`` only reaches the metadata when a role declares it, so the
+    roles of the x/y tasks read as they did before it existed. The golden of
+    the front's declarations compares as a subset and would not catch it."""
+    for role in task.column_roles():
+        assert "description" not in role.to_metadata()
+
+
 def test_the_single_series_forecasting_task_declares_its_own_roles():
     # Not the x/y short form: a time index and a series, both protected from
     # the session's preprocessing, and any number of exogenous variables,
