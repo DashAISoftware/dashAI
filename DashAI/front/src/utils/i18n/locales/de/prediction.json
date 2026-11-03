@@ -66,7 +66,8 @@
     "useExistingDataset": "Vorhandenen Datensatz verwenden"
   },
   "message": {
-    "unevaluatedSteps": "Die letzten {{count}} Schritte gehen über die {{evaluated}} hinaus, die der Backtest gemessen hat: ihr Fehler wurde nie bewertet.",
+    "unevaluatedSteps_one": "Der letzte Schritt geht über die {{evaluated}} hinaus, die der Backtest gemessen hat: sein Fehler wurde nie bewertet.",
+    "unevaluatedSteps_other": "Die letzten {{count}} Schritte gehen über die {{evaluated}} hinaus, die der Backtest gemessen hat: ihr Fehler wurde nie bewertet.",
     "deletedSuccessfully": "Vorhersage erfolgreich gelöscht",
     "downloadedSuccessfully": "Vorhersage erfolgreich heruntergeladen",
     "predictionCompleted": "Vorhersage erfolgreich abgeschlossen",

@@ -108,6 +108,27 @@ describe("HorizonPredictionPanel", () => {
     console.error.mockRestore();
   });
 
+  it("warns about a single unmeasured step in the singular", async () => {
+    getPredictionSplits.mockResolvedValue({ splits: [], horizon: 6 });
+    createPrediction.mockResolvedValue({
+      id: 9,
+      unevaluated_steps: 1,
+      evaluated_horizon: 6,
+    });
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={jest.fn()} />,
+    );
+    await waitFor(() => expect(horizonField()).toHaveValue(6));
+
+    await run(7);
+
+    expect(
+      await screen.findByText(
+        "The last step goes beyond the 6 the backtest measured: its error was never evaluated.",
+      ),
+    ).toBeInTheDocument();
+  });
+
   it("shows no warning for a horizon the backtest measured", async () => {
     getPredictionSplits.mockResolvedValue({ splits: [], horizon: 6 });
     createPrediction.mockResolvedValue({ id: 9 });
