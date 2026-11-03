@@ -12,6 +12,7 @@ from DashAI.back.dataloaders.classes.dashai_data import DashAIData
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.dashai_image import DashAIImage
+from DashAI.back.types.date_utils import format_date_column
 from DashAI.back.types.utils import (
     arrow_to_dashai_types,
     comma_float_to_float,
@@ -852,7 +853,14 @@ def transform_dataset_with_schema(
                         arrow_type=_type, format=_format
                     )
                     pa_type = to_arrow_types("string")
-                    dai_table[column_name] = table.column(column_name)
+                    column = table.column(column_name)
+                    if (
+                        pa.types.is_timestamp(column.type)
+                        or pa.types.is_date(column.type)
+                        or pa.types.is_time(column.type)
+                    ):
+                        column = format_date_column(column, _format)
+                    dai_table[column_name] = column
 
                 elif _type == "Float":
                     dashai_types[column_name] = arrow_to_dashai_types(pa_type)
