@@ -175,20 +175,41 @@ def forecast_steps(model, horizon: int, x_future=None) -> "np.ndarray":
 
 
 def exogenous_for(
-    model_class: type, parameters: Optional[Dict[str, Any]], cut: Dict[str, Any]
+    model_class: type,
+    parameters: Optional[Dict[str, Any]],
+    declared: bool,
+    cut: Dict[str, Any],
 ) -> Optional["np.ndarray"]:
     """The exogenous matrix of a cut, or None when the run does not read it.
 
-    Whether it does is ``exogenous_usage``'s answer, the same the run records
-    and the session shows before training. A model that takes none, or one
-    switched off, is never handed an ``x``.
+    Whether it does is ``exogenous_usage``'s answer, from what the run is
+    configured with: whether the session's role has columns (``declared``),
+    the model and its parameters. It is the same answer the session shows
+    before training and the run records, so the three cannot disagree. A
+    model that takes none, or one switched off, is never handed an ``x``.
+
+    Raises
+    ------
+    JobError
+        If the run reads them and this cut's preprocessing resolved the role
+        to no column: the cut is not trained without them.
     """
+    from DashAI.back.job.base_job import JobError
     from DashAI.back.models.forecasting.single_series_forecasting_model import (
         exogenous_usage,
     )
 
-    used, _ = exogenous_usage(model_class, parameters, bool(cut["columns"]))
-    return cut["values"] if used else None
+    used, _ = exogenous_usage(model_class, parameters, declared)
+    if not used:
+        return None
+    if not cut["columns"]:
+        raise JobError(
+            f"The session's preprocessing fitted for {cut['name']} left no "
+            f"exogenous column, and {model_class.__name__} reads them in this "
+            "run. Change the steps that transform the exogenous variables, or "
+            "turn off use_exogenous to compare the model without them."
+        )
+    return cut["values"]
 
 
 def scored_forecast(record: Dict[str, Any], series: "np.ndarray", season_length: int):

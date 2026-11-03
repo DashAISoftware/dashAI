@@ -510,6 +510,7 @@ async def upload_run(
                 component_registry[params.model_name]["class"],
                 model_session,
                 component_registry[task_name]["class"](),
+                params.parameters,
             )
             run = Run(
                 model_session_id=params.model_session_id,
@@ -538,31 +539,42 @@ async def upload_run(
             ) from e
 
 
-def _check_exogenous_requirement(model_class, model_session, task) -> None:
-    """Refuse a model that cannot run without exogenous variables in a session
-    that has none, before it trains (RECONCILING_FORECASTING §2.14, detail 2).
+def _check_exogenous_requirement(model_class, model_session, task, parameters) -> None:
+    """Refuse a model that cannot run without exogenous variables in a run that
+    will not read them, before it trains (RECONCILING_FORECASTING §2.14,
+    detail 2).
+
+    Whether the run reads them is ``exogenous_usage``'s answer, the one the
+    session shows before training, the units act on and the run records.
 
     Raises
     ------
     HTTPException
-        422 naming the model.
+        422 naming the model and why the run would not read them.
     """
     from DashAI.back.models.forecasting.single_series_forecasting_model import (
         EXOGENOUS_REQUIRED,
+        exogenous_usage,
     )
     from DashAI.back.tasks.session_roles import session_exogenous_refs
 
     if getattr(model_class, "EXOGENOUS", None) != EXOGENOUS_REQUIRED:
         return
-    if not session_exogenous_refs(model_session, task):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=(
-                f"Model {model_class.__name__!r} requires exogenous variables, "
-                "and this session has none. Choose another model, or create a "
-                "session that gives the exogenous role its columns."
-            ),
-        )
+    used, reason = exogenous_usage(
+        model_class, parameters, bool(session_exogenous_refs(model_session, task))
+    )
+    if used:
+        return
+    why = (
+        "and this session has none. Choose another model, or create a session "
+        "that gives the exogenous role its columns."
+        if reason["key"] == "sessionHasNoExogenous"
+        else "and use_exogenous is off. Turn it on, or choose another model."
+    )
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail=f"Model {model_class.__name__!r} requires exogenous variables, {why}",
+    )
 
 
 def _check_goal_metric(component_registry, task_name, goal_metric, optimizer_name):

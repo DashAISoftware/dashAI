@@ -165,18 +165,29 @@ WITH_PROMO = SERIES + 6.0 * PROMO[:, 0] + np.cos(np.arange(24.0))
 ARIMA_100 = {"p": 1, "d": 0, "q": 0}
 
 
+def _cut(name, values=None):
+    if values is None:
+        return {"name": name, "columns": [], "values": np.empty((24, 0))}
+    return {"name": name, "columns": ["promo"], "values": values}
+
+
 def _exogenous(values=None):
     """What ``ApplyCutPreprocessingUnit`` publishes: the same raw cut each time."""
-    cut = (
-        {"columns": [], "values": np.empty((24, 0))}
-        if values is None
-        else {"columns": ["promo"], "values": values}
-    )
-    return {"validation": [cut, cut], "test": cut, "final": cut}
+    return {
+        "declared": values is not None,
+        "validation": [_cut("origin_0", values), _cut("origin_1", values)],
+        "test": _cut("test", values),
+        "final": _cut("final", values),
+    }
 
 
 def _backtested(
-    model="NaiveForecaster", params=None, series=SERIES, exogenous=None, optimizer=None
+    model="NaiveForecaster",
+    params=None,
+    series=SERIES,
+    exogenous=None,
+    optimizer=None,
+    published=None,
 ):
     ctx = _context(task_name=TASK, grid=GRID.to_ref())
     BuildForecasterUnit(
@@ -184,7 +195,7 @@ def _backtested(
     )(ctx)
     ctx.put("series", series)
     ctx.put_ref("split_indexes", CUTS)
-    ctx.put("exogenous", _exogenous(exogenous))
+    ctx.put("exogenous", published or _exogenous(exogenous))
     BacktestForecasterUnit(
         optimizer=optimizer or NO_SEARCH,
         goal_metric="MAE" if optimizer else "",
@@ -227,6 +238,25 @@ def test_switched_off_the_model_forecasts_without_them():
 def test_a_model_that_takes_none_is_never_handed_them():
     # Naive refuses an x; the unit leaves it out rather than fail.
     origins = _backtested(exogenous=PROMO).require("forecasts")["origins"]
+
+    assert origins[0]["forecast"] == [15.0] * 3
+
+
+def test_a_cut_left_without_columns_is_refused_when_the_run_reads_them():
+    # The session declares the role, so the run reads its exogenous variables;
+    # a cut whose preprocessing resolved none is not trained without them.
+    published = _exogenous(PROMO)
+    published["validation"][0] = _cut("origin_0")
+
+    with pytest.raises(JobError, match="origin_0"):
+        _backtested("ARIMA", ARIMA_100, WITH_PROMO, published=published)
+
+
+def test_a_cut_left_without_columns_is_fine_for_a_model_that_reads_none():
+    published = _exogenous(PROMO)
+    published["validation"][0] = _cut("origin_0")
+
+    origins = _backtested(published=published).require("forecasts")["origins"]
 
     assert origins[0]["forecast"] == [15.0] * 3
 
@@ -405,6 +435,51 @@ def test_the_kept_model_is_fitted_on_the_final_cut():
     assert list(kept.predict(3, x_future=future).point) == pytest.approx(
         list(by_hand.point), rel=1e-9
     )
+
+
+def test_a_final_cut_left_without_columns_is_refused_when_the_run_reads_them():
+    published = _exogenous(PROMO)
+    published["final"] = _cut("final")
+    ctx = _backtested("ARIMA", ARIMA_100, WITH_PROMO, published=published)
+
+    with pytest.raises(JobError, match="final"):
+        FitFinalForecasterUnit()(ctx)
+
+
+# --- ModelJob._exogenous_record ----------------------------------------------
+
+
+def test_the_run_records_the_decision_its_session_and_model_make(registry):
+    """What the run records comes from the session's role, the model and its
+    parameters, the same answer the units and the session's mark give: not
+    from the columns one cut happened to resolve."""
+    from types import SimpleNamespace
+
+    from DashAI.back.job.model_job import ModelJob
+
+    ctx = ExecutionContext()
+    ctx.put("exogenous", {**_exogenous(PROMO), "final": _cut("final")})
+    ctx.put(
+        "dataset",
+        transform_dataset_with_schema(
+            to_dashai_dataset(pd.DataFrame({"promo": PROMO[:, 0]})),
+            {"promo": {"type": "Float", "dtype": "float64"}},
+        ),
+    )
+
+    record = ModelJob._exogenous_record(
+        SimpleNamespace(model_name="NaiveForecaster", parameters={}),
+        SimpleNamespace(preprocessing=None),
+        SimpleNamespace(
+            config={"exogenous_column_refs": [{"kind": "raw", "name": "promo"}]}
+        ),
+        ctx,
+        registry,
+    )
+
+    assert record["used"] is False
+    assert record["reason"]["key"] == "modelTakesNoExogenous"
+    assert record["columns"] == [{"name": "promo", "type": "Float"}]
 
 
 # --- SaveForecastsUnit -------------------------------------------------------

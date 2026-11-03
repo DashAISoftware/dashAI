@@ -147,3 +147,18 @@ def test_a_model_that_requires_them_is_taken_with_them(client, tmp_path, requiri
     )
 
     assert response.status_code == 201, response.text
+
+
+def test_a_model_that_requires_them_is_refused_switched_off(
+    client, tmp_path, requiring
+):
+    """The 422 reads the run's decision, the same the units act on: a model
+    that needs them and is told not to read them would fail training."""
+    session_id = _exogenous_session(client, tmp_path, _frame(), exogenous=PROMO)
+    body = _run_body(session_id, requiring.__name__)
+    body["parameters"] = {"use_exogenous": False}
+
+    response = client.post("/api/v1/run/", json=body)
+
+    assert response.status_code == 422, response.text
+    assert "requires exogenous variables" in response.json()["detail"]

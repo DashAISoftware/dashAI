@@ -691,11 +691,13 @@ class ModelJob(BaseJob):
         """What the run did with its session's exogenous variables.
 
         ``used`` and ``reason`` are ``exogenous_usage``'s answer, the one the
-        units acted on. ``columns`` are the raw columns a prediction has to
-        bring, with their types: the exogenous refs walked back to the dataset,
-        plus every column the session's steps read, since the fitted sequence
-        reads them all (``ConverterSequence.raw_columns_read``). None for a
-        session without exogenous variables.
+        units acted on: from whether the role has columns, the model and its
+        parameters, never from what one cut resolved. ``columns`` are the raw
+        columns a prediction has to bring, with their types: the exogenous
+        refs walked back to the dataset, plus every column the session's steps
+        read, since the fitted sequence reads them all
+        (``ConverterSequence.raw_columns_read``). None for a session without
+        exogenous variables.
         """
         from DashAI.back.models.forecasting.single_series_forecasting_model import (
             exogenous_usage,
@@ -710,9 +712,7 @@ class ModelJob(BaseJob):
         if not refs:
             return None
         used, reason = exogenous_usage(
-            component_registry[run.model_name]["class"],
-            run.parameters,
-            bool(ctx.require("exogenous")["final"]["columns"]),
+            component_registry[run.model_name]["class"], run.parameters, bool(refs)
         )
         sequence = ConverterSequence.model_validate(
             model_session.preprocessing or {"steps": []}

@@ -106,6 +106,26 @@ def test_without_artifacts_every_cut_reads_the_raw_columns():
         np.testing.assert_array_equal(cut["values"], _promo().reshape(-1, 1))
 
 
+def test_each_cut_is_named_and_the_role_is_said_to_be_declared():
+    """The units that forecast name a cut in their errors, and decide the use
+    from whether the role has columns, not from what one cut resolved."""
+    ctx = _context()
+
+    ApplyCutPreprocessingUnit(exogenous_column_refs=PROMO)(ctx)
+
+    published = ctx.require("exogenous")
+    assert published["declared"] is True
+    assert [cut["name"] for cut in _cuts(published)] == list(FITS)
+
+
+def test_without_the_role_nothing_is_declared():
+    ctx = _context()
+
+    ApplyCutPreprocessingUnit(exogenous_column_refs=None)(ctx)
+
+    assert ctx.require("exogenous")["declared"] is False
+
+
 def test_without_the_role_every_cut_reads_no_column():
     ctx = _context()
 

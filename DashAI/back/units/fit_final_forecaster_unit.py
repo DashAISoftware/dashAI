@@ -42,12 +42,17 @@ class FitFinalForecasterUnit(BaseUnit):
         parameters = ctx.require("best_parameters")
         series = np.asarray(ctx.require("series"), dtype=float)
         grid = ctx.require("grid")
-        final = ctx.require("exogenous")["final"]
+        exogenous = ctx.require("exogenous")
 
         try:
             model_class = type(factory.model)
             model = build_model(model_class, parameters, factory.model.run_id)
-            model.fit(series, exogenous_for(model_class, parameters, final))
+            x = exogenous_for(
+                model_class, parameters, exogenous["declared"], exogenous["final"]
+            )
+            model.fit(series, x)
+        except JobError:
+            raise
         except Exception as e:
             log.exception(e)
             raise JobError(f"Fitting the model on the whole series failed: {e}") from e

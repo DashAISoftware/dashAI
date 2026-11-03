@@ -159,7 +159,10 @@ class ApplyCutPreprocessingUnit(BaseUnit):
     step of the series, so a forecaster fitted on the steps before origin
     ``o`` reads its rows ``[:o]`` and forecasts with ``[o:o + h]``. Rows past
     a cut's window are transformed too, which leaks nothing: the fit never
-    saw them.
+    saw them. Each cut carries its ``name``, the artifact it came from, and
+    ``declared`` says whether the role has columns at all: that, and not the
+    columns one cut resolved, is what decides whether a run reads them
+    (``exogenous_for``).
 
     **It always runs,** as ``ApplySessionPreprocessingUnit`` does on the
     prediction side. Without artifacts every cut reads the raw columns, and
@@ -219,11 +222,12 @@ class ApplyCutPreprocessingUnit(BaseUnit):
         for name, steps in zip(cut_names(cuts), cut_lengths(cuts), strict=True):
             transformed, columns = self._apply(dataset, artifacts_path, name)
             values = exogenous_matrix(transformed, columns, steps, grid)
-            published.append({"columns": columns, "values": values})
+            published.append({"name": name, "columns": columns, "values": values})
 
         ctx.put(
             "exogenous",
             {
+                "declared": bool(self._resolve_refs()),
                 "validation": published[:-2],
                 "test": published[-2],
                 "final": published[-1],

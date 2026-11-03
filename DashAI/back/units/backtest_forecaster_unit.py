@@ -126,7 +126,10 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
                     index,
                     levels,
                     x=exogenous_for(
-                        model_class, best_parameters, exogenous["validation"][index]
+                        model_class,
+                        best_parameters,
+                        exogenous["declared"],
+                        exogenous["validation"][index],
                     ),
                 )
                 for index, origin in enumerate(cuts["validation_origins"])
@@ -141,7 +144,12 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
                     "test",
                     0,
                     levels,
-                    x=exogenous_for(model_class, best_parameters, exogenous["test"]),
+                    x=exogenous_for(
+                        model_class,
+                        best_parameters,
+                        exogenous["declared"],
+                        exogenous["test"],
+                    ),
                 )
             )
             season_length = getattr(
@@ -203,7 +211,12 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
                 "validation",
                 index,
                 levels,
-                x=exogenous_for(type(model), switch, exogenous["validation"][index]),
+                x=exogenous_for(
+                    type(model),
+                    switch,
+                    exogenous["declared"],
+                    exogenous["validation"][index],
+                ),
             )
             dates = record["dates"]
             first, last = (
