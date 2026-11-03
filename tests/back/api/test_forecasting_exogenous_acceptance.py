@@ -292,7 +292,6 @@ def test_an_imputer_in_the_session_fills_a_gap_in_the_history(client, tmp_path):
 # --------------------------------------------------------------------------- #
 
 
-@pending("6")
 def test_arima_forecasts_every_origin_with_the_exogenous_columns(client, tmp_path):
     from DashAI.back.models.forecasting.arima import ARIMA
 
@@ -303,13 +302,12 @@ def test_arima_forecasts_every_origin_with_the_exogenous_columns(client, tmp_pat
     sales = frame["sales"].to_numpy()
     promo = frame[["promo"]].to_numpy()
     for record in _forecasts(client, run_id)["origins"]:
-        o = record["origin"]
+        o = record["origin_step"]
         by_hand = ARIMA(**ARIMA_PARAMS).fit(sales[:o], promo[:o])
         expected = by_hand.predict(HORIZON, x_future=promo[o : o + HORIZON]).point
         assert record["forecast"] == pytest.approx(list(expected), rel=1e-6)
 
 
-@pending("6")
 def test_the_run_records_whether_it_used_the_exogenous_columns(client, tmp_path):
     session_id = _session(client, tmp_path, exogenous=PROMO)
 
@@ -329,7 +327,6 @@ def test_the_run_records_whether_it_used_the_exogenous_columns(client, tmp_path)
     assert switched_off.exogenous["reason"]["key"] == "exogenousSwitchedOff"
 
 
-@pending("6")
 def test_with_the_switch_off_arima_forecasts_as_without_exogenous(client, tmp_path):
     frame = _frame()
     with_role = _session(client, tmp_path / "a", frame, exogenous=PROMO)
@@ -345,7 +342,6 @@ def test_with_the_switch_off_arima_forecasts_as_without_exogenous(client, tmp_pa
     assert _forecasts(client, off)["origins"] == _forecasts(client, plain)["origins"]
 
 
-@pending("6")
 def test_a_session_without_exogenous_records_none(client, tmp_path):
     session_id = _session(client, tmp_path)
 

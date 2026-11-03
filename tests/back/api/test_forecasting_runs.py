@@ -520,3 +520,82 @@ def test_a_run_without_its_forecasts_has_no_report(client, tmp_path):
 
     with pytest.raises(JobError, match="saved no forecasts"):
         ReportJob(report_id=response.json()["id"]).run()
+
+
+@pytest.fixture(name="exogenous_run")
+def a_run_that_read_a_planned_promotion(client, tmp_path):
+    import numpy as np
+
+    from DashAI.back.job.model_job import ModelJob
+    from tests.back.api.test_forecasting_acceptance import (
+        CV,
+        ROLLING,
+        _create_run,
+        _session_body,
+        _upload,
+    )
+
+    frame = _monthly().assign(promo=[float(i % 4 == 1) for i in range(48)])
+    frame["sales"] += 15.0 * frame["promo"] + np.cos(np.arange(48))
+    body = _session_body(
+        _upload(client, frame, tmp_path, f"exogenous-run-{tmp_path.name}"),
+        strategy=CV,
+        splits=ROLLING,
+    )
+    body["column_roles"]["exogenous"] = [{"kind": "raw", "name": "promo"}]
+    response = client.post("/api/v1/model-session/", json=body)
+    assert response.status_code == 201, response.text
+    run_id = _create_run(
+        client, response.json()["id"], "ARIMA", {"p": 1, "d": 0, "q": 0}
+    )
+    ModelJob(run_id=run_id).run()
+    return run_id
+
+
+RECORDED = {
+    "used": True,
+    "columns": [{"name": "promo", "type": "Float"}],
+    "reason": None,
+}
+
+
+def test_the_run_answers_what_it_did_with_the_exogenous(client, exogenous_run):
+    response = client.get(f"/api/v1/run/{exogenous_run}")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["exogenous"] == RECORDED
+
+
+def test_a_reset_forgets_what_the_training_recorded(client, exogenous_run):
+    assert _get(client, Run, exogenous_run).exogenous == RECORDED
+
+    assert client.patch(f"/api/v1/run/{exogenous_run}/reset").status_code == 200
+
+    assert _get(client, Run, exogenous_run).exogenous is None
+
+
+def test_a_session_package_carries_what_a_trained_run_recorded(
+    client, exogenous_run, tmp_path
+):
+    container = client.app.container
+    package = tmp_path / "exogenous.dashai"
+    build_session_package(
+        _get(client, Run, exogenous_run).model_session_id,
+        [exogenous_run],
+        True,
+        package,
+        container["session_factory"],
+        container["component_registry"],
+    )
+
+    result = import_session_package(
+        package,
+        container["session_factory"],
+        container["component_registry"],
+        container["config"],
+        container["job_queue"],
+    )
+
+    with container["session_factory"]() as db:
+        (imported,) = db.query(Run).filter(Run.model_session_id == result["session_id"])
+        assert imported.exogenous == RECORDED

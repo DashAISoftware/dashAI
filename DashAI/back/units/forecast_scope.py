@@ -98,8 +98,13 @@ def forecast_origin(
     partition: str,
     index: int,
     levels: Sequence[int],
+    x: Optional["np.ndarray"] = None,
 ) -> Dict[str, Any]:
     """Fit on the steps before an origin and forecast the horizon after it.
+
+    ``x``, when given, is the cut's exogenous matrix, one row per step of the
+    whole series: the model is fitted with its rows before the origin and
+    forecasts with the horizon's rows after it.
 
     Returns
     -------
@@ -110,8 +115,10 @@ def forecast_origin(
         Without a grid, as in a search trial that only scores, the dates are
         left empty.
     """
-    model.fit(series[:origin])
-    forecast = model.predict(horizon, levels=list(levels) or None)
+    history = None if x is None else x[:origin]
+    future = None if x is None else x[origin : origin + horizon]
+    model.fit(series[:origin], history)
+    forecast = model.predict(horizon, x_future=future, levels=list(levels) or None)
     dates = grid.dates(origin, horizon) if grid is not None else []
     return {
         "partition": partition,
@@ -123,6 +130,23 @@ def forecast_origin(
         "lower": {str(level): _plain(forecast.lower[level]) for level in levels},
         "upper": {str(level): _plain(forecast.upper[level]) for level in levels},
     }
+
+
+def exogenous_for(
+    model_class: type, parameters: Optional[Dict[str, Any]], cut: Dict[str, Any]
+) -> Optional["np.ndarray"]:
+    """The exogenous matrix of a cut, or None when the run does not read it.
+
+    Whether it does is ``exogenous_usage``'s answer, the same the run records
+    and the session shows before training. A model that takes none, or one
+    switched off, is never handed an ``x``.
+    """
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        exogenous_usage,
+    )
+
+    used, _ = exogenous_usage(model_class, parameters, bool(cut["columns"]))
+    return cut["values"] if used else None
 
 
 def scored_forecast(record: Dict[str, Any], series: "np.ndarray", season_length: int):

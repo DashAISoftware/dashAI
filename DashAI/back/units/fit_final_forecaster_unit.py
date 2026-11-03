@@ -6,7 +6,7 @@ from DashAI.back.core.schema_fields import BaseSchema
 from DashAI.back.job.base_job import JobError
 from DashAI.back.units.base_unit import BaseUnit
 from DashAI.back.units.context import ExecutionContext
-from DashAI.back.units.forecast_scope import build_model
+from DashAI.back.units.forecast_scope import build_model, exogenous_for
 
 log = logging.getLogger(__name__)
 
@@ -25,12 +25,14 @@ class FitFinalForecasterUnit(BaseUnit):
 
     The grid goes with it (``time_grid``): its frequency and last date are
     what turn a forecast's steps into dates when the model is asked to
-    predict (D5).
+    predict (D5). A run that reads exogenous variables fits it on the final
+    cut, which ``final.pkl`` made from the whole series, the same fit that
+    transforms the future when predicting.
     """
 
     SCHEMA = FitFinalForecasterSchema
 
-    REQUIRES = ("factory", "best_parameters", "series", "grid")
+    REQUIRES = ("factory", "best_parameters", "series", "grid", "exogenous")
     PROVIDES = ("model",)
 
     def execute(self, ctx: ExecutionContext) -> None:
@@ -40,10 +42,12 @@ class FitFinalForecasterUnit(BaseUnit):
         parameters = ctx.require("best_parameters")
         series = np.asarray(ctx.require("series"), dtype=float)
         grid = ctx.require("grid")
+        final = ctx.require("exogenous")["final"]
 
         try:
-            model = build_model(type(factory.model), parameters, factory.model.run_id)
-            model.fit(series)
+            model_class = type(factory.model)
+            model = build_model(model_class, parameters, factory.model.run_id)
+            model.fit(series, exogenous_for(model_class, parameters, final))
         except Exception as e:
             log.exception(e)
             raise JobError(f"Fitting the model on the whole series failed: {e}") from e

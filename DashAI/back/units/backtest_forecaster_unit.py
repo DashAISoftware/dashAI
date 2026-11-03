@@ -14,6 +14,7 @@ from DashAI.back.units.fit_scope import (
 from DashAI.back.units.forecast_scope import (
     LEVELS,
     build_model,
+    exogenous_for,
     forecast_origin,
     scored_forecast,
 )
@@ -44,6 +45,11 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
     published as ``forecasts``, in the shape the forecasts file holds, and
     ``ScoreForecastsUnit`` and ``SaveForecastsUnit`` read them.
 
+    **The exogenous variables** come from ``ApplyCutPreprocessingUnit``, one
+    matrix per cut: validation origin ``i`` reads its own, the test its own,
+    and so does every trial of the search. A model reads them only when
+    ``exogenous_usage`` says the run does (``exogenous_for``).
+
     ``best_parameters`` is published whether or not there was a search, so the
     final fit can require it rather than check for it (ATOMIZING §5.4).
     """
@@ -58,6 +64,7 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
         "series",
         "split_indexes",
         "grid",
+        "exogenous",
     )
     PROVIDES = ("forecasts", "plot_paths", "best_parameters")
     RUNTIME_PARAMS = ("run_id", "artifact_prefix")
@@ -81,6 +88,7 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
         grid = TimeGrid.from_ref(ctx.require("grid"))
         optimizable_parameters = ctx.require("optimizable_parameters")
         best_parameters = ctx.require("model_parameters")
+        exogenous = ctx.require("exogenous")
 
         plot_paths = []
         try:
@@ -99,7 +107,7 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
                     self.config["artifact_prefix"],
                     lambda trial_model, values, trial_cuts, metric: (
                         self._score_one_trial(
-                            trial_model, values, trial_cuts, metric, grid
+                            trial_model, values, trial_cuts, metric, grid, exogenous
                         )
                     ),
                 )
@@ -117,6 +125,9 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
                     "validation",
                     index,
                     levels,
+                    x=exogenous_for(
+                        model_class, best_parameters, exogenous["validation"][index]
+                    ),
                 )
                 for index, origin in enumerate(cuts["validation_origins"])
             ]
@@ -130,6 +141,7 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
                     "test",
                     0,
                     levels,
+                    x=exogenous_for(model_class, best_parameters, exogenous["test"]),
                 )
             )
             season_length = getattr(
@@ -155,7 +167,7 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
         ctx.put_ref("plot_paths", plot_paths)
         ctx.put_ref("best_parameters", best_parameters)
 
-    def _score_one_trial(self, model, series, cuts, metric, grid) -> float:
+    def _score_one_trial(self, model, series, cuts, metric, grid, exogenous) -> float:
         """The mean of the goal metric over the validation origins.
 
         The optimizer has set this trial's parameters on ``model``; it is
@@ -178,10 +190,20 @@ class BacktestForecasterUnit(BaseUnit, ModelFitScopeMixin):
 
         horizon = cuts["horizon"]
         levels = [95] if model.SUPPORTS_INTERVALS else []
+        # The switch is never searched, so the trial's model carries the run's.
+        switch = {"use_exogenous": getattr(model, "use_exogenous", True)}
         scores = []
         for index, origin in enumerate(cuts["validation_origins"]):
             record = forecast_origin(
-                model, series, origin, horizon, grid, "validation", index, levels
+                model,
+                series,
+                origin,
+                horizon,
+                grid,
+                "validation",
+                index,
+                levels,
+                x=exogenous_for(type(model), switch, exogenous["validation"][index]),
             )
             dates = record["dates"]
             first, last = (

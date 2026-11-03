@@ -254,6 +254,9 @@ class ModelJob(BaseJob):
                         plot_paths = ctx.require("plot_paths")
                         run.parameters = ctx.require("best_parameters")
                         flag_modified(run, "parameters")
+                        run.exogenous = self._exogenous_record(
+                            run, model_session, cut_unit, ctx, component_registry
+                        )
                         db.commit()
 
                         self.report_progress(0.85, "Computing metrics")
@@ -682,6 +685,47 @@ class ModelJob(BaseJob):
                 },
             },
         )
+
+    @staticmethod
+    def _exogenous_record(run, model_session, cut_unit, ctx, component_registry):
+        """What the run did with its session's exogenous variables.
+
+        ``used`` and ``reason`` are ``exogenous_usage``'s answer, the one the
+        units acted on. ``columns`` are the raw columns a prediction has to
+        bring, with their types: the exogenous refs walked back to the dataset,
+        plus every column the session's steps read, since the fitted sequence
+        reads them all (``ConverterSequence.raw_columns_read``). None for a
+        session without exogenous variables.
+        """
+        from DashAI.back.models.forecasting.single_series_forecasting_model import (
+            exogenous_usage,
+        )
+        from DashAI.back.preprocessing.column_ref import (
+            ConverterSequence,
+            parse_column_refs,
+        )
+        from DashAI.back.preprocessing.structure_types import type_fields
+
+        refs = parse_column_refs(cut_unit.config.get("exogenous_column_refs") or [])
+        if not refs:
+            return None
+        used, reason = exogenous_usage(
+            component_registry[run.model_name]["class"],
+            run.parameters,
+            bool(ctx.require("exogenous")["final"]["columns"]),
+        )
+        sequence = ConverterSequence.model_validate(
+            model_session.preprocessing or {"steps": []}
+        )
+        types = ctx.require("dataset").types
+        return {
+            "used": used,
+            "columns": [
+                {"name": name, "type": type_fields(types[name])[0]}
+                for name in sequence.raw_columns_read(refs)
+            ],
+            "reason": reason,
+        }
 
     @staticmethod
     def _cut_unit(model_session: ModelSession, task, io: SessionIO):
