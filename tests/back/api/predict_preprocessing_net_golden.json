@@ -1,0 +1,367 @@
+{
+ "dataset": {
+  "saved": {
+   "columns": [
+    "num_a",
+    "num_b",
+    "color",
+    "day",
+    "y"
+   ],
+   "rows": {
+    "color": [
+     "red",
+     "green",
+     "violet",
+     "red",
+     "green",
+     "blue"
+    ],
+    "day": [
+     "2021-03-01",
+     "2021-03-06",
+     "2021-03-11",
+     "2021-03-16",
+     "2021-03-21",
+     "2021-03-26"
+    ],
+    "num_a": [
+     10.0,
+     10.5,
+     11.0,
+     null,
+     12.0,
+     12.5
+    ],
+    "num_b": [
+     107.0,
+     103.78211614107698,
+     97.08697214417,
+     93.07005252379687,
+     95.42449465395472,
+     101.98563529824258
+    ],
+    "y": [
+     3.965733333237734,
+     3.427915414370957,
+     3.8909792916295256,
+     3.1601922377534426,
+     3.5118681709457213,
+     3.45096696882091
+    ]
+   },
+   "schema_metadata": {
+    "dashai_types": "{\"num_a\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"num_b\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"color\": {\"type\": \"Categorical\", \"dtype\": \"string\", \"encoder\": \"one_hot\", \"categories\": [\"blue\", \"green\", \"red\", \"violet\"], \"num_categories\": 4, \"converted\": false}, \"day\": {\"type\": \"Date\", \"dtype\": \"string\", \"format\": \"%Y-%m-%d\"}, \"y\": {\"type\": \"Float\", \"dtype\": \"float64\"}}"
+   },
+   "types": {
+    "color": {
+     "categories": [
+      "blue",
+      "green",
+      "red",
+      "violet"
+     ],
+     "converted": false,
+     "dtype": "string",
+     "encoder": "one_hot",
+     "num_categories": 4,
+     "type": "Categorical"
+    },
+    "day": {
+     "dtype": "string",
+     "format": "%Y-%m-%d",
+     "type": "Date"
+    },
+    "num_a": {
+     "dtype": "float64",
+     "type": "Float"
+    },
+    "num_b": {
+     "dtype": "float64",
+     "type": "Float"
+    },
+    "y": {
+     "dtype": "float64",
+     "type": "Float"
+    }
+   }
+  },
+  "unseen_categories": [
+   {
+    "column": "color",
+    "count": 1,
+    "source": "OneHotEncoder (step 3)",
+    "values": [
+     "violet"
+    ]
+   }
+  ]
+ },
+ "filter_datasets": [
+  "future",
+  "train"
+ ],
+ "manual_job": {
+  "saved": {
+   "columns": [
+    "num_a",
+    "num_b",
+    "color",
+    "day",
+    "y"
+   ],
+   "rows": {
+    "color": [
+     "red",
+     "blue"
+    ],
+    "day": [
+     "2021-12-01",
+     "2022-01-15"
+    ],
+    "num_a": [
+     12.5,
+     40.0
+    ],
+    "num_b": [
+     99.0,
+     104.5
+    ],
+    "y": [
+     18.88162398819147,
+     -4.0619532070807445
+    ]
+   },
+   "schema_metadata": {
+    "dashai_types": "{\"num_a\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"num_b\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"color\": {\"type\": \"Categorical\", \"dtype\": \"string\", \"encoder\": \"one_hot\", \"categories\": [\"blue\", \"red\"], \"num_categories\": 2, \"converted\": false}, \"day\": {\"type\": \"Date\", \"dtype\": \"string\", \"format\": \"%Y-%m-%d\"}, \"y\": {\"type\": \"Float\", \"dtype\": \"float64\"}}"
+   },
+   "types": {
+    "color": {
+     "categories": [
+      "blue",
+      "red"
+     ],
+     "converted": false,
+     "dtype": "string",
+     "encoder": "one_hot",
+     "num_categories": 2,
+     "type": "Categorical"
+    },
+    "day": {
+     "dtype": "string",
+     "format": "%Y-%m-%d",
+     "type": "Date"
+    },
+    "num_a": {
+     "dtype": "float64",
+     "type": "Float"
+    },
+    "num_b": {
+     "dtype": "float64",
+     "type": "Float"
+    },
+    "y": {
+     "dtype": "float64",
+     "type": "Float"
+    }
+   }
+  },
+  "unseen_categories": []
+ },
+ "manual_preview": {
+  "columns": [
+   "num_a",
+   "num_b",
+   "ohe_color_blue",
+   "ohe_color_green",
+   "ohe_color_red",
+   "day_year",
+   "day_month",
+   "day_weekday",
+   "y"
+  ],
+  "rows": [
+   [
+    12.5,
+    -0.1858151403523482,
+    0,
+    0,
+    1,
+    2021,
+    12,
+    2,
+    18.88162398819147
+   ],
+   [
+    40.0,
+    0.9093678387484305,
+    1,
+    0,
+    0,
+    2022,
+    1,
+    5,
+    -4.0619532070807445
+   ]
+  ]
+ },
+ "partition": {
+  "saved": {
+   "columns": [
+    "num_a",
+    "num_b",
+    "color",
+    "day",
+    "label",
+    "y"
+   ],
+   "rows": {
+    "color": [
+     "red",
+     "green",
+     "blue",
+     "red",
+     "green",
+     "blue",
+     "red",
+     "green",
+     "blue",
+     "red",
+     "green",
+     "blue"
+    ],
+    "day": [
+     "2021-10-27",
+     "2021-11-01",
+     "2021-11-06",
+     "2021-11-11",
+     "2021-11-16",
+     "2021-11-21",
+     "2021-11-26",
+     "2021-12-01",
+     "2021-12-06",
+     "2021-12-11",
+     "2021-12-16",
+     "2021-12-21"
+    ],
+    "label": [
+     "no",
+     "yes",
+     "yes",
+     "no",
+     "yes",
+     "yes",
+     "no",
+     "yes",
+     "yes",
+     "no",
+     "yes",
+     "yes"
+    ],
+    "num_a": [
+     34.0,
+     34.5,
+     35.0,
+     35.5,
+     36.0,
+     36.5,
+     37.0,
+     null,
+     38.0,
+     38.5,
+     39.0,
+     39.5
+    ],
+    "num_b": [
+     95.5189896237156,
+     102.10414780620546,
+     106.7547621994448,
+     105.19507937769647,
+     98.85906453443006,
+     93.57202049651517,
+     94.19483116995796,
+     100.1548872938337,
+     105.97254075405807,
+     106.29906778878436,
+     100.83426094814172,
+     94.60243843916908
+    ],
+    "y": [
+     12.502620857458483,
+     13.36870777389346,
+     13.267676500225258,
+     13.559766644010207,
+     13.255754352111472,
+     13.537465712546123,
+     13.7454984986498,
+     17.37419757206562,
+     14.603394562724562,
+     14.709125743235331,
+     14.371559425699092,
+     14.803371114561715
+    ]
+   },
+   "schema_metadata": {
+    "dashai_types": "{\"num_a\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"num_b\": {\"type\": \"Float\", \"dtype\": \"float64\"}, \"color\": {\"type\": \"Categorical\", \"dtype\": \"string\", \"encoder\": \"one_hot\", \"categories\": [\"blue\", \"green\", \"red\"], \"num_categories\": 3, \"converted\": false}, \"day\": {\"type\": \"Date\", \"dtype\": \"string\", \"format\": \"%Y-%m-%d\"}, \"label\": {\"type\": \"Text\", \"encoding\": \"utf-8\", \"dtype\": \"string\"}, \"y\": {\"type\": \"Float\", \"dtype\": \"float64\"}}"
+   },
+   "types": {
+    "color": {
+     "categories": [
+      "blue",
+      "green",
+      "red"
+     ],
+     "converted": false,
+     "dtype": "string",
+     "encoder": "one_hot",
+     "num_categories": 3,
+     "type": "Categorical"
+    },
+    "day": {
+     "dtype": "string",
+     "format": "%Y-%m-%d",
+     "type": "Date"
+    },
+    "label": {
+     "dtype": "string",
+     "encoding": "utf-8",
+     "type": "Text"
+    },
+    "num_a": {
+     "dtype": "float64",
+     "type": "Float"
+    },
+    "num_b": {
+     "dtype": "float64",
+     "type": "Float"
+    },
+    "y": {
+     "dtype": "float64",
+     "type": "Float"
+    }
+   }
+  },
+  "unseen_categories": []
+ },
+ "predict_splits": {
+  "horizon": null,
+  "splits": [
+   {
+    "name": "train",
+    "rows": 36
+   },
+   {
+    "name": "test",
+    "rows": 12
+   },
+   {
+    "name": "val",
+    "rows": 12
+   },
+   {
+    "name": "all",
+    "rows": 60
+   }
+  ]
+ }
+}
