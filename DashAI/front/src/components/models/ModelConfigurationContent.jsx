@@ -17,8 +17,11 @@ function ModelConfigurationContent({ run, model }) {
 
   const hasParams = run.parameters && Object.keys(run.parameters).length > 0;
   const hasOptimizer = run.optimizer_name && run.goal_metric;
+  // What a forecasting run did with its session's exogenous variables, as
+  // its training recorded it (Run.exogenous); null for any other run.
+  const exogenous = run.exogenous;
 
-  if (!hasParams && !hasOptimizer) {
+  if (!hasParams && !hasOptimizer && !exogenous) {
     return (
       <Typography variant="body2" color="text.secondary">
         {t("models:label.noConfigurationAvailable")}
@@ -39,6 +42,26 @@ function ModelConfigurationContent({ run, model }) {
               value,
             ])}
           />
+        </Box>
+      )}
+
+      {exogenous && (
+        <Box>
+          <Typography variant="subtitle2" gutterBottom>
+            {t("models:exogenous.title")}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {exogenous.used
+              ? t("models:exogenous.used", {
+                  columns: (exogenous.columns ?? [])
+                    .map((column) => column.name)
+                    .join(", "),
+                })
+              : t(
+                  `models:exogenous.reason.${exogenous.reason?.key}`,
+                  exogenous.reason?.values,
+                )}
+          </Typography>
         </Box>
       )}
 
@@ -70,6 +93,14 @@ ModelConfigurationContent.propTypes = {
     optimizer_name: PropTypes.string,
     optimizer_parameters: PropTypes.object,
     goal_metric: PropTypes.string,
+    exogenous: PropTypes.shape({
+      used: PropTypes.bool,
+      columns: PropTypes.arrayOf(PropTypes.shape({ name: PropTypes.string })),
+      reason: PropTypes.shape({
+        key: PropTypes.string,
+        values: PropTypes.object,
+      }),
+    }),
   }).isRequired,
   model: PropTypes.shape({
     schema: PropTypes.object,

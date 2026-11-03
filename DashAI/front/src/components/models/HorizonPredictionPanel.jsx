@@ -1,15 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
-import { Alert, Box, TextField } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
 import { LoadingButton } from "@mui/lab";
 import { PlayArrow as PlayArrowIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import {
   createPrediction,
+  getFutureDates,
   getPredictionSplits,
   getPredictions,
 } from "../../api/predict";
+import DatasetPredictionPanel from "./DatasetPredictionPanel";
 import { enqueuePredictionJob } from "../../api/job";
 import { startJobPolling } from "../../utils/jobPoller";
 import { getApiErrorMessage } from "../../utils/apiError";
@@ -22,7 +32,16 @@ import { getApiErrorMessage } from "../../utils/apiError";
  * prediction options publish (GET /predict/splits/{run}). Asking for more is
  * allowed; the answer says how many steps no backtest measured and how many
  * it did, and the panel shows that while the field holds the horizon asked.
+ *
+ * A run that read exogenous variables declares their columns (`exogenous`)
+ * and forecasts their future values instead: from a dataset of the future
+ * rows, or typed in on the next dates of its grid, which the backend gives.
+ * The horizon is then the number of rows.
  */
+
+// Exogenous columns of these types are typed in as numbers.
+const NUMERIC_TYPES = ["Float", "Integer"];
+
 export default function HorizonPredictionPanel({ run, onSaved }) {
   const { t } = useTranslation(["prediction", "common"]);
   const { enqueueSnackbar } = useSnackbar();
@@ -31,13 +50,25 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
   // asked for: { horizon, unevaluated, evaluated }.
   const [warning, setWarning] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // The columns a run that read exogenous variables needs the future of.
+  const [exogenous, setExogenous] = useState(null);
+  const [mode, setMode] = useState("dataset");
+  // The future typed in by hand: one row per date the backend gave.
+  const [timeIndex, setTimeIndex] = useState(null);
+  const [futureRows, setFutureRows] = useState([]);
+  const datasetRunRef = useRef(null);
+  const [datasetRunState, setDatasetRunState] = useState({
+    canRun: false,
+    isSubmitting: false,
+  });
 
   useEffect(() => {
     let cancelled = false;
     getPredictionSplits(run.id)
-      .then(({ horizon: measured }) => {
+      .then(({ horizon: measured, exogenous: declared }) => {
         if (cancelled) return;
         if (measured) setHorizon((current) => current || String(measured));
+        setExogenous(declared ?? null);
       })
       .catch((error) =>
         console.error("Error fetching the prediction options:", error),
@@ -50,16 +81,58 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
   const steps = Number(horizon);
   const isValid = Number.isInteger(steps) && steps >= 1;
 
+  const columns = exogenous?.columns ?? [];
+  const typedIn = futureRows.length > 0;
+  const allTyped =
+    typedIn &&
+    futureRows.every((row) =>
+      columns.every((column) => String(row[column.name] ?? "") !== ""),
+    );
+
+  const handleGenerateDates = async () => {
+    try {
+      const { timeIndex: column, dates } = await getFutureDates(run.id, steps);
+      setTimeIndex(column);
+      setFutureRows(dates.map((date) => ({ [column]: date })));
+    } catch (error) {
+      enqueueSnackbar(getApiErrorMessage(error, t("common:unknownError")), {
+        variant: "error",
+      });
+    }
+  };
+
+  const setValue = (index, name, value) =>
+    setFutureRows((rows) =>
+      rows.map((row, i) => (i === index ? { ...row, [name]: value } : row)),
+    );
+
+  // The rows as the job reads them: numbers where the column is numeric.
+  const manualInput = () =>
+    futureRows.map((row) => {
+      const typed = { [timeIndex]: row[timeIndex] };
+      columns.forEach((column) => {
+        const value = row[column.name];
+        typed[column.name] = NUMERIC_TYPES.includes(column.type)
+          ? Number(value)
+          : value;
+      });
+      return typed;
+    });
+
   const handleRun = async () => {
     setIsSubmitting(true);
     try {
-      const prediction = await createPrediction(run.id, null, null, steps);
+      const prediction = exogenous
+        ? await createPrediction(run.id, null, null)
+        : await createPrediction(run.id, null, null, steps);
       setWarning({
         horizon: steps,
         unevaluated: prediction.unevaluated_steps ?? 0,
         evaluated: prediction.evaluated_horizon ?? null,
       });
-      const jobResponse = await enqueuePredictionJob(prediction.id);
+      const jobResponse = exogenous
+        ? await enqueuePredictionJob(prediction.id, manualInput())
+        : await enqueuePredictionJob(prediction.id);
       if (!jobResponse?.id) {
         throw new Error("Failed to enqueue prediction job");
       }
@@ -109,6 +182,116 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
       setIsSubmitting(false);
     }
   };
+
+  const runButton = (onClick, disabled, loading) => (
+    <LoadingButton
+      variant="contained"
+      size="small"
+      startIcon={<PlayArrowIcon />}
+      onClick={onClick}
+      disabled={disabled}
+      loading={loading}
+      sx={{ textTransform: "none", fontWeight: 500, alignSelf: "flex-start" }}
+    >
+      {t("prediction:button.runPrediction")}
+    </LoadingButton>
+  );
+
+  if (exogenous) {
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+        <Typography variant="body2" color="text.secondary">
+          {t("prediction:message.exogenousFuture", {
+            columns: columns.map((column) => column.name).join(", "),
+          })}
+        </Typography>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={mode}
+          onChange={(event, value) => value && setMode(value)}
+        >
+          <ToggleButton value="dataset" sx={{ textTransform: "none" }}>
+            {t("prediction:label.futureFromDataset")}
+          </ToggleButton>
+          <ToggleButton value="manual" sx={{ textTransform: "none" }}>
+            {t("prediction:label.futureTypedIn")}
+          </ToggleButton>
+        </ToggleButtonGroup>
+        {mode === "dataset" ? (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <DatasetPredictionPanel
+              run={run}
+              onSaved={onSaved}
+              onClose={() => {}}
+              runRef={datasetRunRef}
+              onStateChange={setDatasetRunState}
+            />
+            {runButton(
+              () => datasetRunRef.current?.(),
+              !datasetRunState.canRun,
+              datasetRunState.isSubmitting,
+            )}
+          </Box>
+        ) : (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
+              <TextField
+                label={t("prediction:label.horizon")}
+                helperText={t("prediction:label.futureStepsDescription")}
+                type="number"
+                size="small"
+                value={horizon}
+                onChange={(event) => setHorizon(event.target.value)}
+                error={horizon !== "" && !isValid}
+                slotProps={{ htmlInput: { min: 1, step: 1 } }}
+                sx={{ width: 220 }}
+              />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleGenerateDates}
+                disabled={!isValid}
+                sx={{ textTransform: "none", mt: 0.5 }}
+              >
+                {t("prediction:button.generateDates")}
+              </Button>
+            </Box>
+            {futureRows.map((row, index) => (
+              <Box
+                key={row[timeIndex]}
+                sx={{ display: "flex", alignItems: "center", gap: 2 }}
+              >
+                <Typography variant="body2" sx={{ width: 140 }}>
+                  {row[timeIndex]}
+                </Typography>
+                {columns.map((column) => (
+                  <TextField
+                    key={column.name}
+                    label={column.name}
+                    size="small"
+                    type={
+                      NUMERIC_TYPES.includes(column.type) ? "number" : "text"
+                    }
+                    value={row[column.name] ?? ""}
+                    onChange={(event) =>
+                      setValue(index, column.name, event.target.value)
+                    }
+                    slotProps={{
+                      htmlInput: {
+                        "aria-label": `${column.name} ${row[timeIndex]}`,
+                      },
+                    }}
+                  />
+                ))}
+              </Box>
+            ))}
+            {typedIn && runButton(handleRun, !allTyped, isSubmitting)}
+          </Box>
+        )}
+      </Box>
+    );
+  }
 
   return (
     // The top padding leaves room for the outlined field's label, which sits

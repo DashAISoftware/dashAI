@@ -461,5 +461,14 @@
     "consistencyTitle": "Predicciones consistentes.",
     "consistency": "Los datos nuevos que predigas reciben exactamente el mismo preprocesamiento.",
     "diagramReceivesOne": "solo lo recibe"
+  },
+  "exogenous": {
+    "title": "Variables exógenas",
+    "used": "Leyó las variables exógenas: {{columns}}.",
+    "reason": {
+      "sessionHasNoExogenous": "La sesión no tiene variables exógenas, así que {{model}} pronostica solo con la serie.",
+      "modelTakesNoExogenous": "{{model}} no usa variables exógenas: pronostica solo con la serie.",
+      "exogenousSwitchedOff": "\"Usar variables exógenas\" está apagado: {{model}} pronostica sin ellas."
+    }
   }
 }

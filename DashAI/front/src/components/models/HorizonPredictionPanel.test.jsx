@@ -4,6 +4,7 @@ import { renderWithProviders } from "../../test-utils/renderWithProviders";
 import i18n from "../../utils/i18n";
 import {
   createPrediction,
+  getFutureDates,
   getPredictionSplits,
   getPredictions,
 } from "../../api/predict";
@@ -19,9 +20,14 @@ import HorizonPredictionPanel from "./HorizonPredictionPanel";
 
 jest.mock("../../api/predict", () => ({
   createPrediction: jest.fn(),
+  getFutureDates: jest.fn(),
   getPredictionSplits: jest.fn(),
   getPredictions: jest.fn(),
 }));
+jest.mock("./DatasetPredictionPanel", () => {
+  const Stub = () => <div>future dataset panel</div>;
+  return Stub;
+});
 jest.mock("../../api/job", () => ({ enqueuePredictionJob: jest.fn() }));
 jest.mock("../../utils/jobPoller", () => ({ startJobPolling: jest.fn() }));
 jest.mock("notistack", () => {
@@ -190,5 +196,72 @@ describe("HorizonPredictionPanel", () => {
 
     expect(onSaved).toHaveBeenLastCalledWith(failed);
     console.error.mockRestore();
+  });
+});
+
+describe("HorizonPredictionPanel, for a run that read exogenous variables", () => {
+  const declared = {
+    splits: [],
+    horizon: 3,
+    exogenous: { columns: [{ name: "promo", type: "Float" }] },
+  };
+
+  it("offers a dataset of the future rows, or typing them in", async () => {
+    getPredictionSplits.mockResolvedValue(declared);
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={jest.fn()} />,
+    );
+
+    expect(await screen.findByText("future dataset panel")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("prediction:label.futureTypedIn"),
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("types the future in on the next dates and sends it as the job's rows", async () => {
+    getPredictionSplits.mockResolvedValue(declared);
+    getFutureDates.mockResolvedValue({
+      timeIndex: "date",
+      dates: ["2024-01-01", "2024-02-01"],
+    });
+    createPrediction.mockResolvedValue({ id: 9 });
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={jest.fn()} />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: i18n.t("prediction:label.futureTypedIn"),
+      }),
+    );
+    fireEvent.change(horizonField(), { target: { value: "2" } });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: i18n.t("prediction:button.generateDates"),
+      }),
+    );
+    await waitFor(() => expect(getFutureDates).toHaveBeenCalledWith(1, 2));
+
+    fireEvent.change(await screen.findByLabelText("promo 2024-01-01"), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText("promo 2024-02-01"), {
+      target: { value: "0" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: i18n.t("prediction:button.runPrediction"),
+      }),
+    );
+
+    await waitFor(() =>
+      expect(enqueuePredictionJob).toHaveBeenCalledWith(9, [
+        { date: "2024-01-01", promo: 1 },
+        { date: "2024-02-01", promo: 0 },
+      ]),
+    );
+    // No horizon apart: it is the number of rows.
+    expect(createPrediction).toHaveBeenCalledWith(1, null, null);
   });
 });

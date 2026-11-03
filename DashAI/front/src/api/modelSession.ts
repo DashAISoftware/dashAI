@@ -22,6 +22,23 @@ export const getModelSessionById = async (
   return response.data;
 };
 
+// Per model the session's task offers, whether a run reads the session's
+// exogenous variables, why not, and the parameter that switches them off.
+export const getExogenousUse = async (
+  id: number | string,
+): Promise<{
+  has_exogenous: boolean;
+  models: {
+    model: string;
+    uses: boolean;
+    reason: { key: string; values: Record<string, unknown> } | null;
+    switch: string | null;
+  }[];
+}> => {
+  const response = await api.get(`${endpointURL}/${id}/exogenous-use`);
+  return response.data;
+};
+
 export const createModelSession = async (
   datasetId: number,
   taskName: string,

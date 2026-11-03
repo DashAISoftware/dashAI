@@ -452,5 +452,14 @@
     "performance": "Werte zu skalieren oder Spalten zu reduzieren kann dem Modell helfen.",
     "consistencyTitle": "Konsistente Vorhersagen.",
     "consistency": "Neue Daten, für die Sie Vorhersagen treffen, erhalten genau dieselbe Vorverarbeitung."
+  },
+  "exogenous": {
+    "title": "Exogene Variablen",
+    "used": "Las die exogenen Variablen: {{columns}}.",
+    "reason": {
+      "sessionHasNoExogenous": "Die Sitzung hat keine exogenen Variablen, daher prognostiziert {{model}} nur aus der Zeitreihe.",
+      "modelTakesNoExogenous": "{{model}} verwendet keine exogenen Variablen: Es prognostiziert nur aus der Zeitreihe.",
+      "exogenousSwitchedOff": "„Exogene Variablen verwenden“ ist aus: {{model}} prognostiziert ohne sie."
+    }
   }
 }

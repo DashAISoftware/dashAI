@@ -450,5 +450,14 @@
     "performance": "缩放数值或减少列可能有助于模型。",
     "consistencyTitle": "一致的预测。",
     "consistency": "你预测的新数据会接受完全相同的预处理。"
+  },
+  "exogenous": {
+    "title": "外生变量",
+    "used": "读取了外生变量：{{columns}}。",
+    "reason": {
+      "sessionHasNoExogenous": "该会话没有外生变量，因此 {{model}} 仅根据序列预测。",
+      "modelTakesNoExogenous": "{{model}} 不使用外生变量：仅根据序列预测。",
+      "exogenousSwitchedOff": "“使用外生变量”已关闭：{{model}} 不使用它们进行预测。"
+    }
   }
 }
