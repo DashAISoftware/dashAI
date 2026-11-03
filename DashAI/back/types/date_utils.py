@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, Final, List, Optional, Union
 
 if TYPE_CHECKING:
     import pandas as pd
+    import pyarrow as pa
 
 # The strptime format a Date column falls back to when nothing better is known.
 DEFAULT_DATE_FORMAT: Final[str] = "%Y-%m-%d"
@@ -112,6 +113,36 @@ def parse_date_column(values: Any, format: str = DEFAULT_DATE_FORMAT) -> "pd.Ser
         )
 
     return parsed
+
+
+def format_date_column(values: Any, format: str = DEFAULT_DATE_FORMAT) -> "pa.Array":
+    """Render a column of real dates, times or timestamps as text.
+
+    Loaders such as the Excel one hand over native temporal columns, while a
+    ``Date`` column is stored as text that ``format`` parses back. A plain cast
+    to string would write ``"1990-01-01 00:00:00.000000000"`` whatever the
+    format says, so the values are rendered through the format instead.
+
+    Parameters
+    ----------
+    values : pyarrow.Array or pyarrow.ChunkedArray
+        A date, time or timestamp column.
+    format : str, optional
+        The strftime format to render with. Defaults to
+        ``DEFAULT_DATE_FORMAT``.
+
+    Returns
+    -------
+    pyarrow.Array
+        A string array. Missing values stay null.
+    """
+    import pyarrow as pa  # local import
+
+    rendered = [
+        None if value is None else value.strftime(format)
+        for value in values.to_pylist()
+    ]
+    return pa.array(rendered, type=pa.string())
 
 
 def detect_date_format(values: Any, hint: Optional[str] = None) -> Optional[str]:

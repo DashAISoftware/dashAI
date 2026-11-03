@@ -3,6 +3,7 @@ import { Box, CircularProgress, Stack } from "@mui/material";
 import { useTourContext } from "../../tour/TourProvider";
 import { useTranslation } from "react-i18next";
 import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
+import { useModelDownloadGate } from "../../models/model/ComponentDownloadControl";
 
 /**
  * This component renders a selector for available dataloaders
@@ -12,6 +13,7 @@ import StepperNavigationFooter from "../../shared/StepperNavigationFooter";
  * @param {function} setSelectedDataloader - Function to update the selected dataloader
  * @param {Array} dataloaders - List of available dataloaders (fetched by parent)
  * @param {boolean} loadingDataloaders - Whether dataloaders are still loading
+ * @param {function} onDownloadChange - Called with a dataloader and its new download state after an inline download or delete
  */
 export default function SelectDataloaderStep({
   goToNextStep,
@@ -20,9 +22,14 @@ export default function SelectDataloaderStep({
   setSelectedDataloader,
   dataloaders = [],
   loadingDataloaders = false,
+  onDownloadChange = null,
 }) {
   const tourContext = useTourContext();
   const { t } = useTranslation(["datasets", "common"]);
+  const { modelNotDownloaded } = useModelDownloadGate(
+    selectedDataloader,
+    selectedDataloader?.name ?? "",
+  );
 
   const handleNext = () => {
     goToNextStep();
@@ -59,6 +66,7 @@ export default function SelectDataloaderStep({
             }))}
             categoryKey="category"
             selected={selectedDataloader || null}
+            onDownloadChange={onDownloadChange}
             onSelect={(item) => {
               setSelectedDataloader(item);
               const currentTarget =
@@ -82,7 +90,7 @@ export default function SelectDataloaderStep({
       <StepperNavigationFooter
         onBack={goToPrevStep}
         onNext={handleNext}
-        nextDisabled={!selectedDataloader?.name}
+        nextDisabled={!selectedDataloader?.name || modelNotDownloaded}
         nextDataTour={
           tourContext?.run ? "dataloader-step-next-button" : undefined
         }

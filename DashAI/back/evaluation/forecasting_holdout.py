@@ -6,43 +6,20 @@ from DashAI.back.evaluation.holdout import SinglePartitionEvaluationStrategy
 
 
 class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
-    """Holdout evaluation that records no in-sample metrics.
+    """A backtest with one validation origin, then the test.
 
-    One thing the ordinary holdout strategy assumes is wrong for a forecaster,
-    and it is a decision about evaluation rather than about any model.
+    Pair it with ``TemporalHoldoutSplitter``. The model is fitted on the steps
+    before the validation window and scored on its ``horizon`` steps, then
+    refitted on everything before the test and scored on the last ``horizon``
+    steps. Validation and test measure the same horizon, so the two columns of
+    the results compare like with like.
 
-    **The training partition is not scored.** Scoring it would mean asking the
-    model about dates it was fitted on. That is an in-sample fit statistic,
-    which is a real diagnostic but is not comparable with a forecast made
-    several steps out; showing the two side by side in one results table
-    invites exactly that comparison. Only validation and test are recorded.
-
-    **The kept model is fitted on the training partition alone**, like every
-    other holdout run, and nothing is fed to it afterwards. Two approaches that
-    would have changed that were tried and dropped, both because they hand the
-    model data from a partition it was meant to be held out from:
-
-        refitting through validation before scoring test, which overwrote the
-        fit the validation metrics came from, so the saved model could not
-        reproduce its own results table;
-
-        advancing the model through the observed validation rows at predict
-        time, which re-estimates nothing but still lets a held out partition
-        reach the model, which no other task in DashAI does.
-
-    So the two columns describe different horizons, and deliberately:
-
-        validation metrics  <- forecasting 1..len(val) past the fit
-        test metrics        <- forecasting len(val)+1..len(val)+len(test),
-                               its own forecasts standing in for validation
-
-    The test column is therefore the harder question, not the same one further
-    along. Comparing like with like over a chosen horizon is what
-    ``RollingOriginSplitter`` is for, since its ``horizon`` says outright how
-    many steps ahead each refit is scored on.
-
-    Hyperparameter search is untouched. Its trials are scored on validation, so
-    they must not be fitted on it.
+    It runs the same units as the rolling origin (``KIND = "backtest"``): a
+    holdout is a backtest with one origin. The training steps are never
+    scored, since a forecaster asked about steps it was fitted on reports a
+    fit, not a forecast. A search measures its trials on validation only. The
+    kept model is fitted on the whole series, and the metrics are the
+    backtest's (RECONCILING_FORECASTING §2.13).
     """
 
     DESCRIPTION = MultilingualString(
@@ -54,20 +31,20 @@ class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
         ),
         es=(
             "Corta la serie una sola vez, en orden temporal: el modelo entrena "
-            "con las filas mas antiguas y se evalua con las que vienen despues. "
-            "La particion de entrenamiento no se evalua, porque preguntarle a un "
+            "con las filas más antiguas y se evalúa con las que vienen después. "
+            "La partición de entrenamiento no se evalúa, porque preguntarle a un "
             "pronosticador por fechas con las que fue ajustado da un ajuste, no "
-            "un pronostico."
+            "un pronóstico."
         ),
         pt=(
-            "Corta a serie uma unica vez, em ordem temporal: o modelo treina nas "
-            "linhas mais antigas e e avaliado nas que vem depois. A particao de "
-            "treino nao e avaliada, porque perguntar a um previsor sobre datas "
-            "em que ele foi ajustado da um ajuste, nao uma previsao."
+            "Corta a série uma única vez, em ordem temporal: o modelo treina nas "
+            "linhas mais antigas e é avaliado nas que vêm depois. A partição de "
+            "treino não é avaliada, porque perguntar a um previsor sobre datas "
+            "em que ele foi ajustado dá um ajuste, não uma previsão."
         ),
         de=(
             "Teilt die Zeitreihe ein einziges Mal in zeitlicher Reihenfolge: Das "
-            "Modell trainiert auf den fruehesten Zeilen und wird auf den "
+            "Modell trainiert auf den frühesten Zeilen und wird auf den "
             "folgenden bewertet. Die Trainingspartition wird nicht bewertet, "
             "denn ein Prognosemodell, das nach Daten seiner eigenen Anpassung "
             "gefragt wird, liefert eine Anpassung und keine Prognose."
@@ -84,5 +61,17 @@ class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
         ),
     )
 
-    COMPATIBLE_COMPONENTS = ["ForecastingTask"]
+    COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     SCORED_SPLITS: tuple = (SplitEnum.VALIDATION, SplitEnum.TEST)
+    # A holdout is a backtest with one origin, so both forecasting strategies
+    # run the same units: ModelJob dispatches them on this one KIND.
+    KIND = "backtest"
+    # Both take a splitter that cuts the series into origins, in steps.
+    SPLITTER_PARTITIONING = "origins"
+    DEFAULT_SPLITTER = "TemporalHoldoutSplitter"
+    # Both splitters cut origins, so the partitioning alone would take the
+    # other strategy's: the same backtest under this strategy's label.
+    SPLITTERS: tuple = ("TemporalHoldoutSplitter",)
+    # A single validation origin leaves nothing to compare across origins,
+    # so the run offers its forecasts and no per-origin view.
+    RESULT_VIEWS: tuple = ("forecasts",)

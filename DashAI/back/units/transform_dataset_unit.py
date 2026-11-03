@@ -40,7 +40,7 @@ class TransformDatasetUnit(BaseUnit, ConverterScopeMixin):
 
     SCHEMA = TransformDatasetSchema
 
-    REQUIRES = ("dataset", "fitted_converter")
+    REQUIRES = ("dataset", "fitted_converter", "fitted_converter_options")
     PROVIDES = ("dataset",)
 
     def validate(self, ctx: ExecutionContext) -> None:
@@ -51,7 +51,13 @@ class TransformDatasetUnit(BaseUnit, ConverterScopeMixin):
         dataset: "DashAIDataset" = ctx.require("dataset")
         converter_instance = ctx.require("fitted_converter")
         converter_name = type(converter_instance).__name__
+        # Published by the unit that fitted the converter, so every dataset
+        # it transforms loses the same columns.
+        drop_source_columns = bool(
+            ctx.require("fitted_converter_options").get("drop_source_columns")
+        )
 
+        self._check_drop_scope(drop_source_columns)
         self._check_target_bounds(dataset)
         (
             scope_column_names,
@@ -78,5 +84,7 @@ class TransformDatasetUnit(BaseUnit, ConverterScopeMixin):
                 dataset,
                 transformed_dataset,
                 scope_column_names,
+                drop_source_columns=drop_source_columns,
+                target_column_name=target_column_name,
             ),
         )

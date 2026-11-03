@@ -29,6 +29,7 @@ class TabularClassificationTask(ClassificationTask):
         ),
         zh="从表格数据（行和列）中预测分类标签。",
     )
+    ICON: str = "TableChart"
     DISPLAY_NAME: str = MultilingualString(
         en="Tabular Classification",
         es="Clasificación Tabular",

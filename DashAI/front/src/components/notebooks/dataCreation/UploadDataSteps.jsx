@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import PropTypes from "prop-types";
 import { useNavigate, useParams } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
@@ -135,6 +135,13 @@ export default function UploadDataSteps({ backHome }) {
     );
   }, [step, selectedLoader, dataKind, setRightBarContent, computeMetadata]);
 
+  const handleLoaderDownloadChange = useCallback((loader, isDownloaded) => {
+    const mark = (item) =>
+      item?.name === loader.name ? { ...item, downloaded: isDownloaded } : item;
+    setLoaders((prev) => prev.map(mark));
+    setSelectedLoader(mark);
+  }, []);
+
   const goToNextStep = () => {
     navigate(`${UPLOAD_BASE_PATH}/${selectedLoader.name}`);
   };
@@ -206,6 +213,7 @@ export default function UploadDataSteps({ backHome }) {
           setSelectedDataloader={setSelectedLoader}
           dataloaders={loaders}
           loadingDataloaders={loadingLoaders}
+          onDownloadChange={handleLoaderDownloadChange}
         />
       )}
 

@@ -165,8 +165,9 @@ async def create_data_document(
     Raises
     ------
     HTTPException
-        409 for a taken name; 422 for an empty name, a wrong loader, an
-        unsupported extension or invalid parameters; 500 on database errors.
+        409 for a taken name or a loader still to be downloaded; 422 for an
+        empty name, a wrong loader, an unsupported extension or invalid
+        parameters; 500 on database errors.
     """
     name = params.name.strip()
     if not name:
@@ -176,6 +177,15 @@ async def create_data_document(
         )
     file_name = os.path.basename(params.file_name)
     loader_class = _document_loader_class(component_registry, params.dataloader)
+    if getattr(
+        loader_class, "REQUIRES_DOWNLOAD", False
+    ) and not component_registry.refresh_download_status(params.dataloader):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Document loader {params.dataloader} must be downloaded before use."
+            ),
+        )
     if not loader_class.supports_file(file_name):
         accepted = ", ".join(sorted(loader_class.SUPPORTED_EXTENSIONS))
         raise HTTPException(

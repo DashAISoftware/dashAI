@@ -168,4 +168,6 @@ class FitModelUnit(BaseUnit, ModelFitScopeMixin):
 
         predictions = model.predict(x["validation"])
         expected = model.prepare_output(y["validation"], is_fit=False)
-        return metric.score(expected, predictions)
+        return self._goal_score(
+            metric, expected, predictions, "the validation partition"
+        )

@@ -29,6 +29,7 @@
     "trainSplitMustBeGreaterThanZero": "训练集比例必须大于零",
     "trainSplitMustHaveAtLeastOneRow": "训练集至少需要一行数据",
     "foldsMustBeLessThanDatasetSize": "折数必须小于或等于数据集中的样本数（{{datasetSize}}）",
+    "seriesTooShort": "预测步长为 {{horizon}}、{{origins}} 个验证起点至少需要 {{needed}} 行；数据集有 {{rows}} 行。请缩短步长、减少起点或提供更多历史数据。",
     "groupColumnMustBeSelected": "必须选择一个用于分组的列"
   },
   "label": {
@@ -45,6 +46,7 @@
     "currentExperiments": "当前实验",
     "currentOptimizerSettings": "当前优化器设置 {{optimizer}}",
     "cvType": "交叉验证类型",
+    "splitter": "划分器",
     "datasetRoleColumnRequirements": "<0>{{role}}：列的类型必须为</0><1></1><2>，且基数应为</2><3>{{cardinality}}。</3>",
     "duration": "时长",
     "endTime": "结束时间",
@@ -81,11 +83,9 @@
     "seed": "随机种子",
     "selectAColumn": "选择一列",
     "selectDataset": "选择数据集",
-    "selectDatasetColumns": "指定数据集中用作输入和输出的列。",
     "selectDatasetTitle": "为所选任务选择数据集",
     "selectEvaluationStrategy": "评估策略",
     "selectHowToDivideDataset": "选择如何将数据集划分为训练集、验证集和测试集。",
-    "selectInputOutputColumnsDescription": "从列表中选择列名。",
     "selectMetrics": "选择指标",
     "selectModelFirst": "请先选择模型",
     "selectModelToAdd": "选择要添加的模型",
@@ -134,17 +134,26 @@
   "splitPreview": {
     "title": "划分预览",
     "unavailable": "该拆分器尚未声明其形状，因此无法绘制。",
+    "loading": "正在绘制划分…",
+    "failed": "无法计算预览（{{reason}}）。您可以继续：会话在创建时会检查这些参数。",
+    "retry": "重试",
+    "invalid": "划分器无法使用这些参数；请检查其表单中标出的字段。",
     "wholeDataset": "数据集",
     "reservedTest": "预留",
     "finalFit": "最终训练",
     "fold": "第 {{index}} 折",
+    "origin": "起点 {{index}}",
+    "testOrigin": "测试",
     "moreFolds": "另有 {{hidden}} 折",
+    "moreOrigins": "+{{hidden}} 个其他起点",
     "unused": "未使用",
-    "notes": {
-      "foldsHidden": "共 {{total}} 折；只绘制最前面几折和最后一折。"
+    "legend": {
+      "steps_one": "{{role}}：{{count}} 步",
+      "steps_other": "{{role}}：{{count}} 步"
     },
-    "error": {
-      "notEnoughRows": "{{folds}} 个起点、{{horizon}} 的预测跨度和 {{step}} 的步长放不进 {{rows}} 行。请调小其中之一，或减少预留。"
+    "notes": {
+      "foldsHidden": "共 {{total}} 折；只绘制最前面几折和最后一折。",
+      "originsHidden": "共 {{total}} 个起点；只绘制前几个和最后一个。"
     }
   }
 }

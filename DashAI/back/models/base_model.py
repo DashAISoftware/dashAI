@@ -10,11 +10,34 @@ from kink import di
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.enums.metrics import LevelEnum, SplitEnum
 from DashAI.back.dependencies.database.models import Metric
+from DashAI.back.metrics.undefined_metric import (
+    Unavailable,
+    UndefinedMetricError,
+    describe_undefined,
+)
 
 if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 logger = logging.getLogger(__name__)
+
+
+def _value_and_reason(result: Any) -> tuple:
+    """A metric result as the value and the reason a ``Metric`` row holds."""
+    if isinstance(result, Unavailable):
+        return None, result.reason
+    return result, None
+
+
+def _scores_only(results: Optional[Dict[str, Any]]) -> Optional[Dict[str, float]]:
+    """The scored metrics alone, without the ones that had no value."""
+    if results is None:
+        return None
+    return {
+        name: value
+        for name, value in results.items()
+        if not isinstance(value, Unavailable)
+    }
 
 
 class BaseModel(ConfigObject, metaclass=ABCMeta):
@@ -46,6 +69,12 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
     # `level=EPOCH`, so for them this stays None and nothing changes.
     _epoch_reporter = None
 
+    # The splits a model is scored on, pointed at by whoever fits it so that
+    # `calculate_metrics` can read them. None until then, and again once the
+    # model is pickled: they are the run's data, never part of the model.
+    x_data = None
+    y_data = None
+
     @classmethod
     def get_metadata(cls) -> Dict[str, Any]:
         """Get metadata values for the current model.
@@ -61,6 +90,31 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         metadata["requires_download"] = bool(getattr(cls, "REQUIRES_DOWNLOAD", False))
         metadata["download_size_bytes"] = getattr(cls, "DOWNLOAD_SIZE_BYTES", None)
         return metadata
+
+    def __getstate__(self) -> Dict[str, Any]:
+        """Leave the data the model was scored on out of its pickled state.
+
+        Whoever fits a model points ``x_data`` and ``y_data`` at the splits it
+        trains on, so ``calculate_metrics`` can read them. Every model that
+        saves itself by pickling (``joblib.dump(self)``) would otherwise write
+        the whole dataset into its artifact: a copy of the data on every run,
+        and a save that grows with the dataset instead of with the model.
+
+        Dropping them lets the class defaults answer, so a loaded model scores
+        nothing on its own, the same as a model never pointed at any data.
+
+        Returns
+        -------
+        Dict[str, Any]
+            A copy of the instance state, without the training data.
+        """
+        # A copy, because further up the MRO the state may be the live
+        # ``__dict__``; and ``or {}``, because ``object`` gives None for an
+        # instance that has no attributes yet.
+        state = dict(super().__getstate__() or {})
+        state.pop("x_data", None)
+        state.pop("y_data", None)
+        return state
 
     @abstractmethod
     def save(self, filename: str) -> None:
@@ -186,6 +240,7 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             # 2. Handle 'LAST' level replacement logic
             if level == LevelEnum.LAST:
                 for name, value in results.items():
+                    score, reason = _value_and_reason(value)
                     existing = (
                         db.query(Metric)
                         .filter_by(
@@ -195,7 +250,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                     )
 
                     if existing:
-                        existing.value = value
+                        existing.value = score
+                        existing.unavailable_reason = reason
                         existing.step = log_index
                     else:
                         db.add(
@@ -204,7 +260,8 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                                 split=split,
                                 level=level,
                                 name=name,
-                                value=value,
+                                value=score,
+                                unavailable_reason=reason,
                                 step=log_index,
                             )
                         )
@@ -217,12 +274,13 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                         split=split,
                         level=level,
                         name=name,
-                        value=score,
+                        value=_value_and_reason(value)[0],
+                        unavailable_reason=_value_and_reason(value)[1],
                         step=log_index,
                         fold_index=fold_index,
                         inner_fold_index=inner_fold_index,
                     )
-                    for name, score in results.items()
+                    for name, value in results.items()
                 ]
                 db.add_all(metric_entries)
 
@@ -256,12 +314,18 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
 
         Returns
         -------
-        Optional[Dict[str, float]]
+        Optional[Dict[str, float or Unavailable]]
             The finite scores keyed by metric name, or None when there was
             nothing to score: no metrics declared for the split, or no data
-            available for it. None and an empty dict are different answers --
+            loaded for it. None and an empty dict are different answers --
             the first says the question could not be asked, the second that
             every metric was asked and none returned a usable number.
+
+            A metric that raised ``UndefinedMetricError`` maps to an
+            ``Unavailable`` holding its reason, and so does every metric of a
+            split whose stored partition has no rows. ``calculate_metrics``
+            records it, so the run says why; ``compute_metrics`` leaves it
+            out, as it leaves out a non-finite score.
         """
         metrics = getattr(self, f"{split.value}_metrics", None)
 
@@ -275,6 +339,16 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
                 return None
             x_data = self.x_data[split.value]
             y_data = self.y_data[split.value]
+            # A partition the splitter left without rows (a holdout with no
+            # test) has nothing to score: a model cannot predict zero rows.
+            # Its metrics have no value rather than failing the run, and the
+            # run says why, as it does for a metric undefined on its data.
+            if x_data is not None and len(x_data) == 0:
+                reason = Unavailable(
+                    f"The {split.value} partition has no rows to score: the "
+                    "splitter left none in it."
+                )
+                return {metric.__name__: reason for metric in metrics}
 
         # If data is empty after retrieval, there is nothing to score
         if x_data is None or y_data is None:
@@ -287,7 +361,11 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         # Calculate metric scores
         results = {}
         for metric in metrics:
-            score = metric.score(y_transformed, y_pred)
+            try:
+                score = metric.score(y_transformed, y_pred)
+            except UndefinedMetricError as undefined:
+                results[metric.__name__] = Unavailable(describe_undefined(undefined))
+                continue
             if not math.isfinite(score):
                 logger.warning(
                     "Metric %s returned a non-finite value (%s) for split %s "
@@ -337,9 +415,10 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
             mapping is empty when every metric returned one. ``None`` when
             there is nothing to score at all: no metrics configured, or no
             data for this split. Callers that need a particular metric must
-            therefore check that it is there.
+            therefore check that it is there. A metric with no value on the
+            data (``UndefinedMetricError``) is absent the same way.
         """
-        return self._score_split(split, x_data=x_data, y_data=y_data)
+        return _scores_only(self._score_split(split, x_data=x_data, y_data=y_data))
 
     @final
     def calculate_metrics(
@@ -404,19 +483,20 @@ class BaseModel(ConfigObject, metaclass=ABCMeta):
         if not getattr(self, "run_id", None):
             return None
 
-        results = self._score_split(split, x_data=x_data, y_data=y_data)
-        if results is None:
+        recorded = self._score_split(split, x_data=x_data, y_data=y_data)
+        if recorded is None:
             return None
 
-        # Save to database
+        # Save to database, the unavailable metrics with their reason.
         self._save_metrics(
             split=split,
             level=level,
-            results=results,
+            results=recorded,
             log_index=log_index,
             fold_index=fold_index,
             inner_fold_index=inner_fold_index,
         )
+        results = _scores_only(recorded)
 
         # Report the epoch to whoever is watching, AFTER persisting: the reporter
         # is allowed to raise (Optuna prunes that way), and the metrics of the

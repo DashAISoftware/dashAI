@@ -21,6 +21,7 @@ class RegressionTask(SupervisedTask):
         de="Kontinuierliche numerische Werte aus tabellarischen Daten vorhersagen.",
         zh="从表格数据中预测连续数值。",
     )
+    ICON: str = "ShowChart"
     DISPLAY_NAME: str = MultilingualString(
         en="Regression", es="Regresión", pt="Regressão", de="Regression", zh="回归"
     )

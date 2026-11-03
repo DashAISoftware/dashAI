@@ -15,7 +15,16 @@ const DEFAULT_ICON = Icons.Science;
  * - Falls back to DEFAULT_ICON (Science) if the icon name is not found.
  * - The iconName should match a Material-UI icon name (e.g., "Forest", "Timeline", "ScatterPlot").
  */
+/**
+ * The Material UI icon a component declares by name in its metadata.
+ *
+ * @param {string} iconName - Icon name from Material-UI (backend metadata.icon).
+ * @returns {React.ComponentType} The icon, or DEFAULT_ICON when there is no
+ * icon by that name.
+ */
+export const iconByName = (iconName) => Icons[iconName] || DEFAULT_ICON;
+
 export function ModelIcon({ iconName, color }) {
-  const IconComponent = Icons[iconName] || DEFAULT_ICON;
+  const IconComponent = iconByName(iconName);
   return <IconComponent style={{ color: color ?? "white", fontSize: 24 }} />;
 }

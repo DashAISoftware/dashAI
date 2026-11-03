@@ -36,9 +36,9 @@ import { LoadingButton } from "@mui/lab";
 import { useTranslation } from "react-i18next";
 import { generateSequentialName } from "../../utils/nameGenerator";
 
-const getNextExplainerName = (existingExplainers = []) => {
+const getNextExplainerName = (existingExplainers, t) => {
   const { defaultName } = generateSequentialName({
-    base: "Explainer_local",
+    base: t("common:defaultName.localExplainer"),
     items: existingExplainers,
     getName: (explainer) => explainer?.name,
   });
@@ -130,13 +130,14 @@ export default function NewLocalExplainerModal({
 
     setNewLocalExpl((prev) => ({
       ...prev,
-      name: getNextExplainerName(existingLocalExplainers),
+      name: getNextExplainerName(existingLocalExplainers, t),
     }));
   }, [
     open,
     existingLocalExplainersLoaded,
     existingLocalExplainers,
     newLocalExpl.name,
+    t,
   ]);
 
   const enqueueLocalExplainerJob = async (explainerId) => {
