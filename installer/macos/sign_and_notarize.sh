@@ -54,6 +54,21 @@ while IFS= read -r line; do
     [ -n "$line" ] && ORIGINAL_KEYCHAINS+=("$line")
 done < <(security list-keychains -d user)
 
+# `security import` that tolerates "already exists". Newer runner images
+# (macos-26) report that error even on a freshly created keychain; whether
+# the identity is really usable is checked right after the imports.
+import_into_keychain() {
+    local output
+    if output="$(security import "$@" 2>&1)"; then
+        echo "$output"
+    elif echo "$output" | grep -q "already exists"; then
+        echo "    (already present, continuing) $output"
+    else
+        echo "$output" >&2
+        return 1
+    fi
+}
+
 cleanup() {
     echo "==> Cleaning up temporary keychain and credentials"
     security list-keychains -d user -s ${ORIGINAL_KEYCHAINS[@]+"${ORIGINAL_KEYCHAINS[@]}"} || true
@@ -73,14 +88,14 @@ security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
 echo "==> Importing signing certificate"
 printf '%s' "$MACOS_CERTIFICATE_P12_BASE64" | base64 --decode > "$CERT_PATH"
-security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -f pkcs12 \
+import_into_keychain "$CERT_PATH" -k "$KEYCHAIN_PATH" -f pkcs12 \
     -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
 # The .p12 exported from Keychain Access holds only the leaf certificate.
 # Without Apple's intermediate CA the identity is "not valid" and codesign
 # refuses it, so import the intermediate explicitly.
 curl -fsSL -o "$WORK_DIR/DeveloperIDG2CA.cer" \
     https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
-security import "$WORK_DIR/DeveloperIDG2CA.cer" -k "$KEYCHAIN_PATH"
+import_into_keychain "$WORK_DIR/DeveloperIDG2CA.cer" -k "$KEYCHAIN_PATH"
 # Let codesign use the key without an interactive access prompt.
 security set-key-partition-list -S apple-tool:,apple:,codesign: -s \
     -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" > /dev/null
