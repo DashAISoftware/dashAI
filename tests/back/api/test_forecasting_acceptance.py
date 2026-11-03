@@ -299,7 +299,6 @@ def test_a_series_too_short_for_its_cuts_is_refused(client, tmp_path):
     assert "horizon" in response.text
 
 
-@pytest.mark.xfail(strict=True, reason="PR 5, slice 3: one fit per cut")
 def test_a_forecasting_session_takes_preprocessing(client, tmp_path):
     # Until the exogenous role (RECONCILING_FORECASTING §7) this session was
     # refused with "takes no preprocessing": no role of the task could be

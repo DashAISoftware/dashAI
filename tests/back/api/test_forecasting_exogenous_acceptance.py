@@ -221,7 +221,6 @@ def test_a_step_that_changes_rows_is_refused_by_a_task_with_a_time_index(
 # --------------------------------------------------------------------------- #
 
 
-@pending("3")
 def test_a_session_preprocesses_its_exogenous_columns_once_per_cut(client, tmp_path):
     session_id = _session(
         client,

@@ -32,6 +32,11 @@ class PreprocessingJob(BaseJob):
     training pool) or once for Holdout, and persists each fitted
     SessionPreprocessor so ModelJob, predict_job and explainer_job can
     reuse it without ever re-fitting on new data.
+
+    A backtest (a splitter whose ``PARTITIONING`` is ``"origins"``) cuts the
+    series in steps, so it fits once per cut instead: ``origin_{i}.pkl`` and
+    ``test.pkl`` on the steps before each origin, and ``final.pkl`` on the
+    whole series, as the final model is (RECONCILING_FORECASTING §2.14).
     """
 
     @inject
@@ -127,17 +132,27 @@ class PreprocessingJob(BaseJob):
                 # notice: the entries still come in the same number. As in the
                 # unit, only the raw refs are validated here, because a group
                 # ref names a column that exists once its converter has run.
-                prepared_dataset = task.prepare_for_task(
-                    dataset=loaded_dataset,
-                    input_columns=io.raw_inputs,
-                    output_columns=io.outputs,
-                )
-                y_for_split = prepared_dataset.select_columns(io.outputs)
-                x, _, _ = splitter.split(prepared_dataset, y_for_split)
+                if getattr(splitter, "PARTITIONING", None) == "origins":
+                    entries, final_split = _cut_entries(
+                        task, loaded_dataset, io, splitter
+                    )
+                else:
+                    prepared_dataset = task.prepare_for_task(
+                        dataset=loaded_dataset,
+                        input_columns=io.raw_inputs,
+                        output_columns=io.outputs,
+                    )
+                    y_for_split = prepared_dataset.select_columns(io.outputs)
+                    x, _, _ = splitter.split(prepared_dataset, y_for_split)
 
-                is_cv = isinstance(x, list)
-                x_folds = x if is_cv else [x]
-                total_folds = len(x_folds) - 1 if is_cv else 0
+                    is_cv = isinstance(x, list)
+                    x_folds = x if is_cv else [x]
+                    entries = [
+                        (f"fold_{i}.pkl", "fold", x_folds[i])
+                        for i in range(len(x_folds) - 1 if is_cv else 0)
+                    ]
+                    final_split = x_folds[-1]
+                total_folds = len(entries)
 
                 artifacts_dir = os.path.join(
                     str(config["PREPROCESSING_PATH"]), str(model_session.id)
@@ -146,18 +161,18 @@ class PreprocessingJob(BaseJob):
                 final_transformed = None
                 final_resolved = None
                 with atomic_directory(artifacts_dir) as tmp_dir:
-                    for i in range(total_folds):
+                    for i, (filename, label, split) in enumerate(entries):
                         self.report_progress(
                             0.1 + 0.7 * (i / max(total_folds, 1)),
-                            f"Fitting preprocessing for fold {i + 1}/{total_folds}",
+                            f"Fitting preprocessing for {label} {i + 1}/{total_folds}",
                         )
                         fold_preprocessor = SessionPreprocessor(
                             sequence,
                             component_registry,
                             target_columns=io.outputs,
                         )
-                        fold_preprocessor.fit_transform(x_folds[i])
-                        with open(os.path.join(tmp_dir, f"fold_{i}.pkl"), "wb") as f:
+                        fold_preprocessor.fit_transform(split)
+                        with open(os.path.join(tmp_dir, filename), "wb") as f:
                             pickle.dump(fold_preprocessor, f)
 
                     self.report_progress(0.85, "Fitting final preprocessing")
@@ -167,7 +182,7 @@ class PreprocessingJob(BaseJob):
                         target_columns=io.outputs,
                     )
                     final_transformed, final_resolved = (
-                        final_preprocessor.fit_transform(x_folds[-1])
+                        final_preprocessor.fit_transform(final_split)
                     )
                     with open(os.path.join(tmp_dir, "final.pkl"), "wb") as f:
                         pickle.dump(final_preprocessor, f)
@@ -210,3 +225,32 @@ class PreprocessingJob(BaseJob):
                 raise JobError(
                     f"Error running preprocessing for session {model_session_id}: {e}"
                 ) from e
+
+
+def _cut_entries(task, dataset, io, splitter):
+    """The training steps of every cut of a backtest, and of the final fit.
+
+    The series is validated and put in date order by the task first, with
+    the message a run gives (D5), so a series off its grid fails here, once,
+    and not in every run. The cuts are the splitter's, on the series'
+    number of steps. They match the ones a run makes because every step of
+    the preprocessing keeps the rows (``PREPROCESSING_KEEPS_ROWS``).
+
+    Returns
+    -------
+    tuple
+        The ``(filename, label, split)`` of each validation origin and of the
+        test, and the split of the final fit. Every split holds only a
+        ``"train"`` entry: the steps before its cut.
+    """
+    prepared = task.prepare_series(dataset, io.raw_inputs, io.outputs)
+    rows = prepared.dataset
+    cuts = splitter.cuts(prepared.grid.n_steps)
+    entries = [
+        (f"origin_{i}.pkl", "origin", {"train": rows.select(range(origin))})
+        for i, origin in enumerate(cuts["validation_origins"])
+    ]
+    entries.append(
+        ("test.pkl", "test", {"train": rows.select(range(cuts["test_origin"]))})
+    )
+    return entries, {"train": rows}
