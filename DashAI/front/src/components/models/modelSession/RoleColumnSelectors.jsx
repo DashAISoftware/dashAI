@@ -1,13 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import {
-  Grid,
-  Typography,
-  Autocomplete,
-  TextField,
-  Box,
-  Chip,
-} from "@mui/material";
+import { Autocomplete, TextField, Box, Chip } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { getColorByColumnType } from "../../../utils";
 import { getColumnTypeLabel } from "../../../utils/typesLists";
@@ -120,21 +113,6 @@ function RoleColumnSelectors({
 
   return (
     <React.Fragment>
-      <Grid size={{ xs: 12 }}>
-        <Typography variant="subtitle1" component="h3" sx={{ mb: 0 }}>
-          {t("experiments:label.selectDatasetColumns")}
-        </Typography>
-      </Grid>
-      <Grid size={{ xs: 12 }}>
-        <Typography
-          variant="caption"
-          component="h3"
-          sx={{ mb: 8, color: "grey" }}
-        >
-          {t("experiments:label.selectInputOutputColumnsDescription")}
-        </Typography>
-      </Grid>
-
       {shown.map((role) => {
         const options = optionsFor(role);
         const picked = selection[role.name] || [];
