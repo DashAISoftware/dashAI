@@ -420,7 +420,11 @@ async def get_future_dates(
             detail=f"Run {run_id} kept no forecasting model to date its steps.",
         ) from e
     spec = get_columns_spec(training_path).get(time_index) or {}
-    date_format = spec.get("format") or DEFAULT_DATE_FORMAT
+    # The spec keeps a Date's format under "dtype": the same format the
+    # future rows are parsed with (PrepareFutureUnit).
+    date_format = (
+        spec.get("dtype") if spec.get("type") == "Date" else None
+    ) or DEFAULT_DATE_FORMAT
     dates = grid.dates(grid.n_steps, horizon)
     return {"time_index": time_index, "dates": list(dates.strftime(date_format))}
 

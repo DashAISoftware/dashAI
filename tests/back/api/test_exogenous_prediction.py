@@ -4,12 +4,18 @@ Lives under ``tests/back/api`` to reuse the ``client`` fixture.
 """
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from DashAI.back.job.base_job import JobError
 from DashAI.back.job.predict_job import PredictJob
 from tests.back.api.test_forecasting_exogenous_acceptance import (
+    ARIMA_PARAMS,
+    PROMO,
+    _body,
+    _frame,
     _future,
+    _train,
     _upload,
     fixture_exogenous_run,  # noqa: F401
 )
@@ -75,3 +81,41 @@ def test_a_future_value_that_is_not_finite_names_the_column_and_the_date(
 
     with pytest.raises(JobError, match=r"'promo'.*2024-02-01"):
         _predict(client, exogenous_run, dataset_id)
+
+
+def test_the_next_dates_come_in_the_format_the_series_was_given_in(client, tmp_path):
+    """A series dated day first is offered its next dates day first, and those
+    dates, typed back in, are the ones the run forecasts."""
+    from DashAI.back.core.enums.status import PredictionStatus
+    from DashAI.back.dependencies.database.models import Prediction
+
+    frame = _frame()
+    frame["date"] = pd.to_datetime(frame["date"]).dt.strftime("%d/%m/%Y")
+    dataset_id = _upload(
+        client,
+        frame,
+        tmp_path,
+        "day-first",
+        types={"date": {"type": "Date", "dtype": "%d/%m/%Y"}},
+    )
+    response = client.post(
+        "/api/v1/model-session/", json=_body(dataset_id, exogenous=PROMO)
+    )
+    assert response.status_code == 201, response.text
+    run_id = _train(client, response.json()["id"], "ARIMA", ARIMA_PARAMS)
+
+    response = client.get(
+        f"/api/v1/predict/future-dates/{run_id}", params={"horizon": 2}
+    )
+
+    assert response.status_code == 200, response.text
+    dates = response.json()["dates"]
+    assert dates == ["01/01/2024", "01/02/2024"]
+
+    response = client.post("/api/v1/predict/", json={"run_id": run_id})
+    assert response.status_code == 200, response.text
+    rows = [{"date": date, "promo": 0.0} for date in dates]
+    PredictJob(prediction_id=response.json()["id"], manual_input_data=rows).run()
+    with client.app.container["session_factory"]() as db:
+        prediction = db.get(Prediction, response.json()["id"])
+        assert prediction.status == PredictionStatus.FINISHED
