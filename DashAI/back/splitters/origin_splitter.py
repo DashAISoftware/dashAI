@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, List
 
 from DashAI.back.core.schema_fields import int_field, schema_field
 from DashAI.back.core.utils import MultilingualString
+from DashAI.back.splitters.split_preview import backtest_preview
 
 from .base_splitter import BaseSplitter
 
@@ -23,14 +24,14 @@ def horizon_field():
                 "monthly series."
             ),
             es=(
-                "Cuantos pasos hacia adelante se evalua el modelo, desde cada "
+                "Cuántos pasos hacia adelante se evalúa el modelo, desde cada "
                 "origen y en el test. Un paso es un periodo de la serie: un mes "
                 "en una serie mensual."
             ),
             pt=(
-                "Quantos passos a frente o modelo e avaliado, a partir de cada "
-                "origem e no teste. Um passo e um periodo da serie: um mes numa "
-                "serie mensal."
+                "Quantos passos à frente o modelo é avaliado, a partir de cada "
+                "origem e no teste. Um passo é um período da série: um mês numa "
+                "série mensal."
             ),
             de=(
                 "Wie viele Schritte voraus das Modell bewertet wird, von jedem "
@@ -76,8 +77,7 @@ class OriginSplitter(BaseSplitter):
     """
 
     PARTITIONING: str = "origins"
-    # No preview draws this shape yet; the frontend leaves it blank rather
-    # than drawing proportions that the cuts no longer are.
+    # Drawn by ``preview``: one bar per origin, the test and the kept model.
     GEOMETRY: str = "backtest_origins"
     NO_ROW_PARTITIONS = (
         "A backtest cuts the series in steps of its grid, so its run has no "
@@ -92,11 +92,33 @@ class OriginSplitter(BaseSplitter):
         ----------
         splits_data : dict
             The splitter's configuration.
+
+        Raises
+        ------
+        ValueError
+            If the horizon or the number of origins is below 1: there would be
+            no window to score, so no cuts. The schema refuses them for a
+            session; this is for a splitter built by hand.
         """
         super().__init__(splits_data)
         self.horizon = int(splits_data.get("horizon", 6))
         self.n_origins = int(splits_data.get("n_origins", 1))
         self.shuffle = False
+        if self.horizon < 1 or self.n_origins < 1:
+            raise ValueError(
+                f"A backtest needs a horizon and a number of origins of at "
+                f"least 1; got horizon={self.horizon}, "
+                f"n_origins={self.n_origins}."
+            )
+
+    def needed_steps(self) -> int:
+        """The fewest steps a series needs for these cuts.
+
+        The validation windows and the test, ``horizon`` steps each, after at
+        least one step to fit on. ``cuts`` refuses a shorter series, and the
+        preview reports this number, so the two cannot disagree.
+        """
+        return (self.n_origins + 1) * self.horizon + 1
 
     def cuts(self, n_steps: int) -> Dict[str, Any]:
         """Where a series of ``n_steps`` steps is cut.
@@ -119,7 +141,7 @@ class OriginSplitter(BaseSplitter):
             first origin.
         """
         h, k = self.horizon, self.n_origins
-        needed = (k + 1) * h + 1
+        needed = self.needed_steps()
         if n_steps < needed:
             raise ValueError(
                 f"A horizon of {h} step(s) with {k} validation origin(s) needs "
@@ -139,6 +161,17 @@ class OriginSplitter(BaseSplitter):
     def validate_size(self, n_rows: int) -> None:
         """Refuse a dataset too short for these cuts (see ``cuts``)."""
         self.cuts(n_rows)
+
+    @classmethod
+    def preview(cls, params, dataset, split_type=None, indexes=None):
+        """One bar per origin and the test (see ``BaseSplitter.preview``).
+
+        Raises
+        ------
+        ValueError
+            If the parameters leave no window to score (see ``__init__``).
+        """
+        return backtest_preview(cls(params), dataset)
 
     @classmethod
     def explainable_partitions(cls, split_indexes: Dict[str, Any]) -> Dict:

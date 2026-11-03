@@ -42,6 +42,7 @@ from DashAI.back.splitters.splits_payload import (
     DEFAULT_SPLITTER_NAME,
     META_KEYS,
     normalize_splits_payload,
+    validate_splitter_parameters,
 )
 from DashAI.back.tasks.session_roles import SessionColumnRoles, session_roles
 
@@ -530,13 +531,17 @@ def _validate_splits(
                 f"splitter, but {splitter_name} is a {partitioning!r} splitter."
             ),
         )
-    parameters = {
-        key: value for key, value in splits_data.items() if key not in META_KEYS
-    }
-    try:
-        splitter_class.SCHEMA.model_validate(
-            {**schema_placeholder_defaults(splitter_class), **parameters}
+    taken_names = getattr(strategy_class, "SPLITTERS", None)
+    if taken_names is not None and splitter_name not in taken_names:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Evaluation strategy {strategy_class.__name__} takes only "
+                f"{', '.join(taken_names)}, not {splitter_name}."
+            ),
         )
+    try:
+        validate_splitter_parameters(splitter_class, splits_data)
     except ValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -892,13 +897,12 @@ async def create_model_session(
     # The task translates the roles it was given into the model's inputs
     # and outputs, which the checks below read.
     task = task_or_http_error(params.task_name, component_registry)
-    if has_preprocessing and not any(
-        role.transformable for role in task.column_roles()
-    ):
+    if has_preprocessing and not task.takes_preprocessing():
         # Session preprocessing transforms the columns of the roles that
         # allow it, and fits once per partition. A task none of whose roles
         # allow it has nothing for the steps to feed, and partitions that are
-        # not rows: single-series forecasting until its exogenous role.
+        # not rows: single-series forecasting until its exogenous role. The
+        # wizard reads the same answer from the task's metadata.
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=(

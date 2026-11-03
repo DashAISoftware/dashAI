@@ -75,17 +75,14 @@ function ResultsGraphs({
       test: new Set(),
       full: new Set(),
     };
+    // A metric with no value on a run (MAPE on a zero) still has its column:
+    // the run says why, under {split}_metrics_unavailable.
     finishedRuns.forEach((run) => {
-      if (run.train_metrics)
-        Object.keys(run.train_metrics).forEach((m) => sets.train.add(m));
-      if (run.validation_metrics)
-        Object.keys(run.validation_metrics).forEach((m) =>
-          sets.validation.add(m),
+      Object.entries(sets).forEach(([split, names]) => {
+        [run[`${split}_metrics`], run[`${split}_metrics_unavailable`]].forEach(
+          (values) => Object.keys(values ?? {}).forEach((m) => names.add(m)),
         );
-      if (run.test_metrics)
-        Object.keys(run.test_metrics).forEach((m) => sets.test.add(m));
-      if (run.full_metrics)
-        Object.keys(run.full_metrics).forEach((m) => sets.full.add(m));
+      });
     });
     return {
       train: Array.from(sets.train),

@@ -29,6 +29,7 @@
     "trainSplitMustBeGreaterThanZero": "La división de entrenamiento debe ser mayor que cero",
     "trainSplitMustHaveAtLeastOneRow": "La división de entrenamiento debe tener al menos una fila",
     "foldsMustBeLessThanDatasetSize": "El número de pliegues debe ser menor o igual al número de muestras en el dataset ({{datasetSize}})",
+    "seriesTooShort": "Un horizonte de {{horizon}} con {{origins}} origen(es) de validación necesita al menos {{needed}} filas; el dataset tiene {{rows}}. Acorta el horizonte, usa menos orígenes o agrega más historia.",
     "groupColumnMustBeSelected": "Debe seleccionarse una columna para agrupar"
   },
   "label": {
@@ -76,6 +77,7 @@
     "holdout": "Holdout",
     "crossValidation": "Validación Cruzada",
     "cvType": "Tipo de Validación Cruzada",
+    "splitter": "Divisor",
     "numFolds": "Número de Pliegues (k)",
     "numFoldsDescription": "Número de pliegues de validación cruzada. Más pliegues pueden mejorar la estabilidad de la evaluación, pero incrementan el tiempo de procesamiento. Debe ser un entero mayor que 1.",
     "numRepeats": "Número de Repeticiones",
@@ -132,17 +134,26 @@
   "splitPreview": {
     "title": "Vista previa de la división",
     "unavailable": "Este divisor aún no declara su forma, así que no hay nada que dibujar.",
+    "loading": "Dibujando la división…",
+    "failed": "No se pudo calcular la vista previa ({{reason}}). Puedes continuar: la sesión revisa estos parámetros al crearse.",
+    "retry": "Reintentar",
+    "invalid": "El divisor no puede usar estos parámetros; revisa los campos marcados de su formulario.",
     "wholeDataset": "Conjunto",
     "reservedTest": "Reservado",
     "finalFit": "Ajuste final",
     "fold": "Pliegue {{index}}",
+    "origin": "Origen {{index}}",
+    "testOrigin": "Prueba",
     "moreFolds": "+{{hidden}} pliegues más",
+    "moreOrigins": "+{{hidden}} orígenes más",
     "unused": "Sin usar",
-    "notes": {
-      "foldsHidden": "{{total}} pliegues en total; solo se dibujan los primeros y el último."
+    "legend": {
+      "steps_one": "{{role}}: {{count}} paso",
+      "steps_other": "{{role}}: {{count}} pasos"
     },
-    "error": {
-      "notEnoughRows": "{{folds}} orígenes con un horizonte de {{horizon}} y un paso de {{step}} no caben en {{rows}} filas. Reduce alguno o reserva menos."
+    "notes": {
+      "foldsHidden": "{{total}} pliegues en total; solo se dibujan los primeros y el último.",
+      "originsHidden": "{{total}} orígenes en total; solo se dibujan los primeros y el último."
     }
   }
 }

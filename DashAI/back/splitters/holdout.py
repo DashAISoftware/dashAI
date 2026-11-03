@@ -16,6 +16,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset
 from DashAI.back.splitters.rules import SEED_ONLY_MATTERS_WHEN_SHUFFLING
+from DashAI.back.splitters.split_preview import partitions_preview
 
 from .base_splitter import BaseSplitter
 
@@ -193,6 +194,11 @@ class PartitionSplitter(BaseSplitter):
     """
 
     GEOMETRY: str = "partitions"
+
+    @classmethod
+    def preview(cls, params, dataset, split_type=None, indexes=None):
+        """One bar of the whole dataset (see ``BaseSplitter.preview``)."""
+        return partitions_preview(params, dataset, split_type, indexes)
 
     @classmethod
     def explainable_partitions(cls, split_indexes):

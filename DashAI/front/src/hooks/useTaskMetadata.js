@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { getComponents } from "../api/component";
-import { sessionColumns } from "../components/models/modelSession/columnRoles";
+import {
+  columnsByRole,
+  sessionColumns,
+} from "../components/models/modelSession/columnRoles";
 import { getApiDetail } from "../utils/apiError";
 
 /**
@@ -91,4 +94,18 @@ export function useSessionColumns(session) {
   const metadata = useTaskMetadata(session?.task_name);
   if (!session || !metadata) return null;
   return sessionColumns(session, metadata);
+}
+
+/**
+ * A session's columns by role, labelled as its task labels them (see
+ * columnsByRole).
+ *
+ * @param {object|null} session a model session as the API returns it
+ * @returns {{name: string, label: string, columns: string[]}[]} empty while
+ *   the session or its task's metadata is not known yet
+ */
+export function useSessionRoleColumns(session) {
+  const metadata = useTaskMetadata(session?.task_name);
+  if (!session || !metadata) return [];
+  return columnsByRole(session, metadata);
 }

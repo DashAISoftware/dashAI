@@ -277,7 +277,7 @@ def test_nothing_registered_names_the_forecasting_family(client):
 
 
 def test_mape_refuses_a_zero_actual_with_a_reason():
-    from DashAI.back.metrics.forecasting.mape import MAPE
+    from DashAI.back.metrics.regression.mape import MAPE
     from DashAI.back.metrics.undefined_metric import UndefinedMetricError
 
     with pytest.raises(UndefinedMetricError, match="zero"):

@@ -31,15 +31,15 @@ class IntervalCoverage(ForecastingMetric):
             "well calibrated model scores close to 0.95."
         ),
         es=(
-            "La proporcion de valores reales dentro del intervalo de "
-            "prediccion del 95%. Un modelo bien calibrado obtiene cerca de 0.95."
+            "La proporción de valores reales dentro del intervalo de "
+            "predicción del 95%. Un modelo bien calibrado obtiene cerca de 0.95."
         ),
         pt=(
-            "A proporcao de valores reais dentro do intervalo de previsao de "
-            "95%. Um modelo bem calibrado obtem perto de 0.95."
+            "A proporção de valores reais dentro do intervalo de previsão de "
+            "95%. Um modelo bem calibrado obtém perto de 0.95."
         ),
         de=(
-            "Der Anteil der tatsaechlichen Werte innerhalb des "
+            "Der Anteil der tatsächlichen Werte innerhalb des "
             "95-%-Prognoseintervalls. Ein gut kalibriertes Modell liegt nahe "
             "0.95."
         ),

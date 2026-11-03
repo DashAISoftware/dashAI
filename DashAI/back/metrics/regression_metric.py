@@ -28,7 +28,8 @@ class RegressionMetric(PointMetricMixin, BaseMetric):
     MAXIMIZE: bool = False
     # Only regression. A forecasting task that shares one of these metrics
     # lists it in its own COMPATIBLE_COMPONENTS, as SingleSeriesForecastingTask
-    # does with MAE and RMSE, so the metric never names a forecasting task.
+    # does with MAE, RMSE, MAPE and SMAPE, so the metric never names a
+    # forecasting task.
     COMPATIBLE_COMPONENTS = ["RegressionTask"]
 
 

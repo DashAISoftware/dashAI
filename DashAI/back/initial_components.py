@@ -256,15 +256,15 @@ from DashAI.back.metrics.clustering.calinski_harabasz import CalinskiHarabasz
 from DashAI.back.metrics.clustering.davies_bouldin import DaviesBouldin
 from DashAI.back.metrics.clustering.silhouette import Silhouette
 from DashAI.back.metrics.forecasting.interval_coverage import IntervalCoverage
-from DashAI.back.metrics.forecasting.mape import MAPE
 from DashAI.back.metrics.forecasting.mase import MASE
-from DashAI.back.metrics.forecasting.smape import SMAPE
 from DashAI.back.metrics.regression.explained_variance import ExplainedVariance
 from DashAI.back.metrics.regression.mae import MAE
+from DashAI.back.metrics.regression.mape import MAPE
 from DashAI.back.metrics.regression.median_absolute_error import MedianAbsoluteError
 from DashAI.back.metrics.regression.mse import MSE
 from DashAI.back.metrics.regression.r2 import R2
 from DashAI.back.metrics.regression.rmse import RMSE
+from DashAI.back.metrics.regression.smape import SMAPE
 from DashAI.back.metrics.translation.bleu import Bleu
 from DashAI.back.metrics.translation.chrf import Chrf
 from DashAI.back.metrics.translation.ter import Ter

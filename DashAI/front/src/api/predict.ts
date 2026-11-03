@@ -24,16 +24,24 @@ export const downloadPredict = async (prediction_id: string) => {
   return response.data;
 };
 
+// A task that predicts rows takes a dataset (and maybe one of its
+// partitions); one that predicts by horizon takes a horizon, and the answer
+// says how many of its steps no backtest measured (unevaluated_steps).
 export const createPrediction = async (
   run_id: number,
-  dataset_id?: number,
+  dataset_id?: number | null,
   split?: string | null,
-): Promise<object> => {
-  const response = await api.post<object>(`${predictEndpoint}/`, {
-    run_id,
-    dataset_id,
-    split,
-  });
+  horizon?: number,
+): Promise<{ id: number; unevaluated_steps?: number }> => {
+  const response = await api.post<{ id: number; unevaluated_steps?: number }>(
+    `${predictEndpoint}/`,
+    {
+      run_id,
+      dataset_id,
+      split,
+      ...(horizon !== undefined ? { horizon } : {}),
+    },
+  );
   return response.data;
 };
 
@@ -52,14 +60,19 @@ export const getPredictionSplits = async (
 ): Promise<{
   splits: IPredictionSplit[];
   trainingDatasetId: number | null;
+  horizon: number | null;
 }> => {
   const response = await api.get<{
     splits: IPredictionSplit[];
     training_dataset_id: number | null;
+    horizon?: number | null;
   }>(`${predictEndpoint}/splits/${runId}`);
   return {
     splits: response.data.splits,
     trainingDatasetId: response.data.training_dataset_id,
+    // The horizon the run's backtest measured, for a task that predicts by
+    // horizon; null otherwise.
+    horizon: response.data.horizon ?? null,
   };
 };
 

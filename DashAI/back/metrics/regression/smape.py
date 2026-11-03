@@ -1,10 +1,9 @@
-"""DashAI sMAPE forecasting metric implementation."""
+"""DashAI sMAPE regression metric implementation."""
 
 from typing import TYPE_CHECKING
 
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.metrics.forecasting_metric import ForecastingMetric, PointMetricMixin
-from DashAI.back.metrics.regression_metric import prepare_to_metric
+from DashAI.back.metrics.regression_metric import RegressionMetric, prepare_to_metric
 
 if TYPE_CHECKING:
     import numpy as np
@@ -12,7 +11,7 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class SMAPE(PointMetricMixin, ForecastingMetric):
+class SMAPE(RegressionMetric):
     """Percentage error measured against the size of both values.
 
     Symmetric Mean Absolute Percentage Error divides each error by the average
@@ -48,17 +47,17 @@ class SMAPE(PointMetricMixin, ForecastingMetric):
         es=(
             "Error porcentual medido respecto al promedio del valor real y el "
             "predicho. Sigue definido cuando el valor real es cero y trata "
-            "igual la sobreestimacion y la subestimacion, a diferencia de MAPE."
+            "igual la sobreestimación y la subestimación, a diferencia de MAPE."
         ),
         pt=(
-            "Erro percentual medido em relacao a media do valor real e do "
-            "previsto. Permanece definido quando o valor real e zero e trata "
-            "igualmente super e subprevisao, ao contrario do MAPE."
+            "Erro percentual medido em relação à média do valor real e do "
+            "previsto. Permanece definido quando o valor real é zero e trata "
+            "igualmente super e subprevisão, ao contrário do MAPE."
         ),
         de=(
             "Prozentualer Fehler, gemessen am Mittel aus wahrem und "
             "vorhergesagtem Wert. Bleibt definiert, wenn der wahre Wert null "
-            "ist, und behandelt Ueber- und Unterschaetzung gleich, anders als "
+            "ist, und behandelt Über- und Unterschätzung gleich, anders als "
             "MAPE."
         ),
         zh=(

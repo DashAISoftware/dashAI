@@ -41,21 +41,20 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
     def get_metadata(cls) -> Dict[str, Any]:
         """Return metadata describing how this splitter carves the dataset.
 
-        ``geometry`` names the shape of the carve rather than the splitter, so
-        the frontend can draw a preview of the splits without knowing which
-        splitter produced them. It is declared rather than inferred from the
-        schema parameters: two splitters can take the same ``n_splits`` and
-        still lay their folds out differently, and a preview that guesses would
-        draw a confident picture of the wrong thing. A splitter whose shape has
-        no renderer yet leaves the default, and the frontend draws nothing.
+        ``geometry`` names the shape of the carve rather than the splitter. It
+        is declared rather than inferred from the schema parameters: two
+        splitters can take the same ``n_splits`` and still lay their folds out
+        differently. The preview the wizard draws is computed by
+        :meth:`preview`, by the splitter that knows its own shape; a splitter
+        with none returns None there, and the wizard says so.
 
         Returns
         -------
         Dict[str, Any]
             Mapping with ``partitioning``, which the frontend uses to decide
             whether the splitter belongs to the holdout or the
-            cross-validation strategy, and ``geometry``, which it uses to
-            preview the splits.
+            cross-validation strategy, and ``geometry``, the shape of the
+            carve.
         """
         return {"partitioning": cls.PARTITIONING, "geometry": cls.GEOMETRY}
 
@@ -131,6 +130,46 @@ class BaseSplitter(ConfigObject, metaclass=ABCMeta):
             }
         )
         return splits
+
+    @classmethod
+    def preview(
+        cls,
+        params: Dict[str, Any],
+        dataset: Dict[str, Any],
+        split_type: Optional[str] = None,
+        indexes: Optional[Dict[str, List[int]]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Describe how this splitter would carve a dataset, for the wizard.
+
+        The session wizard draws what this returns and enables its next step
+        only when ``errors`` is empty; it computes none of it. A splitter whose
+        shape has no preview returns None, and the wizard says so.
+
+        Parameters
+        ----------
+        params : dict
+            The splitter's parameters, as the session would store them.
+        dataset : dict
+            ``total_rows``, and for a predefined split the sizes of the
+            dataset's own partitions (``train_size``, ``val_size``,
+            ``test_size``).
+        split_type : str, optional
+            How a holdout is given: ``"random"`` (proportions), ``"manual"``
+            or ``"predefined"`` (row indexes). Folds and backtests ignore it.
+        indexes : dict, optional
+            Row indexes per partition, for the index modes.
+
+        Returns
+        -------
+        dict or None
+            ``rows`` to draw (each a list of ``{role, fraction}`` segments, or
+            an ellipsis standing for hidden rows), ``notes``, the ``shares``
+            of each role, the ``errors`` that make the configuration invalid
+            (``{key, values}``, for the frontend to translate) and the
+            ``partitions`` that receive rows, which pick the metrics a session
+            records.
+        """
+        return None
 
     def validate_size(self, n_rows: int) -> None:
         """Refuse a dataset this splitter cannot carve, before any run.

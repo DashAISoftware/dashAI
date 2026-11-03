@@ -48,17 +48,17 @@ class TemporalHoldoutSplitter(OriginSplitter):
             "last horizon steps. Never shuffles."
         ),
         es=(
-            "Reserva el final de una serie: el modelo se evalua en los pasos "
-            "del horizonte anteriores al test y luego se reajusta y se evalua "
-            "en los ultimos pasos del horizonte. Nunca mezcla."
+            "Reserva el final de una serie: el modelo se evalúa en los pasos "
+            "del horizonte anteriores al test y luego se reajusta y se evalúa "
+            "en los últimos pasos del horizonte. Nunca mezcla."
         ),
         pt=(
-            "Reserva o final de uma serie: o modelo e avaliado nos passos do "
-            "horizonte anteriores ao teste e depois e reajustado e avaliado "
-            "nos ultimos passos do horizonte. Nunca embaralha."
+            "Reserva o final de uma série: o modelo é avaliado nos passos do "
+            "horizonte anteriores ao teste e depois é reajustado e avaliado "
+            "nos últimos passos do horizonte. Nunca embaralha."
         ),
         de=(
-            "Haelt das Ende einer Zeitreihe zurueck: Das Modell wird auf den "
+            "Hält das Ende einer Zeitreihe zurück: Das Modell wird auf den "
             "Horizontschritten vor dem Test bewertet, dann neu angepasst und "
             "auf den letzten Horizontschritten bewertet. Es wird nie gemischt."
         ),

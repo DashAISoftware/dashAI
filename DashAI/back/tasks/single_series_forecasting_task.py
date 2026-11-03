@@ -58,15 +58,15 @@ class SingleSeriesForecastingTask(ForecastingTask):
         es=(
             "Predice los valores futuros de una serie temporal a partir de su "
             "propia historia. Toma una columna de fecha y una columna "
-            "numerica, sin ninguna otra variable."
+            "numérica, sin ninguna otra variable."
         ),
         pt=(
-            "Preve os valores futuros de uma serie temporal a partir da sua "
-            "propria historia. Recebe uma coluna de data e uma coluna "
-            "numerica, sem nenhuma outra variavel."
+            "Prevê os valores futuros de uma série temporal a partir da sua "
+            "própria história. Recebe uma coluna de data e uma coluna "
+            "numérica, sem nenhuma outra variável."
         ),
         de=(
-            "Sagt die zukuenftigen Werte einer Zeitreihe aus ihrer eigenen "
+            "Sagt die zukünftigen Werte einer Zeitreihe aus ihrer eigenen "
             "Vergangenheit voraus. Nimmt eine Datumsspalte und eine numerische "
             "Spalte, ohne weitere Variablen."
         ),
@@ -75,10 +75,11 @@ class SingleSeriesForecastingTask(ForecastingTask):
             "接受一个日期列和一个数值列，不使用其他变量。"
         ),
     )
+    ICON: str = "Timeline"
     DISPLAY_NAME: str = MultilingualString(
         en="Forecasting",
-        es="Pronostico",
-        pt="Previsao",
+        es="Pronóstico",
+        pt="Previsão",
         de="Zeitreihenprognose",
         zh="时间序列预测",
     )
@@ -116,7 +117,7 @@ class SingleSeriesForecastingTask(ForecastingTask):
 
     # The shared point metrics, listed here rather than naming this task from
     # the metric: ``RegressionMetric`` names only ``RegressionTask``.
-    COMPATIBLE_COMPONENTS = ["MAE", "RMSE"]
+    COMPATIBLE_COMPONENTS = ["MAE", "RMSE", "MAPE", "SMAPE"]
 
     # A trained model forecasts a number of steps past the end of its series;
     # there are no rows to hand it. A kind of forecasting whose dates are not

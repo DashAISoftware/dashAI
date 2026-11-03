@@ -15,6 +15,10 @@ class SinglePartitionEvaluationStrategy(BaseEvaluationStrategy):
 
     KIND: str = "holdout"
     SPLITTER_PARTITIONING = "holdout"
+    # The label of the session wizard's strategy toggle.
+    DISPLAY_NAME = MultilingualString(
+        en="Holdout", es="Holdout", pt="Holdout", de="Holdout", zh="留出法"
+    )
 
 
 class HoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
@@ -31,6 +35,8 @@ class HoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
     to the fit, which models use to watch training and stop early -- being
     given it to watch is not the same as being fitted on it.
     """
+
+    DEFAULT_SPLITTER = "HoldoutSplitter"
 
     DESCRIPTION = MultilingualString(
         en=(

@@ -35,20 +35,20 @@ class ExponentialSmoothingSchema(BaseSchema):
             ),
             es=(
                 "Si la serie deriva de forma sostenida hacia arriba o abajo. "
-                "'add' para una tendencia de tamano aproximadamente constante, "
+                "'add' para una tendencia de tamaño aproximadamente constante, "
                 "'mul' para una que crece con el nivel, 'none' para una serie "
-                "sin direccion."
+                "sin dirección."
             ),
             pt=(
-                "Se a serie deriva de forma sustentada para cima ou para "
-                "baixo. 'add' para uma tendencia de tamanho aproximadamente "
-                "constante, 'mul' para uma que cresce com o nivel, 'none' para "
-                "uma serie sem direcao."
+                "Se a série deriva de forma sustentada para cima ou para "
+                "baixo. 'add' para uma tendência de tamanho aproximadamente "
+                "constante, 'mul' para uma que cresce com o nível, 'none' para "
+                "uma série sem direção."
             ),
             de=(
-                "Ob die Reihe stetig steigt oder faellt. 'add' fuer einen "
-                "Trend etwa gleichbleibender Groesse, 'mul' fuer einen, der mit "
-                "dem Niveau waechst, 'none' fuer eine Reihe ohne Richtung."
+                "Ob die Reihe stetig steigt oder fällt. 'add' für einen "
+                "Trend etwa gleichbleibender Größe, 'mul' für einen, der mit "
+                "dem Niveau wächst, 'none' für eine Reihe ohne Richtung."
             ),
             zh=(
                 "序列是否持续上升或下降。'add' 表示幅度大致恒定的趋势，"
@@ -56,7 +56,7 @@ class ExponentialSmoothingSchema(BaseSchema):
             ),
         ),
         alias=MultilingualString(
-            en="Trend", es="Tendencia", pt="Tendencia", de="Trend", zh="趋势"
+            en="Trend", es="Tendencia", pt="Tendência", de="Trend", zh="趋势"
         ),
     )  # type: ignore
     seasonal: schema_field(
@@ -69,21 +69,21 @@ class ExponentialSmoothingSchema(BaseSchema):
                 "the level. Needs a season length above 1."
             ),
             es=(
-                "Si un patron se repite cada estacion. 'add' cuando la "
-                "oscilacion tiene un tamano similar en cada ciclo, 'mul' "
-                "cuando crece con el nivel. Requiere una longitud de estacion "
+                "Si un patrón se repite cada estación. 'add' cuando la "
+                "oscilación tiene un tamaño similar en cada ciclo, 'mul' "
+                "cuando crece con el nivel. Requiere una longitud de estación "
                 "mayor que 1."
             ),
             pt=(
-                "Se um padrao se repete a cada estacao. 'add' quando a "
-                "oscilacao tem tamanho semelhante em cada ciclo, 'mul' quando "
-                "cresce com o nivel. Requer um comprimento de estacao maior "
+                "Se um padrão se repete a cada estação. 'add' quando a "
+                "oscilação tem tamanho semelhante em cada ciclo, 'mul' quando "
+                "cresce com o nível. Requer um comprimento de estação maior "
                 "que 1."
             ),
             de=(
                 "Ob sich ein Muster jede Saison wiederholt. 'add', wenn der "
-                "Ausschlag pro Zyklus etwa gleich gross ist, 'mul', wenn er mit "
-                "dem Niveau waechst. Erfordert eine Saisonlaenge groesser 1."
+                "Ausschlag pro Zyklus etwa gleich groß ist, 'mul', wenn er mit "
+                "dem Niveau wächst. Erfordert eine Saisonlänge größer 1."
             ),
             zh=(
                 "是否存在每个季节重复的模式。'add' 表示每个周期波动幅度相近，"
@@ -113,19 +113,19 @@ class ExponentialSmoothingSchema(BaseSchema):
                 "data repeating yearly, 7 for daily data repeating weekly."
             ),
             es=(
-                "Cuantas observaciones forman un ciclo completo: 12 para datos "
-                "mensuales que se repiten cada ano, 7 para datos diarios que se "
+                "Cuántas observaciones forman un ciclo completo: 12 para datos "
+                "mensuales que se repiten cada año, 7 para datos diarios que se "
                 "repiten cada semana."
             ),
             pt=(
-                "Quantas observacoes formam um ciclo completo: 12 para dados "
-                "mensais que se repetem a cada ano, 7 para dados diarios que se "
+                "Quantas observações formam um ciclo completo: 12 para dados "
+                "mensais que se repetem a cada ano, 7 para dados diários que se "
                 "repetem a cada semana."
             ),
             de=(
-                "Wie viele Beobachtungen einen vollen Zyklus bilden: 12 fuer "
-                "monatliche Daten mit jaehrlicher Wiederholung, 7 fuer "
-                "taegliche mit woechentlicher."
+                "Wie viele Beobachtungen einen vollen Zyklus bilden: 12 für "
+                "monatliche Daten mit jährlicher Wiederholung, 7 für "
+                "tägliche mit wöchentlicher."
             ),
             zh=(
                 "一个完整周期包含多少个观测值：月度数据按年重复为 12，"
@@ -134,9 +134,9 @@ class ExponentialSmoothingSchema(BaseSchema):
         ),
         alias=MultilingualString(
             en="Season length",
-            es="Longitud de estacion",
-            pt="Comprimento da estacao",
-            de="Saisonlaenge",
+            es="Longitud de estación",
+            pt="Comprimento da estação",
+            de="Saisonlänge",
             zh="季节长度",
         ),
     )  # type: ignore
@@ -164,15 +164,15 @@ class ExponentialSmoothingSchema(BaseSchema):
                     "is selected."
                 ),
                 es=(
-                    "La longitud de estacion solo se usa cuando se elige un "
+                    "La longitud de estación solo se usa cuando se elige un "
                     "componente estacional."
                 ),
                 pt=(
-                    "O comprimento da estacao so e usado quando ha um "
+                    "O comprimento da estação só é usado quando há um "
                     "componente sazonal."
                 ),
                 de=(
-                    "Die Saisonlaenge wird nur bei gewaehlter saisonaler "
+                    "Die Saisonlänge wird nur bei gewählter saisonaler "
                     "Komponente verwendet."
                 ),
                 zh="季节长度仅在选择季节性成分时使用。",
@@ -221,20 +221,20 @@ class ExponentialSmoothing(SingleSeriesForecastingModel):
         es=(
             "Pronostica a partir de un promedio ponderado que favorece las "
             "observaciones recientes, con componentes opcionales de tendencia "
-            "y estacionalidad. El metodo Holt-Winters, y la mejor primera "
-            "opcion para una serie con estacionalidad visible."
+            "y estacionalidad. El método Holt-Winters, y la mejor primera "
+            "opción para una serie con estacionalidad visible."
         ),
         pt=(
-            "Preve a partir de uma media ponderada que favorece as observacoes "
-            "recentes, com componentes opcionais de tendencia e sazonalidade. "
-            "O metodo Holt-Winters, e a melhor primeira escolha para uma serie "
-            "com sazonalidade visivel."
+            "Prevê a partir de uma média ponderada que favorece as observações "
+            "recentes, com componentes opcionais de tendência e sazonalidade. "
+            "O método Holt-Winters, e a melhor primeira escolha para uma série "
+            "com sazonalidade visível."
         ),
         de=(
-            "Prognostiziert aus einem gewichteten Mittel, das juengere "
+            "Prognostiziert aus einem gewichteten Mittel, das jüngere "
             "Beobachtungen bevorzugt, mit optionalen Trend- und "
             "Saisonkomponenten. Das Holt-Winters-Verfahren und die bessere "
-            "erste Wahl fuer eine Reihe mit sichtbarer Saison."
+            "erste Wahl für eine Reihe mit sichtbarer Saison."
         ),
         zh=(
             "基于偏重近期观测的加权平均进行预测，可选加入趋势和季节性成分。"
@@ -244,8 +244,8 @@ class ExponentialSmoothing(SingleSeriesForecastingModel):
     DISPLAY_NAME = MultilingualString(
         en="Exponential Smoothing",
         es="Suavizado Exponencial",
-        pt="Suavizacao Exponencial",
-        de="Exponentielle Glaettung",
+        pt="Suavização Exponencial",
+        de="Exponentielle Glättung",
         zh="指数平滑",
     )
 

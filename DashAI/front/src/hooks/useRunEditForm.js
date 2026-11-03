@@ -3,6 +3,7 @@ import { useSnackbar } from "notistack";
 import { useTranslation } from "react-i18next";
 import useSchema from "./useSchema";
 import { updateRunParameters, getRunOperationsCount } from "../api/run";
+import { getApiErrorMessage } from "../utils/apiError";
 import { checkIfHaveOptimazers } from "../utils/schema";
 
 // A copy of `value` with every object's keys sorted, so two that only differ
@@ -207,9 +208,11 @@ export default function useRunEditForm({
       if (onSaved) onSaved();
     } catch (error) {
       console.error("Error updating run:", error);
+      // The backend says why it refused (a goal metric the task does not
+      // offer, for instance); axios's own message only gives the status.
       enqueueSnackbar(
         t("models:error.failedToUpdateRun", {
-          error: error.message || t("common:unknownError"),
+          error: getApiErrorMessage(error, t("common:unknownError")),
         }),
         { variant: "error" },
       );

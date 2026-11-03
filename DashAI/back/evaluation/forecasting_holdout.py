@@ -31,20 +31,20 @@ class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
         ),
         es=(
             "Corta la serie una sola vez, en orden temporal: el modelo entrena "
-            "con las filas mas antiguas y se evalua con las que vienen despues. "
-            "La particion de entrenamiento no se evalua, porque preguntarle a un "
+            "con las filas más antiguas y se evalúa con las que vienen después. "
+            "La partición de entrenamiento no se evalúa, porque preguntarle a un "
             "pronosticador por fechas con las que fue ajustado da un ajuste, no "
-            "un pronostico."
+            "un pronóstico."
         ),
         pt=(
-            "Corta a serie uma unica vez, em ordem temporal: o modelo treina nas "
-            "linhas mais antigas e e avaliado nas que vem depois. A particao de "
-            "treino nao e avaliada, porque perguntar a um previsor sobre datas "
-            "em que ele foi ajustado da um ajuste, nao uma previsao."
+            "Corta a série uma única vez, em ordem temporal: o modelo treina nas "
+            "linhas mais antigas e é avaliado nas que vêm depois. A partição de "
+            "treino não é avaliada, porque perguntar a um previsor sobre datas "
+            "em que ele foi ajustado dá um ajuste, não uma previsão."
         ),
         de=(
             "Teilt die Zeitreihe ein einziges Mal in zeitlicher Reihenfolge: Das "
-            "Modell trainiert auf den fruehesten Zeilen und wird auf den "
+            "Modell trainiert auf den frühesten Zeilen und wird auf den "
             "folgenden bewertet. Die Trainingspartition wird nicht bewertet, "
             "denn ein Prognosemodell, das nach Daten seiner eigenen Anpassung "
             "gefragt wird, liefert eine Anpassung und keine Prognose."
@@ -68,3 +68,10 @@ class ForecastingHoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
     KIND = "backtest"
     # Both take a splitter that cuts the series into origins, in steps.
     SPLITTER_PARTITIONING = "origins"
+    DEFAULT_SPLITTER = "TemporalHoldoutSplitter"
+    # Both splitters cut origins, so the partitioning alone would take the
+    # other strategy's: the same backtest under this strategy's label.
+    SPLITTERS: tuple = ("TemporalHoldoutSplitter",)
+    # A single validation origin leaves nothing to compare across origins,
+    # so the run offers its forecasts and no per-origin view.
+    RESULT_VIEWS: tuple = ("forecasts",)

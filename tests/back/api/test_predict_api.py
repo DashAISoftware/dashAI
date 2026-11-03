@@ -424,6 +424,8 @@ def test_splits_endpoint_offers_every_partition_of_an_ordinary_run(
         "all",
     ]
     assert all(split["rows"] > 0 for split in body["splits"])
+    # A task that predicts rows measured no horizon to start a form on.
+    assert body["horizon"] is None
 
 
 def test_splits_endpoint_run_not_found(client: TestClient):

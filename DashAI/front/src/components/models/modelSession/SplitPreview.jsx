@@ -1,10 +1,10 @@
-import React, { useMemo } from "react";
+import React from "react";
 import PropTypes from "prop-types";
-import { Box, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Stack, Tooltip, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import SplitsCard from "./SplitsCard";
-import { buildSplitPreview, SPLIT_ROLES } from "../../../utils/splitPreview";
+import { SPLIT_ROLES } from "../../../utils/splitPreview";
 
 const LEGEND_ORDER = [
   SPLIT_ROLES.TRAIN,
@@ -25,29 +25,26 @@ export const roleColors = (theme) => {
 
 const asPercent = (fraction) => Math.round((fraction ?? 0) * 100);
 
+/**
+ * Draw the preview of a split, as the splitter computed it on the dataset
+ * (POST /splitter/preview). Nothing here is computed: the bars, their labels,
+ * the shares and the notes all come with the preview.
+ *
+ * Without a preview it says why: it is being drawn, the splitter has none,
+ * the splitter refuses the parameters (`failure.invalid`, explained under its
+ * form), or the preview could not be computed, which can be retried and does
+ * not keep the wizard from going on.
+ */
 function SplitPreview({
-  geometry,
+  preview,
+  loading,
+  failure,
+  onRetry,
   description,
   splitterDescription,
-  splitType,
-  params,
-  indexes,
-  datasetInfo,
 }) {
   const theme = useTheme();
   const { t } = useTranslation(["experiments", "common"]);
-
-  const preview = useMemo(
-    () =>
-      buildSplitPreview({
-        geometry,
-        splitType,
-        params,
-        indexes,
-        datasetInfo,
-      }),
-    [geometry, splitType, params, indexes, datasetInfo],
-  );
 
   const explainers = [description, splitterDescription].filter(Boolean);
 
@@ -72,17 +69,44 @@ function SplitPreview({
             </Typography>
           ))}
           <Typography variant="caption" color="text.secondary">
-            {t("experiments:splitPreview.unavailable")}
+            {loading
+              ? t("experiments:splitPreview.loading")
+              : failure?.invalid
+                ? t("experiments:splitPreview.invalid")
+                : failure
+                  ? t("experiments:splitPreview.failed", {
+                      reason: failure.reason,
+                    })
+                  : t("experiments:splitPreview.unavailable")}
           </Typography>
+          {!loading && failure && !failure.invalid && onRetry && (
+            <Box>
+              <Button size="small" onClick={onRetry}>
+                {t("experiments:splitPreview.retry")}
+              </Button>
+            </Box>
+          )}
         </Stack>
       </SplitsCard>
     );
   }
 
-  const { rows, notes, error, shares } = preview;
-  const legendRoles = LEGEND_ORDER.filter(
-    (role) => (shares[role] ?? 0) > 0.0001,
-  );
+  const { rows, notes, shares } = preview;
+  // The legend the preview carries, when the shares would not say it (a
+  // backtest counts its windows in steps); otherwise each share as a
+  // percentage.
+  const legend =
+    preview.legend ??
+    LEGEND_ORDER.filter((role) => (shares[role] ?? 0) > 0.0001).map((role) => ({
+      role,
+      text: `${roleLabel(role)} ${asPercent(shares[role])}%`,
+    }));
+  const legendText = (entry) =>
+    entry.text ??
+    t(`experiments:splitPreview.legend.${entry.key}`, {
+      ...entry.values,
+      role: roleLabel(entry.role),
+    });
 
   return (
     <SplitsCard label={t("experiments:splitPreview.title")}>
@@ -101,11 +125,7 @@ function SplitPreview({
           </Stack>
         )}
 
-        {error ? (
-          <Typography variant="caption" color="error.main">
-            {t(`experiments:splitPreview.error.${error.key}`, error.values)}
-          </Typography>
-        ) : (
+        {rows.length > 0 && (
           <Stack spacing={1}>
             {rows.map((row) =>
               row.ellipsis ? (
@@ -119,8 +139,8 @@ function SplitPreview({
                     color="text.secondary"
                     sx={{ lineHeight: 1 }}
                   >
-                    {t("experiments:splitPreview.moreFolds", {
-                      hidden: row.hiddenCount,
+                    {t(`experiments:splitPreview.${row.label}`, {
+                      hidden: row.hidden_count,
                     })}
                   </Typography>
                 </Box>
@@ -135,7 +155,10 @@ function SplitPreview({
                     noWrap
                     sx={{ width: 58, flexShrink: 0, fontSize: "0.68rem" }}
                   >
-                    {t(row.labelKey, row.labelValues)}
+                    {t(
+                      `experiments:splitPreview.${row.label}`,
+                      row.label_values,
+                    )}
                   </Typography>
                   <Box
                     sx={{
@@ -175,11 +198,11 @@ function SplitPreview({
           </Stack>
         )}
 
-        {!error && legendRoles.length > 0 && (
+        {legend.length > 0 && (
           <Stack direction="row" flexWrap="wrap" sx={{ gap: 3 }}>
-            {legendRoles.map((role) => (
+            {legend.map((entry) => (
               <Box
-                key={role}
+                key={entry.role}
                 sx={{ display: "flex", alignItems: "center", gap: 1 }}
               >
                 <Box
@@ -187,7 +210,7 @@ function SplitPreview({
                     width: 8,
                     height: 8,
                     borderRadius: "2px",
-                    backgroundColor: colors[role],
+                    backgroundColor: colors[entry.role],
                   }}
                 />
                 <Typography
@@ -195,7 +218,7 @@ function SplitPreview({
                   color="text.secondary"
                   sx={{ fontSize: "0.68rem" }}
                 >
-                  {`${roleLabel(role)} ${asPercent(shares[role])}%`}
+                  {legendText(entry)}
                 </Typography>
               </Box>
             ))}
@@ -222,13 +245,28 @@ function SplitPreview({
 }
 
 SplitPreview.propTypes = {
-  geometry: PropTypes.string,
+  preview: PropTypes.shape({
+    rows: PropTypes.array.isRequired,
+    notes: PropTypes.array.isRequired,
+    shares: PropTypes.object.isRequired,
+    legend: PropTypes.arrayOf(
+      PropTypes.shape({
+        role: PropTypes.string.isRequired,
+        key: PropTypes.string.isRequired,
+        values: PropTypes.object,
+      }),
+    ),
+  }),
+  loading: PropTypes.bool,
+  // Why there is no preview: the backend's reason, and whether it refused the
+  // parameters (a 422) rather than failing to compute the preview.
+  failure: PropTypes.shape({
+    reason: PropTypes.string,
+    invalid: PropTypes.bool,
+  }),
+  onRetry: PropTypes.func,
   description: PropTypes.string,
   splitterDescription: PropTypes.string,
-  splitType: PropTypes.string,
-  params: PropTypes.object,
-  indexes: PropTypes.object,
-  datasetInfo: PropTypes.object,
 };
 
 export default SplitPreview;

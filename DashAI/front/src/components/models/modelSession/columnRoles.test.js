@@ -5,6 +5,7 @@ import {
   resolveSelection,
   selectionReady,
   selectionToRefs,
+  columnsByRole,
   sessionColumns,
   shownRoles,
 } from "./columnRoles";
@@ -206,5 +207,99 @@ describe("sessionColumns", () => {
       outputs: [],
       target: undefined,
     });
+  });
+});
+
+describe("defaultRoleSelection, by the types the roles declare", () => {
+  const typed = (role, types) => ({ ...role, types });
+  const TYPES = {
+    date: { type: "Date" },
+    promo: { type: "Float" },
+    sales: { type: "Float" },
+    label: { type: "Categorical" },
+    width: { type: "Float" },
+  };
+
+  test("a protected role takes, from the end, the last column of a type it accepts", () => {
+    expect(
+      defaultRoleSelection(
+        [
+          typed(INDEX, ["Date"]),
+          typed(SERIES, ["Float", "Integer"]),
+          typed(EXOGENOUS, ["Float", "Integer"]),
+        ],
+        ["date", "promo", "sales"],
+        TYPES,
+      ),
+    ).toEqual({ index: ["date"], series: ["sales"], exogenous: ["promo"] });
+  });
+
+  test("an x/y target that is not the last column is found by its type", () => {
+    expect(
+      defaultRoleSelection(
+        [
+          typed(FEATURES, ["Float", "Integer", "Categorical"]),
+          typed(TARGET, ["Categorical"]),
+        ],
+        ["sales", "label", "width"],
+        TYPES,
+      ),
+    ).toEqual({ features: ["sales", "width"], target: ["label"] });
+  });
+
+  test("an x/y target that is the last column stays the last column", () => {
+    expect(
+      defaultRoleSelection(
+        [typed(FEATURES, ["Float"]), typed(TARGET, ["Categorical"])],
+        ["sales", "width", "label"],
+        TYPES,
+      ),
+    ).toEqual({ features: ["sales", "width"], target: ["label"] });
+  });
+
+  test("no column of an accepted type: the last one, as without types", () => {
+    expect(
+      defaultRoleSelection(
+        [typed(FEATURES, ["Float"]), typed(TARGET, ["Categorical"])],
+        ["sales", "width"],
+        TYPES,
+      ),
+    ).toEqual({ features: ["sales"], target: ["width"] });
+  });
+});
+
+describe("columnsByRole", () => {
+  test("each role the task declares with the columns the session gave it, labelled as the task labels it", () => {
+    const session = {
+      column_roles: {
+        target: { columns: ["Species"] },
+        features: { columns: ["a", "b"] },
+      },
+    };
+
+    expect(columnsByRole(session, SUPERVISED)).toEqual([
+      { name: "features", label: "Features", columns: ["a", "b"] },
+      { name: "target", label: "Target", columns: ["Species"] },
+    ]);
+  });
+
+  test("a task with roles of its own: no input nor output, its roles", () => {
+    const session = {
+      column_roles: {
+        index: { columns: ["date"] },
+        series: { columns: ["sales"] },
+      },
+    };
+
+    expect(
+      columnsByRole(session, { column_roles: [INDEX, SERIES, EXOGENOUS] }),
+    ).toEqual([
+      { name: "index", label: "Index", columns: ["date"] },
+      { name: "series", label: "Series", columns: ["sales"] },
+    ]);
+  });
+
+  test("nothing without the task's declaration", () => {
+    expect(columnsByRole({ column_roles: {} }, undefined)).toEqual([]);
   });
 });

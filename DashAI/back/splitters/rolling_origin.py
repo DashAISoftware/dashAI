@@ -27,12 +27,12 @@ class RollingOriginSplitterSchema(BaseSchema):
                 "horizon after the last and each with more history."
             ),
             es=(
-                "En cuantas ventanas de validacion se evalua el modelo, cada "
-                "una un horizonte despues de la anterior y con mas historia."
+                "En cuántas ventanas de validación se evalúa el modelo, cada "
+                "una un horizonte después de la anterior y con más historia."
             ),
             pt=(
-                "Em quantas janelas de validacao o modelo e avaliado, cada uma "
-                "um horizonte depois da anterior e com mais historia."
+                "Em quantas janelas de validação o modelo é avaliado, cada uma "
+                "um horizonte depois da anterior e com mais história."
             ),
             de=(
                 "Auf wie vielen Validierungsfenstern das Modell bewertet wird, "
@@ -42,9 +42,9 @@ class RollingOriginSplitterSchema(BaseSchema):
         ),
         alias=MultilingualString(
             en="Number of origins",
-            es="Numero de origenes",
-            pt="Numero de origens",
-            de="Anzahl der Ursprunge",
+            es="Número de orígenes",
+            pt="Número de origens",
+            de="Anzahl der Ursprünge",
             zh="起点数量",
         ),
     )  # type: ignore
@@ -79,20 +79,20 @@ class RollingOriginSplitter(OriginSplitter):
         ),
         es=(
             "Avanza el origen a lo largo de una serie. El modelo se ajusta con "
-            "todo lo anterior a cada origen y se evalua en los pasos del "
+            "todo lo anterior a cada origen y se evalúa en los pasos del "
             "horizonte siguientes; luego el origen avanza un horizonte. El "
-            "ultimo horizonte es el test."
+            "último horizonte es el test."
         ),
         pt=(
-            "Avanca a origem ao longo de uma serie. O modelo e ajustado com "
+            "Avança a origem ao longo de uma série. O modelo é ajustado com "
             "tudo o que vem antes de cada origem e avaliado nos passos do "
-            "horizonte seguintes; entao a origem avanca um horizonte. O ultimo "
-            "horizonte e o teste."
+            "horizonte seguintes; então a origem avança um horizonte. O último "
+            "horizonte é o teste."
         ),
         de=(
             "Schiebt den Ursprung durch eine Zeitreihe. Das Modell wird auf "
             "allem vor jedem Ursprung angepasst und auf den folgenden "
-            "Horizontschritten bewertet; dann rueckt der Ursprung um einen "
+            "Horizontschritten bewertet; dann rückt der Ursprung um einen "
             "Horizont weiter. Der letzte Horizont ist der Test."
         ),
         zh=(
@@ -104,8 +104,8 @@ class RollingOriginSplitter(OriginSplitter):
     COMPATIBLE_COMPONENTS = ["SingleSeriesForecastingTask"]
     DISPLAY_NAME: str = MultilingualString(
         en="Rolling Origin",
-        es="Origen Movil",
-        pt="Origem Movel",
+        es="Origen Móvil",
+        pt="Origem Móvel",
         de="Rollierender Ursprung",
         zh="滚动起点",
     )

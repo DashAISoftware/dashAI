@@ -92,99 +92,65 @@ export const buildSplitsPayload = ({
   return payload;
 };
 
-/** Splitters that produce one set of partitions rather than several folds. */
-export const HOLDOUT_PARTITIONING = "holdout";
-/** Splitters that produce several train and validation pairs. */
-export const FOLD_PARTITIONING = "folds";
-
 /**
- * Keep only the splitters that pair with a given evaluation strategy.
+ * The splitters a strategy takes, among those the task offers.
  *
- * The backend reports how each splitter carves the dataset, so which strategy
- * it belongs to is read from the component rather than inferred from its name.
+ * The strategy declares the partitioning of the splitters it takes
+ * (`splitter_partitioning`), and each splitter how it carves the dataset
+ * (`partitioning`), so which splitter goes with which strategy is read from
+ * both rather than inferred from a name or from the strategy's kind. A
+ * strategy that names the splitters it takes (`splitters`) takes only those.
  *
+ * @param {object} strategy the selected EvaluationStrategy component
  * @param {Array} splitters splitter components compatible with the task
- * @param {string} partitioning HOLDOUT_PARTITIONING or FOLD_PARTITIONING
- * @returns {Array} the splitters that carve the dataset that way
+ * @returns {Array} the splitters the strategy takes, in the order offered
  */
-export const filterByPartitioning = (splitters, partitioning) =>
-  (splitters ?? []).filter(
-    (splitter) => splitter?.metadata?.partitioning === partitioning,
+export const splittersOf = (strategy, splitters) => {
+  const partitioning = strategy?.metadata?.splitter_partitioning;
+  if (!partitioning) return [];
+  const named = strategy?.metadata?.splitters ?? null;
+  return (splitters ?? []).filter(
+    (splitter) =>
+      splitter?.metadata?.partitioning === partitioning &&
+      (named === null || named.includes(splitter?.name)),
   );
-
-/**
- * Resolve the registry name of the splitter a session configuration uses.
- *
- * Both strategies now pick from the splitters the task allows. Holdout used to
- * return the literal "HoldoutSplitter" whatever the task was, which offered a
- * shuffling splitter for time series: shuffling a series trains a model on its
- * own future and reports a score it could never reproduce, with nothing raising
- * an error.
- *
- * @param {string} strategyKind the split shape of the selected strategy
- * @param {object} cvType the splitter component selected for cross-validation
- * @param {object} holdoutType the splitter component selected for holdout
- * @returns {string|null} the splitter name, or null when none is resolved yet
- */
-export const resolveSplitterName = (
-  strategyKind,
-  cvType,
-  holdoutType = null,
-) => {
-  if (strategyKind === STRATEGY_KINDS.HOLDOUT) return holdoutType?.name ?? null;
-  if (strategyKind === STRATEGY_KINDS.CV) return cvType?.name ?? null;
-  return null;
 };
 
 /**
- * Choose which holdout splitter a task should start on.
+ * The splitter a strategy starts a session on.
  *
- * Every task that had one before keeps it, so enabling this selection changes
- * nothing for them. A task without it, which today means forecasting, takes the
- * only holdout splitter it allows.
+ * The one it declares (`default_splitter`) when the task offers it, and the
+ * first one it takes otherwise.
  *
- * @param {Array} holdoutSplitters the task's holdout splitter components
+ * @param {object} strategy the selected EvaluationStrategy component
+ * @param {Array} splitters the splitters the strategy takes
  * @returns {object|null} the splitter to select by default
  */
-export const defaultHoldoutSplitter = (holdoutSplitters) => {
-  const options = holdoutSplitters ?? [];
+export const defaultSplitterOf = (strategy, splitters) => {
+  const options = splitters ?? [];
+  const declared = strategy?.metadata?.default_splitter;
   return (
-    options.find((splitter) => splitter?.name === "HoldoutSplitter") ??
+    options.find((splitter) => splitter?.name === declared) ??
     options[0] ??
     null
   );
 };
 
 /**
- * Report whether a splits payload gives a partition any rows.
+ * The metric lists of a new session, one per partition.
  *
- * Cross-validation splits every fold into train and validation, so those two
- * always receive rows; it only fills a test partition when the session reserved
- * rows the folds never see. Index modes carry row indexes, random splits carry
- * proportions, and payloads written before the splits followed the splitter
- * schema carry the indexes under the partition names.
+ * Every metric the task offers is recorded on each partition that receives
+ * rows, as the splitter's preview says; a partition without rows records none.
  *
- * @param {object} splits a splits payload
- * @param {string} partition one of "train", "validation", "test"
- * @returns {boolean} true when the partition receives rows
+ * @param {string[]|null} partitions the partitions with rows
+ * @param {string[]} metricNames the metrics the task offers
+ * @returns {{train: string[], validation: string[], test: string[]}}
  */
-export const hasPartition = (splits, partition) => {
-  if (!splits) return false;
-  if (splits.splitType === SPLIT_TYPES.CV) {
-    // Sessions written while the reserved proportion was still called
-    // "holdout" carry that key instead, the same fallback the backend
-    // normalizer applies.
-    if (partition === "test")
-      return Number(splits.test_size ?? splits.holdout ?? 0) > 0;
-    return true;
-  }
-
-  const indexes = splits.splitted_indexes;
-  if (indexes) {
-    return (indexes[PARTITION_INDEX_KEYS[partition]] ?? []).length > 0;
-  }
-
-  const value = splits[partition];
-  if (Array.isArray(value)) return value.length > 0;
-  return typeof value === "number" && value !== 0;
+export const metricsByPartition = (partitions, metricNames) => {
+  const has = (partition) => (partitions ?? []).includes(partition);
+  return {
+    train: has("train") ? metricNames : [],
+    validation: has("validation") ? metricNames : [],
+    test: has("test") ? metricNames : [],
+  };
 };

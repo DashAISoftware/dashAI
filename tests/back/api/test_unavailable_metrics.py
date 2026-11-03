@@ -25,7 +25,7 @@ from DashAI.back.dependencies.database.models import Dataset, Metric, Run
 from DashAI.back.job.base_job import JobError
 from DashAI.back.job.dataset_job import DatasetJob
 from DashAI.back.job.model_job import ModelJob
-from DashAI.back.metrics.forecasting.mape import MAPE
+from DashAI.back.metrics.regression.mape import MAPE
 from DashAI.back.model_package.export import build_package
 from DashAI.back.session_package.export import build_session_package
 from DashAI.back.session_package.load import import_session_package

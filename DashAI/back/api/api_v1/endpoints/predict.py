@@ -65,7 +65,7 @@ async def create_prediction(
     dict
         The prediction created. For a horizon longer than the one the run was
         evaluated on, ``unevaluated_steps`` says how many of its steps no
-        backtest measured.
+        backtest measured, and ``evaluated_horizon`` how many it did.
 
     Raises
     ------
@@ -105,9 +105,10 @@ async def create_prediction(
         db.commit()
         db.refresh(prediction)
         if unevaluated_steps:
-            # Not a column: a warning about this request, for the form that
-            # sent it.
+            # Not columns: a warning about this request, for the form that
+            # sent it, with the horizon the backtest measured.
             prediction.unevaluated_steps = unevaluated_steps
+            prediction.evaluated_horizon = _evaluated_horizon(run, task)
         return prediction
 
 
@@ -154,11 +155,33 @@ def _check_prediction_mode(params, run, model_session, task) -> int:
                 "give the horizon, the number of steps to forecast."
             ),
         )
-    if run.status != RunStatus.FINISHED:
+    evaluated = _evaluated_horizon(run, task)
+    if evaluated is None:
         # Nothing was measured yet; the job reports the run that cannot predict.
         return 0
+    return max(0, params.horizon - evaluated)
+
+
+def _evaluated_horizon(run, task):
+    """The horizon a run's backtest measured, or None when there is none.
+
+    None for a task that predicts rows and for a run that has not finished.
+    The horizon is the one the run was cut with, which is in its cuts: the
+    session's payload may leave it out and let the splitter fall back to its
+    own.
+
+    Raises
+    ------
+    HTTPException
+        500 for a finished run of a task that predicts by horizon with no
+        horizon in its cuts, which a backtest always writes.
+    """
+    if getattr(task, "PREDICTION_MODE", "rows") != "horizon":
+        return None
+    if run.status != RunStatus.FINISHED:
+        return None
     try:
-        evaluated = int(json.loads(run.split_indexes)["horizon"])
+        return int(json.loads(run.split_indexes)["horizon"])
     except (TypeError, ValueError, KeyError) as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -167,7 +190,6 @@ def _check_prediction_mode(params, run, model_session, task) -> int:
                 "horizon it was measured on is unknown: train it again."
             ),
         ) from e
-    return max(0, params.horizon - evaluated)
 
 
 @router.get("/")
@@ -250,7 +272,9 @@ async def get_prediction_splits(
     -------
     dict
         A ``splits`` list of ``{"name", "rows"}`` entries, empty when the run
-        has no partition worth offering.
+        has no partition worth offering; the ``training_dataset_id``; and the
+        ``horizon`` the run's backtest measured, which a form that asks for a
+        horizon starts on, or None for a task that predicts rows.
 
     Raises
     ------
@@ -276,6 +300,12 @@ async def get_prediction_splits(
         training_dataset_id = model_session.dataset_id
         task_name = model_session.task_name
         evaluation_strategy = model_session.evaluation_strategy
+        task = (
+            component_registry[task_name]["class"]
+            if task_name in component_registry
+            else None
+        )
+        horizon = _evaluated_horizon(run, task)
 
     try:
         splits = predictable_splits(
@@ -290,7 +320,11 @@ async def get_prediction_splits(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
         ) from e
 
-    return {"splits": splits, "training_dataset_id": training_dataset_id}
+    return {
+        "splits": splits,
+        "training_dataset_id": training_dataset_id,
+        "horizon": horizon,
+    }
 
 
 @router.get("/filter_datasets")

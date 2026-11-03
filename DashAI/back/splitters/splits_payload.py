@@ -25,6 +25,11 @@ INDEX_KEY_BY_SPLIT = {
 
 META_KEYS = ("splitter_name", "splitType", "splitted_indexes", "seed")
 
+# The holdout modes that give the partitions as row indexes. Their payload
+# carries ``splitted_indexes`` and none of the proportions the form still holds
+# from the random mode.
+INDEX_SPLIT_TYPES = ("manual", "predefined")
+
 
 def normalize_splits_payload(splits_data: Dict[str, Any]) -> Dict[str, Any]:
     """Translate a legacy splits payload into the current contract.
@@ -110,6 +115,41 @@ def _declared_parameters(splitter_name: str) -> Optional[set]:
         return None
     schema = getattr(registry[splitter_name]["class"], "SCHEMA", None)
     return set(schema.model_fields) if schema is not None else None
+
+
+def validate_splitter_parameters(
+    splitter_class: Type, splits_data: Dict[str, Any]
+) -> None:
+    """Check a splitter's parameters against its schema, as a session stores them.
+
+    The meta keys are not the schema's, and any parameter left out is filled
+    with the schema placeholder, which is the value the frontend form would
+    have submitted, so a manual split (which carries row indexes instead of
+    proportions) validates too. The session API checks a payload with this
+    before creating the session, and the split preview before drawing one, so
+    the wizard never goes on with a configuration the session would refuse.
+
+    Parameters
+    ----------
+    splitter_class : type
+        The splitter the parameters are for.
+    splits_data : dict
+        The splits payload, normalized, or the parameters alone.
+
+    Raises
+    ------
+    pydantic.ValidationError
+        If the schema refuses the parameters.
+    """
+    from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
+
+    schema = getattr(splitter_class, "SCHEMA", None)
+    if schema is None:
+        return
+    parameters = {
+        key: value for key, value in splits_data.items() if key not in META_KEYS
+    }
+    schema.model_validate({**schema_placeholder_defaults(splitter_class), **parameters})
 
 
 def splitter_class_for(session_splits: Dict[str, Any], component_registry) -> Type:

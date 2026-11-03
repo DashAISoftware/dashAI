@@ -39,17 +39,17 @@ class NaiveForecaster(SingleSeriesForecastingModel):
             "using."
         ),
         es=(
-            "Predice que cada valor futuro es igual al ultimo observado. Es la "
-            "linea base que cualquier modelo de pronostico real debe superar "
+            "Predice que cada valor futuro es igual al último observado. Es la "
+            "línea base que cualquier modelo de pronóstico real debe superar "
             "para valer la pena."
         ),
         pt=(
-            "Preve que cada valor futuro e igual ao ultimo observado. E a "
-            "linha de base que qualquer modelo de previsao real precisa "
+            "Prevê que cada valor futuro é igual ao último observado. É a "
+            "linha de base que qualquer modelo de previsão real precisa "
             "superar para valer a pena."
         ),
         de=(
-            "Sagt voraus, dass jeder zukuenftige Wert dem zuletzt beobachteten "
+            "Sagt voraus, dass jeder zukünftige Wert dem zuletzt beobachteten "
             "entspricht. Die Grundlinie, die jedes echte Prognosemodell "
             "schlagen muss, um sich zu lohnen."
         ),
@@ -60,8 +60,8 @@ class NaiveForecaster(SingleSeriesForecastingModel):
     )
     DISPLAY_NAME = MultilingualString(
         en="Naive Forecaster",
-        es="Pronostico Ingenuo",
-        pt="Previsao Ingenua",
+        es="Pronóstico Ingenuo",
+        pt="Previsão Ingênua",
         de="Naive Prognose",
         zh="朴素预测",
     )

@@ -134,6 +134,15 @@ def test_a_horizon_past_the_evaluated_one_says_how_many_steps_were_not(client, t
     assert response.json()["unevaluated_steps"] == 2
 
 
+def test_the_warning_names_the_horizon_the_backtest_measured(client, trained):
+    # The form's warning says how far the backtest went, from this answer,
+    # without a second request that may fail.
+    response = _predict(client, run_id=trained["run_id"], horizon=5)
+
+    assert response.status_code == 200, response.text
+    assert response.json()["evaluated_horizon"] == 3
+
+
 @pytest.fixture(scope="module", name="default_horizon_run")
 def a_run_whose_session_left_the_horizon_out(client, trained):
     # The splitter falls back to its default horizon, 6, and the run's cuts
@@ -157,6 +166,21 @@ def test_the_evaluated_horizon_is_the_one_the_run_was_cut_with(
 
     assert response.status_code == 200, response.text
     assert response.json()["unevaluated_steps"] == 18
+
+
+def test_the_prediction_options_give_the_horizon_the_run_measured(
+    client, trained, default_horizon_run
+):
+    # The form starts on the horizon the run was evaluated on; the frontend
+    # reads it here instead of from the run's cuts, whose format it would
+    # otherwise have to know.
+    measured = client.get(f"/api/v1/predict/splits/{trained['run_id']}")
+    defaulted = client.get(f"/api/v1/predict/splits/{default_horizon_run}")
+
+    assert measured.status_code == 200, measured.text
+    assert measured.json()["horizon"] == 3
+    assert measured.json()["splits"] == []
+    assert defaulted.json()["horizon"] == 6
 
 
 def test_a_backtest_run_without_its_cuts_is_an_error_not_a_silence(
