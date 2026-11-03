@@ -14,6 +14,8 @@ EXPECTED_UNITS = {
     "ScoreClustersUnit",
     "PrepareSeriesUnit",
     "ApplyCutPreprocessingUnit",
+    "PrepareFutureUnit",
+    "ForecastFutureUnit",
     "BuildForecasterUnit",
     "BacktestForecasterUnit",
     "ScoreForecastsUnit",

@@ -600,6 +600,7 @@ from DashAI.back.units.fit_model_over_nested_folds_unit import (
 )
 from DashAI.back.units.fit_model_unit import FitModelUnit
 from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
+from DashAI.back.units.forecast_future_unit import ForecastFutureUnit
 from DashAI.back.units.forecast_horizon_unit import ForecastHorizonUnit
 from DashAI.back.units.generate_global_explanation_unit import (
     GenerateGlobalExplanationUnit,
@@ -619,6 +620,7 @@ from DashAI.back.units.predict_unit import PredictUnit
 from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
 from DashAI.back.units.prepare_explanation_data_unit import PrepareExplanationDataUnit
+from DashAI.back.units.prepare_future_unit import PrepareFutureUnit
 from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
 from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
 from DashAI.back.units.run_exploration_unit import RunExplorationUnit
@@ -847,6 +849,8 @@ def get_initial_components():
         ScoreClustersUnit,
         PrepareSeriesUnit,
         ApplyCutPreprocessingUnit,
+        PrepareFutureUnit,
+        ForecastFutureUnit,
         BuildForecasterUnit,
         BacktestForecasterUnit,
         ScoreForecastsUnit,

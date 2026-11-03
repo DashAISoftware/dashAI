@@ -132,6 +132,48 @@ def forecast_origin(
     }
 
 
+def model_grid(model) -> "TimeGrid":
+    """The grid a kept model was fitted on, which dates the steps it forecasts.
+
+    Raises
+    ------
+    JobError
+        If the model carries none: it was not kept by a forecasting run.
+    """
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.tasks.time_grid import TimeGrid
+
+    grid_ref = getattr(model, "time_grid", None)
+    if not grid_ref:
+        raise JobError(
+            "The model has no grid to name the dates of its forecast: it "
+            "was not trained by a forecasting run. Train it again."
+        )
+    return TimeGrid.from_ref(grid_ref)
+
+
+def forecast_steps(model, horizon: int, x_future=None) -> "np.ndarray":
+    """The kept model's point forecast of the steps after its series.
+
+    Shared by the prediction by horizon and the one with future exogenous
+    values, so the two fail with the same message.
+
+    Raises
+    ------
+    JobError
+        If the model cannot forecast them.
+    """
+    import logging
+
+    from DashAI.back.job.base_job import JobError
+
+    try:
+        return model.predict(int(horizon), x_future=x_future).point
+    except Exception as e:
+        logging.getLogger(__name__).exception(e)
+        raise JobError(f"The model could not forecast {horizon} steps: {e}") from e
+
+
 def exogenous_for(
     model_class: type, parameters: Optional[Dict[str, Any]], cut: Dict[str, Any]
 ) -> Optional["np.ndarray"]:

@@ -384,7 +384,6 @@ def _future(n: int = 4) -> pd.DataFrame:
     return _frame(N_STEPS + n).iloc[N_STEPS:][["date", "promo"]].reset_index(drop=True)
 
 
-@pending("8")
 def test_a_run_that_used_exogenous_declares_what_its_prediction_needs(
     client, exogenous_run
 ):
@@ -396,7 +395,6 @@ def test_a_run_that_used_exogenous_declares_what_its_prediction_needs(
     }
 
 
-@pending("8")
 def test_a_dataset_of_future_rows_is_forecast_with_its_exogenous_values(
     client, tmp_path, exogenous_run
 ):
@@ -417,7 +415,6 @@ def test_a_dataset_of_future_rows_is_forecast_with_its_exogenous_values(
     assert len(saved) == len(future)
 
 
-@pending("8")
 def test_a_future_that_misses_a_date_of_the_grid_is_refused_with_the_date(
     client, tmp_path, exogenous_run
 ):
@@ -433,7 +430,6 @@ def test_a_future_that_misses_a_date_of_the_grid_is_refused_with_the_date(
         PredictJob(prediction_id=response.json()["id"]).run()
 
 
-@pending("8")
 def test_a_manual_future_starts_from_the_next_dates_of_the_grid(client, exogenous_run):
     response = client.get(
         f"/api/v1/predict/future-dates/{exogenous_run}", params={"horizon": 2}
@@ -443,7 +439,6 @@ def test_a_manual_future_starts_from_the_next_dates_of_the_grid(client, exogenou
     assert response.json()["dates"] == ["2024-01-01", "2024-02-01"]
 
 
-@pending("8")
 def test_a_manual_future_is_forecast_through_the_job(client, exogenous_run):
     response = client.post("/api/v1/predict/", json={"run_id": exogenous_run})
     assert response.status_code == 200, response.text
