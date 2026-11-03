@@ -36,7 +36,8 @@ import { getApiErrorMessage } from "../../utils/apiError";
  * A run that read exogenous variables declares their columns (`exogenous`)
  * and forecasts their future values instead: from a dataset of the future
  * rows, or typed in on the next dates of its grid, which the backend gives.
- * The horizon is then the number of rows.
+ * The horizon is then the number of rows, and the warning belongs to them: to
+ * the dataset chosen, or to as many rows as were typed in.
  */
 
 // Exogenous columns of these types are typed in as numbers.
@@ -46,8 +47,10 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
   const { t } = useTranslation(["prediction", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const [horizon, setHorizon] = useState("");
-  // The warning of the last prediction asked for, with the horizon it was
-  // asked for: { horizon, unevaluated, evaluated }.
+  // The warning of the last prediction asked for, with what it was asked
+  // for: { horizon } here, { mode: "manual", rows } or { mode: "dataset",
+  // datasetId } for a run that read exogenous variables; plus { unevaluated,
+  // evaluated }, as POST /predict/ answered.
   const [warning, setWarning] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // The columns a run that read exogenous variables needs the future of.
@@ -60,6 +63,7 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
   const [datasetRunState, setDatasetRunState] = useState({
     canRun: false,
     isSubmitting: false,
+    datasetId: null,
   });
 
   useEffect(() => {
@@ -119,17 +123,22 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
       return typed;
     });
 
+  const answered = (prediction) => ({
+    unevaluated: prediction.unevaluated_steps ?? 0,
+    evaluated: prediction.evaluated_horizon ?? null,
+  });
+
   const handleRun = async () => {
     setIsSubmitting(true);
     try {
-      const prediction = exogenous
-        ? await createPrediction(run.id, null, null)
-        : await createPrediction(run.id, null, null, steps);
-      setWarning({
-        horizon: steps,
-        unevaluated: prediction.unevaluated_steps ?? 0,
-        evaluated: prediction.evaluated_horizon ?? null,
-      });
+      // With exogenous variables the horizon is the number of rows typed in.
+      const asked = exogenous ? futureRows.length : steps;
+      const prediction = await createPrediction(run.id, null, null, asked);
+      setWarning(
+        exogenous
+          ? { mode: "manual", rows: asked, ...answered(prediction) }
+          : { horizon: asked, ...answered(prediction) },
+      );
       const jobResponse = exogenous
         ? await enqueuePredictionJob(prediction.id, manualInput())
         : await enqueuePredictionJob(prediction.id);
@@ -183,6 +192,25 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
     }
   };
 
+  // The warning shows while the form still holds what it was asked for.
+  const warningHolds =
+    warning &&
+    warning.unevaluated > 0 &&
+    (exogenous
+      ? warning.mode === mode &&
+        (mode === "manual"
+          ? warning.rows === futureRows.length
+          : warning.datasetId === datasetRunState.datasetId)
+      : warning.horizon === steps);
+  const warningAlert = warningHolds && (
+    <Alert severity="warning">
+      {t("prediction:message.unevaluatedSteps", {
+        count: warning.unevaluated,
+        evaluated: warning.evaluated,
+      })}
+    </Alert>
+  );
+
   const runButton = (onClick, disabled, loading) => (
     <LoadingButton
       variant="contained"
@@ -226,6 +254,13 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
               onClose={() => {}}
               runRef={datasetRunRef}
               onStateChange={setDatasetRunState}
+              onCreated={(prediction) =>
+                setWarning({
+                  mode: "dataset",
+                  datasetId: prediction.dataset_id ?? null,
+                  ...answered(prediction),
+                })
+              }
             />
             {runButton(
               () => datasetRunRef.current?.(),
@@ -289,6 +324,7 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
             {typedIn && runButton(handleRun, !allTyped, isSubmitting)}
           </Box>
         )}
+        {warningAlert}
       </Box>
     );
   }
@@ -321,14 +357,7 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
           {t("prediction:button.runPrediction")}
         </LoadingButton>
       </Box>
-      {warning && warning.horizon === steps && warning.unevaluated > 0 && (
-        <Alert severity="warning">
-          {t("prediction:message.unevaluatedSteps", {
-            count: warning.unevaluated,
-            evaluated: warning.evaluated,
-          })}
-        </Alert>
-      )}
+      {warningAlert}
     </Box>
   );
 }

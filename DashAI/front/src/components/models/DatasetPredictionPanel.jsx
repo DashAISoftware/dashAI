@@ -27,6 +27,7 @@ export default function DatasetPredictionPanel({
   onClose,
   runRef = null,
   onStateChange = null,
+  onCreated = null,
 }) {
   const [datasets, setDatasets] = useState([]);
   const [selectedDataset, setSelectedDataset] = useState(null);
@@ -53,6 +54,7 @@ export default function DatasetPredictionPanel({
     onStateChange?.({
       canRun: !!selectedDataset && !isSubmitting,
       isSubmitting,
+      datasetId: selectedDataset?.id ?? null,
     });
   }, [selectedDataset, isSubmitting, onStateChange]);
 
@@ -99,6 +101,9 @@ export default function DatasetPredictionPanel({
         selectedDataset.id,
         selectedSplit !== "all" ? selectedSplit : null,
       );
+      // What POST /predict/ answered, its warnings included, for a form
+      // that shows them.
+      onCreated?.(prediction);
       const jobResponse = await enqueuePredictionJob(prediction.id);
 
       if (!jobResponse || !jobResponse.id) {
@@ -227,4 +232,7 @@ DatasetPredictionPanel.propTypes = {
   }),
   onSaved: PropTypes.func,
   onClose: PropTypes.func.isRequired,
+  runRef: PropTypes.shape({ current: PropTypes.any }),
+  onStateChange: PropTypes.func,
+  onCreated: PropTypes.func,
 };
