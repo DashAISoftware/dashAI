@@ -335,9 +335,13 @@ def test_with_the_switch_off_arima_forecasts_as_without_exogenous(client, tmp_pa
     with_role = _session(client, tmp_path / "a", frame, exogenous=PROMO)
     without = _session(client, tmp_path / "b", frame)
 
+    on = _train(client, with_role, "ARIMA", ARIMA_PARAMS)
     off = _train(client, with_role, "ARIMA", {**ARIMA_PARAMS, "use_exogenous": False})
     plain = _train(client, without, "ARIMA", ARIMA_PARAMS)
 
+    # The switch is what tells the two runs of the session apart: on, the
+    # promotion moves the forecasts; off, they are the ones without the role.
+    assert _forecasts(client, on)["origins"] != _forecasts(client, off)["origins"]
     assert _forecasts(client, off)["origins"] == _forecasts(client, plain)["origins"]
 
 

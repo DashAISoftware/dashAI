@@ -108,6 +108,67 @@ def test_only_arima_takes_exogenous_variables():
     assert ARIMA.EXOGENOUS == "optional"
     for model_class in (NaiveForecaster, SeasonalNaiveForecaster, ExponentialSmoothing):
         assert model_class.EXOGENOUS == "none"
+    # Published, so the session can mark the models that will not use them.
+    for model_class in ALL_MODELS:
+        assert model_class.get_metadata()["exogenous"] == model_class.EXOGENOUS
+
+
+def test_a_model_that_takes_exogenous_variables_can_be_told_not_to():
+    # The switch compares the same model with and without them, so it is a
+    # choice of the run and never something a search tunes.
+    field = ARIMA.get_schema()["properties"]["use_exogenous"]
+    assert field["type"] == "boolean"
+    assert field["placeholder"] is True
+    assert "use_exogenous" not in NaiveForecaster.get_schema()["properties"]
+    assert ARIMA().use_exogenous is True
+    assert ARIMA(use_exogenous=False).use_exogenous is False
+
+
+@pytest.mark.parametrize(
+    ("x", "match"),
+    [
+        (np.arange(30.0), "one column per variable"),
+        (np.full((30, 1), np.nan), "not finite"),
+    ],
+    ids=["one-dimensional", "not finite"],
+)
+def test_exogenous_variables_are_a_finite_matrix(x, match):
+    with pytest.raises(ValueError, match=match):
+        ARIMA(p=1, d=0, q=0).fit(SERIES, x=x)
+
+
+def test_the_future_has_the_columns_the_model_was_fitted_on():
+    steps = np.arange(len(SERIES), dtype=float)
+    x = np.column_stack([np.sin(steps), np.cos(steps)])
+    model = ARIMA(p=1, d=0, q=0).fit(SERIES, x=x)
+
+    with pytest.raises(ValueError, match="2 exogenous variable"):
+        model.predict(3, x_future=np.ones((3, 1)))
+
+
+@pytest.mark.parametrize(
+    ("model_class", "params", "has_exogenous", "used", "reason"),
+    [
+        (ARIMA, {}, True, True, None),
+        (ARIMA, {"use_exogenous": False}, True, False, "exogenousSwitchedOff"),
+        (ARIMA, {}, False, False, "sessionHasNoExogenous"),
+        (NaiveForecaster, {}, True, False, "modelTakesNoExogenous"),
+        (NaiveForecaster, {}, False, False, "sessionHasNoExogenous"),
+    ],
+)
+def test_whether_a_run_uses_the_exogenous_variables(
+    model_class, params, has_exogenous, used, reason
+):
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        exogenous_usage,
+    )
+
+    uses, why = exogenous_usage(model_class, params, has_exogenous)
+
+    assert uses is used
+    assert (why or {}).get("key") == reason
+    if why:
+        assert why["values"] == {"model": model_class.__name__}
 
 
 def test_a_model_without_exogenous_variables_refuses_them():

@@ -3,6 +3,8 @@
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence
 
+from DashAI.back.core.schema_fields import bool_field, schema_field
+from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.base_model import BaseModel
 
 if TYPE_CHECKING:
@@ -14,6 +16,82 @@ if TYPE_CHECKING:
 EXOGENOUS_NONE = "none"
 EXOGENOUS_OPTIONAL = "optional"
 EXOGENOUS_REQUIRED = "required"
+
+
+def use_exogenous_field():
+    """Whether a model that can read exogenous variables reads them in a run.
+
+    On by default. It is the explicit comparison of the same model with and
+    without them, so it is never searched over. It shows in a session without
+    exogenous variables too, because a model's schema does not know its
+    session; the session's own mark says there is nothing to use then.
+    """
+    return schema_field(
+        bool_field(),
+        True,
+        description=MultilingualString(
+            en=(
+                "Read the session's exogenous variables. Turn it off to "
+                "compare the same model without them."
+            ),
+            es=(
+                "Lee las variables exógenas de la sesión. Apágalo para "
+                "comparar el mismo modelo sin ellas."
+            ),
+            pt=(
+                "Lê as variáveis exógenas da sessão. Desative para comparar o "
+                "mesmo modelo sem elas."
+            ),
+            de=(
+                "Liest die exogenen Variablen der Sitzung. Schalten Sie es "
+                "aus, um dasselbe Modell ohne sie zu vergleichen."
+            ),
+            zh="读取会话的外生变量。关闭它可以比较不使用外生变量的同一模型。",
+        ),
+        alias=MultilingualString(
+            en="Use exogenous variables",
+            es="Usar variables exógenas",
+            pt="Usar variáveis exógenas",
+            de="Exogene Variablen verwenden",
+            zh="使用外生变量",
+        ),
+    )
+
+
+def exogenous_usage(
+    model_class: type, params: Optional[Dict[str, Any]], session_has_exogenous: bool
+) -> "tuple[bool, Optional[Dict[str, Any]]]":
+    """Whether a run of this model reads the session's exogenous variables.
+
+    The one place that decides it: the mark a session shows before training,
+    the units that pass ``x`` or not, and what the run records all ask here,
+    so the three cannot disagree.
+
+    Parameters
+    ----------
+    model_class : type
+        The forecaster, as the registry holds it.
+    params : dict, optional
+        The run's parameters. ``use_exogenous`` left out counts as on.
+    session_has_exogenous : bool
+        Whether the session gives the exogenous role any column.
+
+    Returns
+    -------
+    tuple
+        ``(used, reason)``. ``reason`` is None when they are used, and
+        otherwise ``{"key", "values"}`` for the app to say why in its own
+        language: ``sessionHasNoExogenous``, ``modelTakesNoExogenous`` or
+        ``exogenousSwitchedOff``.
+    """
+    values = {"model": model_class.__name__}
+    if not session_has_exogenous:
+        return False, {"key": "sessionHasNoExogenous", "values": values}
+    if getattr(model_class, "EXOGENOUS", EXOGENOUS_NONE) == EXOGENOUS_NONE:
+        return False, {"key": "modelTakesNoExogenous", "values": values}
+    if (params or {}).get("use_exogenous", True) is False:
+        return False, {"key": "exogenousSwitchedOff", "values": values}
+    return True, None
 
 
 @dataclass(frozen=True)
@@ -48,8 +126,9 @@ class SingleSeriesForecastingModel(BaseModel):
     **What a model declares.**
     - ``EXOGENOUS``: whether it ignores exogenous variables (``"none"``), uses
       them when a session has them (``"optional"``) or needs them
-      (``"required"``). ``fit`` and ``predict`` take them already, as ``x``
-      and ``x_future``; sessions give them a role later.
+      (``"required"``), as ``x`` and ``x_future``. It is published in the
+      model's metadata, and a model that takes them declares
+      ``use_exogenous`` in its schema (``use_exogenous_field``).
     - ``SUPPORTS_INTERVALS``: whether it can bound its forecasts.
 
     **What a subclass implements.** ``_fit(y, x)``, ``_forecast(h, x_future)``
@@ -71,11 +150,28 @@ class SingleSeriesForecastingModel(BaseModel):
     #: model never reads it.
     time_grid = None
 
-    def __init__(self, **kwargs):
-        """Initialise the forecaster with no history."""
+    def __init__(self, use_exogenous: bool = True, **kwargs):
+        """Initialise the forecaster with no history.
+
+        Parameters
+        ----------
+        use_exogenous : bool
+            Whether a run hands it the session's exogenous variables. Only a
+            model that takes them declares it; the units read it through
+            ``exogenous_usage``, and the model itself never does.
+        """
         super().__init__(**kwargs)
+        self.use_exogenous = use_exogenous
         self._fitted = False
         self._n_obs = 0
+        self._n_exogenous = 0
+
+    @classmethod
+    def get_metadata(cls) -> Dict[str, Any]:
+        """The model's metadata, with what it does with exogenous variables."""
+        metadata = super().get_metadata()
+        metadata["exogenous"] = cls.EXOGENOUS
+        return metadata
 
     # --- the contract --------------------------------------------------------
 
@@ -125,6 +221,7 @@ class SingleSeriesForecastingModel(BaseModel):
 
         self._fit(values, x)
         self._n_obs = len(values)
+        self._n_exogenous = 0 if x is None else np.asarray(x).shape[1]
         self._fitted = True
         return self
 
@@ -256,9 +353,28 @@ class SingleSeriesForecastingModel(BaseModel):
                 f"{type(self).__name__} uses no exogenous variables, but was "
                 f"handed {name}."
             )
-        if len(x) != rows:
+        import numpy as np
+
+        values = np.asarray(x, dtype=float)
+        if values.ndim != 2:
             raise ValueError(
-                f"{name} has {len(x)} row(s), but {rows} step(s) need one each."
+                f"{name} needs one column per variable and one row per step, "
+                f"but has shape {values.shape}."
+            )
+        if len(values) != rows:
+            raise ValueError(
+                f"{name} has {len(values)} row(s), but {rows} step(s) need one each."
+            )
+        if not np.isfinite(values).all():
+            raise ValueError(
+                f"{name} holds {int((~np.isfinite(values)).sum())} value(s) that "
+                "are not finite. The unit that cuts the exogenous variables "
+                "refuses a gap first, so this is a wiring error."
+            )
+        if name == "x_future" and values.shape[1] != self._n_exogenous:
+            raise ValueError(
+                f"{type(self).__name__} was fitted on {self._n_exogenous} "
+                f"exogenous variable(s), but {name} has {values.shape[1]}."
             )
 
     @staticmethod
