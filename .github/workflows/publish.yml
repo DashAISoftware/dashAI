@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - production
+  # Manual run from any branch to test the macOS signing/notarization job.
+  # Only react-build and build-macos-arm64 run; publishing jobs are skipped.
+  workflow_dispatch:
 
 jobs:
   # ============================================================
@@ -41,6 +44,7 @@ jobs:
   # 2. Publish to PyPI
   # ============================================================
   publish-pypi:
+    if: github.event_name == 'push'
     needs: react-build
     runs-on: ubuntu-latest
 
@@ -85,6 +89,7 @@ jobs:
   # 3. Build Windows Executable
   # ============================================================
   build-windows-executable:
+    if: github.event_name == 'push'
     needs: react-build
     runs-on: windows-latest
 
@@ -182,6 +187,7 @@ jobs:
   # 5. Build macOS x86_64 Executable
   # ============================================================
   build-macos-x86_64:
+    if: github.event_name == 'push'
     needs: react-build
     runs-on: macos-15-intel
     # PyTorch's last macOS Intel wheel is 2.2.2, so `uv sync --locked` can't
@@ -238,6 +244,7 @@ jobs:
   # 6. Build Linux AppImage
   # ============================================================
   build-linux-appimage:
+    if: github.event_name == 'push'
     needs: react-build
     # ubuntu-22.04 sets the minimum glibc (2.35) for the AppImage.
     runs-on: ubuntu-22.04
@@ -299,6 +306,7 @@ jobs:
   # 7. Publish installers to GitHub Release
   # ============================================================
   github-release:
+    if: github.event_name == 'push'
     needs:
       - publish-pypi
       - build-windows-executable
