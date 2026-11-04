@@ -388,11 +388,14 @@ def _future(n: int = 4) -> pd.DataFrame:
 def test_a_run_that_used_exogenous_declares_what_its_prediction_needs(
     client, exogenous_run
 ):
+    from DashAI.back.api.api_v1.endpoints.predict import MAX_TYPED_IN_ROWS
+
     response = client.get(f"/api/v1/predict/splits/{exogenous_run}")
 
     assert response.status_code == 200, response.text
     assert response.json()["exogenous"] == {
-        "columns": [{"name": "promo", "type": "Float"}]
+        "columns": [{"name": "promo", "type": "Float"}],
+        "max_rows": MAX_TYPED_IN_ROWS,
     }
 
 

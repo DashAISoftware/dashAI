@@ -86,6 +86,10 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
   const isValid = Number.isInteger(steps) && steps >= 1;
 
   const columns = exogenous?.columns ?? [];
+  // How many rows the backend takes typed in: past it the form would freeze
+  // drawing a field per row and column, and the rows come in a dataset.
+  const maxRows = exogenous?.max_rows ?? null;
+  const tooMany = maxRows !== null && isValid && steps > maxRows;
   const typedIn = futureRows.length > 0;
   const allTyped =
     typedIn &&
@@ -273,20 +277,26 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
             <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}>
               <TextField
                 label={t("prediction:label.horizon")}
-                helperText={t("prediction:label.futureStepsDescription")}
+                helperText={
+                  tooMany
+                    ? t("prediction:label.futureStepsMax", { max: maxRows })
+                    : t("prediction:label.futureStepsDescription")
+                }
                 type="number"
                 size="small"
                 value={horizon}
                 onChange={(event) => setHorizon(event.target.value)}
-                error={horizon !== "" && !isValid}
-                slotProps={{ htmlInput: { min: 1, step: 1 } }}
+                error={(horizon !== "" && !isValid) || tooMany}
+                slotProps={{
+                  htmlInput: { min: 1, step: 1, max: maxRows ?? undefined },
+                }}
                 sx={{ width: 220 }}
               />
               <Button
                 variant="outlined"
                 size="small"
                 onClick={handleGenerateDates}
-                disabled={!isValid}
+                disabled={!isValid || tooMany}
                 sx={{ textTransform: "none", mt: 0.5 }}
               >
                 {t("prediction:button.generateDates")}

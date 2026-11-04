@@ -238,6 +238,36 @@ describe("HorizonPredictionPanel, for a run that read exogenous variables", () =
     ).toBeInTheDocument();
   });
 
+  it("asks for no more rows than the backend takes typed in", async () => {
+    getPredictionSplits.mockResolvedValue({
+      ...declared,
+      exogenous: { ...declared.exogenous, max_rows: 5 },
+    });
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={jest.fn()} />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: i18n.t("prediction:label.futureTypedIn"),
+      }),
+    );
+    const generate = () =>
+      screen.getByRole("button", {
+        name: i18n.t("prediction:button.generateDates"),
+      });
+
+    fireEvent.change(horizonField(), { target: { value: "6" } });
+
+    expect(
+      screen.getByText(i18n.t("prediction:label.futureStepsMax", { max: 5 })),
+    ).toBeInTheDocument();
+    expect(generate()).toBeDisabled();
+
+    fireEvent.change(horizonField(), { target: { value: "5" } });
+
+    expect(generate()).toBeEnabled();
+  });
+
   it("types the future in on the next dates and sends it as the job's rows", async () => {
     getPredictionSplits.mockResolvedValue(declared);
     getFutureDates.mockResolvedValue({

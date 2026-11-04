@@ -31,8 +31,31 @@ if TYPE_CHECKING:
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+#: How many future rows a run that read exogenous variables takes typed in.
+#: The form holds a field per row and column, and past a few hundred rows it
+#: freezes the window that draws it; more rows come in a dataset.
+MAX_TYPED_IN_ROWS = 500
 
 router = APIRouter()
+
+
+def _check_typed_in_rows(rows: int) -> None:
+    """Refuse more future rows than are typed in, pointing to a dataset.
+
+    Raises
+    ------
+    HTTPException
+        422 past ``MAX_TYPED_IN_ROWS``.
+    """
+    if rows > MAX_TYPED_IN_ROWS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Up to {MAX_TYPED_IN_ROWS} rows are typed in by hand, and "
+                f"{rows} were asked for: give a dataset of the future rows "
+                "instead."
+            ),
+        )
 
 
 @router.post("/")
@@ -176,6 +199,8 @@ def _check_prediction_mode(params, run, model_session, task, future_rows=None) -
                     "horizon."
                 ),
             )
+        if params.dataset_id is None:
+            _check_typed_in_rows(params.horizon)
         rows = future_rows if params.dataset_id is not None else params.horizon
         evaluated = _evaluated_horizon(run, task)
         if evaluated is None or not rows:
@@ -350,7 +375,9 @@ async def get_prediction_splits(
         )
         horizon = _evaluated_horizon(run, task)
         exogenous = (
-            {"columns": run.exogenous["columns"]} if used_exogenous(run) else None
+            {"columns": run.exogenous["columns"], "max_rows": MAX_TYPED_IN_ROWS}
+            if used_exogenous(run)
+            else None
         )
 
     try:
@@ -401,12 +428,18 @@ async def get_future_dates(
     ------
     HTTPException
         404 if the run or its session does not exist, or the run kept no
-        model with a grid; 422 for a task that predicts rows.
+        model with a grid; 422 for a task that predicts rows, for more rows
+        than are typed in (``MAX_TYPED_IN_ROWS``), or for steps dated past
+        the last date pandas holds.
     """
+    import pandas as pd
+    from pandas.errors import OutOfBoundsDatetime
+
     from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
     from DashAI.back.tasks.time_grid import TimeGrid
     from DashAI.back.types.date_utils import DEFAULT_DATE_FORMAT
 
+    _check_typed_in_rows(horizon)
     with session_factory() as db:
         run: Run = db.get(Run, run_id)
         model_session = db.get(ModelSession, run.model_session_id) if run else None
@@ -438,7 +471,17 @@ async def get_future_dates(
     date_format = (
         spec.get("dtype") if spec.get("type") == "Date" else None
     ) or DEFAULT_DATE_FORMAT
-    dates = grid.dates(grid.n_steps, horizon)
+    try:
+        dates = grid.dates(grid.n_steps, horizon)
+    except OutOfBoundsDatetime as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"{horizon} steps after the series reach past "
+                f"{pd.Timestamp.max:%Y-%m-%d}, the last date there is: ask for "
+                "fewer."
+            ),
+        ) from e
     return {"time_index": time_index, "dates": list(dates.strftime(date_format))}
 
 

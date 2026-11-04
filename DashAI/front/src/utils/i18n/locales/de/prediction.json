@@ -67,7 +67,8 @@
     "useExistingDataset": "Vorhandenen Datensatz verwenden",
     "futureFromDataset": "Aus einem Datensatz",
     "futureTypedIn": "Von Hand eingegeben",
-    "futureStepsDescription": "Wie viele Schritte eingegeben werden"
+    "futureStepsDescription": "Wie viele Schritte eingegeben werden",
+    "futureStepsMax": "Bis zu {{max}} Zeilen werden von Hand eingegeben; für mehr einen Datensatz verwenden"
   },
   "message": {
     "unevaluatedSteps_one": "Der letzte Schritt geht über die {{evaluated}} hinaus, die der Backtest gemessen hat: sein Fehler wurde nie bewertet.",

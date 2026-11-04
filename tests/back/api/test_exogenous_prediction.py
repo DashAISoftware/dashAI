@@ -185,3 +185,46 @@ def test_it_offers_no_partition_to_predict(client, exogenous_run):
 
     assert response.status_code == 200, response.text
     assert response.json()["splits"] == []
+
+
+def test_it_declares_how_many_rows_are_typed_in_at_most(client, exogenous_run):
+    from DashAI.back.api.api_v1.endpoints.predict import MAX_TYPED_IN_ROWS
+
+    response = client.get(f"/api/v1/predict/splits/{exogenous_run}")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["exogenous"]["max_rows"] == MAX_TYPED_IN_ROWS
+
+
+def test_more_rows_than_are_typed_in_point_to_a_dataset(client, exogenous_run):
+    """A table of that many fields freezes the form that holds it: past the
+    limit, the future rows come in a dataset."""
+    from DashAI.back.api.api_v1.endpoints.predict import MAX_TYPED_IN_ROWS
+
+    too_many = MAX_TYPED_IN_ROWS + 1
+    dates = client.get(
+        f"/api/v1/predict/future-dates/{exogenous_run}", params={"horizon": too_many}
+    )
+    prediction = client.post(
+        "/api/v1/predict/", json={"run_id": exogenous_run, "horizon": too_many}
+    )
+
+    for response in (dates, prediction):
+        assert response.status_code == 422, response.text
+        assert f"{MAX_TYPED_IN_ROWS} rows" in response.json()["detail"]
+        assert "dataset" in response.json()["detail"]
+
+
+def test_dates_past_the_last_one_pandas_holds_are_refused(
+    client, exogenous_run, monkeypatch
+):
+    from DashAI.back.api.api_v1.endpoints import predict
+
+    monkeypatch.setattr(predict, "MAX_TYPED_IN_ROWS", 10**6)
+
+    response = client.get(
+        f"/api/v1/predict/future-dates/{exogenous_run}", params={"horizon": 10**5}
+    )
+
+    assert response.status_code == 422, response.text
+    assert "2262" in response.json()["detail"]

@@ -70,7 +70,8 @@
     "useExistingDataset": "Usar Conjunto de Dados Existente",
     "futureFromDataset": "De um conjunto de dados",
     "futureTypedIn": "Digitadas à mão",
-    "futureStepsDescription": "Quantos passos digitar"
+    "futureStepsDescription": "Quantos passos digitar",
+    "futureStepsMax": "Até {{max}} linhas são digitadas à mão; para mais, use um dataset"
   },
   "message": {
     "unevaluatedSteps_one": "O último passo vai além dos {{evaluated}} que o backtest mediu: o erro dele nunca foi avaliado.",

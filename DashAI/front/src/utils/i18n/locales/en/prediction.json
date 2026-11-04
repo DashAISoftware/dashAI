@@ -67,7 +67,8 @@
     "useExistingDataset": "Use Existing Dataset",
     "futureFromDataset": "From a dataset",
     "futureTypedIn": "Typed in",
-    "futureStepsDescription": "How many steps to type in"
+    "futureStepsDescription": "How many steps to type in",
+    "futureStepsMax": "Up to {{max}} rows are typed in by hand; for more, use a dataset"
   },
   "message": {
     "unevaluatedSteps_one": "The last step goes beyond the {{evaluated}} the backtest measured: its error was never evaluated.",

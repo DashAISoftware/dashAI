@@ -64,7 +64,8 @@
     "useExistingDataset": "使用现有数据集",
     "futureFromDataset": "来自数据集",
     "futureTypedIn": "手动输入",
-    "futureStepsDescription": "要输入的步数"
+    "futureStepsDescription": "要输入的步数",
+    "futureStepsMax": "最多手动输入 {{max}} 行；更多行请使用数据集"
   },
   "message": {
     "unevaluatedSteps_other": "最后 {{count}} 步超出了回测衡量的 {{evaluated}} 步：它们的误差从未被评估。",

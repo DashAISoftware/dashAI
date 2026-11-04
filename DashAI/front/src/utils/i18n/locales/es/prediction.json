@@ -70,7 +70,8 @@
     "useExistingDataset": "Usar Dataset Existente",
     "futureFromDataset": "Desde un dataset",
     "futureTypedIn": "Ingresadas a mano",
-    "futureStepsDescription": "Cuántos pasos ingresar"
+    "futureStepsDescription": "Cuántos pasos ingresar",
+    "futureStepsMax": "Se ingresan a mano hasta {{max}} filas; para más, usa un dataset"
   },
   "message": {
     "unevaluatedSteps_one": "El último paso va más allá de los {{evaluated}} que midió el backtest: su error nunca se evaluó.",
