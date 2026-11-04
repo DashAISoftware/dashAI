@@ -7,6 +7,7 @@ from sqlalchemy.pool import StaticPool
 
 from DashAI.back.auth.catalog import (
     ALL_PERMISSIONS,
+    PERMISSIONS,
     PROJECT_PERMISSIONS,
     ROLES,
     sync_auth_catalog,
@@ -58,6 +59,25 @@ def test_fixed_roles_follow_their_rule(session_factory):
     assert _role_permissions(session_factory, "reader") == {
         uid for uid in PROJECT_PERMISSIONS if uid.endswith(".read")
     }
+
+
+def test_collaborator_cannot_delete_export_or_manage(session_factory):
+    sync_auth_catalog(session_factory)
+
+    permissions = _role_permissions(session_factory, "collaborator")
+
+    assert "documents.index" in permissions
+    assert "generative.execute" in permissions
+    assert "projects.manage" not in permissions
+    assert not any(uid.endswith((".delete", ".export")) for uid in permissions)
+
+
+def test_permission_names_are_unique():
+    # The permission table has a unique name, so a repeated label would make
+    # the startup sync fail
+    names = [spec.name for spec in PERMISSIONS]
+
+    assert len(names) == len(set(names))
 
 
 def test_editable_roles_start_with_their_defaults(session_factory):

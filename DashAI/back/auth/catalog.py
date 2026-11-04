@@ -31,17 +31,39 @@ class PermissionSpec:
     instance: bool = False
 
 
+# Each module follows the same pattern: read, write (create and edit), delete,
+# execute for work that uses compute and export for taking data out
 PERMISSIONS: List[PermissionSpec] = [
     PermissionSpec("datasets.read", "Ver datasets", "Datos"),
     PermissionSpec("datasets.write", "Crear y modificar datasets", "Datos"),
+    PermissionSpec("datasets.delete", "Eliminar datasets", "Datos"),
+    PermissionSpec("datasets.export", "Descargar datasets", "Datos"),
+    PermissionSpec("notebooks.read", "Ver notebooks", "Datos"),
     PermissionSpec("notebooks.write", "Crear y modificar notebooks", "Datos"),
     PermissionSpec("models.read", "Ver sesiones y resultados", "Modelos"),
     PermissionSpec(
-        "models.execute", "Entrenar modelos y ejecutar predicciones", "Modelos"
+        "models.write", "Crear y modificar sesiones de modelos y pipelines", "Modelos"
     ),
-    PermissionSpec("workflows.write", "Crear y modificar pipelines", "Modelos"),
+    PermissionSpec(
+        "models.execute",
+        "Entrenar modelos, ejecutar predicciones y explicaciones",
+        "Modelos",
+    ),
+    PermissionSpec("models.delete", "Eliminar sesiones, runs y pipelines", "Modelos"),
     PermissionSpec("generative.read", "Ver sesiones generativas", "Generativo"),
-    PermissionSpec("generative.execute", "Usar modelos generativos", "Generativo"),
+    PermissionSpec(
+        "generative.execute",
+        "Usar modelos generativos, incluidas las consultas RAG",
+        "Generativo",
+    ),
+    PermissionSpec("generative.delete", "Eliminar sesiones generativas", "Generativo"),
+    PermissionSpec("documents.read", "Ver documentos", "Documentos"),
+    PermissionSpec(
+        "documents.write", "Subir, extraer y configurar documentos", "Documentos"
+    ),
+    PermissionSpec("documents.index", "Indexar documentos para RAG", "Documentos"),
+    PermissionSpec("documents.export", "Descargar documentos", "Documentos"),
+    PermissionSpec("documents.delete", "Eliminar documentos", "Documentos"),
     PermissionSpec(
         "projects.manage", "Gestionar miembros y roles del proyecto", "Proyecto"
     ),
@@ -121,16 +143,13 @@ ROLES: List[RoleSpec] = [
     RoleSpec(
         "collaborator",
         "Colaborador",
-        "Trabaja con los datos y modelos del proyecto.",
+        "Trabaja con los recursos del proyecto, sin eliminarlos ni descargarlos.",
         "project",
         fixed=False,
         permissions=lambda: [
-            "datasets.read",
-            "datasets.write",
-            "notebooks.write",
-            "models.read",
-            "models.execute",
-            "workflows.write",
+            uid
+            for uid in PROJECT_PERMISSIONS
+            if not uid.endswith((".delete", ".export")) and uid != "projects.manage"
         ],
     ),
     RoleSpec(
