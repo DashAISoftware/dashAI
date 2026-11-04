@@ -32,9 +32,9 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 #: How many future rows a run that read exogenous variables takes typed in.
-#: The form holds a field per row and column, and past a few hundred rows it
-#: freezes the window that draws it; more rows come in a dataset.
-MAX_TYPED_IN_ROWS = 500
+#: The form holds a field per row and column, and 200 rows already froze the
+#: window that draws it. More rows come in a dataset.
+MAX_TYPED_IN_ROWS = 100
 
 router = APIRouter()
 
