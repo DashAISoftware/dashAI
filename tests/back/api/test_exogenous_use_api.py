@@ -73,6 +73,7 @@ def test_every_offered_model_is_marked_in_a_session_with_exogenous(client, tmp_p
         "MeanForecaster",
         "NaiveForecaster",
         "SeasonalNaiveForecaster",
+        "Theta",
     ]
     by_model = {m["model"]: m for m in declared["models"]}
     assert by_model["ARIMA"] == {
