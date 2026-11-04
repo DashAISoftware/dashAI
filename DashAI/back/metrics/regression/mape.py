@@ -31,8 +31,8 @@ class MAPE(RegressionMetric):
     value is zero, and then the whole score is undefined: averaging only the
     other rows would report the error of a different series, and an infinity
     says nothing. It raises ``UndefinedMetricError``, which a run records as
-    "not available" with the reason. Prefer :class:`SMAPE` or :class:`MASE`
-    on series that reach zero.
+    "not available" with the reason. Prefer :class:`SMAPE` on series that
+    reach zero.
 
     MAPE is also asymmetric: it penalises a forecast that is too high more
     heavily than one that is too low by the same amount, since the denominator
@@ -105,7 +105,7 @@ class MAPE(RegressionMetric):
             raise UndefinedMetricError(
                 "MAPE divides by each actual value, and the actual value is zero",
                 positions=zeros,
-                hint="Use SMAPE or MASE for a series that reaches zero.",
+                hint="Use SMAPE for a series that reaches zero.",
             )
 
         errors = np.abs(true_values - pred_values)

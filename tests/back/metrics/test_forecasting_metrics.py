@@ -60,7 +60,7 @@ def test_mape_is_undefined_when_any_actual_is_zero():
     with pytest.raises(UndefinedMetricError, match="is zero") as raised:
         MAPE.score(_true([0.0, 100.0]), np.array([5.0, 110.0]))
 
-    assert "SMAPE or MASE" in str(raised.value)
+    assert "Use SMAPE for" in str(raised.value)
 
 
 def test_an_undefined_metric_says_where_it_is_undefined():
@@ -72,7 +72,7 @@ def test_an_undefined_metric_says_where_it_is_undefined():
     assert raised.value.positions == (0, 2)
     assert describe_undefined(raised.value) == (
         "MAPE divides by each actual value, and the actual value is zero on 2 "
-        "rows. Use SMAPE or MASE for a series that reaches zero."
+        "rows. Use SMAPE for a series that reaches zero."
     )
 
 
@@ -85,7 +85,7 @@ def test_the_dates_of_an_undefined_metric_are_named_up_to_five():
     assert describe_undefined(raised.value, dates) == (
         "MAPE divides by each actual value, and the actual value is zero on "
         "2023-01-01, 2023-02-01, 2023-03-01, 2023-04-01, 2023-05-01 and 2 more "
-        "dates. Use SMAPE or MASE for a series that reaches zero."
+        "dates. Use SMAPE for a series that reaches zero."
     )
 
 
