@@ -377,7 +377,9 @@ function SelectColumnsStep({
           columnTypes={columnTypesForSelector}
           optionLabels={optionLabels}
           errorFor={missing}
-          helperTextFor={(role) => (missing(role) ? t("common:required") : "")}
+          helperTextFor={(role) =>
+            missing(role) ? t("common:required") : (role.description ?? "")
+          }
           disabledFor={fixedRole}
           disabled={rawColumnNames.length === 0}
         />

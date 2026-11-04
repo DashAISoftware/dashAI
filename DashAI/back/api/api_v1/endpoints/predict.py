@@ -17,6 +17,9 @@ from DashAI.back.dependencies.database.models import (
     Run,
 )
 from DashAI.back.job.predict_job import run_manual_prediction
+from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    used_exogenous,
+)
 from DashAI.back.splitters.splits_payload import predictable_splits
 from DashAI.back.tasks.session_roles import session_io, session_raw_columns
 
@@ -28,8 +31,31 @@ if TYPE_CHECKING:
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+#: How many future rows a run that read exogenous variables takes typed in.
+#: The form holds a field per row and column, and 200 rows already froze the
+#: window that draws it. More rows come in a dataset.
+MAX_TYPED_IN_ROWS = 100
 
 router = APIRouter()
+
+
+def _check_typed_in_rows(rows: int) -> None:
+    """Refuse more future rows than are typed in, pointing to a dataset.
+
+    Raises
+    ------
+    HTTPException
+        422 past ``MAX_TYPED_IN_ROWS``.
+    """
+    if rows > MAX_TYPED_IN_ROWS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Up to {MAX_TYPED_IN_ROWS} rows are typed in by hand, and "
+                f"{rows} were asked for: give a dataset of the future rows "
+                "instead."
+            ),
+        )
 
 
 @router.post("/")
@@ -93,7 +119,13 @@ async def create_prediction(
             if model_session.task_name in component_registry
             else None
         )
-        unevaluated_steps = _check_prediction_mode(params, run, model_session, task)
+        future_rows = None
+        if params.dataset_id is not None and used_exogenous(run):
+            future = db.get(Dataset, params.dataset_id)
+            future_rows = getattr(future, "total_rows", None)
+        unevaluated_steps = _check_prediction_mode(
+            params, run, model_session, task, future_rows
+        )
 
         prediction = Prediction(
             run_id=run.id,
@@ -112,8 +144,15 @@ async def create_prediction(
         return prediction
 
 
-def _check_prediction_mode(params, run, model_session, task) -> int:
+def _check_prediction_mode(params, run, model_session, task, future_rows=None) -> int:
     """Refuse a request for a kind of prediction the task does not make.
+
+    A run that read exogenous variables forecasts with their future values
+    (RECONCILING_FORECASTING §2.14, decision 5): it takes a dataset of the
+    future rows, or no dataset for rows typed by hand, which reach the job
+    as ``manual_input_data``. The horizon is the number of those rows: a
+    dataset's own (``future_rows``), not given apart, and for rows typed in
+    the ``horizon`` the request gives, which the job holds them to.
 
     Returns
     -------
@@ -138,6 +177,35 @@ def _check_prediction_mode(params, run, model_session, task) -> int:
                 detail=f"{task_name} predicts rows, not a horizon: give a dataset.",
             )
         return 0
+
+    if used_exogenous(run):
+        if params.split is not None or (
+            params.dataset_id is not None and params.horizon is not None
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    f"Run {run.id} read exogenous variables, so it forecasts the "
+                    "future rows that bring their values: give a dataset of "
+                    "them, or type them in. Their number is the horizon."
+                ),
+            )
+        if params.dataset_id is None and params.horizon is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=(
+                    f"Run {run.id} read exogenous variables: give a dataset of "
+                    "the future rows, or say how many rows you type in as the "
+                    "horizon."
+                ),
+            )
+        if params.dataset_id is None:
+            _check_typed_in_rows(params.horizon)
+        rows = future_rows if params.dataset_id is not None else params.horizon
+        evaluated = _evaluated_horizon(run, task)
+        if evaluated is None or not rows:
+            return 0
+        return max(0, rows - evaluated)
 
     if params.dataset_id is not None or params.split is not None:
         raise HTTPException(
@@ -306,6 +374,11 @@ async def get_prediction_splits(
             else None
         )
         horizon = _evaluated_horizon(run, task)
+        exogenous = (
+            {"columns": run.exogenous["columns"], "max_rows": MAX_TYPED_IN_ROWS}
+            if used_exogenous(run)
+            else None
+        )
 
     try:
         splits = predictable_splits(
@@ -320,11 +393,96 @@ async def get_prediction_splits(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e)
         ) from e
 
-    return {
+    declared = {
         "splits": splits,
         "training_dataset_id": training_dataset_id,
         "horizon": horizon,
     }
+    if exogenous is not None:
+        # Only for a run that read them, so the prediction asks for their
+        # future values with their types; any other run asks what it did.
+        declared["exogenous"] = exogenous
+    return declared
+
+
+@router.get("/future-dates/{run_id}")
+@inject
+async def get_future_dates(
+    run_id: int,
+    horizon: int = Query(..., ge=1, description="How many steps to date"),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+):
+    """The dates of the ``horizon`` steps after a forecasting run's series.
+
+    The table to type a future in by hand starts on them (RECONCILING_FORECASTING
+    §2.14, decision 5): the kept model's grid gives them, in the format the
+    training dataset declares its time index with.
+
+    Returns
+    -------
+    dict
+        ``{"time_index": column, "dates": [...]}``.
+
+    Raises
+    ------
+    HTTPException
+        404 if the run or its session does not exist, or the run kept no
+        model with a grid; 422 for a task that predicts rows, for more rows
+        than are typed in (``MAX_TYPED_IN_ROWS``), or for steps dated past
+        the last date pandas holds.
+    """
+    import pandas as pd
+    from pandas.errors import OutOfBoundsDatetime
+
+    from DashAI.back.dataloaders.classes.dashai_dataset import get_columns_spec
+    from DashAI.back.tasks.time_grid import TimeGrid
+    from DashAI.back.types.date_utils import DEFAULT_DATE_FORMAT
+
+    _check_typed_in_rows(horizon)
+    with session_factory() as db:
+        run: Run = db.get(Run, run_id)
+        model_session = db.get(ModelSession, run.model_session_id) if run else None
+        if not run or not model_session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Run not found"
+            )
+        task = task_or_http_error(model_session.task_name, component_registry)
+        if not hasattr(task, "split_inputs"):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"{model_session.task_name} predicts rows, not dates.",
+            )
+        (time_index,), _ = task.split_inputs(session_io(model_session, task).inputs)
+        training = db.get(Dataset, model_session.dataset_id)
+        model_class = component_registry[run.model_name]["class"]
+        run_path, training_path = run.run_path, f"{training.file_path}/dataset"
+
+    try:
+        grid = TimeGrid.from_ref(model_class.load(run_path).time_grid)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Run {run_id} kept no forecasting model to date its steps.",
+        ) from e
+    spec = get_columns_spec(training_path).get(time_index) or {}
+    # The spec keeps a Date's format under "dtype": the same format the
+    # future rows are parsed with (PrepareFutureUnit).
+    date_format = (
+        spec.get("dtype") if spec.get("type") == "Date" else None
+    ) or DEFAULT_DATE_FORMAT
+    try:
+        dates = grid.dates(grid.n_steps, horizon)
+    except OutOfBoundsDatetime as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"{horizon} steps after the series reach past "
+                f"{pd.Timestamp.max:%Y-%m-%d}, the last date there is: ask for "
+                "fewer."
+            ),
+        ) from e
+    return {"time_index": time_index, "dates": list(dates.strftime(date_format))}
 
 
 @router.get("/filter_datasets")
@@ -371,9 +529,16 @@ async def filter_datasets_endpoint(
                     detail="Model session not found",
                 )
             task = task_or_http_error(model_session.task_name, component_registry)
-            input_columns = session_raw_columns(
-                model_session, session_io(model_session, task)
-            )
+            io = session_io(model_session, task)
+            input_columns = session_raw_columns(model_session, io)
+            if used_exogenous(run):
+                # The future of a run that read exogenous variables: its dates
+                # and the raw columns it read, as it recorded them (§2.14,
+                # mismatch 7), not every input of the session.
+                (time_index,), _ = task.split_inputs(io.inputs)
+                input_columns = [time_index] + [
+                    column["name"] for column in run.exogenous["columns"]
+                ]
 
             datasets = db.query(Dataset).all()
             valid_dataset_ids = []

@@ -73,6 +73,9 @@ RUN_FIELDS = (
     "split_indexes",
     "artifacts",
 )
+# Run fields a file may leave out: written since format 3 had shipped, so a
+# file without them still imports, as NULL.
+OPTIONAL_RUN_FIELDS = ("exogenous",)
 # Encoders whose stored steps meant sklearn's "error" when they left
 # ``handle_unknown`` out, before sessions treated a category unseen in fit by
 # default. A file always says which one a step uses (``with_session_params``),
@@ -372,7 +375,10 @@ def build_session_package(
             )
             exported_runs.append(
                 {
-                    "recipe": {field: getattr(run, field) for field in RUN_FIELDS},
+                    "recipe": {
+                        field: getattr(run, field)
+                        for field in (*RUN_FIELDS, *OPTIONAL_RUN_FIELDS)
+                    },
                     "with_model": with_model,
                     "run_path": run.run_path,
                     "plots": {field: getattr(run, field) for field in PLOT_FIELDS},
