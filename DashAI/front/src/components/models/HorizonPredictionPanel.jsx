@@ -251,7 +251,9 @@ export default function HorizonPredictionPanel({ run, onSaved }) {
           </ToggleButton>
         </ToggleButtonGroup>
         {mode === "dataset" ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          // The top padding keeps the selector's outlined label, which sits
+          // above the field, off the mode buttons.
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
             <DatasetPredictionPanel
               run={run}
               onSaved={onSaved}
