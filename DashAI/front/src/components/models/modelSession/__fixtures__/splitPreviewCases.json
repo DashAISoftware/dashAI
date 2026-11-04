@@ -1,0 +1,1068 @@
+[
+  {
+    "name": "random holdout, three partitions",
+    "geometry": "partitions",
+    "split_type": "random",
+    "params": {
+      "train": 0.6,
+      "validation": 0.2,
+      "test": 0.2
+    },
+    "indexes": null,
+    "dataset": {
+      "total_rows": 150,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "dataset",
+          "label": "wholeDataset",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.6
+            },
+            {
+              "role": "validation",
+              "fraction": 0.2
+            },
+            {
+              "role": "test",
+              "fraction": 0.2
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "shares": {
+        "train": 0.6,
+        "validation": 0.2,
+        "test": 0.2
+      },
+      "errors": [],
+      "partitions": [
+        "train",
+        "validation",
+        "test"
+      ]
+    }
+  },
+  {
+    "name": "random holdout without validation",
+    "geometry": "partitions",
+    "split_type": "random",
+    "params": {
+      "train": 0.7,
+      "validation": 0,
+      "test": 0.3
+    },
+    "indexes": null,
+    "dataset": {
+      "total_rows": 150,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "dataset",
+          "label": "wholeDataset",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.7
+            },
+            {
+              "role": "test",
+              "fraction": 0.3
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "shares": {
+        "train": 0.7,
+        "test": 0.3
+      },
+      "errors": [],
+      "partitions": [
+        "train",
+        "test"
+      ]
+    }
+  },
+  {
+    "name": "random holdout asking for more than the dataset",
+    "geometry": "partitions",
+    "split_type": "random",
+    "params": {
+      "train": 0.8,
+      "validation": 0.2,
+      "test": 0.2
+    },
+    "indexes": null,
+    "dataset": {
+      "total_rows": 150,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "dataset",
+          "label": "wholeDataset",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.6666666666666667
+            },
+            {
+              "role": "validation",
+              "fraction": 0.16666666666666669
+            },
+            {
+              "role": "test",
+              "fraction": 0.16666666666666669
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "shares": {
+        "train": 0.6666666666666667,
+        "validation": 0.16666666666666669,
+        "test": 0.16666666666666669
+      },
+      "errors": [
+        {
+          "key": "splitsMustSumToOne",
+          "values": {}
+        }
+      ],
+      "partitions": [
+        "train",
+        "validation",
+        "test"
+      ]
+    }
+  },
+  {
+    "name": "random holdout leaving rows unused",
+    "geometry": "partitions",
+    "split_type": "random",
+    "params": {
+      "train": 0.5,
+      "validation": 0.2,
+      "test": 0.1
+    },
+    "indexes": null,
+    "dataset": {
+      "total_rows": 150,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "dataset",
+          "label": "wholeDataset",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.5
+            },
+            {
+              "role": "validation",
+              "fraction": 0.2
+            },
+            {
+              "role": "test",
+              "fraction": 0.1
+            },
+            {
+              "role": "unused",
+              "fraction": 0.20000000000000007
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "shares": {
+        "train": 0.5,
+        "validation": 0.2,
+        "test": 0.1,
+        "unused": 0.20000000000000007
+      },
+      "errors": [
+        {
+          "key": "splitsMustSumToOne",
+          "values": {}
+        }
+      ],
+      "partitions": [
+        "train",
+        "validation",
+        "test"
+      ]
+    }
+  },
+  {
+    "name": "random holdout with an empty train",
+    "geometry": "partitions",
+    "split_type": "random",
+    "params": {
+      "train": 0,
+      "validation": 0.5,
+      "test": 0.5
+    },
+    "indexes": null,
+    "dataset": {
+      "total_rows": 150,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "dataset",
+          "label": "wholeDataset",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "validation",
+              "fraction": 0.5
+            },
+            {
+              "role": "test",
+              "fraction": 0.5
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "shares": {
+        "validation": 0.5,
+        "test": 0.5
+      },
+      "errors": [
+        {
+          "key": "trainSplitMustBeGreaterThanZero",
+          "values": {}
+        }
+      ],
+      "partitions": [
+        "validation",
+        "test"
+      ]
+    }
+  },
+  {
+    "name": "manual holdout",
+    "geometry": "partitions",
+    "split_type": "manual",
+    "params": {
+      "train": 0.6,
+      "validation": 0.2,
+      "test": 0.2
+    },
+    "indexes": {
+      "train": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "validation": [
+        6,
+        7
+      ],
+      "test": [
+        8,
+        9
+      ]
+    },
+    "dataset": {
+      "total_rows": 10,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "dataset",
+          "label": "wholeDataset",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.6
+            },
+            {
+              "role": "validation",
+              "fraction": 0.2
+            },
+            {
+              "role": "test",
+              "fraction": 0.2
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "shares": {
+        "train": 0.6,
+        "validation": 0.2,
+        "test": 0.2
+      },
+      "errors": [],
+      "partitions": [
+        "train",
+        "validation",
+        "test"
+      ]
+    }
+  },
+  {
+    "name": "manual holdout without train rows",
+    "geometry": "partitions",
+    "split_type": "manual",
+    "params": {
+      "train": 0.6,
+      "validation": 0.2,
+      "test": 0.2
+    },
+    "indexes": {
+      "train": [],
+      "validation": [
+        6,
+        7
+      ],
+      "test": [
+        8,
+        9
+      ]
+    },
+    "dataset": {
+      "total_rows": 10,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "dataset",
+          "label": "wholeDataset",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "validation",
+              "fraction": 0.2
+            },
+            {
+              "role": "test",
+              "fraction": 0.2
+            },
+            {
+              "role": "unused",
+              "fraction": 0.6
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "shares": {
+        "validation": 0.2,
+        "test": 0.2,
+        "unused": 0.6
+      },
+      "errors": [
+        {
+          "key": "trainSplitMustHaveAtLeastOneRow",
+          "values": {}
+        }
+      ],
+      "partitions": [
+        "validation",
+        "test"
+      ]
+    }
+  },
+  {
+    "name": "predefined holdout",
+    "geometry": "partitions",
+    "split_type": "predefined",
+    "params": {
+      "train": 0.6,
+      "validation": 0.2,
+      "test": 0.2
+    },
+    "indexes": {
+      "train": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "validation": [],
+      "test": [
+        7,
+        8,
+        9
+      ]
+    },
+    "dataset": {
+      "total_rows": 10,
+      "train_size": 7,
+      "val_size": 0,
+      "test_size": 3
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "dataset",
+          "label": "wholeDataset",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.7
+            },
+            {
+              "role": "test",
+              "fraction": 0.3
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "shares": {
+        "train": 0.7,
+        "test": 0.3
+      },
+      "errors": [],
+      "partitions": [
+        "train",
+        "test"
+      ]
+    }
+  },
+  {
+    "name": "folds without a reserved test",
+    "geometry": "blocked_folds",
+    "split_type": "cv",
+    "params": {
+      "n_splits": 5,
+      "test_size": 0
+    },
+    "indexes": null,
+    "dataset": {
+      "total_rows": 150,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "fold-0",
+          "label": "fold",
+          "label_values": {
+            "index": 1
+          },
+          "segments": [
+            {
+              "role": "validation",
+              "fraction": 0.2
+            },
+            {
+              "role": "train",
+              "fraction": 0.8
+            }
+          ]
+        },
+        {
+          "key": "fold-1",
+          "label": "fold",
+          "label_values": {
+            "index": 2
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.2
+            },
+            {
+              "role": "validation",
+              "fraction": 0.2
+            },
+            {
+              "role": "train",
+              "fraction": 0.6000000000000001
+            }
+          ]
+        },
+        {
+          "key": "fold-2",
+          "label": "fold",
+          "label_values": {
+            "index": 3
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.4
+            },
+            {
+              "role": "validation",
+              "fraction": 0.2
+            },
+            {
+              "role": "train",
+              "fraction": 0.4
+            }
+          ]
+        },
+        {
+          "key": "fold-3",
+          "label": "fold",
+          "label_values": {
+            "index": 4
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.6000000000000001
+            },
+            {
+              "role": "validation",
+              "fraction": 0.2
+            },
+            {
+              "role": "train",
+              "fraction": 0.2
+            }
+          ]
+        },
+        {
+          "key": "fold-4",
+          "label": "fold",
+          "label_values": {
+            "index": 5
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.8
+            },
+            {
+              "role": "validation",
+              "fraction": 0.2
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "shares": {
+        "validation": 0.2,
+        "train": 0.8
+      },
+      "errors": [],
+      "partitions": [
+        "train",
+        "validation"
+      ]
+    }
+  },
+  {
+    "name": "folds with a reserved test",
+    "geometry": "blocked_folds",
+    "split_type": "cv",
+    "params": {
+      "n_splits": 5,
+      "test_size": 0.2
+    },
+    "indexes": null,
+    "dataset": {
+      "total_rows": 150,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "reserved",
+          "label": "reservedTest",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "unused",
+              "fraction": 0.8
+            },
+            {
+              "role": "test",
+              "fraction": 0.2
+            }
+          ]
+        },
+        {
+          "key": "fold-0",
+          "label": "fold",
+          "label_values": {
+            "index": 1
+          },
+          "segments": [
+            {
+              "role": "validation",
+              "fraction": 0.16
+            },
+            {
+              "role": "train",
+              "fraction": 0.64
+            },
+            {
+              "role": "unused",
+              "fraction": 0.2
+            }
+          ]
+        },
+        {
+          "key": "fold-1",
+          "label": "fold",
+          "label_values": {
+            "index": 2
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.16
+            },
+            {
+              "role": "validation",
+              "fraction": 0.16
+            },
+            {
+              "role": "train",
+              "fraction": 0.48
+            },
+            {
+              "role": "unused",
+              "fraction": 0.2
+            }
+          ]
+        },
+        {
+          "key": "fold-2",
+          "label": "fold",
+          "label_values": {
+            "index": 3
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.32
+            },
+            {
+              "role": "validation",
+              "fraction": 0.16
+            },
+            {
+              "role": "train",
+              "fraction": 0.32
+            },
+            {
+              "role": "unused",
+              "fraction": 0.2
+            }
+          ]
+        },
+        {
+          "key": "fold-3",
+          "label": "fold",
+          "label_values": {
+            "index": 4
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.48
+            },
+            {
+              "role": "validation",
+              "fraction": 0.16
+            },
+            {
+              "role": "train",
+              "fraction": 0.16
+            },
+            {
+              "role": "unused",
+              "fraction": 0.2
+            }
+          ]
+        },
+        {
+          "key": "fold-4",
+          "label": "fold",
+          "label_values": {
+            "index": 5
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.64
+            },
+            {
+              "role": "validation",
+              "fraction": 0.16
+            },
+            {
+              "role": "unused",
+              "fraction": 0.2
+            }
+          ]
+        },
+        {
+          "key": "final",
+          "label": "finalFit",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.8
+            },
+            {
+              "role": "test",
+              "fraction": 0.2
+            }
+          ]
+        }
+      ],
+      "notes": [],
+      "shares": {
+        "validation": 0.16,
+        "train": 0.64,
+        "unused": 0,
+        "test": 0.2
+      },
+      "errors": [],
+      "partitions": [
+        "train",
+        "validation",
+        "test"
+      ]
+    }
+  },
+  {
+    "name": "more folds than are drawn",
+    "geometry": "blocked_folds",
+    "split_type": "cv",
+    "params": {
+      "n_splits": 12,
+      "test_size": 0.1
+    },
+    "indexes": null,
+    "dataset": {
+      "total_rows": 150,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "reserved",
+          "label": "reservedTest",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "unused",
+              "fraction": 0.9
+            },
+            {
+              "role": "test",
+              "fraction": 0.1
+            }
+          ]
+        },
+        {
+          "key": "fold-0",
+          "label": "fold",
+          "label_values": {
+            "index": 1
+          },
+          "segments": [
+            {
+              "role": "validation",
+              "fraction": 0.075
+            },
+            {
+              "role": "train",
+              "fraction": 0.825
+            },
+            {
+              "role": "unused",
+              "fraction": 0.1
+            }
+          ]
+        },
+        {
+          "key": "fold-1",
+          "label": "fold",
+          "label_values": {
+            "index": 2
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.075
+            },
+            {
+              "role": "validation",
+              "fraction": 0.075
+            },
+            {
+              "role": "train",
+              "fraction": 0.75
+            },
+            {
+              "role": "unused",
+              "fraction": 0.1
+            }
+          ]
+        },
+        {
+          "key": "fold-2",
+          "label": "fold",
+          "label_values": {
+            "index": 3
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.15
+            },
+            {
+              "role": "validation",
+              "fraction": 0.075
+            },
+            {
+              "role": "train",
+              "fraction": 0.6749999999999999
+            },
+            {
+              "role": "unused",
+              "fraction": 0.1
+            }
+          ]
+        },
+        {
+          "key": "ellipsis",
+          "label": "moreFolds",
+          "ellipsis": true,
+          "hidden_count": 8
+        },
+        {
+          "key": "fold-11",
+          "label": "fold",
+          "label_values": {
+            "index": 12
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.825
+            },
+            {
+              "role": "validation",
+              "fraction": 0.075
+            },
+            {
+              "role": "unused",
+              "fraction": 0.1
+            }
+          ]
+        },
+        {
+          "key": "final",
+          "label": "finalFit",
+          "label_values": {},
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.9
+            },
+            {
+              "role": "test",
+              "fraction": 0.1
+            }
+          ]
+        }
+      ],
+      "notes": [
+        {
+          "key": "foldsHidden",
+          "values": {
+            "total": 12
+          }
+        }
+      ],
+      "shares": {
+        "validation": 0.075,
+        "train": 0.825,
+        "unused": 0,
+        "test": 0.1
+      },
+      "errors": [],
+      "partitions": [
+        "train",
+        "validation",
+        "test"
+      ]
+    }
+  },
+  {
+    "name": "more folds than rows",
+    "geometry": "blocked_folds",
+    "split_type": "cv",
+    "params": {
+      "n_splits": 200,
+      "test_size": 0
+    },
+    "indexes": null,
+    "dataset": {
+      "total_rows": 150,
+      "train_size": 0,
+      "val_size": 0,
+      "test_size": 0
+    },
+    "expected": {
+      "rows": [
+        {
+          "key": "fold-0",
+          "label": "fold",
+          "label_values": {
+            "index": 1
+          },
+          "segments": [
+            {
+              "role": "validation",
+              "fraction": 0.005
+            },
+            {
+              "role": "train",
+              "fraction": 0.995
+            }
+          ]
+        },
+        {
+          "key": "fold-1",
+          "label": "fold",
+          "label_values": {
+            "index": 2
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.005
+            },
+            {
+              "role": "validation",
+              "fraction": 0.005
+            },
+            {
+              "role": "train",
+              "fraction": 0.99
+            }
+          ]
+        },
+        {
+          "key": "fold-2",
+          "label": "fold",
+          "label_values": {
+            "index": 3
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.01
+            },
+            {
+              "role": "validation",
+              "fraction": 0.005
+            },
+            {
+              "role": "train",
+              "fraction": 0.985
+            }
+          ]
+        },
+        {
+          "key": "ellipsis",
+          "label": "moreFolds",
+          "ellipsis": true,
+          "hidden_count": 196
+        },
+        {
+          "key": "fold-199",
+          "label": "fold",
+          "label_values": {
+            "index": 200
+          },
+          "segments": [
+            {
+              "role": "train",
+              "fraction": 0.995
+            },
+            {
+              "role": "validation",
+              "fraction": 0.005
+            }
+          ]
+        }
+      ],
+      "notes": [
+        {
+          "key": "foldsHidden",
+          "values": {
+            "total": 200
+          }
+        }
+      ],
+      "shares": {
+        "validation": 0.005,
+        "train": 0.995
+      },
+      "errors": [
+        {
+          "key": "foldsMustBeLessThanDatasetSize",
+          "values": {
+            "datasetSize": 150
+          }
+        }
+      ],
+      "partitions": [
+        "train",
+        "validation"
+      ]
+    }
+  }
+]

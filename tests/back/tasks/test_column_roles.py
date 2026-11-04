@@ -23,6 +23,9 @@ from DashAI.back.tasks.column_roles import ColumnRole, IOColumns
 from DashAI.back.tasks.forecasting_task import ForecastingTask
 from DashAI.back.tasks.image_classification_task import ImageClassificationTask
 from DashAI.back.tasks.regression_task import RegressionTask
+from DashAI.back.tasks.single_series_forecasting_task import (
+    SingleSeriesForecastingTask,
+)
 from DashAI.back.tasks.supervised_task import SupervisedTask
 from DashAI.back.tasks.tabular_classification_task import TabularClassificationTask
 from DashAI.back.tasks.text_classification_task import TextClassificationTask
@@ -164,8 +167,8 @@ def test_declared_roles_win_over_the_short_form():
         "series",
         "extra",
     ]
-    assert metadata["inputs_types"] == ["Float", "Integer"]
-    assert metadata["outputs_types"] == ["Float", "Integer"]
+    assert metadata["prediction_mode"] == "rows"
+    assert "inputs_types" not in metadata
 
 
 def test_a_task_that_declares_nothing_says_what_to_declare():
@@ -289,19 +292,32 @@ def test_a_task_without_outputs_refuses_a_target_by_naming_its_roles(dataset):
                 ("features", ["Float", "Integer"], 0, "n", False, True),
             ],
         ),
-        (
-            ForecastingTask,
-            [
-                ("features", ["Date"], 1, 1, True, True),
-                ("target", ["Float", "Integer"], 1, 1, True, False),
-            ],
-        ),
     ],
 )
 def test_the_built_in_tasks_get_the_roles_of_their_short_form(task, expected):
     assert _role_summary(task) == expected
     outputs = ["target"] if len(expected) > 1 else []
     assert task.io_roles() == {"inputs": ["features"], "outputs": outputs}
+
+
+def test_the_single_series_forecasting_task_declares_its_own_roles():
+    # Not the x/y short form: a time index and a series, both protected from
+    # the session's preprocessing.
+    assert _role_summary(SingleSeriesForecastingTask) == [
+        ("time_index", ["Date"], 1, 1, True, False),
+        ("series", ["Float", "Integer"], 1, 1, True, False),
+    ]
+    assert SingleSeriesForecastingTask.io_roles() == {
+        "inputs": ["time_index"],
+        "outputs": ["series"],
+    }
+
+
+def test_the_forecasting_family_declares_no_roles():
+    # Roles depend on the structure of the series, which the family leaves to
+    # each concrete task.
+    with pytest.raises(NotImplementedError, match="declares no column roles"):
+        ForecastingTask.column_roles()
 
 
 def test_the_role_metadata_names_its_types_and_keeps_its_label():
@@ -435,7 +451,6 @@ TASKS = [
     ImageClassificationTask,
     TranslationTask,
     ClusteringTask,
-    ForecastingTask,
     _FlatTask,
 ]
 COLUMN_CHOICES = [
@@ -490,12 +505,46 @@ def test_validation_says_exactly_what_it_said_before_roles(dataset, task):
     assert differences == []
 
 
-@pytest.mark.parametrize("task", TASKS, ids=lambda t: t.__name__)
-def test_the_flat_metadata_is_what_it_was_before_roles(task):
-    metadata = task.get_metadata()
-    old = _old_flat_metadata(task)
+class _FlatForecastingTask(BaseTask):
+    """The short form the forecasting task declared before its own roles."""
 
-    assert {key: metadata[key] for key in old} == old
+    metadata = {
+        "inputs_types": [Date],
+        "outputs_types": [Float, Integer],
+        "inputs_cardinality": 1,
+        "outputs_cardinality": 1,
+    }
+
+
+def test_the_single_series_task_validates_what_its_short_form_did(dataset):
+    # The roles are its own now, not the x/y short form, but the columns it
+    # accepts and the messages it refuses with are the same.
+    differences = []
+    for inputs in COLUMN_CHOICES:
+        for outputs in OUTPUT_CHOICES:
+            before = _outcome(
+                lambda inputs=inputs, outputs=outputs: _old_validate(
+                    _FlatForecastingTask, dataset._types, inputs, outputs
+                )
+            )
+            after = _outcome(
+                lambda inputs=inputs, outputs=outputs: (
+                    SingleSeriesForecastingTask().validate_dataset_for_task(
+                        dataset, "dataset", inputs, outputs
+                    )
+                )
+            )
+            if before != after:
+                differences.append((inputs, outputs, before, after))
+    assert differences == []
+
+
+@pytest.mark.parametrize("task", TASKS, ids=lambda t: t.__name__)
+def test_the_input_cardinality_is_what_the_flat_metadata_said(task):
+    # The flat view is no longer emitted. What still reads it, the check on a
+    # manual prediction's columns, reads the same value from the roles.
+    assert task.inputs_cardinality() == _old_flat_metadata(task)["inputs_cardinality"]
+    assert "inputs_types" not in task.get_metadata()
 
 
 def test_the_supervised_base_needs_no_declaration_of_its_own():

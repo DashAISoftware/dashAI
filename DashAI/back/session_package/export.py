@@ -30,7 +30,12 @@ if TYPE_CHECKING:
 SESSION_EXTENSION = ".dashai"
 # 2 stores the session's columns by role. Format 1, from before roles, stored
 # ``FORMAT_1_COLUMN_FIELDS`` instead; the importer still reads it.
-SESSION_FORMAT_VERSION = 2
+# 3 lets a metric row have no value, with ``unavailable_reason`` saying why. A
+# DashAI that reads format 2 would refuse the null at the database instead of
+# the file, so the version moves; formats 1 and 2 still import. A run of 3 may
+# also carry its backtest forecasts (``forecasts_entry``); a package without
+# the key, or with it null, imports the run without them.
+SESSION_FORMAT_VERSION = 3
 KIND_SESSION = "session"
 SESSION_ENTRY = "session.json"
 # Holds data.arrow and splits.json, like "<dataset>/dataset" on disk.
@@ -156,6 +161,21 @@ def _has_model_file(run) -> bool:
     return bool(run.run_path) and Path(run.run_path).exists()
 
 
+def _forecasts_path(run) -> Optional[Path]:
+    """The run's backtest forecasts, if it saved any.
+
+    Named after the run's id rather than stored on the row, so the package
+    carries the file under its own entry and the import names it after the
+    id the run gets there.
+    """
+    from kink import di
+
+    from DashAI.back.units.forecast_scope import forecasts_file
+
+    path = forecasts_file(di["config"]["RUNS_PATH"], str(run.id))
+    return path if path.is_file() else None
+
+
 def _size(path: Optional[str]) -> int:
     if not path or not Path(path).exists():
         return 0
@@ -192,6 +212,7 @@ def _metric_row(metric) -> Dict[str, Any]:
         "level": metric.level.name,
         "name": metric.name,
         "value": metric.value,
+        "unavailable_reason": metric.unavailable_reason,
         "std_value": metric.std_value,
         "step": metric.step,
         "fold_index": metric.fold_index,
@@ -238,8 +259,11 @@ def export_preview(session_id: int, session_factory: "sessionmaker") -> Dict[str
                 .first()
             )
             if with_model:
-                models_size += _size(run.run_path) + sum(
-                    _size(getattr(run, field)) for field in PLOT_FIELDS
+                forecasts = _forecasts_path(run)
+                models_size += (
+                    _size(run.run_path)
+                    + sum(_size(getattr(run, field)) for field in PLOT_FIELDS)
+                    + _size(str(forecasts) if forecasts else None)
                 )
             runs.append(
                 {
@@ -352,6 +376,7 @@ def build_session_package(
                     "with_model": with_model,
                     "run_path": run.run_path,
                     "plots": {field: getattr(run, field) for field in PLOT_FIELDS},
+                    "forecasts": _forecasts_path(run) if with_model else None,
                     "created": _iso(run.created),
                     "start_time": _iso(run.start_time),
                     "end_time": _iso(run.end_time),
@@ -385,6 +410,7 @@ def build_session_package(
                 "end_time": run["end_time"] if run["with_model"] else None,
                 "model_entry": None,
                 "plots": {},
+                "forecasts_entry": None,
                 "metrics": run["metrics"],
             }
             if run["with_model"]:
@@ -395,6 +421,9 @@ def build_session_package(
                     if path and Path(path).is_file():
                         entry["plots"][field] = f"{run_dir}/{field}.pickle"
                         _copy(Path(path), staging / entry["plots"][field])
+                if run["forecasts"]:
+                    entry["forecasts_entry"] = f"{run_dir}/forecasts.json"
+                    _copy(run["forecasts"], staging / entry["forecasts_entry"])
             recipe_runs.append(entry)
 
         recipe = {

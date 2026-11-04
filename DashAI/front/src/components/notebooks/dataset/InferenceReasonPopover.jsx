@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { useTranslation } from "react-i18next";
+import { getColumnTypeLabel } from "../../../utils/typesLists";
 
 const RULE_DESCRIPTIONS = {
   boolean_always_categorical: "datasets:inferenceReason.rule.boolean",
@@ -88,7 +89,7 @@ export default function InferenceReasonPopover({ columnName, reason }) {
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Chip
               size="small"
-              label={reason.final_type}
+              label={getColumnTypeLabel(reason.final_type, t)}
               color={reason.is_categorical ? "warning" : "primary"}
             />
             <Typography variant="caption" color="text.secondary">

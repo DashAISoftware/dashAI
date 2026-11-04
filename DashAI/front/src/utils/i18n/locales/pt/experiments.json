@@ -29,6 +29,7 @@
     "trainSplitMustBeGreaterThanZero": "A divisão de treinamento deve ser maior que zero",
     "trainSplitMustHaveAtLeastOneRow": "A divisão de treinamento deve ter pelo menos uma linha",
     "foldsMustBeLessThanDatasetSize": "O número de dobras deve ser menor ou igual ao número de amostras no conjunto de dados ({{datasetSize}})",
+    "seriesTooShort": "Um horizonte de {{horizon}} com {{origins}} origem(ns) de validação precisa de pelo menos {{needed}} linhas; o conjunto de dados tem {{rows}}. Encurte o horizonte, use menos origens ou traga mais histórico.",
     "groupColumnMustBeSelected": "Uma coluna para agrupamento deve ser selecionada"
   },
   "label": {
@@ -45,6 +46,7 @@
     "currentExperiments": "Experimentos Atuais",
     "currentOptimizerSettings": "Configuração Atual do Otimizador {{optimizer}}",
     "cvType": "Tipo de Validação Cruzada",
+    "splitter": "Divisor",
     "datasetRoleColumnRequirements": "<0>{{role}}: as colunas devem ser dos tipos</0><1></1><2>, e devem ter uma cardinalidade de </2><3>{{cardinality}}.</3>",
     "duration": "Duração",
     "endTime": "Hora de Conclusão",
@@ -81,11 +83,9 @@
     "seed": "Semente",
     "selectAColumn": "Selecione uma coluna",
     "selectDataset": "Selecionar conjunto de dados",
-    "selectDatasetColumns": "Indique quais colunas do conjunto de dados serão usadas como entrada e saída.",
     "selectDatasetTitle": "Selecione um conjunto de dados para a tarefa selecionada",
     "selectEvaluationStrategy": "Estratégia de avaliação",
     "selectHowToDivideDataset": "Selecione como dividir o conjunto de dados em subconjuntos de treinamento, validação e teste.",
-    "selectInputOutputColumnsDescription": "Selecione nomes de colunas das listas.",
     "selectMetrics": "Selecionar métricas",
     "selectModelFirst": "Selecione um Modelo Primeiro",
     "selectModelToAdd": "Selecione um Modelo para Adicionar",
@@ -134,17 +134,26 @@
   "splitPreview": {
     "title": "Prévia da divisão",
     "unavailable": "Este divisor ainda não declara sua forma, então não há nada para desenhar.",
+    "loading": "Desenhando a divisão…",
+    "failed": "Não foi possível calcular a pré-visualização ({{reason}}). Você pode continuar: a sessão verifica estes parâmetros ao ser criada.",
+    "retry": "Tentar novamente",
+    "invalid": "O divisor não pode usar estes parâmetros; revise os campos marcados do formulário.",
     "wholeDataset": "Conjunto",
     "reservedTest": "Reservado",
     "finalFit": "Ajuste final",
     "fold": "Dobra {{index}}",
+    "origin": "Origem {{index}}",
+    "testOrigin": "Teste",
     "moreFolds": "+{{hidden}} dobras a mais",
+    "moreOrigins": "+{{hidden}} origens a mais",
     "unused": "Sem uso",
-    "notes": {
-      "foldsHidden": "{{total}} dobras no total; só as primeiras e a última são desenhadas."
+    "legend": {
+      "steps_one": "{{role}}: {{count}} passo",
+      "steps_other": "{{role}}: {{count}} passos"
     },
-    "error": {
-      "notEnoughRows": "{{folds}} origens com um horizonte de {{horizon}} e um passo de {{step}} não cabem em {{rows}} linhas. Reduza um deles ou reserve menos."
+    "notes": {
+      "foldsHidden": "{{total}} dobras no total; só as primeiras e a última são desenhadas.",
+      "originsHidden": "{{total}} origens no total; só as primeiras e a última são desenhadas."
     }
   }
 }

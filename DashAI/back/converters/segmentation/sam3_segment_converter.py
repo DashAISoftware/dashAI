@@ -8,6 +8,7 @@ from kink import di
 from DashAI.back.converters.category.advanced_preprocessing import (
     AdvancedPreprocessingConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.core.schema_fields import (
     bool_field,
     enum_field,
@@ -16,7 +17,6 @@ from DashAI.back.core.schema_fields import (
     schema_field,
     string_field,
 )
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.downloads.downloadable import (
     HFPretrainedDownloadMixin,
@@ -66,7 +66,7 @@ def _mask_column(rank: int) -> str:
     return f"{MASK_COLUMN}_{rank}"
 
 
-class SAM3SegmentConverterSchema(BaseSchema):
+class SAM3SegmentConverterSchema(AddColumnsConverterSchema):
     """Configuration schema for the SAM3 segmentation converter."""
 
     prompt: schema_field(

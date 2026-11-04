@@ -340,6 +340,8 @@ class PdfPlumberDocumentDataLoader(DocumentDataLoader):
             "text item, or keeps the whole page as a single item, and when "
             "enabled stores each detected table as a separate text item of tab "
             "separated rows."
+            " [https://github.com/jsvine/pdfplumber]"
+            "(https://github.com/jsvine/pdfplumber)"
         ),
         es=(
             "Lee archivos PDF con pdfplumber, que detecta palabras y tablas. "
@@ -347,6 +349,8 @@ class PdfPlumberDocumentDataLoader(DocumentDataLoader):
             "un elemento de texto, o conserva la página completa como un único "
             "elemento, y si se activa guarda cada tabla detectada como otro "
             "elemento de texto con filas separadas por tabuladores."
+            " [https://github.com/jsvine/pdfplumber]"
+            "(https://github.com/jsvine/pdfplumber)"
         ),
         pt=(
             "Lê arquivos PDF com pdfplumber, que detecta palavras e tabelas. "
@@ -354,6 +358,8 @@ class PdfPlumberDocumentDataLoader(DocumentDataLoader):
             "item de texto, ou mantém a página inteira como um único item, e "
             "quando ativado guarda cada tabela detectada como outro item de "
             "texto com linhas separadas por tabulações."
+            " [https://github.com/jsvine/pdfplumber]"
+            "(https://github.com/jsvine/pdfplumber)"
         ),
         de=(
             "Liest PDF-Dateien mit pdfplumber, das Wörter und Tabellen erkennt. "
@@ -361,11 +367,15 @@ class PdfPlumberDocumentDataLoader(DocumentDataLoader):
             "als Textelement, oder behält die ganze Seite als ein einziges "
             "Element, und speichert, falls aktiviert, jede erkannte Tabelle als "
             "eigenes Textelement mit tabulatorgetrennten Zeilen."
+            " [https://github.com/jsvine/pdfplumber]"
+            "(https://github.com/jsvine/pdfplumber)"
         ),
         zh=(
             "使用 pdfplumber 读取 PDF 文件，可识别单词和表格。将页面中的行分组为"
             "文本块并分别保存为文本项，或整页保存为一个文本项；启用后，"
             "每个识别出的表格会另存为以制表符分隔行的文本项。"
+            "[https://github.com/jsvine/pdfplumber]"
+            "(https://github.com/jsvine/pdfplumber)"
         ),
     )
 

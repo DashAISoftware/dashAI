@@ -66,3 +66,8 @@ export const dataTypesbyColumnType = {
   Categorical: ["string"],
   Image: ["struct"],
 };
+
+// Translated label for a column type. The raw type stays the value sent to
+// the backend; unknown types (e.g. from plugins) fall back to the raw name.
+export const getColumnTypeLabel = (type, t) =>
+  type ? t(`datasets:columnType.${type}`, { defaultValue: type }) : type;

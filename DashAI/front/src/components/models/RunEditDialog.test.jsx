@@ -17,6 +17,11 @@ jest.mock("react-markdown", () => ({
   default: ({ children }) => <span>{children}</span>,
 }));
 
+const mockEnqueueSnackbar = jest.fn();
+jest.mock("notistack", () => ({
+  useSnackbar: () => ({ enqueueSnackbar: mockEnqueueSnackbar }),
+}));
+
 jest.mock("../../api/component", () => ({
   getComponents: jest.fn(),
 }));
@@ -35,7 +40,8 @@ jest.mock("../../hooks/useStrategyKind", () => ({
 }));
 
 import { getComponents } from "../../api/component";
-import { getRunOperationsCount } from "../../api/run";
+import { getRunOperationsCount, updateRunParameters } from "../../api/run";
+import i18n from "../../utils/i18n";
 import { renderWithProviders } from "../../test-utils/renderWithProviders";
 import RunEditDialog from "./RunEditDialog";
 
@@ -90,5 +96,34 @@ describe("RunEditDialog", () => {
     fireEvent.change(depth, { target: { value: "7" } });
 
     await waitFor(() => expect(save).toBeEnabled());
+  });
+
+  test("a refused save shows what the backend said", async () => {
+    // The run API refuses a goal metric the task does not offer, or one that
+    // cannot be optimized, and says which; axios's own message only gives
+    // the status code.
+    const detail =
+      "Metric 'MAE' is not available for task TabularClassificationTask.";
+    updateRunParameters.mockRejectedValue({
+      message: "Request failed with status code 422",
+      response: { status: 422, data: { detail } },
+    });
+    renderDialog();
+    const save = await fieldsDrawn();
+    const [depth] = screen.getAllByRole("spinbutton");
+    fireEvent.change(depth, { target: { value: "7" } });
+    await waitFor(() => expect(save).toBeEnabled());
+
+    fireEvent.click(save);
+    fireEvent.click(
+      await screen.findByRole("button", { name: i18n.t("common:saveChanges") }),
+    );
+
+    await waitFor(() =>
+      expect(mockEnqueueSnackbar).toHaveBeenCalledWith(
+        i18n.t("models:error.failedToUpdateRun", { error: detail }),
+        { variant: "error" },
+      ),
+    );
   });
 });

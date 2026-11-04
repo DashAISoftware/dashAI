@@ -17,16 +17,9 @@ import { getTraceColors } from "../../utils/chartColors";
 import { useStrategyMetadata } from "../../hooks/useStrategyKind";
 import { STRATEGY_KINDS } from "../../utils/splitsPayload";
 import { useModels } from "./ModelsContext";
+import { metricSummary } from "../../utils/metricSummary";
 
 const SPLITS = ["TRAIN", "VALIDATION", "TEST"];
-
-function toFinalValue(value) {
-  const resolved = Array.isArray(value)
-    ? (value[value.length - 1]?.value ?? null)
-    : value;
-  const num = Number(resolved);
-  return Number.isNaN(num) ? null : num;
-}
 
 // Non-iterative models (e.g. plain scikit-learn ones) never call
 // calculate_metrics during training, so the only row the backend ever writes
@@ -242,13 +235,12 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
 
   // Compact final-value summary for whichever split is selected — same
   // numbers shown in the session's comparison table, scoped to the split
-  // currently picked here instead of a fixed one.
-  const summaryMetrics = useMemo(() => {
-    const rawMetrics = run[`${split.toLowerCase()}_metrics`] ?? {};
-    return Object.entries(rawMetrics)
-      .map(([name, value]) => [name, toFinalValue(value)])
-      .filter(([, value]) => value !== null);
-  }, [run.train_metrics, run.validation_metrics, run.test_metrics, split]);
+  // currently picked here instead of a fixed one. A metric the run could not
+  // compute keeps its place, with the reason.
+  const summaryMetrics = useMemo(
+    () => metricSummary(run, split.toLowerCase()),
+    [run, split],
+  );
 
   // One small panel per metric — each keeps its own x/y scale instead of
   // sharing a single overlaid axis, same "small multiples" approach used for
@@ -486,7 +478,7 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
               borderRadius: 1,
             }}
           >
-            {summaryMetrics.map(([name, value]) => (
+            {summaryMetrics.map(({ name, value, reason }) => (
               <Box
                 key={name}
                 sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
@@ -494,9 +486,21 @@ export function LiveMetricsChart({ run, modelSessionDetail = null }) {
                 <Typography variant="caption" color="text.secondary">
                   {name}
                 </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {value.toFixed(4)}
-                </Typography>
+                {value === null ? (
+                  <Tooltip title={reason} arrow>
+                    <Typography
+                      variant="body2"
+                      aria-label={reason}
+                      sx={{ fontWeight: 600, cursor: "help" }}
+                    >
+                      -
+                    </Typography>
+                  </Tooltip>
+                ) : (
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {value.toFixed(4)}
+                  </Typography>
+                )}
               </Box>
             ))}
           </Box>

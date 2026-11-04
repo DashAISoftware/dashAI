@@ -12,6 +12,13 @@ EXPECTED_UNITS = {
     "FitModelUnit",
     "FitWithoutTargetUnit",
     "ScoreClustersUnit",
+    "PrepareSeriesUnit",
+    "BuildForecasterUnit",
+    "BacktestForecasterUnit",
+    "ScoreForecastsUnit",
+    "FitFinalForecasterUnit",
+    "SaveForecastsUnit",
+    "ForecastHorizonUnit",
     "FitModelOverFoldsUnit",
     "FitModelOverNestedFoldsUnit",
     "EvaluateModelUnit",
@@ -292,6 +299,11 @@ EXPECTED_RUNTIME_PARAMS = {
     ("FitModelOverNestedFoldsUnit", "artifact_prefix"),
     ("FitModelUnit", "artifact_prefix"),
     ("SaveModelUnit", "artifact_prefix"),
+    ("BuildForecasterUnit", "run_id"),
+    ("BacktestForecasterUnit", "run_id"),
+    ("BacktestForecasterUnit", "artifact_prefix"),
+    ("SaveForecastsUnit", "artifact_prefix"),
+    ("PrepareSeriesUnit", "preprocessing_artifacts_path"),
 }
 
 

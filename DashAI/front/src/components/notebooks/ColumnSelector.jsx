@@ -9,6 +9,7 @@ import { useTheme } from "@mui/material/styles";
 import { getDatasetTypesByFilePath } from "../../api/datasets";
 import { Trans, useTranslation } from "react-i18next";
 import { getColorByColumnType } from "../../utils";
+import { getColumnTypeLabel } from "../../utils/typesLists";
 import { useTableLocalization } from "../../utils/useTableLocalization";
 
 /**
@@ -101,7 +102,7 @@ function ColumnSelector({
                   <span>{label}</span>
                   {type && type !== t("common:unknown") && (
                     <Chip
-                      label={type}
+                      label={getColumnTypeLabel(type, t)}
                       size="small"
                       sx={{
                         backgroundColor: (cellTheme) =>
@@ -124,6 +125,7 @@ function ColumnSelector({
         accessorKey: "valueType",
         header: t("datasets:label.valueType"),
         flex: 0.5,
+        Cell: ({ cell }) => getColumnTypeLabel(cell.getValue(), t),
       },
       {
         accessorKey: "dataType",

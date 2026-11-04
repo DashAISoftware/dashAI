@@ -1,5 +1,5 @@
 import { MenuItem, TextField } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import useMetricsByTask from "../../../hooks/useMetricByTask";
 
 function ModelsTableSelectMetric({
@@ -10,7 +10,16 @@ function ModelsTableSelectMetric({
   variant = "outlined",
   autoSelectDefault = false,
 }) {
-  const { compatibleMetrics, loading } = useMetricsByTask({ taskName });
+  const { compatibleMetrics: taskMetrics, loading } = useMetricsByTask({
+    taskName,
+  });
+  // A goal metric is the one a search optimizes, so a metric the backend
+  // declares not optimizable (interval coverage) is not offered.
+  const compatibleMetrics = useMemo(
+    () =>
+      taskMetrics.filter((metric) => metric?.metadata?.optimizable !== false),
+    [taskMetrics],
+  );
   const [selectedMetric, setSelectedMetric] = useState(metricName);
 
   // Opt-in only: the run-edit/add-model wizard wants a default goal metric

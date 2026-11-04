@@ -21,6 +21,8 @@
     "updatingPredictionStatus": "Error al actualizar el estado de la predicción."
   },
   "label": {
+    "horizon": "Horizonte",
+    "horizonDescription": "Cuántos pasos pronosticar después del final de la serie.",
     "basedOnDataset": "Basado en el dataset: {{datasetName}}",
     "changeImage": "Cambiar imagen",
     "chooseInputMethod": "Elegir Método de Entrada",
@@ -67,6 +69,8 @@
     "useExistingDataset": "Usar Dataset Existente"
   },
   "message": {
+    "unevaluatedSteps_one": "El último paso va más allá de los {{evaluated}} que midió el backtest: su error nunca se evaluó.",
+    "unevaluatedSteps_other": "Los últimos {{count}} pasos van más allá de los {{evaluated}} que midió el backtest: su error nunca se evaluó.",
     "deletedSuccessfully": "Predicción eliminada exitosamente",
     "downloadedSuccessfully": "Predicción descargada exitosamente",
     "predictionCompleted": "Predicción completada exitosamente",
