@@ -375,14 +375,19 @@ class Theta(SingleSeriesForecastingModel):
         return np.asarray(self._result.forecast(h, theta=self.theta), dtype=float)
 
     def _intervals(self, h: int, levels, x_future: Optional[Any]):
-        """The prediction intervals statsmodels gives for the Theta forecast."""
+        """Normal intervals with the h-step variance of simple exponential smoothing.
+
+        The Theta method is simple exponential smoothing with drift, so its
+        h-step variance is sigma^2 * (1 + (h - 1) * alpha^2), as for SES (fpp3
+        §8.7). statsmodels' ``prediction_intervals`` squares ``alpha - 1``
+        instead of ``alpha`` (``1 + (h - 1) * (1 + (alpha - 1)^2)``), so its
+        bounds are too wide for any alpha below 1: on series simulated from
+        the Theta model, its 80% intervals cover 90% to 98% of the values from
+        the second step on.
+        """
         import numpy as np
 
-        lower, upper = {}, {}
-        for level in levels:
-            frame = self._result.prediction_intervals(
-                h, theta=self.theta, alpha=1 - level / 100.0
-            )
-            lower[level] = np.asarray(frame["lower"], dtype=float)
-            upper[level] = np.asarray(frame["upper"], dtype=float)
-        return lower, upper
+        alpha = float(self._result.params["alpha"])
+        steps = np.arange(h, dtype=float)
+        sd = np.sqrt(self._result.sigma2 * (1 + steps * alpha**2))
+        return self._normal_bounds(self._forecast(h, None), sd, levels)

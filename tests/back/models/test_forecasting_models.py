@@ -395,6 +395,24 @@ def test_theta_can_use_a_seasonal_component():
     assert forecast.point == pytest.approx(season, abs=1.0)
 
 
+def test_theta_intervals_cover_what_they_promise():
+    # The Theta method is simple exponential smoothing with drift. On series
+    # drawn from that model, an 80% interval should hold about 80% of the
+    # values to come. statsmodels' own intervals square alpha - 1 instead of
+    # alpha, and with alpha 0.2 they hold about 98% six steps ahead.
+    rng = np.random.default_rng(0)
+    alpha, n, h, reps = 0.2, 120, 6, 200
+    inside = 0
+    for _ in range(reps):
+        noise = rng.normal(0.0, 1.0, n + h + 1)
+        series = 100.0 + np.cumsum(0.3 + noise[1:] - (1 - alpha) * noise[:-1])
+        forecast = Theta().fit(series[:n]).predict(h, levels=[80])
+        actual = series[n + h - 1]
+        inside += forecast.lower[80][-1] <= actual <= forecast.upper[80][-1]
+
+    assert 0.72 <= inside / reps <= 0.88
+
+
 def test_mean_forecasts_the_average_with_intervals_of_one_width():
     series = [2.0, 4.0, 3.0, 5.0, 6.0, 8.0]
     forecast = MeanForecaster().fit(series).predict(3, levels=[80])
