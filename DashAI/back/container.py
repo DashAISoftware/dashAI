@@ -49,6 +49,11 @@ def build_container(config: Dict[str, str]) -> Container:
     encryptor = CredentialEncryptor(credentials_key)
     di["credential_encryptor"] = encryptor
     di["credential_store"] = CredentialStore(session_factory, encryptor)
+    # A separate key from the credentials one, so each secret has one purpose
+    di["auth_secret"] = load_or_create_key(
+        pathlib.Path(config["AUTH_SECRET_PATH"]),
+        env_value=os.getenv("DASHAI_AUTH_SECRET"),
+    )
     job_queue = HueyJobQueue("job_queue", path_db=config["LOCAL_PATH"])
 
     di["job_queue"] = job_queue

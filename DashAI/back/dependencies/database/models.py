@@ -7,6 +7,7 @@ from sqlalchemy import (
     JSON,
     BigInteger,
     Boolean,
+    CheckConstraint,
     DateTime,
     Enum,
     Float,
@@ -16,6 +17,8 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
+    true,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -67,12 +70,47 @@ class Folder(Base):
 
 
 class User(Base):
+    """
+    Account of a person using a multi-user DashAI instance.
+
+    The global role (instance-wide access) lives in `global_role_id`; roles
+    inside each project live in `UserRoleProject`.
+    """
+
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    email: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    password_hash: Mapped[str] = mapped_column(String, nullable=False)
+
+    # Unique public handle (shown as "@username" in the app)
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+
+    # Profile data edited by the user
+    social_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    phone: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    github: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    linkedin: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    # Data managed by the organization (read-only for the user)
+    legal_name: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    organization: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
+    position: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+
+    # Access
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=true()
+    )
+    global_role_id: Mapped[int] = mapped_column(
+        ForeignKey("role.id", ondelete="RESTRICT"), nullable=False
+    )
+    last_login: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Every session token carries this number; increasing it invalidates all
+    # of the user's tokens (log out everywhere, password change, deactivation)
+    token_version: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
 
     created: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[datetime] = mapped_column(
@@ -81,7 +119,8 @@ class User(Base):
         onupdate=datetime.now,
     )
 
-    user_role_projects: Mapped[List["UserRoleProject"]] = relationship(
+    global_role: Mapped["Role"] = relationship("Role", back_populates="users")
+    project_roles: Mapped[List["UserRoleProject"]] = relationship(
         "UserRoleProject",
         back_populates="user",
         cascade="all, delete-orphan",
@@ -89,12 +128,19 @@ class User(Base):
 
 
 class Permission(Base):
+    """
+    A single action that can be granted, identified by a stable `uid`
+    such as "datasets.write" or "users.manage".
+    """
+
     __tablename__ = "permission"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    uid: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    uid: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    # Groups permissions in the UI ("Datos", "Modelos", "Instancia", ...)
+    category: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
     roles: Mapped[List["Role"]] = relationship(
         "Role",
@@ -104,23 +150,34 @@ class Permission(Base):
 
 
 class Role(Base):
+    """
+    Named set of permissions. `scope` says where the role applies: "global"
+    roles are assigned through `User.global_role_id`, "project" roles through
+    `UserRoleProject`. System roles cannot be edited or deleted.
+    """
+
     __tablename__ = "role"
+    __table_args__ = (
+        CheckConstraint("scope IN ('global', 'project')", name="role_scope"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
-    uid: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    uid: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    scope: Mapped[str] = mapped_column(String(20), nullable=False)
+    is_system: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
 
     permissions: Mapped[List["Permission"]] = relationship(
         "Permission",
         secondary="role_permission",
         back_populates="roles",
     )
-
-    user_role_projects: Mapped[List["UserRoleProject"]] = relationship(
-        "UserRoleProject",
-        back_populates="role",
-        cascade="all, delete-orphan",
+    users: Mapped[List["User"]] = relationship("User", back_populates="global_role")
+    project_assignments: Mapped[List["UserRoleProject"]] = relationship(
+        "UserRoleProject", back_populates="role"
     )
 
 
@@ -139,43 +196,67 @@ class RolePermission(Base):
 
 
 class UserRoleProject(Base):
+    """
+    Membership of a user in a project, with exactly one project role.
+    Instance-wide access is not stored here but in `User.global_role_id`.
+    """
+
     __tablename__ = "user_role_project"
 
     user_id: Mapped[int] = mapped_column(
         ForeignKey("user.id", ondelete="CASCADE"),
         primary_key=True,
     )
-
-    role_id: Mapped[int] = mapped_column(
-        ForeignKey("role.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-
-    project_id: Mapped[Optional[int]] = mapped_column(
+    project_id: Mapped[int] = mapped_column(
         ForeignKey("project.id", ondelete="CASCADE"),
         primary_key=True,
-        nullable=True,  # NULL = global scope
+    )
+    # A role still assigned to a member cannot be deleted
+    role_id: Mapped[int] = mapped_column(
+        ForeignKey("role.id", ondelete="RESTRICT"),
+        nullable=False,
     )
 
-    user: Mapped["User"] = relationship(
-        "User",
-        back_populates="user_role_projects",
-    )
+    created: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
-    role: Mapped["Role"] = relationship(
-        "Role",
-        back_populates="user_role_projects",
-    )
-
-    project: Mapped["Project"] = relationship("Project")
+    user: Mapped["User"] = relationship("User", back_populates="project_roles")
+    role: Mapped["Role"] = relationship("Role", back_populates="project_assignments")
+    project: Mapped["Project"] = relationship("Project", back_populates="members")
 
 
 class Project(Base):
+    """
+    Shared workspace that groups the resources a team works on.
+    Ownership is the "owner" project role in `UserRoleProject`.
+    """
+
     __tablename__ = "project"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String, nullable=True)
+    name: Mapped[str] = mapped_column(String(150), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    is_archived: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
+    created_by_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("user.id", ondelete="SET NULL"), nullable=True
+    )
+
+    created: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    last_modified: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.now,
+        onupdate=datetime.now,
+    )
+
+    created_by: Mapped[Optional["User"]] = relationship(
+        "User", foreign_keys=[created_by_id]
+    )
+    members: Mapped[List["UserRoleProject"]] = relationship(
+        "UserRoleProject",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
 
 
 class Dataset(Base):

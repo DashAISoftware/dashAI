@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from DashAI.back.api.api_v1.endpoints.app_config import router as app_config
+from DashAI.back.api.api_v1.endpoints.auth import router as auth
 from DashAI.back.api.api_v1.endpoints.components import router as components
 from DashAI.back.api.api_v1.endpoints.converters import router as converters
 from DashAI.back.api.api_v1.endpoints.credentials import router as credentials
@@ -62,3 +63,4 @@ api_router_v1.include_router(credentials, prefix="/credential")
 api_router_v1.include_router(rag, prefix="/rag")
 api_router_v1.include_router(system, prefix="/system")
 api_router_v1.include_router(app_config, prefix="/app-config")
+api_router_v1.include_router(auth, prefix="/auth")

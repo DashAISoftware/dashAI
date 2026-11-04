@@ -11,6 +11,7 @@ from kink import di
 
 from DashAI.back.api.api_v1.api import api_router_v1
 from DashAI.back.api.front_api import router as app_router
+from DashAI.back.auth.catalog import sync_auth_catalog
 from DashAI.back.container import build_container
 from DashAI.back.dependencies.config_builder import build_config_dict
 from DashAI.back.dependencies.database.backfill import (
@@ -105,6 +106,10 @@ def create_app(
         sqlite_file_path=pathlib.Path(config["SQLITE_DB_PATH"]),
     )
 
+    # Not tied to enable_seeding: registration needs the built-in roles
+    logger.debug("4a. Syncing built-in roles and permissions.")
+    sync_auth_catalog(di["session_factory"])
+
     logger.debug("4b. Backfilling dataset row/column counts.")
     backfill_dataset_counts(di["session_factory"])
 
@@ -130,7 +135,9 @@ def create_app(
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        # An explicit list: with credentials allowed, "*" would let any site
+        # send requests carrying the user's session cookie
+        allow_origins=config["CORS_ORIGINS"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
