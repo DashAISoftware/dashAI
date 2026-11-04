@@ -427,6 +427,7 @@
     "cardinalityMin": "Este converter necesita al menos {{min}} columnas, pero hay {{selected}} seleccionadas.",
     "cardinalityMax": "Este converter acepta como máximo {{max}} columnas, pero hay {{selected}} seleccionadas.",
     "rows_not_supported": "Los converters que cambian la cantidad de filas todavía no están disponibles en sesiones.",
+    "changes_rows": "Esta tarea lee sus filas en orden temporal, así que no admite un convertidor que quite o agregue filas. Completa los vacíos con un imputador.",
     "n_components_exceeds": "Pide {{n_components}} componentes, pero solo hay {{columns}} columnas seleccionadas.",
     "unknown_converter": "El converter \"{{converter}}\" no está disponible.",
     "invalid_params": "Parámetros inválidos: {{detail}}",
@@ -460,5 +461,14 @@
     "consistencyTitle": "Predicciones consistentes.",
     "consistency": "Los datos nuevos que predigas reciben exactamente el mismo preprocesamiento.",
     "diagramReceivesOne": "solo lo recibe"
+  },
+  "exogenous": {
+    "title": "Variables exógenas",
+    "used": "Leyó las variables exógenas: {{columns}}.",
+    "reason": {
+      "sessionHasNoExogenous": "La sesión no tiene variables exógenas, así que {{model}} pronostica solo con la serie.",
+      "modelTakesNoExogenous": "{{model}} no usa variables exógenas: pronostica solo con la serie.",
+      "exogenousSwitchedOff": "\"Usar variables exógenas\" está apagado: {{model}} pronostica sin ellas."
+    }
   }
 }

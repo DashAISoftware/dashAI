@@ -50,7 +50,9 @@ function BaseColumnsStep({
     }
   }, [rawColumnNames.join(","), roles.map((role) => role.name).join(",")]);
 
-  const ready = roles.length > 0 && selectionReady(roles, selection);
+  const ready =
+    roles.length > 0 &&
+    selectionReady(roles, selection, taskMetadata?.io_roles?.inputs);
   const selectionKey = JSON.stringify(selection);
 
   useEffect(() => {

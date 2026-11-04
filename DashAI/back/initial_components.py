@@ -277,7 +277,9 @@ from DashAI.back.models.efficientnet_b0_image_classifier import (
 from DashAI.back.models.faiss.faiss_dbscan_clustering import FaissDBSCANClustering
 from DashAI.back.models.faiss.faiss_kmeans_clustering import FaissKMeansClustering
 from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.drift import DriftForecaster
 from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
+from DashAI.back.models.forecasting.mean import MeanForecaster
 from DashAI.back.models.forecasting.naive import NaiveForecaster
 from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 from DashAI.back.models.forecasting.theta import Theta
@@ -577,6 +579,7 @@ from DashAI.back.tasks.translation_task import TranslationTask
 
 # Units
 from DashAI.back.units.apply_converter_unit import ApplyConverterUnit
+from DashAI.back.units.apply_cut_preprocessing_unit import ApplyCutPreprocessingUnit
 from DashAI.back.units.apply_dataset_schema_unit import ApplyDatasetSchemaUnit
 from DashAI.back.units.apply_session_preprocessing_unit import (
     ApplySessionPreprocessingUnit,
@@ -600,6 +603,7 @@ from DashAI.back.units.fit_model_over_nested_folds_unit import (
 )
 from DashAI.back.units.fit_model_unit import FitModelUnit
 from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
+from DashAI.back.units.forecast_future_unit import ForecastFutureUnit
 from DashAI.back.units.forecast_horizon_unit import ForecastHorizonUnit
 from DashAI.back.units.generate_global_explanation_unit import (
     GenerateGlobalExplanationUnit,
@@ -619,6 +623,7 @@ from DashAI.back.units.predict_unit import PredictUnit
 from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
 from DashAI.back.units.prepare_explanation_data_unit import PrepareExplanationDataUnit
+from DashAI.back.units.prepare_future_unit import PrepareFutureUnit
 from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
 from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
 from DashAI.back.units.run_exploration_unit import RunExplorationUnit
@@ -669,6 +674,8 @@ def get_initial_components():
         SingleSeriesForecastingTask,
         # Models
         NaiveForecaster,
+        MeanForecaster,
+        DriftForecaster,
         SeasonalNaiveForecaster,
         ARIMA,
         ExponentialSmoothing,
@@ -847,6 +854,9 @@ def get_initial_components():
         FitWithoutTargetUnit,
         ScoreClustersUnit,
         PrepareSeriesUnit,
+        ApplyCutPreprocessingUnit,
+        PrepareFutureUnit,
+        ForecastFutureUnit,
         BuildForecasterUnit,
         BacktestForecasterUnit,
         ScoreForecastsUnit,

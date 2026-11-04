@@ -506,6 +506,12 @@ async def upload_run(
                 params.goal_metric,
                 params.optimizer_name,
             )
+            _check_exogenous_requirement(
+                component_registry[params.model_name]["class"],
+                model_session,
+                component_registry[task_name]["class"](),
+                params.parameters,
+            )
             run = Run(
                 model_session_id=params.model_session_id,
                 model_name=params.model_name,
@@ -531,6 +537,44 @@ async def upload_run(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+
+def _check_exogenous_requirement(model_class, model_session, task, parameters) -> None:
+    """Refuse a model that cannot run without exogenous variables in a run that
+    will not read them, before it trains (RECONCILING_FORECASTING §2.14,
+    detail 2).
+
+    Whether the run reads them is ``exogenous_usage``'s answer, the one the
+    session shows before training, the units act on and the run records.
+
+    Raises
+    ------
+    HTTPException
+        422 naming the model and why the run would not read them.
+    """
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        EXOGENOUS_REQUIRED,
+        exogenous_usage,
+    )
+    from DashAI.back.tasks.session_roles import session_exogenous_refs
+
+    if getattr(model_class, "EXOGENOUS", None) != EXOGENOUS_REQUIRED:
+        return
+    used, reason = exogenous_usage(
+        model_class, parameters, bool(session_exogenous_refs(model_session, task))
+    )
+    if used:
+        return
+    why = (
+        "and this session has none. Choose another model, or create a session "
+        "that gives the exogenous role its columns."
+        if reason["key"] == "sessionHasNoExogenous"
+        else "and use_exogenous is off. Turn it on, or choose another model."
+    )
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail=f"Model {model_class.__name__!r} requires exogenous variables, {why}",
+    )
 
 
 def _check_goal_metric(component_registry, task_name, goal_metric, optimizer_name):
@@ -969,6 +1013,8 @@ def reset_run(run) -> list:
     setattr(run, "start_time", None)
     setattr(run, "delivery_time", None)
     setattr(run, "end_time", None)
+    # Recorded by the training it undoes, so it goes with it.
+    setattr(run, "exogenous", None)
 
     # Delete metrics from DB
     with di["session_factory"]() as db:

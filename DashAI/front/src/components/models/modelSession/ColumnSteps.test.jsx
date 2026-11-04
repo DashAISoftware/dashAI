@@ -52,6 +52,12 @@ const THREE_ROLES = {
   ],
   io_roles: { inputs: ["exogenous"], outputs: ["series"] },
 };
+// As forecasting declares them: the index feeds the model's inputs too, so
+// the exogenous variables are optional.
+const FORECASTING = {
+  ...THREE_ROLES,
+  io_roles: { inputs: ["index", "exogenous"], outputs: ["series"] },
+};
 
 const COLUMNS = ["a", "b", "c"];
 
@@ -154,6 +160,21 @@ describe("SelectColumnsStep", () => {
       index: [{ kind: "raw", name: "c" }],
       series: [{ kind: "raw", name: "b" }],
       exogenous: [{ kind: "raw", name: "a" }],
+    });
+  });
+
+  it("creates a forecasting session without exogenous variables", async () => {
+    const { setNewExp, setNextEnabled } = renderSelect(FORECASTING, {
+      column_roles: {
+        index: [{ kind: "raw", name: "c" }],
+        series: [{ kind: "raw", name: "b" }],
+      },
+    });
+
+    await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
+    expect(setNewExp.mock.calls.at(-1)[0].column_roles).toEqual({
+      index: [{ kind: "raw", name: "c" }],
+      series: [{ kind: "raw", name: "b" }],
     });
   });
 
@@ -270,5 +291,21 @@ describe("BaseColumnsStep", () => {
 
     await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
     expect(heldType("target", "c")).toBe("cCategorical");
+  });
+
+  it("goes on without exogenous candidates in a forecasting session", async () => {
+    const setNextEnabled = jest.fn();
+    renderWithProviders(
+      <BaseColumnsStep
+        newExp={{ column_roles_stage1: { index: ["c"], series: ["b"] } }}
+        setNewExp={jest.fn()}
+        setNextEnabled={setNextEnabled}
+        datasetInfo={{ column_names: COLUMNS }}
+        datasetTypes={{}}
+        taskMetadata={FORECASTING}
+      />,
+    );
+
+    await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
   });
 });

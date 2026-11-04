@@ -53,6 +53,7 @@ def infer_structure(
     target: List[str],
     steps: List[ConverterStep],
     component_registry: Any,
+    keeps_rows: bool = False,
 ) -> StructureResult:
     """Estimate the dataset state after every step of a converter chain.
 
@@ -71,6 +72,10 @@ def infer_structure(
         The chain, in order.
     component_registry : ComponentRegistry or mapping
         Resolves a converter name to ``{"class": converter_class}``.
+    keeps_rows : bool
+        Whether the session's task needs every step to keep its rows
+        (``BaseTask.PREPROCESSING_KEEPS_ROWS``). A step that declares it
+        changes the row count is then an error, ``changes_rows``.
 
     Returns
     -------
@@ -99,7 +104,7 @@ def infer_structure(
             continue
         try:
             state, added, warnings = _apply_step(
-                index, step, state, taken, target_set, component_registry
+                index, step, state, taken, target_set, component_registry, keeps_rows
             )
         except StructureError as e:
             results.append(StepStructure(status="error", state=state, error=e.message))
@@ -124,12 +129,17 @@ def _apply_step(
     taken: Set[str],
     target: Set[str],
     component_registry: Any,
+    keeps_rows: bool = False,
 ) -> Tuple[List[StateItem], List[StateItem], List[StructureMessage]]:
     """Estimate one step. Updates `taken` in place; raises StructureError."""
     try:
         converter_class = component_registry[step.converter]["class"]
     except KeyError as e:
         raise StructureError("unknown_converter", converter=step.converter) from e
+    if keeps_rows and getattr(converter_class, "CHANGES_ROW_COUNT", False):
+        # Before the converter's own rules: whatever rows it would drop or
+        # add, and on whichever split, this task cannot take it.
+        raise StructureError("changes_rows", converter=step.converter)
     converter = _instantiate(converter_class, step.params)
 
     scope = resolve_state_refs(step.scope, state, target)
