@@ -100,6 +100,7 @@ from DashAI.back.converters.simple_converters.type_cast import TypeCast
 # Credentials
 from DashAI.back.credentials.huggingface_credential import HuggingFaceCredential
 from DashAI.back.credentials.kaggle_credential import KaggleCredential
+from DashAI.back.credentials.openml_credential import OpenMLCredential
 
 # DataLoaders
 from DashAI.back.dataloaders.classes.arff_dataloader import ARFFDataLoader
@@ -749,6 +750,7 @@ def get_initial_components():
         # Credentials
         HuggingFaceCredential,
         KaggleCredential,
+        OpenMLCredential,
         # Metrics
         F1,
         Accuracy,

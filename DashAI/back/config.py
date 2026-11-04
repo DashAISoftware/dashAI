@@ -37,3 +37,9 @@ class DefaultSettings(BaseSettings):
     # at a fork with test releases (UPDATE_CHECK_REPOSITORY=me/DashAI) lets the
     # updater be tried end to end without touching the official releases.
     UPDATE_CHECK_REPOSITORY: str = "DashAISoftware/DashAI"
+
+    # OpenML server used to publish datasets. Defaults to the test server so
+    # development uploads never reach the public catalog; set
+    # OPENML_SERVER=https://www.openml.org/api/v1/xml to publish for real.
+    # Dataset search and download in the hub are not affected by this value.
+    OPENML_SERVER: str = "https://test.openml.org/api/v1/xml"
