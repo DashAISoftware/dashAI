@@ -9,6 +9,7 @@ the cache key ignores them.
 """
 
 import uuid
+from pathlib import Path
 from typing import Any, Dict
 
 import pytest
@@ -58,12 +59,13 @@ def _setup_service(
     chunks: Dict[int, Dict[int, Chunk]] | None = None,
     chunk_set_id: int = 7,
     chunking_key: str = "test-chunking",
+    env_rag_path: str = "rag-root",
 ) -> RetrieverSetupService:
     """Return a setup service with the minimal wiring the artifact hash needs."""
     return RetrieverSetupService(
         db=db,
         registry={},
-        env_RAG_path="rag-root",
+        env_RAG_path=env_rag_path,
         chunks=chunks or {},
         chunk_set_id=chunk_set_id,
         pipeline_id=1,
@@ -219,6 +221,54 @@ def test_dense_matrix_dirs_change_with_the_document_content(orm_db):
         first._build_dense_persistence(5).matrix_dirs
         != second._build_dense_persistence(5).matrix_dirs
     )
+
+
+def _write_matrix(folder) -> None:
+    """Leave an ``embeddings.npy`` in *folder*, as an indexing job does."""
+    import numpy as np
+
+    folder.mkdir(parents=True)
+    np.save(folder / "embeddings.npy", np.zeros((1, 3)))
+
+
+def _legacy_dir(root, chunk_set_id: int = 7):
+    """The folder of document 1's matrix before folders were content-addressed."""
+    name = f"doc_id-1__chunk_set_id-{chunk_set_id}__embedding_model_id-5"
+    return root / "embeddings" / name
+
+
+def test_a_matrix_indexed_before_content_folders_is_reused(orm_db, tmp_path):
+    """A session indexed on an older version keeps reading its own matrix."""
+    _write_matrix(_legacy_dir(tmp_path))
+    service = _setup_service(
+        orm_db, chunks=_artifact_corpus(), env_rag_path=str(tmp_path)
+    )
+
+    assert service._build_dense_persistence(5).matrix_dirs[1] == str(
+        _legacy_dir(tmp_path)
+    )
+
+
+def test_the_content_folder_wins_over_an_older_one(orm_db, tmp_path):
+    """Once the content folder has a matrix, the older folder is not read."""
+    service = _setup_service(
+        orm_db, chunks=_artifact_corpus(), env_rag_path=str(tmp_path)
+    )
+    content_dir = service._build_dense_persistence(5).matrix_dirs[1]
+    _write_matrix(Path(content_dir))
+    _write_matrix(_legacy_dir(tmp_path))
+
+    assert service._build_dense_persistence(5).matrix_dirs[1] == content_dir
+
+
+def test_an_older_matrix_of_another_chunk_set_is_not_reused(orm_db, tmp_path):
+    """Another chunk set may have chunked the document differently."""
+    _write_matrix(_legacy_dir(tmp_path, chunk_set_id=41))
+    service = _setup_service(
+        orm_db, chunks=_artifact_corpus(), chunk_set_id=7, env_rag_path=str(tmp_path)
+    )
+
+    assert "__content-" in service._build_dense_persistence(5).matrix_dirs[1]
 
 
 # ── Cleanup decision ─────────────────────────────────────────────────────────
