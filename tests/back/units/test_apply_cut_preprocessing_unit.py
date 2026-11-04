@@ -374,3 +374,45 @@ def test_the_steps_a_cut_reads_are_what_the_whole_series_would_give(tmp_path):
         assert cut["columns"] == columns
         assert len(columns) > 3
         np.testing.assert_allclose(cut["values"], whole[:steps], rtol=1e-12)
+
+
+def test_a_cluster_label_reaches_the_steps_after_the_cut(tmp_path):
+    """A clustering step fitted on the steps before a cut labels the steps
+    the cut forecasts with too: they are rows it was not fitted on."""
+    from DashAI.back.converters.clustering.clustering import Clustering
+    from DashAI.back.models.scikit_learn.kmeans_clustering import (  # noqa: F401
+        KMeansClustering,
+    )
+
+    registry = {"Clustering": {"class": Clustering}}
+    sequence = ConverterSequence(
+        steps=[
+            ConverterStep(
+                converter="Clustering",
+                params={
+                    "algorithm": "KMeansClustering",
+                    "algorithm_params": {"n_clusters": 2, "random_state": 0},
+                    "output_column_name": "cluster",
+                },
+                scope=PROMO,
+            )
+        ]
+    )
+    dataset = _dataset()
+    for name, steps in FITS.items():
+        preprocessor = SessionPreprocessor(sequence, registry, target_columns=["sales"])
+        preprocessor.fit_transform({"train": dataset.select(range(steps))})
+        with open(tmp_path / f"{name}.pkl", "wb") as f:
+            pickle.dump(preprocessor, f)
+    ctx = _context(dataset)
+
+    ApplyCutPreprocessingUnit(
+        exogenous_column_refs=[{"kind": "group", "step": 0}],
+        preprocessing_artifacts_path=str(tmp_path),
+    )(ctx)
+
+    for cut, steps in zip(
+        _cuts(ctx.require("exogenous")), cut_lengths(CUTS), strict=True
+    ):
+        assert cut["columns"] == ["cluster"]
+        assert cut["values"].shape == (steps, 1)
