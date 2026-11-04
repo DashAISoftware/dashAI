@@ -383,6 +383,10 @@ def import_session_package(
                         )
                         if entry.get("created"):
                             run.created = _date(entry["created"])
+                        if files is not None:
+                            # What the training recorded; a recipe imports
+                            # as never trained, so it has none.
+                            run.exogenous = entry.get("exogenous")
                         if files is None:
                             recipe_runs.append(entry["name"])
                             db.add(run)

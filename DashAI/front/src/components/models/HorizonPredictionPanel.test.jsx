@@ -4,6 +4,7 @@ import { renderWithProviders } from "../../test-utils/renderWithProviders";
 import i18n from "../../utils/i18n";
 import {
   createPrediction,
+  getFutureDates,
   getPredictionSplits,
   getPredictions,
 } from "../../api/predict";
@@ -19,9 +20,32 @@ import HorizonPredictionPanel from "./HorizonPredictionPanel";
 
 jest.mock("../../api/predict", () => ({
   createPrediction: jest.fn(),
+  getFutureDates: jest.fn(),
   getPredictionSplits: jest.fn(),
   getPredictions: jest.fn(),
 }));
+// The dataset panel creates the prediction itself; the stand-in says it chose
+// dataset 4 and, when clicked, hands back what POST /predict/ answered.
+const mockDatasetPrediction = {
+  id: 9,
+  dataset_id: 4,
+  unevaluated_steps: 1,
+  evaluated_horizon: 3,
+};
+jest.mock("./DatasetPredictionPanel", () => {
+  const { useEffect } = jest.requireActual("react");
+  const Stub = ({ onCreated, onStateChange }) => {
+    useEffect(() => {
+      onStateChange?.({ canRun: true, isSubmitting: false, datasetId: 4 });
+    }, [onStateChange]);
+    return (
+      <button type="button" onClick={() => onCreated?.(mockDatasetPrediction)}>
+        future dataset panel
+      </button>
+    );
+  };
+  return Stub;
+});
 jest.mock("../../api/job", () => ({ enqueuePredictionJob: jest.fn() }));
 jest.mock("../../utils/jobPoller", () => ({ startJobPolling: jest.fn() }));
 jest.mock("notistack", () => {
@@ -190,5 +214,171 @@ describe("HorizonPredictionPanel", () => {
 
     expect(onSaved).toHaveBeenLastCalledWith(failed);
     console.error.mockRestore();
+  });
+});
+
+describe("HorizonPredictionPanel, for a run that read exogenous variables", () => {
+  const declared = {
+    splits: [],
+    horizon: 3,
+    exogenous: { columns: [{ name: "promo", type: "Float" }] },
+  };
+
+  it("offers a dataset of the future rows, or typing them in", async () => {
+    getPredictionSplits.mockResolvedValue(declared);
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={jest.fn()} />,
+    );
+
+    expect(await screen.findByText("future dataset panel")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", {
+        name: i18n.t("prediction:label.futureTypedIn"),
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("asks for no more rows than the backend takes typed in", async () => {
+    getPredictionSplits.mockResolvedValue({
+      ...declared,
+      exogenous: { ...declared.exogenous, max_rows: 5 },
+    });
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={jest.fn()} />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: i18n.t("prediction:label.futureTypedIn"),
+      }),
+    );
+    const generate = () =>
+      screen.getByRole("button", {
+        name: i18n.t("prediction:button.generateDates"),
+      });
+
+    fireEvent.change(horizonField(), { target: { value: "6" } });
+
+    expect(
+      screen.getByText(i18n.t("prediction:label.futureStepsMax", { max: 5 })),
+    ).toBeInTheDocument();
+    expect(generate()).toBeDisabled();
+
+    fireEvent.change(horizonField(), { target: { value: "5" } });
+
+    expect(generate()).toBeEnabled();
+  });
+
+  it("types the future in on the next dates and sends it as the job's rows", async () => {
+    getPredictionSplits.mockResolvedValue(declared);
+    getFutureDates.mockResolvedValue({
+      timeIndex: "date",
+      dates: ["2024-01-01", "2024-02-01"],
+    });
+    createPrediction.mockResolvedValue({ id: 9 });
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={jest.fn()} />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: i18n.t("prediction:label.futureTypedIn"),
+      }),
+    );
+    fireEvent.change(horizonField(), { target: { value: "2" } });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: i18n.t("prediction:button.generateDates"),
+      }),
+    );
+    await waitFor(() => expect(getFutureDates).toHaveBeenCalledWith(1, 2));
+
+    fireEvent.change(await screen.findByLabelText("promo 2024-01-01"), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText("promo 2024-02-01"), {
+      target: { value: "0" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: i18n.t("prediction:button.runPrediction"),
+      }),
+    );
+
+    await waitFor(() =>
+      expect(enqueuePredictionJob).toHaveBeenCalledWith(9, [
+        { date: "2024-01-01", promo: 1 },
+        { date: "2024-02-01", promo: 0 },
+      ]),
+    );
+    // The horizon is the number of rows typed in.
+    expect(createPrediction).toHaveBeenCalledWith(1, null, null, 2);
+  });
+
+  const typeIn = async (dates) => {
+    getFutureDates.mockResolvedValueOnce({ timeIndex: "date", dates });
+    fireEvent.change(horizonField(), {
+      target: { value: String(dates.length) },
+    });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: i18n.t("prediction:button.generateDates"),
+      }),
+    );
+    // The table is the one for these dates once it has as many rows.
+    await waitFor(() =>
+      expect(screen.getAllByLabelText(/^promo /)).toHaveLength(dates.length),
+    );
+    for (const date of dates) {
+      fireEvent.change(await screen.findByLabelText(`promo ${date}`), {
+        target: { value: "1" },
+      });
+    }
+  };
+
+  it("warns about the rows typed in past the horizon measured, while there are that many", async () => {
+    getPredictionSplits.mockResolvedValue(declared);
+    createPrediction.mockResolvedValue({
+      id: 9,
+      unevaluated_steps: 2,
+      evaluated_horizon: 3,
+    });
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={jest.fn()} />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: i18n.t("prediction:label.futureTypedIn"),
+      }),
+    );
+    const five = ["2024-01-01", "2024-02-01", "2024-03-01", "2024-04-01"];
+    await typeIn([...five, "2024-05-01"]);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: i18n.t("prediction:button.runPrediction"),
+      }),
+    );
+
+    await waitFor(() =>
+      expect(createPrediction).toHaveBeenCalledWith(1, null, null, 5),
+    );
+    expect(await screen.findByText(warning(2, 3))).toBeInTheDocument();
+
+    // Editing the horizon field changes no row: the warning stays.
+    fireEvent.change(horizonField(), { target: { value: "3" } });
+    expect(screen.getByText(warning(2, 3))).toBeInTheDocument();
+
+    await typeIn(["2024-01-01", "2024-02-01", "2024-03-01"]);
+    expect(screen.queryByText(warning(2, 3))).not.toBeInTheDocument();
+  });
+
+  it("warns about the rows of a dataset past the horizon measured", async () => {
+    getPredictionSplits.mockResolvedValue(declared);
+    renderWithProviders(
+      <HorizonPredictionPanel run={{ id: 1 }} onSaved={jest.fn()} />,
+    );
+
+    fireEvent.click(await screen.findByText("future dataset panel"));
+
+    expect(await screen.findByText(warning(1, 3))).toBeInTheDocument();
   });
 });

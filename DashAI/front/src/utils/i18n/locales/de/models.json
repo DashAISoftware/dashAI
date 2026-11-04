@@ -418,6 +418,7 @@
     "cardinalityMin": "Dieser Converter benötigt mindestens {{min}} Spalten, ausgewählt sind {{selected}}.",
     "cardinalityMax": "Dieser Converter akzeptiert höchstens {{max}} Spalten, ausgewählt sind {{selected}}.",
     "rows_not_supported": "Converter, die die Zeilenanzahl ändern, sind in Sitzungen noch nicht verfügbar.",
+    "changes_rows": "Diese Aufgabe liest ihre Zeilen in zeitlicher Reihenfolge und nimmt daher keinen Converter, der Zeilen entfernt oder hinzufügt. Füllen Sie Lücken stattdessen mit einem Imputer.",
     "n_components_exceeds": "Es werden {{n_components}} Komponenten angefordert, aber nur {{columns}} Spalten sind ausgewählt.",
     "unknown_converter": "Der Converter \"{{converter}}\" ist nicht verfügbar.",
     "invalid_params": "Ungültige Parameter: {{detail}}",
@@ -451,5 +452,14 @@
     "performance": "Werte zu skalieren oder Spalten zu reduzieren kann dem Modell helfen.",
     "consistencyTitle": "Konsistente Vorhersagen.",
     "consistency": "Neue Daten, für die Sie Vorhersagen treffen, erhalten genau dieselbe Vorverarbeitung."
+  },
+  "exogenous": {
+    "title": "Exogene Variablen",
+    "used": "Las die exogenen Variablen: {{columns}}.",
+    "reason": {
+      "sessionHasNoExogenous": "Die Sitzung hat keine exogenen Variablen, daher prognostiziert {{model}} nur aus der Zeitreihe.",
+      "modelTakesNoExogenous": "{{model}} verwendet keine exogenen Variablen: Es prognostiziert nur aus der Zeitreihe.",
+      "exogenousSwitchedOff": "„Exogene Variablen verwenden“ ist aus: {{model}} prognostiziert ohne sie."
+    }
   }
 }

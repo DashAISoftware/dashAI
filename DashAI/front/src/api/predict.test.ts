@@ -100,6 +100,8 @@ describe("predict api", () => {
         trainingDatasetId: 5,
         // A run of a task that predicts rows measured no horizon.
         horizon: null,
+        // Nor did it read exogenous variables.
+        exogenous: null,
       });
     });
 
@@ -114,6 +116,7 @@ describe("predict api", () => {
         splits: [],
         trainingDatasetId: null,
         horizon: null,
+        exogenous: null,
       });
     });
   });
@@ -127,6 +130,16 @@ describe("predict api", () => {
       splits: [],
       trainingDatasetId: 2,
       horizon: 3,
+      exogenous: null,
     });
+  });
+
+  it("getPredictionSplits gives the exogenous columns of a run that read them", async () => {
+    const exogenous = { columns: [{ name: "promo", type: "Float" }] };
+    (api.get as jest.Mock).mockResolvedValue({
+      data: { splits: [], training_dataset_id: 2, horizon: 3, exogenous },
+    });
+
+    expect((await getPredictionSplits(9)).exogenous).toEqual(exogenous);
   });
 });

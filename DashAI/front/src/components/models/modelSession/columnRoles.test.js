@@ -80,18 +80,35 @@ describe("defaultRoleSelection", () => {
 });
 
 describe("selectionReady", () => {
-  test("needs every required role and some transformable column", () => {
+  test("needs every required role and some column the model reads", () => {
     const roles = [FEATURES, TARGET];
-    expect(selectionReady(roles, { features: ["a"], target: ["b"] })).toBe(
-      true,
+    const inputs = SUPERVISED.io_roles.inputs;
+    expect(
+      selectionReady(roles, { features: ["a"], target: ["b"] }, inputs),
+    ).toBe(true);
+    expect(selectionReady(roles, { features: ["a"], target: [] }, inputs)).toBe(
+      false,
     );
-    expect(selectionReady(roles, { features: ["a"], target: [] })).toBe(false);
-    expect(selectionReady(roles, { features: [], target: ["b"] })).toBe(false);
+    expect(selectionReady(roles, { features: [], target: ["b"] }, inputs)).toBe(
+      false,
+    );
   });
 
-  test("a task whose only transformable role is optional and empty", () => {
+  test("an optional role left empty, when another input has columns", () => {
+    // The index feeds the model's inputs too: the exogenous role may stay
+    // empty.
     const roles = [INDEX, SERIES, EXOGENOUS];
-    expect(selectionReady(roles, { index: ["d"], series: ["y"] })).toBe(false);
+    expect(
+      selectionReady(roles, { index: ["d"], series: ["y"] }, [
+        "index",
+        "exogenous",
+      ]),
+    ).toBe(true);
+  });
+
+  test("without the inputs declared, the transformable roles are the inputs", () => {
+    const roles = [FEATURES, TARGET];
+    expect(selectionReady(roles, { features: [], target: ["b"] })).toBe(false);
   });
 });
 

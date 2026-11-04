@@ -93,6 +93,11 @@ def test_the_series_comes_out_in_time_order_with_its_grid_and_cuts():
     assert ctx.require("grid") == GRID.to_ref()
     assert ctx.require("split_indexes") == CUTS
     assert ctx.require("task_name") == TASK
+    # The rows too, in the same order, for the unit that reads the exogenous
+    # variables one step per row.
+    rows = ctx.require("dataset").to_pandas()
+    assert list(rows["date"]) == list(dates)
+    assert list(rows["v"]) == list(SERIES)
 
 
 def test_a_series_off_its_grid_is_a_job_error_with_the_tasks_message():
@@ -154,17 +159,139 @@ def test_a_season_given_is_kept_even_if_it_is_one():
 # --- BacktestForecasterUnit --------------------------------------------------
 
 
-def _backtested(model="NaiveForecaster", params=None, series=SERIES):
+#: A planned promotion every third month, and what it adds to the series.
+PROMO = np.array([1.0 if i % 3 == 1 else 0.0 for i in range(24)]).reshape(-1, 1)
+WITH_PROMO = SERIES + 6.0 * PROMO[:, 0] + np.cos(np.arange(24.0))
+ARIMA_100 = {"p": 1, "d": 0, "q": 0}
+
+
+def _cut(name, values=None):
+    if values is None:
+        return {"name": name, "columns": [], "values": np.empty((24, 0))}
+    return {"name": name, "columns": ["promo"], "values": values}
+
+
+def _exogenous(values=None):
+    """What ``ApplyCutPreprocessingUnit`` publishes: the same raw cut each time."""
+    return {
+        "declared": values is not None,
+        "validation": [_cut("origin_0", values), _cut("origin_1", values)],
+        "test": _cut("test", values),
+        "final": _cut("final", values),
+    }
+
+
+def _backtested(
+    model="NaiveForecaster",
+    params=None,
+    series=SERIES,
+    exogenous=None,
+    optimizer=None,
+    published=None,
+):
     ctx = _context(task_name=TASK, grid=GRID.to_ref())
     BuildForecasterUnit(
         model={"component": model, "params": params or {}}, run_id=None
     )(ctx)
     ctx.put("series", series)
     ctx.put_ref("split_indexes", CUTS)
+    ctx.put("exogenous", published or _exogenous(exogenous))
     BacktestForecasterUnit(
-        optimizer=NO_SEARCH, goal_metric="", run_id=None, artifact_prefix="test"
+        optimizer=optimizer or NO_SEARCH,
+        goal_metric="MAE" if optimizer else "",
+        run_id=None,
+        artifact_prefix="test",
     )(ctx)
     return ctx
+
+
+def _by_hand(origin, x=None, params=ARIMA_100):
+    from DashAI.back.models.forecasting.arima import ARIMA
+
+    model = ARIMA(**params).fit(WITH_PROMO[:origin], None if x is None else x[:origin])
+    future = None if x is None else x[origin : origin + 3]
+    return list(model.predict(3, x_future=future).point)
+
+
+def test_a_model_that_takes_them_forecasts_every_origin_with_its_cut():
+    origins = _backtested("ARIMA", ARIMA_100, WITH_PROMO, PROMO).require("forecasts")[
+        "origins"
+    ]
+
+    for record in origins:
+        expected = _by_hand(record["origin_step"], PROMO)
+        assert record["forecast"] == pytest.approx(expected, rel=1e-9)
+
+
+def test_switched_off_the_model_forecasts_without_them():
+    params = {**ARIMA_100, "use_exogenous": False}
+    origins = _backtested("ARIMA", params, WITH_PROMO, PROMO).require("forecasts")[
+        "origins"
+    ]
+
+    for record in origins:
+        assert record["forecast"] == pytest.approx(
+            _by_hand(record["origin_step"]), rel=1e-9
+        )
+
+
+def test_a_model_that_takes_none_is_never_handed_them():
+    # Naive refuses an x; the unit leaves it out rather than fail.
+    origins = _backtested(exogenous=PROMO).require("forecasts")["origins"]
+
+    assert origins[0]["forecast"] == [15.0] * 3
+
+
+def test_a_cut_left_without_columns_is_refused_when_the_run_reads_them():
+    # The session declares the role, so the run reads its exogenous variables;
+    # a cut whose preprocessing resolved none is not trained without them.
+    published = _exogenous(PROMO)
+    published["validation"][0] = _cut("origin_0")
+
+    with pytest.raises(JobError, match="origin_0"):
+        _backtested("ARIMA", ARIMA_100, WITH_PROMO, published=published)
+
+
+def test_a_cut_left_without_columns_is_fine_for_a_model_that_reads_none():
+    published = _exogenous(PROMO)
+    published["validation"][0] = _cut("origin_0")
+
+    origins = _backtested(published=published).require("forecasts")["origins"]
+
+    assert origins[0]["forecast"] == [15.0] * 3
+
+
+def test_a_search_trial_forecasts_with_the_exogenous_columns(monkeypatch):
+    from DashAI.back.units import backtest_forecaster_unit
+
+    handed = []
+    original = backtest_forecaster_unit.forecast_origin
+
+    def recording(*args, **kwargs):
+        handed.append(kwargs.get("x"))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(backtest_forecaster_unit, "forecast_origin", recording)
+    searched = {
+        "p": {"optimize": True, "fixed_value": 1, "lower_bound": 1, "upper_bound": 1},
+        "d": 0,
+        "q": 0,
+    }
+
+    _backtested(
+        "ARIMA",
+        searched,
+        WITH_PROMO,
+        PROMO,
+        optimizer={
+            "component": "OptunaOptimizer",
+            "params": {"n_trials": 1, "sampler": "TPESampler", "pruner": "None"},
+        },
+    )
+
+    # The trial's two validation origins, then the backtest's three.
+    assert len(handed) == 5
+    assert all(x is not None and x.shape == (24, 1) for x in handed)
 
 
 def test_the_model_published_is_the_factorys_own():
@@ -293,6 +420,66 @@ def test_the_kept_model_is_fresh_and_has_seen_the_whole_series():
     assert kept is not backtested
     assert kept.predict(1).point[0] == pytest.approx(24.0)
     assert kept.time_grid == GRID.to_ref()
+
+
+def test_the_kept_model_is_fitted_on_the_final_cut():
+    ctx = _backtested("ARIMA", ARIMA_100, WITH_PROMO, PROMO)
+
+    FitFinalForecasterUnit()(ctx)
+
+    kept = ctx.require("model")
+    future = np.array([[1.0], [0.0], [0.0]])
+    from DashAI.back.models.forecasting.arima import ARIMA
+
+    by_hand = ARIMA(**ARIMA_100).fit(WITH_PROMO, PROMO).predict(3, x_future=future)
+    assert list(kept.predict(3, x_future=future).point) == pytest.approx(
+        list(by_hand.point), rel=1e-9
+    )
+
+
+def test_a_final_cut_left_without_columns_is_refused_when_the_run_reads_them():
+    published = _exogenous(PROMO)
+    published["final"] = _cut("final")
+    ctx = _backtested("ARIMA", ARIMA_100, WITH_PROMO, published=published)
+
+    with pytest.raises(JobError, match="final"):
+        FitFinalForecasterUnit()(ctx)
+
+
+# --- ModelJob._exogenous_record ----------------------------------------------
+
+
+def test_the_run_records_the_decision_its_session_and_model_make(registry):
+    """What the run records comes from the session's role, the model and its
+    parameters, the same answer the units and the session's mark give: not
+    from the columns one cut happened to resolve."""
+    from types import SimpleNamespace
+
+    from DashAI.back.job.model_job import ModelJob
+
+    ctx = ExecutionContext()
+    ctx.put("exogenous", {**_exogenous(PROMO), "final": _cut("final")})
+    ctx.put(
+        "dataset",
+        transform_dataset_with_schema(
+            to_dashai_dataset(pd.DataFrame({"promo": PROMO[:, 0]})),
+            {"promo": {"type": "Float", "dtype": "float64"}},
+        ),
+    )
+
+    record = ModelJob._exogenous_record(
+        SimpleNamespace(model_name="NaiveForecaster", parameters={}),
+        SimpleNamespace(preprocessing=None),
+        SimpleNamespace(
+            config={"exogenous_column_refs": [{"kind": "raw", "name": "promo"}]}
+        ),
+        ctx,
+        registry,
+    )
+
+    assert record["used"] is False
+    assert record["reason"]["key"] == "modelTakesNoExogenous"
+    assert record["columns"] == [{"name": "promo", "type": "Float"}]
 
 
 # --- SaveForecastsUnit -------------------------------------------------------

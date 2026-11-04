@@ -10,7 +10,9 @@ import pytest
 
 from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.drift import DriftForecaster
 from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
+from DashAI.back.models.forecasting.mean import MeanForecaster
 from DashAI.back.models.forecasting.naive import NaiveForecaster
 from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 from DashAI.back.models.forecasting.single_series_forecasting_model import (
@@ -18,7 +20,14 @@ from DashAI.back.models.forecasting.single_series_forecasting_model import (
     SingleSeriesForecastingModel,
 )
 
-ALL_MODELS = [NaiveForecaster, SeasonalNaiveForecaster, ARIMA, ExponentialSmoothing]
+ALL_MODELS = [
+    NaiveForecaster,
+    MeanForecaster,
+    DriftForecaster,
+    SeasonalNaiveForecaster,
+    ARIMA,
+    ExponentialSmoothing,
+]
 SERIES = np.arange(1.0, 31.0)
 
 
@@ -108,6 +117,87 @@ def test_only_arima_takes_exogenous_variables():
     assert ARIMA.EXOGENOUS == "optional"
     for model_class in (NaiveForecaster, SeasonalNaiveForecaster, ExponentialSmoothing):
         assert model_class.EXOGENOUS == "none"
+    # Published, so the session can mark the models that will not use them.
+    for model_class in ALL_MODELS:
+        assert model_class.get_metadata()["exogenous"] == model_class.EXOGENOUS
+
+
+def test_a_model_that_takes_exogenous_variables_can_be_told_not_to():
+    # The switch compares the same model with and without them, so it is a
+    # choice of the run and never something a search tunes.
+    field = ARIMA.get_schema()["properties"]["use_exogenous"]
+    assert field["type"] == "boolean"
+    assert field["placeholder"] is True
+    assert "use_exogenous" not in NaiveForecaster.get_schema()["properties"]
+    assert ARIMA().use_exogenous is True
+    assert ARIMA(use_exogenous=False).use_exogenous is False
+
+
+@pytest.mark.parametrize(
+    ("x", "match"),
+    [
+        (np.arange(30.0), "one column per variable"),
+        (np.full((30, 1), np.nan), "not finite"),
+    ],
+    ids=["one-dimensional", "not finite"],
+)
+def test_exogenous_variables_are_a_finite_matrix(x, match):
+    with pytest.raises(ValueError, match=match):
+        ARIMA(p=1, d=0, q=0).fit(SERIES, x=x)
+
+
+def test_the_future_has_the_columns_the_model_was_fitted_on():
+    steps = np.arange(len(SERIES), dtype=float)
+    x = np.column_stack([np.sin(steps), np.cos(steps)])
+    model = ARIMA(p=1, d=0, q=0).fit(SERIES, x=x)
+
+    with pytest.raises(ValueError, match="2 exogenous variable"):
+        model.predict(3, x_future=np.ones((3, 1)))
+
+
+@pytest.mark.parametrize(
+    ("model_class", "params", "has_exogenous", "used", "reason"),
+    [
+        (ARIMA, {}, True, True, None),
+        (ARIMA, {"use_exogenous": False}, True, False, "exogenousSwitchedOff"),
+        (ARIMA, {}, False, False, "sessionHasNoExogenous"),
+        (NaiveForecaster, {}, True, False, "modelTakesNoExogenous"),
+        (NaiveForecaster, {}, False, False, "sessionHasNoExogenous"),
+    ],
+)
+def test_whether_a_run_uses_the_exogenous_variables(
+    model_class, params, has_exogenous, used, reason
+):
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        exogenous_usage,
+    )
+
+    uses, why = exogenous_usage(model_class, params, has_exogenous)
+
+    assert uses is used
+    assert (why or {}).get("key") == reason
+    if why:
+        assert why["values"] == {"model": model_class.__name__}
+
+
+@pytest.mark.parametrize(
+    ("record", "used"),
+    [
+        (None, False),
+        ({"used": False, "columns": [], "reason": None}, False),
+        ({"used": True, "columns": [{"name": "promo", "type": "Float"}]}, True),
+    ],
+)
+def test_what_a_run_recorded_says_whether_it_read_exogenous_variables(record, used):
+    """The one reader of ``Run.exogenous.used``: the prediction API and the
+    prediction job ask it, so the two cannot disagree."""
+    from types import SimpleNamespace
+
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        used_exogenous,
+    )
+
+    assert used_exogenous(SimpleNamespace(exogenous=record)) is used
 
 
 def test_a_model_without_exogenous_variables_refuses_them():
@@ -120,6 +210,23 @@ def test_exogenous_variables_need_one_row_per_step():
 
     with pytest.raises(ValueError, match="2 row"):
         model.predict(3, x_future=np.ones((2, 1)))
+
+
+def test_a_model_fitted_on_exogenous_variables_needs_their_future():
+    x = np.random.RandomState(1).normal(size=(len(SERIES), 1))
+    model = ARIMA(p=1, d=0, q=0).fit(SERIES, x=x)
+
+    with pytest.raises(ValueError, match="fitted on 1 exogenous variable"):
+        model.predict(3)
+
+
+def test_a_model_kept_before_exogenous_variables_still_forecasts():
+    """A model pickled before it counted its exogenous variables has no
+    ``_n_exogenous``; it was fitted without them, and forecasts as before."""
+    model = ARIMA(p=1, d=0, q=0).fit(SERIES)
+    del model._n_exogenous
+
+    assert len(model.predict(3).point) == 3
 
 
 def test_arima_uses_exogenous_variables_when_given():
@@ -266,3 +373,26 @@ def test_a_multiplicative_trend_gives_the_same_intervals_every_time():
     second = model.predict(3, levels=[80])
 
     assert list(first.lower[80]) == list(second.lower[80])
+
+
+def test_mean_forecasts_the_average_with_intervals_of_one_width():
+    series = [2.0, 4.0, 3.0, 5.0, 6.0, 8.0]
+    forecast = MeanForecaster().fit(series).predict(3, levels=[80])
+
+    assert forecast.point == pytest.approx([28.0 / 6] * 3)
+    width = forecast.upper[80] - forecast.lower[80]
+    assert width == pytest.approx([width[0]] * 3)
+
+
+def test_drift_extends_the_line_from_the_first_value_to_the_last():
+    series = [2.0, 4.0, 3.0, 5.0, 6.0, 8.0]
+    forecast = DriftForecaster().fit(series).predict(3, levels=[80])
+
+    # Slope (8 - 2) / 5 = 1.2 per step, carried on from the last value.
+    assert forecast.point == pytest.approx([9.2, 10.4, 11.6])
+    assert (np.diff(forecast.upper[80] - forecast.lower[80]) > 0).all()
+
+
+def test_drift_needs_two_observations_to_measure_a_slope():
+    with pytest.raises(ValueError, match="at least 2 observations"):
+        DriftForecaster().fit([5.0])
