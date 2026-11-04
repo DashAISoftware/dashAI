@@ -3,7 +3,8 @@
     "deleteSelected_one": "Ausgewählte löschen ({{count}})",
     "deleteSelected_other": "Ausgewählte löschen ({{count}})",
     "downloadResults": "Vorhersageergebnisse herunterladen",
-    "runPrediction": "Vorhersage ausführen"
+    "runPrediction": "Vorhersage ausführen",
+    "generateDates": "Die nächsten Daten anzeigen"
   },
   "error": {
     "creatingPrediction": "Fehler beim Erstellen der Vorhersage",
@@ -63,7 +64,11 @@
     "selectRowsToDelete": "Zeilen zum Löschen auswählen",
     "targetColumn": "Zielspalte",
     "uploadImage": "Bild hochladen",
-    "useExistingDataset": "Vorhandenen Datensatz verwenden"
+    "useExistingDataset": "Vorhandenen Datensatz verwenden",
+    "futureFromDataset": "Aus einem Datensatz",
+    "futureTypedIn": "Von Hand eingegeben",
+    "futureStepsDescription": "Wie viele Schritte eingegeben werden",
+    "futureStepsMax": "Bis zu {{max}} Zeilen werden von Hand eingegeben; für mehr einen Datensatz verwenden"
   },
   "message": {
     "unevaluatedSteps_one": "Der letzte Schritt geht über die {{evaluated}} hinaus, die der Backtest gemessen hat: sein Fehler wurde nie bewertet.",
@@ -73,7 +78,8 @@
     "predictionCompleted": "Vorhersage erfolgreich abgeschlossen",
     "predictionJobSubmitted": "Vorhersage-Job erfolgreich eingereicht",
     "predictionsDeleted_one": "{{count}} Vorhersage erfolgreich gelöscht",
-    "predictionsDeleted_other": "{{count}} Vorhersagen erfolgreich gelöscht"
+    "predictionsDeleted_other": "{{count}} Vorhersagen erfolgreich gelöscht",
+    "exogenousFuture": "Dieses Modell las exogene Variablen und prognostiziert daher mit ihren zukünftigen Werten: Geben Sie {{columns}} für jeden zu prognostizierenden Schritt an. Der Horizont ist die Anzahl der Zeilen."
   },
   "unseen": {
     "title": "Kategorien, die das Modell im Training nie gesehen hat",

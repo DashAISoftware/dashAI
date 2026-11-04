@@ -7,12 +7,21 @@ from fastapi.exceptions import HTTPException
 from kink import di, inject
 from sqlalchemy import exc
 
-from DashAI.back.dependencies.database.models import Dataset, ModelSession, Prediction
+from DashAI.back.dependencies.database.models import (
+    Dataset,
+    ModelSession,
+    Prediction,
+    Run,
+)
 from DashAI.back.job.base_job import BaseJob, JobError
+from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    used_exogenous,
+)
 from DashAI.back.splitters.splits_payload import run_split_indexes
 from DashAI.back.tasks.session_roles import (
     SessionIO,
     TaskUnavailableError,
+    session_has_steps,
     session_io,
     session_raw_columns,
     session_task,
@@ -22,11 +31,13 @@ from DashAI.back.units.apply_session_preprocessing_unit import (
 )
 from DashAI.back.units.build_manual_input_unit import BuildManualInputUnit
 from DashAI.back.units.context import ExecutionContext
+from DashAI.back.units.forecast_future_unit import ForecastFutureUnit
 from DashAI.back.units.forecast_horizon_unit import ForecastHorizonUnit
 from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
 from DashAI.back.units.load_trained_model_unit import LoadTrainedModelUnit
 from DashAI.back.units.load_training_dataset_unit import LoadTrainingDatasetUnit
 from DashAI.back.units.predict_unit import PredictUnit
+from DashAI.back.units.prepare_future_unit import PrepareFutureUnit
 from DashAI.back.units.save_prediction_unit import SavePredictionUnit
 
 if TYPE_CHECKING:
@@ -45,7 +56,7 @@ def _preprocessing_artifacts_path(model_session: ModelSession) -> Optional[str]:
     artifacts path mean anything, so the two are read together and the path
     alone travels to the unit that applies it.
     """
-    if not (model_session.preprocessing and model_session.preprocessing.get("steps")):
+    if not session_has_steps(model_session):
         return None
     artifacts_path = model_session.preprocessing_artifacts_path
     if not artifacts_path:
@@ -105,7 +116,7 @@ def _input_columns_training_prepared_with(
     ``PreprocessingJob``). Without steps, the session's inputs are the raw
     columns themselves.
     """
-    if not (model_session.preprocessing and model_session.preprocessing.get("steps")):
+    if not session_has_steps(model_session):
         return io.inputs
     return io.raw_inputs
 
@@ -417,9 +428,20 @@ class PredictJob(BaseJob):
         return getattr(task_class, "PREDICTION_MODE", "rows") == "horizon"
 
     def _forecast_horizon(
-        self, db, ctx: ExecutionContext, prediction, model_session, io, dataset_trained
+        self,
+        db,
+        ctx: ExecutionContext,
+        prediction,
+        model_session,
+        io,
+        dataset_trained,
+        manual_input_data=None,
     ) -> None:
         """Forecast the prediction's horizon past the end of the run's series.
+
+        A run that read exogenous variables, as it recorded
+        (``Run.exogenous``), forecasts the future rows the request brings
+        instead: ``_forecast_future``.
 
         No dataset is read: the kept model was fitted on the whole series and
         knows its grid, so the dates follow its last one. The forecast is saved
@@ -431,6 +453,19 @@ class PredictJob(BaseJob):
             If the request names rows to predict, which a forecast has none
             of (the API refuses it first), or a step of the forecast fails.
         """
+        run = db.get(Run, prediction.run_id)
+        if run is not None and used_exogenous(run):
+            self._forecast_future(
+                db,
+                ctx,
+                prediction,
+                model_session,
+                io,
+                dataset_trained,
+                run.exogenous,
+                manual_input_data,
+            )
+            return
         try:
             if prediction.dataset_id or prediction.split or not prediction.horizon:
                 raise JobError(
@@ -451,6 +486,89 @@ class PredictJob(BaseJob):
             SavePredictionUnit(
                 task_name=model_session.task_name,
                 input_columns=io.inputs,
+                output_columns=io.outputs,
+            )(ctx)
+
+            prediction.results_path = ctx.require("results_path")
+            prediction.set_status_as_finished()
+            db.commit()
+        except Exception as e:
+            prediction.set_status_as_error()
+            db.commit()
+            log.exception(e)
+            raise
+        finally:
+            ctx.clear_cache()
+
+    def _forecast_future(
+        self,
+        db,
+        ctx: ExecutionContext,
+        prediction,
+        model_session,
+        io,
+        dataset_trained,
+        exogenous,
+        manual_input_data,
+    ) -> None:
+        """Forecast the future rows of a run that read exogenous variables.
+
+        The rows come from a dataset or typed by hand, as ``dataset`` either
+        way, so ``PrepareFutureUnit`` checks them once (decision 6). The
+        session's ``final.pkl`` turns them into what the model reads, as it
+        does an x/y prediction's rows, and the saved prediction keeps the
+        exogenous values it was made with (detail 10).
+
+        Raises
+        ------
+        JobError
+            If the request names a partition or brings no rows, rows typed in
+            are not as many as the horizon asked for, or a step of the
+            forecast fails.
+        """
+        task = di["component_registry"][model_session.task_name]["class"]()
+        (time_index,), model_exogenous = task.split_inputs(io.inputs)
+        raw_columns = [column["name"] for column in exogenous["columns"]]
+        try:
+            if prediction.split or not (prediction.dataset_id or manual_input_data):
+                raise JobError(
+                    f"Run {prediction.run_id} read exogenous variables, so it "
+                    "forecasts the future rows that bring their values: give a "
+                    "dataset of them, or type them in."
+                )
+            preprocessing_artifacts_path = _preprocessing_artifacts_path(model_session)
+            LoadTrainedModelUnit(run_id=prediction.run_id)(ctx)
+            LoadTrainingDatasetUnit(train_dataset_file_path=dataset_trained.file_path)(
+                ctx
+            )
+            if prediction.dataset_id:
+                LoadDatasetUnit(dataset_id=prediction.dataset_id)(ctx)
+            else:
+                if prediction.horizon and len(manual_input_data) != prediction.horizon:
+                    raise JobError(
+                        f"The prediction was asked for {prediction.horizon} "
+                        f"rows, and {len(manual_input_data)} were typed in."
+                    )
+                BuildManualInputUnit(
+                    task_name=model_session.task_name,
+                    train_dataset_file_path=dataset_trained.file_path,
+                    manual_input_data=manual_input_data,
+                )(ctx)
+            PrepareFutureUnit(
+                time_index=time_index, exogenous_columns=exogenous["columns"]
+            )(ctx)
+            ApplySessionPreprocessingUnit(
+                preprocessing_artifacts_path=preprocessing_artifacts_path,
+            )(ctx)
+
+            self.report_progress(0.4, "Forecasting")
+            ForecastFutureUnit(exogenous_columns=list(model_exogenous))(ctx)
+            prediction.unseen_categories = list(ctx.require("unseen_categories"))
+
+            self.report_progress(0.9, "Saving predictions")
+            SavePredictionUnit(
+                task_name=model_session.task_name,
+                input_columns=[time_index, *raw_columns],
                 output_columns=io.outputs,
             )(ctx)
 
@@ -559,7 +677,13 @@ class PredictJob(BaseJob):
                 model_session.task_name, component_registry
             ):
                 self._forecast_horizon(
-                    db, ctx, prediction, model_session, io, dataset_trained
+                    db,
+                    ctx,
+                    prediction,
+                    model_session,
+                    io,
+                    dataset_trained,
+                    manual_input_data,
                 )
                 return
 

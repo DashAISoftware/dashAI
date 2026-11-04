@@ -3,10 +3,10 @@
 import logging
 
 from DashAI.back.core.schema_fields import BaseSchema
-from DashAI.back.job.base_job import JobError
 from DashAI.back.splitters.origin_splitter import horizon_field
 from DashAI.back.units.base_unit import BaseUnit
 from DashAI.back.units.context import ExecutionContext
+from DashAI.back.units.forecast_scope import forecast_steps, model_grid
 from DashAI.back.units.splitter_scope import input_columns_field
 
 log = logging.getLogger(__name__)
@@ -45,7 +45,6 @@ class ForecastHorizonUnit(BaseUnit):
             to_dashai_dataset,
             transform_dataset_with_schema,
         )
-        from DashAI.back.tasks.time_grid import TimeGrid
         from DashAI.back.types.date_utils import DEFAULT_DATE_FORMAT
 
         model = ctx.require("model")
@@ -53,19 +52,8 @@ class ForecastHorizonUnit(BaseUnit):
         horizon = int(self.config["horizon"])
         time_index = self.config["input_columns"][0]
 
-        grid_ref = getattr(model, "time_grid", None)
-        if not grid_ref:
-            raise JobError(
-                "The model has no grid to name the dates of its forecast: it "
-                "was not trained by a forecasting run. Train it again."
-            )
-        grid = TimeGrid.from_ref(grid_ref)
-
-        try:
-            forecast = model.predict(horizon)
-        except Exception as e:
-            log.exception(e)
-            raise JobError(f"The model could not forecast {horizon} steps: {e}") from e
+        grid = model_grid(model)
+        point = forecast_steps(model, horizon)
 
         # The training type spells the format apart from the Arrow dtype; a
         # schema to apply carries the format as its dtype.
@@ -78,4 +66,4 @@ class ForecastHorizonUnit(BaseUnit):
         dataset = transform_dataset_with_schema(to_dashai_dataset(rows), schema)
 
         ctx.put("dataset", dataset)
-        ctx.put("y_pred", forecast.point)
+        ctx.put("y_pred", point)

@@ -418,6 +418,7 @@
     "cardinalityMin": "This converter needs at least {{min}} columns, but {{selected}} are selected.",
     "cardinalityMax": "This converter accepts at most {{max}} columns, but {{selected}} are selected.",
     "rows_not_supported": "Converters that change the number of rows are not available in sessions yet.",
+    "changes_rows": "This task reads its rows in time order, so it cannot take a converter that removes or adds rows. Fill gaps with an imputer instead.",
     "n_components_exceeds": "It asks for {{n_components}} components, but only {{columns}} columns are selected.",
     "unknown_converter": "The converter \"{{converter}}\" is not available.",
     "invalid_params": "Invalid parameters: {{detail}}",
@@ -451,5 +452,14 @@
     "consistencyTitle": "Consistent predictions.",
     "consistency": "New data you predict on receives exactly the same preprocessing.",
     "diagramReceivesOne": "only receives it"
+  },
+  "exogenous": {
+    "title": "Exogenous variables",
+    "used": "Read the exogenous variables: {{columns}}.",
+    "reason": {
+      "sessionHasNoExogenous": "The session has no exogenous variables, so {{model}} forecasts from the series alone.",
+      "modelTakesNoExogenous": "{{model}} does not use exogenous variables: it forecasts from the series alone.",
+      "exogenousSwitchedOff": "\"Use exogenous variables\" is off: {{model}} forecasts without them."
+    }
   }
 }

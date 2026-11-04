@@ -263,6 +263,10 @@ class Run(Base):
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
     split_indexes: Mapped[str] = mapped_column(JSON, nullable=True)
+    # What a forecasting run did with its session's exogenous variables:
+    # {"used", "columns": [{"name", "type"}], "reason"}, the raw columns a
+    # prediction has to bring. NULL for a session without them.
+    exogenous: Mapped[JSON] = mapped_column(JSON, nullable=True)
     # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)

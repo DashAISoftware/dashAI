@@ -5,6 +5,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.forecasting.single_series_forecasting_model import (
     EXOGENOUS_OPTIONAL,
     SingleSeriesForecastingModel,
+    use_exogenous_field,
 )
 
 if TYPE_CHECKING:
@@ -277,6 +278,7 @@ class ARIMASchema(BaseSchema):
             zh="季节长度",
         ),
     )  # type: ignore
+    use_exogenous: use_exogenous_field()  # type: ignore
 
 
 class ARIMA(SingleSeriesForecastingModel):

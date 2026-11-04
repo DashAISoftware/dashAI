@@ -21,6 +21,7 @@ import { Close as CloseIcon } from "@mui/icons-material";
 import { useSnackbar } from "notistack";
 import FormSchemaWithSelectedModel from "../shared/FormSchemaWithSelectedModel";
 import FormSchemaContainer from "../shared/FormSchemaContainer";
+import ExogenousUseNotice from "./ExogenousUseNotice";
 import OptimizationTableSelectOptimizer from "./modelSession/OptimizationTableSelectOptimizer";
 import ModelsTableSelectMetric from "./modelSession/ModelsTableSelectMetric";
 import NestedCVSelector from "./modelSession/NestedCVSelector";
@@ -450,6 +451,11 @@ function AddModelDialog({
                     hideButtons
                   />
                 </FormSchemaContainer>
+                <ExogenousUseNotice
+                  sessionId={session?.id}
+                  model={selectedModel}
+                  parameters={modelParameters}
+                />
               </Box>
             )}
           </Box>

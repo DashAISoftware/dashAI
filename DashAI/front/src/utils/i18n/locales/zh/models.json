@@ -416,6 +416,7 @@
     "cardinalityMin": "此转换器至少需要 {{min}} 列，但只选择了 {{selected}} 列。",
     "cardinalityMax": "此转换器最多接受 {{max}} 列，但选择了 {{selected}} 列。",
     "rows_not_supported": "会改变行数的转换器暂时无法在会话中使用。",
+    "changes_rows": "此任务按时间顺序读取行，因此不能使用删除或添加行的转换器。请改用插补器填补空缺。",
     "n_components_exceeds": "要求 {{n_components}} 个成分，但只选择了 {{columns}} 列。",
     "unknown_converter": "转换器“{{converter}}”不可用。",
     "invalid_params": "参数无效：{{detail}}",
@@ -449,5 +450,14 @@
     "performance": "缩放数值或减少列可能有助于模型。",
     "consistencyTitle": "一致的预测。",
     "consistency": "你预测的新数据会接受完全相同的预处理。"
+  },
+  "exogenous": {
+    "title": "外生变量",
+    "used": "读取了外生变量：{{columns}}。",
+    "reason": {
+      "sessionHasNoExogenous": "该会话没有外生变量，因此 {{model}} 仅根据序列预测。",
+      "modelTakesNoExogenous": "{{model}} 不使用外生变量：仅根据序列预测。",
+      "exogenousSwitchedOff": "“使用外生变量”已关闭：{{model}} 不使用它们进行预测。"
+    }
   }
 }

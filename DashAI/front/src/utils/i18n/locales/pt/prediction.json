@@ -4,7 +4,8 @@
     "deleteSelected_many": "Excluir Selecionadas ({{count}})",
     "deleteSelected_other": "Excluir Selecionadas ({{count}})",
     "downloadResults": "Baixar Resultados da Previsão",
-    "runPrediction": "Executar Previsão"
+    "runPrediction": "Executar Previsão",
+    "generateDates": "Mostrar as próximas datas"
   },
   "error": {
     "creatingPrediction": "Erro ao criar previsão",
@@ -66,7 +67,11 @@
     "selectRowsToDelete": "Selecionar linhas para excluir",
     "targetColumn": "Coluna Alvo",
     "uploadImage": "Enviar imagem",
-    "useExistingDataset": "Usar Conjunto de Dados Existente"
+    "useExistingDataset": "Usar Conjunto de Dados Existente",
+    "futureFromDataset": "De um conjunto de dados",
+    "futureTypedIn": "Digitadas à mão",
+    "futureStepsDescription": "Quantos passos digitar",
+    "futureStepsMax": "Até {{max}} linhas são digitadas à mão; para mais, use um dataset"
   },
   "message": {
     "unevaluatedSteps_one": "O último passo vai além dos {{evaluated}} que o backtest mediu: o erro dele nunca foi avaliado.",
@@ -77,7 +82,8 @@
     "predictionJobSubmitted": "Trabalho de previsão enviado com sucesso",
     "predictionsDeleted_one": "{{count}} previsão excluída com sucesso",
     "predictionsDeleted_many": "{{count}} previsões excluídas com sucesso",
-    "predictionsDeleted_other": "{{count}} previsões excluídas com sucesso"
+    "predictionsDeleted_other": "{{count}} previsões excluídas com sucesso",
+    "exogenousFuture": "Este modelo leu variáveis exógenas, então prevê com os seus valores futuros: traga {{columns}} para cada passo a prever. O horizonte é o número de linhas."
   },
   "unseen": {
     "title": "Categorias que o modelo não viu no treinamento",

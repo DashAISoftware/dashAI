@@ -147,6 +147,46 @@ def test_a_scope_type_the_converter_does_not_accept_is_an_error():
     assert result.steps[0].error.code == "type_not_allowed"
 
 
+def _infer_keeping_rows(steps, **kwargs):
+    return infer_structure(
+        dataset_types=_dataset().types,
+        candidates=["age", "height", "city", "date"],
+        target=["label"],
+        steps=steps,
+        component_registry=REGISTRY,
+        keeps_rows=True,
+        **kwargs,
+    )
+
+
+def test_a_task_that_keeps_its_rows_refuses_every_step_that_changes_them():
+    # A task with a time index counts its cuts in steps (PREPROCESSING_KEEPS_ROWS):
+    # removing rows, resampling or a resampler with no split rule all shift them.
+    params = schema_placeholder_defaults(TimeResamplerConverter)
+    for step in (
+        _step("NanRemover", [RawColumnRef(name="height")]),
+        _step("SMOTEConverter", [RawColumnRef(name="age")]),
+        _step("TimeResamplerConverter", [RawColumnRef(name="date")], **params),
+    ):
+        result = _infer_keeping_rows([step])
+
+        assert not result.valid
+        assert result.steps[0].error.code == "changes_rows"
+        assert result.steps[0].error.params == {"converter": step.converter}
+
+
+def test_a_task_that_keeps_its_rows_takes_a_step_that_keeps_them():
+    result = _infer_keeping_rows([_step("StandardScaler", [RawColumnRef(name="age")])])
+
+    assert result.valid
+
+
+def test_a_task_that_may_change_rows_still_takes_a_row_step():
+    result = _infer([_step("NanRemover", [RawColumnRef(name="height")])])
+
+    assert result.valid
+
+
 def test_row_changing_converters_without_a_split_rule_are_not_supported():
     params = schema_placeholder_defaults(TimeResamplerConverter)
     result = _infer(

@@ -98,8 +98,13 @@ def forecast_origin(
     partition: str,
     index: int,
     levels: Sequence[int],
+    x: Optional["np.ndarray"] = None,
 ) -> Dict[str, Any]:
     """Fit on the steps before an origin and forecast the horizon after it.
+
+    ``x``, when given, is the cut's exogenous matrix, one row per step of the
+    whole series: the model is fitted with its rows before the origin and
+    forecasts with the horizon's rows after it.
 
     Returns
     -------
@@ -110,8 +115,10 @@ def forecast_origin(
         Without a grid, as in a search trial that only scores, the dates are
         left empty.
     """
-    model.fit(series[:origin])
-    forecast = model.predict(horizon, levels=list(levels) or None)
+    history = None if x is None else x[:origin]
+    future = None if x is None else x[origin : origin + horizon]
+    model.fit(series[:origin], history)
+    forecast = model.predict(horizon, x_future=future, levels=list(levels) or None)
     dates = grid.dates(origin, horizon) if grid is not None else []
     return {
         "partition": partition,
@@ -123,6 +130,86 @@ def forecast_origin(
         "lower": {str(level): _plain(forecast.lower[level]) for level in levels},
         "upper": {str(level): _plain(forecast.upper[level]) for level in levels},
     }
+
+
+def model_grid(model) -> "TimeGrid":
+    """The grid a kept model was fitted on, which dates the steps it forecasts.
+
+    Raises
+    ------
+    JobError
+        If the model carries none: it was not kept by a forecasting run.
+    """
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.tasks.time_grid import TimeGrid
+
+    grid_ref = getattr(model, "time_grid", None)
+    if not grid_ref:
+        raise JobError(
+            "The model has no grid to name the dates of its forecast: it "
+            "was not trained by a forecasting run. Train it again."
+        )
+    return TimeGrid.from_ref(grid_ref)
+
+
+def forecast_steps(model, horizon: int, x_future=None) -> "np.ndarray":
+    """The kept model's point forecast of the steps after its series.
+
+    Shared by the prediction by horizon and the one with future exogenous
+    values, so the two fail with the same message.
+
+    Raises
+    ------
+    JobError
+        If the model cannot forecast them.
+    """
+    import logging
+
+    from DashAI.back.job.base_job import JobError
+
+    try:
+        return model.predict(int(horizon), x_future=x_future).point
+    except Exception as e:
+        logging.getLogger(__name__).exception(e)
+        raise JobError(f"The model could not forecast {horizon} steps: {e}") from e
+
+
+def exogenous_for(
+    model_class: type,
+    parameters: Optional[Dict[str, Any]],
+    declared: bool,
+    cut: Dict[str, Any],
+) -> Optional["np.ndarray"]:
+    """The exogenous matrix of a cut, or None when the run does not read it.
+
+    Whether it does is ``exogenous_usage``'s answer, from what the run is
+    configured with: whether the session's role has columns (``declared``),
+    the model and its parameters. It is the same answer the session shows
+    before training and the run records, so the three cannot disagree. A
+    model that takes none, or one switched off, is never handed an ``x``.
+
+    Raises
+    ------
+    JobError
+        If the run reads them and this cut's preprocessing resolved the role
+        to no column: the cut is not trained without them.
+    """
+    from DashAI.back.job.base_job import JobError
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        exogenous_usage,
+    )
+
+    used, _ = exogenous_usage(model_class, parameters, declared)
+    if not used:
+        return None
+    if not cut["columns"]:
+        raise JobError(
+            f"The session's preprocessing fitted for {cut['name']} left no "
+            f"exogenous column, and {model_class.__name__} reads them in this "
+            "run. Change the steps that transform the exogenous variables, or "
+            "turn off use_exogenous to compare the model without them."
+        )
+    return cut["values"]
 
 
 def scored_forecast(record: Dict[str, Any], series: "np.ndarray", season_length: int):

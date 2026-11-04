@@ -36,6 +36,13 @@ class BaseTask:
     #: forecast a number of steps past the end of the training data.
     PREDICTION_MODE: str = "rows"
 
+    #: Whether every step of a session's preprocessing has to keep the rows
+    #: it is given. A task that reads row order as time order, with its cuts
+    #: counted in steps, cannot take a step that drops or adds rows: the cuts
+    #: the session fitted on and the ones a run makes would stop matching.
+    #: The estimated structure refuses such a step (``changes_rows``).
+    PREPROCESSING_KEEPS_ROWS: bool = False
+
     #: The task's icon in the task list: the name of a Material UI icon, as a
     #: model declares its own.
     ICON: str = "Science"
