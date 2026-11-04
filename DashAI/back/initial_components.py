@@ -277,7 +277,9 @@ from DashAI.back.models.efficientnet_b0_image_classifier import (
 from DashAI.back.models.faiss.faiss_dbscan_clustering import FaissDBSCANClustering
 from DashAI.back.models.faiss.faiss_kmeans_clustering import FaissKMeansClustering
 from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.drift import DriftForecaster
 from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
+from DashAI.back.models.forecasting.mean import MeanForecaster
 from DashAI.back.models.forecasting.naive import NaiveForecaster
 from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 from DashAI.back.models.hugging_face.albert_transformer import AlbertTransformer
@@ -671,6 +673,8 @@ def get_initial_components():
         SingleSeriesForecastingTask,
         # Models
         NaiveForecaster,
+        MeanForecaster,
+        DriftForecaster,
         SeasonalNaiveForecaster,
         ARIMA,
         ExponentialSmoothing,

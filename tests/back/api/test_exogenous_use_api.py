@@ -68,7 +68,9 @@ def test_every_offered_model_is_marked_in_a_session_with_exogenous(client, tmp_p
     assert declared["has_exogenous"] is True
     assert [m["model"] for m in declared["models"]] == [
         "ARIMA",
+        "DriftForecaster",
         "ExponentialSmoothing",
+        "MeanForecaster",
         "NaiveForecaster",
         "SeasonalNaiveForecaster",
     ]

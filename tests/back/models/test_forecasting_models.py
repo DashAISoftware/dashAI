@@ -10,7 +10,9 @@ import pytest
 
 from DashAI.back.dataloaders.classes.dashai_dataset import to_dashai_dataset
 from DashAI.back.models.forecasting.arima import ARIMA
+from DashAI.back.models.forecasting.drift import DriftForecaster
 from DashAI.back.models.forecasting.exponential_smoothing import ExponentialSmoothing
+from DashAI.back.models.forecasting.mean import MeanForecaster
 from DashAI.back.models.forecasting.naive import NaiveForecaster
 from DashAI.back.models.forecasting.seasonal_naive import SeasonalNaiveForecaster
 from DashAI.back.models.forecasting.single_series_forecasting_model import (
@@ -18,7 +20,14 @@ from DashAI.back.models.forecasting.single_series_forecasting_model import (
     SingleSeriesForecastingModel,
 )
 
-ALL_MODELS = [NaiveForecaster, SeasonalNaiveForecaster, ARIMA, ExponentialSmoothing]
+ALL_MODELS = [
+    NaiveForecaster,
+    MeanForecaster,
+    DriftForecaster,
+    SeasonalNaiveForecaster,
+    ARIMA,
+    ExponentialSmoothing,
+]
 SERIES = np.arange(1.0, 31.0)
 
 
@@ -364,3 +373,26 @@ def test_a_multiplicative_trend_gives_the_same_intervals_every_time():
     second = model.predict(3, levels=[80])
 
     assert list(first.lower[80]) == list(second.lower[80])
+
+
+def test_mean_forecasts_the_average_with_intervals_of_one_width():
+    series = [2.0, 4.0, 3.0, 5.0, 6.0, 8.0]
+    forecast = MeanForecaster().fit(series).predict(3, levels=[80])
+
+    assert forecast.point == pytest.approx([28.0 / 6] * 3)
+    width = forecast.upper[80] - forecast.lower[80]
+    assert width == pytest.approx([width[0]] * 3)
+
+
+def test_drift_extends_the_line_from_the_first_value_to_the_last():
+    series = [2.0, 4.0, 3.0, 5.0, 6.0, 8.0]
+    forecast = DriftForecaster().fit(series).predict(3, levels=[80])
+
+    # Slope (8 - 2) / 5 = 1.2 per step, carried on from the last value.
+    assert forecast.point == pytest.approx([9.2, 10.4, 11.6])
+    assert (np.diff(forecast.upper[80] - forecast.lower[80]) > 0).all()
+
+
+def test_drift_needs_two_observations_to_measure_a_slope():
+    with pytest.raises(ValueError, match="at least 2 observations"):
+        DriftForecaster().fit([5.0])
