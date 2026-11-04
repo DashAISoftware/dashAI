@@ -28,13 +28,15 @@ class Golden:
             None if self.recording else json.loads(path.read_text(encoding="utf-8"))
         )
 
-    def pin(self, key: str, value, rel_tol: float = 1e-9) -> None:
+    def pin(
+        self, key: str, value, rel_tol: float = 1e-9, abs_tol: float = 1e-12
+    ) -> None:
         value = json.loads(json.dumps(plain(value)))
         if self.recording:
             self._recorded[key] = value
             return
         assert key in self._values, f"{key} was never recorded"
-        if not same(value, self._values[key], rel_tol):
+        if not same(value, self._values[key], rel_tol, abs_tol):
             assert value == self._values[key], key
 
     def save(self) -> None:
@@ -71,8 +73,8 @@ def plain(value):
     return value
 
 
-def same(value, expected, rel_tol: float = 1e-9) -> bool:
-    """Equal, floats to ``rel_tol`` and everything else exactly."""
+def same(value, expected, rel_tol: float = 1e-9, abs_tol: float = 1e-12) -> bool:
+    """Equal, floats to ``rel_tol`` or ``abs_tol``, everything else exactly."""
     if isinstance(value, float) or isinstance(expected, float):
         numbers = (int, float)
         return (
@@ -80,14 +82,14 @@ def same(value, expected, rel_tol: float = 1e-9) -> bool:
             and isinstance(expected, numbers)
             and not isinstance(value, bool)
             and not isinstance(expected, bool)
-            and math.isclose(value, expected, rel_tol=rel_tol, abs_tol=1e-12)
+            and math.isclose(value, expected, rel_tol=rel_tol, abs_tol=abs_tol)
         )
     if isinstance(value, dict) and isinstance(expected, dict):
         return value.keys() == expected.keys() and all(
-            same(value[k], expected[k], rel_tol) for k in value
+            same(value[k], expected[k], rel_tol, abs_tol) for k in value
         )
     if isinstance(value, list) and isinstance(expected, list):
         return len(value) == len(expected) and all(
-            same(v, e, rel_tol) for v, e in zip(value, expected, strict=True)
+            same(v, e, rel_tol, abs_tol) for v, e in zip(value, expected, strict=True)
         )
     return value == expected

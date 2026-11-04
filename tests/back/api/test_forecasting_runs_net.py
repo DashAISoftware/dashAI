@@ -62,9 +62,22 @@ RUNS = {
         "ExponentialSmoothing",
         {"trend": "add", "seasonal": "add", "season_length": 12},
         False,
-        1e-4,
+        1e-3,
     ),
 }
+
+# The series has no noise, and exponential smoothing fits it almost exactly:
+# its likelihood is flat around the fit, so where the optimizer stops depends
+# on the platform's BLAS and libm. The forecast past the end moved by a
+# relative 1.5e-4 between Windows, where the golden was recorded, and Linux
+# (138.4209 against 138.4000 on the first step). Losing the trend or the
+# seasonal part moves it by whole units, far past 1e-3.
+#
+# A metric is a difference of values on the series' scale, so its error is
+# relative to that scale, not to the metric: an ETS error of 1e-9 is noise
+# that doubles between platforms, and an ARIMA error of 3.6 moved by 2e-6, a
+# relative 5.7e-7 already. Metrics take the model's tolerance on the scale.
+SERIES_SCALE = float(_monthly()["sales"].abs().max())
 
 STRATEGIES = {
     "holdout": {"strategy": HOLDOUT_STRATEGY, "splits": HOLDOUT},
@@ -179,6 +192,7 @@ def test_the_run_scores_the_same(client, trained, strategy, run):
         f"{strategy}/{run}/metrics",
         _metrics(client, trained[(strategy, run)]),
         RUNS[run][3],
+        abs_tol=RUNS[run][3] * SERIES_SCALE,
     )
 
 
