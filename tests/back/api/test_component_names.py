@@ -55,6 +55,7 @@ def test_the_concrete_task_is_offered_its_models_and_strategies(client):
         "SeasonalNaiveForecaster",
         "ARIMA",
         "ExponentialSmoothing",
+        "Theta",
         "ForecastingHoldoutEvaluationStrategy",
         "ForecastingCrossValidationEvaluationStrategy",
         "TemporalHoldoutSplitter",

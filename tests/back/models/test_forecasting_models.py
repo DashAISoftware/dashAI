@@ -17,8 +17,15 @@ from DashAI.back.models.forecasting.single_series_forecasting_model import (
     Forecast,
     SingleSeriesForecastingModel,
 )
+from DashAI.back.models.forecasting.theta import Theta
 
-ALL_MODELS = [NaiveForecaster, SeasonalNaiveForecaster, ARIMA, ExponentialSmoothing]
+ALL_MODELS = [
+    NaiveForecaster,
+    SeasonalNaiveForecaster,
+    ARIMA,
+    ExponentialSmoothing,
+    Theta,
+]
 SERIES = np.arange(1.0, 31.0)
 
 
@@ -266,3 +273,21 @@ def test_a_multiplicative_trend_gives_the_same_intervals_every_time():
     second = model.predict(3, levels=[80])
 
     assert list(first.lower[80]) == list(second.lower[80])
+
+
+@pytest.mark.parametrize(("theta", "slope"), [(1.0, 0.0), (2.0, 0.5)])
+def test_theta_follows_its_share_of_a_linear_trend(theta, slope):
+    # On a line rising 1 per step, theta 1 forecasts flat and the classical
+    # theta 2 follows half of the slope.
+    forecast = Theta(theta=theta).fit(SERIES).predict(4)
+
+    assert np.diff(forecast.point) == pytest.approx([slope] * 3, abs=1e-3)
+
+
+def test_theta_can_use_a_seasonal_component():
+    season = [10.0, 20.0, 30.0, 40.0]
+    model = Theta(seasonal="add", season_length=4, theta=1.0)
+
+    forecast = model.fit(season * 8).predict(4)
+
+    assert forecast.point == pytest.approx(season, abs=1.0)
