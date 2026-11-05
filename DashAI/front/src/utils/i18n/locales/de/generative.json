@@ -245,22 +245,8 @@
     "create": {
       "newSession": "Neue RAG-Sitzung",
       "selectModel": "Sprachmodell",
-      "subtitle": "Ein Name und ein Modell. Wählen Sie Dokumente jetzt oder fügen Sie sie später hinzu; alles andere hat einen sinnvollen Standardwert, den Sie später ändern können.",
-      "title": "Neue RAG-Sitzung",
-      "documentsTitle": "Dokumente (optional)",
-      "documentsHint": "Wählen Sie jetzt Ordner oder Dokumente aus oder fügen Sie sie später in der Sitzung hinzu. Ein Ordner fügt die Dokumente hinzu, die er gerade enthält.",
-      "chooseDocuments": "Ordner und Dokumente auswählen",
-      "changeDocuments": "Auswahl ändern",
-      "clearDocuments": "Entfernen",
-      "documentsSelected_one": "{{count}} Dokument",
-      "documentsSelected_other": "{{count}} Dokumente",
-      "foldersSelected_one": "{{count}} Ordner",
-      "foldersSelected_other": "{{count}} Ordner",
-      "attachFailed": "Die Sitzung wurde erstellt, aber ihre Dokumente konnten nicht hinzugefügt werden",
-      "rollbackFailed": "Die Sitzung konnte nicht entfernt werden. Aktualisieren Sie die Sitzungsliste, bevor Sie fortfahren.",
-      "someDocumentsSkipped_one": "{{count}} Dokument wurde möglicherweise gelöscht oder wird noch verarbeitet und wird nicht hinzugefügt",
-      "someDocumentsSkipped_other": "{{count}} Dokumente wurden möglicherweise gelöscht oder werden noch verarbeitet und werden nicht hinzugefügt",
-      "documentsValidationFailed": "Die ausgewählten Dokumente konnten nicht geprüft werden, daher wurde die Sitzung ohne sie erstellt."
+      "subtitle": "Ein Name und ein Modell. F?gen Sie Ihre Dokumente hinzu, sobald die Sitzung besteht; alles andere hat einen sinnvollen Standardwert, den Sie sp?ter ?ndern k?nnen.",
+      "title": "Neue RAG-Sitzung"
     },
     "documentPreview": {
       "openInData": "In Daten öffnen",
@@ -415,7 +401,6 @@
     "insufficientContextDescription": "Das ausgewählte Modell hat nicht genug Kontext, um die aktuellen Chunk-Größen- und Top-K-Einstellungen zu verarbeiten. Bitte reduzieren Sie die Chunk-Größe, die Anzahl der Ergebnisse (Top K) oder wählen Sie ein Modell mit einem größeren Kontextfenster."
   },
   "documentPicker": {
-    "title": "Dokumente auswählen",
     "search": "Ordner und Dokumente suchen",
     "noFolder": "Kein Ordner",
     "noDocuments": "In Daten gibt es noch keine Dokumente.",

@@ -247,22 +247,8 @@
     "create": {
       "newSession": "Nova sessão RAG",
       "selectModel": "Modelo de linguagem",
-      "subtitle": "Um nome e um modelo. Escolha documentos agora ou adicione-os depois; todo o resto tem um padrão que você pode mudar depois.",
-      "title": "Nova sessão RAG",
-      "documentsTitle": "Documentos (opcional)",
-      "documentsHint": "Escolha pastas ou documentos agora, ou adicione-os depois pela sessão. Uma pasta adiciona os documentos que contém neste momento.",
-      "chooseDocuments": "Escolher pastas e documentos",
-      "changeDocuments": "Alterar seleção",
-      "clearDocuments": "Remover",
-      "documentsSelected_one": "{{count}} documento",
-      "documentsSelected_other": "{{count}} documentos",
-      "foldersSelected_one": "{{count}} pasta",
-      "foldersSelected_other": "{{count}} pastas",
-      "attachFailed": "A sessão foi criada, mas não foi possível adicionar os documentos",
-      "rollbackFailed": "Não foi possível remover a sessão. Atualize a lista de sessões antes de continuar.",
-      "someDocumentsSkipped_one": "{{count}} documento pode ter sido excluído ou ainda estar em processamento e não será adicionado",
-      "someDocumentsSkipped_other": "{{count}} documentos podem ter sido excluídos ou ainda estar em processamento e não serão adicionados",
-      "documentsValidationFailed": "Não foi possível verificar os documentos selecionados, então a sessão foi criada sem eles."
+      "subtitle": "Um nome e um modelo. Adicione seus documentos depois de criar a sess?o; todo o resto tem um padr?o que voc? pode mudar depois.",
+      "title": "Nova sessão RAG"
     },
     "documentPreview": {
       "openInData": "Abrir em Dados",
@@ -422,7 +408,6 @@
     "insufficientContextDescription": "O modelo selecionado não tem contexto suficiente para lidar com as configurações atuais de Tamanho do Fragmento e Top K. Reduza o Tamanho do Fragmento, o número de resultados (Top K) ou selecione um modelo com uma janela de contexto maior."
   },
   "documentPicker": {
-    "title": "Escolher documentos",
     "search": "Pesquisar pastas e documentos",
     "noFolder": "Sem pasta",
     "noDocuments": "Ainda não há documentos em Dados.",

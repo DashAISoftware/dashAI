@@ -244,22 +244,8 @@
     "create": {
       "newSession": "新建 RAG 会话",
       "selectModel": "语言模型",
-      "subtitle": "一个名称和一个模型。可以现在选择文档，也可以稍后添加；其余设置都有合理的默认值，之后可以更改。",
-      "title": "新建 RAG 会话",
-      "documentsTitle": "文档（可选）",
-      "documentsHint": "现在选择文件夹或文档，也可以稍后在会话中添加。文件夹会添加其当前包含的文档。",
-      "chooseDocuments": "选择文件夹和文档",
-      "changeDocuments": "更改选择",
-      "clearDocuments": "清除",
-      "documentsSelected_one": "{{count}} 个文档",
-      "documentsSelected_other": "{{count}} 个文档",
-      "foldersSelected_one": "{{count}} 个文件夹",
-      "foldersSelected_other": "{{count}} 个文件夹",
-      "attachFailed": "会话已创建，但无法添加其文档",
-      "rollbackFailed": "无法删除该会话。请刷新会话列表后再继续。",
-      "someDocumentsSkipped_one": "{{count}} 个文档可能已被删除或仍在处理中，将不会被添加",
-      "someDocumentsSkipped_other": "{{count}} 个文档可能已被删除或仍在处理中，将不会被添加",
-      "documentsValidationFailed": "无法验证所选文档，因此会话已在不含这些文档的情况下创建。"
+      "subtitle": "?????????????????????????????????????????",
+      "title": "新建 RAG 会话"
     },
     "documentPreview": {
       "openInData": "在数据中打开",
@@ -413,7 +399,6 @@
     "insufficientContextDescription": "所选模型没有足够的上下文来处理当前的块大小和 Top K 设置。请减小块大小、减少结果数量 (Top K)，或选择具有更大上下文窗口的模型。"
   },
   "documentPicker": {
-    "title": "选择文档",
     "search": "搜索文件夹和文档",
     "noFolder": "未分类",
     "noDocuments": "数据中还没有文档。",
