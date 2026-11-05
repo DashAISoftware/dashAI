@@ -7,9 +7,6 @@
   "documentsBar": {
     "addFromData": "Add from Data",
     "addFromDataTitle": "Add documents from Data",
-    "addSelected_one": "Add {{count}} document",
-    "addSelected_other": "Add {{count}} documents",
-    "alreadyAttached": "Already in this session",
     "attached_one": "Added {{count}} document to this session",
     "attached_other": "Added {{count}} documents to this session",
     "detach": "Remove from session",
@@ -24,11 +21,9 @@
     "folderDocumentCount_other": "{{count}} documents",
     "noDocumentsFound": "No documents found",
     "noDocumentsInSession": "No documents in this session",
-    "noLibraryDocuments": "There are no documents in Data yet. Upload one to start.",
     "preview": "Preview",
     "searchPlaceholder": "Search documents",
     "selectToSeeDetails": "Select a document to see its details",
-    "stillProcessing": "Still being processed",
     "title": "Documents",
     "untitledFolder": "Untitled folder",
     "upload": "Upload",
@@ -254,8 +249,22 @@
     "create": {
       "newSession": "New RAG session",
       "selectModel": "Language model",
-      "subtitle": "A name and a model. Add your documents once the session exists; everything else has a sensible default you can change later.",
-      "title": "New RAG session"
+      "subtitle": "A name and a model. Pick documents now or add them later; everything else has a sensible default you can change later.",
+      "title": "New RAG session",
+      "documentsTitle": "Documents (optional)",
+      "documentsHint": "Pick folders or documents now, or add them later from the session. A folder adds the documents it contains right now.",
+      "chooseDocuments": "Choose folders and documents",
+      "changeDocuments": "Change selection",
+      "clearDocuments": "Clear",
+      "documentsSelected_one": "{{count}} document",
+      "documentsSelected_other": "{{count}} documents",
+      "foldersSelected_one": "{{count}} folder",
+      "foldersSelected_other": "{{count}} folders",
+      "attachFailed": "The session was created but its documents could not be added",
+      "rollbackFailed": "The session could not be removed. Refresh the session list before continuing.",
+      "someDocumentsSkipped_one": "{{count}} document may have been deleted or is still processing and will not be added",
+      "someDocumentsSkipped_other": "{{count}} documents may have been deleted or are still processing and will not be added",
+      "documentsValidationFailed": "Could not verify the selected documents, so the session was created without them."
     },
     "documentPreview": {
       "openInData": "Open in Data",
@@ -408,5 +417,26 @@
     "apiKeyMissingDescription": "This model requires an API key to function. Open Advanced Configuration to add your API key.",
     "contextSpace": "With your current configuration you have space for your sources (chunks) and {{availableChars}} characters for your message.",
     "insufficientContextDescription": "The selected model doesn't have enough context to handle the current Chunk Size and Top K settings. Please reduce the Chunk Size, the number of results (Top K), or select a model with a larger context window."
+  },
+  "documentPicker": {
+    "title": "Choose documents",
+    "search": "Search folders and documents",
+    "noFolder": "No folder",
+    "noDocuments": "There are no documents in Data yet.",
+    "noResults": "No documents found",
+    "folderCount_one": "{{count}} document",
+    "folderCount_other": "{{count}} documents",
+    "selectedSummary_one": "{{count}} document selected",
+    "selectedSummary_other": "{{count}} documents selected",
+    "selectFolder": "Select {{name}}",
+    "collapseFolder": "Hide documents in {{name}}",
+    "expandFolder": "Show documents in {{name}}",
+    "alreadyAttached": "Already in this session",
+    "processing": "Still being processed",
+    "error": "Error",
+    "addSelected_one": "Add {{count}} document",
+    "addSelected_other": "Add {{count}} documents",
+    "selectDocuments": "Select documents",
+    "clearSearchToSelectFolder": "Clear the search to select the whole folder"
   }
 }

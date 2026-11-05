@@ -7,9 +7,6 @@
   "documentsBar": {
     "addFromData": "Aus Daten hinzufügen",
     "addFromDataTitle": "Dokumente aus Daten hinzufügen",
-    "addSelected_one": "{{count}} Dokument hinzufügen",
-    "addSelected_other": "{{count}} Dokumente hinzufügen",
-    "alreadyAttached": "Bereits in dieser Sitzung",
     "attached_one": "{{count}} Dokument zu dieser Sitzung hinzugefügt",
     "attached_other": "{{count}} Dokumente zu dieser Sitzung hinzugefügt",
     "detach": "Aus Sitzung entfernen",
@@ -24,11 +21,9 @@
     "folderDocumentCount_other": "{{count}} Dokumente",
     "noDocumentsFound": "Keine Dokumente gefunden",
     "noDocumentsInSession": "Keine Dokumente in dieser Sitzung",
-    "noLibraryDocuments": "In Daten gibt es noch keine Dokumente. Laden Sie eines hoch, um zu beginnen.",
     "preview": "Vorschau",
     "searchPlaceholder": "Dokumente suchen",
     "selectToSeeDetails": "Wählen Sie ein Dokument aus, um seine Details zu sehen",
-    "stillProcessing": "Wird noch verarbeitet",
     "title": "Dokumente",
     "untitledFolder": "Unbenannter Ordner",
     "upload": "Hochladen",
@@ -254,8 +249,22 @@
     "create": {
       "newSession": "Neue RAG-Sitzung",
       "selectModel": "Sprachmodell",
-      "subtitle": "Ein Name und ein Modell. Fügen Sie Ihre Dokumente hinzu, sobald die Sitzung besteht; alles andere hat einen sinnvollen Standardwert, den Sie später ändern können.",
-      "title": "Neue RAG-Sitzung"
+      "subtitle": "Ein Name und ein Modell. Wählen Sie Dokumente jetzt oder fügen Sie sie später hinzu; alles andere hat einen sinnvollen Standardwert, den Sie später ändern können.",
+      "title": "Neue RAG-Sitzung",
+      "documentsTitle": "Dokumente (optional)",
+      "documentsHint": "Wählen Sie jetzt Ordner oder Dokumente aus oder fügen Sie sie später in der Sitzung hinzu. Ein Ordner fügt die Dokumente hinzu, die er gerade enthält.",
+      "chooseDocuments": "Ordner und Dokumente auswählen",
+      "changeDocuments": "Auswahl ändern",
+      "clearDocuments": "Entfernen",
+      "documentsSelected_one": "{{count}} Dokument",
+      "documentsSelected_other": "{{count}} Dokumente",
+      "foldersSelected_one": "{{count}} Ordner",
+      "foldersSelected_other": "{{count}} Ordner",
+      "attachFailed": "Die Sitzung wurde erstellt, aber ihre Dokumente konnten nicht hinzugefügt werden",
+      "rollbackFailed": "Die Sitzung konnte nicht entfernt werden. Aktualisieren Sie die Sitzungsliste, bevor Sie fortfahren.",
+      "someDocumentsSkipped_one": "{{count}} Dokument wurde möglicherweise gelöscht oder wird noch verarbeitet und wird nicht hinzugefügt",
+      "someDocumentsSkipped_other": "{{count}} Dokumente wurden möglicherweise gelöscht oder werden noch verarbeitet und werden nicht hinzugefügt",
+      "documentsValidationFailed": "Die ausgewählten Dokumente konnten nicht geprüft werden, daher wurde die Sitzung ohne sie erstellt."
     },
     "documentPreview": {
       "openInData": "In Daten öffnen",
@@ -408,5 +417,26 @@
     "apiKeyMissingDescription": "Dieses Modell benötigt einen API-Schlüssel, um zu funktionieren. Öffnen Sie die erweiterte Konfiguration, um Ihren API-Schlüssel hinzuzufügen.",
     "contextSpace": "Mit Ihrer aktuellen Konfiguration haben Sie Platz für Ihre Quellen (Chunks) und {{availableChars}} Zeichen für Ihre Nachricht.",
     "insufficientContextDescription": "Das ausgewählte Modell hat nicht genug Kontext, um die aktuellen Chunk-Größen- und Top-K-Einstellungen zu verarbeiten. Bitte reduzieren Sie die Chunk-Größe, die Anzahl der Ergebnisse (Top K) oder wählen Sie ein Modell mit einem größeren Kontextfenster."
+  },
+  "documentPicker": {
+    "title": "Dokumente auswählen",
+    "search": "Ordner und Dokumente suchen",
+    "noFolder": "Kein Ordner",
+    "noDocuments": "In Daten gibt es noch keine Dokumente.",
+    "noResults": "Keine Dokumente gefunden",
+    "folderCount_one": "{{count}} Dokument",
+    "folderCount_other": "{{count}} Dokumente",
+    "selectedSummary_one": "{{count}} Dokument ausgewählt",
+    "selectedSummary_other": "{{count}} Dokumente ausgewählt",
+    "selectFolder": "{{name}} auswählen",
+    "collapseFolder": "Dokumente in {{name}} ausblenden",
+    "expandFolder": "Dokumente in {{name}} anzeigen",
+    "alreadyAttached": "Bereits in dieser Sitzung",
+    "processing": "Wird noch verarbeitet",
+    "error": "Fehler",
+    "addSelected_one": "{{count}} Dokument hinzufügen",
+    "addSelected_other": "{{count}} Dokumente hinzufügen",
+    "selectDocuments": "Dokumente auswählen",
+    "clearSearchToSelectFolder": "Löschen Sie die Suche, um den ganzen Ordner auszuwählen"
   }
 }

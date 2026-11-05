@@ -1,152 +1,16 @@
 import { useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import {
-  Box,
-  Button,
-  ButtonBase,
-  Checkbox,
-  Chip,
-  Divider,
-  Typography,
-} from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
+import { Box, Chip, Divider, Typography } from "@mui/material";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import DocumentIcon from "@mui/icons-material/Description";
-import SearchBar from "../../threeSectionLayout/SearchBar";
-import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { DOCUMENT_STATUS } from "../../../hooks/datasets/useDocuments";
 import { formatDate } from "../../../pages/results/constants/formatDate";
-
-function statusChip(doc, attached, t) {
-  if (attached)
-    return {
-      label: t("generative:documentsBar.alreadyAttached"),
-      color: "success",
-    };
-  if (doc.status === DOCUMENT_STATUS.ERROR)
-    return { label: t("datasets:document.statusError"), color: "error" };
-  if (doc.status !== DOCUMENT_STATUS.FINISHED)
-    return {
-      label: t("generative:documentsBar.stillProcessing"),
-      color: "info",
-    };
-  return null;
-}
-
-function DocumentTile({ doc, attached, checked, focused, onClick }) {
-  const theme = useTheme();
-  const { t } = useTranslation(["generative", "datasets"]);
-  const selectable = !attached && doc.status === DOCUMENT_STATUS.FINISHED;
-  const accent = theme.palette.primary.main;
-  const chip = statusChip(doc, attached, t);
-
-  return (
-    <ButtonBase
-      onClick={onClick}
-      aria-pressed={selectable ? checked : undefined}
-      title={doc.name}
-      sx={{
-        position: "relative",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        gap: 1,
-        p: 1.5,
-        pt: 2.5,
-        minWidth: 0,
-        height: 150,
-        borderRadius: 1.5,
-        border: 1,
-        borderColor: checked
-          ? alpha(accent, 0.6)
-          : focused
-            ? "divider"
-            : "transparent",
-        bgcolor: checked
-          ? alpha(accent, 0.12)
-          : focused
-            ? "action.selected"
-            : "transparent",
-        transition: "background-color 0.15s, border-color 0.15s",
-        "@media (hover: hover)": {
-          "&:hover": {
-            bgcolor: checked ? alpha(accent, 0.18) : "action.hover",
-          },
-          "&:hover .tile-check": { opacity: 1 },
-        },
-        "&.Mui-focusVisible .tile-check": { opacity: 1 },
-        "&.Mui-focusVisible": {
-          outline: `2px solid ${accent}`,
-          outlineOffset: "-2px",
-        },
-      }}
-    >
-      {selectable && (
-        <Checkbox
-          className="tile-check"
-          size="small"
-          checked={checked}
-          tabIndex={-1}
-          disableRipple
-          sx={{
-            position: "absolute",
-            top: 2,
-            left: 2,
-            p: 0.5,
-            opacity: checked ? 1 : 0,
-            transition: "opacity 0.15s",
-          }}
-        />
-      )}
-      <Box
-        sx={{
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: 64,
-          height: 64,
-          color: selectable ? "text.secondary" : "text.disabled",
-          opacity: selectable ? 1 : 0.6,
-        }}
-      >
-        <DocumentIcon sx={{ fontSize: 56 }} />
-      </Box>
-      <Typography
-        variant="body2"
-        sx={{
-          width: "100%",
-          textAlign: "center",
-          lineHeight: 1.3,
-          wordBreak: "break-word",
-          display: "-webkit-box",
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: "vertical",
-          overflow: "hidden",
-          color: selectable ? "text.primary" : "text.secondary",
-        }}
-      >
-        {doc.name}
-      </Typography>
-      {chip && (
-        <Chip
-          size="small"
-          variant="outlined"
-          color={chip.color}
-          label={chip.label}
-          sx={{
-            height: 18,
-            maxWidth: "100%",
-            "& .MuiChip-label": { px: 0.75, fontSize: 10 },
-          }}
-        />
-      )}
-    </ButtonBase>
-  );
-}
+import useDocumentFolderSelection from "./useDocumentFolderSelection";
+import DocumentFolderPicker from "./DocumentFolderPicker";
+import DocumentPickerDialog from "./DocumentPickerDialog";
+import { documentStatusChip } from "./documentStatusChip";
 
 function DetailRow({ label, value }) {
   return (
@@ -199,7 +63,7 @@ function DocumentDetails({ doc, attached }) {
 
   const counts = doc.content_counts || {};
   const finished = doc.status === DOCUMENT_STATUS.FINISHED;
-  const chip = statusChip(doc, attached, t);
+  const chip = documentStatusChip(doc, attached, t);
   const rows = [
     [t("datasets:document.fileName"), doc.file_name],
     [t("datasets:document.loader"), doc.dataloader],
@@ -266,131 +130,96 @@ export default function AddFromDataDialog({
   onConfirm,
 }) {
   const { t } = useTranslation(["generative", "datasets", "common"]);
-  const { documents = [] } = useDatasetsAndNotebooks();
-  const [selected, setSelected] = useState([]);
-  const [focusedId, setFocusedId] = useState(null);
-  const [query, setQuery] = useState("");
-
-  const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return documents.filter(
-      (doc) => !needle || doc.name.toLowerCase().includes(needle),
+  const context = useDatasetsAndNotebooks();
+  if (!context) {
+    throw new Error(
+      "AddFromDataDialog must be used within DatasetsAndNotebooksProvider",
     );
-  }, [documents, query]);
+  }
+  const { documents = [], folders = [] } = context;
+  const [submitting, setSubmitting] = useState(false);
+  const selection = useDocumentFolderSelection({
+    documents,
+    folders,
+    attachedIds,
+  });
 
-  const focusedDoc = documents.find((doc) => doc.id === focusedId) ?? null;
+  const focusedDoc = useMemo(() => {
+    const byId = new Map(documents.map((doc) => [doc.id, doc]));
+    if (selection.focusedId != null) {
+      const focused = byId.get(selection.focusedId);
+      if (focused) return focused;
+    }
+    return byId.get(selection.selectedIdsArray[0]) ?? null;
+  }, [documents, selection.focusedId, selection.selectedIdsArray]);
 
-  const handleTileClick = (doc) => {
-    setFocusedId(doc.id);
-    if (attachedIds.has(doc.id) || doc.status !== DOCUMENT_STATUS.FINISHED)
-      return;
-    setSelected((previous) =>
-      previous.includes(doc.id)
-        ? previous.filter((value) => value !== doc.id)
-        : [...previous, doc.id],
-    );
-  };
-
+  /**
+   * Closes the dialog without discarding the selection while an attach runs.
+   */
   const handleClose = () => {
-    setSelected([]);
-    setFocusedId(null);
-    setQuery("");
+    if (submitting) return;
+    selection.clear();
     onClose();
   };
 
+  /**
+   * Sends the selected ids and closes only when the attach succeeds.
+   *
+   * `onConfirm` returns false when the attach failed; the dialog then stays
+   * open with the selection intact so the user can retry or adjust it.
+   */
   const handleConfirm = async () => {
-    const ids = selected;
-    handleClose();
-    await onConfirm(ids);
+    if (submitting) return;
+    const ids = [...selection.selectedIdsArray];
+    setSubmitting(true);
+    try {
+      const accepted = await onConfirm(ids);
+      if (accepted === false) return;
+      selection.clear();
+      onClose();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
-    <RAGAdvancedDialog
+    <DocumentPickerDialog
       open={open}
       onClose={handleClose}
       title={t("generative:documentsBar.addFromDataTitle")}
-      maxWidth="lg"
-      minHeight={0}
-      paperSx={{
-        height: "80vh",
-        bgcolor: "background.paper",
-        backgroundImage: "none",
-      }}
-      contentSx={{ p: 0, display: "flex", minHeight: 0, overflow: "hidden" }}
-      actions={
-        <>
-          <Button onClick={handleClose}>{t("common:cancel")}</Button>
-          <Button
-            variant="contained"
-            disabled={selected.length === 0}
-            onClick={handleConfirm}
-          >
-            {t("generative:documentsBar.addSelected", {
-              count: selected.length,
-            })}
-          </Button>
-        </>
+      confirmLabel={
+        selection.selectedCount === 0
+          ? t("generative:documentPicker.selectDocuments")
+          : t("generative:documentPicker.addSelected", {
+              count: selection.selectedCount,
+            })
       }
+      confirmDisabled={selection.selectedCount === 0 || submitting}
+      confirming={submitting}
+      onConfirm={handleConfirm}
     >
       <Box
         sx={{
-          flex: 3,
+          flex: { xs: 1, md: 3 },
           minWidth: 0,
+          minHeight: 0,
           display: "flex",
           flexDirection: "column",
+          p: 2,
         }}
       >
-        <Box sx={{ p: 2, pb: 1.5 }}>
-          <SearchBar
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onClear={() => setQuery("")}
-            placeholder={t("generative:documentsBar.searchPlaceholder")}
-          />
-        </Box>
-        <Box
-          sx={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            overscrollBehavior: "contain",
-            px: 2,
-            pb: 2,
-          }}
-        >
-          {visible.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
-              {documents.length === 0
-                ? t("generative:documentsBar.noLibraryDocuments")
-                : t("generative:documentsBar.noDocumentsFound")}
-            </Typography>
-          ) : (
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))",
-                gap: 1,
-              }}
-            >
-              {visible.map((doc) => (
-                <DocumentTile
-                  key={doc.id}
-                  doc={doc}
-                  attached={attachedIds.has(doc.id)}
-                  checked={selected.includes(doc.id)}
-                  focused={focusedId === doc.id}
-                  onClick={() => handleTileClick(doc)}
-                />
-              ))}
-            </Box>
-          )}
-        </Box>
+        <DocumentFolderPicker
+          selection={selection}
+          onFocusDocument={(doc) => selection.setFocusedId(doc.id)}
+        />
       </Box>
       <Box
         sx={{
-          flex: 1,
+          flex: { xs: "0 0 38%", md: 1 },
           minWidth: 0,
-          borderLeft: 1,
+          minHeight: 0,
+          borderTop: { xs: 1, md: 0 },
+          borderLeft: { xs: 0, md: 1 },
           borderColor: "divider",
           overflowY: "auto",
           overscrollBehavior: "contain",
@@ -402,17 +231,9 @@ export default function AddFromDataDialog({
           attached={focusedDoc ? attachedIds.has(focusedDoc.id) : false}
         />
       </Box>
-    </RAGAdvancedDialog>
+    </DocumentPickerDialog>
   );
 }
-
-DocumentTile.propTypes = {
-  doc: PropTypes.object.isRequired,
-  attached: PropTypes.bool.isRequired,
-  checked: PropTypes.bool.isRequired,
-  focused: PropTypes.bool.isRequired,
-  onClick: PropTypes.func.isRequired,
-};
 
 DetailRow.propTypes = {
   label: PropTypes.string.isRequired,

@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
 import {
   Box,
+  Button,
   CircularProgress,
   Stack,
   TextField,
@@ -18,6 +19,11 @@ import SessionBar from "../../../components/generative/SessionBar";
 import StepperNavigationFooter from "../../../components/shared/StepperNavigationFooter";
 import ComponentSelector from "../../../components/custom/ComponentSelector";
 import RAGBreadcrumbs from "../../../components/generative/RAG/RAGBreadcrumbs";
+import CreateSessionDocumentsDialog from "../../../components/generative/RAG/CreateSessionDocumentsDialog";
+import {
+  createAttachCreatedSession,
+  resolveAttachableIds,
+} from "../../../components/generative/RAG/ragSessionDocuments";
 import {
   useCredentialStatuses,
   getComponentCredentialState,
@@ -25,9 +31,11 @@ import {
 import {
   RAG_MODEL_NAME,
   RAG_TASK_NAME,
+  attachSessionDocuments,
   createRAGSession,
   getGeneratorComponents,
 } from "../../../api/rag";
+import { getSessions, removeSession } from "../../../api/session";
 import { useGenerative } from "../../../components/generative/GenerativeContext";
 import { useTaskDisplayName } from "../../../hooks/generative/useTaskDisplayName";
 import { useThreePanelLayout } from "../../../hooks/useThreePanelsLayout";
@@ -42,9 +50,9 @@ import { getApiErrorMessage } from "../../../utils/apiError";
  * This is what `/app/generative/rag` renders, so arriving from the hub puts
  * the cursor straight in the form. Existing sessions are listed on the left.
  *
- * Documents are uploaded into the session once it exists, so there is nothing
- * to pick here; everything else the pipeline needs has a backend default the
- * session view can change.
+ * Documents are optional at creation: the user may pick folders and documents
+ * up front, or add them later from the session view. Picking them here attaches
+ * the current snapshot of those folders right after the session exists.
  *
  * Chunking, retrieval and the prompt template are filled in by the backend and
  * stay editable in the session view, so creating a session is three decisions
@@ -66,6 +74,9 @@ export default function RAGCreatePage() {
   const [loadingModels, setLoadingModels] = useState(true);
   const [selectedModel, setSelectedModel] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [documentsPickerOpen, setDocumentsPickerOpen] = useState(false);
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState([]);
+  const [selectedFolderCount, setSelectedFolderCount] = useState(0);
 
   const { statuses, loaded: credentialsLoaded } = useCredentialStatuses();
 
@@ -139,6 +150,66 @@ export default function RAGCreatePage() {
     !modelUnavailable &&
     !submitting;
 
+  /**
+   * Refetches the RAG session list without the sessions hook's error toast.
+   *
+   * The rollback already reports its own failure; a second toast for the same
+   * event would only add noise.
+   */
+  const refreshSessionsSilently = async () => {
+    try {
+      const data = await getSessions({ taskName: RAG_TASK_NAME });
+      setSessions?.(data);
+    } catch (error) {
+      console.error("Failed to refresh RAG sessions:", error);
+    }
+  };
+
+  /**
+   * Attaches the ids and undoes the session when the attach fails.
+   *
+   * The rollback reporting lives in the shared helper; this component only
+   * supplies the toasts and the silent session-list refresh.
+   */
+  const attachCreatedSession = createAttachCreatedSession({
+    attach: attachSessionDocuments,
+    remove: removeSession,
+    onAttachFailed: (error) =>
+      enqueueSnackbar(
+        getApiErrorMessage(error, t("generative:rag.create.attachFailed")),
+        { variant: "error" },
+      ),
+    onRollbackFailed: () =>
+      enqueueSnackbar(t("generative:rag.create.rollbackFailed"), {
+        variant: "error",
+      }),
+    refreshSessions: refreshSessionsSilently,
+  });
+
+  /**
+   * Adds the created session to the list and navigates to it.
+   *
+   * @param {{id: string|number}} created - The created session.
+   */
+  const finishCreatedSession = (created) => {
+    setSessions?.((prev) => [...(prev ?? []), created]);
+    enqueueSnackbar(t("generative:rag.messages.success"), {
+      variant: "success",
+    });
+    navigate(`/app/generative/rag/sessions/${created.id}`);
+  };
+
+  /**
+   * Creates the session and attaches the documents picked for it.
+   *
+   * The flow reads linearly: create → resolve the still-attachable ids →
+   * attach (rolling the session back on failure) → finish. When the library
+   * cannot be read after a retry, the session is created without documents and
+   * a warning explains it. Skipped documents are announced only after a
+   * successful attach. The page never navigates when the attach fails.
+   *
+   * @returns {Promise<void>}
+   */
   const handleCreate = async () => {
     if (!canCreate) return;
     setSubmitting(true);
@@ -152,11 +223,33 @@ export default function RAGCreatePage() {
           generation_model: { component: selectedModel.name, params: {} },
         },
       });
-      setSessions?.((prev) => [...(prev ?? []), created]);
-      enqueueSnackbar(t("generative:rag.messages.success"), {
-        variant: "success",
-      });
-      navigate(`/app/generative/rag/sessions/${created.id}`);
+
+      if (selectedDocumentIds.length === 0) {
+        finishCreatedSession(created);
+        return;
+      }
+
+      const resolution = await resolveAttachableIds(selectedDocumentIds);
+      if (resolution.validationFailed) {
+        enqueueSnackbar(t("generative:rag.create.documentsValidationFailed"), {
+          variant: "warning",
+        });
+        finishCreatedSession(created);
+        return;
+      }
+
+      const attached = await attachCreatedSession(created, resolution.ids);
+      if (!attached) return;
+
+      if (resolution.skipped > 0) {
+        enqueueSnackbar(
+          t("generative:rag.create.someDocumentsSkipped", {
+            count: resolution.skipped,
+          }),
+          { variant: "info" },
+        );
+      }
+      finishCreatedSession(created);
     } catch (error) {
       console.error("Error creating RAG session:", error);
       enqueueSnackbar(
@@ -261,6 +354,70 @@ export default function RAGCreatePage() {
                       />
                     )}
                   </Box>
+                  <Box>
+                    <Typography
+                      variant="subtitle2"
+                      component="h3"
+                      sx={{ mb: 1, fontWeight: 600 }}
+                    >
+                      {t("generative:rag.create.documentsTitle")}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1.5 }}
+                    >
+                      {t("generative:rag.create.documentsHint")}
+                    </Typography>
+                    {selectedDocumentIds.length > 0 ? (
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        useFlexGap
+                        flexWrap="wrap"
+                        alignItems="center"
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {t("generative:rag.create.documentsSelected", {
+                            count: selectedDocumentIds.length,
+                          })}
+                        </Typography>
+                        {selectedFolderCount > 0 && (
+                          <Typography variant="body2" color="text.secondary">
+                            {t("generative:rag.create.foldersSelected", {
+                              count: selectedFolderCount,
+                            })}
+                          </Typography>
+                        )}
+                        <Button
+                          size="small"
+                          disabled={submitting}
+                          onClick={() => setDocumentsPickerOpen(true)}
+                        >
+                          {t("generative:rag.create.changeDocuments")}
+                        </Button>
+                        <Button
+                          size="small"
+                          color="inherit"
+                          disabled={submitting}
+                          onClick={() => {
+                            setSelectedDocumentIds([]);
+                            setSelectedFolderCount(0);
+                          }}
+                        >
+                          {t("generative:rag.create.clearDocuments")}
+                        </Button>
+                      </Stack>
+                    ) : (
+                      <Button
+                        variant="outlined"
+                        disabled={submitting}
+                        onClick={() => setDocumentsPickerOpen(true)}
+                      >
+                        {t("generative:rag.create.chooseDocuments")}
+                      </Button>
+                    )}
+                  </Box>
                 </Stack>
               </Box>
 
@@ -280,6 +437,19 @@ export default function RAGCreatePage() {
             <ComponentDetailsPanel component={selectedModelState} />
           </RightPanel>
         </ModuleContainer>
+
+        {documentsPickerOpen && (
+          <CreateSessionDocumentsDialog
+            open
+            onClose={() => setDocumentsPickerOpen(false)}
+            onConfirm={(ids, meta) => {
+              setSelectedDocumentIds(ids);
+              setSelectedFolderCount(meta.folderCount);
+              setDocumentsPickerOpen(false);
+            }}
+            initialSelectedIds={selectedDocumentIds}
+          />
+        )}
       </ThreePanelLayoutContext.Provider>
     </FormSchemaProvider>
   );

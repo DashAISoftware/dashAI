@@ -15,6 +15,7 @@ jest.mock("../../../api/rag", () => ({
   RAG_TASK_NAME: "RAGTask",
   RAG_MODEL_NAME: "RAGPipeline",
   createRAGSession: jest.fn(),
+  attachSessionDocuments: jest.fn(),
   getGeneratorComponents: jest.fn(),
 }));
 
@@ -126,7 +127,7 @@ test("a name and a model are enough to create, and no documents are sent", async
   const payload = api.createRAGSession.mock.calls[0][0];
   expect(payload.task_name).toBe("RAGTask");
   expect(payload.parameters.generation_model.component).toBe("StubLLM");
-  // Documents are uploaded into the session afterwards; sending them here is
-  // rejected by the backend.
+  // Documents are attached to the new session afterwards; sending them in the
+  // create payload is rejected by the backend.
   expect(payload.parameters).not.toHaveProperty("documents");
 });
