@@ -47,6 +47,10 @@ metadata or versions. Future work could include:
 - Document versioning: supporting multiple versions of the same document and allowing retrieval from a specific version.
 - Document similarity search: enabling users to find documents similar to a given document based on content or metadata.
 - Import/export functionality: allowing users to import/export documents and their metadata in various formats (e.g., JSON, CSV, XML), including support for BibTeX and Mendeley references.
+- **Live folder membership**: a session can select a whole Data folder, but the
+  selection is a snapshot of the documents it held at that moment. A persistent
+  session-to-folder link (with synchronization when documents are added or
+  removed from the folder) would need its own model and endpoints.
 
 ## Tree-Based Retrieval
 

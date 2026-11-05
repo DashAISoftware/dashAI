@@ -262,9 +262,17 @@ Under `components/generative/RAG/`:
 
 - `DocumentsBar` — the session's document panel: the list grouped by Data folder,
   the "add from Data" picker, the upload button, and per-row preview and detach.
-- `AddFromDataDialog` — the "Data documents" picker: lists the Data module's
-  documents, disables the ones already attached or still parsing, and attaches
-  the selection by id.
+- `AddFromDataDialog` — the "Data documents" picker: a folder-and-document tree
+  (`DocumentFolderPicker`) that selects whole folders and loose documents
+  together, disables documents already attached or still parsing, shows the
+  focused document's details on the right, and attaches the resulting id set.
+- `CreateSessionDocumentsDialog` — the same picker used while creating a session;
+  its selection is handed to `RAGCreatePage`, which attaches it after creating
+  the session and rolls the session back if the attach fails.
+- `useDocumentFolderSelection` — the selection model: a single set of document
+  ids, with each folder's checked/indeterminate state derived from its
+  selectable documents, so a folder selection is the snapshot of its current
+  contents.
 - `RAGDocumentUpload` — uploads one folder or several loose files into the Data
   module in a single pass. It reads file and directory drops
   (`webkitRelativePath`/`webkitGetAsEntry`), groups the selection by extension,

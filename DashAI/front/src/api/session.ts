@@ -18,7 +18,9 @@ export const getSessions = async (filters?: {
   return response.data;
 };
 
-export const removeSession = async (sessionId: string): Promise<void> => {
+export const removeSession = async (
+  sessionId: string | number,
+): Promise<void> => {
   await api.delete(`/v1/generative-session/${sessionId}`);
 };
 

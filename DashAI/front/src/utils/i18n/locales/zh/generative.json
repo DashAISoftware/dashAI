@@ -7,9 +7,6 @@
   "documentsBar": {
     "addFromData": "从数据中添加",
     "addFromDataTitle": "从数据中添加文档",
-    "addSelected_one": "添加 {{count}} 个文档",
-    "addSelected_other": "添加 {{count}} 个文档",
-    "alreadyAttached": "已在此会话中",
     "attached_one": "已向此会话添加 {{count}} 个文档",
     "attached_other": "已向此会话添加 {{count}} 个文档",
     "detach": "从会话中移除",
@@ -24,11 +21,9 @@
     "folderDocumentCount_other": "{{count}} 个文档",
     "noDocumentsFound": "未找到文档",
     "noDocumentsInSession": "此会话中没有文档",
-    "noLibraryDocuments": "数据中还没有文档。请先上传一个。",
     "preview": "预览",
     "searchPlaceholder": "搜索文档",
     "selectToSeeDetails": "选择一个文档以查看其详细信息",
-    "stillProcessing": "仍在处理中",
     "title": "文档",
     "untitledFolder": "未命名文件夹",
     "upload": "上传",
@@ -249,8 +244,22 @@
     "create": {
       "newSession": "新建 RAG 会话",
       "selectModel": "语言模型",
-      "subtitle": "一个名称和一个模型。会话创建后再添加文档；其余设置都有合理的默认值，之后可以更改。",
-      "title": "新建 RAG 会话"
+      "subtitle": "一个名称和一个模型。可以现在选择文档，也可以稍后添加；其余设置都有合理的默认值，之后可以更改。",
+      "title": "新建 RAG 会话",
+      "documentsTitle": "文档（可选）",
+      "documentsHint": "现在选择文件夹或文档，也可以稍后在会话中添加。文件夹会添加其当前包含的文档。",
+      "chooseDocuments": "选择文件夹和文档",
+      "changeDocuments": "更改选择",
+      "clearDocuments": "清除",
+      "documentsSelected_one": "{{count}} 个文档",
+      "documentsSelected_other": "{{count}} 个文档",
+      "foldersSelected_one": "{{count}} 个文件夹",
+      "foldersSelected_other": "{{count}} 个文件夹",
+      "attachFailed": "会话已创建，但无法添加其文档",
+      "rollbackFailed": "无法删除该会话。请刷新会话列表后再继续。",
+      "someDocumentsSkipped_one": "{{count}} 个文档可能已被删除或仍在处理中，将不会被添加",
+      "someDocumentsSkipped_other": "{{count}} 个文档可能已被删除或仍在处理中，将不会被添加",
+      "documentsValidationFailed": "无法验证所选文档，因此会话已在不含这些文档的情况下创建。"
     },
     "documentPreview": {
       "openInData": "在数据中打开",
@@ -402,5 +411,26 @@
     "apiKeyMissingDescription": "此模型需要 API 密钥才能运行。打开高级配置以添加您的 API 密钥。",
     "contextSpace": "使用当前配置，您有空间容纳源（块）和 {{availableChars}} 个字符用于您的消息。",
     "insufficientContextDescription": "所选模型没有足够的上下文来处理当前的块大小和 Top K 设置。请减小块大小、减少结果数量 (Top K)，或选择具有更大上下文窗口的模型。"
+  },
+  "documentPicker": {
+    "title": "选择文档",
+    "search": "搜索文件夹和文档",
+    "noFolder": "未分类",
+    "noDocuments": "数据中还没有文档。",
+    "noResults": "未找到文档",
+    "folderCount_one": "{{count}} 个文档",
+    "folderCount_other": "{{count}} 个文档",
+    "selectedSummary_one": "已选择 {{count}} 个文档",
+    "selectedSummary_other": "已选择 {{count}} 个文档",
+    "selectFolder": "选择 {{name}}",
+    "collapseFolder": "隐藏 {{name}} 中的文档",
+    "expandFolder": "显示 {{name}} 中的文档",
+    "alreadyAttached": "已在此会话中",
+    "processing": "仍在处理中",
+    "error": "错误",
+    "addSelected_one": "添加 {{count}} 个文档",
+    "addSelected_other": "添加 {{count}} 个文档",
+    "selectDocuments": "选择文档",
+    "clearSearchToSelectFolder": "清除搜索以选择整个文件夹"
   }
 }
