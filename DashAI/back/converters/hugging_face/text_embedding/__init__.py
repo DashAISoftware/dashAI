@@ -9,6 +9,9 @@ from DashAI.back.converters.hugging_face.text_embedding.e5 import (
     MultilingualE5LargeEmbedding,
     MultilingualE5SmallEmbedding,
 )
+from DashAI.back.converters.hugging_face.text_embedding.e5_mistral_gguf import (
+    E5MistralGGUFEmbedding,
+)
 from DashAI.back.converters.hugging_face.text_embedding.instructor import (
     InstructorLargeEmbedding,
     InstructorTextEmbedding,
@@ -26,6 +29,11 @@ from DashAI.back.converters.hugging_face.text_embedding.sentence_transformer imp
     Qwen3Embedding06B,
     SentenceTransformerTextEmbedding,
 )
+from DashAI.back.converters.hugging_face.text_embedding.transformer import (
+    DistilBERTEmbedding,
+    RoBERTaEmbedding,
+    TransformerTextEmbedding,
+)
 
 TEXT_EMBEDDING_CONVERTERS = [
     AllMiniLML6V2Embedding,
@@ -42,6 +50,9 @@ TEXT_EMBEDDING_CONVERTERS = [
     HarrierOSS270MEmbedding,
     HarrierOSS06BEmbedding,
     InstructorLargeEmbedding,
+    DistilBERTEmbedding,
+    RoBERTaEmbedding,
+    E5MistralGGUFEmbedding,
 ]
 
 __all__ = [
@@ -50,5 +61,6 @@ __all__ = [
     "SentenceTransformerTextEmbedding",
     "E5TextEmbedding",
     "InstructorTextEmbedding",
+    "TransformerTextEmbedding",
     *[component.__name__ for component in TEXT_EMBEDDING_CONVERTERS],
 ]

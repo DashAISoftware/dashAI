@@ -91,6 +91,21 @@ def test_normalize_controls_the_vector_length():
     assert not np.allclose(raw_lengths, 1.0)
 
 
+def test_normalize_fixes_checkpoint_dtype_rounding():
+    """Rows are renormalized in float32, not only inside the model dtype."""
+    converter = AllMiniLML6V2Embedding(normalize=True)
+    model = with_fake_model(converter)
+    # What a checkpoint stored in bfloat16 yields after normalizing there:
+    # close to unit length, but off by more than the accuracy cosine expects.
+    rounded = np.zeros((2, 8), dtype=np.float32)
+    rounded[:, 0] = 0.9987812
+    model.encode = lambda *args, **kwargs: rounded
+
+    lengths = np.linalg.norm(converter.encode(["a", "b"]), axis=1)
+
+    assert np.allclose(lengths, 1.0, atol=1e-6)
+
+
 def test_aggregate_encodes_long_text_in_windows_and_averages():
     converter = AllMiniLML6V2Embedding(overflow_strategy="aggregate")
     model = with_fake_model(converter, max_seq_length=6)
@@ -149,7 +164,7 @@ def test_fit_rejects_non_text_columns():
         converter.fit(data)
 
 
-def test_the_fourteen_models_are_registered_dataset_only():
+def test_the_seventeen_models_are_registered_dataset_only():
     registered = [
         component
         for component in get_initial_components()
@@ -159,8 +174,8 @@ def test_the_fourteen_models_are_registered_dataset_only():
     assert sorted(c.__name__ for c in registered) == sorted(
         c.__name__ for c in TEXT_EMBEDDING_CONVERTERS
     )
-    assert len(TEXT_EMBEDDING_CONVERTERS) == 14
-    assert len({c.MODEL_NAME for c in TEXT_EMBEDDING_CONVERTERS}) == 14
+    assert len(TEXT_EMBEDDING_CONVERTERS) == 17
+    assert len({c.MODEL_NAME for c in TEXT_EMBEDDING_CONVERTERS}) == 17
     for component in TEXT_EMBEDDING_CONVERTERS:
         assert component.REQUIRES_DOWNLOAD
         assert component.DOWNLOAD_SIZE_BYTES > 0
