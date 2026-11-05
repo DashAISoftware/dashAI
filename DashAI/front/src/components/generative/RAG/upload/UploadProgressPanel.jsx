@@ -4,12 +4,14 @@ import {
   Alert,
   Box,
   Button,
+  ButtonBase,
   Chip,
   LinearProgress,
   Stack,
   Typography,
   useMediaQuery,
 } from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
   ATTACH_STATUS,
   FAILURE_CODE,
@@ -90,6 +92,7 @@ export default function UploadProgressPanel({
   resolvedFolderName,
   renamedCount,
   onRetryAttach,
+  onPreviewDocument,
   titleRef,
 }) {
   const { t } = useTranslation(["generative", "common"]);
@@ -179,43 +182,97 @@ export default function UploadProgressPanel({
           const basename = item.relativePath
             ? item.relativePath.split("/").pop()
             : item.name;
+          const previewable =
+            item.status === FILE_STATUS.READY &&
+            item.document?.file_type === "pdf";
+          const Row = previewable ? ButtonBase : Box;
           return (
-            <Box
+            <Row
               key={item.key}
+              onClick={
+                previewable && onPreviewDocument
+                  ? () => onPreviewDocument(item.document)
+                  : undefined
+              }
+              aria-label={
+                previewable
+                  ? `${item.name} — ${t("documentsBar.preview")}`
+                  : undefined
+              }
               sx={{
                 display: "flex",
                 alignItems: "flex-start",
                 justifyContent: "space-between",
                 gap: 1.5,
+                width: "100%",
+                px: 0.5,
                 py: 0.75,
+                borderRadius: 1,
+                textAlign: "left",
+                ...(previewable &&
+                  onPreviewDocument && {
+                    cursor: "pointer",
+                    "@media (hover: hover)": {
+                      "&:hover": { bgcolor: "action.hover" },
+                    },
+                    "&.Mui-focusVisible": {
+                      outline: "2px solid",
+                      outlineColor: "primary.main",
+                      outlineOffset: -2,
+                    },
+                  }),
               }}
             >
-              <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Box
+                component="span"
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  minWidth: 0,
+                  flex: 1,
+                }}
+              >
                 <Typography
                   variant="body2"
+                  component="span"
                   noWrap
                   title={item.relativePath ?? item.name}
+                  sx={{ display: "block" }}
                 >
                   {item.name}
                 </Typography>
                 {basename !== item.name && (
                   <Typography
                     variant="caption"
-                    component="div"
+                    component="span"
                     color="text.secondary"
                     noWrap
                     title={item.relativePath}
+                    sx={{ display: "block" }}
                   >
                     {item.relativePath}
                   </Typography>
                 )}
                 {item.status === FILE_STATUS.ERROR && item.failure && (
-                  <Typography variant="caption" color="error">
+                  <Typography
+                    variant="caption"
+                    component="span"
+                    color="error"
+                    sx={{ display: "block" }}
+                  >
                     {failureLabel(item.failure, t)}
                   </Typography>
                 )}
               </Box>
+              {previewable && (
+                <VisibilityIcon
+                  fontSize="small"
+                  color="action"
+                  aria-hidden="true"
+                />
+              )}
               <Chip
+                component="span"
                 size="small"
                 variant="outlined"
                 color={STATUS_COLOR[item.status] ?? "default"}
@@ -228,7 +285,7 @@ export default function UploadProgressPanel({
                   "& .MuiChip-label": { px: 0.75, fontSize: 11 },
                 }}
               />
-            </Box>
+            </Row>
           );
         })}
       </Box>
@@ -325,5 +382,6 @@ UploadProgressPanel.propTypes = {
   resolvedFolderName: PropTypes.string,
   renamedCount: PropTypes.number,
   onRetryAttach: PropTypes.func,
+  onPreviewDocument: PropTypes.func,
   titleRef: PropTypes.shape({ current: PropTypes.any }),
 };

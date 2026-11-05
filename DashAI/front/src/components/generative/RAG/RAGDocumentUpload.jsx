@@ -10,6 +10,7 @@ import ExtensionParserConfig from "./upload/ExtensionParserConfig";
 import UploadProgressPanel from "./upload/UploadProgressPanel";
 import LargeSelectionDialog from "./upload/LargeSelectionDialog";
 import CloseUploadConfirmDialog from "./upload/CloseUploadConfirmDialog";
+import DocumentSourcePreviewDialog from "./DocumentSourcePreviewDialog";
 import useDocumentUpload from "./upload/useDocumentUpload";
 import {
   getFileExtension,
@@ -65,6 +66,7 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
   const [missingDownloads, setMissingDownloads] = useState({});
   const [confirmLargeOpen, setConfirmLargeOpen] = useState(false);
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
+  const [previewDocument, setPreviewDocument] = useState(null);
   const formRefs = useRef({});
   const loadersRequestRef = useRef(0);
   const lastRootRef = useRef("");
@@ -348,175 +350,185 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
   };
 
   return (
-    <RAGAdvancedDialog
-      open={open}
-      onClose={handleClose}
-      title={t("generative:documentsBar.uploadTitle")}
-      maxWidth={false}
-      minHeight={0}
-      paperSx={{
-        height: "90vh",
-        maxWidth: "min(1680px, 95vw)",
-        bgcolor: "background.paper",
-        backgroundImage: "none",
-      }}
-      contentSx={{ p: 0, display: "flex", minHeight: 0, overflow: "hidden" }}
-      actions={
-        <>
-          <Button onClick={handleClose}>
-            {isDone ? t("common:close") : t("common:cancel")}
-          </Button>
-          {!isDone && (
-            <Button
-              variant="contained"
-              loading={upload.busy && !reduceMotion}
-              disabled={!canUpload}
-              onClick={handleUpload}
-            >
-              {t("generative:documentsBar.upload")}
+    <>
+      <RAGAdvancedDialog
+        open={open}
+        onClose={handleClose}
+        title={t("generative:documentsBar.uploadTitle")}
+        maxWidth={false}
+        minHeight={0}
+        paperSx={{
+          height: "90vh",
+          maxWidth: "min(1680px, 95vw)",
+          bgcolor: "background.paper",
+          backgroundImage: "none",
+        }}
+        contentSx={{ p: 0, display: "flex", minHeight: 0, overflow: "hidden" }}
+        actions={
+          <>
+            <Button onClick={handleClose}>
+              {isDone ? t("common:close") : t("common:cancel")}
             </Button>
-          )}
-        </>
-      }
-    >
-      {upload.phase === UPLOAD_PHASE.SELECTING ? (
-        <Box
-          sx={{
-            display: "flex",
-            flex: 1,
-            minHeight: 0,
-            minWidth: 0,
-            flexDirection: { xs: "column", md: "row" },
-          }}
-        >
+            {!isDone && (
+              <Button
+                variant="contained"
+                loading={upload.busy && !reduceMotion}
+                disabled={!canUpload}
+                onClick={handleUpload}
+              >
+                {t("generative:documentsBar.upload")}
+              </Button>
+            )}
+          </>
+        }
+      >
+        {upload.phase === UPLOAD_PHASE.SELECTING ? (
           <Box
             sx={{
-              flex: 3,
-              minWidth: 0,
-              minHeight: 0,
-              overflowY: "auto",
-              overscrollBehavior: "contain",
-              p: 2,
-            }}
-          >
-            <DocumentSourcePicker
-              mode={mode}
-              onModeChange={handleModeChange}
-              entries={supportedEntries}
-              skipped={allSkipped}
-              onSelectionChange={handleSelectionChange}
-              folderName={folderName}
-              onFolderNameChange={handleFolderNameChange}
-              folderNameError={folderNameInvalid && supportedEntries.length > 0}
-              disabled={upload.busy}
-            />
-          </Box>
-          <Box
-            sx={{
-              flex: 2,
-              minWidth: 0,
-              minHeight: 0,
               display: "flex",
-              flexDirection: "column",
-              borderLeft: { xs: 0, md: 1 },
-              borderTop: { xs: 1, md: 0 },
-              borderColor: "divider",
-              p: 2,
+              flex: 1,
+              minHeight: 0,
+              minWidth: 0,
+              flexDirection: { xs: "column", md: "row" },
             }}
           >
-            {loadersStatus === LOADERS_STATUS.ERROR ? (
-              <Alert
-                severity="error"
-                action={
-                  <Button color="inherit" size="small" onClick={loadLoaders}>
-                    {t("generative:documentUpload.retryLoaders")}
-                  </Button>
+            <Box
+              sx={{
+                flex: 3,
+                minWidth: 0,
+                minHeight: 0,
+                display: "flex",
+                flexDirection: "column",
+                p: 2,
+              }}
+            >
+              <DocumentSourcePicker
+                mode={mode}
+                onModeChange={handleModeChange}
+                entries={supportedEntries}
+                skipped={allSkipped}
+                onSelectionChange={handleSelectionChange}
+                folderName={folderName}
+                onFolderNameChange={handleFolderNameChange}
+                folderNameError={
+                  folderNameInvalid && supportedEntries.length > 0
                 }
-              >
-                {t("generative:documentUpload.loadersFailed")}
-              </Alert>
-            ) : loadersStatus === LOADERS_STATUS.LOADING ? (
-              <Box
-                sx={{
-                  flex: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "text.secondary",
-                }}
-              >
-                <Typography variant="body2">
-                  {t("generative:rag.common.loading")}
-                </Typography>
-              </Box>
-            ) : supportedEntries.length === 0 ? (
-              <Box
-                sx={{
-                  flex: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  textAlign: "center",
-                  color: "text.secondary",
-                }}
-              >
-                <Typography variant="body2">
-                  {t("generative:documentUpload.selectFilesToConfigure")}
-                </Typography>
-              </Box>
-            ) : (
-              <ExtensionParserConfig
-                extensions={extensions}
-                groupsByExtension={groupsByExtension}
-                loaders={loaders}
-                selectedByExtension={selectedByExtension}
-                onSelectLoader={handleSelectLoader}
-                registerFormRef={registerFormRef}
-                onFormErrorChange={handleFormErrorChange}
-                onDownloadGateChange={handleDownloadGateChange}
                 disabled={upload.busy}
               />
-            )}
+            </Box>
+            <Box
+              sx={{
+                flex: 2,
+                minWidth: 0,
+                minHeight: 0,
+                display: "flex",
+                flexDirection: "column",
+                borderLeft: { xs: 0, md: 1 },
+                borderTop: { xs: 1, md: 0 },
+                borderColor: "divider",
+                p: 2,
+              }}
+            >
+              {loadersStatus === LOADERS_STATUS.ERROR ? (
+                <Alert
+                  severity="error"
+                  action={
+                    <Button color="inherit" size="small" onClick={loadLoaders}>
+                      {t("generative:documentUpload.retryLoaders")}
+                    </Button>
+                  }
+                >
+                  {t("generative:documentUpload.loadersFailed")}
+                </Alert>
+              ) : loadersStatus === LOADERS_STATUS.LOADING ? (
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "text.secondary",
+                  }}
+                >
+                  <Typography variant="body2">
+                    {t("generative:rag.common.loading")}
+                  </Typography>
+                </Box>
+              ) : supportedEntries.length === 0 ? (
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                    color: "text.secondary",
+                  }}
+                >
+                  <Typography variant="body2">
+                    {t("generative:documentUpload.selectFilesToConfigure")}
+                  </Typography>
+                </Box>
+              ) : (
+                <ExtensionParserConfig
+                  extensions={extensions}
+                  groupsByExtension={groupsByExtension}
+                  loaders={loaders}
+                  selectedByExtension={selectedByExtension}
+                  onSelectLoader={handleSelectLoader}
+                  registerFormRef={registerFormRef}
+                  onFormErrorChange={handleFormErrorChange}
+                  onDownloadGateChange={handleDownloadGateChange}
+                  disabled={upload.busy}
+                />
+              )}
+            </Box>
           </Box>
-        </Box>
-      ) : (
-        <Box
-          sx={{
-            flex: 1,
-            minHeight: 0,
-            display: "flex",
-            p: 2,
-            minWidth: 0,
-          }}
-        >
-          <UploadProgressPanel
-            phase={upload.phase}
-            progress={upload.progress}
-            failures={upload.failures}
-            skipped={upload.skipped}
-            attach={upload.attach}
-            requestedFolderName={folderName}
-            resolvedFolderName={upload.resolvedFolderName}
-            renamedCount={upload.renamedCount}
-            onRetryAttach={upload.retryAttach}
-            titleRef={progressTitleRef}
-          />
-        </Box>
-      )}
+        ) : (
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              p: 2,
+              minWidth: 0,
+            }}
+          >
+            <UploadProgressPanel
+              phase={upload.phase}
+              progress={upload.progress}
+              failures={upload.failures}
+              skipped={upload.skipped}
+              attach={upload.attach}
+              requestedFolderName={folderName}
+              resolvedFolderName={upload.resolvedFolderName}
+              renamedCount={upload.renamedCount}
+              onRetryAttach={upload.retryAttach}
+              onPreviewDocument={setPreviewDocument}
+              titleRef={progressTitleRef}
+            />
+          </Box>
+        )}
 
-      <LargeSelectionDialog
-        open={confirmLargeOpen}
-        count={supportedEntries.length}
-        onCancel={() => setConfirmLargeOpen(false)}
-        onConfirm={startUpload}
-      />
+        <LargeSelectionDialog
+          open={confirmLargeOpen}
+          count={supportedEntries.length}
+          onCancel={() => setConfirmLargeOpen(false)}
+          onConfirm={startUpload}
+        />
 
-      <CloseUploadConfirmDialog
-        open={closeConfirmOpen}
-        onCancel={() => setCloseConfirmOpen(false)}
-        onConfirm={handleConfirmClose}
+        <CloseUploadConfirmDialog
+          open={closeConfirmOpen}
+          onCancel={() => setCloseConfirmOpen(false)}
+          onConfirm={handleConfirmClose}
+        />
+      </RAGAdvancedDialog>
+      <DocumentSourcePreviewDialog
+        open={previewDocument != null}
+        onClose={() => setPreviewDocument(null)}
+        document={previewDocument}
       />
-    </RAGAdvancedDialog>
+    </>
   );
 }
 
