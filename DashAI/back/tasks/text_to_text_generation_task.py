@@ -1,6 +1,6 @@
 from typing import Any, List, Optional, Tuple
 
-from DashAI.back.core.generation import GenerationResult
+from DashAI.back.core.generation import GenerationResult, TextPart
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
@@ -144,9 +144,20 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         -------
         list of tuple of (str, str)
             A single-element list containing the answer and its ``str`` type.
+
+        Raises
+        ------
+        ValueError
+            If a typed reply has no text part (reasoning only).
         """
 
         if isinstance(output, GenerationResult):
+            if not any(isinstance(part, TextPart) for part in output.parts):
+                raise ValueError(
+                    "The model returned reasoning but no answer text. Reasoning "
+                    "is not stored yet, so there is nothing to save; make the "
+                    "model return a text part with its answer."
+                )
             return [(output.text, "str")]
         return [(str(output[0]), "str")]
 

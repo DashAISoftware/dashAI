@@ -89,13 +89,13 @@ def test_invalid_enriched_response_does_not_fall_back_to_legacy():
     model = Mock(spec=["generate", "generate_result"])
     model.generate_result.return_value = ["not a GenerationResult"]
 
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError, match="Invalid text generation data"):
         generate_text(model, MESSAGES)
 
     model.generate.assert_not_called()
 
 
-@pytest.mark.parametrize("output", [None, "answer", [], [None], [42], [{}]])
+@pytest.mark.parametrize("output", [None, "answer", [], (), [None], [42], [{}]])
 def test_invalid_legacy_output_is_not_silently_stringified(output):
     with pytest.raises((TypeError, ValueError)):
         GenerationResult.from_legacy(output)
@@ -103,6 +103,54 @@ def test_invalid_legacy_output_is_not_silently_stringified(output):
 
 def test_legacy_first_reply_convention_is_preserved():
     assert GenerationResult.from_legacy(["first", "second"]).text == "first"
+
+
+def test_legacy_tuple_output_is_accepted():
+    assert GenerationResult.from_legacy(("first", "second")).text == "first"
+
+
+@pytest.mark.parametrize(
+    "messages",
+    [
+        [{"role": "user", "content": None}],
+        [{"role": "tool", "content": "x"}],
+        [("role", "content")],
+    ],
+)
+def test_invalid_messages_fail_before_any_provider_call(messages):
+    model = Mock(spec=["generate"])
+
+    with pytest.raises(ValueError, match="role and content|Invalid text generation"):
+        generate_text(model, messages)
+
+    model.generate.assert_not_called()
+
+
+def test_validation_errors_do_not_repeat_the_content():
+    model = Mock(spec=["generate", "generate_result"])
+    model.generate_result.return_value = {"parts": [{"type": "text", "text": 42}]}
+
+    with pytest.raises(ValueError, match=r"parts\.0\.text") as error:
+        generate_text(model, [{"role": "user", "content": "secret prompt"}])
+
+    assert "secret prompt" not in str(error.value)
+    assert "input_value" not in str(error.value)
+    model.generate.assert_not_called()
+
+
+def test_enriched_method_may_return_a_valid_mapping():
+    model = Mock(spec=["generate", "generate_result"])
+    model.generate_result.return_value = {"parts": [{"type": "text", "text": "mapped"}]}
+
+    assert generate_text(model, MESSAGES).text == "mapped"
+
+
+def test_non_callable_generate_result_attribute_uses_legacy_path():
+    model = Mock(spec=["generate"])
+    model.generate.return_value = ["answer"]
+    model.generate_result = None
+
+    assert generate_text(model, MESSAGES).text == "answer"
 
 
 def test_reasoning_is_never_concatenated_into_the_answer():
@@ -166,9 +214,12 @@ def test_usage_rejects_invalid_measurements(payload):
         GenerationUsage.model_validate(payload)
 
 
-def test_request_and_results_do_not_share_mutable_data():
+def test_validated_data_is_frozen_and_does_not_alias_input():
     request = GenerationRequest.from_messages(MESSAGES)
-    request.messages[0].parts[0].text = "changed"
+    with pytest.raises(ValidationError):
+        request.messages[0].parts[0].text = "changed"
+    with pytest.raises(ValidationError):
+        GenerationResult(parts=[TextPart(text="x")]).parts = []
     assert MESSAGES[0]["content"] == "Keep whitespace."
 
 

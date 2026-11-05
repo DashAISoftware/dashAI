@@ -4,9 +4,16 @@ Changelog
 Unreleased
 ----------
 
-- Added a typed text-generation interface with explicit text and reasoning parts,
-  optional usage and finish reason, and legacy model adapters shared by chat and
-  RAG. Existing session parameters and plain-text storage remain unchanged.
+- Added an opt-in typed text-generation interface (``DashAI.back.core.generation``)
+  with explicit text and reasoning parts, optional usage and finish reason, and
+  an optional ``generate_result`` model method. Chat and the LLM stage of RAG share
+  one adapter that calls the model exactly once. Existing plugins, session
+  parameters and plain-text storage keep working. See the plugin development guide.
+- Chat now validates legacy ``generate`` output like RAG already did: the first
+  item must be a string, otherwise the generation fails with an error instead of
+  storing ``str(output[0])``. Lists and tuples are accepted.
+- A typed reply with reasoning but no answer text fails in chat, because reasoning
+  is not persisted yet.
 
 0.0.12
 ------

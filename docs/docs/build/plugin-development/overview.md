@@ -212,4 +212,4 @@ class PhiModel(TextToTextGenerationTaskModel):
 | Extending a dashAI base class | `PhiModel(TextToTextGenerationTaskModel)`                    |
 | Defining parameters           | `PhiSchema` with `schema_field()`                            |
 | Model loading                 | `__init__` with `validate_and_transform`                     |
-| Generating output             | `generate()` returning `List[str]`                           |
+| Generating output             | `generate()` returning `List[str]`; richer output with [`generate_result()`](./generation-interface.md) |

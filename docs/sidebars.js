@@ -81,6 +81,7 @@ const sidebars = {
         "build/plugin-development/overview",
         "build/plugin-development/structure",
         "build/plugin-development/develop",
+        "build/plugin-development/generation-interface",
         "build/plugin-development/upload",
       ],
     },
