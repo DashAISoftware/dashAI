@@ -71,9 +71,10 @@ the existing schema names and credentials. Use native Pydantic AI adapters where
 they preserve the required options. Compare parameter mappings, error handling,
 timeouts and retries before replacing the current HTTP/SDK paths.
 
-Plugins keep `generate` for older hosts. New host types and provider-specific
-imports may be lazy inside `generate_result`; an old host must not need them to
-import or run the legacy method. Each path makes one logical generation request.
+Migrated plugins implement `generate_result` and import Pydantic AI normally. A
+plugin that must also run on older hosts keeps `generate` and imports lazily inside
+`generate_result`, so the module still loads there. Each path makes one logical
+generation request.
 For in-process GGUF engines, implement an explicit adapter instead of starting a
 new server merely to match an HTTP provider.
 

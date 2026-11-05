@@ -372,3 +372,28 @@ def test_unknown_draft_finish_reason_is_kept_in_provider_details():
     ).to_model_response()
     assert result.finish_reason is None
     assert result.provider_details == {"finish_reason": "load"}
+
+
+def test_model_with_only_generate_result_works_and_exposes_generate():
+    class Enriched(TextToTextGenerationTaskModel):
+        def __init__(self, **kwargs):
+            pass
+
+        def generate_result(self, messages):
+            return ModelResponse(parts=[ThinkingPart("Plan"), TextPart("Answer")])
+
+    model = Enriched()
+    assert generate_text(model, [{"role": "user", "content": "Hi"}]).parts[1].content
+    assert model.generate([{"role": "user", "content": "Hi"}]) == ["Answer"]
+
+
+def test_model_must_override_generate_or_generate_result():
+    class Empty(TextToTextGenerationTaskModel):
+        def __init__(self, **kwargs):
+            pass
+
+    messages = [{"role": "user", "content": "Hi"}]
+    with pytest.raises(NotImplementedError):
+        Empty().generate(messages)
+    with pytest.raises(NotImplementedError):
+        generate_text(Empty(), messages)
