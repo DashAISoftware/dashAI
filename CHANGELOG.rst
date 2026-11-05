@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+- Added a typed text-generation interface with explicit text and reasoning parts,
+  optional usage and finish reason, and legacy model adapters shared by chat and
+  RAG. Existing session parameters and plain-text storage remain unchanged.
+
 0.0.12
 ------
 

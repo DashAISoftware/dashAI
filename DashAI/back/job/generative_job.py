@@ -6,6 +6,7 @@ from kink import inject
 from sqlalchemy import exc
 
 from DashAI.back.core.enums.status import RunStatus
+from DashAI.back.core.generation import generate_text
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
@@ -16,6 +17,7 @@ from DashAI.back.job.RAG_job import RAGJob
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
 from DashAI.back.tasks.RAG_task import RAGTask
+from DashAI.back.tasks.text_to_text_generation_task import TextToTextGenerationTask
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -266,7 +268,11 @@ class GenerativeJob(BaseJob):
                     ) from e
 
                 try:
-                    output: Any = model.generate(input_data)
+                    output: Any = (
+                        generate_text(model, input_data)
+                        if isinstance(task, TextToTextGenerationTask)
+                        else model.generate(input_data)
+                    )
                 except Exception as e:
                     log.exception(e)
                     generative_process.set_status_as_error()

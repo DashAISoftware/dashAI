@@ -1,5 +1,6 @@
 from typing import Any, List, Optional, Tuple
 
+from DashAI.back.core.generation import GenerationResult
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
@@ -125,16 +126,16 @@ class TextToTextGenerationTask(BaseGenerativeTask):
 
     def process_output(
         self,
-        output: List[Any],
+        output: List[Any] | GenerationResult,
         **kwargs: Any,
     ) -> List[Tuple[str, str]]:
         """Convert raw model output to a storable (text, type) pair.
 
         Parameters
         ----------
-        output : list of Any
-            Raw output from the generative model. The first element is cast
-            to ``str`` and returned.
+        output : list of Any or GenerationResult
+            Legacy output or a typed reply. Only the answer text is stored;
+            structured persistence is handled separately from this interface.
         **kwargs : dict
             Additional keyword arguments (e.g. ``file_name``, ``path``).
             Currently unused; present for interface compatibility.
@@ -142,9 +143,11 @@ class TextToTextGenerationTask(BaseGenerativeTask):
         Returns
         -------
         list of tuple of (str, str)
-            A single-element list containing ``(str(output[0]), "str")``.
+            A single-element list containing the answer and its ``str`` type.
         """
 
+        if isinstance(output, GenerationResult):
+            return [(output.text, "str")]
         return [(str(output[0]), "str")]
 
     def process_output_from_database(

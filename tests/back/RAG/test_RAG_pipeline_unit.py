@@ -13,6 +13,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from DashAI.back.core.generation import (
+    GenerationResult,
+    GenerationUsage,
+    ReasoningPart,
+    TextPart,
+)
 from DashAI.back.models.RAG.documents.chunk import Chunk
 from DashAI.back.models.RAG.exceptions import (
     RAGPipelineConfigError,
@@ -84,7 +90,7 @@ def _make_pipeline(
         prompt_model.format.return_value = "formatted prompt"
 
     if llm_model is None:
-        llm_model = MagicMock()
+        llm_model = MagicMock(spec=["generate"])
         llm_model.generate.return_value = ["stub answer"]
 
     if chunks is None:
@@ -350,7 +356,7 @@ class TestRAGPipelineGenerateRuntimeErrors:
         """LLM returns empty list → RAGPipelineRuntimeError."""
         retriever = MagicMock()
         retriever.retrieve.return_value = []
-        llm = MagicMock()
+        llm = MagicMock(spec=["generate"])
         llm.generate.return_value = []
         pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
         with pytest.raises(RAGPipelineRuntimeError, match="empty output"):
@@ -360,7 +366,7 @@ class TestRAGPipelineGenerateRuntimeErrors:
         """LLM returns non-string → RAGPipelineRuntimeError."""
         retriever = MagicMock()
         retriever.retrieve.return_value = []
-        llm = MagicMock()
+        llm = MagicMock(spec=["generate"])
         llm.generate.return_value = [42]  # int, not str
         pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
         with pytest.raises(RAGPipelineRuntimeError, match="not a string"):
@@ -370,7 +376,7 @@ class TestRAGPipelineGenerateRuntimeErrors:
         """LLM raises exception → RAGPipelineRuntimeError."""
         retriever = MagicMock()
         retriever.retrieve.return_value = []
-        llm = MagicMock()
+        llm = MagicMock(spec=["generate"])
         llm.generate.side_effect = RuntimeError("OOM")
         pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
         with pytest.raises(RAGPipelineRuntimeError, match="LLM generation"):
@@ -392,7 +398,7 @@ class TestRAGPipelineGenerateHappyPath:
         retriever.retrieve.return_value = [chunk]
         prompt_model = MagicMock()
         prompt_model.format.return_value = "formatted"
-        llm = MagicMock()
+        llm = MagicMock(spec=["generate"])
         llm.generate.return_value = ["the answer"]
         pipeline = _make_pipeline(
             retriever=retriever,
@@ -410,13 +416,47 @@ class TestRAGPipelineGenerateHappyPath:
         assert ref.document_position == 0
         assert ref.text == "hello world"
 
+    def test_enriched_model_preserves_metadata_without_changing_the_message(self):
+        """RAG retains structured output while its text projection stays compatible."""
+        llm = MagicMock(spec=["generate", "generate_result"])
+        enriched = GenerationResult(
+            parts=[ReasoningPart(text="Plan"), TextPart(text="Answer")],
+            usage=GenerationUsage(completion_tokens=3),
+            finish_reason="stop",
+        )
+        llm.generate_result.return_value = enriched
+        pipeline = _make_pipeline(llm_model=llm)
+
+        result = pipeline.generate(({"role": "user", "content": "Question"},))
+
+        assert result.message == "Answer"
+        assert result.generation_result == enriched
+        assert result.chunks == {}
+        llm.generate.assert_not_called()
+        llm.generate_result.assert_called_once()
+        request = llm.generate_result.call_args.args[0]
+        assert request.to_messages() == [
+            {"role": "user", "content": "formatted prompt"}
+        ]
+
+    def test_enriched_provider_failure_is_not_retried_with_legacy_generate(self):
+        """A failed enriched call must not make a second provider request."""
+        llm = MagicMock(spec=["generate", "generate_result"])
+        llm.generate_result.side_effect = RuntimeError("provider failed")
+        pipeline = _make_pipeline(llm_model=llm)
+
+        with pytest.raises(RAGPipelineRuntimeError, match="provider failed"):
+            pipeline.generate(({"role": "user", "content": "Question"},))
+
+        llm.generate.assert_not_called()
+
     def test_history_passed_to_llm(self):
         """History (input_data[:-1]) is forwarded to the LLM as prior messages."""
         retriever = MagicMock()
         retriever.retrieve.return_value = []
         prompt_model = MagicMock()
         prompt_model.format.return_value = "formatted prompt"
-        llm = MagicMock()
+        llm = MagicMock(spec=["generate"])
         llm.generate.return_value = ["answer"]
         pipeline = _make_pipeline(
             retriever=retriever,
@@ -441,7 +481,7 @@ class TestRAGPipelineGenerateHappyPath:
         """When retriever returns no chunks, chunks dict is empty."""
         retriever = MagicMock()
         retriever.retrieve.return_value = []
-        llm = MagicMock()
+        llm = MagicMock(spec=["generate"])
         llm.generate.return_value = ["answer with no context"]
         pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
         result = pipeline.generate(({"role": "user", "content": "hello"},))
@@ -454,7 +494,7 @@ class TestRAGPipelineGenerateHappyPath:
         chunk2 = Chunk(id=2, document_id=2, document_position=1, text="chunk B")
         retriever = MagicMock()
         retriever.retrieve.return_value = [chunk1, chunk2]
-        llm = MagicMock()
+        llm = MagicMock(spec=["generate"])
         llm.generate.return_value = ["multi-doc answer"]
         pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
         result = pipeline.generate(({"role": "user", "content": "compare docs"},))

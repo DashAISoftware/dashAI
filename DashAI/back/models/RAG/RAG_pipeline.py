@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
+from DashAI.back.core.generation import GenerationResult, generate_text
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     component_field,
@@ -109,6 +110,7 @@ class RAGGenerationOutput:
 
     message: str
     chunks: Dict[str, "ChunkReference"]
+    generation_result: GenerationResult | None = None
 
 
 @dataclass(frozen=True)
@@ -482,15 +484,10 @@ class RAGPipeline(BaseGenerativeModel):
                 {"role": "user", "content": prompt}
             ]
             # NOTE: Output is not streamed — the user waits for the full response.
-            output: List[Any] = self.llm_model.generate(model_input)
-            if not output:
-                raise RAGPipelineRuntimeError("LLM model returned empty output list.")
-            raw_message = output[0]
-            if not isinstance(raw_message, str):
-                raise RAGPipelineRuntimeError(
-                    f"LLM output is not a string, got {type(raw_message).__name__}"
-                )
-            return RAGGenerationOutput(message=raw_message, chunks=chunk_dict)
+            result = generate_text(self.llm_model, model_input)
+            return RAGGenerationOutput(
+                message=result.text, chunks=chunk_dict, generation_result=result
+            )
         except RAGPipelineRuntimeError:
             raise
         except Exception as e:
