@@ -4,8 +4,8 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.feature_engineering import (
     FeatureEngineeringConverter,
 )
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.core.schema_fields import bool_field, schema_field
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.preprocessing.structure_types import (
     ColumnItem,
@@ -39,7 +39,7 @@ CYCLICAL_PERIODS: Dict[str, int] = {
 }
 
 
-class DateFeaturesSchema(BaseSchema):
+class DateFeaturesSchema(AddColumnsConverterSchema):
     """Schema for DateFeaturesConverter hyperparameters."""
 
     year: schema_field(
@@ -216,11 +216,13 @@ class DateFeaturesConverter(FeatureEngineeringConverter, BaseConverter):
     columns named ``<column>_<feature>``, one set per ``Date`` column in
     scope, and leaves the original column untouched.
 
-    The columns it produces are exactly what ``ExogenousForecastingTask``
-    takes beside the series: variables known for every period being forecast,
-    since a calendar is known in advance. That is what separates them from an
-    exogenous variable such as a price, which has to be planned or forecast
-    first.
+    The columns it produces are what the ``exogenous`` role of
+    ``SingleSeriesForecastingTask`` takes beside the series: variables known
+    for every period being forecast, since a calendar is known in advance.
+    The role takes only variables like those, known ahead of time; a price
+    goes in only once it has been set for the periods being forecast. The
+    time index itself is protected from the session's preprocessing, so the
+    calendar comes from a copy of the date in a column of its own.
 
     Cyclical encoding answers the one problem plain calendar numbers have.
     Month 12 and month 1 are one step apart in the calendar and eleven apart

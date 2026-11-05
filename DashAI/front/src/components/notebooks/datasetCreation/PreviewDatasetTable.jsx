@@ -6,6 +6,7 @@ import InferenceReasonPopover from "../dataset/InferenceReasonPopover";
 import EncoderChipBase from "../../shared/leanDatasetTable/EncoderChipBase";
 import { useTranslation } from "react-i18next";
 import { useSnackbar } from "notistack";
+import { getColumnTypeLabel } from "../../../utils/typesLists";
 
 const TYPE_TO_DEFAULT_DTYPE = {
   Integer: "int64",
@@ -38,6 +39,7 @@ const ColumnTypeSelect = memo(function ColumnTypeSelect({
   bg,
   color,
 }) {
+  const { t } = useTranslation(["datasets"]);
   return (
     <select
       value={value || "Text"}
@@ -55,9 +57,9 @@ const ColumnTypeSelect = memo(function ColumnTypeSelect({
         outline: "none",
       }}
     >
-      {TYPE_OPTIONS.map((t) => (
-        <option key={t} value={t}>
-          {t}
+      {TYPE_OPTIONS.map((type) => (
+        <option key={type} value={type}>
+          {getColumnTypeLabel(type, t)}
         </option>
       ))}
     </select>

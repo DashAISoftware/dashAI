@@ -52,6 +52,12 @@ const THREE_ROLES = {
   ],
   io_roles: { inputs: ["exogenous"], outputs: ["series"] },
 };
+// As forecasting declares them: the index feeds the model's inputs too, so
+// the exogenous variables are optional.
+const FORECASTING = {
+  ...THREE_ROLES,
+  io_roles: { inputs: ["index", "exogenous"], outputs: ["series"] },
+};
 
 const COLUMNS = ["a", "b", "c"];
 
@@ -107,7 +113,7 @@ describe("SelectColumnsStep", () => {
     renderSelect(SUPERVISED);
     await waitFor(() => expect(validateColumns).toHaveBeenCalled());
 
-    expect(selectorLabels()).toEqual(["Features", "Target"]);
+    expect(selectorLabels()).toEqual(["Target", "Features"]);
   });
 
   it("sends the default columns by role: the last one is the target", async () => {
@@ -154,6 +160,21 @@ describe("SelectColumnsStep", () => {
       index: [{ kind: "raw", name: "c" }],
       series: [{ kind: "raw", name: "b" }],
       exogenous: [{ kind: "raw", name: "a" }],
+    });
+  });
+
+  it("creates a forecasting session without exogenous variables", async () => {
+    const { setNewExp, setNextEnabled } = renderSelect(FORECASTING, {
+      column_roles: {
+        index: [{ kind: "raw", name: "c" }],
+        series: [{ kind: "raw", name: "b" }],
+      },
+    });
+
+    await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
+    expect(setNewExp.mock.calls.at(-1)[0].column_roles).toEqual({
+      index: [{ kind: "raw", name: "c" }],
+      series: [{ kind: "raw", name: "b" }],
     });
   });
 
@@ -205,8 +226,10 @@ describe("SelectColumnsStep", () => {
     renderSelect(THREE_ROLES, {}, TYPES);
     await waitFor(() => expect(validateColumns).toHaveBeenCalled());
 
+    // No Date column: the index takes the last one, as without types. The
+    // series takes the last column of a type it accepts (Float).
     expect(heldType("index", "c")).toBe("cCategorical");
-    expect(heldType("series", "b")).toBe("bInteger");
+    expect(heldType("series", "a")).toBe("aFloat");
   });
 
   it("with preprocessing, the fixed target still shows its type", async () => {
@@ -245,10 +268,7 @@ describe("BaseColumnsStep", () => {
     );
 
     await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
-    expect(selectorLabels()).toEqual([
-      "Features (candidate columns)",
-      "Target",
-    ]);
+    expect(selectorLabels()).toEqual(["Target", "Candidate Features"]);
     const update = setNewExp.mock.calls.at(-1)[0];
     expect(update({}).column_roles_stage1).toEqual({
       features: ["a", "b"],
@@ -271,5 +291,21 @@ describe("BaseColumnsStep", () => {
 
     await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
     expect(heldType("target", "c")).toBe("cCategorical");
+  });
+
+  it("goes on without exogenous candidates in a forecasting session", async () => {
+    const setNextEnabled = jest.fn();
+    renderWithProviders(
+      <BaseColumnsStep
+        newExp={{ column_roles_stage1: { index: ["c"], series: ["b"] } }}
+        setNewExp={jest.fn()}
+        setNextEnabled={setNextEnabled}
+        datasetInfo={{ column_names: COLUMNS }}
+        datasetTypes={{}}
+        taskMetadata={FORECASTING}
+      />,
+    );
+
+    await waitFor(() => expect(setNextEnabled).toHaveBeenLastCalledWith(true));
   });
 });

@@ -431,7 +431,7 @@ export default function FoldMetricsChart({ run }) {
     return (
       <Alert severity="warning">
         <AlertTitle>No Fold Data Available</AlertTitle>
-        {error} — This run may not use cross-validation.
+        {error}
       </Alert>
     );
   }

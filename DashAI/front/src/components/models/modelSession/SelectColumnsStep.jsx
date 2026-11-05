@@ -7,6 +7,7 @@ import { getComponents as getComponentsRequest } from "../../../api/component";
 import { validateColumns as validateColumnsRequest } from "../../../api/modelSession";
 import { useSnackbar } from "notistack";
 import { getColorByColumnType } from "../../../utils";
+import { getColumnTypeLabel } from "../../../utils/typesLists";
 import { useTranslation, Trans } from "react-i18next";
 import {
   refToKey,
@@ -18,6 +19,7 @@ import usePreprocessingStructure from "./usePreprocessingStructure";
 import {
   defaultRoleSelection,
   optionsForRole,
+  protectedRolesFirst,
   resolveSelection,
   selectionReady,
   selectionToRefs,
@@ -137,7 +139,9 @@ function SelectColumnsStep({
   const structureMissing = withPreprocessing && !structure;
   const awaitingStructure = structureMissing && !structureError;
   const columnsReady =
-    roles.length > 0 && selectionReady(roles, selection) && !structureMissing;
+    roles.length > 0 &&
+    selectionReady(roles, selection, taskMetadata?.io_roles?.inputs) &&
+    !structureMissing;
   // The backend's answer, with the selection it was about. An answer only
   // counts for the selection on screen, so a selection changed since, or an
   // answer that arrives after a newer one, never enables Create.
@@ -153,7 +157,7 @@ function SelectColumnsStep({
       return;
     }
     if (Object.values(selectionState).every((keys) => !keys?.length)) {
-      setSelection(defaultRoleSelection(roles, rawColumnNames));
+      setSelection(defaultRoleSelection(roles, rawColumnNames, datasetTypes));
     }
   }, [rawColumnNames.join(","), roles.map((role) => role.name).join(",")]);
 
@@ -275,7 +279,7 @@ function SelectColumnsStep({
         {typesList.map((type, index) => (
           <React.Fragment key={type}>
             <Chip
-              label={type}
+              label={getColumnTypeLabel(type, t)}
               size="small"
               sx={{
                 backgroundColor: getColorByColumnType(type),
@@ -364,7 +368,7 @@ function SelectColumnsStep({
 
       <Grid container spacing={2}>
         <RoleColumnSelectors
-          roles={roles}
+          roles={protectedRolesFirst(roles)}
           selection={selection}
           onChange={(name, keys) =>
             setSelection((prev) => ({ ...prev, [name]: keys }))
@@ -375,7 +379,9 @@ function SelectColumnsStep({
           columnTypes={columnTypesForSelector}
           optionLabels={optionLabels}
           errorFor={missing}
-          helperTextFor={(role) => (missing(role) ? t("common:required") : "")}
+          helperTextFor={(role) =>
+            missing(role) ? t("common:required") : (role.description ?? "")
+          }
           disabledFor={fixedRole}
           disabled={rawColumnNames.length === 0}
         />

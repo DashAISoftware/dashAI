@@ -24,9 +24,14 @@ import PillToggleButtonGroup from "../../shared/PillToggleButtonGroup";
 import PredictionCard from "../PredictionCard";
 import ManualPredictionsTable from "../ManualPredictionsTable";
 import DatasetPredictionPanel from "../DatasetPredictionPanel";
+import HorizonPredictionPanel from "../HorizonPredictionPanel";
+import { useTaskMetadata } from "../../../hooks/useTaskMetadata";
 
 /**
- * The Predictions tab: a dataset / manual toggle over the run's predictions.
+ * The Predictions tab, as the session's task says it predicts
+ * (`prediction_mode`). A task that predicts by horizon gets a horizon field
+ * over the run's predictions. One that predicts rows gets a dataset / manual
+ * toggle over the run's predictions.
  * Dataset predictions render as cards created through a dialog; manual ones
  * render in an editable table. Panel visibility is controlled by the parent so
  * an external "open prediction dialog" event can trigger it.
@@ -62,6 +67,9 @@ export default function PredictionResultsTab({
     isRunning: false,
   });
 
+  const predictsByHorizon =
+    useTaskMetadata(session?.task_name)?.prediction_mode === "horizon";
+
   const visiblePredictions = useMemo(
     () =>
       predictions.filter((p) =>
@@ -69,6 +77,27 @@ export default function PredictionResultsTab({
       ),
     [predictions, predictionFilter],
   );
+
+  if (predictsByHorizon) {
+    return (
+      <Box sx={{ pb: 4, display: "flex", flexDirection: "column", gap: 4 }}>
+        <HorizonPredictionPanel run={run} onSaved={onSaved} />
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {predictions.map((prediction) => (
+            <PredictionCard
+              key={prediction.id}
+              prediction={prediction}
+              onDelete={onDelete}
+              onUpdate={onUpdate}
+              targetColumn={outputColumn}
+              datasetSample={trainingDatasetSample}
+              displayNumber={predictionDisplayNumbers.get(prediction.id)}
+            />
+          ))}
+        </Box>
+      </Box>
+    );
+  }
 
   return (
     <Box

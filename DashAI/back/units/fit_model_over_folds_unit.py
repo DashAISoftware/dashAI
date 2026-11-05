@@ -177,7 +177,9 @@ class FitModelOverFoldsUnit(BaseUnit, ModelFitScopeMixin):
             self._fit_kept_model(model, x_fold, y_fold)
             predictions = model.predict(x_fold["validation"])
             expected = model.prepare_output(y_fold["validation"], is_fit=False)
-            score = metric.score(expected, predictions)
+            score = self._goal_score(
+                metric, expected, predictions, f"the validation rows of fold {index}"
+            )
 
             # A fold whose objective is not a number is not a fold to skip:
             # the objective would then be the mean of a different set of folds

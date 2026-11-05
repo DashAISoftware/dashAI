@@ -29,6 +29,7 @@
     "trainSplitMustBeGreaterThanZero": "Trainingsaufteilung muss größer als null sein",
     "trainSplitMustHaveAtLeastOneRow": "Trainingsaufteilung muss mindestens eine Zeile haben",
     "foldsMustBeLessThanDatasetSize": "Die Anzahl der Folds muss kleiner oder gleich der Anzahl der Stichproben im Datensatz sein ({{datasetSize}})",
+    "seriesTooShort": "Ein Horizont von {{horizon}} mit {{origins}} Validierungsursprung/-ursprüngen braucht mindestens {{needed}} Zeilen; der Datensatz hat {{rows}}. Verkürze den Horizont, nutze weniger Ursprünge oder bringe mehr Historie.",
     "groupColumnMustBeSelected": "Es muss eine Spalte zum Gruppieren ausgewählt werden"
   },
   "label": {
@@ -45,6 +46,7 @@
     "currentExperiments": "Aktuelle Experimente",
     "currentOptimizerSettings": "Aktuelle Optimierereinstellungen {{optimizer}}",
     "cvType": "Art der Kreuzvalidierung",
+    "splitter": "Aufteiler",
     "datasetRoleColumnRequirements": "<0>{{role}}: Die Spalten müssen folgende Typen haben</0><1></1><2>, und eine Kardinalität von </2><3>{{cardinality}}.</3>",
     "duration": "Dauer",
     "endTime": "Endzeit",
@@ -81,11 +83,9 @@
     "seed": "Seed",
     "selectAColumn": "Eine Spalte auswählen",
     "selectDataset": "Datensatz auswählen",
-    "selectDatasetColumns": "Geben Sie an, welche Spalten des Datensatzes als Ein- und Ausgabe verwendet werden.",
     "selectDatasetTitle": "Datensatz für die ausgewählte Aufgabe auswählen",
     "selectEvaluationStrategy": "Bewertungsstrategie",
     "selectHowToDivideDataset": "Wählen Sie, wie der Datensatz in Trainings-, Validierungs- und Testmengen aufgeteilt werden soll.",
-    "selectInputOutputColumnsDescription": "Spaltenbezeichnungen aus den Listen auswählen.",
     "selectMetrics": "Metriken auswählen",
     "selectModelFirst": "Zuerst ein Modell auswählen",
     "selectModelToAdd": "Ein hinzuzufügendes Modell auswählen",
@@ -134,17 +134,26 @@
   "splitPreview": {
     "title": "Vorschau der Aufteilung",
     "unavailable": "Dieser Splitter beschreibt seine Form noch nicht, daher gibt es nichts zu zeichnen.",
+    "loading": "Aufteilung wird gezeichnet…",
+    "failed": "Die Vorschau konnte nicht berechnet werden ({{reason}}). Sie können fortfahren: Die Sitzung prüft diese Parameter beim Erstellen.",
+    "retry": "Erneut versuchen",
+    "invalid": "Der Aufteiler kann diese Parameter nicht verwenden; prüfe die markierten Felder seines Formulars.",
     "wholeDataset": "Datensatz",
     "reservedTest": "Zurückgelegt",
     "finalFit": "Finales Training",
     "fold": "Fold {{index}}",
+    "origin": "Ursprung {{index}}",
+    "testOrigin": "Test",
     "moreFolds": "+{{hidden}} weitere Folds",
+    "moreOrigins": "+{{hidden}} weitere Ursprünge",
     "unused": "Ungenutzt",
-    "notes": {
-      "foldsHidden": "Insgesamt {{total}} Folds; nur die ersten und der letzte werden gezeichnet."
+    "legend": {
+      "steps_one": "{{role}}: {{count}} Schritt",
+      "steps_other": "{{role}}: {{count}} Schritte"
     },
-    "error": {
-      "notEnoughRows": "{{folds}} Ursprünge mit einem Horizont von {{horizon}} und einer Schrittweite von {{step}} passen nicht in {{rows}} Zeilen. Verringere einen davon oder lege weniger zurück."
+    "notes": {
+      "foldsHidden": "Insgesamt {{total}} Folds; nur die ersten und der letzte werden gezeichnet.",
+      "originsHidden": "{{total}} Ursprünge insgesamt; nur die ersten und der letzte werden gezeichnet."
     }
   }
 }

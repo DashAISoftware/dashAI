@@ -15,12 +15,16 @@ class SinglePartitionEvaluationStrategy(BaseEvaluationStrategy):
 
     KIND: str = "holdout"
     SPLITTER_PARTITIONING = "holdout"
+    # The label of the session wizard's strategy toggle.
+    DISPLAY_NAME = MultilingualString(
+        en="Holdout", es="Holdout", pt="Holdout", de="Holdout", zh="留出法"
+    )
 
 
 class HoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
     """Split once into train, validation and test, and score all three.
 
-    The ordinary holdout evaluation. Not offered for ``ForecastingTask``:
+    The ordinary holdout evaluation. Not offered for ``SingleSeriesForecastingTask``:
     scoring the training partition of a forecaster means predicting on dates
     it was fitted on, which is a fit statistic rather than a forecast and does
     not belong in the same results table as one.
@@ -31,6 +35,8 @@ class HoldoutEvaluationStrategy(SinglePartitionEvaluationStrategy):
     to the fit, which models use to watch training and stop early -- being
     given it to watch is not the same as being fitted on it.
     """
+
+    DEFAULT_SPLITTER = "HoldoutSplitter"
 
     DESCRIPTION = MultilingualString(
         en=(

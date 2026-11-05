@@ -6,6 +6,7 @@ import RoleColumnSelectors from "./RoleColumnSelectors";
 import {
   defaultRoleSelection,
   optionsForRole,
+  protectedRolesFirst,
   resolveSelection,
   selectionReady,
   shownRoles,
@@ -45,11 +46,13 @@ function BaseColumnsStep({
     // The first time the dataset's columns and the task's roles are known.
     if (rawColumnNames.length === 0 || roles.length === 0) return;
     if (Object.values(selectionState).every((columns) => !columns?.length)) {
-      setSelection(defaultRoleSelection(roles, rawColumnNames));
+      setSelection(defaultRoleSelection(roles, rawColumnNames, datasetTypes));
     }
   }, [rawColumnNames.join(","), roles.map((role) => role.name).join(",")]);
 
-  const ready = roles.length > 0 && selectionReady(roles, selection);
+  const ready =
+    roles.length > 0 &&
+    selectionReady(roles, selection, taskMetadata?.io_roles?.inputs);
   const selectionKey = JSON.stringify(selection);
 
   useEffect(() => {
@@ -60,10 +63,20 @@ function BaseColumnsStep({
   const missing = (role) =>
     role.required && (selection[role.name] || []).length === 0;
 
+  // What each selector is for, by the kind of role: the candidates are what
+  // the preprocessing works on, a protected role is never touched, and one
+  // that feeds the model's outputs is also what it learns to predict.
+  const outputRoles = new Set(taskMetadata?.io_roles?.outputs || []);
+  const roleHelp = (role) => {
+    if (role.transformable) return t("models:label.candidatesHelp");
+    if (outputRoles.has(role.name)) return t("models:label.targetHelp");
+    return t("models:label.protectedRoleHelp");
+  };
+
   return (
     <Grid container spacing={2}>
       <RoleColumnSelectors
-        roles={roles}
+        roles={protectedRolesFirst(roles)}
         selection={selection}
         onChange={(name, columns) =>
           setSelection((prev) => ({ ...prev, [name]: columns }))
@@ -78,7 +91,9 @@ function BaseColumnsStep({
         }
         columnTypes={datasetTypes}
         errorFor={missing}
-        helperTextFor={(role) => (missing(role) ? t("common:required") : "")}
+        helperTextFor={(role) =>
+          missing(role) ? t("common:required") : roleHelp(role)
+        }
         disabled={rawColumnNames.length === 0}
       />
     </Grid>

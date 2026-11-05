@@ -25,50 +25,91 @@ export function shownRoles(taskMetadata) {
 }
 
 /**
+ * The shown roles in the order the column steps display them: the protected
+ * roles first, since what the model predicts is the simplest pick and gives
+ * the rest their purpose, then the roles the preprocessing may transform.
+ * Each group keeps the order the task declares.
+ *
+ * @param {Array<object>} roles the shown roles
+ * @returns {Array<object>} the same roles, protected ones first
+ */
+export function protectedRolesFirst(roles) {
+  return [
+    ...roles.filter((role) => !role.transformable),
+    ...roles.filter((role) => role.transformable),
+  ];
+}
+
+/**
  * The selection a column step starts from, over a list of columns.
  *
  * The protected roles take columns from the end, each as many as its
- * minimum (at least one), in the order the task declares them; the first
- * role the preprocessing may transform takes every other column. For a
- * supervised task, the last column is the target and the rest are features;
- * for clustering, every column is a feature.
+ * minimum (at least one), in the order the task declares them: the last
+ * columns of a type the role accepts, when the column types are known, and
+ * otherwise the last ones left. The first role the preprocessing may
+ * transform takes every other column, in order. For a supervised task, the
+ * target is the last column of a target type and the rest are features; for
+ * clustering, every column is a feature. Only two declarations are crossed:
+ * the types each role accepts and the types of the columns.
  *
  * @param {Array<object>} roles the shown roles
  * @param {string[]} columns the columns to share out
+ * @param {Object<string, {type: string}>} [columnTypes] the type of each
+ *   column, when known
  * @returns {Object<string, string[]>} role name to its columns
  */
-export function defaultRoleSelection(roles, columns) {
+export function defaultRoleSelection(roles, columns, columnTypes = {}) {
   const selection = Object.fromEntries(roles.map((role) => [role.name, []]));
-  let end = columns.length;
+  const left = [...columns];
+  const accepts = (role, column) => {
+    const type = columnTypes?.[column]?.type;
+    return !type || !role.types || role.types.includes(type);
+  };
   roles
     .filter((role) => !role.transformable)
     .forEach((role) => {
-      const count = Math.min(Math.max(role.min || 0, 1), end);
-      selection[role.name] = columns.slice(end - count, end);
-      end -= count;
+      const count = Math.min(Math.max(role.min || 0, 1), left.length);
+      const taken = [];
+      // From the end: the last columns of a type the role accepts...
+      for (let i = left.length - 1; i >= 0 && taken.length < count; i -= 1) {
+        if (accepts(role, left[i])) taken.unshift(left[i]);
+      }
+      // ...and, when there are not enough of them, the last ones left.
+      for (let i = left.length - 1; i >= 0 && taken.length < count; i -= 1) {
+        if (!taken.includes(left[i])) taken.unshift(left[i]);
+      }
+      selection[role.name] = left.filter((column) => taken.includes(column));
+      taken.forEach((column) => left.splice(left.indexOf(column), 1));
     });
   const first = roles.find((role) => role.transformable);
   if (first) {
-    selection[first.name] = columns.slice(0, end);
+    selection[first.name] = left;
   }
   return selection;
 }
 
 /**
  * Whether a selection is complete enough to be checked by the backend:
- * every required role has columns, and the roles the preprocessing may
- * transform have at least one between them.
+ * every required role has columns, and the roles that feed the model's
+ * inputs have at least one between them. An optional input role may stay
+ * empty when another one has columns (forecasting's exogenous variables,
+ * beside its time index); in an x/y task the features are the only input
+ * role, so they still need a column.
  *
  * @param {Array<object>} roles the shown roles
  * @param {Object<string, string[]>} selection role name to its columns
+ * @param {string[]} [inputRoles] the roles that feed the model's inputs
+ *   (`metadata.io_roles.inputs`); without them, the transformable roles
  * @returns {boolean}
  */
-export function selectionReady(roles, selection) {
+export function selectionReady(roles, selection, inputRoles) {
   const has = (role) => (selection[role.name] || []).length > 0;
-  const transformable = roles.filter((role) => role.transformable);
+  const inputs = roles.filter((role) =>
+    inputRoles ? inputRoles.includes(role.name) : role.transformable,
+  );
   return (
     roles.every((role) => !role.required || has(role)) &&
-    (transformable.length === 0 || transformable.some(has))
+    (inputs.length === 0 || inputs.some(has))
   );
 }
 
@@ -184,4 +225,28 @@ export function sessionColumns(session, taskMetadata) {
     outputs,
     target: outputs[0],
   };
+}
+
+/**
+ * A session's columns by role, as the task declares and labels its roles.
+ *
+ * What a screen lists to say which columns a session uses, without naming
+ * them inputs and outputs: a task's roles need not be either (a time index,
+ * a series).
+ *
+ * @param {object} session a model session, with `column_roles`
+ * @param {object} taskMetadata the session's task metadata, with
+ *   `column_roles`
+ * @returns {{name: string, label: string, columns: string[]}[]} the roles
+ *   that have columns, in the order the task declares them
+ */
+export function columnsByRole(session, taskMetadata) {
+  const stored = session?.column_roles || {};
+  return (taskMetadata?.column_roles || [])
+    .map((role) => ({
+      name: role.name,
+      label: role.label ?? role.name,
+      columns: stored[role.name]?.columns || [],
+    }))
+    .filter((role) => role.columns.length > 0);
 }

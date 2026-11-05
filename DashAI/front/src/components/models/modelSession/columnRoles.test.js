@@ -5,6 +5,7 @@ import {
   resolveSelection,
   selectionReady,
   selectionToRefs,
+  columnsByRole,
   sessionColumns,
   shownRoles,
 } from "./columnRoles";
@@ -79,18 +80,35 @@ describe("defaultRoleSelection", () => {
 });
 
 describe("selectionReady", () => {
-  test("needs every required role and some transformable column", () => {
+  test("needs every required role and some column the model reads", () => {
     const roles = [FEATURES, TARGET];
-    expect(selectionReady(roles, { features: ["a"], target: ["b"] })).toBe(
-      true,
+    const inputs = SUPERVISED.io_roles.inputs;
+    expect(
+      selectionReady(roles, { features: ["a"], target: ["b"] }, inputs),
+    ).toBe(true);
+    expect(selectionReady(roles, { features: ["a"], target: [] }, inputs)).toBe(
+      false,
     );
-    expect(selectionReady(roles, { features: ["a"], target: [] })).toBe(false);
-    expect(selectionReady(roles, { features: [], target: ["b"] })).toBe(false);
+    expect(selectionReady(roles, { features: [], target: ["b"] }, inputs)).toBe(
+      false,
+    );
   });
 
-  test("a task whose only transformable role is optional and empty", () => {
+  test("an optional role left empty, when another input has columns", () => {
+    // The index feeds the model's inputs too: the exogenous role may stay
+    // empty.
     const roles = [INDEX, SERIES, EXOGENOUS];
-    expect(selectionReady(roles, { index: ["d"], series: ["y"] })).toBe(false);
+    expect(
+      selectionReady(roles, { index: ["d"], series: ["y"] }, [
+        "index",
+        "exogenous",
+      ]),
+    ).toBe(true);
+  });
+
+  test("without the inputs declared, the transformable roles are the inputs", () => {
+    const roles = [FEATURES, TARGET];
+    expect(selectionReady(roles, { features: [], target: ["b"] })).toBe(false);
   });
 });
 
@@ -206,5 +224,99 @@ describe("sessionColumns", () => {
       outputs: [],
       target: undefined,
     });
+  });
+});
+
+describe("defaultRoleSelection, by the types the roles declare", () => {
+  const typed = (role, types) => ({ ...role, types });
+  const TYPES = {
+    date: { type: "Date" },
+    promo: { type: "Float" },
+    sales: { type: "Float" },
+    label: { type: "Categorical" },
+    width: { type: "Float" },
+  };
+
+  test("a protected role takes, from the end, the last column of a type it accepts", () => {
+    expect(
+      defaultRoleSelection(
+        [
+          typed(INDEX, ["Date"]),
+          typed(SERIES, ["Float", "Integer"]),
+          typed(EXOGENOUS, ["Float", "Integer"]),
+        ],
+        ["date", "promo", "sales"],
+        TYPES,
+      ),
+    ).toEqual({ index: ["date"], series: ["sales"], exogenous: ["promo"] });
+  });
+
+  test("an x/y target that is not the last column is found by its type", () => {
+    expect(
+      defaultRoleSelection(
+        [
+          typed(FEATURES, ["Float", "Integer", "Categorical"]),
+          typed(TARGET, ["Categorical"]),
+        ],
+        ["sales", "label", "width"],
+        TYPES,
+      ),
+    ).toEqual({ features: ["sales", "width"], target: ["label"] });
+  });
+
+  test("an x/y target that is the last column stays the last column", () => {
+    expect(
+      defaultRoleSelection(
+        [typed(FEATURES, ["Float"]), typed(TARGET, ["Categorical"])],
+        ["sales", "width", "label"],
+        TYPES,
+      ),
+    ).toEqual({ features: ["sales", "width"], target: ["label"] });
+  });
+
+  test("no column of an accepted type: the last one, as without types", () => {
+    expect(
+      defaultRoleSelection(
+        [typed(FEATURES, ["Float"]), typed(TARGET, ["Categorical"])],
+        ["sales", "width"],
+        TYPES,
+      ),
+    ).toEqual({ features: ["sales"], target: ["width"] });
+  });
+});
+
+describe("columnsByRole", () => {
+  test("each role the task declares with the columns the session gave it, labelled as the task labels it", () => {
+    const session = {
+      column_roles: {
+        target: { columns: ["Species"] },
+        features: { columns: ["a", "b"] },
+      },
+    };
+
+    expect(columnsByRole(session, SUPERVISED)).toEqual([
+      { name: "features", label: "Features", columns: ["a", "b"] },
+      { name: "target", label: "Target", columns: ["Species"] },
+    ]);
+  });
+
+  test("a task with roles of its own: no input nor output, its roles", () => {
+    const session = {
+      column_roles: {
+        index: { columns: ["date"] },
+        series: { columns: ["sales"] },
+      },
+    };
+
+    expect(
+      columnsByRole(session, { column_roles: [INDEX, SERIES, EXOGENOUS] }),
+    ).toEqual([
+      { name: "index", label: "Index", columns: ["date"] },
+      { name: "series", label: "Series", columns: ["sales"] },
+    ]);
+  });
+
+  test("nothing without the task's declaration", () => {
+    expect(columnsByRole({ column_roles: {} }, undefined)).toEqual([]);
   });
 });

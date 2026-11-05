@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useStrategyKind } from "../../hooks/useStrategyKind";
-import { STRATEGY_KINDS } from "../../utils/splitsPayload";
+import { useStrategyMetadata } from "../../hooks/useStrategyKind";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -214,16 +213,19 @@ export default function ModelsRightBar({ onToggle }) {
 
   const tourContext = useTourContext();
 
-  // Determine if statistical tests should be shown (only for nested CV sessions)
-  const isCv =
-    useStrategyKind(session?.evaluation_strategy) === STRATEGY_KINDS.CV;
+  // The statistical tests compare runs fold by fold, so they are offered when
+  // the strategy declares a score per fold or origin, as the session view
+  // reads it.
+  const comparesFolds = (
+    useStrategyMetadata(session?.evaluation_strategy)?.result_views ?? []
+  ).includes("fold_metrics");
 
   useEffect(() => {
-    if (!isCv) {
+    if (!comparesFolds) {
       setActiveTab("models");
       closeStatisticalTest();
     }
-  }, [isCv, closeStatisticalTest]);
+  }, [comparesFolds, closeStatisticalTest]);
 
   const handleUseModel = (model) => {
     if (!session) {
@@ -359,7 +361,7 @@ export default function ModelsRightBar({ onToggle }) {
                 : t("models:label.statisticalTests")}
             </Typography>
           </Box>
-          {isCv && (
+          {comparesFolds && (
             <Tabs
               value={activeTab}
               onChange={(e, newValue) => setActiveTab(newValue)}
@@ -515,7 +517,7 @@ export default function ModelsRightBar({ onToggle }) {
         test={selectedStatisticalTest}
         runs={existingRuns}
         session={session}
-        open={statisticalTestsModalOpen && isCv}
+        open={statisticalTestsModalOpen && comparesFolds}
         onClose={closeStatisticalTest}
       />
       <CredentialsDialog
