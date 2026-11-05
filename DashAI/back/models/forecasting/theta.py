@@ -256,6 +256,8 @@ class Theta(SingleSeriesForecastingModel):
         de="Theta-Methode",
         zh="Theta 方法",
     )
+    COLOR: str = "#EC407A"
+    ICON: str = "MultilineChart"
 
     SUPPORTS_INTERVALS = True
 

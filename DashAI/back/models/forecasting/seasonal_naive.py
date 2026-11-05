@@ -118,6 +118,8 @@ class SeasonalNaiveForecaster(SingleSeriesForecastingModel):
         de="Saisonale Naive Prognose",
         zh="季节性朴素预测",
     )
+    COLOR: str = "#26C6DA"
+    ICON: str = "EventRepeat"
 
     def __init__(self, season_length: int = 1, **kwargs):
         """Initialise the forecaster with the length of one cycle.

@@ -338,6 +338,8 @@ class ARIMA(SingleSeriesForecastingModel):
     DISPLAY_NAME = MultilingualString(
         en="ARIMA", es="ARIMA", pt="ARIMA", de="ARIMA", zh="ARIMA"
     )
+    COLOR: str = "#5C6BC0"
+    ICON: str = "AutoGraph"
 
     EXOGENOUS = EXOGENOUS_OPTIONAL
     SUPPORTS_INTERVALS = True

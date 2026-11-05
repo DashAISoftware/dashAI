@@ -64,6 +64,8 @@ class DriftForecaster(SingleSeriesForecastingModel):
         de="Drift-Prognose",
         zh="漂移预测",
     )
+    COLOR: str = "#FFCA28"
+    ICON: str = "TrendingUp"
 
     SUPPORTS_INTERVALS = True
 

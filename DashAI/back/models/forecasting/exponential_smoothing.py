@@ -248,6 +248,8 @@ class ExponentialSmoothing(SingleSeriesForecastingModel):
         de="Exponentielle Glättung",
         zh="指数平滑",
     )
+    COLOR: str = "#66BB6A"
+    ICON: str = "Waves"
 
     def __init__(
         self,
