@@ -1,4 +1,5 @@
 import api from "./api";
+import type { IFolder } from "../types/folder";
 
 const documentsEndpoint = "/v1/documents";
 const documentsUrlBase = "/api/v1/documents";
@@ -43,6 +44,32 @@ export interface IDocumentCreateParams {
   file_name: string;
   dataloader: string;
   dataloader_params: Record<string, unknown>;
+  folder_id?: number | null;
+}
+
+/**
+ * One document of a batch creation request.
+ *
+ * The bytes are not sent here: each document is created as a placeholder row
+ * and its file is uploaded afterwards through its own DocumentJob.
+ */
+export interface IDocumentBatchFile {
+  name: string;
+  file_name: string;
+  dataloader: string;
+  dataloader_params: Record<string, unknown>;
+}
+
+export interface IDocumentBatchParams {
+  /** Folder that groups every created document, or null for loose documents. */
+  folder_name: string | null;
+  files: IDocumentBatchFile[];
+}
+
+export interface IDocumentBatchResult {
+  /** The folder created for the batch, or null when no folder was requested. */
+  folder: IFolder | null;
+  documents: IDataDocument[];
 }
 
 export const createDocumentFromNotebook = async (
@@ -71,6 +98,26 @@ export const createDocument = async (
 ): Promise<IDataDocument> => {
   const response = await api.post<IDataDocument>(
     `${documentsEndpoint}/`,
+    params,
+  );
+  return response.data;
+};
+
+/**
+ * Creates a folder and its documents in a single atomic request.
+ *
+ * Either every row is created or none is: a duplicate name answers 409 and an
+ * invalid loader, extension or parameter set answers 422, so the caller only
+ * has to resolve conflicts once before retrying.
+ *
+ * @param params - Optional folder name and the placeholder for each file.
+ * @returns The created folder (or null) and the placeholder documents.
+ */
+export const createDocumentsBatch = async (
+  params: IDocumentBatchParams,
+): Promise<IDocumentBatchResult> => {
+  const response = await api.post<IDocumentBatchResult>(
+    `${documentsEndpoint}/batch`,
     params,
   );
   return response.data;

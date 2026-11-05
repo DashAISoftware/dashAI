@@ -10,7 +10,7 @@ nor another session's index.
 import logging
 from typing import List, Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from DashAI.back.core.enums.status import DocumentStatus
 from DashAI.back.dependencies.database.models import (
@@ -82,6 +82,9 @@ class SessionDocumentService:
     def list_documents(self, session_id: int) -> List[DataDocument]:
         """Return the documents a session uses, by id.
 
+        The folder of each document is loaded with it, so callers may
+        serialize ``folder.name`` while the session is still open.
+
         Parameters
         ----------
         session_id : int
@@ -95,6 +98,7 @@ class SessionDocumentService:
         session = self.get_rag_session(session_id)
         return (
             self.db.query(DataDocument)
+            .options(joinedload(DataDocument.folder))
             .join(
                 RAGSessionDocument,
                 RAGSessionDocument.data_document_id == DataDocument.id,
