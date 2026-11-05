@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { Box, ButtonBase, Collapse, Typography } from "@mui/material";
+import {
+  Box,
+  ButtonBase,
+  Collapse,
+  Typography,
+  useMediaQuery,
+} from "@mui/material";
 import FolderIcon from "@mui/icons-material/Folder";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -73,6 +79,7 @@ export default function DocumentGroupList({
   renderActions,
 }) {
   const { t } = useTranslation("generative");
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [collapsedFolders, setCollapsedFolders] = useState(() => new Set());
   const { loose, groups } = useMemo(
     () => groupDocuments(documents),
@@ -144,7 +151,9 @@ export default function DocumentGroupList({
                 textAlign: "left",
                 justifyContent: "flex-start",
                 color: "text.secondary",
-                "&:hover": { bgcolor: "action.hover" },
+                "@media (hover: hover)": {
+                  "&:hover": { bgcolor: "action.hover" },
+                },
                 "&.Mui-focusVisible": {
                   outline: "2px solid",
                   outlineColor: "primary.main",
@@ -178,7 +187,11 @@ export default function DocumentGroupList({
               )}
             </ButtonBase>
 
-            <Collapse in={!collapsed}>
+            <Collapse
+              in={!collapsed}
+              timeout={reduceMotion ? 0 : "auto"}
+              unmountOnExit
+            >
               <Box sx={{ pl: 2, minWidth: 0 }}>
                 <DocumentList documents={group.documents} {...listProps} />
               </Box>

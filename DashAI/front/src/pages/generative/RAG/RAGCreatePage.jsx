@@ -9,6 +9,7 @@ import {
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
@@ -65,6 +66,7 @@ export default function RAGCreatePage() {
   const { t } = useTranslation(["generative", "common"]);
   const { enqueueSnackbar } = useSnackbar();
   const threePanelLayout = useThreePanelLayout({ storageKey: "rag" });
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const { sessions, setSessions, deleteSessionById } = useGenerative();
   const ragTitle = useTaskDisplayName(RAG_TASK_NAME);
 
@@ -307,6 +309,7 @@ export default function RAGCreatePage() {
                   flex: 1,
                   minHeight: 0,
                   overflowY: "auto",
+                  overscrollBehavior: "contain",
                   pt: 1.5,
                   pb: 2,
                 }}
@@ -340,7 +343,17 @@ export default function RAGCreatePage() {
                           py: 6,
                         }}
                       >
-                        <CircularProgress />
+                        {reduceMotion ? (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            role="status"
+                          >
+                            {t("common:loading")}
+                          </Typography>
+                        ) : (
+                          <CircularProgress />
+                        )}
                       </Box>
                     ) : (
                       <ComponentSelector

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { Alert, Box, Button, Typography } from "@mui/material";
+import { Alert, Box, Button, Typography, useMediaQuery } from "@mui/material";
 import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
 import { getComponents } from "../../../api/component";
 import { loadsDataKind } from "../../../utils/dataKinds";
@@ -51,6 +51,7 @@ function supportsExtension(loader, extension) {
  */
 export default function RAGDocumentUpload({ open, onClose, onReady }) {
   const { t } = useTranslation(["generative", "common"]);
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
   const [mode, setMode] = useState(UPLOAD_MODE.FILE);
   const [entries, setEntries] = useState([]);
@@ -368,7 +369,7 @@ export default function RAGDocumentUpload({ open, onClose, onReady }) {
           {!isDone && (
             <Button
               variant="contained"
-              loading={upload.busy}
+              loading={upload.busy && !reduceMotion}
               disabled={!canUpload}
               onClick={handleUpload}
             >

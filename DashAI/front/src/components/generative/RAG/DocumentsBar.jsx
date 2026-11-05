@@ -10,6 +10,7 @@ import {
   Stack,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
@@ -58,6 +59,7 @@ export default function DocumentsBar({
   const { t } = useTranslation("generative");
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
   const [documents, setDocuments] = useState([]);
   const [status, setStatus] = useState(LOAD_STATUS.LOADING);
@@ -263,7 +265,13 @@ export default function DocumentsBar({
               p: 2,
             }}
           >
-            <CircularProgress size={28} aria-label={t("common:loading")} />
+            {reduceMotion ? (
+              <Typography variant="body2" color="text.secondary" role="status">
+                {t("common:loading")}
+              </Typography>
+            ) : (
+              <CircularProgress size={28} aria-label={t("common:loading")} />
+            )}
           </Box>
         ) : status === LOAD_STATUS.ERROR ? (
           <Alert
