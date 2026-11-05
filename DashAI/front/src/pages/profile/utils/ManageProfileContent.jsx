@@ -110,7 +110,7 @@ function ProfileRow({
         <EditButton
           withIcon={action.type === "edit"}
           onClick={action.onClick}
-          disabled={disabled}
+          disabled={disabled || action.disabled}
         >
           {action.label}
         </EditButton>
@@ -190,10 +190,13 @@ export default function ManageProfileContent({ user, pendingEmail, onEdit }) {
           title="Nickname"
           value={`@${user.nickname}`}
           description="Identificador utilizado para mencionarte y compartir proyectos contigo."
+          // The backend cannot change the username yet; the form in
+          // ManageProfile is kept for when it can
           action={{
-            label: "Editar",
-            type: "edit",
+            label: "Próximamente",
+            type: "request",
             onClick: () => onEdit("nickname"),
+            disabled: true,
           }}
           icon={AlternateEmailIcon}
         />

@@ -44,8 +44,9 @@ export default function Register() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
+      // Registering also logs in, so the user goes straight into the app
       await register({ name: name.trim(), nickname, email, password });
-      navigate("/app/login", { state: { registered: true, email } });
+      navigate("/app", { replace: true });
     } catch (registerError) {
       setError(registerError.message);
     }

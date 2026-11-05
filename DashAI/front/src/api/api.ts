@@ -4,6 +4,9 @@ import i18n from "../utils/i18n";
 
 const api: AxiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
+  // Sends the session cookie when the dev server (port 3000) calls the API
+  // on port 8000; same-origin requests send it anyway
+  withCredentials: true,
   paramsSerializer: (params) => {
     const sp = new URLSearchParams();
     for (const [key, val] of Object.entries(params)) {

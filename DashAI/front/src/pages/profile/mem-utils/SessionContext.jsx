@@ -9,7 +9,6 @@ import React, {
 import PropTypes from "prop-types";
 
 import * as authService from "./authService";
-import { getRolePermissions } from "./mockInstance";
 
 const SessionContext = createContext(null);
 
@@ -20,21 +19,23 @@ const SessionContext = createContext(null);
 export function SessionProvider({ children }) {
   const [user, setUser] = useState(null);
   const [users, setUsers] = useState([]);
-  // True until the stored session has been read; guards wait for it
+  // True until the backend has said who is logged in; guards wait for it
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([authService.getCurrentUser(), authService.getUsers()]).then(
-      ([currentUser, allUsers]) => {
-        setUser(currentUser);
-        setUsers(allUsers);
-        setLoading(false);
-      },
-    );
+    Promise.all([
+      // An unreachable backend is treated as no session
+      authService.getCurrentUser().catch(() => null),
+      authService.getUsers(),
+    ]).then(([currentUser, allUsers]) => {
+      setUser(currentUser);
+      setUsers(allUsers);
+      setLoading(false);
+    });
   }, []);
 
-  const login = useCallback(async (email, password) => {
-    const loggedUser = await authService.login(email, password);
+  const login = useCallback(async (identifier, password) => {
+    const loggedUser = await authService.login(identifier, password);
     setUser(loggedUser);
     return loggedUser;
   }, []);
@@ -44,32 +45,35 @@ export function SessionProvider({ children }) {
     setUser(null);
   }, []);
 
+  // The backend starts a session for the new account right away
   const register = useCallback(async (data) => {
     const newUser = await authService.register(data);
-    setUsers(await authService.getUsers());
+    setUser(newUser);
     return newUser;
   }, []);
 
-  const updateUser = useCallback(async (userId, changes) => {
-    const allUsers = await authService.updateUser(userId, changes);
-    setUsers(allUsers);
-    setUser((previous) =>
-      previous?.id === userId
-        ? allUsers.find((candidate) => candidate.id === userId)
-        : previous,
-    );
-  }, []);
-
-  const changePassword = useCallback(
-    (currentPassword, newPassword) =>
-      authService.changePassword(user.id, currentPassword, newPassword),
+  // Own profile goes to the backend; other accounts are still mock data
+  const updateUser = useCallback(
+    async (userId, changes) => {
+      if (userId === user?.id) {
+        setUser(await authService.updateProfile(changes));
+        return;
+      }
+      setUsers(await authService.updateUser(userId, changes));
+    },
     [user],
   );
 
-  // Permissions come from the global role; project roles are not checked yet
+  const changePassword = useCallback(
+    (currentPassword, newPassword) =>
+      authService.changePassword(currentPassword, newPassword),
+    [],
+  );
+
+  // Permissions come from the global role, as computed by the backend;
+  // project roles are not checked yet
   const can = useCallback(
-    (permission) =>
-      Boolean(user) && getRolePermissions(user.globalRole).includes(permission),
+    (permission) => Boolean(user) && user.permissions.includes(permission),
     [user],
   );
 
