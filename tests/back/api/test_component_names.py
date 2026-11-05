@@ -30,6 +30,14 @@ def test_the_forecasting_family_is_never_registered():
     assert "SingleSeriesForecastingTask" in names
 
 
+def test_mase_is_not_offered():
+    # Each model scales MASE by its own season, so two runs of a session are
+    # not comparable. It comes back once the season belongs to the session.
+    names = {component.__name__ for component in get_initial_components()}
+
+    assert "MASE" not in names
+
+
 def test_no_registered_component_names_the_forecasting_family(client):
     registry = client.app.container["component_registry"]
 
