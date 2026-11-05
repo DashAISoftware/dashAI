@@ -64,6 +64,22 @@ def test_detect_date_format_resolves_ambiguity_from_the_whole_column():
     assert detected == "%d/%m/%Y"
 
 
+def test_detect_date_format_prefers_the_reading_on_a_regular_grid():
+    values = [
+        f"{month:02d}/01/{year}" for year in (2020, 2021) for month in range(1, 13)
+    ]
+
+    assert detect_date_format(values, hint="date-eu") == "%m/%d/%Y"
+
+
+def test_detect_date_format_prefers_the_regular_day_first_reading():
+    values = [
+        f"01/{month:02d}/{year}" for year in (2020, 2021) for month in range(1, 13)
+    ]
+
+    assert detect_date_format(values) == "%d/%m/%Y"
+
+
 TEST_COLUMNS = [
     (["2026-01-05", "2026-02-14", "2026-12-25"], "%Y-%m-%d"),
     (["01/05/2026", "02/14/2026", "12/25/2026"], "%m/%d/%Y"),

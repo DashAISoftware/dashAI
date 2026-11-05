@@ -77,6 +77,31 @@ def _names_a_full_date(date_format: str) -> bool:
     return has_day and has_month and has_year
 
 
+def _lies_on_a_grid(dates: "pd.Series") -> bool:
+    """Check whether parsed dates sit on a regular calendar frequency.
+
+    Parameters
+    ----------
+    dates : pandas.Series
+        Parsed datetimes, possibly unsorted, repeated or missing.
+
+    Returns
+    -------
+    bool
+        ``True`` when the distinct dates, sorted, follow a frequency
+        ``pandas.infer_freq`` recognises.
+    """
+    import pandas as pd  # local import
+
+    index = pd.DatetimeIndex(dates.dropna().drop_duplicates().sort_values())
+    if len(index) < 3:
+        return False
+    try:
+        return pd.infer_freq(index) is not None
+    except ValueError:
+        return False
+
+
 def parse_date_column(values: Any, format: str = DEFAULT_DATE_FORMAT) -> "pd.Series":
     """Parse a column of date strings into datetimes.
 
@@ -153,13 +178,20 @@ def detect_date_format(values: Any, hint: Optional[str] = None) -> Optional[str]
     ``EXTRA_DATE_FORMATS``. Each candidate is then checked against the whole
     column, which is what catches a guess that only fits the first few rows.
 
+    When several candidates read every value, the first whose dates sit on a
+    regular calendar frequency wins, and the first candidate otherwise. ptype
+    labels month first dates ``"date-eu"`` too, so the hint cannot settle a
+    column where every value reads both ways: monthly ``"MM/01/YYYY"`` data
+    read day first lands on the first twelve days of each January.
+
     Parameters
     ----------
     values : Any
         The column values to inspect.
     hint : str, optional
-        The ptype label for this column. ``"date-eu"`` means day first, which
-        is the only thing that can disambiguate a value like ``"01/02/2020"``.
+        The ptype label for this column. ``"date-eu"`` puts day first
+        candidates ahead of month first ones, which decides a value like
+        ``"01/02/2020"`` only when neither reading sits on a regular grid.
 
     Returns
     -------
@@ -200,16 +232,23 @@ def detect_date_format(values: Any, hint: Optional[str] = None) -> Optional[str]
     )
     candidates.extend(fmt for fmt in extras if fmt not in candidates)
 
+    readings = []
     for candidate in candidates:
         if not _names_a_full_date(candidate):
             continue
         try:
-            parse_date_column(text, candidate)
+            parsed = parse_date_column(text, candidate)
         except ValueError:
             continue
-        return candidate
+        readings.append((candidate, parsed))
 
-    return None
+    if not readings:
+        return None
+
+    for candidate, parsed in readings:
+        if _lies_on_a_grid(parsed):
+            return candidate
+    return readings[0][0]
 
 
 def infer_frequency(dates: Any) -> Union[str, "pd.Timedelta", None]:

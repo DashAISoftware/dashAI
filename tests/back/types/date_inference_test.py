@@ -57,6 +57,15 @@ def test_slash_separated_eu_dates_keep_their_separator():
     assert result["dtype"] == "%d/%m/%Y"
 
 
+def test_monthly_month_first_dates_are_not_read_day_first():
+    result = _infer(
+        [f"{month:02d}/01/{year}" for year in (2020, 2021) for month in range(1, 13)]
+    )
+
+    assert result["type"] == "Date"
+    assert result["dtype"] == "%m/%d/%Y"
+
+
 def test_two_digit_years_are_inferred_as_date():
     # ptype labels these "date-eu"; guess_datetime_format cannot read them, so
     # this proves the EXTRA_DATE_FORMATS fallback runs inside inference too.
