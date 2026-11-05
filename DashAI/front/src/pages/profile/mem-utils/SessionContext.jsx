@@ -4,10 +4,12 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import PropTypes from "prop-types";
 
+import { setUnauthorizedHandler } from "../../../api/api";
 import * as authService from "./authService";
 
 const SessionContext = createContext(null);
@@ -21,6 +23,25 @@ export function SessionProvider({ children }) {
   const [users, setUsers] = useState([]);
   // True until the backend has said who is logged in; guards wait for it
   const [loading, setLoading] = useState(true);
+  // True when a session that was open stopped being valid
+  const [expired, setExpired] = useState(false);
+
+  // Read by the 401 handler, which is registered once
+  const userRef = useRef(null);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  useEffect(() => {
+    // A 401 without a session (wrong password, first load) is not an expiry
+    setUnauthorizedHandler(() => {
+      if (userRef.current) {
+        setUser(null);
+        setExpired(true);
+      }
+    });
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -37,6 +58,7 @@ export function SessionProvider({ children }) {
   const login = useCallback(async (identifier, password) => {
     const loggedUser = await authService.login(identifier, password);
     setUser(loggedUser);
+    setExpired(false);
     return loggedUser;
   }, []);
 
@@ -49,6 +71,7 @@ export function SessionProvider({ children }) {
   const register = useCallback(async (data) => {
     const newUser = await authService.register(data);
     setUser(newUser);
+    setExpired(false);
     return newUser;
   }, []);
 
@@ -82,6 +105,7 @@ export function SessionProvider({ children }) {
       user,
       users,
       loading,
+      expired,
       isAuthenticated: Boolean(user),
       login,
       logout,
@@ -94,6 +118,7 @@ export function SessionProvider({ children }) {
       user,
       users,
       loading,
+      expired,
       login,
       logout,
       register,

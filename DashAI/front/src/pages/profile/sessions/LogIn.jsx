@@ -30,6 +30,7 @@ export default function LogIn() {
 
   // RequireAuth sends the path the user wanted to visit
   const needsLogin = location.state?.reason === "auth";
+  const sessionExpired = location.state?.reason === "expired";
   const redirectTo = location.state?.from ?? "/app";
 
   // Email or nickname; the backend tells them apart by the "@"
@@ -71,6 +72,12 @@ export default function LogIn() {
       {needsLogin && (
         <Alert severity="info" sx={{ mb: 3 }}>
           Para acceder a esta funcionalidad debes iniciar sesión.
+        </Alert>
+      )}
+
+      {sessionExpired && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Tu sesión expiró o fue cerrada. Inicia sesión nuevamente.
         </Alert>
       )}
 

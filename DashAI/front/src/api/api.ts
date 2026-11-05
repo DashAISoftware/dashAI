@@ -27,4 +27,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Set by the session context, which cannot be imported here without a cycle
+let onUnauthorized: (() => void) | null = null;
+
+/**
+ * Register what to do when any request answers 401 (the session expired or
+ * was revoked). The error is still rejected so the caller can react too.
+ */
+export const setUnauthorizedHandler = (handler: (() => void) | null): void => {
+  onUnauthorized = handler;
+};
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && onUnauthorized) onUnauthorized();
+    return Promise.reject(error);
+  },
+);
+
 export default api;

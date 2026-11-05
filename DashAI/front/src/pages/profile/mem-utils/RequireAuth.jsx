@@ -13,7 +13,7 @@ import { useSession } from "./SessionContext";
  * endpoint.
  */
 export default function RequireAuth({ children }) {
-  const { isAuthenticated, loading } = useSession();
+  const { isAuthenticated, loading, expired } = useSession();
   const location = useLocation();
 
   if (loading) return null;
@@ -25,7 +25,7 @@ export default function RequireAuth({ children }) {
         replace
         state={{
           from: `${location.pathname}${location.search}`,
-          reason: "auth",
+          reason: expired ? "expired" : "auth",
         }}
       />
     );

@@ -91,7 +91,8 @@ export default function Profile() {
   const { user, updateUser } = useSession();
   const [editing, setEditing] = useState(false);
 
-  // Saved in the toy session, so the app bar and other views see the change
+  // Saved in the backend and in the session, so the app bar and other views
+  // see the change; the returned promise lets the field show save errors
   const handleChange = (field, value) =>
     updateUser(user.id, { [field]: value });
 

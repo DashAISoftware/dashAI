@@ -10,7 +10,8 @@ import FormActions from "./FormActions";
 
 /**
  * Label / value pair that can be switched to an inline text input.
- * `onSave` receives the trimmed new value.
+ * `onSave` receives the trimmed new value; if it rejects, the input stays
+ * open and shows the error message.
  */
 export default function EditableField({
   label,
@@ -24,19 +25,29 @@ export default function EditableField({
   const theme = useTheme();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  const [saveError, setSaveError] = useState(null);
 
   const startEditing = () => {
     setDraft(value);
+    setSaveError(null);
     setEditing(true);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    onSave(draft.trim());
-    setEditing(false);
+    try {
+      await onSave(draft.trim());
+      setEditing(false);
+    } catch (error) {
+      setSaveError(error.message);
+    }
   };
 
   const invalid = required && draft.trim() === "";
+
+  let helperText = description;
+  if (invalid) helperText = "Este campo es obligatorio.";
+  else if (saveError) helperText = saveError;
 
   return (
     <Box sx={{ "& + &": { mt: 3 } }}>
@@ -73,7 +84,10 @@ export default function EditableField({
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
           <TextField
             value={draft}
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={(event) => {
+              setDraft(event.target.value);
+              setSaveError(null);
+            }}
             onKeyDown={(event) => {
               if (event.key === "Escape") setEditing(false);
             }}
@@ -82,8 +96,8 @@ export default function EditableField({
             autoFocus
             multiline={multiline}
             minRows={multiline ? 3 : undefined}
-            error={invalid}
-            helperText={invalid ? "Este campo es obligatorio." : description}
+            error={invalid || Boolean(saveError)}
+            helperText={helperText}
           />
           <FormActions
             onCancel={() => setEditing(false)}
