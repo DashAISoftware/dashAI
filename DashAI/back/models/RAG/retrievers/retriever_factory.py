@@ -11,7 +11,7 @@ from typing import Any
 from DashAI.back.core.schema_fields.utils import fill_objects, normalize_payload
 from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
 from DashAI.back.models.RAG.documents.chunk import Chunk
-from DashAI.back.models.RAG.documents.rag_document import RAGDocument
+from DashAI.back.models.RAG.documents.source_document import SourceDocument
 from DashAI.back.models.RAG.exceptions import (
     RAGComponentNotFoundError,
     RAGRetrieverError,
@@ -212,7 +212,7 @@ class RetrieverFactory:
         registry: ComponentRegistry,
         RAG_path: str,  # noqa: N803
         chunks: dict[int, dict[int, Chunk]],
-        documents: dict[int, RAGDocument] | None = None,
+        documents: dict[int, SourceDocument] | None = None,
     ):
         self._registry = registry
         self._RAG_path = RAG_path

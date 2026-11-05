@@ -12,6 +12,7 @@ from DashAI.back.dataloaders.classes.dashai_data import DashAIData
 from DashAI.back.types.categorical import Categorical
 from DashAI.back.types.dashai_data_type import DashAIDataType
 from DashAI.back.types.dashai_image import DashAIImage
+from DashAI.back.types.date_utils import format_date_column
 from DashAI.back.types.utils import (
     arrow_to_dashai_types,
     comma_float_to_float,
@@ -682,8 +683,20 @@ class DashAIDataset(Dataset, DashAIData):
         if isinstance(selected_dataset, DashAIDataset):
             return selected_dataset
         else:
-            # If the selected dataset is a Dataset, convert it to DashAIDataset
-            arrow_tbl = selected_dataset.with_format("arrow")[:]
+            # If the selected dataset is a Dataset, convert it to DashAIDataset.
+            # Rows that are not one contiguous range come back as the whole
+            # table plus an indices mapping, and reading that mapping with
+            # ``with_format("arrow")[:]`` gathers one record batch per row.
+            # The layout outlives the selection: a dataset saved from it keeps
+            # a chunk per row, and pickling such a table takes about a
+            # thousand times longer than a regular one. ``take`` gathers the
+            # same rows, in the same order, into regular chunks.
+            if selected_dataset._indices is not None:
+                arrow_tbl = selected_dataset.data.table.take(
+                    selected_dataset._indices.column(0)
+                )
+            else:
+                arrow_tbl = selected_dataset.with_format("arrow")[:]
             arrow_tblx = save_types_in_arrow_metadata(
                 arrow_tbl, {col: self._types[col].to_string() for col in self._types}
             )
@@ -840,7 +853,14 @@ def transform_dataset_with_schema(
                         arrow_type=_type, format=_format
                     )
                     pa_type = to_arrow_types("string")
-                    dai_table[column_name] = table.column(column_name)
+                    column = table.column(column_name)
+                    if (
+                        pa.types.is_timestamp(column.type)
+                        or pa.types.is_date(column.type)
+                        or pa.types.is_time(column.type)
+                    ):
+                        column = format_date_column(column, _format)
+                    dai_table[column_name] = column
 
                 elif _type == "Float":
                     dashai_types[column_name] = arrow_to_dashai_types(pa_type)
@@ -1527,7 +1547,9 @@ def get_dataset_info(dataset_path: str) -> object:
     Returns
     -------
     object
-        Dictionary with the information of the dataset
+        Dictionary with the information of the dataset, including
+        ``predefined_splits``: the share of each partition the dataset carries
+        of its own, or None when it carries none.
     """
     import json
 
@@ -1545,6 +1567,20 @@ def get_dataset_info(dataset_path: str) -> object:
     total_rows = splits_data.get("total_rows", 0)
     column_names = splits_data.get("column_names", [])
 
+    # The share of each partition the dataset carries of its own, which the
+    # session wizard shows and offers as a predefined split; None when it
+    # carries none. Without a row count, the partitions share their own rows.
+    sizes = {
+        "train": len(train_indices),
+        "validation": len(val_indices),
+        "test": len(test_indices),
+    }
+    predefined_rows = sum(sizes.values())
+    predefined_splits = None
+    if predefined_rows > 0:
+        whole = total_rows or predefined_rows
+        predefined_splits = {name: size / whole for name, size in sizes.items()}
+
     return {
         "total_rows": total_rows,
         "total_columns": len(column_names),
@@ -1556,6 +1592,7 @@ def get_dataset_info(dataset_path: str) -> object:
         "train_indices": train_indices,
         "test_indices": test_indices,
         "val_indices": val_indices,
+        "predefined_splits": predefined_splits,
         **splits_data,
     }
 

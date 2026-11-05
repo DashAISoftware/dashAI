@@ -1,7 +1,12 @@
 import React, { memo, useCallback, useEffect, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useTheme } from "@mui/material/styles";
-import { dataTypesbyColumnType, columnTypesList } from "../../utils/typesLists";
+import { useTranslation } from "react-i18next";
+import {
+  dataTypesbyColumnType,
+  columnTypesList,
+  getColumnTypeLabel,
+} from "../../utils/typesLists";
 
 const PAGE_SIZE = 10;
 
@@ -39,6 +44,7 @@ const TypeSelect = memo(function TypeSelect({
   field,
   value,
   options,
+  getLabel,
   onChange,
   bg,
 }) {
@@ -50,7 +56,7 @@ const TypeSelect = memo(function TypeSelect({
     >
       {options.map((opt) => (
         <option key={opt} value={opt}>
-          {opt}
+          {getLabel ? getLabel(opt) : opt}
         </option>
       ))}
     </select>
@@ -62,6 +68,7 @@ TypeSelect.propTypes = {
   field: PropTypes.string.isRequired,
   value: PropTypes.string,
   options: PropTypes.arrayOf(PropTypes.string).isRequired,
+  getLabel: PropTypes.func,
   onChange: PropTypes.func.isRequired,
   bg: PropTypes.string,
 };
@@ -73,6 +80,8 @@ function DatasetPreviewTable({
   setColumnsSpec,
 }) {
   const theme = useTheme();
+  const { t } = useTranslation(["datasets"]);
+  const getTypeLabel = useCallback((type) => getColumnTypeLabel(type, t), [t]);
   const [rows, setRows] = useState([]);
   const [page, setPage] = useState(0);
   const bg = theme.palette.background.paper;
@@ -175,11 +184,12 @@ function DatasetPreviewTable({
                         field="columnType"
                         value={row.columnType}
                         options={columnTypesList}
+                        getLabel={getTypeLabel}
                         onChange={handleChange}
                         bg={bg}
                       />
                     ) : (
-                      row.columnType
+                      getTypeLabel(row.columnType)
                     )}
                   </td>
                   <td style={tdStyle}>

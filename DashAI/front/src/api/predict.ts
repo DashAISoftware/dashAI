@@ -24,16 +24,24 @@ export const downloadPredict = async (prediction_id: string) => {
   return response.data;
 };
 
+// A task that predicts rows takes a dataset (and maybe one of its
+// partitions); one that predicts by horizon takes a horizon, and the answer
+// says how many of its steps no backtest measured (unevaluated_steps).
 export const createPrediction = async (
   run_id: number,
-  dataset_id?: number,
+  dataset_id?: number | null,
   split?: string | null,
-): Promise<object> => {
-  const response = await api.post<object>(`${predictEndpoint}/`, {
-    run_id,
-    dataset_id,
-    split,
-  });
+  horizon?: number,
+): Promise<{ id: number; unevaluated_steps?: number }> => {
+  const response = await api.post<{ id: number; unevaluated_steps?: number }>(
+    `${predictEndpoint}/`,
+    {
+      run_id,
+      dataset_id,
+      split,
+      ...(horizon !== undefined ? { horizon } : {}),
+    },
+  );
   return response.data;
 };
 
@@ -47,20 +55,48 @@ export interface IPredictionSplit {
  * may target when it runs on that same dataset. Which ones exist depends on how
  * the run was evaluated, so the backend decides the list and its names.
  */
+export interface IExogenousColumn {
+  name: string;
+  type: string;
+}
+
 export const getPredictionSplits = async (
   runId: number,
 ): Promise<{
   splits: IPredictionSplit[];
   trainingDatasetId: number | null;
+  horizon: number | null;
+  exogenous: { columns: IExogenousColumn[] } | null;
 }> => {
   const response = await api.get<{
     splits: IPredictionSplit[];
     training_dataset_id: number | null;
+    horizon?: number | null;
+    exogenous?: { columns: IExogenousColumn[] } | null;
   }>(`${predictEndpoint}/splits/${runId}`);
   return {
     splits: response.data.splits,
     trainingDatasetId: response.data.training_dataset_id,
+    // The horizon the run's backtest measured, for a task that predicts by
+    // horizon; null otherwise.
+    horizon: response.data.horizon ?? null,
+    // The columns a run that read exogenous variables needs the future
+    // values of; null for any other run.
+    exogenous: response.data.exogenous ?? null,
   };
+};
+
+// The dates of the steps after a forecasting run's series, in the format of
+// its time index, for a future typed in by hand.
+export const getFutureDates = async (
+  runId: number,
+  horizon: number,
+): Promise<{ timeIndex: string; dates: string[] }> => {
+  const response = await api.get<{ time_index: string; dates: string[] }>(
+    `${predictEndpoint}/future-dates/${runId}`,
+    { params: { horizon } },
+  );
+  return { timeIndex: response.data.time_index, dates: response.data.dates };
 };
 
 export const getPredictions = async (

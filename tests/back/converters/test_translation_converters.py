@@ -184,4 +184,5 @@ def test_the_target_language_comes_before_the_shared_options():
         "split_by",
         "batch_size",
         "device",
+        "drop_source_columns",
     ]

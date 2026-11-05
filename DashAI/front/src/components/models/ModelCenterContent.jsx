@@ -7,24 +7,7 @@ import SelectOptionMenu from "../threeSectionLayout/SelectOptionMenu";
 import ModelsBreadcrumbs from "./ModelsBreadcrumbs";
 import { useTourContext } from "../tour/TourProvider";
 import { useNavigate } from "react-router-dom";
-import {
-  Category as ClassificationIcon,
-  ShowChart as RegressionIcon,
-  TextFields as TextClassificationIcon,
-  TableChart as TabularClassificationIcon,
-  Translate as TranslationIcon,
-  ImageSearch as ImageClassificationIcon,
-  Science as DefaultTaskIcon,
-} from "@mui/icons-material";
-
-const TASK_ICONS = {
-  ClassificationTask: ClassificationIcon,
-  TabularClassificationTask: TabularClassificationIcon,
-  TextClassificationTask: TextClassificationIcon,
-  ImageClassificationTask: ImageClassificationIcon,
-  RegressionTask: RegressionIcon,
-  TranslationTask: TranslationIcon,
-};
+import { iconByName } from "./model/ModelIcon";
 
 export default function ModelsCenterContent() {
   const { t } = useTranslation(["models", "datasets", "common"]);
@@ -144,7 +127,8 @@ export default function ModelsCenterContent() {
                 .trim(),
             description:
               task.description || task.metadata?.short_description || "",
-            Icon: TASK_ICONS[task.name] || DefaultTaskIcon,
+            // The task declares its icon, as a model does.
+            Icon: iconByName(task.metadata?.icon),
             badge:
               task.metadata?.requires_target === false
                 ? t("models:label.unsupervisedBadge")

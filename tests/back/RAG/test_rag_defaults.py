@@ -76,6 +76,7 @@ BAG_OF_WORDS_DEFAULTS = {
     "upper_bound_ngrams": 1,
     "min_df": 0.0,
     "max_df": 1.0,
+    "drop_source_columns": False,
 }
 
 #: Embedding parameters the semantic default ships: the schema placeholders.

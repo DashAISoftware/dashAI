@@ -1,5 +1,8 @@
 import React from "react";
-import { useStrategyKind } from "../../../hooks/useStrategyKind";
+import {
+  useStrategyKind,
+  useStrategyMetadata,
+} from "../../../hooks/useStrategyKind";
 import { STRATEGY_KINDS } from "../../../utils/splitsPayload";
 import PropTypes from "prop-types";
 import { Box, Typography, Tab, Tooltip, Chip } from "@mui/material";
@@ -16,6 +19,8 @@ import { useModels } from "../ModelsContext";
  * results tabs, so this one takes the next free value.
  */
 export const REPORTS_TAB = 6;
+/** The forecasts of every origin, for a strategy that declares them. */
+export const FORECASTS_TAB = 7;
 
 const groupLabelSx = {
   textTransform: "uppercase",
@@ -80,6 +85,13 @@ export default function ResultsTabsHeader({
   const isCrossValidation =
     useStrategyKind(selectedSession?.evaluation_strategy) === STRATEGY_KINDS.CV;
   const isNestedCrossValidation = !!run?.nested;
+  // The views a finished run offers beyond its metrics are the strategy's to
+  // declare: a score per fold or origin, the forecasts of every origin.
+  const resultViews =
+    useStrategyMetadata(selectedSession?.evaluation_strategy)?.result_views ??
+    [];
+  const showsFolds = resultViews.includes("fold_metrics");
+  const showsForecasts = resultViews.includes("forecasts");
 
   // Cross-validation runs can only be explained when the session reserved rows
   // for it: the final model is refit on everything else, so without a test set
@@ -136,30 +148,51 @@ export default function ResultsTabsHeader({
               disabled={!isFinished || optimizables === 0}
             />
           </PillTabs>
-          {isCrossValidation && (
+          {(showsFolds || isCrossValidation || showsForecasts) && (
             <PillTabs
-              value={[4, 5].includes(activeTab) ? activeTab : false}
+              value={
+                [4, 5, FORECASTS_TAB].includes(activeTab) ? activeTab : false
+              }
               onChange={(e, newValue) => onTabChange(newValue)}
-              aria-label="Result cross-validation tabs"
+              aria-label="Result evaluation tabs"
             >
-              <Tab
-                value={4}
-                label={
-                  <Box sx={tabLabelRowSx}>{t("models:label.foldGraphs")}</Box>
-                }
-                disabled={!isFinished}
-              />
-              <Tab
-                value={5}
-                label={
-                  <Tooltip title={nestedCvResultsTooltip}>
-                    <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
-                      {t("models:label.nestedCvResults")}
-                    </Box>
-                  </Tooltip>
-                }
-                disabled={!isFinished || !isNestedCrossValidation}
-              />
+              {showsFolds && (
+                <Tab
+                  value={4}
+                  label={
+                    <Box sx={tabLabelRowSx}>{t("models:label.foldGraphs")}</Box>
+                  }
+                  disabled={!isFinished}
+                />
+              )}
+              {/* Nested cross-validation is a cross-validation feature: the
+                  run dialog offers it only there. */}
+              {isCrossValidation && (
+                <Tab
+                  value={5}
+                  label={
+                    <Tooltip title={nestedCvResultsTooltip}>
+                      <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
+                        {t("models:label.nestedCvResults")}
+                      </Box>
+                    </Tooltip>
+                  }
+                  disabled={!isFinished || !isNestedCrossValidation}
+                />
+              )}
+              {showsForecasts && (
+                <Tab
+                  value={FORECASTS_TAB}
+                  label={
+                    <Tooltip title={notFinishedTooltip}>
+                      <Box sx={{ ...tabLabelRowSx, pointerEvents: "auto" }}>
+                        {t("models:label.forecasts")}
+                      </Box>
+                    </Tooltip>
+                  }
+                  disabled={!isFinished}
+                />
+              )}
             </PillTabs>
           )}
         </Box>

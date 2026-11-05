@@ -5,6 +5,10 @@ from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.feature_engineering import (
     FeatureEngineeringConverter,
 )
+from DashAI.back.converters.drop_source_columns import (
+    AddColumnsConverterSchema,
+    reject_output_named_like_scope,
+)
 from DashAI.back.core.schema_fields import (
     bool_field,
     enum_field,
@@ -13,7 +17,6 @@ from DashAI.back.core.schema_fields import (
     schema_field,
     string_field,
 )
-from DashAI.back.core.schema_fields.base_schema import BaseSchema
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.preprocessing.structure_types import (
     ColumnItem,
@@ -30,7 +33,7 @@ if TYPE_CHECKING:
 OPERATIONS = ["add", "subtract", "multiply", "divide"]
 
 
-class ColumnArithmeticSchema(BaseSchema):
+class ColumnArithmeticSchema(AddColumnsConverterSchema):
     """Schema for ColumnArithmetic hyperparameters."""
 
     operation: schema_field(
@@ -394,6 +397,7 @@ class ColumnArithmetic(FeatureEngineeringConverter, BaseConverter):
         result_column_name = self.output_column_name or (
             f"{column_a}_{self.operation}_{operand_b_label}"
         )
+        reject_output_named_like_scope(result_column_name, columns)
         output_is_integer = (
             self.operation != "divide"
             and types[column_a] == "Integer"

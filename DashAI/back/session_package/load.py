@@ -21,7 +21,7 @@ from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.model_package.manifest import (
     MANIFEST_ENTRY,
-    MissingPluginError,
+    MissingComponentError,
     ModelPackageError,
     check_manifest,
 )
@@ -38,6 +38,7 @@ from DashAI.back.session_package.export import (
     SESSION_FORMAT_VERSION,
     with_unknown_handling,
 )
+from DashAI.back.units.forecast_scope import forecasts_file
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -54,6 +55,8 @@ PLOT_PREFIXES = {
 
 class UnsafePackageError(ModelPackageError):
     """An entry of the zip would be written outside the extraction folder."""
+
+    code = "unsafe_file"
 
 
 def unique_name(base: str, taken: Set[str]) -> str:
@@ -193,9 +196,10 @@ def _check_components(recipe: Dict[str, Any], component_registry: Any) -> None:
     needed += [step["converter"] for step in steps]
     for name in needed:
         if name not in component_registry:
-            raise MissingPluginError(
+            raise MissingComponentError(
                 f"This session needs '{name}', which this DashAI does not have. "
-                "Install the plugin that provides it and try again."
+                "Install the plugin that provides it and try again.",
+                component=name,
             )
 
 
@@ -379,6 +383,10 @@ def import_session_package(
                         )
                         if entry.get("created"):
                             run.created = _date(entry["created"])
+                        if files is not None:
+                            # What the training recorded; a recipe imports
+                            # as never trained, so it has none.
+                            run.exogenous = entry.get("exogenous")
                         if files is None:
                             recipe_runs.append(entry["name"])
                             db.add(run)
@@ -393,6 +401,14 @@ def import_session_package(
                         run.end_time = _date(entry.get("end_time"))
                         db.add(run)
                         db.flush()
+                        if entry.get("forecasts_entry"):
+                            # Named after the run's id, which only exists now.
+                            # Small, unlike a model, so it is copied inside
+                            # the transaction, and removed with the rest if
+                            # the import fails.
+                            forecasts = forecasts_file(runs_dir, str(run.id))
+                            created.append(forecasts)
+                            shutil.copy2(workdir / entry["forecasts_entry"], forecasts)
                         db.add_all(
                             Metric(
                                 run_id=run.id,
@@ -400,6 +416,7 @@ def import_session_package(
                                 level=LevelEnum[metric["level"]],
                                 name=metric["name"],
                                 value=metric["value"],
+                                unavailable_reason=metric.get("unavailable_reason"),
                                 std_value=metric.get("std_value"),
                                 step=metric["step"],
                                 fold_index=metric.get("fold_index"),

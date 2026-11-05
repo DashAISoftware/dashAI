@@ -9,7 +9,11 @@ import { checkHowManyOptimazers } from "../../utils/schema";
 import { isRunActive } from "../../utils/runStatus";
 import { useModels } from "./ModelsContext";
 import useRunResultsData from "./runResults/useRunResultsData";
-import ResultsTabsHeader, { REPORTS_TAB } from "./runResults/ResultsTabsHeader";
+import ResultsTabsHeader, {
+  FORECASTS_TAB,
+  REPORTS_TAB,
+} from "./runResults/ResultsTabsHeader";
+import ForecastsChart from "./ForecastsChart";
 import ExplainerResultsTab from "./runResults/ExplainerResultsTab";
 import PredictionResultsTab from "./runResults/PredictionResultsTab";
 import ReportResultsTab from "./runResults/ReportResultsTab";
@@ -226,6 +230,12 @@ export default function RunResults({
       {activeTab === 5 && isFinished && (
         <Box sx={{ pb: 4 }}>
           <OuterFoldMetricsTable run={run} />
+        </Box>
+      )}
+
+      {activeTab === FORECASTS_TAB && isFinished && (
+        <Box sx={{ pb: 4 }}>
+          <ForecastsChart run={run} />
         </Box>
       )}
 

@@ -4,6 +4,7 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset_cv
+from DashAI.back.splitters.split_preview import blocked_folds_preview
 
 from .base_splitter import BaseSplitter
 
@@ -58,6 +59,11 @@ class FoldSplitter(BaseSplitter):
     # uniformly, ``"stratified"`` preserves the target distribution, and
     # ``"group"`` moves whole groups so a group never spans the carve.
     TEST_SPLIT_STRATEGY: str = "random"
+
+    @classmethod
+    def preview(cls, params, dataset, split_type=None, indexes=None):
+        """One bar per fold (see ``BaseSplitter.preview``)."""
+        return blocked_folds_preview(params, dataset)
 
     @classmethod
     def explainable_partitions(cls, split_indexes):

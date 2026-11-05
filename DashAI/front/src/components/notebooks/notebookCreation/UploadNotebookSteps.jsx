@@ -50,8 +50,11 @@ export default function UploadNotebookSteps({
 
   const { defaultName } = useMemo(
     () =>
-      generateSequentialName({ base: "Notebook", items: existingNotebooks }),
-    [existingNotebooks],
+      generateSequentialName({
+        base: t("common:defaultName.notebook"),
+        items: existingNotebooks,
+      }),
+    [existingNotebooks, t],
   );
 
   const lastAutoFilledRef = useRef(null);

@@ -74,9 +74,13 @@ class DashAIPtype(PtypeCat, InferenceMethod):
                 # Fallback to text for unknown types
                 dashai_info = {"type": "Text", "dtype": "string"}
 
+            is_empty = bool(data[col_name].isna().all())
+            if is_empty:
+                dashai_info = {"type": "Text", "dtype": "string", "encoding": "utf-8"}
+
             # Handle categorical specially
             # include categories and preserve original dtype
-            if ptype_type == "categorical":
+            elif ptype_type == "categorical":
                 unique_vals = col_object.get_normal_values()
                 dashai_info["categories"] = unique_vals
 
@@ -117,7 +121,9 @@ class DashAIPtype(PtypeCat, InferenceMethod):
                 reason = {**reason}
                 reason["final_type"] = dashai_info.get("type")
                 reason["ptype_final"] = ptype_type
-                reason["is_categorical"] = ptype_type == "categorical"
+                reason["is_categorical"] = ptype_type == "categorical" and not is_empty
+                if is_empty:
+                    reason["rule"] = "empty_column"
                 non_null = data[col_name].dropna()
                 reason["sample_values"] = (
                     non_null.drop_duplicates().head(5).astype(str).tolist()

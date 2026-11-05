@@ -25,11 +25,12 @@ from DashAI.back.api.api_v1.schemas.model_sessions_params import (
 )
 from DashAI.back.api.utils import (
     offered_components,
-    remove_path,
+    remove_run_files,
+    run_file_paths,
     task_or_http_error,
 )
 from DashAI.back.core.schema_fields.utils import schema_placeholder_defaults
-from DashAI.back.dependencies.database.models import Dataset, ModelSession, Run
+from DashAI.back.dependencies.database.models import Dataset, ModelSession, Plugin, Run
 from DashAI.back.job.preprocessing_job import PreprocessingJob
 from DashAI.back.preprocessing.column_ref import ConverterSequence
 from DashAI.back.preprocessing.structure import (
@@ -41,14 +42,20 @@ from DashAI.back.splitters.splits_payload import (
     DEFAULT_SPLITTER_NAME,
     META_KEYS,
     normalize_splits_payload,
+    validate_splitter_parameters,
 )
-from DashAI.back.tasks.session_roles import SessionColumnRoles, session_roles
+from DashAI.back.tasks.session_roles import (
+    SessionColumnRoles,
+    session_exogenous_refs,
+    session_roles,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
 
     from DashAI.back.dependencies.job_queues import BaseJobQueue
     from DashAI.back.dependencies.registry import ComponentRegistry
+    from DashAI.back.model_package.manifest import ModelPackageError
     from DashAI.back.tasks.base_task import BaseTask
 
 
@@ -259,6 +266,7 @@ def _roles_problem(
             target=protected,
             steps=steps,
             component_registry=component_registry,
+            keeps_rows=task.PREPROCESSING_KEEPS_ROWS,
         )
         if not structure.valid:
             return "The preprocessing chain has an invalid step."
@@ -284,6 +292,74 @@ def _roles_problem(
         except (TypeError, ValueError) as e:
             return str(e)
     return None
+
+
+@router.get("/{model_session_id}/exogenous-use")
+@inject
+async def get_exogenous_use(
+    model_session_id: int,
+    component_registry: "ComponentRegistry" = Depends(lambda: di["component_registry"]),
+    session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+):
+    """Say, model by model, whether a run would read the exogenous variables.
+
+    The run dialog shows it before training (RECONCILING_FORECASTING §2.14,
+    detail 2): every model the task offers is offered, and the ones that will
+    not read the session's exogenous variables are marked, with the reason as
+    ``{key, values}`` for the app to say in its own language. The answer is
+    ``exogenous_usage``'s, the same the units act on and the run records.
+
+    ``switch`` names the parameter that turns the use off, for a model that
+    declares one, so the dialog can say the run will not read them while the
+    form has it off. A task without exogenous variables marks no model.
+
+    Returns
+    -------
+    dict
+        ``{"has_exogenous": bool, "models": [{"model", "uses", "reason",
+        "switch"}]}``, the models sorted by name.
+    """
+    from DashAI.back.models.forecasting.single_series_forecasting_model import (
+        exogenous_usage,
+    )
+
+    with session_factory() as db:
+        try:
+            model_session = db.get(ModelSession, model_session_id)
+        except exc.SQLAlchemyError as e:
+            log.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal database error",
+            ) from e
+        if not model_session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Model session not found",
+            )
+        task = task_or_http_error(model_session.task_name, component_registry)
+        has_exogenous = bool(session_exogenous_refs(model_session, task))
+        if not hasattr(task, "split_inputs"):
+            return {"has_exogenous": False, "models": []}
+
+        models = []
+        for name in offered_components(
+            component_registry, model_session.task_name, "Model"
+        ):
+            model_class = component_registry[name]["class"]
+            uses, reason = exogenous_usage(model_class, None, has_exogenous)
+            properties = model_class.get_schema().get("properties", {})
+            models.append(
+                {
+                    "model": name,
+                    "uses": uses,
+                    "reason": reason,
+                    "switch": "use_exogenous"
+                    if "use_exogenous" in properties
+                    else None,
+                }
+            )
+        return {"has_exogenous": has_exogenous, "models": models}
 
 
 @router.post("/preprocessing/structure")
@@ -334,6 +410,7 @@ async def get_preprocessing_structure(
         target=protected,
         steps=params.steps,
         component_registry=component_registry,
+        keeps_rows=task.PREPROCESSING_KEEPS_ROWS,
     )
 
 
@@ -528,18 +605,94 @@ def _validate_splits(
                 f"splitter, but {splitter_name} is a {partitioning!r} splitter."
             ),
         )
-    parameters = {
-        key: value for key, value in splits_data.items() if key not in META_KEYS
-    }
-    try:
-        splitter_class.SCHEMA.model_validate(
-            {**schema_placeholder_defaults(splitter_class), **parameters}
+    taken_names = getattr(strategy_class, "SPLITTERS", None)
+    if taken_names is not None and splitter_name not in taken_names:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"Evaluation strategy {strategy_class.__name__} takes only "
+                f"{', '.join(taken_names)}, not {splitter_name}."
+            ),
         )
+    try:
+        validate_splitter_parameters(splitter_class, splits_data)
     except ValidationError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Invalid configuration for splitter {splitter_name}: {e}",
         ) from e
+
+
+def _validate_splits_size(
+    splits: str, count_rows, component_registry: "ComponentRegistry"
+) -> None:
+    """Refuse a dataset too short for the session's splitter.
+
+    Runs after ``_validate_splits``, so the payload parses and names a
+    registered splitter. Most splitters carve any number of rows; a backtest
+    needs enough steps for its windows, and saying so here beats a run that
+    fails on it.
+
+    Parameters
+    ----------
+    splits : str
+        The splits payload, serialized as JSON.
+    count_rows : Callable[[], int]
+        How many rows the dataset has. Called only for a splitter that has a
+        size to check, because counting may read the dataset.
+    component_registry : ComponentRegistry
+        Registry used to resolve the splitter.
+
+    Raises
+    ------
+    HTTPException
+        422 with the splitter's explanation.
+    """
+    import json
+
+    from DashAI.back.splitters.base_splitter import BaseSplitter
+
+    splits_data = normalize_splits_payload(json.loads(splits))
+    splitter_class = component_registry[splits_data["splitter_name"]]["class"]
+    # Only a splitter that has a size to check is built here: the others
+    # accept any count, and building them would only risk a constructor that
+    # needs what a run gives it.
+    if splitter_class.validate_size is BaseSplitter.validate_size:
+        return
+    parameters = {
+        key: value for key, value in splits_data.items() if key not in META_KEYS
+    }
+    splitter = splitter_class(
+        {**schema_placeholder_defaults(splitter_class), **parameters}
+    )
+    try:
+        splitter.validate_size(count_rows())
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from e
+
+
+def _row_count(dataset: Dataset, data_filepath: str) -> int:
+    """How many rows a dataset has, without reading them if it can.
+
+    The dataset's own ``total_rows`` when it has one: the dataset job writes
+    it and every edit of the data rewrites it. A dataset from before the
+    column was filled is counted from the file, memory mapped, so only the
+    headers of its batches are read.
+    """
+    if dataset.total_rows is not None:
+        return dataset.total_rows
+
+    import pyarrow as pa
+    import pyarrow.ipc as ipc
+
+    with pa.memory_map(data_filepath, "r") as source:
+        reader = ipc.open_file(source)
+        return sum(
+            reader.get_batch(i).num_rows for i in range(reader.num_record_batches)
+        )
 
 
 def _validate_roles_for_task(
@@ -701,7 +854,13 @@ def _with_resampling_seeds(steps, component_registry):
 
 
 def _check_preprocessing_structure(
-    db, params, sequence, input_column_refs, output_columns, component_registry
+    db,
+    params,
+    sequence,
+    input_column_refs,
+    output_columns,
+    component_registry,
+    keeps_rows: bool = False,
 ) -> None:
     """Reject a session whose chain or inputs cannot work, before creating it.
 
@@ -723,6 +882,7 @@ def _check_preprocessing_structure(
         target=output_columns,
         steps=sequence.steps,
         component_registry=component_registry,
+        keeps_rows=keeps_rows,
     )
     if not structure.valid:
         raise HTTPException(
@@ -818,6 +978,19 @@ async def create_model_session(
     # The task translates the roles it was given into the model's inputs
     # and outputs, which the checks below read.
     task = task_or_http_error(params.task_name, component_registry)
+    if has_preprocessing and not task.takes_preprocessing():
+        # Session preprocessing transforms the columns of the roles that
+        # allow it. A task none of whose roles allow it has nothing for the
+        # steps to feed: a plugin task whose roles are all protected. The
+        # wizard reads the same answer from the task's metadata.
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=(
+                f"{params.task_name} takes no preprocessing: none of its column "
+                "roles can be transformed. Transform the dataset in a notebook "
+                "instead."
+            ),
+        )
     roles = {name: list(refs) for name, refs in params.column_roles.items() if refs}
     io = task.io_columns(roles)
     input_column_refs = list(io.inputs)
@@ -850,6 +1023,13 @@ async def create_model_session(
                 schema = reader.schema
                 column_names = schema.names
 
+            if getattr(strategy_class, "KIND", "holdout") != "full":
+                _validate_splits_size(
+                    params.splits,
+                    lambda: _row_count(dataset, data_filepath),
+                    component_registry,
+                )
+
             if has_preprocessing:
                 _check_preprocessing_structure(
                     db,
@@ -858,6 +1038,7 @@ async def create_model_session(
                     input_column_refs,
                     output_columns,
                     component_registry,
+                    keeps_rows=task.PREPROCESSING_KEEPS_ROWS,
                 )
 
             # When preprocessing is configured, some inputs are converter
@@ -947,20 +1128,25 @@ async def delete_model_sessions(
     """
     with session_factory() as db:
         try:
+            paths_to_clean = []
             for model_session_id in params.ids:
                 model_session = db.get(ModelSession, model_session_id)
                 if not model_session:
                     continue
+                paths_to_clean += run_file_paths(model_session.runs)
                 db.delete(model_session)
 
             db.commit()
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
         except exc.SQLAlchemyError as e:
             log.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
             ) from e
+
+    # The files of the runs the cascade deleted, once the delete committed.
+    remove_run_files(paths_to_clean)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete("/{model_session_id}")
@@ -983,8 +1169,6 @@ async def delete_model_session(
     -------
     Response with code 204 NO_CONTENT
     """
-    import os
-
     with session_factory() as db:
         try:
             model_session = db.get(ModelSession, model_session_id)
@@ -997,17 +1181,7 @@ async def delete_model_session(
             # Snapshot the on-disk paths of the runs that the FK cascade is
             # about to delete, so they can be cleaned up after the commit.
             runs = db.query(Run).filter(Run.model_session_id == model_session_id).all()
-            paths_to_clean = [
-                path
-                for run in runs
-                for path in (
-                    run.run_path,
-                    run.plot_history_path,
-                    run.plot_slice_path,
-                    run.plot_contour_path,
-                    run.plot_importance_path,
-                )
-            ]
+            paths_to_clean = run_file_paths(runs)
 
             db.delete(model_session)
             db.commit()
@@ -1020,12 +1194,7 @@ async def delete_model_session(
 
     # Best-effort disk cleanup, done only once the DB delete has committed:
     # a cleanup failure here must not undo an otherwise-successful deletion.
-    for path in paths_to_clean:
-        if path and os.path.exists(path):
-            try:
-                remove_path(path)
-            except (OSError, ValueError) as e:
-                log.warning(f"Failed to delete path {path}: {e}")
+    remove_run_files(paths_to_clean)
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -1203,10 +1372,14 @@ async def import_model_session(
             (accept_language or "en").split("-")[0].lower(),
         )
     except (UnsupportedPackageFormatError, MissingPluginError) as e:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e)) from e
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=await run_in_threadpool(_import_error_detail, e, session_factory),
+        ) from e
     except ModelPackageError as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=await run_in_threadpool(_import_error_detail, e, session_factory),
         ) from e
     except Exception as e:
         log.exception(e)
@@ -1216,6 +1389,61 @@ async def import_model_session(
         ) from e
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
+
+
+def _import_error_detail(
+    error: "ModelPackageError", session_factory: "sessionmaker"
+) -> dict:
+    """Describe a refused import so the app can say why in its own language.
+
+    ``detail`` keeps the English message for API and Python callers. For a
+    missing plugin, ``plugin_id`` points to its entry in the plugins module so
+    the app can link straight to it, and ``published`` says whether PyPI has
+    it: ``False`` for a private plugin the plugins module will never list,
+    ``None`` when PyPI could not be asked.
+    """
+    params = dict(error.params)
+    if error.code == "missing_plugin" and params.get("plugin"):
+        params.update(_catalog_entry(params["plugin"], session_factory))
+    return {"code": error.code, "detail": str(error), "params": params}
+
+
+def _catalog_entry(plugin: str, session_factory: "sessionmaker") -> dict:
+    """Find a plugin in the plugins catalog, asking PyPI when it is not listed.
+
+    The catalog is filled only when the plugins module is opened, so a public
+    plugin may be missing from it; one found on PyPI is added to it.
+    """
+    from DashAI.back.api.api_v1.schemas.plugin_params import PluginParams
+    from DashAI.back.dependencies.database.utils import add_plugin_to_db
+    from DashAI.back.plugins import utils as plugin_utils
+    from DashAI.back.plugins.installer import canonical_name
+
+    def listed_id():
+        wanted = canonical_name(plugin)
+        with session_factory() as db:
+            return next(
+                (
+                    plugin_id
+                    for plugin_id, name in db.query(Plugin.id, Plugin.name)
+                    if canonical_name(name) == wanted
+                ),
+                None,
+            )
+
+    plugin_id = listed_id()
+    if plugin_id is not None:
+        return {"plugin_id": plugin_id, "published": True}
+
+    published = plugin_utils.pypi_project_exists(plugin)
+    if published:
+        try:
+            raw = plugin_utils.get_plugin_by_name_from_pypi(plugin)
+            add_plugin_to_db(PluginParams.model_validate(raw), session_factory)
+            plugin_id = listed_id()
+        except Exception:
+            log.exception("Could not add the plugin %s to the catalog", plugin)
+    return {"plugin_id": plugin_id, "published": published}
 
 
 @router.get("/{model_session_id}/export/preview")

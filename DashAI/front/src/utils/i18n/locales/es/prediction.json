@@ -4,7 +4,8 @@
     "deleteSelected_many": "Eliminar Seleccionadas ({{count}})",
     "deleteSelected_other": "Eliminar Seleccionadas ({{count}})",
     "downloadResults": "Descargar Resultados de Predicción",
-    "runPrediction": "Ejecutar Predicción"
+    "runPrediction": "Ejecutar Predicción",
+    "generateDates": "Mostrar las fechas siguientes"
   },
   "error": {
     "creatingPrediction": "Error al crear predicción",
@@ -21,6 +22,8 @@
     "updatingPredictionStatus": "Error al actualizar el estado de la predicción."
   },
   "label": {
+    "horizon": "Horizonte",
+    "horizonDescription": "Cuántos pasos pronosticar después del final de la serie.",
     "basedOnDataset": "Basado en el dataset: {{datasetName}}",
     "changeImage": "Cambiar imagen",
     "chooseInputMethod": "Elegir Método de Entrada",
@@ -64,16 +67,23 @@
     "selectRowsToDelete": "Seleccionar filas para eliminar",
     "targetColumn": "Columna Objetivo",
     "uploadImage": "Subir imagen",
-    "useExistingDataset": "Usar Dataset Existente"
+    "useExistingDataset": "Usar Dataset Existente",
+    "futureFromDataset": "Desde un dataset",
+    "futureTypedIn": "Ingresadas a mano",
+    "futureStepsDescription": "Cuántos pasos ingresar",
+    "futureStepsMax": "Se ingresan a mano hasta {{max}} filas; para más, usa un dataset"
   },
   "message": {
+    "unevaluatedSteps_one": "El último paso va más allá de los {{evaluated}} que midió el backtest: su error nunca se evaluó.",
+    "unevaluatedSteps_other": "Los últimos {{count}} pasos van más allá de los {{evaluated}} que midió el backtest: su error nunca se evaluó.",
     "deletedSuccessfully": "Predicción eliminada exitosamente",
     "downloadedSuccessfully": "Predicción descargada exitosamente",
     "predictionCompleted": "Predicción completada exitosamente",
     "predictionJobSubmitted": "Trabajo de predicción enviado exitosamente",
     "predictionsDeleted_one": "{{count}} predicción eliminada correctamente",
     "predictionsDeleted_many": "{{count}} predicciones eliminadas correctamente",
-    "predictionsDeleted_other": "{{count}} predicciones eliminadas correctamente"
+    "predictionsDeleted_other": "{{count}} predicciones eliminadas correctamente",
+    "exogenousFuture": "Este modelo leyó variables exógenas, así que pronostica con sus valores futuros: trae {{columns}} para cada paso a pronosticar. El horizonte es el número de filas."
   },
   "unseen": {
     "title": "Categorías que el modelo no vio al entrenar",

@@ -12,7 +12,7 @@ from DashAI.back.models.RAG.chunking_models.chunking_model_factory import (
     ChunkingModelFactory,
 )
 from DashAI.back.models.RAG.documents.chunk import Chunk
-from DashAI.back.models.RAG.documents.rag_document import RAGDocument
+from DashAI.back.models.RAG.documents.source_document import SourceDocument
 from DashAI.back.models.RAG.llm_factory import LLMFactory, LLMFactoryResult
 from DashAI.back.models.RAG.prompts.prompt_factory import (
     PromptFactory,
@@ -61,7 +61,7 @@ class RAGModelsFactory:
         RAG_path: str,  # noqa: N803
         chunks: dict[int, dict[int, Chunk]],
         persistence: DensePersistence | SparsePersistence | None = None,
-        documents: dict[int, RAGDocument] | None = None,
+        documents: dict[int, SourceDocument] | None = None,
     ) -> RetrieverFactoryResult:
         """Build a retriever via RetrieverFactory. Phase 1 only.
 
@@ -77,7 +77,7 @@ class RAGModelsFactory:
             Chunk corpus keyed by document id and chunk id.
         persistence : DensePersistence | SparsePersistence | None
             Persistence object required by unit retrievers.
-        documents : dict[int, RAGDocument] | None
+        documents : dict[int, SourceDocument] | None
             Optional document mapping injected into unit retrievers so the
             LLM-evaluated retrievers can describe the corpus in their prompts.
 

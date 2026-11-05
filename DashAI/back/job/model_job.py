@@ -15,11 +15,15 @@ from DashAI.back.dependencies.database.models import (
 from DashAI.back.job.base_job import BaseJob, JobError
 from DashAI.back.metrics.base_metric import BaseMetric
 from DashAI.back.optimizers.base_optimizer import BaseOptimizer
-from DashAI.back.splitters.splits_payload import normalize_splits_payload
-from DashAI.back.tasks.session_roles import SessionIO, session_io
+from DashAI.back.splitters.splits_payload import META_KEYS, normalize_splits_payload
+from DashAI.back.tasks.session_roles import SessionIO, session_has_steps, session_io
+from DashAI.back.units.apply_cut_preprocessing_unit import ApplyCutPreprocessingUnit
+from DashAI.back.units.backtest_forecaster_unit import BacktestForecasterUnit
+from DashAI.back.units.build_forecaster_unit import BuildForecasterUnit
 from DashAI.back.units.build_model_unit import BuildModelUnit
 from DashAI.back.units.context import ExecutionContext
 from DashAI.back.units.evaluate_model_unit import EvaluateModelUnit
+from DashAI.back.units.fit_final_forecaster_unit import FitFinalForecasterUnit
 from DashAI.back.units.fit_model_over_folds_unit import FitModelOverFoldsUnit
 from DashAI.back.units.fit_model_over_nested_folds_unit import (
     FitModelOverNestedFoldsUnit,
@@ -29,9 +33,12 @@ from DashAI.back.units.fit_without_target_unit import FitWithoutTargetUnit
 from DashAI.back.units.load_dataset_unit import LoadDatasetUnit
 from DashAI.back.units.prepare_and_fold_unit import PrepareAndFoldUnit
 from DashAI.back.units.prepare_and_split_unit import PrepareAndSplitUnit
+from DashAI.back.units.prepare_series_unit import PrepareSeriesUnit
 from DashAI.back.units.prepare_without_target_unit import PrepareWithoutTargetUnit
+from DashAI.back.units.save_forecasts_unit import SaveForecastsUnit
 from DashAI.back.units.save_model_unit import SaveModelUnit
 from DashAI.back.units.score_clusters_unit import ScoreClustersUnit
+from DashAI.back.units.score_forecasts_unit import ScoreForecastsUnit
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import sessionmaker
@@ -140,19 +147,23 @@ class ModelJob(BaseJob):
                     )
                     model_session: ModelSession = preparation_results["model_session"]
                     prepare = preparation_results["prepare_unit"]
+                    cut_unit = preparation_results["cut_unit"]
 
                     LoadDatasetUnit(dataset_id=model_session.dataset_id)(ctx)
 
-                    build_model = BuildModelUnit(
-                        model={
-                            "component": run.model_name,
-                            "params": run.parameters,
-                        },
-                        train_metrics=model_session.train_metrics,
-                        validation_metrics=model_session.validation_metrics,
-                        test_metrics=model_session.test_metrics,
-                        run_id=run_id,
-                    )
+                    model = {"component": run.model_name, "params": run.parameters}
+                    if isinstance(prepare, PrepareSeriesUnit):
+                        # A forecaster is sized by its series' grid, and its
+                        # metrics are scored on the backtest's forecasts.
+                        build_model = BuildForecasterUnit(model=model, run_id=run_id)
+                    else:
+                        build_model = BuildModelUnit(
+                            model=model,
+                            train_metrics=model_session.train_metrics,
+                            validation_metrics=model_session.validation_metrics,
+                            test_metrics=model_session.test_metrics,
+                            run_id=run_id,
+                        )
                     # The download gate lives in validate(), and running it here
                     # keeps a model that cannot be trained from being reported
                     # as a preparation failure further down.
@@ -171,6 +182,10 @@ class ModelJob(BaseJob):
                     # strategy that carves nothing publishes no partitions, so
                     # there are no indexes to keep for a re-train.
                     prepare(ctx)
+                    # A backtest reads its exogenous variables per cut, each
+                    # as the preprocessing fitted for that cut made them.
+                    if cut_unit is not None:
+                        cut_unit(ctx)
 
                     # save the obtained splits into the database
                     if ctx.has("split_indexes"):
@@ -226,6 +241,33 @@ class ModelJob(BaseJob):
                         self._write_full_metrics(
                             db, run_id, ctx.require("metrics")["full"]
                         )
+                    elif kind == "backtest":
+                        BacktestForecasterUnit(
+                            optimizer={
+                                "component": run.optimizer_name,
+                                "params": run.optimizer_parameters,
+                            },
+                            goal_metric=run.goal_metric,
+                            run_id=run_id,
+                            artifact_prefix=str(run_id),
+                        )(ctx)
+                        plot_paths = ctx.require("plot_paths")
+                        run.parameters = ctx.require("best_parameters")
+                        flag_modified(run, "parameters")
+                        run.exogenous = self._exogenous_record(
+                            run, model_session, cut_unit, ctx, component_registry
+                        )
+                        db.commit()
+
+                        self.report_progress(0.85, "Computing metrics")
+                        ScoreForecastsUnit(
+                            validation_metrics=model_session.validation_metrics,
+                            test_metrics=model_session.test_metrics,
+                        )(ctx)
+                        self._write_forecast_metrics(
+                            db, run_id, ctx.require("forecast_metrics")
+                        )
+                        FitFinalForecasterUnit()(ctx)
                     elif kind == "holdout":
                         fit_model = FitModelUnit(
                             optimizer={
@@ -339,6 +381,10 @@ class ModelJob(BaseJob):
 
                 self.report_progress(0.95, "Saving model")
                 SaveModelUnit(artifact_prefix=str(run_id))(ctx)
+                if ctx.has("forecasts"):
+                    # A backtest's forecasts are kept beside its model; the
+                    # results and the reports read them, never the model.
+                    SaveForecastsUnit(artifact_prefix=str(run_id))(ctx)
 
                 try:
                     run.run_path = ctx.require("model_path")
@@ -366,6 +412,38 @@ class ModelJob(BaseJob):
             finally:
                 ctx.clear_cache()
                 gc.collect()
+
+    @staticmethod
+    def _write_forecast_metrics(db, run_id: int, rows: List[Dict[str, Any]]) -> None:
+        """Persist the metric rows a backtest's scoring produced.
+
+        The unit computes every row, the summaries included, and publishes
+        them as plain values; writing them is the job's, like every other row
+        this job persists.
+
+        They replace the rows a previous training of the same run left at
+        those splits and levels: a run trained again without a reset would
+        otherwise hold every origin twice, and the paired tests read the fold
+        rows by position.
+        """
+        written = {(SplitEnum[row["split"]], LevelEnum[row["level"]]) for row in rows}
+        for split, level in written:
+            db.query(Metric).filter_by(run_id=run_id, split=split, level=level).delete()
+        db.add_all(
+            Metric(
+                run_id=run_id,
+                split=SplitEnum[row["split"]],
+                level=LevelEnum[row["level"]],
+                name=row["name"],
+                value=row["value"],
+                unavailable_reason=row["unavailable_reason"],
+                std_value=row["std_value"],
+                fold_index=row["fold_index"],
+                step=0,
+            )
+            for row in rows
+        )
+        db.commit()
 
     @staticmethod
     def _aggregate_fold_metrics(
@@ -399,38 +477,57 @@ class ModelJob(BaseJob):
         """
         import numpy as np
 
-        for split_name, by_metric in fold_metrics.items():
-            for metric_name, values in by_metric.items():
-                if not values:
-                    continue
-                existing = (
-                    db.query(Metric)
-                    .filter_by(
+        # A metric with no value on some fold has no mean over the folds
+        # either: averaging the others would summarise a different set of
+        # folds than every other metric of the run. The fold rows say why,
+        # and the summary repeats it.
+        fold_level = (
+            LevelEnum.OUTER_FOLD if level is LevelEnum.LAST_OUTER else LevelEnum.FOLD
+        )
+        unavailable: Dict[tuple, str] = {}
+        for row in (
+            db.query(Metric)
+            .filter_by(run_id=run_id, level=fold_level)
+            .filter(Metric.value.is_(None))
+            .order_by(Metric.fold_index)
+        ):
+            # The first fold that had no value is the one the summary names.
+            unavailable.setdefault((row.split, row.name), row.unavailable_reason)
+
+        def upsert(split, metric_name, value, deviation, reason):
+            existing = (
+                db.query(Metric)
+                .filter_by(run_id=run_id, split=split, level=level, name=metric_name)
+                .first()
+            )
+            if existing:
+                existing.value = value
+                existing.std_value = deviation
+                existing.unavailable_reason = reason
+            else:
+                db.add(
+                    Metric(
                         run_id=run_id,
-                        split=SplitEnum[split_name],
+                        split=split,
                         level=level,
                         name=metric_name,
+                        value=value,
+                        std_value=deviation,
+                        unavailable_reason=reason,
+                        step=0,
                     )
-                    .first()
                 )
+
+        for (split, metric_name), reason in unavailable.items():
+            upsert(split, metric_name, None, None, reason)
+
+        for split_name, by_metric in fold_metrics.items():
+            for metric_name, values in by_metric.items():
+                if not values or (SplitEnum[split_name], metric_name) in unavailable:
+                    continue
                 mean = float(np.mean(values))
                 deviation = float(np.std(values)) if len(values) > 1 else 0.0
-
-                if existing:
-                    existing.value = mean
-                    existing.std_value = deviation
-                else:
-                    db.add(
-                        Metric(
-                            run_id=run_id,
-                            split=SplitEnum[split_name],
-                            level=level,
-                            name=metric_name,
-                            value=mean,
-                            std_value=deviation,
-                            step=0,
-                        )
-                    )
+                upsert(SplitEnum[split_name], metric_name, mean, deviation, None)
         db.commit()
 
     def _prepare_dataset_and_components(
@@ -506,12 +603,19 @@ class ModelJob(BaseJob):
         # to read: its unit prepares the features over every row. The session
         # API only pairs such a strategy with a task without a target, which is
         # what lets that unit leave the target out.
-        if getattr(evaluation_strategy_class, "KIND", "holdout") == "full":
+        kind = getattr(evaluation_strategy_class, "KIND", "holdout")
+        cut_unit = None
+        if kind == "full":
             prepare_unit = PrepareWithoutTargetUnit(
                 task_name=model_session.task_name,
                 input_columns=io.inputs,
                 standardise=True,
             )
+        elif kind == "backtest":
+            # A backtest recomputes its cuts from the session every time: they
+            # are steps of the prepared series, not rows a re-train reuses.
+            prepare_unit = self._series_unit(model_session, task, io)
+            cut_unit = self._cut_unit(model_session, task, io)
         else:
             prepare_unit = self._partitioning_unit(
                 run, model_session, io, component_registry
@@ -537,10 +641,111 @@ class ModelJob(BaseJob):
         return {
             "model_session": model_session,
             "prepare_unit": prepare_unit,
+            "cut_unit": cut_unit,
             "evaluation_strategy_class": evaluation_strategy_class,
             "optimizer": optimizer,
             "goal_metric": goal_metric,
         }
+
+    @staticmethod
+    def _series_unit(model_session: ModelSession, task, io: SessionIO):
+        """Build the unit that prepares a series and cuts it into origins.
+
+        With preprocessing, the unit gets only the time index as an input:
+        the exogenous columns the session stores are what each cut's fit
+        resolved, and they exist once ``ApplyCutPreprocessingUnit`` has run.
+
+        Raises
+        ------
+        JobError
+            If the session's splits payload cannot be read.
+        """
+        import json
+
+        try:
+            splits_data = normalize_splits_payload(json.loads(model_session.splits))
+        except Exception as e:
+            log.exception(e)
+            raise JobError(
+                f"Can not load splits data from model session {model_session.id}",
+            ) from e
+        input_columns = io.inputs
+        if session_has_steps(model_session):
+            input_columns, _ = task.split_inputs(io.inputs)
+        return PrepareSeriesUnit(
+            task_name=model_session.task_name,
+            input_columns=input_columns,
+            output_columns=io.outputs,
+            splitter={
+                "component": splits_data.get("splitter_name"),
+                "params": {
+                    key: value
+                    for key, value in splits_data.items()
+                    if key not in META_KEYS
+                },
+            },
+        )
+
+    @staticmethod
+    def _exogenous_record(run, model_session, cut_unit, ctx, component_registry):
+        """What the run did with its session's exogenous variables.
+
+        ``used`` and ``reason`` are ``exogenous_usage``'s answer, the one the
+        units acted on: from whether the role has columns, the model and its
+        parameters, never from what one cut resolved. ``columns`` are the raw
+        columns a prediction has to bring, with their types: the exogenous
+        refs walked back to the dataset, plus every column the session's steps
+        read, since the fitted sequence reads them all
+        (``ConverterSequence.raw_columns_read``). None for a session without
+        exogenous variables.
+        """
+        from DashAI.back.models.forecasting.single_series_forecasting_model import (
+            exogenous_usage,
+        )
+        from DashAI.back.preprocessing.column_ref import (
+            ConverterSequence,
+            parse_column_refs,
+        )
+        from DashAI.back.preprocessing.structure_types import type_fields
+
+        refs = parse_column_refs(cut_unit.config.get("exogenous_column_refs") or [])
+        if not refs:
+            return None
+        used, reason = exogenous_usage(
+            component_registry[run.model_name]["class"], run.parameters, bool(refs)
+        )
+        sequence = ConverterSequence.model_validate(
+            model_session.preprocessing or {"steps": []}
+        )
+        types = ctx.require("dataset").types
+        return {
+            "used": used,
+            "columns": [
+                {"name": name, "type": type_fields(types[name])[0]}
+                for name in sequence.raw_columns_read(refs)
+            ],
+            "reason": reason,
+        }
+
+    @staticmethod
+    def _cut_unit(model_session: ModelSession, task, io: SessionIO):
+        """Build the unit that gives each cut of a backtest its exogenous columns.
+
+        The refs are what the wizard stored for the exogenous role, and the
+        artifacts are passed only when there are steps, as for the x/y
+        partitioning units: without them every cut reads the raw columns.
+        """
+        _, exogenous_refs = task.split_inputs(io.input_refs)
+        return ApplyCutPreprocessingUnit(
+            exogenous_column_refs=[
+                ref.model_dump(mode="json") for ref in exogenous_refs
+            ],
+            preprocessing_artifacts_path=(
+                model_session.preprocessing_artifacts_path
+                if session_has_steps(model_session)
+                else None
+            ),
+        )
 
     @staticmethod
     def _partitioning_unit(
@@ -596,7 +801,7 @@ class ModelJob(BaseJob):
             "output_columns": io.outputs,
             "splitter": {"component": splitter_name, "params": splits_data},
         }
-        if model_session.preprocessing and model_session.preprocessing.get("steps"):
+        if session_has_steps(model_session):
             # PreprocessingJob fitted the sequence once per entry and left the
             # artifacts at this path; the refs are what the wizard stored,
             # and the unit resolves them against each entry's own fit. Passed

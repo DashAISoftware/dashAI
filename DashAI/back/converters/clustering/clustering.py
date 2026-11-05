@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING, Any, Dict, Union
 
 from DashAI.back.converters.base_converter import BaseConverter
 from DashAI.back.converters.category.clustering import ClusteringConverter
+from DashAI.back.converters.drop_source_columns import AddColumnsConverterSchema
 from DashAI.back.core.schema_fields import (
     schema_field,
     string_field,
 )
 from DashAI.back.core.schema_fields.base_schema import (
-    BaseSchema,
     replace_defs_in_schema,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
-class ClusteringSchema(BaseSchema):
+class ClusteringSchema(AddColumnsConverterSchema):
     """Schema for the generic clustering converter."""
 
     algorithm: schema_field(
@@ -361,13 +361,14 @@ class Clustering(ClusteringConverter, BaseConverter):
     def transform(
         self, x: "DashAIDataset", y: Union["DashAIDataset", None] = None
     ) -> "DashAIDataset":
-        """Append the cluster labels computed during ``fit`` to the dataset.
+        """Append the cluster label of each row of ``x`` to the dataset.
 
         Parameters
         ----------
         x : DashAIDataset
-            Input dataset to transform. Must have the same number of rows as
-            the dataset used in ``fit``.
+            Input dataset to transform. An algorithm that labels new rows
+            (K-Means, Gaussian Mixture) takes any rows; one that only labels
+            the rows it was fitted on (DBSCAN, Agglomerative) takes those.
         y : DashAIDataset, optional
             Ignored. Present for API compatibility. Defaults to None.
 
@@ -379,8 +380,10 @@ class Clustering(ClusteringConverter, BaseConverter):
         Raises
         ------
         ValueError
-            If ``fit`` has not been called yet.
+            If ``fit`` has not been called yet, or if the algorithm cannot
+            label rows other than the ones it was fitted on.
         """
+        import numpy as np
         import pyarrow as pa
 
         from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
@@ -390,9 +393,13 @@ class Clustering(ClusteringConverter, BaseConverter):
                 f"{self.__class__.__name__} must be fitted before transform."
             )
 
+        # A session transforms rows other than the ones it fitted on: the
+        # model labels them, if it can label new rows, and says it cannot
+        # otherwise. The rows of the fit keep their labels either way.
+        labels = self._model.get_cluster_labels(self._select_numeric_dataset(x))
         result_table = x.arrow_table.append_column(
             self.output_column_name,
-            pa.array(self._labels.tolist(), type=pa.int64()),
+            pa.array(np.asarray(labels).tolist(), type=pa.int64()),
         )
         result_types = dict(x.types)
         result_types[self.output_column_name] = self.get_output_type()

@@ -162,6 +162,17 @@ def session_task(task_name: str, component_registry: Any) -> "BaseTask":
         raise TaskNotBuiltError(task_name, e) from e
 
 
+def session_has_steps(model_session: Any) -> bool:
+    """Whether the session preprocesses, so its fitted preprocessor is there.
+
+    A session preprocesses when it declares steps. Training, prediction and
+    the model package ask here, so they cannot disagree on it.
+    """
+    return bool(
+        model_session.preprocessing and model_session.preprocessing.get("steps")
+    )
+
+
 def session_raw_columns(model_session: Any, io: SessionIO) -> List[str]:
     """The dataset columns the session's model reads, through its preprocessing.
 
@@ -178,6 +189,20 @@ def session_raw_columns(model_session: Any, io: SessionIO) -> List[str]:
         return list(io.inputs)
     sequence = ConverterSequence.model_validate(preprocessing)
     return sequence.raw_columns_read(io.input_refs)
+
+
+def session_exogenous_refs(model_session: Any, task: "BaseTask") -> List[Any]:
+    """The refs of a session's exogenous variables, as the task tells them apart.
+
+    A task that has exogenous variables says which of a model's inputs they
+    are (``split_inputs``); every other task has none, so nothing here names a
+    role.
+    """
+    split_inputs = getattr(task, "split_inputs", None)
+    if split_inputs is None:
+        return []
+    _, exogenous = split_inputs(session_io(model_session, task).input_refs)
+    return list(exogenous)
 
 
 def session_roles(model_session: Any, task: "BaseTask") -> SessionColumnRoles:

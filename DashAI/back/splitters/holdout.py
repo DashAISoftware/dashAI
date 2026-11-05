@@ -16,6 +16,7 @@ from DashAI.back.core.schema_fields import (
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dataloaders.classes.dashai_dataset import split_dataset
 from DashAI.back.splitters.rules import SEED_ONLY_MATTERS_WHEN_SHUFFLING
+from DashAI.back.splitters.split_preview import partitions_preview
 
 from .base_splitter import BaseSplitter
 
@@ -195,6 +196,11 @@ class PartitionSplitter(BaseSplitter):
     GEOMETRY: str = "partitions"
 
     @classmethod
+    def preview(cls, params, dataset, split_type=None, indexes=None):
+        """One bar of the whole dataset (see ``BaseSplitter.preview``)."""
+        return partitions_preview(params, dataset, split_type, indexes)
+
+    @classmethod
     def explainable_partitions(cls, split_indexes):
         """Return the train, test and validation partitions of a holdout run.
 
@@ -369,9 +375,10 @@ class HoldoutSplitter(PartitionSplitter):
     optional shuffling, stratification and a seed to make the sample
     reproducible.
 
-    Not offered for ``ForecastingTask``. Sampling rows out of a series lets a
-    model train on its own future and report a score it could never reproduce
-    in use, and nothing about that failure raises an error. Forecasting uses
+    Not offered for ``SingleSeriesForecastingTask``. Sampling rows out of a
+    series lets a model train on its own future and report a score it could
+    never reproduce in use, and nothing about that failure raises an error.
+    Forecasting uses
     ``TemporalHoldoutSplitter``, which cuts the rows where they lie.
     """
 

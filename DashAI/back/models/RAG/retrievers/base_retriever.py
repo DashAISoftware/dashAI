@@ -7,7 +7,7 @@ from typing import Any, ClassVar, Dict, Final, List, Tuple
 
 from DashAI.back.config_object import ConfigObject
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.RAG.documents import Chunk, RAGDocument
+from DashAI.back.models.RAG.documents import Chunk, SourceDocument
 from DashAI.back.models.RAG.exceptions import RAGRetrieverError, RAGWorkflowError
 from DashAI.back.models.RAG.retrievers.ref_utils import is_component_ref
 from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
@@ -111,7 +111,7 @@ class BaseRetriever(ConfigObject, ABC):
 
     env_RAG_path: str | os.PathLike | None  # noqa: N815
     chunks: Dict[int, Dict[int, Chunk]]
-    documents: Dict[int, RAGDocument]
+    documents: Dict[int, SourceDocument]
     params: Dict[str, Any]
 
     @classmethod
@@ -165,7 +165,7 @@ class BaseRetriever(ConfigObject, ABC):
         """
         self._db_id: int | None = None
         self._trace_params: Dict[str, Any] = {}
-        self.documents: Dict[int, RAGDocument] = {}
+        self.documents: Dict[int, SourceDocument] = {}
         enabled = kwargs.pop(ENABLE_FIELD, DEFAULT_ENABLE_RETRIEVE_THEN_EXPAND)
         if not isinstance(enabled, bool):
             raise RAGRetrieverError(
@@ -419,7 +419,7 @@ class BaseRetriever(ConfigObject, ABC):
         env_RAG_path: str | os.PathLike,  # noqa: N803
         chunks: Dict[int, Dict[int, Chunk]],
         persistence: Any,
-        documents: Dict[int, RAGDocument] | None = None,
+        documents: Dict[int, SourceDocument] | None = None,
     ) -> None:
         """Inject runtime infrastructure *after* schema validation.
 

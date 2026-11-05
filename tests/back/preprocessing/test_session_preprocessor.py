@@ -784,6 +784,95 @@ def test_a_document_only_converter_cannot_preprocess_a_session():
         preprocessor.fit_transform(_split(train_ages=[1, 2]))
 
 
+class _FakeAddColumnsConverter(_FakeAdditiveConverter):
+    COLUMN_OPERATION = "add"
+
+
+class _PassthroughAddConverter(_FakeAddColumnsConverter):
+    """An "add" converter that, on this data, creates nothing new."""
+
+    def transform(self, x, y=None):
+        return x
+
+
+def _drop_sequence(converter="AddColumns", drop=True):
+    params = {"drop_source_columns": True} if drop else {}
+    return ConverterSequence(
+        steps=[
+            ConverterStep(
+                converter=converter, params=params, scope=[RawColumnRef(name="age")]
+            )
+        ]
+    )
+
+
+DROP_REGISTRY = _FakeRegistry(
+    {"AddColumns": _FakeAddColumnsConverter, "Passthrough": _PassthroughAddConverter}
+)
+
+
+def test_fit_transform_drops_source_columns_in_every_split():
+    preprocessor = SessionPreprocessor(_drop_sequence(), DROP_REGISTRY)
+
+    transformed, resolved = preprocessor.fit_transform(
+        _split(train_ages=[1, 2, 3], val_ages=[4])
+    )
+
+    assert transformed["train"].column_names == ["derived"]
+    assert transformed["validation"].column_names == ["derived"]
+    assert transformed["validation"].to_pandas()["derived"].tolist() == [40]
+    assert resolved == {0: ["derived"]}
+
+
+def test_a_dropping_step_records_the_names_the_dataset_really_has():
+    # "derived" exists outside the scope, so the new column is "derived_1" in
+    # the dataset; the group must point at it, not at the untouched original.
+    preprocessor = SessionPreprocessor(_drop_sequence(), DROP_REGISTRY)
+    schema = {
+        "age": {"type": "Integer", "dtype": "int64"},
+        "derived": {"type": "Integer", "dtype": "int64"},
+    }
+    split = {"train": _dataset({"age": [1, 2], "derived": [7, 7]}, schema)}
+
+    transformed, resolved = preprocessor.fit_transform(split)
+
+    assert transformed["train"].column_names == ["derived", "derived_1"]
+    assert resolved == {0: ["derived_1"]}
+
+
+def test_a_dropping_step_with_no_new_columns_records_an_empty_group():
+    preprocessor = SessionPreprocessor(_drop_sequence("Passthrough"), DROP_REGISTRY)
+
+    transformed, resolved = preprocessor.fit_transform(_split(train_ages=[1, 2]))
+
+    assert transformed["train"].column_names == []
+    assert resolved == {0: []}
+
+
+def test_transform_only_drops_the_same_columns_after_pickling():
+    import pickle
+
+    preprocessor = SessionPreprocessor(_drop_sequence(), DROP_REGISTRY)
+    preprocessor.fit_transform(_split(train_ages=[1, 2, 3]))
+
+    restored = pickle.loads(pickle.dumps(preprocessor))
+    single = _dataset({"age": [5]}, {"age": {"type": "Integer", "dtype": "int64"}})
+
+    assert restored.transform_dataset(single).column_names == ["derived"]
+
+
+def test_a_preprocessor_pickled_without_the_flag_does_not_drop():
+    import pickle
+
+    preprocessor = SessionPreprocessor(_drop_sequence(drop=False), DROP_REGISTRY)
+    preprocessor.fit_transform(_split(train_ages=[1, 2, 3]))
+
+    restored = pickle.loads(pickle.dumps(preprocessor))
+    single = _dataset({"age": [5]}, {"age": {"type": "Integer", "dtype": "int64"}})
+
+    assert restored.transform_dataset(single).column_names == ["age", "derived"]
+
+
 def test_transforming_rows_without_a_column_a_step_reads_names_it():
     """What the preprocessor reads is ``ConverterSequence.raw_columns_read``,
     the same list the endpoints use to decide which datasets can be

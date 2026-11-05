@@ -263,6 +263,10 @@ class Run(Base):
     model_name: Mapped[str] = mapped_column(String)
     parameters: Mapped[JSON] = mapped_column(JSON)
     split_indexes: Mapped[str] = mapped_column(JSON, nullable=True)
+    # What a forecasting run did with its session's exogenous variables:
+    # {"used", "columns": [{"name", "type"}], "reason"}, the raw columns a
+    # prediction has to bring. NULL for a session without them.
+    exogenous: Mapped[JSON] = mapped_column(JSON, nullable=True)
     # optimizer
     optimizer_name: Mapped[str] = mapped_column(String)
     optimizer_parameters: Mapped[JSON] = mapped_column(JSON)
@@ -320,6 +324,9 @@ class Prediction(Base):
     run_id: Mapped[int] = mapped_column(ForeignKey("run.id", ondelete="CASCADE"))
     dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"), nullable=True)
     split: Mapped[str] = mapped_column(String, nullable=True)
+    # How many steps past the end of the training series to forecast, for a
+    # task that predicts by horizon. NULL for a prediction of rows.
+    horizon: Mapped[int] = mapped_column(Integer, nullable=True)
     huey_id: Mapped[str] = mapped_column(String, nullable=True)
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
@@ -378,7 +385,10 @@ class Metric(Base):
     level: Mapped[LevelEnum] = mapped_column(Enum(LevelEnum), nullable=False)
 
     name: Mapped[str] = mapped_column(String, nullable=False)
-    value: Mapped[float] = mapped_column(Float, nullable=False)
+    # NULL when the metric has no value on this data, and then
+    # unavailable_reason says why (MAPE on a series with a zero, say).
+    value: Mapped[float] = mapped_column(Float, nullable=True)
+    unavailable_reason: Mapped[str] = mapped_column(String, nullable=True)
     std_value: Mapped[float] = mapped_column(Float, nullable=True)
     step: Mapped[int] = mapped_column(Integer, nullable=False)
     fold_index: Mapped[int] = mapped_column(Integer, nullable=True)

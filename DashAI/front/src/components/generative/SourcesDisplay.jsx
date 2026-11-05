@@ -8,26 +8,27 @@ import {
   ViewList as ViewListIcon,
 } from "@mui/icons-material";
 import TraceChunksPanel from "./RAG/TraceChunksPanel";
-import { filterRenderableEntries } from "./RAG/traceUtils";
+import { filterRenderableEntries, referenceGroupKey } from "./RAG/traceUtils";
 import { TRACE_VIEW_CHUNKS, TRACE_VIEW_PIPELINE } from "../../constants/rag";
 
 /**
  * Counts the distinct documents referenced by a chunk reference map.
  *
  * Chunks repeat the same `document_id` several times, so the header badge
- * reports documents, not chunks.
+ * reports documents, not chunks. A citation of a deleted document has no id
+ * and counts once per document name, as the chunks panel groups it.
  *
  * @param {object|null|undefined} references - Chunk reference map by ref key.
- * @returns {number} The number of distinct document ids.
+ * @returns {number} The number of distinct documents.
  */
 const countDocuments = (references) => {
   if (!references) return 0;
-  const ids = new Set(
-    Object.values(references)
-      .map((ref) => ref?.document_id)
-      .filter((id) => id != null),
+  const keys = new Set(
+    Object.entries(references)
+      .filter(([, info]) => info && typeof info === "object")
+      .map(([ref, info]) => referenceGroupKey(ref, info)),
   );
-  return ids.size;
+  return keys.size;
 };
 
 const toggleButtonSx = {

@@ -12,6 +12,8 @@ import {
 import ModuleContainer from "../../../components/layout/ModuleContainer";
 import LeftPanel from "../../../components/threeSectionLayout/panels/LeftPanel";
 import CenterPanel from "../../../components/threeSectionLayout/panels/CenterPanel";
+import RightPanel from "../../../components/threeSectionLayout/panels/RightPanel";
+import ComponentDetailsPanel from "../../../components/custom/ComponentDetailsPanel";
 import SessionBar from "../../../components/generative/SessionBar";
 import StepperNavigationFooter from "../../../components/shared/StepperNavigationFooter";
 import ComponentSelector from "../../../components/custom/ComponentSelector";
@@ -71,12 +73,12 @@ export default function RAGCreatePage() {
   useEffect(() => {
     if (isNameTouched) return;
     const { defaultName } = generateSequentialName({
-      base: "RAG_Session",
+      base: `${t("common:session")}_RAG`,
       items: sessions ?? [],
       getName: (session) => session?.name,
     });
-    setName(defaultName || "RAG_Session_1");
-  }, [sessions, isNameTouched]);
+    setName(defaultName);
+  }, [sessions, isNameTouched, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -273,6 +275,10 @@ export default function RAGCreatePage() {
               />
             </Box>
           </CenterPanel>
+
+          <RightPanel toggleButtonTop="50%">
+            <ComponentDetailsPanel component={selectedModelState} />
+          </RightPanel>
         </ModuleContainer>
       </ThreePanelLayoutContext.Provider>
     </FormSchemaProvider>

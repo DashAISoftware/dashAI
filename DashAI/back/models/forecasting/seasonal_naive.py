@@ -1,13 +1,13 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 from DashAI.back.core.schema_fields import BaseSchema, int_field, search_space
 from DashAI.back.core.utils import MultilingualString
-from DashAI.back.models.forecasting.base_forecasting_model import ForecastingModel
+from DashAI.back.models.forecasting.single_series_forecasting_model import (
+    SingleSeriesForecastingModel,
+)
 
 if TYPE_CHECKING:
     import numpy as np
-
-    from DashAI.back.dataloaders.classes.dashai_dataset import DashAIDataset
 
 
 class SeasonalNaiveForecasterSchema(BaseSchema):
@@ -26,21 +26,21 @@ class SeasonalNaiveForecasterSchema(BaseSchema):
                 "the plain naive forecast."
             ),
             es=(
-                "Cuantas observaciones forman un ciclo completo: 12 para datos "
-                "mensuales que se repiten cada ano, 7 para datos diarios que se "
+                "Cuántas observaciones forman un ciclo completo: 12 para datos "
+                "mensuales que se repiten cada año, 7 para datos diarios que se "
                 "repiten cada semana. Dejar en 1 cuando la serie no tiene "
-                "estacionalidad, lo que equivale al pronostico ingenuo simple."
+                "estacionalidad, lo que equivale al pronóstico ingenuo simple."
             ),
             pt=(
-                "Quantas observacoes formam um ciclo completo: 12 para dados "
-                "mensais que se repetem a cada ano, 7 para dados diarios que se "
-                "repetem a cada semana. Deixe em 1 quando a serie nao tem "
-                "sazonalidade, o que equivale a previsao ingenua simples."
+                "Quantas observações formam um ciclo completo: 12 para dados "
+                "mensais que se repetem a cada ano, 7 para dados diários que se "
+                "repetem a cada semana. Deixe em 1 quando a série não tem "
+                "sazonalidade, o que equivale à previsão ingênua simples."
             ),
             de=(
-                "Wie viele Beobachtungen einen vollen Zyklus bilden: 12 fuer "
-                "monatliche Daten mit jaehrlicher Wiederholung, 7 fuer "
-                "taegliche Daten mit woechentlicher. Bei 1 belassen, wenn die "
+                "Wie viele Beobachtungen einen vollen Zyklus bilden: 12 für "
+                "monatliche Daten mit jährlicher Wiederholung, 7 für "
+                "tägliche Daten mit wöchentlicher. Bei 1 belassen, wenn die "
                 "Reihe keine Saison hat, was der einfachen naiven Prognose "
                 "entspricht."
             ),
@@ -52,15 +52,15 @@ class SeasonalNaiveForecasterSchema(BaseSchema):
         ),
         alias=MultilingualString(
             en="Season length",
-            es="Longitud de estacion",
-            pt="Comprimento da estacao",
-            de="Saisonlaenge",
+            es="Longitud de estación",
+            pt="Comprimento da estação",
+            de="Saisonlänge",
             zh="季节长度",
         ),
     )  # type: ignore
 
 
-class SeasonalNaiveForecaster(ForecastingModel):
+class SeasonalNaiveForecaster(SingleSeriesForecastingModel):
     """Predict that each season repeats the one before it.
 
     Every future value is forecast as the value one full season earlier, so a
@@ -89,21 +89,21 @@ class SeasonalNaiveForecaster(ForecastingModel):
             "than the naive forecast on any series with a repeating pattern."
         ),
         es=(
-            "Predice que cada valor repite el de una estacion completa antes, "
-            "por ejemplo el proximo enero a partir del enero anterior. Una "
-            "linea base mucho mas exigente que el pronostico ingenuo en "
-            "cualquier serie con un patron repetitivo."
+            "Predice que cada valor repite el de una estación completa antes, "
+            "por ejemplo el próximo enero a partir del enero anterior. Una "
+            "línea base mucho más exigente que el pronóstico ingenuo en "
+            "cualquier serie con un patrón repetitivo."
         ),
         pt=(
-            "Preve que cada valor repete o de uma estacao completa antes, por "
-            "exemplo o proximo janeiro a partir do janeiro anterior. Uma linha "
-            "de base bem mais exigente que a previsao ingenua em qualquer "
-            "serie com padrao repetitivo."
+            "Prevê que cada valor repete o de uma estação completa antes, por "
+            "exemplo o próximo janeiro a partir do janeiro anterior. Uma linha "
+            "de base bem mais exigente que a previsão ingênua em qualquer "
+            "série com padrão repetitivo."
         ),
         de=(
             "Sagt voraus, dass sich jeder Wert von vor einer vollen Saison "
-            "wiederholt, etwa der naechste Januar aus dem letzten Januar. Eine "
-            "deutlich haertere Grundlinie als die naive Prognose bei jeder "
+            "wiederholt, etwa der nächste Januar aus dem letzten Januar. Eine "
+            "deutlich härtere Grundlinie als die naive Prognose bei jeder "
             "Reihe mit wiederkehrendem Muster."
         ),
         zh=(
@@ -113,8 +113,8 @@ class SeasonalNaiveForecaster(ForecastingModel):
     )
     DISPLAY_NAME = MultilingualString(
         en="Seasonal Naive Forecaster",
-        es="Pronostico Ingenuo Estacional",
-        pt="Previsao Ingenua Sazonal",
+        es="Pronóstico Ingenuo Estacional",
+        pt="Previsão Ingênua Sazonal",
         de="Saisonale Naive Prognose",
         zh="季节性朴素预测",
     )
@@ -141,31 +141,17 @@ class SeasonalNaiveForecaster(ForecastingModel):
             )
         self.season_length = season_length
 
-    def train(
-        self,
-        x_train: "DashAIDataset",
-        y_train: "DashAIDataset",
-        x_validation: "DashAIDataset" = None,
-        y_validation: "DashAIDataset" = None,
-    ) -> "SeasonalNaiveForecaster":
-        """Remember the most recent full season of the series.
+    SUPPORTS_INTERVALS = True
+
+    def _fit(self, y: "np.ndarray", x: Optional[Any]) -> None:
+        """Remember the most recent full season, and the seasonal spread.
 
         Parameters
         ----------
-        x_train : DashAIDataset
-            The date column, used to record where the training data ends so a
-            later partition can be forecast at its own dates.
-        y_train : DashAIDataset
-            The series to forecast.
-        x_validation : DashAIDataset, optional
-            Unused.
-        y_validation : DashAIDataset, optional
-            Unused.
-
-        Returns
-        -------
-        SeasonalNaiveForecaster
-            The fitted model.
+        y : np.ndarray
+            The series, in time order.
+        X : None
+            The model uses no exogenous variables.
 
         Raises
         ------
@@ -173,27 +159,33 @@ class SeasonalNaiveForecaster(ForecastingModel):
             If the series is shorter than one season, since there would be no
             complete cycle to repeat.
         """
-        series = self._series(y_train)
-        if len(series) < self.season_length:
+        import numpy as np
+
+        m = self.season_length
+        if len(y) < m:
             raise ValueError(
-                f"A season of {self.season_length} needs at least that many "
-                f"observations to repeat, but the series has {len(series)}. "
-                "Shorten the season length or supply more history."
+                f"A season of {m} needs at least that many observations to "
+                f"repeat, but the series has {len(y)}. Shorten the season "
+                "length or supply more history."
             )
 
-        self._history = list(series)
-        self._last_season = [float(v) for v in series[-self.season_length :]]
-        self._remember_dates(x_train)
-        self._fitted = True
-        return self
+        self._last_season = [float(v) for v in y[-m:]]
+        # The residual is the change from the same step a season earlier, and
+        # the first season has none: fpp3 estimates over the T - m there are.
+        changes = y[m:] - y[:-m]
+        self._sigma = (
+            float(np.sqrt(np.mean(changes**2))) if len(changes) else float("nan")
+        )
 
-    def _forecast(self, steps: int) -> "np.ndarray":
+    def _forecast(self, h: int, x_future: Optional[Any]) -> "np.ndarray":
         """Repeat the last full season out to the requested length.
 
         Parameters
         ----------
-        steps : int
-            How many periods to forecast.
+        h : int
+            How many steps to forecast.
+        x_future : None
+            The model uses no exogenous variables.
 
         Returns
         -------
@@ -203,6 +195,20 @@ class SeasonalNaiveForecaster(ForecastingModel):
         import numpy as np
 
         return np.array(
-            [self._last_season[i % self.season_length] for i in range(steps)],
+            [self._last_season[i % self.season_length] for i in range(h)],
             dtype=float,
         )
+
+    def _intervals(self, h: int, levels, x_future: Optional[Any]):
+        """Normal intervals that widen once per completed season.
+
+        fpp3 §5.5: the h-step standard deviation is the one-step one times
+        sqrt(k + 1), where k is the number of complete seasons before step h.
+        A series of one season has no seasonal change to measure, so its
+        bounds are not a number.
+        """
+        import numpy as np
+
+        k = (np.arange(1, h + 1) - 1) // self.season_length
+        sd = self._sigma * np.sqrt(k + 1)
+        return self._normal_bounds(self._forecast(h, None), sd, levels)
