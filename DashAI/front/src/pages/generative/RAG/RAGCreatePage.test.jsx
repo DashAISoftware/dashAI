@@ -15,7 +15,6 @@ jest.mock("../../../api/rag", () => ({
   RAG_TASK_NAME: "RAGTask",
   RAG_MODEL_NAME: "RAGPipeline",
   createRAGSession: jest.fn(),
-  attachSessionDocuments: jest.fn(),
   getGeneratorComponents: jest.fn(),
 }));
 

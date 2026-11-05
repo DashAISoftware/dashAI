@@ -69,20 +69,11 @@ On success, a `GenerativeSession` record is persisted with:
 ### 2. Adding Documents
 
 Documents belong to the Data module, so the session attaches them rather than
-owning them. The selection can happen at creation time or later:
-
-- **At creation**, `RAGCreatePage` offers an optional `CreateSessionDocumentsDialog`
-  over the same folder-and-document picker. The session is created first, then
-  the picked ids are attached; if the attach fails, the freshly created session
-  is removed again and the user stays on the form. Documents are validated
-  against a fresh Data library first, so a document deleted or still processing
-  while the form was open is skipped with a notice instead of failing the whole
-  creation.
-- **From the session**, `RAGDocumentUpload` uploads one folder or several loose
-  files: `POST /api/v1/documents/batch` creates the optional `Folder` and every
-  `DataDocument` placeholder atomically, then one `POST /api/v1/job/`
-  (`DocumentJob`) per file parses them. `AddFromDataDialog` picks documents that
-  have already been parsed.
+owning them. From the session, `RAGDocumentUpload` uploads one folder or several
+loose files: `POST /api/v1/documents/batch` creates the optional `Folder` and
+every `DataDocument` placeholder atomically, then one `POST /api/v1/job/`
+(`DocumentJob`) per file parses them. `AddFromDataDialog` picks documents that
+have already been parsed.
 
 Either path attaches the selection through
 `POST /api/v1/rag/sessions/{session_id}/documents`, which inserts the

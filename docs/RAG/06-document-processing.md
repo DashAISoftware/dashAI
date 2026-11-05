@@ -266,9 +266,6 @@ Under `components/generative/RAG/`:
   (`DocumentFolderPicker`) that selects whole folders and loose documents
   together, disables documents already attached or still parsing, shows the
   focused document's details on the right, and attaches the resulting id set.
-- `CreateSessionDocumentsDialog` — the same picker used while creating a session;
-  its selection is handed to `RAGCreatePage`, which attaches it after creating
-  the session and rolls the session back if the attach fails.
 - `useDocumentFolderSelection` — the selection model: a single set of document
   ids, with each folder's checked/indeterminate state derived from its
   selectable documents, so a folder selection is the snapshot of its current

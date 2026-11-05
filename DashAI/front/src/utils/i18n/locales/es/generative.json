@@ -251,22 +251,8 @@
     "create": {
       "newSession": "Nueva sesión RAG",
       "selectModel": "Modelo de lenguaje",
-      "subtitle": "Un nombre y un modelo. Puedes elegir documentos ahora o agregarlos después; todo lo demás tiene un valor por defecto que puedes cambiar después.",
-      "title": "Nueva sesión RAG",
-      "documentsTitle": "Documentos (opcional)",
-      "documentsHint": "Elige carpetas o documentos ahora, o agrégalos más tarde desde la sesión. Una carpeta aporta los documentos que tiene en este momento.",
-      "chooseDocuments": "Elegir carpetas y documentos",
-      "changeDocuments": "Cambiar selección",
-      "clearDocuments": "Quitar",
-      "documentsSelected_one": "{{count}} documento",
-      "documentsSelected_other": "{{count}} documentos",
-      "foldersSelected_one": "{{count}} carpeta",
-      "foldersSelected_other": "{{count}} carpetas",
-      "attachFailed": "La sesión se creó pero no se pudieron agregar sus documentos",
-      "rollbackFailed": "No se pudo eliminar la sesión. Actualiza la lista de sesiones antes de continuar.",
-      "someDocumentsSkipped_one": "{{count}} documento puede haberse eliminado o estar en proceso y no se agregará",
-      "someDocumentsSkipped_other": "{{count}} documentos pueden haberse eliminado o estar en proceso y no se agregarán",
-      "documentsValidationFailed": "No se pudieron verificar los documentos seleccionados, así que la sesión se creó sin ellos."
+      "subtitle": "Un nombre y un modelo. Agrega tus documentos una vez creada la sesi?n; todo lo dem?s tiene un valor por defecto que puedes cambiar despu?s.",
+      "title": "Nueva sesión RAG"
     },
     "documentPreview": {
       "openInData": "Abrir en Datos",
@@ -426,7 +412,6 @@
     "insufficientContextDescription": "El modelo seleccionado no tiene suficiente contexto para manejar la configuración actual de tamaño de fragmento y Top K. Por favor, reduce el tamaño de fragmento, el número de resultados (Top K), o selecciona un modelo con una ventana de contexto más grande."
   },
   "documentPicker": {
-    "title": "Elegir documentos",
     "search": "Buscar carpetas y documentos",
     "noFolder": "Sin carpeta",
     "noDocuments": "Todavía no hay documentos en Datos.",
