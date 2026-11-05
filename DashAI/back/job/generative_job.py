@@ -268,9 +268,10 @@ class GenerativeJob(BaseJob):
                     ) from e
 
                 try:
+                    # Custom tasks keep their own input and output contracts.
                     output: Any = (
                         generate_text(model, input_data)
-                        if isinstance(task, TextToTextGenerationTask)
+                        if type(task) is TextToTextGenerationTask
                         else model.generate(input_data)
                     )
                 except Exception as e:

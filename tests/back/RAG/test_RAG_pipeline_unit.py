@@ -12,13 +12,10 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic_ai.messages import ModelResponse, TextPart, ThinkingPart
+from pydantic_ai.usage import RequestUsage
 
-from DashAI.back.core.generation import (
-    GenerationResult,
-    GenerationUsage,
-    ReasoningPart,
-    TextPart,
-)
+from DashAI.back.core.generation import to_chat_messages
 from DashAI.back.models.RAG.documents.chunk import Chunk
 from DashAI.back.models.RAG.exceptions import (
     RAGPipelineConfigError,
@@ -419,9 +416,9 @@ class TestRAGPipelineGenerateHappyPath:
     def test_enriched_model_preserves_metadata_without_changing_the_message(self):
         """RAG retains structured output while its text projection stays compatible."""
         llm = MagicMock(spec=["generate", "generate_result"])
-        enriched = GenerationResult(
-            parts=[ReasoningPart(text="Plan"), TextPart(text="Answer")],
-            usage=GenerationUsage(completion_tokens=3),
+        enriched = ModelResponse(
+            parts=[ThinkingPart(content="Plan"), TextPart(content="Answer")],
+            usage=RequestUsage(output_tokens=3),
             finish_reason="stop",
         )
         llm.generate_result.return_value = enriched
@@ -435,7 +432,7 @@ class TestRAGPipelineGenerateHappyPath:
         llm.generate.assert_not_called()
         llm.generate_result.assert_called_once()
         request = llm.generate_result.call_args.args[0]
-        assert request.to_messages() == [
+        assert to_chat_messages(request) == [
             {"role": "user", "content": "formatted prompt"}
         ]
 

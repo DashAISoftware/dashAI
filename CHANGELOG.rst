@@ -4,16 +4,15 @@ Changelog
 Unreleased
 ----------
 
-- Added an opt-in typed text-generation interface (``DashAI.back.core.generation``)
-  with explicit text and reasoning parts, optional usage and finish reason, and
-  an optional ``generate_result`` model method. Chat and the LLM stage of RAG share
-  one adapter that calls the model exactly once. Existing plugins, session
-  parameters and plain-text storage keep working. See the plugin development guide.
-- Chat now validates legacy ``generate`` output like RAG already did: the first
-  item must be a string, otherwise the generation fails with an error instead of
-  storing ``str(output[0])``. Lists and tuples are accepted.
-- A typed reply with reasoning but no answer text fails in chat, because reasoning
-  is not persisted yet.
+- Adopted Pydantic AI's native messages and responses for enriched generation,
+  using ``pydantic-ai-slim`` without provider SDK extras. Removed the custom types
+  from the earlier unreleased interface draft. Chat and RAG share one bridge for
+  native Pydantic AI models, enriched DashAI models and legacy plugins.
+- Preserved session configuration, redacted validation errors, list/tuple legacy
+  output and answer-only storage. Unsupported structured output fails explicitly
+  until its persistence is implemented; no provider fallback repeats generation.
+- Documented the staged migration for chat reasoning, provider plugins and
+  multimodal attachments. The existing legacy ``generate`` contract stays supported.
 
 0.0.12
 ------

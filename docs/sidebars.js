@@ -82,6 +82,7 @@ const sidebars = {
         "build/plugin-development/structure",
         "build/plugin-development/develop",
         "build/plugin-development/generation-interface",
+        "build/plugin-development/pydantic-ai-migration",
         "build/plugin-development/upload",
       ],
     },

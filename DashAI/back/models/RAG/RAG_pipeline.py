@@ -12,9 +12,10 @@ import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
+from pydantic_ai.messages import ModelResponse
 from sqlalchemy.orm import Session
 
-from DashAI.back.core.generation import GenerationResult, generate_text
+from DashAI.back.core.generation import generate_text, text_answer
 from DashAI.back.core.schema_fields import (
     BaseSchema,
     component_field,
@@ -110,7 +111,7 @@ class RAGGenerationOutput:
 
     message: str
     chunks: Dict[str, "ChunkReference"]
-    generation_result: GenerationResult | None = None
+    generation_result: ModelResponse | None = None
 
 
 @dataclass(frozen=True)
@@ -486,7 +487,7 @@ class RAGPipeline(BaseGenerativeModel):
             # NOTE: Output is not streamed — the user waits for the full response.
             result = generate_text(self.llm_model, model_input)
             return RAGGenerationOutput(
-                message=result.text, chunks=chunk_dict, generation_result=result
+                message=text_answer(result), chunks=chunk_dict, generation_result=result
             )
         except RAGPipelineRuntimeError:
             raise

@@ -5,9 +5,10 @@ import uuid
 
 import pytest
 from kink import di
+from pydantic_ai.messages import ModelResponse, TextPart, ThinkingPart
 
 from DashAI.back.core.enums.status import RunStatus
-from DashAI.back.core.generation import GenerationResult, ReasoningPart, TextPart
+from DashAI.back.core.generation import to_chat_messages
 from DashAI.back.dependencies.database.models import (
     GenerativeProcess,
     GenerativeSession,
@@ -35,9 +36,9 @@ def test_models_keep_session_parameters_and_plain_text_history(client, enriched)
 
     class TypedModel(LegacyModel):
         def generate_result(self, request):
-            prompts.append(request.to_messages())
-            return GenerationResult(
-                parts=[ReasoningPart(text="Plan"), TextPart(text="Answer")]
+            prompts.append(to_chat_messages(request))
+            return ModelResponse(
+                parts=[ThinkingPart(content="Plan"), TextPart(content="Answer")]
             )
 
         def generate(self, prompt):
@@ -95,10 +96,10 @@ def test_models_keep_session_parameters_and_plain_text_history(client, enriched)
         di["component_registry"] = registry
 
 
-def _run_chat_job(client, model_class):
+def _run_chat_job(client, model_class, task_class=TextToTextGenerationTask):
     registry = di["component_registry"]
     di["component_registry"] = {
-        "TextToTextGenerationTask": {"class": TextToTextGenerationTask},
+        "TextToTextGenerationTask": {"class": task_class},
         "InterfaceTestModel": {"class": model_class},
     }
     session_factory = di["session_factory"]
@@ -160,7 +161,7 @@ def test_reasoning_only_reply_is_an_error_not_an_empty_answer(client):
             raise NotImplementedError
 
         def generate_result(self, request):
-            return GenerationResult(parts=[ReasoningPart(text="Plan")])
+            return ModelResponse(parts=[ThinkingPart(content="Plan")])
 
     status, outputs = _run_chat_job(client, ReasoningOnlyModel)
 
@@ -184,10 +185,36 @@ def test_legacy_tuple_output_is_stored_as_the_first_reply(client):
 
 def test_process_output_rejects_reasoning_only_reply_with_actionable_message():
     task = TextToTextGenerationTask()
-    result = GenerationResult(parts=[ReasoningPart(text="Plan")])
+    result = ModelResponse(parts=[ThinkingPart(content="Plan")])
 
     with pytest.raises(ValueError, match="reasoning but no answer text"):
         task.process_output(result)
 
-    answer = GenerationResult(parts=[ReasoningPart(text="Plan"), TextPart(text="")])
+    answer = ModelResponse(parts=[ThinkingPart(content="Plan"), TextPart(content="")])
     assert task.process_output(answer) == [("", "str")]
+
+
+def test_custom_text_task_plugin_keeps_its_existing_input_and_output_contract(client):
+    class CustomTask(TextToTextGenerationTask):
+        def prepare_for_task(self, input, **kwargs):
+            return input[0].data
+
+        def process_output(self, output, **kwargs):
+            assert isinstance(output, list)
+            return [(output[0], "str")]
+
+    class LegacyModel(TextToTextGenerationTaskModel):
+        def __init__(self, **kwargs):
+            pass
+
+        def generate(self, prompt):
+            assert prompt == "Hi"
+            return ["Custom answer"]
+
+        def generate_result(self, messages):
+            pytest.fail("A custom task must keep its existing generation contract.")
+
+    status, outputs = _run_chat_job(client, LegacyModel, task_class=CustomTask)
+
+    assert status == RunStatus.FINISHED
+    assert outputs == ["Custom answer"]

@@ -1,6 +1,8 @@
 from typing import Any, List, Optional, Tuple
 
-from DashAI.back.core.generation import GenerationResult, TextPart
+from pydantic_ai.messages import ModelResponse
+
+from DashAI.back.core.generation import text_answer
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.dependencies.database.models import ProcessData
 from DashAI.back.tasks.base_generative_task import BaseGenerativeTask
@@ -126,14 +128,14 @@ class TextToTextGenerationTask(BaseGenerativeTask):
 
     def process_output(
         self,
-        output: List[Any] | GenerationResult,
+        output: List[Any] | ModelResponse,
         **kwargs: Any,
     ) -> List[Tuple[str, str]]:
         """Convert raw model output to a storable (text, type) pair.
 
         Parameters
         ----------
-        output : list of Any or GenerationResult
+        output : list of Any or ModelResponse
             Legacy output or a typed reply. Only the answer text is stored;
             structured persistence is handled separately from this interface.
         **kwargs : dict
@@ -151,14 +153,8 @@ class TextToTextGenerationTask(BaseGenerativeTask):
             If a typed reply has no text part (reasoning only).
         """
 
-        if isinstance(output, GenerationResult):
-            if not any(isinstance(part, TextPart) for part in output.parts):
-                raise ValueError(
-                    "The model returned reasoning but no answer text. Reasoning "
-                    "is not stored yet, so there is nothing to save; make the "
-                    "model return a text part with its answer."
-                )
-            return [(output.text, "str")]
+        if isinstance(output, ModelResponse):
+            return [(text_answer(output), "str")]
         return [(str(output[0]), "str")]
 
     def process_output_from_database(
