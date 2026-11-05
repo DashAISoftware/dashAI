@@ -36,7 +36,14 @@ def _validated(build: Callable[[Any], _T], data: Any) -> _T:
 
 
 def from_chat_messages(messages: list[dict[str, str]]) -> list[ModelMessage]:
-    """Convert DashAI's existing role/content messages to native Pydantic AI types."""
+    """Convert legacy role/content messages to native Pydantic AI types.
+
+    Warnings
+    --------
+    Compatibility bridge only. Do not use this function in new integrations;
+    construct native ``ModelRequest`` and ``ModelResponse`` messages instead.
+    This conversion is reserved for existing tasks and plugins being migrated.
+    """
     if not messages:
         raise ValueError("Generation requires at least one message.")
     converted: list[ModelMessage] = []
@@ -60,7 +67,14 @@ def from_chat_messages(messages: list[dict[str, str]]) -> list[ModelMessage]:
 
 
 def to_chat_messages(messages: Sequence[ModelMessage]) -> list[dict[str, str]]:
-    """Adapt text-only messages, rejecting parts legacy plugins cannot represent."""
+    """Adapt text-only messages, rejecting parts legacy plugins cannot represent.
+
+    Warnings
+    --------
+    Compatibility bridge only. Do not use this function in new integrations;
+    pass native Pydantic AI messages directly to the model. This conversion is
+    reserved for adapters that must still call a legacy task, plugin or provider.
+    """
     converted = []
     for message in messages:
         if not message.parts:
@@ -92,7 +106,14 @@ def to_chat_messages(messages: Sequence[ModelMessage]) -> list[dict[str, str]]:
 
 
 def from_legacy_output(output: list[str] | tuple[str, ...]) -> ModelResponse:
-    """Wrap the first legacy reply without inventing provider-reported usage."""
+    """Wrap the first legacy reply without inventing provider-reported usage.
+
+    Warnings
+    --------
+    Compatibility bridge only. Do not use this function in new integrations;
+    return a native ``ModelResponse`` with its parts and usage instead. This
+    adapter exists solely to keep existing ``generate`` implementations working.
+    """
     if not isinstance(output, (list, tuple)):
         raise TypeError("Text generation must return a list or tuple of strings.")
     if not output:
@@ -103,7 +124,14 @@ def from_legacy_output(output: list[str] | tuple[str, ...]) -> ModelResponse:
 
 
 def text_answer(response: ModelResponse) -> str:
-    """Project an answer for the current text storage, never dropping other output."""
+    """Project an answer for the current text storage, never dropping other output.
+
+    Warnings
+    --------
+    Legacy text-storage adapter only. Do not use this projection in new structured
+    storage or generation flows; retain the complete native ``ModelResponse``.
+    It exists only until the current answer-only storage path is migrated.
+    """
     if any(not isinstance(part, (TextPart, ThinkingPart)) for part in response.parts):
         raise ValueError(
             "This task cannot store tool or multimodal output yet; "
@@ -127,6 +155,10 @@ def generate_text(
     Native messages retain multimodal and tool parts for capable models. Legacy
     adapters reject unsupported data before calling the provider. Invalid replies
     and provider failures never trigger a fallback generation call.
+
+    New callers must pass native Pydantic AI messages and consume the complete
+    ``ModelResponse``. Dictionary input and the legacy ``generate`` fallback are
+    supported only for backward compatibility, not for new integrations.
     """
     if not messages:
         raise ValueError("Generation requires at least one message.")

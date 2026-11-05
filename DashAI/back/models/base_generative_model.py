@@ -57,5 +57,13 @@ class BaseGenerativeModel(ConfigObject, metaclass=ABCMeta):
         -------
         List[Any]
             A list of generated outputs (e.g. strings, images).
+
+        Notes
+        -----
+        For text-to-text models, this method is a backward-compatibility entry
+        point only. New text integrations must implement ``generate_result`` and
+        use native Pydantic AI messages and responses; do not call ``generate``
+        in new text-generation flows. Keep it implemented for older hosts and
+        custom legacy tasks. Other model modalities still use this contract.
         """
         raise NotImplementedError
