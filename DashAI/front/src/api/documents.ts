@@ -183,6 +183,28 @@ export const getDocumentSourceViewUrl = (
     ? `${documentsUrlBase}/${id}/source/view?v=${encodeURIComponent(version)}`
     : `${documentsUrlBase}/${id}/source/view`;
 
+/**
+ * Absolute URL of the inline source view, for iframes and new tabs.
+ *
+ * `getDocumentSourceViewUrl` is rooted at `/api`; in development the frontend
+ * runs on another origin, so the API base URL has to be prefixed (and its
+ * `/api` suffix removed to avoid `/api/api`).
+ *
+ * @param id - The document id.
+ * @param version - Optional cache-busting version.
+ * @returns The URL the browser can load directly.
+ */
+export const getDocumentSourceViewAbsoluteUrl = (
+  id: number,
+  version?: string | null,
+): string => {
+  const path = getDocumentSourceViewUrl(id, version);
+  const base = (api.defaults.baseURL ?? "").replace(/\/$/, "");
+  if (!base) return path;
+  const suffix = base.endsWith("/api") ? path.replace(/^\/api/, "") : path;
+  return `${base}${suffix}`;
+};
+
 export const getDocumentSourceDownloadUrl = (id: number): string =>
   `${documentsUrlBase}/${id}/source`;
 

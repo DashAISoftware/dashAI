@@ -384,7 +384,7 @@ export default function useDocumentUpload({ onReady } = {}) {
           continue;
         }
 
-        updateItem(key, { status: FILE_STATUS.UPLOADING });
+        updateItem(key, { status: FILE_STATUS.UPLOADING, document });
         try {
           const job = await enqueueDocumentJob(
             document.id,
