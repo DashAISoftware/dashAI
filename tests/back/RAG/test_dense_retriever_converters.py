@@ -106,3 +106,44 @@ def test_documents_without_chunks_do_not_block_indexing(tmp_path):
     assert len(trace["chunks"]) == len(results)
     assert len(model.calls[0]["sentences"]) == PASSAGE_COUNT
     assert not (tmp_path / "empty_matrix").exists()
+
+
+def test_close_releases_the_embedding_model(tmp_path):
+    """The retrieval stage closes the converter so the generator can own the GPU."""
+    retriever, model = _retriever(tmp_path)
+    closed = []
+    model.close = lambda: closed.append(True)
+
+    retriever.close()
+
+    assert closed == [True]
+    assert retriever.embedding_model._pretrained is None
+
+
+def test_close_is_idempotent(tmp_path):
+    """Closing twice is safe, which the pipeline's finally block relies on."""
+    retriever, _ = _retriever(tmp_path)
+
+    retriever.close()
+    retriever.close()
+
+    assert retriever.embedding_model._pretrained is None
+
+
+def test_retrieve_after_close_reloads_the_model(tmp_path, monkeypatch):
+    """A closed converter loads its checkpoint again on the next query."""
+    retriever, model = _retriever(tmp_path)
+    reloaded = []
+
+    def _load_pretrained(source):
+        reloaded.append(source)
+        return model
+
+    monkeypatch.setattr(retriever.embedding_model, "load_pretrained", _load_pretrained)
+    retriever.close()
+
+    results, _ = retriever.retrieve("what is passage one")
+
+    assert results
+    assert len(reloaded) == 1
+    assert retriever.embedding_model._pretrained is model
