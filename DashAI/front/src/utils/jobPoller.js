@@ -15,6 +15,9 @@ const state = {
 
 export const FAILED_JOB_STATUSES = ["error", "cancelled", "killed"];
 
+/** Failures caused by stopping a job rather than by an error in it. */
+export const CANCELLED_JOB_STATUSES = ["cancelled", "killed"];
+
 export const TERMINAL_JOB_STATUSES = ["finished", ...FAILED_JOB_STATUSES];
 
 /**

@@ -1,21 +1,28 @@
 """Schemas for the persistent documents of the Data module."""
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from DashAI.back.api.api_v1.schemas.folders_params import Folder
 from DashAI.back.core.enums.status import DocumentStatus
 from DashAI.back.dataloaders.classes.document_dataloader import redact_params
 
+MAX_NAME_LENGTH = 255
 
-class DataDocumentCreateParams(BaseModel):
-    """Body of ``POST /api/v1/documents/``.
+
+class BatchDocumentFile(BaseModel):
+    """One file of ``POST /api/v1/documents/batch``.
+
+    Unknown keys are rejected, so a typo such as ``folder`` instead of
+    ``folder_name`` fails the request instead of silently creating the
+    documents somewhere else.
 
     Attributes
     ----------
     name : str
-        Unique document name.
+        Unique document name, at most 255 characters.
     file_name : str
         Name of the file the user is about to upload. Its extension must be
         one the loader supports.
@@ -25,10 +32,54 @@ class DataDocumentCreateParams(BaseModel):
         Loader parameters. Missing keys take the loader defaults.
     """
 
-    name: str
-    file_name: str
+    model_config = ConfigDict(extra="forbid")
+
+    name: str = Field(max_length=MAX_NAME_LENGTH)
+    file_name: str = Field(max_length=MAX_NAME_LENGTH)
     dataloader: str
     dataloader_params: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DataDocumentCreateParams(BatchDocumentFile):
+    """Body of ``POST /api/v1/documents/``.
+
+    Attributes
+    ----------
+    name : str
+        Unique document name, at most 255 characters.
+    file_name : str
+        Name of the file the user is about to upload. Its extension must be
+        one the loader supports.
+    dataloader : str
+        Registry name of a ``DocumentDataLoader`` component.
+    dataloader_params : Dict[str, Any]
+        Loader parameters. Missing keys take the loader defaults.
+    folder_id : Optional[int]
+        Folder receiving the document, or None to leave it loose. Only an
+        integer is accepted: ``true`` and ``"1"`` are rejected.
+    """
+
+    folder_id: Optional[int] = Field(default=None, strict=True)
+
+
+class DataDocumentBatchCreateParams(BaseModel):
+    """Body of ``POST /api/v1/documents/batch``.
+
+    Unknown keys are rejected; see ``BatchDocumentFile``.
+
+    Attributes
+    ----------
+    folder_name : Optional[str]
+        Folder created for the documents, at most 255 characters. When
+        omitted the documents are left loose.
+    files : List[BatchDocumentFile]
+        Documents to create, at least one. There is no upper bound.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    folder_name: Optional[str] = Field(default=None, max_length=MAX_NAME_LENGTH)
+    files: List[BatchDocumentFile] = Field(min_length=1)
 
 
 class DataDocumentFromNotebookParams(BaseModel):
@@ -127,3 +178,19 @@ class DataDocumentSchema(BaseModel):
             The parameters with sensitive values blanked.
         """
         return None if value is None else redact_params(value)
+
+
+class DataDocumentBatchSchema(BaseModel):
+    """Response of ``POST /api/v1/documents/batch``.
+
+    Attributes
+    ----------
+    folder : Optional[Folder]
+        The folder created with the documents, or None when the batch was
+        created without one.
+    documents : List[DataDocumentSchema]
+        The created rows, in the order the request listed them.
+    """
+
+    folder: Optional[Folder] = None
+    documents: List[DataDocumentSchema]

@@ -16,6 +16,7 @@ from DashAI.back.api.api_v1.schemas.folders_params import (
     FolderUpdateParams,
 )
 from DashAI.back.dependencies.database.models import Folder
+from DashAI.back.services.documents.folder_lock import lock_folder_row
 
 logger = logging.getLogger(__name__)
 
@@ -140,8 +141,15 @@ async def delete_folder(
     folder_id: int,
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
 ):
-    """Delete a folder. Its datasets and documents move to no folder (SET NULL)."""
+    """Delete a folder. Its datasets and documents move to no folder (SET NULL).
+
+    SQLite does not run the ``SET NULL`` here (foreign keys are disabled), so
+    the folder row is locked before its contents are read: a document being
+    created or moved into it concurrently blocks on that lock and its writer
+    commits first, which keeps the read below current and lets it be detached.
+    """
     with session_factory() as db:
+        lock_folder_row(db, folder_id)
         folder = db.get(Folder, folder_id)
         if folder is None:
             raise HTTPException(

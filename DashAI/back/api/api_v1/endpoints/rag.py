@@ -331,7 +331,8 @@ def _session_document_row(document) -> Dict[str, Any]:
     -------
     dict
         ``{id, name, file_name, file_type, status, total_pages,
-        content_counts, created}``; ``status`` is the integer value.
+        content_counts, folder_id, folder_name, created}``; ``status`` is the
+        integer value and ``folder_name`` is None for a loose document.
     """
     return {
         "id": document.id,
@@ -341,6 +342,8 @@ def _session_document_row(document) -> Dict[str, Any]:
         "status": document.status.value,
         "total_pages": document.total_pages,
         "content_counts": document.content_counts,
+        "folder_id": document.folder_id,
+        "folder_name": document.folder.name if document.folder is not None else None,
         "created": document.created,
     }
 

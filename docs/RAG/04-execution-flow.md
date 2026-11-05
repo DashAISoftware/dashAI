@@ -69,15 +69,18 @@ On success, a `GenerativeSession` record is persisted with:
 ### 2. Adding Documents
 
 Documents belong to the Data module, so the session attaches them rather than
-owning them. `RAGDocumentUpload` creates the document through
-`POST /api/v1/documents/` and enqueues its parse with `POST /api/v1/job/`
-(`DocumentJob`); `AddFromDataDialog` picks documents that have already been
-parsed. Either path attaches the selection through
+owning them. `RAGDocumentUpload` uploads one folder or several loose files:
+`POST /api/v1/documents/batch` creates the optional `Folder` and every
+`DataDocument` placeholder atomically, then one `POST /api/v1/job/`
+(`DocumentJob`) per file parses them. `AddFromDataDialog` picks documents that
+have already been parsed. Either path attaches the selection through
 `POST /api/v1/rag/sessions/{session_id}/documents`, which inserts the
 `rag_session_document` links, discards the session's indexes, and rebuilds
 `parameters["documents"]` with a history entry, so the pipeline, the chunk-set
 signature and the index status all see the change. Detaching (`DELETE` on the
-same route) removes only the link; the Data document stays.
+same route) removes only the link; the Data document stays. The session panel
+groups the linked documents by their Data folder; a folder selection is a
+snapshot of the documents it held at that moment, not a live link.
 
 The user may also adjust the configuration at any point, through
 `PUT /api/v1/generative-session/{id}/parameters`. Only the keys present in the

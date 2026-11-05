@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   IconButton,
   Stack,
   Tooltip,
@@ -18,7 +20,7 @@ import { useTheme } from "@mui/material/styles";
 import { useSnackbar } from "notistack";
 import SearchBar from "../../threeSectionLayout/SearchBar";
 import DeleteConfirmationModal from "../../threeSectionLayout/DeleteConfirmationModal";
-import DocumentList from "./DocumentList";
+import DocumentGroupList from "./DocumentGroupList";
 import DocumentPreviewModal from "./DocumentPreviewModal";
 import AddFromDataDialog from "./AddFromDataDialog";
 import RAGDocumentUpload from "./RAGDocumentUpload";
@@ -36,8 +38,16 @@ function toRow(doc) {
     status: doc.status,
     totalPages: doc.total_pages,
     created: doc.created,
+    folderId: doc.folder_id ?? null,
+    folderName: doc.folder_name ?? null,
   };
 }
+
+const LOAD_STATUS = Object.freeze({
+  LOADING: "loading",
+  READY: "ready",
+  ERROR: "error",
+});
 
 export default function DocumentsBar({
   sessionId,
@@ -50,11 +60,13 @@ export default function DocumentsBar({
   const theme = useTheme();
 
   const [documents, setDocuments] = useState([]);
+  const [status, setStatus] = useState(LOAD_STATUS.LOADING);
   const [searchQuery, setSearchQuery] = useState("");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [previewDoc, setPreviewDoc] = useState(null);
   const [pendingDetach, setPendingDetach] = useState(null);
+  const requestIdRef = useRef(0);
 
   const indexStateByDocument = useMemo(() => {
     const indexing = indexStatus?.status === "indexing";
@@ -67,16 +79,23 @@ export default function DocumentsBar({
 
   const fetchDocuments = useCallback(async () => {
     if (!sessionId) return;
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setStatus(LOAD_STATUS.LOADING);
     try {
       const data = await listSessionDocuments(sessionId);
+      if (requestId !== requestIdRef.current) return;
       setDocuments(data.map(toRow));
+      setStatus(LOAD_STATUS.READY);
     } catch (error) {
+      if (requestId !== requestIdRef.current) return;
       console.error("Failed to fetch documents:", error);
-      enqueueSnackbar(t("documentsBar.failedFetch"), { variant: "error" });
+      setStatus(LOAD_STATUS.ERROR);
     }
-  }, [sessionId, enqueueSnackbar, t]);
+  }, [sessionId]);
 
   useEffect(() => {
+    setDocuments([]);
     fetchDocuments();
   }, [fetchDocuments]);
 
@@ -93,21 +112,24 @@ export default function DocumentsBar({
 
   const handleAttach = useCallback(
     async (documentIds) => {
-      if (documentIds.length === 0) return;
+      if (documentIds.length === 0) return true;
       try {
         const data = await attachSessionDocuments(sessionId, documentIds);
         setDocuments(data.map(toRow));
+        setStatus(LOAD_STATUS.READY);
         enqueueSnackbar(
           t("documentsBar.attached", { count: documentIds.length }),
           { variant: "success" },
         );
         onDocumentChange?.();
+        return true;
       } catch (error) {
         console.error("Failed to attach documents:", error);
         enqueueSnackbar(
           getApiErrorMessage(error, t("documentsBar.failedAttach")),
           { variant: "error" },
         );
+        return false;
       }
     },
     [sessionId, enqueueSnackbar, t, onDocumentChange],
@@ -173,15 +195,16 @@ export default function DocumentsBar({
           sx={{
             bgcolor: "primary.main",
             color: "primary.contrastText",
-            borderRadius: "50%",
-            width: 20,
+            borderRadius: 10,
+            minWidth: 20,
+            px: 0.75,
             height: 20,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          {documents.length}
+          {documents.length > 99 ? "99+" : documents.length}
         </Typography>
       </Box>
 
@@ -230,8 +253,31 @@ export default function DocumentsBar({
           minWidth: 0,
         }}
       >
-        {filteredDocuments.length > 0 ? (
-          <DocumentList
+        {status === LOAD_STATUS.LOADING ? (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              p: 2,
+            }}
+          >
+            <CircularProgress size={28} aria-label={t("common:loading")} />
+          </Box>
+        ) : status === LOAD_STATUS.ERROR ? (
+          <Alert
+            severity="error"
+            action={
+              <Button color="inherit" size="small" onClick={fetchDocuments}>
+                {t("documentsBar.retry")}
+              </Button>
+            }
+          >
+            {t("documentsBar.failedFetch")}
+          </Alert>
+        ) : filteredDocuments.length > 0 ? (
+          <DocumentGroupList
             documents={filteredDocuments}
             indexStateByDocument={indexStateByDocument}
             onDocumentClick={setPreviewDoc}
