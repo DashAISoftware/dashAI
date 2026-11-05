@@ -1,5 +1,6 @@
 """Pydantic AI message contracts and compatibility for DashAI text models."""
 
+import warnings
 from collections.abc import Callable, Sequence
 from dataclasses import asdict
 from math import isfinite
@@ -13,14 +14,37 @@ from pydantic_ai.messages import (
     ModelRequest,
     ModelResponse,
     SystemPromptPart,
-    TextPart,
     ThinkingPart,
     UserPromptPart,
 )
+from pydantic_ai.messages import TextPart as _TextPart
 from pydantic_ai.models import Model
+
+from DashAI.back.core.generation_legacy import (
+    DEPRECATED_NAMES,
+    REPLACEMENT_HINT,
+    LegacyRequestMessages,
+    deprecated_attribute,
+)
+from DashAI.back.core.generation_legacy import (
+    GenerationResult as _LegacyGenerationResult,
+)
 
 _T = TypeVar("_T")
 _RESPONSE = TypeAdapter(ModelResponse)
+
+
+def __getattr__(name: str) -> Any:
+    """Keep the removed draft types importable, with a deprecation warning."""
+    if name in DEPRECATED_NAMES:
+        warnings.warn(
+            f"DashAI.back.core.generation.{name} is deprecated and will be removed "
+            f"in a future major release. {REPLACEMENT_HINT}",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return deprecated_attribute(name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def _validated(build: Callable[[Any], _T], data: Any) -> _T:
@@ -60,7 +84,7 @@ def from_chat_messages(messages: list[dict[str, str]]) -> list[ModelMessage]:
         elif message["role"] == "user":
             converted.append(ModelRequest(parts=[UserPromptPart(content)]))
         elif message["role"] == "assistant":
-            converted.append(ModelResponse(parts=[TextPart(content)]))
+            converted.append(ModelResponse(parts=[_TextPart(content)]))
         else:
             raise ValueError("Text message role must be system, user or assistant.")
     return converted
@@ -80,7 +104,7 @@ def to_chat_messages(messages: Sequence[ModelMessage]) -> list[dict[str, str]]:
         if not message.parts:
             raise ValueError("Generation messages require at least one part.")
         if isinstance(message, ModelResponse):
-            if any(not isinstance(part, TextPart) for part in message.parts):
+            if any(not isinstance(part, _TextPart) for part in message.parts):
                 raise ValueError("Legacy generation only accepts text input parts.")
             converted.append(
                 {
@@ -120,7 +144,7 @@ def from_legacy_output(output: list[str] | tuple[str, ...]) -> ModelResponse:
         raise ValueError("LLM model returned empty output list.")
     if not isinstance(output[0], str):
         raise TypeError(f"LLM output is not a string, got {type(output[0]).__name__}")
-    return ModelResponse(parts=[TextPart(output[0])])
+    return ModelResponse(parts=[_TextPart(output[0])])
 
 
 def text_answer(response: ModelResponse) -> str:
@@ -132,18 +156,18 @@ def text_answer(response: ModelResponse) -> str:
     storage or generation flows; retain the complete native ``ModelResponse``.
     It exists only until the current answer-only storage path is migrated.
     """
-    if any(not isinstance(part, (TextPart, ThinkingPart)) for part in response.parts):
+    if any(not isinstance(part, (_TextPart, ThinkingPart)) for part in response.parts):
         raise ValueError(
             "This task cannot store tool or multimodal output yet; "
             "use a model that returns a text answer."
         )
-    if not any(isinstance(part, TextPart) for part in response.parts):
+    if not any(isinstance(part, _TextPart) for part in response.parts):
         raise ValueError(
             "The model returned reasoning but no answer text. Reasoning "
             "is not stored yet; make the model return a text part with its answer."
         )
     return "".join(
-        part.content for part in response.parts if isinstance(part, TextPart)
+        part.content for part in response.parts if isinstance(part, _TextPart)
     )
 
 
@@ -159,6 +183,14 @@ def generate_text(
     New callers must pass native Pydantic AI messages and consume the complete
     ``ModelResponse``. Dictionary input and the legacy ``generate`` fallback are
     supported only for backward compatibility, not for new integrations.
+
+    Notes
+    -----
+    This function is synchronous and blocks until the provider answers. It is meant
+    for worker threads such as the generative job. A native ``Model`` is called
+    through ``model_request_sync``, which raises ``RuntimeError`` inside a running
+    event loop; do not call this function from an ``async`` handler, run it in a
+    thread instead.
     """
     if not messages:
         raise ValueError("Generation requires at least one message.")
@@ -176,7 +208,15 @@ def generate_text(
         generate_result = getattr(model, "generate_result", None)
         if not callable(generate_result):
             return from_legacy_output(model.generate(to_chat_messages(request)))
-        response = generate_result(request)
+        response = generate_result(LegacyRequestMessages(request))
+        if isinstance(response, _LegacyGenerationResult):
+            warnings.warn(
+                "Returning GenerationResult from generate_result is deprecated. "
+                + REPLACEMENT_HINT,
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            response = response.to_model_response()
     if isinstance(response, ModelResponse):
         response = asdict(response)
     result = _validated(_RESPONSE.validate_python, response)

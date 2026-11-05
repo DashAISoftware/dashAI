@@ -7,10 +7,10 @@ from DashAI.back.models.base_generative_model import BaseGenerativeModel
 class TextToTextGenerationTaskModel(BaseGenerativeModel):
     """Base class for models that generate text from a text input.
 
-    New text models must override ``generate_result`` and use native Pydantic AI
-    messages and responses. Implement ``generate`` only to retain the existing
-    abstract contract and support older hosts; new text-generation flows must
-    not call that legacy entry point. Compatible with ``TextToTextGenerationTask``.
+    New text models should override ``generate_result`` and return a native Pydantic
+    AI ``ModelResponse``. Keep a working ``generate`` too (it returns ``List[str]``):
+    older hosts and custom legacy tasks still call it, and the default
+    ``generate_result`` is built on it. Compatible with ``TextToTextGenerationTask``.
     """
 
     COMPATIBLE_COMPONENTS = ["TextToTextGenerationTask", "RAGTask"]

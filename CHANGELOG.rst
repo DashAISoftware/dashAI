@@ -4,15 +4,21 @@ Changelog
 Unreleased
 ----------
 
-- Adopted Pydantic AI's native messages and responses for enriched generation,
-  using ``pydantic-ai-slim`` without provider SDK extras. Removed the custom types
-  from the earlier unreleased interface draft. Chat and RAG share one bridge for
-  native Pydantic AI models, enriched DashAI models and legacy plugins.
-- Preserved session configuration, redacted validation errors, list/tuple legacy
-  output and answer-only storage. Unsupported structured output fails explicitly
-  until its persistence is implemented; no provider fallback repeats generation.
-- Documented the staged migration for chat reasoning, provider plugins and
-  multimodal attachments. The existing legacy ``generate`` contract stays supported.
+- Text generation can now return reasoning and token usage using Pydantic AI's
+  native ``ModelResponse``. Plugins may implement an optional ``generate_result``
+  method; plugins with only ``generate`` keep working unchanged. Chat and RAG use
+  the same bridge, ``DashAI.back.core.generation.generate_text``. Adds the
+  ``pydantic-ai-slim`` dependency (no provider SDKs).
+- Chat history must contain only ``role`` and string ``content`` keys, and
+  ``generate`` must return a list or tuple whose first item is a string; other
+  shapes now fail with a clear error before or after generation.
+- Only the answer text is stored. Output with only reasoning, or with tool or
+  multimodal parts, fails explicitly instead of being silently dropped. A failed
+  or invalid generation is never retried through the legacy method.
+- ``GenerationRequest``, ``GenerationResult``, ``GenerationUsage`` and related
+  classes from an earlier draft remain importable from
+  ``DashAI.back.core.generation`` but are deprecated; use the Pydantic AI types.
+- Added the "Generation Interface" plugin guide and a maintainer migration plan.
 
 0.0.12
 ------

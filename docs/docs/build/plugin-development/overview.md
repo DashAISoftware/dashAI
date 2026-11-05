@@ -212,4 +212,9 @@ class PhiModel(TextToTextGenerationTaskModel):
 | Extending a dashAI base class | `PhiModel(TextToTextGenerationTaskModel)`                    |
 | Defining parameters           | `PhiSchema` with `schema_field()`                            |
 | Model loading                 | `__init__` with `validate_and_transform`                     |
-| Generating output             | `generate()` returning `List[str]`; richer output with [`generate_result()`](./generation-interface.md) |
+| Generating output             | `generate()` returning `List[str]` (see note below)          |
+
+The example above uses the simple `generate()` contract, which works on every
+DashAI version. To also return reasoning or measured token usage, add a
+`generate_result()` method as described in
+[Generation Interface](./generation-interface.md).

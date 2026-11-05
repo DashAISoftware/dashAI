@@ -319,3 +319,56 @@ def test_legacy_input_conversion_does_not_drop_unsupported_fields():
         from_chat_messages(
             [{"role": "assistant", "content": "Answer", "tool_calls": []}]
         )
+
+
+def test_removed_draft_types_stay_importable_with_a_warning():
+    from DashAI.back.core import generation
+
+    with pytest.warns(DeprecationWarning, match="pydantic_ai.messages"):
+        GenerationResult = generation.GenerationResult
+    with pytest.warns(DeprecationWarning, match="ReasoningPart"):
+        ReasoningPart = generation.ReasoningPart
+    with pytest.warns(DeprecationWarning, match="TextPart"):
+        LegacyTextPart = generation.TextPart
+    result = GenerationResult(
+        parts=[ReasoningPart(text="Plan"), LegacyTextPart(text="Answer")]
+    )
+    assert result.text == "Answer"
+    name = "Missing"
+    with pytest.raises(AttributeError):
+        getattr(generation, name)
+
+
+def test_plugin_written_for_the_draft_interface_still_works():
+    """Mirrors an enriched plugin that uses request.to_messages() and the DTOs."""
+    from DashAI.back.core import generation_legacy as old
+
+    class DraftPlugin:
+        def generate_result(self, request):
+            assert request.to_messages() == [{"role": "user", "content": "Hi"}]
+            assert request.messages[0].role == "user"
+            return old.GenerationResult(
+                parts=[old.ReasoningPart(text="Plan"), old.TextPart(text="Answer")],
+                usage=old.GenerationUsage(
+                    prompt_tokens=3, completion_tokens=2, generation_seconds=1.5
+                ),
+                finish_reason="stop",
+            )
+
+    with pytest.warns(DeprecationWarning, match="GenerationResult"):
+        response = generate_text(DraftPlugin(), [{"role": "user", "content": "Hi"}])
+    assert [type(p) for p in response.parts] == [ThinkingPart, TextPart]
+    assert text_answer(response) == "Answer"
+    assert (response.usage.input_tokens, response.usage.output_tokens) == (3, 2)
+    assert response.finish_reason == "stop"
+    assert response.provider_details == {"generation_seconds": 1.5}
+
+
+def test_unknown_draft_finish_reason_is_kept_in_provider_details():
+    from DashAI.back.core import generation_legacy as old
+
+    result = old.GenerationResult(
+        parts=[old.TextPart(text="A")], finish_reason="load"
+    ).to_model_response()
+    assert result.finish_reason is None
+    assert result.provider_details == {"finish_reason": "load"}

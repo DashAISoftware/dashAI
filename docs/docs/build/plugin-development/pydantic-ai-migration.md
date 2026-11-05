@@ -5,15 +5,22 @@ sidebar_label: Pydantic AI Migration
 
 # Migration to Pydantic AI
 
+:::note Maintainer plan
+This page is the staged plan for the team and contributors. Plugin authors should
+read [Generation Interface](./generation-interface.md) instead.
+:::
+
 Use Pydantic AI's native model messages and responses as the generative contract,
 as proposed in [#976](https://github.com/DashAISoftware/dashAI/issues/976).
 Keep DashAI's components, schemas, credential store, tasks and process lifecycle.
 The framework's `Model`/direct API can be used without adopting an agent loop.
 
-This plan replaces the custom `GenerationRequest`, `GenerationResult`,
-`ReasoningPart` and `GenerationUsage` types from the earlier draft of this PR.
-Those types have not been released, so they are removed rather than maintained as
-a competing interface. The legacy `generate` contract remains supported.
+The custom `GenerationRequest`, `GenerationResult`, `ReasoningPart` and
+`GenerationUsage` types of an earlier draft are no longer the contract. They stay
+importable as deprecated shims (with a `DeprecationWarning`) so plugins written
+against them do not break; see
+[Deprecated types](./generation-interface.md#deprecated-types-from-the-earlier-draft).
+The legacy `generate` contract remains supported.
 
 ## 1. Foundation: this PR
 

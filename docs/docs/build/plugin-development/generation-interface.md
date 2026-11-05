@@ -17,6 +17,16 @@ There is no second DashAI message schema. Import `ModelMessage`, `ModelRequest`,
 Existing plugins keep working without any change. Model parameters and credentials
 remain in the existing DashAI schemas and credential store.
 
+## What your plugin should return
+
+| You want to return | Implement | Return |
+| --- | --- | --- |
+| Only the answer text | `generate` | `["answer"]` (a list or tuple; the first item is used) |
+| Answer and reasoning | `generate_result` | `ModelResponse(parts=[ThinkingPart(...), TextPart(...)])` |
+| Measured token usage | `generate_result` | The same `ModelResponse` with `usage=RequestUsage(input_tokens=..., output_tokens=...)` |
+
+Always keep `generate` too, so the plugin still runs on older DashAI versions.
+
 ## Compatibility
 
 | Plugin | Host | Behavior |
@@ -25,6 +35,15 @@ remain in the existing DashAI schemas and credential store.
 | Only `generate` | New | DashAI adapts its first text reply to `ModelResponse`. |
 | `generate` and `generate_result` | Old | The host calls `generate` only. |
 | `generate` and `generate_result` | New | The host calls `generate_result` once. |
+
+Roles, content and message order are preserved. Two behaviors differ from before
+the bridge existed, so check your plugin and tests:
+
+- Chat history passed to the bridge must contain dictionaries with exactly `role`
+  and a string `content`. A dictionary with an extra key (for example `name`) is
+  rejected before generation instead of being forwarded to the plugin.
+- Legacy `generate` output must be a list or tuple whose first item is a string.
+  A dictionary or other object as the first item is rejected.
 
 The public bridge is `DashAI.back.core.generation`. `from_chat_messages` converts
 existing role/content dictionaries to native messages; `to_chat_messages` performs
@@ -43,6 +62,13 @@ DashAI retry/fallback. Provider SDKs may have their own retry policy. A Pydantic
 model still needs a DashAI component wrapper to supply registry metadata, schema
 parameters and credentials when offered in the UI.
 
+:::warning Synchronous call
+`generate_text` blocks until the provider replies, and `model_request_sync` raises
+`RuntimeError: This event loop is already running` inside a running event loop.
+It is designed for the generative job, which runs in a worker thread. Do not call
+it from an `async` endpoint handler; run it in a thread instead.
+:::
+
 ## Enriched plugins
 
 Keep `generate` for older hosts and implement `generate_result` using native
@@ -59,20 +85,33 @@ class MyModel(TextToTextGenerationTaskModel):
     def __init__(self, **kwargs):
         pass  # Your existing schema and model setup.
 
-    def _call_provider(self, messages):
+    def _call_provider(self, question):
         # Replace this deterministic response with one provider request.
         return {"answer": "Answer", "reasoning": "Plan"}
 
     def generate(self, prompt):
-        return [self._call_provider(prompt)["answer"]]
+        # Older hosts and legacy tasks pass [{"role": ..., "content": ...}].
+        return [self._call_provider(prompt[-1]["content"])["answer"]]
 
     def generate_result(self, messages):
         # Lazy imports let the plugin still import on older hosts.
-        from pydantic_ai.messages import ModelResponse, TextPart, ThinkingPart
+        from pydantic_ai.messages import (
+            ModelRequest,
+            ModelResponse,
+            TextPart,
+            ThinkingPart,
+            UserPromptPart,
+        )
 
-        from DashAI.back.core.generation import to_chat_messages
-
-        response = self._call_provider(to_chat_messages(messages))
+        # Read the native messages directly; no conversion helper is needed.
+        question = next(
+            part.content
+            for message in reversed(messages)
+            if isinstance(message, ModelRequest)
+            for part in message.parts
+            if isinstance(part, UserPromptPart)
+        )
+        response = self._call_provider(question)
         return ModelResponse(
             parts=[
                 ThinkingPart(content=response["reasoning"]),
@@ -86,10 +125,26 @@ If the provider is already supported by Pydantic AI, the enriched method can use
 The legacy method must stay independent of new host imports to remain usable on
 an older host. Install provider-specific extras in the plugin that uses them.
 
-An enriched method may return a mapping shaped like native `ModelResponse`:
+An enriched method may also return a mapping shaped like native `ModelResponse`:
 `{"parts": [{"part_kind": "text", "content": "Answer"}]}`. DashAI validates it
-with a native Pydantic type adapter. `TextPart` and `ThinkingPart` use `content`,
-not DashAI's former `text` field. No aliases for the unreleased custom DTOs remain.
+with a native Pydantic type adapter. Unknown extra keys in that mapping are ignored.
+
+## Deprecated types from the earlier draft
+
+An earlier iteration of this interface exposed `GenerationRequest`,
+`GenerationMessage`, `GenerationResult`, `GenerationUsage`, `TextPart` (field
+`text`) and `ReasoningPart` in `DashAI.back.core.generation`. Plugins written
+against it keep working: the names still import from that module with a
+`DeprecationWarning`, `generate_result` may still return `GenerationResult`, and
+the `messages` argument still answers `to_messages()` and `.messages`.
+The host converts the result to a native `ModelResponse` (reasoning becomes
+`ThinkingPart`, token counts become `RequestUsage`; durations and finish reasons
+that Pydantic AI does not define are kept in `provider_details`).
+
+Do not use these names in new code; they live in
+`DashAI.back.core.generation_legacy` and may be removed in a future major release.
+Migrate by importing `ModelResponse`, `TextPart`, `ThinkingPart` and `RequestUsage`
+from Pydantic AI (`TextPart` and `ThinkingPart` use `content`, not `text`).
 
 ## Validation and errors
 
@@ -104,10 +159,11 @@ The built-in text chat task and the LLM stage of RAG use
 3. An enriched method or native model is called once. Errors and invalid responses
    propagate without retrying through the legacy method.
 4. Validation errors report their location and reason without repeating prompt,
-   answer or attachment contents in logs or stored error messages.
+   answer or attachment contents. This covers errors raised by the bridge only: an
+   exception raised by the provider is still logged and stored as before, so a
+   plugin should not put prompt text in its own exception messages.
 
-Validation follows the native Pydantic AI schema, not the removed custom DTOs.
-The bridge also rejects negative token counts and negative/nonfinite audio duration.
+Validation follows the native Pydantic AI schema. The bridge also rejects negative token counts and negative/nonfinite audio duration.
 Native messages are not frozen. Consumers should not mutate shared histories.
 Round-trip native history with `ModelMessagesTypeAdapter.dump_json(messages)` and
 `ModelMessagesTypeAdapter.validate_json(data)`.
