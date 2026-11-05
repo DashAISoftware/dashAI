@@ -8,6 +8,7 @@ import {
   LinearProgress,
   Stack,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import {
   ATTACH_STATUS,
@@ -92,6 +93,7 @@ export default function UploadProgressPanel({
   titleRef,
 }) {
   const { t } = useTranslation(["generative", "common"]);
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const total = progress.total;
   const completed = Math.min(progress.completed, total);
   const readyCount = progress.items.filter(
@@ -102,10 +104,9 @@ export default function UploadProgressPanel({
   ).length;
   const isProcessing = phase === UPLOAD_PHASE.PROCESSING;
   const isDone = phase === UPLOAD_PHASE.DONE;
+  const readyPercent = total > 0 ? Math.round((readyCount / total) * 100) : 0;
   const percent = isDone
-    ? total > 0
-      ? Math.round((readyCount / total) * 100)
-      : 0
+    ? readyPercent
     : total > 0
       ? Math.round((completed / total) * 100)
       : 0;
@@ -147,8 +148,10 @@ export default function UploadProgressPanel({
       </Box>
 
       <LinearProgress
-        variant={isProcessing ? "indeterminate" : "determinate"}
-        value={percent}
+        variant={
+          isProcessing && !reduceMotion ? "indeterminate" : "determinate"
+        }
+        value={isProcessing && reduceMotion ? readyPercent : percent}
       />
 
       {folderRenamed && (

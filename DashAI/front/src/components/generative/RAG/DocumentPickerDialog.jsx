@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { Button } from "@mui/material";
+import { Button, useMediaQuery } from "@mui/material";
 import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
 
 /**
@@ -32,6 +32,7 @@ export default function DocumentPickerDialog({
   onConfirm,
 }) {
   const { t } = useTranslation(["common"]);
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
   /**
    * Ignores close requests while the confirm action is in flight.
@@ -69,8 +70,8 @@ export default function DocumentPickerDialog({
           </Button>
           <Button
             variant="contained"
-            loading={confirming}
-            disabled={confirmDisabled}
+            loading={confirming && !reduceMotion}
+            disabled={confirmDisabled || confirming}
             onClick={onConfirm}
           >
             {confirmLabel}

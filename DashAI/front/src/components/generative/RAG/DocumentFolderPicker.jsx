@@ -11,6 +11,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import FolderIcon from "@mui/icons-material/Folder";
@@ -131,6 +132,7 @@ function GroupSection({
   contentId,
 }) {
   const { t } = useTranslation(["generative"]);
+  const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const label = group.folder ? group.folder.name : t("documentPicker.noFolder");
   const FolderGlyph = group.folder ? FolderIcon : FolderOffIcon;
   const folderCheckbox = (
@@ -221,7 +223,7 @@ function GroupSection({
         </ButtonBase>
       </Box>
 
-      <Collapse in={expanded} unmountOnExit>
+      <Collapse in={expanded} unmountOnExit timeout={reduceMotion ? 0 : "auto"}>
         <Box
           id={contentId}
           role="group"
