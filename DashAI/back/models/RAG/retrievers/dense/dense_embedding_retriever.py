@@ -1,17 +1,15 @@
 import os
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from sklearn.metrics.pairwise import pairwise_distances
 
-from DashAI.back.converters.hugging_face.text_embedding.base import (
+from DashAI.back.converters.hugging_face.text_embedding_roles import (
     PASSAGE,
     QUERY,
-    TextEmbeddingConverter,
 )
 from DashAI.back.core.atomic import atomic_open
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     enum_field,
     int_field,
@@ -19,12 +17,16 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
+from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 from DashAI.back.models.RAG.retrievers.unit_retriever import UnitRetriever
 
 METRICS = ["cityblock", "cosine", "euclidean", "l1", "l2", "manhattan"]
 
 
-class DenseEmbeddingRetrieverSchema(BaseSchema):
+class DenseEmbeddingRetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`DenseEmbeddingRetriever`.
 
     Attributes:
@@ -110,6 +112,28 @@ class DenseEmbeddingRetriever(UnitRetriever):
         zh="稠密检索器",
     )
 
+    REPRESENTATION = MultilingualString(
+        en="{embedding_model} · similarity {similarity_metric} · top-k {top_k}",
+        es="{embedding_model} · similitud {similarity_metric} · top-k {top_k}",
+        pt="{embedding_model} · similaridade {similarity_metric} · top-k {top_k}",
+        de="{embedding_model} · Ähnlichkeit {similarity_metric} · top-k {top_k}",
+        zh="{embedding_model} · 相似度 {similarity_metric} · top-k {top_k}",
+    )
+
+    @classmethod
+    def _get_main_parameters(cls) -> Dict[str, str]:
+        """Return the embedding model, similarity metric and top-k paths.
+
+        The embedding model path is bare on purpose: an embedding converter is
+        the model, so a direct component reference renders its class name (see
+        :meth:`BaseRetriever.get_representation` for the placeholder contract).
+        """
+        return {
+            "embedding_model": "embedding_model",
+            "similarity_metric": "similarity_metric",
+            "top_k": "top_k",
+        }
+
     def __init__(self, **kwargs):
         """Initialize the dense embedding retriever.
 
@@ -124,6 +148,10 @@ class DenseEmbeddingRetriever(UnitRetriever):
         TypeError
             If ``embedding_model`` is not a ``TextEmbeddingConverter``.
         """
+        from DashAI.back.converters.hugging_face.text_embedding.base import (
+            TextEmbeddingConverter,
+        )
+
         embedding_model = kwargs.pop("embedding_model")
         if not isinstance(embedding_model, TextEmbeddingConverter):
             raise TypeError(
@@ -147,6 +175,21 @@ class DenseEmbeddingRetriever(UnitRetriever):
         self.compute_missing_embeddings()
         self.init_similarity_matrix()
 
+    def close(self) -> None:
+        """Release the embedding model at the end of the retrieval stage.
+
+        The retriever owns the converter for the whole session, so without this
+        hook the checkpoint stays resident and the generator cannot be offloaded
+        next to it. The persisted per-document matrices mean the next
+        ``retrieve`` only has to load the model again, not re-index.
+
+        The call is idempotent and safe when the converter has no ``close``
+        hook of its own.
+        """
+        close_embedding = getattr(self.embedding_model, "close", None)
+        if callable(close_embedding):
+            close_embedding()
+
     def compute_missing_embeddings(self):
         """Compute and persist embeddings for chunks that lack them.
 
@@ -163,14 +206,15 @@ class DenseEmbeddingRetriever(UnitRetriever):
         ``np.save`` writes to the open temporary file, so it does not append
         a second ``.npy`` suffix to the final name.
         """
-        for doc_id, doc_chunks in self.chunks.items():
+        for doc_id in sorted(self.chunks):
+            doc_chunks = self.chunks[doc_id]
             matrix_dir = self._persistence.matrix_dirs.get(doc_id)
             if matrix_dir is None or not doc_chunks:
                 continue
             matrix_path = os.path.join(matrix_dir, "embeddings.npy")
             if os.path.exists(matrix_path):
                 continue
-            chunk_texts = [chunk.text for chunk in doc_chunks.values()]
+            chunk_texts = [chunk.text for _, chunk in sorted(doc_chunks.items())]
             embeddings = self.embedding_model.encode(chunk_texts, role=PASSAGE)
             os.makedirs(matrix_dir, exist_ok=True)
             with atomic_open(matrix_path, "wb") as f:
@@ -189,6 +233,10 @@ class DenseEmbeddingRetriever(UnitRetriever):
         which is what composite retrievers (MMR reranker, sequential,
         parallel, cross-encoder) pass to ``score_chunks`` /
         ``get_chunk_vectors``.
+
+        Rows follow ``(document id ascending, document position ascending)``
+        rather than dict insertion order, so a matrix written by another
+        session over the same corpus lines up with this one row for row.
         """
         self.similarity_matrix = None
         self.matrix_row_to_chunk_id = {}
@@ -197,14 +245,15 @@ class DenseEmbeddingRetriever(UnitRetriever):
 
         all_embeddings = []
         row_index = 0
-        for doc_id, chunks in self.chunks.items():
+        for doc_id in sorted(self.chunks):
+            chunks = self.chunks[doc_id]
             matrix_dir = self._persistence.matrix_dirs.get(doc_id)
             if matrix_dir is None or not chunks:
                 continue
             matrix_path = os.path.join(matrix_dir, "embeddings.npy")
             if not os.path.exists(matrix_path):
                 continue
-            for chunk_key, chunk in chunks.items():
+            for chunk_key, chunk in sorted(chunks.items()):
                 chunk_id = chunk.id
                 self.matrix_row_to_chunk_id[row_index] = chunk_id
                 self.chunk_id_to_doc_id[chunk_id] = doc_id
@@ -224,7 +273,9 @@ class DenseEmbeddingRetriever(UnitRetriever):
         """
         return self._top_k
 
-    def retrieve(self, query: str, top_k: int | None = None) -> List[Chunk]:
+    def retrieve(
+        self, query: str, top_k: int | None = None
+    ) -> Tuple[List[Chunk], Dict[str, Any]]:
         """Retrieve the top-k chunks by embedding similarity.
 
         Args:
@@ -233,7 +284,10 @@ class DenseEmbeddingRetriever(UnitRetriever):
                 configured value if ``None``.
 
         Returns:
-            A list of :class:`Chunk` instances ordered by distance.
+            A ``(chunks, trace)`` tuple. ``chunks`` is the list of retrieved
+            :class:`Chunk` instances ordered by distance, widened when
+            retrieve-then-expand is enabled; ``trace`` is the retriever's trace
+            node.
 
         Raises:
             ValueError: If the similarity matrix has not been
@@ -255,7 +309,8 @@ class DenseEmbeddingRetriever(UnitRetriever):
             chunk_id = self.matrix_row_to_chunk_id[idx]
             doc_id, chunk_key = self._chunk_key_by_id[chunk_id]
             results.append(self.chunks[doc_id][chunk_key])
-        return results
+        results = self._apply_retrieval_expansion(results)
+        return results, retriever_trace(self, results)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Score a set of chunk IDs against the query.

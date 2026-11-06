@@ -6,12 +6,12 @@
   documents but will not scale to millions. No out-of-core or approximate
   indexing.
 
-- **Chunk sets are not shared between sessions.** Documents belong to exactly
-  one session, so `RAGChunkSet.signature` — which hashes the document ids —
-  always differs. Two sessions configured identically over the same file each
-  chunk it and fit their own retriever. This is the accepted cost of session
-  isolation; the bytes on disk are still shared, since files are stored
-  content-addressed.
+- **Chunk sets are not shared between sessions.** Documents belong to the Data
+  module, but `RAGChunkSet.signature` includes the owning session id alongside
+  the document ids, so it always differs. Two sessions configured identically
+  over the same Data documents each chunk them and fit their own retriever.
+  This is the accepted cost of session isolation; the parsed document folder on
+  disk is shared, since it belongs to the Data document.
 
 - **No streaming.** The frontend waits for the full LLM response before
   displaying it. Streaming support is not implemented.
@@ -23,46 +23,130 @@
   candidate chunks from the child retriever. With large candidate sets
   (controlled by the child's own `top_k`), this can be slow on CPU.
 
-- **DB session held open during LLM inference.** The same database transaction
-  remains open while the LLM generates a response, which risks connection
-  timeout on slow LLM calls.
+- **Generation occupies the single Huey worker.** `RAGJob` holds no database
+  session while the LLM runs — it loads and builds in one session and saves the
+  output in a second — but the model load and inference are synchronous and
+  take the worker's only slot, so other queued jobs wait for the whole turn.
+
+- **The optional query-transformation stage adds an LLM call per turn.** When
+  enabled, one model call — and possibly a distinct model instance — runs
+  before any retrieval, ahead of the generation call itself.
+
+- **`n` transformed queries mean `n` retriever calls per turn.** Retrieval runs
+  once per query and merges the ranked lists round-robin, de-duplicating by
+  `(document_id, document_position)`; there is no score fusion or re-ranking
+  beyond that interleave. The stored trace also carries one node per query, so
+  the process output grows with the query count.
+
+- **LLM stages are not resident simultaneously, but a nested retriever can
+  exceed one model.** Each top-level stage's model is a lazy proxy: it loads
+  when its stage starts and is closed as soon as the stage ends, so peak memory
+  is the largest **top-level** stage — the generation model, the retriever LLM
+  and the transformer are never resident at the same time. A **nested**
+  LLM-evaluated retriever can keep its parent and child evaluation LLMs live
+  simultaneously, so peak can exceed one model in that configuration. The
+  trade-off is reloading weights per turn/stage whenever the same checkpoint is
+  used more than once. `context_window` still dominates the KV-cache footprint —
+  a Phi-4-mini at a 20k-token window already spends ≈ 2.5 GiB — so a single
+  large GGUF can still fail to fit. The GGUF loader raises an actionable error
+  naming the model, device and context window and suggesting CPU, a lower
+  `context_window` or a smaller checkpoint; llama.cpp's free-memory report in
+  that error is best-effort. HuggingFace download/network failures are reported
+  as download failures, not as insufficient memory, and a missing or partial
+  GGUF file raises a file-specific "missing/incomplete, re-download" error.
+  `is_downloaded` likewise requires a matching GGUF file on disk.
+
+- **The pure factory path still builds nested LLMs eagerly.** Calling
+  `RAGModelsFactory.create_retriever()` directly — or using `RetrieverFactory`
+  on its own — resolves nested LLMs when the retriever is constructed instead of
+  deferring them. The production path goes through `RetrieverSetupService`,
+  which wraps each LLM stage in the lazy resolver, so use the setup service for
+  VRAM-constrained deployments.
+
+- **Lazy plugin LLMs must expose function-calling support on the class.** The
+  lazy wrappers capture the capability from the component class, not from an
+  instance, so a plugin LLM used lazily has to implement
+  `supports_function_calling()` as a classmethod or set
+  `SUPPORTS_FUNCTION_CALLING` on the class. An instance-only implementation is
+  invisible to the wrapper.
+
+- **GPU embedding models and cross-encoders are not released by the retriever
+  close hooks.** The lazy lifecycle covers the stage LLMs; a dense embedding
+  model or a GPU cross-encoder stays on the device for the life of the
+  retriever. On a small GPU prefer the CPU variants for those components.
+
+- **Nested LLM parameters are validated during assembly.** Deferring
+  construction does not defer validation: a transformer's or retriever's nested
+  LLM is checked against its `SCHEMA` while the pipeline is assembled, so bad
+  parameters fail before any weights load.
 
 ## Concurrency
 
 - **`get_or_create_chunk_set()`** uses a SELECT-then-INSERT pattern without a
-  lock or upsert. Safe for single-user usage but could create duplicate chunk
-  sets under concurrent requests.
+  lock or upsert. `RAGChunkSet.signature` is UNIQUE, so a concurrent race
+  cannot persist duplicate chunk sets; the losing request instead surfaces a
+  database error (wrapped as `RuntimeError`).
 
 - **SQLite foreign keys are not enforced.** The engine is created without
   `PRAGMA foreign_keys=ON` and nothing sets it per connection
   (`dependencies/database/sqlite_database.py`), so every `ondelete` clause in
   the models is documentation rather than behaviour. Cascading deletes have to
   come from SQLAlchemy relationships — which is why, for example,
-  `GenerativeSession.documents` carries `cascade="all, delete-orphan"`.
+  `GenerativeSession.document_links` carries `cascade="all, delete-orphan"`.
 
 - **Huey consumer runs in-process.** In dev mode it spawns as a subprocess; in
   PyInstaller bundles it runs as a daemon thread. Both models limit
   parallelism.
 
+- **`RAGJob` cleans up on every failure path.** Setup, generation and output
+  persistence failures all release the pipeline models and clear the process
+  progress before the job is marked errored, so a failed turn leaves neither
+  loaded weights nor a stale progress payload behind.
+
 ## Unused Components
 
-- **`DefaultAugmentationPrompt`** is registered in the component registry but
-  **commented out** in `get_initial_components()`. The augmentation prompt
-  family (query expansion / HyDE-style) is not yet wired into the pipeline.
+- **`DefaultAugmentationPrompt`** and **`CustomAugmentationPrompt`** are
+  registered in `get_initial_components()` but are not referenced by any
+  pipeline or validation code. The augmentation prompt family (query expansion
+  / HyDE-style) is not yet wired into the pipeline.
 
-- **`CustomAugmentationPrompt`** is registered but unused by the pipeline.
+- The query-transformation prompts (`Default`/`Custom` `QueryRewriting`,
+  `QueryExpansion`, `QueryDecomposition`) and the `LLMQueryRewriter`,
+  `LLMQueryExpander`, `LLMQueryDecomposer` components **are** wired: they are
+  registered, validated by
+  `services/RAG/query_transformation_validation.py`, and run by the pipeline.
 
-## Type System Caveats
+## Query Transformation
 
-- **Prompt `chunks` type:** The pipeline passes a formatted `str` to
-  `prompt.format()`, but the abstract `RAGGenerationPrompt.format()` and some
-  subclasses declare `chunks: List[str]`. Only `str` works at runtime. The
-  abstract base signature should match the concrete usage.
+- **Function-calling versus text route.** The stage uses constrained function
+  calling only when the configured LLM reports support
+  (`SUPPORTS_FUNCTION_CALLING`, true for the local GGUF text-generation base);
+  every other model falls back to a tolerant text parser over the model's raw
+  output. Output shape therefore depends on the model, not just the prompt.
 
-- **`score_chunks()` contract:** The abstract method declares return type
-  `List[float]`, but all implementations return `List[Tuple[int, float]]`
-  (chunk ID, distance). Consumers destructure tuples, so the abstract
-  signature is wrong.
+- **A transformation failure fails the turn.** There is no silent fallback to
+  the raw user message: if the model produces unparseable output, calls the
+  wrong function, or the backend raises, the pipeline raises and the chat turn
+  errors out.
+
+- **The nested transformation and retrieval LLMs share the RAG LLM defaults.**
+  The server-side override is `context_window=10000`, `max_tokens=300` and
+  `temperature=0.1` (see `rag_llm_param_overrides()`). A value equal to the
+  model schema's placeholder is treated as "not customized" and replaced; an
+  explicit non-default value wins. LLMs that name the context window
+  differently (for example DeepSeek's `n_ctx`) keep their own value.
+  Sessions created before this default changed keep their stored parameters:
+  clear the `context_window` field to pick up the new value.
+
+- **Sessions created before the sufficiency prompt changed keep their stored
+  template.** The zero-based chunk-position rule is part of the default
+  template; an existing session that already stores the previous template must
+  clear the prompt template (or reselect the default sufficiency prompt) to
+  receive it.
+
+- **`prompt` and `llm_model` refs are mandatory.** A transformer is built only
+  from an explicit prompt component and an explicit text-to-text model
+  reference; neither has an implicit default.
 
 ## Maintenance
 
@@ -74,37 +158,41 @@
   tokenizer from HuggingFace Hub lazily (on first `chunk_text()` call), but
   this still requires network access. Pre-download tokenizers for offline use.
 
-- **Embedding models downloaded on first use.** Each `DenseEmbedding` subclass
-  downloads its model from HuggingFace Hub on first instantiation. Pre-download
-  for offline environments.
+- **Embedding models downloaded on first use.** Each `TextEmbeddingConverter`
+  subclass downloads its checkpoint from HuggingFace Hub when the converter is
+  first asked to encode text. Pre-download for offline environments.
 
 ## Code Duplication
 
-- **`GenerativeJob` and `RAGJob` share identical `set_status_as_delivered()`,
-  `set_status_as_error()`, and `get_job_name()` methods.** The code is
-  duplicated rather than extracted into a shared helper. `RAGJob` is a
+- **`RAGJob` reimplements `GenerativeJob`'s status helpers.**
+  `set_status_as_delivered()`, `set_status_as_error()`, and `get_job_name()`
+  are near-duplicates that have already diverged: the RAG job clears
+  `progress` on error and prefixes its job name with `RAG:`. `RAGJob` is a
   standalone `BaseJob` subclass (not a subclass of `GenerativeJob`), so the
-  common status-update logic is copied rather than inherited. This is accepted
-  technical debt; a future refactor should extract a shared mixin or base class.
-
-- **`FastTextEmbedding`** is defined in
-  `models/RAG/embeddings/dense/fasttext_embedding.py` but is **not exposed**
-  through `embeddings/dense/__init__.py`. It must be explicitly imported and
-  registered if needed.
+  logic is copied rather than inherited. This is accepted technical debt; a
+  future refactor should extract a shared mixin or base class.
 
 ## Deprecated Patterns
 
 - The old `notebooks/`, `images/`, `explanations/` directories listed in the
   runtime data layout are no longer actively used by the RAG module.
 
-## Extractors
+- **The RAG embedding classes are gone (historical note).**
+  `models/RAG/embeddings/` and its `DenseEmbedding` subclasses (`BERTEmbedding`,
+  `DistilBERTEmbedding`, `E5Embedding`, `InstructorEmbedding`, `LaBSEmbedding`,
+  `RoBERTaEmbedding`, `SentenceTransformerEmbedding`, `FastTextEmbedding`) were
+  replaced by the text embedding converters in
+  `converters/hugging_face/text_embedding/`. Dense retrieval now takes a
+  `TextEmbeddingConverter` through `DenseEmbeddingRetriever.embedding_model`, and
+  the sparse retrievers take a `BagOfWordsConverter` / `TFIDFConverter` through
+  their `vectorizer` field. FastText/static embeddings have no replacement.
 
-- **PypdfExtractor** default `strict=True` rejects malformed PDFs (xref
-  errors). Use `strict=False` for broken PDFs. Committing it for a PDF it
-  cannot read now fails with `422` and changes nothing, rather than leaving the
-  document pointing at it.
-- **EasyOCRExtractor** requires the `easyocr` dependency (heavy, downloads
-  models on first use).
+## Document Loaders
+
+- **`PypdfDocumentDataLoader`** defaults to `strict=True`, rejecting malformed
+  PDFs (xref errors). Use `strict=False` for broken PDFs. Parsing runs in
+  `DocumentJob`, so a failure surfaces as an `ERROR` row (with its partial
+  folder deleted) rather than a half-parsed document in the library.
 
 ## Validation
 

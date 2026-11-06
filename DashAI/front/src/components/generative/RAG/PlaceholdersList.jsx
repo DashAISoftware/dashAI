@@ -19,8 +19,8 @@ export default function PlaceholdersList({
   const theme = useTheme();
   const { t } = useTranslation(["generative"]);
   return (
-    <Box sx={{ mt: 2, mb: 2 }}>
-      <Typography variant="subtitle1" gutterBottom>
+    <Box>
+      <Typography variant="subtitle2" component="h3" sx={{ mb: 1 }}>
         {t("generative:rag.placeholders.title")}
       </Typography>
       <Box
@@ -70,10 +70,15 @@ export default function PlaceholdersList({
                   <IconButton
                     size="small"
                     onClick={() => onInsertPlaceholder(ph)}
+                    aria-label={t("generative:rag.placeholders.insert", {
+                      placeholder: ph,
+                    })}
                     sx={{
                       p: 0.25,
                       color: "primary.main",
-                      "&:hover": { backgroundColor: "primary.light" },
+                      "@media (hover: hover)": {
+                        "&:hover": { backgroundColor: "action.hover" },
+                      },
                     }}
                   >
                     <AddCircleOutlineIcon fontSize="small" />

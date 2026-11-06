@@ -7,10 +7,6 @@ import {
   ButtonBase,
   Checkbox,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
   Typography,
 } from "@mui/material";
@@ -18,6 +14,7 @@ import { alpha, useTheme } from "@mui/material/styles";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import DocumentIcon from "@mui/icons-material/Description";
 import SearchBar from "../../threeSectionLayout/SearchBar";
+import RAGAdvancedDialog from "../../../pages/generative/RAGSession/advanced/RAGAdvancedDialog";
 import { useDatasetsAndNotebooks } from "../../custom/contexts/DatasetsAndNotebooksContext";
 import { DOCUMENT_STATUS } from "../../../hooks/datasets/useDocuments";
 import { formatDate } from "../../../pages/results/constants/formatDate";
@@ -74,12 +71,13 @@ function DocumentTile({ doc, attached, checked, focused, onClick }) {
             ? "action.selected"
             : "transparent",
         transition: "background-color 0.15s, border-color 0.15s",
-        "&:hover": {
-          bgcolor: checked ? alpha(accent, 0.18) : "action.hover",
+        "@media (hover: hover)": {
+          "&:hover": {
+            bgcolor: checked ? alpha(accent, 0.18) : "action.hover",
+          },
+          "&:hover .tile-check": { opacity: 1 },
         },
-        "&:hover .tile-check, &.Mui-focusVisible .tile-check": {
-          opacity: 1,
-        },
+        "&.Mui-focusVisible .tile-check": { opacity: 1 },
         "&.Mui-focusVisible": {
           outline: `2px solid ${accent}`,
           outlineOffset: "-2px",
@@ -307,100 +305,104 @@ export default function AddFromDataDialog({
   };
 
   return (
-    <Dialog
+    <RAGAdvancedDialog
       open={open}
       onClose={handleClose}
+      title={t("generative:documentsBar.addFromDataTitle")}
       maxWidth="lg"
-      fullWidth
-      slotProps={{
-        paper: {
-          sx: {
-            height: "80vh",
-            bgcolor: "background.paper",
-            backgroundImage: "none",
-          },
-        },
+      minHeight={0}
+      paperSx={{
+        height: "80vh",
+        bgcolor: "background.paper",
+        backgroundImage: "none",
       }}
+      contentSx={{ p: 0, display: "flex", minHeight: 0, overflow: "hidden" }}
+      actions={
+        <>
+          <Button onClick={handleClose}>{t("common:cancel")}</Button>
+          <Button
+            variant="contained"
+            disabled={selected.length === 0}
+            onClick={handleConfirm}
+          >
+            {t("generative:documentsBar.addSelected", {
+              count: selected.length,
+            })}
+          </Button>
+        </>
+      }
     >
-      <DialogTitle>{t("generative:documentsBar.addFromDataTitle")}</DialogTitle>
-      <DialogContent
-        dividers
-        sx={{ p: 0, display: "flex", minHeight: 0, overflow: "hidden" }}
+      <Box
+        sx={{
+          flex: 3,
+          minWidth: 0,
+          display: "flex",
+          flexDirection: "column",
+        }}
       >
-        <Box
-          sx={{
-            flex: 3,
-            minWidth: 0,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <Box sx={{ p: 2, pb: 1.5 }}>
-            <SearchBar
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              onClear={() => setQuery("")}
-              placeholder={t("generative:documentsBar.searchPlaceholder")}
-            />
-          </Box>
-          <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto", px: 2, pb: 2 }}>
-            {visible.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                {documents.length === 0
-                  ? t("generative:documentsBar.noLibraryDocuments")
-                  : t("generative:documentsBar.noDocumentsFound")}
-              </Typography>
-            ) : (
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))",
-                  gap: 1,
-                }}
-              >
-                {visible.map((doc) => (
-                  <DocumentTile
-                    key={doc.id}
-                    doc={doc}
-                    attached={attachedIds.has(doc.id)}
-                    checked={selected.includes(doc.id)}
-                    focused={focusedId === doc.id}
-                    onClick={() => handleTileClick(doc)}
-                  />
-                ))}
-              </Box>
-            )}
-          </Box>
+        <Box sx={{ p: 2, pb: 1.5 }}>
+          <SearchBar
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onClear={() => setQuery("")}
+            placeholder={t("generative:documentsBar.searchPlaceholder")}
+          />
         </Box>
         <Box
           sx={{
             flex: 1,
-            minWidth: 0,
-            borderLeft: 1,
-            borderColor: "divider",
+            minHeight: 0,
             overflowY: "auto",
-            p: 2,
+            overscrollBehavior: "contain",
+            px: 2,
+            pb: 2,
           }}
         >
-          <DocumentDetails
-            doc={focusedDoc}
-            attached={focusedDoc ? attachedIds.has(focusedDoc.id) : false}
-          />
+          {visible.length === 0 ? (
+            <Typography variant="body2" color="text.secondary">
+              {documents.length === 0
+                ? t("generative:documentsBar.noLibraryDocuments")
+                : t("generative:documentsBar.noDocumentsFound")}
+            </Typography>
+          ) : (
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(132px, 1fr))",
+                gap: 1,
+              }}
+            >
+              {visible.map((doc) => (
+                <DocumentTile
+                  key={doc.id}
+                  doc={doc}
+                  attached={attachedIds.has(doc.id)}
+                  checked={selected.includes(doc.id)}
+                  focused={focusedId === doc.id}
+                  onClick={() => handleTileClick(doc)}
+                />
+              ))}
+            </Box>
+          )}
         </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>{t("common:cancel")}</Button>
-        <Button
-          variant="contained"
-          disabled={selected.length === 0}
-          onClick={handleConfirm}
-        >
-          {t("generative:documentsBar.addSelected", {
-            count: selected.length,
-          })}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      </Box>
+      <Box
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          borderLeft: 1,
+          borderColor: "divider",
+          overflowY: "auto",
+          overscrollBehavior: "contain",
+          p: 2,
+        }}
+      >
+        <DocumentDetails
+          doc={focusedDoc}
+          attached={focusedDoc ? attachedIds.has(focusedDoc.id) : false}
+        />
+      </Box>
+    </RAGAdvancedDialog>
   );
 }
 

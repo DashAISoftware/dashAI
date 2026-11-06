@@ -183,27 +183,28 @@ export default function DocumentsBar({
         >
           {documents.length}
         </Typography>
-        <Stack direction="row" spacing={0.5} sx={{ ml: 2 }}>
-          <Tooltip title={t("documentsBar.addFromData")}>
-            <IconButton
-              size="small"
-              onClick={() => setPickerOpen(true)}
-              aria-label={t("documentsBar.addFromData")}
-            >
-              <LibraryAddIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={t("documentsBar.uploadToData")}>
-            <IconButton
-              size="small"
-              onClick={() => setUploadOpen(true)}
-              aria-label={t("documentsBar.uploadToData")}
-            >
-              <UploadFileIcon sx={{ fontSize: 18 }} />
-            </IconButton>
-          </Tooltip>
-        </Stack>
       </Box>
+
+      {/* Kept side by side as in the original documents panel: the two primary
+          actions read as one row instead of a stack. */}
+      <Stack direction="row" spacing={1} sx={{ flexShrink: 0, px: 4, pb: 2 }}>
+        <Button
+          variant="contained"
+          fullWidth
+          startIcon={<LibraryAddIcon />}
+          onClick={() => setPickerOpen(true)}
+        >
+          {t("documentsBar.addFromData")}
+        </Button>
+        <Button
+          variant="outlined"
+          fullWidth
+          startIcon={<UploadFileIcon />}
+          onClick={() => setUploadOpen(true)}
+        >
+          {t("documentsBar.uploadToData")}
+        </Button>
+      </Stack>
 
       {/* {showSearch && documents.length > 1 && (
         <Box sx={{ px: 4, pb: 2, flexShrink: 0 }}>
@@ -222,6 +223,7 @@ export default function DocumentsBar({
           minHeight: 0,
           overflowY: "auto",
           overflowX: "hidden",
+          overscrollBehavior: "contain",
           px: 4,
           pb: 2,
           width: "100%",
@@ -267,29 +269,6 @@ export default function DocumentsBar({
                 ? t("documentsBar.noDocumentsFound")
                 : t("documentsBar.noDocumentsInSession")}
             </Typography>
-            {!searchQuery && (
-              <Stack
-                direction="row"
-                spacing={1}
-                useFlexGap
-                sx={{ flexWrap: "wrap", justifyContent: "center" }}
-              >
-                <Button
-                  size="small"
-                  startIcon={<LibraryAddIcon fontSize="small" />}
-                  onClick={() => setPickerOpen(true)}
-                >
-                  {t("documentsBar.addFromData")}
-                </Button>
-                <Button
-                  size="small"
-                  startIcon={<UploadFileIcon fontSize="small" />}
-                  onClick={() => setUploadOpen(true)}
-                >
-                  {t("documentsBar.uploadToData")}
-                </Button>
-              </Stack>
-            )}
           </Box>
         )}
       </Box>

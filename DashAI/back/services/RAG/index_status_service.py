@@ -36,6 +36,9 @@ from DashAI.back.models.RAG.RAG_constants import (
 from DashAI.back.models.RAG.retrievers.dense.dense_embedding_retriever import (
     DenseEmbeddingRetriever,
 )
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    strip_expansion_options,
+)
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
 from DashAI.back.services.RAG.chunking_service import ChunkingService
 from DashAI.back.services.RAG.index_job_service import get_index_job, get_live_index_job
@@ -362,7 +365,9 @@ class IndexStatusService:
 
         Composite retrievers are never cached by the pipeline — only their
         children are — so a composite is ready exactly when all of its leaves
-        are.
+        are. The retrieve-then-expand options are stripped before the lookup:
+        they are post-processing knobs, so toggling them must not report a
+        stale index.
         """
         if not isinstance(retriever, dict) or not retriever.get("component"):
             return False
@@ -380,7 +385,7 @@ class IndexStatusService:
         if component not in self._registry:
             return False
         model_class = self._registry[component]["class"]
-        sorted_params = dict(sorted(params.items()))
+        sorted_params = dict(sorted(strip_expansion_options(params).items()))
         try:
             if issubclass(model_class, DenseEmbeddingRetriever):
                 return (

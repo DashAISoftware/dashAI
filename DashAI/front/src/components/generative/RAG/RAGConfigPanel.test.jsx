@@ -4,6 +4,13 @@ import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "../../../test-utils/renderWithProviders";
 import RAGConfigPanel from "./RAGConfigPanel";
 
+// react-markdown ships ESM only and Create React App's jest does not transform
+// it; the panel reaches it through the prompt-aware forms.
+jest.mock("react-markdown", () => ({
+  __esModule: true,
+  default: ({ children }) => <span>{children}</span>,
+}));
+
 // One stable object: the panel's loader depends on `enqueueSnackbar`, so a
 // fresh reference per render would restart the load on every render.
 jest.mock("notistack", () => {
@@ -19,6 +26,9 @@ jest.mock("../../../api/rag", () => ({
   getSessionConfiguration: jest.fn(),
   updateGenerativeSessionParams: jest.fn(),
   getDefaultPrompts: jest.fn(),
+  getQueryTransformationComponents: jest.fn(),
+  getQueryTransformationPrompts: jest.fn(),
+  getGeneratorComponents: jest.fn(),
 }));
 jest.mock("../../../api/session", () => ({
   updateGenerativeSession: jest.fn(),
@@ -108,6 +118,17 @@ const CONFIGURATION = {
     preset_display_name: "Balanced",
     summary: "400 characters",
   },
+  // What the backend returns for a session with no query transformation:
+  // the section is always present, disabled.
+  query_transformation: {
+    section_name: "Query Transformation",
+    component: null,
+    display_name: null,
+    description: null,
+    registered: false,
+    params: [],
+    enabled: false,
+  },
   retriever_model: {
     section_name: "Retrieval",
     component: "BM25Retriever",
@@ -151,6 +172,9 @@ beforeEach(() => {
   api.getRetrieverComponents.mockResolvedValue([]);
   api.updateGenerativeSessionParams.mockResolvedValue({});
   api.getDefaultPrompts.mockResolvedValue([]);
+  api.getQueryTransformationComponents.mockResolvedValue([]);
+  api.getQueryTransformationPrompts.mockResolvedValue([]);
+  api.getGeneratorComponents.mockResolvedValue([]);
   loadRetrieverKinds.mockResolvedValue({});
 });
 

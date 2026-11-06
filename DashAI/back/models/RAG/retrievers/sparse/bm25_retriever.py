@@ -1,14 +1,14 @@
 import logging
 import os
 import pickle
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from scipy.sparse import lil_matrix
 from sklearn.metrics.pairwise import pairwise_distances
 
+from DashAI.back.core.atomic import atomic_open
 from DashAI.back.core.schema_fields import (
-    BaseSchema,
     component_field,
     enum_field,
     float_field,
@@ -17,12 +17,16 @@ from DashAI.back.core.schema_fields import (
 )
 from DashAI.back.core.utils import MultilingualString
 from DashAI.back.models.RAG.documents import Chunk
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    RetrievalExpansionSchema,
+)
 from DashAI.back.models.RAG.retrievers.sparse.sparse_retriever import SparseRetriever
+from DashAI.back.models.RAG.retrievers.trace_utils import retriever_trace
 
 log = logging.getLogger(__name__)
 
 
-class BM25RetrieverSchema(BaseSchema):
+class BM25RetrieverSchema(RetrievalExpansionSchema):
     """Schema for :class:`BM25Retriever`.
 
     Attributes:
@@ -135,7 +139,20 @@ class BM25Retriever(SparseRetriever):
         zh="使用 BM25（Okapi）排序进行文档检索的稀疏检索器。",
     )
 
+    REPRESENTATION = MultilingualString(
+        en="k1 {k1} · b {b} · top-k {top_k}",
+        es="k1 {k1} · b {b} · top-k {top_k}",
+        pt="k1 {k1} · b {b} · top-k {top_k}",
+        de="k1 {k1} · b {b} · top-k {top_k}",
+        zh="k1 {k1} · b {b} · top-k {top_k}",
+    )
+
     SCHEMA = BM25RetrieverSchema
+
+    @classmethod
+    def _get_main_parameters(cls) -> Dict[str, str]:
+        """Return the BM25 weighting and top-k parameter paths."""
+        return {"k1": "k1", "b": "b", "top_k": "top_k"}
 
     def __init__(self, **kwargs):
         """Initialize the BM25 retriever.
@@ -163,6 +180,11 @@ class BM25Retriever(SparseRetriever):
     def load(self) -> bool:
         """Load a previously saved BM25 state from disk.
 
+        The storage folder is content-addressed, so the state may have been
+        fitted by another session over the same corpus. The persisted map holds
+        chunk ids, which this session resolves through its own chunks, so the
+        state is reused as-is.
+
         Returns:
             ``True`` if state was loaded successfully, ``False`` if
             no saved state exists or loading failed.
@@ -179,11 +201,18 @@ class BM25Retriever(SparseRetriever):
                 bm25_matrix = pickle.load(f)
             with open(os.path.join(model_dir, "bm25_row_to_chunk_id.pkl"), "rb") as f:
                 matrix_row_to_chunk_id = pickle.load(f)
+            if not self._row_map_matches_corpus(matrix_row_to_chunk_id):
+                log.warning(
+                    "Persisted BM25 state does not describe the current corpus; "
+                    "refitting from the injected chunks."
+                )
+                return False
             self._converter.vectorizer = vectorizer
             self._converter.fitted = True
             self._tf_matrix = tf_matrix
             self._bm25_matrix = bm25_matrix
             self.matrix_row_to_chunk_id = matrix_row_to_chunk_id
+            self._state_loaded = True
             return True
         except Exception as e:
             log.error("Error loading BM25 state: %s", e)
@@ -208,21 +237,14 @@ class BM25Retriever(SparseRetriever):
             "bm25_row_to_chunk_id.pkl": self.matrix_row_to_chunk_id,
         }
         for fname, obj in to_save.items():
-            with open(os.path.join(model_dir, fname), "wb") as f:
+            with atomic_open(os.path.join(model_dir, fname), "wb") as f:
                 pickle.dump(obj, f)
 
     def _fit(self):
         """Count the words of every chunk and compute the BM25-weighted matrix."""
-        chunk_texts = []
-        current_idx = 0
-        self.matrix_row_to_chunk_id: Dict[int, int] = {}
-
-        for doc_chunks in self.chunks.values():
-            for chunk in doc_chunks.values():
-                chunk_texts.append(chunk.text)
-                self.matrix_row_to_chunk_id[current_idx] = chunk.id
-                current_idx += 1
-
+        self._state_loaded = False
+        self.matrix_row_to_chunk_id: Dict[int, int] = self.row_map_for_corpus()
+        chunk_texts = [chunk.text for chunk in self._ordered_chunks()]
         self._tf_matrix = self._converter.fit_matrix(chunk_texts)
 
         tf = self._tf_matrix.copy()
@@ -257,7 +279,9 @@ class BM25Retriever(SparseRetriever):
         """
         return self._top_k
 
-    def retrieve(self, query: str, top_k: int | None = None) -> List[Chunk]:
+    def retrieve(
+        self, query: str, top_k: int | None = None
+    ) -> Tuple[List[Chunk], Dict[str, Any]]:
         """Retrieve the top-k chunks by BM25-weighted similarity.
 
         Args:
@@ -266,7 +290,8 @@ class BM25Retriever(SparseRetriever):
                 configured value if ``None``.
 
         Returns:
-            A list of :class:`Chunk` instances ordered by distance.
+            A ``(chunks, trace)`` tuple, where ``chunks`` is ordered by
+            distance and ``trace`` is this retriever's trace node.
         """
         self._check_infra()
         k = top_k if top_k is not None else self._top_k
@@ -277,9 +302,11 @@ class BM25Retriever(SparseRetriever):
             metric=self.similarity_function_name,
         ).flatten()
         top_indices = np.argsort(distances)[:k]
-        return [
+        results = [
             self._chunk_lookup[self.matrix_row_to_chunk_id[idx]] for idx in top_indices
         ]
+        results = self._apply_retrieval_expansion(results)
+        return results, retriever_trace(self, results)
 
     def score_chunks(self, chunk_ids: List[int], query: str) -> List[Tuple[int, float]]:
         """Score a set of chunk IDs against the query.

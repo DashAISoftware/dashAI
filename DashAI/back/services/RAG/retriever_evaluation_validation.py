@@ -1,0 +1,445 @@
+"""Validation for the LLM-evaluated composite retrievers.
+
+Single-responsibility service extracted from ``SessionValidationService``. It
+owns the structural and class checks for the nested ``llm_model`` and
+``prompt`` references of the LLM-evaluated retrievers and resolves their
+schema defaults. Prompt-template validation is injected as a callable so this
+class never reaches into ``PromptService`` internals.
+"""
+
+from __future__ import annotations
+
+import copy
+import logging
+from typing import Any, Callable, Dict, List
+
+from DashAI.back.core.schema_fields.defaults import resolve_component_defaults
+from DashAI.back.dependencies.registry.component_registry import ComponentRegistry
+from DashAI.back.models.RAG.prompts.evaluation import RetrievalSufficiencyPrompt
+from DashAI.back.models.RAG.RAG_constants import (
+    LLM_EVALUATED_RETRIEVER_NAMES,
+    RAG_PARAM_RETRIEVER_MODEL,
+)
+from DashAI.back.models.RAG.RAG_defaults import (
+    DEFAULT_LLM_FILTER_PROMPT_COMPONENT,
+    DEFAULT_SUFFICIENCY_PROMPT_COMPONENT,
+    merge_rag_llm_params,
+    rag_llm_param_overrides,
+)
+from DashAI.back.models.text_to_text_generation_model import (
+    TextToTextGenerationTaskModel,
+)
+
+log = logging.getLogger(__name__)
+
+#: Default sufficiency prompts whose ``template`` may be injected from
+#: ``metadata["templates"]`` before schema validation, exactly like the default
+#: generation and transformation prompts.
+DEFAULT_SUFFICIENCY_PROMPT_NAMES = frozenset({DEFAULT_SUFFICIENCY_PROMPT_COMPONENT})
+
+#: Default LLM filter prompts with the same blank-template tolerance.
+DEFAULT_FILTER_PROMPT_NAMES = frozenset({DEFAULT_LLM_FILTER_PROMPT_COMPONENT})
+
+#: Every default LLM-evaluated prompt; used for blank-template tolerance.
+DEFAULT_LLM_PROMPT_NAMES = (
+    DEFAULT_SUFFICIENCY_PROMPT_NAMES | DEFAULT_FILTER_PROMPT_NAMES
+)
+
+#: Nested retriever-parameter keys, hoisted to avoid magic strings.
+_PROMPT_KEY = "prompt"
+_LLM_MODEL_KEY = "llm_model"
+
+
+class RetrieverEvaluationValidationService:
+    """Validates the nested refs of an LLM-evaluated composite retriever.
+
+    ``validate`` performs the full structural plus class check (prompt family
+    and ``llm_model`` subclass enforcement, plus template validation through the
+    injected callable). ``apply_defaults`` resolves the nested LLM's and
+    prompt's omitted parameters from their schemas, applying the shared RAG LLM
+    overrides to the nested LLM.
+    """
+
+    def __init__(
+        self,
+        registry: ComponentRegistry,
+        prompt_validator: Callable[[str, str], None],
+    ):
+        """Initialise the validator.
+
+        Parameters
+        ----------
+        registry : ComponentRegistry
+            Application component registry.
+        prompt_validator : Callable[[str, str], None]
+            ``PromptService.validate_prompt_template`` injected as a
+            dependency; called as ``(component_name, template)`` and raises
+            when the template is invalid.
+        """
+        self._registry = registry
+        self._prompt_validator = prompt_validator
+
+    def validate(self, retriever_ref: Dict[str, Any]) -> None:
+        """Validate an LLM-evaluated retriever's nested references.
+
+        The retriever must be a ``{component, params}`` dict with a registered
+        outer component. Its nested ``prompt`` must be a component reference to
+        a :class:`RetrievalSufficiencyPrompt` (or the retriever's declared
+        ``EVALUATION_PROMPT_BASE``) and its nested ``llm_model`` a registered
+        :class:`TextToTextGenerationTaskModel`. A caller-provided nested prompt
+        template is validated here; default templates are injected later by the
+        validation service's component-params pass.
+
+        Parameters
+        ----------
+        retriever_ref : Dict[str, Any]
+            The ``retriever_model`` reference, read-only here.
+
+        Raises
+        ------
+        ValueError
+            If the reference is present but malformed.
+        """
+        where = f"'{RAG_PARAM_RETRIEVER_MODEL}'"
+        if not isinstance(retriever_ref, dict):
+            raise ValueError(
+                f"{where} must be a dict, got {type(retriever_ref).__name__}."
+            )
+        component_name = retriever_ref.get("component")
+        if not isinstance(component_name, str):
+            raise ValueError(f"Missing or invalid 'component' in {where}.")
+        params = retriever_ref.get("params")
+        if not isinstance(params, dict):
+            raise ValueError(f"Missing or invalid 'params' in {where}.")
+        if component_name not in self._registry:
+            raise ValueError(
+                f"Component '{component_name}' at {where} is not registered."
+            )
+        component_class = self._registry[component_name]["class"]
+
+        self._validate_prompt(component_class, params, where)
+        self._validate_llm(params, where)
+        log.debug("LLM-evaluated retriever enabled with %s", component_class.__name__)
+
+    def apply_defaults(self, retriever_ref: Dict[str, Any]) -> None:
+        """Fill the retriever's omitted nested params from their schemas.
+
+        The retriever's own schema placeholders plus the nested LLM's and
+        prompt's placeholders are resolved server-side, sitting *under*
+        whatever the caller sent. The nested LLM additionally receives the RAG
+        LLM overrides (see
+        :func:`~DashAI.back.models.RAG.RAG_defaults.merge_rag_llm_params`):
+        a value equal to the model schema's placeholder counts as "not
+        customized" and is replaced, while an explicit non-default value wins.
+        The resolved default prompt template is later injected from its
+        language-driven defaults by the component-params pass.
+
+        Parameters
+        ----------
+        retriever_ref : Dict[str, Any]
+            The ``retriever_model`` reference, mutated in place only when the
+            shape allows it.
+        """
+        if not isinstance(retriever_ref, dict):
+            return
+        name = retriever_ref.get("component")
+        params = retriever_ref.get("params")
+        if not name or not isinstance(params, dict):
+            return
+
+        # Copy the resolved defaults: list-valued placeholders (notably
+        # ``children``) are assigned by reference by the shared resolver, so
+        # mutating this payload would otherwise mutate the registry schema for
+        # every later session.
+        defaults = copy.deepcopy(resolve_component_defaults(name, self._registry))
+        merged = {**defaults, **params}
+        llm_ref = merged.get(_LLM_MODEL_KEY)
+        if isinstance(llm_ref, dict):
+            self._apply_llm_defaults(llm_ref)
+        prompt_ref = merged.get(_PROMPT_KEY)
+        if isinstance(prompt_ref, dict):
+            self._apply_prompt_defaults(prompt_ref)
+        retriever_ref["params"] = merged
+
+    def validate_recursive(self, value: Any) -> None:
+        """Validate every LLM-evaluated retriever found in ``value``.
+
+        Mirrors :meth:`apply_defaults_recursive`: a composite can nest an
+        LLM-evaluated retriever as one of its children, so validating only the
+        top-level ``retriever_model`` would let a malformed nested prompt or LLM
+        family reach the retriever constructor instead of failing at save time.
+
+        Parameters
+        ----------
+        value : Any
+            A ``{component, params}`` reference, a params container, or a list
+            of either, read-only here.
+
+        Raises
+        ------
+        ValueError
+            If any nested LLM-evaluated reference is malformed.
+        """
+        if isinstance(value, dict):
+            component = value.get("component")
+            if (
+                isinstance(component, str)
+                and component in LLM_EVALUATED_RETRIEVER_NAMES
+            ):
+                self.validate(value)
+            for child in value.values():
+                self.validate_recursive(child)
+        elif isinstance(value, list):
+            for child in value:
+                self.validate_recursive(child)
+
+    def apply_defaults_recursive(self, value: Any) -> None:
+        """Apply defaults to every LLM-evaluated retriever found in ``value``.
+
+        A composite retriever can nest an LLM-evaluated retriever as one of its
+        children. Defaults must be resolved for those nested references too, so
+        a persisted configuration stays complete instead of relying on the
+        retriever constructor to fill the gaps at run time.
+
+        Parameters
+        ----------
+        value : Any
+            A ``{component, params}`` reference, a params container, or a list
+            of either. Mutated in place when an LLM-evaluated ref is found.
+        """
+        if isinstance(value, dict):
+            component = value.get("component")
+            if (
+                isinstance(component, str)
+                and component in LLM_EVALUATED_RETRIEVER_NAMES
+            ):
+                self.apply_defaults(value)
+            for child in value.values():
+                self.apply_defaults_recursive(child)
+        elif isinstance(value, list):
+            for child in value:
+                self.apply_defaults_recursive(child)
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
+
+    def _apply_llm_defaults(self, llm_ref: Dict[str, Any]) -> None:
+        """Resolve the nested LLM's params with the RAG overrides on top.
+
+        Parameters
+        ----------
+        llm_ref : Dict[str, Any]
+            A ``{component, params}`` reference, mutated in place. A missing or
+            malformed ``params`` container counts as empty, so the reference is
+            normalized to the full schema defaults plus the RAG overrides.
+        """
+        llm_name = llm_ref.get("component")
+        if not llm_name:
+            return
+        llm_params = llm_ref.get("params")
+        caller_params = llm_params if isinstance(llm_params, dict) else {}
+        llm_defaults = copy.deepcopy(
+            resolve_component_defaults(llm_name, self._registry)
+        )
+        llm_ref["params"] = merge_rag_llm_params(
+            llm_defaults, caller_params, rag_llm_param_overrides()
+        )
+
+    def _apply_prompt_defaults(self, prompt_ref: Dict[str, Any]) -> None:
+        """Resolve the nested prompt's placeholders under the caller values.
+
+        Parameters
+        ----------
+        prompt_ref : Dict[str, Any]
+            A ``{component, params}`` reference, mutated in place when its
+            ``params`` is a dict. Left untouched otherwise.
+        """
+        prompt_name = prompt_ref.get("component")
+        prompt_params = prompt_ref.get("params")
+        if not prompt_name or not isinstance(prompt_params, dict):
+            return
+        prompt_defaults = copy.deepcopy(
+            resolve_component_defaults(prompt_name, self._registry)
+        )
+        prompt_ref["params"] = {**prompt_defaults, **prompt_params}
+
+    def _validate_prompt(
+        self,
+        component_class: type,
+        params: Dict[str, Any],
+        where: str,
+    ) -> None:
+        """Validate the nested prompt reference and its family.
+
+        Parameters
+        ----------
+        component_class : type
+            The resolved outer retriever class; its
+            ``EVALUATION_PROMPT_BASE`` selects the accepted prompt family.
+        params : Dict[str, Any]
+            The retriever params dict.
+        where : str
+            Human-readable location used in error messages.
+
+        Raises
+        ------
+        ValueError
+            If the prompt reference is missing, unregistered, of the wrong
+            family or carries a malformed template.
+        """
+        prompt_where = f"{where}.params.{_PROMPT_KEY}"
+        prompt_ref = params.get(_PROMPT_KEY)
+        if not isinstance(prompt_ref, dict) or "component" not in prompt_ref:
+            raise ValueError(
+                f"'{_PROMPT_KEY}' is required in {where} and must be a "
+                "component reference."
+            )
+        prompt_name = prompt_ref["component"]
+        if not isinstance(prompt_name, str):
+            raise ValueError(
+                f"'component' of {prompt_where} must be a string, got "
+                f"{type(prompt_name).__name__}."
+            )
+        prompt_base = getattr(
+            component_class, "EVALUATION_PROMPT_BASE", RetrievalSufficiencyPrompt
+        )
+        self._resolve_subclass(prompt_name, prompt_base, prompt_where)
+
+        prompt_params = prompt_ref.get("params")
+        if prompt_params is not None and not isinstance(prompt_params, dict):
+            raise ValueError(
+                f"'params' of {prompt_where} must be a dict, got "
+                f"{type(prompt_params).__name__}."
+            )
+        template = (
+            prompt_params.get("template") if isinstance(prompt_params, dict) else None
+        )
+        self._validate_nested_template(prompt_name, template)
+
+    def _validate_llm(self, params: Dict[str, Any], where: str) -> None:
+        """Validate the nested LLM reference.
+
+        Parameters
+        ----------
+        params : Dict[str, Any]
+            The retriever params dict.
+        where : str
+            Human-readable location used in error messages.
+
+        Raises
+        ------
+        ValueError
+            If the LLM reference is missing, unregistered, of the wrong type,
+            does not support function calling, or carries a malformed params
+            container.
+        """
+        llm_where = f"{where}.params.{_LLM_MODEL_KEY}"
+        llm_ref = params.get(_LLM_MODEL_KEY)
+        if not isinstance(llm_ref, dict) or "component" not in llm_ref:
+            raise ValueError(
+                f"'{_LLM_MODEL_KEY}' is required in {where} and must be a "
+                "component reference."
+            )
+        llm_name = llm_ref["component"]
+        if not isinstance(llm_name, str):
+            raise ValueError(
+                f"'component' of {llm_where} must be a string, got "
+                f"{type(llm_name).__name__}."
+            )
+        llm_class = self._resolve_subclass(
+            llm_name, TextToTextGenerationTaskModel, llm_where
+        )
+        if not llm_class.supports_function_calling():
+            raise ValueError(
+                f"Component '{llm_name}' at '{llm_where}' must support function "
+                "calling; the LLM-backed retrievers require a function-calling "
+                "model."
+            )
+        llm_params = llm_ref.get("params")
+        if llm_params is not None and not isinstance(llm_params, dict):
+            raise ValueError(
+                f"'params' of {llm_where} must be a dict, got "
+                f"{type(llm_params).__name__}."
+            )
+
+    def _validate_nested_template(self, prompt_name: str, template: Any) -> None:
+        """Validate the nested LLM-evaluated prompt's ``template`` value.
+
+        Default sufficiency and filter prompts may omit or blank their template:
+        the language-driven template is injected later by the component-params
+        pass (see ``SessionValidationService._validate_component_params``). Any
+        other prompt must carry a non-blank string template with the required
+        placeholders.
+
+        Parameters
+        ----------
+        prompt_name : str
+            Registered prompt component name.
+        template : Any
+            The raw ``template`` value sent for the prompt, or ``None`` when
+            the key is absent.
+
+        Raises
+        ------
+        ValueError
+            If the template is not a string, or is blank/absent for a
+            non-default prompt.
+        """
+        where = f"{RAG_PARAM_RETRIEVER_MODEL}.params.{_PROMPT_KEY}.params.template"
+        is_default = prompt_name in DEFAULT_LLM_PROMPT_NAMES
+        is_blank = template is None or (
+            isinstance(template, str) and not template.strip()
+        )
+        if is_blank:
+            if is_default:
+                return
+            raise ValueError(
+                f"'{where}' must not be blank; provide a template containing "
+                "the required placeholders."
+            )
+        if not isinstance(template, str):
+            raise ValueError(
+                f"'{where}' must be a string, got {type(template).__name__}."
+            )
+        self._prompt_validator(prompt_name, template)
+
+    def _resolve_subclass(self, name: str, base: type, where: str) -> type:
+        """Resolve ``name`` in the registry and assert it derives from ``base``.
+
+        Parameters
+        ----------
+        name : str
+            Registered component name.
+        base : type
+            Required ancestor class.
+        where : str
+            Human-readable location used in the error message.
+
+        Returns
+        -------
+        type
+            The resolved component class.
+
+        Raises
+        ------
+        ValueError
+            If the component is unregistered or not a subclass of ``base``.
+        """
+        if name not in self._registry:
+            raise ValueError(f"Component '{name}' at '{where}' is not registered.")
+        klass = self._registry[name]["class"]
+        if not issubclass(klass, base):
+            raise ValueError(
+                f"Component '{name}' at '{where}' must be a {base.__name__}."
+            )
+        return klass
+
+
+__all__: List[str] = [
+    "DEFAULT_FILTER_PROMPT_NAMES",
+    "DEFAULT_LLM_PROMPT_NAMES",
+    "DEFAULT_SUFFICIENCY_PROMPT_NAMES",
+    "LLM_EVALUATED_RETRIEVER_NAMES",
+    "RetrieverEvaluationValidationService",
+]

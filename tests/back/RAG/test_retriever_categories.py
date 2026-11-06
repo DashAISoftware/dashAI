@@ -11,6 +11,9 @@ EXPECTED = {
     "SequentialRetriever": "Composite retrievers",
     "MMRRerankerRetriever": "Composite retrievers",
     "SentenceTransformerCrossEncoderRetriever": "Composite retrievers",
+    "LLMEvaluatedDepthRetriever": "LLM retrievers",
+    "LLMEvaluatedEnsembleRetriever": "LLM retrievers",
+    "LLMFilterRetriever": "LLM retrievers",
 }
 
 

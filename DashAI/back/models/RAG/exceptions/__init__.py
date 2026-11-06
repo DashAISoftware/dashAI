@@ -18,7 +18,8 @@ Exception tree (simplified)::
     ├── RAGRetrieverError
     │   ├── RAGRetrieverMissingParameterError
     │   ├── RAGRetrieverCompositeValidationError
-    │   └── RAGRetrieverEmptyChildrenError
+    │   ├── RAGRetrieverEmptyChildrenError
+    │   └── RAGRetrieverEvaluationError
     ├── RAGPromptError
     │   ├── RAGPromptValidationError
     │   └── RAGPromptTemplateError
@@ -35,6 +36,9 @@ Exception tree (simplified)::
     │   └── RAGEmbeddingEmptyInputError
     ├── RAGFactoryError
     │   └── RAGComponentNotFoundError
+    ├── RAGTransformationError
+    │   ├── RAGTransformationConfigError
+    │   └── RAGTransformationOutputError
     └── RAGTaskError
         └── RAGTaskInputError
 """
@@ -81,11 +85,17 @@ from DashAI.back.models.RAG.exceptions.retriever import (
     RAGRetrieverCompositeValidationError,
     RAGRetrieverEmptyChildrenError,
     RAGRetrieverError,
+    RAGRetrieverEvaluationError,
     RAGRetrieverMissingParameterError,
 )
 from DashAI.back.models.RAG.exceptions.task import (
     RAGTaskError,
     RAGTaskInputError,
+)
+from DashAI.back.models.RAG.exceptions.transformation import (
+    RAGTransformationConfigError,
+    RAGTransformationError,
+    RAGTransformationOutputError,
 )
 
 __all__ = [
@@ -105,6 +115,7 @@ __all__ = [
     "RAGRetrieverMissingParameterError",
     "RAGRetrieverCompositeValidationError",
     "RAGRetrieverEmptyChildrenError",
+    "RAGRetrieverEvaluationError",
     # Prompt
     "RAGPromptError",
     "RAGPromptValidationError",
@@ -126,6 +137,10 @@ __all__ = [
     # Factory
     "RAGFactoryError",
     "RAGComponentNotFoundError",
+    # Transformation
+    "RAGTransformationError",
+    "RAGTransformationConfigError",
+    "RAGTransformationOutputError",
     # Task
     "RAGTaskError",
     "RAGTaskInputError",

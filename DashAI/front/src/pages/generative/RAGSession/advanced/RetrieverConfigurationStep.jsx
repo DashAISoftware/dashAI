@@ -17,10 +17,10 @@ import {
   retrieverCategory,
   sortByCategory,
 } from "../retrieverKinds";
-import FormSchema from "../../../../components/shared/FormSchema";
+import FormSchemaWithPrompts from "../../../../components/generative/RAG/FormSchemaWithPrompts";
 import CompositeRetrieverBuilder from "./CompositeRetrieverBuilder";
 import { FormSchemaProvider } from "../../../../contexts/schema";
-import { resolveDefaults } from "../../../../utils/schema";
+import { resolveRetrieverDefaults } from "./resolveRetrieverDefaults";
 
 /**
  * Resolves a component's display name from its display_name field (string or multilingual).
@@ -65,7 +65,7 @@ function AutoSaveFormSchema({
     if (!selectedRetriever) return;
     let cancelled = false;
     (async () => {
-      const d = await resolveDefaults(selectedRetriever.name);
+      const d = await resolveRetrieverDefaults(selectedRetriever.name);
       if (!cancelled) setFetchedDefaults(d);
     })();
     return () => {
@@ -92,10 +92,10 @@ function AutoSaveFormSchema({
   );
 
   return (
-    <FormSchema
+    <FormSchemaWithPrompts
       model={selectedRetriever.name}
       initialValues={initialValues}
-      autoSave={true}
+      autoSave
       onFormSubmit={handleFormSubmit}
       formSubmitRef={formikRef}
       hideButtons
@@ -202,7 +202,7 @@ const RetrieverConfigurationStep = forwardRef(
           return;
         }
 
-        const defaults = await resolveDefaults(newValue.name);
+        const defaults = await resolveRetrieverDefaults(newValue.name);
         setSelectedRetriever(newValue);
         setRetrieverModel({ component: newValue.name, params: defaults });
         setOpenConfig(Boolean(newValue?.schema?.properties));
@@ -248,8 +248,12 @@ const RetrieverConfigurationStep = forwardRef(
       selectedRetriever && isCompositeKind(selectedRetriever.name);
 
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3, p: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 0 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+        <Typography
+          variant="subtitle2"
+          component="h3"
+          sx={{ mb: 0, fontWeight: 600 }}
+        >
           {t("generative:rag.composite.selectModel")}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>

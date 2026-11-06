@@ -108,9 +108,9 @@ function ParamsSettings({
             <FormSchemaFieldWithParent
               key={objName}
               name={objName}
+              parent={fieldSchema.parent}
               label={fieldSchema.title}
               description={fieldSchema.description}
-              parent={fieldSchema.parent}
               field={{
                 value: value,
                 onChange: fieldOnChange,

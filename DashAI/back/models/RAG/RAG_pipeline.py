@@ -9,8 +9,9 @@ retrieval → prompt formatting → LLM generation.
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Final, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -19,6 +20,7 @@ from DashAI.back.core.schema_fields import (
     component_field,
     int_field,
     list_field,
+    none_type,
     schema_field,
 )
 from DashAI.back.core.utils import MultilingualString
@@ -30,17 +32,36 @@ from DashAI.back.models.RAG.exceptions import (
     RAGPipelineInputError,
     RAGPipelineRuntimeError,
 )
+from DashAI.back.models.RAG.progress_utils import (
+    normalize_progress_text,
+    progress_scope,
+    report_progress,
+)
 from DashAI.back.models.RAG.RAG_constants import (
     RAG_INFRA_KEYS,
     RAG_MODEL_KEYS,
     RAG_PARAM_KEYS,
     RAG_PARAM_KEYS_ALL,
+    RAG_PARAM_QUERY_TRANSFORMATION,
+    RAG_PROGRESS_QUERIES_KEY,
+    RAG_PROGRESS_STAGE_GENERATING,
+    RAG_PROGRESS_STAGE_RETRIEVING,
+    RAG_PROGRESS_STAGE_TRANSFORMING,
 )
+from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
+from DashAI.back.models.RAG.retrievers.retrieval_contracts import (
+    unpack_retrieval_result,
+)
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import prefer_wider_chunk
+from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref
 from DashAI.back.models.text_to_text_generation_model import (
     TextToTextGenerationTaskModel,
 )
 
 log = logging.getLogger(__name__)
+
+#: Separator between the first and last position of a covered range.
+_POSITION_RANGE_SEPARATOR: Final[str] = "–"
 
 if TYPE_CHECKING:
     from DashAI.back.models.RAG.chunking_models.base_chunking_model import (
@@ -48,6 +69,9 @@ if TYPE_CHECKING:
     )
     from DashAI.back.models.RAG.prompts import BasePrompt
     from DashAI.back.models.RAG.retrievers.base_retriever import BaseRetriever
+    from DashAI.back.models.RAG.transformation.base_query_transformation import (
+        BaseQueryTransformation,
+    )
 
 
 @dataclass(frozen=True)
@@ -78,6 +102,9 @@ class ChunkReference:
         The chunk text.
     page : int or None
         Page the chunk starts in, None when the format has no pages.
+    source_positions : tuple of int or None
+        Document positions covered by a retrieve-then-expand unit. ``None``
+        for a stored chunk; the frontend uses it to render the covered range.
     """
 
     document_id: int
@@ -85,6 +112,7 @@ class ChunkReference:
     document_position: int
     text: str
     page: Optional[int] = None
+    source_positions: Optional[Tuple[int, ...]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a JSON serializable dict representation.
@@ -92,7 +120,9 @@ class ChunkReference:
         Returns
         -------
         dict
-            Every attribute, keyed by name.
+            Every attribute, keyed by name. ``source_positions`` is the covered
+            range of a retrieve-then-expand unit, or ``None`` for a stored
+            chunk.
         """
         return {
             "document_id": self.document_id,
@@ -100,15 +130,196 @@ class ChunkReference:
             "document_position": self.document_position,
             "text": self.text,
             "page": self.page,
+            "source_positions": (
+                list(self.source_positions)
+                if self.source_positions is not None
+                else None
+            ),
+        }
+
+
+def merge_round_robin(retrieved_lists: List[List[Chunk]]) -> List[Chunk]:
+    """Merge per-query retrieval results by round-robin interleave.
+
+    Queries are retrieved independently and their ranked lists are merged
+    fairly: the first result of every list, then the second of every list, and
+    so on. A chunk already seen is keyed by
+    ``(document_id, document_position)`` — the same identity the rest of the
+    pipeline uses. On a repeated key the chunk covering more document positions
+    replaces the earlier one in place (a widened unit beats the plain chunk or
+    narrow window anchored on the same position), so the result keeps the widest
+    context and never grows beyond the number of distinct keys. Otherwise the
+    order of first appearance wins, and empty (or shorter) lists are tolerated.
+
+    Parameters
+    ----------
+    retrieved_lists : List[List[Chunk]]
+        One ranked chunk list per query, in query order.
+
+    Returns
+    -------
+    List[Chunk]
+        The merged, de-duplicated chunks in round-robin order.
+    """
+    seen: Dict[Tuple[int, int], int] = {}
+    merged: List[Chunk] = []
+    max_length = max((len(chunks) for chunks in retrieved_lists), default=0)
+    for index in range(max_length):
+        for chunks in retrieved_lists:
+            if index >= len(chunks):
+                continue
+            chunk = chunks[index]
+            key = (chunk.document_id, chunk.document_position)
+            position = seen.get(key)
+            if position is None:
+                seen[key] = len(merged)
+                merged.append(chunk)
+                continue
+            merged[position] = prefer_wider_chunk(merged[position], chunk)
+    return merged
+
+
+def _chunk_label(chunk: Chunk) -> str:
+    """Build the prompt label describing which chunk positions *chunk* covers.
+
+    A stored chunk is labelled by its own position. A chunk widened by
+    retrieve-then-expand covers several positions, so the whole covered range is
+    rendered instead of only the first position, which would hide the rest of
+    the window from the model.
+
+    Parameters
+    ----------
+    chunk : Chunk
+        Retrieved chunk, possibly expanded.
+
+    Returns
+    -------
+    str
+        ``"chunk nº <position>"`` for a stored chunk, or
+        ``"chunks nº <first>–<last>"`` for an expanded unit.
+    """
+    covered = getattr(chunk, "source_positions", None)
+    if not covered:
+        return f"chunk nº {chunk.document_position}"
+    positions = sorted(set(covered))
+    if len(positions) == 1:
+        return f"chunk nº {positions[0]}"
+    contiguous = positions == list(range(positions[0], positions[-1] + 1))
+    if contiguous:
+        return f"chunks nº {positions[0]}{_POSITION_RANGE_SEPARATOR}{positions[-1]}"
+    listed = ", ".join(str(position) for position in positions)
+    return f"chunks nº {listed}"
+
+
+@dataclass(frozen=True)
+class PipelineStageTimings:
+    """Per-stage wall-clock durations of a single pipeline run.
+
+    Every value is a non-negative number of milliseconds measured with
+    ``time.perf_counter()`` inside ``RAGPipeline.generate()``. Progress events
+    emitted by nested LLM components (the transformer and LLM-evaluated
+    retrievers) run inside their stage timer, so the transformation/retrieval
+    durations include any reporter overhead they incur.
+
+    Stage timings include the first-use construction of that stage's lazy
+    model, because the load happens inside the timed call. Each stage's own
+    teardown is excluded: the timer is taken before ``_release`` runs.
+    ``total_ms`` is taken after the generation stage's teardown, so it covers
+    every teardown in addition to all stage work.
+
+    Attributes
+    ----------
+    transformation_ms : float
+        Duration of the ``_resolve_queries`` call, including any first-use
+        model construction, excluding that stage's teardown. Exactly ``0.0``
+        when the query transformation stage is disabled.
+    retrieval_ms : float
+        Duration of the ``_retrieve`` call, including the per-query retrieves,
+        the round-robin merge and any retriever model construction, excluding
+        that stage's teardown.
+    generation_ms : float
+        Duration of prompt building (``_build_prompt``) plus the LLM call
+        (``_generate_answer``), including the LLM's first-use construction and
+        excluding its teardown.
+    total_ms : float
+        Duration of the whole ``generate()`` call, from entry through the
+        generation stage's teardown to return.
+    """
+
+    transformation_ms: float
+    retrieval_ms: float
+    generation_ms: float
+    total_ms: float
+
+    def to_dict(self) -> Dict[str, float]:
+        """Return a JSON serializable dict representation.
+
+        Returns
+        -------
+        Dict[str, float]
+            The four timing fields, keyed by name in pipeline order.
+        """
+        return {
+            "transformation_ms": self.transformation_ms,
+            "retrieval_ms": self.retrieval_ms,
+            "generation_ms": self.generation_ms,
+            "total_ms": self.total_ms,
         }
 
 
 @dataclass(frozen=True)
+class ResolvedQueries:
+    """Queries resolved by the optional transformation stage.
+
+    Attributes
+    ----------
+    queries : List[str]
+        The queries actually retrieved. Always non-empty: the transformed
+        queries when the stage ran, or ``[input_message]`` when it is disabled.
+    transformed_queries : List[str] or None
+        The transformed queries, or ``None`` when no transformation ran.
+    message : str
+        Optional user-facing sentence the transformer produced. Empty when the
+        transformer (or a legacy/plugin one) supplied none.
+    justification : str
+        Optional short rationale the transformer produced. Empty when absent.
+    """
+
+    queries: List[str]
+    transformed_queries: Optional[List[str]]
+    message: str = ""
+    justification: str = ""
+
+
+@dataclass(frozen=True)
 class RAGGenerationOutput:
-    """Typed output from RAGPipeline.generate()."""
+    """Typed output from RAGPipeline.generate().
+
+    Attributes
+    ----------
+    message : str
+        The generated answer.
+    chunks : Dict[str, ChunkReference]
+        The retrieved chunks keyed by ``"<document_id>_<position>"``.
+    queries : List[str]
+        The queries used for retrieval (always a list; one element when the
+        query transformation stage is disabled or when rewriting produces a
+        single query).
+    trace : List[Dict[str, Any]]
+        One trace node per query, in query order. Each entry is
+        ``{"query": <query>, "retriever": <retriever trace node>}``. The
+        retriever nodes reference chunks by ``"<document_id>_<position>"`` —
+        the same keys as ``chunks`` — so the frontend joins them without
+        duplicating chunk payloads. Always a list.
+    timings : PipelineStageTimings
+        The per-stage wall-clock durations measured during the run.
+    """
 
     message: str
     chunks: Dict[str, "ChunkReference"]
+    queries: List[str]
+    trace: List[Dict[str, Any]]
+    timings: PipelineStageTimings
 
 
 @dataclass(frozen=True)
@@ -128,6 +339,7 @@ class RAGPipelineConfig:
     chunking_model: ModelRef
     retriever_model: ModelRef
     generation_model: ModelRef
+    query_transformation: Optional[ModelRef] = None
 
     @classmethod
     def from_kwargs(cls, **kwargs: Any) -> "RAGPipelineConfig":
@@ -137,7 +349,8 @@ class RAGPipelineConfig:
             **kwargs: Raw pipeline parameter dict containing infrastructure
                 keys (session_id, db, component_registry, env_RAG_path),
                 model keys (prompt, chunking_model, retriever_model,
-                generation_model), and the documents list.
+                generation_model), the optional query_transformation model key,
+                and the documents list.
 
         Returns:
             A validated RAGPipelineConfig instance.
@@ -175,6 +388,27 @@ class RAGPipelineConfig:
                 params=raw["params"],
             )
 
+        query_transformation_ref: Optional[ModelRef] = None
+        raw_transformation = kwargs.get(RAG_PARAM_QUERY_TRANSFORMATION)
+        if raw_transformation is not None:
+            if not isinstance(raw_transformation, dict):
+                raise RAGPipelineConfigError(
+                    f"'{RAG_PARAM_QUERY_TRANSFORMATION}' must be a dict, got "
+                    f"{type(raw_transformation).__name__}"
+                )
+            if "component" not in raw_transformation:
+                raise RAGPipelineConfigError(
+                    f"Missing 'component' in '{RAG_PARAM_QUERY_TRANSFORMATION}'"
+                )
+            if "params" not in raw_transformation:
+                raise RAGPipelineConfigError(
+                    f"Missing 'params' in '{RAG_PARAM_QUERY_TRANSFORMATION}'"
+                )
+            query_transformation_ref = ModelRef(
+                component=raw_transformation["component"],
+                params=raw_transformation["params"],
+            )
+
         extra: set[str] = set(kwargs) - RAG_PARAM_KEYS_ALL
         if extra:
             log.warning(
@@ -188,26 +422,41 @@ class RAGPipelineConfig:
                 "These keys are not recognized pipeline configuration parameters."
             )
 
+        raw_documents = kwargs["documents"]
+        if not isinstance(raw_documents, list):
+            raise RAGPipelineConfigError(
+                f"'documents' must be a list of integers, got "
+                f"{type(raw_documents).__name__}."
+            )
+        try:
+            documents = [int(document_id) for document_id in raw_documents]
+        except (TypeError, ValueError) as exc:
+            raise RAGPipelineConfigError(
+                f"'documents' must be a list of integers, got {raw_documents!r}."
+            ) from exc
+
         return cls(
             session_id=kwargs["session_id"],
             db=kwargs["db"],
             component_registry=kwargs["component_registry"],
             env_RAG_path=kwargs["env_RAG_path"],
-            documents=kwargs["documents"],
+            documents=documents,
             prompt=model_refs["prompt"],
             chunking_model=model_refs["chunking_model"],
             retriever_model=model_refs["retriever_model"],
             generation_model=model_refs["generation_model"],
+            query_transformation=query_transformation_ref,
         )
 
 
 class RAGPipelineSchema(BaseSchema):
     """Schema for RAG pipeline configuration parameters.
 
-    Defines the five configurable fields: documents, prompt,
-    chunking_model, retriever_model, and generation_model. Each
-    model field accepts a ``{"component": str, "params": dict}``
-    structure resolved by the ComponentRegistry.
+    Defines the six configurable fields: documents, prompt,
+    chunking_model, retriever_model, generation_model, and the optional
+    query_transformation stage. Each model field accepts a
+    ``{"component": str, "params": dict}`` structure resolved by the
+    ComponentRegistry.
     """
 
     documents: schema_field(
@@ -273,6 +522,24 @@ class RAGPipelineSchema(BaseSchema):
         ),
     )  # type: ignore
 
+    query_transformation: schema_field(
+        none_type(component_field(parent="BaseQueryTransformation")),
+        placeholder=None,
+        description=MultilingualString(
+            en="Optional query transformation stage that turns the user message"
+            " into one or more search queries before retrieval.",
+            es="Etapa opcional de transformación de consulta que convierte el"
+            " mensaje del usuario en una o varias consultas de búsqueda antes"
+            " de la recuperación.",
+            pt="Etapa opcional de transformação de consulta que converte a"
+            " mensagem do usuário em uma ou mais consultas de busca antes da"
+            " recuperação.",
+            de="Optionale Abfrage-Transformationsstufe, die die Benutzernachricht"
+            " vor dem Abruf in eine oder mehrere Suchanfragen umwandelt.",
+            zh="可选的查询转换阶段，在检索前将用户消息转换为一个或多个搜索查询。",
+        ),
+    ) = None  # type: ignore
+
 
 class RAGPipeline(BaseGenerativeModel):
     """Retrieval-Augmented Generation pipeline.
@@ -283,6 +550,11 @@ class RAGPipeline(BaseGenerativeModel):
 
     Orchestrates: document loading → chunk-set creation → chunking →
     retrieval → prompt formatting → LLM generation.
+
+    The stage LLMs (query transformation, retrieval evaluation and generation)
+    are lazy proxies. Each one is constructed on first use inside its own stage
+    and released when that stage ends, so the peak memory is the largest single
+    model rather than the sum of all three.
     """
 
     COMPATIBLE_COMPONENTS: List[str] = ["RAGTask"]
@@ -298,6 +570,7 @@ class RAGPipeline(BaseGenerativeModel):
     chunks: Dict[int, Dict[int, Chunk]]
     retriever: BaseRetriever
     llm_model: TextToTextGenerationTaskModel
+    query_transformation: Optional[BaseQueryTransformation]
 
     DISPLAY_NAME: str = MultilingualString(
         en="RAG Pipeline",
@@ -348,6 +621,7 @@ class RAGPipeline(BaseGenerativeModel):
         chunking_model: BaseChunkingModel,
         retriever: BaseRetriever,
         llm_model: TextToTextGenerationTaskModel,
+        query_transformation: Optional[BaseQueryTransformation] = None,
     ) -> None:
         """Initialise the RAG pipeline with fully constructed dependencies.
 
@@ -359,8 +633,12 @@ class RAGPipeline(BaseGenerativeModel):
             chunks: Mapping of document IDs to their chunk dicts.
             prompt_model: The prompt template model.
             chunking_model: The chunking model instance.
-            retriever: The retriever model instance.
-            llm_model: The text generation (LLM) model instance.
+            retriever: The retriever model instance. An LLM-evaluated retriever
+                holds its own lazy proxy, which the retrieval stage releases.
+            llm_model: The text generation model, normally a lazy proxy whose
+                real backend is constructed on first generation.
+            query_transformation: Optional query transformation stage. When
+                None, the current message is used directly as the search query.
         """
         self.session_id = config.session_id
         self.pipeline_id = pipeline_id
@@ -372,26 +650,68 @@ class RAGPipeline(BaseGenerativeModel):
         self.chunks = chunks
         self.retriever = retriever
         self.llm_model = llm_model
+        self.query_transformation = query_transformation
 
-    def single_interaction(
-        self,
-        query: str,
-    ) -> List[Chunk]:
-        """Retrieve the top-K chunks for a single query.
+    def multi_query_retrieval(
+        self, queries: List[str]
+    ) -> Tuple[List[Chunk], List[Dict[str, Any]]]:
+        """Retrieve for every query and merge the results fairly.
 
-        Args:
-            query: The search query string.
+        This is the pipeline's ONLY retrieval path: a plain one-element query
+        list (the raw message when the transformation stage is disabled, or a
+        single rewrite) goes through the same per-query retrieve plus merge as
+        an n-element list. Merging a single list is effectively a no-op —
+        ``merge_round_robin`` preserves its content and order — while an
+        n-element list is interleaved round-robin and de-duplicated by
+        ``(document_id, document_position)``.
 
-        Returns:
-            Ranked list of retrieved chunks.
+        When the retriever expands its results, two queries can return expanded
+        windows that overlap without sharing a chunk key, so the merged list is
+        then collapsed again through
+        :meth:`BaseRetriever.merge_expanded_chunks`; the same happens for the
+        single-query case, where it is a no-op.
 
-        Raises:
-            RAGPipelineRuntimeError: If the retriever fails.
+        Each query is retrieved independently. A failure on any query aborts
+        the whole retrieval with a wrapped error, so callers see one consistent
+        failure mode.
+
+        Parameters
+        ----------
+        queries : List[str]
+            The search queries, in priority order. Always non-empty.
+
+        Returns
+        -------
+        Tuple[List[Chunk], List[Dict[str, Any]]]
+            The round-robin merged, de-duplicated chunks and one trace entry
+            per query — ``{"query": <query>, "retriever": <trace node>}`` — in
+            query order.
+
+        Raises
+        ------
+        RAGPipelineRuntimeError
+            If any underlying retrieval fails.
         """
-        try:
-            return self.retriever.retrieve(query)
-        except Exception as e:
-            raise RAGPipelineRuntimeError(f"Document retrieval failed: {str(e)}") from e
+        retrieved_lists: List[List[Chunk]] = []
+        trace: List[Dict[str, Any]] = []
+        for query in queries:
+            try:
+                # A legacy or plugin retriever returning a bare list instead
+                # of the (chunks, trace) tuple must fail loudly instead of
+                # silently mis-unpacking chunk data as the trace node.
+                query_chunks, query_node = unpack_retrieval_result(
+                    self.retriever.retrieve(query)
+                )
+            except Exception as e:
+                raise RAGPipelineRuntimeError(
+                    f"Document retrieval failed: {str(e)}"
+                ) from e
+            retrieved_lists.append(query_chunks)
+            trace.append({"query": query, "retriever": query_node})
+        merged = merge_round_robin(retrieved_lists)
+        if isinstance(self.retriever, BaseRetriever):
+            merged = self.retriever.merge_expanded_chunks(merged)
+        return merged, trace
 
     def _build_chunk_references(
         self,
@@ -418,37 +738,43 @@ class RAGPipeline(BaseGenerativeModel):
             chunk_position: int = retrieved_chunk.document_position
             chunk_text: str = retrieved_chunk.text
             page = retrieved_chunk.page
-            chunk_ref: str = f"{document_id}_{chunk_position}"
-            chunk_dict[chunk_ref] = ChunkReference(
+            ref: str = chunk_ref(retrieved_chunk)
+            chunk_dict[ref] = ChunkReference(
                 document_id=document_id,
                 document_name=document.file_name,
                 document_position=chunk_position,
                 text=chunk_text,
                 page=page,
+                source_positions=getattr(retrieved_chunk, "source_positions", None),
             )
             location = f", page {page}" if page is not None else ""
             chunks_texts.append(
                 f"Document {document.file_name}{location}, "
-                f"chunk nº {chunk_position}, text:\n {chunk_text}"
+                f"{_chunk_label(retrieved_chunk)}, text:\n {chunk_text}"
             )
         return "\n\n".join(chunks_texts), chunk_dict
 
-    def generate(
+    def _extract_input(
         self,
         input_data: Tuple[Dict[str, str], ...],
-    ) -> RAGGenerationOutput:
-        """Run the full RAG pipeline: retrieve, format, and generate.
+    ) -> Tuple[str, Tuple[Dict[str, str], ...]]:
+        """Validate the chat input and split message from history.
 
-        Args:
-            input_data: Chat-format input with history as earlier entries
-                and the current user message as the last entry.
+        Parameters
+        ----------
+        input_data : Tuple[Dict[str, str], ...]
+            Chat-format input with history as earlier entries and the current
+            user message as the last entry.
 
-        Returns:
-            The generated message and the chunks used for retrieval.
+        Returns
+        -------
+        Tuple[str, Tuple[Dict[str, str], ...]]
+            The current user message and the preceding history entries.
 
-        Raises:
-            RAGPipelineInputError: If input_data is empty or malformed.
-            RAGPipelineRuntimeError: If any pipeline stage fails.
+        Raises
+        ------
+        RAGPipelineInputError
+            If input_data is empty or malformed.
         """
         if not input_data:
             raise RAGPipelineInputError("input_data must not be empty.")
@@ -460,23 +786,163 @@ class RAGPipeline(BaseGenerativeModel):
                 f"Malformed input_data: expected Tuple[Dict[str, str], ...] "
                 f"with a 'content' key in the last entry, got {type(input_data)}: {e}"
             ) from e
-        history: Tuple[Dict[str, str], ...] = input_data[:-1]
+        return input_message, tuple(input_data[:-1])
+
+    def _resolve_queries(
+        self,
+        input_message: str,
+        history: Tuple[Dict[str, str], ...],
+    ) -> ResolvedQueries:
+        """Resolve the retrieval queries from the optional transformation stage.
+
+        Parameters
+        ----------
+        input_message : str
+            The current user message.
+        history : Tuple[Dict[str, str], ...]
+            Prior conversation entries, forwarded to the transformer.
+
+        Returns
+        -------
+        ResolvedQueries
+            The resolved queries plus the optional narrative the transformer
+            produced. ``queries`` is always a non-empty list — the transformed
+            queries when the stage ran, or the one-element ``[input_message]``
+            when it is disabled. ``transformed_queries`` is ``None`` when no
+            transformation ran.
+
+        Raises
+        ------
+        RAGPipelineRuntimeError
+            If the transformation fails or returns no queries.
+        """
+        if self.query_transformation is None:
+            return ResolvedQueries(queries=[input_message], transformed_queries=None)
         try:
-            chunks: List[Chunk] = self.single_interaction(input_message)
+            transformation_result = self.query_transformation.transform(
+                message=input_message, history=list(history)
+            )
+        except RAGPipelineRuntimeError:
+            raise
+        except Exception as e:
+            raise RAGPipelineRuntimeError(
+                f"Query transformation failed: {str(e)}"
+            ) from e
+        raw_queries = getattr(transformation_result, "queries", None)
+        if not isinstance(raw_queries, list) or not raw_queries:
+            raise RAGPipelineRuntimeError("Query transformation returned no queries.")
+        transformed_queries = list(raw_queries)
+        return ResolvedQueries(
+            queries=transformed_queries,
+            transformed_queries=transformed_queries,
+            message=normalize_progress_text(
+                getattr(transformation_result, "message", "")
+            ),
+            justification=normalize_progress_text(
+                getattr(transformation_result, "justification", "")
+            ),
+        )
+
+    def _retrieve(self, queries: List[str]) -> Tuple[List[Chunk], List[Dict[str, Any]]]:
+        """Retrieve chunks through the pipeline's single retrieval path.
+
+        Parameters
+        ----------
+        queries : List[str]
+            The non-empty query list to retrieve for.
+
+        Returns
+        -------
+        Tuple[List[Chunk], List[Dict[str, Any]]]
+            Merged, de-duplicated chunks and the per-query trace entries.
+
+        Raises
+        ------
+        RAGPipelineRuntimeError
+            If retrieval fails.
+        """
+        try:
+            return self.multi_query_retrieval(queries)
+        except RAGPipelineRuntimeError:
+            # Already the retriever's wrapped failure; re-wrapping it would
+            # stack two prefixes ("Failed during retrieval: Document
+            # retrieval failed: ...") over the same root cause.
+            raise
         except Exception as e:
             raise RAGPipelineRuntimeError(f"Failed during retrieval: {str(e)}") from e
+
+    def _build_prompt(
+        self,
+        input_message: str,
+        chunks: List[Chunk],
+        transformed_queries: Optional[List[str]],
+    ) -> Tuple[str, Dict[str, ChunkReference]]:
+        """Build chunk references and render the prompt.
+
+        Parameters
+        ----------
+        input_message : str
+            The current user message.
+        chunks : List[Chunk]
+            The retrieved chunks.
+        transformed_queries : List[str] or None
+            The transformed queries, or None when no transformation ran. The
+            prompt's optional ``{queries}`` placeholder receives their joined
+            form, or None so an untransformed run sends no transformed queries.
+
+        Returns
+        -------
+        Tuple[str, Dict[str, ChunkReference]]
+            The rendered prompt and the chunk reference map.
+
+        Raises
+        ------
+        RAGPipelineRuntimeError
+            If chunk rendering or prompt formatting fails.
+        """
         try:
             chunks_text: str
             chunk_dict: Dict[str, ChunkReference]
             chunks_text, chunk_dict = self._build_chunk_references(chunks)
+            if transformed_queries is not None:
+                queries_value: Optional[str] = "; ".join(transformed_queries)
+            else:
+                queries_value = None
             prompt: str = self.prompt_model.format(
                 input=input_message,
                 chunks=chunks_text,
+                queries=queries_value,
             )
+            return prompt, chunk_dict
         except Exception as e:
             raise RAGPipelineRuntimeError(
                 f"Failed during prompt formatting: {str(e)}"
             ) from e
+
+    def _generate_answer(
+        self,
+        history: Tuple[Dict[str, str], ...],
+        prompt: str,
+    ) -> str:
+        """Call the LLM and return its first output message.
+
+        Parameters
+        ----------
+        history : Tuple[Dict[str, str], ...]
+            Prior conversation entries.
+        prompt : str
+            The rendered RAG prompt to send as the current user message.
+
+        Returns
+        -------
+        str
+            The generated answer.
+
+        Raises
+        ------
+        RAGPipelineRuntimeError
+            If the LLM fails or returns an unexpected payload.
+        """
         try:
             model_input: List[Dict[str, str]] = list(history) + [
                 {"role": "user", "content": prompt}
@@ -490,10 +956,144 @@ class RAGPipeline(BaseGenerativeModel):
                 raise RAGPipelineRuntimeError(
                     f"LLM output is not a string, got {type(raw_message).__name__}"
                 )
-            return RAGGenerationOutput(message=raw_message, chunks=chunk_dict)
+            return raw_message
         except RAGPipelineRuntimeError:
             raise
         except Exception as e:
             raise RAGPipelineRuntimeError(
                 f"Failed during LLM generation: {str(e)}"
             ) from e
+
+    @staticmethod
+    def _release(stage_model: Any) -> None:
+        """Release a stage model without letting cleanup mask a failure.
+
+        Parameters
+        ----------
+        stage_model : Any
+            Model or component that may expose a ``close`` lifecycle hook.
+
+        Returns
+        -------
+        None
+            Nothing. A missing hook is ignored and a close error is logged as a
+            warning, so teardown never replaces the stage's own failure.
+        """
+        close = getattr(stage_model, "close", None)
+        if not callable(close):
+            return
+        try:
+            close()
+        except Exception:
+            log.warning("Error closing RAG stage model.", exc_info=True)
+
+    def generate(
+        self,
+        input_data: Tuple[Dict[str, str], ...],
+        progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
+    ) -> RAGGenerationOutput:
+        """Run the full RAG pipeline: retrieve, format, and generate.
+
+        The retrieval path is uniform: a one-element query list (the raw
+        message when the transformation stage is disabled, or a single rewrite)
+        goes through the same per-query retrieval and merge as an n-element
+        list.
+
+        Every stage's LLM is lazy: the stage loads it on first use and closes
+        it as soon as the stage's timing has been taken. The transformation,
+        retrieval and generation models are therefore never resident at the
+        same time, and the proxies remain reusable for the next call. Each
+        stage's timing includes its first-use model construction and excludes
+        its teardown; ``total_ms`` includes every teardown.
+
+        Args:
+            input_data: Chat-format input with history as earlier entries
+                and the current user message as the last entry.
+            progress_callback: Optional reporter invoked with one small payload
+                per pipeline stage (shapes documented in ``RAG_constants``).
+                When None no progress is reported. The reporter MUST NOT raise:
+                its exceptions are not swallowed, so a raising reporter aborts
+                the run.
+
+        Returns:
+            The generated message, the chunks used for retrieval, the queries
+            the retrieval ran over (always a list), the per-query trace
+            entries, and the per-stage timings.
+
+        Raises:
+            RAGPipelineInputError: If input_data is empty or malformed.
+            RAGPipelineRuntimeError: If any pipeline stage fails.
+        """
+        with progress_scope(progress_callback):
+            started_at = time.perf_counter()
+            try:
+                input_message, history = self._extract_input(input_data)
+                if self.query_transformation is not None:
+                    report_progress(RAG_PROGRESS_STAGE_TRANSFORMING)
+                transformation_started_at = time.perf_counter()
+                try:
+                    resolved = self._resolve_queries(input_message, history)
+                finally:
+                    transformation_ms = (
+                        time.perf_counter() - transformation_started_at
+                    ) * 1000.0
+                    # Teardown happens after the stage timing, so releasing
+                    # weights is not charged to transformation_ms; any first-use
+                    # model construction inside the stage is included.
+                    if self.query_transformation is not None:
+                        self._release(self.query_transformation)
+                report_progress(
+                    RAG_PROGRESS_STAGE_RETRIEVING,
+                    message=resolved.message,
+                    justification=resolved.justification,
+                    **{RAG_PROGRESS_QUERIES_KEY: list(resolved.queries)},
+                )
+                retrieval_started_at = time.perf_counter()
+                try:
+                    chunks, trace = self._retrieve(resolved.queries)
+                finally:
+                    retrieval_ms = (time.perf_counter() - retrieval_started_at) * 1000.0
+                    self._release(self.retriever)
+                # Report BEFORE taking the generation start timestamp: the
+                # reporter may open a DB session and commit, and that overhead
+                # must not be charged to generation_ms (which measures only
+                # prompt build + LLM). Progress events emitted by nested LLM
+                # components do run inside their own stage timer; see
+                # PipelineStageTimings.
+                report_progress(RAG_PROGRESS_STAGE_GENERATING)
+                generation_started_at = time.perf_counter()
+                try:
+                    prompt, chunk_dict = self._build_prompt(
+                        input_message, chunks, resolved.transformed_queries
+                    )
+                    raw_message = self._generate_answer(history, prompt)
+                finally:
+                    generation_ms = (
+                        time.perf_counter() - generation_started_at
+                    ) * 1000.0
+                    # Take total_ms after the generation teardown so it covers
+                    # every stage's release, not just their work.
+                    self._release(self.llm_model)
+                    total_ms = (time.perf_counter() - started_at) * 1000.0
+                timings = PipelineStageTimings(
+                    transformation_ms=(
+                        0.0 if self.query_transformation is None else transformation_ms
+                    ),
+                    retrieval_ms=retrieval_ms,
+                    generation_ms=generation_ms,
+                    total_ms=total_ms,
+                )
+                return RAGGenerationOutput(
+                    message=raw_message,
+                    chunks=chunk_dict,
+                    queries=resolved.queries,
+                    trace=trace,
+                    timings=timings,
+                )
+            finally:
+                # Safety net: an early failure (input parsing, a reporter, a
+                # stage) must not leave a loaded model behind. Releases are
+                # idempotent, so already-closed stages are no-ops.
+                self._release(self.query_transformation)
+                self._release(self.retriever)
+                self._release(self.llm_model)

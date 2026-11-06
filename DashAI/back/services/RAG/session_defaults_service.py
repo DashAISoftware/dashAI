@@ -18,6 +18,10 @@ from DashAI.back.models.RAG.RAG_constants import (
     RAG_PARAM_PROMPT,
     RAG_PARAM_RETRIEVER_MODEL,
 )
+from DashAI.back.models.RAG.RAG_defaults import (
+    DEFAULT_RAG_CONTEXT_WINDOW,
+    rag_llm_param_overrides,
+)
 from DashAI.back.services.RAG.chunking_presets import get_default_chunking
 from DashAI.back.services.RAG.retriever_presets import get_default_retriever
 
@@ -32,7 +36,7 @@ DEFAULT_PROMPT = "DefaultRAGGenerationPrompt"
 #: paper over this by overriding the value on model selection; the override
 #: belongs here, where it applies to every client and is visible in the stored
 #: configuration.
-RAG_CONTEXT_WINDOW = 10000
+RAG_CONTEXT_WINDOW = DEFAULT_RAG_CONTEXT_WINDOW
 
 #: Room a RAG session reserves for the answer itself, for the same reason.
 RAG_MAX_TOKENS = 1000
@@ -98,3 +102,24 @@ def generation_model_overrides() -> Dict[str, Any]:
         "context_window": RAG_CONTEXT_WINDOW,
         "max_tokens": RAG_MAX_TOKENS,
     }
+
+
+def transformation_llm_overrides() -> Dict[str, Any]:
+    """Return the parameters the query-transformation LLM needs.
+
+    Applied under anything the caller sends explicitly, so a user who sets
+    their own ``context_window``, ``max_tokens`` or ``temperature`` keeps it.
+    The values come from :func:`rag_llm_param_overrides` so the stage shares
+    one source of truth with the LLM-evaluated retrievers: a 10000-token
+    context window, a 300-token budget and a 0.1 temperature, instead of the
+    shared schema placeholders (512/100/0.7) that cannot hold the technique
+    prompt plus the stage's history nor keep the function call deterministic.
+
+    Returns
+    -------
+    dict
+        ``{temperature, context_window, max_tokens}``. Models without one of
+        those parameters (for example DeepSeek's ``n_ctx``) ignore the extra
+        key, the same way the generation overrides do.
+    """
+    return rag_llm_param_overrides()

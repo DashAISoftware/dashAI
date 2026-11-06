@@ -1,21 +1,13 @@
 import { useState, useRef } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  IconButton,
-  Typography,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
+import { Button, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import { FormSchemaProvider } from "../../../../contexts/schema";
 import RetrieverConfigurationStep from "./RetrieverConfigurationStep";
+import RAGAdvancedDialog from "./RAGAdvancedDialog";
 
 /**
  * Full-screen modal dialog for advanced retriever configuration.
- * Wraps RetrieverConfigurationStep in a dialog with save/cancel actions.
+ * Wraps RetrieverConfigurationStep in the shared RAG advanced dialog shell.
  *
  * @param {object} props
  * @param {boolean} props.open - Whether the dialog is open.
@@ -41,11 +33,6 @@ export default function RetrieverAdvancedModal({
   const [stepValid, setStepValid] = useState(false);
   const retrieverStepRef = useRef(null);
 
-  /** Closes the modal without saving. */
-  const handleClose = () => {
-    onClose();
-  };
-
   /**
    * Triggers a save of the current form values and closes the modal.
    */
@@ -57,72 +44,46 @@ export default function RetrieverAdvancedModal({
   };
 
   return (
-    <Dialog
+    <RAGAdvancedDialog
       open={open}
-      onClose={handleClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: { minHeight: "500px" },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          bgcolor: "background.paper",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        {t("generative:rag.advanced.retrieverTitle")}
-        <IconButton
-          onClick={handleClose}
-          size="small"
-          sx={{ color: "text.secondary" }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent
-        dividers
-        sx={{ bgcolor: "background.paper", minHeight: 400 }}
-      >
-        <FormSchemaProvider
-          key={`retriever-advanced-${retrieverModel?.component}`}
-        >
-          <RetrieverConfigurationStep
-            ref={retrieverStepRef}
-            allParadigms={allParadigms}
-            retrieverModel={retrieverModel}
-            setRetrieverModel={setRetrieverModel}
-            setNextEnabled={setStepValid}
-          />
-        </FormSchemaProvider>
-      </DialogContent>
-
-      <DialogActions sx={{ p: 2, bgcolor: "background.paper" }}>
-        {downloadMessage && (
-          <Typography
-            variant="caption"
-            color="warning.main"
-            sx={{ mr: "auto" }}
+      onClose={onClose}
+      title={t("generative:rag.advanced.retrieverTitle")}
+      actions={
+        <>
+          {downloadMessage && (
+            <Typography
+              variant="caption"
+              color="warning.main"
+              sx={{ mr: "auto" }}
+            >
+              {downloadMessage}
+            </Typography>
+          )}
+          <Button onClick={onClose} variant="outlined">
+            {t("generative:rag.advanced.close")}
+          </Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            color="primary"
+            disabled={!stepValid || Boolean(downloadMessage)}
           >
-            {downloadMessage}
-          </Typography>
-        )}
-        <Button onClick={handleClose} variant="outlined">
-          {t("generative:rag.advanced.close")}
-        </Button>
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          color="primary"
-          disabled={!stepValid || Boolean(downloadMessage)}
-        >
-          {t("generative:rag.advanced.done")}
-        </Button>
-      </DialogActions>
-    </Dialog>
+            {t("generative:rag.advanced.done")}
+          </Button>
+        </>
+      }
+    >
+      <FormSchemaProvider
+        key={`retriever-advanced-${retrieverModel?.component}`}
+      >
+        <RetrieverConfigurationStep
+          ref={retrieverStepRef}
+          allParadigms={allParadigms}
+          retrieverModel={retrieverModel}
+          setRetrieverModel={setRetrieverModel}
+          setNextEnabled={setStepValid}
+        />
+      </FormSchemaProvider>
+    </RAGAdvancedDialog>
   );
 }

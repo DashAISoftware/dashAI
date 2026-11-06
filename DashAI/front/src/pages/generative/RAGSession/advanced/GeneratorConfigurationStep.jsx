@@ -4,6 +4,7 @@ import { Box, Autocomplete, TextField, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
 import FormSchema from "../../../../components/shared/FormSchema";
 import FormSchemaContainer from "../../../../components/shared/FormSchemaContainer";
+import { resolveLabel } from "../../../../components/generative/RAG/QueryTransformationPicker";
 import { getGeneratorComponents } from "../../../../api/rag";
 import { resolveDefaults } from "../../../../utils/schema";
 
@@ -99,14 +100,19 @@ export default function GeneratorConfigurationStep({
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Typography variant="subtitle2" sx={{ mb: 0 }}>
+      <Typography
+        variant="subtitle2"
+        component="h3"
+        sx={{ mb: 0, fontWeight: 600 }}
+      >
         {t("generative:rag.generatorConfig.configureTitle")}
       </Typography>
 
       <Autocomplete
-        disablePortal
         options={generators}
-        getOptionLabel={(option) => option.name}
+        getOptionLabel={(option) =>
+          resolveLabel(option.display_name, option.name)
+        }
         value={selectedGenerator}
         onChange={handleSelection}
         isOptionEqualToValue={(option, value) => option.name === value?.name}

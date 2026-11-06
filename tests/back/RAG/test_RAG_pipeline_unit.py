@@ -9,6 +9,7 @@ The generate() tests use MagicMock for all dependencies.
 
 from __future__ import annotations
 
+import time
 from unittest.mock import MagicMock
 
 import pytest
@@ -19,14 +20,21 @@ from DashAI.back.models.RAG.exceptions import (
     RAGPipelineInputError,
     RAGPipelineRuntimeError,
 )
-from DashAI.back.models.RAG.RAG_constants import RAG_INFRA_KEYS
+from DashAI.back.models.RAG.RAG_constants import (
+    RAG_INFRA_KEYS,
+    RAG_PROGRESS_STAGE_GENERATING,
+    RAG_PROGRESS_STAGE_KEY,
+)
 from DashAI.back.models.RAG.RAG_pipeline import (
     ChunkReference,
     ModelRef,
+    PipelineStageTimings,
     RAGGenerationOutput,
     RAGPipeline,
     RAGPipelineConfig,
+    _chunk_label,
 )
+from DashAI.back.models.RAG.retrievers.trace_utils import chunk_ref
 
 # ---------------------------------------------------------------------------
 # helpers
@@ -56,6 +64,11 @@ def _valid_kwargs(**overrides) -> dict:
     return base
 
 
+def _retriever_stub(chunks):
+    """A ``(chunks, trace)`` tuple, the shape every retriever now returns."""
+    return (chunks, {"name": "MockRetriever", "chunks": [chunk_ref(c) for c in chunks]})
+
+
 def _make_pipeline(
     documents=None,
     retriever=None,
@@ -77,7 +90,7 @@ def _make_pipeline(
 
     if retriever is None:
         retriever = MagicMock()
-        retriever.retrieve.return_value = []
+        retriever.retrieve.return_value = _retriever_stub([])
 
     if prompt_model is None:
         prompt_model = MagicMock()
@@ -101,6 +114,18 @@ def _make_pipeline(
         retriever=retriever,
         llm_model=llm_model,
     )
+
+
+class _SleepingRetriever:
+    """Non-mock retriever whose retrieve() sleeps to make timing observable."""
+
+    def __init__(self, sleep_seconds: float, chunks=None):
+        self.sleep_seconds = sleep_seconds
+        self.chunks = [] if chunks is None else chunks
+
+    def retrieve(self, query):
+        time.sleep(self.sleep_seconds)
+        return _retriever_stub(self.chunks)
 
 
 # ===================================================================
@@ -256,6 +281,23 @@ class TestRAGPipelineConfigValid:
         assert config.documents == [10, 20]
         assert config.env_RAG_path == "/tmp/rag"
 
+    def test_documents_are_normalized_to_integers(self):
+        """String document ids are coerced so they match Chunk.document_id."""
+        kwargs = _valid_kwargs()
+        kwargs["documents"] = ["10", "20"]
+
+        config = RAGPipelineConfig.from_kwargs(**kwargs)
+
+        assert config.documents == [10, 20]
+
+    def test_invalid_documents_raise(self):
+        """A non-integer document id is a configuration error."""
+        kwargs = _valid_kwargs()
+        kwargs["documents"] = ["not-an-id"]
+
+        with pytest.raises(RAGPipelineConfigError, match="list of integers"):
+            RAGPipelineConfig.from_kwargs(**kwargs)
+
     def test_model_refs_parsed_correctly(self):
         """Model refs are parsed into ModelRef dataclass instances."""
         kwargs = _valid_kwargs()
@@ -330,7 +372,7 @@ class TestRAGPipelineGenerateRuntimeErrors:
         """Retrieved chunk references unknown document → RAGPipelineRuntimeError."""
         chunk = Chunk(id=1, document_id=999, document_position=0, text="orphan")
         retriever = MagicMock()
-        retriever.retrieve.return_value = [chunk]
+        retriever.retrieve.return_value = _retriever_stub([chunk])
         pipeline = _make_pipeline(retriever=retriever)
         with pytest.raises(RAGPipelineRuntimeError, match="not found"):
             pipeline.generate(({"role": "user", "content": "hello"},))
@@ -339,7 +381,7 @@ class TestRAGPipelineGenerateRuntimeErrors:
         """Prompt formatting failure → RAGPipelineRuntimeError."""
         chunk = Chunk(id=1, document_id=1, document_position=0, text="text")
         retriever = MagicMock()
-        retriever.retrieve.return_value = [chunk]
+        retriever.retrieve.return_value = _retriever_stub([chunk])
         prompt_model = MagicMock()
         prompt_model.format.side_effect = ValueError("bad template")
         pipeline = _make_pipeline(retriever=retriever, prompt_model=prompt_model)
@@ -349,7 +391,7 @@ class TestRAGPipelineGenerateRuntimeErrors:
     def test_llm_returns_empty_output(self):
         """LLM returns empty list → RAGPipelineRuntimeError."""
         retriever = MagicMock()
-        retriever.retrieve.return_value = []
+        retriever.retrieve.return_value = _retriever_stub([])
         llm = MagicMock()
         llm.generate.return_value = []
         pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
@@ -359,7 +401,7 @@ class TestRAGPipelineGenerateRuntimeErrors:
     def test_llm_returns_non_string_output(self):
         """LLM returns non-string → RAGPipelineRuntimeError."""
         retriever = MagicMock()
-        retriever.retrieve.return_value = []
+        retriever.retrieve.return_value = _retriever_stub([])
         llm = MagicMock()
         llm.generate.return_value = [42]  # int, not str
         pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
@@ -369,7 +411,7 @@ class TestRAGPipelineGenerateRuntimeErrors:
     def test_llm_raises_exception(self):
         """LLM raises exception → RAGPipelineRuntimeError."""
         retriever = MagicMock()
-        retriever.retrieve.return_value = []
+        retriever.retrieve.return_value = _retriever_stub([])
         llm = MagicMock()
         llm.generate.side_effect = RuntimeError("OOM")
         pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
@@ -389,7 +431,7 @@ class TestRAGPipelineGenerateHappyPath:
         """Happy path: returns RAGGenerationOutput with message and chunks."""
         chunk = Chunk(id=1, document_id=1, document_position=0, text="hello world")
         retriever = MagicMock()
-        retriever.retrieve.return_value = [chunk]
+        retriever.retrieve.return_value = _retriever_stub([chunk])
         prompt_model = MagicMock()
         prompt_model.format.return_value = "formatted"
         llm = MagicMock()
@@ -409,11 +451,17 @@ class TestRAGPipelineGenerateHappyPath:
         assert ref.document_name == "doc1.txt"
         assert ref.document_position == 0
         assert ref.text == "hello world"
+        assert result.trace == [
+            {
+                "query": "what is DashAI?",
+                "retriever": {"name": "MockRetriever", "chunks": ["1_0"]},
+            }
+        ]
 
     def test_history_passed_to_llm(self):
         """History (input_data[:-1]) is forwarded to the LLM as prior messages."""
         retriever = MagicMock()
-        retriever.retrieve.return_value = []
+        retriever.retrieve.return_value = _retriever_stub([])
         prompt_model = MagicMock()
         prompt_model.format.return_value = "formatted prompt"
         llm = MagicMock()
@@ -440,7 +488,7 @@ class TestRAGPipelineGenerateHappyPath:
     def test_empty_chunks_returns_empty_dict(self):
         """When retriever returns no chunks, chunks dict is empty."""
         retriever = MagicMock()
-        retriever.retrieve.return_value = []
+        retriever.retrieve.return_value = _retriever_stub([])
         llm = MagicMock()
         llm.generate.return_value = ["answer with no context"]
         pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
@@ -453,7 +501,7 @@ class TestRAGPipelineGenerateHappyPath:
         chunk1 = Chunk(id=1, document_id=1, document_position=0, text="chunk A")
         chunk2 = Chunk(id=2, document_id=2, document_position=1, text="chunk B")
         retriever = MagicMock()
-        retriever.retrieve.return_value = [chunk1, chunk2]
+        retriever.retrieve.return_value = _retriever_stub([chunk1, chunk2])
         llm = MagicMock()
         llm.generate.return_value = ["multi-doc answer"]
         pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
@@ -463,6 +511,78 @@ class TestRAGPipelineGenerateHappyPath:
         assert "2_1" in result.chunks
         assert result.chunks["1_0"].document_name == "doc1.txt"
         assert result.chunks["2_1"].document_name == "doc2.txt"
+
+
+# ===================================================================
+# RAGPipeline.generate() — stage timings
+# ===================================================================
+
+
+class TestRAGPipelineTimings:
+    """The pipeline measures each stage with perf_counter."""
+
+    def _run(self):
+        retriever = MagicMock()
+        retriever.retrieve.return_value = _retriever_stub([])
+        llm = MagicMock()
+        llm.generate.return_value = ["answer"]
+        pipeline = _make_pipeline(retriever=retriever, llm_model=llm)
+        return pipeline.generate(({"role": "user", "content": "hello"},))
+
+    def test_timings_fields_are_non_negative_floats(self):
+        timings = self._run().timings
+        assert isinstance(timings, PipelineStageTimings)
+        for value in timings.to_dict().values():
+            assert isinstance(value, float)
+            assert value >= 0.0
+
+    def test_total_covers_the_largest_stage(self):
+        timings = self._run().timings
+        assert timings.total_ms >= max(
+            timings.transformation_ms,
+            timings.retrieval_ms,
+            timings.generation_ms,
+        )
+
+    def test_disabled_transformation_is_exactly_zero(self):
+        assert self._run().timings.transformation_ms == 0.0
+
+    def test_retrieval_stage_is_actually_measured(self):
+        """A 10 ms retrieve must show up as retrieval_ms >= 5 ms (not 0.0)."""
+        pipeline = _make_pipeline(retriever=_SleepingRetriever(0.01))
+        timings = pipeline.generate(({"role": "user", "content": "hello"},)).timings
+        assert timings.retrieval_ms >= 5.0
+        assert timings.total_ms >= 5.0
+
+    def test_generating_report_is_outside_generation_timing(self):
+        """Reporter overhead on the generating stage is not charged to generation_ms."""
+        seen_stages = []
+
+        def reporter(payload):
+            stage = payload[RAG_PROGRESS_STAGE_KEY]
+            seen_stages.append(stage)
+            if stage == RAG_PROGRESS_STAGE_GENERATING:
+                time.sleep(0.05)
+
+        pipeline = _make_pipeline()
+        timings = pipeline.generate(
+            ({"role": "user", "content": "hello"},), progress_callback=reporter
+        ).timings
+
+        assert RAG_PROGRESS_STAGE_GENERATING in seen_stages
+        # generation_ms covers only prompt build + LLM, so the 50 ms reporter
+        # sleep that fires on the generating stage must not appear in it; the
+        # mock LLM returns instantly, so a tight bound still has plenty of
+        # margin while catching partial leaks too.
+        assert timings.generation_ms < 10.0
+
+    def test_to_dict_has_exactly_the_four_keys(self):
+        assert list(self._run().timings.to_dict()) == [
+            "transformation_ms",
+            "retrieval_ms",
+            "generation_ms",
+            "total_ms",
+        ]
 
 
 # ===================================================================
@@ -488,14 +608,60 @@ class TestChunkReferenceToDict:
             "document_position": 3,
             "text": "some text",
             "page": None,
+            "source_positions": None,
         }
 
     def test_page_is_carried_into_the_reference(self):
         """A retrieved chunk's page reaches the stored reference."""
         chunk = Chunk(id=1, document_id=1, document_position=0, text="t", page=3)
         pipeline = _make_pipeline()
-        pipeline.retriever.retrieve.return_value = [chunk]
+        pipeline.retriever.retrieve.return_value = _retriever_stub([chunk])
 
         result = pipeline.generate(({"role": "user", "content": "q"},))
 
         assert result.chunks["1_0"].page == 3
+
+    def test_expanded_range_is_carried_into_the_reference(self):
+        """An expanded unit exposes its covered positions to the frontend."""
+        chunk = Chunk(
+            id=1,
+            document_id=1,
+            document_position=3,
+            text="c3 c4 c5",
+            page=4,
+            source_positions=(3, 4, 5),
+        )
+        pipeline = _make_pipeline()
+        pipeline.retriever.retrieve.return_value = _retriever_stub([chunk])
+
+        result = pipeline.generate(({"role": "user", "content": "q"},))
+
+        reference = result.chunks["1_3"]
+        assert reference.source_positions == (3, 4, 5)
+        assert reference.to_dict()["source_positions"] == [3, 4, 5]
+
+
+def test_chunk_label_renders_a_contiguous_range():
+    """A contiguous window is labelled as a range in the prompt."""
+    chunk = Chunk(
+        id=1,
+        document_id=1,
+        document_position=3,
+        text="c3 c4 c5",
+        source_positions=(3, 4, 5),
+    )
+
+    assert _chunk_label(chunk) == "chunks nº 3–5"
+
+
+def test_chunk_label_lists_non_contiguous_positions():
+    """A gapped window lists its positions instead of inventing a range."""
+    chunk = Chunk(
+        id=1,
+        document_id=1,
+        document_position=1,
+        text="c1 c2 c10",
+        source_positions=(1, 2, 10),
+    )
+
+    assert _chunk_label(chunk) == "chunks nº 1, 2, 10"

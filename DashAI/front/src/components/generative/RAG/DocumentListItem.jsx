@@ -31,9 +31,24 @@ export default function DocumentListItem({
 
   const disabledOverlay = `repeating-linear-gradient(45deg, transparent, transparent 10px, ${theme.palette.action.disabled} 10px, ${theme.palette.action.disabled} 20px)`;
 
+  /**
+   * Opens the row with Enter or Space, as a button would.
+   * @param {React.KeyboardEvent} event - The keydown event.
+   */
+  const handleKeyDown = (event) => {
+    if (disabled || !onClick) return;
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    onClick();
+  };
+
   return (
     <Box
-      onClick={disabled ? null : onClick}
+      role={disabled ? undefined : "button"}
+      tabIndex={disabled ? undefined : 0}
+      onClick={disabled ? undefined : onClick}
+      onKeyDown={handleKeyDown}
       sx={{
         display: "flex",
         alignItems: "center",
@@ -47,14 +62,23 @@ export default function DocumentListItem({
         borderColor: "divider",
         borderRadius: 1,
         cursor: disabled ? "not-allowed" : "pointer",
-        transition: "all 0.2s",
+        // Only what actually changes on hover/focus: a named property list
+        // keeps the row from also transitioning its layout and icon filters.
+        transition:
+          "background-color 150ms ease-out, border-color 150ms ease-out",
         opacity: disabled ? 0.5 : 1,
         filter: disabled ? "grayscale(0.6)" : "none",
         position: "relative",
-        "&:hover": {
-          bgcolor: disabled ? "action.disabledBackground" : "action.hover",
-          borderColor: disabled ? "divider" : documentColor,
-          transform: disabled ? "none" : "translateX(4px)",
+        "&:focus-visible": {
+          outline: "2px solid",
+          outlineColor: "primary.main",
+          outlineOffset: 2,
+        },
+        "@media (hover: hover)": {
+          "&:hover": {
+            bgcolor: disabled ? "action.disabledBackground" : "action.hover",
+            borderColor: disabled ? "divider" : documentColor,
+          },
         },
         "&::after": disabled
           ? {
@@ -77,9 +101,8 @@ export default function DocumentListItem({
           height: 36,
           borderRadius: 1,
           bgcolor: "action.selected",
-          color: disabled ? "text.disabled" : "text.primary",
+          color: disabled ? "text.disabled" : documentColor,
           flexShrink: 0,
-          transition: "all 0.2s",
         }}
       >
         <DocumentIcon sx={{ fontSize: 20 }} />
@@ -97,6 +120,8 @@ export default function DocumentListItem({
           <Typography
             variant="body2"
             sx={{
+              flex: 1,
+              minWidth: 0,
               color: disabled ? "text.disabled" : "text.primary",
               overflow: "hidden",
               textOverflow: "ellipsis",

@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+from typing import Any, Sequence
 
 from sqlalchemy.orm import Session
 
@@ -15,11 +16,46 @@ from DashAI.back.dependencies.database.models import (
     RAGRetrieverChild,
     RAGSparseRetriever,
 )
-from DashAI.back.models.RAG.RAG_constants import COMPOSITE_RETRIEVER_NAMES
+from DashAI.back.models.RAG.RAG_constants import (
+    COMPOSITE_RETRIEVER_NAMES,
+    RAG_PARAM_RETRIEVER_MODEL,
+)
+from DashAI.back.models.RAG.retrievers.retrieval_expansion import (
+    strip_expansion_options,
+)
 from DashAI.back.services.RAG.deferred_fs import remove_after_commit, remove_now
 from DashAI.back.services.RAG.retriever_db_service import RetrieverDBService
 
 log = logging.getLogger(__name__)
+
+
+def _retriever_identity(reference: Any) -> Any:
+    """Return a retriever reference without its expansion options.
+
+    The retrieve-then-expand options are post-processing knobs: they change
+    nothing about what is indexed, so a session that only toggled them must not
+    have its fitted retriever deleted. Stripping is recursive, so a composite's
+    children are compared without their options too.
+
+    Parameters
+    ----------
+    reference : Any
+        A ``{"component", "params"}`` retriever reference, or any other value.
+
+    Returns
+    -------
+    Any
+        The reference with ``params`` stripped of the two options, or the value
+        unchanged when it is not a retriever reference.
+    """
+    if not isinstance(reference, dict):
+        return reference
+    params = reference.get("params")
+    if not isinstance(params, dict):
+        return reference
+    identity = dict(reference)
+    identity["params"] = strip_expansion_options(params)
+    return identity
 
 
 class CleanupService:
@@ -60,7 +96,11 @@ class CleanupService:
             def _component_changed(key: str) -> bool:
                 if new_parameters is None:
                     return True
-                return old_parameters.get(key) != new_parameters.get(key)
+                old_value = old_parameters.get(key)
+                new_value = new_parameters.get(key)
+                if key != RAG_PARAM_RETRIEVER_MODEL:
+                    return old_value != new_value
+                return _retriever_identity(old_value) != _retriever_identity(new_value)
 
             documents_ids = sorted(old_parameters.get("documents") or [])
 
@@ -158,6 +198,65 @@ class CleanupService:
         if record is not None:
             self.db.delete(record)
 
+    def _sparse_folder_in_use(
+        self, storage_folder: str, exclude_ids: Sequence[int] = ()
+    ) -> bool:
+        """Whether another sparse retriever row points at a storage folder.
+
+        Sparse folders are content-addressed, so several sessions over the same
+        corpus share one folder. Deleting it while another row still references
+        it would break that session, so the folder may only go when the last
+        reference does.
+
+        Parameters
+        ----------
+        storage_folder : str
+            Absolute folder path being released.
+        exclude_ids : Sequence[int]
+            Rows being deleted in the same transaction, which must not count as
+            live references.
+
+        Returns
+        -------
+        bool
+            ``True`` when at least one other row still uses the folder.
+        """
+        query = self.db.query(RAGSparseRetriever).filter(
+            RAGSparseRetriever.storage_folder == storage_folder
+        )
+        if exclude_ids:
+            query = query.filter(RAGSparseRetriever.id.notin_(list(exclude_ids)))
+        return bool(query.count())
+
+    def _embedding_folder_in_use(
+        self, storage_folder: str, exclude_ids: Sequence[int] = ()
+    ) -> bool:
+        """Whether another embedding matrix row points at a storage folder.
+
+        Embedding folders are content-addressed, so every session indexing the
+        same document with the same embedding model shares one folder while
+        keeping its own row.
+
+        Parameters
+        ----------
+        storage_folder : str
+            Absolute folder path being released.
+        exclude_ids : Sequence[int]
+            Rows being deleted in the same transaction, which must not count as
+            live references.
+
+        Returns
+        -------
+        bool
+            ``True`` when at least one other row still uses the folder.
+        """
+        query = self.db.query(RAGEmbeddingMatrix).filter(
+            RAGEmbeddingMatrix.storage_folder == storage_folder
+        )
+        if exclude_ids:
+            query = query.filter(RAGEmbeddingMatrix.id.notin_(list(exclude_ids)))
+        return bool(query.count())
+
     def _embedding_model_in_use(
         self, embedding_model_id: int, *, exclude_dense_retriever_id: int | None = None
     ) -> bool:
@@ -246,8 +345,12 @@ class CleanupService:
                 if child_bridge is None:
                     continue
                 if child_bridge.sparse_detail:
-                    self._delete_path(child_bridge.sparse_detail.storage_folder)
-                    self.db.delete(child_bridge.sparse_detail)
+                    detail = child_bridge.sparse_detail
+                    if not self._sparse_folder_in_use(
+                        detail.storage_folder, exclude_ids=[detail.id]
+                    ):
+                        remove_after_commit(self.db, detail.storage_folder)
+                    self.db.delete(detail)
                 elif child_bridge.dense_detail:
                     self.db.delete(child_bridge.dense_detail)
             self.db.delete(bridge)
@@ -319,10 +422,12 @@ class CleanupService:
             .all()
         )
 
-        matrix_ids = []
+        matrix_ids = [matrix.id for matrix in embedding_matrices]
         for matrix in embedding_matrices:
-            self._delete_path(matrix.storage_folder)
-            matrix_ids.append(matrix.id)
+            if not self._embedding_folder_in_use(
+                matrix.storage_folder, exclude_ids=matrix_ids
+            ):
+                self._delete_path(matrix.storage_folder)
 
         if matrix_ids:
             self.db.query(RAGEmbeddingMatrix).filter(
@@ -345,13 +450,18 @@ class CleanupService:
     ) -> None:
         """Cascade-delete a sparse retriever and its storage folder.
 
-        Removes the on-disk storage folder and the sparse detail DB record.
+        Removes the sparse detail DB record and, when no other row shares it,
+        the on-disk storage folder: folders are content-addressed, so another
+        session may still be using this one.
 
         Args:
             bridge: The bridge record for the sparse retriever.
         """
         sparse_retriever = bridge.sparse_detail
-        self._delete_path(sparse_retriever.storage_folder)
+        if not self._sparse_folder_in_use(
+            sparse_retriever.storage_folder, exclude_ids=[sparse_retriever.id]
+        ):
+            self._delete_path(sparse_retriever.storage_folder)
         self.db.delete(sparse_retriever)
 
     def invalidate_session_artifacts(
@@ -416,8 +526,9 @@ class CleanupService:
         Removes the composite retrievers built over its retrievers, its sparse
         and dense retrievers, its embedding matrices (and their embedding model
         once nothing else uses it) and the chunk set itself, whose chunks and
-        membership rows go with it. Storage folders are queued with
-        ``remove_after_commit``.
+        membership rows go with it. Storage folders are content-addressed, so a
+        folder is only queued with ``remove_after_commit`` once no other row
+        still references it.
 
         Parameters
         ----------
@@ -456,24 +567,39 @@ class CleanupService:
                 if parent is not None:
                     self.db.delete(parent)
 
+        sparse_ids = [detail.id for detail, _bridge in sparse_links]
+
         for sparse_detail, bridge in sparse_links:
-            remove_after_commit(self.db, sparse_detail.storage_folder)
+            if not self._sparse_folder_in_use(
+                sparse_detail.storage_folder, exclude_ids=sparse_ids
+            ):
+                remove_after_commit(self.db, sparse_detail.storage_folder)
             self.db.delete(sparse_detail)
             self.db.delete(bridge)
 
-        for dense_detail, bridge in dense_links:
-            embedding_model_id = dense_detail.embedding_model_id
-            matrices = (
+        dense_matrices: dict[int, list[RAGEmbeddingMatrix]] = {}
+        for dense_detail, _bridge in dense_links:
+            dense_matrices[dense_detail.id] = (
                 self.db.query(RAGEmbeddingMatrix)
                 .filter(
                     RAGEmbeddingMatrix.chunk_set_id == chunk_set_id,
-                    RAGEmbeddingMatrix.embedding_model_id == embedding_model_id,
+                    RAGEmbeddingMatrix.embedding_model_id
+                    == dense_detail.embedding_model_id,
                     RAGEmbeddingMatrix.document_id.in_(document_ids),
                 )
                 .all()
             )
-            for matrix in matrices:
-                remove_after_commit(self.db, matrix.storage_folder)
+        doomed_matrix_ids = [
+            matrix.id for matrices in dense_matrices.values() for matrix in matrices
+        ]
+
+        for dense_detail, bridge in dense_links:
+            embedding_model_id = dense_detail.embedding_model_id
+            for matrix in dense_matrices[dense_detail.id]:
+                if not self._embedding_folder_in_use(
+                    matrix.storage_folder, exclude_ids=doomed_matrix_ids
+                ):
+                    remove_after_commit(self.db, matrix.storage_folder)
                 self.db.delete(matrix)
             if not self._embedding_model_in_use(
                 embedding_model_id, exclude_dense_retriever_id=dense_detail.id

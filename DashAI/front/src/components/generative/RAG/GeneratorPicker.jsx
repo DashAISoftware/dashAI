@@ -43,6 +43,7 @@ export default function GeneratorPicker({
   const { t } = useTranslation(["generative"]);
   const [generators, setGenerators] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { statuses, loaded: credentialsLoaded } = useCredentialStatuses();
 
@@ -54,6 +55,7 @@ export default function GeneratorPicker({
       })
       .catch((error) => {
         console.error("Error loading generation models:", error);
+        if (!cancelled) setLoadFailed(true);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -125,6 +127,12 @@ export default function GeneratorPicker({
 
   return (
     <Stack spacing={2}>
+      {loadFailed && generators.length === 0 && (
+        <Alert severity="error" sx={{ py: 0.5 }}>
+          {t("generative:error.failedToLoadModels")}
+        </Alert>
+      )}
+
       <Autocomplete
         options={generators}
         value={selected}
