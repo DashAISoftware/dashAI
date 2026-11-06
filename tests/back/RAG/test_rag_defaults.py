@@ -66,7 +66,6 @@ from DashAI.back.models.RAG.retrievers.sparse.bm25_retriever import BM25Retrieve
 #: Bag-of-words parameters the keyword default ships: the schema placeholders,
 #: with ``max_features`` unset so BM25 weights the whole vocabulary.
 BAG_OF_WORDS_DEFAULTS = {
-    "drop_source_columns": False,
     "max_features": None,
     "lowercase": True,
     "strip_accents": None,

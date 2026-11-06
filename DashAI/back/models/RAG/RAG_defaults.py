@@ -96,12 +96,7 @@ PARAPHRASE_MULTILINGUAL_EMBEDDING_COMPONENT = (
 
 #: Complete bag-of-words parameters (the schema fills no missing values).
 #: ``max_features`` stays unset so BM25 weights the whole vocabulary.
-#: ``drop_source_columns`` is inherited from ``AddColumnsConverterSchema`` and
-#: is listed explicitly because a nested recipe replaces the resolved defaults
-#: instead of merging into them. It keeps the shipped recipe identical to what
-#: the frontend sends (the form seeds every schema field with its placeholder).
 _BAG_OF_WORDS_PARAMS: Dict[str, Any] = {
-    "drop_source_columns": False,
     "max_features": None,
     "lowercase": True,
     "strip_accents": None,
