@@ -24,6 +24,7 @@ from DashAI.back.api.api_v1.schemas.data_documents_params import (
     DataDocumentFromNotebookParams,
     DataDocumentSchema,
     DataDocumentUpdateParams,
+    DocumentSessionRef,
 )
 from DashAI.back.api.document_content import (
     image_response,
@@ -42,12 +43,18 @@ from DashAI.back.dependencies.database.models import (
     Folder,
     Notebook,
 )
-from DashAI.back.services.RAG.deferred_fs import remove_after_commit
+from DashAI.back.services.RAG.document_service import (
+    DocumentBusyError,
+    DocumentInUseError,
+    DocumentNotFoundError,
+    DocumentService,
+)
 from DashAI.back.services.RAG.session_document_service import SessionDocumentService
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session, sessionmaker
 
+    from DashAI.back.dependencies.job_queues.base_job_queue import BaseJobQueue
     from DashAI.back.dependencies.registry import ComponentRegistry
 
 logger = logging.getLogger(__name__)
@@ -55,7 +62,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 BASE_URL = "/api/v1/documents"
-BUSY_STATUSES = (DocumentStatus.DELIVERED, DocumentStatus.STARTED)
 
 
 def _document_loader_class(component_registry: "ComponentRegistry", name: str) -> type:
@@ -425,7 +431,17 @@ async def get_data_documents(
     """
     with session_factory() as db:
         try:
-            return db.query(DataDocument).order_by(DataDocument.id).all()
+            documents = db.query(DataDocument).order_by(DataDocument.id).all()
+            usage = SessionDocumentService(db).sessions_by_document()
+            result = []
+            for document in documents:
+                schema = DataDocumentSchema.model_validate(document)
+                schema.sessions = [
+                    DocumentSessionRef(id=session.id, name=session.name)
+                    for session in usage.get(document.id, [])
+                ]
+                result.append(schema)
+            return result
         except exc.SQLAlchemyError as e:
             logger.exception(e)
             raise HTTPException(
@@ -460,7 +476,16 @@ async def get_data_document(
         404 if there is no such document.
     """
     with session_factory() as db:
-        return _get_document_or_404(db, document_id)
+        document = _get_document_or_404(db, document_id)
+        sessions = SessionDocumentService(db).sessions_using(document_id)
+        return DataDocumentSchema.model_validate(document).model_copy(
+            update={
+                "sessions": [
+                    DocumentSessionRef(id=session.id, name=session.name)
+                    for session in sessions
+                ]
+            }
+        )
 
 
 @router.patch("/{document_id}", response_model=DataDocumentSchema)
@@ -548,7 +573,9 @@ async def update_data_document(
 @inject
 async def delete_data_document(
     document_id: int,
+    cascade_sessions: bool = Query(default=False),
     session_factory: "sessionmaker" = Depends(lambda: di["session_factory"]),
+    job_queue: "BaseJobQueue" = Depends(lambda: di["job_queue"]),
 ):
     """Delete a document row, its notebooks and, once that commits, their folders.
 
@@ -563,8 +590,14 @@ async def delete_data_document(
     ----------
     document_id : int
         Primary key.
+    cascade_sessions : bool
+        Delete the RAG sessions that use the document as well. When false and
+        such sessions exist, the request fails with 409 and lists them, which
+        is what lets the UI ask for confirmation before losing them.
     session_factory : sessionmaker
         Session factory from the DI container.
+    job_queue : BaseJobQueue
+        Queue consulted to stop the deleted sessions' indexing jobs.
 
     Returns
     -------
@@ -575,45 +608,42 @@ async def delete_data_document(
     ------
     HTTPException
         404 for an unknown document, 409 while it is being parsed or while
-        RAG sessions use it (the detail lists them and the notebooks deleted
-        with it), 500 on database errors.
+        RAG sessions use it without ``cascade_sessions`` (the detail lists
+        them and the notebooks deleted with it), 500 on database errors.
     """
     with session_factory() as db:
-        document = _get_document_or_404(db, document_id)
-        sessions = SessionDocumentService(db).sessions_using(document_id)
-        if sessions:
+        try:
+            DocumentService(db, job_queue).delete(
+                document_id, cascade_sessions=cascade_sessions
+            )
+        except DocumentNotFoundError as e:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+            ) from e
+        except DocumentInUseError as e:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail={
-                    "detail": (
-                        "This document is used by RAG sessions. Remove it from "
-                        "them before deleting it. Its notebooks are deleted "
-                        "with it."
-                    ),
-                    "sessions": _users_payload(sessions),
-                    "notebooks": _users_payload(document.notebooks),
+                    "detail": str(e),
+                    "sessions": _users_payload(e.sessions),
+                    "notebooks": _users_payload(e.notebooks),
                 },
-            )
-        if document.status in BUSY_STATUSES:
+            ) from e
+        except DocumentBusyError as e:
             raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=(
-                    "The document is still being parsed. "
-                    "Cancel its job before deleting it."
-                ),
-            )
-        remove_after_commit(db, document.file_path)
-        for notebook in document.notebooks:
-            remove_after_commit(db, notebook.file_path)
-        db.delete(document)
-        try:
-            db.commit()
+                status_code=status.HTTP_409_CONFLICT, detail=str(e)
+            ) from e
         except exc.SQLAlchemyError as e:
-            db.rollback()
             logger.exception(e)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal database error",
+            ) from e
+        except Exception as e:
+            logger.exception(e)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal server error",
             ) from e
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 

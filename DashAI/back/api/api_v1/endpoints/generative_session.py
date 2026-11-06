@@ -12,16 +12,17 @@ from DashAI.back.api.api_v1.schemas.generative_session_params import (
 )
 from DashAI.back.core.utils import localize
 from DashAI.back.dependencies.database.models import (
-    GenerativeProcess,
     GenerativeSession,
     GenerativeSessionParameterHistory,
-    ProcessData,
 )
 from DashAI.back.dependencies.downloads.nested import missing_downloads
 from DashAI.back.models.base_generative_model import BaseGenerativeModel
 from DashAI.back.models.RAG.exceptions.base import RAGWorkflowError
 from DashAI.back.services.RAG.cleanup_service import CleanupService
 from DashAI.back.services.RAG.index_job_service import cancel_live_index_job
+from DashAI.back.services.RAG.session_document_service import (
+    SessionDocumentService,
+)
 from DashAI.back.services.RAG.session_validation_service import (
     SessionValidationService,
 )
@@ -311,46 +312,9 @@ async def delete_generative_sessions(
 
     with session_factory() as db:
         try:
+            deletion = SessionDocumentService(db, di["job_queue"])
             for session_id in params.ids:
-                session = db.get(GenerativeSession, session_id)
-                if not session:
-                    continue
-
-                CleanupService(db).invalidate_session_artifacts(
-                    session_id, commit=False
-                )
-
-                # Delete all the processes associated with the session
-                processes = (
-                    db.query(GenerativeProcess)
-                    .filter(GenerativeProcess.session_id == session_id)
-                    .all()
-                )
-                # Delete all the process data associated with the processes
-                for process in processes:
-                    process_data = (
-                        db.query(ProcessData)
-                        .filter(ProcessData.process_id == process.id)
-                        .all()
-                    )
-                    for data in process_data:
-                        db.delete(data)
-                # Delete the processes
-                for process in processes:
-                    db.delete(process)
-
-                # Delete the session parameter history entries
-                parameters_history = (
-                    db.query(GenerativeSessionParameterHistory)
-                    .filter(GenerativeSessionParameterHistory.session_id == session_id)
-                    .all()
-                )
-                for entry in parameters_history:
-                    db.delete(entry)
-
-                # Finally, delete the session itself
-                db.delete(session)
-
+                deletion.delete_session(session_id, commit=False, missing_ok=True)
             db.commit()
         except exc.SQLAlchemyError as e:
             log.exception(e)
@@ -365,7 +329,6 @@ async def delete_generative_sessions(
                 detail="Internal server error",
             ) from e
         finally:
-            db.rollback()
             db.close()
 
 
@@ -393,52 +356,12 @@ async def delete_generative_session(
 
     with session_factory() as db:
         try:
-            session = db.get(GenerativeSession, session_id)
-            if not session:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Generative session {session_id} does not exist in DB.",
-                )
-
-            old_parameters = dict(session.parameters or {})
-
-            # Stop any index still running for a session that is going away.
-            cancel_live_index_job(session, di["job_queue"])
-
-            # Delete all the processes associated with the session
-            processes = (
-                db.query(GenerativeProcess)
-                .filter(GenerativeProcess.session_id == session_id)
-                .all()
-            )
-            # Delete all the process data associated with the processes
-            for process in processes:
-                process_data = (
-                    db.query(ProcessData)
-                    .filter(ProcessData.process_id == process.id)
-                    .all()
-                )
-                for data in process_data:
-                    db.delete(data)
-            # Delete the processes
-            for process in processes:
-                db.delete(process)
-
-            CleanupService(db).invalidate_session_artifacts(session_id, commit=False)
-
-            # Delete the session parameter history entries
-            parameters_history = (
-                db.query(GenerativeSessionParameterHistory)
-                .filter(GenerativeSessionParameterHistory.session_id == session_id)
-                .all()
-            )
-            for entry in parameters_history:
-                db.delete(entry)
-            # Finally, delete the session itself
-            db.delete(session)
-
-            CleanupService(db).cleanup_orphaned_resources(session_id, old_parameters)
-            db.commit()
+            SessionDocumentService(db, di["job_queue"]).delete_session(session_id)
+        except LookupError as e:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            ) from e
         except HTTPException:
             raise
         except exc.SQLAlchemyError as e:

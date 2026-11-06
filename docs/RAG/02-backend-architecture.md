@@ -25,8 +25,8 @@ Services (services/RAG/)
   ├── SetupService              — indexing (build_index) + pipeline assembly
   ├── IndexStatusService        — read-only view of a session's index state
   ├── index_job_service.py      — functions to resolve / cancel a live indexing job
-  ├── DocumentService           — loads parsed Data documents for the pipeline
-  ├── SessionDocumentService    — session ↔ Data document links (attach/detach)
+  ├── DocumentService           — loads parsed Data documents and deletes them with their session cascade
+  ├── SessionDocumentService    — session ↔ Data document links (attach/detach) and session deletion
   ├── SessionDefaultsService    — server-side defaults for a new session
   ├── SessionConfigurationService — resolved configuration for the panel
   ├── ChunkingService           — chunk set identity (SHA-256), chunking lifecycle
@@ -145,6 +145,35 @@ paths.
   `RAGModelsFactory.create_query_transformation(...)` when
   `config.query_transformation` is not `None`, and returns a `RAGPipeline`
   instance.
+
+### Session deletion
+
+`SessionDocumentService.delete_session()` centralises the explicit cascade
+SQLite cannot enforce. It stops the live indexing job, deletes `process_data`
+and `generative_process` rows, invalidates the session's chunk sets, deletes
+its parameter history and document links, runs
+`CleanupService.cleanup_orphaned_resources(..., commit=False)` while the
+pipeline still exists, then deletes the `rag_pipeline` row and the session.
+
+`DocumentService.delete()` owns the document side: it checks for dependent
+sessions, optionally calls `delete_session(..., commit=False)` for each one,
+and then deletes the document and its notebooks. The same `commit=False`
+pattern is used by `DELETE /api/v1/documents/{id}?cascade_sessions=true` and
+`DELETE /api/v1/prompt/{id}?cascade_sessions=true`, so the sessions and the
+resource disappear in one transaction.
+
+### Prompt deletion
+
+`PromptService` marks rows created from `POST /api/v1/prompt/` with
+`is_library=True`; `get_or_create` rows and built-in seeds keep `False`.
+`GET /api/v1/prompt/library` returns the user-created rows and the built-in
+defaults, plus the sessions using each one. Built-ins are discovered from the
+`Prompt` components in the registry (generation, augmentation, query
+transformation, retrieval sufficiency and LLM filter), so registering a new
+default prompt family automatically makes it visible. `DELETE /api/v1/prompt/{id}`
+refuses internal rows and built-ins, refuses a prompt in use unless
+`cascade_sessions=true`, and deletes the referencing `rag_pipeline` rows
+explicitly before the prompt itself.
 
 The split exists so indexing never loads generation weights. It is also LLM-free
 in its own right: every RAG LLM is obtained as a

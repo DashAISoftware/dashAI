@@ -1295,6 +1295,12 @@ class RAGPrompt(Base):
     name: Mapped[str] = mapped_column(String, nullable=True)
     parameters: Mapped[JSON] = mapped_column(JSON, nullable=True)
     parameters_hash: Mapped[str] = mapped_column(String, nullable=False)
+    #: Whether this row was created by a user from the prompt library. Rows
+    #: created by ``get_or_create`` for a session's pipeline, and the built-in
+    #: defaults, are internal and must not be deleted from the library UI.
+    is_library: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
     created: Mapped[DateTime] = mapped_column(DateTime, default=datetime.now)
     last_modified: Mapped[DateTime] = mapped_column(
         DateTime,

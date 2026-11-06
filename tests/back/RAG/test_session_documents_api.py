@@ -6,9 +6,11 @@ from pathlib import Path
 from DashAI.back.core.enums.status import DocumentStatus
 from DashAI.back.dependencies.database.models import (
     DataDocument,
+    GenerativeSession,
     Notebook,
     RAGChunkSet,
     RAGChunkSetDocument,
+    RAGSessionDocument,
 )
 from tests.back.RAG.conftest import (
     _create_data_document,
@@ -173,6 +175,63 @@ def test_deleting_a_document_a_session_uses_is_refused(client):
     assert refused.json()["detail"]["notebooks"] == []
     assert client.delete(_url(session_id, document_id)).status_code == 204
     assert client.delete(f"/api/v1/documents/{document_id}").status_code == 204
+
+
+def test_document_payload_reports_the_sessions_using_it(client):
+    session_id = _session(client)
+    document_id = _create_data_document(client, text="reported")
+    client.post(_url(session_id), json={"document_ids": [document_id]})
+
+    with client.app.container["session_factory"]() as db:
+        session_name = db.get(GenerativeSession, session_id).name
+
+    fetched = client.get(f"/api/v1/documents/{document_id}")
+    listed = client.get("/api/v1/documents/")
+
+    expected = [{"id": session_id, "name": session_name}]
+    assert fetched.json()["sessions"] == expected
+    assert (
+        next(row for row in listed.json() if row["id"] == document_id)["sessions"]
+        == expected
+    )
+
+
+def test_deleting_a_document_cascades_its_sessions(client):
+    session_id = _session(client)
+    document_id = _create_data_document(client, text="cascade me")
+    client.post(_url(session_id), json={"document_ids": [document_id]})
+    chunk_set_id = _owned_chunk_set(client, session_id, document_id)
+    with client.app.container["session_factory"]() as db:
+        document_folder = Path(db.get(DataDocument, document_id).file_path)
+
+    response = client.delete(f"/api/v1/documents/{document_id}?cascade_sessions=true")
+
+    assert response.status_code == 204, response.text
+    with client.app.container["session_factory"]() as db:
+        assert db.get(DataDocument, document_id) is None
+        assert db.get(GenerativeSession, session_id) is None
+        assert db.get(RAGChunkSet, chunk_set_id) is None
+        assert (
+            db.query(RAGSessionDocument)
+            .filter(RAGSessionDocument.session_id == session_id)
+            .count()
+            == 0
+        )
+    assert not document_folder.exists()
+
+
+def test_document_cascade_keeps_sessions_that_do_not_use_it(client):
+    owning_session = _session(client)
+    other_session = _session(client)
+    document_id = _create_data_document(client, text="owned")
+    client.post(_url(owning_session), json={"document_ids": [document_id]})
+
+    response = client.delete(f"/api/v1/documents/{document_id}?cascade_sessions=true")
+
+    assert response.status_code == 204, response.text
+    with client.app.container["session_factory"]() as db:
+        assert db.get(GenerativeSession, owning_session) is None
+        assert db.get(GenerativeSession, other_session) is not None
 
 
 def test_a_document_used_only_by_notebooks_still_deletes(client, tmp_path):
