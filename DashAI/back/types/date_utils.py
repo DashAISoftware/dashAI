@@ -89,17 +89,30 @@ def _lies_on_a_grid(dates: "pd.Series") -> bool:
     -------
     bool
         ``True`` when the distinct dates, sorted, follow a frequency
-        ``pandas.infer_freq`` recognises.
+        ``pandas.infer_freq`` recognises, or fall on one day of the month
+        with a constant number of months between them.
     """
+    import numpy as np  # local import
     import pandas as pd  # local import
 
     index = pd.DatetimeIndex(dates.dropna().drop_duplicates().sort_values())
     if len(index) < 3:
         return False
     try:
-        return pd.infer_freq(index) is not None
+        if pd.infer_freq(index) is not None:
+            return True
     except ValueError:
         return False
+
+    # infer_freq anchors a monthly frequency on the first or the last day of
+    # the month only, so monthly dates on the 5th would count as irregular.
+    # Day first dates like those, within one year, would then lose to their
+    # month first reading, which lands on consecutive days of one month.
+    days = np.asarray(index.day)
+    if (days != days[0]).any():
+        return False
+    steps = np.diff(np.asarray(index.year * 12 + index.month))
+    return bool(steps[0] > 0 and (steps == steps[0]).all())
 
 
 def parse_date_column(values: Any, format: str = DEFAULT_DATE_FORMAT) -> "pd.Series":
